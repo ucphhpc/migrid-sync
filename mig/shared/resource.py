@@ -842,14 +842,14 @@ def write_resource_config(configuration, resource_conf, conf_path):
 
     return lines
 
-def list_resources(resource_home, only_valid=False, force_refresh=False):
+def list_resources(resource_home, only_valid=False, expire_cache=False):
     """Return a list of all resources by listing the resource configuration
     directories in resource_home. Uses dircache for efficiency when used more
     than once per session.
     Use only_valid parameter to filter out deleted and broken resources.
     """
     resources = []
-    if force_refresh:
+    if expire_cache:
         dircache.reset()
 
     children = dircache.listdir(resource_home)

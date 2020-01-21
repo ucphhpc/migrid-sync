@@ -46,11 +46,11 @@ def anon_user_id(user_id):
     anon_id = hash_algo(user_id).hexdigest()
     return anon_id
 
-def list_users(configuration, force_refresh=False):
+def list_users(configuration, expire_cache=False):
     """Return a list of all users by listing the user homes in user_home.
     Uses dircache for efficiency when used more than once per session.
     """
-    if force_refresh:
+    if expire_cache:
         dircache.reset()
 
     users = []

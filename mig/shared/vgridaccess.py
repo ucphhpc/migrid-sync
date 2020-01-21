@@ -142,7 +142,7 @@ def refresh_user_map(configuration):
 
     # Find all users and their configurations
 
-    all_users = list_users(configuration, force_refresh=True)
+    all_users = list_users(configuration, expire_cache=True)
     real_map = real_to_anon_user_map(configuration)
     for user in all_users:
         settings_path = os.path.join(configuration.user_settings,
@@ -211,7 +211,7 @@ def refresh_resource_map(configuration):
 
     all_resources = list_resources(configuration.resource_home,
                                    only_valid=True,
-                                   force_refresh=True)
+                                   expire_cache=True)
     real_map = real_to_anon_res_map(configuration.resource_home)
     for res in all_resources:
         # Sandboxes do not change their configuration
@@ -310,7 +310,7 @@ def refresh_vgrid_map(configuration):
     optional_conf = [SETTINGS, ]
 
     for vgrid in all_vgrids:
-        for (field, name, list_call) in conf_read:
+        for (field, name, list_call) in  :
             conf_path = os.path.join(configuration.vgrid_home, vgrid, name)
             if not os.path.isfile(conf_path):
                 # Make sure vgrid dict exists before filling it
@@ -350,7 +350,7 @@ def refresh_vgrid_map(configuration):
     # TODO: use get_resource_map output instead?
     all_resources = list_resources(configuration.resource_home,
                                    only_valid=True,
-                                   force_refresh=True)
+                                   expire_cache=True)
     real_map = real_to_anon_res_map(configuration.resource_home)
     for res in all_resources:
         # Sandboxes do not change their vgrid participation
@@ -451,7 +451,7 @@ def refresh_vgrid_map(configuration):
     # Find all users and their vgrid assignments
 
     # TODO: use get_user_map output instead?
-    all_users = list_users(configuration, force_refresh=True)
+    all_users = list_users(configuration, expire_cache=True)
     real_map = real_to_anon_user_map(configuration)
     for user in all_users:
         settings_path = os.path.join(configuration.user_settings,
@@ -529,11 +529,11 @@ def refresh_vgrid_map(configuration):
     return vgrid_map
 
 
-def get_user_map(configuration, force_refresh=False):
+def get_user_map(configuration, expire_cache=False):
     """Returns the current map of users and their configurations. Caches the
     map for load prevention with repeated calls within short time span.
     """
-    if not force_refresh \
+    if not expire_cache \
             and last_load[USERS] + MAP_CACHE_SECONDS > time.time():
         configuration.logger.debug("using cached user map")
         return last_map[USERS]
@@ -553,12 +553,12 @@ def get_user_map(configuration, force_refresh=False):
     return user_map
 
 
-def get_resource_map(configuration, force_refresh=False):
+def get_resource_map(configuration, expire_cache=False):
     """Returns the current map of resources and their configurations.
     Caches the map for load prevention with repeated calls
     within short time span.
     """
-    if not force_refresh \
+    if not expire_cache \
             and last_load[RESOURCES] + MAP_CACHE_SECONDS > time.time():
         configuration.logger.debug("using cached resource map")
         return last_map[RESOURCES]
@@ -610,14 +610,14 @@ def vgrid_inherit_map(configuration, vgrid_map):
     return inherit_map
 
 
-def get_vgrid_map(configuration, recursive=True, force_refresh=False):
+def get_vgrid_map(configuration, recursive=True, expire_cache=False):
     """Returns the current map of vgrids and their configurations. Caches the
     map for load prevention with repeated calls within short time span.
     The recursive parameter is there to request extension of all sub-vgrids
     participation with inherited entities. The raw vgrid map only mirrors the
     direct participation.
     """
-    if not force_refresh \
+    if not expire_cache \
             and last_load[VGRIDS] + MAP_CACHE_SECONDS > time.time():
         configuration.logger.debug("using cached vgrid map")
         vgrid_map = last_map[VGRIDS]
@@ -643,7 +643,7 @@ def get_vgrid_map(configuration, recursive=True, force_refresh=False):
 
 
 def get_vgrid_map_vgrids(configuration, recursive=True, sort=True,
-                         force_refresh=False):
+                         expire_cache=False):
     """Returns the current list of vgrids from vgrid map. Caches the
     map for load prevention with repeated calls within short time span.
     The recursive parameter is there to request extension of all sub-vgrids
@@ -651,7 +651,7 @@ def get_vgrid_map_vgrids(configuration, recursive=True, sort=True,
     """
     vgrid_map = get_vgrid_map(configuration,
                               recursive=recursive,
-                              force_refresh=force_refresh)
+                              expire_cache=expire_cache)
     vgrid_list = vgrid_map.get(VGRIDS, {}).keys()
     if sort:
         vgrid_list.sort()
@@ -659,7 +659,7 @@ def get_vgrid_map_vgrids(configuration, recursive=True, sort=True,
 
 
 def user_vgrid_access(configuration, client_id, inherited=False,
-                      recursive=True, force_refresh=False):
+                      recursive=True, expire_cache=False):
     """Extract a list of vgrids that user is allowed to access either due to
     owner or membership. The optional inherited argument tells the function to
     expand vgrid access to *parent* vgrids so that the somewhat broken reverse
@@ -673,7 +673,7 @@ def user_vgrid_access(configuration, client_id, inherited=False,
     vgrid_access = [default_vgrid]
     vgrid_map = get_vgrid_map(configuration,
                               recursive=recursive,
-                              force_refresh=force_refresh)
+                              expire_cache=expire_cache)
     for vgrid in vgrid_map[VGRIDS].keys():
         if vgrid_allowed(client_id, vgrid_map[VGRIDS][vgrid][OWNERS]) or \
                 vgrid_allowed(client_id, vgrid_map[VGRIDS][vgrid][MEMBERS]):
@@ -684,7 +684,7 @@ def user_vgrid_access(configuration, client_id, inherited=False,
 
 
 def check_vgrid_access(configuration, client_id, vgrid_name,
-                       recursive=True, force_refresh=False):
+                       recursive=True, expire_cache=False):
     """Inspect the vgrid map and check if client_id is either a member or
     owner of vgrid_name.
     The optional recursive argument is passed directly to the get_vgrid_map
@@ -696,14 +696,14 @@ def check_vgrid_access(configuration, client_id, vgrid_name,
     vgrid_access = [default_vgrid]
     vgrid_map = get_vgrid_map(configuration,
                               recursive=recursive,
-                              force_refresh=force_refresh)
+                              expire_cache=expire_cache)
     vgrid_entry = vgrid_map[VGRIDS].get(vgrid_name, {OWNERS: [], MEMBERS: []})
     return vgrid_allowed(client_id, vgrid_entry[OWNERS]) or \
         vgrid_allowed(client_id, vgrid_entry[MEMBERS])
 
 
 def res_vgrid_access(configuration, client_id,
-                     recursive=True, force_refresh=False):
+                     recursive=True, expire_cache=False):
     """Extract a list of vgrids that resource is allowed to access.
     The optional recursive argument is passed directly to the get_vgrid_map
     call so please refer to the use there.
@@ -714,14 +714,14 @@ def res_vgrid_access(configuration, client_id,
     vgrid_access = [default_vgrid]
     vgrid_map = get_vgrid_map(configuration,
                               recursive=recursive,
-                              force_refresh=force_refresh)
+                              expire_cache=expire_cache)
     for vgrid in vgrid_map[VGRIDS].keys():
         if vgrid_allowed(client_id, vgrid_map[VGRIDS][vgrid][RESOURCES]):
             vgrid_access.append(vgrid)
     return vgrid_access
 
 
-def user_owned_res_confs(configuration, client_id, force_refresh=False):
+def user_owned_res_confs(configuration, client_id, expire_cache=False):
     """Extract a map of resources that client_id owns.
 
     Returns a map from resource IDs to resource conf dictionaries.
@@ -731,7 +731,7 @@ def user_owned_res_confs(configuration, client_id, force_refresh=False):
     """
     owned = {}
     resource_map = get_resource_map(configuration,
-                                    force_refresh=force_refresh)
+                                    expire_cache=expire_cache)
 
     # Map only contains the raw resource names - anonymize as requested
 
@@ -745,7 +745,7 @@ def user_owned_res_confs(configuration, client_id, force_refresh=False):
     return owned
 
 
-def user_allowed_res_confs(configuration, client_id, force_refresh=False):
+def user_allowed_res_confs(configuration, client_id, expire_cache=False):
     """Extract a map of resources that client_id can really submit to or store
     data on.
     There is no guarantee that they will ever be online to accept any further
@@ -766,15 +766,15 @@ def user_allowed_res_confs(configuration, client_id, force_refresh=False):
 
     allowed_vgrids = user_vgrid_access(configuration, client_id,
                                        inherited=True,
-                                       force_refresh=force_refresh)
+                                       expire_cache=expire_cache)
 
     # Find all potential resources from vgrid sign up
 
     vgrid_map = get_vgrid_map(configuration,
-                              force_refresh=force_refresh)
+                              expire_cache=expire_cache)
     vgrid_map_res = vgrid_map[RESOURCES]
     resource_map = get_resource_map(configuration,
-                                    force_refresh=force_refresh)
+                                    expire_cache=expire_cache)
 
     # Map only contains the raw resource names - anonymize as requested
 
@@ -800,7 +800,7 @@ def user_allowed_res_confs(configuration, client_id, force_refresh=False):
 
 
 def user_visible_res_confs(configuration, client_id,
-                           force_refresh=False):
+                           expire_cache=False):
     """Extract a map of resources that client_id owns or can submit jobs to.
     This is a wrapper combining user_owned_res_confs and
     user_allowed_res_confs.
@@ -812,15 +812,15 @@ def user_visible_res_confs(configuration, client_id,
     """
     visible = user_allowed_res_confs(configuration,
                                      client_id,
-                                     force_refresh=force_refresh)
+                                     expire_cache=expire_cache)
     visible.update(user_owned_res_confs(configuration,
                                         client_id,
-                                        force_refresh=force_refresh))
+                                        expire_cache=expire_cache))
     return visible
 
 
 def user_owned_res_exes(configuration, client_id,
-                        force_refresh=False):
+                        expire_cache=False):
     """Extract a map of resource exes that client_id owns.
 
     Returns a map from resource IDs to lists of exe node names.
@@ -829,7 +829,7 @@ def user_owned_res_exes(configuration, client_id,
     """
     owned = {}
     owned_confs = user_owned_res_confs(configuration, client_id,
-                                       force_refresh=force_refresh)
+                                       expire_cache=expire_cache)
     for (res_id, res) in owned_confs.items():
         # NOTE: we need to allow missing EXECONFIG
         owned[res_id] = [exe["name"] for exe in res.get("EXECONFIG", [])]
@@ -837,7 +837,7 @@ def user_owned_res_exes(configuration, client_id,
 
 
 def user_owned_res_stores(configuration, client_id,
-                          force_refresh=False):
+                          expire_cache=False):
     """Extract a map of resources that client_id owns.
 
     Returns a map from resource IDs to lists of store node names.
@@ -847,7 +847,7 @@ def user_owned_res_stores(configuration, client_id,
     owned = {}
     owned_confs = user_owned_res_confs(configuration,
                                        client_id,
-                                       force_refresh=force_refresh)
+                                       expire_cache=expire_cache)
     for (res_id, res) in owned_confs.items():
         # NOTE: we need to allow missing STORECONFIG
         owned[res_id] = [store["name"] for store in res.get("STORECONFIG", [])]
@@ -855,7 +855,7 @@ def user_owned_res_stores(configuration, client_id,
 
 
 def user_allowed_res_units(configuration, client_id, unit_type,
-                           force_refresh=False):
+                           expire_cache=False):
     """Find resource units of unit_type exe or store that client_id is allowed
     to use.
     """
@@ -865,11 +865,11 @@ def user_allowed_res_units(configuration, client_id, unit_type,
 
     allowed_vgrids = user_vgrid_access(configuration, client_id,
                                        inherited=True,
-                                       force_refresh=force_refresh)
+                                       expire_cache=expire_cache)
 
     # Find all potential resources from vgrid sign up
 
-    vgrid_map = get_vgrid_map(configuration, force_refresh=force_refresh)
+    vgrid_map = get_vgrid_map(configuration, expire_cache=expire_cache)
     vgrid_map_res = vgrid_map[RESOURCES]
 
     # Map only contains the raw resource names - anonymize as requested
@@ -912,7 +912,7 @@ def user_allowed_res_units(configuration, client_id, unit_type,
     return allowed
 
 
-def user_allowed_res_exes(configuration, client_id, force_refresh=False):
+def user_allowed_res_exes(configuration, client_id, expire_cache=False):
     """Extract a map of resources that client_id can really submit to.
     There is no guarantee that they will ever accept any further jobs.
 
@@ -925,10 +925,10 @@ def user_allowed_res_exes(configuration, client_id, force_refresh=False):
     in a vgrid if the vgrid *and* resource owners configured it so.
     """
     return user_allowed_res_units(configuration, client_id, "exe",
-                                  force_refresh=force_refresh)
+                                  expire_cache=expire_cache)
 
 
-def user_allowed_res_stores(configuration, client_id, force_refresh=False):
+def user_allowed_res_stores(configuration, client_id, expire_cache=False):
     """Extract a map of resources that client_id can really store data on.
     There is no guarantee that they will ever be available for storing again.
 
@@ -941,10 +941,10 @@ def user_allowed_res_stores(configuration, client_id, force_refresh=False):
     in a vgrid if the vgrid *and* resource owners configured it so.
     """
     return user_allowed_res_units(configuration, client_id, "store",
-                                  force_refresh=force_refresh)
+                                  expire_cache=expire_cache)
 
 
-def user_visible_res_exes(configuration, client_id, force_refresh=False):
+def user_visible_res_exes(configuration, client_id, expire_cache=False):
     """Extract a map of resources that client_id owns or can submit jobs to.
     This is a wrapper combining user_owned_res_exes and
     user_allowed_res_exes.
@@ -954,13 +954,13 @@ def user_visible_res_exes(configuration, client_id, force_refresh=False):
     Resource IDs are anonymized unless explicitly configured otherwise.
     """
     visible = user_allowed_res_exes(configuration, client_id,
-                                    force_refresh=force_refresh)
+                                    expire_cache=expire_cache)
     visible.update(user_owned_res_exes(configuration, client_id,
-                                       force_refresh=force_refresh))
+                                       expire_cache=expire_cache))
     return visible
 
 
-def user_visible_res_stores(configuration, client_id, force_refresh=False):
+def user_visible_res_stores(configuration, client_id, expire_cache=False):
     """Extract a map of resources that client_id owns or can store data on.
     This is a wrapper combining user_owned_res_stores and
     user_allowed_res_stores.
@@ -970,13 +970,13 @@ def user_visible_res_stores(configuration, client_id, force_refresh=False):
     Resource IDs are anonymized unless explicitly configured otherwise.
     """
     visible = user_allowed_res_stores(configuration, client_id,
-                                      force_refresh=force_refresh)
+                                      expire_cache=expire_cache)
     visible.update(user_owned_res_stores(configuration, client_id,
-                                         force_refresh=force_refresh))
+                                         expire_cache=expire_cache))
     return visible
 
 
-def user_allowed_user_confs(configuration, client_id, force_refresh=False):
+def user_allowed_user_confs(configuration, client_id, expire_cache=False):
     """Extract a map of users that client_id can really view and maybe
     contact.
 
@@ -986,11 +986,11 @@ def user_allowed_user_confs(configuration, client_id, force_refresh=False):
     """
     allowed = {}
     allowed_vgrids = user_vgrid_access(configuration, client_id,
-                                       force_refresh=force_refresh)
+                                       expire_cache=expire_cache)
 
     # Find all potential users from vgrid member and ownership
 
-    user_map = get_user_map(configuration, force_refresh=force_refresh)
+    user_map = get_user_map(configuration, expire_cache=expire_cache)
 
     # Map only contains the raw user names - anonymize as requested
 
@@ -1006,7 +1006,7 @@ def user_allowed_user_confs(configuration, client_id, force_refresh=False):
 
 
 def user_visible_user_confs(configuration, client_id,
-                            force_refresh=False):
+                            expire_cache=False):
     """Extract a map of users that client_id is allowed to view or contact.
 
     Returns a map from user IDs to user conf dictionaries.
@@ -1015,18 +1015,18 @@ def user_visible_user_confs(configuration, client_id,
     the user confs are always raw.
     """
     visible = user_allowed_user_confs(configuration, client_id,
-                                      force_refresh=force_refresh)
+                                      expire_cache=expire_cache)
     return visible
 
 
-def resources_using_re(configuration, re_name, force_refresh=False):
+def resources_using_re(configuration, re_name, expire_cache=False):
     """Find resources implementing the re_name runtime environment.
 
     Resources are anonymized unless explicitly configured otherwise.
     """
     resources = []
     resource_map = get_resource_map(configuration,
-                                    force_refresh=force_refresh)
+                                    expire_cache=expire_cache)
 
     # Map only contains the raw resource names - anonymize as requested
 
@@ -1038,14 +1038,14 @@ def resources_using_re(configuration, re_name, force_refresh=False):
     return resources
 
 
-def get_re_provider_map(configuration, force_refresh=False):
+def get_re_provider_map(configuration, expire_cache=False):
     """Find providers for all runtime environments in one go.
 
     Resources are anonymized unless explicitly configured otherwise.
     """
     provider_map = {}
     resource_map = get_resource_map(configuration,
-                                    force_refresh=force_refresh)
+                                    expire_cache=expire_cache)
 
     # Map only contains the raw resource names - anonymize as requested
 
