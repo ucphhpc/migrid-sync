@@ -875,7 +875,7 @@ def cloud_load_instance(configuration, client_id, cloud_id, instance_id):
     state_path = _get_instance_state_path(configuration, client_id, cloud_id)
     lock_path = "%s.lock" % state_path
     state_lock = acquire_file_lock(lock_path, False)
-    saved_instances = unpickle(state_path, _logger)
+    saved_instances = unpickle(state_path, _logger, allow_missing=True)
     release_file_lock(state_lock)
     if not saved_instances:
         saved_instances = {}
