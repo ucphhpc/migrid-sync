@@ -527,6 +527,39 @@ def refresh_vgrid_map(configuration):
     return vgrid_map
 
 
+def force_update_user_map(configuration):
+    """Refresh user map and update map cache"""
+    map_stamp = load_stamp = time.time()
+    user_map = refresh_user_map(configuration)
+    last_map[USERS] = user_map
+    last_refresh[USERS] = map_stamp
+    last_load[USERS] = load_stamp
+
+    return user_map
+
+
+def force_update_resource_map(configuration):
+    """Refresh resources map and update map cache"""
+    map_stamp = load_stamp = time.time()
+    resource_map = refresh_resource_map(configuration)
+    last_map[RESOURCES] = resource_map
+    last_refresh[RESOURCES] = map_stamp
+    last_load[RESOURCES] = load_stamp
+
+    return resource_map
+
+
+def force_update_vgrid_map(configuration):
+    """Refresh vgrid map and update map cache"""
+    map_stamp = load_stamp = time.time()
+    vgrid_map = refresh_vgrid_map(configuration)
+    last_map[VGRIDS] = vgrid_map
+    last_refresh[VGRIDS] = map_stamp
+    last_load[VGRIDS] = load_stamp
+
+    return vgrid_map
+
+
 def get_user_map(configuration):
     """Returns the current map of users and their configurations. Caches the
     map for load prevention with repeated calls within short time span.
