@@ -108,7 +108,10 @@ VALID_JOB_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_+@%'
 VALID_BASE_VGRID_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_ '
 VALID_VGRID_NAME_CHARACTERS = VALID_BASE_VGRID_NAME_CHARACTERS + '/'
 VALID_ARCHIVE_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '_ '
-VALID_CLOUD_NAME_CHARACTERS = VALID_FQDN_CHARACTERS + '+_=@ '
+# Do not allow space in cloud labels as it makes ssh helpers cumbersome
+VALID_CLOUD_LABEL_CHARACTERS = VALID_FQDN_CHARACTERS + '+_=@'
+# We do allow space in image names
+VALID_CLOUD_NAME_CHARACTERS = VALID_CLOUD_LABEL_CHARACTERS + ' '
 VALID_CLOUD_INSTANCE_ID_CHARACTERS = VALID_CLOUD_NAME_CHARACTERS + ':'
 REJECT_UNSET = 'MUST_BE_SET_AND_NO_DEFAULT_VALUE'
 ALLOW_UNSAFE = \
@@ -825,6 +828,23 @@ def valid_cloud_instance_id(
     __valid_contents(instance_id, valid_chars, min_length, max_length)
 
 
+def valid_cloud_label(
+    cloud_label,
+    min_length=0,
+    max_length=64,
+    extra_chars='',
+):
+    """Verify that supplied cloud instance label, only contains characters that
+    we consider valid. Cloud labels are entered by users, so they should be
+    relatively flexible.
+    IMPORTANT: We avoid colon (:) and space to avoid collisions with the saved
+    instance_id format and to avoid ssh choking on word breaks.
+    """
+
+    valid_chars = VALID_CLOUD_LABEL_CHARACTERS + extra_chars
+    __valid_contents(cloud_label, valid_chars, min_length, max_length)
+
+
 def valid_cloud_name(
     cloud_name,
     min_length=0,
@@ -838,7 +858,7 @@ def valid_cloud_name(
     IMPORTANT: We avoid colon (:) to avoid collisions with the saved
     instance_id format.
     """
-    
+
     valid_chars = VALID_CLOUD_NAME_CHARACTERS + extra_chars
     __valid_contents(cloud_name, valid_chars, min_length, max_length)
 
@@ -1541,8 +1561,10 @@ def guess_type(name):
             __type_map[key] = valid_gdp_ref_value
         for key in ('instance_id', ):
             __type_map[key] = valid_cloud_instance_id
-        for key in ('cloud_id', 'instance_image', 'instance_label', ):
+        for key in ('cloud_id', 'instance_image', ):
             __type_map[key] = valid_cloud_name
+        for key in ('instance_label', ):
+            __type_map[key] = valid_cloud_label
 
     # Return type checker from __type_map with fall back to alphanumeric
 

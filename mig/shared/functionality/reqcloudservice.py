@@ -35,12 +35,12 @@ import time
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir, extract_field
 from shared.cloud import allowed_cloud_images, status_of_cloud_instance, \
-     start_cloud_instance, restart_cloud_instance, stop_cloud_instance, \
-     update_cloud_instance_keys, create_cloud_instance, delete_cloud_instance, \
-     web_access_cloud_instance, cloud_access_allowed, cloud_login_username, \
-     cloud_ssh_login_help, cloud_build_instance_id, cloud_split_instance_id, \
-     cloud_load_instance, cloud_save_instance, cloud_purge_instance, \
-     lookup_user_service_value, cloud_edit_actions, cloud_manage_actions
+    start_cloud_instance, restart_cloud_instance, stop_cloud_instance, \
+    update_cloud_instance_keys, create_cloud_instance, delete_cloud_instance, \
+    web_access_cloud_instance, cloud_access_allowed, cloud_login_username, \
+    cloud_ssh_login_help, cloud_build_instance_id, cloud_split_instance_id, \
+    cloud_load_instance, cloud_save_instance, cloud_purge_instance, \
+    lookup_user_service_value, cloud_edit_actions, cloud_manage_actions
 from shared.defaults import session_id_bytes, keyword_all
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
@@ -51,6 +51,7 @@ from shared.ssh import generate_ssh_rsa_key_pair
 from shared.useradm import get_full_user_map
 
 valid_actions = cloud_edit_actions + cloud_manage_actions
+
 
 def cloud_host(configuration, output_objects, user, url):
     """
@@ -95,6 +96,7 @@ def valid_cloud_service(configuration, service):
             % service)
         return False
     return True
+
 
 def _ssh_help(configuration, client_id, cloud_id, cloud_dict,
               instance_id):
@@ -177,7 +179,7 @@ def main(client_id, user_arguments_dict):
                           for options in configuration.cloud_services]
         output_objects.append(
             {'object_type': 'error_text',
-             'text': '%s is not among the valid cloud services: %s' % \
+             'text': '%s is not among the valid cloud services: %s' %
              (cloud_id, ', '.join(valid_services))})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -218,7 +220,6 @@ def main(client_id, user_arguments_dict):
             "No client ID found - can't continue"})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-
     ssh_auth_msg = "Login requires your private key for your public key:"
     instance_missing_msg = "Found no '%s' instance at %s. Please contact a " \
                            + "site administrator if it should be there."
@@ -227,10 +228,10 @@ def main(client_id, user_arguments_dict):
     if instance_id and not _label:
         _, _label, _ = cloud_split_instance_id(configuration, client_id,
                                                instance_id)
-        
-    if "create" == action:    
+
+    if "create" == action:
         if not accept_terms:
-            logger.error("refusing create without accepting terms for %s!" % \
+            logger.error("refusing create without accepting terms for %s!" %
                          client_id)
             output_objects.append({
                 'object_type': 'error_text', 'text':
@@ -242,11 +243,11 @@ def main(client_id, user_arguments_dict):
                                               cloud_id, keyword_all)
         for (saved_id, instance) in saved_instances.items():
             if instance_label == instance.get('INSTANCE_LABEL', saved_id):
-                logger.error("Refused %s re-create %s cloud instance %s!" % \
-                                      (client_id, cloud_id, instance_label))
+                logger.error("Refused %s re-create %s cloud instance %s!" %
+                             (client_id, cloud_id, instance_label))
                 output_objects.append({
                     'object_type': 'error_text', 'text':
-                    "You already have an instance with the label '%s'!" % \
+                    "You already have an instance with the label '%s'!" %
                     instance_label})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -256,17 +257,17 @@ def main(client_id, user_arguments_dict):
         max_user_instances = int(max_instances)
         # NOTE: a negative max value means unlimited but 0 or more is enforced
         if max_user_instances >= 0 and \
-               len(saved_instances) >= max_user_instances:
-            logger.error("Refused %s create additional %s cloud instances!" % \
-                                      (client_id, cloud_id))
+                len(saved_instances) >= max_user_instances:
+            logger.error("Refused %s create additional %s cloud instances!" %
+                         (client_id, cloud_id))
             output_objects.append({
                 'object_type': 'error_text', 'text':
-                "You already have the maximum allowed %s instances (%d)!" % \
+                "You already have the maximum allowed %s instances (%d)!" %
                 (service_title, max_user_instances)})
             return (output_objects, returnvalues.CLIENT_ERROR)
-            
+
         if not instance_label:
-            logger.error("Refused %s create unlabelled %s cloud instance!" % \
+            logger.error("Refused %s create unlabelled %s cloud instance!" %
                          (client_id, cloud_id))
             output_objects.append({
                 'object_type': 'error_text', 'text':
@@ -281,10 +282,10 @@ def main(client_id, user_arguments_dict):
                 'object_type': 'error_text', 'text':
                 "No valid / allowed cloud images found!"})
             return (output_objects, returnvalues.CLIENT_ERROR)
- 
+
         if not instance_image:
             instance_image = allowed_images[0]
-            logger.info("No image specified - using first for %s in %s: %s" % \
+            logger.info("No image specified - using first for %s in %s: %s" %
                         (client_id, cloud_id, instance_image))
 
         image_id = None
@@ -294,7 +295,7 @@ def main(client_id, user_arguments_dict):
                 break
 
         if not image_id:
-            logger.error("No matching image ID found for %s in %s: %s" % \
+            logger.error("No matching image ID found for %s in %s: %s" %
                          (client_id, cloud_id, instance_image))
             output_objects.append({
                 'object_type': 'error_text', 'text':
@@ -307,7 +308,7 @@ def main(client_id, user_arguments_dict):
         auth_keys = [i.split('#', 1)[0].strip() for i in raw_keys]
         auth_keys = [i for i in auth_keys if i]
         if not auth_keys:
-            logger.error("No cloud pub keys setup for %s - refuse create" % \
+            logger.error("No cloud pub keys setup for %s - refuse create" %
                          client_id)
             output_objects.append({
                 'object_type': 'error_text', 'text':
@@ -321,7 +322,7 @@ is stricly required for all use. Please do so before you try again.
                 'title': 'open cloud setup', 'target': '_blank'})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-        logger.debug("Continue create for %s with auth_keys: %s" % \
+        logger.debug("Continue create for %s with auth_keys: %s" %
                      (client_id, auth_keys))
 
         # Create a new internal keyset and session id
@@ -348,17 +349,17 @@ is stricly required for all use. Please do so before you try again.
             # Init unset ssh address and leave for floating IP assigment below
             'INSTANCE_SSH_IP': '',
             'INSTANCE_SSH_PORT': 22,
-            }
+        }
         (action_status, action_msg) = create_cloud_instance(
             configuration, client_id, cloud_id, cloud_flavor, instance_id,
             image_id, auth_keys)
         if not action_status:
-            logger.error("%s %s cloud instance %s for %s failed: %s" % \
+            logger.error("%s %s cloud instance %s for %s failed: %s" %
                          (action, cloud_id, instance_id, client_id,
                           action_msg))
             output_objects.append({
                 'object_type': 'error_text',
-                'text': 'Your %s instance %s at %s did not succeed: %s' % \
+                'text': 'Your %s instance %s at %s did not succeed: %s' %
                 (action, instance_label, service_title, action_msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
@@ -367,84 +368,84 @@ is stricly required for all use. Please do so before you try again.
         cloud_dict['INSTANCE_SSH_IP'] = instance_ssh_fqdn
         if not cloud_save_instance(configuration, client_id, cloud_id,
                                    instance_id, cloud_dict):
-            logger.error("save new %s cloud instance %s for %s failed" % \
+            logger.error("save new %s cloud instance %s for %s failed" %
                          (cloud_id, instance_id, client_id))
             output_objects.append({
                 'object_type': 'error_text',
-                'text': 'Error saving your %s cloud instance setup' % \
+                'text': 'Error saving your %s cloud instance setup' %
                 service_title})
             return (output_objects, returnvalues.SYSTEM_ERROR)
-            
+
         output_objects.append({
-            'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
+            'object_type': 'text', 'text': "%s instance %s at %s: %s" %
             (action, instance_label, service_title, "success")})
         output_objects.append({
             'object_type': 'html_form', 'text': _ssh_help(
                 configuration, client_id, cloud_id, cloud_dict, instance_id)})
-    
+
     elif "delete" == action:
         saved_instance = cloud_load_instance(configuration, client_id,
                                              cloud_id, instance_id)
         if not saved_instance:
-            logger.error("no saved %s cloud instance %s for %s to delete" % \
+            logger.error("no saved %s cloud instance %s for %s to delete" %
                          (cloud_id, instance_id, client_id))
             output_objects.append(
-                {'object_type': 'error_text', 'text': instance_missing_msg % \
+                {'object_type': 'error_text', 'text': instance_missing_msg %
                  (_label, service_title)})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         (action_status, action_msg) = delete_cloud_instance(
             configuration, client_id, cloud_id, cloud_flavor, instance_id)
         if not action_status:
-            logger.error("%s %s cloud instance %s for %s failed: %s" % \
+            logger.error("%s %s cloud instance %s for %s failed: %s" %
                          (action, cloud_id, instance_id, client_id,
                           action_msg))
             output_objects.append({
                 'object_type': 'error_text',
-                'text': 'Your %s instance %s at %s did not succeed: %s' % \
+                'text': 'Your %s instance %s at %s did not succeed: %s' %
                 (action, _label, service_title, action_msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         if not cloud_purge_instance(configuration, client_id, cloud_id,
                                     instance_id):
-            logger.error("purge %s cloud instance %s for %s failed" % \
+            logger.error("purge %s cloud instance %s for %s failed" %
                          (cloud_id, instance_id, client_id))
             output_objects.append({
                 'object_type': 'error_text',
-                'text': 'Error deleting your %s cloud instance setup' % \
+                'text': 'Error deleting your %s cloud instance setup' %
                 service_title
-                })
+            })
             return (output_objects, returnvalues.SYSTEM_ERROR)
-            
+
         output_objects.append({
-            'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
+            'object_type': 'text', 'text': "%s instance %s at %s: %s" %
             (action, _label, service_title, "success")})
-    
+
     elif "status" == action:
         saved_instance = cloud_load_instance(configuration, client_id,
                                              cloud_id, instance_id)
         if not saved_instance:
-            logger.error("no saved %s cloud instance %s for %s to query" % \
+            logger.error("no saved %s cloud instance %s for %s to query" %
                          (cloud_id, instance_id, client_id))
             output_objects.append(
-                {'object_type': 'error_text', 'text': instance_missing_msg % \
+                {'object_type': 'error_text', 'text': instance_missing_msg %
                  (_label, service_title)})
             return (output_objects, returnvalues.CLIENT_ERROR)
-            
+
         (action_status, action_msg) = status_of_cloud_instance(
             configuration, client_id, cloud_id, cloud_flavor, instance_id)
         if not action_status:
-            logger.error("%s %s cloud instance %s for %s failed: %s" % \
+            logger.error("%s %s cloud instance %s for %s failed: %s" %
                          (action, cloud_id, instance_id, client_id,
                           action_msg))
             output_objects.append({
                 'object_type': 'error_text',
-                'text': 'Your %s instance %s at %s did not succeed: %s' % \
+                'text': 'Your %s instance %s at %s did not succeed: %s' %
                 (action, _label, service_title, action_msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({
-            'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
+            'object_type': 'text', 'text': "%s instance %s at %s: %s" %
             (action, _label, service_title, action_msg)})
 
         # Show web console and ssh details if running
@@ -452,13 +453,15 @@ is stricly required for all use. Please do so before you try again.
             (console_status, console_msg) = web_access_cloud_instance(
                 configuration, client_id, cloud_id, cloud_flavor, instance_id)
             if not console_status:
-                logger.error("%s cloud instance %s console for %s failed: %s" \
+                logger.error("%s cloud instance %s console for %s failed: %s"
                              % (cloud_id, instance_id, client_id, console_msg))
                 output_objects.append({
                     'object_type': 'error_text',
-                    'text': 'Failed to get instance %s at %s console: %s' % \
+                    'text': 'Failed to get instance %s at %s console: %s' %
                     (_label, service_title, console_msg)})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
+            logger.info("%s cloud instance %s console for %s: %s" %
+                        (cloud_id, instance_id, client_id, console_msg))
             output_objects.append({
                 'object_type': 'link', 'destination': console_msg,
                 'text': 'Open web console', 'class': 'consolelink iconspace',
@@ -476,27 +479,27 @@ is stricly required for all use. Please do so before you try again.
         saved_instance = cloud_load_instance(configuration, client_id,
                                              cloud_id, instance_id)
         if not saved_instance:
-            logger.error("no saved %s cloud instance %s for %s to start" % \
+            logger.error("no saved %s cloud instance %s for %s to start" %
                          (cloud_id, instance_id, client_id))
             output_objects.append(
-                {'object_type': 'error_text', 'text': instance_missing_msg % \
+                {'object_type': 'error_text', 'text': instance_missing_msg %
                  (_label, service_title)})
             return (output_objects, returnvalues.CLIENT_ERROR)
-            
+
         (action_status, action_msg) = start_cloud_instance(
             configuration, client_id, cloud_id, cloud_flavor, instance_id)
         if not action_status:
-            logger.error("%s %s cloud instance %s for %s failed: %s" % \
+            logger.error("%s %s cloud instance %s for %s failed: %s" %
                          (action, cloud_id, instance_id, client_id,
                           action_msg))
             output_objects.append({
                 'object_type': 'error_text',
-                'text': 'Your %s instance %s at %s did not succeed: %s' % \
+                'text': 'Your %s instance %s at %s did not succeed: %s' %
                 (action, _label, service_title, action_msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({
-            'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
+            'object_type': 'text', 'text': "%s instance %s at %s: %s" %
             (action, _label, service_title, "success")})
         output_objects.append({
             'object_type': 'html_form', 'text': _ssh_help(
@@ -508,28 +511,28 @@ is stricly required for all use. Please do so before you try again.
         saved_instance = cloud_load_instance(configuration, client_id,
                                              cloud_id, instance_id)
         if not saved_instance:
-            logger.error("no saved %s cloud instance %s for %s to restart" % \
+            logger.error("no saved %s cloud instance %s for %s to restart" %
                          (cloud_id, instance_id, client_id))
             output_objects.append(
-                {'object_type': 'error_text', 'text': instance_missing_msg % \
+                {'object_type': 'error_text', 'text': instance_missing_msg %
                  (_label, service_title)})
             return (output_objects, returnvalues.CLIENT_ERROR)
-            
+
         (action_status, action_msg) = restart_cloud_instance(
             configuration, client_id, cloud_id, cloud_flavor, instance_id,
             boot_strength)
         if not action_status:
-            logger.error("%s %s cloud instance %s for %s failed: %s" % \
+            logger.error("%s %s cloud instance %s for %s failed: %s" %
                          (action, cloud_id, instance_id, client_id,
                           action_msg))
             output_objects.append({
                 'object_type': 'error_text',
-                'text': 'Your %s instance %s at %s did not succeed: %s' % \
+                'text': 'Your %s instance %s at %s did not succeed: %s' %
                 (action, _label, service_title, action_msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({
-            'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
+            'object_type': 'text', 'text': "%s instance %s at %s: %s" %
             (action, _label, service_title, "success")})
         output_objects.append({
             'object_type': 'html_form', 'text': _ssh_help(
@@ -540,55 +543,54 @@ is stricly required for all use. Please do so before you try again.
         saved_instance = cloud_load_instance(configuration, client_id,
                                              cloud_id, instance_id)
         if not saved_instance:
-            logger.error("no saved %s cloud instance %s for %s to %s" % \
+            logger.error("no saved %s cloud instance %s for %s to %s" %
                          (cloud_id, instance_id, client_id, action))
             output_objects.append(
-                {'object_type': 'error_text', 'text': instance_missing_msg % \
+                {'object_type': 'error_text', 'text': instance_missing_msg %
                  (_label, service_title)})
             return (output_objects, returnvalues.CLIENT_ERROR)
-            
-            
+
         (action_status, action_msg) = stop_cloud_instance(
             configuration, client_id, cloud_id, cloud_flavor, instance_id)
         if not action_status:
-            logger.error("%s %s cloud instance %s for %s failed: %s" % \
+            logger.error("%s %s cloud instance %s for %s failed: %s" %
                          (action, cloud_id, instance_id, client_id,
                           action_msg))
             output_objects.append({
                 'object_type': 'error_text',
-                'text': 'Your %s instance %s at %s did not succeed: %s' % \
+                'text': 'Your %s instance %s at %s did not succeed: %s' %
                 (action, _label, service_title, action_msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({
-            'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
+            'object_type': 'text', 'text': "%s instance %s at %s: %s" %
             (action, _label, service_title, "success")})
 
     elif "webaccess" == action:
         saved_instance = cloud_load_instance(configuration, client_id,
                                              cloud_id, instance_id)
         if not saved_instance:
-            logger.error("no saved %s cloud instance %s for %s to query" % \
+            logger.error("no saved %s cloud instance %s for %s to query" %
                          (cloud_id, instance_id, client_id))
             output_objects.append(
-                {'object_type': 'error_text', 'text': instance_missing_msg % \
+                {'object_type': 'error_text', 'text': instance_missing_msg %
                  (_label, service_title)})
             return (output_objects, returnvalues.CLIENT_ERROR)
-            
+
         (action_status, action_msg) = web_access_cloud_instance(
             configuration, client_id, cloud_id, cloud_flavor, instance_id)
         if not action_status:
-            logger.error("%s %s cloud instance %s for %s failed: %s" % \
+            logger.error("%s %s cloud instance %s for %s failed: %s" %
                          (action, service_title, instance_id, client_id,
                           action_msg))
             output_objects.append({
                 'object_type': 'error_text',
-                'text': 'Your %s instance %s at %s did not succeed: %s' % \
+                'text': 'Your %s instance %s at %s did not succeed: %s' %
                 (action, _label, service_title, action_msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({
-            'object_type': 'text', 'text': "%s instance %s at %s" % \
+            'object_type': 'text', 'text': "%s instance %s at %s" %
             (action, _label, service_title)})
         output_objects.append({
             'object_type': 'link', 'destination': action_msg,
@@ -604,10 +606,10 @@ is stricly required for all use. Please do so before you try again.
         saved_instance = cloud_load_instance(configuration, client_id,
                                              cloud_id, instance_id)
         if not saved_instance:
-            logger.error("no saved %s cloud instance %s for %s to update" % \
+            logger.error("no saved %s cloud instance %s for %s to update" %
                          (cloud_id, instance_id, client_id))
             output_objects.append(
-                {'object_type': 'error_text', 'text': instance_missing_msg % \
+                {'object_type': 'error_text', 'text': instance_missing_msg %
                  (_label, service_title)})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -617,17 +619,17 @@ is stricly required for all use. Please do so before you try again.
             configuration, client_id, cloud_id, cloud_flavor, instance_id,
             auth_keys)
         if not action_status:
-            logger.error("%s %s cloud instance %s for %s failed: %s" % \
+            logger.error("%s %s cloud instance %s for %s failed: %s" %
                          (action, cloud_id, instance_id, client_id,
                           action_msg))
             output_objects.append({
                 'object_type': 'error_text',
-                'text': 'Your %s instance %s at %s did not succeed: %s' % \
+                'text': 'Your %s instance %s at %s did not succeed: %s' %
                 (action, _label, service_title, action_msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({
-            'object_type': 'text', 'text': "%s instance %s at %s: %s" % \
+            'object_type': 'text', 'text': "%s instance %s at %s: %s" %
             (action, _label, service_title, "success")})
         output_objects.append({
             'object_type': 'html_form', 'text': _ssh_help(
@@ -650,7 +652,7 @@ is stricly required for all use. Please do so before you try again.
                            'title': 'Go back to cloud management',
                            'text': 'Back to cloud management'})
     return (output_objects, return_status)
-        
+
 
 if __name__ == "__main__":
     if not os.environ.get('MIG_CONF', ''):

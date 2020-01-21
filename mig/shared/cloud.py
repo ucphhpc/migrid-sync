@@ -48,14 +48,14 @@ except ImportError, err:
 from shared.base import force_utf8, force_utf8_rec, client_id_dir
 from shared.defaults import keyword_all
 from shared.fileio import pickle, unpickle, acquire_file_lock, \
-     release_file_lock
+    release_file_lock
 from shared.safeeval import subprocess_call
 
 # Internal helper to map individual operations to flavored cloud functions
 __cloud_helper_map = {"openstack": None}
 # How long and often to poll during wait for instance creation and destruction
-__max_wait_secs = 120
-__poll_delay_secs = 3
+__max_wait_secs = 240
+__poll_delay_secs = 5
 
 cloud_manage_actions = ['start', 'softrestart', 'hardrestart',
                         'status', 'stop', 'webaccess']
@@ -73,6 +73,7 @@ def __require_openstack(func):
     if openstack is None:
         return __bail_out_openstack
     return func
+
 
 def __bail_out_requests(*args, **kwargs):
     """Helper for dynamic bail out on actual use"""
@@ -140,13 +141,13 @@ def openstack_cloud_connect(configuration, cloud_id):
     """Shared helper to connect to the cloud with basic setup handled"""
     cloud_flavor = "openstack"
     _logger = configuration.logger
-    _logger.info("connect to %s" % cloud_id)
+    _logger.debug("connect to %s" % cloud_id)
     # TODO: we should either edit cloud.yaml ID to fit or introduce service id
     internal_id = cloud_id.lower()
     try:
         conn = openstack.connect(cloud=internal_id)
         openstack.enable_logging(debug=False)
-        _logger.info("connected to %s" % cloud_id)
+        _logger.debug("connected to %s" % cloud_id)
     except Exception, exc:
         _logger.error("connect to %s failed: %s" % (cloud_id, exc))
         return None
@@ -268,7 +269,7 @@ def openstack_restart_cloud_instance(configuration, client_id, cloud_id, instanc
     """Reboot provided cloud instance. Use SOFT or HARD as boot_strength"""
     cloud_flavor = "openstack"
     _logger = configuration.logger
-    _logger.info("restart %s cloud instance %s for %s %s" % \
+    _logger.info("restart %s cloud instance %s for %s %s" %
                  (cloud_id, instance_id, client_id, boot_strength))
     conn = openstack_cloud_connect(configuration, cloud_id)
     if conn is None:
@@ -388,7 +389,7 @@ def openstack_status_all_cloud_instances(configuration, client_id, cloud_id,
                               (client_id, cloud_id, instance_id, msg))
                 status_dict[instance_id]['msg'] = msg
                 continue
-            #_logger.debug("%s status all for cloud %s instance %s: %s" % \
+            # _logger.debug("%s status all for cloud %s instance %s: %s" % \
             #              (client_id, cloud_id, instance_id, instance))
             for name in fields:
                 lookup_name = lookup_map.get(name, name)
@@ -404,20 +405,20 @@ def openstack_status_all_cloud_instances(configuration, client_id, cloud_id,
                         address_entries = field_val.values()
                         for entry in address_entries:
                             if entry and entry[-1] and \
-                                'floating' in entry[-1].values():
+                                    'floating' in entry[-1].values():
                                 field_val = entry[-1].get('addr', 'UNKNOWN')
                                 break
                     elif name == 'public_fqdn':
                         address_entries = field_val.values()
                         for entry in address_entries:
                             if entry and entry[-1] and \
-                                'floating' in entry[-1].values():
+                                    'floating' in entry[-1].values():
                                 addr = entry[-1].get('addr', '')
                                 field_val = cloud_fqdn_from_ip(configuration,
                                                                addr)[0]
                                 break
                     else:
-                        _logger.warning("no converter for status field %s" % \
+                        _logger.warning("no converter for status field %s" %
                                         name)
                         field_val = "%s" % field_val
                 else:
@@ -425,7 +426,7 @@ def openstack_status_all_cloud_instances(configuration, client_id, cloud_id,
                 status_dict[instance_id][name] = field_val
                 status_dict[instance_id]['success'] = True
                 status_dict[instance_id]['msg'] = ''
-    
+
         _logger.debug("%s status all for cloud %s instances %s: %s" %
                       (client_id, cloud_id, ', '.join(instance_id_list),
                        status_dict))
@@ -470,22 +471,35 @@ def openstack_web_access_cloud_instance(configuration, client_id, cloud_id,
         web_auth = conn.authorize()
 
         server = conn.compute.find_server(instance_id)
-        API_ENDPOINT = "https://os208.hpc.ku.dk:8774/v2.1/servers/%s/action" \
-                       % server.id
+        try:
+            # API_ENDPOINT is something like
+            # https://CLOUD_BASE_URL:8774/v2.1/servers/SERVER_ID/action
+            API_ENDPOINT = "%s/action" % instance.links[0]['href']
+        except Exception, exc:
+            _logger.error("%s failed web console lookup for %s instance %s: %s"
+                          % (client_id, cloud_id, instance_id, exc))
+            status = False
+            msg = "instance web console lookup failed!"
+            return (status, msg)
+
         body = '{"os-getVNCConsole":{"type": "novnc"}}'
         HEADERS = {}
         HEADERS['X-Auth-Token'] = web_auth
         HEADERS['Content-type'] = "application/json"
-        response = requests.post(API_ENDPOINT, headers=HEADERS, data=body, verify=True)
+        _logger.info("%s get web console server for %s: %s" %
+                     (instance_id, server.id, instance))
+        response = requests.post(
+            API_ENDPOINT, headers=HEADERS, data=body, verify=True)
         response_dict = force_utf8_rec(response.json())
-        _logger.info("%s web console response: %s" % (client_id, response_dict))
+        _logger.info("%s web console response: %s" %
+                     (client_id, response_dict))
         console_url = response_dict.get('console', {}).get('url', '')
         if console_url:
             msg = console_url
             _logger.info("%s web console for cloud %s instance %s: %s" %
                          (client_id, cloud_id, instance_id, msg))
         else:
-            _logger.error("%s failed web console for %s cloud instance %s" \
+            _logger.error("%s failed web console for %s cloud instance %s"
                           % (client_id, cloud_id, instance_id))
 
     except Exception, exc:
@@ -622,16 +636,16 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
     mandatory_settings = [flavor_id, network_id, sec_group_id,
                           floating_network_id, availability_zone]
 
-    _logger.debug("create instance for %s with mandatory settings: %s" % \
+    _logger.debug("create instance for %s with mandatory settings: %s" %
                   (client_id, mandatory_settings))
 
     # The lookup_user_service_value returns None if unset
     if None in mandatory_settings:
         _logger.warning("Found unknown mandatory cloud service setting(s): %s"
                         % mandatory_settings)
-        _logger.warning("%s create %s cloud instance %s will likely fail" % \
+        _logger.warning("%s create %s cloud instance %s will likely fail" %
                         (client_id, cloud_id, instance_id))
-        
+
     if auth_keys:
         openstack_register_cloud_keys(configuration, client_id, cloud_id,
                                       auth_keys)
@@ -650,7 +664,7 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
             _logger.error("%s refusing to create %s cloud instance %s again" %
                           (client_id, cloud_id, instance_id))
             return (status, msg)
-        _logger.debug("create_server with instance_id=%s, image=%s, availability_zone=%s, key_name=%s, flavor_id=%s, network=%s, sec_groups=%s" % \
+        _logger.debug("create_server with instance_id=%s, image=%s, availability_zone=%s, key_name=%s, flavor_id=%s, network=%s, sec_groups=%s" %
                       (instance_id, image_id, availability_zone, key_id,
                        flavor_id, network_id, sec_group_id))
         instance = conn.create_server(instance_id, image=image_id,
@@ -671,7 +685,7 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
                                                              instance_id)
             _logger.error(msg)
 
-            _logger.info("cleaning up after failed %s cloud instance %s" % \
+            _logger.info("cleaning up after failed %s cloud instance %s" %
                          (cloud_id, instance_id))
             try:
                 instance = conn.compute.find_server(instance_id)
@@ -679,7 +693,7 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
                 if msg:
                     raise Exception(force_utf8(msg))
             except Exception, exc:
-                _logger.error("%s failed to clean up %s cloud instance: %s" % \
+                _logger.error("%s failed to clean up %s cloud instance: %s" %
                               (client_id, instance_id, exc))
             return (status, msg)
 
@@ -713,7 +727,7 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
                   (cloud_id, instance_id)
             _logger.error("%s %s " % (client_id, msg))
             return (status, msg)
-        
+
     except Exception, exc:
         status = False
         msg = "instance creation failed!"
@@ -742,10 +756,10 @@ def openstack_delete_cloud_instance(configuration, client_id, cloud_id,
             if msg:
                 msg = force_utf8(msg)
                 status = False
-                _logger.error("%s failed to delete %s cloud instance: %s" % \
+                _logger.error("%s failed to delete %s cloud instance: %s" %
                               (client_id, instance_id, msg))
                 return (status, msg)
-        
+
             if not __wait_gone(configuration, client_id, cloud_id,
                                cloud_flavor,
                                instance):
@@ -757,10 +771,10 @@ def openstack_delete_cloud_instance(configuration, client_id, cloud_id,
 
             removed = conn.delete_unattached_floating_ips(retry=1)
             if removed < 1:
-                # Possibly failed removal is not critical 
-                _logger.warning("%s failed to free IP for %s cloud instance: %s" % \
+                # Possibly failed removal is not critical
+                _logger.warning("%s failed to free IP for %s cloud instance: %s" %
                                 (client_id, instance_id, removed))
-            _logger.info("%s deleted cloud %s instance %s" % \
+            _logger.info("%s deleted cloud %s instance %s" %
                          (client_id, cloud_id, instance_id))
         elif allow_missing:
             # Silently accept local delete if instance is already gone
@@ -812,9 +826,10 @@ def cloud_find_service(configuration, cloud_id):
     for service in configuration.cloud_services:
         if service['service_name'] == cloud_id:
             return service
-    _logger.error("no such cloud service found: %s (%s)" % \
+    _logger.error("no such cloud service found: %s (%s)" %
                   (cloud_id, configuration.cloud_services))
     return None
+
 
 def cloud_build_instance_id(configuration, client_email, instance_label,
                             session_id):
@@ -822,10 +837,11 @@ def cloud_build_instance_id(configuration, client_email, instance_label,
     session_id.
     """
     _logger = configuration.logger
-    _logger.debug("build instance id from %s %s %s" % \
+    _logger.debug("build instance id from %s %s %s" %
                   (client_email, instance_label, session_id))
     instance_id = "%s:%s:%s" % (client_email, instance_label, session_id)
     return instance_id
+
 
 def cloud_split_instance_id(configuration, client_id, instance_id):
     """Extract the instance_id parts of a full instance_id"""
@@ -834,6 +850,7 @@ def cloud_split_instance_id(configuration, client_id, instance_id):
     _logger.debug("split instance id %s" % instance_id)
     client_email, instance_label, session_id = instance_id.split(':')
     return (client_email, instance_label, session_id)
+
 
 def cloud_fqdn_from_ip(configuration, ip_addr):
     """Lookup host FQDN list from ip_addr"""
@@ -844,9 +861,10 @@ def cloud_fqdn_from_ip(configuration, ip_addr):
     try:
         fqdn = socket.gethostbyaddr(ip_addr)
     except Exception, exc:
-        _logger.warning("could not resolve IP addresss %s to FQDN: %s" % \
+        _logger.warning("could not resolve IP addresss %s to FQDN: %s" %
                         (ip_addr, exc))
     return fqdn
+
 
 def cloud_access_allowed(configuration, user_dict):
     """Check if user with user_dict is allowed to access site cloud features"""
@@ -855,6 +873,7 @@ def cloud_access_allowed(configuration, user_dict):
         if not re.match(val, user_dict.get(key, 'NO SUCH FIELD')):
             return False
     return True
+
 
 def _get_instance_state_path(configuration, client_id, cloud_id):
     """Return the path where client_id stores a pickled dict of all personal
@@ -865,6 +884,7 @@ def _get_instance_state_path(configuration, client_id, cloud_id):
     state_path = os.path.join(configuration.user_settings, client_dir,
                               cloud_id + '.state')
     return state_path
+
 
 def cloud_load_instance(configuration, client_id, cloud_id, instance_id):
     """Load saved instance dictionary for client_id on cloud_id with
@@ -883,6 +903,7 @@ def cloud_load_instance(configuration, client_id, cloud_id, instance_id):
         return saved_instances
     return saved_instances.get(instance_id, {})
 
+
 def cloud_save_instance(configuration, client_id, cloud_id, instance_id,
                         instance_dict):
     """Save cloud instance dictionary for client_id on cloud_id with
@@ -899,16 +920,17 @@ def cloud_save_instance(configuration, client_id, cloud_id, instance_id,
     saved_instances[instance_id] = instance_dict
     if pickle(saved_instances, state_path, _logger):
         save_status = True
-        _logger.info("saved new %s cloud instance %s for %s" % \
+        _logger.info("saved new %s cloud instance %s for %s" %
                      (cloud_id, instance_id, client_id))
     else:
-        _logger.error("save new %s cloud instance %s for %s failed" % \
+        _logger.error("save new %s cloud instance %s for %s failed" %
                       (cloud_id, instance_id, client_id))
     release_file_lock(state_lock)
     return save_status
 
+
 def cloud_purge_instance(configuration, client_id, cloud_id,
-                                instance_id):
+                         instance_id):
     """Purge saved cloud instance dictionary for client_id on cloud_id with
     concurrency support.
     """
@@ -922,15 +944,15 @@ def cloud_purge_instance(configuration, client_id, cloud_id,
         del saved_instances[instance_id]
         if pickle(saved_instances, state_path, _logger):
             delete_status = True
-            _logger.info("deleted %s cloud instance %s for %s" % \
+            _logger.info("deleted %s cloud instance %s for %s" %
                          (cloud_id, instance_id, client_id))
         else:
-            _logger.error("delete %s cloud instance %s for %s failed" % \
+            _logger.error("delete %s cloud instance %s for %s failed" %
                           (cloud_id, instance_id, client_id))
     else:
-        _logger.error("no such %s cloud instance %s for %s to delete" % \
+        _logger.error("no such %s cloud instance %s for %s to delete" %
                       (cloud_id, instance_id, client_id))
-            
+
     release_file_lock(state_lock)
     return delete_status
 
@@ -941,7 +963,7 @@ def cloud_login_username(configuration, cloud_id, instance_image):
     to the instance_image name otherwise.
     """
     _logger = configuration.logger
-    _logger.debug("find jump host for %s" %  cloud_id)
+    _logger.debug("find jump host for %s" % cloud_id)
     username = instance_image
     user_map = {}
     service = cloud_find_service(configuration, cloud_id)
@@ -950,18 +972,18 @@ def cloud_login_username(configuration, cloud_id, instance_image):
         return instance_image
     user_map = service['service_user_map']
     username = user_map.get(instance_image, instance_image)
-    _logger.debug("found instance image username %s for %s (%s)" % \
-                  (username, instance_image, user_map))
+    _logger.info("found instance image username %s for %s (%s)" %
+                 (username, instance_image, user_map))
     return username
 
-    
+
 def lookup_user_value_in_map(configuration, client_id, service_default,
-                              override_map):
+                             override_map):
     """Helper to look up a service conf value for client_id based on the common
     structure with a service_default value and a map of user overrides.
     """
     _logger = configuration.logger
-    _logger.debug("lookup user setting for %s: %s %s" % \
+    _logger.debug("lookup user setting for %s: %s %s" %
                   (client_id, service_default, override_map))
     for (key, val) in override_map.items():
         # Use regexp search here to match on sub-strings without anchoring
@@ -970,6 +992,7 @@ def lookup_user_value_in_map(configuration, client_id, service_default,
             return val
     _logger.debug("using default %s for %s" % (service_default, client_id))
     return service_default
+
 
 def lookup_user_service_value(configuration, client_id, service, setting,
                               fallback=None):
@@ -986,16 +1009,17 @@ def lookup_user_service_value(configuration, client_id, service, setting,
     return lookup_user_value_in_map(configuration, client_id, default,
                                     overrides)
 
+
 def _get_encoder(configuration, coding):
     """"""
     coding_map = {"base16": base64.b16encode, "base32": base64.b32encode,
                   "base64": base64.b64encode}
     if not coding in coding_map.keys():
-        raise ValueError("invalid coding value: %s (allowed: %s)" % \
+        raise ValueError("invalid coding value: %s (allowed: %s)" %
                          (coding, ', '.join(coding_map.keys())))
     return coding_map[coding]
-    
-    
+
+
 def _get_jump_host(configuration, client_id, cloud_id, manage=False):
     """Return any configured ssh jump host ssh details including address, port
     and username for client_id on cloud_id. If the optional manage arg is set
@@ -1017,9 +1041,10 @@ def _get_jump_host(configuration, client_id, cloud_id, manage=False):
     if manage:
         for name in ('manage_keys_script', 'manage_keys_coding'):
             jump_host[name] = service['service_jumphost_%s' % name]
-    _logger.debug("found jump host for %s on %s: %s" % \
+    _logger.debug("found jump host for %s on %s: %s" %
                   (client_id, cloud_id, jump_host))
     return jump_host
+
 
 def cloud_login_jump_host(configuration, client_id, cloud_id):
     """Return any configured ssh jump host ssh login details including
@@ -1027,12 +1052,14 @@ def cloud_login_jump_host(configuration, client_id, cloud_id):
     """
     return _get_jump_host(configuration, client_id, cloud_id, False)
 
+
 def cloud_manage_jump_host(configuration, client_id, cloud_id):
     """Return any configured ssh jump host ssh manage details including
     manage script, network encoding, address, port and username for client_id
     on cloud_id.
     """
     return _get_jump_host(configuration, client_id, cloud_id, True)
+
 
 def _manage_jump_host_keys(configuration, client_id, cloud_id, action,
                            auth_keys, ignore_disabled=True):
@@ -1051,8 +1078,8 @@ def _manage_jump_host_keys(configuration, client_id, cloud_id, action,
     if not action in jumphost_manage_key_actions:
         _logger.error("invalid manage jump host keys action: %s" % action)
         return False
-    
-    # Sanitize keys to avoid malicious or broken key entries 
+
+    # Sanitize keys to avoid malicious or broken key entries
     sanitized_keys = []
     for pub_key in auth_keys:
         sanitized = pub_key.strip()
@@ -1087,8 +1114,9 @@ def cloud_add_jump_host_key(configuration, client_id, cloud_id, auth_keys,
     return _manage_jump_host_keys(configuration, client_id, cloud_id, 'add',
                                   auth_keys, ignore_disabled)
 
+
 def cloud_remove_jump_host_key(configuration, client_id, cloud_id, auth_keys,
-                            ignore_disabled=True):
+                               ignore_disabled=True):
     """Remove the given auth_keys as allowed jump host ssh key for client_id"""
     return _manage_jump_host_keys(configuration, client_id, cloud_id, 'remove',
                                   auth_keys, ignore_disabled)
@@ -1108,7 +1136,7 @@ def cloud_ssh_login_help(configuration, client_id, cloud_id, label, address,
     jump_host = cloud_login_jump_host(configuration, client_id, cloud_id)
     fqdn = cloud_fqdn_from_ip(configuration, address)[0]
     username = cloud_login_username(configuration, cloud_id, image)
-    msg = base_msg  % (username, fqdn, port)
+    msg = base_msg % (username, fqdn, port)
     jump_opt = ''
     ssh_config = """Host %s
 HostName %s 
@@ -1175,16 +1203,17 @@ def allowed_cloud_images(configuration, client_id, cloud_id, cloud_flavor):
     (img_status, img_list) = list_cloud_images(
         configuration, client_id, cloud_id, cloud_flavor)
     if not img_status:
-        _logger.error("Image lookup failed for %s in %s: %s" % \
+        _logger.error("Image lookup failed for %s in %s: %s" %
                       (client_id, cloud_id, img_list))
         allowed_images = []
     elif keyword_all in allowed_images:
         allowed_images = img_list
     else:
         allowed_images = [i for i in img_list if i[0] in allowed_images]
-    _logger.debug("found allowed images for %s on %s: %s" % \
+    _logger.debug("found allowed images for %s on %s: %s" %
                   (client_id, cloud_id, allowed_images))
     return allowed_images
+
 
 def start_cloud_instance(configuration, client_id, cloud_id, cloud_flavor,
                          instance_id):
@@ -1232,7 +1261,7 @@ def status_of_cloud_instance(configuration, client_id, cloud_id, cloud_flavor,
 
 
 def status_all_cloud_instances(configuration, client_id, cloud_id, cloud_flavor,
-                             instance_id_list, fields=['status']):
+                               instance_id_list, fields=['status']):
     """Status of all provided cloud instances"""
     _logger = configuration.logger
     _logger.info("status all %s cloud instances %s for %s" %
@@ -1315,7 +1344,7 @@ if __name__ == "__main__":
                                     'service_key_id')
     #print cloud_add_jump_host_key(conf, client_id, cloud_id, auth_keys)
     #print cloud_remove_jump_host_key(conf, client_id, cloud_id, auth_keys)
-    
+
     # TODO: load yaml from custom location or inline
     print "calling cloud operations for %s in %s with instance %s" % \
           (client_id, cloud_id, instance_id)
@@ -1334,7 +1363,7 @@ if __name__ == "__main__":
     print status_of_cloud_instance(conf, client_id, cloud_id, cloud_flavor,
                                    instance_id)
     print status_all_cloud_instances(conf, client_id, cloud_id, cloud_flavor,
-                                   [instance_id])
+                                     [instance_id])
     print update_cloud_instance_keys(conf, client_id, cloud_id, cloud_flavor,
                                      instance_id, auth_keys)
     if restart_instance:
