@@ -93,17 +93,17 @@ def init_user_adm():
     return (args, app_dir, db_path)
 
 
-def lock_user_db(db_path):
+def lock_user_db(db_path, exclusive=True):
     """Lock user db"""
     db_lock_path = '%s.lock' % db_path
-    return acquire_file_lock(db_lock_path)
+    return acquire_file_lock(db_lock_path, exclusive=exclusive)
 
 
 def load_user_db(db_path, do_lock=True):
     """Load pickled user DB"""
 
     if do_lock:
-        flock = lock_user_db(db_path)
+        flock = lock_user_db(db_path, exclusive=False)
     try:
         result = load(db_path)
     except Exception, exc:
@@ -237,8 +237,6 @@ def create_user(
 ):
     """Add user"""
     flock = None
-    if do_lock:
-        flock = lock_user_db(db_path)
     user_db = {}
     if conf_path:
         if isinstance(conf_path, basestring):
@@ -268,6 +266,10 @@ def create_user(
 
     if verbose:
         print 'User ID: %s\n' % client_id
+
+    if do_lock:
+        flock = lock_user_db(db_path)
+
     if not os.path.exists(db_path):
         print 'User DB in %s does not exist - okay if first user' % db_path
         create_answer = raw_input('Create new user DB? [Y/n] ')
@@ -766,8 +768,6 @@ def edit_user(
     """Edit user"""
 
     flock = None
-    if do_lock:
-        flock = lock_user_db(db_path)
     user_db = {}
     if conf_path:
         if isinstance(conf_path, basestring):
@@ -782,6 +782,9 @@ def edit_user(
 
     if verbose:
         print 'User ID: %s\n' % client_id
+
+    if do_lock:
+        flock = lock_user_db(db_path)
 
     if os.path.exists(db_path):
         try:
@@ -1051,8 +1054,6 @@ def delete_user(
     """Delete user"""
 
     flock = None
-    if do_lock:
-        flock = lock_user_db(db_path)
     user_db = {}
     if conf_path:
         if isinstance(conf_path, basestring):
@@ -1068,6 +1069,9 @@ def delete_user(
 
     if verbose:
         print 'User ID: %s\n' % client_id
+
+    if do_lock:
+        flock = lock_user_db(db_path)
 
     if os.path.exists(db_path):
         try:
@@ -1325,8 +1329,6 @@ def migrate_users(
     """
 
     flock = None
-    if do_lock:
-        flock = lock_user_db(db_path)
     user_db = {}
     if conf_path:
         if isinstance(conf_path, basestring):
@@ -1335,6 +1337,9 @@ def migrate_users(
             configuration = conf_path
     else:
         configuration = get_configuration_object()
+
+    if do_lock:
+        flock = lock_user_db(db_path)
 
     if os.path.exists(db_path):
         try:
@@ -1573,8 +1578,6 @@ def fix_userdb_keys(
     with the new DN form from the associated user dict.
     """
     flock = None
-    if do_lock:
-        flock = lock_user_db(db_path)
     user_db = {}
     if conf_path:
         if isinstance(conf_path, basestring):
@@ -1583,6 +1586,9 @@ def fix_userdb_keys(
             configuration = conf_path
     else:
         configuration = get_configuration_object()
+
+    if do_lock:
+        flock = lock_user_db(db_path)
 
     if os.path.exists(db_path):
         try:
