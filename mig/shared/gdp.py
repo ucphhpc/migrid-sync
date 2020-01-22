@@ -545,7 +545,7 @@ def __load_user_db(configuration,
     (db_filepath, db_lock_filepath) = __user_db_filepath(configuration,
                                                          db_path=db_path)
     if do_lock:
-        flock = acquire_file_lock(db_lock_filepath)
+        flock = acquire_file_lock(db_lock_filepath, exclusive=False)
     result = {}
     if os.path.exists(db_filepath):
         try:
@@ -1569,8 +1569,8 @@ def ensure_user(configuration, client_addr, client_id):
 
     status = False
     (_, db_lock_filepath) = __user_db_filepath(configuration)
-    db_flock = acquire_file_lock(db_lock_filepath)
-    user_db = __load_user_db(configuration, do_lock=False, allow_missing=True)
+
+    user_db = __load_user_db(configuration, allow_missing=True)
     user = user_db.get(client_id, None)
     err_msg = "Failed to ensure user: %r from ip: %s" \
         % (client_id, client_addr)
@@ -1595,6 +1595,9 @@ def ensure_user(configuration, client_addr, client_id):
             err_msg += template
             _logger.error(log_err_msg + template)
         else:
+            db_flock = acquire_file_lock(db_lock_filepath)
+            user_db = __load_user_db(configuration, 
+                                do_lock=False , allow_missing=True)
             user_db[client_id] = __create_gdp_user_db_entry(configuration)
             update_status = __update_user_log(
                 configuration, client_id, do_lock=False)
@@ -1608,8 +1611,9 @@ def ensure_user(configuration, client_addr, client_id):
                 template = ": Failed to create GDP DB entry"
                 err_msg += template
                 _logger.error(log_err_msg + template)
+            release_file_lock(db_flock)
         release_file_lock(log_flock)
-    release_file_lock(db_flock)
+    
 
     ret_msg = ""
     if not status:
@@ -2302,7 +2306,7 @@ def edit_gdp_user(
                     rollback = True
                     break
         release_file_lock(flock_log)
-    
+
     if rollback:
 
         # Roll back in case of failure
