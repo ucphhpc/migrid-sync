@@ -914,31 +914,34 @@ def edit_user(
 
     # Loop through resource map and update user resource ownership
 
-    res_map = get_resource_map(configuration)
-    for (res_id, res) in res_map.items():
-        if client_id in res[OWNERS]:
-            (add_status, err) = resource_add_owners(configuration, res_id,
-                                                    [new_id])
-            if not add_status:
+    if configuration.site_enable_resources:
+        force_update_resource_map(configuration)
+        res_map = get_resource_map(configuration)
+        for (res_id, res) in res_map.items():
+            if client_id in res[OWNERS]:
+                (add_status, err) = resource_add_owners(configuration, res_id,
+                                                        [new_id])
+                if not add_status:
+                    if verbose:
+                        print 'Could not add new %s owner of %s: %s' \
+                              % (new_id, res_id, err)
+                    continue
+                (del_status, err) = resource_remove_owners(configuration, res_id,
+                                                           [client_id])
+                if not del_status:
+                    if verbose:
+                        print 'Could not remove old %s owner of %s: %s' \
+                              % (client_id, res_id, err)
+                    continue
                 if verbose:
-                    print 'Could not add new %s owner of %s: %s' \
-                          % (new_id, res_id, err)
-                continue
-            (del_status, err) = resource_remove_owners(configuration, res_id,
-                                                       [client_id])
-            if not del_status:
-                if verbose:
-                    print 'Could not remove old %s owner of %s: %s' \
-                          % (client_id, res_id, err)
-                continue
-            if verbose:
-                print 'Updated %s owner from %s to %s' % (res_id, client_id,
-                                                          new_id)
+                    print 'Updated %s owner from %s to %s' % (res_id, client_id,
+                                                              new_id)
 
     # Loop through vgrid map and update user owner/membership
     # By using the high level add/remove API the corresponding vgrid components
     # get properly updated, too
 
+    force_update_vgrid_map(configuration)
     vgrid_map = get_vgrid_map(configuration, recursive=False)
     for (vgrid_name, vgrid) in vgrid_map[VGRIDS].items():
         if client_id in vgrid[OWNERS]:
@@ -1036,8 +1039,9 @@ def edit_user(
     _logger.info("Force access map updates to avoid web stall")
     _logger.info("Force update user map")
     force_update_user_map(configuration)
-    _logger.info("Force update resource map")
-    force_update_resource_map(configuration)
+    if configuration.site_enable_resources:
+        _logger.info("Force update resource map")
+        force_update_resource_map(configuration)
     _logger.info("Force update vgrid map")
     force_update_vgrid_map(configuration)
     return user_dict
