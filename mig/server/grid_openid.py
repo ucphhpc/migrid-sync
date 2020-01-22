@@ -480,8 +480,11 @@ Invalid '%s' input: %s
             try:
                 request = self.server.openid.decodeRequest(query)
             except server.ProtocolError, why:
-                logger.error("handleAllow got broken request: %s" % why)
-                self.displayResponse(why)
+                # NOTE: Do not send exception to displayResponse
+                #       password might be written to screen !!!
+                msg = "handleAllow got broken request"
+                logger.error("%s: %s, error: %s" % (msg, query, why))
+                self.displayResponse(msg)
                 return
 
         logger.debug("handleAllow with last request %s from user %s" %
@@ -626,7 +629,11 @@ Invalid '%s' input: %s
             # Pass any errors from previous login attempts on for display
             request.error = query.get('err', '')
         except server.ProtocolError, why:
-            self.displayResponse(why)
+            # NOTE: Do not send exception to displayResponse
+            #       password might be written to screen !!!
+            msg = "serverEndPoint got broken request"
+            logger.error("%s: %s, error: %s" % (msg, query, why))
+            self.displayResponse(msg)
             return
 
         if request is None:
