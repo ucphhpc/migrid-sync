@@ -125,7 +125,7 @@ def load_vgrid_map(configuration, do_lock=True):
     return load_entity_map(configuration, 'vgrid', do_lock)
 
 
-def refresh_user_map(configuration):
+def refresh_user_map(configuration, clean=False):
     """Refresh map of users and their configuration. Uses a pickled
     dictionary for efficiency.
     User IDs are stored in their raw (non-anonymized form).
@@ -138,7 +138,12 @@ def refresh_user_map(configuration):
     lock_path = os.path.join(configuration.mig_system_files, "user.lock")
     lock_handle = open(lock_path, 'a')
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
-    user_map, map_stamp = load_user_map(configuration, do_lock=False)
+    if not clean:
+        user_map, map_stamp = load_user_map(configuration, do_lock=False)
+    else:
+        configuration.logger.info("Creating clean user map")
+        user_map = {}
+        map_stamp = 0 
 
     # Find all users and their configurations
 
@@ -192,7 +197,7 @@ def refresh_user_map(configuration):
     return user_map
 
 
-def refresh_resource_map(configuration):
+def refresh_resource_map(configuration, clean=False):
     """Refresh map of resources and their configuration. Uses a pickled
     dictionary for efficiency.
     Resource IDs are stored in their raw (non-anonymized form).
@@ -205,7 +210,12 @@ def refresh_resource_map(configuration):
     lock_path = os.path.join(configuration.mig_system_files, "resource.lock")
     lock_handle = open(lock_path, 'a')
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
-    resource_map, map_stamp = load_resource_map(configuration, do_lock=False)
+    if not clean:
+        resource_map, map_stamp = load_resource_map(configuration, do_lock=False)
+    else:
+        configuration.logger.info("Creating clean resource map")
+        resource_map = {}
+        map_stamp = 0 
 
     # Find all resources and their configurations
 
@@ -265,7 +275,7 @@ def refresh_resource_map(configuration):
     return resource_map
 
 
-def refresh_vgrid_map(configuration):
+def refresh_vgrid_map(configuration, clean=False):
     """Refresh map of users and resources with their direct vgrid
     participation. That is, without inheritance. Uses a pickled dictionary for
     efficiency.
@@ -281,7 +291,12 @@ def refresh_vgrid_map(configuration):
     lock_path = os.path.join(configuration.mig_system_files, "vgrid.lock")
     lock_handle = open(lock_path, 'a')
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
-    vgrid_map, map_stamp = load_vgrid_map(configuration, do_lock=False)
+    if not clean:
+        vgrid_map, map_stamp = load_vgrid_map(configuration, do_lock=False)
+    else:
+        configuration.logger.info("Creating clean vgrid map")
+        vgrid_map = {}
+        map_stamp = 0 
 
     vgrid_helper = {default_vgrid: {RESOURCES: ['*'],
                                     OWNERS: [], MEMBERS: ['*'],
@@ -527,10 +542,10 @@ def refresh_vgrid_map(configuration):
     return vgrid_map
 
 
-def force_update_user_map(configuration):
+def force_update_user_map(configuration, clean=False):
     """Refresh user map and update map cache"""
     map_stamp = load_stamp = time.time()
-    user_map = refresh_user_map(configuration)
+    user_map = refresh_user_map(configuration, clean=clean)
     last_map[USERS] = user_map
     last_refresh[USERS] = map_stamp
     last_load[USERS] = load_stamp
@@ -538,10 +553,10 @@ def force_update_user_map(configuration):
     return user_map
 
 
-def force_update_resource_map(configuration):
+def force_update_resource_map(configuration, clean=False):
     """Refresh resources map and update map cache"""
     map_stamp = load_stamp = time.time()
-    resource_map = refresh_resource_map(configuration)
+    resource_map = refresh_resource_map(configuration, clean=clean)
     last_map[RESOURCES] = resource_map
     last_refresh[RESOURCES] = map_stamp
     last_load[RESOURCES] = load_stamp
@@ -549,10 +564,10 @@ def force_update_resource_map(configuration):
     return resource_map
 
 
-def force_update_vgrid_map(configuration):
+def force_update_vgrid_map(configuration, clean=False):
     """Refresh vgrid map and update map cache"""
     map_stamp = load_stamp = time.time()
-    vgrid_map = refresh_vgrid_map(configuration)
+    vgrid_map = refresh_vgrid_map(configuration, clean=clean)
     last_map[VGRIDS] = vgrid_map
     last_refresh[VGRIDS] = map_stamp
     last_load[VGRIDS] = load_stamp

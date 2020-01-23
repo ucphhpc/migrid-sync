@@ -2045,6 +2045,20 @@ def edit_gdp_user(
         _logger.debug(msg)
         print msg
 
+    # Force clean rebuild of vgrid maps,
+    # this should be done before copy/locking of database 
+    # and log files as it migth take some time
+    
+    msg = "rebuilding user, vgrid and resource maps to ensure consistency"
+    if verbose:
+        print msg
+    _logger.info(log_prefix + msg)
+
+    force_update_user_map(configuration, clean=True)
+    force_update_vgrid_map(configuration, clean=True)
+    if configuration.site_enable_resources:
+        force_update_resource_map(configuration, clean=True)
+    
     # Backup MiG user DB
 
     flock_mig_db = lock_user_db(mig_db_path)
