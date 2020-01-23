@@ -1373,31 +1373,34 @@ Please contact the site admins %s if you think it should be enabled.
     (status, ensure_msg) = ensure_user(configuration, client_addr, client_id)
 
     if status and not action or action == 'logout':
+        redirect_url = ""
         active_project_client_id = get_active_project_client_id(
             configuration, client_id, 'https')
-
-        if active_project_client_id or action == 'logout':
-            project_logout(configuration,
-                           'https',
-                           client_addr,
-                           client_id,
-                           autologout=True)
+        if action == 'logout':
+            if active_project_client_id:
+                project_logout(configuration,
+                               'https',
+                               client_addr,
+                               client_id,
+                               autologout=True)
             return_url = req_url
-            if action == 'logout':
-                return_query_dict = None
-            else:
-                return_query_dict = user_arguments_dict
-
+            return_query_dict = None
+            redirect_url = openid_autologout_url(configuration,
+                                                 identity,
+                                                 client_id,
+                                                 return_url,
+                                                 return_query_dict)
+        elif active_project_client_id:
+            dest_op_name = 'fileman'
+            redirect_url = environ.get('REQUEST_URI',
+                                       '').split('?')[0].replace(op_name,
+                                                                 dest_op_name)
+        if redirect_url:
             html = """
-            <a id='autologout' href='%s'></a>
+            <a id='redircet' href='%s'></a>
             <script type='text/javascript'>
-                document.getElementById('autologout').click();
-            </script>""" \
-                % openid_autologout_url(configuration,
-                                        identity,
-                                        client_id,
-                                        return_url,
-                                        return_query_dict)
+                document.getElementById('redircet').click();
+            </script>""" % redirect_url
 
             output_objects.append({'object_type': 'html_form',
                                    'text': html})
