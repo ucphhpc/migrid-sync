@@ -1924,6 +1924,77 @@ def project_invite_user(
     return (status, ret_msg)
 
 
+def reset_account_roles(
+        configuration,
+        client_id,
+        gdp_db_path=None,
+        verbose=False):
+    """Force reset GDP user account role for all protocols"""
+
+    _logger = configuration.logger
+
+    status = True
+    flock = None
+    gdp_user = None
+    ok_msg = "Account roles reset"
+    err_msg = "Failed reset account roles"
+    log_ok_msg = "GDP: User: %r" % client_id \
+        + ", reset account roles"
+
+    log_err_msg = "GDP: User: %r" % client_id \
+        + ", failed to reset account roles"
+
+    if status:
+        (_, db_lock_filepath) = __user_db_filepath(configuration,
+                                                   db_path=gdp_db_path)
+        flock = acquire_file_lock(db_lock_filepath)
+        gdp_db = __load_user_db(
+            configuration, do_lock=False, db_path=gdp_db_path)
+        gdp_user = gdp_db.get(client_id, {})
+
+        if not gdp_user:
+            status = False
+            template = ", invalid GDP user"
+            err_msg += "%s: %r" % (template, client_id)
+            _logger.error(log_err_msg + template)
+
+    if status:
+        ok_msg = ""
+        for protocol in valid_protocols:
+            gdp_account_protocol = gdp_user.get(
+                'account', {}).get(protocol, {})
+            if gdp_account_protocol:
+                role = gdp_account_protocol.get('role', '')
+                gdp_account_protocol['role'] = ''
+                template = "current role: %r for protocol: %r" \
+                    % (role, protocol)
+                ok_msg += ", " + template
+                if verbose:
+                    msg = "Resetting " + template
+                    print msg
+                    _logger.debug("GDP: " + msg)
+            else:
+                status = False
+                template += ", malformed GDP user DB"
+                err_msg += template
+                _logger.error(err_msg + template)
+                break
+    if status:
+        __save_user_db(configuration, gdp_db,
+                       do_lock=False, db_path=gdp_db_path)
+        ok_msg += " for user: %r" % client_id
+        _logger.info(log_ok_msg)
+
+    if flock:
+        release_file_lock(flock)
+
+    ret_msg = err_msg
+    if status:
+        ret_msg = ok_msg
+
+    return(status, ret_msg)
+
+
 def set_account_state(
         configuration,
         client_id,
@@ -1961,7 +2032,7 @@ def set_account_state(
 
         if not gdp_user:
             status = False
-            template = ", Invalid GDP user"
+            template = ", invalid GDP user"
             err_msg += "%s: %r" % (template, client_id)
             _logger.error(log_err_msg + template)
 
@@ -1977,7 +2048,7 @@ def set_account_state(
             _logger.info(log_ok_msg + template)
         else:
             status = False
-            template = ", Malformed GDP user DB"
+            template = ", malformed GDP user DB"
             err_msg += template
             _logger.error(err_msg + template)
     if flock:
@@ -2045,6 +2116,24 @@ def edit_gdp_user(
             % (user_id, changes)
         _logger.debug(msg)
         print msg
+
+    # Check if user is logged in on any of the valid protocols
+
+    for protocol in valid_protocols:
+        project_client_id = get_active_project_client_id(configuration,
+                                                         user_id,
+                                                         protocol)
+        if project_client_id:
+            project_name = \
+                __project_name_from_project_client_id(configuration,
+                                                      project_client_id)
+            msg = "user currently logged in to project: %r with protocol: %r" \
+                % (project_name, protocol)
+            if verbose:
+                print msg
+            _logger.error(log_prefix + msg)
+            if not force:
+                return (False, msg)
 
     # Force clean rebuild of vgrid maps,
     # this should be done before copy/locking of database

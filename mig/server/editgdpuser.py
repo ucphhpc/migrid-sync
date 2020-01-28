@@ -33,7 +33,8 @@ import sys
 import getopt
 
 from shared.conf import get_configuration_object
-from shared.gdp import set_account_state, edit_gdp_user
+from shared.gdp import edit_gdp_user, reset_account_roles, \
+    set_account_state
 from shared.useradm import init_user_adm
 
 
@@ -53,6 +54,7 @@ Where OPTIONS may be one or more of:
    -g GDP DB_FILE      Use GDP_DB_FILE as GDP user database file
    -h                  Show this help
    -i CERT_DN          CERT_DN of user to edit
+   -r                  Reset project logins
    -S ACCOUNT_STATE    Change GDP user account state to ACCOUNT_STATE
    -v                  Verbose output
 """\
@@ -71,8 +73,9 @@ if '__main__' == __name__:
     user_id = None
     short_id = None
     account_state = None
+    reset_roles = False
     user_dict = {}
-    opt_args = 'c:g:d:fhi:S:v'
+    opt_args = 'c:g:d:fhri:S:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError, err:
@@ -94,6 +97,8 @@ if '__main__' == __name__:
             sys.exit(0)
         elif opt == '-i':
             user_id = val
+        elif opt == '-r':
+            reset_roles = True
         elif opt == '-S':
             account_state = val
         elif opt == '-v':
@@ -131,7 +136,7 @@ if '__main__' == __name__:
 
             pass
 
-    elif not account_state:
+    elif not (account_state or reset_roles):
         print "Error: Missing one or more of the arguments: " \
             + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] " \
             + "[EMAIL]"
@@ -150,6 +155,12 @@ if '__main__' == __name__:
             account_state,
             gdp_db_path=gdp_db_path)
         print msg
+    elif reset_roles:
+        (status, msg) = reset_account_roles(
+            configuration,
+            user_id,
+            gdp_db_path=gdp_db_path,
+            verbose=verbose)
     else:
         if force:
             print "WARNING: -f disables rollback !!!"
@@ -162,12 +173,22 @@ if '__main__' == __name__:
             gdp_db_path=gdp_db_path,
             force=force,
             verbose=verbose)
-        if not verbose:
-            # NOTE: If verbose everything is printed from functions in GDP
-            if not status:
-                print "ERROR: " + msg
-            else:
-                print msg
+    if not verbose:
+        # NOTE: If verbose everything is printed from functions in GDP
+        if not status:
+            print "ERROR: " + msg
+        else:
+            print msg
+
+    if status:
+        if account_state:
+            print "OK: Account state set successfully"
+        elif reset_roles:
+            print "OK: Project logins reset successfully"
+        else:
+            print "OK: User modified successfully"
+    if not status:
+        print "ERROR: Failed to edit user: %r" % user_id
 
     if not status:
         sys.exit(1)
