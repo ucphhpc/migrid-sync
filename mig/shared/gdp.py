@@ -58,6 +58,8 @@ from shared.useradm import create_user, delete_user, edit_user, \
 from shared.vgrid import vgrid_flat_name, vgrid_is_owner, vgrid_set_owners, \
     vgrid_add_members, vgrid_set_settings, vgrid_create_allowed, \
     vgrid_remove_members, vgrid_restrict_write_support
+from shared.vgridaccess import force_update_user_map, \
+    force_update_vgrid_map, force_update_resource_map
 from shared.vgridkeywords import get_settings_keywords_dict
 
 user_db_filename = 'gdp-users.db'
@@ -1596,8 +1598,8 @@ def ensure_user(configuration, client_addr, client_id):
             _logger.error(log_err_msg + template)
         else:
             db_flock = acquire_file_lock(db_lock_filepath)
-            user_db = __load_user_db(configuration, 
-                                do_lock=False , allow_missing=True)
+            user_db = __load_user_db(configuration,
+                                     do_lock=False, allow_missing=True)
             user_db[client_id] = __create_gdp_user_db_entry(configuration)
             update_status = __update_user_log(
                 configuration, client_id, do_lock=False)
@@ -1613,7 +1615,6 @@ def ensure_user(configuration, client_addr, client_id):
                 _logger.error(log_err_msg + template)
             release_file_lock(db_flock)
         release_file_lock(log_flock)
-    
 
     ret_msg = ""
     if not status:
@@ -2046,9 +2047,9 @@ def edit_gdp_user(
         print msg
 
     # Force clean rebuild of vgrid maps,
-    # this should be done before copy/locking of database 
+    # this should be done before copy/locking of database
     # and log files as it migth take some time
-    
+
     msg = "rebuilding user, vgrid and resource maps to ensure consistency"
     if verbose:
         print msg
@@ -2058,7 +2059,7 @@ def edit_gdp_user(
     force_update_vgrid_map(configuration, clean=True)
     if configuration.site_enable_resources:
         force_update_resource_map(configuration, clean=True)
-    
+
     # Backup MiG user DB
 
     flock_mig_db = lock_user_db(mig_db_path)
@@ -2355,7 +2356,7 @@ def edit_gdp_user(
         # Roll back GDP DB entry
 
         msg = "rolling back GDP DB user: %r to %r" % \
-                (new_user_id, user_id)
+            (new_user_id, user_id)
         if verbose:
             print msg
         _logger.info(log_prefix + msg)
