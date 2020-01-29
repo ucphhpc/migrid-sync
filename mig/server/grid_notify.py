@@ -351,6 +351,6 @@ unless it is available in mig/server/MiGserver.conf
     else:
         stop_msg += ", exit_code: %s, %s" % (exit_code, exit_msg)
         print stop_msg
-        logger.error("(%s) %s" % stop_msg)
+        logger.error("(%s) %s" % (main_pid, stop_msg))
 
     sys.exit(exit_code)
