@@ -1701,7 +1701,6 @@ unless it is available in mig/server/MiGserver.conf
     daemon_conf['acceptdigest'] = daemon_conf['allow_digest']
     # Keep order of auth methods (please note the 2GB+ upload bug with digest)
     daemon_conf['defaultdigest'] = 'digest' in configuration.user_davs_auth[:1]
-    print "daemon_conf['defaultdigest']: %s" % daemon_conf['defaultdigest']
     if configuration.site_enable_gdp:
         # Close projects marked as open due to NON-clean exits
         project_close(configuration, 'davs',
