@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_ftps - secure ftp server wrapping ftp in tls/ssl and mapping user home
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -245,7 +245,9 @@ class MiGUserAuthorizer(DummyAuthorizer):
             logger.debug("refresh user %s" % username)
             self._update_logins(configuration, username)
             if not self.has_user(username):
-                invalid_user = True
+                if not os.path.islink(
+                        os.path.join(daemon_conf['root_dir'], username)):
+                    invalid_user = True
                 entries = []
             else:
                 # list of User login objects for username

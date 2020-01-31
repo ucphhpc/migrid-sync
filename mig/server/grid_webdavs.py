@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_webdavs - secure WebDAV server providing access to MiG user homes
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -393,9 +393,9 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
                       invalid_username,
                       invalid_user,
                       valid_twofa,
-                      digest_enabled,
+                      digest_auth,
                       valid_digest,
-                      password_enabled,
+                      password_auth,
                       valid_password,
                       exceeded_rate_limit):
         """Update statistics cache"""
@@ -409,14 +409,14 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
                 stats['invalid_username'] += 1
             elif invalid_user:
                 stats['invalid_user'] += 1
-            elif digest_enabled:
+            elif digest_auth:
                 if valid_digest and valid_twofa:
                     stats['digest_accepted'] += 1
                 elif valid_digest and not valid_twofa:
                     stats['invalid_twofa'] += 1
                 else:
                     stats['digest_failed'] += 1
-            elif password_enabled:
+            elif password_auth:
                 if valid_password and valid_twofa:
                     stats['password_accepted'] += 1
                 elif valid_password and not valid_twofa:
@@ -468,14 +468,14 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
 
     def authBasicAuthRequest(self, environ, start_response):
         """Overrides HTTPAuthenticator.authBasicAuthRequest"""
-        return self.authRequest(environ, start_response, password_enabled=True)
+        return self.authRequest(environ, start_response, password_auth=True)
 
     def authDigestAuthRequest(self, environ, start_response):
         """Overrides HTTPAuthenticator.authDigestAuthRequest"""
-        return self.authRequest(environ, start_response, digest_enabled=True)
+        return self.authRequest(environ, start_response, digest_auth=True)
 
     def authRequest(self, environ, start_response,
-                    password_enabled=False, digest_enabled=False):
+                    password_auth=False, digest_auth=False):
         """Overrides HTTPAuthenticator.authRequest
         Authorize users and log auth attempts.
         When auth is granted the session is tracked
@@ -491,7 +491,6 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
         6) Valid password (if password enabled)
         7) Valid digest (if digest enabled)
         """
-
         result = None
         response_ok = False
         pre_authorized = False
@@ -513,9 +512,9 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
         proto_abuse_hits = daemon_conf['auth_limits']['proto_abuse_hits']
         max_secret_hits = daemon_conf['auth_limits']['max_secret_hits']
         authtype = ''
-        if password_enabled:
+        if password_auth:
             authtype = 'password'
-        elif digest_enabled:
+        elif digest_auth:
             authtype = 'digest'
 
         # For e.g. GDP we require all logins to match active 2FA session IP,
@@ -539,19 +538,21 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
             exceeded_rate_limit = True
         elif not default_username_validator(configuration, username):
             invalid_username = True
-        elif password_enabled or digest_enabled:
-            if password_enabled:
+        elif password_auth or digest_auth:
+            if password_auth:
                 result = super(MiGHTTPAuthenticator, self) \
                     .authBasicAuthRequest(environ, start_response)
-            elif digest_enabled:
+            elif digest_auth:
                 result = super(MiGHTTPAuthenticator, self) \
                     .authDigestAuthRequest(environ, start_response)
             auth_username = environ.get('http_authenticator.username', None)
             auth_realm = environ.get('http_authenticator.realm', None)
+            print "auth_username: %s" % auth_username
+            print "auth_realm: %s" % auth_realm
             if auth_username and auth_username == username and auth_realm:
-                if password_enabled:
+                if password_auth:
                     valid_password = True
-                elif digest_enabled:
+                elif digest_auth:
                     valid_digest = True
                 if check_twofactor_session(configuration, username,
                                            enforce_address, 'davs'):
@@ -572,13 +573,15 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
             # because some clients uses a new digest token for every requerst
             # and therefore we do not have any other unique identifiers
 
-            if password_enabled:
+            if password_auth:
                 secret = authheader.get('password', '')
             if not secret:
                 secret = environ.get('SSL_SESSION_TOKEN', None)
 
             # Update rate limits and write to auth log
 
+            password_enabled = environ.get('http_authenticator.password_enabled', False)
+            digest_enabled = environ.get('http_authenticator.digest_enabled', False)
             (authorized, disconnect) = handle_auth_attempt(
                 configuration,
                 'davs',
@@ -590,8 +593,8 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
                 invalid_username=invalid_username,
                 invalid_user=invalid_user,
                 valid_twofa=valid_twofa,
-                authtype_enabled=(digest_enabled or password_enabled),
-                valid_auth=(valid_digest or valid_password),
+                authtype_enabled=(password_enabled or digest_enabled),
+                valid_auth=(valid_password or valid_digest),
                 exceeded_rate_limit=exceeded_rate_limit,
                 user_abuse_hits=user_abuse_hits,
                 proto_abuse_hits=proto_abuse_hits,
@@ -649,9 +652,9 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
             invalid_username,
             invalid_user,
             valid_twofa,
-            digest_enabled,
+            digest_auth,
             valid_digest,
-            password_enabled,
+            password_auth,
             valid_password,
             exceeded_rate_limit)
 
@@ -665,12 +668,14 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
     NOTE: The username arguments are already on utf8 here so no need to force.
     """
 
+    root_dir = None
     min_expire_delay = 0
     last_expire = 0
 
-    def __init__(self, userMap):
+    def __init__(self, root_dir, userMap):
         WsgiDAVDomainController.__init__(self, userMap)
         # Alias to CamelCase version userMap required internally
+        self.root_dir = root_dir
         self.user_map = self.userMap = userMap
         self.last_expire = time.time()
         self.min_expire_delay = 300
@@ -712,10 +717,17 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         #     + "realmname: %s, username: %s, password: %s" \
         #     % (realmname, username, password))
         success = False
-        valid_user = False
+        password_auth = False
         # logger.debug("refresh user %s" % username)
         update_users(configuration, self.user_map, username)
         user_list = self.user_map[realmname].get(username, [])
+        if not user_list \
+            and not os.path.islink(
+                os.path.join(self.root_dir, username)):
+            environ['http_authenticator.valid_user'] = False
+        else:
+            environ['http_authenticator.valid_user'] = True
+
         # Only sharelinks should be excluded from strict password policy
         if possible_sharelink_id(configuration, username):
             strict_policy = False
@@ -726,16 +738,17 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             offered = password
             allowed = user_obj.password
             if allowed is not None:
-                valid_user = True
+                password_auth = True
                 # logger.debug("Password check for %s" % username)
                 if check_password_hash(configuration, 'webdavs', username,
                                        offered, allowed, self.hash_cache,
                                        strict_policy):
                     success = True
-        if valid_user:
-            environ['http_authenticator.valid_user'] = True
+
+        if password_auth:
+            environ['http_authenticator.password_enabled'] = True
         else:
-            environ['http_authenticator.valid_user'] = False
+            environ['http_authenticator.password_enabled'] = False
 
         return success
 
@@ -754,11 +767,12 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         success = False
         # logger.debug("refresh user %s" % username)
         update_users(configuration, self.user_map, username)
-        if self._get_user_digests(realmname, username):
-            success = True
-            environ['http_authenticator.valid_user'] = True
+        if not self._get_user_digests(realmname, username) \
+            and not os.path.islink(
+                os.path.join(self.root_dir, username)):
+            success = environ['http_authenticator.valid_user'] = False
         else:
-            environ['http_authenticator.valid_user'] = False
+            success = environ['http_authenticator.valid_user'] = True
 
         return success
 
@@ -778,6 +792,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
         #      + "realmname: %s, username: %s" \
         #     % (realmname, username))
         # Only sharelinks should be excluded from strict password policy
+        digest_enabled = False
         if possible_sharelink_id(configuration, username):
             strict_policy = False
         else:
@@ -801,10 +816,16 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                         + "does not satisfy local policy: %s" % exc
                     logger.warning(msg)
                     password = ''
+            digest_enabled = True
         except Exception, exc:
+            digest_enabled = False
             logger.error("failed to extract digest password: %s" % exc)
             password = ''
 
+        if digest_enabled:
+            environ['http_authenticator.digest_enabled'] = True
+        else:
+            environ['http_authenticator.digest_enabled'] = False
         return password
 
 
@@ -1512,7 +1533,7 @@ def run(configuration):
         "locksmanager": True,      # True: use lock_manager.LockManager
         # Allow last modified timestamp updates from client to support rsync -a
         "mutable_live_props": ["{DAV:}getlastmodified"],
-        "domaincontroller": MiGWsgiDAVDomainController(user_map),
+        "domaincontroller": MiGWsgiDAVDomainController(daemon_conf['root_dir'], user_map),
         "middleware_stack": [WsgiDavDirBrowser, MiGHTTPAuthenticator, ErrorPrinter, WsgiDavDebugFilter],
         "enable_stats": False
     })
@@ -1630,7 +1651,6 @@ unless it is available in mig/server/MiGserver.conf
     print __doc__
     address = configuration.user_davs_address
     port = configuration.user_davs_port
-
     # Lookup chroot exceptions once and for all
     chroot_exceptions = user_chroot_exceptions(configuration)
     # Any extra chmod exceptions here - we already cover invisible_path check
@@ -1681,6 +1701,7 @@ unless it is available in mig/server/MiGserver.conf
     daemon_conf['acceptdigest'] = daemon_conf['allow_digest']
     # Keep order of auth methods (please note the 2GB+ upload bug with digest)
     daemon_conf['defaultdigest'] = 'digest' in configuration.user_davs_auth[:1]
+    print "daemon_conf['defaultdigest']: %s" % daemon_conf['defaultdigest']
     if configuration.site_enable_gdp:
         # Close projects marked as open due to NON-clean exits
         project_close(configuration, 'davs',

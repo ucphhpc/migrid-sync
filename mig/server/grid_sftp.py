@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_sftp - SFTP server providing access to MiG user homes
-# Copyright (C) 2010-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -1039,7 +1039,6 @@ class SimpleSSHServer(paramiko.ServerInterface):
         6) Valid password (if password enabled)
         7) Valid key (if key enabled)
         """
-
         secret = None
         disconnect = False
         strict_password_policy = True
@@ -1108,7 +1107,9 @@ class SimpleSSHServer(paramiko.ServerInterface):
                                   password=update_password_map,
                                   key=update_key_map)
             login_map = login_map_lookup(daemon_conf, username)
-            if not login_map:
+            if not login_map \
+                    and not os.path.islink(
+                        os.path.join(self.conf['root_dir'], username)):
                 invalid_user = True
             for entry in login_map:
                 if password is not None and entry.password is not None:
@@ -1140,26 +1141,34 @@ class SimpleSSHServer(paramiko.ServerInterface):
                     configuration, username, enforce_address, 'sftp-pw')):
                 valid_twofa = True
 
-        # Update rate limits and write to auth log
-
-        (authorized, disconnect) = handle_auth_attempt(
-            configuration,
-            'sftp',
-            authtype,
-            username,
-            client_ip,
-            tcp_port,
-            secret=secret,
-            invalid_username=invalid_username,
-            invalid_user=invalid_user,
-            valid_twofa=valid_twofa,
-            authtype_enabled=(key_enabled or password_enabled),
-            valid_auth=(valid_key or valid_password),
-            exceeded_rate_limit=exceeded_rate_limit,
-            exceeded_max_sessions=exceeded_max_sessions,
-            user_abuse_hits=user_abuse_hits,
-            proto_abuse_hits=proto_abuse_hits,
-            max_secret_hits=max_secret_hits,
+        if authtype == 'key' \
+                and not key_enabled \
+                and not invalid_username \
+                and not invalid_user \
+                and not exceeded_rate_limit:
+            # Do not register missing SSH keys attempt
+            # if everything else is valid
+            (authorized, disconnect) = (False, False)
+        else:
+            # Update rate limits and write to auth log
+            (authorized, disconnect) = handle_auth_attempt(
+                configuration,
+                'sftp',
+                authtype,
+                username,
+                client_ip,
+                tcp_port,
+                secret=secret,
+                invalid_username=invalid_username,
+                invalid_user=invalid_user,
+                valid_twofa=valid_twofa,
+                authtype_enabled=(key_enabled or password_enabled),
+                valid_auth=(valid_key or valid_password),
+                exceeded_rate_limit=exceeded_rate_limit,
+                exceeded_max_sessions=exceeded_max_sessions,
+                user_abuse_hits=user_abuse_hits,
+                proto_abuse_hits=proto_abuse_hits,
+                max_secret_hits=max_secret_hits,
             )
         if disconnect:
             self.transport.close()
