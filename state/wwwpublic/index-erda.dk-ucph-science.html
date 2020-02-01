@@ -411,9 +411,14 @@ Alternatively you can install Python software dependencies like e.g. the
 scikit-image package directly in the Jupyter Notebook itself by evaluating
 <tt>!pip3 install scikit-image</tt> in a cell.<br/>
 At the moment installing software that requires compilation or come with other
-external dependencies is typically not supported. We're
-working on a framework to allow some self-service customization of the
-Jupyter instances. Until then you can contact us at our support email if
+external dependencies is typically not supported.
+To ensure that packages you install will stick around between
+different sessions, specify the <tt>--user</tt> flag as part
+of the pip or pip3 install command. This will ensure that the package
+is installed into your own home <tt>__{service}_config__</tt>
+directory which will persistent beyond the lifetime of a single
+Jupyter instance.
+You can contact us at our support email if
 you have additional software wishes. Then we will see if they can be
 fulfilled - but we can't give any promises.
 </p>
