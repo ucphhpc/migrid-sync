@@ -835,7 +835,8 @@ cert, oid and sid based https!
             # Populate apache confs with hosts definitions and balancer members
             for i_h, host in enumerate(values['hosts']):
                 name_index = '%s_%s' % (u_name, i_h)
-                member = "BalancerMember %s route=%s retry=600 timeout=40\n" \
+                # https://httpd.apache.org/docs/2.4/mod/mod_proxy.html
+                member = "BalancerMember %s route=%s retry=600 timeout=60 keepalive=On\n" \
                     % ("${JUPYTER_%s}" % name_index, i_h)
                 ws_member = member.replace("${JUPYTER_%s}" % name_index,
                                            "${WS_JUPYTER_%s}" % name_index)
