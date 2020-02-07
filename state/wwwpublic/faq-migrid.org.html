@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>IDCM FAQ</title>
+  </head>
+  <body>
+      <div id="faq-english" class="english i18n row" lang="en">
+        <div class="faq-header col-lg-12">
+          <h2 class="staticpage">Frequently Asked Questions (FAQ)</h2>
+        </div>
+        <div class="faq-entries accordion col-lg-12">
+          <h4 class="staticpage">How much storage space do I have on MiGrid?</h4>
+          <p>
+            There's no space quota as such on the general MiGrid
+            storage, but we do recommend using our ERDA/IDMC services
+            for any larger data sets. Anything within a few tens of
+            gigabytes should be fine, and we suggest that you 
+            just have a word with us if you want to store more than that.<br/>
+          </p>
+          <h4 class="staticpage">Is My MiGrid Data Replicated and Backed Up?</h4>
+          <p>
+            All data on MiGrid is automatically replicated over multiple disks with
+            RAID technology. We do run complete nightly backups of all
+            user data to another host but we do <em>not</em> currently
+            guarantee the complete backup availability of ordinary data
+            in your MiGrid home folder or in the VGrid shares. Please
+            contact us if in doubt about this or use e.g. our ERDA
+            service with freeze archives if that is essential.
+          </p>
+          <h4 class="staticpage">How do I Transfer Entire Folders to/from MiGrid?</h4>
+          <p>
+            In the MiGrid web interface you can only upload/download individual files,
+            so if you e.g. want to upload an entire folder structure there, first
+            pack the folder(s) in a zip or tar file, upload it as usual and then
+            use <em>unpack</em> from the right-click menu on the uploaded file.<br/>
+            Likewise you can use <em>pack</em> on a folder in MiGrid, download and
+            unpack it locally.<br/>
+            Alternatively you can use the efficient file/folder handling described
+            in the Advanced Data Access sections of the user guide. That makes MiGrid
+            appear like a network drive so that you can use your local file manager
+            to copy entire folders to MiGrid.
+          </p>
+          <h4 class="staticpage">Can I Share, Exchange and Publish Data in e.g. a Read-only Fashion on MiGrid?</h4>
+          <p>
+            Yes, depending on the audience and dynamics of the data to share you can
+            use one of two overall methods.<br/> 
+            For dynamic data you can either share in a read-write manner using
+            the VGrid shares or make them read-only in the VGrid
+            administration. Similarly you can do read-only sharing and publishing through the
+            VGrid web pages. Both are built into the VGrids and the web pages
+            come in a public and in a group-wide flavor, where the publishing is done
+            by VGrid owners storing data in the public_base and private_base
+            VGrid subdirectories respectively on MiGrid. Your VGrids page
+            includes links to those and to the resulting web pages.<br/>
+            For quick data exchange with anyone and particularly people <em>not</em> on
+            MiGrid, we recommend the Share Link feature. From your Files page you can
+            create a share link for a file or folder and choose what kind of read
+            and write access share link recipients should be granted. 
+            The share link method include the option to send out an
+            invitation with the link directly on email, but it can of course also be
+            manually distributed by other means. Share links can also be accessed
+            with SFTP, FTPS and WebDAVS as described in the user guide.
+          </p>
+          <h4 class="staticpage">How Are VGrids Managed?</h4>
+          <p>
+            VGrids can be created by anyone and the creator of a
+            VGrid automatically becomes owner. All user management is left to
+            the owner(s) without interaction from the MiGrid system
+            administrators. Co-owners and members can be added either directly using
+            the <em>Swedish numberplate</em> or email alias of the user, or
+            indirectly if the user requests owner-/membership on the VGrids
+            page, and the owner(s) follow the instructions then sent on email about
+            adding the user with the full user ID format.
+          </p>
+          <h4 class="staticpage">Can I have a shared or separate account for our project?</h4>
+          <p>
+            No, we <b>cannot</b> allow such accounts or account aliasing, mainly due to
+            rules and regulations. In case of suspected or alleged abuse we need to
+            be able to uniquely identify who did what and when, and all kinds of
+            anonymous or shared accounts would prevent that. Please refer to
+            the <a href="https://informationssikkerhed.ku.dk/english/is-policy/"
+                 target="_blank">UCPH information security policy</a> for further details
+            about identity and traceability requirements.<br/>
+            So basically you need to use your own personal and clearly identifiable
+            account for all logins. What you <b>can</b> do is to use VGrids to
+            store data in a shared group folder. In that way the data is not bound
+            to your account specifically and you and your project group can easily
+            manage all account access yourselves through the VGrid admin
+            page.<br/>
+            Similarly share links can be used for access to particular subfolders if
+            you need to e.g. automate data upload from lab machines without storing
+            your personal login there. Please refer to the user guide for more details.
+          </p>
+          <h4 class="staticpage">Why can't I use certain characters in file names?</h4>
+          <p>
+            MiGrid prevents certain characters like 
+            "&lt; &gt; &#123; &#124; &#125; &#42; &#63; &#91; &#93;"
+            in file names. You may already have run into similar limitations when
+            naming files on your own PC or devices. In order to provide a secure and
+            consistent experience across different platforms, web and advanced
+            interfaces MiGrid prohibits those and some more that are known to cause
+            problems. Either because they are so-called control characters with a
+            special potentially dangerous meaning on the storage systems or because
+            they are known to interfere with the web interfacing and
+            presentation. We are continuously evaluating the need for allowing more
+            exotic characters but always with focus on not breaking existing
+            interfaces and backends. Feel free to contact us about the possibility
+            of allowing any additional characters that you may miss.
+          </p>
+          <h4 class="staticpage">Can I use a certifcate to access MiGrid?</h4>
+          <p>
+            In case you want the extra secure access you need to request and
+            install one of our grid certificates as described on the
+            corresponding <a class="reqcert-en-link">getting started</a> page. As
+            you can see in the user-cert-import guide there, the certificate install
+            process takes quite a few steps, but then at least login gets simpler
+            afterwards. After installing your certificate you can use it first to
+            <a class="extcertsignup-link">sign up</a> for your MiGrid account and then
+            afterwards to <a class="extcertlogin-link">log in</a>.  
+            <br /> 
+          </p>
+        </div>
+      </div>
+
+      <div id="faq-danish" class="danish i18n row" lang="da">
+        <div class="faq-header col-lg-12">
+          <h2 class="staticpage">Ofte stillede spørgsmål (OSS)</h2>
+        </div>
+        <div class="faq-entries accordion col-lg-12">
+          <h4 class="staticpage">Hvor meget plads har jeg på MiGrid?</h4>
+          <p>
+            Vi håndhæver ikke som sådan pladskvoter på selve MiGrid datalageret, men
+            vi anbefaler at benytte vores ERDA/IDMC services til alle
+            større datasæt. Så længe vi taler datamængder op til en snes
+            gigabytes, skulle der ikke være nogen problemer. Hvis du gerne vil gemme mere
+            end det, kan det sikkert også lade sig gøre - bare tag en snak med os om
+            det.<br/>
+          </p>
+          <h4 class="staticpage">Er mine MiGrid data replikerede og med backup?</h4>
+          <p>
+            Al data på MiGrid er automatisk replikeret over flere diske v.h.a.
+            RAID-teknologi. Vi kører backup hver nat af alle brugerdata
+            men vi garanterer <em>ikke</em> i øjeblikket fuldstændig
+            tilgængelig backup af almindelige data i din MiGrid brugerfolder eller i
+            VGrid shares. Kontakt os venligst for uddybning eller benyt
+            vores ERDA service med freeze archives hvis det er essentielt.
+          </p>
+          <h4 class="staticpage">Hvordan overfører jeg hele foldere til/fra MiGrid?</h4>
+          <p>
+            På dine MiGrid websider kan du kun uploade/downloade enkeltfiler, så hvis
+            du f.eks. vil uploade hele foldere den vej, må du først pakke dem i en
+            zip- eller tar-fil, som du derefter uploader som vanligt og endelig
+            udpakker med <em>unpack</em> fra højreklik-menuen på den uploadede
+            fil.<br/>
+            Tilsvarende kan du bruge <em>pack</em> på en MiGrid folder, downloade den
+            pakkede fil og udpakke lokalt.<br/>
+            Alternativt kan du benytte den effektive fil/folder-håndtering som
+            beskrevet i afsnittene om Avanceret datatilgang i brugervejledningen. På
+            den måde kan MiGrid tilgås som et netværksdrev så du kan benytte din
+            almindelige filhåndtering til at kopiere hele foldere til og fra MiGrid.
+          </p>
+          <h4 class="staticpage">Kan jeg dele, udveklse og publicere MiGrid data f.eks. så der kun er læse-adgang?</h4>
+          <p>
+            Ja, der er overordnet to forskellige måder at gøre det på afhængigt af
+            hvor dynamiske data er, og hvem du vil dele med.<br/> 
+            Når det drejer sig om dynamiske data er det muligt at dele med læse- og
+            skrive-adgang via de almindelige VGrid shares, samt at skifte
+            sådanne shares til kun at give læse-adgang på administrationssiden. Det
+            er også muligt at lave skrivebeskyttet deling og publicering via de
+            tilknyttede VGrid web sider. Begge følger automatisk med alle
+            VGrids og sidstnævnte findes i en udgave med offentlig adgang og en
+            kun for gruppens deltagere. Publicering den vej foregår ved at VGrid
+            ejere gemmer data i de tilhørende public_base hhv private_base VGrid
+            undermapper på MiGrid. På din VGrids side finder du links til disse og
+            til de resulterende web-sider.<br/>
+            Til hurtig udveksling af data med hvem som helst, herunder ikke mindst folk
+            som <em>ikke</em> er på MiGrid, kan vi anbefale Share Link metoden. Fra
+            din Files side kan du oprette et share link og vælge hvilken kombination
+            af læse- og skrive-adgang modtageren skal gives. 
+            Share link metoden inkluderer muligheden for at udsende en invitation med link 
+            direkte på email, men det kan naturligvis også gøres manuelt via andre kanaler.
+          </p>
+          <h4 class="staticpage">Hvordan styres VGrids?</h4>
+          <p>
+            Alle kan oprette VGrids og de bliver derved
+            automatisk ejere af det nye VGrid. Al brugerstyring er ejernes
+            ansvar og foregår uden indblanding fra systemadministratorerne på
+            MiGrid. Medejere og medlemmer kan enten tilføjes direkte ved at indtaste
+            brugerens <em>svenske nummerplade</em> eller email på VGrid
+            Management siden eller ved at brugere anmoder om owner-/membership på
+            VGrids-siden, og ejerne følger de derved emailede instruktioner om
+            at tilføje brugeren vha det komplette bruger-ID.
+          </p>
+          <h4 class="staticpage">Kan jeg få en delt eller særskilt konto til vores projekt?</h4>
+          <p>
+            Nej, vi kan <b>ikke</b> tillade sådanne delte eller særskilte konti, især
+            pga love og regler. I tilfælde af mistanke eller anklager om
+            kontimisbrug er det strengt nødvendigt at vi entydigt kan afgøre præcis
+            hvem der gjorde hvad og hvornår. Det er helt uforeneligt med alle former
+            for anonyme eller delte konti. Vi henviser
+            til <a href="https://informationssikkerhed.ku.dk/politik/"
+                   target="_blank">KUs Informationssikkerhedspolitik</a> for nærmere
+            detaljer omkring krav omkring identitet og sporbarhed. Hvad
+            man <b>kan</b> gøre er at benytte VGrids til at opbevare data i en
+            delt gruppemappe. På den måde er data ikke bundet specifikt til din
+            private konto og du og din projektgruppe kan nemt selv styre al
+            kontoadgang dertil via pågældende VGrids admin-side.<br/>
+            Det er desuden muligt at benytte sharelinks til at give adgang til
+            specifikke undermapper, i tilfælde af at man f.eks. har brug for at
+            automatisere data-upload fra laboratoriemaskiner uden at have sit
+            personlige login flydende rundt. Se venligst brugervejledningen for
+            nærmere detaljer.
+          </p>
+          <h4 class="staticpage">Hvorfor er der tegn jeg ikke kan bruge i filnavne?</h4>
+          <p>
+            MiGrid afviser enkelte tegn så som 
+            "&lt; &gt; &#123; &#124; &#125; &#42; &#63; &#91; &#93;"
+            i filnavne. Måske du allerede har oplevet lignende begrænsninger i
+            navngivningen af filer på din PC eller andre enheder.
+            For at kunne levere en sikker og ensartet brugeroplevelse på tværs af
+            platforme, web og avancerede brugergrænseflader afviser MiGrid disse og
+            visse andre som er kendt for at skabe problemer.
+            Hvadenten det er fordi de er såkaldte kontroltegn med en speciel og
+            potentielt skadelig betydning på lagersystemerne eller fordi de vides at
+            forstyrre web-brug og -visning. Vi evaluerer løbende på behovet for at
+            tillade yderligere eksotiske tegn, hele tiden under krav om hverken at
+            skade brugergrænseflader eller bagvedliggende systemer. Du er
+            naturligvis velkommen til at kontakte os angående at få yderligere tegn
+            du måtte savne tilladt.
+          </p>
+          <h4 class="staticpage">Kan jeg bruge et certifikat til min MiGrid-konto?</h4>
+          <p>
+            For den yderligere sikrede certifikat løsning skal du anmode om - og
+            installere et af vores grid-brugercertifikater, jvf den
+            tilhørende <a class="reqcert-da-link"> sådan kommer du igang</a>
+            side. Som det fremgår af user-cert-import guiden dér, kræver
+            certifikat-installationen en del trin, men i det mindste er login så
+            efterfølgende simplere. Når du har installeret dit certifikat kan du
+            bruge det først i MiGrids <a class="extcertsignup-link">tilmelding</a> og
+            efterfølgende til <a class="extcertlogin-link">log ind</a>.
+            <br/>
+          </p>
+        </div>
+      </div>
+
+    </body>
+</html>
