@@ -168,6 +168,7 @@ def fix_missing(config_file, verbose=True):
         'user_seafile_auth': ['password'],
         'user_seafile_ro_access': False,
         'user_duplicati_protocols': [],
+        'user_cloud_console_access': [],
         'user_cloud_ssh_auth': ['publickey'],
         'user_cloud_alias': '',
         'user_imnotify_address': '',
@@ -403,6 +404,7 @@ class Configuration:
     user_seafile_alias = ''
     user_seafile_ro_access = True
     user_duplicati_protocols = []
+    user_cloud_console_access = []
     user_cloud_ssh_auth = ['publickey']
     user_cloud_alias = ''
     user_openid_address = ''
@@ -1003,6 +1005,9 @@ location.""" % self.config_file
                 'SITE', 'enable_cloud')
         else:
             self.site_enable_cloud = False
+        if config.has_option('GLOBAL', 'user_cloud_console_access'):
+            self.user_cloud_console_access = config.get(
+                'GLOBAL', 'user_cloud_console_access').split()
         if config.has_option('GLOBAL', 'user_cloud_ssh_auth'):
             self.user_cloud_ssh_auth = config.get('GLOBAL',
                                                   'user_cloud_ssh_auth').split()

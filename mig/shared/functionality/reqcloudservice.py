@@ -448,25 +448,29 @@ is stricly required for all use. Please do so before you try again.
             'object_type': 'text', 'text': "%s instance %s at %s: %s" %
             (action, _label, service_title, action_msg)})
 
-        # Show web console and ssh details if running
+        # Show instance access details if running
         if action_msg in ('ACTIVE', 'RUNNING'):
-            (console_status, console_msg) = web_access_cloud_instance(
-                configuration, client_id, cloud_id, cloud_flavor, instance_id)
-            if not console_status:
-                logger.error("%s cloud instance %s console for %s failed: %s"
-                             % (cloud_id, instance_id, client_id, console_msg))
-                output_objects.append({
-                    'object_type': 'error_text',
-                    'text': 'Failed to get instance %s at %s console: %s' %
-                    (_label, service_title, console_msg)})
-                return (output_objects, returnvalues.SYSTEM_ERROR)
-            logger.info("%s cloud instance %s console for %s: %s" %
+            # Only include web console if explicitly configured
+            if configuration.user_cloud_console_access:
+                (console_status, console_msg) = web_access_cloud_instance(
+                    configuration, client_id, cloud_id, cloud_flavor,
+                    instance_id)
+                if not console_status:
+                    logger.error(
+                        "%s cloud instance %s console for %s failed: %s" % \
                         (cloud_id, instance_id, client_id, console_msg))
-            output_objects.append({
-                'object_type': 'link', 'destination': console_msg,
-                'text': 'Open web console', 'class': 'consolelink iconspace',
-                'title': 'open web console', 'target': '_blank'})
-            output_objects.append({'object_type': 'text', 'text': ''})
+                    output_objects.append({
+                        'object_type': 'error_text',
+                        'text': 'Failed to get instance %s at %s console: %s' %
+                        (_label, service_title, console_msg)})
+                    return (output_objects, returnvalues.SYSTEM_ERROR)
+                logger.info("%s cloud instance %s console for %s: %s" %
+                            (cloud_id, instance_id, client_id, console_msg))
+                output_objects.append({
+                    'object_type': 'link', 'destination': console_msg,
+                    'text': 'Open web console', 'class': 'consolelink iconspace',
+                    'title': 'open web console', 'target': '_blank'})
+                output_objects.append({'object_type': 'text', 'text': ''})
 
             output_objects.append({
                 'object_type': 'html_form', 'text': _ssh_help(
@@ -575,6 +579,13 @@ is stricly required for all use. Please do so before you try again.
             output_objects.append(
                 {'object_type': 'error_text', 'text': instance_missing_msg %
                  (_label, service_title)})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
+        if not configuration.user_cloud_console_access:
+            logger.error("web console not enabled in conf!")
+            output_objects.append({
+                'object_type': 'error_text',
+                'text': 'Site does not expose cloud web console!'})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         (action_status, action_msg) = web_access_cloud_instance(
