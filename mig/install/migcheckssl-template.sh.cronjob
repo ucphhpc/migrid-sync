@@ -29,7 +29,8 @@ server_key_crt_ca_pem="${domain_cert_path}/server.key.crt.ca.pem"
 combined_pem="${domain_cert_path}/combined.pem"
 combined_pub="${domain_cert_path}/combined.pub"
 dhparams_pem="${cert_base}/dhparams.pem"
-getssl_url="https://raw.githubusercontent.com/srvrco/getssl/master/getssl"
+# use git latest or release version of getssl
+getssl_version="release"
 getssl_tmp="/tmp/getssl"
 getssl_script="getssl"
 getssl_path=`which ${getssl_script} 2>/dev/null`
@@ -42,6 +43,19 @@ if [[ $(id -u) -ne 0 ]]; then
 fi
 
 # Check getssl script
+
+if [ "$getssl_version" = "latest" ]; then
+  # Latest version is directly available from master url
+  getssl_url="https://raw.githubusercontent.com/srvrco/getssl/master/getssl"
+else
+  # Extract latest release tag use in direct download url
+  release_tag=$(curl -s https://api.github.com/repos/srvrco/getssl/releases/latest | grep 'tag_name' | cut -d\" -f4)
+  if [ $? -ne 0 ]; then
+      echo "Could not extract latest release tag from getssl git repo!"
+      exit 1
+  fi
+  getssl_url=https://raw.githubusercontent.com/srvrco/getssl/${release_tag}/getssl
+fi
 
 if [ ! -x "${getssl_path}" ]; then
     echo "ERROR: Missing getssl script"
