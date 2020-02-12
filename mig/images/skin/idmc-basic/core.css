@@ -42,9 +42,14 @@ body.staticpage {
   border-left: 1px solid #CCC;
 }
 
+/* adjust to fit logo background */
+.sidebar-header {
+  padding-left: 10px;
+}
 .home-nav-logo {
-	background-image: url("home-logo.png");
-        background-color: #147;
+  background-image: url("home-logo.png");
+  background-color: #147;
+  width: 70px;
 }
 
 a {
