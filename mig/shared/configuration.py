@@ -90,6 +90,7 @@ def fix_missing(config_file, verbose=True):
         'sessid_to_mrsl_link_home': '~/state/sessid_to_mrsl_link_home/',
         'sessid_to_jupyter_mount_link_home': '~/state/sessid_to_jupyter_mount_link_home/',
         'mig_system_files': '~/state/mig_system_files/',
+        'mig_system_run': '~/state/mig_system_run/',
         'wwwpublic': '~/state/wwwpublic/',
         'vm_home': '~/state/vm_home',
         'server_cert': '~/certs/cert.pem',
@@ -447,6 +448,7 @@ class Configuration:
     sessid_to_mrsl_link_home = ''
     sessid_to_jupyter_mount_link_home = ''
     mig_system_files = ''
+    mig_system_run = ''
     empty_job_name = ''
     migserver_http_url = ''
     migserver_https_mig_cert_url = ''
@@ -652,6 +654,8 @@ location.""" % self.config_file
                                                        'sessid_to_mrsl_link_home')
             self.mig_system_files = config.get('GLOBAL',
                                                'mig_system_files')
+            self.mig_system_run = config.get('GLOBAL',
+                                               'mig_system_run')
             self.empty_job_name = config.get('GLOBAL', 'empty_job_name')
             self.migserver_http_url = config.get('GLOBAL',
                                                  'migserver_http_url')
