@@ -78,6 +78,8 @@ _rate_limits_lock = threading.Lock()
 _active_sessions = {}
 _sessions_lock = threading.Lock()
 
+valid_auth_types = ['key', 'password', 'digest']
+
 
 def accepting_username_validator(configuration, username):
     """A simple username validator which accepts everything"""
@@ -889,7 +891,7 @@ def refresh_job_creds(configuration, protocol, username):
 
         # Use frontend proxy if available otherwise use hosturl to resolve IP
         user_url = job_dict['RESOURCE_CONFIG'].get('FRONTENDPROXY', '')
-        if not user_url:
+        if user_url:
             user_url = job_dict['RESOURCE_CONFIG'].get('HOSTURL', '')
         try:
             user_ip = socket.gethostbyname_ex(user_url)[2][0]
@@ -1942,7 +1944,7 @@ def authlog(configuration,
         logger.error("Invalid authlog level: %s" % log_lvl)
         return False
 
-    log_message = "IP: %s, Protocol: %s, Type: %s, User: %s, Message: %s" \
+    log_message = "IP: %s, Protocol: %s, Type: %s, Username: %s, Message: %s" \
         % (user_addr, protocol, authtype, user_id, log_msg)
     _auth_logger(log_message)
 
@@ -1957,25 +1959,26 @@ def authlog(configuration,
     return status
 
 
-def handle_auth_attempt(configuration,
-                        protocol,
-                        authtype,
-                        username,
-                        ip_addr,
-                        tcp_port=0,
-                        secret=None,
-                        invalid_username=False,
-                        invalid_user=False,
-                        skip_twofa_check=False,
-                        valid_twofa=False,
-                        authtype_enabled=False,
-                        valid_auth=False,
-                        exceeded_rate_limit=False,
-                        exceeded_max_sessions=False,
-                        user_abuse_hits=default_user_abuse_hits,
-                        proto_abuse_hits=default_proto_abuse_hits,
-                        max_secret_hits=default_max_secret_hits,
-                        ):
+def validate_auth_attempt(configuration,
+                          protocol,
+                          authtype,
+                          username,
+                          ip_addr,
+                          tcp_port=0,
+                          secret=None,
+                          invalid_username=False,
+                          invalid_user=False,
+                          skip_twofa_check=False,
+                          valid_twofa=False,
+                          authtype_enabled=False,
+                          valid_auth=False,
+                          exceeded_rate_limit=False,
+                          exceeded_max_sessions=False,
+                          user_abuse_hits=default_user_abuse_hits,
+                          proto_abuse_hits=default_proto_abuse_hits,
+                          max_secret_hits=default_max_secret_hits,
+                          skip_notify=False,
+                          ):
     """Log auth attempt to daemon-logger and auth log.
     Update/check rate limits and log abuses to auth log.
 
@@ -1990,10 +1993,10 @@ def handle_auth_attempt(configuration,
     logger.debug("\n-----------------------------------------------------\n"
                  + "protocol: %s\n"
                  % protocol
-                 + "username: %s\n"
-                 % username
                  + "authtype: %s\n"
                  % authtype
+                 + "username: %s\n"
+                 % username
                  + "ip_addr: %s, tcp_port: %s\n"
                  % (ip_addr, tcp_port)
                  + "secret: %s\n"
@@ -2012,14 +2015,28 @@ def handle_auth_attempt(configuration,
                  % exceeded_rate_limit
                  + "exceeded_max_sessions: %s\n"
                  % exceeded_max_sessions
+                 + "max_secret_hits: %s\n"
+                 % max_secret_hits
+                 + "skip_notify: %s\n"
+                 % skip_notify
                  + "-----------------------------------------------------")
     """
 
     authorized = False
     disconnect = False
     twofa_passed = valid_twofa
+
+    notify = True
+    if skip_notify:
+        notify = False
+
     if skip_twofa_check:
         twofa_passed = True
+
+    if not authtype in valid_auth_types:
+        logger.error("Invalid authlog auth type: %r" % authtype
+                     + " not in valid auth types: %s" % valid_auth_types)
+        return (authorized, disconnect)
 
     # Log auth attempt and set (authorized, disconnect) return values
 
@@ -2031,7 +2048,7 @@ def handle_auth_attempt(configuration,
             log_msg += ":%s" % tcp_port
         logger.warning(log_msg)
         authlog(configuration, 'WARNING', protocol, authtype,
-                username, ip_addr, auth_msg, notify=True)
+                username, ip_addr, auth_msg, notify=notify)
     elif exceeded_max_sessions:
         disconnect = True
         active_count = active_sessions(configuration, protocol, username)
@@ -2040,7 +2057,7 @@ def handle_auth_attempt(configuration,
             % (active_count, username)
         logger.warning(log_msg)
         authlog(configuration, 'WARNING', protocol, authtype,
-                username, ip_addr, auth_msg, notify=True)
+                username, ip_addr, auth_msg, notify=notify)
     elif invalid_username:
         disconnect = True
         if re.match(CRACK_USERNAME_REGEX, username) is not None:
@@ -2075,7 +2092,7 @@ def handle_auth_attempt(configuration,
             log_msg += ":%s" % tcp_port
         logger.error(log_msg)
         authlog(configuration, 'ERROR', protocol, authtype,
-                username, ip_addr, auth_msg, notify=True)
+                username, ip_addr, auth_msg, notify=notify)
     elif valid_auth and not twofa_passed:
         disconnect = True
         auth_msg = "No valid two factor session"
@@ -2084,7 +2101,7 @@ def handle_auth_attempt(configuration,
             log_msg += ":%s" % tcp_port
         logger.error(log_msg)
         authlog(configuration, 'ERROR', protocol, authtype,
-                username, ip_addr, auth_msg, notify=True)
+                username, ip_addr, auth_msg, notify=notify)
     elif authtype_enabled and not valid_auth:
         auth_msg = "Failed %s" % authtype
         log_msg = auth_msg + " login for %s from %s" % (username, ip_addr)
@@ -2092,12 +2109,10 @@ def handle_auth_attempt(configuration,
             log_msg += ":%s" % tcp_port
         logger.error(log_msg)
         authlog(configuration, 'ERROR', protocol, authtype,
-                username, ip_addr, auth_msg, notify=True)
+                username, ip_addr, auth_msg, notify=notify)
     elif valid_auth and twofa_passed:
         authorized = True
-        if configuration.site_enable_gdp:
-            notify = True
-        else:
+        if notify and not configuration.site_enable_gdp:
             notify = False
         auth_msg = "Accepted %s" % authtype
         log_msg = auth_msg + " login for %s from %s" % (username, ip_addr)
@@ -2114,7 +2129,7 @@ def handle_auth_attempt(configuration,
             log_msg += ":%s" % tcp_port
         logger.warning(log_msg)
         authlog(configuration, 'ERROR', protocol, authtype,
-                username, ip_addr, auth_msg, notify=True)
+                username, ip_addr, auth_msg, notify=notify)
 
     # Update and check rate limits
 
