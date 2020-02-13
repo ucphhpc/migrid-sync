@@ -96,7 +96,7 @@ from shared.griddaemons import default_max_user_hits, \
     default_max_secret_hits, default_username_validator, \
     get_fs_path, acceptable_chmod, refresh_user_creds, refresh_share_creds, \
     update_login_map, login_map_lookup, hit_rate_limit, expire_rate_limit, \
-    check_twofactor_session, handle_auth_attempt
+    check_twofactor_session, validate_auth_attempt
 from shared.tlsserver import hardened_openssl_context
 from shared.logger import daemon_logger, register_hangup_handler
 from shared.pwhash import make_scramble
@@ -269,7 +269,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
 
         # Update rate limits and write to auth log
 
-        (authorized, disconnect) = handle_auth_attempt(
+        (authorized, disconnect) = validate_auth_attempt(
             configuration,
             'ftps',
             'password',

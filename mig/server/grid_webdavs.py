@@ -75,7 +75,7 @@ from shared.griddaemons import get_fs_path, acceptable_chmod, \
     update_login_map, login_map_lookup, hit_rate_limit, expire_rate_limit, \
     add_user_object, track_open_session, track_close_session, \
     track_close_expired_sessions, get_active_session, \
-    check_twofactor_session, handle_auth_attempt
+    check_twofactor_session, validate_auth_attempt
 from shared.pwhash import make_scramble
 from shared.sslsession import ssl_session_token
 from shared.tlsserver import hardened_ssl_context
@@ -582,7 +582,7 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
 
             password_enabled = environ.get('http_authenticator.password_enabled', False)
             digest_enabled = environ.get('http_authenticator.digest_enabled', False)
-            (authorized, disconnect) = handle_auth_attempt(
+            (authorized, disconnect) = validate_auth_attempt(
                 configuration,
                 'davs',
                 authtype,

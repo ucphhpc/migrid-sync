@@ -86,7 +86,7 @@ from shared.griddaemons import default_max_user_hits, \
     default_user_abuse_hits, default_proto_abuse_hits, \
     default_username_validator, refresh_user_creds, update_login_map, \
     login_map_lookup, hit_rate_limit, expire_rate_limit, \
-    handle_auth_attempt
+    validate_auth_attempt
 from shared.html import openid_page_template
 from shared.logger import daemon_logger, register_hangup_handler
 from shared.pwhash import make_scramble
@@ -539,7 +539,7 @@ Invalid '%s' input: %s
 
             # Update rate limits and write to auth log
 
-            (authorized, _) = handle_auth_attempt(
+            (authorized, _) = validate_auth_attempt(
                 configuration,
                 'openid',
                 'password',
@@ -841,7 +841,7 @@ Invalid '%s' input: %s
 
             # Update rate limits and write to auth log
 
-            (authorized, _) = handle_auth_attempt(
+            (authorized, _) = validate_auth_attempt(
                 configuration,
                 'openid',
                 'password',

@@ -94,7 +94,7 @@ from shared.griddaemons import default_username_validator, \
     refresh_jupyter_creds, update_login_map, login_map_lookup, \
     hit_rate_limit, expire_rate_limit, track_open_session, \
     track_close_session, active_sessions, check_twofactor_session, \
-    handle_auth_attempt
+    validate_auth_attempt
 from shared.logger import daemon_logger, daemon_gdp_logger, \
     register_hangup_handler
 from shared.notification import send_system_notification
@@ -1151,7 +1151,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
             (authorized, disconnect) = (False, False)
         else:
             # Update rate limits and write to auth log
-            (authorized, disconnect) = handle_auth_attempt(
+            (authorized, disconnect) = validate_auth_attempt(
                 configuration,
                 'sftp',
                 authtype,
