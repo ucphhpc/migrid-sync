@@ -132,6 +132,8 @@ def possible_job_id(configuration, job_id):
     """Check if job_id is a possible job ID based on knowledge about contents
     and length. We use hexlify on a random string of session_id_bytes, which
     results in session_id_length characters."""
+    if not configuration.site_enable_jobs:
+        return False
     if len(job_id) != session_id_length:
         return False
     for i in job_id:
