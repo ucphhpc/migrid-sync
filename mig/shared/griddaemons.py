@@ -891,7 +891,7 @@ def refresh_job_creds(configuration, protocol, username):
 
         # Use frontend proxy if available otherwise use hosturl to resolve IP
         user_url = job_dict['RESOURCE_CONFIG'].get('FRONTENDPROXY', '')
-        if user_url:
+        if not user_url:
             user_url = job_dict['RESOURCE_CONFIG'].get('HOSTURL', '')
         try:
             user_ip = socket.gethostbyname_ex(user_url)[2][0]
