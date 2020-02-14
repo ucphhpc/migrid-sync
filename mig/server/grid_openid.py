@@ -1112,7 +1112,6 @@ Invalid '%s' input: %s
             mdata = {
                 'expected_user': expected_user,
                 'user': self.user,
-                'err_msg': err_msg,
             }
             msg = '''\
             <p>A site has asked for an identity belonging to
@@ -1126,6 +1125,7 @@ Invalid '%s' input: %s
                 'trust_root': request.trust_root,
                 'expected_user': expected_user,
                 'server_base': self.server.server_base,
+                'err_msg': err_msg,
             }
             form = '''\
             <table>
