@@ -67,8 +67,8 @@ else
             echo "--- Updated LetsEncrypt script available - please verify+update ---"
             echo "${getssl_url}"
             echo
-            echo "--- Detailed difference follows ---"
-            diff -u -w ${getssl_tmp} ${getssl_path} 
+            echo "--- Start of detailed difference follows ---"
+            diff -u -w ${getssl_tmp} ${getssl_path} | head
             echo
         fi
     fi
