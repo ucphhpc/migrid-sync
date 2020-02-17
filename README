@@ -84,6 +84,7 @@ sudo apt install libapache2-mod-wsgi libapache2-mod-auth-openid  \
      trac trac-mercurial lftp rsync fail2ban ipset
 
 On RedHat/CentOS servers the basic packages can be installed with:
+sudo yum install epel-release
 sudo yum install httpd mod_ssl openssh-clients python python-pip \
      python-setuptools python-devel gcc
 
