@@ -93,7 +93,9 @@ sudo yum install mod_wsgi mod_auth_openid python-paramiko python-enchant \
      python-jsonrpclib python-requests cracklib-python openssh-server \
      pam-devel mercurial lftp rsync fail2ban ipset
 
-while the remaining ones need to be installed from pypi:
+while the remaining ones need to be installed from EPEL
+sudo yum install trac trac-mercurial-plugin
+or alternatively directly from pypi:
 sudo pip install trac tracmercurial
 
 Apache comes with a number of modules natively included, so it is usually not
@@ -115,11 +117,11 @@ sudo aptitude install trac-customfieldadmin trac-graphviz \
 
 and the unpackaged ones can be grabbed from trac-hacks.org with pip
 and easy_install:
-sudo easy_install http://trac-hacks.org/svn/wikicssplugin
-sudo easy_install http://trac-hacks.org/svn/fullblogplugin
-sudo easy_install http://trac-hacks.org/svn/discussionplugin/0.11
-sudo easy_install http://trac-hacks.org/svn/tracpasteplugin
-sudo easy_install http://trac-hacks.org/svn/downloadsplugin
+sudo easy_install https://trac-hacks.org/svn/wikicssplugin
+sudo easy_install https://trac-hacks.org/svn/fullblogplugin
+sudo easy_install https://trac-hacks.org/svn/discussionplugin
+sudo easy_install https://trac-hacks.org/svn/tracpasteplugin
+sudo easy_install https://trac-hacks.org/svn/downloadsplugin
 sudo pip install TracStats
 
 where 0.11 in the URLs may need to be changed to fit your particular version
@@ -279,7 +281,7 @@ https://sourceforge.net/p/migrid/code/HEAD/tree/trunk/
 
 At this point it may be comfortable to copy some of the basic
 account configuration files from mig/install/mig-user to ~/ but this is
-not required.
+not mandatory.
 
 Now you are ready to actually configure your installation.
 The easiest way to do that is to use the configuration generator in 
