@@ -281,6 +281,6 @@
 
 /* Additional tuning below */
 /* Make sure accept terms status don't wrap to slider width */
-.valid-feedback, .invalid-feedback, .switch-label {
+.form-group .valid-feedback, .form-group .invalid-feedback, .form-group .switch-label {
     width: 400px;
 }

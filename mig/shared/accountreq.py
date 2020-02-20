@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # accountreq - helpers for certificate/OpenID account requests
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -287,7 +287,8 @@ def account_request_template(configuration, password=True, default_country=''):
         Looks good!
       </div>
       <div class="invalid-feedback">
-        Please provide a valid and sufficiently strong password.
+        Please provide a valid and sufficiently strong password.<br/>
+        I.e. %(password_min_len)d to %(password_max_len)d characters from at least %(password_min_classes)d of the 4 different character classes: lowercase, uppercase, digits, other.
       </div>
     </div>
     <div class="col-md-4 mb-3">
