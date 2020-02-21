@@ -931,8 +931,6 @@ background: url(/images/icons/compress.png) left center no-repeat;
 */
 
 /* General helper icons */
-/* TODO: spinner still looks rough on save apps page with themed background */
-/* TODO: success icon is invisible on save apps page with themed background */
 .spinner { 
     background-image: url(/images/icons/spinner-rolling.gif);
     background-repeat: no-repeat;
@@ -971,7 +969,9 @@ background: url(/images/icons/compress.png) left center no-repeat;
 }
 .sendemaillink {
     background: url(/images/icons/email_protocol.svg) no-repeat;
-    padding-left: 25px;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
 }
 .shadeinfolink {
     background: url('/images/icons/information_grey.svg') no-repeat;

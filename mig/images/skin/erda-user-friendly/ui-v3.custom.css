@@ -675,69 +675,69 @@ a {
     background-image: url('/images/icons/accept_46743c.svg');
 }
 .urllink {
-    background: url('/images/icons/html_46743c.svg') no-repeat; 
+    background-image: url('/images/icons/html_46743c.svg'); 
 }
 .infolink {
-    background: url('/images/icons/information_46743c.svg') no-repeat; 
+    background-image: url('/images/icons/information_46743c.svg');
 }
 .sendemaillink {
-    background: url(/images/icons/email_protocol_46743c.svg) no-repeat;
+    background-image: url(/images/icons/email_protocol_46743c.svg);
 }
 
 
 .editlink {
-    background: url('/images/icons/page_edit_46743c.svg') no-repeat; 
+    background-image: url('/images/icons/page_edit_46743c.svg'); 
 }
 .sharedfolderlink {
-    background: url('/images/icons/folder_link_46743c.svg') no-repeat;
+    background-image: url('/images/icons/folder_link_46743c.svg');
 }
 
 .adminlink {
-    background: url('/images/icons/wrench_46743c.svg') no-repeat;
+    background-image: url('/images/icons/wrench_46743c.svg');
 }
 
 .addlink {
-    background: url('/images/icons/add_46743c.svg') no-repeat; 
+    background-image: url('/images/icons/add_46743c.svg'); 
 }
 .addadminlink {
-    background: url('/images/icons/cog_add_46743c.svg') no-repeat;
+    background-image: url('/images/icons/cog_add_46743c.svg');
 }
 
 .additemlink {
-  background: url('/images/icons/page_white_add_46743c.svg') no-repeat;
+  background-image: url('/images/icons/page_white_add_46743c.svg');
   }
 
 .removelink {
-    background: url('/images/icons/delete_46743c.svg') no-repeat;
+    background-image: url('/images/icons/delete_46743c.svg');
 }
 .removeadminlink {
-    background: url('/images/icons/cog_delete_46743c.svg') no-repeat;
+    background-image: url('/images/icons/cog_delete_46743c.svg');
 }
 
 .removeitemlink {
-  background: url('/images/icons/page_white_delete_46743c.svg') no-repeat;
+  background-image: url('/images/icons/page_white_delete_46743c.svg');
   }
 
 .previouslink {
-    background: url('/images/icons/arrow_left_46743c.svg') no-repeat;
+    background-image: url('/images/icons/arrow_left_46743c.svg');
 }
 .nextlink {
-    background: url('/images/icons/arrow_right_46743c.svg') no-repeat;
+    background-image: url('/images/icons/arrow_right_46743c.svg');
 }
 .firstlink {
-    background: url('/images/icons/arrow_first_46743c.svg') no-repeat;
+    background-image: url('/images/icons/arrow_first_46743c.svg');
 }
 .lastlink {
-    background: url('/images/icons/arrow_last_46743c.svg') no-repeat;
+    background-image: url('/images/icons/arrow_last_46743c.svg');
 }
 
 
 .seafilelink {
-    background: url('/images/icons/seafile_46743c.svg') no-repeat;
+    background-image: url('/images/icons/seafile_46743c.svg');
 }
 
 .adminlink {
-    background: url('/images/icons/wrench_46743c.svg') no-repeat;
+    background-image: url('/images/icons/wrench_46743c.svg');
 }
 
 
