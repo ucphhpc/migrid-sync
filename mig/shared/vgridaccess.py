@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridaccess - user access in VGrids
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -78,18 +78,19 @@ def load_entity_map(configuration, kind, do_lock):
     Please note that time stamp is explicitly set to start of last update
     to make sure any concurrent updates get caught in next run.
     """
+    _logger = configuration.logger
     map_path = os.path.join(configuration.mig_system_files, "%s.map" % kind)
     lock_path = os.path.join(configuration.mig_system_files, "%s.lock" % kind)
     if do_lock:
         lock_handle = open(lock_path, 'a')
         fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
     try:
-        configuration.logger.info("before %s map load" % kind)
+        _logger.info("before %s map load" % kind)
         entity_map = load(map_path)
-        configuration.logger.info("after %s map load" % kind)
+        _logger.info("after %s map load" % kind)
         map_stamp = os.path.getmtime(map_path)
     except IOError:
-        configuration.logger.warn("No %s map to load" % kind)
+        _logger.warn("No %s map to load" % kind)
         entity_map = {}
         map_stamp = -1
     if do_lock:
@@ -132,6 +133,7 @@ def refresh_user_map(configuration, clean=False):
     Only update map for users that updated conf after last map save.
     NOTE: Save start time so that any concurrent updates get caught next time.
     """
+    _logger = configuration.logger
     start_time = time.time()
     dirty = []
     map_path = os.path.join(configuration.mig_system_files, "user.map")
@@ -141,9 +143,9 @@ def refresh_user_map(configuration, clean=False):
     if not clean:
         user_map, map_stamp = load_user_map(configuration, do_lock=False)
     else:
-        configuration.logger.info("Creating clean user map")
+        _logger.info("Creating clean user map")
         user_map = {}
-        map_stamp = 0 
+        map_stamp = 0
 
     # Find all users and their configurations
 
@@ -189,7 +191,7 @@ def refresh_user_map(configuration, clean=False):
             dump(user_map, map_path)
             os.utime(map_path, (start_time, start_time))
         except Exception, exc:
-            configuration.logger.error("Could not save user map: %s" % exc)
+            _logger.error("Could not save user map: %s" % exc)
 
     last_refresh[USERS] = start_time
     lock_handle.close()
@@ -204,6 +206,7 @@ def refresh_resource_map(configuration, clean=False):
     Only update map for resources that updated conf after last map save.
     NOTE: Save start time so that any concurrent updates get caught next time.
     """
+    _logger = configuration.logger
     start_time = time.time()
     dirty = []
     map_path = os.path.join(configuration.mig_system_files, "resource.map")
@@ -211,11 +214,12 @@ def refresh_resource_map(configuration, clean=False):
     lock_handle = open(lock_path, 'a')
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
     if not clean:
-        resource_map, map_stamp = load_resource_map(configuration, do_lock=False)
+        resource_map, map_stamp = load_resource_map(
+            configuration, do_lock=False)
     else:
-        configuration.logger.info("Creating clean resource map")
+        _logger.info("Creating clean resource map")
         resource_map = {}
-        map_stamp = 0 
+        map_stamp = 0
 
     # Find all resources and their configurations
 
@@ -240,7 +244,7 @@ def refresh_resource_map(configuration, clean=False):
             (status, res_conf) = get_resource_configuration(
                 configuration.resource_home, res, configuration.logger)
             if not status:
-                configuration.logger.warning(
+                _logger.warning(
                     "could not load conf for %s" % res)
                 continue
             resource_map[res][CONF] = res_conf
@@ -267,7 +271,7 @@ def refresh_resource_map(configuration, clean=False):
             dump(resource_map, map_path)
             os.utime(map_path, (start_time, start_time))
         except Exception, exc:
-            configuration.logger.error("Could not save resource map: %s" % exc)
+            _logger.error("Could not save resource map: %s" % exc)
 
     last_refresh[RESOURCES] = start_time
     lock_handle.close()
@@ -284,6 +288,7 @@ def refresh_vgrid_map(configuration, clean=False):
     save.
     NOTE: Save start time so that any concurrent updates get caught next time.
     """
+    _logger = configuration.logger
     start_time = time.time()
     dirty = {}
     vgrid_changes = {}
@@ -294,9 +299,9 @@ def refresh_vgrid_map(configuration, clean=False):
     if not clean:
         vgrid_map, map_stamp = load_vgrid_map(configuration, do_lock=False)
     else:
-        configuration.logger.info("Creating clean vgrid map")
+        _logger.info("Creating clean vgrid map")
         vgrid_map = {}
-        map_stamp = 0 
+        map_stamp = 0
 
     vgrid_helper = {default_vgrid: {RESOURCES: ['*'],
                                     OWNERS: [], MEMBERS: ['*'],
@@ -331,8 +336,8 @@ def refresh_vgrid_map(configuration, clean=False):
                 vgrid_map[VGRIDS][vgrid] = vgrid_map[VGRIDS].get(vgrid, {})
                 vgrid_map[VGRIDS][vgrid][field] = []
                 if vgrid != default_vgrid and field not in optional_conf:
-                    configuration.logger.warning('missing file: %s' %
-                                                 conf_path)
+                    _logger.warning('missing file: %s' %
+                                    conf_path)
                     dirty[VGRIDS] = dirty.get(VGRIDS, []) + [vgrid]
 
             elif not vgrid_map[VGRIDS].has_key(vgrid) or \
@@ -418,26 +423,26 @@ def refresh_vgrid_map(configuration, clean=False):
 
     # Update list of mutually agreed vgrid participations for dirty resources
     # and resources assigned to dirty vgrids
-    configuration.logger.info(
+    _logger.info(
         "update res vgrid participations: %s" % vgrid_changes)
     update_res = [i for i in dirty.get(RESOURCES, []) if i not in MAP_SECTIONS]
-    # configuration.logger.info("update vgrid allow res")
+    # _logger.info("update vgrid allow res")
     for (vgrid, changes) in vgrid_changes.items():
         old, new = changes.get(RESOURCES, ([], []))
         if old == new:
-            configuration.logger.debug("skip res update of vgrid %s (%s)" %
-                                       (vgrid, changes))
+            _logger.debug("skip res update of vgrid %s (%s)" %
+                          (vgrid, changes))
             continue
-        # configuration.logger.info("update res vgrid %s" % vgrid)
+        # _logger.info("update res vgrid %s" % vgrid)
         for res in [i for i in vgrid_map[RESOURCES].keys()
                     if i not in update_res]:
             # Sandboxes do not change their vgrid participation
             if sandbox_resource(res):
                 continue
-            # configuration.logger.info("update res vgrid %s for res %s" % (vgrid, res))
+            # _logger.info("update res vgrid %s for res %s" % (vgrid, res))
             if vgrid_allowed(res, old) != vgrid_allowed(res, new):
                 update_res.append(res)
-    # configuration.logger.info("update res assign vgrid")
+    # _logger.info("update res assign vgrid")
     for res in [i for i in update_res if i not in missing_res]:
         allowexe, allowstore = [], []
         res_data = vgrid_map[RESOURCES][res]
@@ -459,7 +464,7 @@ def refresh_vgrid_map(configuration, clean=False):
                 allowstore.append(vgrid)
             vgrid_map[RESOURCES][res][ALLOWSTORE] = allowstore
 
-    configuration.logger.info("done updating vgrid res participations")
+    _logger.info("done updating vgrid res participations")
 
     # Find all users and their vgrid assignments
 
@@ -508,15 +513,15 @@ def refresh_vgrid_map(configuration, clean=False):
         old_owners, new_owners = changes.get(OWNERS, ([], []))
         old_members, new_members = changes.get(MEMBERS, ([], []))
         if old_owners == new_owners and old_members == new_members:
-            configuration.logger.debug("skip user update of vgrid %s (%s)" %
-                                       (vgrid, changes))
+            _logger.debug("skip user update of vgrid %s (%s)" %
+                          (vgrid, changes))
             continue
         (old, new) = (old_owners + old_members, new_owners + new_members)
         for user in [i for i in vgrid_map[USERS].keys()
                      if i not in update_user]:
             if vgrid_allowed(user, old) != vgrid_allowed(user, new):
-                configuration.logger.info("update user vgrid %s for user %s" %
-                                          (vgrid, user))
+                _logger.info("update user vgrid %s for user %s" %
+                             (vgrid, user))
                 update_user.append(user)
     for user in [i for i in update_user if i not in missing_user]:
         allow = []
@@ -529,12 +534,12 @@ def refresh_vgrid_map(configuration, clean=False):
             vgrid_map[USERS][user][ALLOW] = allow
 
     if dirty:
-        configuration.logger.info("Saving vgrid map changes: %s" % dirty)
+        _logger.info("Saving vgrid map changes: %s" % dirty)
         try:
             dump(vgrid_map, map_path)
             os.utime(map_path, (start_time, start_time))
         except Exception, exc:
-            configuration.logger.error("Could not save vgrid map: %s" % exc)
+            _logger.error("Could not save vgrid map: %s" % exc)
 
     last_refresh[VGRIDS] = start_time
     lock_handle.close()
@@ -579,17 +584,18 @@ def get_user_map(configuration):
     """Returns the current map of users and their configurations. Caches the
     map for load prevention with repeated calls within short time span.
     """
+    _logger = configuration.logger
     if last_load[USERS] + MAP_CACHE_SECONDS > time.time():
-        configuration.logger.debug("using cached user map")
+        _logger.debug("using cached user map")
         return last_map[USERS]
     modified_users, _ = check_users_modified(configuration)
     if modified_users:
-        configuration.logger.info("refreshing user map (%s)" % modified_users)
+        _logger.info("refreshing user map (%s)" % modified_users)
         map_stamp = load_stamp = time.time()
         user_map = refresh_user_map(configuration)
         reset_users_modified(configuration)
     else:
-        configuration.logger.debug("No changes - not refreshing")
+        _logger.debug("No changes - not refreshing")
         load_stamp = time.time()
         user_map, map_stamp = load_user_map(configuration)
     last_map[USERS] = user_map
@@ -603,18 +609,19 @@ def get_resource_map(configuration):
     Caches the map for load prevention with repeated calls
     within short time span.
     """
+    _logger = configuration.logger
     if last_load[RESOURCES] + MAP_CACHE_SECONDS > time.time():
-        configuration.logger.debug("using cached resource map")
+        _logger.debug("using cached resource map")
         return last_map[RESOURCES]
     modified_resources, _ = check_resources_modified(configuration)
     if modified_resources:
-        configuration.logger.info(
+        _logger.info(
             "refreshing resource map (%s)" % modified_resources)
         map_stamp = load_stamp = time.time()
         resource_map = refresh_resource_map(configuration)
         reset_resources_modified(configuration)
     else:
-        configuration.logger.debug("No changes - not refreshing")
+        _logger.debug("No changes - not refreshing")
         load_stamp = time.time()
         resource_map, map_stamp = load_resource_map(configuration)
     last_map[RESOURCES] = resource_map
@@ -661,19 +668,22 @@ def get_vgrid_map(configuration, recursive=True):
     participation with inherited entities. The raw vgrid map only mirrors the
     direct participation.
     """
+    _logger = configuration.logger
     if last_load[VGRIDS] + MAP_CACHE_SECONDS > time.time():
-        configuration.logger.debug("using cached vgrid map")
+        _logger.debug("using cached vgrid map")
         vgrid_map = last_map[VGRIDS]
     else:
         modified_vgrids, _ = check_vgrids_modified(configuration)
         if modified_vgrids:
-            configuration.logger.info("refreshing vgrid map (%s)" %
-                                      modified_vgrids)
+            _logger.info("refreshing vgrid map (%s)" %
+                         modified_vgrids)
             map_stamp = load_stamp = time.time()
             vgrid_map = refresh_vgrid_map(configuration)
             reset_vgrids_modified(configuration)
+            _logger.info("refreshed vgrid map (%s)" %
+                         modified_vgrids)
         else:
-            configuration.logger.debug("No changes - not refreshing")
+            _logger.debug("No changes - not refreshing")
             load_stamp = time.time()
             vgrid_map, map_stamp = load_vgrid_map(configuration)
         last_map[VGRIDS] = vgrid_map
@@ -876,6 +886,7 @@ def user_allowed_res_units(configuration, client_id, unit_type):
     """Find resource units of unit_type exe or store that client_id is allowed
     to use.
     """
+    _logger = configuration.logger
     allowed = {}
 
     # Extend allowed_vgrids with any parent vgrids here to fit inheritance
@@ -912,7 +923,7 @@ def user_allowed_res_units(configuration, client_id, unit_type):
             allowunit = res_data[ALLOWSTORE]
             assignvgrid = res_data[STOREVGRIDS]
         else:
-            configuration.logger.error("unexpected unit_type: %s" % unit_type)
+            _logger.error("unexpected unit_type: %s" % unit_type)
             return allowed
         # We add the implicit default_vgrid here as it is not in allowunit.
         shared = [i for i in allowunit +
@@ -1114,7 +1125,8 @@ if "__main__" == __name__:
     vgrid_access = user_vgrid_access(conf, user_id, inherited=True)
     vgrid_access.sort()
     print "inherit user access vgrids: %s" % vgrid_access
-    print "inherit user allow and access match: %s" % (vgrids_allowed == vgrid_access)
+    print "inherit user allow and access match: %s" % (
+        vgrids_allowed == vgrid_access)
     # Verify that old-fashioned res_allowed_vgrids matches res_vgrid_access
     vgrids_allowed = res_allowed_vgrids(conf, res_id)
     vgrids_allowed.sort()
