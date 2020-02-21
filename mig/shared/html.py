@@ -645,7 +645,7 @@ def tablesorter_pager(configuration, id_prefix='', entry_name='files',
     toolbar += '''
         <span class="pager-nav-wrap first icon"></span>
         <span class="pager-nav-wrap prev icon"></span>
-        <input class="pagedisplay" type="text" size=15 readonly="readonly" />
+        <input class="pagedisplay" type="text" size=18 readonly="readonly" />
         <span class="pager-nav-wrap next icon"></span>        
         <span class="pager-nav-wrap last icon"></span>        
         <select class="pagesize pager-select styled-select html-select">
