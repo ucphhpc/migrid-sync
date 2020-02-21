@@ -678,8 +678,6 @@ def get_vgrid_map(configuration, recursive=True, caching=False):
             _logger.info("refreshing vgrid map (%s)" %
                          modified_vgrids)
             map_stamp = load_stamp = time.time()
-            # TMP: fake slow update while testing!!!
-            time.sleep(30)
             vgrid_map = refresh_vgrid_map(configuration)
             reset_vgrids_modified(configuration)
             _logger.info("refreshed vgrid map (%s)" %
