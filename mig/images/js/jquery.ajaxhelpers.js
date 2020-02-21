@@ -427,10 +427,8 @@ function ajax_vgridman(vgrid_label, vgrid_links, caching) {
     /* Force caching to boolean if e.g. left out */
     if (!caching) {
         caching = false;
-        loading_msg += " forcing refresh, which may take a while"
+        loading_msg = "Updating "+vgrid_label+"s - may take a while"
     }
-    //console.debug("empty table");
-    $(tbody_elem).empty();
     $("#ajax_status").addClass("spinner iconleftpad");
     $("#ajax_status").html(loading_msg);
     /* Request vgrid list in the background and handle as soon as
@@ -442,6 +440,8 @@ function ajax_vgridman(vgrid_label, vgrid_links, caching) {
       cache: false,
       success: function(jsonRes, textStatus) {
           console.debug("got response from list");
+          //console.debug("empty table");
+          $(tbody_elem).empty();
           var chunk_size = 200;
           var table_entries = "", error = "";
           var i, j, k;
@@ -560,14 +560,13 @@ function ajax_vgridman(vgrid_label, vgrid_links, caching) {
               $("#ajax_status").append("<span class=\'errortext\'>"+
                                        "Error: "+error+"</span>");
           } else if (pending_updates) {
-              /* TODO: trigger async AJAX update call here!
-                       Should change msg to 'update ready' on completion */
-              /*
+              /* NOTE: pending vgrid map update detected - background update */
               $("#ajax_status").append("<span class=\'infotext\'>"+
-                                       "Showing cached list while updating in the background</span>");
-                                       */
-              $("#ajax_status").append("<span class=\'infotext\'>"+
-                                       "Showing cached list - click refresh to update</span>");
+                                       "Loaded cached "+vgrid_label+
+                                       "s - update pending</span>");
+              setTimeout(function() {
+                  ajax_vgridman(vgrid_label, vgrid_links, false);
+              }, 3000);
           }
           $("#vgridtable").trigger("update");
 
