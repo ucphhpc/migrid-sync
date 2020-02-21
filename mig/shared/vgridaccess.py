@@ -661,7 +661,7 @@ def vgrid_inherit_map(configuration, vgrid_map):
     return inherit_map
 
 
-def get_vgrid_map(configuration, recursive=True):
+def get_vgrid_map(configuration, recursive=True, caching=False):
     """Returns the current map of vgrids and their configurations. Caches the
     map for load prevention with repeated calls within short time span.
     The recursive parameter is there to request extension of all sub-vgrids
@@ -674,16 +674,18 @@ def get_vgrid_map(configuration, recursive=True):
         vgrid_map = last_map[VGRIDS]
     else:
         modified_vgrids, _ = check_vgrids_modified(configuration)
-        if modified_vgrids:
+        if modified_vgrids and not caching:
             _logger.info("refreshing vgrid map (%s)" %
                          modified_vgrids)
             map_stamp = load_stamp = time.time()
+            # TMP: fake slow update while testing!!!
+            time.sleep(30)
             vgrid_map = refresh_vgrid_map(configuration)
             reset_vgrids_modified(configuration)
             _logger.info("refreshed vgrid map (%s)" %
                          modified_vgrids)
         else:
-            _logger.debug("No changes - not refreshing")
+            _logger.debug("No changes or forced caching - not refreshing")
             load_stamp = time.time()
             vgrid_map, map_stamp = load_vgrid_map(configuration)
         last_map[VGRIDS] = vgrid_map

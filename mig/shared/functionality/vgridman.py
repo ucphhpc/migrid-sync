@@ -34,6 +34,7 @@ from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import man_base_js, man_base_html, html_post_helper
 from shared.init import initialize_main_variables, find_entry
+from shared.modified import check_vgrids_modified
 from shared.useradm import get_full_user_map
 from shared.vgrid import vgrid_create_allowed
 from shared.vgridaccess import get_vgrid_map, VGRIDS, OWNERS, MEMBERS, SETTINGS
@@ -46,7 +47,8 @@ allowed_operations = list(set(list_operations + show_operations))
 def signature():
     """Signature of the main function"""
 
-    defaults = {'operation': ['show']}
+    defaults = {'operation': ['show'],
+                'caching': ['false']}
     return ['vgrids', defaults]
 
 
@@ -72,6 +74,7 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     operation = accepted['operation'][-1]
+    caching = (accepted['caching'][-1].lower() in ('true', 'yes'))
 
     if not operation in allowed_operations:
         output_objects.append({'object_type': 'error_text', 'text':
@@ -87,7 +90,8 @@ def main(client_id, user_arguments_dict):
     # Check if user wants advanced VGrid component links
 
     user_settings = title_entry.get('user_settings', {})
-    collaboration_links = user_settings.get('SITE_COLLABORATION_LINKS', 'default')
+    collaboration_links = user_settings.get(
+        'SITE_COLLABORATION_LINKS', 'default')
     if not collaboration_links in configuration.site_collaboration_links or \
             collaboration_links == 'default':
         active_vgrid_links += configuration.site_default_vgrid_links
@@ -108,13 +112,16 @@ def main(client_id, user_arguments_dict):
         # jquery support for tablesorter and confirmation on request and leave
         # table initially sorted by col. 2 (admin), then 3 (member), then 0 (name)
 
-        refresh_call = 'ajax_vgridman("%s", %s)' % (label, active_vgrid_links)
+        # NOTE: We distinguish between caching on page load and forced refresh
+        refresh_helper = 'ajax_vgridman("%s", %s, %%s)'
+        refresh_call = refresh_helper % (label, active_vgrid_links)
         table_spec = {'table_id': 'vgridtable', 'sort_order':
-                      '[[2,1],[3,1],[0,0]]', 'refresh_call': refresh_call}
+                      '[[2,1],[3,1],[0,0]]',
+                      'refresh_call': refresh_call % 'false'}
         (add_import, add_init, add_ready) = man_base_js(configuration,
                                                         [table_spec])
         if operation == "show":
-            add_ready += '%s;' % refresh_call
+            add_ready += '%s;' % (refresh_call % 'true')
         title_entry['script']['advanced'] += add_import
         title_entry['script']['init'] += add_init
         title_entry['script']['ready'] += add_ready
@@ -172,7 +179,17 @@ resources.''' % label})
                                'default_entries': default_pager_entries})
 
     if operation in list_operations:
-        vgrid_map = get_vgrid_map(configuration)
+        logger.info("get vgrid map with caching %s" % caching)
+        vgrid_map = get_vgrid_map(configuration, caching=caching)
+        member_list['pending_updates'] = False
+        if caching:
+            modified_vgrids, _ = check_vgrids_modified(configuration)
+            if modified_vgrids:
+                logger.info("pending cache updates: %s" % modified_vgrids)
+                member_list['pending_updates'] = True
+            else:
+                logger.info("no pending cache updates")
+
         vgrid_list = vgrid_map[VGRIDS].keys()
 
         # Iterate through vgrids and print details for each

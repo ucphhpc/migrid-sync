@@ -419,17 +419,24 @@ function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_updating,
   });
 }
 
-function ajax_vgridman(vgrid_label, vgrid_links) {
-    console.debug("load vgrids");
+function ajax_vgridman(vgrid_label, vgrid_links, caching) {
+    console.debug("load vgrids - with caching "+caching);
     var tbody_elem = $("#vgridtable tbody");
+    var pending_updates = false;
+    var loading_msg = "Loading "+vgrid_label+"s ...";
+    /* Force caching to boolean if e.g. left out */
+    if (!caching) {
+        caching = false;
+        loading_msg += " forcing refresh, which may take a while"
+    }
     //console.debug("empty table");
     $(tbody_elem).empty();
     $("#ajax_status").addClass("spinner iconleftpad");
-    $("#ajax_status").html("Loading "+vgrid_label+"s ...");
+    $("#ajax_status").html(loading_msg);
     /* Request vgrid list in the background and handle as soon as
     results come in */
     $.ajax({
-      url: "?output_format=json;operation=list",
+      url: "?output_format=json;operation=list;caching="+caching,
       type: "GET",
       dataType: "json",
       cache: false,
@@ -446,8 +453,11 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
                   console.error("list: "+jsonRes[i].text);
                   error += jsonRes[i].text;
               } else if (jsonRes[i].object_type === "vgrid_list") {
+                  if (caching) {
+                      pending_updates = jsonRes[i].pending_updates;
+                  }
                   var vgrids = jsonRes[i].vgrids;
-                  for (j=0; j<vgrids.length; j++) {
+                  for (j=0; j < vgrids.length; j++) {
                       vgrid = vgrids[j];
                       //console.info("found vgrid: "+vgrid.name);
                       var viewlink = format_link(vgrid.viewvgridlink);
@@ -549,6 +559,15 @@ function ajax_vgridman(vgrid_label, vgrid_links) {
           if (error) {
               $("#ajax_status").append("<span class=\'errortext\'>"+
                                        "Error: "+error+"</span>");
+          } else if (pending_updates) {
+              /* TODO: trigger async AJAX update call here!
+                       Should change msg to 'update ready' on completion */
+              /*
+              $("#ajax_status").append("<span class=\'infotext\'>"+
+                                       "Showing cached list while updating in the background</span>");
+                                       */
+              $("#ajax_status").append("<span class=\'infotext\'>"+
+                                       "Showing cached list - click refresh to update</span>");
           }
           $("#vgridtable").trigger("update");
 
