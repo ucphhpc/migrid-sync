@@ -974,7 +974,7 @@ background: url(/images/icons/compress.png) left center no-repeat;
     padding-left: 25px;
 }
 .shadeinfolink {
-    background: url('/images/icons/information_grey.png') no-repeat;
+    background: url('/images/icons/information_grey.svg') no-repeat;
     padding-left: 18px;
     background-size: 18px 18px;
     background-position: left center;
