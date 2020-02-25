@@ -427,7 +427,7 @@ function ajax_vgridman(vgrid_label, vgrid_links, caching) {
     /* Force caching to boolean if e.g. left out */
     if (!caching) {
         caching = false;
-        loading_msg = "Updating "+vgrid_label+"s - may take a while"
+        loading_msg = "Updating "+vgrid_label+"s - may take a while";
     }
     $("#ajax_status").addClass("spinner iconleftpad");
     $("#ajax_status").html(loading_msg);
@@ -578,22 +578,29 @@ function ajax_vgridman(vgrid_label, vgrid_links, caching) {
   });
 }
 
-function ajax_resman() {
-    console.debug("load resources");
+function ajax_resman(caching) {
+    console.debug("load resources - with caching "+caching);
     var tbody_elem = $("#resourcetable tbody");
-    //console.debug("empty table");
-    $(tbody_elem).empty();
+    var pending_updates = false;
+    var loading_msg = "Loading resources ...";
+    /* Force caching to boolean if e.g. left out */
+    if (!caching) {
+        caching = false;
+        loading_msg = "Updating resources - may take a while";
+    }
     $("#ajax_status").addClass("spinner iconleftpad");
-    $("#ajax_status").html("Loading resources ...");
+    $("#ajax_status").html(loading_msg);
     /* Request resource list in the background and handle as soon as
     results come in */
     $.ajax({
-      url: "?output_format=json;operation=list",
+      url: "?output_format=json;operation=list;caching="+caching,
       type: "GET",
       dataType: "json",
       cache: false,
       success: function(jsonRes, textStatus) {
           console.debug("got response from list");
+          //console.debug("empty table");
+          $(tbody_elem).empty();
           var chunk_size = 200;
           var table_entries = "", error = "";
           var i, j, k;
@@ -605,6 +612,9 @@ function ajax_resman() {
                   console.error("list: "+jsonRes[i].text);
                   error += jsonRes[i].text;
               } else if (jsonRes[i].object_type === "resource_list") {
+                  if (caching) {
+                      pending_updates = jsonRes[i].pending_updates;
+                  }
                   var resources = jsonRes[i].resources;
                   for (j=0; j<resources.length; j++) {
                       resource = resources[j];
@@ -653,6 +663,13 @@ function ajax_resman() {
           if (error) {
               $("#ajax_status").append("<span class=\'errortext\'>"+
                                        "Error: "+error+"</span>");
+          } else if (pending_updates) {
+              /* NOTE: pending resource map update detected - background update */
+              $("#ajax_status").append("<span class=\'infotext\'>"+
+                                       "Loaded cached resources - update pending</span>");
+              setTimeout(function() {
+                  ajax_resman(false);
+              }, 3000);
           }
           $("#resourcetable").trigger("update");
 
@@ -664,22 +681,29 @@ function ajax_resman() {
   });
 }
 
-function ajax_people(protocols) {
-    console.debug("load users");
+function ajax_people(protocols, caching) {
+    console.debug("load users - with caching "+caching);
     var tbody_elem = $("#usertable tbody");
-    //console.debug("empty table");
-    $(tbody_elem).empty();
+    var pending_updates = false;
+    var loading_msg = "Loading users ...";
+    /* Force caching to boolean if e.g. left out */
+    if (!caching) {
+        caching = false;
+        loading_msg = "Updating users - may take a while";
+    }
     $("#ajax_status").addClass("spinner iconleftpad");
-    $("#ajax_status").html("Loading users ...");
+    $("#ajax_status").html(loading_msg);
     /* Request user list in the background and handle as soon as
     results come in */
     $.ajax({
-      url: "?output_format=json;operation=list",
+      url: "?output_format=json;operation=list;caching="+caching,
       type: "GET",
       dataType: "json",
       cache: false,
       success: function(jsonRes, textStatus) {
           console.debug("got response from list");
+          //console.debug("empty table");
+          $(tbody_elem).empty();
           var chunk_size = 200;
           var table_entries = "", error = "";
           var i, j, k;
@@ -691,6 +715,9 @@ function ajax_people(protocols) {
                   console.error("list: "+jsonRes[i].text);
                   error += jsonRes[i].text;
               } else if (jsonRes[i].object_type === "user_list") {
+                  if (caching) {
+                      pending_updates = jsonRes[i].pending_updates;
+                  }
                   var users = jsonRes[i].users;
                   for (j=0; j<users.length; j++) {
                       usr = users[j];
@@ -728,6 +755,13 @@ function ajax_people(protocols) {
           if (error) {
               $("#ajax_status").append("<span class=\'errortext\'>"+
                                        "Error: "+error+"</span>");
+          } else if (pending_updates) {
+              /* NOTE: pending vgrid map update detected - background update */
+              $("#ajax_status").append("<span class=\'infotext\'>"+
+                                       "Loaded cached users - update pending</span>");
+              setTimeout(function() {
+                  ajax_people(protocols, false);
+              }, 3000);
           }
           $("#usertable").trigger("update");
 

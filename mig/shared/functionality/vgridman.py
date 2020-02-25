@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridman - backend to manage vgrids
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #

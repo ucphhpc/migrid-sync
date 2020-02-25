@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resman - manage resources
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,6 +36,7 @@ from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import man_base_js, man_base_html, html_post_helper
 from shared.init import initialize_main_variables, find_entry
+from shared.modified import check_resources_modified, check_vgrids_modified
 from shared.resource import anon_to_real_res_map
 from shared.vgridaccess import user_visible_res_confs, get_resource_map, \
     OWNERS, CONF
@@ -48,7 +49,8 @@ allowed_operations = list(set(list_operations + show_operations))
 def signature():
     """Signature of the main function"""
 
-    defaults = {'show_sandboxes': ['false'], 'operation': ['show']}
+    defaults = {'show_sandboxes': ['false'], 'operation': ['show'],
+                'caching': ['false']}
     return ['resources', defaults]
 
 
@@ -74,6 +76,7 @@ def main(client_id, user_arguments_dict):
 
     show_sandboxes = (accepted['show_sandboxes'][-1] != 'false')
     operation = accepted['operation'][-1]
+    caching = (accepted['caching'][-1].lower() in ('true', 'yes'))
 
     if not configuration.site_enable_resources:
         output_objects.append({'object_type': 'error_text', 'text':
@@ -87,18 +90,20 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.OK)
 
     logger.info("%s %s begin for %s" % (op_name, operation, client_id))
+    pending_updates = False
     if operation in show_operations:
 
         # jquery support for tablesorter and confirmation on delete
         # table initially sorted by col. 1 (admin), then 0 (name)
 
-        refresh_call = 'ajax_resman()'
+        # NOTE: We distinguish between caching on page load and forced refresh
+        refresh_call = 'ajax_resman(%s)'
         table_spec = {'table_id': 'resourcetable', 'sort_order':
-                      '[[1,0],[0,0]]', 'refresh_call': refresh_call}
+                      '[[1,0],[0,0]]', 'refresh_call': refresh_call % 'false'}
         (add_import, add_init, add_ready) = man_base_js(configuration,
                                                         [table_spec])
         if operation == "show":
-            add_ready += '%s;' % refresh_call
+            add_ready += '%s;' % refresh_call % 'true'
         title_entry['script']['advanced'] += add_import
         title_entry['script']['init'] += add_init
         title_entry['script']['ready'] += add_ready
@@ -145,10 +150,25 @@ to open resource management.
 
     resources = []
     if operation in list_operations:
-        # TODO: next call is slow because we walk and reload all pickles
-        visible_res_confs = user_visible_res_confs(configuration, client_id)
-        res_map = get_resource_map(configuration)
+        logger.info("get vgrid and resource map with caching %s" % caching)
+        visible_res_confs = user_visible_res_confs(configuration, client_id,
+                                                   caching)
+        res_map = get_resource_map(configuration, caching)
         anon_map = anon_to_real_res_map(configuration.resource_home)
+
+        if caching:
+            modified_resources, _ = check_resources_modified(configuration)
+            modified_vgrids, _ = check_vgrids_modified(configuration)
+            if modified_resources:
+                logger.info("pending resource cache updates: %s" %
+                            modified_resources)
+                pending_updates = True
+            elif modified_vgrids:
+                logger.info("pending vgrid cache updates: %s" %
+                            modified_vgrids)
+                pending_updates = True
+            else:
+                logger.info("no pending cache updates")
 
         # Iterate through resources and show management for each one requested
 
@@ -234,8 +254,9 @@ to open resource management.
         res_obj = {'object_type': 'resource', 'name': ''}
         resources.append(res_obj)
 
-    output_objects.append({'object_type': 'resource_list', 'resources':
-                           resources})
+    output_objects.append({'object_type': 'resource_list',
+                           'pending_updates': pending_updates,
+                           'resources': resources})
 
     if operation in show_operations:
         if configuration.site_enable_sandboxes:

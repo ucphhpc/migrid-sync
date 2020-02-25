@@ -147,7 +147,7 @@ def initialize_main_variables(client_id, op_title=True, op_header=True,
                 user_profile['full_name'] = full_name
                 user_profile['profile_image'] = profile_image
                 title['user_profile'] = user_profile
-                logger.info('setting user profile: %s' % user_profile)
+                logger.debug('setting user profile: %s' % user_profile)
     else:
         # No user so we just enforce default site style and scripts
         title = find_entry(output_objects, 'title')

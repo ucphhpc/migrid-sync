@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # people - view and communicate with other users
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,6 +36,7 @@ from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import man_base_js, man_base_html, html_post_helper
 from shared.init import initialize_main_variables, find_entry
+from shared.modified import check_users_modified, check_vgrids_modified
 from shared.user import anon_to_real_user_map
 from shared.vgridaccess import user_visible_user_confs, user_vgrid_access, \
     CONF
@@ -48,7 +49,8 @@ allowed_operations = list(set(list_operations + show_operations))
 def signature():
     """Signature of the main function"""
 
-    defaults = {'operation': ['show']}
+    defaults = {'operation': ['show'],
+                'caching': ['false']}
     return ['users', defaults]
 
 
@@ -72,6 +74,7 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     operation = accepted['operation'][-1]
+    caching = (accepted['caching'][-1].lower() in ('true', 'yes'))
 
     if not operation in allowed_operations:
         output_objects.append({'object_type': 'text', 'text':
@@ -80,19 +83,22 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.OK)
 
     logger.info("%s %s begin for %s" % (op_name, operation, client_id))
+    pending_updates = False
     if operation in show_operations:
 
         # jquery support for tablesorter and confirmation on "send"
         # table initially sorted by 0 (name)
 
-        refresh_call = 'ajax_people(%s)' % configuration.notify_protocols
+        # NOTE: We distinguish between caching on page load and forced refresh
+        refresh_helper = 'ajax_people(%s, %%s)'
+        refresh_call = refresh_helper % configuration.notify_protocols
         table_spec = {'table_id': 'usertable', 'sort_order': '[[0,0]]',
-                      'refresh_call': refresh_call}
+                      'refresh_call': refresh_call % 'false'}
         (add_import, add_init, add_ready) = man_base_js(configuration,
                                                         [table_spec],
                                                         {'width': 640})
         if operation == "show":
-            add_ready += '%s;' % refresh_call
+            add_ready += '%s;' % (refresh_call % 'true')
         title_entry['script']['advanced'] += add_import
         title_entry['script']['init'] += add_init
         title_entry['script']['ready'] += add_ready
@@ -132,13 +138,29 @@ def main(client_id, user_arguments_dict):
 
     users = []
     if operation in list_operations:
-        visible_user = user_visible_user_confs(configuration, client_id)
-        vgrid_access = user_vgrid_access(configuration, client_id)
+        logger.info("get vgrid and user map with caching %s" % caching)
+        visible_user = user_visible_user_confs(configuration, client_id,
+                                               caching)
+        vgrid_access = user_vgrid_access(configuration, client_id,
+                                         caching=caching)
         anon_map = anon_to_real_user_map(configuration)
         if not visible_user:
             output_objects.append(
                 {'object_type': 'error_text', 'text': 'no users found!'})
             return (output_objects, returnvalues.SYSTEM_ERROR)
+
+        if caching:
+            modified_users, _ = check_users_modified(configuration)
+            modified_vgrids, _ = check_vgrids_modified(configuration)
+            if modified_users:
+                logger.info("pending user cache updates: %s" % modified_users)
+                pending_updates = True
+            elif modified_vgrids:
+                logger.info("pending vgrid cache updates: %s" %
+                            modified_vgrids)
+                pending_updates = True
+            else:
+                logger.info("no pending cache updates")
 
         for (visible_user_id, user_dict) in visible_user.items():
             user_id = visible_user_id
@@ -207,6 +229,7 @@ def main(client_id, user_arguments_dict):
         users.append(user_obj)
 
     output_objects.append({'object_type': 'user_list',
+                           'pending_updates': pending_updates,
                            'users': users})
 
     logger.info("%s %s end for %s" % (op_name, operation, client_id))
