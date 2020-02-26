@@ -60,6 +60,7 @@ from shared.vgridaccess import get_vgrid_map, VGRIDS, user_vgrid_access
 WRITE_LOCK = 'write.lock'
 WORKFLOW_PATTERN = 'workflowpattern'
 WORKFLOW_RECIPE = 'workflowrecipe'
+WORKFLOW_HISTORY = 'workflowhistory'
 WORKFLOW_ANY = 'any'
 WORKFLOW_API_DB_NAME = 'workflow_api_db'
 WORKFLOW_TYPES = [WORKFLOW_PATTERN, WORKFLOW_RECIPE, WORKFLOW_ANY]
@@ -78,6 +79,31 @@ MAP_CACHE_SECONDS = 60
 last_load = {WORKFLOW_PATTERNS: 0, WORKFLOW_RECIPES: 0}
 last_refresh = {WORKFLOW_PATTERNS: 0, WORKFLOW_RECIPES: 0}
 last_map = {WORKFLOW_PATTERNS: {}, WORKFLOW_RECIPES: {}}
+
+job_env_vars_map = {
+    'PATH': 'ENV_WORKFLOW_INPUT_PATH',
+    'REL_PATH': 'ENV_WORKFLOW_REL_INPUT_PATH',
+    'DIR': 'ENV_WORKFLOW_DIR_NAME',
+    'REL_DIR': 'ENV_WORKFLOW_REL_DIR_NAME',
+    'FILENAME': 'ENV_WORKFLOW_INPUT_FILENAME',
+    'PREFIX': 'ENV_WORKFLOW_INPUT_PREFIX',
+    'EXTENSION': 'ENV_WORKFLOW_INPUT_EXTENSION',
+    'VGRID': 'ENV_WORKFLOW_VGRID_NAME',
+    'JOB': 'ENV_JOB_ID'
+    # 'USER': '',
+}
+
+vgrid_env_vars_map = {
+    'ENV_WORKFLOW_INPUT_PATH': '+TRIGGERPATH+',
+    'ENV_WORKFLOW_REL_INPUT_PATH': '+TRIGGERRELPATH+',
+    'ENV_WORKFLOW_DIR_NAME': '+TRIGGERDIRNAME+',
+    'ENV_WORKFLOW_REL_DIR_NAME': '+TRIGGERRELDIRNAME+',
+    'ENV_WORKFLOW_INPUT_FILENAME': '+TRIGGERFILENAME+',
+    'ENV_WORKFLOW_INPUT_PREFIX': '+TRIGGERPREFIX+',
+    'ENV_WORKFLOW_INPUT_EXTENSION': '+TRIGGEREXTENSION+',
+    'ENV_WORKFLOW_VGRID_NAME': '+TRIGGERVGRIDNAME+',
+    'ENV_JOB_ID': '+JOBID+'
+}
 
 # A persistent correct pattern
 VALID_PATTERN = {
@@ -1028,7 +1054,8 @@ def init_workflow_home(configuration, vgrid, workflow_type=WORKFLOW_PATTERN):
     Creates directories in which to save workflow object data.
     :param configuration: The MiG configuration object.
     :param vgrid: The MiG VGrid
-    :param workflow_type: The MiG workflow type.
+    :param workflow_type: The MiG workflow type. Can be workflowpattern,
+    workflowrecipe, or workflowhistory.
     :return: (Tuple (boolean, string)) The first value is True if the required
     directory has been created or already exists, and is False if it cannot be
     created. If False, then an accompanying error message is provided in the
@@ -1045,6 +1072,9 @@ def init_workflow_home(configuration, vgrid, workflow_type=WORKFLOW_PATTERN):
     elif workflow_type == WORKFLOW_RECIPE:
         path = os.path.join(vgrid_path,
                             configuration.workflows_vgrid_recipes_home)
+    elif workflow_type == WORKFLOW_HISTORY:
+        path = os.path.join(vgrid_path,
+                            configuration.workflows_vgrid_history_home)
 
     if not path:
         return (False, "Failed to setup init workflow home '%s' in vgrid '%s'"
@@ -1684,8 +1714,8 @@ def __create_workflow_pattern_entry(configuration, client_id, vgrid,
 
     # Create a trigger of each associated input path with an empty `template`
     for path in workflow_pattern['input_paths']:
-        trigger, msg = create_workflow_trigger(configuration, client_id, vgrid,
-                                               path)
+        trigger, msg = create_workflow_trigger(
+            configuration, client_id, vgrid, path, workflow_pattern)
         if not trigger:
             return (False, msg)
 
@@ -1964,8 +1994,8 @@ def __update_workflow_pattern(configuration, client_id, vgrid,
 
         # Create empty trigger for path
         for path in missing_paths:
-            trigger, msg = create_workflow_trigger(configuration, client_id,
-                                                   vgrid, path)
+            trigger, msg = create_workflow_trigger(
+                configuration, client_id, vgrid, path, workflow_pattern)
             if not trigger:
                 return (False, msg)
 
@@ -2123,6 +2153,8 @@ def __update_workflow_recipe(configuration, client_id, vgrid, workflow_recipe,
 
     for variable in workflow_recipe.keys():
         recipe[variable] = workflow_recipe[variable]
+        
+    # TODO, update workflow task file if new is provided
 
     recipe, msg = __build_wr_object(configuration, **recipe)
     if not recipe:
@@ -2203,7 +2235,9 @@ def __prepare_template(configuration, template, **kwargs):
         if r_key not in kwargs:
             kwargs[r_key] = ''
 
-    # Prepare job executable
+    # Prepare job executable. Note thet CPUCOUNT, NODECOUNT and MEMORY must
+    # be more than zero for the job to be considered feasible.
+
     template_mrsl = \
         """
 ::EXECUTE::
@@ -2215,8 +2249,8 @@ def __prepare_template(configuration, template, **kwargs):
 ::RETRIES::
 0
 
-::MEMORY::
-0
+::MEMORY:: 
+256
 
 ::DISK::
 0
@@ -2225,21 +2259,24 @@ def __prepare_template(configuration, template, **kwargs):
 0
 
 ::CPUCOUNT::
-0
+1
 
 ::NODECOUNT::
-0
-
-::VGRID::
-+TRIGGERVGRIDNAME+
+1
 
 ::MOUNT::
 +TRIGGERVGRIDNAME+ +TRIGGERVGRIDNAME+
+
+::VGRID::
++TRIGGERVGRIDNAME+
 
 ::ENVIRONMENT::
 LC_ALL=en_US.utf8
 PYTHONPATH=+TRIGGERVGRIDNAME+
 WORKFLOW_INPUT_PATH=+TRIGGERPATH+
+
+::NOTIFY::
+email: SETTINGS
 
 ::RUNTIMEENVIRONMENT::
 NOTEBOOK_PARAMETERIZER
@@ -2535,7 +2572,7 @@ def delete_workflow_task_file(configuration, vgrid, task_name):
 def get_task_parameter_path(configuration, vgrid, pattern, extension='.yaml',
                             relative=False):
     """
-    Gets path to a parameter file based on a given pattern.
+    Gets path to a base parameter file based on a given pattern.
     :param configuration: The MiG configuration object.
     :param vgrid: The MiG VGrid containing the parameter file.
     :param pattern: Workflow pattern used to generate parameter file.
@@ -2561,7 +2598,8 @@ def get_task_parameter_path(configuration, vgrid, pattern, extension='.yaml',
 def __create_task_parameter_file(configuration, vgrid, pattern,
                                  serializer='yaml'):
     """
-    Create a yaml task parameter file that can be used by the executed task.
+    Create a yaml task base parameter file that can be used by to generate job
+    parameter files.
     :param configuration: The MiG configuration object.
     :param vgrid: The MiG VGrid containing the parameter file.
     :param pattern: Workflow pattern used to generate parameter file.
@@ -2584,16 +2622,36 @@ def __create_task_parameter_file(configuration, vgrid, pattern,
         _logger.error(msg)
         return (False, msg)
 
+    job_env_vars = [item for item in job_env_vars_map.keys()]
+
     input_file = pattern.get('input_file', VALID_PATTERN['input_file'])
     parameter_dict = {}
     if input_file:
         parameter_dict.update({input_file: "ENV_WORKFLOW_INPUT_PATH"})
-    # Ensure that output variables are based of the vgrid root dir
-    output = pattern.get('output', VALID_PATTERN['output'])
-    parameter_dict.update(
-        {key: os.path.join(vgrid, value) for key, value in output.items()}
-    )
-    parameter_dict.update(pattern.get('variables', VALID_PATTERN['variables']))
+
+    for var_name, var_value \
+            in pattern.get('variables', VALID_PATTERN['variables']).items():
+        if var_name != input_file:
+            # TODO change this to recursive search through any parameter
+            #  type
+            for env_var in job_env_vars:
+                full_env_var = "{%s}" % env_var
+                if isinstance(var_value, str) and full_env_var in var_value:
+                    var_value = "ENV_%s" % var_name
+            parameter_dict[var_name] = var_value
+
+    for var_name, var_value \
+            in pattern.get('output', VALID_PATTERN['output']).items():
+        if var_name != input_file:
+            # TODO change this to recursive search through any parameter
+            #  type
+            var_value = os.path.join(vgrid, var_value)
+            for env_var in job_env_vars:
+                full_env_var = "{%s}" % env_var
+                if isinstance(var_value, str) and full_env_var in var_value:
+                    var_value = "ENV_%s" % var_name
+            parameter_dict[var_name] = var_value
+
     try:
         dump(parameter_dict, path, serializer=serializer, mode='w',
              **{'default_flow_style': False})
@@ -2648,7 +2706,7 @@ def __delete_task_parameter_file(configuration, vgrid, pattern):
     return delete_file(path, _logger, allow_missing=True)
 
 
-def create_workflow_trigger(configuration, client_id, vgrid, path,
+def create_workflow_trigger(configuration, client_id, vgrid, path, pattern,
                             arguments=None, templates=None):
     """
     Creates a workflow trigger for a given path.
@@ -2657,6 +2715,7 @@ def create_workflow_trigger(configuration, client_id, vgrid, path,
     :param vgrid: The MiG VGrid containing trigger.
     :param path: Path against which events will be tested to determine if
     trigger fires or not. Paths are relative to the containing VGrid.
+    :param pattern: pattern dict this trigger is assosiated with.
     :param arguments: [optional] (list) list of additional trigger arguments.
     :param templates: [optional] (list) list of additional trigger templates.
     :return: (Tuple (boolean or dict, string)) A tuple is returned. If a
@@ -2684,6 +2743,35 @@ def create_workflow_trigger(configuration, client_id, vgrid, path,
                         % rule_id)
         return (False, "Failed to create trigger, conflicting rule_id")
 
+    job_env_vars = [item for item in job_env_vars_map.keys()]
+
+    environment_variables = {}
+    if 'variables' in pattern:
+        for var_name, var_value in pattern['variables'].items():
+            if var_name == pattern['input_file']:
+                continue
+            # TODO change this to recursive search through any parameter type
+            for env_var in job_env_vars:
+                full_env_var = "{%s}" % env_var
+                if isinstance(var_value, str) and full_env_var in var_value:
+                    environment_variables[var_name] = \
+                        var_value.replace(
+                            full_env_var,
+                            vgrid_env_vars_map[job_env_vars_map[env_var]])
+
+    if 'output' in pattern:
+        for var_name, var_value in pattern['output'].items():
+            if var_name != pattern['input_file']:
+                # TODO change this to recursive search through any parameter
+                #  type
+                for env_var in job_env_vars:
+                    full_env_var = "{%s}" % env_var
+                    if isinstance(var_value, str) and full_env_var in var_value:
+                        environment_variables[var_name] = \
+                            var_value.replace(
+                                full_env_var,
+                                vgrid_env_vars_map[job_env_vars_map[env_var]])
+
     # See addvgridtrigger.py#86 NOTE about normalizing trigger path
     norm_path = os.path.normpath(path.strip()).lstrip(os.sep)
     # TODO, for now set the settle_time to 1s
@@ -2692,6 +2780,10 @@ def create_workflow_trigger(configuration, client_id, vgrid, path,
     rule_dict = {
         'rule_id': rule_id,
         'vgrid_name': vgrid,
+        'pattern_id': pattern['persistence_id'],
+        # Some variables will only be defined at job creation, and so are
+        # passed to the final job as additional environment variables.
+        'environment_vars': environment_variables,
         'path': norm_path,
         'changes': ['created', 'modified'],
         'run_as': client_id,

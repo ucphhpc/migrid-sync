@@ -122,6 +122,9 @@ workflow = {
     # 'required': [],
     # 'optional': [workflowpattern, workflowrecipe]
 }
+job_dict = {
+    'object_type': 'job_dict'
+}
 
 frozenfile = {'object_type': 'frozenfile', 'required':
               ['name', 'size', 'checksum', 'timestamp'], 'optional': []}
@@ -396,6 +399,7 @@ valid_types_list = [
     trigger_job,
     warning,
     job_list,
+    job_dict,
     trigger_job_list,
     trigger_log,
     crontab_log,
@@ -557,8 +561,7 @@ def validate(input_object):
                         # return (False, "%s has an invalid member %s, valid required members: %s, valid optional members: %s" % (obj, checkele, ", ".join(valid_object_type["required"]), ", ".join(valid_object_type["optional"])))
 
             if valid_object_type.has_key('required_list'):
-                for (req, reqtype) in valid_object_type['required_list'
-                                                        ]:
+                for (req, reqtype) in valid_object_type['required_list']:
                     if not obj.has_key(req):
                         return (False,
                                 'Required list  %s for object_type %s not found!'

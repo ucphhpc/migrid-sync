@@ -39,6 +39,7 @@ from shared.defaults import default_vgrid, any_vgrid, src_dst_sep
 from shared.fileio import unpickle, pickle, send_message_to_grid_script
 from shared.refunctions import is_runtime_environment
 from shared.safeinput import html_escape, valid_path
+from shared.vgrid import vgrid_add_recent_jobs, JOB_ID, JOB_CLIENT
 from shared.vgridaccess import user_vgrid_access
 
 try:
@@ -310,7 +311,6 @@ environment '%s', therefore the job can not be run on any resources.""" % \
             return (False, err.__str__())
     
     # save file
-
     if outfile == 'AUTOMATIC':
         filename = \
             os.path.abspath(os.path.join(configuration.mrsl_files_dir,
@@ -327,6 +327,16 @@ environment '%s', therefore the job can not be run on any resources.""" % \
         # grid_script
 
         return (True, '')
+
+    # update vgrid recent jobs list
+
+    for vgrid in vgrid_list:
+        if vgrid != default_vgrid:
+            job_queue_entry = {
+                JOB_ID: job_id,
+                JOB_CLIENT: client_id
+            }
+            vgrid_add_recent_jobs(configuration, vgrid, [job_queue_entry])
 
     # tell 'grid_script'
 

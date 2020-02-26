@@ -31,9 +31,12 @@ import fcntl
 import os
 import time
 
+from glob import glob
+
 from shared.base import client_id_dir
 from shared.fileio import send_message_to_grid_script, unpickle
 from shared.mrslparser import parse
+from shared.vgrid import vgrid_owners, vgrid_members
 
 JOB = 'job'
 QUEUE = 'queue'
@@ -285,6 +288,76 @@ def get_job_ids_with_specified_project_name(
             if job_dict['PROJECT'] == project_name:
                 matching_job_ids.append(job_dict['JOB_ID'])
     return matching_job_ids
+
+
+def get_job_with_id(configuration, job_id, client_id=None, vgrid=None,
+                    only_user_jobs=True):
+    """Retrieves the job mrsl definition of a given job id. Optional
+    parameters client_id and vgrid should be provided to speed up search if
+    they are known at function call. If only_user_jobs is true then a
+    client_id must be provided and only jobs that match that id will be
+    returned."""
+
+    # This will try and retrieve a jobs mrsl file as efficiently as possible
+    # depending on what help the function caller can provide. If a caller
+    # already knows the client_id then we can attempt to go straight to the
+    # job file, otherwise we will need to search through all users in a vgrid.
+    # If that fails then an exhaustive search of all jobs will be needed but
+    # this should only be used as a last resort as this will be an extremely
+    # costly action.
+
+    if only_user_jobs and not client_id:
+        return (False, "Cannot retrieve a job without 'client_id' being set. ")
+
+    # If client id is provided we can jump straight to the file without
+    # needing to search
+    if client_id:
+        path = os.path.abspath(
+            os.path.join(configuration.mrsl_files_dir, client_id, job_id)
+        )
+
+        if os.path.exists(path):
+            job_dict = unpickle(path, configuration.logger)
+
+            if job_dict:
+                return (True, job_dict)
+
+        if only_user_jobs:
+            return (False, "Could not locate job file '%s' for user '%s'"
+                    % (job_id, client_id))
+
+    users = []
+    # If vgrid is known we can just search through the users on that vgrid.
+    if vgrid:
+        owner_status, owners = vgrid_owners(vgrid, configuration)
+        if owner_status:
+            users += owner_status
+        member_status, members = vgrid_members(vgrid, configuration)
+        if member_status:
+            users += member_status
+        for user in users:
+            path = os.path.abspath(
+                os.path.join(configuration.mrsl_files_dir, user, job_id)
+            )
+
+            matches = glob(path)
+            if not matches:
+                break
+            if len(matches) > 1:
+                break
+            return (True, matches[0])
+
+    # If we don't know the vgrid we need to search through all mrsl files
+    path = os.path.abspath(
+        os.path.join(configuration.mrsl_files_dir, '*', job_id)
+    )
+
+    matches = glob(path)
+    if not matches:
+        return (False, "Could not locate job file for job '%s'." % job_id)
+    if len(matches) > 1:
+        return (False, "Multiple matches for job file for job '%s'." % job_id)
+    return (True, matches[0])
 
 
 def fields_to_mrsl(configuration, user_arguments_dict, external_dict):

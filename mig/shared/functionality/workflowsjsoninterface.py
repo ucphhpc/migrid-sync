@@ -79,8 +79,7 @@ def type_value_checker(type_value):
     Validate that the provided workflow type is allowed. A ValueError
     Exception will be raised if type_value is invalid.
     :param type_value: The type to be checked. Valid types are
-    'workflowpattern', 'workflowrecipe', 'any', 'manual_trigger',
-    'cancel_job', 'resubmit_job', 'pattern_graph', 'job', and 'queue'
+    'workflowpattern', 'workflowrecipe', 'any', and 'manual_trigger'.
     :return: No return
     """
     valid_types = WORKFLOW_TYPES + WORKFLOW_ACTION_TYPES +\
@@ -178,11 +177,11 @@ def workflow_api_read(configuration, workflow_session,
     'pattern_graph'. Default is 'workflowpattern'.
     :param workflow_attributes: dictionary of arguments used to select the
     workflow object to read.
-    :return: (Tuple (boolean, string) or function call to,
+    :return: (Tuple (boolean, string) or function call to 'get_jobs_with',
     'get_workflow_with' or 'search_workflow') If the given workflow_type is
-    either 'job' or 'queue' will be called. If
+    either 'job' or 'queue' the function 'get_jobs_with' will be called. If
     the given workflow type is either 'workflowpattern', 'workflowrecipe', or
-    'any' the fucntion 'get_workflow_with' is called. If the given
+    'any' the function 'get_workflow_with' is called. If the given
     workflow_type is 'pattern_graph' the function 'search_workflow' is called.
     If the given workflow_type is none of the above a tuple is returned with a
     first value of False, and an explanatory error message as the second value.
@@ -191,6 +190,7 @@ def workflow_api_read(configuration, workflow_session,
     _logger.debug("W_API: search: (%s, %s, %s)" % (workflow_session,
                                                    workflow_type,
                                                    workflow_attributes))
+
     if workflow_type in WORKFLOW_TYPES:
         workflows = get_workflow_with(configuration,
                                       workflow_session['owner'],

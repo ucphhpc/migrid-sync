@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # safeinput - user input validation functions
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -57,6 +57,11 @@ VALID_WORKFLOW_ATTRIBUTES = [
     'recipes',
     'variables',
     'parameterize_over'
+]
+
+VALID_JOB_ATTRIBUTES = [
+    'job_id',
+    'vgrid'
 ]
 
 # Accented character constant helpers - the allowed set of accented characters
@@ -676,7 +681,7 @@ def valid_path_patterns(
     pattern_list,
     min_length=1,
     max_length=4096,
-    extra_chars='.*?',
+    extra_chars='.*?{}',
 ):
     """Verify that supplied pattern_list only contains characters that
     we consider valid in paths. Valid wild card characters are added
@@ -909,7 +914,7 @@ def valid_workflow_output(output):
         # Validate that the output key is a variable
         # name compliant string
         valid_alphanumeric(o_key, extra_chars='_')
-        valid_path_pattern(o_value, min_length=0)
+        valid_path_pattern(o_value, min_length=0, extra_chars='{}')
 
 
 def valid_workflow_recipes(recipes):
@@ -931,7 +936,7 @@ def valid_workflow_variables(vars):
         raise InputException("Workflow attribute '%s' must "
                              "be of type: '%s'" % (vars, dict))
     for _key, _value in vars.items():
-        valid_alphanumeric(_key, extra_chars='_')
+        valid_alphanumeric(_key, extra_chars='_-{}')
         # Essentially no validation since this is a python variable
         # value, don't evaluate this.
         valid_free_text(_value)

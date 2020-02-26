@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgrid - helper functions related to VGrid actions
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,13 +30,14 @@
 import fnmatch
 import os
 import re
+import time
 
-from shared.base import valid_dir_input
+from shared.base import valid_dir_input, client_id_dir
 from shared.defaults import default_vgrid, keyword_owners, keyword_members, \
     keyword_all, keyword_auto, keyword_never, keyword_any, keyword_none, \
     csrf_field, default_vgrid_settings_limit, vgrid_nest_sep, _dot_vgrid
 from fileio import make_symlink, move, check_readonly, check_writable, \
-    check_write_access
+    check_write_access, unpickle
 from shared.findtype import is_user, is_resource
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import html_post_helper
@@ -47,6 +48,66 @@ from shared.serial import load, dump
 from shared.sharelinkkeywords import get_sharelink_keywords_dict
 from shared.vgridkeywords import get_trigger_keywords_dict, \
     get_settings_keywords_dict
+
+
+# TODO make this dynamic
+JOB_QUEUE_COUNT = 100
+
+JOB_CLIENT = 'client_id'
+JOB_ID = 'job_id'
+VALID_JOB_QUEUE = {
+    JOB_CLIENT: str,
+    JOB_ID: str
+}
+
+
+def get_vgrid_recent_jobs(configuration, vgrid_name, json_serializable=False):
+    """Retrieves all jobs in a vgrid recent job queue. This should be all jobs
+    run as part of a vgrid and is not limited to one users submissions. """
+
+    status, job_queue = vgrid_recent_jobs(vgrid_name, configuration)
+
+    if not status:
+        msg = "Could not retreive job queue for vgrid '%s'" % vgrid_name
+        configuration.logger.error(msg)
+        return (False, msg)
+
+
+    jobs = []
+    for queue_entry in job_queue:
+        configuration.logger.info("Inspecting %s" % queue_entry)
+
+        entry_client = queue_entry[JOB_CLIENT]
+        entry_id = queue_entry[JOB_ID]
+        path = os.path.abspath(
+            os.path.join(configuration.mrsl_files_dir,
+                         client_id_dir(entry_client), entry_id) + '.mRSL'
+        )
+
+        try:
+            job_dict = unpickle(path, configuration.logger)
+        except Exception:
+            msg = "Could not load job queue file '%s'" % path
+            configuration.logger.error(msg)
+            return (False, msg)
+        if not job_dict:
+            continue
+
+        # convert timestamps as they are not json serializable
+        if json_serializable:
+            for key, value in job_dict.items():
+                if isinstance(value, time.struct_time):
+                    job_dict[key] = \
+                        time.strftime('%Y-%m-%d %H:%M:%S', job_dict[key])
+            if 'EXECUTION_HISTORY' in job_dict:
+                for entry in job_dict['EXECUTION_HISTORY']:
+                    for key, value in entry.items():
+                        if isinstance(value, time.struct_time):
+                            entry[key] = \
+                                time.strftime('%Y-%m-%d %H:%M:%S', entry[key])
+
+        jobs.append(job_dict)
+    return jobs
 
 
 def vgrid_add_remove_table(client_id,
@@ -434,7 +495,7 @@ def vgrid_is_entity_in_list(
 ):
     """Return True if specified entity_id is in group
     ('owners', 'members', 'resources', 'triggers', 'settings', 'sharelinks', 
-    'imagesettings') of vgrid.
+    'imagesettings', 'jobqueue') of vgrid.
     If recursive is True the entities from parent vgrids will be included. The
     optional dict_field is used to check against the trigger case where entries
     are dicts rather than raw strings.
@@ -955,6 +1016,8 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True,
         name = configuration.vgrid_triggers
     elif group == 'settings':
         name = configuration.vgrid_settings
+    elif group == 'jobqueue':
+        name = configuration.vgrid_recent_job_queue
     elif group == 'sharelinks':
         name = configuration.vgrid_sharelinks
     elif group == 'imagesettings':
@@ -1047,6 +1110,11 @@ def vgrid_settings(vgrid_name, configuration, recursive=True, allow_missing=True
         if not as_dict:
             output = output.items()
     return (status, output)
+
+
+def vgrid_recent_jobs(vgrid_name, configuration, recursive=True):
+    """Extract recent jobs list for a vgrid."""
+    return vgrid_list(vgrid_name, 'jobqueue', configuration, recursive)
 
 
 def vgrid_sharelinks(vgrid_name, configuration, recursive=True,
@@ -1197,6 +1265,23 @@ def mark_nested_vgrids_modified(configuration, vgrid_name):
     return list_status
 
 
+def is_valid_job_queue_entry(entry):
+    """Validates that a given entry is in the expected structure for a job
+    queue entry"""
+    if not isinstance(entry, dict):
+        return (False, "Value is not expected type. Expected: '%s', but got "
+                       "'%s'." % (dict, type(entry)))
+    for req_key, req_type in VALID_JOB_QUEUE.items():
+        if req_key not in entry:
+            return (False, "Key '%s' was missing for the provided jobqueue "
+                           "entry" % req_key)
+        if not isinstance(entry[req_key], req_type):
+            return (False, "Provided value '%s' does not have the correct "
+                           "type. Expected '%s' but got '%s'" %
+                    (entry[req_key], req_type, type(entry[req_key])))
+    return (True, '')
+
+
 def vgrid_validate_entities(configuration, vgrid_name, kind, id_list):
     """Validate that entities in id_list are on required format"""
     _logger = configuration.logger
@@ -1282,6 +1367,13 @@ def vgrid_validate_entities(configuration, vgrid_name, kind, id_list):
                         "invalid type for '%s' value %s (%s) in %s entry" %
                         (key, val, type(val), kind))
             # TODO: handle keys outside spec?
+    elif kind == 'jobqueue':
+        for entry in id_list:
+            status, msg = is_valid_job_queue_entry(entry)
+            if not status:
+                raise ValueError(
+                    "invalid entry '%s' in jobqueue. Invalid because: %s"
+                    % (entry, msg))
     elif kind == 'imagesettings':
         for i in id_list:
             if not isinstance(i, dict):
@@ -1327,6 +1419,8 @@ def vgrid_add_entities(configuration, vgrid_name, kind, id_list,
         entity_filename = configuration.vgrid_triggers
     elif kind == 'settings':
         entity_filename = configuration.vgrid_settings
+    elif kind == 'jobqueue':
+        entity_filename = configuration.vgrid_recent_job_queue
     elif kind == 'sharelinks':
         entity_filename = configuration.vgrid_sharelinks
     elif kind == 'imagesettings':
@@ -1400,6 +1494,24 @@ def vgrid_add_settings(configuration, vgrid_name, id_list, update_id=None,
                               id_list, update_id, rank)
 
 
+def vgrid_add_recent_jobs(configuration, vgrid_name, id_list, rank=None):
+    """Append id_list to pickled list of jobs for vgrid_name"""
+
+    status, jobs = vgrid_recent_jobs(vgrid_name, configuration)
+
+    if not status:
+        # Note this is not currently stopping the addition to the queue.
+        msg = "Could not load jobqueue for vgrid '%s'" % vgrid_name
+        configuration.logger.error(msg)
+    else:
+        if len(jobs) > JOB_QUEUE_COUNT + len(id_list):
+            first_jobs = jobs[:len(jobs)-JOB_QUEUE_COUNT+len(id_list)]
+            vgrid_remove_recent_jobs(configuration, vgrid_name, first_jobs)
+
+    return vgrid_add_entities(configuration, vgrid_name, 'jobqueue',
+                              id_list, None, rank)
+
+
 def vgrid_add_sharelinks(configuration, vgrid_name, id_list, update_id=None,
                          rank=None):
     """Append id_list to pickled list of sharelinks for vgrid_name"""
@@ -1433,6 +1545,8 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
         entity_filename = configuration.vgrid_triggers
     elif kind == 'settings':
         entity_filename = configuration.vgrid_settings
+    elif kind == 'jobqueue':
+        entity_filename = configuration.vgrid_recent_job_queue
     elif kind == 'sharelinks':
         entity_filename = configuration.vgrid_sharelinks
     elif kind == 'imagesettings':
@@ -1498,6 +1612,13 @@ def vgrid_remove_settings(configuration, vgrid_name, id_list,
                                  id_list, allow_empty, dict_field='option_id')
 
 
+def vgrid_remove_recent_jobs(configuration, vgrid_name, id_list,
+                           allow_empty=True):
+    """Remove id_list from pickled list of jobs for vgrid_name."""
+    return vgrid_remove_entities(configuration, vgrid_name, 'jobqueue',
+                                 id_list, allow_empty)
+
+
 def vgrid_remove_sharelinks(configuration, vgrid_name, id_list,
                             allow_empty=True):
     """Remove id_list from pickled list of sharelinks for vgrid_name"""
@@ -1527,6 +1648,8 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
         entity_filename = configuration.vgrid_triggers
     elif kind == 'settings':
         entity_filename = configuration.vgrid_settings
+    elif kind == 'jobqueue':
+        entity_filename = configuration.vgrid_recent_job_queue
     elif kind == 'sharelinks':
         entity_filename = configuration.vgrid_sharelinks
     elif kind == 'imagesettings':
@@ -1578,13 +1701,22 @@ def vgrid_set_settings(configuration, vgrid_name, id_list, allow_empty=False):
                               id_list, allow_empty)
 
 
-def vgrid_set_sharelinks(configuration, vgrid_name, id_list, allow_empty=False):
+def vgrid_set_recent_jobs(configuration, vgrid_name, id_list,
+                          allow_empty=True):
+    """Set list of recent vgrid jobs."""
+    return vgrid_set_entities(configuration, vgrid_name, 'jobqueue',
+                              id_list, allow_empty)
+
+
+def vgrid_set_sharelinks(configuration, vgrid_name, id_list,
+                         allow_empty=False):
     """Set list of sharelinks for given vgrid"""
     return vgrid_set_entities(configuration, vgrid_name, 'sharelinks',
                               id_list, allow_empty)
 
 
-def vgrid_set_imagesettings(configuration, vgrid_name, id_list, allow_empty=False):
+def vgrid_set_imagesettings(configuration, vgrid_name, id_list,
+                            allow_empty=False):
     """Set list of imagesettings for given vgrid"""
     return vgrid_set_entities(configuration, vgrid_name, 'imagesettings',
                               id_list, allow_empty)
