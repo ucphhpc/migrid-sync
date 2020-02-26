@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_ftps - secure ftp server wrapping ftp in tls/ssl and mapping user home
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2014-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
