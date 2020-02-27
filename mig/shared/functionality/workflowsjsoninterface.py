@@ -5,7 +5,7 @@
 #
 # workflowsjsoninterface.py - JSON interface for
 # managing workflows via cgisid requests
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2019-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,6 +31,7 @@
 
 import sys
 import json
+
 import shared.returnvalues as returnvalues
 
 from shared.base import force_utf8_rec
@@ -294,7 +295,7 @@ def main(client_id, user_arguments_dict):
     # Ensure that the output format is in JSON
     user_arguments_dict['output_format'] = ['json']
     user_arguments_dict.pop('__DELAYED_INPUT__', None)
-    (configuration, logger, output_objects, op_name) = \
+    (configuration, _logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_title=False, op_header=False,
                                   op_menu=False)
 
@@ -323,10 +324,15 @@ def main(client_id, user_arguments_dict):
     except ValueError:
         msg = "An invalid format was supplied to: '%s', requires a JSON " \
               "compatible format" % op_name
-        logger.error(msg)
+        _logger.error(msg)
         output_objects.append({'object_type': 'error_text',
                                'text': msg})
         return (output_objects, returnvalues.CLIENT_ERROR)
+
+    # TODO: consider additional CSRF protection here?
+    # attacker needs to intercept jupyter session_id from running session
+    # and work around security restrictions in Jupyter API to abuse anything
+    # https://github.com/jupyter/jupyter/wiki/Jupyter-Notebook-Server-API
 
     # IMPORTANT!! Do not access the json_data input before it has been
     # validated by validated_input.
@@ -337,16 +343,16 @@ def main(client_id, user_arguments_dict):
         list_wrap=True)
 
     if not accepted or rejected:
-        logger.error("A validation error occurred: '%s'" % rejected)
+        _logger.error("A validation error occurred: '%s'" % rejected)
         msg = "Invalid input was supplied to the workflow API: %s" % rejected
         # TODO, Transform error messages to something more readable
         output_objects.append({'object_type': 'error_text', 'text': msg})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    workflow_attributes = json_data.get('attributes', None)
-    workflow_type = json_data.get('type', None)
-    operation = json_data.get('operation', None)
-    workflow_session_id = json_data.get('workflowsessionid', None)
+    workflow_attributes = accepted.get('attributes', None)
+    workflow_type = accepted.get('type', None)
+    operation = accepted.get('operation', None)
+    workflow_session_id = accepted.get('workflowsessionid', None)
 
     if not valid_session_id(configuration, workflow_session_id):
         output_objects.append({'object_type': 'error_text',
@@ -358,7 +364,7 @@ def main(client_id, user_arguments_dict):
     try:
         workflow_sessions_db = load_workflow_sessions_db(configuration)
     except IOError:
-        logger.debug("Workflow sessions db didn't load, creating new db")
+        _logger.debug("Workflow sessions db didn't load, creating new db")
         if not touch_workflow_sessions_db(configuration, force=True):
             output_objects.append(
                 {'object_type': 'error_text',
@@ -371,14 +377,18 @@ def main(client_id, user_arguments_dict):
             workflow_sessions_db = load_workflow_sessions_db(configuration)
 
     if workflow_session_id not in workflow_sessions_db:
-        # TODO, Log this in the auth logger,
-        # Also track multiple attempts from the same IP
+        _logger.error("Workflow session '%s' from user '%s' not found in "
+                      "database" % (workflow_session_id, client_id))
+        configuration.auth_logger.error(
+            "Workflow session '%s' provided by user '%s' but not present in "
+            "database" % (workflow_session_id, client_id))
+        # TODO Also track multiple attempts from the same IP
         output_objects.append({'object_type': 'error_text',
                                'text': 'Invalid workflowsessionid'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     workflow_session = workflow_sessions_db.get(workflow_session_id)
-    logger.info('workflowjsoninterface found %s' % workflow_session)
+    _logger.info('workflowjsoninterface found %s' % workflow_session)
     # Create
     if operation == WORKFLOW_API_CREATE:
         created, msg = workflow_api_create(configuration,
@@ -388,7 +398,7 @@ def main(client_id, user_arguments_dict):
         if not created:
             output_objects.append({'object_type': 'error_text',
                                    'text': msg})
-            logger.error("Returning error msg '%s'" % msg)
+            _logger.error("Returning error msg '%s'" % msg)
             return (output_objects, returnvalues.CLIENT_ERROR)
         output_objects.append({'object_type': 'workflows',
                                'text': msg})

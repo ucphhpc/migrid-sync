@@ -5,7 +5,7 @@
 #
 # jobsjsoninterface.py - JSON interface for
 # managing jobs via cgisid requests
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2019-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,11 +29,12 @@
 
 """JSON interface for job related requests"""
 
+import json
 import os
 import sys
-import json
-import shared.returnvalues as returnvalues
 import tempfile
+
+import shared.returnvalues as returnvalues
 
 from shared.base import force_utf8_rec, client_id_dir
 from shared.fileio import unpickle, unpickle_and_change_status, \
@@ -45,23 +46,19 @@ from shared.safeinput import REJECT_UNSET, valid_sid, validated_input, \
     html_escape, valid_job_id, valid_job_vgrid, valid_job_attributes, \
     valid_job_type, valid_job_operation
 from shared.job import JOB_TYPES, JOB, QUEUE, get_job_with_id, fields_to_mrsl
-from shared.workflows import WORKFLOW_TYPES, WORKFLOW_CONSTRUCT_TYPES, \
-    WORKFLOW_PATTERN, valid_session_id, get_workflow_with,\
-    load_workflow_sessions_db, create_workflow, delete_workflow,\
-    update_workflow, touch_workflow_sessions_db, search_workflow, \
-    WORKFLOW_ACTION_TYPES, WORKFLOW_SEARCH_TYPES
+from shared.workflows import valid_session_id, load_workflow_sessions_db, \
+    touch_workflow_sessions_db
 from shared.vgrid import get_vgrid_recent_jobs
 
 JOB_API_CREATE = 'create'
 JOB_API_READ = 'read'
 JOB_API_UPDATE = 'update'
-JOB_API_DELETE = 'delete'
 
 PATTERN_LIST = 'pattern_list'
 RECIPE_LIST = 'recipe_list'
 
 VALID_OPERATIONS = [
-    JOB_API_CREATE, JOB_API_READ, JOB_API_UPDATE, JOB_API_DELETE
+    JOB_API_CREATE, JOB_API_READ, JOB_API_UPDATE
 ]
 
 JOB_SIGNATURE = {
@@ -85,8 +82,8 @@ def type_value_checker(type_value):
     valid_types = JOB_TYPES
 
     if type_value not in valid_types:
-        raise ValueError("Workflow type '%s' is not valid"
-                         % html_escape(valid_types))
+        raise ValueError("Workflow type '%s' is not valid. "
+                         % html_escape(type_value))
 
 
 def operation_value_checker(operation_value):
@@ -98,7 +95,7 @@ def operation_value_checker(operation_value):
     :return: No return.
     """
     if operation_value not in VALID_OPERATIONS:
-        raise ValueError("Workflow operation '%s' is not valid"
+        raise ValueError("Workflow operation '%s' is not valid. "
                          % html_escape(operation_value))
 
 
@@ -134,11 +131,12 @@ def job_api_create(configuration, workflow_session, job_type=JOB,
     :param job_type: [optional] A MiG job type. Default is 'job'.
     :param job_attributes: dictionary of arguments used to create the job
     :return: Tuple (boolean, string)
-    If a job can be created then a tuple is returned of first value true, and
-    the created job's id in the sceond value. If it cannot be created then a
+    If a job can be created then a tuple is returned of first value True, and
+    the created job's id in the second value. If it cannot be created then a
     tuple is returned with a first value of False, and an explanatory error
     message as the second value.
     """
+    _logger = configuration.logger
 
     client_id = workflow_session['owner']
     external_dict = get_keywords_dict(configuration)
@@ -149,10 +147,6 @@ def job_api_create(configuration, workflow_session, job_type=JOB,
 
     tmpfile = None
 
-    if not configuration.site_enable_jobs:
-        msg = 'Job execution is not enabled on this system'
-        return (False, msg)
-
     # save to temporary file
     try:
         (filehandle, real_path) = tempfile.mkstemp(text=True)
@@ -160,7 +154,7 @@ def job_api_create(configuration, workflow_session, job_type=JOB,
         os.close(filehandle)
     except Exception, err:
         msg = 'Failed to write temporary mRSL file: %s' % err
-        configuration.logger.error(msg)
+        _logger.error(msg)
         return (False, msg)
 
     # submit it
@@ -169,11 +163,11 @@ def job_api_create(configuration, workflow_session, job_type=JOB,
             new_job(real_path, client_id, configuration, False, True)
     except Exception, exc:
         msg = "Failed to submit new job. Possible invalid mRSL?"
-        configuration.logger.error(msg)
+        _logger.error(msg)
         return (False, msg)
 
     if not job_status:
-        configuration.logger.error(newmsg)
+        _logger.error(newmsg)
         return (False, newmsg)
 
     return (True, job_id)
@@ -193,14 +187,12 @@ def job_api_read(configuration, workflow_session, job_type=JOB,
     :return: (Tuple (boolean, string) or function call to 'get_job_with_id')
     If the given job_type is 'job', the function 'get_job_with_id' will be
     called. If the given job_type is 'queue' then a tuple is returned with the
-    first value being true and a dictionary of jobs being the second value,
+    first value being True and a dictionary of jobs being the second value,
     with the job ids being the keys. If a problem is encountered a tuple is
-    returned with the first value being false and an explanatory error message
+    returned with the first value being False and an explanatory error message
     for a second value.
     """
     _logger = configuration.logger
-    _logger.debug("J_API: search: (%s, %s, %s)"
-                  % (workflow_session, job_type, job_attributes))
 
     if job_type == QUEUE:
         if 'vgrid' not in job_attributes:
@@ -245,25 +237,25 @@ def job_api_update(configuration, workflow_session, job_type=JOB,
     :param job_attributes: dictionary of arguments used to update the
     specified workflow object. Currently can only be a job id to cancel.
     :return: Tuple (boolean, string)
-    If the given job_type is valid the a tuple is returned with true in the
+    If the given job_type is valid a tuple is returned with True in the
     first value and a feedback message in the second. Else, a tuple is
     returned with a first value of False, and an explanatory error message as
     the second value.
     """
-
     _logger = configuration.logger
 
-    _logger.info('GIVEN UPDATE REQUEST WITH ATTRIBUTES: %s' % job_attributes)
     client_id = workflow_session['owner']
-    job_id = job_attributes['JOB_ID']
 
-    client_dir = client_id_dir(client_id)
+    job_id = job_attributes.get('JOB_ID', None)
+    if not job_id:
+        msg = "No job id provided in update"
+        _logger.error(msg)
+        return (False, msg)
 
-    file_path = os.path.join(
-        configuration.mrsl_files_dir, client_dir, job_id + '.mRSL')
-    job = unpickle(file_path, _logger)
+    status, job = get_job_with_id(configuration, job_id, client_id=client_id,
+                          only_user_jobs=False)
 
-    if not job:
+    if not status:
         msg = "Could not open job file for job '%s'" % job_id
         _logger.error(msg)
         return (False, msg)
@@ -280,6 +272,9 @@ def job_api_update(configuration, workflow_session, job_type=JOB,
                 _logger.error(msg)
                 return (False, msg)
 
+            job_user_dir = client_id_dir(job['USER_CERT'])
+            file_path = os.path.join(
+                configuration.mrsl_files_dir, job_user_dir, job_id + '.mRSL')
             if not unpickle_and_change_status(file_path, new_state, _logger):
                 _logger.error('%s could not cancel job: %s'
                               % (client_id, job_id))
@@ -306,42 +301,6 @@ def job_api_update(configuration, workflow_session, job_type=JOB,
     return (False, "No updated applied from attributes '%s'" % job_attributes)
 
 
-def job_api_delete(configuration, workflow_session, job_type=JOB,
-                   **job_attributes):
-    # """
-    # Handler for 'delete' calls to workflow API.
-    # :param configuration: The MiG configuration object.
-    # :param workflow_session: The MiG workflow session. This must contain the
-    # key 'owner'
-    # :param workflow_type: [optional] A MiG workflow construct type. This should
-    # be one of 'workflowpattern' or 'workflowrecipe'. Default is
-    # 'workflowpattern'.
-    # :param workflow_attributes: dictionary of arguments used to update the
-    # specified workflow object. Must contain key 'persistence_id'.
-    # :return: (Tuple (boolean, string) or function call to 'delete_workflow')
-    # If the given workflow_type is valid the function 'delete_workflow' will be
-    # called. Else, a tuple is returned with a first value of False, and an
-    # explanatory error message as the second value.
-    # """
-    # _logger = configuration.logger
-    # _logger.debug("W_API: delete: (%s, %s, %s)" % (workflow_session,
-    #                                                workflow_type,
-    #                                                workflow_attributes))
-    #
-    # if 'persistence_id' not in workflow_attributes:
-    #     return (False, "Can't delete workflow without 'persistence_id' "
-    #                    "attribute"
-    #             % workflow_attributes)
-    #
-    # if workflow_type in WORKFLOW_CONSTRUCT_TYPES:
-    #     return delete_workflow(configuration, workflow_session['owner'],
-    #                            workflow_type, **workflow_attributes)
-    #
-    # return (False, "Invalid workflow update api type: '%s', valid are: '%s'" %
-    #         (workflow_type, ', '.join(WORKFLOW_CONSTRUCT_TYPES)))
-    return (True, 'job_api_delete response')
-
-
 def main(client_id, user_arguments_dict):
     """
     Main function used by front end.
@@ -357,12 +316,18 @@ def main(client_id, user_arguments_dict):
     # Ensure that the output format is in JSON
     user_arguments_dict['output_format'] = ['json']
     user_arguments_dict.pop('__DELAYED_INPUT__', None)
-    (configuration, logger, output_objects, op_name) = \
+    (configuration, _logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_title=False, op_header=False,
                                   op_menu=False)
 
-    logger.info("Got job json request for client '%s' with arguments '%s'"
+    _logger.info("Got job json request for client '%s' with arguments '%s'"
                 % (client_id, user_arguments_dict))
+
+    if not configuration.site_enable_workflows:
+        output_objects.append({
+            'object_type': 'error_text',
+            'text': 'Workflows are not enabled on this system'})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Add allow Access-Control-Allow-Origin to headers
     # Required to allow Jupyter Widget from localhost to request against the
@@ -376,12 +341,6 @@ def main(client_id, user_arguments_dict):
                                          'POST, OPTIONS'))
     output_objects[0]['headers'].append(('Content-Type', 'application/json'))
 
-    # if not configuration.site_enable_workflows:
-    #     output_objects.append({
-    #         'object_type': 'error_text',
-    #         'text': 'Workflows are not enabled on this system'})
-    #     return (output_objects, returnvalues.SYSTEM_ERROR)
-
     # Input data
     data = sys.stdin.read()
     try:
@@ -389,12 +348,15 @@ def main(client_id, user_arguments_dict):
     except ValueError:
         msg = "An invalid format was supplied to: '%s', requires a JSON " \
               "compatible format" % op_name
-        logger.error(msg)
+        _logger.error(msg)
         output_objects.append({'object_type': 'error_text',
                                'text': msg})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    logger.info("Extracted json data: '%s'" % (json_data))
+    # TODO: consider additional CSRF protection here?
+    # attacker needs to intercept jupyter session_id from running session
+    # and work around security restrictions in Jupyter API to abuse anything
+    # https://github.com/jupyter/jupyter/wiki/Jupyter-Notebook-Server-API
 
     # IMPORTANT!! Do not access the json_data input before it has been
     # validated by validated_input.
@@ -405,16 +367,16 @@ def main(client_id, user_arguments_dict):
         list_wrap=True)
 
     if not accepted or rejected:
-        logger.error("A validation error occurred: '%s'" % rejected)
+        _logger.error("A validation error occurred: '%s'" % rejected)
         msg = "Invalid input was supplied to the job API: %s" % rejected
         # TODO, Transform error messages to something more readable
         output_objects.append({'object_type': 'error_text', 'text': msg})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    job_attributes = json_data.get('attributes', None)
-    job_type = json_data.get('type', None)
-    operation = json_data.get('operation', None)
-    workflow_session_id = json_data.get('workflowsessionid', None)
+    job_attributes = accepted.get('attributes', None)
+    job_type = accepted.get('type', None)
+    operation = accepted.get('operation', None)
+    workflow_session_id = accepted.get('workflowsessionid', None)
 
     if not valid_session_id(configuration, workflow_session_id):
         output_objects.append({'object_type': 'error_text',
@@ -426,7 +388,7 @@ def main(client_id, user_arguments_dict):
     try:
         workflow_sessions_db = load_workflow_sessions_db(configuration)
     except IOError:
-        logger.debug("Workflow sessions db didn't load, creating new db")
+        _logger.info("Workflow sessions db didn't load, creating new db")
         if not touch_workflow_sessions_db(configuration, force=True):
             output_objects.append(
                 {'object_type': 'error_text',
@@ -439,14 +401,18 @@ def main(client_id, user_arguments_dict):
             workflow_sessions_db = load_workflow_sessions_db(configuration)
 
     if workflow_session_id not in workflow_sessions_db:
-        # TODO, Log this in the auth logger,
-        # Also track multiple attempts from the same IP
+        _logger.error("Workflow session '%s' from user '%s' not found in "
+                      "database" % (workflow_session_id, client_id))
+        configuration.auth_logger.error(
+            "Workflow session '%s' provided by user '%s' but not present in "
+            "database" % (workflow_session_id, client_id))
+        # TODO Also track multiple attempts from the same IP
         output_objects.append({'object_type': 'error_text',
                                'text': 'Invalid workflowsessionid'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     workflow_session = workflow_sessions_db.get(workflow_session_id)
-    logger.info('jobsjsoninterface found %s' % workflow_session)
+
     # Create
     if operation == JOB_API_CREATE:
         created, msg = job_api_create(configuration, workflow_session,
@@ -454,7 +420,7 @@ def main(client_id, user_arguments_dict):
         if not created:
             output_objects.append({'object_type': 'error_text',
                                    'text': msg})
-            logger.error("Returning error msg '%s'" % msg)
+            _logger.error("Returning error msg '%s'" % msg)
             return (output_objects, returnvalues.CLIENT_ERROR)
         output_objects.append({'object_type': 'text', 'text': msg})
         return (output_objects, returnvalues.OK)
@@ -482,16 +448,8 @@ def main(client_id, user_arguments_dict):
         output_objects.append({'object_type': 'text', 'text': msg})
         return (output_objects, returnvalues.OK)
 
-    # Delete
-    if operation == JOB_API_DELETE:
-        deleted, msg = job_api_delete(configuration, workflow_session,
-                                      job_type, **job_attributes)
-        if not deleted:
-            output_objects.append({'object_type': 'error_text',
-                                   'text': msg})
-            return (output_objects, returnvalues.OK)
-        output_objects.append({'object_type': 'text', 'text': msg})
-        return (output_objects, returnvalues.OK)
+    # Delete has not been implemented, and probably shouldn't be. Jobs may be
+    # canceled remotely but not entirely deleted.
 
     output_objects.append({'object_type': 'error_text',
                            'text': 'You are out of bounds here'})

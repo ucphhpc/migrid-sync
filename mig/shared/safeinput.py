@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # safeinput - user input validation functions
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -964,6 +964,34 @@ def valid_workflow_operation(operation):
 def valid_workflow_type(type):
     """Verify that the supplied workflow type only contains letters"""
     valid_ascii(type, extra_chars='_')
+    
+
+def valid_job_vgrid(vgrid):
+    """Verify that supplied vgrid only contains characters that
+    we consider valid in a vgrid name."""
+    valid_vgrid_name(vgrid)
+
+
+def valid_job_attributes(attributes):
+    """Verify that supplied attributes dictionary only contains entries that
+      we consider valid job attribute keys.
+      """
+    if not isinstance(attributes, dict):
+        raise InputException("Expects job attributes to be a dictionary")
+
+    for _key, _value in attributes.items():
+        if _key not in VALID_JOB_ATTRIBUTES:
+            raise InputException("Job attribute '%s' is illegal" % _key)
+
+
+def valid_job_type(type):
+    """Verify that the supplied job type only contains letters + _ """
+    valid_ascii(type, extra_chars='_')
+
+
+def valid_job_operation(operation):
+    """Verify that the supplied job operation only contains letters + _ """
+    valid_ascii(operation, extra_chars='_')
 
 
 def filter_ascii(contents):
