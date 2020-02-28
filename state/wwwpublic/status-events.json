@@ -1,6 +1,40 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2020-03-22T10:00:00", 
+    "description": {
+      "EN": "We will run a series of pending updates on the ERDA frontend and the underlying host. The work will require at least a short outage to restart everything.", 
+      "DK": "Vi planlægger at opdatere ERDAs frontend og den underliggende maskine. Arbejdet vil kræve minimum lidt nedetid for at genstarte alt."
+    }, 
+    "announce_start": "2020-02-27T00:00:00", 
+    "title": {
+      "EN": "Planned ERDA Maintenance", 
+      "DK": "Planlagt vedligehold på ERDA"
+    }, 
+    "services": "ALL", 
+    "work_end": "2020-03-23T06:59:59", 
+    "system": "ERDA", 
+    "announce_end": "2020-03-23T07:00:00"
+  }, 
+  {
+    "status": "AUTO", 
+    "work_start": "2019-08-01T00:00:00", 
+    "description": {
+      "EN": "We are developing the new user interface for ERDA and some glitches may appear here as a result.", 
+      "DK": "Vi er igang med at udvikle den nye brugergrænseflade til ERDA og det kan give småfejl i visningen her."
+    }, 
+    "announce_start": "2019-07-31T00:00:00", 
+    "title": {
+      "EN": "ERDA User Interface Work", 
+      "DK": "ERDA udvikling på brugergrænsefladen"
+    }, 
+    "services": "Web", 
+    "work_end": "2020-12-31T23:59:59", 
+    "system": "ERDA", 
+    "announce_end": "2020-12-31T23:59:59"
+  }, 
+  {
+    "status": "AUTO", 
     "work_start": "2020-02-21T00:00:00", 
     "description": {
       "EN": "UCPH have announced   plans for a major service window from Friday February 21st in the afternoon to Sunday February 23rd late in the evening. ERDA/IDMC/SIF is not directly affected and should remain fully online. Yet, the UCPH OpenID login service may be unstable in that  period, despite their redundancies. Thus, UCPH users  may experience problems especially in relation to ERDA/IDMC/SIF web login during that time frame.", 
@@ -86,20 +120,20 @@
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2019-11-09+10T00:00:00", 
+    "work_start": "2019-11-09T00:00:00", 
     "description": {
       "EN": "We completed the planned update and general hardening of the DAG service with a number of service restarts and general reconfiguration of each node. For now 5 out of 7 nodes are back to normal service with 2 being restored  before they are back to being operational.", 
       "DK": "Vi afsluttede den planlagte opdatering og generelle hærdning af DAG-tjenesten med et antal servicegenstarter og generel rekonfiguration af hver knude. I øjeblikket er 5 ud af 7 noder tilbage til normal service, hvor 2 er under gendannelse før de er tilbage til at være operationelle."
     }, 
-    "announce_start": "2019-11-09+10T00:00:00", 
+    "announce_start": "2019-11-09T00:00:00", 
     "title": {
       "EN": "Planned DAG Maintenance", 
       "DK": "Planlagt DAG vedligeholdelse"
     }, 
     "services": "ALL", 
-    "work_end": "2019-11-09+10T23:59:59", 
+    "work_end": "2019-11-10T23:59:59", 
     "system": "ERDA", 
-    "announce_end": "2019-11-09+10T23:59:59"
+    "announce_end": "2019-11-09T23:59:59"
   }, 
   {
     "status": "AUTO", 

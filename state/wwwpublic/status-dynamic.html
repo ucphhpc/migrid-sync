@@ -36,54 +36,43 @@ ERDA Status
 <script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
 
 
-
-<!-- TMP local version for laptop dev -->
-<!-- site default style -->
-<link rel="stylesheet" type="text/css" href="../../mig/images/default.css" media="screen"/>
-
-<!-- site basic skin style -->
-<!--<link rel="stylesheet" type="text/css" href="../../mig//images/static-skin.css" media="screen"/>-->
-<link rel="stylesheet" type="text/css" href="../../mig//images/skin/erda-ucph-science/core.css" media="screen"/>
-
-<!-- base page styles -->
-<link rel="stylesheet" type="text/css" href="../../mig//images/css/jquery-ui.css" media="screen"/>
-
-<!-- country-dropdown -->
-<link rel="stylesheet" type="text/css" href="../../mig//images/lib/country-dropdown/css/msdropdown/dd.css" />
-<link rel="stylesheet" type="text/css" href="../../mig//images/lib/country-dropdown/css/msdropdown/flags.css" />
-
-<!-- override with any site-specific styles -->
-<link rel="stylesheet" type="text/css" href="../../mig/images/site-custom.css"
-      media="screen"/>
-
-<!-- site skin style -->
-<link rel="stylesheet" type="text/css" href="../../mig/images/skin/erda-ucph-science/ui-theme.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="../../mig/images/skin/erda-ucph-science/ui-theme.custom.css" media="screen"/>
-
-<link rel="icon" type="image/vnd.microsoft.icon"
-      href="../../mig/images/skin/erda-ucph-science/favicon.ico"/>
-
-<script type="text/javascript" src="../../mig/images/js/jquery.js"></script>
-<script type="text/javascript" src="../../mig/images/js/jquery-ui.js"></script>
-<script type="text/javascript" src="../../mig/images/js/jquery.migtools.js"></script>
-<script type="text/javascript" src="../../mig/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
-
-
 <script type="text/javascript">
+  /* NOTE: extract browser/user language dynamically if possible */
+  var req_lang = navigator.language || navigator.userLanguage || '';
+  //console.log("found requested lang: "+req_lang);
+  var locale = req_lang.split(/[_-]/)[0].toLowerCase();
+  /* Init supported languages to just english and extend based on lang select */
+  var supported_languages = ['en'];
+  var default_lang = supported_languages[0];
+  var user_lang;
 
   /* We need to run accordion init as a callback on status event load */
   function delayed_init() {
-  /* Init NEWS as foldable, with latest entry open and with individual heights */
-  $(".news-accordion").accordion({
-  collapsible: true,
-  //active: false,
-  heightStyle: "content"
-  });
-  /* fix and reduce accordion spacing */
-  $(".ui-accordion-header").css("padding-top", 0).css("padding-bottom", 0).css("margin", 0);
+      /* Init NEWS as foldable, with latest entry open and with individual heights */
+      $(".news-accordion").accordion({
+          collapsible: true,
+          //active: false,
+          heightStyle: "content"
+      });
+      /* fix and reduce accordion spacing */
+      $(".ui-accordion-header").css("padding-top", 0).css("padding-bottom", 0).css("margin", 0);
   }
   
   $(document).ready(function() {
+    /* Extend supported_languages with all entries from select elem */
+    $("#langselect option").each(function() {
+    var option_val = $(this).val();
+    if (supported_languages.indexOf(option_val) < 0) {
+      supported_languages.push($(this).val());
+    }
+    });
+    console.log("found supported langs: "+supported_languages);
+    if (locale && supported_languages.indexOf(locale) >= 0)  {
+      user_lang = locale;
+    } else {
+      console.log(locale+" not supported - fall back to: "+default_lang);
+      user_lang = default_lang;
+    }
 
   /* Dynamically load and display parsed events here */
   content_url="status-events.json"
@@ -93,7 +82,7 @@ ERDA Status
   $('.danish .news-accordion').html("<p class='leftpad spinner'>Henter status og nyheder ...</p>");
   try {
       $.getJSON('status-events.json').done(function(response) {
-          console.log("Success: "+response);
+          //console.log("Success: "+response);
           var title, desc;
   
           /* Loop through events */
@@ -101,6 +90,10 @@ ERDA Status
           var dk_items = [];
           var en_entry, en_title, en_description;
           var dk_entry, dk_title, dk_description;
+          var work_start, work_end, announce_start, announce_end;
+          var now = new Date();
+          var work_dates = "";
+          var title_class;
           $.each(response, function (index, item) {
             en_entry = "";
             en_title = "";
@@ -108,6 +101,9 @@ ERDA Status
             dk_entry = "";
             dk_title = "";
             dk_description = "";
+            title_class = "";
+            work_start = work_end = new Date();
+            announce_start = announce_end = new Date();
             $.each(item, function(key, val) {
                if (key === "title") {
                  en_title = val["EN"];
@@ -117,11 +113,44 @@ ERDA Status
                  en_description = val["EN"];
                  dk_description = val["DK"];
                }
+               else if (key === "work_start") {
+                 work_start = new Date(val);
+               }
+               else if (key === "work_end") {
+                 work_end = new Date(val);
+               }
+               else if (key === "announce_start") {
+                 announce_start = new Date(val);
+               }
+               else if (key === "announce_end") {
+                 announce_end = new Date(val);
+               }
             });
-   
-            en_entry = "<h4>"+en_title+"</h4><p>" + en_description + "</p>";
+  
+            
+            if (work_start < now && now < work_end) {
+                title_class += "work warn iconleftpad";
+                console.log("Is active: " + work_start +" < " +now+ " < "+work_end );
+
+            } else if (announce_start < now && now < announce_end) {
+                title_class += "announce info iconleftpad";
+                console.log("announce: " + announce_start +" < " +now+ " < "+announce_end );
+
+            } else if (now < announce_start) {
+                console.debug("skip future marker: " + announce_start + " vs "+now);
+                title_class += "waiting iconleftpad";
+            } else if (now > announce_end) {
+                console.debug("skip past marker: " + announce_end + " vs "+now);
+                title_class += "ok iconleftpad";
+            }
+            /* TODO: consider showing time, too? */
+            work_dates = work_start.toLocaleDateString(locale);
+            if (work_end.toLocaleDateString(locale) != work_dates) {
+                work_dates += " - "+work_end.toLocaleDateString(locale);
+            }
+            en_entry = "<h4><span class='"+title_class+"'>"+work_dates+"</span>: "+en_title+"</h4><p>" + en_description + "</p>";
             en_items.push(en_entry);
-            dk_entry = "<h4>"+dk_title+"</h4><p>" + dk_description + "</p>";
+            dk_entry = "<h4><span class='"+title_class+"'>"+work_dates+"</span>: "+dk_title+"</h4><p>" + dk_description + "</p>";
             dk_items.push(dk_entry);
  
           });
@@ -176,9 +205,9 @@ ERDA Status
       switch_language(lang);
     }
   );
-  var default_lang = 'en';
-  $("#langselect").val(default_lang);
-  switch_language(default_lang);
+  console.log("switch to user lang: "+user_lang);
+  $("#langselect").val(user_lang);
+  switch_language(user_lang);
   $("#langselect").msDropdown();
 
   });
