@@ -1397,9 +1397,9 @@ Please contact the site admins %s if you think it should be enabled.
                                                                  dest_op_name)
         if redirect_url:
             html = """
-            <a id='redircet' href='%s'></a>
+            <a id='redirect' href='%s'></a>
             <script type='text/javascript'>
-                document.getElementById('redircet').click();
+                document.getElementById('redirect').click();
             </script>""" % redirect_url
 
             output_objects.append({'object_type': 'html_form',
