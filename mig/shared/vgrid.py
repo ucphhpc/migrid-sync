@@ -37,7 +37,7 @@ from shared.defaults import default_vgrid, keyword_owners, keyword_members, \
     keyword_all, keyword_auto, keyword_never, keyword_any, keyword_none, \
     csrf_field, default_vgrid_settings_limit, vgrid_nest_sep, _dot_vgrid
 from fileio import make_symlink, move, check_readonly, check_writable, \
-    check_write_access, unpickle
+    check_write_access, unpickle, acquire_file_lock, release_file_lock
 from shared.findtype import is_user, is_resource
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import html_post_helper
@@ -48,6 +48,8 @@ from shared.sharelinkkeywords import get_sharelink_keywords_dict
 from shared.vgridkeywords import get_trigger_keywords_dict, \
     get_settings_keywords_dict
 
+# For synchronization in vgrid state and participation files
+LOCK_PATTERN = "%s.lock"
 
 # TODO make this dynamic
 JOB_QUEUE_COUNT = 100
@@ -123,9 +125,9 @@ def vgrid_add_remove_table(client_id,
     Arguments: vgrid_name, the vgrid to operate on
                item_string, one of owner, member, resource, trigger
                script_suffix, will be prepended with 'add' and 'rm' for forms
-               configuration, for loading the list of current items 
+               configuration, for loading the list of current items
                extra_fields, additional input fields for some item forms
-               filter_items, list of found item IDs to filter from results 
+               filter_items, list of found item IDs to filter from results
 
     Returns: (Bool, list of output_objects)
     """
@@ -492,7 +494,7 @@ def vgrid_is_entity_in_list(
     allow_missing=False
 ):
     """Return True if specified entity_id is in group
-    ('owners', 'members', 'resources', 'triggers', 'settings', 'sharelinks', 
+    ('owners', 'members', 'resources', 'triggers', 'settings', 'sharelinks',
     'imagesettings', 'jobqueue') of vgrid.
     If recursive is True the entities from parent vgrids will be included. The
     optional dict_field is used to check against the trigger case where entries
@@ -791,7 +793,7 @@ def merge_vgrid_settings(vgrid_name, configuration, settings_list):
     _logger = configuration.logger
     # List of all inherited settings dictionaries, root-to-leaf order. Only
     # one entry if non-recursive, but same procedure.
-    #_logger.debug("raw settings list %s: %s" % (vgrid_name, settings_list))
+    # _logger.debug("raw settings list %s: %s" % (vgrid_name, settings_list))
     merged = {}
     specs_map = get_settings_keywords_dict(configuration)
     # We start from the back (vgrid_name) for fewest updates
@@ -1031,13 +1033,20 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True,
     for sub_vgrid in vgrid_parts:
         vgrid_dir = os.path.join(vgrid_dir, sub_vgrid)
         name_path = os.path.join(configuration.vgrid_home, vgrid_dir, name)
+        lock_path = LOCK_PATTERN % name_path
+        lock_handle = None
 
         status, entries, err_msg = True, [], ''
         try:
+            # Keep load-only under shared lock
+            lock_handle = acquire_file_lock(lock_path, exclusive=False)
             entries = load(name_path)
-        except Exception, err:
+        except Exception, exc:
             status = False
-            err_msg = "ERROR in load %s for %s: %s" % (group, vgrid_name, err)
+            err_msg = "Failed to load %s for %s: %s" % (group, vgrid_name, exc)
+        finally:
+            if lock_handle:
+                release_file_lock(lock_handle)
 
         if status:
 
@@ -1392,7 +1401,7 @@ def vgrid_valid_entities(configuration, vgrid_name, kind, id_list):
     """Return the subset of entries in id_list that are on required format"""
     _logger = configuration.logger
     valid = []
-    #_logger.debug("validating %s for %s" % (id_list, vgrid_name))
+    # _logger.debug("validating %s for %s" % (id_list, vgrid_name))
     # Validate all in one go for settings (unfolded dictionary list)
     if kind == 'settings':
         check_list = [id_list]
@@ -1434,8 +1443,13 @@ def vgrid_add_entities(configuration, vgrid_name, kind, id_list,
 
     entity_filepath = os.path.join(configuration.vgrid_home, vgrid_name,
                                    entity_filename)
+    lock_path = LOCK_PATTERN % entity_filepath
+    lock_handle = None
+    status, msg = True, ''
     try:
         vgrid_validate_entities(configuration, vgrid_name, kind, id_list)
+        # Keep load and dump under same exclusive lock
+        lock_handle = acquire_file_lock(lock_path, exclusive=True)
         if os.path.exists(entity_filepath):
             entities = load(entity_filepath)
         else:
@@ -1458,12 +1472,16 @@ def vgrid_add_entities(configuration, vgrid_name, kind, id_list,
         # _logger.debug("add %s %s at pos %s in %s" % \
         #                           (kind, id_list, rank, entities))
         entities = entities[:rank] + id_list + entities[rank:]
-        #_logger.debug("added: %s" % entities)
+        # _logger.debug("added: %s" % entities)
         dump(entities, entity_filepath)
         mark_nested_vgrids_modified(configuration, vgrid_name)
-        return (True, '')
     except Exception, exc:
-        return (False, "could not add %s for %s: %s" % (kind, vgrid_name, exc))
+        status = False
+        msg = "could not add %s for %s: %s" % (kind, vgrid_name, exc)
+    finally:
+        if lock_handle:
+            release_file_lock(lock_handle)
+    return (status, msg)
 
 
 def vgrid_add_owners(configuration, vgrid_name, id_list, rank=None):
@@ -1536,7 +1554,7 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
     The allow_empty argument can be used to prevent removal of e.g. the last
     owner.
     Use the dict_field if the entries are dictionaries and the id_list should
-    be matched against dict_field in each of them. 
+    be matched against dict_field in each of them.
     """
 
     if kind == 'owners':
@@ -1567,7 +1585,12 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
     if isinstance(id_list, basestring):
         id_list = [id_list]
 
+    lock_path = LOCK_PATTERN % entity_filepath
+    lock_handle = None
+    status, msg = True, ''
     try:
+        # Keep load and dump under same exclusive lock
+        lock_handle = acquire_file_lock(lock_path, exclusive=True)
         entities = load(entity_filepath)
         if dict_field:
             entities = [i for i in entities if not i[dict_field] in id_list]
@@ -1577,10 +1600,13 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
             raise ValueError("not allowed to remove last entry of %s" % kind)
         dump(entities, entity_filepath)
         mark_nested_vgrids_modified(configuration, vgrid_name)
-        return (True, '')
     except Exception, exc:
-        return (False, "could not remove %s for %s: %s" % (kind, vgrid_name,
-                                                           exc))
+        status = False
+        msg = "could not remove %s for %s: %s" % (kind, vgrid_name, exc)
+    finally:
+        if lock_handle:
+            release_file_lock(lock_handle)
+    return (status, msg)
 
 
 def vgrid_remove_owners(configuration, vgrid_name, id_list, allow_empty=False):
@@ -1663,16 +1689,24 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
 
     entity_filepath = os.path.join(configuration.vgrid_home, vgrid_name,
                                    entity_filename)
-
+    lock_path = LOCK_PATTERN % entity_filepath
+    lock_handle = None
+    status, msg = True, ''
     try:
         if not id_list and not allow_empty:
             raise ValueError("not allowed to set empty list of %s" % kind)
         vgrid_validate_entities(configuration, vgrid_name, kind, id_list)
+        # Keep dump under exclusive lock
+        lock_handle = acquire_file_lock(lock_path, exclusive=True)
         dump(id_list, entity_filepath)
         mark_nested_vgrids_modified(configuration, vgrid_name)
-        return (True, '')
     except Exception, exc:
-        return (False, "could not set %s for %s: %s" % (kind, vgrid_name, exc))
+        status = False
+        msg = "could not set %s for %s: %s" % (kind, vgrid_name, exc)
+    finally:
+        if lock_handle:
+            release_file_lock(lock_handle)
+    return (status, msg)
 
 
 def vgrid_set_owners(configuration, vgrid_name, id_list, allow_empty=False):
@@ -2017,3 +2051,15 @@ if __name__ == "__main__":
     for name in ['eScience', 'nosuchvgridanywhere']:
         print vgrid_list(name, 'owners', conf, allow_missing=True)
         print vgrid_list(name, 'members', conf)
+    print "= testing vgrid_add+remove ="
+    dummy_vgrid = 'DUMMY'
+    member_list = ['bardino@nbi.ku.dk', 'bardino@nbi.dk']
+    (load_status, orig_members) = vgrid_members(dummy_vgrid, conf)
+    print vgrid_members(dummy_vgrid, conf)
+    print vgrid_add_members(conf, dummy_vgrid, member_list)
+    print vgrid_members(dummy_vgrid, conf)
+    print vgrid_remove_members(conf, dummy_vgrid, member_list[:1])
+    print vgrid_members(dummy_vgrid, conf)
+    if load_status:
+        print vgrid_set_members(conf, dummy_vgrid, orig_members)
+    print vgrid_members(dummy_vgrid, conf)
