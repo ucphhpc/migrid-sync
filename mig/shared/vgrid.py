@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgrid - helper functions related to VGrid actions
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -41,7 +41,6 @@ from fileio import make_symlink, move, check_readonly, check_writable, \
 from shared.findtype import is_user, is_resource
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import html_post_helper
-from shared.listhandling import list_items_in_pickled_list
 from shared.modified import mark_vgrid_modified
 from shared.output import html_link
 from shared.serial import load, dump
@@ -71,7 +70,6 @@ def get_vgrid_recent_jobs(configuration, vgrid_name, json_serializable=False):
         msg = "Could not retreive job queue for vgrid '%s'" % vgrid_name
         configuration.logger.error(msg)
         return (False, msg)
-
 
     jobs = []
     for queue_entry in job_queue:
@@ -1033,43 +1031,49 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True,
     for sub_vgrid in vgrid_parts:
         vgrid_dir = os.path.join(vgrid_dir, sub_vgrid)
         name_path = os.path.join(configuration.vgrid_home, vgrid_dir, name)
-        (status, msg) = list_items_in_pickled_list(name_path, _logger,
-                                                   allow_missing)
+
+        status, entries, err_msg = True, [], ''
+        try:
+            entries = load(name_path)
+        except Exception, err:
+            status = False
+            err_msg = "ERROR in load %s for %s: %s" % (group, vgrid_name, err)
+
         if status:
 
-            # msg is a list
+            # entries is a list
 
             # We sometimes find singleton lists containing an empty string due
             # to the way we worked around the former restriction that owner
             # lists were not allowed to be empty. For sub-vgrid owners this is
             # fully valid, so we no longer enforce that from createvgrid.py.
 
-            if msg != ['']:
+            if entries != ['']:
                 # We allow filtering e.g. system triggers here
                 for filter_item in filter_entries:
                     if isinstance(filter_item, tuple):
                         (key, val) = filter_item
-                        msg = [entry for entry in msg if not
-                               re.match(val, entry[key])]
+                        entries = [entry for entry in entries if not
+                                   re.match(val, entry[key])]
                     else:
-                        msg = [entry for entry in msg if not
-                               re.match(filter_item, entry)]
+                        entries = [entry for entry in entries if not
+                                   re.match(filter_item, entry)]
 
                 # Filter any invalid entries here to avoid checking everywhere
-                msg = vgrid_valid_entities(
-                    configuration, vgrid_name, group, msg)
+                entries = vgrid_valid_entities(
+                    configuration, vgrid_name, group, entries)
                 # Wrap settings tuples for each vgrid in a separate dict
                 # to make inheritance handling easier.
                 if group == 'settings':
                     # NOTE: list.extend() expects a list
-                    msg = [dict(msg)]
-                output.extend(msg)
+                    entries = [dict(entries)]
+                output.extend(entries)
         elif allow_missing and not os.path.exists(name_path):
             if replace_missing is not None:
                 # NOTE: list.extend() expects a list
                 output.extend([replace_missing])
         else:
-            return (False, msg)
+            return (False, err_msg)
     return (True, output)
 
 
@@ -1613,7 +1617,7 @@ def vgrid_remove_settings(configuration, vgrid_name, id_list,
 
 
 def vgrid_remove_recent_jobs(configuration, vgrid_name, id_list,
-                           allow_empty=True):
+                             allow_empty=True):
     """Remove id_list from pickled list of jobs for vgrid_name."""
     return vgrid_remove_entities(configuration, vgrid_name, 'jobqueue',
                                  id_list, allow_empty)
@@ -2008,3 +2012,8 @@ if __name__ == "__main__":
             print "settings check succeeded"
         except Exception, exc:
             print "settings check failed: %s" % exc
+
+    print "= testing vgrid_list ="
+    for name in ['eScience', 'nosuchvgridanywhere']:
+        print vgrid_list(name, 'owners', conf, allow_missing=True)
+        print vgrid_list(name, 'members', conf)
