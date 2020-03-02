@@ -681,7 +681,7 @@ def valid_path_patterns(
     pattern_list,
     min_length=1,
     max_length=4096,
-    extra_chars='.*?{}',
+    extra_chars='.*?',
 ):
     """Verify that supplied pattern_list only contains characters that
     we consider valid in paths. Valid wild card characters are added
@@ -964,7 +964,7 @@ def valid_workflow_operation(operation):
 def valid_workflow_type(type):
     """Verify that the supplied workflow type only contains letters"""
     valid_ascii(type, extra_chars='_')
-    
+
 
 def valid_job_vgrid(vgrid):
     """Verify that supplied vgrid only contains characters that
