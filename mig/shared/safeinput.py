@@ -147,7 +147,7 @@ float_extras = integer_extras + '.'
 password_extras = ' -_#.,:;!@%/()[]{}+=?<>'
 # Absolute length limits for all passwords - further restricted in backends
 password_min_len = 4
-password_max_len = 64
+password_max_len = 256
 dn_max_len = 96
 
 valid_integer_chars = digits + integer_extras
@@ -1763,9 +1763,14 @@ def validate_values(
         values = [values]
 
     for entry in values:
+        # Never show actual passwords in output
+        show_val = entry
+        if type_checks.get(key, None) is valid_password:
+            show_val = '*' * len(entry)
+
         if key not in fields:
             err = 'unexpected field: %s' % key
-            bad_values.append((html_escape(entry),
+            bad_values.append((html_escape(show_val),
                                html_escape(str(err))))
             continue
         if key not in type_checks:
@@ -1775,7 +1780,7 @@ def validate_values(
             type_checks[key](entry)
         except Exception, err:
             # Probably illegal type hint
-            bad_values.append((html_escape(entry),
+            bad_values.append((html_escape(show_val),
                                html_escape(str(err))))
             continue
         if key not in value_checks:
@@ -1785,7 +1790,7 @@ def validate_values(
             value_checks[key](entry)
         except Exception, err:
             # Value check failed
-            bad_values.append((html_escape(entry),
+            bad_values.append((html_escape(show_val),
                                html_escape(str(err))))
             continue
         ok_values.append(entry)
