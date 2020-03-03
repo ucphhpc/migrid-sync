@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# griddaemons.sftp - Wrapper for davs grid daemon import
+# griddaemons.davs - Wrapper for davs grid daemon import
 # Copyright (C) 2010-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
