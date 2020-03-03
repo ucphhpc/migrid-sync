@@ -91,7 +91,7 @@ except ImportError:
 from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
 from shared.fileio import user_chroot_exceptions
-from shared.griddaemons import default_max_user_hits, \
+from shared.griddaemons.ftps import default_max_user_hits, \
     default_user_abuse_hits, default_proto_abuse_hits, \
     default_max_secret_hits, default_username_validator, \
     get_fs_path, acceptable_chmod, refresh_user_creds, refresh_share_creds, \

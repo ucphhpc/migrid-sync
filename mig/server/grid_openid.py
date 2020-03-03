@@ -82,7 +82,7 @@ from openid.consumer import discover
 from shared.base import client_id_dir, cert_field_map
 from shared.conf import get_configuration_object
 from shared.defaults import user_db_filename
-from shared.griddaemons import default_max_user_hits, \
+from shared.griddaemons.openid import default_max_user_hits, \
     default_user_abuse_hits, default_proto_abuse_hits, \
     default_username_validator, refresh_user_creds, update_login_map, \
     login_map_lookup, hit_rate_limit, expire_rate_limit, \

@@ -86,7 +86,7 @@ from shared.defaults import keyword_auto, STRONG_SSH_KEXALGOS, \
     STRONG_SSH_LEGACY_MACS
 from shared.fileio import check_write_access, user_chroot_exceptions
 from shared.gdp import project_open, project_close, project_log
-from shared.griddaemons import default_username_validator, \
+from shared.griddaemons.sftp import default_username_validator, \
     default_max_user_hits, default_user_abuse_hits, \
     default_proto_abuse_hits, default_max_secret_hits, \
     get_fs_path, strip_root, flags_to_mode, acceptable_chmod, \

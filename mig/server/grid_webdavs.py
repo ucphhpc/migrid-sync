@@ -68,7 +68,7 @@ from shared.conf import get_configuration_object
 from shared.defaults import dav_domain, litmus_id, io_session_timeout
 from shared.fileio import check_write_access, user_chroot_exceptions
 from shared.gdp import project_open, project_close, project_log
-from shared.griddaemons import get_fs_path, acceptable_chmod, \
+from shared.griddaemons.davs import get_fs_path, acceptable_chmod, \
     default_max_user_hits, default_user_abuse_hits, \
     default_proto_abuse_hits, default_max_secret_hits, \
     default_username_validator, refresh_user_creds, refresh_share_creds, \
