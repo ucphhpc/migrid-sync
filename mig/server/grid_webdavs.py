@@ -73,9 +73,9 @@ from shared.griddaemons.davs import get_fs_path, acceptable_chmod, \
     default_proto_abuse_hits, default_max_secret_hits, \
     default_username_validator, refresh_user_creds, refresh_share_creds, \
     update_login_map, login_map_lookup, hit_rate_limit, expire_rate_limit, \
-    add_user_object, track_open_session, track_close_session, \
-    track_close_expired_sessions, get_active_session, \
-    check_twofactor_session, validate_auth_attempt
+    add_user_object, track_open_session, clear_sessions, \
+    track_close_session, track_close_expired_sessions, \
+    get_active_session, check_twofactor_session, validate_auth_attempt
 from shared.pwhash import make_scramble
 from shared.sslsession import ssl_session_token
 from shared.tlsserver import hardened_ssl_context
@@ -1705,6 +1705,8 @@ unless it is available in mig/server/MiGserver.conf
         # Close projects marked as open due to NON-clean exits
         project_close(configuration, 'davs',
                       address, user_id=None)
+    # Start with fresh session tracker
+    clear_sessions(configuration, 'davs')
     logger.info("Starting WebDAV server")
     info_msg = "Listening on address '%s' and port %d" % (address, port)
     logger.info(info_msg)

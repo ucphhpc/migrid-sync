@@ -92,9 +92,9 @@ from shared.griddaemons.sftp import default_username_validator, \
     get_fs_path, strip_root, flags_to_mode, acceptable_chmod, \
     refresh_user_creds, refresh_job_creds, refresh_share_creds, \
     refresh_jupyter_creds, update_login_map, login_map_lookup, \
-    hit_rate_limit, expire_rate_limit, track_open_session, \
-    track_close_session, active_sessions, check_twofactor_session, \
-    validate_auth_attempt
+    hit_rate_limit, expire_rate_limit, clear_sessions, \
+    track_open_session, track_close_session, active_sessions, \
+    check_twofactor_session, validate_auth_attempt
 from shared.logger import daemon_logger, daemon_gdp_logger, \
     register_hangup_handler
 from shared.notification import send_system_notification
@@ -1621,6 +1621,8 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
     if configuration.site_enable_gdp:
        # Close projects marked as open due to NON-clean exits
         project_close(configuration, 'sftp', address, user_id=None)
+    # Start with fresh session tracker
+    clear_sessions(configuration, 'sftp')
     logger.info("Starting SFTP server")
     info_msg = "Listening on address '%s' and port %d" % (address, port)
     logger.info(info_msg)

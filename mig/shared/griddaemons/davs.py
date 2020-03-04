@@ -36,7 +36,8 @@ from shared.griddaemons.ratelimits import default_max_user_hits, \
     default_user_abuse_hits, default_proto_abuse_hits, \
     default_max_secret_hits, hit_rate_limit, \
     expire_rate_limit
-from shared.griddaemons.sessions import track_open_session, \
-    track_close_session, track_close_expired_sessions, get_active_session
+from shared.griddaemons.sessions import clear_sessions, \
+    track_open_session, track_close_session, \
+    track_close_expired_sessions, get_active_session
 from shared.griddaemons.auth import check_twofactor_session, \
     validate_auth_attempt
