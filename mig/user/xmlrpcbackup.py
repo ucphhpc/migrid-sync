@@ -252,6 +252,13 @@ key/certificate passphrase before you can continue.
 
     # print "DEBUG: createbackup response: %s" % outlist
 
+    print "Archive create status:"
+    for elem in outlist:
+        if elem.get('object_type', 'UNKNOWN') != 'freezestatus':
+            continue
+        print "Created %(flavor)s archive %(freeze_id)s: %(freeze_state)s" % \
+              elem
+
     # Find actual archive ID from resulting link
     archive_id_list = None
     for elem in outlist:

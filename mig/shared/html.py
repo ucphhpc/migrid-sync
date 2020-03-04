@@ -375,18 +375,30 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
                configuration.site_logo_right)
     else:
         html = '''
-<!--Push notifications-->
-  <div id="sitestatus-popup" class="toast hidden" data-autohide="false">
-    <div id="sitestatus-top" class="toast-header">
-      <div id="sitestatus-title" class="toast-title">
-        <!-- Filled by AJAX -->
-      </div>
+    <!-- Push notifications: updated/filled by AJAX -->
+    <div id="sitestatus-popup" class="toast hidden" data-autohide="false">
+      <div id="sitestatus-top" class="toast-header">
+        <div id="sitestatus-title" class="toast-title">
+          <!-- TODO: move inline style to css files -->
+          <!-- NOTE: reuse 1.5rem size with ml-2 and mb-1 classes to mimic close -->
+          <span id="sitestatus-icon" class="fas fa-question-circle ml-2 mb-1" style="color: grey; font-size: 1.5rem; float: left;"></span>
+          <strong class="mr-auto text-primary" style="float: left;">
+            <h3 id="sitestatus-caption" style="margin-left: 5px;">SITE STATUS</h3>
+          </strong>
+          <small id="sitestatus-timestamp" class="text-muted" style="float: right;"></small>
+        </div>
       <div id="sitestatus-close" class="">
-      <button type="button" class="ml-2 mb-1 close" data-dismiss="toast">&times;</button>
+        <button type="button" class="ml-2 mb-1 close" data-dismiss="toast">&times;</button>
       </div>
     </div>
     <div id="sitestatus-content" class="toast-body">
-      <!-- Filled by AJAX -->
+      <h3>Site Status</h3>
+      <p id="sitestatus-line" class="status-text spinner">
+      Loading status information ... please wait.
+      </p>
+      <div id="sitestatus-recent" class="hidden"><h3>Active Announcements</h3>
+        <p id="sitestatus-announce" class="announce-text"></p>
+      </div>
     </div>
     <div id="sitestatus-more" class="toast-body">
       <a target=_blank href="%(status_url)s">More details ...</a>
@@ -589,6 +601,11 @@ def themed_scripts(configuration, base=[], advanced=[], skin=[], init=[],
     # Always init basic js logging
     scripts['init'].append(console_log_javascript(script_wrap=False))
 
+    # Always add site status helpers
+    scripts['skin'].append('''
+    <script src="/images/js/jquery.sitestatus.js"></script>
+    ''')
+
     if not legacy_user_interface(configuration, user_settings):
         scripts['base'].append('''
 <script src="/assets/vendor/jquery/js/popper.js"></script>
@@ -610,15 +627,22 @@ def themed_scripts(configuration, base=[], advanced=[], skin=[], init=[],
         about_url = configuration.site_about_snippet_url
         # TODO: remote status page may require CORS headers
         sitestatus_url = configuration.site_status_url
+        sitestatus_events = configuration.site_status_events
+        sitestatus_system_match = configuration.site_status_system_match
         scripts['ready'].append('''
+            /* NOTE: extract browser/user language dynamically if possible */
+            var req_lang = navigator.language || navigator.userLanguage || '';
+            //console.log("found requested lang: "+req_lang);
+            var locale = req_lang.split(/[_-]/)[0].toLowerCase();
+
             console.log("loading dynamic snippet content");
             %s("%s");
             load_faq("%s");
             load_about("%s");
-            load_sitestatus("%s");
+            load_sitestatus("%s", %s, locale);
             console.log("loaded dynamic content");
         ''' % (quickstart_init, quickstart_url, faq_url, about_url,
-               sitestatus_url))
+               sitestatus_events, sitestatus_system_match))
     wrapped = {'base': '\n'.join(scripts['base']),
                'advanced': '\n'.join(scripts['advanced']),
                'skin': '\n'.join(scripts['skin']),

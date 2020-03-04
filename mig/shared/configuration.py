@@ -658,7 +658,7 @@ location.""" % self.config_file
             self.mig_system_files = config.get('GLOBAL',
                                                'mig_system_files')
             self.mig_system_run = config.get('GLOBAL',
-                                               'mig_system_run')
+                                             'mig_system_run')
             self.empty_job_name = config.get('GLOBAL', 'empty_job_name')
             self.migserver_http_url = config.get('GLOBAL',
                                                  'migserver_http_url')
@@ -1261,7 +1261,7 @@ location.""" % self.config_file
                 for name in override_map_keys:
                     raw_val = service.get('%s_map' % name, '')
                     map_parts = raw_val.split(';')
-                    entry_pairs = [i.split('=', 1) for i in map_parts if \
+                    entry_pairs = [i.split('=', 1) for i in map_parts if
                                    i.find('=') != -1]
                     entry_map = dict(entry_pairs)
                     service['%s_map' % name] = entry_map
@@ -1714,6 +1714,15 @@ location.""" % self.config_file
             self.site_status_url = config.get('SITE', 'status_url')
         else:
             self.site_status_url = '/public/status.html'
+        if config.has_option('SITE', 'status_events'):
+            self.site_status_events = config.get('SITE', 'status_events')
+        else:
+            self.site_status_events = '/public/status-events.json'
+        if config.has_option('SITE', 'status_system_match'):
+            self.site_status_system_match = config.get(
+                'SITE', 'status_system_match').split()
+        else:
+            self.site_status_system_match = ['ALL']
         # Fall back to a static 'random' salt string since we need it to
         # remain constant
         static_rand = 'w\xff\xcft\xaf/\x089 B\x1eG\x84i\x97a'

@@ -33,6 +33,7 @@ ERDA Status
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
+<script type="text/javascript" src="/images/js/jquery.sitestatus.js"></script>
 <script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
 
 
@@ -75,129 +76,10 @@ ERDA Status
     }
 
   /* Dynamically load and display parsed events here */
-  content_url="status-events.json"
+  content_url = "status-events.json"
   console.log("get content from "+content_url);
-  /* Load content: roughly equivalent to $.get(url, data, success) */
-  $('.english .news-accordion').html("<p class='leftpad spinner'>Loading status and news entries ...</p>");
-  $('.danish .news-accordion').html("<p class='leftpad spinner'>Henter status og nyheder ...</p>");
-  try {
-      $.getJSON('status-events.json').done(function(response) {
-          //console.log("Success: "+response);
-          var title, desc;
-  
-          /* Loop through events */
-          var en_items = [];
-          var dk_items = [];
-          var en_entry, en_title, en_description;
-          var dk_entry, dk_title, dk_description;
-          var work_start, work_end, announce_start, announce_end;
-          var now = new Date();
-          var work_dates = "";
-          var title_class;
-          $.each(response, function (index, item) {
-            en_entry = "";
-            en_title = "";
-            en_description = "";
-            dk_entry = "";
-            dk_title = "";
-            dk_description = "";
-            title_class = "";
-            work_start = work_end = new Date();
-            announce_start = announce_end = new Date();
-            $.each(item, function(key, val) {
-               if (key === "title") {
-                 en_title = val["EN"];
-                 dk_title = val["DK"];
-               }
-               else if (key === "description") {
-                 en_description = val["EN"];
-                 dk_description = val["DK"];
-               }
-               else if (key === "work_start") {
-                 work_start = new Date(val);
-               }
-               else if (key === "work_end") {
-                 work_end = new Date(val);
-               }
-               else if (key === "announce_start") {
-                 announce_start = new Date(val);
-               }
-               else if (key === "announce_end") {
-                 announce_end = new Date(val);
-               }
-            });
-  
-            
-            if (work_start < now && now < work_end) {
-                title_class += "work warn iconleftpad";
-                console.log("Is active: " + work_start +" < " +now+ " < "+work_end );
-
-            } else if (announce_start < now && now < announce_end) {
-                title_class += "announce info iconleftpad";
-                console.log("announce: " + announce_start +" < " +now+ " < "+announce_end );
-
-            } else if (now < announce_start) {
-                console.debug("skip future marker: " + announce_start + " vs "+now);
-                title_class += "waiting iconleftpad";
-            } else if (now > announce_end) {
-                console.debug("skip past marker: " + announce_end + " vs "+now);
-                title_class += "ok iconleftpad";
-            }
-            /* TODO: consider showing time, too? */
-            work_dates = work_start.toLocaleDateString(locale);
-            if (work_end.toLocaleDateString(locale) != work_dates) {
-                work_dates += " - "+work_end.toLocaleDateString(locale);
-            }
-            en_entry = "<h4><span class='"+title_class+"'>"+work_dates+"</span>: "+en_title+"</h4><p>" + en_description + "</p>";
-            en_items.push(en_entry);
-            dk_entry = "<h4><span class='"+title_class+"'>"+work_dates+"</span>: "+dk_title+"</h4><p>" + dk_description + "</p>";
-            dk_items.push(dk_entry);
- 
-          });
-          $('.english .news-accordion').html(en_items.join(""));
-          $('.danish .news-accordion').html(dk_items.join(""));
-  
-          /* Call accordion init now that contents are loaded */
-          delayed_init();
-       }).fail(function(response) {
-           console.error("getjson failed: "+ response);
-  });
-  /*
-      $.ajax({
-             url: 'status-events.json',
-             type: 'get',
-             error: function(data){
-                 console.error('plain ajax failed: '+data);
-             },
-             success: function(data){
-                 console.log('plain ajax got data: '+data);
-             }
-       });
-      $.ajax({
-             url: 'status-events.json',
-             type: 'get',
-             dataType: 'json',
-             error: function(data){
-                 console.error('ajax failed: '+data);
-             },
-             success: function(data){
-                 console.log('ajax got data: '+data);
-             }
-      });
-      $.ajax(content_url, {
-                            success: function() {
-                                console.log("success in load json");
-                            },
-                            error: function() {
-                                console.error("in load json");
-                            },
-                            dataType: "json"
-                          }
-                      );
-    */
-  } catch(err) {
-      console.error("load json failed: "+err);
-  }
+  status_targets = {"EN": ".english .news-accordion", "DK": ".danish .news-accordion"};
+  fill_server_status_accordion(content_url, status_targets, locale);
 
   $("#langselect").on('change', function() { 
       var lang = $(this).val();

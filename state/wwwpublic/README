@@ -1,4 +1,10 @@
-This directory is for public files on the MiG server and all files are visible on the plain HTTP virtual 
-host.
+This directory is for public files on migrid sites and all files are visible in
+the root on the plain HTTP virtual host and through /public/ on the HTTPS
+virtual hosts.
 
-The monitor and public vgrid files should automatically be included here.
+For UI V3 support in About, Support and Status popups on user pages it is
+necessary to add about-snippet.html, faq-snippet.html and
+quickstart-snippet.html files or symlinks to the sample site files with a
+similar prefix.
+
+The monitor, archives and public vgrid files should automatically be included here.
