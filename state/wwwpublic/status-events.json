@@ -44,6 +44,14 @@
   {
     "status": "AUTO", 
     "work_start": "2020-02-21T00:00:00", 
+    "references": {
+      "EN": [
+        "https://kunet.ku.dk/newsroom/news/Pages/Major-service-window-at-UCPH-in-February.aspx"
+      ], 
+      "DK": [
+        "https://kunet.ku.dk/nyhedsrum/nyheder/Sider/Servicevindue-p%C3%A5-KU.aspx"
+      ]
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -65,6 +73,10 @@
   {
     "status": "AUTO", 
     "work_start": "2020-02-19T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -86,6 +98,10 @@
   {
     "status": "AUTO", 
     "work_start": "2020-01-22T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "SIF"
     ], 
@@ -107,6 +123,10 @@
   {
     "status": "AUTO", 
     "work_start": "2020-01-09T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -129,6 +149,10 @@
   {
     "status": "AUTO", 
     "work_start": "2019-12-04T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ERDA"
     ], 
@@ -150,6 +174,10 @@
   {
     "status": "AUTO", 
     "work_start": "2019-11-09T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -171,6 +199,10 @@
   {
     "status": "AUTO", 
     "work_start": "2019-11-07T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "SIF"
     ], 
@@ -192,6 +224,10 @@
   {
     "status": "AUTO", 
     "work_start": "2019-11-05T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ERDA"
     ], 
@@ -213,6 +249,10 @@
   {
     "status": "AUTO", 
     "work_start": "2019-09-24T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -234,6 +274,10 @@
   {
     "status": "AUTO", 
     "work_start": "2019-09-18T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "SIF"
     ], 
@@ -255,6 +299,10 @@
   {
     "status": "AUTO", 
     "work_start": "2019-08-10T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -276,6 +324,10 @@
   {
     "status": "AUTO", 
     "work_start": "2019-07-30T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -298,6 +350,10 @@
   {
     "status": "AUTO", 
     "work_start": "2019-07-22T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -320,6 +376,10 @@
   {
     "status": "AUTO", 
     "work_start": "2019-07-05T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -341,6 +401,10 @@
   {
     "status": "AUTO", 
     "work_start": "2019-07-04T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -362,6 +426,10 @@
   {
     "status": "AUTO", 
     "work_start": "2019-07-04T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "SIF"
     ], 
@@ -383,6 +451,10 @@
   {
     "status": "AUTO", 
     "work_start": "2019-07-01T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -404,6 +476,10 @@
   {
     "status": "AUTO", 
     "work_start": "2019-06-26T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -425,6 +501,14 @@
   {
     "status": "AUTO", 
     "work_start": "2019-05-29T00:00:00", 
+    "references": {
+      "EN":[
+        "https://it.ku.dk/driftinfo/"
+      ], 
+      "DK": [
+        "https://it.ku.dk/driftinfo/"
+      ]
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -446,6 +530,10 @@
   {
     "status": "AUTO", 
     "work_start": "2019-05-14T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -467,6 +555,10 @@
   {
     "status": "AUTO", 
     "work_start": "2019-05-10T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -488,6 +580,10 @@
   {
     "status": "AUTO", 
     "work_start": "2019-04-23T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -509,6 +605,10 @@
   {
     "status": "AUTO", 
     "work_start": "2019-03-27T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -530,6 +630,14 @@
   {
     "status": "AUTO", 
     "work_start": "2019-02-06T00:00:00", 
+    "references": {
+      "EN": [
+        "http://sif.ku.dk"
+      ], 
+      "DK": [
+        "http://sif.ku.dk"
+      ]
+    }, 
     "systems": [
       "SIF"
     ], 
@@ -551,6 +659,10 @@
   {
     "status": "AUTO", 
     "work_start": "2019-01-21T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -572,6 +684,10 @@
   {
     "status": "AUTO", 
     "work_start": "2019-01-17T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -593,6 +709,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-09-09T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -614,6 +734,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-09-08T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -635,6 +759,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-09-03T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -656,6 +784,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-07-18T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -677,6 +809,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-07-12T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -698,6 +834,16 @@
   {
     "status": "AUTO", 
     "work_start": "2018-07-06T00:00:00", 
+    "references": {
+      "EN": [
+        "https://intranet.ku.dk/employeeguide/safety-and-emergency/information-security/Pages/default.aspx", 
+        "http://sif-www.erda.dk"
+      ], 
+      "DK": [
+        "https://intranet.ku.dk/medarbejderguide/sikkerhed-og-beredskab/IS/Sider/default.aspx", 
+        "http://sif-www.erda.dk"
+      ]
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -719,6 +865,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-06-25T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -743,6 +893,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-06-21T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -764,6 +918,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-06-20T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -785,6 +943,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-06-18T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -806,6 +968,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-06-13T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -827,6 +993,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-04-19T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -848,6 +1018,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-04-17T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -869,6 +1043,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-04-06T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -890,6 +1068,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-03-16T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -911,6 +1093,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-03-15T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -932,6 +1118,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-03-12T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -953,6 +1143,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-03-11T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -974,6 +1168,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-03-05T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -995,6 +1193,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-03-04T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -1016,6 +1218,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-02-21T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -1037,6 +1243,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-02-13T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -1058,6 +1268,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-02-12T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -1079,6 +1293,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-01-25T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -1100,6 +1318,14 @@
   {
     "status": "AUTO", 
     "work_start": "2018-01-10T00:00:00", 
+    "references": {
+      "EN": [
+        "https://meltdownattack.com/"
+      ], 
+      "DK": [
+        "https://meltdownattack.com/"
+      ]
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -1121,6 +1347,10 @@
   {
     "status": "AUTO", 
     "work_start": "2018-01-10T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -1142,6 +1372,10 @@
   {
     "status": "AUTO", 
     "work_start": "2017-11-02T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -1163,6 +1397,10 @@
   {
     "status": "AUTO", 
     "work_start": "2017-09-21T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -1184,6 +1422,14 @@
   {
     "status": "AUTO", 
     "work_start": "2017-07-25T00:00:00", 
+    "references": {
+      "EN": [
+        "http://www.erda.dk/index.html"
+      ], 
+      "DK": [
+        "http://www.erda.dk/index.html"
+      ]
+    }, 
     "systems": [
       "ALL"
     ], 
@@ -1205,6 +1451,10 @@
   {
     "status": "AUTO", 
     "work_start": "2017-04-21T00:00:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
     "systems": [
       "ALL"
     ], 
