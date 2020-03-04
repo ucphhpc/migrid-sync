@@ -1068,7 +1068,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
 
         authtype = ''
         if key is not None:
-            authtype = 'key'
+            authtype = 'publickey'
         elif password is not None:
             authtype = 'password'
         elif (key is None and password is None) \
@@ -1141,7 +1141,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
                     configuration, username, enforce_address, 'sftp-pw')):
                 valid_twofa = True
 
-        if authtype == 'key' \
+        if authtype == 'publickey' \
                 and not key_enabled \
                 and not invalid_username \
                 and not invalid_user \

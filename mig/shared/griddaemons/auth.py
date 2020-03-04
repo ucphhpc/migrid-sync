@@ -41,8 +41,6 @@ from shared.settings import load_twofactor
 from shared.twofactorkeywords import get_keywords_dict as twofactor_defaults
 from shared.useradm import expand_openid_alias
 
-valid_auth_types = ['key', 'password', 'digest']
-
 
 def valid_twofactor_session(configuration, client_id, addr=None):
     """Check if *client_id* has a valid 2FA session.
@@ -240,9 +238,27 @@ def validate_auth_attempt(configuration,
     if skip_twofa_check:
         twofa_passed = True
 
-    if not authtype in valid_auth_types:
-        logger.error("Invalid authlog auth type: %r" % authtype
-                     + " not in valid auth types: %s" % valid_auth_types)
+    if protocol == 'davs' \
+            and authtype in configuration.user_davs_auth:
+        pass
+    elif protocol == 'ftps' \
+            and authtype in configuration.user_ftps_auth:
+        pass
+    elif protocol == 'sftp' \
+            and authtype in configuration.user_sftp_auth:
+        pass
+    elif protocol == 'sftp-subsys' \
+            and authtype in configuration.user_sftp_auth:
+        pass
+    elif protocol == 'openid' \
+            and authtype in configuration.user_openid_auth:
+        pass
+    elif not protocol in ['davs', 'ftps', 'sftp', 'sftp-subsys', 'openid']:
+        logger.error("Invalid protocol: %r" % protocol)
+        return (authorized, disconnect)
+    else:
+        logger.error("Invalid auth type: %r for protocol: %r"
+                     % (authtype, protocol))
         return (authorized, disconnect)
 
     # Log auth attempt and set (authorized, disconnect) return values
