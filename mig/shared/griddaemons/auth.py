@@ -33,7 +33,7 @@ import re
 from shared.auth import active_twofactor_session
 from shared.defaults import CRACK_USERNAME_REGEX
 from shared.gdp import get_client_id_from_project_client_id
-from shared.griddaemons.rate_limits import default_user_abuse_hits, \
+from shared.griddaemons.ratelimits import default_user_abuse_hits, \
     default_proto_abuse_hits, default_max_secret_hits, update_rate_limit
 from shared.griddaemons.sessions import active_sessions
 from shared.notification import send_system_notification

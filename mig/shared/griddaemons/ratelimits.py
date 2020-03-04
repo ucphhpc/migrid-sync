@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# rate_limits - grid daemon rate limit helper functions
+# ratelimits - grid daemon rate limit helper functions
 # Copyright (C) 2010-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.

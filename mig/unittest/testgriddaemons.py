@@ -31,7 +31,7 @@ import sys
 import time
 import logging
 
-from shared.griddaemons.rate_limits import default_max_user_hits, \
+from shared.griddaemons.ratelimits import default_max_user_hits, \
     expire_rate_limit, hit_rate_limit, update_rate_limit
 from shared.griddaemons.sessions import active_sessions, \
     get_active_session, get_open_sessions, track_open_session, \

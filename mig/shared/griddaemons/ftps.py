@@ -31,7 +31,7 @@ from shared.griddaemons.base import default_username_validator, \
     get_fs_path, acceptable_chmod
 from shared.griddaemons.login import refresh_user_creds, \
     refresh_share_creds, update_login_map, login_map_lookup
-from shared.griddaemons.rate_limits import default_max_user_hits, \
+from shared.griddaemons.ratelimits import default_max_user_hits, \
     default_user_abuse_hits, default_proto_abuse_hits, \
     default_max_secret_hits, hit_rate_limit, expire_rate_limit
 from shared.griddaemons.auth import check_twofactor_session, \
