@@ -37,6 +37,7 @@ _sessions_filename = "sessions.pck"
 
 
 def _acquire_sessions_lock(configuration, proto, exclusive=True):
+    """Acquire sessions lock for protocol proto"""
     flock_filepath = \
         os.path.join(configuration.mig_system_run,
                      "%s.%s.lock"
@@ -47,6 +48,7 @@ def _acquire_sessions_lock(configuration, proto, exclusive=True):
 
 
 def _release_sessions_lock(flock):
+    """Release sessions file lock"""
     return release_file_lock(flock)
 
 
