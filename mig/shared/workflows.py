@@ -2246,11 +2246,18 @@ def __prepare_template(configuration, template, **kwargs):
 ::OUTPUTFILES::
 %(output_files)s%(sep)sjob_output/+JOBID+/%(output_files)s
 
+::MAXFILL::
+CPUCOUNT
+CPUTIME
+DISK
+MEMORY
+NODECOUNT
+
 ::RETRIES::
 0
 
 ::MEMORY:: 
-256
+0
 
 ::DISK::
 0
@@ -2259,10 +2266,10 @@ def __prepare_template(configuration, template, **kwargs):
 0
 
 ::CPUCOUNT::
-1
+0
 
 ::NODECOUNT::
-1
+0
 
 ::MOUNT::
 +TRIGGERVGRIDNAME+ +TRIGGERVGRIDNAME+

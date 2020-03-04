@@ -118,7 +118,8 @@ class JobJSONInterfaceAPIFunctionsTest(unittest.TestCase):
         job = {'EXECUTE': "echo 'hello world",
                'MEMORY': '1',
                'DISK': '1',
-               'CPUTIME': '1'}
+               'CPUTIME': '1',
+               'vgrid': self.test_vgrid}
 
         created, job_id = job_api_create(self.configuration,
                                          self.workflow_session,
@@ -131,7 +132,8 @@ class JobJSONInterfaceAPIFunctionsTest(unittest.TestCase):
         job_attributes = {'EXECUTE': "echo 'hello world",
                'MEMORY': '1',
                'DISK': '1',
-               'CPUTIME': '1'}
+               'CPUTIME': '1',
+               'vgrid': self.test_vgrid}
 
         created, job_id = job_api_create(self.configuration,
                                          self.workflow_session,
@@ -140,10 +142,15 @@ class JobJSONInterfaceAPIFunctionsTest(unittest.TestCase):
         self.logger.info(job_id)
         self.assertTrue(created)
 
+        read_attributes = {
+            'job_id': job_id,
+            'vgrid': self.test_vgrid
+         }
+
         status, job = job_api_read(self.configuration,
                                 self.workflow_session,
                                 JOB,
-                                **{'job_id': job_id})
+                                **read_attributes)
 
         self.assertTrue(status)
         self.assertIsInstance(job, dict)
@@ -158,7 +165,8 @@ class JobJSONInterfaceAPIFunctionsTest(unittest.TestCase):
         job_attributes = {'EXECUTE': "echo 'hello world",
                           'MEMORY': '1',
                           'DISK': '1',
-                          'CPUTIME': '1'}
+                          'CPUTIME': '1',
+                          'vgrid': self.test_vgrid}
 
         created, job_id = job_api_create(self.configuration,
                                          self.workflow_session,
@@ -168,7 +176,8 @@ class JobJSONInterfaceAPIFunctionsTest(unittest.TestCase):
         self.assertTrue(created)
 
         new_attributes = {'JOB_ID': job_id,
-                          'STATUS': 'CANCELED'}
+                          'STATUS': 'CANCELED',
+                          'vgrid': self.test_vgrid}
 
         status, updated = job_api_update(self.configuration,
                                       self.workflow_session,

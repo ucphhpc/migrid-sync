@@ -84,14 +84,10 @@ def get_vgrid_recent_jobs(configuration, vgrid_name, json_serializable=False):
                          client_id_dir(entry_client), entry_id) + '.mRSL'
         )
 
-        try:
-            job_dict = unpickle(path, configuration.logger)
-        except Exception:
-            msg = "Could not load job queue file '%s'" % path
-            configuration.logger.error(msg)
-            return (False, msg)
+        job_dict = unpickle(path, configuration.logger)
         if not job_dict:
-            continue
+            msg = "Could not load job queue file '%s'" % path
+            return (False, msg)
 
         # convert timestamps as they are not json serializable
         if json_serializable:

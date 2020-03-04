@@ -914,27 +914,6 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                 for job_template in rule['templates']:
                     mrsl_fd.truncate(0)
 
-                    # If rule requires additional environment vars, add them
-                    # to the job definition here. This could be moved inside
-                    # the fill_mrsl_template function instead.
-                    add_env_vars = rule.get('environment_vars', None)
-                    if add_env_vars:
-                        env_var_str = ''
-                        for env_var_key, env_var_val in add_env_vars.items():
-                            env_var_str \
-                                += "\n%s=%s" % (env_var_key, env_var_val)
-                        env_key = '::ENVIRONMENT::'
-                        if env_key in job_template:
-                            job_template = \
-                                job_template[
-                                :job_template.find(env_key) + len(env_key)] \
-                                + env_var_str \
-                                + job_template[
-                                  job_template.find(env_key) + len(
-                                      env_key):]
-                        else:
-                            job_template += env_key + env_var_str
-
                     if not fill_mrsl_template(
                         job_template,
                         mrsl_fd,

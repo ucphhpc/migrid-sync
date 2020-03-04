@@ -720,7 +720,7 @@ def gen_job_script(
                                          sftp_address, sftp_port,
                                          'mount_status'))
         job_array.append(generator.print_on_error('mount_status', '0',
-                                                  'failded to mount job home'))
+                                                  'failed to mount job home'))
         job_array.append(generator.log_on_error('mount_status', '0',
                                                 'system: mount'))
     job_array.append(generator.comment('execute!'))

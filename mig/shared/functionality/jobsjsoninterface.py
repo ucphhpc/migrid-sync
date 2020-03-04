@@ -48,7 +48,7 @@ from shared.safeinput import REJECT_UNSET, valid_sid, validated_input, \
 from shared.job import JOB_TYPES, JOB, QUEUE, get_job_with_id, fields_to_mrsl
 from shared.workflows import valid_session_id, load_workflow_sessions_db, \
     touch_workflow_sessions_db
-from shared.vgrid import get_vgrid_recent_jobs
+from shared.vgrid import get_vgrid_recent_jobs, init_vgrid_script_list
 
 JOB_API_CREATE = 'create'
 JOB_API_READ = 'read'
@@ -140,8 +140,19 @@ def job_api_create(configuration, workflow_session, job_type=JOB,
 
     client_id = workflow_session['owner']
     external_dict = get_keywords_dict(configuration)
-    if 'vgrid' in job_attributes:
-        job_attributes.pop('vgrid')
+
+    if 'vgrid' not in job_attributes:
+        msg = "Cannot create new job without specifying a VGrid for it to be " \
+              "attached to. "
+        return (False, msg)
+    vgrid = job_attributes['vgrid']
+
+    # User is vgrid owner or member
+    success, msg, _ = init_vgrid_script_list(vgrid, client_id, configuration)
+    if not success:
+        return (False, msg)
+
+    job_attributes.pop('vgrid')
 
     mrsl = fields_to_mrsl(configuration, job_attributes, external_dict)
 
@@ -194,11 +205,18 @@ def job_api_read(configuration, workflow_session, job_type=JOB,
     """
     _logger = configuration.logger
 
-    if job_type == QUEUE:
-        if 'vgrid' not in job_attributes:
-            return (False, "Can't read job queue without 'vgrid' attribute")
-        vgrid = job_attributes['vgrid']
+    if 'vgrid' not in job_attributes:
+        return (False, "Can't read jobs without 'vgrid' attribute")
+    vgrid = job_attributes['vgrid']
 
+    # User is vgrid owner or member
+    client_id = workflow_session['owner']
+    success, msg, _ = init_vgrid_script_list(vgrid, client_id,
+                                             configuration)
+    if not success:
+        return (False, msg)
+
+    if job_type == QUEUE:
         job_list = \
             get_vgrid_recent_jobs(configuration, vgrid, json_serializable=True)
 
@@ -213,15 +231,11 @@ def job_api_read(configuration, workflow_session, job_type=JOB,
         if 'job_id' not in job_attributes:
             return (False, "Can't read single job without 'job_id' attribute")
 
-        vgrid=None
-        if 'vgrid' in job_attributes:
-            vgrid = job_attributes['vgrid']
-
         return get_job_with_id(
             configuration,
             job_attributes['job_id'],
-            client_id=workflow_session['owner'],
-            vgrid=vgrid,
+            vgrid,
+            workflow_session['owner'],
             only_user_jobs=False
         )
 
@@ -252,8 +266,24 @@ def job_api_update(configuration, workflow_session, job_type=JOB,
         _logger.error(msg)
         return (False, msg)
 
-    status, job = get_job_with_id(configuration, job_id, client_id=client_id,
-                          only_user_jobs=False)
+    if 'vgrid' not in job_attributes:
+        return (False, "Can't update job without 'vgrid' attribute")
+    vgrid = job_attributes['vgrid']
+
+    # User is vgrid owner or member
+    client_id = workflow_session['owner']
+    success, msg, _ = init_vgrid_script_list(vgrid, client_id,
+                                             configuration)
+    if not success:
+        return (False, msg)
+
+    status, job = get_job_with_id(
+        configuration,
+        job_id,
+        vgrid,
+        client_id,
+        only_user_jobs=False
+    )
 
     if not status:
         msg = "Could not open job file for job '%s'" % job_id
@@ -316,11 +346,11 @@ def main(client_id, user_arguments_dict):
     # Ensure that the output format is in JSON
     user_arguments_dict['output_format'] = ['json']
     user_arguments_dict.pop('__DELAYED_INPUT__', None)
-    (configuration, _logger, output_objects, op_name) = \
+    (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_title=False, op_header=False,
                                   op_menu=False)
 
-    _logger.info("Got job json request for client '%s' with arguments '%s'"
+    logger.info("Got job json request for client '%s' with arguments '%s'"
                 % (client_id, user_arguments_dict))
 
     if not configuration.site_enable_workflows:
@@ -348,7 +378,7 @@ def main(client_id, user_arguments_dict):
     except ValueError:
         msg = "An invalid format was supplied to: '%s', requires a JSON " \
               "compatible format" % op_name
-        _logger.error(msg)
+        logger.error(msg)
         output_objects.append({'object_type': 'error_text',
                                'text': msg})
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -367,16 +397,18 @@ def main(client_id, user_arguments_dict):
         list_wrap=True)
 
     if not accepted or rejected:
-        _logger.error("A validation error occurred: '%s'" % rejected)
+        logger.error("A validation error occurred: '%s'" % rejected)
         msg = "Invalid input was supplied to the job API: %s" % rejected
         # TODO, Transform error messages to something more readable
         output_objects.append({'object_type': 'error_text', 'text': msg})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    job_attributes = accepted.get('attributes', None)
-    job_type = accepted.get('type', None)
-    operation = accepted.get('operation', None)
-    workflow_session_id = accepted.get('workflowsessionid', None)
+    # Should use 'accepted' here, but all data jumbled together into one big
+    # dict, easier to access json data by known keys
+    job_attributes = json_data.get('attributes', None)
+    job_type = json_data.get('type', None)
+    operation = json_data.get('operation', None)
+    workflow_session_id = json_data.get('workflowsessionid', None)
 
     if not valid_session_id(configuration, workflow_session_id):
         output_objects.append({'object_type': 'error_text',
@@ -388,7 +420,7 @@ def main(client_id, user_arguments_dict):
     try:
         workflow_sessions_db = load_workflow_sessions_db(configuration)
     except IOError:
-        _logger.info("Workflow sessions db didn't load, creating new db")
+        logger.info("Workflow sessions db didn't load, creating new db")
         if not touch_workflow_sessions_db(configuration, force=True):
             output_objects.append(
                 {'object_type': 'error_text',
@@ -401,7 +433,7 @@ def main(client_id, user_arguments_dict):
             workflow_sessions_db = load_workflow_sessions_db(configuration)
 
     if workflow_session_id not in workflow_sessions_db:
-        _logger.error("Workflow session '%s' from user '%s' not found in "
+        logger.error("Workflow session '%s' from user '%s' not found in "
                       "database" % (workflow_session_id, client_id))
         configuration.auth_logger.error(
             "Workflow session '%s' provided by user '%s' but not present in "
@@ -412,6 +444,28 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     workflow_session = workflow_sessions_db.get(workflow_session_id)
+    client_id = workflow_session['owner']
+
+    if 'vgrid' not in job_attributes:
+        logger.info("Invalid json job interaction. user '%s' does not specify "
+                    "a vgrid in '%s'" % (client_id, job_attributes.keys()))
+        msg = "Cannot create new job without specifying a VGrid for it to be " \
+              "attached to. "
+        output_objects.append({'object_type': 'error_text',
+                               'text': msg})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+    vgrid = job_attributes['vgrid']
+
+    # User is vgrid owner or member
+    success, msg, _ = init_vgrid_script_list(vgrid, client_id,
+                                             configuration)
+
+    if not success:
+        logger.error("Illegal access attempt by user '%s' to vgrid '%s'. %s"
+                     % (client_id, vgrid, msg))
+        output_objects.append({'object_type': 'error_text',
+                               'text': msg})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Create
     if operation == JOB_API_CREATE:
@@ -420,7 +474,7 @@ def main(client_id, user_arguments_dict):
         if not created:
             output_objects.append({'object_type': 'error_text',
                                    'text': msg})
-            _logger.error("Returning error msg '%s'" % msg)
+            logger.error("Returning error msg '%s'" % msg)
             return (output_objects, returnvalues.CLIENT_ERROR)
         output_objects.append({'object_type': 'text', 'text': msg})
         return (output_objects, returnvalues.OK)

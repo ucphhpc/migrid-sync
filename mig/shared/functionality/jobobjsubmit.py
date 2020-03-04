@@ -38,7 +38,8 @@ from shared.conf import get_configuration_object
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables
-from shared.job import new_job, fields_to_mrsl, create_job_object_from_pickled_mrsl
+from shared.job import new_job, fields_to_mrsl, \
+    create_job_object_from_pickled_mrsl
 from shared.mrslkeywords import get_job_specs, get_keywords_dict
 
 
