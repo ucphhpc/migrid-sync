@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# griddaemons.sessions - grid daemon session tracker helper functions
+# sessions - grid daemon session tracker helper functions
 # Copyright (C) 2010-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.

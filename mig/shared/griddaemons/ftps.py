@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# griddaemons.ftps - Wrapper for ftps grid daemon import
+# ftps - Wrapper for ftps grid daemon import
 # Copyright (C) 2010-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.

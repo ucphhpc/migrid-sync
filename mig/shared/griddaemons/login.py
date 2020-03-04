@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# griddaemons.login - grid daemon login helper functions
+# login - grid daemon login helper functions
 # Copyright (C) 2010-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
