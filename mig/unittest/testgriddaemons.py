@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# griddaemons.__main__ - Unit tests for grid daemon helper functions
+# testgriddaemons- Set of unit tests for grid daemon helper functions
 # Copyright (C) 2010-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
