@@ -428,7 +428,8 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
         """Expire old entries in the rate limit dictionary"""
         if self.last_expire + self.min_expire_delay < time.time():
             self.last_expire = time.time()
-            expire_rate_limit(configuration, "davs")
+            expire_rate_limit(configuration, "davs",
+                expire_delay=self.min_expire_delay)
 
     def _authheader(self, environ):
         """Returns dict with HTTP AUTH REQUEST header

@@ -243,7 +243,8 @@ class OpenIDHTTPServer(HTTPServer):
         """Expire old entries in the volatile helper dictionaries"""
         if self.last_expire + self.min_expire_delay < time.time():
             self.last_expire = time.time()
-            expire_rate_limit(configuration, "openid")
+            expire_rate_limit(configuration, "openid", 
+                expire_delay=self.min_expire_delay)
             if self.hash_cache:
                 self.hash_cache.clear()
             if self.scramble_cache:
@@ -1450,14 +1451,11 @@ def start_service(configuration):
     serve_msg = 'Server running at: %s' % httpserver.base_url
     logger.info(serve_msg)
     print serve_msg
-    min_expire_delay = 300
-    last_expire = time.time()
     while True:
         logger.debug('handle next request')
         httpserver.handle_request()
         logger.debug('done handling request')
-        if last_expire + min_expire_delay < time.time():
-            httpserver.expire_volatile()
+        httpserver.expire_volatile()
 
 
 if __name__ == '__main__':

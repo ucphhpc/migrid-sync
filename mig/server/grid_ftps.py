@@ -228,7 +228,8 @@ class MiGUserAuthorizer(DummyAuthorizer):
 
         if self.last_expire + self.min_expire_delay < time.time():
             self.last_expire = time.time()
-            expire_rate_limit(configuration, "ftps")
+            expire_rate_limit(configuration, "ftps", 
+                expire_delay=self.min_expire_delay)
         if hit_rate_limit(configuration, 'ftps', client_ip, username,
                           max_user_hits=max_user_hits):
             exceeded_rate_limit = True

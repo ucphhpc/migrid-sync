@@ -52,7 +52,7 @@ if __name__ == "__main__":
     invalid_id = 'root'
     print "Running unit test on rate limit functions"
     print "Force expire all"
-    (_, _, _, expired) = expire_rate_limit(conf, test_proto, fail_cache=0)
+    expired = expire_rate_limit(conf, test_proto, fail_cache=0)
     print "Expired: %s" % expired
     this_pw = test_pw
     print "Emulate rate limit"
@@ -91,8 +91,8 @@ if __name__ == "__main__":
     print "Blocked: %s" % hit
     time.sleep(2)
     print "Force expire some entries"
-    (_, _, _, expired) = expire_rate_limit(conf, test_proto,
-                                           fail_cache=default_max_user_hits)
+    expired = expire_rate_limit(conf, test_proto,
+                                fail_cache=default_max_user_hits)
     print "Expired: %s" % expired
     print "Test reset on success"
     hit = hit_rate_limit(conf, test_proto, test_address, test_id)

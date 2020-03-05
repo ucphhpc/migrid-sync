@@ -1493,7 +1493,8 @@ def start_service(configuration):
         worker.start()
         if last_expire + min_expire_delay < time.time():
             last_expire = time.time()
-            expire_rate_limit(configuration, "sftp")
+            expire_rate_limit(configuration, "sftp", 
+                expire_delay=min_expire_delay)
 
 
 if __name__ == "__main__":
