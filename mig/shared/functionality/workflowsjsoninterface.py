@@ -36,6 +36,7 @@ import shared.returnvalues as returnvalues
 
 from shared.base import force_utf8_rec
 from shared.init import initialize_main_variables
+from shared.handlers import correct_handler
 from shared.safeinput import REJECT_UNSET, valid_workflow_pers_id, \
     valid_workflow_vgrid, valid_workflow_name, valid_workflow_input_file, \
     valid_workflow_input_paths, valid_workflow_output, valid_workflow_recipes,\
@@ -310,6 +311,14 @@ def main(client_id, user_arguments_dict):
     output_objects[0]['headers'].append(('Access-Control-Allow-Methods',
                                          'POST, OPTIONS'))
     output_objects[0]['headers'].append(('Content-Type', 'application/json'))
+
+    if not correct_handler('POST'):
+        msg = "Interaction from %s not POST request" % client_id
+        logger.error(msg)
+        output_objects.append({
+            'object_type': 'error_text',
+            'text': msg})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if not configuration.site_enable_workflows:
         output_objects.append({

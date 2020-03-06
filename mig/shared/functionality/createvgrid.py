@@ -47,7 +47,7 @@ from shared.safeeval import subprocess_call, subprocess_popen, \
 from shared.useradm import get_full_user_map
 from shared.vgrid import vgrid_is_owner, vgrid_set_owners, vgrid_set_members, \
      vgrid_set_resources, vgrid_set_triggers, vgrid_set_settings, \
-     vgrid_set_recent_jobs, vgrid_create_allowed, \
+     vgrid_set_workflow_jobs, vgrid_create_allowed, \
      vgrid_restrict_write_support, vgrid_flat_name, vgrid_settings
 from shared.vgridkeywords import get_settings_keywords_dict
 
@@ -1098,7 +1098,7 @@ for job input and output.
 
     # create empty job queue
 
-    (queue_status, queue_msg) = vgrid_set_recent_jobs(configuration,
+    (queue_status, queue_msg) = vgrid_set_workflow_jobs(configuration,
                                                       vgrid_name, [])
     if not queue_status:
         output_objects.append({'object_type': 'error_text', 'text'

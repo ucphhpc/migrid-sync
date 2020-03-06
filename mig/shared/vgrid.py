@@ -62,11 +62,14 @@ VALID_JOB_QUEUE = {
 }
 
 
-def get_vgrid_recent_jobs(configuration, vgrid_name, json_serializable=False):
-    """Retrieves all jobs in a vgrid recent job queue. This should be all jobs
-    run as part of a vgrid and is not limited to one users submissions. """
+def get_vgrid_workflow_jobs(
+        configuration, vgrid_name, json_serializable=False
+):
+    """Retrieves all jobs in a vgrid workflow job queue. This should be all
+    jobs run as part of a MEOW workflow and is not limited to one users
+    submissions. """
 
-    status, job_queue = vgrid_recent_jobs(vgrid_name, configuration)
+    status, job_queue = vgrid_workflow_jobs(vgrid_name, configuration)
 
     if not status:
         msg = "Could not retreive job queue for vgrid '%s'" % vgrid_name
@@ -1013,7 +1016,7 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True,
     elif group == 'settings':
         name = configuration.vgrid_settings
     elif group == 'jobqueue':
-        name = configuration.vgrid_recent_job_queue
+        name = configuration.vgrid_workflow_job_queue
     elif group == 'sharelinks':
         name = configuration.vgrid_sharelinks
     elif group == 'imagesettings':
@@ -1121,8 +1124,9 @@ def vgrid_settings(vgrid_name, configuration, recursive=True, allow_missing=True
     return (status, output)
 
 
-def vgrid_recent_jobs(vgrid_name, configuration, recursive=True):
-    """Extract recent jobs list for a vgrid."""
+def vgrid_workflow_jobs(vgrid_name, configuration, recursive=True,
+                        allow_missing=True):
+    """Extract workflow jobs list for a vgrid."""
     return vgrid_list(vgrid_name, 'jobqueue', configuration, recursive)
 
 
@@ -1429,7 +1433,7 @@ def vgrid_add_entities(configuration, vgrid_name, kind, id_list,
     elif kind == 'settings':
         entity_filename = configuration.vgrid_settings
     elif kind == 'jobqueue':
-        entity_filename = configuration.vgrid_recent_job_queue
+        entity_filename = configuration.vgrid_workflow_job_queue
     elif kind == 'sharelinks':
         entity_filename = configuration.vgrid_sharelinks
     elif kind == 'imagesettings':
@@ -1512,10 +1516,10 @@ def vgrid_add_settings(configuration, vgrid_name, id_list, update_id=None,
                               id_list, update_id, rank)
 
 
-def vgrid_add_recent_jobs(configuration, vgrid_name, id_list, rank=None):
+def vgrid_add_workflow_jobs(configuration, vgrid_name, id_list, rank=None):
     """Append id_list to pickled list of jobs for vgrid_name"""
 
-    status, jobs = vgrid_recent_jobs(vgrid_name, configuration)
+    status, jobs = vgrid_workflow_jobs(vgrid_name, configuration)
 
     if not status:
         # Note this is not currently stopping the addition to the queue.
@@ -1524,7 +1528,7 @@ def vgrid_add_recent_jobs(configuration, vgrid_name, id_list, rank=None):
     else:
         if len(jobs) > JOB_QUEUE_COUNT + len(id_list):
             first_jobs = jobs[:len(jobs)-JOB_QUEUE_COUNT+len(id_list)]
-            vgrid_remove_recent_jobs(configuration, vgrid_name, first_jobs)
+            vgrid_remove_workflow_jobs(configuration, vgrid_name, first_jobs)
 
     return vgrid_add_entities(configuration, vgrid_name, 'jobqueue',
                               id_list, None, rank)
@@ -1564,7 +1568,7 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
     elif kind == 'settings':
         entity_filename = configuration.vgrid_settings
     elif kind == 'jobqueue':
-        entity_filename = configuration.vgrid_recent_job_queue
+        entity_filename = configuration.vgrid_workflow_job_queue
     elif kind == 'sharelinks':
         entity_filename = configuration.vgrid_sharelinks
     elif kind == 'imagesettings':
@@ -1638,7 +1642,7 @@ def vgrid_remove_settings(configuration, vgrid_name, id_list,
                                  id_list, allow_empty, dict_field='option_id')
 
 
-def vgrid_remove_recent_jobs(configuration, vgrid_name, id_list,
+def vgrid_remove_workflow_jobs(configuration, vgrid_name, id_list,
                              allow_empty=True):
     """Remove id_list from pickled list of jobs for vgrid_name."""
     return vgrid_remove_entities(configuration, vgrid_name, 'jobqueue',
@@ -1675,7 +1679,7 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
     elif kind == 'settings':
         entity_filename = configuration.vgrid_settings
     elif kind == 'jobqueue':
-        entity_filename = configuration.vgrid_recent_job_queue
+        entity_filename = configuration.vgrid_workflow_job_queue
     elif kind == 'sharelinks':
         entity_filename = configuration.vgrid_sharelinks
     elif kind == 'imagesettings':
@@ -1735,9 +1739,9 @@ def vgrid_set_settings(configuration, vgrid_name, id_list, allow_empty=False):
                               id_list, allow_empty)
 
 
-def vgrid_set_recent_jobs(configuration, vgrid_name, id_list,
+def vgrid_set_workflow_jobs(configuration, vgrid_name, id_list,
                           allow_empty=True):
-    """Set list of recent vgrid jobs."""
+    """Set list of workflow vgrid jobs."""
     return vgrid_set_entities(configuration, vgrid_name, 'jobqueue',
                               id_list, allow_empty)
 

@@ -81,7 +81,8 @@ from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.job import fill_mrsl_template, new_job
 from shared.logger import daemon_logger, register_hangup_handler
 from shared.serial import load
-from shared.vgrid import vgrid_valid_entities
+from shared.vgrid import vgrid_valid_entities, vgrid_add_workflow_jobs, \
+    JOB_ID, JOB_CLIENT
 from shared.vgridaccess import check_vgrid_access
 
 # Global trigger rule dictionaries with rules for all VGrids
@@ -935,6 +936,16 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                     if success:
                         self.__add_trigger_job_ent(configuration,
                                                    event, rule, jobid)
+
+                        # update vgrid workflow jobs list
+                        for vgrid in vgrid_list:
+                            if vgrid != default_vgrid:
+                                job_queue_entry = {
+                                    JOB_ID: job_id,
+                                    JOB_CLIENT: client_id
+                                }
+                                vgrid_add_workflow_jobs(configuration, vgrid,
+                                                        [job_queue_entry])
 
                         logger.info('(%s) submitted job for %s: %s'
                                     % (pid, target_path, msg))
