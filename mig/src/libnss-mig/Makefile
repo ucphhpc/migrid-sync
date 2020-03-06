@@ -15,13 +15,35 @@
 # Leave like this to lookup values in $MIG_CONF or default MiGserver.conf .
 #MIG_DEFAULTS=-D'SHARELINK_HOME=""' -D'SHARELINK_LENGTH=-1' -D'USERNAME_REGEX=""' 
 # ... or hard code to your site values like this (NOTE: escaped dollar = '$$')
-MIG_DEFAULTS=-D'SHARELINK_HOME="/home/mig/state/sharelink_home"' -D'SHARELINK_LENGTH=10' -D'JOBSIDMOUNT_HOME="/home/mig/state/webserver_home"' -D'JOBSIDMOUNT_LENGTH=64' -D'JUPYTERSIDMOUNT_HOME="/home/mig/state/sessid_to_jupyter_mount_link_home"' -D'JUPYTERSIDMOUNT_LENGTH=64' -D'USERNAME_REGEX="^[a-zA-Z0-9][a-zA-Z0-9.@_-]{0,127}$$"'
-
+MIG_DEFAULTS=-D'SHARELINK_HOME="/home/mig/state/sharelink_home"' \
+			-D'SHARELINK_LENGTH=10' \
+			-D'JOBSIDMOUNT_HOME="/home/mig/state/webserver_home"' \
+			-D'JOBSIDMOUNT_LENGTH=64' \
+			-D'JUPYTERSIDMOUNT_HOME="/home/mig/state/sessid_to_jupyter_mount_link_home"' \
+			-D'JUPYTERSIDMOUNT_LENGTH=64' \
+			-D'USERNAME_REGEX="^[a-zA-Z0-9][a-zA-Z0-9.@_-]{0,127}$$"'
 ### End of MiG site variables
+
+#### Start of compiler configuration section ### 
+
+DEBUG_DEFINES=
+	#-D'DEBUG'
+DEBUG_CFLAGS=
+	#-g
+
+CC = gcc
+INCLUDES=-I./
+DEFINES=$(MIG_DEFAULTS) \
+		$(DEBUG_DEFINES)
+CFLAGS=-Wall \
+	   -Wpedantic \
+	   ${DEBUG_CFLAGS}
+LDFLAGS= -shared
+
+#### End of compiler configuration section ###
 
 #### Start of system configuration section. ####
 
-CC = gcc
 INSTALL = /usr/bin/install
 INSTALL_PROGRAM = ${INSTALL} -m 755
 INSTALL_DATA = ${INSTALL} -m 644
@@ -48,10 +70,11 @@ manprefix =
 
 #### End of system configuration section. ####
 
-all:	libnss_mig
+all:	libnss_mig.so.2
 
-libnss_mig:	libnss_mig.c
-	${CC} -std=gnu99 -fPIC ${MIG_DEFAULTS} -Wall -Wpedantic -shared -o libnss_mig.so.2 -Wl,-soname,libnss_mig.so.2 libnss_mig.c #-lini_config
+libnss_mig.so.2:	libnss_mig.c
+	${CC} -std=gnu99 -fPIC ${INCLUDES} ${DEFINES} ${CFLAGS} -o $@ $< ${LDFLAGS} 
+
 
 install:	libnss_mig.so.2
 	# remember  /lib64/libnss_mig.so.2 -> libnss_mig-2.3.6.so

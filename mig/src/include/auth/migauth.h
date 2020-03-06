@@ -1,6 +1,6 @@
 /*
  * migauth.h - PAM and NSS helpers for MiG user authentication
- * Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+ * Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
  *
  * This file is part of MiG
  *
@@ -27,6 +27,7 @@
  *
  * Written by Kenneth Skovhede <skovhede@nbi.ku.dk>
  * Extended for sharelinks by Jonas Bardino <bardino@nb.ku.dk>
+ * Extended for GDB debugging by Martin Rehr <rehr@nbi.ku.dk>
  *
  */
 
@@ -35,11 +36,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
 #include <regex.h>
 #include <stdarg.h>
 #include <syslog.h>
+#include <signal.h>
 /* TODO: enable conf parsing with this:
 #include <ini_config.h>
 */
@@ -66,6 +69,12 @@
 #ifndef USER_HOME
 #define USER_HOME "/home"
 #endif
+
+/* Various settings used by optional auth handler access */
+/* Enable auth handler unless explicitly disabled during compilation */
+#ifndef DISABLE_AUTHHANDLER
+#define ENABLE_AUTHHANDLER 1
+#endif				/* !DISABLE_AUTHHANDLER */
 
 /* Various settings used by optional sharelink access */
 /* Enable sharelinks unless explicitly disabled during compilation */
@@ -119,35 +128,82 @@
 #endif
 #endif				/* !DISABLE_JUPYTERSIDMOUNT */
 
-/* For testing, the printf can be activated,
+/* Helper macros that writes messages to syslog  */
+
+/* For testing, log to stderr can be used instead of syslog,
    but should never be enabled in non-debug mode */
-//#define DEBUG_PRINTF 0
+//#define DEBUG_LOG_STDERR 1
 /* Uncomment to enable debug messages as well */
-//#define DEBUG 0
+//#define DEBUG 1
 
-/* Helper function that writes messages to syslog */
-static void writelogmessage(int priority, const char *msg, ...)
-{
-	va_list args;
-
-#ifndef DEBUG
-	if (priority == LOG_DEBUG) {
-		return;
+#if defined(DEBUG) || defined(DEBUG_LOG_STDERR)
+#define MAX_DEBUG_LOG_MSG_LENGTH 2048
+#define DEBUG_LOG_PREFIX(priority) \
+    (priority == LOG_INFO ? "INFO" \
+     : priority == LOG_ERR ? "ERROR" \
+     : priority == LOG_WARNING ? "WARNING" \
+     : priority == LOG_DEBUG ? "DEBUG" \
+     : priority == LOG_NOTICE ? "NOTICE" \
+     : priority == LOG_CRIT ? "CRITICAL" \
+     : priority == LOG_ALERT ? "ALERT" \
+     : priority == LOG_EMERG ? "PANIC" \
+     : "UNKNOWN")
+char _debug_log_msg[MAX_DEBUG_LOG_MSG_LENGTH];
+#ifdef DEBUG_LOG_STDERR
+#define WRITELOGMESSAGE(priority, format, ...) \
+	snprintf(_debug_log_msg, MAX_DEBUG_LOG_MSG_LENGTH, format, ##__VA_ARGS__); \
+	fprintf(stderr, _debug_log_msg);
+fprintf(stderr, "%s: %s(%d): %s", DEBUG_LOG_PREFIX(priority), __FILE__,
+	__LINE__, _debug_log_msg);
+#else				/* DEBUG_LOG_STDERR */
+#define WRITELOGMESSAGE(priority, format, ...) \
+	snprintf(_debug_log_msg, MAX_DEBUG_LOG_MSG_LENGTH, format, ##__VA_ARGS__); \
+	openlog("pam_mig", LOG_PID, LOG_AUTHPRIV); \
+	syslog(priority, "%s: %s(%d): %s", DEBUG_LOG_PREFIX(priority), __FILE__, __LINE__, _debug_log_msg);
+#endif				/* DEBUG_LOG_STDERR */
+#else				/* DEBUG || DEBUG_LOG_STDERR */
+#define WRITELOGMESSAGE(priority, format, ...) \
+	if (priority != LOG_DEBUG) { \
+		openlog("pam_mig", LOG_PID, LOG_AUTHPRIV); \
+		syslog(priority, format, ##__VA_ARGS__); \
 	}
-#endif				/* DEBUG */
-	openlog("pam_mig", LOG_PID, LOG_AUTHPRIV);
-	va_start(args, msg);
-	vsyslog(priority, msg, args);
-	va_end(args);
+#endif				/* DEBUG || DEBUG_LOG_STDERR */
 
-#ifdef DEBUG
-#ifdef DEBUG_PRINTF
-	va_start(args, msg);
-	vprintf(msg, args);
-	va_end(args);
-#endif				/*DEBUG_PRINTF */
-#endif				/* DEBUG */
+/* Helper functions/macros for GDB debugging */
+
+#ifdef GDB_BREAKPOINT_ENABLED
+unsigned int _gdb_console_connected = 0;
+void _gdb_handle_sigcont(int signal)
+{
+	/* NOTE: We do not forward SIGCONT because: 
+	   You can set a handler, but SIGCONT always makes the process continue regardless:
+	   https://www.gnu.org/software/libc/manual/html_node/Job-Control-Signals.html 
+	 */
+
+	if (!_gdb_console_connected) {
+		WRITELOGMESSAGE(LOG_DEBUG, "GDB console attached to: %d\n",
+				getpid());
+		_gdb_console_connected = 1;
+	}
 }
+
+/* NOTE: 
+First GDB_BREAKPOINT: Register signal handler and wait for GDB console 'signal SIGCONT'
+Rest: http://lackingrhoticity.blogspot.com/2010/05/breakpoints-in-gdb-using-int3.htmlint3
+*/
+#define GDB_BREAKPOINT \
+ 	WRITELOGMESSAGE(LOG_DEBUG, "_GDB_BREAKPOINT: %s(%d)", __FILE__, __LINE__); \
+ 	if (!_gdb_console_connected) { \
+ 		WRITELOGMESSAGE(LOG_DEBUG, "Waiting for GDB console: gdb attach %d\n", getpid()); \
+		WRITELOGMESSAGE(LOG_DEBUG, "To continue from GDB console: signal SIGCONT\n"); \
+ 		signal(SIGCONT, _gdb_handle_sigcont); \
+		pause(); \
+	} else { \
+		asm volatile ("int3;"); \
+	}
+#else				/* GDB_BREAKPOINT_ENABLED */
+#define GDB_BREAKPOINT asm ("nop");
+#endif				/* GDB_BREAKPOINT_ENABLED */
 
 /* General helper to extract variable value. Tries the environment, conf, 
    compile-time definition and default definition in that order until one
@@ -176,7 +232,7 @@ static const char *get_runtime_var(const char *env_name,
 	if (var_val == NULL) {
 		var_val = define_val;
 	}
-	writelogmessage(LOG_DEBUG, "Found runtime var value %s\n", var_val);
+	WRITELOGMESSAGE(LOG_DEBUG, "Found runtime var value %s\n", var_val);
 	return var_val;
 }
 
@@ -285,20 +341,20 @@ static int get_jupytersidmount_length()
 /* username input validation using username_regex and length helpers */
 static int validate_username(const char *username)
 {
-	writelogmessage(LOG_DEBUG, "Validate username '%s'\n", username);
+	WRITELOGMESSAGE(LOG_DEBUG, "Validate username '%s'\n", username);
 	if (strlen(username) < USERNAME_MIN_LENGTH) {
-		writelogmessage(LOG_DEBUG,
+		WRITELOGMESSAGE(LOG_DEBUG,
 				"Invalid username %s - too short (<%d)\n",
 				username, USERNAME_MIN_LENGTH);
 		return 1;
 	} else if (strlen(username) > USERNAME_MAX_LENGTH) {
-		writelogmessage(LOG_DEBUG,
+		WRITELOGMESSAGE(LOG_DEBUG,
 				"Invalid username %s - too long (>%d)\n",
 				username, USERNAME_MAX_LENGTH);
 		return 2;
 	}
 
-	writelogmessage(LOG_DEBUG, "Validated length of username '%s'\n",
+	WRITELOGMESSAGE(LOG_DEBUG, "Validated length of username '%s'\n",
 			username);
 	int retval;
 	regex_t validator;
@@ -307,7 +363,7 @@ static int validate_username(const char *username)
 	if (strlen(username_regex) < 2 || username_regex[0] != '^' ||
 	    username_regex[strlen(username_regex) - 1] != '$') {
 		/* regex must have begin and end markers to avoid false hits */
-		writelogmessage(LOG_ERR,
+		WRITELOGMESSAGE(LOG_ERR,
 				"Invalid username regex %s - line anchors required\n",
 				username_regex);
 		return 3;
@@ -318,41 +374,41 @@ static int validate_username(const char *username)
 	    regcomp(&validator, username_regex, REG_EXTENDED | REG_NOSUB);
 	if (regex_res) {
 		if (regex_res == REG_ESPACE) {
-			writelogmessage(LOG_ERR,
+			WRITELOGMESSAGE(LOG_ERR,
 					"Memory error in username validation: %s\n",
 					strerror(ENOMEM));
 			retval = 4;
 		} else {
-			writelogmessage(LOG_ERR,
+			WRITELOGMESSAGE(LOG_ERR,
 					"Syntax error in username_regex: %s\n",
 					username_regex);
 			retval = 5;
 		}
 		return retval;
 	}
-	writelogmessage(LOG_DEBUG, "Validate username '%s' vs regex '%s'\n",
+	WRITELOGMESSAGE(LOG_DEBUG, "Validate username '%s' vs regex '%s'\n",
 			username, username_regex);
 	/* Do not try to do submatch on group (last three arguments) */
 	regex_res = regexec(&validator, username, 0, NULL, 0);
 	if (regex_res == 0) {
 		/* Success - username matches regex and length limits */
-		writelogmessage(LOG_DEBUG,
+		WRITELOGMESSAGE(LOG_DEBUG,
 				"Validated username '%s' vs regex '%s'\n",
 				username, username_regex);
 		retval = 0;
 	} else if (regex_res == REG_NOMATCH) {
-		writelogmessage(LOG_DEBUG,
+		WRITELOGMESSAGE(LOG_DEBUG,
 				"username %s did not match username_regex %s\n",
 				username, username_regex);
 		retval = 6;
 	} else {
-		writelogmessage(LOG_ERR,
-				"Error in regexec: %s\n",
+		WRITELOGMESSAGE(LOG_ERR,
+				"Error in regexec: %zd\n",
 				regerror(regex_res, &validator, NULL, 0));
 		retval = 7;
 	}
 	regfree(&validator);
-	writelogmessage(LOG_DEBUG, "Validate username %s returning %d\n",
+	WRITELOGMESSAGE(LOG_DEBUG, "Validate username %s returning %d\n",
 			username, retval);
 	return retval;
 }
