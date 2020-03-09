@@ -136,7 +136,6 @@ def initialize_main_variables(client_id, op_title=True, op_header=True,
             user_profile = load_profile(client_id, configuration)
             if user_profile:
                 # These data are used for display in own profile view only
-                full_name = extract_field(client_id, 'full_name')
                 profile_image_list = user_profile.get('PUBLIC_IMAGE', [])
                 if profile_image_list:
                     # TODO: copy profile image to /public/avatars/X and use it
@@ -144,10 +143,14 @@ def initialize_main_variables(client_id, op_title=True, op_header=True,
                                                  profile_image_list[-1])
                 else:
                     profile_image = ''
-                user_profile['full_name'] = full_name
                 user_profile['profile_image'] = profile_image
-                title['user_profile'] = user_profile
-                logger.debug('setting user profile: %s' % user_profile)
+            else:
+                user_profile = {}
+            # Always set full name for use in personal user menu
+            full_name = extract_field(client_id, 'full_name')
+            user_profile['full_name'] = full_name
+            title['user_profile'] = user_profile
+            logger.debug('setting user profile: %s' % user_profile)
     else:
         # No user so we just enforce default site style and scripts
         title = find_entry(output_objects, 'title')
