@@ -27,9 +27,9 @@ MIG_DEFAULTS=-D'SHARELINK_HOME="/home/mig/state/sharelink_home"' \
 #### Start of compiler configuration section ### 
 
 DEBUG_DEFINES=
-	#-D'DEBUG'
 DEBUG_CFLAGS=
-	#-g
+#DEBUG_DEFINES=-D'DEBUG'
+#DEBUG_CFLAGS=-g
 
 CC = gcc
 INCLUDES=-I./
@@ -72,7 +72,7 @@ manprefix =
 
 all:	libnss_mig.so.2
 
-libnss_mig.so.2:	libnss_mig.c
+libnss_mig.so.2:    libnss_mig.c
 	${CC} -std=gnu99 -fPIC ${INCLUDES} ${DEFINES} ${CFLAGS} -o $@ $< ${LDFLAGS} 
 
 
