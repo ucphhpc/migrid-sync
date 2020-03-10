@@ -432,7 +432,10 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     }
 
     /* check MiG max sftp sessions */
-
+    
+    /* NOTE: Disabled for now, 
+     * this require session open/close tracking in sftp_subsys.py 
+    
     bool exceeded_max_sessions = mig_exceeded_max_sessions(pUsername,
                                                         pAddress);
     WRITELOGMESSAGE(LOG_DEBUG, "exceeded_max_sessions: %d\n",
@@ -444,6 +447,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                       pUsername, pAddress, NULL);
         return PAM_AUTH_ERR;
     }
+    */
 #endif              /* ENABLE_AUTHHANDLER */
 
     /* Validate username */
