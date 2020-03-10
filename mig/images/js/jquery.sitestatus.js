@@ -172,6 +172,8 @@ function fill_server_status_popup(status_events, system_match, locale) {
     var time = now.toLocaleTimeString(locale);
     var outage_count = 0, warn_count = 0, announce_count = 0;
 
+    $("#sitestatus-line").addClass("spinner").addClass("iconleftpad");
+    $("#sitestatus-line").html("Loading status information ... please wait");
     try {
         $.getJSON(status_events).done(function(response) {
             //console.debug("Success: "+response);
@@ -273,7 +275,7 @@ function fill_server_status_popup(status_events, system_match, locale) {
             $("#sitestatus-icon").css("color", status_color);
             $("#sitestatus-caption").html(status_caption);
             $("#sitestatus-timestamp").html("at "+time);
-            $("#sitestatus-line").removeClass("spinner");
+            $("#sitestatus-line").removeClass("spinner").removeClass("iconleftpad");
             $("#sitestatus-line").html(status_line);
             $("#sitestatus-announce").removeClass("spinner");
             $("#sitestatus-announce").html(announce_text);

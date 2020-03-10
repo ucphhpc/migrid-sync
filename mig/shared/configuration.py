@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # configuration - configuration wrapper
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -1714,6 +1714,12 @@ location.""" % self.config_file
             self.site_status_url = config.get('SITE', 'status_url')
         else:
             self.site_status_url = '/public/status.html'
+
+        if config.has_option('SITE', 'enable_sitestatus'):
+            self.site_enable_sitestatus = config.getboolean('SITE',
+                                                            'enable_sitestatus')
+        else:
+            self.site_enable_sitestatus = True
         if config.has_option('SITE', 'status_events'):
             self.site_status_events = config.get('SITE', 'status_events')
         else:

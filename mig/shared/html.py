@@ -374,6 +374,14 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
         ''' % (configuration.site_logo_left, configuration.site_logo_center,
                configuration.site_logo_right)
     else:
+        fill_helper = {'short_title': configuration.short_title,
+                       'status_url': configuration.site_status_url,
+                       'sitestatus_button': ''}
+        if configuration.site_enable_sitestatus:
+            fill_helper['sitestatus_button'] = '''
+                <li id="sitestatus-button" class="nav__item nav_item--expanded fas fa-question-circle custom-show" onclick="show_message()"></li>
+            '''
+
         html = '''
     <!-- Push notifications: updated/filled by AJAX -->
     <div id="sitestatus-popup" class="toast hidden" data-autohide="false">
@@ -393,8 +401,8 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
     </div>
     <div id="sitestatus-content" class="toast-body">
       <h3>Site Status</h3>
-      <p id="sitestatus-line" class="status-text spinner">
-      Loading status information ... please wait.
+      <p id="sitestatus-line" class="status-text">
+      <!-- Filled by AJAX -->
       </p>
       <div id="sitestatus-recent" class="hidden"><h3>Active Announcements</h3>
         <p id="sitestatus-announce" class="announce-text"></p>
@@ -404,8 +412,7 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
       <a target=_blank href="%(status_url)s">More details ...</a>
     </div>
   </div>
-  ''' % {'short_title': configuration.short_title,
-         'status_url': configuration.site_status_url}
+  '''
 
         html += '''
 
@@ -418,8 +425,10 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
 		<li class="nav__item nav_item--expanded">
 			<a id="aboutInfoButton" href="#" class="nav__label" onclick="toggle_info(\'aboutInfo\')">About</a>
 		</li>
+                <!-- NOTE: completely skip feedback button for now to avoid border
                 <li id="sitefeedback-button" class="nav__item nav_item--expanded fas fa-thumbs-up custom-hidden"></li>
-                <li id="sitestatus-button" class="nav__item nav_item--expanded fas fa-question-circle custom-show" onclick="show_message()"></li>
+                -->
+                %(sitestatus_button)s
 	</ul>
 </nav>
 
@@ -457,7 +466,7 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
 </div>
     '''
 
-    return html
+    return html % fill_helper
 
 
 def render_after_menu(configuration, user_settings={}):
@@ -625,11 +634,7 @@ def themed_scripts(configuration, base=[], advanced=[], skin=[], init=[],
         quickstart_url = configuration.site_quickstart_snippet_url
         faq_url = configuration.site_faq_snippet_url
         about_url = configuration.site_about_snippet_url
-        # TODO: remote status page may require CORS headers
-        sitestatus_url = configuration.site_status_url
-        sitestatus_events = configuration.site_status_events
-        sitestatus_system_match = configuration.site_status_system_match
-        scripts['ready'].append('''
+        dyn_scripts = '''
             /* NOTE: extract browser/user language dynamically if possible */
             var req_lang = navigator.language || navigator.userLanguage || '';
             //console.log("found requested lang: "+req_lang);
@@ -639,10 +644,18 @@ def themed_scripts(configuration, base=[], advanced=[], skin=[], init=[],
             %s("%s");
             load_faq("%s");
             load_about("%s");
+        ''' % (quickstart_init, quickstart_url, faq_url, about_url)
+        if configuration.site_enable_sitestatus:
+            # TODO: remote status page may require CORS headers
+            sitestatus_url = configuration.site_status_url
+            sitestatus_events = configuration.site_status_events
+            sitestatus_system_match = configuration.site_status_system_match
+            dyn_scripts += '''
             load_sitestatus("%s", %s, locale);
-            console.log("loaded dynamic content");
-        ''' % (quickstart_init, quickstart_url, faq_url, about_url,
-               sitestatus_events, sitestatus_system_match))
+            ''' % (sitestatus_events, sitestatus_system_match)
+        # Call dynamic content scripts on page ready
+        scripts['ready'].append(dyn_scripts)
+
     wrapped = {'base': '\n'.join(scripts['base']),
                'advanced': '\n'.join(scripts['advanced']),
                'skin': '\n'.join(scripts['skin']),
@@ -670,8 +683,8 @@ def tablesorter_pager(configuration, id_prefix='', entry_name='files',
         <span class="pager-nav-wrap first icon"></span>
         <span class="pager-nav-wrap prev icon"></span>
         <input class="pagedisplay" type="text" size=18 readonly="readonly" />
-        <span class="pager-nav-wrap next icon"></span>        
-        <span class="pager-nav-wrap last icon"></span>        
+        <span class="pager-nav-wrap next icon"></span>
+        <span class="pager-nav-wrap last icon"></span>
         <select class="pagesize pager-select styled-select html-select">
 '''
     for value in page_entries:

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # install - MiG server install helpers
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -265,6 +265,7 @@ def generate_confs(
     enable_twofactor_strict_address=False,
     enable_cracklib=False,
     enable_openid=False,
+    enable_sitestatus=True,
     user_interface="V2 V3",
     mig_oid_provider='',
     ext_oid_provider='',
@@ -397,6 +398,7 @@ def generate_confs(
         str(enable_twofactor_strict_address)
     user_dict['__ENABLE_CRACKLIB__'] = str(enable_cracklib)
     user_dict['__ENABLE_OPENID__'] = str(enable_openid)
+    user_dict['__ENABLE_SITESTATUS__'] = str(enable_sitestatus)
     user_dict['__USER_INTERFACE__'] = user_interface
     user_dict['__MIG_OID_PROVIDER_BASE__'] = mig_oid_provider
     user_dict['__MIG_OID_PROVIDER_ID__'] = mig_oid_provider
@@ -1613,6 +1615,7 @@ def create_user(
     enable_twofactor_strict_address = False
     enable_cracklib = False
     enable_openid = False
+    enable_sitestatus = True
     enable_wsgi = True
     wsgi_procs = 5
     enable_jobs = True
@@ -1750,6 +1753,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_twofactor,
         enable_cracklib,
         enable_openid,
+        enable_sitestatus,
         user_interface,
         mig_oid_provider,
         ext_oid_provider,
