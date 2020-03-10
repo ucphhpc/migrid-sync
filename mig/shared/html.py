@@ -549,7 +549,7 @@ def themed_styles(configuration, base=[], advanced=[], skin=[], user_settings={}
 <link rel="stylesheet" href="/assets/vendor/fontawesome/css/all.css"> <!--load all styles -->
 
 <!-- UI V3 CSS -->
-<link rel="stylesheet" href="/assets/css/V3/ui-v3.css">
+<link rel="stylesheet" href="/assets/css/V3/ui.css">
 <link rel="stylesheet" href="/assets/css/V3/style.css">
 <link rel="stylesheet" href="/assets/css/V3/nav.css">
         '''
@@ -610,12 +610,12 @@ def themed_scripts(configuration, base=[], advanced=[], skin=[], init=[],
     # Always init basic js logging
     scripts['init'].append(console_log_javascript(script_wrap=False))
 
-    # Always add site status helpers
-    scripts['skin'].append('''
-    <script src="/images/js/jquery.sitestatus.js"></script>
-    ''')
-
-    if not legacy_user_interface(configuration, user_settings):
+    if legacy_user_interface(configuration, user_settings):
+        # Always add site status helpers
+        scripts['skin'].append('''
+<script src="/assets/js/V2/ui-dynamic.js"></script>
+        ''')
+    else:
         scripts['base'].append('''
 <script src="/assets/vendor/jquery/js/popper.js"></script>
 <script src="/assets/vendor/jquery/js/jquery.validate.min.js"></script>
@@ -623,9 +623,9 @@ def themed_scripts(configuration, base=[], advanced=[], skin=[], init=[],
         scripts['skin'].append('''
 <!-- UI V3 JS -->
 <script src="/assets/vendor/bootstrap/js/bootstrap.min.js"></script>
-<script src="/assets/js/V3/ui-v3_global.js"></script>
-<script src="/assets/js/V3/ui-v3_extra.js"></script>
-<script src="/assets/js/V3/ui-v3_dynamic.js"></script>
+<script src="/assets/js/V3/ui-global.js"></script>
+<script src="/assets/js/V3/ui-extra.js"></script>
+<script src="/assets/js/V3/ui-dynamic.js"></script>
         ''')
         if logged_in:
             quickstart_init = 'load_quickstart_dynamic'
@@ -635,11 +635,7 @@ def themed_scripts(configuration, base=[], advanced=[], skin=[], init=[],
         faq_url = configuration.site_faq_snippet_url
         about_url = configuration.site_about_snippet_url
         dyn_scripts = '''
-            /* NOTE: extract browser/user language dynamically if possible */
-            var req_lang = navigator.language || navigator.userLanguage || '';
-            //console.log("found requested lang: "+req_lang);
-            var locale = req_lang.split(/[_-]/)[0].toLowerCase();
-
+            var locale = extract_default_locale()
             console.log("loading dynamic snippet content");
             %s("%s");
             load_faq("%s");

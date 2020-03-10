@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# ui-v3_extra - UI V3 specific but skin-independent helper functions
+# ui-extra - UI V3 specific but skin-independent helper functions
 # Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -159,7 +159,7 @@ $(document).on('touchstart', function (e)
 // ONLY ON HOME.PY - ADD APPLICATIONS
 function addApp() {
   var x = document.getElementById("add-app__window");
-  var b = document.getElementById('userBody');
+  var b = document.getElementById('modern-ui-body');
   console.log(b);
   if (x.className === "app-container") {
     x.className = "app-container is-active";

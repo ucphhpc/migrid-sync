@@ -79,6 +79,10 @@ js_code_files = [
     'images/js/preview-caman.js',
     'images/js/preview.js',
     'images/js/preview-paraview.js',
+    'assets/js/V2/ui-dynamic.js',
+    'assets/js/V3/ui-dynamic.js',
+    'assets/js/V3/ui-global.js',
+    'assets/js/V3/ui-extra.js',
 ]
 code_files = py_code_files + sh_code_files + js_code_files
 

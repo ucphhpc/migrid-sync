@@ -21,9 +21,9 @@
     <link href="/assets/vendor/fontawesome/css/all.css" rel="stylesheet"> <!--load all styles -->
 
     <!-- UI V3 CSS -->
+    <link rel="stylesheet" href="/assets/css/V3/ui.css">
     <link rel="stylesheet" href="/assets/css/V3/style.css">
     <link rel="stylesheet" href="/assets/css/V3/nav.css">
-    <link rel="stylesheet" href="/assets/css/V3/ui-v3.css">
 
     <!-- site skin style -->
     <link rel="stylesheet" type="text/css" href="/images/skin/erda-user-friendly/core.css" media="screen"/>
@@ -44,7 +44,6 @@
 
     <script type="text/javascript" src="/assets/vendor/jquery/js/jquery.js"></script>
     <script type="text/javascript" src="/assets/vendor/jquery-ui/js/jquery-ui.js"></script>
-    <script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
     <script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
 
     <script src="/assets/vendor/jquery/js/popper.js"></script>
@@ -52,11 +51,17 @@
 
     <!-- UI V3 JS -->
     <script src="/assets/vendor/bootstrap/js/bootstrap.min.js"></script>
-    <script src="/assets/js/V3/ui-v3_global.js"></script>
-    <script src="/assets/js/V3/ui-v3_extra.js"></script>
-    <script src="/assets/js/V3/ui-v3_dynamic.js"></script>
+    <script src="/assets/js/V3/ui-global.js"></script>
+    <script src="/assets/js/V3/ui-extra.js"></script>
+    <script src="/assets/js/V3/ui-dynamic.js"></script>
 
     <script type="text/javascript">
+      var locale = extract_default_locale();
+      /* Init supported languages to just english and extend based on lang select */
+      var supported_languages = ['en'];
+      var default_lang = supported_languages[0];
+      var user_lang;
+
       /* We assume UCPH users here and leave external users to FAQ entry */
       function login(user) {
         if (user == "extoid") {
@@ -88,6 +93,21 @@
       }
 
       $(document).ready(function() {
+        /* Extend supported_languages with all entries from select elem */
+        $("#langselect option").each(function() {
+          var option_val = $(this).val();
+          if (supported_languages.indexOf(option_val) < 0) {
+            supported_languages.push($(this).val());
+          }
+        });
+        console.log("found supported langs: "+supported_languages);
+        if (locale && supported_languages.indexOf(locale) >= 0)  {
+          user_lang = locale;
+        } else {
+          console.log(locale+" not supported - fall back to: "+default_lang);
+          user_lang = default_lang;
+      }
+
       /* Init links centrally */
       $("a.reqcert-en-link").attr("target", "_blank").attr("href", 
         "https://sites.google.com/site/minimumintrusiongrid/" +
@@ -107,32 +127,33 @@
       /* Fetch FAQ and About contents from snippets */
       var base_url = window.location.href;
       base_url = base_url.substring(0, base_url.lastIndexOf("/")+1);
-      var quickstart_url = base_url + "quickstart-snippet.html #quickstart-english"; 
-      console.log("get quickstart content from "+quickstart_url);
-      $("#quickstart-content").load(quickstart_url, init_quickstart_static);
-      var faq_url = base_url + "faq-snippet.html #faq-english"; 
-      console.log("get faq content from "+faq_url);
-      $("#faq-content").load(faq_url, init_faq);
-      var about_url = base_url + "about-snippet.html .english"; 
-      console.log("get about content from "+about_url);
-      $("#about-content").load(about_url, init_about);
-      // TODO: switch to status.erda.dk? (requires CORS here)
-      //var sitestatus_url = "http://status.erda.dk .english"; 
-      var sitestatus_url_href = base_url + "status.html"; 
-      var sitestatus_url = sitestatus_url_href + " #brief-status-english"; 
 
-      console.log("get sitestatus content from "+sitestatus_url);
-      $("#sitestatus-content").load(sitestatus_url, init_sitestatus);
-      $("#sitestatus-more a").attr("target", "_blank").attr("href", sitestatus_url_href);
+        var quickstart_url = base_url + "quickstart-snippet.html"; 
+        console.log("get quickstart content from "+quickstart_url);
+        load_quickstart_static(quickstart_url)
+
+        var faq_url = base_url + "faq-snippet.html"; 
+        console.log("get faq content from "+faq_url);
+        load_faq(faq_url);
+
+        var about_url = base_url + "about-snippet.html"; 
+        console.log("get about content from "+about_url);
+        load_about(about_url)
+        // TODO: switch to status.erda.dk? (requires CORS here)
+        //var sitestatus_url = base_url + "status.html"; 
+        var sitestatus_events = base_url + "status-events.json"; 
+        
+        console.log("get sitestatus content from "+sitestatus_events);
+        load_sitestatus(sitestatus_events, ["UI.ERDA", "ERDA"], locale);
 
       $("#langselect").on('change', function() { 
         var lang = $(this).val();
         //alert("switch_language: "+lang);
         switch_language(lang);
       });
-      var default_lang = 'en';
-      $("#langselect").val(default_lang);
-      switch_language(default_lang);
+      console.log("switch to user lang: "+user_lang);
+      $("#langselect").val(user_lang);
+      switch_language(user_lang);
       $("#langselect").msDropdown();
       });
     </script>
@@ -155,17 +176,29 @@
     <div class="toast sitestatus" data-autohide="false" style="position: absolute; right: 20px; z-index: 999;">
       <div id="sitestatus-top" class="toast-header">
         <div id="sitestatus-title" class="" style="width: 90%;">
-          <!-- Filled by AJAX -->
+          <!-- TODO: move inline style to css files -->
+          <!-- NOTE: reuse 1.5rem size with ml-2 and mb-1 classes to mimic close -->
+          <span id="sitestatus-icon" class="fas fa-question-circle ml-2 mb-1" style="color: grey; font-size: 1.5rem; float: left;"></span>
+          <strong class="mr-auto text-primary" style="float: left;">
+            <h3 id="sitestatus-caption" style="margin-left: 5px;">SITE STATUS</h3>
+          </strong>
+          <small id="sitestatus-timestamp" class="text-muted" style="float: right;"></small>
         </div>
         <div id="sitestatus-close" class="">
           <button type="button" class="ml-2 mb-1 close" data-dismiss="toast">&times;</button>
         </div>
       </div>
       <div id="sitestatus-content" class="toast-body">
+      <h3>Site Status</h3>
+      <p id="sitestatus-line" class="status-text">
         <!-- Filled by AJAX -->
+      </p>
+      <div id="sitestatus-recent" class="hidden"><h3>Active Announcements</h3>
+        <p id="sitestatus-announce" class="announce-text"></p>
+      </div>
       </div>
       <div id="sitestatus-more" class="toast-body">
-        <a target=_blank href="#">More details ...</a>
+        <a target=_blank href="/public/status.html">More details ...</a>
       </div>
     </div>
 
@@ -179,7 +212,7 @@
 	  <a id="aboutInfoButton" href="#" class="nav__label" onclick="toggle_info('aboutInfo')">About</a>
         </li>
         <li class="nav__item nav_item--expanded fas fa-thumbs-up custom-hidden" style="color:#46743C;"></li>
-        <li id="sitestatus-button" class="nav__item nav_item--expanded fas fa-info-circle custom-show" style="color: grey;" onclick="show_message('sitestatus')"></li>
+        <li id="sitestatus-button" class="nav__item nav_item--expanded fas fa-question-circle custom-show" style="color: grey;" onclick="show_message('sitestatus')"></li>
       </ul>
     </nav>
 
@@ -196,10 +229,10 @@
           <!-- Filled by AJAX -->
         </div>
         
-        <div id="faq-content" class="row">
+        <div id="faq-content" class="col-lg-12">
           <!-- Filled by AJAX -->
         </div>
-        
+
         <div class="vertical-spacer"></div>
 
       </div>

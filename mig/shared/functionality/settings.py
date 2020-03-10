@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settings - back end for the settings page
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -129,7 +129,7 @@ def main(client_id, user_arguments_dict):
 %s
 ''' % cm_css
     add_import += '''
-<script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
+<script type="text/javascript" src="/images/js/jquery.ajaxhelpers.js"></script>
 
 %s
 

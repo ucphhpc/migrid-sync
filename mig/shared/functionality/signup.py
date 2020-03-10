@@ -91,7 +91,7 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s account sign up' % configuration.short_title
     add_import = '''
-<script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
+<script type="text/javascript" src="/images/js/jquery.ajaxhelpers.js"></script>
     '''
     add_init = ''
     add_ready = '''
@@ -110,10 +110,12 @@ def main(client_id, user_arguments_dict):
     title_entry['script']['init'] += add_init
     title_entry['script']['ready'] += add_ready
     title_entry['skipmenu'] = True
-    # header_entry = {'object_type': 'header', 'text'
-    #                : 'Welcome to the %s account sign up page' % \
-    #                configuration.short_title}
-    # output_objects.append(header_entry)
+    # NOTE: keep empty header for narrow page layout
+    header_entry = {'object_type': 'header', 'text':
+                    # 'Welcome to the %s account sign up page' % \
+                    # configuration.short_title
+                    ''}
+    output_objects.append(header_entry)
 
     html = """
     <h2>Signup for %s</h2>
@@ -223,7 +225,7 @@ to accept that your certificate is used for %(short_title)s login.
 </p>
 
 """
-            
+
     var_map = {'migoid_url': valid_show['migoid']['url'],
                'migoid_title': configuration.user_mig_oid_title,
                'extoid_url': valid_show['extoid']['url'],

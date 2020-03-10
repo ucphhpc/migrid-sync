@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# ui-v3_global - UI V3 specific but skin-independent core functions
+# ui-global - UI V3 specific but skin-independent core functions
 # Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -32,7 +32,7 @@ function toggle_info(id) {
   var e = document.getElementById(id);
   var i = document.getElementById('supportInfo');
   var a = document.getElementById('aboutInfo');
-  var b = document.getElementById('userBody');
+  var b = document.getElementById('modern-ui-body');
   
   if(e.className == 'infoArea-container infoArea__active') {
     e.className =  'infoArea-container';
@@ -63,7 +63,7 @@ $(document).mouseup(function (e)
   var container4 = $("#aboutInfoButton");
   var y = document.getElementById("aboutInfo");
 
-  var b = document.getElementById('userBody');
+  var b = document.getElementById('modern-ui-body');
 
   if (!container.is(e.target) // if the target of the click isn't the container...
   && container.has(e.target).length === 0 
@@ -96,7 +96,7 @@ $(document).on('touchstart', function (e)
   var container4 = $("#aboutInfoButton");
   var y = document.getElementById("aboutInfo");
 
-  var b = document.getElementById('userBody');
+  var b = document.getElementById('modern-ui-body');
 
   if (!container.is(e.target) // if the target of the click isn't the container...
   && container.has(e.target).length === 0 

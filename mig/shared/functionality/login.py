@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # login - general login method selection backend
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -82,9 +82,8 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s login selector' % configuration.short_title
-
     add_import = '''
-<script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
+<script type="text/javascript" src="/images/js/jquery.ajaxhelpers.js"></script>
     '''
     add_init = ''
     add_ready = '''
@@ -103,8 +102,11 @@ def main(client_id, user_arguments_dict):
     title_entry['script']['init'] += add_init
     title_entry['script']['ready'] += add_ready
     title_entry['skipmenu'] = True
-    header_entry = {'object_type': 'header', 'text': 'Welcome to the %s login selector page' %
-                    configuration.short_title}
+    # NOTE: keep empty header for narrow page layout
+    header_entry = {'object_type': 'header', 'text':
+                    # 'Welcome to the %s login selector page' % \
+                    #  configuration.short_title
+                    ''}
     output_objects.append(header_entry)
 
     html = ""

@@ -32,33 +32,17 @@ ERDA Status
 
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
-<script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
-<script type="text/javascript" src="/images/js/jquery.sitestatus.js"></script>
+<script type="text/javascript" src="/assets/js/V2/ui-dynamic.js"></script>
 <script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
 
 
 <script type="text/javascript">
-  /* NOTE: extract browser/user language dynamically if possible */
-  var req_lang = navigator.language || navigator.userLanguage || '';
-  //console.log("found requested lang: "+req_lang);
-  var locale = req_lang.split(/[_-]/)[0].toLowerCase();
+  var locale = extract_default_locale();
   /* Init supported languages to just english and extend based on lang select */
   var supported_languages = ['en'];
   var default_lang = supported_languages[0];
   var user_lang;
 
-  /* We need to run accordion init as a callback on status event load */
-  function delayed_init() {
-      /* Init NEWS as foldable, with latest entry open and with individual heights */
-      $(".news-accordion").accordion({
-          collapsible: true,
-          //active: false,
-          heightStyle: "content"
-      });
-      /* fix and reduce accordion spacing */
-      $(".ui-accordion-header").css("padding-top", 0).css("padding-bottom", 0).css("margin", 0);
-  }
-  
   $(document).ready(function() {
     /* Extend supported_languages with all entries from select elem */
     $("#langselect option").each(function() {
