@@ -168,10 +168,13 @@ static bool mig_hit_rate_limit(const char *username, const char *address)
     return result;
  }
 
-static bool mig_max_sessions(const char *username, const char *address)
+static bool mig_exceeded_max_sessions(const char *username,
+                                    const char *address)
 {
     bool result = false;
     int active_count = 0;
+    int max_sftp_sessions = 0;
+
     pyinit();
     pyrun("active_count = active_sessions(configuration, 'sftp-subsys', '%s')",
         username); 
@@ -184,7 +187,6 @@ static bool mig_max_sessions(const char *username, const char *address)
         active_count = PyInt_AsLong(py_active_count);
         Py_DECREF(py_active_count);
     }
-    int max_sftp_sessions = 0;
     pyrun("sftp_max_sessions = configuration.user_sftp_max_sessions");
     PyObject * py_max_sftp_sessions =
     PyObject_GetAttrString(py_main, "sftp_max_sessions");
@@ -195,10 +197,10 @@ static bool mig_max_sessions(const char *username, const char *address)
         max_sftp_sessions = PyInt_AsLong(py_max_sftp_sessions);
         Py_DECREF(py_max_sftp_sessions);
     }
-    if (active_count < max_sftp_sessions) {
-        result = false;
-    } else {
+    if (max_sftp_sessions > 0 && active_count >= max_sftp_sessions) {
         result = true;
+    } else {
+        result = false;
     }
     return result;
 }

@@ -433,7 +433,8 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 
     /* check MiG max sftp sessions */
 
-    bool exceeded_max_sessions = mig_max_sessions(pUsername, pAddress);
+    bool exceeded_max_sessions = mig_exceeded_max_sessions(pUsername,
+                                                        pAddress);
     WRITELOGMESSAGE(LOG_DEBUG, "exceeded_max_sessions: %d\n",
             exceeded_max_sessions);
     if (exceeded_max_sessions == true) {
