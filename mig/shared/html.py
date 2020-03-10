@@ -354,6 +354,9 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
     """Render the default structure from body and until the navigation menu
     entries using the user provided script_map for further customization.
     """
+    fill_helper = {'short_title': configuration.short_title,
+                   'status_url': configuration.site_status_url,
+                   'sitestatus_button': ''}
     if legacy_user_interface(configuration, user_settings):
         html = '''
 <div id="topspace">
@@ -374,9 +377,6 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
         ''' % (configuration.site_logo_left, configuration.site_logo_center,
                configuration.site_logo_right)
     else:
-        fill_helper = {'short_title': configuration.short_title,
-                       'status_url': configuration.site_status_url,
-                       'sitestatus_button': ''}
         if configuration.site_enable_sitestatus:
             fill_helper['sitestatus_button'] = '''
                 <li id="sitestatus-button" class="nav__item nav_item--expanded fas fa-question-circle custom-show" onclick="show_message()"></li>
