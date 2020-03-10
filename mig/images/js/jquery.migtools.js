@@ -1313,3 +1313,49 @@ function prepare_seafile_settings(reg_url, username, integration,
         }
     });
 }
+
+/* We need to run accordion init as a callback on status event load */
+function accordion_init(accordion_selector, active) {
+    /* Init accordion as foldable, with latest entry open and with individual heights */
+    if (!active) {
+        active = false;
+    }
+    $(accordion_selector).accordion({
+        collapsible: true,
+        active: active,
+        heightStyle: "content"
+    });
+    /* fix and reduce accordion spacing */
+    $(accordion_selector + " .ui-accordion-header").css("padding-top", 0).css("padding-bottom", 0).css("margin", 0);
+  }
+
+function init_faq_content() {
+    console.log("init faq");
+    accordion_init(".faq-entries.accordion", false);
+}
+function init_about_content() {
+    console.log("init About");
+}
+
+function load_faq_content(base_url, country) {
+    /* Fetch FAQ contents from snippet specified in configuration */
+    var content_url = base_url+" #faq-"+country;
+    console.log("get content from "+content_url);
+    /* Load content: roughly equivalent to $.get(url, data, success) */
+    try {
+        $("#faq-content-"+country).load(content_url, init_faq_content);
+    } catch(err) {
+        console.error("load "+country+" faq failed: "+err);
+    }
+}
+function load_about_content(base_url, country) {
+    /* Fetch About contents from snippet specified in configuration */
+    var content_url = base_url+" ."+country;
+    console.log("get content from "+content_url);
+    /* Load content: roughly equivalent to $.get(url, data, success) */
+    try {
+        $("#about-content-"+country).load(content_url, init_about_content);
+    } catch(err) {
+        console.error("load "+country+" about failed: "+err);
+    }
+}

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # html - html helper functions
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -1847,7 +1847,7 @@ def get_xgi_html_header(
                 </div>
                 ''' % menu_helpers
 
-                profile_helper = {'full_name': 'Unknown User',
+                profile_helper = {'full_name': '',
                                   'profile_image': '',
                                   'email_address': '',
                                   'help_url': configuration.site_external_doc}
