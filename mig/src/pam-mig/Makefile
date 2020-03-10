@@ -29,10 +29,10 @@ MIG_DEFAULTS=-D'RATE_LIMIT_EXPIRE_DELAY=300' \
 
 #### Start of compiler configuration section ### 
 
-#DEBUG_DEFINES=
-#DEBUG_CFLAGS=
-DEBUG_DEFINES=-D'DEBUG'
-DEBUG_CFLAGS=-g
+DEBUG_DEFINES=
+DEBUG_CFLAGS=
+#DEBUG_DEFINES=-D'DEBUG'
+#DEBUG_CFLAGS=-g
 
 CC = gcc
 INCLUDES=-I./ -I/usr/include/python2.7
