@@ -381,14 +381,13 @@ def expire_rate_limit(configuration, proto,
             # % (old_proto_fails, proto_fails) \
             #    + "\nold_proto_hits: %d -> %d" \
             #    % (old_proto_hits, proto_hits)
-
-        _address_limits['fails'] = address_fails
-        _address_limits['hits'] = address_hits
-        # debug_msg += "\nold_address_fails: %d -> %d" \
-        # % (old_address_fails, address_fails) \
-        #    + "\nold_address_hits: %d -> %d" \
-        #    % (old_address_hits, address_hits)
-        # logger.debug(debug_msg)
+            _address_limits['fails'] = address_fails
+            _address_limits['hits'] = address_hits
+            # debug_msg += "\nold_address_fails: %d -> %d" \
+            # % (old_address_fails, address_fails) \
+            #    + "\nold_address_hits: %d -> %d" \
+            #    % (old_address_hits, address_hits)
+            # logger.debug(debug_msg)
         if not _save_rate_limits(configuration,
                                  proto, _rate_limits, do_lock=False):
             raise IOError("%s save rate limits failed" % proto)
