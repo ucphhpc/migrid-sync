@@ -435,7 +435,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     
     /* NOTE: Disabled for now, 
      * this require session open/close tracking in sftp_subsys.py 
-    
+
     bool exceeded_max_sessions = mig_exceeded_max_sessions(pUsername,
                                                         pAddress);
     WRITELOGMESSAGE(LOG_DEBUG, "exceeded_max_sessions: %d\n",
@@ -627,6 +627,13 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 #ifdef DISABLE_JOBSIDMOUNT_WITH_PASSWORD
             WRITELOGMESSAGE(LOG_INFO,
                     "Password login not enabled for jobsidmount - use key!\n");
+#ifdef ENABLE_AUTHHANDLER
+            register_auth_attempt(MIG_SKIP_TWOFA_CHECK
+                          | MIG_AUTHTYPE_PASSWORD
+                          | MIG_AUTHTYPE_DISABLED,
+                          pUsername,
+                          pAddress, pPassword);
+#endif              /* ENABLE_AUTHHANDLER */
             return PAM_AUTH_ERR;
 #endif              /* DISABLE_JOBSIDMOUNT_WITH_PASSWORD */
             WRITELOGMESSAGE(LOG_DEBUG,
@@ -695,7 +702,14 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         if (access(share_path, R_OK) == 0) {
 #ifdef DISABLE_JUPYTERSIDMOUNT_WITH_PASSWORD
             WRITELOGMESSAGE(LOG_INFO,
-                    "Password login not enabled for jupytersidmount - use key!\n");
+                "Password login not enabled for jupytersidmount - use key!\n");
+#ifdef ENABLE_AUTHHANDLER
+            register_auth_attempt(MIG_SKIP_TWOFA_CHECK
+                          | MIG_AUTHTYPE_PASSWORD
+                          | MIG_AUTHTYPE_DISABLED,
+                          pUsername,
+                          pAddress, pPassword);
+#endif              /* ENABLE_AUTHHANDLER */
             return PAM_AUTH_ERR;
 #endif              /* DISABLE_JUPYTERSIDMOUNT_WITH_PASSWORD */
             if (strcmp(pUsername, pPassword) == 0) {
@@ -711,6 +725,9 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 #endif              /* ENABLE_AUTHHANDLER */
                 return PAM_SUCCESS;
             } else {
+                WRITELOGMESSAGE(LOG_WARNING,
+                        "Username and password mismatch for jupytersidmount: %s\n",
+                        pUsername);
 #ifdef ENABLE_AUTHHANDLER
                 register_auth_attempt(MIG_SKIP_TWOFA_CHECK
                               | MIG_SKIP_NOTIFY
@@ -720,9 +737,6 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                               pUsername,
                               pAddress, pPassword);
 #endif              /* ENABLE_AUTHHANDLER */
-                WRITELOGMESSAGE(LOG_WARNING,
-                        "Username and password mismatch for jupytersidmount: %s\n",
-                        pUsername);
                 return PAM_AUTH_ERR;
             }
         } else {
@@ -996,8 +1010,6 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                   | MIG_AUTHTYPE_ENABLED
                   | MIG_VALID_AUTH, pUsername, pAddress, pPassword);
 #endif              /* ENABLE_AUTHHANDLER */
-
-    //register_auth_attempt();
     WRITELOGMESSAGE(LOG_DEBUG, "Return success\n");
     return PAM_SUCCESS;
 }
