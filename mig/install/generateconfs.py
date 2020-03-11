@@ -106,6 +106,7 @@ if '__main__' == __name__:
         'short_title',
         'secscan_addr',
         'user_interface',
+        'vgrid_label',
     ]
     int_names = [
         'apache_worker_procs',

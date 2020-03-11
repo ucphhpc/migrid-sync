@@ -522,7 +522,7 @@ optimized SFTP, Seafile integration and OpenID login:
                    --login_methods="extoid migoid extcert" \
                    --distro=centos --landing_page='/wsgi-bin/fileman.py' \
                    --skin=erda-ucph-science --short_title=ERDA \
-                   --wsgi_procs=25
+                   --vgrid_label=Workgroup --wsgi_procs=25
                    
 and the same with added Jupyter integration and optional 2FA support:
 ./generateconfs.py --source=. --destination=generated-confs \
@@ -579,7 +579,7 @@ and the same with added Jupyter integration and optional 2FA support:
                    --login_methods="extoid migoid extcert" \
                    --distro=centos --landing_page='/wsgi-bin/fileman.py' \
                    --skin=erda-ucph-science --short_title=ERDA \
-                   --apache_worker_procs=2048 \
+                   --vgrid_label=Workgroup --apache_worker_procs=2048 \
                    --davs_port=8020 --openid_port=8001 \
                    --wsgi_procs=50 --sftp_subsys_auth_procs=25
 
@@ -640,7 +640,8 @@ with optional 2-FA support and legacy sftp clients:
                    --signup_methods="extoid migoid extcert" \
                    --login_methods="extoid migoid extcert" \
                    --distro=centos --landing_page='/wsgi-bin/fileman.py' \
-                   --skin=idmc-basic --short_title=IDMC --apache_worker_procs=512 \
+                   --skin=idmc-basic --short_title=IDMC \
+                   --vgrid_label=Workgroup --apache_worker_procs=512 \
                    --wsgi_procs=25 --sftp_subsys_auth_procs=25 \
                    --davs_port=8020 --openid_port=8001 \
                    --secscan_addr=130.225.213.72

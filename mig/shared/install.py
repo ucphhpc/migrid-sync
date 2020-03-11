@@ -312,6 +312,7 @@ def generate_confs(
     landing_page=None,
     skin='migrid-basic',
     short_title='MiG',
+    vgrid_label='VGrid',
     secscan_addr='UNSET',
 ):
     """Generate Apache and MiG server confs with specified variables"""
@@ -451,6 +452,7 @@ def generate_confs(
     user_dict['__DISTRO__'] = distro
     user_dict['__SKIN__'] = skin
     user_dict['__SHORT_TITLE__'] = short_title
+    user_dict['__VGRID_LABEL__'] = vgrid_label
     user_dict['__SECSCAN_ADDR__'] = secscan_addr
     user_dict['__PUBLIC_ALIAS_LISTEN__'] = listen_clause
 
@@ -1279,6 +1281,11 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict
     #    fail2ban_daemon_ports, sorted_ports)
     user_dict['__FAIL2BAN_DAEMON_PORTS__'] = ','.join(
         [str(i) for i in sorted_ports])
+
+    # Alias vgrid_label variations as aliases for vgrid pub page URL
+    vgrid_aliases = [vgrid_label, vgrid_label.lower(), vgrid_label.upper()]
+    vgrid_aliases = [i for i in vgrid_aliases if i != 'vgrid']
+    user_dict['__VGRID_ALIAS_REGEX__'] = '(%s)' % '|'.join(vgrid_aliases)
 
     # Collect final variable values for log
     sorted_keys = user_dict.keys()
