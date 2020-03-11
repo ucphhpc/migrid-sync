@@ -59,7 +59,7 @@
 #define MIG_CONF MIG_HOME"/server/MiGserver.conf"
 #endif
 
-#ifdef RATE_LIMIT_EXPIRE_DELAY
+#ifndef RATE_LIMIT_EXPIRE_DELAY
 #define RATE_LIMIT_EXPIRE_DELAY 120
 #endif
 
