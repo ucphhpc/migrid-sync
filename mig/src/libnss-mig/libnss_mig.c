@@ -94,20 +94,20 @@ static struct passwd *read_conf()
 
     if (conf == NULL) {
         WRITELOGMESSAGE(LOG_ERR, "Failed to parse file %s, error: %d\n",
-                CONF_FILE, errno);
+                        CONF_FILE, errno);
         fclose(fd);
         return NULL;
     }
 
     if (conf->pw_uid < MIN_UID_NUMBER) {
         WRITELOGMESSAGE(LOG_WARNING, "UID was %d adjusting to %d\n",
-                conf->pw_uid, MIN_UID_NUMBER);
+                        conf->pw_uid, MIN_UID_NUMBER);
         conf->pw_uid = MIN_UID_NUMBER;
     }
 
     if (conf->pw_gid < MIN_GID_NUMBER) {
         WRITELOGMESSAGE(LOG_WARNING, "GID was %d adjusting to %d\n",
-                conf->pw_gid, MIN_GID_NUMBER);
+                        conf->pw_gid, MIN_GID_NUMBER);
         conf->pw_gid = MIN_GID_NUMBER;
     }
 
@@ -145,7 +145,7 @@ static char *get_static(char **buffer, size_t * buflen, int len)
 
 enum nss_status
 _nss_mig_getpwnam_r(const char *name,
-            struct passwd *p, char *buffer, size_t buflen, int *errnop)
+                    struct passwd *p, char *buffer, size_t buflen, int *errnop)
 {
     struct passwd *conf;
     size_t name_len = strlen(name);
@@ -160,7 +160,7 @@ _nss_mig_getpwnam_r(const char *name,
 
     if ((conf = read_conf()) == NULL) {
         WRITELOGMESSAGE(LOG_WARNING,
-                "Invalid config file, username = %s\n", name);
+                        "Invalid config file, username = %s\n", name);
         return NSS_STATUS_NOTFOUND;
     }
 
@@ -179,43 +179,40 @@ _nss_mig_getpwnam_r(const char *name,
        - username and password must be identical
      */
     if (keep_trying && strlen(name) == get_sharelink_length()) {
-        WRITELOGMESSAGE(LOG_DEBUG, "Checking for sharelink: %s\n",
-                name);
+        WRITELOGMESSAGE(LOG_DEBUG, "Checking for sharelink: %s\n", name);
         memset(pathbuf, 0, PATH_BUF_LEN);
         if (PATH_BUF_LEN ==
             snprintf(pathbuf, PATH_BUF_LEN, "%s/%s/%s",
-                 get_sharelink_home(), SHARELINK_SUBDIR, name)) {
+                     get_sharelink_home(), SHARELINK_SUBDIR, name)) {
             WRITELOGMESSAGE(LOG_WARNING,
-                    "Path construction overflow for: %s/%s/%s\n",
-                    get_sharelink_home(), SHARELINK_SUBDIR,
-                    name);
+                            "Path construction overflow for: %s/%s/%s\n",
+                            get_sharelink_home(), SHARELINK_SUBDIR, name);
             return NSS_STATUS_NOTFOUND;
         }
         /* Make sure prefix of direct sharelink target is user home */
         WRITELOGMESSAGE(LOG_DEBUG,
-                "Checking prefix for sharelink: %s\n", pathbuf);
+                        "Checking prefix for sharelink: %s\n", pathbuf);
         char link_target[PATH_BUF_LEN];
         memset(link_target, 0, PATH_BUF_LEN);
         if (PATH_BUF_LEN ==
             readlink(pathbuf, link_target, strlen(conf->pw_dir))) {
             WRITELOGMESSAGE(LOG_WARNING,
-                    "Link lookup overflow for sharelink: %s\n",
-                    pathbuf);
+                            "Link lookup overflow for sharelink: %s\n",
+                            pathbuf);
             return NSS_STATUS_NOTFOUND;
         }
         /* Explicitly terminate string after target prefix */
         link_target[strlen(conf->pw_dir)] = 0;
         if (strlen(link_target) == 0) {
-            WRITELOGMESSAGE(LOG_DEBUG,
-                    "Not a valid sharelink: %s\n", pathbuf);
+            WRITELOGMESSAGE(LOG_DEBUG, "Not a valid sharelink: %s\n", pathbuf);
         } else if (strcmp(conf->pw_dir, link_target) != 0) {
             WRITELOGMESSAGE(LOG_DEBUG,
-                    "Not a valid sharelink target prefix: %s\n",
-                    link_target);
+                            "Not a valid sharelink target prefix: %s\n",
+                            link_target);
         } else if (access(link_target, R_OK) != 0) {
             WRITELOGMESSAGE(LOG_WARNING,
-                    "Read access to sharelink target %s denied: %s\n",
-                    link_target, strerror(errno));
+                            "Read access to sharelink target %s denied: %s\n",
+                            link_target, strerror(errno));
         } else {
             /* Once here it has to be a sharelink - don't try other methods */
             keep_trying = 0;
@@ -227,7 +224,7 @@ _nss_mig_getpwnam_r(const char *name,
         }
     }
     WRITELOGMESSAGE(LOG_DEBUG, "Detect sharelink: %d\n", is_share);
-#endif              /* ENABLE_SHARELINK */
+#endif                          /* ENABLE_SHARELINK */
 
 #ifdef ENABLE_JOBSIDMOUNT
     /* Optional job session mount access:
@@ -236,55 +233,51 @@ _nss_mig_getpwnam_r(const char *name,
        - session ssh key must match for access
      */
     if (keep_trying && strlen(name) == get_jobsidmount_length()) {
-        WRITELOGMESSAGE(LOG_DEBUG, "Checking for jobsidmount: %s\n",
-                name);
+        WRITELOGMESSAGE(LOG_DEBUG, "Checking for jobsidmount: %s\n", name);
         memset(pathbuf, 0, PATH_BUF_LEN);
         if (PATH_BUF_LEN ==
             snprintf(pathbuf, PATH_BUF_LEN, "%s/%s",
-                 get_jobsidmount_home(), name)) {
+                     get_jobsidmount_home(), name)) {
             WRITELOGMESSAGE(LOG_WARNING,
-                    "Path construction overflow for: %s/%s\n",
-                    get_jobsidmount_home(), name);
+                            "Path construction overflow for: %s/%s\n",
+                            get_jobsidmount_home(), name);
             return NSS_STATUS_NOTFOUND;
         }
         /* Make sure prefix of direct jobsidmount target is user home */
         WRITELOGMESSAGE(LOG_DEBUG,
-                "Checking prefix for jobsidmount: %s\n",
-                pathbuf);
+                        "Checking prefix for jobsidmount: %s\n", pathbuf);
         char link_target[PATH_BUF_LEN];
         memset(link_target, 0, PATH_BUF_LEN);
         if (PATH_BUF_LEN ==
             readlink(pathbuf, link_target, strlen(conf->pw_dir))) {
             WRITELOGMESSAGE(LOG_WARNING,
-                    "Link lookup overflow for jobsidmount: %s\n",
-                    pathbuf);
+                            "Link lookup overflow for jobsidmount: %s\n",
+                            pathbuf);
             return NSS_STATUS_NOTFOUND;
         }
         /* Explicitly terminate string after target prefix */
         link_target[strlen(conf->pw_dir)] = 0;
         if (strlen(link_target) == 0) {
             WRITELOGMESSAGE(LOG_DEBUG,
-                    "Not a valid jobsidmount: %s\n",
-                    pathbuf);
+                            "Not a valid jobsidmount: %s\n", pathbuf);
         } else if (strcmp(conf->pw_dir, link_target) != 0) {
             WRITELOGMESSAGE(LOG_DEBUG,
-                    "Not a valid jobsidmount target prefix: %s\n",
-                    link_target);
+                            "Not a valid jobsidmount target prefix: %s\n",
+                            link_target);
         } else if (access(link_target, R_OK) != 0) {
             WRITELOGMESSAGE(LOG_WARNING,
-                    "Read access to jobsidmount target %s denied: %s\n",
-                    link_target, strerror(errno));
+                            "Read access to jobsidmount target %s denied: %s\n",
+                            link_target, strerror(errno));
         } else {
             /* Once here it has to be a job link - don't try other methods */
             keep_trying = 0;
             /* Match - override home path with jobsidmount base */
             is_job = 1;
-            pathlen =
-                strlen(get_jobsidmount_home()) + strlen(name) + 1;
+            pathlen = strlen(get_jobsidmount_home()) + strlen(name) + 1;
         }
     }
     WRITELOGMESSAGE(LOG_DEBUG, "Detect jobsidmount: %d\n", is_job);
-#endif              /* ENABLE_JOBSIDMOUNT */
+#endif                          /* ENABLE_JOBSIDMOUNT */
 
 #ifdef ENABLE_JUPYTERSIDMOUNT
     /* Optional jupyter session mount access:
@@ -293,62 +286,57 @@ _nss_mig_getpwnam_r(const char *name,
        - session ssh key must match for access
      */
     if (keep_trying && strlen(name) == get_jupytersidmount_length()) {
-        WRITELOGMESSAGE(LOG_DEBUG, "Checking for jupytersidmount: %s\n",
-                name);
+        WRITELOGMESSAGE(LOG_DEBUG, "Checking for jupytersidmount: %s\n", name);
         memset(pathbuf, 0, PATH_BUF_LEN);
         if (PATH_BUF_LEN ==
             snprintf(pathbuf, PATH_BUF_LEN, "%s/%s",
-                 get_jupytersidmount_home(), name)) {
+                     get_jupytersidmount_home(), name)) {
             WRITELOGMESSAGE(LOG_WARNING,
-                    "Path construction overflow for: %s/%s\n",
-                    get_jupytersidmount_home(), name);
+                            "Path construction overflow for: %s/%s\n",
+                            get_jupytersidmount_home(), name);
             return NSS_STATUS_NOTFOUND;
         }
         /* Make sure prefix of direct jupytersidmount target is user home */
         WRITELOGMESSAGE(LOG_DEBUG,
-                "Checking prefix for jupytersidmount: %s\n",
-                pathbuf);
+                        "Checking prefix for jupytersidmount: %s\n", pathbuf);
         char link_target[PATH_BUF_LEN];
         memset(link_target, 0, PATH_BUF_LEN);
         if (PATH_BUF_LEN ==
             readlink(pathbuf, link_target, strlen(conf->pw_dir))) {
             WRITELOGMESSAGE(LOG_WARNING,
-                    "Link lookup overflow for jupytersidmount: %s\n",
-                    pathbuf);
+                            "Link lookup overflow for jupytersidmount: %s\n",
+                            pathbuf);
             return NSS_STATUS_NOTFOUND;
         }
         /* Explicitly terminate string after target prefix */
         link_target[strlen(conf->pw_dir)] = 0;
         if (strlen(link_target) == 0) {
             WRITELOGMESSAGE(LOG_DEBUG,
-                    "Not a valid jupytersidmount: %s\n",
-                    pathbuf);
+                            "Not a valid jupytersidmount: %s\n", pathbuf);
         } else if (strcmp(conf->pw_dir, link_target) != 0) {
             WRITELOGMESSAGE(LOG_DEBUG,
-                    "Not a valid jupytersidmount target prefix: %s\n",
-                    link_target);
+                            "Not a valid jupytersidmount target prefix: %s\n",
+                            link_target);
         } else if (access(link_target, R_OK) != 0) {
             WRITELOGMESSAGE(LOG_WARNING,
-                    "Read access to jupytersidmount target %s denied: %s\n",
-                    link_target, strerror(errno));
+                            "Read access to jupytersidmount target %s denied: %s\n",
+                            link_target, strerror(errno));
         } else {
             /* Once here it has to be a jupyter link - don't try other methods */
             keep_trying = 0;
             /* Match - override home path with jupytersidmount base */
             is_jupyter = 1;
-            pathlen =
-                strlen(get_jupytersidmount_home()) + strlen(name) +
-                1;
+            pathlen = strlen(get_jupytersidmount_home()) + strlen(name) + 1;
         }
     }
     WRITELOGMESSAGE(LOG_DEBUG, "Detect jupytersidmount: %d\n", is_jupyter);
-#endif              /* ENABLE_JUPYTERSIDMOUNT */
+#endif                          /* ENABLE_JUPYTERSIDMOUNT */
 
     /* Make sure we can fit the path into the buffer */
     if (pathlen + name_len + 2 > PATH_BUF_LEN) {
         WRITELOGMESSAGE(LOG_WARNING,
-                "Expanded path too long, %zd vs %d\n",
-                pathlen + name_len + 2, PATH_BUF_LEN);
+                        "Expanded path too long, %zd vs %d\n",
+                        pathlen + name_len + 2, PATH_BUF_LEN);
         return NSS_STATUS_NOTFOUND;
     }
 
@@ -367,8 +355,7 @@ _nss_mig_getpwnam_r(const char *name,
     char *resolved_path = realpath(pathbuf, NULL);
     if (resolved_path == NULL) {
         WRITELOGMESSAGE(LOG_INFO,
-                "Failed to resolve path to a real path: %s\n",
-                pathbuf);
+                        "Failed to resolve path to a real path: %s\n", pathbuf);
         return NSS_STATUS_NOTFOUND;
     }
 
@@ -377,8 +364,8 @@ _nss_mig_getpwnam_r(const char *name,
     pathlen = strlen(resolved_path);
     if (pathlen >= PATH_BUF_LEN) {
         WRITELOGMESSAGE(LOG_WARNING,
-                "Resolved path too long: %zd, %d: %s\n",
-                pathlen, PATH_BUF_LEN, resolved_path);
+                        "Resolved path too long: %zd, %d: %s\n",
+                        pathlen, PATH_BUF_LEN, resolved_path);
         free(resolved_path);
         resolved_path = NULL;
         return NSS_STATUS_NOTFOUND;
@@ -395,8 +382,8 @@ _nss_mig_getpwnam_r(const char *name,
         resolved_path = NULL;
     } else {
         WRITELOGMESSAGE(LOG_INFO,
-                "Resolved path is not a directory: %s\n",
-                resolved_path);
+                        "Resolved path is not a directory: %s\n",
+                        resolved_path);
         free(resolved_path);
         resolved_path = NULL;
         return NSS_STATUS_NOTFOUND;
@@ -406,16 +393,14 @@ _nss_mig_getpwnam_r(const char *name,
     *p = *conf;
 
     /* If out of memory */
-    if ((p->pw_name =
-         get_static(&buffer, &buflen, strlen(name) + 1)) == NULL) {
+    if ((p->pw_name = get_static(&buffer, &buflen, strlen(name) + 1)) == NULL) {
         return NSS_STATUS_TRYAGAIN;
     }
 
     /* pw_name stay as the name given */
     strcpy(p->pw_name, name);
 
-    if ((p->pw_passwd =
-         get_static(&buffer, &buflen, strlen("x") + 1)) == NULL) {
+    if ((p->pw_passwd = get_static(&buffer, &buflen, strlen("x") + 1)) == NULL) {
         return NSS_STATUS_TRYAGAIN;
     }
 
@@ -429,25 +414,23 @@ _nss_mig_getpwnam_r(const char *name,
     strcpy(p->pw_dir, pathbuf);
 
     WRITELOGMESSAGE(LOG_DEBUG, "Returning success for %s: %s\n",
-            p->pw_name, p->pw_dir);
+                    p->pw_name, p->pw_dir);
     return NSS_STATUS_SUCCESS;
 }
 
 enum nss_status
 _nss_mig_getspnam_r(const char *name,
-            struct spwd *s, char *buffer, size_t buflen, int *errnop)
+                    struct spwd *s, char *buffer, size_t buflen, int *errnop)
 {
 
     /* If out of memory */
-    if ((s->sp_namp =
-         get_static(&buffer, &buflen, strlen(name) + 1)) == NULL) {
+    if ((s->sp_namp = get_static(&buffer, &buflen, strlen(name) + 1)) == NULL) {
         return NSS_STATUS_TRYAGAIN;
     }
 
     strcpy(s->sp_namp, name);
 
-    if ((s->sp_pwdp =
-         get_static(&buffer, &buflen, strlen("*") + 1)) == NULL) {
+    if ((s->sp_pwdp = get_static(&buffer, &buflen, strlen("*") + 1)) == NULL) {
         return NSS_STATUS_TRYAGAIN;
     }
 

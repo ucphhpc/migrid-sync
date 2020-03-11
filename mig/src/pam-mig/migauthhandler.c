@@ -59,6 +59,10 @@
 #define MIG_CONF MIG_HOME"/server/MiGserver.conf"
 #endif
 
+#ifdef RATE_LIMIT_EXPIRE_DELAY
+#define RATE_LIMIT_EXPIRE_DELAY 120
+#endif
+
 void *libpython_handle = NULL;
 PyObject *py_main = NULL;
 
@@ -85,19 +89,17 @@ static bool pyinit()
     if (libpython_handle != NULL) {
         WRITELOGMESSAGE(LOG_DEBUG, "Python already initialized\n");
     } else {
-        libpython_handle =
-            dlopen("libpython2.7.so", RTLD_LAZY | RTLD_GLOBAL);
+        libpython_handle = dlopen("libpython2.7.so", RTLD_LAZY | RTLD_GLOBAL);
         Py_SetProgramName("pam-mig");
         Py_Initialize();
         if (!Py_IsInitialized()) {
             WRITELOGMESSAGE(LOG_ERR,
-                    "Failed to initialize Python interpreter\n");
+                            "Failed to initialize Python interpreter\n");
             return false;
         }
         py_main = PyImport_AddModule("__main__");
         if (py_main == NULL) {
-            WRITELOGMESSAGE(LOG_ERR,
-                    "Failed to find Python __main__\n");
+            WRITELOGMESSAGE(LOG_ERR, "Failed to find Python __main__\n");
             return false;
         }
         pyrun("import os");
@@ -109,11 +111,13 @@ static bool pyinit()
         pyrun("from shared.griddaemons.sftp import validate_auth_attempt");
         pyrun("from shared.griddaemons.sftp import active_sessions");
         pyrun("from shared.griddaemons.sftp import expire_rate_limit");
-        pyrun("from shared.logger import daemon_logger, register_hangup_handler");
+        pyrun
+            ("from shared.logger import daemon_logger, register_hangup_handler");
         pyrun("from shared.conf import get_configuration_object");
         pyrun("configuration = get_configuration_object(skip_log=True)");
         pyrun("log_level = configuration.loglevel");
-        pyrun("logger = daemon_logger('sftp-subsys', configuration.user_sftp_subsys_log, configuration.loglevel)");
+        pyrun
+            ("logger = daemon_logger('sftp-subsys', configuration.user_sftp_subsys_log, configuration.loglevel)");
         pyrun("configuration.logger = logger");
     }
     return true;
@@ -134,12 +138,9 @@ static int mig_expire_rate_limit()
 {
     int result = 0;
     pyinit();
-#ifdef RATE_LIMIT_EXPIRE_DELAY
-    pyrun("expired = expire_rate_limit(configuration, 'sftp-subsys', expire_delay=%d)",
-        RATE_LIMIT_EXPIRE_DELAY);
-#else
-    pyrun("expired = expire_rate_limit(configuration, 'sftp-subsys')";
-#endif              /* RATE_LIMIT_EXPIRE_DELAY */
+    pyrun
+        ("expired = expire_rate_limit(configuration, 'sftp-subsys', expire_delay=%d)",
+         RATE_LIMIT_EXPIRE_DELAY);
     PyObject *py_expired = PyObject_GetAttrString(py_main, "expired");
     if (py_expired == NULL) {
         WRITELOGMESSAGE(LOG_ERR, "Missing python variable: expired\n");
@@ -150,26 +151,26 @@ static int mig_expire_rate_limit()
     return result;
 }
 
-static bool mig_hit_rate_limit(const char *username, const char *address) 
+static bool mig_hit_rate_limit(const char *username, const char *address)
 {
     bool result = false;
     pyinit();
-    pyrun("exceeded_rate_limit = hit_rate_limit(configuration, 'sftp-subsys', '%s', '%s')",
-        address, username);
-    PyObject * py_exceeded_rate_limit =
-          PyObject_GetAttrString(py_main, "exceeded_rate_limit");
+    pyrun
+        ("exceeded_rate_limit = hit_rate_limit(configuration, 'sftp-subsys', '%s', '%s')",
+         address, username);
+    PyObject *py_exceeded_rate_limit =
+        PyObject_GetAttrString(py_main, "exceeded_rate_limit");
     if (py_exceeded_rate_limit == NULL) {
         WRITELOGMESSAGE(LOG_ERR,
-            "Missing python variable: py_exceeded_rate_limit\n");
+                        "Missing python variable: py_exceeded_rate_limit\n");
     } else {
         result = PyObject_IsTrue(py_exceeded_rate_limit);
         Py_DECREF(py_exceeded_rate_limit);
     }
     return result;
- }
+}
 
-static bool mig_exceeded_max_sessions(const char *username,
-                                    const char *address)
+static bool mig_exceeded_max_sessions(const char *username, const char *address)
 {
     bool result = false;
     int active_count = 0;
@@ -177,22 +178,20 @@ static bool mig_exceeded_max_sessions(const char *username,
 
     pyinit();
     pyrun("active_count = active_sessions(configuration, 'sftp-subsys', '%s')",
-        username); 
-    PyObject * py_active_count =
-        PyObject_GetAttrString(py_main, "active_count");
+          username);
+    PyObject *py_active_count = PyObject_GetAttrString(py_main, "active_count");
     if (py_active_count == NULL) {
-        WRITELOGMESSAGE(LOG_ERR,
-            "Missing python variable: py_active_count\n");
+        WRITELOGMESSAGE(LOG_ERR, "Missing python variable: py_active_count\n");
     } else {
         active_count = PyInt_AsLong(py_active_count);
         Py_DECREF(py_active_count);
     }
     pyrun("sftp_max_sessions = configuration.user_sftp_max_sessions");
-    PyObject * py_max_sftp_sessions =
-    PyObject_GetAttrString(py_main, "sftp_max_sessions");
+    PyObject *py_max_sftp_sessions =
+        PyObject_GetAttrString(py_main, "sftp_max_sessions");
     if (py_max_sftp_sessions == NULL) {
         WRITELOGMESSAGE(LOG_ERR,
-            "Missing python variable: py_max_sftp_sessions\n");
+                        "Missing python variable: py_max_sftp_sessions\n");
     } else {
         max_sftp_sessions = PyInt_AsLong(py_max_sftp_sessions);
         Py_DECREF(py_max_sftp_sessions);
@@ -205,17 +204,17 @@ static bool mig_exceeded_max_sessions(const char *username,
     return result;
 }
 
-static bool mig_validate_username(const char *username) 
+static bool mig_validate_username(const char *username)
 {
     bool result = false;
     pyinit();
     pyrun("valid_username = default_username_validator(configuration, '%s')",
-         username); 
-    PyObject * py_valid_username =
-         PyObject_GetAttrString(py_main, "valid_username");
+          username);
+    PyObject *py_valid_username =
+        PyObject_GetAttrString(py_main, "valid_username");
     if (py_valid_username == NULL) {
         WRITELOGMESSAGE(LOG_ERR,
-            "Missing python variable: py_valid_username\n");
+                        "Missing python variable: py_valid_username\n");
     } else {
         result = PyObject_IsTrue(py_valid_username);
         Py_DECREF(py_valid_username);
@@ -224,21 +223,21 @@ static bool mig_validate_username(const char *username)
 }
 
 static bool register_auth_attempt(const unsigned int mode,
-                               const char *username,
-                               const char *address,
-                               const char *secret) {
+                                  const char *username,
+                                  const char *address, const char *secret)
+{
     WRITELOGMESSAGE(LOG_DEBUG,
-        "mode: 0x%X, username: %s, address: %s, secret: %s\n",
-            mode, username, address, secret);
+                    "mode: 0x%X, username: %s, address: %s, secret: %s\n",
+                    mode, username, address, secret);
     char pycmd[MAX_PYCMD_LENGTH] =
         "validate_auth_attempt(configuration, 'sftp-subsys', ";
-    char pytmp[MAX_PYCMD_LENGTH]; 
+    char pytmp[MAX_PYCMD_LENGTH];
     if (mode & MIG_AUTHTYPE_PASSWORD) {
         strncat(&pycmd[0], "'password', ", MAX_PYCMD_LENGTH - strlen(pycmd));
     } else {
         WRITELOGMESSAGE(LOG_ERR,
-            "register_auth_attempt: No valid auth-type in mode: 0x%X\n",
-                mode); 
+                        "register_auth_attempt: No valid auth-type in mode: 0x%X\n",
+                        mode);
         return false;
     }
     strncat(&pycmd[0], "'", MAX_PYCMD_LENGTH - strlen(pycmd));
@@ -248,76 +247,72 @@ static bool register_auth_attempt(const unsigned int mode,
     strncat(&pycmd[0], "', ", MAX_PYCMD_LENGTH - strlen(pycmd));
     if (secret != NULL) {
         sprintf(&pytmp[0], "secret='%s', ", secret);
-        strncat(&pycmd[0], &pytmp[0],
-            MAX_PYCMD_LENGTH - strlen(pycmd));
+        strncat(&pycmd[0], &pytmp[0], MAX_PYCMD_LENGTH - strlen(pycmd));
     }
     if (mode & MIG_INVALID_USERNAME) {
         strncat(&pycmd[0], "invalid_username=True, ",
-            MAX_PYCMD_LENGTH - strlen(pycmd));
+                MAX_PYCMD_LENGTH - strlen(pycmd));
     }
     if (mode & MIG_INVALID_USER) {
         strncat(&pycmd[0], "invalid_user=True, ",
-            MAX_PYCMD_LENGTH - strlen(pycmd));
+                MAX_PYCMD_LENGTH - strlen(pycmd));
     }
     if (mode & MIG_SKIP_TWOFA_CHECK) {
         strncat(&pycmd[0], "skip_twofa_check=True, ",
-            MAX_PYCMD_LENGTH - strlen(pycmd));
+                MAX_PYCMD_LENGTH - strlen(pycmd));
     }
     if (mode & MIG_VALID_TWOFA) {
         strncat(&pycmd[0], "valid_twofa=True, ",
-            MAX_PYCMD_LENGTH - strlen(pycmd));
+                MAX_PYCMD_LENGTH - strlen(pycmd));
     }
     if (mode & MIG_AUTHTYPE_DISABLED) {
         strncat(&pycmd[0], "authtype_enabled=False, ",
-            MAX_PYCMD_LENGTH - strlen(pycmd));
+                MAX_PYCMD_LENGTH - strlen(pycmd));
     }
     if (mode & MIG_AUTHTYPE_ENABLED) {
         strncat(&pycmd[0], "authtype_enabled=True, ",
-            MAX_PYCMD_LENGTH - strlen(pycmd));
+                MAX_PYCMD_LENGTH - strlen(pycmd));
     }
     if (mode & MIG_VALID_AUTH) {
         strncat(&pycmd[0], "valid_auth=True, ",
-            MAX_PYCMD_LENGTH - strlen(pycmd));
+                MAX_PYCMD_LENGTH - strlen(pycmd));
     }
     if (mode & MIG_INVALID_AUTH) {
         strncat(&pycmd[0], "valid_auth=False, ",
-            MAX_PYCMD_LENGTH - strlen(pycmd));
+                MAX_PYCMD_LENGTH - strlen(pycmd));
     }
     if (mode & MIG_EXCEEDED_RATE_LIMIT) {
         strncat(&pycmd[0], "exceeded_rate_limit=True, ",
-            MAX_PYCMD_LENGTH - strlen(pycmd));
+                MAX_PYCMD_LENGTH - strlen(pycmd));
     }
     if (mode & MIG_EXCEEDED_MAX_SESSIONS) {
         strncat(&pycmd[0], "exceeded_max_sessions=True, ",
-            MAX_PYCMD_LENGTH - strlen(pycmd));
+                MAX_PYCMD_LENGTH - strlen(pycmd));
     }
     if (mode & MIG_USER_ABUSE_HITS) {
         strncat(&pycmd[0], "user_abuse_hits=True, ",
-            MAX_PYCMD_LENGTH - strlen(pycmd));
+                MAX_PYCMD_LENGTH - strlen(pycmd));
     }
     if (mode & MIG_PROTO_ABUSE_HITS) {
         strncat(&pycmd[0], "proto_abuse_hits=True, ",
-            MAX_PYCMD_LENGTH - strlen(pycmd));
+                MAX_PYCMD_LENGTH - strlen(pycmd));
     }
     if (mode & MIG_MAX_SECRET_HITS) {
         strncat(&pycmd[0], "max_secret_hits=True, ",
-            MAX_PYCMD_LENGTH - strlen(pycmd));
+                MAX_PYCMD_LENGTH - strlen(pycmd));
     }
     if (mode & MIG_SKIP_NOTIFY) {
         strncat(&pycmd[0], "skip_notify=True, ",
-            MAX_PYCMD_LENGTH - strlen(pycmd));
+                MAX_PYCMD_LENGTH - strlen(pycmd));
     }
-    strncat(&pycmd[0], ")",
-        MAX_PYCMD_LENGTH - strlen(pycmd));
+    strncat(&pycmd[0], ")", MAX_PYCMD_LENGTH - strlen(pycmd));
     if (MAX_PYCMD_LENGTH == strlen(pycmd)) {
-        WRITELOGMESSAGE(LOG_ERR,
-            "register_auth_attempt: pycmd overflow\n");
+        WRITELOGMESSAGE(LOG_ERR, "register_auth_attempt: pycmd overflow\n");
         return false;
     }
-    WRITELOGMESSAGE(LOG_DEBUG, "python call: %s",
-        &pycmd[0]);
+    WRITELOGMESSAGE(LOG_DEBUG, "python call: %s", &pycmd[0]);
     pyinit();
     pyrun(&pycmd[0]);
-    pyexit(); 
+    pyexit();
     return true;
 }

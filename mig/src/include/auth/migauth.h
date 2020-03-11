@@ -74,7 +74,7 @@
 /* Enable auth handler unless explicitly disabled during compilation */
 #ifndef DISABLE_AUTHHANDLER
 #define ENABLE_AUTHHANDLER 1
-#endif              /* !DISABLE_AUTHHANDLER */
+#endif                          /* !DISABLE_AUTHHANDLER */
 
 /* Various settings used by optional sharelink access */
 /* Enable sharelinks unless explicitly disabled during compilation */
@@ -90,7 +90,7 @@
 #ifndef SHARELINK_SUBDIR
 #define SHARELINK_SUBDIR "read-write"
 #endif
-#endif              /* !DISABLE_SHARELINK */
+#endif                          /* !DISABLE_SHARELINK */
 
 /* Various settings used by optional job session mount access */
 /* Enable job session mount unless explicitly disabled during compilation */
@@ -108,7 +108,7 @@
 #ifndef JOBSIDMOUNT_LENGTH
 #define JOBSIDMOUNT_LENGTH 42
 #endif
-#endif              /* !DISABLE_JOBSIDMOUNT */
+#endif                          /* !DISABLE_JOBSIDMOUNT */
 
 /* Various settings used by optional jupyter session mount access */
 /* Enable jupyter session mount unless explicitly disabled during compilation */
@@ -126,7 +126,7 @@
 #ifndef JUPYTERSIDMOUNT_LENGTH
 #define JUPYTERSIDMOUNT_LENGTH 42
 #endif
-#endif              /* !DISABLE_JUPYTERSIDMOUNT */
+#endif                          /* !DISABLE_JUPYTERSIDMOUNT */
 
 /* Helper macros that writes messages to syslog  */
 
@@ -154,20 +154,20 @@ char _debug_log_msg[MAX_DEBUG_LOG_MSG_LENGTH];
     snprintf(_debug_log_msg, MAX_DEBUG_LOG_MSG_LENGTH, format, ##__VA_ARGS__); \
     fprintf(stderr, _debug_log_msg);
 fprintf(stderr, "%s: %s(%d): %s", DEBUG_LOG_PREFIX(priority), __FILE__,
-    __LINE__, _debug_log_msg);
-#else               /* DEBUG_LOG_STDERR */
+        __LINE__, _debug_log_msg);
+#else                           /* DEBUG_LOG_STDERR */
 #define WRITELOGMESSAGE(priority, format, ...) \
     snprintf(_debug_log_msg, MAX_DEBUG_LOG_MSG_LENGTH, format, ##__VA_ARGS__); \
     openlog("pam_mig", LOG_PID, LOG_AUTHPRIV); \
     syslog(priority, "%s: %s(%d): %s", DEBUG_LOG_PREFIX(priority), __FILE__, __LINE__, _debug_log_msg);
-#endif              /* DEBUG_LOG_STDERR */
-#else               /* DEBUG || DEBUG_LOG_STDERR */
+#endif                          /* DEBUG_LOG_STDERR */
+#else                           /* DEBUG || DEBUG_LOG_STDERR */
 #define WRITELOGMESSAGE(priority, format, ...) \
     if (priority != LOG_DEBUG) { \
         openlog("pam_mig", LOG_PID, LOG_AUTHPRIV); \
         syslog(priority, format, ##__VA_ARGS__); \
     }
-#endif              /* DEBUG || DEBUG_LOG_STDERR */
+#endif                          /* DEBUG || DEBUG_LOG_STDERR */
 
 /* Helper functions/macros for GDB debugging */
 
@@ -181,8 +181,7 @@ void _gdb_handle_sigcont(int signal)
      */
 
     if (!_gdb_console_connected) {
-        WRITELOGMESSAGE(LOG_DEBUG, "GDB console attached to: %d\n",
-                getpid());
+        WRITELOGMESSAGE(LOG_DEBUG, "GDB console attached to: %d\n", getpid());
         _gdb_console_connected = 1;
     }
 }
@@ -201,16 +200,16 @@ Rest: http://lackingrhoticity.blogspot.com/2010/05/breakpoints-in-gdb-using-int3
     } else { \
         asm volatile ("int3;"); \
     }
-#else               /* GDB_BREAKPOINT_ENABLED */
+#else                           /* GDB_BREAKPOINT_ENABLED */
 #define GDB_BREAKPOINT asm ("nop");
-#endif              /* GDB_BREAKPOINT_ENABLED */
+#endif                          /* GDB_BREAKPOINT_ENABLED */
 
 /* General helper to extract variable value. Tries the environment, conf, 
    compile-time definition and default definition in that order until one
    is found */
 static const char *get_runtime_var(const char *env_name,
-                   const char *conf_name,
-                   const char *define_val)
+                                   const char *conf_name,
+                                   const char *define_val)
 {
 #ifdef _GNU_SOURCE
     const char *var_val = secure_getenv(env_name);
@@ -238,8 +237,8 @@ static const char *get_runtime_var(const char *env_name,
 
 /* Similar to get_runtime_var but handling integer values */
 static const int get_runtime_var_int(const char *env_name,
-                     const char *conf_name,
-                     const int define_val)
+                                     const char *conf_name,
+                                     const int define_val)
 {
     /* NOTE: tedious but required juggling between string and integer */
     char val_str[4];
@@ -259,8 +258,7 @@ static const int get_runtime_var_int(const char *env_name,
  */
 static const char *get_username_regex()
 {
-    return get_runtime_var("USERNAME_REGEX", "username_regex",
-                   USERNAME_REGEX);
+    return get_runtime_var("USERNAME_REGEX", "username_regex", USERNAME_REGEX);
 }
 
 /* We take first occurence of USER_HOME from
@@ -285,14 +283,13 @@ static const char *get_user_home()
  */
 static const char *get_sharelink_home()
 {
-    return get_runtime_var("SHARELINK_HOME", "sharelink_home",
-                   SHARELINK_HOME);
+    return get_runtime_var("SHARELINK_HOME", "sharelink_home", SHARELINK_HOME);
 }
 
 static int get_sharelink_length()
 {
     return get_runtime_var_int("SHARELINK_LENGTH",
-                   "site->sharelink_length", SHARELINK_LENGTH);
+                               "site->sharelink_length", SHARELINK_LENGTH);
 }
 #endif
 
@@ -306,14 +303,13 @@ static int get_sharelink_length()
 static const char *get_jobsidmount_home()
 {
     return get_runtime_var("JOBSIDMOUNT_HOME", "jobsidmount_home",
-                   JOBSIDMOUNT_HOME);
+                           JOBSIDMOUNT_HOME);
 }
 
 static int get_jobsidmount_length()
 {
     return get_runtime_var_int("JOBSIDMOUNT_LENGTH",
-                   "site->jobsidmount_length",
-                   JOBSIDMOUNT_LENGTH);
+                               "site->jobsidmount_length", JOBSIDMOUNT_LENGTH);
 }
 #endif
 
@@ -327,14 +323,14 @@ static int get_jobsidmount_length()
 static const char *get_jupytersidmount_home()
 {
     return get_runtime_var("JUPYTERSIDMOUNT_HOME", "jupytersidmount_home",
-                   JUPYTERSIDMOUNT_HOME);
+                           JUPYTERSIDMOUNT_HOME);
 }
 
 static int get_jupytersidmount_length()
 {
     return get_runtime_var_int("JUPYTERSIDMOUNT_LENGTH",
-                   "site->jupytersidmount_length",
-                   JUPYTERSIDMOUNT_LENGTH);
+                               "site->jupytersidmount_length",
+                               JUPYTERSIDMOUNT_LENGTH);
 }
 #endif
 
@@ -344,18 +340,17 @@ static int validate_username(const char *username)
     WRITELOGMESSAGE(LOG_DEBUG, "Validate username '%s'\n", username);
     if (strlen(username) < USERNAME_MIN_LENGTH) {
         WRITELOGMESSAGE(LOG_DEBUG,
-                "Invalid username %s - too short (<%d)\n",
-                username, USERNAME_MIN_LENGTH);
+                        "Invalid username %s - too short (<%d)\n",
+                        username, USERNAME_MIN_LENGTH);
         return 1;
     } else if (strlen(username) > USERNAME_MAX_LENGTH) {
         WRITELOGMESSAGE(LOG_DEBUG,
-                "Invalid username %s - too long (>%d)\n",
-                username, USERNAME_MAX_LENGTH);
+                        "Invalid username %s - too long (>%d)\n",
+                        username, USERNAME_MAX_LENGTH);
         return 2;
     }
 
-    WRITELOGMESSAGE(LOG_DEBUG, "Validated length of username '%s'\n",
-            username);
+    WRITELOGMESSAGE(LOG_DEBUG, "Validated length of username '%s'\n", username);
     int retval;
     regex_t validator;
     int regex_res;
@@ -364,53 +359,52 @@ static int validate_username(const char *username)
         username_regex[strlen(username_regex) - 1] != '$') {
         /* regex must have begin and end markers to avoid false hits */
         WRITELOGMESSAGE(LOG_ERR,
-                "Invalid username regex %s - line anchors required\n",
-                username_regex);
+                        "Invalid username regex %s - line anchors required\n",
+                        username_regex);
         return 3;
 
     }
 
-    regex_res =
-        regcomp(&validator, username_regex, REG_EXTENDED | REG_NOSUB);
+    regex_res = regcomp(&validator, username_regex, REG_EXTENDED | REG_NOSUB);
     if (regex_res) {
         if (regex_res == REG_ESPACE) {
             WRITELOGMESSAGE(LOG_ERR,
-                    "Memory error in username validation: %s\n",
-                    strerror(ENOMEM));
+                            "Memory error in username validation: %s\n",
+                            strerror(ENOMEM));
             retval = 4;
         } else {
             WRITELOGMESSAGE(LOG_ERR,
-                    "Syntax error in username_regex: %s\n",
-                    username_regex);
+                            "Syntax error in username_regex: %s\n",
+                            username_regex);
             retval = 5;
         }
         return retval;
     }
     WRITELOGMESSAGE(LOG_DEBUG, "Validate username '%s' vs regex '%s'\n",
-            username, username_regex);
+                    username, username_regex);
     /* Do not try to do submatch on group (last three arguments) */
     regex_res = regexec(&validator, username, 0, NULL, 0);
     if (regex_res == 0) {
         /* Success - username matches regex and length limits */
         WRITELOGMESSAGE(LOG_DEBUG,
-                "Validated username '%s' vs regex '%s'\n",
-                username, username_regex);
+                        "Validated username '%s' vs regex '%s'\n",
+                        username, username_regex);
         retval = 0;
     } else if (regex_res == REG_NOMATCH) {
         WRITELOGMESSAGE(LOG_DEBUG,
-                "username %s did not match username_regex %s\n",
-                username, username_regex);
+                        "username %s did not match username_regex %s\n",
+                        username, username_regex);
         retval = 6;
     } else {
         WRITELOGMESSAGE(LOG_ERR,
-                "Error in regexec: %zd\n",
-                regerror(regex_res, &validator, NULL, 0));
+                        "Error in regexec: %zd\n",
+                        regerror(regex_res, &validator, NULL, 0));
         retval = 7;
     }
     regfree(&validator);
     WRITELOGMESSAGE(LOG_DEBUG, "Validate username %s returning %d\n",
-            username, retval);
+                    username, retval);
     return retval;
 }
 
-#endif              /* _MIGAUTH_H_ */
+#endif                          /* _MIGAUTH_H_ */

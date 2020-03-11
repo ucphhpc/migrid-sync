@@ -30,7 +30,7 @@ extern "C" {
  *
  *  @return size of the buffer required to hold the encoded data
  */
-	size_t b64_get_encoded_buffer_size(const size_t decoded_size);
+    size_t b64_get_encoded_buffer_size(const size_t decoded_size);
 
 /**
  *  Encodes the input into base 64.  The base 64 produced string will be placed
@@ -44,8 +44,8 @@ extern "C" {
  *  @param input_size size of the raw data in bytes
  *  @param output pointer to where the encoded data should be placed
  */
-	void b64_encode(const uint8_t * input, const size_t input_size,
-			uint8_t * output);
+    void b64_encode(const uint8_t * input, const size_t input_size,
+                    uint8_t * output);
 
 /**
  * Get the size of the buffer needed to hold the decoded output.
@@ -56,7 +56,7 @@ extern "C" {
  *
  * @return size of the raw data
  */
-	size_t b64_get_decoded_buffer_size(const size_t encoded_size);
+    size_t b64_get_decoded_buffer_size(const size_t encoded_size);
 
 /**
  * Decodes the base 64 stream.  The produced raw buffer will be placed into the
@@ -71,8 +71,8 @@ extern "C" {
  *
  * @return total number of bytes in the decoded array
  */
-	size_t b64_decode(const uint8_t * input, const size_t input_size,
-			  uint8_t * output);
+    size_t b64_decode(const uint8_t * input, const size_t input_size,
+                      uint8_t * output);
 
 /**
  * Decodes the base 64 url encoded stream.  The produced raw buffer will be
@@ -89,10 +89,10 @@ extern "C" {
  *
  * @return total number of bytes in the decoded array
  */
-	size_t b64url_decode(const uint8_t * input, const size_t input_size,
-			     uint8_t * output);
+    size_t b64url_decode(const uint8_t * input, const size_t input_size,
+                         uint8_t * output);
 
 #ifdef __cplusplus
 }
 #endif
-#endif				/* __BASE64_LIB__ */
+#endif                          /* __BASE64_LIB__ */
