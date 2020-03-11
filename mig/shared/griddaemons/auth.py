@@ -309,7 +309,7 @@ def validate_auth_attempt(configuration,
                 auth_msg, notify=False)
     elif not authtype_enabled:
         disconnect = True
-        auth_msg = "No %s set" % authtype
+        auth_msg = "%s auth disabled or %s not set" % (authtype, authtype)
         log_msg = auth_msg + " for %s from %s" % (username, ip_addr)
         if tcp_port > 0:
             log_msg += ":%s" % tcp_port
