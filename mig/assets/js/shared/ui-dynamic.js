@@ -55,6 +55,22 @@ function extract_default_locale() {
     return req_lang.split(/[_-]/)[0].toLowerCase();
 }
 
+/* Helper to lookup optional site-specific JS conf values with get_site_conf
+   from site-conf.js with fall back to default_value if it is not available.
+*/
+function lookup_site_conf(key, default_value) {
+    var value;
+    try {
+        value = get_site_conf(key);
+        if (value === undefined) throw "get_site_conf "+key+" is undefined";
+    } catch(err) {
+        console.warn("failed to lookup " + key + " in site-conf.js: "+err);
+        value = default_value;
+    }
+    //console.debug("looked up  " + key + " value " + value + " in site-conf.js");
+    return value;
+}
+
 /* Load information snippets on-demand */
 
 function init_quickstart_shared(intro_target, transfer_target, backup_target,
@@ -454,7 +470,7 @@ function fill_server_status_popup(status_events, system_match, locale) {
                 }
                 if (show_entry) {
                     //console.debug("include entry for "+entry_systems+" and match for "+system_match+" : "+systems_overlap);
-                    announce_text += "<span class='"+entry_class+"'>"+entry_text+"</span><br/>";
+                    announce_text += "<span class='"+entry_class+"'>"+work_start.toLocaleDateString(locale) + ": "+ entry_text + "</span><br/>";
                 }
             });
 
@@ -472,7 +488,7 @@ function fill_server_status_popup(status_events, system_match, locale) {
             } else if (announce_count > 0) {
                 status_icon = "fa-info-circle";
                 status_color = "green";
-                status_caption = "PENDING";
+                status_caption = "ANNOUNCED";
                 status_line = "All site services online but pending notices.";
             } else {
                 status_icon = "fa-check-circle";

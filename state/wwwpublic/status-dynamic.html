@@ -30,6 +30,9 @@ ERDA Status
 <link rel="icon" type="image/vnd.microsoft.icon"
       href="/images/skin/erda-ucph-science/favicon.ico"/>
 
+<!-- site-specific variables used to adjust displayed information -->
+<script type="text/javascript" src="/images/site-conf.js"></script>
+
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
 <script type="text/javascript" src="/assets/js/V2/ui-dynamic.js"></script>
@@ -51,19 +54,21 @@ ERDA Status
       supported_languages.push($(this).val());
     }
     });
-    console.log("found supported langs: "+supported_languages);
+    console.debug("found supported langs: "+supported_languages);
     if (locale && supported_languages.indexOf(locale) >= 0)  {
       user_lang = locale;
     } else {
-      console.log(locale+" not supported - fall back to: "+default_lang);
+      console.warn(locale+" not supported - fall back to: "+default_lang);
       user_lang = default_lang;
     }
 
   /* Dynamically load and display parsed events here */
-  content_url = "status-events.json"
-  console.log("get content from "+content_url);
+  var content_url = lookup_site_conf("content_url", "status-events.json");
+  var system_match = lookup_site_conf("system_match", ["ANY"]);
+  console.debug("get content from "+content_url);
   status_targets = {"EN": ".english .news-accordion", "DK": ".danish .news-accordion"};
-  fill_server_status_accordion(content_url, status_targets, ["ALL","ERDA","SIF","IDMC","MiG"], locale);
+  console.debug("fill with system_match: "+system_match);
+  fill_server_status_accordion(content_url, status_targets, system_match, locale);
 
   $("#langselect").on('change', function() { 
       var lang = $(this).val();
@@ -71,7 +76,7 @@ ERDA Status
       switch_language(lang);
     }
   );
-  console.log("switch to user lang: "+user_lang);
+  console.debug("switch to user lang: "+user_lang);
   $("#langselect").val(user_lang);
   switch_language(user_lang);
   $("#langselect").msDropdown();
