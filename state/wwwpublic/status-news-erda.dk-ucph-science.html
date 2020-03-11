@@ -32,10 +32,31 @@ ERDA Status
 
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
-<script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
+<script type="text/javascript" src="/assets/js/V2/ui-dynamic.js"></script>
 <script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
 <script type="text/javascript">
+  var locale = extract_default_locale();
+  /* Init supported languages to just english and extend based on lang select */
+  var supported_languages = ['en'];
+  var default_lang = supported_languages[0];
+  var user_lang;
+
     $(document).ready(function() {
+    /* Extend supported_languages with all entries from select elem */
+    $("#langselect option").each(function() {
+    var option_val = $(this).val();
+    if (supported_languages.indexOf(option_val) < 0) {
+      supported_languages.push($(this).val());
+    }
+    });
+    console.log("found supported langs: "+supported_languages);
+    if (locale && supported_languages.indexOf(locale) >= 0)  {
+      user_lang = locale;
+    } else {
+      console.log(locale+" not supported - fall back to: "+default_lang);
+      user_lang = default_lang;
+    }
+
         /* Init NEWS as foldable, with latest entry open and with individual heights */
         $(".news-accordion").accordion({
                                        collapsible: true,
@@ -50,10 +71,11 @@ ERDA Status
                                           switch_language(lang);
                                       }
                             );
-        var default_lang = 'en';
-        $("#langselect").val(default_lang);
-        switch_language(default_lang);
-	$("#langselect").msDropdown();
+
+  console.log("switch to user lang: "+user_lang);
+  $("#langselect").val(user_lang);
+  switch_language(user_lang);
+  $("#langselect").msDropdown();
     });
 </script>
 
@@ -158,6 +180,16 @@ site status popup. DATE must be ISO 8601 format dates
 
 <h2 class="staticpage">Latest News</h2>
 <div class="news-accordion">
+<h4 class="staticpage brief-announce start_2020-03-18T16:30:00  end_2020-03-19T08:00:00 sys_ERDA svc_ALL">2020/03/18: Planned ERDA Maintenance</h4>
+<p>
+We have a number of pending system and minor feature updates on the ERDA
+frontend. The work will require full frontend restarts in relation to
+the system updates and a little additional downtime to resize a core file
+system. All ERDA services except Seafile will be down for shorter or longer
+periods. The work will commence on March 18th at about 16.30 and we
+expect to finish within a couple of hours, but reserve until next
+morning to be on the safe side. Updates will be announced here as usual.
+</p>
 <h4 class="staticpage brief-announce start_2020-02-10T00:00:00 end_2020-02-24T00:00:00 sys_SIF sys_ERDA sys_IDMC svc_OpenID svc_Web">2020/02/21-23: Planned Major UCPH Maintenance Weekend</h4>
 <p>
 UCPH have announced 
@@ -748,6 +780,18 @@ du har spørgsmål eller oplever problemer.
 
 <h2 class="staticpage">Seneste nyt</h2>
 <div class="news-accordion">
+<h4 class="staticpage brief-announce start_2020-03-18T16:30:00
+           end_2020-03-19T08:00:00 sys_ERDA svc_ALL">18/03-2020: Planlagt vedligehold på ERDA</h4>
+<p>
+Vi har et antal udestående system- og nogle mindre funktionelle opdateringer
+på ERDAs frontend. Arbejdet kræver genstart af hele frontend ifm
+systemopdateringerne og desuden lidt nedetid til at forstørre et centralt
+filsystem. Alle ERDA services bortset fra Seafile vil være nede i
+kortere eller længere perioder under opdateringen. Arbejdet begynder den
+18. marts omkring kl 16.30 og vi forventer at være færdige på et par
+timer, men holder for en sikkerheds skyld bagkanten åben for at forlænge
+til næste morgen. Statusopdateringer følger som altid her.
+</p>
 <h4 class="staticpage brief-announce start_2020-02-10T00:00:00
 	   end_2020-02-24T00:00:00 sys_SIF sys_ERDA sys_IDMC svc_OpenID
 	   svc_Web">21-23/02-2020: Planlagt Stort KU Servicevindue</h4>

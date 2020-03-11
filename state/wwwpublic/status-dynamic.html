@@ -63,7 +63,7 @@ ERDA Status
   content_url = "status-events.json"
   console.log("get content from "+content_url);
   status_targets = {"EN": ".english .news-accordion", "DK": ".danish .news-accordion"};
-  fill_server_status_accordion(content_url, status_targets, locale);
+  fill_server_status_accordion(content_url, status_targets, ["ALL","ERDA","SIF","IDMC","MiG"], locale);
 
   $("#langselect").on('change', function() { 
       var lang = $(this).val();

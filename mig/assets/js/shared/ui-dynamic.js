@@ -215,7 +215,7 @@ function accordion_init(accordion_selector, active) {
 
 
 /* Site status helpers */
-function fill_server_status_accordion(status_events, status_targets, locale) {
+function fill_server_status_accordion(status_events, status_targets, system_match, locale) {
     /* Load content: roughly equivalent to $.get(url, data, success) */
     console.debug("AJAX fill server status accordion");
     $(status_targets["EN"]).html("<p class='leftpad spinner'>Loading status and news entries ...</p>");
@@ -228,69 +228,98 @@ function fill_server_status_accordion(status_events, status_targets, locale) {
             /* Loop through events */
             var en_items = [];
             var dk_items = [];
-            var en_entry, en_title, en_workdatetimes, en_description, en_references;
-            var dk_entry, dk_title, dk_workdatetimes, dk_description, dk_references;
-            var work_start, work_end, announce_start, announce_end;
+            var en_entry, en_title, en_workdatetimes, en_systems, en_services;
+            var en_description, en_references;
+            var dk_entry, dk_title, dk_workdatetimes, dk_systems, dk_services;
+            var dk_description, dk_references;
+            var work_start, work_end, announce_start, announce_end, outage_start, outage_end;
+            var entry_systems;
+            var entry_services;
+            var show_entry;
             var now = new Date();
             var work_dates = "";
             var work_datetimes = "";
-            var title_class, workdatetimes_class, description_class, references_class;
+            var title_class, workdatetimes_class, systems_class, services_class;
+            var description_class, references_class;
             $.each(response, function (index, item) {
                 en_entry = "";
                 en_title = "";
                 en_workdatetimes = "<b>Date:</b><br/>";
+                en_systems = "<b>Systems:</b><br/>";
+                en_services = "<b>Services:</b><br/>";
                 en_description = "<b>Description:</b><br/>";
                 en_references = "<b>References:</b><br/>";
                 dk_entry = "";
                 dk_title = "";
                 dk_workdatetimes = "<b>Dato:</b><br/>";
+                dk_systems = "<b>Systemer:</b><br/>";
+                dk_services = "<b>Services:</b><br/>";
                 dk_description = "<b>Beskrivelse:</b><br/>";
                 dk_references = "<b>Referencer:</b><br/>";
                 title_class = "";
                 workdatetimes_class = "";
+                systems_class = "";
+                services_class = "";
                 description_class = "";
                 references_class = "hidden";
+                outage_start = outage_end = new Date();
                 work_start = work_end = new Date();
                 announce_start = announce_end = new Date();
+                /* Show all except system-filtered entries here */ 
+                show_entry = true; 
                 $.each(item, function(key, val) {
                     if (key === "title") {
                         en_title = val["EN"];
                         dk_title = val["DK"];
-                    }
-                    else if (key === "description") {
+                    } else if (key === "systems") {
+                        entry_systems = val;
+                        en_systems += val.join(", ");
+                        dk_systems += val.join(", ").replace("ALL", "ALLE");
+                    } else if (key === "services") {
+                        entry_services = val;
+                        en_services += val.join(", ");
+                        dk_services += val.join(", ").replace("ALL", "ALLE");
+                    } else if (key === "outage_start") {
+                        outage_start = new Date(val);
+                    } else if (key === "outage_end") {
+                        outage_end = new Date(val);
+                    } else if (key === "description") {
                         en_description += val["EN"];
                         dk_description += val["DK"];
-                    }
-                    else if (key === "references") {
+                    } else if (key === "references") {
                         //console.debug("parse refs: "+val["EN"]+" : "+val["EN"].length);
                         /* Show references section */
-                        references_class = references_class.replace("hidden", "");
                         for (i = 0; i < val["EN"].length; i++) {
                             en_references += "["+i+"] <a href='"+val["EN"][i]+"'>"+val["EN"][i]+"</a><br/>";
                         }
                         for (i = 0; i < val["DK"].length; i++) {
                             dk_references += "["+i+"] <a href='"+val["DK"][i]+"'>"+ val["DK"][i]+"</a><br/>";
                         }
+                        if (val["EN"].length || val["DK"].length) {
+                            references_class = references_class.replace("hidden", "");
+                        }
                         //console.debug("parsed refs: "+en_references + " : " + dk_references);
-                    }
-                    else if (key === "work_start") {
+                    } else if (key === "work_start") {
                         work_start = new Date(val);
-                    }
-                    else if (key === "work_end") {
+                    } else if (key === "work_end") {
                         work_end = new Date(val);
-                    }
-                    else if (key === "announce_start") {
+                    } else if (key === "announce_start") {
                         announce_start = new Date(val);
-                    }
-                    else if (key === "announce_end") {
+                    } else if (key === "announce_end") {
                         announce_end = new Date(val);
                     }
                 });
                 
-                if (work_start < now && now < work_end) {
+                /* Simple list intersection to check if systems lists overlap */
+                var systems_overlap = entry_systems.filter(function(n) {
+                    return (system_match.indexOf("ANY") !== -1 || system_match.indexOf(n) !== -1);
+                });
+                if (systems_overlap.length < 1) {
+                    //console.debug("skip entry for "+entry_systems+" without match for "+system_match+", "+systems_overlap);
+                    show_entry = false;
+                } else if (work_start < now && now < work_end) {
                     title_class += "work warn iconleftpad";
                     //console.debug("show active: " + work_start +" < " +now+ " < "+work_end );
-
                 } else if (announce_start < now && now < announce_end) {
                     title_class += "announce info iconleftpad";
                     //console.debug("announce ahead: " + announce_start +" < " +now+ " < "+announce_end );
@@ -313,12 +342,15 @@ function fill_server_status_accordion(status_events, status_targets, locale) {
                 en_workdatetimes += work_datetimes;
                 dk_workdatetimes += work_datetimes;
 
-                /* NOTE: JQuery UI accordion maps hX-tags to titles with p-tags
-                   as associated entries */
-                en_entry = "<h4><span class='"+title_class+"'>"+work_dates+"</span>: "+en_title+"</h4><p><span class='"+workdatetimes_class+"'>" + en_workdatetimes +"</span><br/><span class='"+description_class+"'>" + en_description +"</span><br/><span class='"+references_class+"'>"+en_references+"</span></p>";
-                en_items.push(en_entry);
-                dk_entry = "<h4><span class='"+title_class+"'>"+work_dates+"</span>: "+dk_title+"</h4><p><span class='"+workdatetimes_class+"'>" + dk_workdatetimes +"</span><br/><span class='"+description_class+"'>" + dk_description + "</span><br/><span class='"+references_class+"'>"+dk_references+"</span></p>";
-                dk_items.push(dk_entry);
+                if (show_entry) {
+                    /* NOTE: JQuery UI accordion maps hX-tags to titles with p-tags
+                       as associated entries */
+                    en_entry = "<h4><span class='"+title_class+"'>"+work_dates+"</span>: "+en_title+"</h4><p><span class='"+workdatetimes_class+"'>" + en_workdatetimes +"</span><br/><span class='"+systems_class+"'>" + en_systems +"</span><br/><span class='"+services_class+"'>" + en_services +"</span><br/><span class='"+description_class+"'>" + en_description +"</span><br/><span class='"+references_class+"'>"+en_references+"</span></p>";
+                    en_items.push(en_entry);
+                    dk_entry = "<h4><span class='"+title_class+"'>"+work_dates+"</span>: "+dk_title+"</h4><p><span class='"+workdatetimes_class+"'>" + dk_workdatetimes +"</span><br/><span class='"+systems_class+"'>" + dk_systems + "</span><br/><span class='"+services_class+"'>" + dk_services + "</span><br/><span class='"+description_class+"'>" + dk_description + "</span><br/><span class='"+references_class+"'>"+dk_references+"</span></p>";
+                    dk_items.push(dk_entry);
+                    //console.debug("include entry for "+entry_systems+" and match for "+system_match+" : "+systems_overlap);
+                }
                 
             });
             $(status_targets["EN"]).html(en_items.join(""));
@@ -347,8 +379,8 @@ function fill_server_status_popup(status_events, system_match, locale) {
     var show_entry = false;
     var entry_text = "";
     var entry_class = "";
-    var entry_systems = "";
-    var entry_services = "";
+    var entry_systems;
+    var entry_services;
     var outage_start, outage_end;
     var work_start, work_end;
     var announce_start, announce_end;
@@ -395,10 +427,10 @@ function fill_server_status_popup(status_events, system_match, locale) {
                 });
                 
                 /* Simple list intersection to check if systems lists overlap */
-                var systems_overlap =  system_match.filter(function(n) {
-                    return entry_systems.indexOf(n) !== -1;
+                var systems_overlap =  entry_systems.filter(function(n) {
+                    return (system_match.indexOf("ANY") !== -1 || system_match.indexOf(n) !== -1);
                 });
-                if (system_match.indexOf('ALL') < 0 && systems_overlap.length < 1) {
+                if (systems_overlap.length < 1) {
                     //console.debug("skip entry for "+entry_systems+" without match for "+system_match+", "+systems_overlap);
                 } else if (outage_start < now && now < outage_end) {
                     entry_class += "outage error iconleftpad";

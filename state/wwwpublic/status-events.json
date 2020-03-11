@@ -1,24 +1,24 @@
 [
   {
     "status": "AUTO", 
-    "work_start": "2020-03-22T10:00:00", 
+    "work_start": "2020-03-18T16:30:00", 
     "systems": [
-        "ERDA"
+      "ERDA"
     ], 
-    "announce_start": "2020-02-27T00:00:00", 
+    "announce_start": "2020-03-11T08:00:00", 
     "title": {
       "EN": "Planned ERDA Maintenance", 
       "DK": "Planlagt vedligehold på ERDA"
     }, 
     "services": [
-        "ALL"
+      "ALL"
     ], 
-    "work_end": "2020-03-23T06:59:59", 
+    "work_end": "2020-03-19T07:59:59", 
     "description": {
-      "EN": "We will run a series of pending updates on the ERDA frontend and the underlying host. The work will require at least a short outage to restart everything.", 
-      "DK": "Vi planlægger at opdatere ERDAs frontend og den underliggende maskine. Arbejdet vil kræve minimum lidt nedetid for at genstarte alt."
+      "EN": "We have a number of pending system and minor feature updates on the ERDA frontend. The work will require full frontend restarts in relation to the system updates and a little additional downtime to resize a core file system. All ERDA services except Seafile will be down for shorter or longer periods. The work will commence on March 18th at about 16.30 and we expect to finish within a couple of hours, but reserve until next morning to be on the safe side. Updates will be announced here as usual.", 
+      "DK": "Vi har et antal udestående system- og nogle mindre funktionelle opdateringer på ERDAs frontend. Arbejdet kræver genstart af hele frontend ifm systemopdateringerne og desuden lidt nedetid til at forstørre et centralt filsystem. Alle ERDA services bortset fra Seafile vil være nede i kortere eller længere perioder under opdateringen. Arbejdet begynder den 18. marts omkring kl 16.30 og vi forventer at være færdige på et par timer, men holder for en sikkerheds skyld bagkanten åben for at forlænge til næste morgen. Statusopdateringer følger som altid her."
     }, 
-    "announce_end": "2020-03-23T07:00:00"
+    "announce_end": "2020-03-19T16:00:00"
   }, 
   {
     "status": "AUTO", 
@@ -78,7 +78,8 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+      "ERDA",
+      "IDMC"
     ], 
     "announce_start": "2020-02-19T00:00:00", 
     "title": {
@@ -128,7 +129,8 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+      "ERDA",
+      "IDMC"
     ], 
     "announce_start": "2020-01-09T00:00:00", 
     "title": {
@@ -179,7 +181,8 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+      "ERDA",
+      "IDMC"
     ], 
     "announce_start": "2019-11-03T00:00:00", 
     "title": {
@@ -254,7 +257,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+      "ERDA"
     ], 
     "announce_start": "2019-09-24T00:00:00", 
     "title": {
@@ -502,7 +505,7 @@
     "status": "AUTO", 
     "work_start": "2019-05-29T00:00:00", 
     "references": {
-      "EN":[
+      "EN": [
         "https://it.ku.dk/driftinfo/"
       ], 
       "DK": [
