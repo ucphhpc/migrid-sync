@@ -143,8 +143,8 @@ def job_api_create(configuration, workflow_session, job_type=JOB,
     external_dict = get_keywords_dict(configuration)
 
     if 'vgrid' not in job_attributes:
-        msg = "Cannot create new job without specifying a VGrid for it to be " \
-              "attached to. "
+        msg = "Cannot create new job without specifying a %s (vgrid) for it " \
+              "to be attached to. " % configuration.site_vgrid_label
         return (False, msg)
     vgrid = job_attributes['vgrid']
 
@@ -441,7 +441,7 @@ def main(client_id, user_arguments_dict):
 
     if workflow_session_id not in workflow_sessions_db:
         logger.error("Workflow session '%s' from user '%s' not found in "
-                      "database" % (workflow_session_id, client_id))
+                     "database" % (workflow_session_id, client_id))
         configuration.auth_logger.error(
             "Workflow session '%s' provided by user '%s' but not present in "
             "database" % (workflow_session_id, client_id))
@@ -456,8 +456,8 @@ def main(client_id, user_arguments_dict):
     if 'vgrid' not in job_attributes:
         logger.info("Invalid json job interaction. user '%s' does not specify "
                     "a vgrid in '%s'" % (client_id, job_attributes.keys()))
-        msg = "Cannot create new job without specifying a VGrid for it to be " \
-              "attached to. "
+        msg = "Cannot create new job without specifying a %s (vgrid) for it " \
+              "to be attached to. " % configuration.site_vgrid_label
         output_objects.append({'object_type': 'error_text',
                                'text': msg})
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -488,7 +488,7 @@ def main(client_id, user_arguments_dict):
     # Read
     if operation == JOB_API_READ:
         status, jobs = job_api_read(configuration, workflow_session,
-                                 job_type, **job_attributes)
+                                    job_type, **job_attributes)
         if not status:
             output_objects.append(
                 {'object_type': 'error_text',
