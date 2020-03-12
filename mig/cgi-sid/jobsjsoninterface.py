@@ -3,9 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# jobsjsoninterface.py - JSON interface for
-# managing workflows via cgisid requests
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# jobsjsoninterface - JSON interface for managing workflows
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,7 +33,7 @@ import cgitb
 cgitb.enable()
 
 from shared.functionality.jobsjsoninterface import main
-from shared.cgiscriptstub import run_cgi_script
+from shared.cgiscriptstub import run_cgi_script_possibly_with_cert
 
 # Expect requests with a JSON formatted body and no field values
-run_cgi_script(main, delayed_input=True, delay_format=True)
+run_cgi_script_possibly_with_cert(main, delayed_input=True, delay_format=True)
