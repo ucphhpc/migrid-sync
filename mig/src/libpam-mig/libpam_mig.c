@@ -346,6 +346,11 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     WRITELOGMESSAGE(LOG_DEBUG,
                     "In pam_sm_authenticate: pamh=%p flags=%x, argc=%d, argv:%p\n",
                     (void *)pamh, flags, argc, (void *)argv);
+
+    /* Change to MiG user */
+
+    chuser_mig();
+
 #ifdef ENABLE_AUTHHANDLER
 
     /* Resolve ip address */

@@ -15,7 +15,9 @@
 # Leave like this to lookup values in $MIG_CONF or default MiGserver.conf .
 #MIG_DEFAULTS=-D'SHARELINK_HOME=""' -D'SHARELINK_LENGTH=-1' -D'USERNAME_REGEX=""'
 # ... or hard code to your site values like this (NOTE: escaped dollar = '$$')
-MIG_DEFAULTS=-D'RATE_LIMIT_EXPIRE_DELAY=300' \
+MIG_DEFAULTS=-D'MIG_UID=501' \
+			 -D'MIG_GID=501' \
+			 -D'RATE_LIMIT_EXPIRE_DELAY=300' \
 			 -D'JOBSIDMOUNT_HOME="/home/mig/state/webserver_home"' \
 			 -D'JOBSIDMOUNT_LENGTH=64' \
 			 -D'JUPYTERSIDMOUNT_HOME="/home/mig/state/sessid_to_jupyter_mount_link_home"' \

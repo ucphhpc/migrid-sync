@@ -47,6 +47,14 @@
 #include <ini_config.h>
 */
 
+#ifndef MIG_UID
+#define MIG_UID 501
+#endif
+
+#ifndef MIG_GID
+#define MIG_GID 501
+#endif
+
 #define PASSWORD_FILENAME "authorized_passwords"
 
 /* Various settings used for username input validation */
@@ -405,6 +413,21 @@ static int validate_username(const char *username)
     WRITELOGMESSAGE(LOG_DEBUG, "Validate username %s returning %d\n",
                     username, retval);
     return retval;
+}
+
+/* change uid and gid to MiG user */
+static void chuser_mig()
+{
+#ifdef DEBUG
+    int org_uid = getuid();
+    int org_gid = getgid();
+#endif                          /* DEBUG */
+    setgid(MIG_GID);
+    setuid(MIG_UID);
+#ifdef DEBUG
+    WRITELOGMESSAGE(LOG_DEBUG, "Changed uid: %d -> %d, gid: %d -> %d\n",
+                    org_uid, getuid(), org_gid, getgid());
+#endif                          /* DEBUG */
 }
 
 #endif                          /* _MIGAUTH_H_ */
