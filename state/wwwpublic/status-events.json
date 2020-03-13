@@ -1,6 +1,27 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2020-03-13T08:00:00", 
+    "systems": [
+        "ALL"
+    ], 
+    "announce_start": "2020-03-13T08:00:00", 
+    "title": {
+      "EN": "Limited Staff on-site due to COVID-19 Precautions", 
+      "DK": "Nedsat lokal bemanding grundet COVID-19 forholdsregler"
+    }, 
+    "services": [
+        "ALL"
+    ], 
+    "work_end": "2020-03-30T23:59:59", 
+    "description": {
+      "EN": "Due to the general university policies in relation to the on-going COVID-19 (Corona) virus precautions we will try to work from home as much as possible. This might affect the response time for incidents that require our presence in the data centers. We will still handle any serious incidents the next business day, if not sooner.", 
+      "DK": "På grund af universitetets generelle politik om begrænset fysisk adgang under den igangværende COVID-19 (Corona) virus-trussel, arbejder vi mest muligt hjemmefra. Det kan få indflydelse på responstiderne i tilfælde af fejl eller udfald som kræver fysisk tilstedeværelse i datacentrene. Alvorlige problemer vil fortsat behandles næste arbejdsdag, hvis ikke før."
+    }, 
+    "announce_end": "2020-03-30T23:59:59"
+  }, 
+  {
+    "status": "AUTO", 
     "work_start": "2020-03-18T16:30:00", 
     "systems": [
       "ERDA"
