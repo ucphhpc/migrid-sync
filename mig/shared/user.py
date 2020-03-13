@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # user - helper functions for user related tasks
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,24 +27,25 @@
 
 """User related functions - especially for People interface"""
 
+import base64
 import dircache
+import hashlib
 import os
-try:
-    from hashlib import md5 as hash_algo
-except ImportError:
-    from md5 import new as hash_algo
+from urllib import urlencode
 
 from shared.base import client_dir_id, client_id_dir
 from shared.defaults import litmus_id
 from shared.settings import load_settings, load_profile
+
 
 def anon_user_id(user_id):
     """Generates an anonymous but (practically) unique user ID for user with
     provided unique user_id. The anonymous ID is just a md5 hash of the
     user_id to keep ID relatively short.
     """
-    anon_id = hash_algo(user_id).hexdigest()
+    anon_id = hashlib.md5(user_id).hexdigest()
     return anon_id
+
 
 def list_users(configuration):
     """Return a list of all users by listing the user homes in user_home.
@@ -56,7 +57,7 @@ def list_users(configuration):
         path = os.path.join(configuration.user_home, name)
 
         # skip all files and dot dirs - they are _not_ users
-        
+
         if os.path.islink(path) or not os.path.isdir(path):
             continue
         if name.startswith('.'):
@@ -69,6 +70,7 @@ def list_users(configuration):
         users.append(client_dir_id(name))
     return users
 
+
 def anon_to_real_user_map(configuration):
     """Return a mapping from anonymous user names to real names"""
     anon_map = {}
@@ -76,12 +78,14 @@ def anon_to_real_user_map(configuration):
         anon_map[anon_user_id(name)] = name
     return anon_map
 
+
 def real_to_anon_user_map(configuration):
     """Return a mapping from real user names to anonymous names"""
     user_map = {}
     for name in list_users(configuration):
         user_map[name] = anon_user_id(name)
     return user_map
+
 
 def get_user_conf(user_id, configuration, include_meta=False):
     """Return user profile and settings"""
@@ -95,6 +99,32 @@ def get_user_conf(user_id, configuration, include_meta=False):
     return conf
 
 
+def user_gravatar_url(configuration, email, size, anon_img="/images/anonymous.png"):
+    """Helper to provide URL to user porfile picture"""
+    configuration.logger.info("build gravatar for %s" % email)
+    anon_png_url = '%s/%s' % (configuration.migserver_http_url, anon_img)
+    gravatar_query = {'s': size, 'd': anon_png_url}
+    gravatar_url = 'https://www.gravatar.com/avatar/'
+    gravatar_url += hashlib.md5(email.strip().lower()).hexdigest()
+    gravatar_url += '?%s' % urlencode(gravatar_query)
+    return gravatar_url
+
+
+def inline_image(configuration, path):
+    """Create inline image base64 string from file in path"""
+    mime_type = os.path.splitext(path)[1].strip('.')
+    data = 'data:image/%s;base64,' % mime_type
+    try:
+        img_fd = open(path)
+        img_data = img_fd.read()
+        img_fd.close()
+    except Exception, exc:
+        configuration.logger.error("viewuser: no such image: %s" % path)
+        img_data = ''
+    data += base64.b64encode(img_data)
+    return data
+
+
 if __name__ == "__main__":
     print "= Unit Testing ="
     from shared.conf import get_configuration_object
@@ -103,6 +133,5 @@ if __name__ == "__main__":
     all_users = list_users(conf)
     print "All users:\n%s" % '\n'.join(all_users)
     real_map = real_to_anon_user_map(conf)
-    print "Real to anon user map:\n%s" % '\n'.join(["%s -> %s" % pair for pair \
+    print "Real to anon user map:\n%s" % '\n'.join(["%s -> %s" % pair for pair
                                                     in real_map.items()])
-    

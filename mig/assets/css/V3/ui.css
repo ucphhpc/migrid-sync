@@ -685,6 +685,7 @@ div.public_image {
 
 table.people td {
     padding: 5px;
+    vertical-align: middle;
 }
 
 /* PAGE - Logout */

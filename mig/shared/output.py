@@ -1950,6 +1950,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 lines.append('''
 <table class="people columnsort" id="usertable"><thead class="title">
 <tr>
+  <th class="avatar iconspace"><!-- avatar --></th>
   <th>User ID</th>
   <th class="icon"><!-- View --></th>
   %s
@@ -1960,6 +1961,10 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                              )
                 for obj in users:
                     lines.append('<tr>')
+                    img_html = ''
+                    if obj.get('avatar_url', ''):
+                        img_html = '<img alt="avatar" class="profile-thumb" src="%(avatar_url)s">' % obj
+                    lines.append('<td class="avatar">%s</td>' % img_html)
                     lines.append('<td class="user" title="user">%s</td>' %
                                  obj.get('pretty_id', obj['name']))
                     lines.append('<td class="centertext">')

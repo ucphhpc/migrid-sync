@@ -177,7 +177,7 @@ _vgrid_xgi_scripts = ['.vgridscm/cgi-bin/hgweb.cgi',
                       '.vgridwiki/cgi-bin/moin.cgi',
                       '.vgridwiki/wsgi-bin/moin.wsgi']
 
-profile_img_max_kb = 128
+profile_img_max_kb = 512
 profile_img_extensions = ['png', 'jpg']
 
 max_software_entries = 40
@@ -366,7 +366,7 @@ CRACK_USERNAME_REGEX = '(root|bin|daemon|adm|admin|administrator|superadmin|lp|o
 CRACK_WEB_REGEX = '((HNAP1|GponForm|provisioning|provision|prov|polycom|yealink|CertProv|phpmyadmin|admin|cfg|wp|wordpress|cms|blog|old|new|test|dev|tmp|temp|remote|mgmt|properties|authenticate|tmui|ddem|a2billing|vtigercrm|secure|rpc|recordings|dana-na)(/.*|)|.*(Login|login|configuration|header|admin)\.(php|jsp|asp))'
 
 # GDP mode settings
-gdp_distinguished_field  = "GDP"
+gdp_distinguished_field = "GDP"
 
 # NOTE: these are Xgi-bin scripts to allow
 valid_gdp_auth_scripts = [

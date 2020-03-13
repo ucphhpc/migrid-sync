@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # viewuser - Display public details about a user
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,12 +27,13 @@
 
 """Get info about a user"""
 
-import base64
+import hashlib
 import os
 from binascii import hexlify
+from urllib import urlencode
 
 import shared.returnvalues as returnvalues
-from shared.base import client_id_dir, pretty_format_user
+from shared.base import client_id_dir, pretty_format_user, extract_field
 from shared.defaults import any_vgrid, csrf_field
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import get_csrf_limit, make_csrf_token
@@ -41,6 +42,7 @@ from shared.init import initialize_main_variables, find_entry
 from shared.output import html_link
 from shared.profilekeywords import get_profile_specs
 from shared.settingskeywords import get_settings_specs
+from shared.user import user_gravatar_url, inline_image
 from shared.vgrid import vgrid_request_and_job_match
 from shared.vgridaccess import user_visible_user_confs, user_vgrid_access, \
     CONF
@@ -51,21 +53,6 @@ def signature():
 
     defaults = {'cert_id': REJECT_UNSET}
     return ['user_info', defaults]
-
-
-def inline_image(configuration, path):
-    """Create inline image base64 string from file in path"""
-    mime_type = os.path.splitext(path)[1].strip('.')
-    data = 'data:image/%s;base64,' % mime_type
-    try:
-        img_fd = open(path)
-        img_data = img_fd.read()
-        img_fd.close()
-    except Exception, exc:
-        configuration.logger.error("viewuser: no such image: %s" % path)
-        img_data = ''
-    data += base64.b64encode(img_data)
-    return data
 
 
 def build_useritem_object_from_user_dict(configuration, client_id,
@@ -80,10 +67,31 @@ def build_useritem_object_from_user_dict(configuration, client_id,
         'user_id': visible_user_id,
         'fields': [],
     }
+    vgrids_allow_email = user_dict[CONF].get('VGRIDS_ALLOW_EMAIL', [])
+    vgrids_allow_im = user_dict[CONF].get('VGRIDS_ALLOW_IM', [])
+    hide_email = user_dict[CONF].get('HIDE_EMAIL_ADDRESS', True)
+    hide_im = user_dict[CONF].get('HIDE_IM_ADDRESS', True)
+    if hide_email:
+        email_vgrids = []
+    elif any_vgrid in vgrids_allow_email:
+        email_vgrids = allow_vgrids
+    else:
+        email_vgrids = set(vgrids_allow_email).intersection(allow_vgrids)
+    if hide_im:
+        im_vgrids = []
+    elif any_vgrid in vgrids_allow_im:
+        im_vgrids = allow_vgrids
+    else:
+        im_vgrids = set(vgrids_allow_im).intersection(allow_vgrids)
     if visible_user_id.find('@') != -1:
         show_user_id = pretty_format_user(visible_user_id)
+        visible_email = extract_field(visible_user_id, 'email')
     else:
         show_user_id = visible_user_id
+        if email_vgrids:
+            visible_email = user_dict[CONF].get('EMAIL', [''])[0]
+        else:
+            visible_email = ''
     user_item['fields'].append(('Public user ID', show_user_id))
 
     public_image = user_dict[CONF].get('PUBLIC_IMAGE', [])
@@ -92,7 +100,13 @@ def build_useritem_object_from_user_dict(configuration, client_id,
 
     img_html = '<div class="public_image">'
     if not public_image:
-        img_html += '<span class="anonymous-profile-img"></span>'
+        if configuration.site_enable_gravatars:
+            gravatar_url = user_gravatar_url(configuration, visible_email, 256)
+            img_html += '<img alt="portrait" class="profile-img" src="%s">' % \
+                        gravatar_url
+        else:
+            img_html += '<span class="anonymous-profile-img"></span>'
+
     for rel_path in public_image:
         img_path = os.path.join(user_home, rel_path)
         img_data = inline_image(configuration, img_path)
@@ -110,22 +124,6 @@ def build_useritem_object_from_user_dict(configuration, client_id,
     public_html += '<div class="public_frame">\n%s\n</div>' % img_html
     profile_html += '<div class="clear"></div>'
     user_item['fields'].append(('Public information', public_html))
-    vgrids_allow_email = user_dict[CONF].get('VGRIDS_ALLOW_EMAIL', [])
-    vgrids_allow_im = user_dict[CONF].get('VGRIDS_ALLOW_IM', [])
-    hide_email = user_dict[CONF].get('HIDE_EMAIL_ADDRESS', True)
-    hide_im = user_dict[CONF].get('HIDE_IM_ADDRESS', True)
-    if hide_email:
-        email_vgrids = []
-    elif any_vgrid in vgrids_allow_email:
-        email_vgrids = allow_vgrids
-    else:
-        email_vgrids = set(vgrids_allow_email).intersection(allow_vgrids)
-    if hide_im:
-        im_vgrids = []
-    elif any_vgrid in vgrids_allow_im:
-        im_vgrids = allow_vgrids
-    else:
-        im_vgrids = set(vgrids_allow_im).intersection(allow_vgrids)
     show_contexts = ['notify']
     for (key, val) in user_specs:
         proto = key.lower()

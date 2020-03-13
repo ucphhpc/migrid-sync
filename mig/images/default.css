@@ -183,6 +183,7 @@ table.resource td {
 }
 table.people {
   text-align: left;
+  vertical-align: middle;
 }
 /* user details */
 .public_frame {
@@ -198,6 +199,11 @@ div.public_image {
 .profile-img {
     height: 200px;
     width: 200px;
+}
+.profile-thumb {
+    height: 32px;
+    width: 32px;
+    border-radius: 50%;
 }
 
 table.user td {

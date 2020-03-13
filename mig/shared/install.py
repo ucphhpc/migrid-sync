@@ -265,6 +265,7 @@ def generate_confs(
     enable_twofactor_strict_address=False,
     enable_cracklib=False,
     enable_openid=False,
+    enable_gravatars=True,
     enable_sitestatus=True,
     user_interface="V2 V3",
     mig_oid_provider='',
@@ -399,6 +400,7 @@ def generate_confs(
         str(enable_twofactor_strict_address)
     user_dict['__ENABLE_CRACKLIB__'] = str(enable_cracklib)
     user_dict['__ENABLE_OPENID__'] = str(enable_openid)
+    user_dict['__ENABLE_GRAVATARS__'] = str(enable_gravatars)
     user_dict['__ENABLE_SITESTATUS__'] = str(enable_sitestatus)
     user_dict['__USER_INTERFACE__'] = user_interface
     user_dict['__MIG_OID_PROVIDER_BASE__'] = mig_oid_provider
@@ -1622,6 +1624,7 @@ def create_user(
     enable_twofactor_strict_address = False
     enable_cracklib = False
     enable_openid = False
+    enable_gravatars = True
     enable_sitestatus = True
     enable_wsgi = True
     wsgi_procs = 5
@@ -1760,6 +1763,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_twofactor,
         enable_cracklib,
         enable_openid,
+        enable_gravatars,
         enable_sitestatus,
         user_interface,
         mig_oid_provider,

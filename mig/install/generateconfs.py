@@ -166,6 +166,7 @@ if '__main__' == __name__:
         'enable_twofactor_strict_address',
         'enable_cracklib',
         'enable_openid',
+        'enable_gravatars',
         'enable_sitestatus',
         'daemon_pubkey_from_dns',
         'seafile_ro_access',

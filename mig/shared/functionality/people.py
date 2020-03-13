@@ -30,14 +30,14 @@
 from urllib import quote
 
 import shared.returnvalues as returnvalues
-from shared.base import pretty_format_user
+from shared.base import pretty_format_user, extract_field
 from shared.defaults import default_pager_entries, any_vgrid, csrf_field
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import man_base_js, man_base_html, html_post_helper
 from shared.init import initialize_main_variables, find_entry
 from shared.modified import check_users_modified, check_vgrids_modified
-from shared.user import anon_to_real_user_map
+from shared.user import anon_to_real_user_map, user_gravatar_url
 from shared.vgridaccess import user_visible_user_confs, user_vgrid_access, \
     CONF
 
@@ -173,13 +173,16 @@ def main(client_id, user_arguments_dict):
                 hide_email = user_dict.get(CONF, {}).get('HIDE_EMAIL_ADDRESS',
                                                          True)
                 pretty_id = pretty_format_user(user_id, hide_email)
+            anon_img = "%s/anonymous.png" % configuration.site_images
+            avatar_size = 32
             user_obj = {'object_type': 'user', 'name': visible_user_id,
-                        'pretty_id': pretty_id}
+                        'pretty_id': pretty_id, 'avatar_url': anon_img}
             user_obj.update(user_dict)
             # NOTE: datetime is not json-serializable so we force to string
             created = user_obj.get(CONF, {}).get('CREATED_TIMESTAMP', '')
             if created:
                 user_obj[CONF]['CREATED_TIMESTAMP'] = str(created)
+            # TODO: consider ALWAYS using anon_id format in link here
             user_obj['userdetailslink'] = \
                 {'object_type': 'link',
                  'destination':
@@ -196,6 +199,12 @@ def main(client_id, user_arguments_dict):
             else:
                 email_vgrids = set(
                     vgrids_allow_email).intersection(vgrid_access)
+
+            if email_vgrids and configuration.site_enable_gravatars:
+                visible_email = extract_field(visible_user_id, 'email')
+                user_obj['avatar_url'] = user_gravatar_url(
+                    configuration, visible_email, avatar_size)
+
             if any_vgrid in vgrids_allow_im:
                 im_vgrids = vgrid_access
             else:

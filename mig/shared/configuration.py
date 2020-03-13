@@ -1021,6 +1021,11 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'user_cloud_alias'):
             self.user_cloud_alias = config.get('GLOBAL',
                                                'user_cloud_alias')
+        if config.has_option('SITE', 'enable_gravatars'):
+            self.site_enable_gravatars = config.getboolean(
+                'SITE', 'enable_gravatars')
+        else:
+            self.site_enable_gravatars = True
         if config.has_option('SITE', 'enable_twofactor'):
             self.site_enable_twofactor = config.getboolean(
                 'SITE', 'enable_twofactor')

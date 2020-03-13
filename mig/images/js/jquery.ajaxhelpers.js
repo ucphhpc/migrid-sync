@@ -724,7 +724,11 @@ function ajax_people(protocols, caching) {
                       //console.info("found user: "+usr.name);
                       var viewlink = format_link(usr.userdetailslink);
                       var sendlink = "";
-                      entry = "<tr>"+base_td(usr.pretty_id)+center_td(viewlink);
+                      var img_html = '';
+                      if (usr.avatar_url) {
+                          img_html = '<img alt="avatar" class="profile-thumb" src="'+usr.avatar_url+'">';
+                      }
+                      entry = "<tr>"+base_td(img_html)+base_td(usr.pretty_id)+center_td(viewlink);
                       for (k=0; k<protocols.length; k++) {
                           proto = protocols[k];
                           link_name = "send"+proto+"link";
