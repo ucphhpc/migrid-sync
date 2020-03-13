@@ -158,15 +158,20 @@
      : "UNKNOWN")
 char _debug_log_msg[MAX_DEBUG_LOG_MSG_LENGTH];
 #ifdef DEBUG_LOG_STDERR
+/*  IMPORTANT: snprintf return values should generally ALWAYS be checked 
+    to avoid silent truncation and unpleasant security side-effects. 
+    However, in this particular case we only write the result as debug log,
+    so we are safe and don't loose anything important if it is truncated. */
 #define WRITELOGMESSAGE(priority, format, ...) \
     snprintf(_debug_log_msg, MAX_DEBUG_LOG_MSG_LENGTH, format, ##__VA_ARGS__); \
-fprintf(stderr, "%s: %s(%d): %s", DEBUG_LOG_PREFIX(priority), __FILE__,
-        __LINE__, _debug_log_msg);
+    fprintf(stderr, "%s: %s(%d): %s", 
+        DEBUG_LOG_PREFIX(priority), __FILE__, __LINE__, _debug_log_msg);
 #else                           /* DEBUG_LOG_STDERR */
 #define WRITELOGMESSAGE(priority, format, ...) \
     snprintf(_debug_log_msg, MAX_DEBUG_LOG_MSG_LENGTH, format, ##__VA_ARGS__); \
     openlog("pam_mig", LOG_PID, LOG_AUTHPRIV); \
-    syslog(priority, "%s: %s(%d): %s", DEBUG_LOG_PREFIX(priority), __FILE__, __LINE__, _debug_log_msg);
+    syslog(priority, "%s: %s(%d): %s", 
+        DEBUG_LOG_PREFIX(priority), __FILE__, __LINE__, _debug_log_msg);
 #endif                          /* DEBUG_LOG_STDERR */
 #else                           /* DEBUG || DEBUG_LOG_STDERR */
 #define WRITELOGMESSAGE(priority, format, ...) \
