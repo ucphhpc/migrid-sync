@@ -160,7 +160,6 @@ char _debug_log_msg[MAX_DEBUG_LOG_MSG_LENGTH];
 #ifdef DEBUG_LOG_STDERR
 #define WRITELOGMESSAGE(priority, format, ...) \
     snprintf(_debug_log_msg, MAX_DEBUG_LOG_MSG_LENGTH, format, ##__VA_ARGS__); \
-    fprintf(stderr, _debug_log_msg);
 fprintf(stderr, "%s: %s(%d): %s", DEBUG_LOG_PREFIX(priority), __FILE__,
         __LINE__, _debug_log_msg);
 #else                           /* DEBUG_LOG_STDERR */
