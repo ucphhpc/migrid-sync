@@ -306,7 +306,7 @@ def expire_rate_limit(configuration, proto,
     """Remove rate limit cache entries older than fail_cache seconds.
     Only entries in proto list will be touched,
     Returns:
-    int (>=0): number of expired elemenets
+    int (>=0): number of expired elements
     int (<0) number of seconds until to next expire based on on *expire_delay*
     """
     logger = configuration.logger
