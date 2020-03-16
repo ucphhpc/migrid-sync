@@ -338,6 +338,50 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t * pamh, int flags, int argc,
     return PAM_SUCCESS;
 }
 
+int pam_sm_authenticate_init()
+{
+    /* change euid and egid to MiG user */
+
+    int cur_euid = geteuid();
+    int cur_egid = getegid();
+
+    if (cur_egid != MIG_GID && setegid(MIG_GID) != 0) {
+        WRITELOGMESSAGE(LOG_ERR, "setegid: %s", strerror(errno));
+        return PAM_AUTH_ERR;
+    }
+    if (cur_euid != MIG_GID && seteuid(MIG_GID) != 0) {
+        WRITELOGMESSAGE(LOG_ERR, "seteuid: %s", strerror(errno));
+        return PAM_AUTH_ERR;
+    }
+#ifdef DEBUG
+    WRITELOGMESSAGE(LOG_DEBUG, "Changed euid: %d -> %d, egid: %d -> %d\n",
+                    cur_euid, geteuid(), cur_egid, getegid());
+#endif                          /* DEBUG */
+    return PAM_SUCCESS;
+}
+
+int pam_sm_authenticate_exit(int return_code)
+{
+    /* change euid and egid  back to user root */
+
+    int cur_euid = geteuid();
+    int cur_egid = getegid();
+
+    if (cur_egid != 0 && setegid(0) != 0) {
+        WRITELOGMESSAGE(LOG_ERR, "setegid: %s", strerror(errno));
+        return PAM_AUTH_ERR;
+    }
+    if (cur_euid != 0 && seteuid(0) != 0) {
+        WRITELOGMESSAGE(LOG_ERR, "seteuid: %s", strerror(errno));
+        return PAM_AUTH_ERR;
+    }
+#ifdef DEBUG
+    WRITELOGMESSAGE(LOG_DEBUG, "Changed euid: %d -> %d, egid: %d -> %d\n",
+                    cur_euid, geteuid(), cur_egid, getegid());
+#endif                          /* DEBUG */
+    return return_code;
+}
+
 /* expected hook, this is where custom stuff happens */
 PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                    int argc, const char **argv)
@@ -347,10 +391,10 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                     "In pam_sm_authenticate: pamh=%p flags=%x, argc=%d, argv:%p\n",
                     (void *)pamh, flags, argc, (void *)argv);
 
-    /* Change to MiG user */
-
-    chuser_mig();
-
+    retval = pam_sm_authenticate_init();
+    if (retval != PAM_SUCCESS) {
+        return pam_sm_authenticate_exit(retval);
+    }
 #ifdef ENABLE_AUTHHANDLER
 
     /* Resolve ip address */
@@ -363,18 +407,18 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     retval = pam_get_item(pamh, PAM_RHOST, (const void **)&pHostname);
     if (retval != PAM_SUCCESS || pHostname == NULL || strlen(pHostname) == 0) {
         WRITELOGMESSAGE(LOG_ERR, "Unable to resolve remote host ...\n");
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
     if ((he = gethostbyname(pHostname)) == NULL) {
         WRITELOGMESSAGE(LOG_ERR,
                         "Unable to resolve address from host: %s\n", pHostname);
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
     addr_list = (struct in_addr **)he->h_addr_list;
     if (addr_list[0] == NULL) {
         WRITELOGMESSAGE(LOG_ERR,
                         "Unable to resolve address from host: %s\n", pHostname);
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
     pAddress = inet_ntoa(*addr_list[0]);
     WRITELOGMESSAGE(LOG_DEBUG,
@@ -395,9 +439,9 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                               pUsername, pAddress, NULL);
 #endif                          /* ENABLE_AUTHHANDLER */
         if (retval != PAM_SUCCESS) {
-            return retval;
+            return pam_sm_authenticate_exit(retval);
         } else {
-            return PAM_AUTH_ERR;
+            return pam_sm_authenticate_exit(PAM_AUTH_ERR);
         }
     }
 #ifdef ENABLE_AUTHHANDLER
@@ -414,7 +458,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                               | MIG_AUTHTYPE_PASSWORD
                               | MIG_EXCEEDED_RATE_LIMIT,
                               pUsername, pAddress, NULL);
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
     /* check MiG max sftp sessions */
@@ -431,7 +475,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
      | MIG_AUTHTYPE_PASSWORD
      | MIG_EXCEEDED_MAX_SESSIONS,
      pUsername, pAddress, NULL);
-     return PAM_AUTH_ERR;
+     return pam_sm_authenticate_exit(PAM_AUTH_ERR);
      }
      */
 #endif                          /* ENABLE_AUTHHANDLER */
@@ -462,7 +506,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     }
 #endif                          /* ENABLE_AUTHHANDLER */
     if (valid_username == false) {
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
     /* Check password */
@@ -476,13 +520,13 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                               | MIG_AUTHTYPE_PASSWORD
                               | MIG_INVALID_USER, pUsername, pAddress, NULL);
 #endif                          /* ENABLE_AUTHHANDLER */
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
     const char *pPassword;
     retval = pam_get_item(pamh, PAM_AUTHTOK, (const void **)&pPassword);
     if (retval != PAM_SUCCESS) {
         WRITELOGMESSAGE(LOG_INFO, "Failed to get password token\n");
-        return retval;
+        return pam_sm_authenticate_exit(retval);
     }
     if (pPassword == NULL) {
         WRITELOGMESSAGE(LOG_DEBUG, "No password, requesting one ...\n");
@@ -497,14 +541,14 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         retval = converse(pamh, 1, pmsg, &resp);
         if (retval != PAM_SUCCESS) {
             WRITELOGMESSAGE(LOG_ERR, "Failed to converse\n");
-            return retval;
+            return pam_sm_authenticate_exit(retval);
         }
         if (resp) {
             if ((flags & PAM_DISALLOW_NULL_AUTHTOK)
                 && resp[0].resp == NULL) {
                 WRITELOGMESSAGE(LOG_INFO, "Failed with nullauth\n");
                 free(resp);
-                return PAM_AUTH_ERR;
+                return pam_sm_authenticate_exit(PAM_AUTH_ERR);
             }
             WRITELOGMESSAGE(LOG_DEBUG,
                             "Got user password, checking correctness ...\n");
@@ -512,14 +556,14 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
             resp[0].resp = NULL;
         } else {
             WRITELOGMESSAGE(LOG_ERR, "Failed to converse - 2\n");
-            return PAM_CONV_ERR;
+            return pam_sm_authenticate_exit(PAM_CONV_ERR);
         }
     }
     const char *pService;
     retval = pam_get_item(pamh, PAM_SERVICE, (const void **)&pService);
     if (retval != PAM_SUCCESS) {
         WRITELOGMESSAGE(LOG_ERR, "Failed to get service name\n");
-        return retval;
+        return pam_sm_authenticate_exit(retval);
     }
 #ifdef ENABLE_AUTHHANDLER
     char *pSecret = mig_scramble_digest(pPassword);
@@ -540,7 +584,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
             WRITELOGMESSAGE(LOG_WARNING,
                             "Path construction failed for: %s/%s/%s\n",
                             get_sharelink_home(), SHARELINK_SUBDIR, pUsername);
-            return PAM_AUTH_ERR;
+            return pam_sm_authenticate_exit(PAM_AUTH_ERR);
         }
         /* NSS lookup assures sharelink target is valid and inside user home */
         /* Just check simple access here to make sure it is a share link */
@@ -557,7 +601,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                       | MIG_VALID_AUTH,
                                       pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
-                return PAM_SUCCESS;
+                return pam_sm_authenticate_exit(PAM_SUCCESS);
             } else {
                 WRITELOGMESSAGE(LOG_WARNING,
                                 "Username and password mismatch for sharelink: %s\n",
@@ -570,7 +614,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                       | MIG_INVALID_AUTH,
                                       pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
-                return PAM_AUTH_ERR;
+                return pam_sm_authenticate_exit(PAM_AUTH_ERR);
             }
         } else {
             WRITELOGMESSAGE(LOG_DEBUG,
@@ -599,7 +643,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
             WRITELOGMESSAGE(LOG_WARNING,
                             "Path construction failed for: %s/%s\n",
                             get_jobsidmount_home(), pUsername);
-            return PAM_AUTH_ERR;
+            return pam_sm_authenticate_exit(PAM_AUTH_ERR);
         }
         /* NSS lookup assures jobsidmount target is valid and inside user home */
         /* Just check simple access here to make sure it is a job session link */
@@ -613,7 +657,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                   | MIG_AUTHTYPE_DISABLED,
                                   pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
-            return PAM_AUTH_ERR;
+            return pam_sm_authenticate_exit(PAM_AUTH_ERR);
 #endif                          /* DISABLE_JOBSIDMOUNT_WITH_PASSWORD */
             WRITELOGMESSAGE(LOG_DEBUG,
                             "Checking jobsidmount %s password\n", pUsername);
@@ -627,7 +671,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                       | MIG_VALID_AUTH,
                                       pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
-                return PAM_SUCCESS;
+                return pam_sm_authenticate_exit(PAM_SUCCESS);
             } else {
                 WRITELOGMESSAGE(LOG_WARNING,
                                 "Username and password mismatch for jobsidmount: %s\n",
@@ -640,7 +684,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                       | MIG_INVALID_AUTH,
                                       pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
-                return PAM_AUTH_ERR;
+                return pam_sm_authenticate_exit(PAM_AUTH_ERR);
             }
         } else {
             WRITELOGMESSAGE(LOG_DEBUG,
@@ -669,7 +713,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
             WRITELOGMESSAGE(LOG_WARNING,
                             "Path construction failed for: %s/%s\n",
                             get_jupytersidmount_home(), pUsername);
-            return PAM_AUTH_ERR;
+            return pam_sm_authenticate_exit(PAM_AUTH_ERR);
         }
         /* NSS lookup assures jupytersidmount target is valid and inside user home */
         /* Just check simple access here to make sure it is a jupyter session link */
@@ -683,7 +727,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                   | MIG_AUTHTYPE_DISABLED,
                                   pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
-            return PAM_AUTH_ERR;
+            return pam_sm_authenticate_exit(PAM_AUTH_ERR);
 #endif                          /* DISABLE_JUPYTERSIDMOUNT_WITH_PASSWORD */
             if (strcmp(pUsername, pPassword) == 0) {
                 WRITELOGMESSAGE(LOG_DEBUG, "Return jupytersidmount success\n");
@@ -694,7 +738,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                       | MIG_VALID_AUTH,
                                       pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
-                return PAM_SUCCESS;
+                return pam_sm_authenticate_exit(PAM_SUCCESS);
             } else {
                 WRITELOGMESSAGE(LOG_WARNING,
                                 "Username and password mismatch for jupytersidmount: %s\n",
@@ -707,7 +751,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                       | MIG_INVALID_AUTH,
                                       pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
-                return PAM_AUTH_ERR;
+                return pam_sm_authenticate_exit(PAM_AUTH_ERR);
             }
         } else {
             WRITELOGMESSAGE(LOG_DEBUG,
@@ -737,7 +781,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                               | MIG_AUTHTYPE_ENABLED
                               | MIG_INVALID_AUTH, pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
     char auth_filename[MAX_PATH_LENGTH];
@@ -748,7 +792,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                         "Path construction failed for: %s/.%s/%s\n",
                         pw->pw_dir, get_service_dir(pService),
                         PASSWORD_FILENAME);
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
     if (access(auth_filename, F_OK) != 0) {
@@ -761,35 +805,35 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                               pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
 
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
     if (access(auth_filename, R_OK) != 0) {
         WRITELOGMESSAGE(LOG_WARNING,
                         "Read access to file %s denied: %s\n",
                         auth_filename, strerror(errno));
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
     struct stat st;
     if (stat(auth_filename, &st) != 0) {
         WRITELOGMESSAGE(LOG_WARNING, "Failed to read file size: %s\n",
                         auth_filename);
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
     if (st.st_size == 0) {
         WRITELOGMESSAGE(LOG_INFO,
                         "Ignoring empty pbkdf digest file: %s\n",
                         auth_filename);
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
     if (st.st_size > MAX_DIGEST_SIZE) {
         WRITELOGMESSAGE(LOG_WARNING,
                         "pbkdf digest file size was %zd but only %d is allowed, filename: %s\n",
                         st.st_size, MAX_DIGEST_SIZE, auth_filename);
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
     char pbkdf[MAX_DIGEST_SIZE];
@@ -798,7 +842,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         WRITELOGMESSAGE(LOG_WARNING,
                         "Failed to open file for reading, filename: %s\n",
                         auth_filename);
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
 
     }
     if (fread(pbkdf, sizeof(char), st.st_size, fd) != st.st_size) {
@@ -806,7 +850,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                         "Failed to read %zd bytes from filename: %s\n",
                         st.st_size, auth_filename);
         fclose(fd);
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
     fclose(fd);
 
@@ -820,7 +864,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         WRITELOGMESSAGE(LOG_WARNING,
                         "The pbkdf format was incorrect in file %s\n",
                         auth_filename);
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
     char *pHashAlg = strchr(pbkdf, '$');
@@ -828,7 +872,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         WRITELOGMESSAGE(LOG_WARNING,
                         "The pbkdf hash algorithm was incorrect in %s\n",
                         auth_filename);
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
     pHashAlg++;
@@ -838,7 +882,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         WRITELOGMESSAGE(LOG_WARNING,
                         "The pbkdf iteration count was incorrect in %s\n",
                         auth_filename);
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
     *pItCount = 0;
@@ -848,7 +892,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     if (pBase64Salt == NULL) {
         WRITELOGMESSAGE(LOG_WARNING,
                         "The pbkdf salt was incorrect in %s\n", auth_filename);
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
     *pBase64Salt = 0;
@@ -858,7 +902,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     if (pBase64Hash == NULL) {
         WRITELOGMESSAGE(LOG_WARNING,
                         "The pbkdf salt was incorrect in %s\n", auth_filename);
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
     *pBase64Hash = 0;
@@ -869,14 +913,14 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         WRITELOGMESSAGE(LOG_WARNING,
                         "The pbkdf iteration count was not a correct integer, file: %s\n",
                         auth_filename);
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
     if (strcmp(pHashAlg, "sha256") != 0) {
         WRITELOGMESSAGE(LOG_WARNING,
                         "The hash algorithm should be sha256, but it was %s\n",
                         pHashAlg);
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
     char pSaltAndHash[MAX_DIGEST_SIZE];
@@ -888,21 +932,21 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         WRITELOGMESSAGE(LOG_WARNING,
                         "The hash was size %zd, but it should be at most %d for SHA256\n",
                         hash_size, 256 / 8);
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
     if (hash_size < MIN_PBKDF_LENGTH) {
         WRITELOGMESSAGE(LOG_WARNING,
                         "The hash was size %zd, but it should be at least %d \n",
                         hash_size, MIN_PBKDF_LENGTH);
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
     if (salt_size + hash_size > MAX_DIGEST_SIZE) {
         WRITELOGMESSAGE(LOG_WARNING,
                         "The expanded salt and hash were too big, reading from file: %s\n",
                         auth_filename);
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
     if (b64_decode
@@ -911,7 +955,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         WRITELOGMESSAGE(LOG_WARNING,
                         "Failed to base64 decode salt from file: %s\n",
                         auth_filename);
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
     if (b64_decode
         ((const uint8_t *)pBase64Hash, strlen(pBase64Hash),
@@ -919,7 +963,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         WRITELOGMESSAGE(LOG_WARNING,
                         "Failed to base64 decode hash from file: %s\n",
                         auth_filename);
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
     WRITELOGMESSAGE(LOG_DEBUG,
@@ -939,7 +983,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         WRITELOGMESSAGE(LOG_WARNING,
                         "Failed to base64 encode hash from file: %s\n",
                         auth_filename);
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
     b64_encode((const uint8_t *)pResult, hash_size, (uint8_t *) & pbkdf);
@@ -958,13 +1002,13 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                               | MIG_AUTHTYPE_ENABLED
                               | MIG_INVALID_AUTH, pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
-        return PAM_AUTH_ERR;
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 #ifdef ENABLE_CHROOT
     retval = pam_set_data(pamh, PAM_DATA_NAME, PAM_CHROOT_AUTHENTICATED, NULL);
     if (retval != PAM_SUCCESS) {
         WRITELOGMESSAGE(LOG_WARNING, "Failed to get set chroot hook\n");
-        return retval;
+        return pam_sm_authenticate_exit(retval);
     }
 #endif                          /* ENABLE_CHROOT */
 
@@ -975,5 +1019,5 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                           | MIG_VALID_AUTH, pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
     WRITELOGMESSAGE(LOG_DEBUG, "Return success\n");
-    return PAM_SUCCESS;
+    return pam_sm_authenticate_exit(PAM_SUCCESS);
 }
