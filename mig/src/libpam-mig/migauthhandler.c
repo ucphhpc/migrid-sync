@@ -114,6 +114,7 @@ static bool pyinit()
         pyrun
             ("from shared.logger import daemon_logger, register_hangup_handler");
         pyrun("from shared.conf import get_configuration_object");
+        pyrun("from shared.pwhash import scramble_digest");
         pyrun("configuration = get_configuration_object(skip_log=True)");
         pyrun("log_level = configuration.loglevel");
         pyrun
@@ -132,6 +133,22 @@ static void pyexit()
         dlclose(libpython_handle);
         libpython_handle = NULL;
     }
+}
+
+static char *mig_scramble_digest(const char *key)
+{
+    char *digest = NULL;
+    pyinit();
+    pyrun("digest = scramble_digest(configuration.site_digest_salt, '%s')",
+          key);
+    PyObject *py_digest = PyObject_GetAttrString(py_main, "digest");
+    if (py_digest == NULL) {
+        WRITELOGMESSAGE(LOG_ERR, "Missing python variable: digest\n");
+    } else {
+        digest = PyString_AsString(py_digest);
+        Py_DECREF(py_digest);
+    }
+    return digest;
 }
 
 static int mig_expire_rate_limit()

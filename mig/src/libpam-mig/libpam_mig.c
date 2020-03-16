@@ -521,6 +521,10 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         WRITELOGMESSAGE(LOG_ERR, "Failed to get service name\n");
         return retval;
     }
+#ifdef ENABLE_AUTHHANDLER
+    char *pSecret = mig_scramble_digest(pPassword);
+    WRITELOGMESSAGE(LOG_DEBUG, "pSecret: %s\n", pSecret);
+#endif
 #ifdef ENABLE_SHARELINK
     /* Optional anonymous share link access:
        - username must have fixed length matching get_sharelink_length()
@@ -551,7 +555,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                       | MIG_AUTHTYPE_PASSWORD
                                       | MIG_AUTHTYPE_ENABLED
                                       | MIG_VALID_AUTH,
-                                      pUsername, pAddress, pPassword);
+                                      pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
                 return PAM_SUCCESS;
             } else {
@@ -564,7 +568,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                       | MIG_AUTHTYPE_PASSWORD
                                       | MIG_AUTHTYPE_ENABLED
                                       | MIG_INVALID_AUTH,
-                                      pUsername, pAddress, pPassword);
+                                      pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
                 return PAM_AUTH_ERR;
             }
@@ -607,7 +611,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
             register_auth_attempt(MIG_SKIP_TWOFA_CHECK
                                   | MIG_AUTHTYPE_PASSWORD
                                   | MIG_AUTHTYPE_DISABLED,
-                                  pUsername, pAddress, pPassword);
+                                  pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
             return PAM_AUTH_ERR;
 #endif                          /* DISABLE_JOBSIDMOUNT_WITH_PASSWORD */
@@ -621,7 +625,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                       | MIG_AUTHTYPE_PASSWORD
                                       | MIG_AUTHTYPE_ENABLED
                                       | MIG_VALID_AUTH,
-                                      pUsername, pAddress, pPassword);
+                                      pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
                 return PAM_SUCCESS;
             } else {
@@ -634,7 +638,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                       | MIG_AUTHTYPE_PASSWORD
                                       | MIG_AUTHTYPE_ENABLED
                                       | MIG_INVALID_AUTH,
-                                      pUsername, pAddress, pPassword);
+                                      pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
                 return PAM_AUTH_ERR;
             }
@@ -677,7 +681,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
             register_auth_attempt(MIG_SKIP_TWOFA_CHECK
                                   | MIG_AUTHTYPE_PASSWORD
                                   | MIG_AUTHTYPE_DISABLED,
-                                  pUsername, pAddress, pPassword);
+                                  pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
             return PAM_AUTH_ERR;
 #endif                          /* DISABLE_JUPYTERSIDMOUNT_WITH_PASSWORD */
@@ -688,7 +692,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                       | MIG_AUTHTYPE_PASSWORD
                                       | MIG_AUTHTYPE_ENABLED
                                       | MIG_VALID_AUTH,
-                                      pUsername, pAddress, pPassword);
+                                      pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
                 return PAM_SUCCESS;
             } else {
@@ -701,7 +705,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                       | MIG_AUTHTYPE_PASSWORD
                                       | MIG_AUTHTYPE_ENABLED
                                       | MIG_INVALID_AUTH,
-                                      pUsername, pAddress, pPassword);
+                                      pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
                 return PAM_AUTH_ERR;
             }
@@ -731,8 +735,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         register_auth_attempt(MIG_SKIP_TWOFA_CHECK
                               | MIG_AUTHTYPE_PASSWORD
                               | MIG_AUTHTYPE_ENABLED
-                              | MIG_INVALID_AUTH,
-                              pUsername, pAddress, pPassword);
+                              | MIG_INVALID_AUTH, pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
         return PAM_AUTH_ERR;
     }
@@ -755,7 +758,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         register_auth_attempt(MIG_SKIP_TWOFA_CHECK
                               | MIG_AUTHTYPE_PASSWORD
                               | MIG_AUTHTYPE_DISABLED,
-                              pUsername, pAddress, pPassword);
+                              pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
 
         return PAM_AUTH_ERR;
@@ -953,8 +956,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         register_auth_attempt(MIG_SKIP_TWOFA_CHECK
                               | MIG_AUTHTYPE_PASSWORD
                               | MIG_AUTHTYPE_ENABLED
-                              | MIG_INVALID_AUTH,
-                              pUsername, pAddress, pPassword);
+                              | MIG_INVALID_AUTH, pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
         return PAM_AUTH_ERR;
     }
@@ -970,7 +972,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     register_auth_attempt(MIG_SKIP_TWOFA_CHECK
                           | MIG_AUTHTYPE_PASSWORD
                           | MIG_AUTHTYPE_ENABLED
-                          | MIG_VALID_AUTH, pUsername, pAddress, pPassword);
+                          | MIG_VALID_AUTH, pUsername, pAddress, pSecret);
 #endif                          /* ENABLE_AUTHHANDLER */
     WRITELOGMESSAGE(LOG_DEBUG, "Return success\n");
     return PAM_SUCCESS;
