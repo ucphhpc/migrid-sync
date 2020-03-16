@@ -311,24 +311,14 @@ def get_job_ids_with_specified_project_name(
     return matching_job_ids
 
 
-def get_job_with_id(configuration, job_id, vgrid, client_id,
+def get_job_with_id(configuration, job_id, vgrid, caller_id,
                     only_user_jobs=True):
     """Retrieves the job mrsl definition of a given job id. If only_user_jobs
-    is true then only the clients job files are searched, otherwise the jobs
-    of other users in the given vgrid are also used, provided the client is a
+    is true then only the callers job files are searched, otherwise the jobs
+    of other users in the given vgrid are also used, provided the caller is a
     user in that vgrid."""
 
-    # This will try and retrieve a jobs mrsl file as efficiently as possible
-    # depending on what help the function caller can provide. If a caller
-    # already knows the client_id then we can attempt to go straight to the
-    # job file, otherwise we will need to search through all users in a vgrid.
-    # This should only be used as a last resort as this will be an extremely
-    # costly action.
-
-    if only_user_jobs and not client_id:
-        return (False, "Cannot retrieve a job without 'client_id' being set. ")
-
-    success, msg, _ = init_vgrid_script_list(vgrid, client_id,
+    success, msg, _ = init_vgrid_script_list(vgrid, caller_id,
                                              configuration)
     if not success:
         return (False, msg)
@@ -337,10 +327,10 @@ def get_job_with_id(configuration, job_id, vgrid, client_id,
     if not job_file.endswith('.mRSL'):
         job_file += '.mRSL'
 
-    # First search given users directory.
+    # First search the callers directory.
     path = os.path.abspath(
         os.path.join(configuration.mrsl_files_dir,
-                     client_id_dir(client_id), job_file)
+                     client_id_dir(caller_id), job_file)
     )
 
     if os.path.exists(path):
@@ -351,7 +341,7 @@ def get_job_with_id(configuration, job_id, vgrid, client_id,
 
     if only_user_jobs:
         return (False, "Could not locate job file '%s' for user '%s'"
-                % (job_file, client_id))
+                % (job_file, caller_id))
 
     users = []
     # If vgrid is known we can just search through the users on that vgrid.
@@ -374,6 +364,14 @@ def get_job_with_id(configuration, job_id, vgrid, client_id,
             job_dict = unpickle(matches[0], configuration.logger)
 
             if job_dict:
+                # Check that job is in the appropriate vgrid. If it is a
+                # trigger job it will be only attached to the triggering vgrid
+                if 'VGRID' not in job_dict:
+                    return (False,
+                            'Job is not attached to any particular VGrid')
+                if job_dict['VGRID'] != [vgrid]:
+                    return (False,
+                            'Job is not only attached to the vgrid %s' % vgrid)
                 return (True, job_dict)
 
     return (False, "Could not locate job file for job '%s'." % job_file)
