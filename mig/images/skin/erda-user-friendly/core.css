@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # core - site style overrides for all pages
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -40,6 +40,10 @@ body.staticpage {
   width: 984px;
   border-right: 1px solid #CCC;
   border-left: 1px solid #CCC;
+}
+/* Wider page for reqoid etc. still allowing e.g. brief inline warnings */
+body.staticpage.wide {
+  width: 1284px;
 }
 
 .home-nav-logo {

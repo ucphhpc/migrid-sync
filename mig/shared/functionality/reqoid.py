@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqoid - OpenID account request backend
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -81,7 +81,8 @@ def main(client_id, user_arguments_dict):
     title_entry['script']['advanced'] += add_import
     title_entry['script']['init'] += add_init
     title_entry['script']['ready'] += add_ready
-    title_entry['script']['body'] = "class='staticpage'"
+    # NOTE: use wide version to allow inline status messages in V2
+    title_entry['script']['body'] = "class='staticpage wide'"
 
     header_entry = {'object_type': 'header', 'text':
                     'Welcome to the %s OpenID account request page' %
