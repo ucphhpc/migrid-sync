@@ -405,12 +405,18 @@ static int validate_username(const char *username)
 static void chuser_mig()
 {
 #ifdef DEBUG
+    int org_euid = geteuid();
+    int org_egid = getegid();
     int org_uid = getuid();
     int org_gid = getgid();
 #endif                          /* DEBUG */
+    setegid(MIG_GID);
+    setegid(MIG_UID);
     setgid(MIG_GID);
     setuid(MIG_UID);
 #ifdef DEBUG
+    WRITELOGMESSAGE(LOG_DEBUG, "Changed euid: %d -> %d, egid: %d -> %d\n",
+                    org_euid, geteuid(), org_egid, getegid());
     WRITELOGMESSAGE(LOG_DEBUG, "Changed uid: %d -> %d, gid: %d -> %d\n",
                     org_uid, getuid(), org_gid, getgid());
 #endif                          /* DEBUG */
