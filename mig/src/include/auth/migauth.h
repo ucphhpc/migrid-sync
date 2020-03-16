@@ -145,33 +145,15 @@
 //#define DEBUG 1
 
 #if defined(DEBUG) || defined(DEBUG_LOG_STDERR)
-#define MAX_DEBUG_LOG_MSG_LENGTH 2048
-#define DEBUG_LOG_PREFIX(priority) \
-    (priority == LOG_INFO ? "INFO" \
-     : priority == LOG_ERR ? "ERROR" \
-     : priority == LOG_WARNING ? "WARNING" \
-     : priority == LOG_DEBUG ? "DEBUG" \
-     : priority == LOG_NOTICE ? "NOTICE" \
-     : priority == LOG_CRIT ? "CRITICAL" \
-     : priority == LOG_ALERT ? "ALERT" \
-     : priority == LOG_EMERG ? "PANIC" \
-     : "UNKNOWN")
-char _debug_log_msg[MAX_DEBUG_LOG_MSG_LENGTH];
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
 #ifdef DEBUG_LOG_STDERR
-/*  IMPORTANT: snprintf return values should generally ALWAYS be checked 
-    to avoid silent truncation and unpleasant security side-effects. 
-    However, in this particular case we only write the result as debug log,
-    so we are safe and don't loose anything important if it is truncated. */
 #define WRITELOGMESSAGE(priority, format, ...) \
-    snprintf(_debug_log_msg, MAX_DEBUG_LOG_MSG_LENGTH, format, ##__VA_ARGS__); \
-    fprintf(stderr, "%s: %s(%d): %s", 
-        DEBUG_LOG_PREFIX(priority), __FILE__, __LINE__, _debug_log_msg);
+    fprintf(stderr, #priority ": " __FILE__"("TOSTRING(__LINE__)"): " format, ##__VA_ARGS__)
 #else                           /* DEBUG_LOG_STDERR */
 #define WRITELOGMESSAGE(priority, format, ...) \
-    snprintf(_debug_log_msg, MAX_DEBUG_LOG_MSG_LENGTH, format, ##__VA_ARGS__); \
     openlog("pam_mig", LOG_PID, LOG_AUTHPRIV); \
-    syslog(priority, "%s: %s(%d): %s", 
-        DEBUG_LOG_PREFIX(priority), __FILE__, __LINE__, _debug_log_msg);
+    syslog(priority, #priority ": " __FILE__"("TOSTRING(__LINE__)"): " format, ##__VA_ARGS__);
 #endif                          /* DEBUG_LOG_STDERR */
 #else                           /* DEBUG || DEBUG_LOG_STDERR */
 #define WRITELOGMESSAGE(priority, format, ...) \
