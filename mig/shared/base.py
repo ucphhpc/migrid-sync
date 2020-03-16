@@ -151,7 +151,8 @@ def pretty_format_user(distinguished_name, hide_email=True):
     """Format distinguished_name of a user to a human-friendly display format,
     and optionally include the email address.
     """
-    user_dict = distinguished_name_to_user(distinguished_name)
+    user_dict = {'full_name': '', 'organization': '', 'email': ''}
+    user_dict.update(distinguished_name_to_user(distinguished_name))
     if hide_email:
         user_dict['email'] = 'email hidden'
     else:

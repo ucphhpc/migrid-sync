@@ -201,7 +201,7 @@ def main(client_id, user_arguments_dict):
                     vgrids_allow_email).intersection(vgrid_access)
 
             if email_vgrids and configuration.site_enable_gravatars:
-                visible_email = extract_field(visible_user_id, 'email')
+                visible_email = extract_field(user_id, 'email')
                 user_obj['avatar_url'] = user_gravatar_url(
                     configuration, visible_email, avatar_size)
 
