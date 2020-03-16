@@ -83,7 +83,7 @@ static void pyrun(const char *cmd, ...)
 
 /* Helper function that writes messages to MiG authlog */
 
-static bool pyinit()
+static bool mig_pyinit()
 {
     // https://stackoverflow.com/questions/11842920/undefined-symbol-pyexc-importerror-when-embedding-python-in-c/50489814#50489814
     if (libpython_handle != NULL) {
@@ -124,7 +124,7 @@ static bool pyinit()
     return true;
 }
 
-static void pyexit()
+static void mig_pyexit()
 {
     if (libpython_handle == NULL) {
         WRITELOGMESSAGE(LOG_DEBUG, "Python already finalized\n");
@@ -138,7 +138,6 @@ static void pyexit()
 static char *mig_scramble_digest(const char *key)
 {
     char *digest = NULL;
-    pyinit();
     pyrun("digest = scramble_digest(configuration.site_digest_salt, '%s')",
           key);
     PyObject *py_digest = PyObject_GetAttrString(py_main, "digest");
@@ -154,7 +153,6 @@ static char *mig_scramble_digest(const char *key)
 static int mig_expire_rate_limit()
 {
     int result = 0;
-    pyinit();
     pyrun
         ("expired = expire_rate_limit(configuration, 'sftp-subsys', expire_delay=%d)",
          RATE_LIMIT_EXPIRE_DELAY);
@@ -171,7 +169,6 @@ static int mig_expire_rate_limit()
 static bool mig_hit_rate_limit(const char *username, const char *address)
 {
     bool result = false;
-    pyinit();
     pyrun
         ("exceeded_rate_limit = hit_rate_limit(configuration, 'sftp-subsys', '%s', '%s')",
          address, username);
@@ -193,7 +190,6 @@ static bool mig_exceeded_max_sessions(const char *username, const char *address)
     int active_count = 0;
     int max_sftp_sessions = 0;
 
-    pyinit();
     pyrun("active_count = active_sessions(configuration, 'sftp-subsys', '%s')",
           username);
     PyObject *py_active_count = PyObject_GetAttrString(py_main, "active_count");
@@ -224,7 +220,6 @@ static bool mig_exceeded_max_sessions(const char *username, const char *address)
 static bool mig_validate_username(const char *username)
 {
     bool result = false;
-    pyinit();
     pyrun("valid_username = default_username_validator(configuration, '%s')",
           username);
     PyObject *py_valid_username =
@@ -328,8 +323,6 @@ static bool register_auth_attempt(const unsigned int mode,
         return false;
     }
     WRITELOGMESSAGE(LOG_DEBUG, "python call: %s", &pycmd[0]);
-    pyinit();
     pyrun(&pycmd[0]);
-    pyexit();
     return true;
 }

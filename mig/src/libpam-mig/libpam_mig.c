@@ -357,11 +357,17 @@ int pam_sm_authenticate_init()
     WRITELOGMESSAGE(LOG_DEBUG, "Changed euid: %d -> %d, egid: %d -> %d\n",
                     cur_euid, geteuid(), cur_egid, getegid());
 #endif                          /* DEBUG */
+#ifdef ENABLE_AUTHHANDLER
+    mig_pyinit();
+#endif                          /* ENABLE_AUTHHANDLER */
     return PAM_SUCCESS;
 }
 
 int pam_sm_authenticate_exit(int return_code)
 {
+#ifdef ENABLE_AUTHHANDLER
+    mig_pyexit();
+#endif                          /* ENABLE_AUTHHANDLER */
     /* change euid and egid  back to user root */
 
     int cur_euid = geteuid();
