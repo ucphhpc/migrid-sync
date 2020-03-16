@@ -1019,10 +1019,13 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 #endif                          /* ENABLE_CHROOT */
 
 #ifdef ENABLE_AUTHHANDLER
-    register_auth_attempt(MIG_SKIP_TWOFA_CHECK
-                          | MIG_AUTHTYPE_PASSWORD
-                          | MIG_AUTHTYPE_ENABLED
-                          | MIG_VALID_AUTH, pUsername, pAddress, pSecret);
+    if (false == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
+                                       | MIG_AUTHTYPE_PASSWORD
+                                       | MIG_AUTHTYPE_ENABLED
+                                       | MIG_VALID_AUTH, pUsername, pAddress,
+                                       pSecret)) {
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
+    }
 #endif                          /* ENABLE_AUTHHANDLER */
     WRITELOGMESSAGE(LOG_DEBUG, "Return success\n");
     return pam_sm_authenticate_exit(PAM_SUCCESS);

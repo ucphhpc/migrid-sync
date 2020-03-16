@@ -238,11 +238,12 @@ static bool register_auth_attempt(const unsigned int mode,
                                   const char *username,
                                   const char *address, const char *secret)
 {
+    bool result = false;
     WRITELOGMESSAGE(LOG_DEBUG,
                     "mode: 0x%X, username: %s, address: %s, secret: %s\n",
                     mode, username, address, secret);
     char pycmd[MAX_PYCMD_LENGTH] =
-        "validate_auth_attempt(configuration, 'sftp-subsys', ";
+        "(authorized, disconnect) = validate_auth_attempt(configuration, 'sftp-subsys', ";
     char pytmp[MAX_PYCMD_LENGTH];
     if (mode & MIG_AUTHTYPE_PASSWORD) {
         strncat(&pycmd[0], "'password', ", MAX_PYCMD_LENGTH - strlen(pycmd));
@@ -324,5 +325,13 @@ static bool register_auth_attempt(const unsigned int mode,
     }
     WRITELOGMESSAGE(LOG_DEBUG, "python call: %s", &pycmd[0]);
     pyrun(&pycmd[0]);
-    return true;
+    PyObject *py_authorized = PyObject_GetAttrString(py_main, "authorized");
+    if (py_authorized == NULL) {
+        WRITELOGMESSAGE(LOG_ERR, "Missing python variable: py_authorized\n");
+    } else {
+        result = PyObject_IsTrue(py_authorized);
+        Py_DECREF(py_authorized);
+    }
+
+    return result;
 }
