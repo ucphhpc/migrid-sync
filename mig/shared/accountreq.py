@@ -455,7 +455,7 @@ def list_country_codes(configuration):
     country_list = []
     for entry in iso3166.countries:
         name, code = force_utf8(entry.name), force_utf8(entry.alpha2)
-        logger.debug("found country %s for code %s" % (name, code))
+        #logger.debug("found country %s for code %s" % (name, code))
         country_list.append((name, code))
     return country_list
 

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # httpsclient - Shared functions for all HTTPS clients
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -86,10 +86,12 @@ def extract_base_url(configuration, environ):
     page_url = environ["SCRIPT_URI"]
     parts = page_url.split('/')
     if not parts or not parts[0] in ('http:', 'https:'):
-        configuration.logger.error("error in base url extraction from %s" % environ)
+        configuration.logger.error(
+            "error in base url extraction from %s" % environ)
         raise ValueError("Invalid request page format: %s" % page_url)
     return '/'.join(parts[:3])
-    
+
+
 def extract_client_cert(configuration, environ):
     """Extract unique user cert ID from SSL cert value in environ.
     NOTE: We must provide the environment as os.environ may be from the time
@@ -137,6 +139,8 @@ def extract_client_openid(configuration, environ, lookup_dn=True):
         login = get_openid_user_dn(configuration, login, user_check=False)
 
         if configuration.site_enable_gdp:
+            # NOTE: some gdp backends require user to be logged in but not that
+            #       a project is open. It's handled with skip_client_id_rewrite
             login = get_project_user_dn(
                 configuration, environ["REQUEST_URI"], login, 'https')
 

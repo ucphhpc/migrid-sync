@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # defaults - default constant values used in many locations
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -380,6 +380,11 @@ valid_gdp_auth_scripts = [
     'ls.py',
     'mkdir.py',
     'mv.py',
+    # NOTE: we allow authenticated semi-automatic cert/oid renew
+    'reqcert.py',
+    'reqcertaction.py',
+    'reqoid.py',
+    'reqoidaction.py',
     'rm.py',
     'setup.py',
     'settingsaction.py',

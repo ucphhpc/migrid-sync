@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # gdp - helper functions related to GDP actions
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -72,6 +72,11 @@ skip_client_id_rewrite = [
     'autocreate.py',
     'autologout.py',
     'gdpman.py',
+    # NOTE: we allow authenticated semi-automatic cert/oid renew
+    'reqcert.py',
+    'reqcertaction.py',
+    'reqoid.py',
+    'reqoidaction.py',
     'rmvgridmember.py',
     'twofactor.py',
     'vgridman.py',
