@@ -100,8 +100,8 @@ from shared.logger import daemon_logger, daemon_gdp_logger, \
 from shared.notification import send_system_notification
 from shared.pwhash import make_scramble
 from shared.useradm import check_password_hash
-from shared.validstring import possible_user_id, possible_job_id,\
-    possible_sharelink_id, possible_jupyter_mount_id
+from shared.validstring import possible_user_id, possible_gdp_user_id, \
+    possible_job_id, possible_sharelink_id, possible_jupyter_mount_id
 
 configuration, logger = None, None
 
@@ -1228,7 +1228,9 @@ def update_sftp_login_map(daemon_conf, username, password=False, key=False):
 
     # Either of user, sharelinks, jobs or jupyter may have changed
     if password or key:
-        if possible_user_id(configuration, username):
+        if possible_user_id(configuration, username) \
+                or (configuration.site_enable_gdp
+                    and possible_gdp_user_id(configuration, username)):
             _, changed_users = refresh_user_creds(configuration,
                                                   'sftp', username)
         if possible_sharelink_id(configuration, username):
@@ -1493,8 +1495,8 @@ def start_service(configuration):
         worker.start()
         if last_expire + min_expire_delay < time.time():
             last_expire = time.time()
-            expire_rate_limit(configuration, "sftp", 
-                expire_delay=min_expire_delay)
+            expire_rate_limit(configuration, "sftp",
+                              expire_delay=min_expire_delay)
 
 
 if __name__ == "__main__":
