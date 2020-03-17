@@ -264,7 +264,8 @@ def openstack_stop_cloud_instance(configuration, client_id, cloud_id, instance_i
 
 
 @__require_openstack
-def openstack_restart_cloud_instance(configuration, client_id, cloud_id, instance_id,
+def openstack_restart_cloud_instance(
+    configuration, client_id, cloud_id, instance_id,
                                      boot_strength):
     """Reboot provided cloud instance. Use SOFT or HARD as boot_strength"""
     cloud_flavor = "openstack"
@@ -328,7 +329,7 @@ def openstack_status_of_cloud_instance(configuration, client_id, cloud_id,
                 instance = server
                 break
 
-        #instance = conn.compute.find_server(instance_id)
+        # instance = conn.compute.find_server(instance_id)
         if not instance:
             status = False
             msg = "failed to locate %s cloud instance %s" % \
@@ -457,7 +458,7 @@ def openstack_web_access_cloud_instance(configuration, client_id, cloud_id,
                 instance = server
                 break
 
-        #instance = conn.compute.find_server(instance_id)
+        # instance = conn.compute.find_server(instance_id)
         if not instance:
             status = False
             msg = "failed to locate %s cloud instance %s" % \
@@ -466,7 +467,7 @@ def openstack_web_access_cloud_instance(configuration, client_id, cloud_id,
                           (client_id, cloud_id, instance_id, msg))
             return (status, msg)
         # TODO: openstack does not expose console URL - manual request for now
-        #console_url = force_utf8(instance.get_console_url())
+        # console_url = force_utf8(instance.get_console_url())
 
         web_auth = conn.authorize()
 
@@ -1139,7 +1140,7 @@ def cloud_ssh_login_help(configuration, client_id, cloud_id, label, address,
     msg = base_msg % (username, fqdn, port)
     jump_opt = ''
     ssh_config = """Host %s
-HostName %s 
+HostName %s
 User %s
 # Path to your ssh private key matching pub key set on your Cloud Setup page
 IdentityFile ~/.ssh/id_rsa
@@ -1260,7 +1261,8 @@ def status_of_cloud_instance(configuration, client_id, cloud_id, cloud_flavor,
     return helper(configuration, client_id, cloud_id, instance_id)
 
 
-def status_all_cloud_instances(configuration, client_id, cloud_id, cloud_flavor,
+def status_all_cloud_instances(
+    configuration, client_id, cloud_id, cloud_flavor,
                                instance_id_list, fields=['status']):
     """Status of all provided cloud instances"""
     _logger = configuration.logger
@@ -1321,7 +1323,7 @@ if __name__ == "__main__":
     from shared.settings import load_cloud
     conf = get_configuration_object()
     client_id = '/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk'
-    cloud_id = 'MIST'
+    cloud_id = 'MIST2'
     cloud_flavor = 'openstack'
     instance_id = 'My-Misty-Test-42'
     instance_image = 'cirrossdk'
@@ -1342,8 +1344,10 @@ if __name__ == "__main__":
                                     'service_sec_group_id')
     print lookup_user_service_value(conf, client_id, service,
                                     'service_key_id')
-    #print cloud_add_jump_host_key(conf, client_id, cloud_id, auth_keys)
-    #print cloud_remove_jump_host_key(conf, client_id, cloud_id, auth_keys)
+    print lookup_user_service_value(conf, client_id, service,
+                                    'service_flavor_id')
+    # print cloud_add_jump_host_key(conf, client_id, cloud_id, auth_keys)
+    # print cloud_remove_jump_host_key(conf, client_id, cloud_id, auth_keys)
 
     # TODO: load yaml from custom location or inline
     print "calling cloud operations for %s in %s with instance %s" % \

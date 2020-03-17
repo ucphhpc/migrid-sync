@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # gdpman - entry point with project access and management for GDP-enabled sites
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -138,7 +138,7 @@ def html_category_fields(configuration, action):
             """ % ref_fill
             if ref_fill.get('ref_type', 'text') == "checkbox":
                 fields += """
-                <!-- NOTE: make a checkbox with ref_id and name --> 
+                <!-- NOTE: make a checkbox with ref_id and name -->
                 <input id='%(action)s_%(ref_id)s' class='%(category_id)s_ref category_ref'
                     name='%(action)s_%(ref_id)s' required title='%(ref_help)s'
                     type='checkbox' /> %(ref_text)s
@@ -256,7 +256,7 @@ def html_tmpl(
         html += """<li><a href='#access'>Access Project</a></li>"""
         tab_count += 1
     if info_projects:
-        html += """<li><a href='#info'>Project info</a></li>"""
+        html += """<li><a href='#info'>Project Info</a></li>"""
         tab_count += 1
     if create_projects:
         html += """<li><a href='#create'>Create Project</a></li>"""
@@ -665,14 +665,14 @@ def html_tmpl(
                 """ % ref_fill
                 if ref_fill.get('ref_type', 'text') == "checkbox":
                     ref_html += """
-                <!-- NOTE: make a checkbox with ref_id and name --> 
+                <!-- NOTE: make a checkbox with ref_id and name -->
                 <input id='create_%(ref_id)s' class='%(category_id)s_ref category_ref'
                     name='create_%(ref_id)s' required title='%(ref_help)s'
                     type='checkbox' /> %(ref_text)s
                 """ % ref_fill
                 else:
                     ref_html += """
-                <!-- NOTE: keep a single field for ref with ref_id in name --> 
+                <!-- NOTE: keep a single field for ref with ref_id in name -->
                 <input id='create_%(ref_id)s' class='%(category_id)s_ref category_ref'
                     name='create_%(ref_id)s' required pattern='%(ref_pattern)s'
                     placeholder='%(ref_name)s' title='%(ref_help)s'
@@ -942,7 +942,7 @@ def js_tmpl_parts(configuration, csrf_token):
             option = new Option('───────', '', false, false);
             select.append(option);
             for (var i=0; i<project_participants.OK.length; i++ ) {
-                option_desc = project_participants.OK[i].name 
+                option_desc = project_participants.OK[i].name
                             + ' (' + project_participants.OK[i].email + ')';
                 option_value = project_participants.OK[i].short_id;
                 option = new Option(option_desc, option_value, false, false);
@@ -965,7 +965,7 @@ def js_tmpl_parts(configuration, csrf_token):
         $('#remove_user tr[id=user]').hide();
         if (project_name !== '') {
             ajax_gdp_project_users(renderSelectRemoveUserFromProject,
-                                     project_name);   
+                                     project_name);
         }
     }
     function extractProject(project_action) {
@@ -986,7 +986,7 @@ def js_tmpl_parts(configuration, csrf_token):
     function extractUser(project_action) {
         var user_name = '';
         var err_help = 'selected';
-        
+
         if (project_action === 'remove_user') {
             user_name = $('#gm_project_form select[name='+project_action+'_short_id]').val();
         }
@@ -994,7 +994,7 @@ def js_tmpl_parts(configuration, csrf_token):
             user_name = '';
             err_help = 'provided or not on required format';
             console.error('user field is missing or not on required format!');
-        } 
+        }
         else {
             user_name = $('#gm_project_form input[name='+project_action+'_short_id]').val();
         }
@@ -1002,7 +1002,7 @@ def js_tmpl_parts(configuration, csrf_token):
             showError('Input Error', 'No User '+err_help+'!');
             return null;
         }
-        
+
         return user_name;
     }
     function extractCategory(project_action, project_name) {
@@ -1192,18 +1192,18 @@ def js_tmpl_parts(configuration, csrf_token):
             active: preselected_tab
         });
         $('#info_dialog').dialog(
-              { autoOpen: false, 
-                width: 500, 
-                height: 500, 
-                modal: true, 
+              { autoOpen: false,
+                width: 500,
+                height: 500,
+                modal: true,
                 closeOnEscape: true,
                 overflow: scroll,
                 buttons: { 'Ok': function() { $(this).dialog('close'); }}
               });
         $('#help_dialog').dialog(
-              { autoOpen: false, 
-                width: 500, 
-                modal: true, 
+              { autoOpen: false,
+                width: 500,
+                modal: true,
                 closeOnEscape: true,
 
                 buttons: { 'Ok': function() { $(this).dialog('close'); }}
