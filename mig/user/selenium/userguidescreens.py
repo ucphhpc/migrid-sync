@@ -71,10 +71,21 @@ def ajax_wait(driver, name, class_name="spinner"):
 def management_actions(driver, url, login, passwd, callbacks):
     """Run user actions for section of same name"""
     # Go through all manager tabs in turn
-    for nav_name in ["Access project", "Create project", "Accept invitation",
-                     "Two-Factor Auth"]:
+    manage_tabs = ["Access Project",
+                   "Project Info",
+                   "Create Project",
+                   "Invite Participant",
+                   "Accept Invitation",
+                   "Remove Participant",
+                   "Two-Factor Auth"]
+    for nav_name in manage_tabs:
         navmenu = driver.find_element_by_id('project-tabs')
-        link = navmenu.find_element_by_link_text(nav_name)
+        # Try to find manage tab (availability depends on state and role)
+        try:
+            link = navmenu.find_element_by_link_text(nav_name)
+        except Exception, exc:
+            print "Warning: no %r tab found - might be okay" % nav_name
+            continue
         # print "DEBUG: found %s link: %s" % (nav_name, link)
         link.click()
         # ajax_wait(driver, nav_name, "ui-progressbar")
@@ -83,7 +94,7 @@ def management_actions(driver, url, login, passwd, callbacks):
             print "INFO: callback for: %s" % state
             callbacks[state](driver, state)
     # Go to Access project tab and open first project
-    nav_name = "Access project"
+    nav_name = "Access Project"
     navmenu = driver.find_element_by_id('project-tabs')
     link = navmenu.find_element_by_link_text(nav_name)
     # print "DEBUG: found %s link: %s" % (nav_name, link)
@@ -396,7 +407,11 @@ def setup_actions(driver, url, login, passwd, callbacks):
         callbacks[state](driver, state)
 
     for (key, name) in setup_sections:
-        sub_link = driver.find_element_by_link_text(name)
+        # Search inside page content to avoid Seafile nav menu interference
+        content_anchor = driver.find_element_by_id("content")
+        sub_link = content_anchor.find_element_by_link_text(name)
+        sub_link = driver.find_element_by_id(
+            "content").find_element_by_link_text(name)
         # print "DEBUG: found webdaws link: %s" % webdaws
         sub_link.click()
         # Wait for Seafile server status lookup
@@ -418,6 +433,76 @@ def jupyter_actions(driver, url, login, passwd, callbacks):
     link.click()
     # ajax_wait(driver, nav_name)
     state = 'jupyter-ready'
+    if callbacks.get(state, None):
+        print "INFO: callback for: %s" % state
+        callbacks[state](driver, state)
+
+
+def cloud_actions(driver, url, login, passwd, callbacks):
+    """Run user actions for section of same name"""
+    nav_name = "Cloud"
+    navmenu = driver.find_element_by_class_name('navmenu')
+    link = navmenu.find_element_by_link_text(nav_name)
+    # print "DEBUG: found %s link: %s" % (nav_name, link)
+    link.click()
+    # ajax_wait(driver, nav_name)
+    state = 'cloud-ready'
+    if callbacks.get(state, None):
+        print "INFO: callback for: %s" % state
+        callbacks[state](driver, state)
+
+
+def people_actions(driver, url, login, passwd, callbacks):
+    """Run user actions for section of same name"""
+    nav_name = "People"
+    navmenu = driver.find_element_by_class_name('navmenu')
+    link = navmenu.find_element_by_link_text(nav_name)
+    # print "DEBUG: found %s link: %s" % (nav_name, link)
+    link.click()
+    ajax_wait(driver, nav_name)
+    state = 'people-ready'
+    if callbacks.get(state, None):
+        print "INFO: callback for: %s" % state
+        callbacks[state](driver, state)
+
+
+def crontab_actions(driver, url, login, passwd, callbacks):
+    """Run user actions for section of same name"""
+    nav_name = "Schedule Tasks"
+    navmenu = driver.find_element_by_class_name('navmenu')
+    link = navmenu.find_element_by_link_text(nav_name)
+    # print "DEBUG: found %s link: %s" % (nav_name, link)
+    link.click()
+    # ajax_wait(driver, nav_name)
+    state = 'crontab-ready'
+    if callbacks.get(state, None):
+        print "INFO: callback for: %s" % state
+        callbacks[state](driver, state)
+
+
+def datatransfer_actions(driver, url, login, passwd, callbacks):
+    """Run user actions for section of same name"""
+    nav_name = "Data Transfers"
+    navmenu = driver.find_element_by_class_name('navmenu')
+    link = navmenu.find_element_by_link_text(nav_name)
+    # print "DEBUG: found %s link: %s" % (nav_name, link)
+    link.click()
+    # ajax_wait(driver, nav_name)
+    state = 'datatransfer-ready'
+    if callbacks.get(state, None):
+        print "INFO: callback for: %s" % state
+        callbacks[state](driver, state)
+
+
+def sharelink_actions(driver, url, login, passwd, callbacks):
+    """Run user actions for section of same name"""
+    nav_name = "Share Links"
+    navmenu = driver.find_element_by_class_name('navmenu')
+    link = navmenu.find_element_by_link_text(nav_name)
+    # print "DEBUG: found %s link: %s" % (nav_name, link)
+    link.click()
+    # ajax_wait(driver, nav_name)
+    state = 'sharelink-ready'
     if callbacks.get(state, None):
         print "INFO: callback for: %s" % state
         callbacks[state](driver, state)
@@ -450,18 +535,30 @@ def main():
         print "USAGE: %s browser url openid login [password]" % sys.argv[0]
         return 1
 
+    reopen_stdin = False
     browser = sys.argv[1]
     url = sys.argv[2]
     openid = sys.argv[3]
     login = sys.argv[4]
     if argc > 4:
-        passwd = sys.argv[5]
+        if sys.argv[5] == '-':
+            passwd = sys.stdin.readline().strip()
+            reopen_stdin = True
+        else:
+            passwd = sys.argv[5]
     else:
         passwd = getpass.getpass()
     if argc > 5:
-        twofactor_key = sys.argv[6]
+        if sys.argv[6] == '-':
+            twofactor_key = sys.stdin.readline().strip()
+            reopen_stdin = True
+        else:
+            twofactor_key = sys.argv[6]
     else:
         twofactor_key = getpass.getpass("2FA *key*: ")
+
+    if reopen_stdin:
+        sys.stdin = open('/dev/tty')
 
     # Screenshot helpers
     mig_calls, ucph_calls, action_calls, logout_calls = {}, {}, {}, {}
@@ -493,9 +590,11 @@ def main():
                         'archive-submitted', 'archive-finalized', 'archive-view',
                         'archive-register', 'settings-ready', 'setup-ready']
     callback_targets += ['setup-%s-ready' % sub for (sub, _) in setup_sections]
+    callback_targets += ['jupyter-ready', 'cloud-ready', 'people-ready',
+                         'crontab-ready', 'datatransfer-ready',
+                         'sharelink-ready']
     callback_targets += ['access-project-ready', 'create-project-ready',
-                         'accept-invitation-ready', 'two-factor-auth-ready',
-                         'jupyter-ready']
+                         'accept-invitation-ready', 'two-factor-auth-ready']
     for name in callback_targets:
         action_calls[name] = lambda driver, name: save_screen(
             driver, active_path % name)
@@ -528,16 +627,16 @@ def main():
 
         # Now proceed with actual actions to document in turn
 
-        # TODO: add Schedule Tasks, Jupyter, ... ?
-
         if url.find('sif') != -1:
             all_sections = [
                 ('Management', management_actions),
                 ('Files', files_actions),
-                ('Settings', settings_actions),
                 ('Setup', setup_actions)
             ]
         else:
+
+            # TODO: add more (sub-)sections ?
+
             all_sections = [
                 ('Home', home_actions),
                 ('Files', files_actions),
@@ -545,7 +644,12 @@ def main():
                 #('Archives', archives_actions),
                 ('Settings', settings_actions),
                 ('Setup', setup_actions),
-                ('Jupyter', jupyter_actions)
+                ('Jupyter', jupyter_actions),
+                ('Cloud', cloud_actions),
+                ('People', people_actions),
+                ('Schedule Tasks', crontab_actions),
+                ('Share Links', sharelink_actions),
+                ('Data Transfers', datatransfer_actions),
             ]
         section_names = [name for (name, _) in all_sections]
         print "Run user guide actions for: %s" % ', '.join(section_names)
@@ -555,11 +659,18 @@ def main():
 
         print "Proceed as you wish while logged in or request stop in console"
         action = None
-        while action not in ['quit', 'exit', 'stop']:
+        stop_actions = ['quit', 'exit', 'stop']
+        while action not in stop_actions:
             action = raw_input('action: ')
+            # Prevent IndexError
+            action_args = action.split()[1:]
             if action.startswith('save'):
-                name = action.split('save ', 1)[1]
-                save_screen(driver, active_path % name)
+                if not action_args:
+                    print "You need to provide a file name argument for save"
+                    continue
+                save_screen(driver, active_path % action_args[0])
+            elif action not in stop_actions:
+                print "Unknown action: %r" % action
             else:
                 time.sleep(1)
 
