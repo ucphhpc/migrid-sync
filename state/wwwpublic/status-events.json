@@ -22,7 +22,7 @@
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2020-03-18T16:30:00", 
+    "work_start": "2020-03-18T17:00:00", 
     "systems": [
       "ERDA"
     ], 
@@ -36,8 +36,8 @@
     ], 
     "work_end": "2020-03-19T07:59:59", 
     "description": {
-      "EN": "We have a number of pending system and minor feature updates on the ERDA frontend. The work will require full frontend restarts in relation to the system updates and a little additional downtime to resize a core file system. All ERDA services except Seafile will be down for shorter or longer periods. The work will commence on March 18th at about 16.30 and we expect to finish within a couple of hours, but reserve until next morning to be on the safe side. Updates will be announced here as usual.", 
-      "DK": "Vi har et antal udestående system- og nogle mindre funktionelle opdateringer på ERDAs frontend. Arbejdet kræver genstart af hele frontend ifm systemopdateringerne og desuden lidt nedetid til at forstørre et centralt filsystem. Alle ERDA services bortset fra Seafile vil være nede i kortere eller længere perioder under opdateringen. Arbejdet begynder den 18. marts omkring kl 16.30 og vi forventer at være færdige på et par timer, men holder for en sikkerheds skyld bagkanten åben for at forlænge til næste morgen. Statusopdateringer følger som altid her."
+      "EN": "We have a number of pending system and minor feature updates on the ERDA frontend. The work will require full frontend restarts in relation to the system updates and a little additional downtime to resize a core file system. All ERDA services except Seafile will be down for shorter or longer periods. The work will commence on March 18th at about 17.00 and we expect to finish within a couple of hours, but reserve until next morning to be on the safe side. Updates will be announced here as usual.", 
+      "DK": "Vi har et antal udestående system- og nogle mindre funktionelle opdateringer på ERDAs frontend. Arbejdet kræver genstart af hele frontend ifm systemopdateringerne og desuden lidt nedetid til at forstørre et centralt filsystem. Alle ERDA services bortset fra Seafile vil være nede i kortere eller længere perioder under opdateringen. Arbejdet begynder den 18. marts omkring kl 17.00 og vi forventer at være færdige på et par timer, men holder for en sikkerheds skyld bagkanten åben for at forlænge til næste morgen. Statusopdateringer følger som altid her."
     }, 
     "announce_end": "2020-03-19T16:00:00"
   }, 
