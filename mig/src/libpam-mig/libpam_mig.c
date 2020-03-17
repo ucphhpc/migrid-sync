@@ -460,10 +460,13 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     WRITELOGMESSAGE(LOG_DEBUG, "exceeded_rate_limit: %d\n",
                     exceeded_rate_limit);
     if (exceeded_rate_limit == true) {
-        register_auth_attempt(MIG_SKIP_TWOFA_CHECK
-                              | MIG_AUTHTYPE_PASSWORD
-                              | MIG_EXCEEDED_RATE_LIMIT,
-                              pUsername, pAddress, NULL);
+        if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
+                                          | MIG_AUTHTYPE_PASSWORD
+                                          | MIG_EXCEEDED_RATE_LIMIT,
+                                          pUsername, pAddress, NULL)) {
+            WRITELOGMESSAGE(LOG_WARNING,
+                            "MiG registered successfull auth despite _NOT_ PAM_SUCCESS");
+        }
         return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
@@ -472,16 +475,19 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     /* NOTE: Disabled for now, 
      * this require session open/close tracking in sftp_subsys.py 
 
-     bool exceeded_max_sessions = mig_exceeded_max_sessions(pUsername,
-     pAddress);
-     WRITELOGMESSAGE(LOG_DEBUG, "exceeded_max_sessions: %d\n",
-     exceeded_max_sessions);
-     if (exceeded_max_sessions == true) {
-     register_auth_attempt(MIG_SKIP_TWOFA_CHECK
-     | MIG_AUTHTYPE_PASSWORD
-     | MIG_EXCEEDED_MAX_SESSIONS,
-     pUsername, pAddress, NULL);
-     return pam_sm_authenticate_exit(PAM_AUTH_ERR);
+    bool exceeded_max_sessions = mig_exceeded_max_sessions(pUsername, 
+                                                        pAddress);
+    WRITELOGMESSAGE(LOG_DEBUG, "exceeded_max_sessions: %d\n",
+                                            exceeded_max_sessions);
+    if (exceeded_max_sessions == true) {
+        if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
+                                        | MIG_AUTHTYPE_PASSWORD
+                                        | MIG_EXCEEDED_MAX_SESSIONS,
+                                        pUsername, pAddress, NULL)) {
+            WRITELOGMESSAGE(LOG_WARNING,
+                "MiG registered successfull auth despite _NOT_ PAM_SUCCESS");
+        }
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
      }
      */
 #endif                          /* ENABLE_AUTHHANDLER */
@@ -505,10 +511,13 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     }
     if (valid_username == false) {
         WRITELOGMESSAGE(LOG_DEBUG, "valid_username: %d\n", valid_username);
-        register_auth_attempt(MIG_SKIP_TWOFA_CHECK
-                              | MIG_AUTHTYPE_PASSWORD
-                              | MIG_INVALID_USERNAME,
-                              pUsername, pAddress, NULL);
+        if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
+                                          | MIG_AUTHTYPE_PASSWORD
+                                          | MIG_INVALID_USERNAME,
+                                          pUsername, pAddress, NULL)) {
+            WRITELOGMESSAGE(LOG_WARNING,
+                            "MiG registered successfull auth despite _NOT_ PAM_SUCCESS");
+        }
     }
 #endif                          /* ENABLE_AUTHHANDLER */
     if (valid_username == false) {
@@ -522,9 +531,13 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     if (pw == NULL) {
         WRITELOGMESSAGE(LOG_INFO, "User not found: %s\n", pUsername);
 #ifdef ENABLE_AUTHHANDLER
-        register_auth_attempt(MIG_SKIP_TWOFA_CHECK
-                              | MIG_AUTHTYPE_PASSWORD
-                              | MIG_INVALID_USER, pUsername, pAddress, NULL);
+        if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
+                                          | MIG_AUTHTYPE_PASSWORD
+                                          | MIG_INVALID_USER, pUsername,
+                                          pAddress, NULL)) {
+            WRITELOGMESSAGE(LOG_WARNING,
+                            "MiG registered successfull auth despite _NOT_ PAM_SUCCESS");
+        }
 #endif                          /* ENABLE_AUTHHANDLER */
         return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
@@ -600,12 +613,16 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
             if (strcmp(pUsername, pPassword) == 0) {
                 WRITELOGMESSAGE(LOG_DEBUG, "Return sharelink success\n");
 #ifdef ENABLE_AUTHHANDLER
-                register_auth_attempt(MIG_SKIP_TWOFA_CHECK
-                                      | MIG_SKIP_NOTIFY
-                                      | MIG_AUTHTYPE_PASSWORD
-                                      | MIG_AUTHTYPE_ENABLED
-                                      | MIG_VALID_AUTH,
-                                      pUsername, pAddress, pSecret);
+                if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
+                                                  | MIG_SKIP_NOTIFY
+                                                  | MIG_AUTHTYPE_PASSWORD
+                                                  | MIG_AUTHTYPE_ENABLED
+                                                  | MIG_VALID_AUTH,
+                                                  pUsername, pAddress,
+                                                  pSecret)) {
+                    WRITELOGMESSAGE(LOG_WARNING,
+                                    "MiG registered successfull auth despite _NOT_ PAM_SUCCESS");
+                }
 #endif                          /* ENABLE_AUTHHANDLER */
                 return pam_sm_authenticate_exit(PAM_SUCCESS);
             } else {
@@ -613,12 +630,16 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                 "Username and password mismatch for sharelink: %s\n",
                                 pUsername);
 #ifdef ENABLE_AUTHHANDLER
-                register_auth_attempt(MIG_SKIP_TWOFA_CHECK
-                                      | MIG_SKIP_NOTIFY
-                                      | MIG_AUTHTYPE_PASSWORD
-                                      | MIG_AUTHTYPE_ENABLED
-                                      | MIG_INVALID_AUTH,
-                                      pUsername, pAddress, pSecret);
+                if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
+                                                  | MIG_SKIP_NOTIFY
+                                                  | MIG_AUTHTYPE_PASSWORD
+                                                  | MIG_AUTHTYPE_ENABLED
+                                                  | MIG_INVALID_AUTH,
+                                                  pUsername, pAddress,
+                                                  pSecret)) {
+                    WRITELOGMESSAGE(LOG_WARNING,
+                                    "MiG registered successfull auth despite _NOT_ PAM_SUCCESS");
+                }
 #endif                          /* ENABLE_AUTHHANDLER */
                 return pam_sm_authenticate_exit(PAM_AUTH_ERR);
             }
@@ -658,10 +679,13 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
             WRITELOGMESSAGE(LOG_INFO,
                             "Password login not enabled for jobsidmount - use key!\n");
 #ifdef ENABLE_AUTHHANDLER
-            register_auth_attempt(MIG_SKIP_TWOFA_CHECK
-                                  | MIG_AUTHTYPE_PASSWORD
-                                  | MIG_AUTHTYPE_DISABLED,
-                                  pUsername, pAddress, pSecret);
+            if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
+                                              | MIG_AUTHTYPE_PASSWORD
+                                              | MIG_AUTHTYPE_DISABLED,
+                                              pUsername, pAddress, pSecret)) {
+                WRITELOGMESSAGE(LOG_WARNING,
+                                "MiG registered successfull auth despite _NOT_ PAM_SUCCESS");
+            }
 #endif                          /* ENABLE_AUTHHANDLER */
             return pam_sm_authenticate_exit(PAM_AUTH_ERR);
 #endif                          /* DISABLE_JOBSIDMOUNT_WITH_PASSWORD */
@@ -670,12 +694,16 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
             if (strcmp(pUsername, pPassword) == 0) {
                 WRITELOGMESSAGE(LOG_DEBUG, "Return jobsidmount success\n");
 #ifdef ENABLE_AUTHHANDLER
-                register_auth_attempt(MIG_SKIP_TWOFA_CHECK
-                                      | MIG_SKIP_NOTIFY
-                                      | MIG_AUTHTYPE_PASSWORD
-                                      | MIG_AUTHTYPE_ENABLED
-                                      | MIG_VALID_AUTH,
-                                      pUsername, pAddress, pSecret);
+                if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
+                                                  | MIG_SKIP_NOTIFY
+                                                  | MIG_AUTHTYPE_PASSWORD
+                                                  | MIG_AUTHTYPE_ENABLED
+                                                  | MIG_VALID_AUTH,
+                                                  pUsername, pAddress,
+                                                  pSecret)) {
+                    WRITELOGMESSAGE(LOG_WARNING,
+                                    "MiG registered successfull auth despite _NOT_ PAM_SUCCESS");
+                }
 #endif                          /* ENABLE_AUTHHANDLER */
                 return pam_sm_authenticate_exit(PAM_SUCCESS);
             } else {
@@ -683,12 +711,16 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                 "Username and password mismatch for jobsidmount: %s\n",
                                 pUsername);
 #ifdef ENABLE_AUTHHANDLER
-                register_auth_attempt(MIG_SKIP_TWOFA_CHECK
-                                      | MIG_SKIP_NOTIFY
-                                      | MIG_AUTHTYPE_PASSWORD
-                                      | MIG_AUTHTYPE_ENABLED
-                                      | MIG_INVALID_AUTH,
-                                      pUsername, pAddress, pSecret);
+                if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
+                                                  | MIG_SKIP_NOTIFY
+                                                  | MIG_AUTHTYPE_PASSWORD
+                                                  | MIG_AUTHTYPE_ENABLED
+                                                  | MIG_INVALID_AUTH,
+                                                  pUsername, pAddress,
+                                                  pSecret)) {
+                    WRITELOGMESSAGE(LOG_WARNING,
+                                    "MiG registered successfull auth despite _NOT_ PAM_SUCCESS");
+                }
 #endif                          /* ENABLE_AUTHHANDLER */
                 return pam_sm_authenticate_exit(PAM_AUTH_ERR);
             }
@@ -728,21 +760,28 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
             WRITELOGMESSAGE(LOG_INFO,
                             "Password login not enabled for jupytersidmount - use key!\n");
 #ifdef ENABLE_AUTHHANDLER
-            register_auth_attempt(MIG_SKIP_TWOFA_CHECK
-                                  | MIG_AUTHTYPE_PASSWORD
-                                  | MIG_AUTHTYPE_DISABLED,
-                                  pUsername, pAddress, pSecret);
+            if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
+                                              | MIG_AUTHTYPE_PASSWORD
+                                              | MIG_AUTHTYPE_DISABLED,
+                                              pUsername, pAddress, pSecret)) {
+                WRITELOGMESSAGE(LOG_WARNING,
+                                "MiG registered successfull auth despite _NOT_ PAM_SUCCESS");
+            }
 #endif                          /* ENABLE_AUTHHANDLER */
             return pam_sm_authenticate_exit(PAM_AUTH_ERR);
 #endif                          /* DISABLE_JUPYTERSIDMOUNT_WITH_PASSWORD */
             if (strcmp(pUsername, pPassword) == 0) {
                 WRITELOGMESSAGE(LOG_DEBUG, "Return jupytersidmount success\n");
 #ifdef ENABLE_AUTHHANDLER
-                register_auth_attempt(MIG_SKIP_TWOFA_CHECK
-                                      | MIG_AUTHTYPE_PASSWORD
-                                      | MIG_AUTHTYPE_ENABLED
-                                      | MIG_VALID_AUTH,
-                                      pUsername, pAddress, pSecret);
+                if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
+                                                  | MIG_AUTHTYPE_PASSWORD
+                                                  | MIG_AUTHTYPE_ENABLED
+                                                  | MIG_VALID_AUTH,
+                                                  pUsername, pAddress,
+                                                  pSecret)) {
+                    WRITELOGMESSAGE(LOG_WARNING,
+                                    "MiG registered successfull auth despite _NOT_ PAM_SUCCESS");
+                }
 #endif                          /* ENABLE_AUTHHANDLER */
                 return pam_sm_authenticate_exit(PAM_SUCCESS);
             } else {
@@ -750,12 +789,16 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                 "Username and password mismatch for jupytersidmount: %s\n",
                                 pUsername);
 #ifdef ENABLE_AUTHHANDLER
-                register_auth_attempt(MIG_SKIP_TWOFA_CHECK
-                                      | MIG_SKIP_NOTIFY
-                                      | MIG_AUTHTYPE_PASSWORD
-                                      | MIG_AUTHTYPE_ENABLED
-                                      | MIG_INVALID_AUTH,
-                                      pUsername, pAddress, pSecret);
+                if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
+                                                  | MIG_SKIP_NOTIFY
+                                                  | MIG_AUTHTYPE_PASSWORD
+                                                  | MIG_AUTHTYPE_ENABLED
+                                                  | MIG_INVALID_AUTH,
+                                                  pUsername, pAddress,
+                                                  pSecret)) {
+                    WRITELOGMESSAGE(LOG_WARNING,
+                                    "MiG registered successfull auth despite _NOT_ PAM_SUCCESS");
+                }
 #endif                          /* ENABLE_AUTHHANDLER */
                 return pam_sm_authenticate_exit(PAM_AUTH_ERR);
             }
@@ -782,10 +825,14 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     if (validate_password(pPassword) != 0) {
         WRITELOGMESSAGE(LOG_INFO, "Invalid password from %s\n", pUsername);
 #ifdef ENABLE_AUTHHANDLER
-        register_auth_attempt(MIG_SKIP_TWOFA_CHECK
-                              | MIG_AUTHTYPE_PASSWORD
-                              | MIG_AUTHTYPE_ENABLED
-                              | MIG_INVALID_AUTH, pUsername, pAddress, pSecret);
+        if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
+                                          | MIG_AUTHTYPE_PASSWORD
+                                          | MIG_AUTHTYPE_ENABLED
+                                          | MIG_INVALID_AUTH, pUsername,
+                                          pAddress, pSecret)) {
+            WRITELOGMESSAGE(LOG_WARNING,
+                            "MiG registered successfull auth despite _NOT_ PAM_SUCCESS");
+        }
 #endif                          /* ENABLE_AUTHHANDLER */
         return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
@@ -805,10 +852,13 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         WRITELOGMESSAGE(LOG_INFO, "No password file %s found: %s\n",
                         auth_filename, strerror(errno));
 #ifdef ENABLE_AUTHHANDLER
-        register_auth_attempt(MIG_SKIP_TWOFA_CHECK
-                              | MIG_AUTHTYPE_PASSWORD
-                              | MIG_AUTHTYPE_DISABLED,
-                              pUsername, pAddress, pSecret);
+        if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
+                                          | MIG_AUTHTYPE_PASSWORD
+                                          | MIG_AUTHTYPE_DISABLED,
+                                          pUsername, pAddress, pSecret)) {
+            WRITELOGMESSAGE(LOG_WARNING,
+                            "MiG registered successfull auth despite _NOT_ PAM_SUCCESS");
+        }
 #endif                          /* ENABLE_AUTHHANDLER */
 
         return pam_sm_authenticate_exit(PAM_AUTH_ERR);
@@ -1003,10 +1053,14 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                         "Supplied password  \"%s\" did not match the stored pbkdf digest \"%s\"\n",
                         pbkdf, pBase64Hash);
 #ifdef ENABLE_AUTHHANDLER
-        register_auth_attempt(MIG_SKIP_TWOFA_CHECK
-                              | MIG_AUTHTYPE_PASSWORD
-                              | MIG_AUTHTYPE_ENABLED
-                              | MIG_INVALID_AUTH, pUsername, pAddress, pSecret);
+        if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
+                                          | MIG_AUTHTYPE_PASSWORD
+                                          | MIG_AUTHTYPE_ENABLED
+                                          | MIG_INVALID_AUTH, pUsername,
+                                          pAddress, pSecret)) {
+            WRITELOGMESSAGE(LOG_WARNING,
+                            "MiG registered successfull auth despite _NOT_ PAM_SUCCESS");
+        }
 #endif                          /* ENABLE_AUTHHANDLER */
         return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
