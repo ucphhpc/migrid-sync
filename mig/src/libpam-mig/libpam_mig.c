@@ -406,27 +406,33 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     /* Resolve ip address */
 
     const char *pHostname;
-    const char *pAddress;
-    struct hostent *he;
-    struct in_addr **addr_list;
+    char address[INET_ADDRSTRLEN];
+    char *pAddress = &address[0];
+    struct addrinfo *pAddrinfo;
+    struct sockaddr_in *ipv4;
 
     retval = pam_get_item(pamh, PAM_RHOST, (const void **)&pHostname);
     if (retval != PAM_SUCCESS || pHostname == NULL || strlen(pHostname) == 0) {
         WRITELOGMESSAGE(LOG_ERR, "Unable to resolve remote host ...\n");
         return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
-    if ((he = gethostbyname(pHostname)) == NULL) {
+
+    retval = getaddrinfo(pHostname, NULL, NULL, &pAddrinfo);
+    if (retval != 0) {
         WRITELOGMESSAGE(LOG_ERR,
-                        "Unable to resolve address from host: %s\n", pHostname);
+                        "Unable to resolve address from host: %s, err: %s\n",
+                        pHostname, strerror(errno));
         return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
-    addr_list = (struct in_addr **)he->h_addr_list;
-    if (addr_list[0] == NULL) {
+
+    ipv4 = (struct sockaddr_in *)pAddrinfo->ai_addr;
+    if (NULL == inet_ntop(AF_INET, &(ipv4->sin_addr), address, INET_ADDRSTRLEN)) {
         WRITELOGMESSAGE(LOG_ERR,
-                        "Unable to resolve address from host: %s\n", pHostname);
+                        "Unable to resolve address from host: %s, err: %s\n",
+                        pHostname, strerror(errno));
         return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
-    pAddress = inet_ntoa(*addr_list[0]);
+
     WRITELOGMESSAGE(LOG_DEBUG,
                     "Resolved remote address: %s from host: %s\n", pAddress,
                     pHostname);
@@ -475,19 +481,19 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     /* NOTE: Disabled for now, 
      * this require session open/close tracking in sftp_subsys.py 
 
-    bool exceeded_max_sessions = mig_exceeded_max_sessions(pUsername, 
-                                                        pAddress);
-    WRITELOGMESSAGE(LOG_DEBUG, "exceeded_max_sessions: %d\n",
-                                            exceeded_max_sessions);
-    if (exceeded_max_sessions == true) {
-        if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
-                                        | MIG_AUTHTYPE_PASSWORD
-                                        | MIG_EXCEEDED_MAX_SESSIONS,
-                                        pUsername, pAddress, NULL)) {
-            WRITELOGMESSAGE(LOG_WARNING,
-                "MiG registered successfull auth despite _NOT_ PAM_SUCCESS");
-        }
-        return pam_sm_authenticate_exit(PAM_AUTH_ERR);
+     bool exceeded_max_sessions = mig_exceeded_max_sessions(pUsername, 
+     pAddress);
+     WRITELOGMESSAGE(LOG_DEBUG, "exceeded_max_sessions: %d\n",
+     exceeded_max_sessions);
+     if (exceeded_max_sessions == true) {
+     if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
+     | MIG_AUTHTYPE_PASSWORD
+     | MIG_EXCEEDED_MAX_SESSIONS,
+     pUsername, pAddress, NULL)) {
+     WRITELOGMESSAGE(LOG_WARNING,
+     "MiG registered successfull auth despite _NOT_ PAM_SUCCESS");
+     }
+     return pam_sm_authenticate_exit(PAM_AUTH_ERR);
      }
      */
 #endif                          /* ENABLE_AUTHHANDLER */
