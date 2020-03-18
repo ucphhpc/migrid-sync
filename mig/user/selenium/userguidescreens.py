@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userguidescreens - selenium-based web client to grab user guide screenshots
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,14 +36,17 @@ import os
 import sys
 import time
 import traceback
+from urlparse import urlparse
 
 from migcore import init_driver, ucph_login, mig_login, shared_twofactor, \
     shared_logout, save_screen, scroll_to_elem, doubleclick_elem, \
     select_item_by_index
 
-setup_sections = [('sftp', 'SFTP'), ('webdavs', 'WebDAVS'), ('ftps', 'FTPS'),
-                  ('duplicati', 'Duplicati'), ('twofactor', '2-Factor Auth'),
-                  ('seafile', 'Seafile')]
+# Which Setup sections to include on SIF (where 2FA is moved to gdpman)
+setup_sections = [('sftp', 'SFTP'), ('webdavs', 'WebDAVS')]
+# Additional setup sections on non-SIF hosts
+extra_setup_sections = [('ftps', 'FTPS'), ('twofactor', '2-Factor Auth'),
+                        ('duplicati', 'Duplicati'), ('seafile', 'Seafile')]
 
 
 def ajax_wait(driver, name, class_name="spinner"):
@@ -93,7 +96,34 @@ def management_actions(driver, url, login, passwd, callbacks):
         if callbacks.get(state, None):
             print "INFO: callback for: %s" % state
             callbacks[state](driver, state)
-    # Go to Access project tab and open first project
+
+    # Go to create project tab and create a new project unless on SIF
+    if not url.startswith('https://sif'):
+        nav_name = "Create Project"
+        navmenu = driver.find_element_by_id('project-tabs')
+        link = navmenu.find_element_by_link_text(nav_name)
+        # print "DEBUG: found %s link: %s" % (nav_name, link)
+        link.click()
+        # ajax_wait(driver, nav_name, "ui-progressbar")
+        sample_workzone, sample_project = "123-4567/00-1234", "X-Ray_Tissue_Scans"
+        workzone_entry = driver.find_element_by_id('create_workzone_id')
+        workzone_entry.send_keys(sample_workzone)
+        proj_entry = driver.find_element_by_name('create_base_vgrid_name')
+        proj_entry.send_keys(sample_project)
+        state = '%s-filled' % nav_name.lower().replace(' ', '-')
+        if callbacks.get(state, None):
+            print "INFO: callback for: %s" % state
+            callbacks[state](driver, state)
+
+        # TODO: create button id collides with tab id - please fix in gdpman!
+        # create_button = driver.find_element_by_id('create')
+        # TODO: actually submit form to create project?
+        # create_button.click()
+
+
+def access_project_actions(driver, url, login, passwd, callbacks):
+    """Run user actions for section of same name"""
+    # Go to access project tab and open first project
     nav_name = "Access Project"
     navmenu = driver.find_element_by_id('project-tabs')
     link = navmenu.find_element_by_link_text(nav_name)
@@ -532,7 +562,7 @@ def main():
     """Main"""
     argc = len(sys.argv) - 1
     if argc < 4:
-        print "USAGE: %s browser url openid login [password]" % sys.argv[0]
+        print "USAGE: %s browser url openid login [password] [2FAkey]" % sys.argv[0]
         return 1
 
     reopen_stdin = False
@@ -562,9 +592,10 @@ def main():
 
     # Screenshot helpers
     mig_calls, ucph_calls, action_calls, logout_calls = {}, {}, {}, {}
+    sys_prefix = urlparse(url).netloc.split('.', 1)[0]
     base_path = os.path.join('screenshots', browser)
-    mig_path = os.path.join(base_path, 'mig-%s.png')
-    ucph_path = os.path.join(base_path, 'ucph-%s.png')
+    mig_path = os.path.join(base_path, 'mig-' + sys_prefix + '_%s.png')
+    ucph_path = os.path.join(base_path, 'ucph-' + sys_prefix + '_%s.png')
     if openid.lower() == 'ucph':
         active_path = ucph_path
     elif openid.lower() == 'mig':
@@ -578,6 +609,37 @@ def main():
     except:
         # probably already there
         pass
+
+    if url.find('sif') != -1:
+        active_setup_sections = [] + setup_sections
+        all_sections = [
+            ('Management', management_actions),
+            ('Access Project', access_project_actions),
+            ('Files', files_actions),
+            ('Setup', setup_actions)
+        ]
+    else:
+
+        # TODO: add more (sub-)sections ?
+
+        # Enable additional setup sections on non-SIF hosts
+        active_setup_sections = setup_sections + extra_setup_sections
+
+        all_sections = [
+            ('Home', home_actions),
+            ('Files', files_actions),
+            ('Workgroups', workgroups_actions),
+            #('Archives', archives_actions),
+            ('Settings', settings_actions),
+            ('Setup', setup_actions),
+            ('Jupyter', jupyter_actions),
+            ('Cloud', cloud_actions),
+            ('People', people_actions),
+            ('Schedule Tasks', crontab_actions),
+            ('Share Links', sharelink_actions),
+            ('Data Transfers', datatransfer_actions),
+        ]
+
     for name in ('login-ready', 'login-filled'):
         mig_calls[name] = lambda driver, name: save_screen(
             driver, active_path % name)
@@ -589,12 +651,14 @@ def main():
                         'archive-empty', 'archive-fileman', 'archive-filled',
                         'archive-submitted', 'archive-finalized', 'archive-view',
                         'archive-register', 'settings-ready', 'setup-ready']
-    callback_targets += ['setup-%s-ready' % sub for (sub, _) in setup_sections]
+    callback_targets += ['setup-%s-ready' %
+                         sub for (sub, _) in active_setup_sections]
     callback_targets += ['jupyter-ready', 'cloud-ready', 'people-ready',
                          'crontab-ready', 'datatransfer-ready',
                          'sharelink-ready']
     callback_targets += ['access-project-ready', 'create-project-ready',
-                         'accept-invitation-ready', 'two-factor-auth-ready']
+                         'create-project-filled', 'accept-invitation-ready',
+                         'two-factor-auth-ready']
     for name in callback_targets:
         action_calls[name] = lambda driver, name: save_screen(
             driver, active_path % name)
@@ -627,30 +691,6 @@ def main():
 
         # Now proceed with actual actions to document in turn
 
-        if url.find('sif') != -1:
-            all_sections = [
-                ('Management', management_actions),
-                ('Files', files_actions),
-                ('Setup', setup_actions)
-            ]
-        else:
-
-            # TODO: add more (sub-)sections ?
-
-            all_sections = [
-                ('Home', home_actions),
-                ('Files', files_actions),
-                ('Workgroups', workgroups_actions),
-                #('Archives', archives_actions),
-                ('Settings', settings_actions),
-                ('Setup', setup_actions),
-                ('Jupyter', jupyter_actions),
-                ('Cloud', cloud_actions),
-                ('People', people_actions),
-                ('Schedule Tasks', crontab_actions),
-                ('Share Links', sharelink_actions),
-                ('Data Transfers', datatransfer_actions),
-            ]
         section_names = [name for (name, _) in all_sections]
         print "Run user guide actions for: %s" % ', '.join(section_names)
         status = user_actions(driver, url, login, passwd,
