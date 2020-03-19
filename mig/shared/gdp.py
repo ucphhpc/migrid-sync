@@ -608,7 +608,7 @@ def __send_project_action_confirmation(configuration,
     #                                                    project_name))
     status = True
     target_dict = {}
-    if action == "create":
+    if action == "create_project":
         target_dict['registrant'] = login
     elif action == "invite_user":
         target_dict['registrant'] = login
@@ -801,7 +801,7 @@ def __send_project_create_confirmation(configuration,
                                        project_name,
                                        category_dict):
     """Send project create confirmation to *login* and GDP admins"""
-    return __send_project_action_confirmation(configuration, "create", login,
+    return __send_project_action_confirmation(configuration, "create_project", login,
                                               '', project_name, category_dict)
 
 
@@ -1470,12 +1470,12 @@ def get_projects(configuration, client_id, state, owner_only=False):
     return result
 
 
-def get_project_users(configuration,
-                      project_name,
-                      skip_users=[],
-                      project_state=None,
-                      do_lock=True):
-    """Generate a list of project participants, each entry on the format:
+def get_project_info(configuration,
+                     project_name,
+                     skip_users=[],
+                     project_state=None,
+                     do_lock=True):
+    """Extract of project info including list of participants, each entry on the format:
     {'name': str,
     'email': str,
     'short_id': str,
@@ -1483,12 +1483,15 @@ def get_project_users(configuration,
     'project_client_id': str}
     """
     _logger = configuration.logger
-    # _logger.debug("get_project_users: project_name: "
+    # _logger.debug("get_project_info: project_name: "
     #    + "%s, skip_users: %s, project_state: %s, do_lock: %s" \
     #    % (project_name, skip_users, project_state, do_lock))
     user_db = __load_user_db(configuration, do_lock=do_lock)
 
-    result = []
+    users = []
+    # TODO: extract additional project info like workzone, expiry, etc.
+    result = {'project_name': project_name, 'project_state': project_state,
+              'users': users}
     for client_id in user_db.keys():
         if client_id in skip_users:
             continue
@@ -1498,7 +1501,7 @@ def get_project_users(configuration,
         if project \
                 and (project_state is None
                      or project_state == project.get('state', None)):
-            result.append({
+            users.append({
                 'name': extract_field(client_id, 'full_name'),
                 'email': extract_field(client_id, 'email'),
                 'short_id': __short_id_from_client_id(configuration, client_id),
@@ -1804,7 +1807,7 @@ def project_invite_user(
     real_action = 'invite_user'
     target = client_id
     if in_create:
-        real_action = 'create'
+        real_action = 'create_project'
         target = None
 
     # Get login handle (email) from client_id
@@ -2617,7 +2620,7 @@ def project_accept_user(
     add_user_status = False
     real_action = 'accept_user'
     if in_create:
-        real_action = 'create'
+        real_action = 'create_project'
 
     # Get login handle (email) from client_id
 
@@ -3183,7 +3186,7 @@ def project_create(
     rollback_dirs = {}
     vgrid_label = '%s' % configuration.site_vgrid_label
     ref_pairs = [(i['ref_id'], i['value']) for i in
-                 category_dict.get('references', {}).get("create", [])]
+                 category_dict.get('references', {}).get("create_project", [])]
     ok_msg = "Created project: %r" % project_name
     err_msg = "Failed to create project: %r" % project_name
     log_ok_msg = "GDP: User: %r from ip: %s, created project: %r" % (

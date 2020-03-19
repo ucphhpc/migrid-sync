@@ -88,7 +88,10 @@ filewc = {'object_type': 'filewc', 'required': ['name'],
           'optional': ['lines', 'words', 'bytes']}
 filedu = {'object_type': 'filedu', 'required': ['name', 'bytes'],
           'optional': []}
-list = {'object_type': 'list', 'required': ['list'], 'optional': []}
+# NOTE: list is not a good naming due to collision with list() function
+plain_list = {'object_type': 'list', 'required': ['list'], 'optional': []}
+project_info = {'object_type': 'project_info',
+                'required': ['info'], 'optional': []}
 file_not_found = {'object_type': 'file_not_found', 'required': ['name'
                                                                 ], 'optional': []}
 file_output = {'object_type': 'file_output', 'required': ['lines'],
@@ -300,7 +303,7 @@ user_stats = {'object_type': 'user_stats', 'required':
 openid_status = {'object_type': 'openid_status', 'required':
                  ['server', 'status', 'error'], 'optional': []}
 seafile_status = {'object_type': 'seafile_status', 'required':
-                 ['server', 'status', 'error'], 'optional': ['data']}
+                  ['server', 'status', 'error'], 'optional': ['data']}
 service = {'object_type': 'service', 'required': ['name', 'targetlink'],
            'optional': []}
 services = {'object_type': 'services',
@@ -452,7 +455,8 @@ valid_types_list = [
     sandboxinfo,
     fileuploadobjs,
     fileuploadobj,
-    list,
+    plain_list,
+    project_info,
     stats,
     stat,
     linklist,

@@ -850,8 +850,8 @@ function ajax_workflowjobs(vgrid_name, flags) {
   });
 }
 
-function ajax_gdp_project_users(callback, project_name) {
-    console.debug("ajax_gdp_project_users: " + project_name);
+function ajax_gdp_project_info(callback, project_name) {
+    console.debug("ajax_gdp_project_info: " + project_name);
     var result = { OK: [], WARNING: [], ERROR: [] };
     var target_op = "gdpman";
     console.info("Lookup CSRF token for " + target_op);
@@ -859,7 +859,7 @@ function ajax_gdp_project_users(callback, project_name) {
     var jsonSettings = {
         base_vgrid_name: project_name,
         output_format: "json",
-        action: "list_project_users"
+        action: "project_info"
     };
     if (csrf_map[target_op] !== undefined) {
         jsonSettings[csrf_field] = csrf_map[target_op];
@@ -877,20 +877,22 @@ function ajax_gdp_project_users(callback, project_name) {
         success: function(jsonRes) {
             for (var i = 0; i < jsonRes.length; i++) {
                 //console.debug("jsonRes: " + JSON.stringify(jsonRes[i]));
-                if (jsonRes[i].object_type === "list") {
-                    for (var j = 0; j < jsonRes[i].list.length; j++) {
-                        console.debug("ajax_gdp_project_users[" + j + "]: "
-                            + JSON.stringify(jsonRes[i].list[j])
+                if (jsonRes[i].object_type === "project_info") {
+                    var user;
+                    for (var j = 0; j < jsonRes[i].info.users.length; j++) {
+                        user = jsonRes[i].info.users[j];
+                        console.debug("ajax_gdp_project_info[" + j + "]: "
+                            + JSON.stringify(user)
                         );
-                        result.OK.push(jsonRes[i].list[j]);
+                        result.OK.push(user);
                     }
                 } else if (jsonRes[i]["object_type"] === "warning") {
                     console.warning(
-                        "ajax_gdp_project_users: " + jsonRes[i].text
+                        "ajax_gdp_project_info: " + jsonRes[i].text
                     );
                     result.WARNING.push(jsonRes[i].text);
                 } else if (jsonRes[i]["object_type"] === "error_text") {
-                    console.error("ajax_gdp_project_users: " + jsonRes[i].text);
+                    console.error("ajax_gdp_project_info: " + jsonRes[i].text);
                     result.ERROR.push(jsonRes[i].text);
                 }
             }
@@ -898,7 +900,7 @@ function ajax_gdp_project_users(callback, project_name) {
         },
         error: function(jqXHR, textStatus, errorThrown) {
             console.error(
-                "ajax_gdp_project_users: " +
+                "ajax_gdp_project_info: " +
                     "status: " +
                     textStatus +
                     "error: " +

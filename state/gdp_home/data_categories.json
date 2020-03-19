@@ -2,7 +2,7 @@
     {"category_id": "personal_data",
      "category_title": "Personal Data",
      "references": {
-         "create": [
+         "create_project": [
              {"ref_id": "workzone_id",
               "ref_name": "Workzone Number",
               "ref_pattern": "[0-9]{3}-[0-9]{4}/[0-9]{2}-[0-9]{4}",
@@ -26,7 +26,7 @@
          "accept_user": [],
          "remove_user": []
      },
-     "create_notify_template": "notify-create-personal_data.txt",
+     "create_project_notify_template": "notify-create-personal_data.txt",
      "invite_user_notify_template": "notify-invite_user-personal_data.txt",
      "accept_user_notify_template": "",
      "remove_user_notify_template": ""
@@ -34,7 +34,7 @@
     {"category_id": "agreement_data",
      "category_title": "Data Subject to an Agreement",
      "references": {
-         "create": [
+         "create_project": [
              {"ref_id": "workzone_id",
               "ref_name": "Workzone Number",
               "ref_pattern": "[0-9]{3}-[0-9]{4}/[0-9]{2}-[0-9]{4}",
@@ -51,12 +51,12 @@
              }
          ], 
          "accept_user": [], "remove_user": []},
-     "create_notify_template": "notify-create-general_data.txt"
+     "create_project_notify_template": "notify-create-general_data.txt"
     },
     {"category_id": "general_data",
      "category_title": "General Sensitive Data",
-     "references": {"create": [], "invite_user": [], "accept_user": [], "remove_user": []},
-     "create_notify_template": "notify-create-general_data.txt",
+     "references": {"create_project": [], "invite_user": [], "accept_user": [], "remove_user": []},
+     "create_project_notify_template": "notify-create-general_data.txt",
      "invite_user_notify_template": "notify-invite_user-general_data.txt",
      "accept_user_notify_template": "notify-accept_user-general_data.txt",
      "remove_user_notify_template": "notify-remove_user-general_data.txt"     
