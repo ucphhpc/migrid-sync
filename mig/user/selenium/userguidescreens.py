@@ -81,6 +81,11 @@ def management_actions(driver, url, login, passwd, callbacks):
                    "Accept Invitation",
                    "Remove Participant",
                    "Two-Factor Auth"]
+    sample_category = "personal_data"
+    sample_workzone = "123-4567/00-1234",
+    sample_project = "X-Ray_Tissue_Scans"
+    sample_int_part = "vinter@nbi.ku.dk"
+    sample_ext_part = "bardino@migrid.org"
     for nav_name in manage_tabs:
         navmenu = driver.find_element_by_id('project-tabs')
         # Try to find manage tab (availability depends on state and role)
@@ -97,28 +102,80 @@ def management_actions(driver, url, login, passwd, callbacks):
             print "INFO: callback for: %s" % state
             callbacks[state](driver, state)
 
-    # Go to create project tab and create a new project unless on SIF
+    # Additional concrete project manipulation unless on SIF
     if not url.startswith('https://sif'):
+        # Go to Create project tab and create a project
         nav_name = "Create Project"
-        navmenu = driver.find_element_by_id('project-tabs')
-        link = navmenu.find_element_by_link_text(nav_name)
-        # print "DEBUG: found %s link: %s" % (nav_name, link)
-        link.click()
-        # ajax_wait(driver, nav_name, "ui-progressbar")
-        sample_workzone, sample_project = "123-4567/00-1234", "X-Ray_Tissue_Scans"
-        workzone_entry = driver.find_element_by_id('create_workzone_id')
-        workzone_entry.send_keys(sample_workzone)
-        proj_entry = driver.find_element_by_name('create_base_vgrid_name')
-        proj_entry.send_keys(sample_project)
-        state = '%s-filled' % nav_name.lower().replace(' ', '-')
-        if callbacks.get(state, None):
-            print "INFO: callback for: %s" % state
-            callbacks[state](driver, state)
+        try:
+            navmenu = driver.find_element_by_id('project-tabs')
+            link = navmenu.find_element_by_link_text(nav_name)
+            # print "DEBUG: found %s link: %s" % (nav_name, link)
+            link.click()
+            # ajax_wait(driver, nav_name, "ui-progressbar")
+            # NOTE: locate the relevant workzone in category ref section
+            active_tab = driver.find_element_by_id('create_project_tab')
+            # NOTE: project name field is shared for all categories
+            workzone_entry = active_tab.find_element_by_id(
+                'create_project_%s_workzone_id' % sample_category)
+            workzone_entry.send_keys(sample_workzone)
+            proj_entry = active_tab.find_element_by_name(
+                'create_project_base_vgrid_name')
+            proj_entry.send_keys(sample_project)
+            state = '%s-filled' % nav_name.lower().replace(' ', '-')
+            if callbacks.get(state, None):
+                print "INFO: callback for: %s" % state
+                callbacks[state](driver, state)
 
-        # TODO: create button id collides with tab id - please fix in gdpman!
-        # create_button = driver.find_element_by_id('create')
-        # TODO: actually submit form to create project?
-        # create_button.click()
+            create_button = active_tab.find_element_by_id(
+                'create_project_button')
+            # TODO: actually submit form to create project?
+            # create_button.click()
+        except Exception, exc:
+            print "Warning: could not test %r tab: %s" % (nav_name, exc)
+
+        # Go to Invite project tab and invite a colleague to project
+        nav_name = "Invite Participant"
+        try:
+            navmenu = driver.find_element_by_id('project-tabs')
+            link = navmenu.find_element_by_link_text(nav_name)
+            # print "DEBUG: found %s link: %s" % (nav_name, link)
+            link.click()
+            # ajax_wait(driver, nav_name, "ui-progressbar")
+            active_tab = driver.find_element_by_id('invite_user_tab')
+            dropdown_container = active_tab.find_element_by_class_name(
+                'gm_select')
+            proj_dropdown = navmenu.find_element_by_name(
+                'invite_user_base_vgrid_name')
+            # NOTE: we expect first real project to match sample category
+            select_item_by_index(driver, proj_dropdown, 2)
+            # ajax_wait(driver, nav_name, "ui-progressbar")
+            active_tab = driver.find_element_by_id('invite_user_tab')
+            terms_checkbox = active_tab.find_element_by_id(
+                'invite_user_%s_user_terms' % sample_category)
+            terms_checkbox.click()
+            workzone_entry = active_tab.find_element_by_id(
+                'invite_user_%s_workzone_id' % sample_category)
+            # NOTE: user id field is shared for all categories
+            invite_entry = active_tab.find_element_by_name(
+                'invite_user_short_id')
+            for (label, email) in [('int', sample_int_part),
+                                   ('ext', sample_ext_part)]:
+                invite_entry.clear()
+                invite_entry.send_keys(email)
+                workzone_entry.clear()
+                workzone_entry.send_keys(sample_workzone)
+                state = '%s-%s-filled' % (
+                    nav_name.lower().replace(' ', '-'), label)
+                if callbacks.get(state, None):
+                    print "INFO: callback for: %s" % state
+                    callbacks[state](driver, state)
+
+                invite_button = active_tab.find_element_by_id(
+                    'invite_user_button')
+                # TODO: actually submit form to invite to project?
+                # invite_button.click()
+        except Exception, exc:
+            print "Warning: could not test %r tab: %s" % (nav_name, exc)
 
 
 def access_project_actions(driver, url, login, passwd, callbacks):
@@ -131,7 +188,8 @@ def access_project_actions(driver, url, login, passwd, callbacks):
     link.click()
     # ajax_wait(driver, nav_name, "ui-progressbar")
     dropdown_container = navmenu.find_element_by_class_name('gm_select')
-    proj_dropdown = navmenu.find_element_by_name('access_base_vgrid_name')
+    proj_dropdown = navmenu.find_element_by_name(
+        'access_project_base_vgrid_name')
     select_item_by_index(driver, proj_dropdown, 2)
     link = driver.find_element_by_link_text('Login')
     link.click()
@@ -656,8 +714,13 @@ def main():
     callback_targets += ['jupyter-ready', 'cloud-ready', 'people-ready',
                          'crontab-ready', 'datatransfer-ready',
                          'sharelink-ready']
-    callback_targets += ['access-project-ready', 'create-project-ready',
-                         'create-project-filled', 'accept-invitation-ready',
+    callback_targets += ['access-project-ready', 'project-info-ready',
+                         'create-project-ready', 'create-project-filled',
+                         'invite-participant-ready',
+                         'invite-participant-int-filled',
+                         'invite-participant-ext-filled',
+                         'accept-invitation-ready',
+                         'remove-participant-ready',
                          'two-factor-auth-ready']
     for name in callback_targets:
         action_calls[name] = lambda driver, name: save_screen(
@@ -725,6 +788,12 @@ def main():
     except Exception as exc:
         print "Unexpected exception: %s" % exc
         print traceback.format_exc()
+
+    # Needed to clean up e.g. rust_mozprofile.* tmp dirs
+    try:
+        driver.quit()
+    except Exception as exc:
+        print "Unexpected exception in quit: %s" % exc
 
 
 if __name__ == "__main__":
