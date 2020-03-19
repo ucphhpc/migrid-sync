@@ -253,13 +253,13 @@ def html_tmpl(
         <div id='project-tabs'>
         <ul class='fillwidth padspace'>"""
     if accepted_projects:
-        html += """<li><a href='#access'>Access Project</a></li>"""
+        html += """<li><a href='#access_project'>Access Project</a></li>"""
         tab_count += 1
     if info_projects:
-        html += """<li><a href='#info'>Project Info</a></li>"""
+        html += """<li><a href='#project_info'>Project Info</a></li>"""
         tab_count += 1
     if create_projects:
-        html += """<li><a href='#create'>Create Project</a></li>"""
+        html += """<li><a href='#create_project'>Create Project</a></li>"""
         if action == 'create':
             preselected_tab = tab_count
         tab_count += 1
@@ -279,12 +279,12 @@ def html_tmpl(
             preselected_tab = tab_count
         tab_count += 1
     if await_projects:
-        html += """<li><a href='#await'>Await Invitation</a></li>"""
+        html += """<li><a href='#await_project'>Await Invitation</a></li>"""
         if action == 'await':
             preselected_tab = tab_count
         tab_count += 1
     if configuration.site_enable_twofactor:
-        html += """<li><a href='#twofactor'>Two-Factor Auth</a></li>"""
+        html += """<li><a href='#twofactor_auth'>Two-Factor Auth</a></li>"""
         if action == 'twofactor':
             preselected_tab = tab_count
         tab_count += 1
@@ -319,7 +319,7 @@ def html_tmpl(
     if accepted_projects:
         html += \
             """
-        <div id='access'>"""
+        <div id='access_project'>"""
         html += status_html
         html += \
             """
@@ -369,7 +369,7 @@ def html_tmpl(
     if info_projects:
         html += \
             """
-        <div id='info'>"""
+        <div id='project_info'>"""
         html += status_html
         html += \
             """
@@ -604,7 +604,7 @@ def html_tmpl(
 
     if create_projects:
         html += """
-        <div id='create'>"""
+        <div id='create_project'>"""
         html += status_html
         html += """
         <table class='gm_projects_table' style='border-spacing=0;'>
@@ -740,7 +740,7 @@ def html_tmpl(
     if await_projects:
         html += \
             """
-        <div id='await'>"""
+        <div id='await_project'>"""
         html += status_html
         html +=  \
             """
@@ -780,7 +780,7 @@ def html_tmpl(
 
         html += \
             """
-        <div id='twofactor'>
+        <div id='twofactor_auth'>
             """
         html += """
         <table class='gm_projects_table' style='border-spacing=0;'>
