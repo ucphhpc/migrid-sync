@@ -74,7 +74,7 @@ from shared.base import force_utf8
 from shared.cmdapi import parse_command_args
 from shared.conf import get_configuration_object
 from shared.defaults import valid_trigger_changes, workflows_log_name, \
-    workflows_log_size, workflows_log_cnt, csrf_field
+    workflows_log_size, workflows_log_cnt, csrf_field, default_vgrid
 from shared.events import get_path_expand_map
 from shared.fileio import makedirs_rec, pickle, unpickle
 from shared.handlers import get_csrf_limit, make_csrf_token
@@ -938,14 +938,14 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                                                    event, rule, jobid)
 
                         # update vgrid workflow jobs list
-                        for vgrid in vgrid_list:
-                            if vgrid != default_vgrid:
-                                job_queue_entry = {
-                                    JOB_ID: job_id,
-                                    JOB_CLIENT: client_id
-                                }
-                                vgrid_add_workflow_jobs(configuration, vgrid,
-                                                        [job_queue_entry])
+                        vgrid = rule['vgrid_name']
+                        if vgrid != default_vgrid:
+                            job_queue_entry = {
+                                JOB_ID: jobid,
+                                JOB_CLIENT: rule['run_as']
+                            }
+                            vgrid_add_workflow_jobs(configuration, vgrid,
+                                                    [job_queue_entry])
 
                         logger.info('(%s) submitted job for %s: %s'
                                     % (pid, target_path, msg))
