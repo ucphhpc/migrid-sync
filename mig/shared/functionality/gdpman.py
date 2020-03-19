@@ -127,26 +127,26 @@ def html_category_fields(configuration, action):
 </span>""" % ref_fill
 
             fields += """
-        <tr class='%(action)s %(category_id)s_section category_section %(hidden)s'>
+        <tr class='%(action)s ref_title %(category_id)s_section category_section %(hidden)s'>
             <td>
             %(ref_name)s: %(ref_help_html)s<br/>
             </td>
         </tr>
-        <tr class='%(action)s %(category_id)s_section category_section %(hidden)s'>
+        <tr class='%(action)s ref_value %(category_id)s_section category_section %(hidden)s'>
             <td>
             <div class='ref_field'>
             """ % ref_fill
             if ref_fill.get('ref_type', 'text') == "checkbox":
                 fields += """
                 <!-- NOTE: make a checkbox with ref_id and name -->
-                <input id='%(action)s_%(ref_id)s' class='%(category_id)s_ref category_ref'
+                <input id='%(action)s_%(category_id)s_%(ref_id)s' class='%(category_id)s_ref category_ref'
                     name='%(action)s_%(ref_id)s' required title='%(ref_help)s'
                     type='checkbox' /> %(ref_text)s
                 """ % ref_fill
             else:
                 fields += """
             <!-- NOTE: keep a single field for ref with ref_id in name -->
-            <input id='%(action)s_%(ref_id)s' class='%(category_id)s_ref category_ref'
+            <input id='%(action)s_%(category_id)s_%(ref_id)s' class='%(category_id)s_ref category_ref'
                 name='%(action)s_%(ref_id)s' required pattern='%(ref_pattern)s'
                 placeholder='%(ref_name)s' title='%(ref_help)s'
                 type='text' size='30' />
@@ -664,26 +664,26 @@ def html_tmpl(
     </span>""" % ref_fill
 
                 ref_html += """
-            <tr class='create_project %(category_id)s_section category_section %(hidden)s'>
+            <tr class='create_project ref_title %(category_id)s_section category_section %(hidden)s'>
                 <td>
                 %(ref_name)s: %(ref_help_html)s<br/>
                 </td>
             </tr>
-            <tr class='create_project %(category_id)s_section category_section %(hidden)s'>
+            <tr class='create_project ref_value %(category_id)s_section category_section %(hidden)s'>
                 <td>
                 <div class='ref_field'>
                 """ % ref_fill
                 if ref_fill.get('ref_type', 'text') == "checkbox":
                     ref_html += """
                 <!-- NOTE: make a checkbox with ref_id and name -->
-                <input id='create_project_%(ref_id)s' class='%(category_id)s_ref category_ref'
+                <input id='create_project_%(category_id)s_%(ref_id)s' class='%(category_id)s_ref category_ref'
                     name='create_project_%(ref_id)s' required title='%(ref_help)s'
                     type='checkbox' /> %(ref_text)s
                 """ % ref_fill
                 else:
                     ref_html += """
                 <!-- NOTE: keep a single field for ref with ref_id in name -->
-                <input id='create_project_%(ref_id)s' class='%(category_id)s_ref category_ref'
+                <input id='create_project_%(category_id)s_%(ref_id)s' class='%(category_id)s_ref category_ref'
                     name='create_project_%(ref_id)s' required pattern='%(ref_pattern)s'
                     placeholder='%(ref_name)s' title='%(ref_help)s'
                     type='text' size='30' />
