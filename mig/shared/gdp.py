@@ -771,13 +771,22 @@ def __send_project_action_confirmation(configuration,
     # Send project action mail
 
     if status:
-        recipients = login
+        mail_fill = {'short_title': configuration.short_title, 'action':
+                     action, 'project_name': project_name}
+        recipients = "%s" % login
         for admin in notify:
-            recipients = '%s, %s %s' % (recipients, admin['name'],
-                                        admin['email'])
-        subject = "%s project %s: %r" % (configuration.short_title, action,
-                                         project_name)
-        message = ''
+            recipients += ', %s %s' % (admin['name'], admin['email'])
+        mail_fill['recipients'] = recipients
+
+        subject = "%(short_title)s project %(action)s: %(project_name)r" % \
+                  mail_fill
+        message = """*** IMPORTANT: direct replies to this automated message will NOT be read! ***
+
+This message from %(short_title)s is sent to %(recipients)s
+in reaction to the %(action)s for %(project_name)s .
+
+Attached you'll find the details registered in relation to the operation.
+        """ % mail_fill
         status = send_email(
             recipients,
             subject,
