@@ -885,6 +885,15 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         WRITELOGMESSAGE(LOG_INFO,
                         "Ignoring empty pbkdf digest file: %s\n",
                         auth_filename);
+#ifdef ENABLE_AUTHHANDLER
+        if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
+                                          | MIG_AUTHTYPE_PASSWORD
+                                          | MIG_AUTHTYPE_DISABLED,
+                                          pUsername, pAddress, pSecret)) {
+            WRITELOGMESSAGE(LOG_WARNING,
+                            "MiG registered successful auth despite NOT PAM_SUCCESS");
+        }
+#endif                          /* ENABLE_AUTHHANDLER */
         return pam_sm_authenticate_exit(PAM_AUTH_ERR);
     }
 
