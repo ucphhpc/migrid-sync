@@ -89,6 +89,8 @@ def fill_category(configuration, category_id, action, ref_dict):
     for ref_fill in category_dict.get('references', {}).get(action, []):
         key = ref_fill['ref_id']
         if not ref_dict.has_key(key):
+            _logger.error('no %s %s value in ref dict: %s' %
+                          (category_id, key, ref_dict))
             raise ValueError('no %s value' % key)
         ref_fill['value'] = ref_dict[key]
     _logger.debug('filled %s dict: %s' % (category_id, category_dict))
@@ -1056,7 +1058,7 @@ def js_tmpl_parts(configuration, csrf_token):
         var valid_fields = true;
         $('#gm_project_form .'+category_name+'_section.'+project_action+' input:enabled').each(
                 function() {
-                    var ref_id = $(this).attr('id').replace(project_action+'_', '');
+                    var ref_id = $(this).attr('id').replace(project_action+'_').replace(category_name+'_', '');
                     var ref_val = $(this).val();
                     //console.debug('checking: '+ref_id+': '+ref_val);
                     var valid_value = $(this)[0].checkValidity();
@@ -1081,7 +1083,7 @@ def js_tmpl_parts(configuration, csrf_token):
             function() {
                 var ref_id, ref_val, field;
                 if ($(this).val() !== '') {
-                    ref_id = $(this).attr('id').replace(project_action+'_', '');
+                    ref_id = $(this).attr('id').replace(project_action+'_', '').replace(category_name+'_', '');
                     ref_val = $(this).val();
                     //console.debug('set '+ref_id+': '+ref_val);
                     /* NOTE: add ref input fields dynamically */
@@ -1517,6 +1519,7 @@ Please contact the site admins %s if you think it should be enabled.
                     status = False
                     msg = "missing reference: %s" % err
 
+            if status:
                 (status, msg) = project_accept_user(configuration, client_addr,
                                                     client_id, base_vgrid_name,
                                                     category_entry)
@@ -1570,6 +1573,7 @@ Please contact the site admins %s if you think it should be enabled.
                     status = False
                     msg = "missing reference: %s" % err
 
+            if status:
                 invite_client_id = gdp_users[username]
                 (status, msg) = project_invite_user(configuration,
                                                     client_addr,
@@ -1620,6 +1624,7 @@ Please contact the site admins %s if you think it should be enabled.
                     status = False
                     msg = "missing reference: %s" % err
 
+            if status:
                 remove_client_id = gdp_users[username]
                 (status, msg) = project_remove_user(configuration,
                                                     client_addr,
