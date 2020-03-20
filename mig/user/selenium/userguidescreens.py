@@ -80,6 +80,7 @@ def management_actions(driver, url, login, passwd, callbacks):
                    "Invite Participant",
                    "Accept Invitation",
                    "Remove Participant",
+                   "Await Invitation",
                    "Two-Factor Auth"]
     sample_category = "personal_data"
     sample_workzone = "123-4567/00-1234",
@@ -721,6 +722,7 @@ def main():
                          'invite-participant-ext-filled',
                          'accept-invitation-ready',
                          'remove-participant-ready',
+                         'await-invitation',
                          'two-factor-auth-ready']
     for name in callback_targets:
         action_calls[name] = lambda driver, name: save_screen(
