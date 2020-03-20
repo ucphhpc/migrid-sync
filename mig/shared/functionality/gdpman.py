@@ -1058,7 +1058,7 @@ def js_tmpl_parts(configuration, csrf_token):
         var valid_fields = true;
         $('#gm_project_form .'+category_name+'_section.'+project_action+' input:enabled').each(
                 function() {
-                    var ref_id = $(this).attr('id').replace(project_action+'_').replace(category_name+'_', '');
+                    var ref_id = $(this).attr('id').replace(project_action+'_', '').replace(category_name+'_', '');
                     var ref_val = $(this).val();
                     //console.debug('checking: '+ref_id+': '+ref_val);
                     var valid_value = $(this)[0].checkValidity();
