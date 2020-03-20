@@ -30,7 +30,7 @@ tools and a Python interpreter with a few external modules.
 -Apache proxy module (http://httpd.apache.org/docs/current/mod/mod_proxy.html)
 -Apache Rewrite module (http://httpd.apache.org/docs/current/mod/mod_rewrite.html)
 -OpenSSH clients (https://www.openssh.org/)
--Python 2.6 or later but not 3.x (https://www.python.org/)
+-Python 2.7 or later but not 3.x (https://www.python.org/)
 
 Optional file synchronization, WSGI interface, OpenID login, instant
 messaging service, efficient file access services, event handler
@@ -55,6 +55,7 @@ the following additional software:
 -Python PDFKit module (https://github.com/Martin-Rehr/python-pdfkit/)
 -Python xvfb module (https://pypi.python.org/pypi/xvfbwrapper/)
 -Python OTP (https://pypi.org/project/pyotp/)
+-Python OpenStackClient (https://pypi.org/project/openstackclient)
 -Python pyyaml (https://pypi.org/pyyaml/)
 -Python nbformat (https://pypi.org/project/nbformat/)
 -Python more-itertools (https://pypi.org/project/more-itertools/5.0.0/)
@@ -160,7 +161,7 @@ The optional grid_openid daemon requires the openid module in a recent
 version, so it is easiest to install it with pip as mentioned above.
 
 The optional grid_events daemon requires the watchdog and scandir modules
- which may be installed with:
+which may be installed with:
 sudo pip install watchdog scandir
 it is likely that the inotify default settings are too low to handle any
 serious number of vgrid shares so you may have to additionally tune the sysctl
@@ -205,6 +206,10 @@ missing on the system.
 The optional PyOTP module used for 2-factor authentication is not
 necessarily recent in distributions but then readily available with pip:
 sudo pip install pyotp
+
+The optional cloud integration relies on the Python openstackclient package for
+communicating with the associated OpenStack provider and it is installed with:
+sudo pip install openstackclient
 
 The optional country code validation in certificate and OpenID account 
 request backends requires the iso3166 module which may be installed with:
@@ -303,14 +308,22 @@ settings:
 --destination_suffix=DESTINATION_SUFFIX
 --base_fqdn=BASE_FQDN
 --public_fqdn=PUBLIC_FQDN
+--public_alias_fqdn=PUBLIC_ALIAS_FQDN
 --mig_cert_fqdn=MIG_CERT_FQDN
 --ext_cert_fqdn=EXT_CERT_FQDN
 --mig_oid_fqdn=MIG_OID_FQDN
 --ext_oid_fqdn=EXT_OID_FQDN
 --sid_fqdn=SID_FQDN
 --io_fqdn=IO_FQDN
---jupyter_hosts=JUPYTER_HOSTS
---jupyter_base_url=JUPYTER_BASE_URL
+--seafile_fqdn=SEAFILE_FQDN
+--seafile_base=SEAFILE_BASE
+--seafmedia_base=SEAFMEDIA_BASE
+--seafhttp_base=SEAFHTTP_BASE
+--jupyter_services=JUPYTER_SERVICES
+--jupyter_services_desc=JUPYTER_SERVICES_DESC
+--cloud_fqdn=CLOUD_FQDN
+--cloud_services=CLOUD_SERVICES
+--cloud_services_desc=CLOUD_SERVICES_DESC
 --user=USER
 --group=GROUP
 --apache_version=APACHE_VERSION
@@ -322,34 +335,6 @@ settings:
 --mig_code=MIG_CODE
 --mig_state=MIG_STATE
 --mig_certs=MIG_CERTS
---enable_sftp=ENABLE_SFTP
---enable_sftp_subsys=ENABLE_SFTP_SUBSYS
---enable_davs=ENABLE_DAVS
---enable_ftps=ENABLE_FTPS
---enable_wsgi=ENABLE_WSGI
---wsgi_procs=WSGI_PROCS
---enable_jobs=ENABLE_JOBS
---enable_resources=ENABLE_RESOURCES
---enable_events=ENABLE_EVENTS
---enable_sharelinks=ENABLE_SHARELINKS
---enable_transfers=ENABLE_TRANSFERS
---enable_freeze=ENABLE_FREEZE
---enable_sandboxes=ENABLE_SANDBOXES
---enable_vmachines=ENABLE_VMACHINES
---enable_preview=ENABLE_PREVIEW
---enable_jupyter=ENABLE_JUPYTER
---enable_gdp=ENABLE_GDP
---enable_hsts=ENABLE_HSTS
---enable_vhost_certs=ENABLE_VHOST_CERTS
---enable_verify_certs=ENABLE_VERIFY_CERTS
---enable_seafile=ENABLE_SEAFILE
---enable_duplicati=ENABLE_DUPLICATI
---enable_crontab=ENABLE_CRONTAB
---enable_imnotify=ENABLE_IMNOTIFY
---enable_dev_accounts=ENABLE_DEV_ACCOUNTS
---enable_twofactor=ENABLE_TWOFACTOR
---enable_cracklib=ENABLE_CRACKLIB
---enable_openid=ENABLE_OPENID
 --mig_oid_provider=MIG_OID_PROVIDER
 --ext_oid_provider=EXT_OID_PROVIDER
 --dhparams_path=DHPARAMS_PATH
@@ -359,16 +344,12 @@ settings:
 --alias_field=ALIAS_FIELD
 --signup_methods=SIGNUP_METHODS
 --login_methods=LOGIN_METHODS
+--csrf_protection=CSRF_PROTECTION
+--password_policy=PASSWORD_POLICY
 --hg_path=HG_PATH
 --hgweb_scripts=HGWEB_SCRIPTS
 --trac_admin_path=TRAC_ADMIN_PATH
 --trac_ini_path=TRAC_INI_PATH
---public_port=PUBLIC_PORT
---mig_cert_port=MIG_CERT_PORT
---ext_cert_port=EXT_CERT_PORT
---mig_oid_port=MIG_OID_PORT
---ext_oid_port=EXT_OID_PORT
---sid_port=SID_PORT
 --user_clause=USER_CLAUSE
 --group_clause=GROUP_CLAUSE
 --listen_clause=LISTEN_CLAUSE
@@ -376,6 +357,69 @@ settings:
 --distro=DISTRO
 --landing_page=LANDING_PAGE
 --skin=SKIN
+--short_title=SHORT_TITLE
+--secscan_addr=SECSCAN_ADDR
+--user_interface=USER_INTERFACE
+--vgrid_label=VGRID_LABEL
+--apache_worker_procs=APACHE_WORKER_PROCS
+--sftp_subsys_auth_procs=SFTP_SUBSYS_AUTH_PROCS
+--wsgi_procs=WSGI_PROCS
+--public_port=PUBLIC_PORT
+--public_alias_port=PUBLIC_ALIAS_PORT
+--mig_cert_port=MIG_CERT_PORT
+--ext_cert_port=EXT_CERT_PORT
+--mig_oid_port=MIG_OID_PORT
+--ext_oid_port=EXT_OID_PORT
+--sid_port=SID_PORT
+--sftp_port=SFTP_PORT
+--sftp_show_port=SFTP_SHOW_PORT
+--sftp_subsys_port=SFTP_SUBSYS_PORT
+--sftp_subsys_show_port=SFTP_SUBSYS_SHOW_PORT
+--davs_port=DAVS_PORT
+--davs_show_port=DAVS_SHOW_PORT
+--ftps_ctrl_port=FTPS_CTRL_PORT
+--ftps_ctrl_show_port=FTPS_CTRL_SHOW_PORT
+--openid_port=OPENID_PORT
+--openid_show_port=OPENID_SHOW_PORT
+--seafile_seahub_port=SEAFILE_SEAHUB_PORT
+--seafile_seafhttp_port=SEAFILE_SEAFHTTP_PORT
+--seafile_client_port=SEAFILE_CLIENT_PORT
+--seafile_quota=SEAFILE_QUOTA
+--enable_sftp=ENABLE_SFTP
+--enable_sftp_subsys=ENABLE_SFTP_SUBSYS
+--enable_davs=ENABLE_DAVS
+--enable_ftps=ENABLE_FTPS
+--enable_wsgi=ENABLE_WSGI
+--enable_jobs=ENABLE_JOBS
+--enable_resources=ENABLE_RESOURCES
+--enable_workflows=ENABLE_WORKFLOWS
+--enable_events=ENABLE_EVENTS
+--enable_sharelinks=ENABLE_SHARELINKS
+--enable_transfers=ENABLE_TRANSFERS
+--enable_freeze=ENABLE_FREEZE
+--enable_sandboxes=ENABLE_SANDBOXES
+--enable_vmachines=ENABLE_VMACHINES
+--enable_preview=ENABLE_PREVIEW
+--enable_jupyter=ENABLE_JUPYTER
+--enable_cloud=ENABLE_CLOUD
+--enable_gdp=ENABLE_GDP
+--enable_hsts=ENABLE_HSTS
+--enable_vhost_certs=ENABLE_VHOST_CERTS
+--enable_verify_certs=ENABLE_VERIFY_CERTS
+--enable_seafile=ENABLE_SEAFILE
+--enable_duplicati=ENABLE_DUPLICATI
+--enable_crontab=ENABLE_CRONTAB
+--enable_notify=ENABLE_NOTIFY
+--enable_imnotify=ENABLE_IMNOTIFY
+--enable_dev_accounts=ENABLE_DEV_ACCOUNTS
+--enable_twofactor=ENABLE_TWOFACTOR
+--enable_twofactor_strict_address=ENABLE_TWOFACTOR_STRICT_ADDRESS
+--enable_cracklib=ENABLE_CRACKLIB
+--enable_openid=ENABLE_OPENID
+--enable_gravatars=ENABLE_GRAVATARS
+--enable_sitestatus=ENABLE_SITESTATUS
+--daemon_pubkey_from_dns=DAEMON_PUBKEY_FROM_DNS
+--seafile_ro_access=SEAFILE_RO_ACCESS
 
 For one of our servers running MiG as the 'mig' user with the code
 checked out directly in the home directory and Debian apache 2.4 without OpenID:
@@ -524,7 +568,7 @@ optimized SFTP, Seafile integration and OpenID login:
                    --skin=erda-ucph-science --short_title=ERDA \
                    --vgrid_label=Workgroup --wsgi_procs=25
                    
-and the same with added Jupyter integration and optional 2FA support:
+and the same with added Jupyter+cloud integration and optional 2FA support:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --destination_suffix="_svn$(svnversion -n ~/)" \
                    --base_fqdn=erda.dk \
@@ -568,7 +612,7 @@ and the same with added Jupyter integration and optional 2FA support:
                    --enable_notify=True --enable_jupyter=True \
                    --jupyter_services='DAG.http://dag002.science DAG.http://dag003.science DAG.http://dag004.science DAG.http://dag005.science DAG.http://dag006.science DAG.http://dag007.science MODI.http://130.225.104.214' \
                    --jupyter_services_desc="{'DAG': '/home/mig/state/wwwpublic/dag_desc.html', 'MODI': '/home/mig/state/wwwpublic/modi_desc.html'}" \
-                   --user_clause=User --group_clause=Group \
+                   --enable_cloud=True --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='#ServerAlias' --alias_field=email \
                    --dhparams_path=~/certs/dhparams.pem \
@@ -809,23 +853,34 @@ details.
 
 == Adding users ==
 You need a either an OpenID login or a MiG certificate+key to fully
-interact with any MiG server as a user. If you don't want to set up your
-on Certificate Authority (CA) you can use e.g. our certificates.
+interact with any MiG server as a user. 
+
+For local username+password logins you can run the built-in OpenID service and
+have users register there (https://SERVER/cgi-sid/reqoid.py) to combine login
+and account creation.
+You can also configure login with any similar remote OpenID-2.0 service as long
+as it offers the required information for sign up and login. We do that to ease
+user management on a number of sites with the automatic signup backend
+(https://SERVER/wsgi-bin/autocreate.py).
+
+If you want certificate login but don't want to set up your own Certificate
+Authority (CA) you might be able to use e.g. our certificates.
 Please use the certificate request link from http://www.migrid.org if
 you haven't got a certificate yet.
 
 If you run your own CA you can simply use the certificate request
-mechanism included in MiG (https://server/cgi-sid/reqcert.py) to combine
+mechanism included in MiG (https://SERVER/cgi-sid/reqcert.py) to combine
 certificate and user creation. Certificate requests will automatically
 result in an email with full certificate and MiG user creation
 instructions to the configured MiG admins. 
-
 Otherwise you can use the external certificate sign up request mechanism
-included in MiG (https://server/cgi-sid/extcert.py) or simply run the
-MiG user creation commands directly as described below.
+included in MiG (https://SERVER/cgi-sid/extcert.py).
 
-To manually add a user to your MiG server you need to look up the certificate
-fields and run the createuser script:
+Finally you can simple run the MiG user creation or import commands directly as
+described below.
+
+To manually add a user to your MiG server you need to have the account fields
+at hand and run the createuser script:
 
 cd ~/mig/server
 ./createuser.py
@@ -834,7 +889,8 @@ You will be prompted for user details one by one before the user is
 added to the local MiG user database. Any user added to this database
 can access your MiG server and manage his/her MiG jobs and files. The
 user must present a MiG certificate with the exact same Distinguished Name
-to get access, however. If you do not use the MiG CA or another CA with
+or login through OpenID with the associated ID to get access, however. If you
+do not use the MiG CA or another CA with
 the same Distinguished Name format
 (/C=.*/ST=.*/O=.*/CN=.*/emailAddress=.*) you have to supply the -i DN
 option for the user to work.
@@ -861,10 +917,22 @@ User Jonas Bardino was successfully added to user DB!
 DB entry and dirs for Jonas Bardino were created or updated
 
 My MiG certificate with Full Name Jonas Bardino and so on will now give
-me access to this development server.
-
-You can find the field details using openssl or by viewing the
+me access to this development server and any others where the MiG CA is
+configured.
+You can find the certificate field details using openssl or by viewing the
 certificate imported in a browser.
+
+Users can also be mass created e.g. from a csv file with our importusers helper:
+cd ~/mig/server
+python parsecsvusers.py add-users.csv > add-users.list
+./importusers.py -v -p AUTO add-users.list
+
+The csv file must have a header line to specify the field layout and then one
+line per user using that layout. It could look something like this:
+### full_name;organization;email;country
+Jonas Bardino;NBI;bardino@nbi.ku.dk;DK
+Martin Garrigues Rehr;NBI;rehr@nbi.ku.dk;DK
+...
 
 
 == Adding resources ==
@@ -882,6 +950,12 @@ echo SHUTDOWN >> /path/to/server.stdin
 
 To completely stop MiG you need to stop all the MiG daemons and the
 apache server.
+
+We provide migrid service scripts for easy integration on the common Linux
+distributions. In that way management of the services is just a matter of
+sudo service migrid ACTION
+and individual daemons can be controlled with: 
+sudo service migrid ACTIONdaemon DAEMON 
 
 
 = Uninstalling MiG =
