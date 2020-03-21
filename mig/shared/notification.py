@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # notification - instant message and email notification helpers
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,11 +34,18 @@ import smtplib
 import threading
 import time
 from email import Encoders
+from email.message import Message
 from email.MIMEBase import MIMEBase
 from email.MIMEMultipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.Utils import formatdate
 from urllib import quote
+
+# Optional gnupg support - delay any error until use
+try:
+    import gnupg
+except ImportError, ierr:
+    gnupg = None
 
 from shared.base import force_utf8, generate_https_urls, extract_field
 from shared.defaults import email_keyword_list, job_output_dir, \
@@ -430,8 +437,18 @@ def send_email(
     spam-filtered because of failed SPF checks.
     If the configuration does not set smtp_send_as_user custom_sender will only
     be used as the Reply-To address which is still convenient when users send out
-    invitations and trigger various requests that may receive manual replies. 
+    invitations and trigger various requests that may receive manual replies.
+    If gnupg is available and configuration sets a gpg_passphrase it is used to
+    enable automatic gpg-signing of outgoing messages.
     """
+
+    gpg_sign = False
+    if configuration.site_gpg_passphrase is not None:
+        if gnupg is None:
+            logger.warning("the gnupg module is required for gpg signing")
+        else:
+            gpg_sign = True
+            logger.debug("enabling automatic gpg signing of email")
 
     if recipients.find(', ') > -1:
         recipients_list = recipients.split(', ')
@@ -449,14 +466,33 @@ def send_email(
             reply_to_email = custom_sender
 
     try:
-        mime_msg = MIMEMultipart()
+        if gpg_sign:
+            mime_msg = MIMEMultipart(_subtype="signed", micalg="pgp-sha1",
+                                     protocol="application/pgp-signature")
+        else:
+            mime_msg = MIMEMultipart()
         mime_msg['From'] = from_email
         mime_msg['To'] = recipients
         if reply_to_email:
             mime_msg['Reply-To'] = reply_to_email
         mime_msg['Date'] = formatdate(localtime=True)
         mime_msg['Subject'] = subject
-        mime_msg.attach(MIMEText(force_utf8(message), "plain", "utf8"))
+        basemsg = MIMEText(force_utf8(message), "plain", "utf8")
+        mime_msg.attach(basemsg)
+        if gpg_sign:
+            logger.info("signing message with gpg")
+            gpg = gnupg.GPG()
+            basetext = basemsg.as_string().replace('\n', '\r\n')
+            signature = gpg.sign(basetext, detach=True,
+                                 passphrase=configuration.site_gpg_passphrase)
+            if signature:
+                msg_sig = Message()
+                msg_sig['Content-Type'] = 'application/pgp-signature; name="signature.asc"'
+                msg_sig['Content-Description'] = 'OpenPGP digital signature'
+                msg_sig.set_payload(str(signature))
+                mime_msg.attach(msg_sig)
+            else:
+                logger.warning("failed to create gnupg signature")
 
         for name in files:
             part = MIMEBase('application', "octet-stream")

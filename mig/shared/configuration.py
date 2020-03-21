@@ -1759,6 +1759,11 @@ location.""" % self.config_file
             except:
                 raise ValueError("Invalid password_salt value: %s" % salt)
 
+        if config.has_option('SITE', 'gpg_passphrase'):
+            self.site_gpg_passphrase = config.get('SITE', 'gpg_passphrase')
+        else:
+            self.site_gpg_passphrase = None
+
         if config.has_option('SITE', 'swrepo_url'):
             self.site_swrepo_url = config.get('SITE', 'swrepo_url')
         else:
