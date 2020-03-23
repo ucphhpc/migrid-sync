@@ -41,7 +41,8 @@ from shared.safeinput import REJECT_UNSET, valid_workflow_pers_id, \
     valid_workflow_vgrid, valid_workflow_name, valid_workflow_input_file, \
     valid_workflow_input_paths, valid_workflow_output, valid_workflow_recipes,\
     valid_workflow_variables, valid_workflow_attributes, valid_workflow_type, \
-    valid_workflow_operation, valid_sid, validated_input, html_escape
+    valid_workflow_operation, valid_sid, validated_input, html_escape, \
+    valid_workflow_param_over
 from shared.workflows import WORKFLOW_TYPES, WORKFLOW_CONSTRUCT_TYPES, \
     WORKFLOW_PATTERN, valid_session_id, get_workflow_with,\
     load_workflow_sessions_db, create_workflow, delete_workflow,\
@@ -114,7 +115,7 @@ WORKFLOW_ATTRIBUTES_TYPE_MAP = {
     'output': valid_workflow_output,
     'recipes': valid_workflow_recipes,
     'variables': valid_workflow_variables,
-    'parameterize_over': valid_workflow_variables
+    'parameterize_over': valid_workflow_param_over
 }
 
 
@@ -359,8 +360,8 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     workflow_type = accepted.pop('type', [None])[0]
-    operation = accepted.pop('operation', None)
-    workflow_session_id = accepted.pop('workflowsessionid', None)
+    operation = accepted.pop('operation', None)[0]
+    workflow_session_id = accepted.pop('workflowsessionid', None)[0]
     workflow_attributes = {}
     for key, value in accepted.items():
         if key in json_data['attributes']:

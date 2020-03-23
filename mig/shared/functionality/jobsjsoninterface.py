@@ -411,8 +411,8 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     job_type = accepted.pop('type', [None])[0]
-    operation = accepted.pop('operation', None)
-    workflow_session_id = accepted.pop('workflowsessionid', None)
+    operation = accepted.pop('operation', None)[0]
+    workflow_session_id = accepted.pop('workflowsessionid', None)[0]
     job_attributes = {}
     for key, value in accepted.items():
         if key in json_data['attributes']:
@@ -452,10 +452,11 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     workflow_session = workflow_sessions_db.get(workflow_session_id)
+    owner = workflow_session['owner']
 
     if 'vgrid' not in job_attributes:
         logger.info("Invalid json job interaction. user '%s' does not specify "
-                    "a vgrid in '%s'" % (client_id, job_attributes.keys()))
+                    "a vgrid in '%s'" % (owner, job_attributes.keys()))
         msg = "Cannot create new job without specifying a VGrid for it to be " \
               "attached to. "
         output_objects.append({'object_type': 'error_text',
@@ -464,11 +465,10 @@ def main(client_id, user_arguments_dict):
     vgrid = job_attributes['vgrid']
 
     # User is vgrid owner or member
-    success, msg, _ = init_vgrid_script_list(vgrid, client_id,
-                                             configuration)
+    success, msg, _ = init_vgrid_script_list(vgrid, owner, configuration)
     if not success:
         logger.error("Illegal access attempt by user '%s' to vgrid '%s'. %s"
-                     % (client_id, vgrid, msg))
+                     % (owner, vgrid, msg))
         output_objects.append({'object_type': 'error_text',
                                'text': msg})
         return (output_objects, returnvalues.CLIENT_ERROR)

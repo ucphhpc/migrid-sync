@@ -59,6 +59,16 @@ VALID_WORKFLOW_ATTRIBUTES = [
     'parameterize_over'
 ]
 
+PARAM_START = 'start'
+PARAM_STOP = 'stop'
+PARAM_JUMP = 'increment'
+
+VALID_PARAM_OVER_ATTRIBUTES = [
+    PARAM_START,
+    PARAM_STOP,
+    PARAM_JUMP
+]
+
 VALID_JOB_ATTRIBUTES = [
     'job_id',
     'vgrid'
@@ -295,10 +305,10 @@ def valid_ascii(contents, min_length=0, max_length=-1, extra_chars=''):
     __valid_contents(contents, letters + extra_chars, min_length, max_length)
 
 
-def valid_numeric(contents, min_length=0, max_length=-1):
+def valid_numeric(contents, min_length=0, max_length=-1, extra_chars=''):
     """Verify that supplied contents only contain numeric characters"""
 
-    __valid_contents(contents, digits, min_length, max_length)
+    __valid_contents(contents, digits + extra_chars, min_length, max_length)
 
 
 def valid_alphanumeric(contents, min_length=0, max_length=-1, extra_chars=''):
@@ -936,10 +946,51 @@ def valid_workflow_variables(vars):
         raise InputException("Workflow attribute '%s' must "
                              "be of type: '%s'" % (vars, dict))
     for _key, _value in vars.items():
-        valid_alphanumeric(_key, extra_chars='_-{}')
+        valid_alphanumeric(_key, extra_chars='_-')
         # Essentially no validation since this is a python variable
         # value, don't evaluate this.
         valid_free_text(_value)
+
+
+def valid_workflow_param_over(params):
+    """Verify that supplied params dictionary only contains keys and values
+    that we consider valid.
+    """
+    if not isinstance(params, dict):
+        raise InputException("Workflow attribute '%s' must "
+                             "be of type: '%s'" % (params, dict))
+
+    for _name, _param in params.items():
+        valid_alphanumeric(_name, extra_chars='_-')
+
+        if not isinstance(_param, dict):
+            raise InputException("Workflow parameterize over attribute '%s' "
+                                 "must be of type: '%s'" % (_param, dict))
+
+        for _key, _value in _param.items():
+            if _key not in VALID_PARAM_OVER_ATTRIBUTES:
+                raise InputException(
+                    "Workflow attribute '%s' is illegal" % _key)
+
+        for _key in VALID_PARAM_OVER_ATTRIBUTES:
+            if _key not in _param:
+                raise InputException(
+                    "Workflow attribute '%s' is missing" % _key)
+
+            valid_numeric(_param[_key], extra_chars='-.', min_length=1)
+
+        # TODO expand this to allow more than just upwards loops
+        if not float(_param[PARAM_START]) < float(_param[PARAM_STOP]):
+            raise InputException(
+                "Cannot parameterise between start '%s' and  end '%s' as end "
+                "value is not bigger than the start value"
+                % (_param[PARAM_START], _param[PARAM_STOP]))
+
+        if not float(_param[PARAM_JUMP]) > 0:
+            raise InputException(
+                "Cannot parameterise with an increment of '%s'. Must be "
+                "positive and non-zero. " % _param[PARAM_JUMP]
+            )
 
 
 def valid_workflow_attributes(attributes):

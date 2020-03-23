@@ -2636,6 +2636,11 @@ def __create_task_parameter_file(configuration, vgrid, pattern,
     if input_file:
         parameter_dict.update({input_file: "ENV_WORKFLOW_INPUT_PATH"})
 
+    for var_name, param in pattern.get(
+            'parameterize_over', VALID_PATTERN['parameterize_over']).items():
+        if var_name != input_file:
+            parameter_dict[var_name] = "ENV_%s" % var_name
+
     for var_name, var_value \
             in pattern.get('variables', VALID_PATTERN['variables']).items():
         if var_name != input_file:

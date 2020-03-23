@@ -118,12 +118,18 @@ def fill_mrsl_template(
     rule,
     expand_map,
     configuration,
+    param_list=None
     ):
     """Generate a job description in mrsl_fd_or_path from the job_template,
     using the trigger details in the rule dictionary and the actual (relative)
     trigger_path of the file and what kind of change triggered the event.
     expand_map is a dictionary mapping variables to actual values.
     Please note that mrsl_fd_or_path may be a path or a file-like object.
+
+    Takes optional argument 'param', for workflow Pattern 'parameterize_over'
+    jobs. This 'param' is one combination of potentially muultiple parameters
+    the Pattern must sweep over. They are added here as environment variables
+    to avoid creating multiple parameter files.
     """
     logger = configuration.logger
     logger.debug("fill template based on trigger for %s : %s and rule %s" % \
@@ -137,21 +143,24 @@ def fill_mrsl_template(
 
     # If rule requires additional environment vars, add them to the job
     # definition here.
+    env_var_str = ''
     add_env_vars = rule.get('environment_vars', None)
     if add_env_vars:
-        env_var_str = ''
-        for env_var_key, env_var_val in add_env_vars.items():
-            env_var_str \
-                += "\n%s=%s" % (env_var_key, env_var_val)
-        env_key = '::ENVIRONMENT::'
+        for name, value in add_env_vars.items():
+            env_var_str += "\n%s=%s" % (name, value)
+
+    if param_list:
+        for name, value in param_list:
+            if name not in add_env_vars:
+                env_var_str += "\n%s=%s" % (name, value)
+
+    env_key = '::ENVIRONMENT::'
+    if env_var_str:
         if env_key in job_template:
             job_template = \
-                job_template[
-                :job_template.find(env_key) + len(env_key)] \
+                job_template[:job_template.find(env_key) + len(env_key)] \
                 + env_var_str \
-                + job_template[
-                  job_template.find(env_key) + len(
-                      env_key):]
+                + job_template[job_template.find(env_key) + len(env_key):]
         else:
             job_template += env_key + env_var_str
 

@@ -34,16 +34,19 @@ Requires watchdog module (https://pypi.python.org/pypi/watchdog).
 
 import fnmatch
 import glob
+import itertools
 import logging
 import logging.handlers
 import os
 import re
+import shutil
 import signal
 import sys
 import tempfile
 import time
 import threading
 import multiprocessing
+import numpy as np
 
 try:
     from watchdog.observers import Observer
@@ -80,10 +83,12 @@ from shared.fileio import makedirs_rec, pickle, unpickle
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.job import fill_mrsl_template, new_job
 from shared.logger import daemon_logger, register_hangup_handler
+from shared.safeinput import PARAM_START, PARAM_STOP, PARAM_JUMP
 from shared.serial import load
 from shared.vgrid import vgrid_valid_entities, vgrid_add_workflow_jobs, \
     JOB_ID, JOB_CLIENT
 from shared.vgridaccess import check_vgrid_access
+from shared.workflows import get_wp_map, CONF
 
 # Global trigger rule dictionaries with rules for all VGrids
 
@@ -905,56 +910,60 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                         'trigger %s event on %s' % (change, rel_path))
                     self.handle_event(fake)
         elif rule['action'] == 'submit':
-            mrsl_fd = tempfile.NamedTemporaryFile(delete=False)
-            mrsl_path = mrsl_fd.name
+            temp_dir = tempfile.mkdtemp()
 
             # Expand dynamic variables in argument once and for all
 
             expand_map = get_path_expand_map(rel_src, rule, state)
             try:
                 for job_template in rule['templates']:
-                    mrsl_fd.truncate(0)
+                    pattern_id = rule['pattern_id']
+                    pattern_map = get_wp_map(configuration).get(pattern_id, None)
 
-                    if not fill_mrsl_template(
-                        job_template,
-                        mrsl_fd,
-                        rel_src,
-                        state,
-                        rule,
-                        expand_map,
-                        configuration,
-                    ):
-                        raise Exception('fill template failed')
+                    if not pattern_map:
+                        raise Exception('(%s) pattern entry %s is missing'
+                                        % (pid, pattern_id))
 
-                    # logger.debug('(%s) filled template for %s in %s'
-                    #             % (pid, target_path, mrsl_path))
+                    pattern = pattern_map[CONF]
 
-                    (success, msg, jobid) = new_job(
-                        mrsl_path, rule['run_as'], configuration, False,
-                        returnjobid=True)
+                    # In cases where parameterize over is defined in a workflow
+                    # Pattern, many different  but related jobs will need to be
+                    # created.
+                    if pattern['parameterize_over']:
+                        all_values = []
+                        for var, sweep in pattern['parameterize_over'].items():
 
-                    if success:
-                        self.__add_trigger_job_ent(configuration,
-                                                   event, rule, jobid)
+                            start = float(sweep[PARAM_START])
+                            stop = float(sweep[PARAM_STOP])
+                            jump = float(sweep[PARAM_JUMP])
 
-                        # update vgrid workflow jobs list
-                        vgrid = rule['vgrid_name']
-                        if vgrid != default_vgrid:
-                            job_queue_entry = {
-                                JOB_ID: jobid,
-                                JOB_CLIENT: rule['run_as']
-                            }
-                            vgrid_add_workflow_jobs(configuration, vgrid,
-                                                    [job_queue_entry])
+                            values = np.arange(start, stop, jump).tolist()
 
-                        logger.info('(%s) submitted job for %s: %s'
-                                    % (pid, target_path, msg))
-                        self.__workflow_info(configuration,
-                                             rule['vgrid_name'],
-                                             'submitted job for %s: %s' %
-                                             (rel_src, msg))
+                            # Add on the ending value to the list, if the jump
+                            # from the last value is not too high. Could be
+                            # removed to make behaviour consistent with normal
+                            # loops
+                            if values and values[-1] + jump <= stop:
+                                values.append(stop)
+
+                            values = [(var, i) for i in values]
+
+                            all_values.append(values)
+
+                        job_params = []
+                        for element in itertools.product(*all_values):
+                            job_params.append(element)
+
+                        for job_param in job_params:
+                            self.__schedule_job(
+                                job_template, rel_src, state, rule, expand_map,
+                                pid, event, target_path, temp_dir,
+                                param=job_param)
                     else:
-                        raise Exception(msg)
+                        self.__schedule_job(
+                            job_template, rel_src, state, rule, expand_map,
+                            pid, event, target_path, temp_dir)
+
             except Exception, exc:
                 logger.error('(%s) failed to submit job(s) for %s: %s'
                              % (pid, target_path, exc))
@@ -962,7 +971,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                                     'failed to submit job for %s: %s'
                                     % (rel_src, exc))
             try:
-                os.remove(mrsl_path)
+                shutil.rmtree(temp_dir)
             except Exception, exc:
                 logger.warning('(%s) clean up after submit failed: %s'
                                % (pid, exc))
@@ -997,6 +1006,59 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         else:
             logger.error('(%s) unsupported action: %s' % (pid,
                                                           rule['action']))
+
+    def __schedule_job(self, job_template, rel_src, state, rule, expand_map,
+                       pid, event, target_path, temp_dir, param=None):
+        """Creates a new job from a triggered event by calling the mRSL file
+        creation, enqueueing the job, and updating the VGrid history.
+        Takes optional parameter 'param', used in workflow Patterns with the
+        'parameterize_over' variable. """
+
+        mrsl_fd = tempfile.NamedTemporaryFile(delete=False, dir=temp_dir)
+        mrsl_path = mrsl_fd.name
+
+        if not fill_mrsl_template(
+                job_template,
+                mrsl_fd,
+                rel_src,
+                state,
+                rule,
+                expand_map,
+                configuration,
+                param_list=param
+        ):
+            raise Exception('fill template failed')
+
+        # logger.debug('(%s) filled template for %s in %s'
+        #             % (pid, target_path, mrsl_path))
+
+        (success, msg, jobid) = new_job(
+            mrsl_path, rule['run_as'], configuration, False,
+            returnjobid=True)
+
+        if success:
+            self.__add_trigger_job_ent(configuration,
+                                       event, rule, jobid)
+
+            # update vgrid workflow jobs list
+            vgrid = rule['vgrid_name']
+            if vgrid != default_vgrid:
+                job_queue_entry = {
+                    JOB_ID: jobid,
+                    JOB_CLIENT: rule['run_as']
+                }
+                vgrid_add_workflow_jobs(configuration, vgrid,
+                                        [job_queue_entry])
+
+            logger.info('(%s) submitted job for %s: %s'
+                        % (pid, target_path, msg))
+            self.__workflow_info(configuration,
+                                 rule['vgrid_name'],
+                                 'submitted job for %s: %s' %
+                                 (rel_src, msg))
+
+        else:
+            raise Exception(msg)
 
     def __update_file_monitor(self, event):
         """Updates file monitor using the global dir_cache"""
