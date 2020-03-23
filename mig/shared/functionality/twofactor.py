@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # twofactor - handle two-factor authentication with per-user shared key
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -70,7 +70,8 @@ def query_args(environ):
 def main(client_id, user_arguments_dict, environ=None):
     """Main function used by front end"""
 
-    (configuration, logger, output_objects, op_name) = initialize_main_variables(
+    (configuration, logger, output_objects, op_name) = \
+        initialize_main_variables(
         client_id, op_header=False, op_title=False, op_menu=client_id)
 
     # Extract raw data first
@@ -98,6 +99,13 @@ def main(client_id, user_arguments_dict, environ=None):
     # logger.debug("User: %s executing %s with redirect url %s" %
     #             (client_id, op_name, redirect_url))
     # logger.debug("env: %s" % environ)
+
+    # IMPORTANT: no title in init above so we MUST call it immediately here
+    #            or basic styling will break on e.g. the check token result.
+    styles = themed_styles(configuration)
+    output_objects.append(
+        {'object_type': 'title', 'text': '2-Factor Authentication',
+         'skipmenu': True, 'style': styles})
 
     if not configuration.site_enable_twofactor:
         output_objects.append({'object_type': 'error_text', 'text':
@@ -186,10 +194,6 @@ def main(client_id, user_arguments_dict, environ=None):
                 configuration, client_id, b32_secret, token):
             logger.info('Accepted valid auth token from %s' % client_id)
         else:
-            styles = themed_styles(configuration)
-            output_objects.append(
-                {'object_type': 'title', 'text': '2-Factor Authentication',
-                 'skipmenu': True, 'style': styles})
             output_objects.append({'object_type': 'html_form', 'text':
                                    twofactor_token_html(configuration)})
             if token:
@@ -263,13 +267,11 @@ def main(client_id, user_arguments_dict, environ=None):
         output_objects.append({'object_type': 'start', 'headers': headers})
         output_objects.append({'object_type': 'script_status'})
     else:
-        output_objects.append(
-            {'object_type': 'title', 'text': '2FA', 'skipmenu': True})
         # NOTE: we keep actual result in plain text for json extract
         output_objects.append({'object_type': 'html_form', 'text': '''
 <!-- Keep similar spacing -->
 <div class="twofactorbg">
-<div class="twofactorstatus">
+<div id="twofactorstatus" class="twofactorstatus">
 <div class="ok leftpad">
 '''})
         output_objects.append({'object_type': 'text', 'text':

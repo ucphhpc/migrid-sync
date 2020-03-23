@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # datatransfer - import and export data in the backgroud
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -142,6 +142,7 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Background Data Transfers'
+    title_entry['container_class'] = 'fillwidth',
 
     # jquery support for tablesorter and confirmation on delete/redo:
     # datatransfer and key tables initially sorted by 0 (id) */

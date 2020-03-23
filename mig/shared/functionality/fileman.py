@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # fileman - File manager UI for browsing and manipulating files and folders
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -807,9 +807,9 @@ def main(client_id, user_arguments_dict):
     title_entry['script']['advanced'] += add_import
     title_entry['script']['init'] += add_init
     title_entry['script']['ready'] += add_ready
+    title_entry['container_class'] = 'fillwidth',
 
     output_objects.append({'object_type': 'header', 'class': 'fileman-title',
-                           'container_class': 'fillwidth',
                            'text': 'File Manager'})
     output_objects.append({'object_type': 'html_form', 'text':
                            html_tmpl(configuration, client_id, title_entry,

@@ -325,6 +325,10 @@ def main(client_id, user_arguments_dict):
             if keyword == 'SUBMITUI' and \
                     'job' not in valid_topics:
                 continue
+            if keyword == 'ENABLE_WIDGETS' and \
+                    not configuration.site_enable_widgets:
+                html += '<input type="hidden" name="%s" value="False" />' % keyword
+                continue
             if val['Context'] == 'notify' and \
                     keyword.lower() not in configuration.notify_protocols:
                 continue
@@ -400,25 +404,14 @@ def main(client_id, user_arguments_dict):
                 if current_settings_dict.has_key(keyword):
                     current_choice = current_settings_dict[keyword]
 
-                if "ENABLE_WIDGETS" == keyword and not configuration.site_enable_widgets:
-                    entry = '<input type="hidden" name="%s" value="False" />' % keyword
-                else:
-                    #entry += '<select class="styled-select semi-square html-select" name="%s">' % keyword
-                    # for choice in (True, False):
-                    #    selected = ''
-                    #    if choice == current_choice:
-                    #        selected = 'selected'
-                    #    entry += '<option %s value="%s">%s</option>'\
-                    #             % (selected, choice, choice)
-                    #entry += '</select><br />'
-                    checked = ''
-                    if current_choice == True:
-                        checked = 'checked'
-                    entry += '<label class="switch">'
-                    entry += '<input type="checkbox" name="%s" %s>' % (keyword,
-                                                                       checked)
-                    entry += '<span class="slider round"></span></label>'
-                    entry += '<br /><br />'
+                checked = ''
+                if current_choice == True:
+                    checked = 'checked'
+                entry += '<label class="switch">'
+                entry += '<input type="checkbox" name="%s" %s>' % (keyword,
+                                                                   checked)
+                entry += '<span class="slider round"></span></label>'
+                entry += '<br /><br />'
 
             html += """%s
             </td></tr>
@@ -551,14 +544,6 @@ so you may have to avoid blank lines in your text below.
                 current_choice = ''
                 if current_profile_dict.has_key(keyword):
                     current_choice = current_profile_dict[keyword]
-                #html += '<select class="styled-select semi-square html-select" name="%s">' % keyword
-                # for choice in valid_choices:
-                #    selected = ''
-                #    if choice == current_choice:
-                #        selected = 'selected'
-                #    html += '<option %s value="%s">%s</option>'\
-                #        % (selected, choice, choice)
-                #html += '</select><br />'
                 checked = ''
                 if current_choice == True:
                     checked = 'checked'
@@ -1759,14 +1744,6 @@ for %(site)s backup use.
                 current_choice = ''
                 if current_duplicati_dict.has_key(keyword):
                     current_choice = current_duplicati_dict[keyword]
-                #html += '<select class="styled-select semi-square html-select" name="%s">' % keyword
-                # for choice in valid_choices:
-                #    selected = ''
-                #    if choice == current_choice:
-                #        selected = 'selected'
-                #    html += '<option %s value="%s">%s</option>'\
-                #        % (selected, choice, choice)
-                #html += '</select><br />'
                 checked = ''
                 if current_choice == True:
                     checked = 'checked'
@@ -2116,14 +2093,6 @@ value="%(default_authpassword)s" />
                 current_choice = ''
                 if current_twofactor_dict.has_key(keyword):
                     current_choice = current_twofactor_dict[keyword]
-                #entry += '<select class="styled-select semi-square html-select" name="%s">' % keyword
-                # for choice in valid_choices:
-                #    selected = ''
-                #    if choice == current_choice:
-                #        selected = 'selected'
-                #    entry += '<option %s value="%s">%s</option>'\
-                #             % (selected, choice, choice)
-                #entry += '</select><br />'
                 checked = ''
                 if current_choice == True:
                     checked = 'checked'

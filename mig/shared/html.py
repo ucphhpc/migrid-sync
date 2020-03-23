@@ -1915,9 +1915,6 @@ def get_xgi_html_header(
 </div>
 
 
-
-
-
 <div id="content" class="i18n" lang="en">
 ''' % (maximize, user_pre_content, header)
 

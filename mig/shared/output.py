@@ -675,12 +675,6 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             lines.append('<p class="warningtext">%s</p>' %
                          html_escape(i['text']))
         elif i['object_type'] == 'header':
-            # Global container introduced with UI V3
-            # the optional container_class is used to switch to full width
-            lines.append('''
-<!-- Begin UI container -->
-<div class="container page-content %s">
-            ''' % i.get('container_class', ''))
             lines.append('<h1 class="header %s">%s</h1>' % (i.get('class', ''),
                                                             html_escape(i['text'])))
         elif i['object_type'] == 'sectionheader':
@@ -739,6 +733,13 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 user_widgets,
                 user_profile,
             ))
+            # TODO: move inside get_xgi_html_header?
+            # Global container introduced with UI V3
+            # the optional container_class is used to switch to full width
+            lines.append('''
+<!-- Begin UI container -->
+<div class="container page-content %s">
+''' % i.get('container_class', ''))
         elif i['object_type'] == 'text':
             lines.append('<p>%s</p>' % html_escape(i['text']))
         elif i['object_type'] == 'verbatim':
@@ -2323,16 +2324,18 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
         else:
             lines.append('unknown object %s' % i)
 
-    # Terminate UI V3 container
-    lines.append('''
-<!-- End UI container -->
-</div>
-    ''')
     if status_line:
         timing_footer = ''
         status_line = status_line.replace('TIMING_INFO', timing_info)
         if user_settings.get('USER_INTERFACE', configuration.user_interface[-1]) == 'V2':
             timing_footer = status_line
+        # TODO: move inside get_xgi_html_footer?
+        # Terminate UI V3 container
+        lines.append('''
+<!-- End UI container -->
+</div>
+'''
+                     )
         lines.append(get_xgi_html_footer(configuration, timing_footer, True,
                                          user_settings, include_widgets,
                                          user_widgets))
