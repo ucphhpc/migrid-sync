@@ -80,19 +80,40 @@ ERDA
             "https://sid.erda.dk/cgi-sid/signup.py?show=extcert");
         $("a.extcertlogin-link").attr("target", "_blank").attr("href", 
             "https://cert.erda.dk");
+
+        var locale = extract_default_locale();
+        /* Init supported languages to just english and extend based on lang select */
+        var supported_languages = ['en'];
+        var default_lang = supported_languages[0];
+        var user_lang;
+        /* Extend supported_languages with all entries from select elem */
+        $("#langselect option").each(function() {
+            var option_val = $(this).val();
+            if (supported_languages.indexOf(option_val) < 0) {
+              supported_languages.push($(this).val());
+            }
+        });
+        //console.debug("found supported langs: "+supported_languages);
+        if (locale && supported_languages.indexOf(locale) >= 0)  {
+          user_lang = locale;
+        } else {
+          console.warn(locale+" not supported - fall back to: "+default_lang);
+          user_lang = default_lang;
+        }
+
         load_faq_content("faq-snippet.html", "english");
         load_faq_content("faq-snippet.html", "danish");
         /* Init FAQ as foldable but closed and with individual heights */
         accordion_init(".faq-accordion");
+
         $("#langselect").on('change', function() { 
                                           var lang = $(this).val();
                                           //alert("switch_language: "+lang);
                                           switch_language(lang);
                                       }
                             );
-        var default_lang = 'en';
-        $("#langselect").val(default_lang);
-        switch_language(default_lang);
+        $("#langselect").val(user_lang);
+        switch_language(user_lang);
 	$("#langselect").msDropdown();
     });
 </script>
@@ -196,8 +217,11 @@ Can just be disabled by putting it into an html comment when not in use.
 <div class="staticpage centertext loginfield">
 <h2 class="staticpage">I'm already on ERDA!</h2>
 <p>In case you already signed up, you can proceed with</p>
-<input class="loginbutton" type="button" value="log in"
-       onClick="login('extoid');" />
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://erda.dk' target='_blank'>
+<input class="loginbutton" type="submit" value="log in"
+       onClick="login('extoid'); return false;" />
+</form>
 <p></p>
 </div>
 </div>
@@ -235,6 +259,14 @@ intended and approved for exactly that purpose.
 
 <div id="faq-content-english" class="col-lg-12">
   <!-- Filled by AJAX -->
+  <noscript>
+    <h2 class="staticpage">FAQ</h2>
+    <p>
+      You need a browser with JavaScript for the intended
+      dynamic behaviour on this page, but you can still manually 
+      <a href="faq-snippet.html">view the FAQ</a> without.
+    </p>
+  </noscript>
 </div>
 
 <h2 class="staticpage">Status and News</h2>
@@ -260,7 +292,7 @@ available from here, in addition to our site privacy and cookie policies
 linked at the bottom.
 </p>
 </div>
-<div class="danish i18n" lang="da">
+<div class="danish i18n hidden" lang="da">
 <h1 class="staticpage">Velkommen til UCPH ERDA</h1>
 
 <!-- Next div is used for site wide system maintenance warnings and such:
@@ -332,8 +364,11 @@ Can just be disabled by putting it into an html comment when not in use.
 <div class="staticpage centertext loginfield">
 <h2 class="staticpage">Jeg er allerede på ERDA!</h2>
 <p>Hvis du allerede har tilmeldt dig ERDA, kan du gå direkte til</p>
-<input class="loginbutton" type="button" value="log ind"
-       onClick="login('extoid');" />
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://erda.dk' target='_blank'>
+<input class="loginbutton" type="submit" value="log ind"
+       onClick="login('extoid'); return false;" />
+</form>
 <p></p>
 </div>
 </div>
@@ -374,6 +409,14 @@ netop <em>er</em> beregnet og godkendt til det formål.
 
 <div id="faq-content-danish" class="col-lg-12">
   <!-- Filled by AJAX -->
+  <noscript>
+    <h2 class="staticpage">FAQ</h2>
+    <p>
+      Du skal bruge en browser med JavaScript for at få den tiltænkte
+      dynamiske opførsel på denne side, men du kan stadig manuelt
+      <a href="faq-snippet.html">åbne vores FAQ</a> uden.
+    </p>
+  </noscript>
 </div>
 
 <h2 class="staticpage">Status og nyheder</h2>
@@ -421,7 +464,7 @@ Please contact
 us at <a href="mailto:support@erda.dk">support@erda.dk</a>
 </p>
 </div>
-<div class="supporttext staticpage i18n" lang="da">
+<div class="supporttext staticpage i18n hidden" lang="da">
 <p class="supporttitle i18n" lang="da">Vejledning</p>
 <p class="i18n" lang="da">
 <a href="/public/ucph-erda-brugervejledning.pdf">ERDA Brugervejledning</a><br />
@@ -441,7 +484,7 @@ Skriv til os på
 &amp; <a href="/public/cookie-policy.pdf">Cookie Policy</a>
 </p>
 </div>
-<div class="privacytext staticpage i18n" lang="da">
+<div class="privacytext staticpage i18n hidden" lang="da">
 <p class="privacytitle i18n" lang="da">Privatliv og rettigheder</p>
 <p class="i18n" lang="da">
 <a href="/public/site-privacy-policy.pdf">Privacy Policy</a>
