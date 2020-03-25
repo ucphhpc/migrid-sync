@@ -110,6 +110,11 @@
 #include "migauthhandler.c"
 #endif
 
+/* Helper to pretty print bool values */
+#ifndef BOOL2STR
+#define BOOL2STR(x) x ? "true" : "false"
+#endif
+
 /* Helper to set result and jump to finally */
 #define EXIT_PAM_SM_AUTH(x) result = x; goto finally;
 
@@ -429,7 +434,6 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 
     const char *pHostname;
     const char *pAddress = NULL;
-
     char address[INET_ADDRSTRLEN];
     struct addrinfo *pAddrinfo;
     struct sockaddr_in *ipv4;
@@ -489,8 +493,8 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     int rate_limit_expired = mig_expire_rate_limit();
     WRITELOGMESSAGE(LOG_DEBUG, "rate_limit_expired: %d\n", rate_limit_expired);
     bool exceeded_rate_limit = mig_hit_rate_limit(pUsername, pAddress);
-    WRITELOGMESSAGE(LOG_DEBUG, "exceeded_rate_limit: %d\n",
-                    exceeded_rate_limit);
+    WRITELOGMESSAGE(LOG_DEBUG, "exceeded_rate_limit: %s\n",
+                    BOOL2STR(exceeded_rate_limit));
     if (exceeded_rate_limit == true) {
         if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
                                           | MIG_AUTHTYPE_PASSWORD
@@ -510,8 +514,8 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
      
     bool exceeded_max_sessions = mig_exceeded_max_sessions(pUsername,
                                                            pAddress);
-    WRITELOGMESSAGE(LOG_DEBUG, "exceeded_max_sessions: %d\n",
-                    exceeded_max_sessions);
+    WRITELOGMESSAGE(LOG_DEBUG, "exceeded_max_sessions: %s\n",
+                    BOOL2STR(exceeded_max_sessions));
     if (exceeded_max_sessions == true) {
         if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
                                           | MIG_AUTHTYPE_PASSWORD
@@ -543,7 +547,8 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         valid_username = mig_validate_username(pUsername);
     }
     if (valid_username == false) {
-        WRITELOGMESSAGE(LOG_DEBUG, "valid_username: %d\n", valid_username);
+        WRITELOGMESSAGE(LOG_DEBUG, "valid_username: %s\n",
+                        BOOL2STR(valid_username));
         if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
                                           | MIG_AUTHTYPE_PASSWORD
                                           | MIG_INVALID_USERNAME,
