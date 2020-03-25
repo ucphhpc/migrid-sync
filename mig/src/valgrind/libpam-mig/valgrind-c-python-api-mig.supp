@@ -1,0 +1,1085 @@
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:set_table_resize
+   fun:set_update_internal
+   fun:set_init
+   fun:type_call
+   fun:PyObject_Call
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:set_table_resize
+   fun:set_update_internal
+   fun:make_new_set
+   fun:frozenset_new
+   fun:type_call
+   fun:PyObject_Call
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:new_threadstate
+   fun:Py_InitializeEx
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:_PyImport_Init
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:PyInterpreterState_New
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:realloc
+   fun:_PyString_Resize
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:find_key
+   fun:PyThread_set_key_value
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:realloc
+   fun:CRYPTO_realloc
+   fun:expand
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:set_table_resize
+   fun:set_merge
+   fun:set_update_internal
+   fun:make_new_set
+   fun:frozenset_new
+   fun:type_call
+   fun:PyObject_Call
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_SSL_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_EC_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:dictresize
+   fun:dict_setdefault
+   fun:call_function
+   fun:PyEval_EvalFrameEx
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_ASN1_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:set_table_resize
+   fun:set_add
+   fun:call_function
+   fun:PyEval_EvalFrameEx
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:realloc
+   fun:CRYPTO_realloc
+   fun:expand
+   fun:lh_insert
+   fun:OBJ_NAME_add
+   fun:OpenSSL_add_all_ciphers
+   fun:OPENSSL_add_all_algorithms_noconf
+   fun:init_ssl
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_CMS_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_EVP_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_X509V3_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:realloc
+   fun:unicode_resize
+   fun:PyUnicodeUCS4_DecodeUTF8Stateful
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_RSA_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:dictresize
+   fun:wrap_objobjargproc
+   fun:PyObject_Call
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_FIPS_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:prepare_s
+   fun:s_init
+   fun:type_call
+   fun:PyObject_Call
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:_dl_new_object
+   fun:_dl_map_object_from_fd
+   fun:_dl_map_object
+   fun:dl_open_worker
+   fun:_dl_catch_error
+   fun:_dl_open
+   fun:dlopen_doit
+   fun:_dl_catch_error
+   fun:_dlerror_run
+   fun:dlopen@@GLIBC_2.2.5
+   fun:_PyImport_GetDynLoadFunc
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:local_strdup
+   fun:expand_dynamic_string_token
+   fun:_dl_map_object
+   fun:dl_open_worker
+   fun:_dl_catch_error
+   fun:_dl_open
+   fun:dlopen_doit
+   fun:_dl_catch_error
+   fun:_dlerror_run
+   fun:dlopen@@GLIBC_2.2.5
+   fun:_PyImport_GetDynLoadFunc
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:realloc
+   fun:_PyObject_GC_Resize
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_TS_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_DSO_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_X509_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_PEM_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_BN_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_PKCS7_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:realloc
+   fun:list_resize
+   fun:app1
+   fun:listappend
+   fun:call_function
+   fun:PyEval_EvalFrameEx
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_ENGINE_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_ERR_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_BIO_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:dictresize
+   fun:cache_struct
+   fun:unpack
+   fun:call_function
+   fun:PyEval_EvalFrameEx
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_PKCS12_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_DSA_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_CONF_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_DH_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_OCSP_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:EVP_DigestInit_ex
+   fun:init_constructor_constant
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:realloc
+   fun:list_resize
+   fun:list_ass_slice
+   fun:assign_slice
+   fun:PyEval_EvalFrameEx
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:_setup_ssl_threads
+   fun:init_ssl
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:_dl_new_object
+   fun:_dl_map_object_from_fd
+   fun:_dl_map_object
+   fun:openaux
+   fun:_dl_catch_error
+   fun:_dl_map_object_deps
+   fun:dl_open_worker
+   fun:_dl_catch_error
+   fun:_dl_open
+   fun:dlopen_doit
+   fun:_dl_catch_error
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:strdup
+   fun:_dl_load_cache_lookup
+   fun:_dl_map_object
+   fun:openaux
+   fun:_dl_catch_error
+   fun:_dl_map_object_deps
+   fun:dl_open_worker
+   fun:_dl_catch_error
+   fun:_dl_open
+   fun:dlopen_doit
+   fun:_dl_catch_error
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_UI_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_CRYPTO_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:realloc
+   fun:_PyString_Resize
+   fun:string_concatenate
+   fun:PyEval_EvalFrameEx
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+   fun:PyImport_ExecCodeModuleEx
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:dl_open_worker
+   fun:_dl_catch_error
+   fun:_dl_open
+   fun:dlopen_doit
+   fun:_dl_catch_error
+   fun:_dlerror_run
+   fun:dlopen@@GLIBC_2.2.5
+   fun:_PyImport_GetDynLoadFunc
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_new
+   fun:OBJ_NAME_init
+   fun:OBJ_NAME_add
+   fun:EVP_add_cipher
+   fun:SSL_library_init
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_new
+   fun:int_err_get
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_ERR_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_OBJ_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_ECDSA_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_BUF_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:realloc
+   fun:unicode_resize
+   fun:_PyUnicode_New.part.8
+   fun:PyUnicodeUCS4_Concat
+   fun:PyEval_EvalFrameEx
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_COMP_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:realloc
+   fun:unicode_resize
+   fun:_PyUnicode_New.part.8
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:realloc
+   fun:unicode_resize
+   fun:PyUnicodeUCS4_DecodeUTF8Stateful
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_RAND_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:int_err_set_item
+   fun:err_load_strings
+   fun:ERR_load_ECDH_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:PyThread_allocate_lock
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:realloc
+   fun:list_resize
+   fun:ins1
+   fun:listinsert
+   fun:call_function
+   fun:PyEval_EvalFrameEx
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:init_name_op
+   fun:half_richcompare
+   fun:instance_richcompare
+   fun:try_rich_compare
+   fun:do_richcmp
+   fun:PyObject_RichCompare
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:sk_new
+   fun:load_builtin_compressions
+   fun:SSL_COMP_get_compression_methods
+   fun:SSL_library_init
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:OBJ_NAME_add
+   fun:EVP_add_digest
+   fun:init_ssl
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:OBJ_NAME_add
+   fun:OpenSSL_add_all_digests
+   fun:init_ssl
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:OBJ_NAME_add
+   fun:EVP_add_digest
+   fun:OpenSSL_add_all_digests
+   fun:init_ssl
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:OBJ_NAME_add
+   fun:OPENSSL_add_all_algorithms_noconf
+   fun:init_ssl
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:OBJ_NAME_add
+   fun:OPENSSL_add_all_algorithms_noconf
+   fun:init_ssl
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:OBJ_NAME_add
+   fun:OpenSSL_add_all_ciphers
+   fun:OPENSSL_add_all_algorithms_noconf
+   fun:init_ssl
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:OBJ_NAME_add
+   fun:OpenSSL_add_all_ciphers
+   fun:OPENSSL_add_all_algorithms_noconf
+   fun:init_ssl
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:OBJ_NAME_add
+   fun:EVP_add_cipher
+   fun:OpenSSL_add_all_ciphers
+   fun:OPENSSL_add_all_algorithms_noconf
+   fun:init_ssl
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:OBJ_NAME_add
+   fun:EVP_add_cipher
+   fun:OpenSSL_add_all_ciphers
+   fun:OPENSSL_add_all_algorithms_noconf
+   fun:init_ssl
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:OBJ_NAME_add
+   fun:EVP_add_digest
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:OBJ_NAME_add
+   fun:OpenSSL_add_all_digests
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:OBJ_NAME_add
+   fun:EVP_add_digest
+   fun:OpenSSL_add_all_digests
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:OBJ_NAME_add
+   fun:EVP_add_digest
+   fun:SSL_library_init
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:OBJ_NAME_add
+   fun:SSL_library_init
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_insert
+   fun:OBJ_NAME_add
+   fun:EVP_add_cipher
+   fun:SSL_library_init
+   fun:init_hashlib
+   fun:_PyImport_LoadDynamicModule
+}
+{
+   <C-Python-API-MiG>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:realloc
+   fun:list_resize
+   fun:app1
+   fun:stringlib_split_whitespace
+   fun:string_split
+   fun:call_function
+   fun:PyEval_EvalFrameEx
+}

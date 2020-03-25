@@ -1,0 +1,317 @@
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:PyObject_Malloc
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:PyObject_Malloc
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:dictresize
+   fun:PyEval_EvalFrameEx
+}
+
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:dictresize
+   fun:import_all_from
+   fun:PyEval_EvalFrameEx
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:dictresize
+   fun:PyDict_Merge
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:dictresize
+   fun:PyDict_SetItemString
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:dictresize
+   fun:PyString_InternInPlace
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:dictresize
+   fun:PyDict_Merge
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:dictresize
+   fun:_PyDict_NewPresized
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:dictresize
+   fun:PyDict_SetItemString
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:dictresize
+   fun:_inscode
+   fun:initerrno
+   fun:init_builtin.part.7
+   fun:init_builtin
+   fun:load_module
+   fun:import_submodule
+   fun:load_next
+   fun:import_module_level
+   fun:PyImport_ImportModuleLevel
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:dictresize
+   fun:PyEval_EvalFrameEx
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:dictresize
+   fun:convertenviron
+   fun:initposix
+   fun:init_builtin.part.7
+   fun:init_builtin
+   fun:load_module
+   fun:import_submodule
+   fun:load_next
+   fun:import_module_level
+   fun:PyImport_ImportModuleLevel
+}
+
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:dictresize
+   fun:get_path_importer
+   fun:find_module
+   fun:import_submodule
+   fun:load_next
+   fun:import_module_level
+   fun:PyImport_ImportModuleLevel
+}
+
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:PyList_New
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:fill_free_list
+   fun:_PyInt_Init
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:fill_free_list
+   fun:PyInt_FromLong
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:fill_free_list
+   fun:PyFloat_FromDouble
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:realloc
+   fun:list_resize
+   fun:listextend
+   fun:call_function
+   fun:PyEval_EvalFrameEx
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:realloc
+   fun:list_resize
+   fun:app1
+   fun:add_subclass.isra.25
+   fun:PyType_Ready
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:realloc
+   fun:list_resize
+   fun:app1
+   fun:listappend
+   fun:call_function
+   fun:PyEval_EvalFrameEx
+}
+{  
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:PyStructSequence_InitType
+}
+{  
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:realloc
+   fun:list_resize
+   fun:app1
+   fun:add_subclass.isra.25
+   fun:PyType_Ready
+}
+{  
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:realloc
+   fun:list_resize
+   fun:app1
+   fun:codec_register
+   fun:call_function
+   fun:PyEval_EvalFrameEx
+}
+{  
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:realloc
+   fun:list_resize
+   fun:app1
+   fun:_PyImportHooks_Init
+}
+{  
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:calculate_path
+   fun:Py_GetProgramFullPath
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:dictresize
+   fun:PyDict_SetItemString
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:dictresize
+   fun:_inscode
+   fun:initerrno
+   fun:init_builtin.part.7
+   fun:init_builtin
+   fun:load_module
+   fun:import_submodule
+   fun:load_next
+   fun:import_module_level
+   fun:PyImport_ImportModuleLevel
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:dictresize
+   fun:add_operators
+   fun:PyType_Ready
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:dictresize
+   fun:_PyDict_NewPresized
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:dictresize
+   fun:_PyObject_GenericSetAttrWithDict
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:dictresize
+   fun:PyClass_New
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:PyThread_allocate_lock
+}
+{
+   <C-Python-API>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:strdup
+   fun:Py_InitializeEx
+}
