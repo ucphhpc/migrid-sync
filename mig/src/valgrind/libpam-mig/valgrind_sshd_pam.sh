@@ -3,7 +3,6 @@ BASEPATH="${PWD}"
 logdir="${BASEPATH}/log"
 program="/usr/sbin/sshd -D -f /etc/ssh/sshd_config-MiG-sftp-subsys"
 datestamp=$(date +%Y-%m-%d_%T)
-#pyinit_logfile="${datestamp}.init.valgrind"
 logfile="${logdir}/${datestamp}.valgrind"
 dlopen_supp="${BASEPATH}/valgrind-dlfcn.supp"
 pyinit_supp="${BASEPATH}/valgrind-c-python-api.supp"
