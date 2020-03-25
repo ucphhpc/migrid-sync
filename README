@@ -515,6 +515,60 @@ vhost-specific certificates from LetsEncrypt and OpenID with optional
                    --skin=migrid-basic --short_title=MiG \
                    --wsgi_procs=25 --secscan_addr=130.225.213.72
 
+or the same on centos
+./generateconfs.py --source=. --destination=generated-confs \
+                   --destination_suffix="_svn$(svnversion -n ~/)" \
+                   --base_fqdn=migrid.org \
+                   --public_fqdn=www.migrid.org \
+                   --mig_cert_fqdn=dk-cert.migrid.org \
+                   --ext_cert_fqdn= \
+                   --mig_oid_fqdn=dk-ext.migrid.org \
+                   --ext_oid_fqdn=dk-oid.migrid.org \
+                   --sid_fqdn=dk-sid.migrid.org \
+                   --io_fqdn=dk-io.migrid.org \
+                   --seafile_fqdn=dk-sid.migrid.org \
+                   --user=mig --group=mig \
+                   --apache_version=2.4 \
+                   --apache_etc=/etc/httpd \
+                   --apache_run=/var/run/httpd \
+                   --apache_lock=/var/lock/subsys/httpd \
+                   --apache_log=/var/log/httpd \
+                   --openssh_version=7.2 \
+                   --mig_code=/home/mig/mig \
+                   --mig_state=/home/mig/state \
+                   --mig_certs=/etc/httpd/MiG-certificates \
+                   --hg_path=/usr/bin/hg \
+                   --hgweb_scripts=/usr/share/doc/mercurial-2.6.2 \
+                   --trac_admin_path=/usr/bin/trac-admin \
+                   --trac_ini_path=/home/mig/mig/server/trac.ini \
+                   --public_port=80 --ext_cert_port=443 --mig_oid_port=443 \
+                   --ext_oid_port=443 --sid_port=443 \
+                   --mig_oid_provider=https://dk-ext.migrid.org/openid/ \
+                   --ext_oid_provider=https://openid.ku.dk/ \
+                   --enable_openid=True --enable_wsgi=True \
+                   --enable_sftp=False --enable_sftp_subsys=True \
+                   --enable_davs=True --enable_ftps=True \
+                   --enable_duplicati=False --enable_seafile=True \
+                   --enable_sandboxes=True --enable_vmachines=False \
+                   --enable_crontab=True --enable_jobs=True \
+                   --enable_resources=True --enable_notify=True \
+                   --enable_events=True --enable_imnotify=True \
+                   --enable_twofactor=True --enable_cracklib=True \
+                   --enable_hsts=True \
+                   --enable_vhost_certs=True --enable_verify_certs=True \
+                   --user_clause=User --group_clause=Group \
+                   --listen_clause='#Listen' \
+                   --serveralias_clause='ServerAlias' --alias_field=email \
+                   --dhparams_path=~/certs/dhparams.pem \
+                   --daemon_keycert=~/certs/combined.pem \
+                   --daemon_pubkey=~/certs/combined.pub \
+                   --daemon_pubkey_from_dns=False \
+                   --signup_methods="extoid migoid migcert" \
+                   --login_methods="extoid migoid migcert" \
+                   --distro=centos --landing_page='/wsgi-bin/home.py' \
+                   --skin=migrid-basic --short_title=MiG \
+                   --wsgi_procs=25 --secscan_addr=130.225.213.72
+
 and a storage-only setup with CentOS 7.x, apache 2.4, WSGI (default web), 
 optimized SFTP, Seafile integration and OpenID login:
 ./generateconfs.py --source=. --destination=generated-confs \

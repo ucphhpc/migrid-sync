@@ -15,8 +15,10 @@
 # Leave like this to lookup values in $MIG_CONF or default MiGserver.conf .
 #MIG_DEFAULTS=-D'SHARELINK_HOME=""' -D'SHARELINK_LENGTH=-1' -D'USERNAME_REGEX=""'
 # ... or hard code to your site values like this (NOTE: escaped dollar = '$$')
-MIG_DEFAULTS=-D'MIG_UID=501' \
-			 -D'MIG_GID=501' \
+# NOTE: we looup UID and GID of 'mig' user to limit hard-coding but we may stil
+#       need to update paths and even the user name if using custom install
+MIG_DEFAULTS=-D'MIG_UID=$(shell id -u mig)' \
+			 -D'MIG_GID=$(shell id -g mig)' \
 			 -D'RATE_LIMIT_EXPIRE_DELAY=300' \
 			 -D'JOBSIDMOUNT_HOME="/home/mig/state/webserver_home"' \
 			 -D'JOBSIDMOUNT_LENGTH=64' \
