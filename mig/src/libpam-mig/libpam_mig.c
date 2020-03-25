@@ -210,7 +210,7 @@ static int converse(pam_handle_t * pamh, int nargs,
     return retval;
 }
 
-/* this function free PAM response structures */
+/* this function frees PAM response structures */
 static void free_pam_response(struct pam_response *resp, int nargs)
 {
     if (resp != NULL) {
@@ -510,7 +510,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 
     /*** 
      * NOTE: Disabled for now, 
-     * this require session open/close tracking in sftp_subsys.py 
+     * this requires session open/close tracking in sftp_subsys.py 
      
     bool exceeded_max_sessions = mig_exceeded_max_sessions(pUsername,
                                                            pAddress);
