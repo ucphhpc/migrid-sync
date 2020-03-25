@@ -1,8 +1,10 @@
 USAGE: ./valgrind_sshd_pam.sh
 
-NOTE: Valgrind needs to track the spawend PAM process,
-      therefore the following has to be changed in 'sshd_config-MiG-sftp-subsys':
+NOTE: Valgrind needs to track the spawned PAM process,
+      therefore the following has to be temporarily changed in 'sshd_config-MiG-sftp-subsys':
 ------------------------------------------------------------------------------
-#UsePrivilegeSeparation sandbox         # Default for new installations.
+#UsePrivilegeSeparation sandbox
 UsePrivilegeSeparation no
 ------------------------------------------------------------------------------
+
+IMPORTANT: Remember to set 'UsePrivilegeSeparation sandbox' when done using valgrind.
