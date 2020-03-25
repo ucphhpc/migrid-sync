@@ -4,7 +4,7 @@ logdir="${BASEPATH}/log"
 program="/usr/sbin/sshd -D -f /etc/ssh/sshd_config-MiG-sftp-subsys"
 datestamp=$(date +%Y-%m-%d_%T)
 logfile="${logdir}/${datestamp}.valgrind"
-dlopen_supp="${BASEPATH}/valgrind-dlfcn.supp"
+dlfcn_supp="${BASEPATH}/valgrind-dlfcn.supp"
 pyinit_supp="${BASEPATH}/valgrind-c-python-api.supp"
 pymig_supp="${BASEPATH}/valgrind-c-python-api-mig.supp"
 sshdpam_supp="${BASEPATH}/valgrind-sshd-pam.supp"
@@ -15,7 +15,7 @@ valgrind_cmd="valgrind --tool=memcheck \
 			    --dsymutil=yes \
 			    --leak-check=full \
 			    --show-leak-kinds=all \
-			    --suppressions=${dlopen_supp} \
+			    --suppressions=${dlfcn_supp} \
 			    --suppressions=${pyinit_supp} \
 			    --suppressions=${pymig_supp} \
 			    --suppressions=${sshdpam_supp} \
