@@ -87,6 +87,7 @@ SIF
         $("a.extcertlogin-link").attr("target", "_blank").attr("href", 
             "https://cert.erda.dk");
         */
+
         var locale = extract_default_locale();
         /* Init supported languages to just english and extend based on lang select */
         var supported_languages = ['en'];
@@ -213,17 +214,9 @@ Can just be disabled by putting it into an html comment when not in use.
 </span>
 <br/><br/>
 -->
+
 </div>
 
-<!--
-  I'm an employee or student at KU / UCPH with a general account there
--->
-<!--
-I'm an external partner in a collaboration with 
--->
-<!-- 
-<h2 class="staticpage">Quick Start</h2>
--->
 <div class="staticpage quickstartfields">
 
 <div id="quick-start-tabs-en">
@@ -245,8 +238,11 @@ I'm an external partner in a collaboration with
 </div>
 <div class="staticpage centertext loginfield">
 <p>I'm already signed up to SIF with my KU / UCPH account!</p>
-<input class="loginbutton" type="button" value="log in"
-       onClick="login('extoid');" />
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://sif.erda.dk' target='_blank'>
+<input class="loginbutton" type="submit" value="log in"
+       onClick="login('extoid'); return false;" />
+</form>
 <p></p>
 </div>
 </div>
@@ -254,14 +250,20 @@ I'm an external partner in a collaboration with
 <div id="external-user-tab-en">
 <div class="staticpage centertext signupfield">
 <p>Sign up to SIF <em>without</em> a KU / UCPH account?</p>
-<input class="loginbutton" type="button" value="sign up"
-       onClick="signup('migoid');" />
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://sif-sid.erda.dk/cgi-sid/reqoid.py' target='_blank'>
+<input class="signupbutton" type="submit" value="sign up" /
+       onClick="signup('migoid'); return false;"/>
+</form>
 <p></p>
 </div>
 <div class="staticpage centertext loginfield">
 <p>I'm already signed up to SIF <em>without</em> a KU / UCPH account!</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://sif-ext.erda.dk' target='_blank'>
 <input class="loginbutton" type="button" value="log in"
-       onClick="login('migoid');" />
+       onClick="login('migoid'); return false;" />
+</form>
 <p></p>
 </div>
 </div>
@@ -311,8 +313,6 @@ For now SIF use is limited to the faculty of Science, but it may be
 extended to all of UCPH in the future to support the general UCPH
 <a href="https://kunet.ku.dk/work-areas/research/data/data-management-at-UCPH/Pages/default.aspx"
 target="_blank">Data Management Guidelines</a>. 
-</p>
-
 </p>
 
 <div id="faq-content-english" class="col-lg-12">
@@ -413,8 +413,11 @@ Can just be disabled by putting it into an html comment when not in use.
 </div>
 <div class="staticpage centertext loginfield">
 <p>Jeg er allerede tilmeldt SIF med min KU-konto!</p>
-<input class="loginbutton" type="button" value="log ind"
-       onClick="login('extoid');" />
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://sif.erda.dk' target='_blank'>
+<input class="loginbutton" type="submit" value="log ind"
+       onClick="login('extoid'); return false;" />
+</form>
 <p></p>
 </div>
 </div>
@@ -422,14 +425,20 @@ Can just be disabled by putting it into an html comment when not in use.
 <div id="external-user-tab-da">
 <div class="staticpage centertext signupfield">
 <p>Tilmeld dig SIF <em>uden</em> en KU-konto?</p>
-<input class="loginbutton" type="button" value="tilmelding"
-       onClick="signup('migoid');" />
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://sif-sid.erda.dk/cgi-sid/reqoid.py' target='_blank'>
+<input class="loginbutton" type="submit" value="tilmelding"
+       onClick="signup('migoid'); return false;" />
+</form>
 <p></p>
 </div>
 <div class="staticpage centertext loginfield">
 <p>Jeg er allerede tilmeldt SIF <em>uden</em> en KU-konto!</p>
-<input class="loginbutton" type="button" value="log ind"
-       onClick="login('migoid');" />
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://sif-ext.erda.dk' target='_blank'>
+<input class="loginbutton" type="submit" value="log ind"
+       onClick="login('migoid'); return false;" />
+</form>
 <p></p>
 </div>
 </div>
@@ -505,10 +514,10 @@ eller ændret funktionalitet.
 </p>
 <h2 class="staticpage">Spørgsmål og hjælp</h2>
 <p>
-<a href="/public/ucph-sif-brugervejledning.pdf">SIF Brugervejledningen</a>
-indeholder basal information om brugen af SIF, men
-kontakt os gerne (på dansk eller engelsk) med øvrige spørgsmål og kommentarer
-v.h.a. email-linket nederst på siden.
+<a href="/public/ucph-sif-brugervejledning.pdf">Brugervejledningen</a>
+indeholder basal information om brugen af SIF, men kontakt os gerne (på dansk
+eller engelsk) med øvrige spørgsmål og kommentarer v.h.a. email-linket nederst
+på siden.
 </p>
 <!--
 <p class="warningtext">

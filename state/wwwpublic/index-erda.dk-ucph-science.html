@@ -110,11 +110,23 @@ ERDA
                                           var lang = $(this).val();
                                           //alert("switch_language: "+lang);
                                           switch_language(lang);
+                                          /* init is broken until visible */
+                                          $("#quick-start-tabs-"+lang).tabs("refresh");
                                       }
                             );
         $("#langselect").val(user_lang);
         switch_language(user_lang);
 	$("#langselect").msDropdown();
+        /* Init Quick Start as tabs to avoid information overload and do
+           last for proper init. */
+        $("#quick-start-tabs-en").tabs({
+            collapsible: false,
+            active: false
+        });
+        $("#quick-start-tabs-da").tabs({
+            collapsible: false,
+            active: false
+        });
     });
 </script>
 
@@ -202,10 +214,16 @@ Can just be disabled by putting it into an html comment when not in use.
 </div>
 
 <div class="staticpage quickstartfields">
-<h2 class="staticpage">Quick Start</h2>
+
+<div id="quick-start-tabs-en">
+<ul class="fillwidth padspace">
+<li><a href="#ucph-user-tab-en">KU / UCPH Users</a></li>
+<li><a href="#external-user-tab-en">External Users</a></li>
+</ul>
+
+<div id="ucph-user-tab-en">
 <div class="staticpage centertext signupfield">
-<h2 class="staticpage">New to ERDA?</h2>
-<p>If you haven't used ERDA before you need to first</p>
+<p>Sign up to ERDA using your KU / UCPH account?</p>
 <form method='post' action='https://erda.dk/wsgi-bin/autocreate.py' target='_blank'>
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
@@ -215,8 +233,7 @@ Can just be disabled by putting it into an html comment when not in use.
 <p></p> 
 </div>
 <div class="staticpage centertext loginfield">
-<h2 class="staticpage">I'm already on ERDA!</h2>
-<p>In case you already signed up, you can proceed with</p>
+<p>I'm already signed up to ERDA with my KU / UCPH account!</p>
 <!-- Use form with JS override to enable fallback functionality -->
 <form method='get' action='https://erda.dk' target='_blank'>
 <input class="loginbutton" type="submit" value="log in"
@@ -225,11 +242,30 @@ Can just be disabled by putting it into an html comment when not in use.
 <p></p>
 </div>
 </div>
-<p>
-You may also want to refer to the 
-<a href="/public/ucph-erda-user-guide.pdf">User Guide</a> for a more thorough
-introduction, with help on getting started and making the most of your account.
-</p>
+
+<div id="external-user-tab-en">
+<div class="staticpage centertext signupfield">
+<p>Sign up to ERDA <em>without</em> a KU / UCPH account?</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://sid.erda.dk/cgi-sid/reqoid.py' target='_blank'>
+<input class="signupbutton" type="submit" value="sign up" /
+       onClick="signup('migoid'); return false;"/>
+</form>
+<p></p>
+</div>
+<div class="staticpage centertext loginfield">
+<p>I'm already signed up to ERDA <em>without</em> a KU / UCPH account!</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://ext.erda.dk' target='_blank'>
+<input class="loginbutton" type="button" value="log in"
+       onClick="login('migoid'); return false;" />
+</form>
+<p></p>
+</div>
+</div>
+
+</div>
+</div>
 
 <h2 class="staticpage">About UCPH ERDA</h2>
 <p>
@@ -278,9 +314,10 @@ features.
 </p>
 <h2 class="staticpage">Questions and Support</h2>
 <p>
-The user guide provides basic information about using ERDA, but feel free
-to contact us using the email link at the bottom of the page in case you
-have any further questions or comments (in English or Danish).
+The <a href="/public/ucph-erda-user-guide.pdf">User Guide</a> provides basic
+information about using ERDA, but feel free to contact us using the email link
+at the bottom of the page in case you have any further questions or comments
+(in English or Danish).
 </p>
 <h2 class="staticpage">Terms of Use</h2>
 <p>
@@ -349,10 +386,14 @@ Can just be disabled by putting it into an html comment when not in use.
 </div>
 
 <div class="staticpage quickstartfields">
-<h2 class="staticpage">Hurtigt igang</h2>
+<div id="quick-start-tabs-da">
+<ul>
+<li><a href="#ucph-user-tab-da">KU / UCPH brugere</a></li>
+<li><a href="#external-user-tab-da">Eksterne brugere</a></li>
+</ul>
+<div id="ucph-user-tab-da">
 <div class="staticpage centertext signupfield">
-<h2 class="staticpage">Ny på ERDA?</h2>
-<p>Hvis ikke du har brugt ERDA før, skal du først igennem</p>
+<p>Tilmeld dig ERDA med din KU-konto?</p>
 <form method='post' action='https://erda.dk/wsgi-bin/autocreate.py' target='_blank'>
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
@@ -362,8 +403,7 @@ Can just be disabled by putting it into an html comment when not in use.
 <p></p>
 </div>
 <div class="staticpage centertext loginfield">
-<h2 class="staticpage">Jeg er allerede på ERDA!</h2>
-<p>Hvis du allerede har tilmeldt dig ERDA, kan du gå direkte til</p>
+<p>Jeg er allerede tilmeldt ERDA med min KU-konto!</p>
 <!-- Use form with JS override to enable fallback functionality -->
 <form method='get' action='https://erda.dk' target='_blank'>
 <input class="loginbutton" type="submit" value="log ind"
@@ -373,11 +413,29 @@ Can just be disabled by putting it into an html comment when not in use.
 </div>
 </div>
 
-<p>Vi anbefaler at du også ser nærmere på
-<a href="/public/ucph-erda-brugervejledning.pdf">ERDA Brugervejledningen</a> for
-en grundigere introduktion, med hjælp til at komme igang og få størst nytte af
-din konto.
-</p>
+<div id="external-user-tab-da">
+<div class="staticpage centertext signupfield">
+<p>Tilmeld dig ERDA <em>uden</em> en KU-konto?</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://sid.erda.dk/cgi-sid/reqoid.py' target='_blank'>
+<input class="loginbutton" type="submit" value="tilmelding"
+       onClick="signup('migoid'); return false;" />
+</form>
+<p></p>
+</div>
+<div class="staticpage centertext loginfield">
+<p>Jeg er allerede tilmeldt ERDA <em>uden</em> en KU-konto!</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://ext.erda.dk' target='_blank'>
+<input class="loginbutton" type="submit" value="log ind"
+       onClick="login('migoid'); return false;" />
+</form>
+<p></p>
+</div>
+</div>
+
+</div>
+</div>
 
 <h2 class="staticpage">Om UCPH ERDA</h2>
 <p>
@@ -429,9 +487,10 @@ eller ændret funktionalitet.
 </p>
 <h2 class="staticpage">Spørgsmål og hjælp</h2>
 <p>
-Brugervejledningen indeholder basal information om brugen af ERDA, men
-kontakt os gerne (på dansk eller engelsk) med øvrige spørgsmål og kommentarer
-v.h.a. email-linket nederst på siden.
+<a href="/public/ucph-erda-brugervejledning.pdf">Brugervejledningen</a>
+indeholder basal information om brugen af ERDA, men kontakt os gerne (på dansk
+eller engelsk) med øvrige spørgsmål og kommentarer v.h.a. email-linket nederst
+på siden.
 </p>
 <!--
 <p class="warningtext">

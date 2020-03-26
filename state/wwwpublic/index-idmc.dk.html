@@ -29,6 +29,7 @@ IDMC
 <link rel="stylesheet" type="text/css" href="/images/skin/idmc-basic/ui-theme.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/skin/idmc-basic/ui-theme.custom.css" media="screen"/>
 
+
 <link rel="icon" type="image/vnd.microsoft.icon"
       href="/images/skin/idmc-basic/favicon.ico"/>
 
@@ -79,6 +80,7 @@ IDMC
             "https://sid.idmc.dk/cgi-sid/signup.py?show=extcert");
         $("a.extcertlogin-link").attr("target", "_blank").attr("href", 
             "https://cert.idmc.dk");
+
         var locale = extract_default_locale();
         /* Init supported languages to just english and extend based on lang select */
         var supported_languages = ['en'];
@@ -193,17 +195,9 @@ Can just be disabled by putting it into an html comment when not in use.
   phishing attacks</a> at KU/KUMail!</span>
 <br/><br/>
 -->
+
 </div>
 
-<!--
-  I'm an employee or student at KU / UCPH with a general account there
--->
-<!--
-I'm an external partner in a collaboration with 
--->
-<!-- 
-<h2 class="staticpage">Quick Start</h2>
--->
 <div class="staticpage quickstartfields">
 
 <div id="quick-start-tabs-en">
@@ -225,8 +219,11 @@ I'm an external partner in a collaboration with
 </div>
 <div class="staticpage centertext loginfield">
 <p>I'm already signed up to IDMC with my KU / UCPH account!</p>
-<input class="loginbutton" type="button" value="log in"
-       onClick="login('extoid');" />
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://oid.idmc.dk' target='_blank'>
+<input class="loginbutton" type="submit" value="log in"
+       onClick="login('extoid'); return false;" />
+</form>
 <p></p>
 </div>
 </div>
@@ -234,14 +231,20 @@ I'm an external partner in a collaboration with
 <div id="external-user-tab-en">
 <div class="staticpage centertext signupfield">
 <p>Sign up to IDMC <em>without</em> a KU / UCPH account?</p>
-<input class="loginbutton" type="button" value="sign up"
-       onClick="signup('migoid');" />
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://sid.idmc.dk/cgi-sid/reqoid.py' target='_blank'>
+<input class="signupbutton" type="submit" value="sign up" /
+       onClick="signup('migoid'); return false;"/>
+</form>
 <p></p>
 </div>
 <div class="staticpage centertext loginfield">
 <p>I'm already signed up to IDMC <em>without</em> a KU / UCPH account!</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://ext.idmc.dk' target='_blank'>
 <input class="loginbutton" type="button" value="log in"
-       onClick="login('migoid');" />
+       onClick="login('migoid'); return false;" />
+</form>
 <p></p>
 </div>
 </div>
@@ -291,10 +294,10 @@ features.
 </p>
 <h2 class="staticpage">Questions and Support</h2>
 <p>
-The <a href="https://sid.erda.dk/public/ucph-erda-user-guide.pdf">user guide</a> 
- provides basic information about using IDMC, but feel
-free to contact us using the email link at the bottom of the page in
-case you have any further questions or comments (in English or Danish).
+The <a href="https://sid.erda.dk/public/ucph-erda-user-guide.pdf">User Guide</a> 
+provides basic information about using IDMC, but feel free to contact us using
+the email link at the bottom of the page in case you have any further questions
+or comments (in English or Danish).
 <p class="warningtext">
 Be aware that the user guide is made for ERDA, the sister system of IDMC, but 
 almost all examples are valid with the replacement of erda.dk with idmc.dk.
@@ -370,8 +373,11 @@ Can just be disabled by putting it into an html comment when not in use.
 </div>
 <div class="staticpage centertext loginfield">
 <p>Jeg er allerede tilmeldt IDMC med min KU-konto!</p>
-<input class="loginbutton" type="button" value="log ind"
-       onClick="login('extoid');" />
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://oid.idmc.dk' target='_blank'>
+<input class="loginbutton" type="submit" value="log ind"
+       onClick="login('extoid'); return false;" />
+</form>
 <p></p>
 </div>
 </div>
@@ -379,14 +385,20 @@ Can just be disabled by putting it into an html comment when not in use.
 <div id="external-user-tab-da">
 <div class="staticpage centertext signupfield">
 <p>Tilmeld dig IDMC <em>uden</em> en KU-konto?</p>
-<input class="loginbutton" type="button" value="tilmelding"
-       onClick="signup('migoid');" />
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://sid.idmc.dk/cgi-sid/reqoid.py' target='_blank'>
+<input class="loginbutton" type="submit" value="tilmelding"
+       onClick="signup('migoid'); return false;" />
+</form>
 <p></p>
 </div>
 <div class="staticpage centertext loginfield">
 <p>Jeg er allerede tilmeldt IDMC <em>uden</em> en KU-konto!</p>
-<input class="loginbutton" type="button" value="log ind"
-       onClick="login('migoid');" />
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://ext.idmc.dk' target='_blank'>
+<input class="loginbutton" type="submit" value="log ind"
+       onClick="login('migoid'); return false;" />
+</form>
 <p></p>
 </div>
 </div>
@@ -436,9 +448,9 @@ eller ændret funktionalitet.
 <h2 class="staticpage">Spørgsmål og hjælp</h2>
 <p>
 <a href="https://sid.erda.dk/public/ucph-store-brugervejledning.pdf">Brugervejledningen</a> 
-indeholder basal information om brugen af IDMC, men
-kontakt os gerne (på dansk eller engelsk) med øvrige spørgsmål og kommentarer
-v.h.a. email-linket nederst på siden.
+indeholder basal information om brugen af IDMC, men kontakt os gerne (på dansk
+eller engelsk) med øvrige spørgsmål og kommentarer v.h.a. email-linket nederst
+på siden.
 </p>
 <p class="warningtext">
 <!--
