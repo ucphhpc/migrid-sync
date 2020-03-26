@@ -33,17 +33,18 @@ Creates MiG server and Apache configurations to fit the provided settings.
 Create MiG developer account with dedicated web server and daemons.
 """
 
+import ast
 import base64
 import crypt
 import datetime
 import hashlib
+import pwd
 import os
-import re
 import random
+import re
 import socket
 import subprocess
 import sys
-import ast
 
 from shared.defaults import default_http_port, default_https_port, \
     auth_openid_mig_db, auth_openid_ext_db, STRONG_TLS_CIPHERS, \
@@ -457,6 +458,11 @@ def generate_confs(
     user_dict['__VGRID_LABEL__'] = vgrid_label
     user_dict['__SECSCAN_ADDR__'] = secscan_addr
     user_dict['__PUBLIC_ALIAS_LISTEN__'] = listen_clause
+
+    # Needed for PAM/NSS
+    pw_info = pwd.getpwnam(user)
+    user_dict['__MIG_UID__'] = str(pw_info.pw_uid)
+    user_dict['__MIG_GID__'] = str(pw_info.pw_gid)
 
     fail2ban_daemon_ports = []
     # Apache fails on duplicate Listen directives so comment in that case
@@ -1324,6 +1330,9 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict
         ("index-template.html", "index.html"),
         ("openssh-MiG-sftp-subsys-template.conf",
          "sshd_config-MiG-sftp-subsys"),
+        ("libnss_mig-template.conf", "libnss_mig.conf"),
+        ("nsswitch-template.conf", "nsswitch.conf"),
+        ("pam-sshd-template", "pam-sshd"),
         ("seafile-template.conf", "seafile.conf"),
         ("seafile-ccnet-template.conf", "ccnet.conf"),
         ("seafile-seahub_settings-template.py", "seahub_settings.py"),
@@ -1420,6 +1429,14 @@ as described in the mig/pam-mig and mig/libnss-mig READMEs and copy the
 generated sshd_config-MiG-sftp-subsys to /etc/ssh/ for a parallel service:
 sudo cp %(destination)s/sshd_config-MiG-sftp-subsys /etc/ssh/
 sudo chown 0:0 /etc/ssh/sshd_config-MiG-sftp-subsys
+sudo cp %(destination)s/libnss_mig.conf /etc/
+then carefully sync or copy contents of PAM sshd service setup and NSS switch
+to only allow password logins for the MiG sftp-subsys service
+sudo cp %(destination)s/pam-sshd /etc/pam.d/sshd
+sudo cp %(destination)s/nsswitch.conf /etc/
+You may also need to reduce the system sshd to listen on a particular address
+rather than claiming all available addresses and thus occupying the one for
+the MiG sftp-susbsys instance.
 We also recommend the moduli tuning to at least 2000 as mentioned on:
 https://stribika.github.io/2015/01/04/secure-secure-shell.html
 After making sure it fits your site you can start the openssh service with:
@@ -1442,7 +1459,7 @@ rotate and compress log files for all MiG daemons.
 You can install it with:
 sudo cp %(destination)s/logrotate-migrid /etc/logrotate.d/migrid
 
-If running a local Seafile instamce you may also want to copy confs to the
+If running a local Seafile instance you may also want to copy confs to the
 Seafile installation 
 cp %(destination)s/seafile.conf ~/seafile/conf/
 cp %(destination)s/ccnet.conf ~/seafile/conf/

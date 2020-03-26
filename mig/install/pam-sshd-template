@@ -1,0 +1,32 @@
+# IMPORTANT: we enable MiG password login for sftp-only access and leave the 
+#            defaults disabled as we don't want general ssh ipassword login
+#            and the included required pam_deny rules from there interfere.
+## MiG
+auth        sufficient    pam_mig.so
+account     sufficient    pam_mig.so
+password    sufficient    pam_mig.so
+session     sufficient    pam_mig.so
+
+### IMPORTANT: We commented out all other default sshd password login
+#              Make sure to set up admin ssh key login before doing this!!!
+# Default sshd password login
+##%PAM-1.0
+#auth	   required	pam_sepermit.so
+#auth       substack     password-auth
+#auth       include      postlogin
+## Used with polkit to reauthorize users in remote sessions
+#-auth      optional     pam_reauthorize.so prepare
+#account    required     pam_nologin.so
+#account    include      password-auth
+#password   include      password-auth
+## pam_selinux.so close should be the first session rule
+#session    required     pam_selinux.so close
+#session    required     pam_loginuid.so
+## pam_selinux.so open should only be followed by sessions to be executed in the user context
+#session    required     pam_selinux.so open env_params
+#session    required     pam_namespace.so
+#session    optional     pam_keyinit.so force revoke
+#session    include      password-auth
+#session    include      postlogin
+## Used with polkit to reauthorize users in remote sessions
+#-session   optional     pam_reauthorize.so prepare
