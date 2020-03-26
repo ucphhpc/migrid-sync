@@ -134,7 +134,7 @@ def track_open_session(configuration,
         session_id = "%s:%s" % (client_address, client_port)
     if do_lock:
         sessions_lock = _acquire_sessions_lock(
-            configuration, proto, exclusive=False)
+            configuration, proto, exclusive=True)
     _active_sessions = _load_sessions(configuration, proto, do_lock=False)
     try:
         _cached = _active_sessions.get(client_id, {})
