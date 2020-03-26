@@ -2,15 +2,17 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>
 SIF
 </title>
+
 <!-- site default style -->
 <link rel="stylesheet" type="text/css" href="/images/default.css" media="screen"/>
 
 <!-- site basic skin style -->
 <!--<link rel="stylesheet" type="text/css" href="/images/static-skin.css" media="screen"/>-->
-<link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/core.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/skin/sif-ucph-science/core.css" media="screen"/>
 
 <!-- base page styles -->
 <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
@@ -24,16 +26,18 @@ SIF
       media="screen"/>
 
 <!-- site skin style -->
-<link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/ui-theme.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/ui-theme.custom.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/skin/sif-ucph-science/ui-theme.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/skin/sif-ucph-science/ui-theme.custom.css" media="screen"/>
+
 
 <link rel="icon" type="image/vnd.microsoft.icon"
-      href="/images/skin/erda-ucph-science/favicon.ico"/>
+      href="/images/skin/sif-ucph-science/favicon.ico"/>
 
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
-<script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
+<script type="text/javascript" src="/assets/js/V2/ui-dynamic.js"></script>
 <script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
+
 <script type="text/javascript">
     /* We assume UCPH users here and leave external users to FAQ entry */
     function login(user) {
@@ -42,30 +46,22 @@ SIF
         } else if (user == "cert") {
             window.open('', '_blank');
         } else if (user == "migoid") {
-            /* TODO: enable when external users are approved */
-            /* window.open('https://sif-ext.erda.dk', '_blank');*/
-            window.open('', '_blank');
+            window.open('https://sif-ext.erda.dk', '_blank');
         } else {
-            /* TODO: enable when external users are approved */
-            /* window.open('https://sif-sid.erda.dk/cgi-sid/login.py', '_blank');*/
-            window.open('https://sif.erda.dk/cgi-sid/login.py', '_blank');
+            window.open('https://sif-sid.erda.dk/cgi-sid/login.py', '_blank');
         }
     }
     function signup(user) {
         if (user == "extoid") {
-            window.open('https://sif.erda.dk/cgi-sid/signup.py?show=kitoid', 
+            window.open('https://sif-sid.erda.dk/cgi-sid/signup.py?show=kitoid', 
                         '_blank');
         } else if (user == "cert") {
             window.open('',
                         '_blank');
         } else if (user == "migoid") {
-            /* TODO: enable when external users are approved */
-            /* window.open('https://sif-sid.erda.dk/cgi-sid/reqoid.py', '_blank');*/
-            window.open('', '_blank');
+            window.open('https://sif-sid.erda.dk/cgi-sid/reqoid.py', '_blank');
         } else {
-            /* TODO: enable when external users are approved */
-            /* window.open('https://sif-sid.erda.dk/cgi-sid/signup.py', '_blank');*/
-            window.open('https://sif.erda.dk/cgi-sid/signup.py', '_blank');
+            window.open('https://sif-sid.erda.dk/cgi-sid/signup.py', '_blank');
         }
     }
     $(document).ready(function() {
@@ -80,12 +76,10 @@ SIF
             "mig-in-danish/saadan-kommer-du-igang");
         */
         /* No migoid support here, yet */
-        /*
         $("a.migoidsignup-link").attr("target", "_blank").attr("href", 
             "https://sif-sid.erda.dk/cgi-sid/signup.py?show=migoid");
         $("a.migoidlogin-link").attr("target", "_blank").attr("href", 
             "https://sif-ext.erda.dk");
-        */
         /* No cert support here */
         /*
         $("a.extcertsignup-link").attr("target", "_blank").attr("href", 
@@ -93,24 +87,52 @@ SIF
         $("a.extcertlogin-link").attr("target", "_blank").attr("href", 
             "https://cert.erda.dk");
         */
+        var locale = extract_default_locale();
+        /* Init supported languages to just english and extend based on lang select */
+        var supported_languages = ['en'];
+        var default_lang = supported_languages[0];
+        var user_lang;
+        /* Extend supported_languages with all entries from select elem */
+        $("#langselect option").each(function() {
+            var option_val = $(this).val();
+            if (supported_languages.indexOf(option_val) < 0) {
+              supported_languages.push($(this).val());
+            }
+        });
+        //console.debug("found supported langs: "+supported_languages);
+        if (locale && supported_languages.indexOf(locale) >= 0)  {
+          user_lang = locale;
+        } else {
+          console.warn(locale+" not supported - fall back to: "+default_lang);
+          user_lang = default_lang;
+        }
+
+        load_faq_content("faq-snippet.html", "english");
+        load_faq_content("faq-snippet.html", "danish");
         /* Init FAQ as foldable but closed and with individual heights */
-        $(".faq-accordion").accordion({
-                                       collapsible: true,
-                                       active: false,
-                                       heightStyle: "content"
-                                      });
-        /* fix and reduce accordion spacing */
-        $(".ui-accordion-header").css("padding-top", 0).css("padding-bottom", 0).css("margin", 0);
+        accordion_init(".faq-accordion");
+
         $("#langselect").on('change', function() { 
                                           var lang = $(this).val();
                                           //alert("switch_language: "+lang);
                                           switch_language(lang);
+                                          /* init is broken until visible */
+                                          $("#quick-start-tabs-"+lang).tabs("refresh");
                                       }
                             );
-        var default_lang = 'en';
-        $("#langselect").val(default_lang);
-        switch_language(default_lang);
+        $("#langselect").val(user_lang);
+        switch_language(user_lang);
 	$("#langselect").msDropdown();
+        /* Init Quick Start as tabs to avoid information overload and do
+           last for proper init. */
+        $("#quick-start-tabs-en").tabs({
+            collapsible: false,
+            active: false
+        });
+        $("#quick-start-tabs-da").tabs({
+            collapsible: false,
+            active: false
+        });
     });
 </script>
 
@@ -193,11 +215,26 @@ Can just be disabled by putting it into an html comment when not in use.
 -->
 </div>
 
-<div class="staticpage quickstartfields">
+<!--
+  I'm an employee or student at KU / UCPH with a general account there
+-->
+<!--
+I'm an external partner in a collaboration with 
+-->
+<!-- 
 <h2 class="staticpage">Quick Start</h2>
+-->
+<div class="staticpage quickstartfields">
+
+<div id="quick-start-tabs-en">
+<ul class="fillwidth padspace">
+<li><a href="#ucph-user-tab-en">KU / UCPH Users</a></li>
+<li><a href="#external-user-tab-en">External Users</a></li>
+</ul>
+
+<div id="ucph-user-tab-en">
 <div class="staticpage centertext signupfield">
-<h2 class="staticpage">New to SIF?</h2>
-<p>If you haven't used SIF before you need to first</p>
+<p>Sign up to SIF using your KU / UCPH account?</p>
 <form method='post' action='https://sif.erda.dk/wsgi-bin/autocreate.py' target='_blank'>
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
@@ -207,18 +244,30 @@ Can just be disabled by putting it into an html comment when not in use.
 <p></p> 
 </div>
 <div class="staticpage centertext loginfield">
-<h2 class="staticpage">I'm already on SIF!</h2>
-<p>In case you already signed up, you can proceed with</p>
+<p>I'm already signed up to SIF with my KU / UCPH account!</p>
 <input class="loginbutton" type="button" value="log in"
        onClick="login('extoid');" />
 <p></p>
 </div>
 </div>
-<p>
-You may also want to refer to the 
-<a href="/public/ucph-sif-user-guide.pdf">User Guide</a> for a more thorough
-introduction, with help on getting started and making the most of your account.
-</p>
+
+<div id="external-user-tab-en">
+<div class="staticpage centertext signupfield">
+<p>Sign up to SIF <em>without</em> a KU / UCPH account?</p>
+<input class="loginbutton" type="button" value="sign up"
+       onClick="signup('migoid');" />
+<p></p>
+</div>
+<div class="staticpage centertext loginfield">
+<p>I'm already signed up to SIF <em>without</em> a KU / UCPH account!</p>
+<input class="loginbutton" type="button" value="log in"
+       onClick="login('migoid');" />
+<p></p>
+</div>
+</div>
+
+</div>
+</div>
 
 <h2 class="staticpage">About UCPH SIF</h2>
 <p>
@@ -229,6 +278,7 @@ data requiring special care under the EU General Data Protection Regulation
 involving sensitive data
 <!-- in addition to archiving of these --> and integrates safe
 sharing with other project participants.<br/>
+
 As a user of SIF you should beware of the following:
 </p>
 <!-- NOTE: ul elements are NOT allowed inside p ones in html spec -->
@@ -263,130 +313,20 @@ extended to all of UCPH in the future to support the general UCPH
 target="_blank">Data Management Guidelines</a>. 
 </p>
 
-<h2 class="staticpage">Frequently Asked Questions (FAQ)</h2>
-<div class="faq-accordion">
-<h4 class="staticpage">How much storage space do I have on SIF?</h4>
-<p>
-There's no space quota as such on the <!--general--> SIF storage. Anything
-within a few <!-- tens of --> terabytes should be fine. We suggest that you
-just have a word with us if you want to store more than that.<br/>
-If you want to store non-sensitive data sets - especially big ones - we
-recommend instead doing so on <a href="http://www.erda.dk">ERDA</a>.
 </p>
-<h4 class="staticpage">Is my SIF Data Replicated and Backed Up?</h4>
-<p>
-All user data on SIF is automatically replicated over multiple disks
-with RAID technology. We additionally run automatic nightly backup of
-all SIF system and user data to a remote location.
-</p>
-<h4 class="staticpage">How are SIF Data Secured?</h4>
-<p>SIF relies on the same mature open source software stack used in ERDA, but
-with a number of additional security enhancements and with all potentially less
-secure features disabled. E.g. it does not come with direct data export and
-share links to reduce the risk of data leaks and avoid anonymous access of
-any kind. SIF enforces mandatory 2-factor authentication for all access using
-the TOTP industry standard for one-time passwords generated on your smart phone
-or tablet. In effect this makes it a lot harder to obtain unauthorized access
-even for an attacker who should somehow get hold of your password. Data on SIF
-can generally only be accessed through security-hardened protocols and user
-data is only ever stored to disk in encrypted form. That is, all data access
-and storage rely on strong encryption standards. Additionally SIF strictly
-separates data on a per-project basis to help users avoid leaking sensitive
-data by mistake.<br/>
-User data is only ever stored on UCPH premises, more precisely in the HPC
-Center server rooms with physical access control. Management-wise SIF also
-comes with even tighter regulation, where only a select few administrators can
-obtain access to decrypted user data, and always only after explicit permission
-from a superior. 
-</p>
-<h4 class="staticpage">How do I Transfer Entire Folders to/from SIF?</h4>
-<p>
-For upload of an entire folder structure, you can use the efficient
-file/folder handling described in the Efficient Data Access sections of
-the <a href="/public/ucph-sif-user-guide.pdf">user guide</a>. That makes SIF appear like a network drive, so that you
-can use your local file manager to copy entire folders to SIF.<br/>
-Currently SIF web access is limited to only upload/download of individual
-files.
-<!--
-so if you e.g. want to upload an entire folder structure there, first
-pack the folder(s) in a zip or tar file, upload it as usual and then
-use <em>unpack</em> from the right-click menu on the uploaded file.<br/>
-Likewise you can use <em>pack</em> on a folder in SIF, download and
-unpack it locally.<br/>
-Alternatively you can use the efficient file/folder handling described
--->
-We may decide to add pack/unpack support later, like it is the case on
-ERDA.
-</p>
-<h4 class="staticpage">Why can't I use certain characters in file names?</h4>
-<p>
-SIF prevents certain characters like 
-"&lt; &gt; &#123; &#124; &#125; &#42; &#63; &#91; &#93;"
-in file names. You may already have run into similar limitations when
-naming files on your own PC or devices. In order to provide a secure and
-consistent experience across different platforms, web and advanced
-interfaces SIF prohibits those and some more that are known to cause
-problems. Either because they are so-called control characters with a
-special potentially dangerous meaning on the storage systems or because
-they are known to interfere with the web interfacing and
-presentation. We are continuously evaluating the need for allowing more
-exotic characters but always with focus on not breaking existing
-interfaces and backends. Feel free to contact us about the possibility
-of allowing any additional characters that you may miss.
-</p>
-<h4 class="staticpage">Can I get or keep a SIF account without a UCPH account?</h4>
-<p>
-We provide external user access with non-UCPH credentials, 
-but for legal reasons this access requires explicit prior acceptance 
-from the relevant faculty legal unit and such external users 
-can only be invited to join existing SIF projects owned by a UCPH employee. 
-Please contact us at the support email below or get in touch 
-with the relevant 
-<a href="https://kunet.ku.dk/work-areas/research/data/personal-data/Pages/default.aspx"
-target="_blank">Faculty Secretariat</a> for further details.
-<!--  
-No, unfortunately not at the moment. Technically we <em>are</em> ready to
-provide external access without UCPH credentials, but our legal department at
-the university hasn't yet established the required procedures and contracts to
-allow it. We're working together to get it all settled, however, and it's
-getting close.
 
-Yes, as long as you need a SIF account for a project collaboration
-with one or more employees at UCPH it is possible to get one, even if you
-don't have a general UCPH account. Likewise it is possible to preserve
-access to your SIF account beyond your employment at UCPH in case you
-need it to keep collaborating with a remaining employee.
-<br/>
-<span class="warningtext">
-IMPORTANT: please note that UCPH management requires all such users not
-employed at UCPH to explicitly register with their affiliation to a local
-user. So please include a reference to your associate/advisor at UCPH
-Science in the comment field when you fill in the OpenID or certificate
-account request described below.
-</span>
-<br />
-Our general username+password access described in the user guide relies on
-the OpenID login from Koncern-IT / University IT and they strictly use
-the UCPH user database. So only users with an account there can use that login.
-<br />
-However, we provide two alternative access methods, namely a similar
-username+password login using our own separate OpenID login service, and
-another one relying on user certificates for added security. 
-<br/>
-You can sign up for an SIF account with OpenID access with the
-<em>Other User OpenID Signup</em> button on the <a class="migoidsignup-link">sign
-  up</a> page. If you already have an SIF account and just want to
-enable this OpenID login before your UCPH login expires you can use the
-same procedure, but then you need to make sure you enter the exact same account
-fields in the signup form. Please ask us if in doubt.
-<br/>
-After the SIF admins accept your OpenID account/access request
-you can use your registered email address along with your chosen
-password for <a class="migoidlogin-link">log in</a>.
-<br/>
--->
-</p>
+<div id="faq-content-english" class="col-lg-12">
+  <!-- Filled by AJAX -->
+  <noscript>
+    <h2 class="staticpage">FAQ</h2>
+    <p>
+      You need a browser with JavaScript for the intended
+      dynamic behaviour on this page, but you can still manually 
+      <a href="faq-snippet.html">view the FAQ</a> without.
+    </p>
+  </noscript>
 </div>
+
 <h2 class="staticpage">Status and News</h2>
 <p>
 You can always refer to our
@@ -396,9 +336,10 @@ features.
 </p>
 <h2 class="staticpage">Questions and Support</h2>
 <p>
-The user guide provides basic information about using SIF, but feel free
-to contact us using the email link at the bottom of the page in case you
-have any further questions or comments (in English or Danish).
+The <a href="/public/ucph-sif-user-guide.pdf">User Guide</a> provides basic
+information about using SIF, but feel free to contact us using the email link
+at the bottom of the page in case you have any further questions or comments
+(in English or Danish).
 </p>
 <h2 class="staticpage">Terms of Use</h2>
 <p>
@@ -410,7 +351,7 @@ available from here, in addition to our site privacy and cookie policies
 linked at the bottom.
 </p>
 </div>
-<div class="danish i18n" lang="da">
+<div class="danish i18n hidden" lang="da">
 <h1 class="staticpage">Velkommen til UCPH SIF</h1>
 
 <!-- Next div is used for site wide system maintenance warnings and such:
@@ -454,10 +395,14 @@ Can just be disabled by putting it into an html comment when not in use.
 </div>
 
 <div class="staticpage quickstartfields">
-<h2 class="staticpage">Hurtigt igang</h2>
+<div id="quick-start-tabs-da">
+<ul>
+<li><a href="#ucph-user-tab-da">KU / UCPH brugere</a></li>
+<li><a href="#external-user-tab-da">Eksterne brugere</a></li>
+</ul>
+<div id="ucph-user-tab-da">
 <div class="staticpage centertext signupfield">
-<h2 class="staticpage">Ny på SIF?</h2>
-<p>Hvis ikke du har en SIF konto, skal du først igennem</p>
+<p>Tilmeld dig SIF med din KU-konto?</p>
 <form method='post' action='https://sif.erda.dk/wsgi-bin/autocreate.py' target='_blank'>
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
@@ -467,18 +412,30 @@ Can just be disabled by putting it into an html comment when not in use.
 <p></p>
 </div>
 <div class="staticpage centertext loginfield">
-<h2 class="staticpage">Jeg er allerede på SIF!</h2>
-<p>Hvis du allerede har tilmeldt dig SIF, kan du gå direkte til</p>
+<p>Jeg er allerede tilmeldt SIF med min KU-konto!</p>
 <input class="loginbutton" type="button" value="log ind"
        onClick="login('extoid');" />
 <p></p>
 </div>
 </div>
-<p>Vi anbefaler at du også ser nærmere på
-<a href="/public/ucph-sif-brugervejledning.pdf">SIF Brugervejledningen</a> for
-en grundigere introduktion, med hjælp til at komme igang og få størst nytte af
-din konto.
-</p>
+
+<div id="external-user-tab-da">
+<div class="staticpage centertext signupfield">
+<p>Tilmeld dig SIF <em>uden</em> en KU-konto?</p>
+<input class="loginbutton" type="button" value="tilmelding"
+       onClick="signup('migoid');" />
+<p></p>
+</div>
+<div class="staticpage centertext loginfield">
+<p>Jeg er allerede tilmeldt SIF <em>uden</em> en KU-konto!</p>
+<input class="loginbutton" type="button" value="log ind"
+       onClick="login('migoid');" />
+<p></p>
+</div>
+</div>
+
+</div>
+</div>
 
 <h2 class="staticpage">Om UCPH SIF</h2>
 <p>
@@ -489,6 +446,7 @@ persondataforordningen, forordning 2016/679 (også kendt som EU
 GDPR). SIF leverer sikker centraliseret lagerplads til diverse projekter med
 følsomme data <!-- samt arkiveringsfaciliteter til disse--> og integrerer
 mulighed for sikker deling med andre projektdeltagere.<br/>
+
 Som bruger på SIF bør du være opmærksom på følgende:
 </p>
 <!-- NOTE: ul elements are NOT allowed inside p ones in html spec -->
@@ -526,137 +484,18 @@ til hele KU for at understøtte KUs generelle
 target="_blank">data management forskrifter</a>. 
 </p>
 
-<h2 class="staticpage">Ofte stillede spørgsmål (OSS)</h2>
-<div class="faq-accordion">
-<h4 class="staticpage">Hvor meget plads har jeg på SIF?</h4>
-<p>
-Vi håndhæver ikke som sådan pladskvoter på selve SIF datalageret. 
-Sålænge vi taler datamængder op til <!-- en snes-->
-terabytes, skulle der ikke være nogen problemer. Hvis du gerne vil gemme
-mere end det, kan det sikkert også lade sig gøre - bare tag en snak med
-os om det.<br/>
-Hvis du ønsker at lagre ikke-sensitive datasæt - især de større af slagsen -
-anbefaler vi i stedet at benytte <a href="http://www.erda.dk">ERDA</a> til
-formålet.
-</p>
-<h4 class="staticpage">Er mine SIF data replikerede og med backup?</h4>
-<p>
-Al brugerdata på SIF er automatisk replikeret over flere diske v.h.a.
-RAID-teknologi. Vi kører desuden hver nat automatisk backup af alle SIF
-system- og brugerdata til en fjernlokation.
-</p>
-<h4 class="staticpage">Hvordan er data sikret på SIF?</h4>
-<p>SIF benytter den samme modne open source software-stak som ERDA, men med en
-række yderligere sikkerhedstiltag og med alle potentielt mindre sikre
-funktioner slået fra. Herunder f.eks. direkte dataeksport og share links, både
-for a mindske risikoen for datalæk og for at undgå alle former for anonym
-dataadgang. SIF håndhæver obligatorisk 2-faktor-autentificering ved al adgang
-v.h.a. TOTP-industristandarden for engangskoder genereret på din smart phone
-eller tablet. I praksis bliver uautoriseret adgang derved markant sværere, selv
-for en angriber, som på en eller anden vis måtte have skaffet sig adgang til dit
-kodeord. Data på SIF kan gennemgående kun tilgåes via sikkerhedshærdede
-protokoller, og brugerdata gemmes altid kun på disk i krypteret form. D.v.s. al
-dataadgang og lagring benytter stærk kryptering. Yderligere separerer SIF
-strengt brugerdata på projektbasis, for at hjælpe brugere undgå ved en fejl at
-lække sensitive data.<br/>
-Brugerdata gemmes ene og alene på KU-ejendom, nærmere bestemt i HPC Centerets
-serverrum med fysisk adgangskontrol. Driftmæssigt er SIF også underlagt ekstra
-streng regulering, så kun et fåtal af administratorer kan opnå adgang til
-dekrypteret brugerdata, og altid kun med eksplicit forudgående godkendelse fra
-en overordnet. 
-</p>
-<h4 class="staticpage">Hvordan overfører jeg hele foldere til/fra SIF?</h4>
-<p>
-For upload af hele foldere kan du benytte den effektive 
-fil/folder-håndtering som beskrevet i afsnittene om Effektiv datatilgang 
-i <a href="/public/ucph-sif-brugervejledning.pdf">brugervejledningen</a>. 
-På den måde kan SIF tilgåes som et netværksdrev så du kan benytte din
-almindelige filhåndtering til at kopiere hele foldere til og fra SIF.<br/>
-I øjeblikket understøtter SIF web-interfacet kun at man
-uploader/downloader enkeltfiler. 
-<!--, så hvis
-du f.eks. vil uploade hele foldere den vej, må du først pakke dem i en
-zip- eller tar-fil, som du derefter uploader som vanligt og endelig
-udpakker med <em>unpack</em> fra højreklik-menuen på den uploadede
-fil.<br/>
-Tilsvarende kan du bruge <em>pack</em> på en SIF folder, downloade den
-pakkede fil og udpakke lokalt.<br/>
-Alternativt kan du benytte den effektive fil/folder-håndtering som
--->
-Vi overvejer om vi på sigt vil tilbyde funktioner til at pakke/udpakke
-arkivfiler ligesom på ERDA.
-</p>
-<h4 class="staticpage">Hvorfor er der tegn jeg ikke kan bruge i filnavne?</h4>
-<p>
-SIF afviser enkelte tegn så som 
-"&lt; &gt; &#123; &#124; &#125; &#42; &#63; &#91; &#93;"
-i filnavne. Måske du allerede har oplevet lignende begrænsninger i
-navngivningen af filer på din PC eller andre enheder.
-For at kunne levere en sikker og ensartet brugeroplevelse på tværs af
-platforme, web og avancerede brugergrænseflader afviser SIF disse og
-visse andre som er kendt for at skabe problemer.
-Hvadenten det er fordi de er såkaldte kontroltegn med en speciel og
-potentielt skadelig betydning på lagersystemerne eller fordi de vides at
-forstyrre web-brug og -visning. Vi evaluerer løbende på behovet for at
-tillade yderligere eksotiske tegn, hele tiden under krav om hverken at
-skade brugergrænseflader eller bagvedliggende systemer. Du er
-naturligvis velkommen til at kontakte os angående at få yderligere tegn
-du måtte savne tilladt.
-</p>
-<h4 class="staticpage">Kan jeg få eller beholde en SIF-konto uden en KU-konto?</h4>
-<p>
-Eksterne brugere uden et KU login kan få adgang til eksisterende SIF projekter.
-Dette kræver en forhåndsgodkendelse fra den juridiske afdeling på det fakultet som 
-er ansvarlig for projektetet. Eksterne brugere kan kun få adgang
-til SIF projekter som er ejet af en KU ansat.
-Kontakt os venligst på vores support emailadresse nederst eller kontakt det 
-relevante 
-<a href="https://kunet.ku.dk/arbejdsomraader/forskning/data/behandling-af-personoplysninger/Sider/default.aspx" 
-target="_blank">fakultetssekretariatet</a> for yderligere information.
-<!--
-Nej, desværre ikke på nuværende tidspunkt. Rent teknisk <em>kunne</em> vi godt
-give ekstern adgang uden KU-konto, men vores juridiske afdeling på
-universitetet har endnu ikke etableret de nødvendige procedurer og kontrakter
-for at vi har lov til det. Vi arbejder dog sammen for at få det på plads og er tæt på.
-
-Ja, sålænge du har brug for en SIF-konto til et projektsamarbejde med
-en eller flere ansatte på KU, er det muligt at få en sådan, også selv om
-du ikke har en generel KU-konto. Ligeledes er det muligt at beholde
-adgang til din SIF-konto efter endt ansættelse, såfremt du har brug for
-den til samarbejde med en vedblivende ansat.
-<br/>
-<span class="warningtext">
-VIGTIGT: bemærk at KU-ledelsen har bedt om at sådanne brugere som ikke
-er ansat på KU registrerer sig med eksplicit tilknytning til en lokal
-bruger. Så henvis venligst til din samarbejdspartner/vejleder på KU Science i
-kommentarfeltet når du anmoder om OpenID- eller certifikat-adgang i
-formularen beskrevet nedenfor.
-</span>
-<br />
-Vores generelle adgangskontrol med brugernavn+kode, som beskrevet i
-brugervejledningen, benytter OpenID-login fra KU Koncern-IT og er dermed
-strengt knyttet til KUs brugerdatabase. Den kan derfor kun benyttes af
-brugere med en KU-konto.
-<br />
-Vi tilbyder dog to alternativer for adgang uden en KU-konto. Den ene er
-ligeledes med brugernavn+kode via vores egen selvstændige OpenID-login
-service og den anden benytter brugercertifikater for ekstra høj sikkerhed.
-<br/>
-Du kan tilmelde dig SIF og få OpenID-adgang til din konto vha 
-<em>Other User OpenID Signup</em>-knappen
-under <a class="migoidsignup-link">tilmelding</a>. 
-Såfremt du allerede har en SIF-konto, som du blot gerne vil bevare
-OpenID-adgang til, kan du benytte selvsamme side. Blot skal du være
-opmærksom på at udfylde formularens felter, så de stemmer nøjagtig
-overens med din nuværende konto. Spørg endelig hvis du er i tvivl.
-<br/>
-Når systemadministratorerne på SIF har godkendt din OpenID-konto/adgang, kan du
-bruge din registrerede emailadresse sammen med din selvvalgte kode
-til <a class="migoidlogin-link">log ind</a>.
-<br/>
--->
-</p>
+<div id="faq-content-danish" class="col-lg-12">
+  <!-- Filled by AJAX -->
+  <noscript>
+    <h2 class="staticpage">FAQ</h2>
+    <p>
+      Du skal bruge en browser med JavaScript for at få den tiltænkte
+      dynamiske opførsel på denne side, men du kan stadig manuelt
+      <a href="faq-snippet.html">åbne vores FAQ</a> uden.
+    </p>
+  </noscript>
 </div>
+
 <h2 class="staticpage">Status og nyheder</h2>
 <p>
 Man kan altid benytte den særskilte side med 
@@ -666,7 +505,8 @@ eller ændret funktionalitet.
 </p>
 <h2 class="staticpage">Spørgsmål og hjælp</h2>
 <p>
-Brugervejledningen indeholder basal information om brugen af SIF, men
+<a href="/public/ucph-sif-brugervejledning.pdf">SIF Brugervejledningen</a>
+indeholder basal information om brugen af SIF, men
 kontakt os gerne (på dansk eller engelsk) med øvrige spørgsmål og kommentarer
 v.h.a. email-linket nederst på siden.
 </p>
@@ -702,7 +542,7 @@ Please contact
 us at <a href="mailto:support@sif.erda.dk">support@sif.erda.dk</a>
 </p>
 </div>
-<div class="supporttext staticpage i18n" lang="da">
+<div class="supporttext staticpage i18n hidden" lang="da">
 <p class="supporttitle i18n" lang="da">Vejledning</p>
 <p class="i18n" lang="da">
 <a href="/public/ucph-sif-brugervejledning.pdf">SIF Brugervejledning</a><br />
@@ -722,7 +562,7 @@ Skriv til os på
 &amp; <a href="/public/cookie-policy.pdf">Cookie Policy</a>
 </p>
 </div>
-<div class="privacytext staticpage i18n" lang="da">
+<div class="privacytext staticpage i18n hidden" lang="da">
 <p class="privacytitle i18n" lang="da">Privatliv og rettigheder</p>
 <p class="i18n" lang="da">
 <a href="/public/site-privacy-policy.pdf">Privacy Policy</a>

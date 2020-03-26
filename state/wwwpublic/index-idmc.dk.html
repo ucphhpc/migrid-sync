@@ -79,10 +79,31 @@ IDMC
             "https://sid.idmc.dk/cgi-sid/signup.py?show=extcert");
         $("a.extcertlogin-link").attr("target", "_blank").attr("href", 
             "https://cert.idmc.dk");
+        var locale = extract_default_locale();
+        /* Init supported languages to just english and extend based on lang select */
+        var supported_languages = ['en'];
+        var default_lang = supported_languages[0];
+        var user_lang;
+        /* Extend supported_languages with all entries from select elem */
+        $("#langselect option").each(function() {
+            var option_val = $(this).val();
+            if (supported_languages.indexOf(option_val) < 0) {
+              supported_languages.push($(this).val());
+            }
+        });
+        //console.debug("found supported langs: "+supported_languages);
+        if (locale && supported_languages.indexOf(locale) >= 0)  {
+          user_lang = locale;
+        } else {
+          console.warn(locale+" not supported - fall back to: "+default_lang);
+          user_lang = default_lang;
+        }
+
         load_faq_content("faq-snippet.html", "english");
         load_faq_content("faq-snippet.html", "danish");
         /* Init FAQ as foldable but closed and with individual heights */
         accordion_init(".faq-accordion");
+
         $("#langselect").on('change', function() { 
                                           var lang = $(this).val();
                                           //alert("switch_language: "+lang);
@@ -91,9 +112,8 @@ IDMC
                                           $("#quick-start-tabs-"+lang).tabs("refresh");
                                       }
                             );
-        var default_lang = 'en';
-        $("#langselect").val(default_lang);
-        switch_language(default_lang);
+        $("#langselect").val(user_lang);
+        switch_language(user_lang);
 	$("#langselect").msDropdown();
         /* Init Quick Start as tabs to avoid information overload and do
            last for proper init. */
@@ -252,6 +272,14 @@ intended and approved for exactly that purpose.
 
 <div id="faq-content-english" class="col-lg-12">
   <!-- Filled by AJAX -->
+  <noscript>
+    <h2 class="staticpage">FAQ</h2>
+    <p>
+      You need a browser with JavaScript for the intended
+      dynamic behaviour on this page, but you can still manually 
+      <a href="faq-snippet.html">view the FAQ</a> without.
+    </p>
+  </noscript>
 </div>
 
 <h2 class="staticpage">Status and News</h2>
@@ -266,7 +294,7 @@ features.
 The <a href="https://sid.erda.dk/public/ucph-erda-user-guide.pdf">user guide</a> 
  provides basic information about using IDMC, but feel
 free to contact us using the email link at the bottom of the page in
-case you have any questions or comments (in English or Danish).
+case you have any further questions or comments (in English or Danish).
 <p class="warningtext">
 Be aware that the user guide is made for ERDA, the sister system of IDMC, but 
 almost all examples are valid with the replacement of erda.dk with idmc.dk.
@@ -281,7 +309,7 @@ available from here, in addition to our site privacy and cookie policies
 linked at the bottom.
 </p>
 </div>
-<div class="danish i18n" lang="da">
+<div class="danish i18n hidden" lang="da">
 <h1 class="staticpage">Velkommen til IDMC!</h1>
 
 <!-- Next div is used for site wide system maintenance warnings and such:
@@ -316,7 +344,8 @@ Can just be disabled by putting it into an html comment when not in use.
   Tag venligst <a href="http://status.erda.dk">dine forholdsregler</a>
   hvis du blev fanget i den seneste
   tids  <a href="https://it.ku.dk/driftinfo/">phishing-angreb</a> på
-  KU/KUMail!</span>  
+  KU/KUMail!
+</span>
 </span>
 <br/><br/>
 -->
@@ -387,6 +416,14 @@ netop <em>er</em> beregnet og godkendt til det formål.
 
 <div id="faq-content-danish" class="col-lg-12">
   <!-- Filled by AJAX -->
+  <noscript>
+    <h2 class="staticpage">FAQ</h2>
+    <p>
+      Du skal bruge en browser med JavaScript for at få den tiltænkte
+      dynamiske opførsel på denne side, men du kan stadig manuelt
+      <a href="faq-snippet.html">åbne vores FAQ</a> uden.
+    </p>
+  </noscript>
 </div>
 
 <h2 class="staticpage">Status og nyheder</h2>
@@ -400,7 +437,7 @@ eller ændret funktionalitet.
 <p>
 <a href="https://sid.erda.dk/public/ucph-store-brugervejledning.pdf">Brugervejledningen</a> 
 indeholder basal information om brugen af IDMC, men
-kontakt os gerne (på dansk eller engelsk) med spørgsmål og kommentarer
+kontakt os gerne (på dansk eller engelsk) med øvrige spørgsmål og kommentarer
 v.h.a. email-linket nederst på siden.
 </p>
 <p class="warningtext">
@@ -408,9 +445,6 @@ v.h.a. email-linket nederst på siden.
 Bemærk at IDMC siderne p.t. kun findes på engelsk. Den danske
 brugervejledning kan forhåbentlig afhjælpe eventuelle
 forståelsesvanskeligheder, og en egentlig dansk oversættelse overvejes stadig.
-<br>
-<br>
-Bemærk desuden at brugervejledningen stammer fra ERDA, IDMCs søster-system, men
 -->
 Bemærk at brugervejledningen stammer fra ERDA, IDMCs søster-system, men
 næsten alle eksempler kan benyttes ved at erstatte erda.dk med idmc.dk.
@@ -434,7 +468,7 @@ i tillæg til vores site privacy og cookie policy via links nederst.
 <div class="supporttext staticpage i18n" lang="en">
 <a href="mailto:support@idmc.dk">Contact & Help</a>
 </div>
-<div class="supporttext staticpage i18n" lang="da">
+<div class="supporttext staticpage i18n hidden" lang="da">
 <a href="mailto:support@idmc.dk">Kontakt & Hjælp</a>
 </div>
 </div>
@@ -447,7 +481,7 @@ i tillæg til vores site privacy og cookie policy via links nederst.
 &amp; <a href="/public/cookie-policy.pdf">Cookie Policy</a>
 </p>
 </div>
-<div class="privacytext staticpage i18n" lang="da">
+<div class="privacytext staticpage i18n hidden" lang="da">
 <p class="i18n" lang="da">
 <a href="/public/site-privacy-policy.pdf">Privacy Policy</a>
 &amp; <a href="/public/cookie-policy.pdf">Cookie Policy</a>
