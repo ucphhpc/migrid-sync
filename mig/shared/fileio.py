@@ -671,7 +671,9 @@ def acquire_file_lock(lock_path, exclusive=True):
         lock_mode = fcntl.LOCK_EX
     else:
         lock_mode = fcntl.LOCK_SH
-    lock_handle = open(lock_path, "w")
+    # NOTE: Some system+python combinations require 'w+' here
+    #       to allow both SH and EX locking
+    lock_handle = open(lock_path, "w+")
     fcntl.flock(lock_handle.fileno(), lock_mode)
     return lock_handle
 
