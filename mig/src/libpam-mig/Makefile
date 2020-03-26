@@ -18,17 +18,17 @@
 # NOTE: we looup UID and GID of 'mig' user to limit hard-coding but we may stil
 #       need to update paths and even the user name if using custom install
 MIG_DEFAULTS=-D'MIG_UID=$(shell id -u mig)' \
-			 -D'MIG_GID=$(shell id -g mig)' \
-			 -D'RATE_LIMIT_EXPIRE_DELAY=300' \
-			 -D'JOBSIDMOUNT_HOME="/home/mig/state/webserver_home"' \
-			 -D'JOBSIDMOUNT_LENGTH=64' \
-			 -D'JUPYTERSIDMOUNT_HOME="/home/mig/state/sessid_to_jupyter_mount_link_home"' \
-			 -D'JUPYTERSIDMOUNT_LENGTH=64' \
-			 -D'PASSWORD_MIN_LENGTH=8' \
-			 -D'PASSWORD_MIN_CLASSES=3' \
-			 -D'SHARELINK_HOME="/home/mig/state/sharelink_home"' \
-			 -D'SHARELINK_LENGTH=10' \
-			 -D'USERNAME_REGEX="^[a-zA-Z0-9][a-zA-Z0-9.@_-]{0,127}$$"'
+	-D'MIG_GID=$(shell id -g mig)' \
+	-D'RATE_LIMIT_EXPIRE_DELAY=300' \
+	-D'JOBSIDMOUNT_HOME="$(shell ~mig/mig/server/readconfval.py webserver_home)"' \
+	-D'JOBSIDMOUNT_LENGTH=64' \
+	-D'JUPYTERSIDMOUNT_HOME="$(shell ~mig/mig/server/readconfval.py sessid_to_jupyter_mount_link_home)"' \
+	-D'JUPYTERSIDMOUNT_LENGTH=64' \
+	-D'PASSWORD_MIN_LENGTH=8' \
+	-D'PASSWORD_MIN_CLASSES=3' \
+	-D'SHARELINK_HOME="$(shell ~mig/mig/server/readconfval.py sharelink_home)"' \
+	-D'SHARELINK_LENGTH=10' \
+	-D'USERNAME_REGEX="^[a-zA-Z0-9][a-zA-Z0-9.@_-]{0,127}$$"'
 ### End of MiG site variables
 
 #### Start of compiler configuration section ### 

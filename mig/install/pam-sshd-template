@@ -1,5 +1,5 @@
 # IMPORTANT: we enable MiG password login for sftp-only access and leave the 
-#            defaults disabled as we don't want general ssh ipassword login
+#            defaults disabled as we don't want general ssh password login
 #            and the included required pam_deny rules from there interfere.
 ## MiG
 auth        sufficient    pam_mig.so
