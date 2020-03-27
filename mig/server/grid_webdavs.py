@@ -85,7 +85,8 @@ from shared.notification import send_system_notification
 from shared.pwhash import unscramble_digest, assure_password_strength
 from shared.useradm import check_password_hash, generate_password_hash, \
     generate_password_digest
-from shared.validstring import possible_user_id, possible_sharelink_id
+from shared.validstring import possible_user_id, possible_gdp_user_id, \
+    possible_sharelink_id
 
 configuration, logger = None, None
 
@@ -429,7 +430,7 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
         if self.last_expire + self.min_expire_delay < time.time():
             self.last_expire = time.time()
             expire_rate_limit(configuration, "davs",
-                expire_delay=self.min_expire_delay)
+                              expire_delay=self.min_expire_delay)
 
     def _authheader(self, environ):
         """Returns dict with HTTP AUTH REQUEST header
@@ -581,8 +582,10 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
 
             # Update rate limits and write to auth log
 
-            password_enabled = environ.get('http_authenticator.password_enabled', False)
-            digest_enabled = environ.get('http_authenticator.digest_enabled', False)
+            password_enabled = environ.get(
+                'http_authenticator.password_enabled', False)
+            digest_enabled = environ.get(
+                'http_authenticator.digest_enabled', False)
             (authorized, disconnect) = validate_auth_attempt(
                 configuration,
                 'davs',
@@ -1279,7 +1282,9 @@ def update_users(configuration, user_map, username):
     """Update creds dict for username and aliases"""
     # Only need to update users and shares here, since jobs only use sftp
     changed_users, changed_shares = [], []
-    if possible_user_id(configuration, username):
+    if possible_user_id(configuration, username) \
+            or (configuration.site_enable_gdp
+                and possible_gdp_user_id(configuration, username)):
         daemon_conf, changed_users = refresh_user_creds(configuration, 'davs',
                                                         username)
     if possible_sharelink_id(configuration, username):
