@@ -1266,6 +1266,7 @@ def twofactor_wizard_js(configuration):
                 //console.log("found activate_id: "+activate_id);
                 var verify_url = $(this).data("verify_url");
                 //console.log("found verify_url: "+verify_url);
+                $('.ui-dialog-buttonset button:contains("Verify")').button().hide();
                 $("#twofactorstatus").html(renderWorking("checking ..."));
                 acceptedOTP = false;
                 try {
@@ -1287,6 +1288,7 @@ def twofactor_wizard_js(configuration):
                                         acceptedOTP = true;
                                         break;
                                     } else if (statusMsg.indexOf("Incorrect token") !== -1) {
+                                        errorMsg = "Wrong token - please retry or check client";
                                         console.error(
                                             "Verify failure: "+statusMsg);
                                         break;
@@ -1302,9 +1304,12 @@ def twofactor_wizard_js(configuration):
                                 setTimeout(function() {$(dialog_handle).dialog("close")},
                                            2000);
                             } else {
-                                errorMsg = "Wrong token - please retry or check client";
+                                if (errorMsg === "") {
+                                    errorMsg = "Failed to verify token - please retry";
+                                }
                                 console.error(errorMsg);
                                 $("#twofactorstatus").html(renderError(errorMsg));
+                                $('.ui-dialog-buttonset button:contains("Verify")').button().show();
                             }
                         },
                         error: function(jqXHR, textStatus, errorThrown) {
