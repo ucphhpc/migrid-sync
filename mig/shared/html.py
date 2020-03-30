@@ -280,9 +280,9 @@ def render_apps(configuration, title_entry, active_menu):
             app_order.append(name)
 
     app_lines = '''
-                                       <div class="home-page__content col-12">
-						<h2>Your apps & app-setup</h2>
-						<div class="app-row row app-grid">
+                    <div class="home-page__content col-12">
+                        <h2>Your apps & app-setup</h2>
+                        <div class="app-row row app-grid">
         '''
 
     for name in app_order:
@@ -306,21 +306,20 @@ def render_apps(configuration, title_entry, active_menu):
             spec['url'] = configuration.user_seahub_url
         spec['hover'] = spec.get('hover', '')
         app_lines += '''
-							<div class="col-lg-2 app-cell">
-								<div class="app__btn col-12">
-									<a href="%(url)s" title="%(hover)s"><span class="fas %(class)s"></span><h3>%(title)s</h3></a>
-								</div>
-							</div>
+                            <div class="col-lg-2 app-cell">
+                                <div class="app__btn col-12">
+                                    <a href="%(url)s" title="%(hover)s"><span class="fas %(class)s"></span><h3>%(title)s</h3></a>
+                                </div>
+                            </div>
         ''' % spec
     app_lines += '''
-							<div class="col-lg-2">
-								<div class="add-app__btn col-12" onclick="addApp()">
-									<a href="#"><span class="fas fa-plus"></span><h3>Add</h3></a>
-								</div>
-							</div>
-
-						</div>
-					</div>
+                            <div class="col-lg-2">
+                                <div class="add-app__btn col-12" onclick="addApp()">
+                                    <a href="#"><span class="fas fa-plus"></span><h3>Add</h3></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 '''
 
     return app_lines
@@ -385,51 +384,51 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
         html = '''
     <!-- Push notifications: updated/filled by AJAX -->
     <div id="sitestatus-popup" class="toast hidden" data-autohide="false">
-      <div id="sitestatus-top" class="toast-header">
-        <div id="sitestatus-title" class="toast-title">
-          <!-- TODO: move inline style to css files -->
-          <!-- NOTE: reuse 1.5rem size with ml-2 and mb-1 classes to mimic close -->
-          <span id="sitestatus-icon" class="fas fa-question-circle ml-2 mb-1" style="color: grey; font-size: 1.5rem; float: left;"></span>
-          <strong class="mr-auto text-primary" style="float: left;">
-            <h3 id="sitestatus-caption" style="margin-left: 5px;">SITE STATUS</h3>
-          </strong>
-          <small id="sitestatus-timestamp" class="text-muted" style="float: right;"></small>
+        <div id="sitestatus-top" class="toast-header">
+            <div id="sitestatus-title" class="toast-title">
+                <!-- TODO: move inline style to css files -->
+                <!-- NOTE: reuse 1.5rem size with ml-2 and mb-1 classes to mimic close -->
+                <span id="sitestatus-icon" class="fas fa-question-circle ml-2 mb-1" style="color: grey; font-size: 1.5rem; float: left;"></span>
+                <strong class="mr-auto text-primary" style="float: left;">
+                    <h3 id="sitestatus-caption" style="margin-left: 5px;">SITE STATUS</h3>
+                </strong>
+                <small id="sitestatus-timestamp" class="text-muted" style="float: right;"></small>
+            </div>
+        <div id="sitestatus-close" class="">
+            <button type="button" class="ml-2 mb-1 close" data-dismiss="toast">&times;</button>
         </div>
-      <div id="sitestatus-close" class="">
-        <button type="button" class="ml-2 mb-1 close" data-dismiss="toast">&times;</button>
-      </div>
     </div>
     <div id="sitestatus-content" class="toast-body">
-      <h3>Site Status</h3>
-      <p id="sitestatus-line" class="status-text">
-      <!-- Filled by AJAX -->
-      </p>
-      <div id="sitestatus-recent" class="hidden"><h3>Active Announcements</h3>
-        <p id="sitestatus-announce" class="announce-text"></p>
-      </div>
+        <h3>Site Status</h3>
+        <p id="sitestatus-line" class="status-text">
+        <!-- Filled by AJAX -->
+        </p>
+        <div id="sitestatus-recent" class="hidden"><h3>Active Announcements</h3>
+            <p id="sitestatus-announce" class="announce-text"></p>
+        </div>
     </div>
     <div id="sitestatus-more" class="toast-body">
-      <a target=_blank href="%(status_url)s">More details ...</a>
+        <a target=_blank href="%(status_url)s">More details ...</a>
     </div>
-  </div>
-  '''
+</div>
+'''
 
         html += '''
 
 <!--HEADER INFO AREA-->
 <nav id="headerNav">
-	<ul class="nav__items">
-		<li class="nav__item">
-			<a id="supportInfoButton" href="#" class="nav__label" onclick="toggle_info(\'supportInfo\')">Support</a>
-		</li>
-		<li class="nav__item nav_item--expanded">
-			<a id="aboutInfoButton" href="#" class="nav__label" onclick="toggle_info(\'aboutInfo\')">About</a>
-		</li>
+    <ul class="nav__items">
+        <li class="nav__item">
+            <a id="supportInfoButton" href="#" class="nav__label" onclick="toggle_info(\'supportInfo\')">Support</a>
+        </li>
+        <li class="nav__item nav_item--expanded">
+            <a id="aboutInfoButton" href="#" class="nav__label" onclick="toggle_info(\'aboutInfo\')">About</a>
+        </li>
                 <!-- NOTE: completely skip feedback button for now to avoid border
                 <li id="sitefeedback-button" class="nav__item nav_item--expanded fas fa-thumbs-up custom-hidden"></li>
                 -->
                 %(sitestatus_button)s
-	</ul>
+    </ul>
 </nav>
 
 <div id="infoArea" class="infoArea-container">
@@ -437,32 +436,32 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
 
 <div id="supportInfo" class="infoArea-container">
     <span class="far fa-times-circle close_btn" onclick="toggle_info(\'supportInfo\')"></span>
-	<div class="popup container">
-		<div class="row">
-                    <div id="quickstart-content" class="col-lg-12">
-                    <!-- Filled by AJAX -->
-                    </div>
+    <div class="popup container">
+        <div class="row">
+            <div id="quickstart-content" class="col-lg-12">
+            <!-- Filled by AJAX -->
+            </div>
 
-                    <div id="faq-content" class="col-lg-12">
-                    <!-- Filled by AJAX -->
-                    </div>
+            <div id="faq-content" class="col-lg-12">
+            <!-- Filled by AJAX -->
+            </div>
 
-                    <div class="vertical-spacer"></div>
-		</div>
-	</div>
+            <div class="vertical-spacer"></div>
+        </div>
+    </div>
 </div>
 
 <div id="aboutInfo" class="infoArea-container">
 <span class="far fa-times-circle close_btn" onclick="toggle_info(\'aboutInfo\')"></span>
-	<div class="popup container">
-		<div class="row">
-			<div id="about-content" class="col-lg-12">
-                        <!-- Filled by AJAX -->
-                        </div>
+    <div class="popup container">
+        <div class="row">
+            <div id="about-content" class="col-lg-12">
+                <!-- Filled by AJAX -->
+                </div>
 
-                        <div class="vertical-spacer"></div>
-		</div>
-	</div>
+                <div class="vertical-spacer"></div>
+        </div>
+    </div>
 </div>
     '''
 
@@ -530,18 +529,18 @@ def themed_styles(configuration, base=[], advanced=[], skin=[], user_settings={}
     styles = {'base': '''
 <link rel="stylesheet" type="text/css" href="/assets/vendor/jquery-ui/css/jquery-ui.css" media="screen"/>
 ''' % css_helpers,
-              'ui_base': '',
-              'advanced': '''
+                'ui_base': '',
+                'advanced': '''
 <link rel="stylesheet" type="text/css" href="%(base_prefix)s/jquery.managers.css" media="screen"/>
-              ''' % css_helpers,
-              'skin': '''
+                ''' % css_helpers,
+                'skin': '''
 <link rel="stylesheet" type="text/css" href="%(skin_prefix)s/core.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="%(skin_prefix)s/managers.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="%(skin_prefix)s/ui-theme.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="%(skin_prefix)s/ui-theme.custom.css" media="screen"/>
 ''' % css_helpers,
-              'ui_skin': ''
-              }
+                'ui_skin': ''
+                }
     if not legacy_user_interface(configuration, user_settings):
         styles['ui_base'] += '''
 <!-- User interface version-specific setup -->
@@ -581,8 +580,8 @@ def jquery_ui_js(configuration, js_import, js_init, js_ready):
     %(js_init)s
 
     $(document).ready(function() {
-         //console.log("document ready handler");
-         %(js_ready)s
+        //console.log("document ready handler");
+        %(js_ready)s
     });
 
 </script>
@@ -668,10 +667,10 @@ def tablesorter_pager(configuration, id_prefix='', entry_name='files',
                       enable_refresh_button=True):
     """Generate html pager for tablesorter table"""
     toolbar = '''
-  <div>
+<div>
     <div class="toolbar">
-      <div class="pager" id="%spager">
-      <form style="display: inline;" action="">
+        <div class="pager" id="%spager">
+        <form style="display: inline;" action="">
 %s
 ''' % (id_prefix, form_prepend)
     # NOTE: UI V3 and V2 assign icons in CSS
@@ -706,10 +705,10 @@ def tablesorter_pager(configuration, id_prefix='', entry_name='files',
         </div>
 ''' % (id_prefix, refresh_button)
     toolbar += '''
-      </form>
-      </div>
+        </form>
+        </div>
     </div>
-  </div>
+</div>
     '''
     return toolbar
 
@@ -756,16 +755,16 @@ def confirm_js(configuration, width=500):
     '''
     add_init = ''
     add_ready = '''
-          // init confirmation dialog
-          $("#confirm_dialog").dialog(
-              // see http://jqueryui.com/docs/dialog/ for options
-              { autoOpen: false,
+        // init confirmation dialog
+        $("#confirm_dialog").dialog(
+            // see http://jqueryui.com/docs/dialog/ for options
+            { autoOpen: false,
                 modal: true, closeOnEscape: true,
                 width: %d,
                 buttons: {
                    "Cancel": function() { $( "#" + name ).dialog("close"); }
                 }
-              });
+            });
     ''' % width
     return (add_import, add_init, add_ready)
 
@@ -776,7 +775,7 @@ def confirm_html(configuration, rows=4, cols=40, cls="fillwidth padspace"):
     <div id="confirm_dialog" title="Confirm">
         <div id="confirm_text"><!-- filled by js --></div>
         <textarea class="%s" cols="%s" rows="%s" id="confirm_input"
-       style="display:none;"></textarea>
+        style="display:none;"></textarea>
     </div>
     ''' % (cls, cols, rows)
     return html
@@ -805,12 +804,12 @@ def man_base_js(configuration, table_dicts, overrides={}):
         }
     '''
     tablesort_args = '''{widgets: ["zebra", "saveSort"],
-                         sortList: %(sort_order)s,
-                         textExtraction: imgTitle
-                         }'''
+                        sortList: %(sort_order)s,
+                        textExtraction: imgTitle
+                        }'''
     pager_args = '''{container: $("#%(pager_id)s"),
-                     size: %(pager_entries)d
-                     }'''
+                    size: %(pager_entries)d
+                    }'''
     pager_init = '''$("#%(pager_id)srefresh").click(function() {
                         %(pager_id)s_refresh();
                     });
@@ -1114,97 +1113,96 @@ def save_settings_js(configuration):
     var errorMsg = "";
 
     var okSaveDialog = {buttons: {Ok: function(){ $(this).dialog("close");}},
-                       minWidth: 600, width: "auto", autoOpen: false, closeOnEscape: true,
-                       modal: true};
+                        minWidth: 600, width: "auto", autoOpen: false, closeOnEscape: true,
+                        modal: true};
 
     //console.debug("submit form serialized: "+$(".save_settings").serialize());
     var options = {
-                   url: "%(save_url)s?output_format=json",
-                   dataType: "json",
-                   type: "POST",
-                   beforeSubmit: function() {
-                       $(".savestatus").html(renderWorking("Saving ..."));
-                       $(".savestatus span").fadeIn(200);
-                   },
-                   success: function(responseObject, statusText) {
-                       /* Reset status */
-                       saved = false;
-                       statusText = "";
-                       warningMsg = "";
-                       errorMsg = "";
-                       //console.log("verify post response: "+statusText);
-                       for (var i=0; i<(responseObject.length); i++) {
-                           if(responseObject[i]["object_type"] === "text") {
-                               statusMsg = responseObject[i]["text"];
-                               if (statusMsg.indexOf("Saved ") !== -1) {
-                                   console.info(
+                    url: "%(save_url)s?output_format=json",
+                    dataType: "json",
+                    type: "POST",
+                    beforeSubmit: function() {
+                        $(".savestatus").html(renderWorking("Saving ..."));
+                        $(".savestatus span").fadeIn(200);
+                    },
+                    success: function(responseObject, statusText) {
+                        /* Reset status */
+                        saved = false;
+                        statusText = "";
+                        warningMsg = "";
+                        errorMsg = "";
+                        //console.log("verify post response: "+statusText);
+                        for (var i=0; i<(responseObject.length); i++) {
+                            if(responseObject[i]["object_type"] === "text") {
+                                statusMsg = responseObject[i]["text"];
+                                if (statusMsg.indexOf("Saved ") !== -1) {
+                                    console.info(
                                             "Save success: "+statusMsg);
                                             saved = true;
                                             /* strip trailing colon */
                                             statusMsg = statusMsg.replace(
                                                 ":", "");
-                                   break;
-                               } else if (statusMsg.indexOf("Input ") !== -1) {
-                                   errorMsg = "Save failed: "+responseObject[i]["text"];
-                                   console.error(errorMsg);
-                                   break;
-                               } else {
-                                   console.debug(
-                                             "ignoring other text entry: "+statusMsg);
-                               }
-                           } else if(responseObject[i]["object_type"] === "error_text") {
-                               errorMsg = "Save failure: "+responseObject[i]["text"];
-                               console.error(errorMsg);
-                               break;
-                           } else if(responseObject[i]["object_type"] === "warning") {
-                               warningMsg = "warning: "+responseObject[i]["text"];
-                               console.warn(warningMsg);
-                           }
-                       }
-                       if (saved) {
-                           var saveMsg = renderSuccess(statusMsg);
-                           if (warningMsg) {
-                               saveMsg += "<br/> "+renderWarning(warningMsg);
-                           }
-                           $(".savestatus").html(saveMsg);
-                           $(".savestatus span").fadeIn(200);
-                           setTimeout(function() { $(".savestatus span").fadeOut(3000);
-                                                 }, 1000);
-                           if (statusMsg.indexOf("duplicati") >= 0) {
-                               console.info(
-                                   "force reload for duplicati to update backup sets");
-                               setTimeout(function() {
-                                   $(".savestatus").html(renderWorking("refreshing ..."));
-                                   $(".savestatus span").fadeIn(200);
-                               }, 4000);
-                               setTimeout(function() { location.reload(); }, 5000);
-                           } else if (location.href.indexOf("home") >= 0) {
-                               console.info("force reload for apps to update");
-                               setTimeout(function() {
-                                   $(".savestatus").html(renderWorking("refreshing ..."));
-                                   $(".savestatus span").fadeIn(200);
-                               }, 4000);
-                               setTimeout(function() { location.reload(); }, 5000);
-                           }
-
-                       } else {
-                           if (!errorMsg) {
-                               errorMsg = "Save failed - please retry";
-                           }
-                           console.error(errorMsg);
-                           $(".savestatus").html(renderError(errorMsg));
-                           $(".savestatus span").fadeIn(100);
-                       }
-                   },
-                   error: function(jqXHR, textStatus, errorThrown) {
-                       errorMsg = "background save failed: ";
-                       errorMsg += textStatus;
-                       console.error(errorMsg);
-                       console.error("error thrown: "+ errorThrown);
-                       $(".savestatus").html(renderError(errorMsg));
-                       $(".savestatus span").fadeIn(100);
-                   }
-               };
+                                    break;
+                                } else if (statusMsg.indexOf("Input ") !== -1) {
+                                    errorMsg = "Save failed: "+responseObject[i]["text"];
+                                    console.error(errorMsg);
+                                    break;
+                                } else {
+                                    console.debug(
+                                            "ignoring other text entry: "+statusMsg);
+                                }
+                            } else if(responseObject[i]["object_type"] === "error_text") {
+                                errorMsg = "Save failure: "+responseObject[i]["text"];
+                                console.error(errorMsg);
+                                break;
+                            } else if(responseObject[i]["object_type"] === "warning") {
+                                warningMsg = "warning: "+responseObject[i]["text"];
+                                console.warn(warningMsg);
+                            }
+                        }
+                        if (saved) {
+                            var saveMsg = renderSuccess(statusMsg);
+                            if (warningMsg) {
+                                saveMsg += "<br/> "+renderWarning(warningMsg);
+                            }
+                            $(".savestatus").html(saveMsg);
+                            $(".savestatus span").fadeIn(200);
+                            setTimeout(function() { $(".savestatus span").fadeOut(3000);
+                                                }, 1000);
+                            if (statusMsg.indexOf("duplicati") >= 0) {
+                                console.info(
+                                    "force reload for duplicati to update backup sets");
+                                setTimeout(function() {
+                                    $(".savestatus").html(renderWorking("refreshing ..."));
+                                    $(".savestatus span").fadeIn(200);
+                                }, 4000);
+                                setTimeout(function() { location.reload(); }, 5000);
+                            } else if (location.href.indexOf("home") >= 0) {
+                                console.info("force reload for apps to update");
+                                setTimeout(function() {
+                                    $(".savestatus").html(renderWorking("refreshing ..."));
+                                    $(".savestatus span").fadeIn(200);
+                                }, 4000);
+                                setTimeout(function() { location.reload(); }, 5000);
+                            }
+                        } else {
+                            if (!errorMsg) {
+                                errorMsg = "Save failed - please retry";
+                            }
+                            console.error(errorMsg);
+                            $(".savestatus").html(renderError(errorMsg));
+                            $(".savestatus span").fadeIn(100);
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        errorMsg = "background save failed: ";
+                        errorMsg += textStatus;
+                        console.error(errorMsg);
+                        console.error("error thrown: "+ errorThrown);
+                        $(".savestatus").html(renderError(errorMsg));
+                        $(".savestatus span").fadeIn(100);
+                    }
+                };
     /* Prevent enter in fields submitting directly to backend */
     $(".save_settings").on("keypress", function(e) {
             return e.which !== 13;
@@ -1403,9 +1401,9 @@ def twofactor_wizard_html(configuration):
     html = """
 <tr class='otp_intro'><td>
 <div id='warning_dialog' title='Warning'
-   class='centertext hidden'><!-- filled by script --></div>
+    class='centertext hidden'><!-- filled by script --></div>
 <div id='otp_secret_dialog' title='TOTP Secret to Import in Your App'
-   class='hidden'><!-- filled by script --></div>
+    class='hidden'><!-- filled by script --></div>
 <p>We %(demand_twofactor)s 2-factor authentication on %(site)s for greater
 password login security.
 In short it means that you enter a generated single-use <em>token</em> from
@@ -1419,7 +1417,7 @@ steps.</p>
 </td></tr>
 <tr class='otp_intro switch_button'><td>
 <button type=button class='ui-button'
-  onClick='switchOTPState(\"otp_intro\", \"otp_install\");'>
+    onClick='switchOTPState(\"otp_intro\", \"otp_install\");'>
 Okay, let's go!</button>
 </td></tr>
 <tr class='otp_install hidden'><td>
@@ -1435,7 +1433,7 @@ usual app store.</p>
 </td></tr>
 <tr class='otp_install switch_button hidden'><td>
 <button type=button class='ui-button'
-  onClick='switchOTPState(\"otp_install\", \"otp_import\");'>
+    onClick='switchOTPState(\"otp_install\", \"otp_import\");'>
 I've got it installed!</button>
 </td></tr>
 <tr class='otp_import hidden'><td>
@@ -1443,10 +1441,10 @@ I've got it installed!</button>
 <p>Open the chosen authenticator app and import your personal 2-factor secret in one of two ways:</p>
 <ul class='dbllineheight' type='A'>
 <li><span id='otp_qr_link' class='fakelink iconspace'
-  onClick='showQRCodeOTPDialog(\"otp_secret_dialog\", \"%(otp_uri)s\");'>
+    onClick='showQRCodeOTPDialog(\"otp_secret_dialog\", \"%(otp_uri)s\");'>
 Scan your personal QR code</span></li>
 <li><span id='otp_key_link' class='fakelink iconspace'
-  onClick='showTextOTPDialog(\"otp_secret_dialog\", \"<p><b>Secret</b>: %(b32_key)s</p><p><b>Interval</b>: %(otp_interval)s</p>\");'>
+    onClick='showTextOTPDialog(\"otp_secret_dialog\", \"<p><b>Secret</b>: %(b32_key)s</p><p><b>Interval</b>: %(otp_interval)s</p>\");'>
 Enter your personal key</span></li>
 </ul>
 <p><br/>The latter is usually more cumbersome but may be needed if your app or smart
@@ -1455,20 +1453,20 @@ and account info on QR code scanning, but otherwise you can manually enter it.</
 </td></tr>
 <tr class='otp_import switch_button hidden'><td>
 <button type=button class='ui-button'
-  onClick='switchOTPState(\"otp_import\", \"otp_verify\");'>
+    onClick='switchOTPState(\"otp_import\", \"otp_verify\");'>
 Yes, I've imported it!</button>
 </td></tr>
 <tr class='otp_verify hidden'><td>
 <h3>3. Verify the Authenticator App Setup</h3>
 <p>Please <span id='otp_verify_link' class='fakelink infolink'
- onClick='verifyClientToken(\"otp_verify_dialog\", \"otp_verified_button\", \"%(check_url)s\");'>
+    onClick='verifyClientToken(\"otp_verify_dialog\", \"otp_verified_button\", \"%(check_url)s\");'>
 verify</span> that your authenticator app displays correct new tokens every 30
 seconds before you actually enable 2-factor authentication. Otherwise you could
 end up locking yourself out once you enable 2-factor authentication!<p/>
 </td></tr>
 <tr class='otp_verify switch_button hidden'><td>
 <button type=button id='otp_verified_button' class='ui-button'
-  onClick='checkOTPVerified() && switchOTPState(\"otp_verify\", \"otp_ready\");'>
+    onClick='checkOTPVerified() && switchOTPState(\"otp_verify\", \"otp_ready\");'>
 It works!</button>
 </td></tr>
 <tr class='otp_ready hidden'><td>
@@ -1499,12 +1497,12 @@ def twofactor_token_html(configuration):
 <div id="twofactorbox" class="staticpage">
 <img class="sitelogo" src="%(skin_base)s/logo-left.png"><br/>
 <img class="authlogo" src="https://lh3.googleusercontent.com/HPc5gptPzRw3wFhJE1ZCnTqlvEvuVFBAsV9etfouOhdRbkp-zNtYTzKUmUVPERSZ_lAL=w300"><br/>
-  <!-- IMPORTANT: this form should not have an explicit action! -->
-  <form id="otp_token_form" method="POST">
-    <input class="tokeninput" type="text" id="token" name="token"
-        placeholder="Authentication Token" autocomplete="off" autofocus><br/>
-    <input id="otp_token_submit" class="submit" type="submit" value="Submit">
-  </form>
+    <!-- IMPORTANT: this form should not have an explicit action! -->
+    <form id="otp_token_form" method="POST">
+        <input class="tokeninput" type="text" id="token" name="token"
+            placeholder="Authentication Token" autocomplete="off" autofocus><br/>
+        <input id="otp_token_submit" class="submit" type="submit" value="Submit">
+    </form>
 </div>
 </div>
 ''' % {'skin_base': configuration.site_skin_base}
@@ -1639,8 +1637,8 @@ def get_xgi_html_preamble(
 <script type="text/javascript" >
     %s
     $(document).ready(function() {
-         //console.log("document ready handler");
-         %s
+        //console.log("document ready handler");
+        %s
     });
 </script>
 
@@ -1788,13 +1786,13 @@ def get_xgi_html_header(
             out += '''
 <!--New nav side bar -->
 <nav id="sideBar" >
-	<!--SIDEBAR-->
-	<div class="sidebar-container row">
-		<div class="sidebar-header col-12 align-self-start">
-			<a id="logoMenu" href="%(home_url)s">
-				<div class="home-nav-logo"></div>
-			</a>
-		</div>
+    <!--SIDEBAR-->
+    <div class="sidebar-container row">
+        <div class="sidebar-header col-12 align-self-start">
+            <a id="logoMenu" href="%(home_url)s">
+                <div class="home-nav-logo"></div>
+            </a>
+        </div>
             ''' % menu_helpers
             if menu:
                 out += '''
@@ -1807,7 +1805,7 @@ def get_xgi_html_header(
                                                          base_menu, user_menu, user_settings, display=TEXT_ONLY)
                 out += '''
 
-		<div class="sidebar-middle col-12 align-self-center">
+        <div class="sidebar-middle col-12 align-self-center">
 
                     %(icon_lines)s
 
@@ -1815,14 +1813,13 @@ def get_xgi_html_header(
                         <div class="hamburger-box">
                             <!--<div class="hamburger-inner"></div>-->
                             <h3>...</h3>
-                       </div>
-                       <!--<div id="menuTxt">Menu</div>-->
-
+                        </div>
+                        <!--<div id="menuTxt">Menu</div>-->
                     </div>
-		</div>
-		<div class="col-12 align-self-end home-nav-user__container">
-		    <div id="userMenuButton" class="fas fa-user home-nav-user" onclick="userMenuToggle()" title="Your personal settings for %(short_title)s"></div>
-		</div>
+        </div>
+        <div class="col-12 align-self-end home-nav-user__container">
+            <div id="userMenuButton" class="fas fa-user home-nav-user" onclick="userMenuToggle()" title="Your personal settings for %(short_title)s"></div>
+        </div>
 
                 ''' % menu_helpers
 
@@ -1830,16 +1827,16 @@ def get_xgi_html_header(
                 <div id="hamMenu" class="slidernav-container">
 
                     <div class="slider-container__inner row">
-			<div class="slider-header col-12 align-self-start">
-				<h2>%(short_title)s</h2>
-			</div>
-			<div class="slider-middle col-12 align-self-center">
+            <div class="slider-header col-12 align-self-start">
+                <h2>%(short_title)s</h2>
+            </div>
+            <div class="slider-middle col-12 align-self-center">
                             %(text_lines)s
-			</div>
-  			<div class="slider-footer col-12 align-self-end home-nav-user__inner">
+            </div>
+            <div class="slider-footer col-12 align-self-end home-nav-user__inner">
                             <a onclick="userMenuToggle()">User</a>
-			</div>
-		    </div>
+            </div>
+            </div>
                 </div>
                 ''' % menu_helpers
 
@@ -1889,7 +1886,7 @@ def get_xgi_html_header(
                 ''' % user_post_menu
 
             out += '''
-	</div>
+    </div>
 </nav>
 
 %s
@@ -2039,18 +2036,18 @@ to override. */
 var log_level = "info";
 var all_log_levels = {"none": 0, "error": 1, "warn": 2, "info": 3, "debug": 4};
 /*
-   Make sure we can always use console.X without scripts crashing. IE<=9
-   does not init it unless in developer mode and things thus randomly fail
-   without a trace.
+    Make sure we can always use console.X without scripts crashing. IE<=9
+    does not init it unless in developer mode and things thus randomly fail
+    without a trace.
 */
 var noOp = function(){}; // no-op function
 if (!window.console) {
     console = {
-	debug: noOp,
-	log: noOp,
-	info: noOp,
-	warn: noOp,
-	error: noOp
+    debug: noOp,
+    log: noOp,
+    info: noOp,
+    warn: noOp,
+    error: noOp
     }
 }
 /*
@@ -2069,28 +2066,28 @@ var init_log = function() {
             console.log(Date.now()+" DEBUG: "+msg)
             };
     } else {
-	console.debug = noOp;
+    console.debug = noOp;
     }
     if (all_log_levels[log_level] >= all_log_levels["info"]) {
-	console.info = function(msg){
+    console.info = function(msg){
             console.log(Date.now()+" INFO: "+msg)
             };
     } else {
-	console.info = noOp;
+    console.info = noOp;
     }
     if (all_log_levels[log_level] >= all_log_levels["warn"]) {
-	console.warn = function(msg){
+    console.warn = function(msg){
             console.log(Date.now()+" WARN: "+msg)
             };
     } else {
-	console.warn = noOp;
+    console.warn = noOp;
     }
     if (all_log_levels[log_level] >= all_log_levels["error"]) {
-	console.error = function(msg){
+    console.error = function(msg){
             console.log(Date.now()+" ERROR: "+msg)
             };
     } else {
-	console.error = noOp;
+    console.error = noOp;
     }
     console.debug("log ready");
 }
