@@ -402,3 +402,6 @@ valid_gdp_anon_scripts = [
     'login.py',
     'signup.py',
 ]
+
+# Maximum allowed workflow parameter sweep size
+MAX_SWEEP = 250

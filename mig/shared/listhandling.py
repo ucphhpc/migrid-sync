@@ -30,6 +30,65 @@
 from shared.fileio import pickle, unpickle
 
 
+def frange(start, stop, jump, inc=False, limit=None):
+    """
+    Helper function to create a list from the given float values in the same
+    manner as pythons default 'range' function, only using floats.
+
+    Optional parameter 'inc' will include the final value in the list
+    inclusively as this may be more intuitive to users. Standard non inclusive
+    behaviour is default.
+    """
+
+    if not isinstance(start, float) and not isinstance(start, int):
+        raise TypeError("Incorrect type provided for 'start'. May be either "
+                        "'int' or 'float' but received: %s" % type(start))
+    if not isinstance(stop, float) and not isinstance(stop, int):
+        raise TypeError("Incorrect type provided for 'stop'. May be either "
+                        "'int' or 'float' but received: %s" % type(stop))
+    if not isinstance(jump, float) and not isinstance(jump, int):
+        raise TypeError("Incorrect type provided for 'jump'. May be either "
+                        "'int' or 'float' but received: %s" % type(jump))
+    if jump > 0:
+        if stop <= start:
+            raise ValueError("Invalid values. With a positive 'jump' value, "
+                             "stop (%s) should be bigger than start (%s)."
+                             % (stop, start))
+    elif jump == 0:
+        raise TypeError("Invalid 'jump' value. Must be non-zero.")
+    if jump < 0:
+        if start <= stop:
+            raise ValueError("Invalid values. With a negative 'jump' value, "
+                             "stop (%s) should be smaller than start (%s)."
+                             % (stop, start))
+
+    value = start
+    values = []
+    while True:
+        values.append(value)
+        value += jump
+        if jump > 0:
+            if inc:
+                if value > stop:
+                    break
+            else:
+                if value >= stop:
+                    break
+        else:
+            if inc:
+                if value < stop:
+                    break
+            else:
+                if value <= stop:
+                    break
+        if limit:
+            if len(values) >= limit:
+                raise ValueError("Invalid range. Is longer than defined "
+                                 "limit '%s'" % limit)
+
+    return values
+
+
 def add_item_to_pickled_list(path, item, logger):
     list_ = unpickle(path, logger)
     output = ''

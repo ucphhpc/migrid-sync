@@ -42,7 +42,8 @@ from unicodedata import category, normalize, name as unicode_name
 
 from shared.base import force_unicode, force_utf8
 from shared.defaults import src_dst_sep, user_id_charset, user_id_max_length, \
-    session_id_charset, session_id_length, workflow_id_length
+    session_id_charset, session_id_length, workflow_id_length, MAX_SWEEP
+from shared.listhandling import frange
 from shared.validstring import valid_user_path
 from shared.valuecheck import lines_value_checker, \
     max_jobs_value_checker
@@ -305,10 +306,10 @@ def valid_ascii(contents, min_length=0, max_length=-1, extra_chars=''):
     __valid_contents(contents, letters + extra_chars, min_length, max_length)
 
 
-def valid_numeric(contents, min_length=0, max_length=-1, extra_chars=''):
+def valid_numeric(contents, min_length=0, max_length=-1):
     """Verify that supplied contents only contain numeric characters"""
 
-    __valid_contents(contents, digits + extra_chars, min_length, max_length)
+    __valid_contents(contents, digits, min_length, max_length)
 
 
 def valid_alphanumeric(contents, min_length=0, max_length=-1, extra_chars=''):
@@ -977,7 +978,7 @@ def valid_workflow_param_over(params):
                 raise InputException(
                     "Workflow attribute '%s' is missing" % _key)
 
-            valid_numeric(_param[_key], extra_chars='-.', min_length=1)
+            valid_float(_param[_key], extra_chars='-')
 
         # TODO expand this to allow more than just upwards loops
         if not float(_param[PARAM_START]) < float(_param[PARAM_STOP]):
@@ -991,6 +992,14 @@ def valid_workflow_param_over(params):
                 "Cannot parameterise with an increment of '%s'. Must be "
                 "positive and non-zero. " % _param[PARAM_JUMP]
             )
+
+        frange(
+            float(_param[PARAM_START]),
+            float(_param[PARAM_STOP]),
+            float(_param[PARAM_JUMP]),
+            inc=True,
+            limit=MAX_SWEEP
+        )
 
 
 def valid_workflow_attributes(attributes):

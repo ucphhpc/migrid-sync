@@ -127,7 +127,7 @@ def fill_mrsl_template(
     Please note that mrsl_fd_or_path may be a path or a file-like object.
 
     Takes optional argument 'param', for workflow Pattern 'parameterize_over'
-    jobs. This 'param' is one combination of potentially muultiple parameters
+    jobs. This 'param' is one combination of potentially multiple parameters
     the Pattern must sweep over. They are added here as environment variables
     to avoid creating multiple parameter files.
     """

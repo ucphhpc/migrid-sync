@@ -46,7 +46,6 @@ import tempfile
 import time
 import threading
 import multiprocessing
-import numpy as np
 
 try:
     from watchdog.observers import Observer
@@ -82,6 +81,7 @@ from shared.events import get_path_expand_map
 from shared.fileio import makedirs_rec, pickle, unpickle
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.job import fill_mrsl_template, new_job
+from shared.listhandling import frange
 from shared.logger import daemon_logger, register_hangup_handler
 from shared.safeinput import PARAM_START, PARAM_STOP, PARAM_JUMP
 from shared.serial import load
@@ -937,14 +937,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                             stop = float(sweep[PARAM_STOP])
                             jump = float(sweep[PARAM_JUMP])
 
-                            values = np.arange(start, stop, jump).tolist()
-
-                            # Add on the ending value to the list, if the jump
-                            # from the last value is not too high. Could be
-                            # removed to make behaviour consistent with normal
-                            # loops
-                            if values and values[-1] + jump <= stop:
-                                values.append(stop)
+                            values = frange(start, stop, jump, inc=True)
 
                             values = [(var, i) for i in values]
 
