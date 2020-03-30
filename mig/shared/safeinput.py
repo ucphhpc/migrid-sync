@@ -978,7 +978,7 @@ def valid_workflow_param_over(params):
                 raise InputException(
                     "Workflow attribute '%s' is missing" % _key)
 
-            valid_float(_param[_key], extra_chars='-')
+            valid_float(_param[_key])
 
         # TODO expand this to allow more than just upwards loops
         if not float(_param[PARAM_START]) < float(_param[PARAM_STOP]):
