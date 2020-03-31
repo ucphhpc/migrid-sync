@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # notifyexpire - Send account expire warning email to user(s)
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -39,7 +39,7 @@ import getopt
 import sys
 import time
 
-from shared.defaults import keyword_auto
+from shared.defaults import keyword_auto, gdp_distinguished_field
 from shared.notification import notify_user
 from shared.useradm import init_user_adm, search_users, default_search, \
     user_migoid_notify
@@ -147,6 +147,7 @@ if '__main__' == __name__:
     (configuration, hits) = search_users(search_filter, conf_path, db_path,
                                          verbose)
     logger = configuration.logger
+    gdp_prefix = "%s=" % gdp_distinguished_field
     # NOTE: we already filtered expired accounts here
     search_dn = search_filter['distinguished_name']
     before = datetime.datetime.fromtimestamp(search_filter['expire_before'])
@@ -161,6 +162,12 @@ if '__main__' == __name__:
     for (user_id, user_dict) in hits:
         if verbose:
             print 'Check for %s' % user_id
+
+        if configuration.site_enable_gdp and \
+                user_id.split('/')[-1].startswith(gdp_prefix):
+            if verbose:
+                print "Skip GDP project account: %s" % user_id
+            continue
 
         if not user_dict.get('password', '') and \
                 not user_dict.get('password_hash', ''):
