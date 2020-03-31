@@ -75,9 +75,9 @@ static void pyrun(const char *cmd, ...)
     va_end(args);
     int pyres = PyRun_SimpleString(pycmd);
     if (pyres == 0) {
-        WRITELOGMESSAGE(LOG_DEBUG, "pyrun OK: %s", pycmd);
+        WRITELOGMESSAGE(LOG_DEBUG, "pyrun OK: %s\n", pycmd);
     } else {
-        WRITELOGMESSAGE(LOG_ERR, "pyrun FAILED: %s", pycmd);
+        WRITELOGMESSAGE(LOG_ERR, "pyrun FAILED: %s\n", pycmd);
     }
 }
 
@@ -124,7 +124,7 @@ static bool mig_pyinit()
     return true;
 }
 
-static void mig_pyexit()
+static bool mig_pyexit()
 {
     if (libpython_handle == NULL) {
         WRITELOGMESSAGE(LOG_DEBUG, "Python already finalized\n");
@@ -133,6 +133,7 @@ static void mig_pyexit()
         dlclose(libpython_handle);
         libpython_handle = NULL;
     }
+    return true;
 }
 
 static char *mig_scramble_digest(const char *key)
@@ -323,7 +324,6 @@ static bool register_auth_attempt(const unsigned int mode,
         WRITELOGMESSAGE(LOG_ERR, "register_auth_attempt: pycmd overflow\n");
         return false;
     }
-    WRITELOGMESSAGE(LOG_DEBUG, "python call: %s", &pycmd[0]);
     pyrun(&pycmd[0]);
     PyObject *py_authorized = PyObject_GetAttrString(py_main, "authorized");
     if (py_authorized == NULL) {
