@@ -54,7 +54,7 @@ from shared.twofactorkeywords import get_keywords_dict as twofactor_defaults
 def signature():
     """Signature of the main function"""
 
-    defaults = {'token': [None], 'redirect_url': ['']}
+    defaults = {'action': ['auth'], 'token': [None], 'redirect_url': ['']}
     return ['text', defaults]
 
 
@@ -92,6 +92,7 @@ def main(client_id, user_arguments_dict, environ=None):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
+    action = accepted['action'][-1]
     token = accepted['token'][-1]
     redirect_url = accepted['redirect_url'][-1]
     check_only = False
@@ -158,9 +159,13 @@ def main(client_id, user_arguments_dict, environ=None):
                                twofactor_defaults(configuration).items()])
 
     # NOTE: twofactor_defaults field availability depends on configuration
-    if not redirect_url:
+    if action == 'auth' and not redirect_url:
         # This is the 2FA setup check mode
+        require_twofactor = True
+    elif action == 'check':
         check_only = True
+        require_twofactor = True
+    elif action == 'renew':
         require_twofactor = True
     elif user_id.startswith(configuration.user_mig_oid_provider) and \
             twofactor_dict.get('MIG_OID_TWOFACTOR', False):
@@ -262,26 +267,40 @@ def main(client_id, user_arguments_dict, environ=None):
         logger.info("saved 2FA session for %s in %s"
                     % (client_id, session_key))
 
-    if redirect_url:
+    if action == 'auth' and redirect_url:
         headers.append(tuple(str(cookie).split(': ', 1)))
         output_objects.append({'object_type': 'start', 'headers': headers})
         output_objects.append({'object_type': 'script_status'})
     else:
-        # NOTE: we keep actual result in plain text for json extract
+        if action == 'auth':
+            reply_status = "error"
+            reply_msg = "Missing redirect_url"
+        elif action == 'check':
+            reply_status = "ok"
+            reply_msg = "Correct token provided!"
+        elif action == 'renew':
+            reply_status = "ok"
+            reply_msg = "Twofactor session renewed!"
+        else:
+            reply_status = "error"
+            reply_msg = "Unknown action: %r" % action
         output_objects.append({'object_type': 'html_form', 'text': '''
 <!-- Keep similar spacing -->
 <div class="twofactorbg">
 <div id="twofactorstatus" class="twofactorstatus">
-<div class="ok leftpad">
-'''})
-        output_objects.append({'object_type': 'text', 'text':
-                               'Correct token provided!'})
+<div class="%s leftpad">
+''' % reply_status})
+        # NOTE: we keep actual result in plain text for json extract
+        output_objects.append({'object_type': 'text', 'text': reply_msg})
         output_objects.append({'object_type': 'html_form', 'text': '''
-</div>
+</div>'''})
+        if action == 'check':
+            output_objects.append({'object_type': 'html_form', 'text': '''
 <p>
-<a href="">Test again</a> or <a href="javascript:close();">close</a> this
+<a href="?action=check">Test again</a> or <a href="javascript:close();">close</a> this
 tab/window and proceed.
-</p>
+</p>'''})
+        output_objects.append({'object_type': 'html_form', 'text': '''
 </div>
 </div>'''})
     # logger.debug("return from %s for %s with headers: %s" %

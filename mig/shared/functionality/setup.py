@@ -1382,7 +1382,7 @@ value="%(default_authpassword)s" />
             # TODO: we might want to protect QR code with repeat basic login
             #       or a simple timeout since last login (cookie age).
             html += twofactor_wizard_html(configuration)
-            check_url = '/%s/twofactor.py' % get_xgi_bin(configuration)
+            check_url = '/%s/twofactor.py?action=check' % get_xgi_bin(configuration)
             fill_helpers.update({'otp_uri': otp_uri, 'b32_key': b32_key,
                                  'otp_interval': otp_interval,
                                  'check_url': check_url, 'demand_twofactor':

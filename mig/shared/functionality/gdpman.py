@@ -811,7 +811,7 @@ def html_tmpl(
         # TODO: we might want to protect QR code with repeat basic login
         #       or a simple timeout since last login (cookie age).
         html += twofactor_wizard_html(configuration)
-        check_url = '/%s/twofactor.py' % get_xgi_bin(configuration)
+        check_url = '/%s/twofactor.py?action=check' % get_xgi_bin(configuration)
         if twofactor_enabled:
             enable_hint = 'enable it (as you already did)'
         else:
