@@ -280,10 +280,10 @@ def render_apps(configuration, title_entry, active_menu):
             app_order.append(name)
 
     app_lines = '''
-                    <div class="home-page__content col-12">
-                        <h2>Your apps & app-setup</h2>
-                        <div class="app-row row app-grid">
-        '''
+        <div class="home-page__content col-12">
+            <h2>Your apps & app-setup</h2>
+            <div class="app-row row app-grid">
+    '''
 
     for name in app_order:
         spec = menu_items.get(name, None)
@@ -306,21 +306,21 @@ def render_apps(configuration, title_entry, active_menu):
             spec['url'] = configuration.user_seahub_url
         spec['hover'] = spec.get('hover', '')
         app_lines += '''
-                            <div class="col-lg-2 app-cell">
-                                <div class="app__btn col-12">
-                                    <a href="%(url)s" title="%(hover)s"><span class="fas %(class)s"></span><h3>%(title)s</h3></a>
-                                </div>
-                            </div>
+                <div class="col-lg-2 app-cell">
+                    <div class="app__btn col-12">
+                        <a href="%(url)s" title="%(hover)s"><span class="fas %(class)s"></span><h3>%(title)s</h3></a>
+                    </div>
+                </div>
         ''' % spec
     app_lines += '''
-                            <div class="col-lg-2">
-                                <div class="add-app__btn col-12" onclick="addApp()">
-                                    <a href="#"><span class="fas fa-plus"></span><h3>Add</h3></a>
-                                </div>
-                            </div>
-                        </div>
+                <div class="col-lg-2">
+                    <div class="add-app__btn col-12" onclick="addApp()">
+                         <a href="#"><span class="fas fa-plus"></span><h3>Add</h3></a>
                     </div>
-'''
+                </div>
+            </div>
+        </div>
+    '''
 
     return app_lines
 
@@ -529,18 +529,18 @@ def themed_styles(configuration, base=[], advanced=[], skin=[], user_settings={}
     styles = {'base': '''
 <link rel="stylesheet" type="text/css" href="/assets/vendor/jquery-ui/css/jquery-ui.css" media="screen"/>
 ''' % css_helpers,
-                'ui_base': '',
-                'advanced': '''
+              'ui_base': '',
+              'advanced': '''
 <link rel="stylesheet" type="text/css" href="%(base_prefix)s/jquery.managers.css" media="screen"/>
                 ''' % css_helpers,
-                'skin': '''
+              'skin': '''
 <link rel="stylesheet" type="text/css" href="%(skin_prefix)s/core.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="%(skin_prefix)s/managers.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="%(skin_prefix)s/ui-theme.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="%(skin_prefix)s/ui-theme.custom.css" media="screen"/>
 ''' % css_helpers,
-                'ui_skin': ''
-                }
+              'ui_skin': ''
+              }
     if not legacy_user_interface(configuration, user_settings):
         styles['ui_base'] += '''
 <!-- User interface version-specific setup -->
@@ -1258,7 +1258,10 @@ def twofactor_wizard_js(configuration):
                        modal: true};
     var verifyOTPDialog = {
         buttons: {
-            Verify: function() {
+            Verify: {
+              id: "twofactor_verify_button",
+              text: "Verify",
+              click: function() {
                 //console.log("clicked verify in popup");
                 /* save dialog handle for AJAX callback use */
                 var dialog_handle = $(this);
@@ -1266,7 +1269,7 @@ def twofactor_wizard_js(configuration):
                 //console.log("found activate_id: "+activate_id);
                 var verify_url = $(this).data("verify_url");
                 //console.log("found verify_url: "+verify_url);
-                $('.ui-dialog-buttonset button:contains("Verify")').button().hide();
+                $("#twofactor_verify_button").prop("disabled", true);
                 $("#twofactorstatus").html(renderWorking("checking ..."));
                 acceptedOTP = false;
                 try {
@@ -1309,7 +1312,8 @@ def twofactor_wizard_js(configuration):
                                 }
                                 console.error(errorMsg);
                                 $("#twofactorstatus").html(renderError(errorMsg));
-                                $('.ui-dialog-buttonset button:contains("Verify")').button().show();
+                                $("#twofactor_verify_button").prop("disabled", false);
+                                $("#token").focus();
                             }
                         },
                         error: function(jqXHR, textStatus, errorThrown) {
@@ -1318,6 +1322,8 @@ def twofactor_wizard_js(configuration):
                             $("#twofactorstatus").html(renderError(errorMsg));
                             console.error(errorMsg);
                             console.error("error thrown: "+ errorThrown);
+                            $("#twofactor_verify_button").prop("disabled", false);
+                            $("#token").focus();
                         }
                     }
                     $("#otp_token_form").ajaxForm(options);
@@ -1326,6 +1332,7 @@ def twofactor_wizard_js(configuration):
                     console.error("ajaxform error: "+ err);
                 }
                 //console.debug("fired ajaxform");
+              }
             },
             Cancel: function() { $(this).dialog("close");}
         },
@@ -1386,7 +1393,11 @@ def twofactor_wizard_js(configuration):
         $("#"+dialog_id+" .submit").hide()
         /* Prevent enter in token field submitting directly to backend */
         $("#otp_token_form").on("keypress", function(e) {
-            return e.which !== 13;
+                if (e.which === 13) {
+                    $("#twofactor_verify_button").click();
+                    return false;
+                }
+                return true;
             });
         /* Change output to json format */
         $("#otp_token_form").append("<input type=\'hidden\' name=\'output_format\' value=\'json\'>");
