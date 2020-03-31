@@ -43,7 +43,7 @@ ERDA
     function login(user) {
         if (user == "extoid") {
             window.open('https://erda.dk', '_blank');
-        } else if (user == "cert") {
+        } else if (user == "extcert") {
             window.open('https://cert.erda.dk', '_blank');
         } else if (user == "migoid") {
             window.open('https://ext.erda.dk', '_blank');
@@ -53,34 +53,19 @@ ERDA
     }
     function signup(user) {
         if (user == "extoid") {
-            window.open('https://sid.erda.dk/cgi-sid/signup.py?show=kitoid', 
+            window.open('https://erda.dk/wsgi-bin/autocreate.py', 
                         '_blank');
-        } else if (user == "cert") {
-            window.open('https://sid.erda.dk/cgi-sid/signup.py?show=extcert',
+        } else if (user == "extcert") {
+            window.open('https://cert.erda.dk/wsgi-bin/extcert.py',
                         '_blank');
         } else if (user == "migoid") {
-            window.open('https://sid.erda.dk/cgi-sid/reqoid.py', '_blank');
+            window.open('https://sid.erda.dk/cgi-sid/reqoid.py', 
+                        '_blank');
         } else {
             window.open('https://sid.erda.dk/cgi-sid/signup.py', '_blank');
         }
     }
     $(document).ready(function() {
-        /* Init links centrally */
-        $("a.reqcert-en-link").attr("target", "_blank").attr("href", 
-            "https://sites.google.com/site/minimumintrusiongrid/" +
-            "getting-started/how-to-get-started");
-        $("a.reqcert-da-link").attr("target", "_blank").attr("href", 
-            "https://sites.google.com/site/minimumintrusiongrid/" +
-            "mig-in-danish/saadan-kommer-du-igang");
-        $("a.migoidsignup-link").attr("target", "_blank").attr("href", 
-            "https://sid.erda.dk/cgi-sid/signup.py?show=migoid");
-        $("a.migoidlogin-link").attr("target", "_blank").attr("href", 
-            "https://ext.erda.dk");
-        $("a.extcertsignup-link").attr("target", "_blank").attr("href", 
-            "https://sid.erda.dk/cgi-sid/signup.py?show=extcert");
-        $("a.extcertlogin-link").attr("target", "_blank").attr("href", 
-            "https://cert.erda.dk");
-
         var locale = extract_default_locale();
         /* Init supported languages to just english and extend based on lang select */
         var supported_languages = ['en'];
@@ -214,11 +199,12 @@ Can just be disabled by putting it into an html comment when not in use.
 </div>
 
 <div class="staticpage quickstartfields">
-
 <div id="quick-start-tabs-en">
+
 <ul class="fillwidth padspace">
 <li><a href="#ucph-user-tab-en">KU / UCPH Users</a></li>
 <li><a href="#external-user-tab-en">External Users</a></li>
+<li><a href="#cert-user-tab-en">Advanced Access</a></li>
 </ul>
 
 <div id="ucph-user-tab-en">
@@ -259,6 +245,27 @@ Can just be disabled by putting it into an html comment when not in use.
 <form method='get' action='https://ext.erda.dk' target='_blank'>
 <input class="loginbutton" type="button" value="log in"
        onClick="login('migoid'); return false;" />
+</form>
+<p></p>
+</div>
+</div>
+
+<div id="cert-user-tab-en">
+<div class="staticpage centertext signupfield">
+<p>Sign up to ERDA with your user certificate?</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://cert.erda.dk/wsgi-bin/extcert.py' target='_blank'>
+<input class="signupbutton" type="submit" value="sign up" /
+       onClick="signup('extcert'); return false;"/>
+</form>
+<p></p>
+</div>
+<div class="staticpage centertext loginfield">
+<p>I'm already signed up to ERDA with my user certificate!</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://cert.erda.dk' target='_blank'>
+<input class="loginbutton" type="button" value="log in"
+       onClick="login('extcert'); return false;" />
 </form>
 <p></p>
 </div>
@@ -387,10 +394,13 @@ Can just be disabled by putting it into an html comment when not in use.
 
 <div class="staticpage quickstartfields">
 <div id="quick-start-tabs-da">
+
 <ul>
 <li><a href="#ucph-user-tab-da">KU / UCPH brugere</a></li>
 <li><a href="#external-user-tab-da">Eksterne brugere</a></li>
+<li><a href="#cert-user-tab-da">Advanceret adgang</a></li>
 </ul>
+
 <div id="ucph-user-tab-da">
 <div class="staticpage centertext signupfield">
 <p>Tilmeld dig ERDA med din KU-konto?</p>
@@ -418,7 +428,7 @@ Can just be disabled by putting it into an html comment when not in use.
 <p>Tilmeld dig ERDA <em>uden</em> en KU-konto?</p>
 <!-- Use form with JS override to enable fallback functionality -->
 <form method='get' action='https://sid.erda.dk/cgi-sid/reqoid.py' target='_blank'>
-<input class="loginbutton" type="submit" value="tilmelding"
+<input class="signupbutton" type="submit" value="tilmelding"
        onClick="signup('migoid'); return false;" />
 </form>
 <p></p>
@@ -429,6 +439,27 @@ Can just be disabled by putting it into an html comment when not in use.
 <form method='get' action='https://ext.erda.dk' target='_blank'>
 <input class="loginbutton" type="submit" value="log ind"
        onClick="login('migoid'); return false;" />
+</form>
+<p></p>
+</div>
+</div>
+
+<div id="cert-user-tab-da">
+<div class="staticpage centertext signupfield">
+<p>Tilmeld dig ERDA med dit brugercertifikat?</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://cert.erda.dk/wsgi-bin/extcert.py' target='_blank'>
+<input class="signupbutton" type="submit" value="tilmelding"
+       onClick="signup('extcert'); return false;" />
+</form>
+<p></p>
+</div>
+<div class="staticpage centertext loginfield">
+<p>Jeg er allerede tilmeldt ERDA med mit brugercertifikat!</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://cert.erda.dk' target='_blank'>
+<input class="loginbutton" type="submit" value="log ind"
+       onClick="login('extcert'); return false;" />
 </form>
 <p></p>
 </div>

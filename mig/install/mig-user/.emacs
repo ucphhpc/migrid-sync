@@ -8,7 +8,7 @@
 (setq delete-auto-save-files		t)
 (setq scroll-step			1)
 (setq default-case-fold-search	nil)
-(setq default-fill-column		72)
+(setq default-fill-column		80)
 (setq display-time-24hr-format t)
 
 
