@@ -230,9 +230,9 @@ def validate_auth_attempt(configuration,
     authorized = False
     disconnect = False
     twofa_passed = valid_twofa
-
     notify = True
-    if skip_notify:
+    
+    if skip_notify or invalid_username or invalid_user:
         notify = False
 
     if skip_twofa_check:
@@ -296,7 +296,7 @@ def validate_auth_attempt(configuration,
             log_msg += ":%s" % tcp_port
         log_func(log_msg)
         authlog(configuration, authlog_lvl, protocol, authtype,
-                username, ip_addr, auth_msg, notify=False)
+                username, ip_addr, auth_msg, notify=notify)
     elif invalid_user:
         disconnect = True
         auth_msg = "Invalid user"
@@ -306,7 +306,7 @@ def validate_auth_attempt(configuration,
         logger.error(log_msg)
         authlog(configuration, 'ERROR', protocol, authtype,
                 username, ip_addr,
-                auth_msg, notify=False)
+                auth_msg, notify=notify)
     elif not authtype_enabled:
         disconnect = True
         auth_msg = "%s auth disabled or %s not set" % (authtype, authtype)
