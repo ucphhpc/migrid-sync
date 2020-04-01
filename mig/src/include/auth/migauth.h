@@ -156,10 +156,20 @@
     syslog(priority, #priority ": " __FILE__"("TOSTRING(__LINE__)"): " format, ##__VA_ARGS__);
 #endif                          /* DEBUG_LOG_STDERR */
 #else                           /* DEBUG || DEBUG_LOG_STDERR */
-#define WRITELOGMESSAGE(priority, format, ...) \
+/* NOTE: we include format in variable args list here to avoid ISO C99 compile
+   warnings for calls without format expansion args like:
+   WRITELOGMESSAGE(LOG_DEBUG, "Return success\n");
+   
+   https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
+
+   We might consider a more flexible solution to get the same effect in the two
+   debug versions above, but it looks quite involved:
+   https://stackoverflow.com/questions/5588855/standard-alternative-to-gccs-va-args-trick
+*/
+#define WRITELOGMESSAGE(priority, ...) \
     if (priority != LOG_DEBUG) { \
         openlog("pam_mig", LOG_PID, LOG_AUTHPRIV); \
-        syslog(priority, format, ##__VA_ARGS__); \
+        syslog(priority, ##__VA_ARGS__); \
     }
 #endif                          /* DEBUG || DEBUG_LOG_STDERR */
 

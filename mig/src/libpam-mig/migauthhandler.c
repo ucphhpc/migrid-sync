@@ -30,6 +30,12 @@
 #include <string.h>
 #include <dlfcn.h>
 #include <time.h>
+/* TODO: Python should really be included first to avoid warnings about 
+   redefined _POSIX_C_SOURCE in line with:
+   https://bugs.python.org/issue1045893 
+   https://stackoverflow.com/questions/10056393/g-with-python-h-how-to-compile
+   It is a bit complicated here due to the code structure, however.
+*/
 #include <Python.h>
 #include "migauth.h"
 
@@ -185,6 +191,8 @@ static bool mig_hit_rate_limit(const char *username, const char *address)
     return result;
 }
 
+/*** 
+ * NOTE: Disabled for now, 
 static bool mig_exceeded_max_sessions(const char *username, const char *address)
 {
     bool result = false;
@@ -217,6 +225,7 @@ static bool mig_exceeded_max_sessions(const char *username, const char *address)
     }
     return result;
 }
+***/
 
 static bool mig_validate_username(const char *username)
 {
