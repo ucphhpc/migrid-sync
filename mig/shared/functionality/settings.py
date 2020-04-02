@@ -88,7 +88,7 @@ cloud_edit = cm_options.copy()
 def signature():
     """Signature of the main function"""
 
-    defaults = {'topic': []}
+    defaults = {'topic': [], 'caching': ['true']}
     return ['html_form', defaults]
 
 
@@ -214,6 +214,7 @@ def main(client_id, user_arguments_dict):
                 and not configuration.site_enable_gdp:
             valid_topics.append('twofactor')
 
+    caching = (accepted['caching'][-1].lower() in ('true', 'yes'))
     topic_list = accepted['topic']
     topic_list = [topic for topic in topic_list if topic in valid_topics]
     # Default to general or general+profile if no valid topics given
@@ -446,7 +447,7 @@ def main(client_id, user_arguments_dict):
 
             current_profile_dict = {}
 
-        all_vgrids = get_vgrid_map_vgrids(configuration)
+        all_vgrids = get_vgrid_map_vgrids(configuration, caching=caching)
         configuration.vgrids_allow_email = all_vgrids
         configuration.vgrids_allow_im = all_vgrids
         images = []
@@ -2004,7 +2005,8 @@ value="%(default_authpassword)s" />
             # TODO: we might want to protect QR code with repeat basic login
             #       or a simple timeout since last login (cookie age).
             html += twofactor_wizard_html(configuration)
-            check_url = '/%s/twofactor.py?action=check' % get_xgi_bin(configuration)
+            check_url = '/%s/twofactor.py?action=check' % get_xgi_bin(
+                configuration)
             fill_helpers.update({'otp_uri': otp_uri, 'b32_key': b32_key,
                                  'otp_interval': otp_interval,
                                  'check_url': check_url, 'demand_twofactor':

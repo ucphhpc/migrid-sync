@@ -36,7 +36,7 @@ from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import man_base_js, man_base_html, html_post_helper
 from shared.init import initialize_main_variables, find_entry
-from shared.modified import check_resources_modified, check_vgrids_modified
+from shared.modified import pending_resources_update, pending_vgrids_update
 from shared.resource import anon_to_real_res_map
 from shared.vgridaccess import user_visible_res_confs, get_resource_map, \
     OWNERS, CONF
@@ -156,19 +156,16 @@ to open resource management.
         res_map = get_resource_map(configuration, caching)
         anon_map = anon_to_real_res_map(configuration.resource_home)
 
+        # NOTE: use simple pending check if caching to avoid lock during update
         if caching:
-            modified_resources, _ = check_resources_modified(configuration)
-            modified_vgrids, _ = check_vgrids_modified(configuration)
-            if modified_resources:
-                logger.info("pending resource cache updates: %s" %
-                            modified_resources)
-                pending_updates = True
-            elif modified_vgrids:
-                logger.info("pending vgrid cache updates: %s" %
-                            modified_vgrids)
-                pending_updates = True
-            else:
-                logger.info("no pending cache updates")
+            pending_updates = pending_vgrids_update(configuration) or \
+                pending_resources_update(configuration)
+        else:
+            pending_updates = False
+        if pending_updates:
+            logger.debug("found pending cache updates: %s" % pending_updates)
+        else:
+            logger.debug("no pending cache updates")
 
         # Iterate through resources and show management for each one requested
 

@@ -36,7 +36,7 @@ from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import man_base_js, man_base_html, html_post_helper
 from shared.init import initialize_main_variables, find_entry
-from shared.modified import check_users_modified, check_vgrids_modified
+from shared.modified import pending_users_update, pending_vgrids_update
 from shared.user import anon_to_real_user_map, user_gravatar_url
 from shared.vgridaccess import user_visible_user_confs, user_vgrid_access, \
     CONF
@@ -149,18 +149,16 @@ def main(client_id, user_arguments_dict):
                 {'object_type': 'error_text', 'text': 'no users found!'})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
+        # NOTE: use simple pending check if caching to avoid lock during update
         if caching:
-            modified_users, _ = check_users_modified(configuration)
-            modified_vgrids, _ = check_vgrids_modified(configuration)
-            if modified_users:
-                logger.info("pending user cache updates: %s" % modified_users)
-                pending_updates = True
-            elif modified_vgrids:
-                logger.info("pending vgrid cache updates: %s" %
-                            modified_vgrids)
-                pending_updates = True
-            else:
-                logger.info("no pending cache updates")
+            pending_updates = pending_vgrids_update(configuration) or \
+                pending_users_update(configuration)
+        else:
+            pending_updates = False
+        if pending_updates:
+            logger.debug("found pending cache updates: %s" % pending_updates)
+        else:
+            logger.debug("no pending cache updates")
 
         for (visible_user_id, user_dict) in visible_user.items():
             user_id = visible_user_id

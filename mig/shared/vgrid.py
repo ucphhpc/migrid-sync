@@ -798,6 +798,10 @@ def merge_vgrid_settings(vgrid_name, configuration, settings_list):
     # We start from the back (vgrid_name) for fewest updates
     for vgrid_dict in settings_list[::-1]:
         for (key, val) in vgrid_dict.items():
+            # Legacy write_shared_files marker
+            if key == 'read_only':
+                key = 'write_shared_files'
+                val = not val
             if not key in specs_map:
                 _logger.warning("unknown settings key %s for %s (%s)"
                                 % (key, vgrid_name, vgrid_dict))
@@ -1643,7 +1647,7 @@ def vgrid_remove_settings(configuration, vgrid_name, id_list,
 
 
 def vgrid_remove_workflow_jobs(configuration, vgrid_name, id_list,
-                             allow_empty=True):
+                               allow_empty=True):
     """Remove id_list from pickled list of jobs for vgrid_name."""
     return vgrid_remove_entities(configuration, vgrid_name, 'jobqueue',
                                  id_list, allow_empty)
@@ -1740,7 +1744,7 @@ def vgrid_set_settings(configuration, vgrid_name, id_list, allow_empty=False):
 
 
 def vgrid_set_workflow_jobs(configuration, vgrid_name, id_list,
-                          allow_empty=True):
+                            allow_empty=True):
     """Set list of workflow vgrid jobs."""
     return vgrid_set_entities(configuration, vgrid_name, 'jobqueue',
                               id_list, allow_empty)

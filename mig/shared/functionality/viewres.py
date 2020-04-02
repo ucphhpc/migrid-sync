@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # viewres - Display public details about a resource
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,16 +32,16 @@ from shared.conf import get_resource_configuration
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables, find_entry
 from shared.resconfkeywords import get_resource_keywords, \
-     get_exenode_keywords, get_storenode_keywords
+    get_exenode_keywords, get_storenode_keywords
 from shared.resource import anon_to_real_res_map
 from shared.vgridaccess import user_visible_res_confs, user_vgrid_access, \
-     user_visible_res_confs, get_resource_map, OWNERS, CONF
+    get_resource_map, OWNERS, CONF
 
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {'unique_resource_name': REJECT_UNSET}
+    defaults = {'unique_resource_name': REJECT_UNSET, 'caching': ['true']}
     return ['resource_info', defaults]
 
 
@@ -53,8 +53,8 @@ def build_resitem_object_from_res_dict(configuration, unique_resource_name,
     exe_keywords = get_exenode_keywords(configuration)
     store_keywords = get_storenode_keywords(configuration)
     res_fields = ['PUBLICNAME', 'PUBLICINFO', 'CPUCOUNT', 'NODECOUNT', 'MEMORY', 'DISK',
-                 'ARCHITECTURE', 'JOBTYPE', 'MAXUPLOADBANDWIDTH',
-                 'MAXDOWNLOADBANDWIDTH', 'SANDBOX']
+                  'ARCHITECTURE', 'JOBTYPE', 'MAXUPLOADBANDWIDTH',
+                  'MAXDOWNLOADBANDWIDTH', 'SANDBOX']
     exe_fields = ['cputime', 'nodecount']
     store_fields = ['storage_disk', 'storage_protocol']
     res_item = {
@@ -63,7 +63,7 @@ def build_resitem_object_from_res_dict(configuration, unique_resource_name,
         'fields': [],
         'exes': {},
         'stores': {},
-        }
+    }
     for name in res_fields:
         res_item['fields'].append((res_keywords[name]['Title'],
                                    res_dict.get(name, 'UNKNOWN')))
@@ -81,7 +81,7 @@ def build_resitem_object_from_res_dict(configuration, unique_resource_name,
         exec_vgrids = exe.get('vgrid', [])
         visible_vgrids = [i for i in exec_vgrids if i in vgrid_access]
         if visible_vgrids != exec_vgrids:
-            visible_vgrids.append('%d undisclosed' % \
+            visible_vgrids.append('%d undisclosed' %
                                   (len(exec_vgrids) - len(visible_vgrids)))
         exe_spec.append((exe_keywords['vgrid']['Title'],
                          ', '.join(visible_vgrids)))
@@ -92,14 +92,14 @@ def build_resitem_object_from_res_dict(configuration, unique_resource_name,
         store_spec = res_item['stores'][store_name] = []
         for name in store_fields:
             store_spec.append((store_keywords[name]['Title'],
-                             store.get(name, 'UNKNOWN')))
+                               store.get(name, 'UNKNOWN')))
         storage_vgrids = store.get('vgrid', [])
         visible_vgrids = [i for i in storage_vgrids if i in vgrid_access]
         if visible_vgrids != storage_vgrids:
-            visible_vgrids.append('%d undisclosed' % \
+            visible_vgrids.append('%d undisclosed' %
                                   (len(storage_vgrids) - len(visible_vgrids)))
         store_spec.append((store_keywords['vgrid']['Title'],
-                         ', '.join(visible_vgrids)))
+                           ', '.join(visible_vgrids)))
     return res_item
 
 
@@ -111,8 +111,8 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Resource details'
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Show resource details'})
+    output_objects.append(
+        {'object_type': 'header', 'text': 'Show resource details'})
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
@@ -122,14 +122,16 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     resource_list = accepted['unique_resource_name']
+    caching = (accepted['caching'][-1].lower() in ('true', 'yes'))
     status = returnvalues.OK
-    visible_res = user_visible_res_confs(configuration, client_id)
-    vgrid_access = user_vgrid_access(configuration, client_id)
-    res_map = get_resource_map(configuration)
+    visible_res = user_visible_res_confs(
+        configuration, client_id, caching=True)
+    vgrid_access = user_vgrid_access(configuration, client_id, caching=caching)
+    res_map = get_resource_map(configuration, caching=caching)
     anon_map = anon_to_real_res_map(configuration.resource_home)
 
     for visible_res_name in resource_list:
@@ -137,10 +139,10 @@ def main(client_id, user_arguments_dict):
         if visible_res_name in anon_map.keys():
             unique_resource_name = anon_map[visible_res_name]
         if not visible_res_name in visible_res.keys():
-            logger.warning('User %s not allowed to view %s (%s)' % \
+            logger.warning('User %s not allowed to view %s (%s)' %
                            (client_id, visible_res_name, visible_res.keys()))
             output_objects.append({'object_type': 'error_text',
-                                   'text': 'invalid resource %s' % \
+                                   'text': 'invalid resource %s' %
                                    visible_res_name})
             continue
         res_dict = visible_res[visible_res_name]
@@ -150,18 +152,16 @@ def main(client_id, user_arguments_dict):
                                                       vgrid_access)
         output_objects.append(res_item)
 
-    
         if client_id in res_map[unique_resource_name][OWNERS]:
             output_objects.append({'object_type': 'sectionheader',
                                    'text': 'Administrate'})
             output_objects.append({'object_type': 'link',
-                                     'destination':
-                                     'resadmin.py?unique_resource_name=%s'\
-                                     % unique_resource_name,
-                                     'class': 'adminlink iconspace',
-                                     'title': 'Administrate %s' % unique_resource_name, 
-                                     'text': 'Administrate %s' % unique_resource_name,
+                                   'destination':
+                                   'resadmin.py?unique_resource_name=%s'
+                                   % unique_resource_name,
+                                   'class': 'adminlink iconspace',
+                                   'title': 'Administrate %s' % unique_resource_name,
+                                   'text': 'Administrate %s' % unique_resource_name,
                                    })
 
-        
     return (output_objects, status)

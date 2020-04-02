@@ -964,14 +964,18 @@ def save_frozen_meta(freeze_dict, arch_dir, configuration):
         del meta_dict['FILES']
     meta_path = os.path.join(arch_dir, freeze_meta_filename)
     lock_path = os.path.join(arch_dir, freeze_lock_filename)
+    status, reply = True, freeze_dict
+    meta_lock = None
     try:
         meta_lock = acquire_file_lock(lock_path)
         dump(meta_dict, meta_path)
-        release_file_lock(meta_lock)
     except Exception, err:
         _logger.error("update meta failed: %s" % err)
-        return (False, 'Error saving frozen archive info: %s' % err)
-    return (True, freeze_dict)
+        status = False
+        reply = 'Error saving frozen archive info: %s' % err
+    if meta_lock:
+        release_file_lock(meta_lock)
+    return (status, reply)
 
 
 def commit_frozen_archive(freeze_dict, arch_dir, configuration):

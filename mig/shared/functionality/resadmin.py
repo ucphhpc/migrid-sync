@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resadmin - Administrate a MiG Resource
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -379,8 +379,10 @@ If in doubt, just let the user request access and accept it with the
 
     # list all vgrids without access
 
-    allowed_vgrids = res_vgrid_access(configuration, resourcename)
-    vgrid_list = get_vgrid_map_vgrids(configuration)
+    use_cache = True
+    allowed_vgrids = res_vgrid_access(configuration, resourcename,
+                                      caching=use_cache)
+    vgrid_list = get_vgrid_map_vgrids(configuration, caching=use_cache)
     for vgrid_name in vgrid_list:
         if not vgrid_name in allowed_vgrids:
             html += '<option value=%s>%s' % (vgrid_name, vgrid_name)

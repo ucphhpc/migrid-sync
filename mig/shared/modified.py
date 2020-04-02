@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # modified - entity modification mark manipulation
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,7 +32,8 @@ import os
 import time
 
 from shared.defaults import keyword_all
-from shared.serial import load, dump
+from shared.serial import load, dump, dumps
+
 
 def mark_entity_modified(configuration, kind, name):
     """Mark name of given kind modified to signal reload before use from other
@@ -52,19 +53,22 @@ def mark_entity_modified(configuration, kind, name):
             modified_list.append(name)
         dump(modified_list, modified_path)
     except Exception, exc:
-        configuration.logger.error("Could not update %s modified mark: %s" % \
+        configuration.logger.error("Could not update %s modified mark: %s" %
                                    (kind, exc))
     lock_handle.close()
+
 
 def mark_user_modified(configuration, user_name):
     """Mark user_name modified to signal e.g. user_map refresh before next
     use"""
     return mark_entity_modified(configuration, 'user', user_name)
 
+
 def mark_resource_modified(configuration, resource_name):
     """Mark resource_name modified to signal e.g. resource_map refresh before
     next use"""
     return mark_entity_modified(configuration, 'resource', resource_name)
+
 
 def mark_vgrid_modified(configuration, vgrid_name):
     """Mark vgrid_name modified to signal e.g. vgrid_map refresh before next
@@ -72,10 +76,12 @@ def mark_vgrid_modified(configuration, vgrid_name):
     """
     return mark_entity_modified(configuration, 'vgrid', vgrid_name)
 
+
 def mark_re_modified(configuration, re_name):
     """Mark re_name modified to signal e.g. re_map refresh
     before next use"""
     return mark_entity_modified(configuration, 'runtimeenvs', re_name)
+
 
 def mark_workflow_p_modified(configuration, workflow_pattern_name):
     """Mark workflow pattern modified to signal e.g.
@@ -83,11 +89,13 @@ def mark_workflow_p_modified(configuration, workflow_pattern_name):
     return mark_entity_modified(configuration, 'workflowpatterns',
                                 workflow_pattern_name)
 
+
 def mark_workflow_r_modified(configuration, workflow_recipe_name):
     """Mark workflow recipe modified to signal e.g.
     workflow_r_map refresh before next use"""
     return mark_entity_modified(configuration, 'workflowrecipes',
                                 workflow_recipe_name)
+
 
 def check_entities_modified(configuration, kind):
     """Check and return any name of given kind that are marked as modified
@@ -100,7 +108,7 @@ def check_entities_modified(configuration, kind):
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
     try:
         if not os.path.isfile(map_path):
-            configuration.logger.warning("%s map doesn't exist, new install?" \
+            configuration.logger.warning("%s map doesn't exist, new install?"
                                          % kind)
             raise Exception("%s map does not exist" % kind)
         modified_list = load(modified_path)
@@ -112,29 +120,69 @@ def check_entities_modified(configuration, kind):
     lock_handle.close()
     return (modified_list, modified_stamp)
 
+
 def check_users_modified(configuration):
     """Check for modified users and return list of such IDs"""
     return check_entities_modified(configuration, 'user')
+
 
 def check_resources_modified(configuration):
     """Check for modified resources and return list of such IDs"""
     return check_entities_modified(configuration, 'resource')
 
+
 def check_vgrids_modified(configuration):
     """Check for modified vgrids and return list of such IDs"""
     return check_entities_modified(configuration, 'vgrid')
+
 
 def check_res_modified(configuration):
     """Check for modified re and return list of such IDs"""
     return check_entities_modified(configuration, 'runtimeenvs')
 
+
 def check_workflow_p_modified(configuration):
     """Check for modified workflow patterns and return a list of such IDs"""
     return check_entities_modified(configuration, 'workflowpatterns')
 
+
 def check_workflow_r_modified(configuration):
     """Check for modified workflow recipes and return a list of such IDs"""
     return check_entities_modified(configuration, 'workflowrecipes')
+
+
+def pending_entities_update(configuration, kind):
+    """Check if entities modified file indicates a pending update"""
+    _logger = configuration.logger
+    modified_path = os.path.join(configuration.mig_system_files,
+                                 "%s.modified" % kind)
+    # NOTE: check if modified file exists with size above pickled empty list
+    try:
+        return os.path.getsize(modified_path) > len(dumps([]))
+    except Exception, exc:
+        # Probably because modified file doesn't exist so just ignore
+        _logger.debug("could not get size of %s: %s" % (modified_path, exc))
+        return False
+
+
+def pending_users_update(configuration):
+    """Check if user modified file indicates a pending update"""
+    return pending_entities_update(configuration, 'user')
+
+
+def pending_resources_update(configuration):
+    """Check if resource modified file indicates a pending update"""
+    return pending_entities_update(configuration, 'resource')
+
+
+def pending_vgrids_update(configuration):
+    """Check if vgrid modified file indicates a pending update"""
+    return pending_entities_update(configuration, 'vgrid')
+
+
+def pending_res_update(configuration):
+    """Check if re modified file indicates a pending update"""
+    return pending_entities_update(configuration, 'runtimeenvs')
 
 
 def reset_entities_modified(configuration, kind):
@@ -147,33 +195,40 @@ def reset_entities_modified(configuration, kind):
     try:
         dump([], modified_path)
     except Exception, exc:
-        configuration.logger.error("Could not reset %s modified mark: %s" % \
+        configuration.logger.error("Could not reset %s modified mark: %s" %
                                    (kind, exc))
     lock_handle.close()
+
 
 def reset_users_modified(configuration):
     """Reset user modified marks"""
     return reset_entities_modified(configuration, 'user')
 
+
 def reset_resources_modified(configuration):
     """Reset resource modified marks"""
     return reset_entities_modified(configuration, 'resource')
+
 
 def reset_vgrids_modified(configuration):
     """Reset vgrid modified marks"""
     return reset_entities_modified(configuration, 'vgrid')
 
+
 def reset_res_modified(configuration):
     """Reset res modified marks"""
     return reset_entities_modified(configuration, 'runtimeenvs')
+
 
 def reset_workflow_p_modified(configuraiton):
     """Reset workflow patterns modified marks"""
     return reset_entities_modified(configuraiton, 'workflowpatterns')
 
+
 def reset_workflow_r_modified(configuraiton):
     """Reset workflow recipes modified marks"""
     return reset_entities_modified(configuraiton, 'workflowrecipes')
+
 
 if __name__ == "__main__":
     import sys
@@ -186,4 +241,3 @@ if __name__ == "__main__":
     print "Marking runtime envs modified: %s" % re_name
     mark_re_modified(conf, re_name)
     print "Check runtime envs modified: %s %s" % check_res_modified(conf)
-        

@@ -842,11 +842,11 @@ def edit_user(
             print 'User %s was successfully edited in user DB!'\
                   % client_id
     except Exception, err:
-        if do_lock:
-            release_file_lock(flock)
         import traceback
         print traceback.format_exc()
         if not force:
+            if do_lock:
+                release_file_lock(flock)
             raise Exception('Failed to edit %s with %s in user DB: %s'
                             % (client_id, changes, err))
 
@@ -1354,9 +1354,9 @@ def migrate_users(
                 if verbose:
                     print 'Loaded existing user DB from: %s' % db_path
         except Exception, err:
-            if do_lock:
-                release_file_lock(flock)
             if not force:
+                if do_lock:
+                    release_file_lock(flock)
                 raise Exception('Failed to load user DB: %s' % err)
 
     targets = {}
@@ -1491,6 +1491,7 @@ def migrate_users(
 
         # Finally update user DB now that file system was updated
 
+        flock = None
         try:
             if do_lock:
                 flock = lock_user_db(db_path)
@@ -1498,19 +1499,17 @@ def migrate_users(
             del user_db[client_id]
             user_db[new_id] = user
             save_user_db(user_db, db_path, do_lock=False)
-            if do_lock:
-                release_file_lock(flock)
-                flock = None
             if verbose:
                 print 'User %s was successfully updated in user DB!'\
                       % client_id
         except Exception, err:
-            if do_lock and flock:
-                release_file_lock(flock)
-                flock = None
             if not force:
+                if do_lock and flock:
+                    release_file_lock(flock)
                 raise Exception('Failed to update %s in user DB: %s'
                                 % (client_id, err))
+        if do_lock and flock:
+            release_file_lock(flock)
 
 
 def fix_entities(

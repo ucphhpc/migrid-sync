@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_monitor - Monitor page generator
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -751,7 +751,7 @@ unless it is available in mig/server/MiGserver.conf
     keep_running = True
     while keep_running:
         try:
-            vgrids_list = get_vgrid_map_vgrids(configuration)
+            vgrids_list = get_vgrid_map_vgrids(configuration, caching=True)
 
             # create global statistics ("")
             # vgrids_list.append("")
