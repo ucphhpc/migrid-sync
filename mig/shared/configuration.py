@@ -1715,6 +1715,11 @@ location.""" % self.config_file
                 'SITE', 'about_snippet_url')
         else:
             self.site_about_snippet_url = '/public/about-snippet.html'
+        if config.has_option('SITE', 'tips_snippet_url'):
+            self.site_tips_snippet_url = config.get(
+                'SITE', 'tips_snippet_url')
+        else:
+            self.site_tips_snippet_url = '/public/tips-snippet.html'
         if config.has_option('SITE', 'status_url'):
             self.site_status_url = config.get('SITE', 'status_url')
         else:

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ui-v3.custom - global skin overrides for UI V3 only
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -45,6 +45,11 @@ table {
     background: transparent;
 }
 
+/* APP POPUP PAGE */
+.app-container {
+    background-color: #147;
+}
+
 /* Don't let buttons shrink when not active/hovering */
 [type=button]:not(:disabled):hover, [type=reset]:not(:disabled):hover, [type=submit]:not(:disabled):hover, button:not(:disabled):hover {
     padding: 5px 10px;
@@ -81,6 +86,11 @@ table {
 }
 .slider-footer a {
     color: #FFF;
+    background-color: #147;
+}
+
+/* SLIDER NAVIGATION */
+.slidernav-container {
     background-color: #147;
 }
 

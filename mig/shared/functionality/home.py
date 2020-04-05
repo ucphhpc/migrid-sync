@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # home - home page
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -59,6 +59,12 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
             ''' % fill_helpers
     html += render_apps(configuration, title_entry, active_menu)
     html += '''
+                                <div id="tips-container" class="col-12">
+                                    <div id="tips-content">
+                                        <!-- NOTE: filled by AJAX -->
+                                    </div>
+                                </div>
+                                
                                 <div class="col-lg-12 vertical-spacer"></div>
 				</div>
 			</div>
@@ -228,6 +234,9 @@ def main(client_id, user_arguments_dict):
         $("#add-app__window").hide();
     }
     '''
+    add_ready += '''
+                load_tips("%s");
+    ''' % configuration.site_tips_snippet_url
     title_entry['script']['advanced'] += add_import
     title_entry['script']['init'] += add_init
     title_entry['script']['ready'] += add_ready

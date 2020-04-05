@@ -131,6 +131,24 @@ function init_faq() {
 function init_about() {
     console.debug("init About");
 }
+function init_tips() {
+    console.debug("init Tips");
+    /* Init Tips as single entry selected based on current date */
+    console.debug("hiding all tips");
+    $("#tips-content .tips-entry").hide();
+    var now = new Date();
+    /* NOTE: select day based on YYYYMMDD for consistent daily increment */
+    var fulldate = now.getFullYear()*1E4 + now.getMonth()*1E2 + now.getDate();
+    var total_tips = $("#tips-content .tips-entry").length;
+    var show_tip = fulldate % total_tips
+    console.debug("show tip number " + show_tip+" : "+fulldate+"%"+total_tips);
+    $("#tips-content .tips-entry").each(function (index, item) {
+        if (show_tip === index) {
+            console.debug("show tip "+index);
+            $(item).fadeIn(500);
+        }
+    });
+}
 
 function load_quickstart_static(base_url) {
     /* Fetch quickstart contents from snippet specified in configuration */
@@ -203,6 +221,32 @@ function load_about_content(base_url, country) {
         $("#about-content-"+country).load(content_url, init_about_content);
     } catch(err) {
         console.error("load "+country+" about failed: "+err);
+    }
+}
+function load_tips(base_url) {
+    /* Fetch Tips contents from snippet specified in configuration */
+    var content_url = base_url+" #tips-english";
+    console.debug("get content from "+content_url);
+    /* Load content: roughly equivalent to $.get(url, data, success) */
+    try {
+        $("#tips-content").load(content_url, init_tips);
+    } catch(err) {
+        console.error("load tips failed: "+err);
+    }
+}
+function init_tips_content() {
+    /* TODO: update to match init_tips if ever used */
+    console.log("init tips");
+}
+function load_tips_content(base_url, country) {
+    /* Fetch Tips contents from snippet specified in configuration */
+    var content_url = base_url+" #tips-"+country;
+    console.log("get content from "+content_url);
+    /* Load content: roughly equivalent to $.get(url, data, success) */
+    try {
+        $("#tips-content-"+country).load(content_url, init_tips_content);
+    } catch(err) {
+        console.error("load "+country+" tips failed: "+err);
     }
 }
 function load_sitestatus(base_url, system_match, locale) {

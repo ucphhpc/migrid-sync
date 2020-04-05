@@ -358,6 +358,10 @@ a:hover.genericbutton {
     color:#46743C;
 }
 
+#tips-content .tips-entry {
+    background-color: #dfd;
+}
+
 
 /* IMPORTANT: these overrides must come after .*link settings to work */
 .owner {

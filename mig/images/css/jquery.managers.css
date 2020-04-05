@@ -1048,6 +1048,29 @@ background: url(/images/icons/code.png) left center no-repeat;
     vertical-align: middle;
 }
 
+/* Tips in Home page below apps */
+#tips-container {
+    padding-top: 3%;
+    width: auto;
+}
+#tips-content .tips-entry {
+    background-color: #eee;
+    border-radius: 8px;
+    padding: 4px 12px;
+}
+#tips-content .tips-entry h4 {
+    font-size: 14px;
+    line-height: 18px;
+    font-weight: 700;
+    padding-top: 5px;
+    padding-bottom: 0;
+    margin: 0;
+}
+#tips-content .tips-entry p {
+    font-size: 14px;
+}
+
+
 /* Cloud button grid layout */
 .manage-cloud-instance, .cloud-instance-input {
     display: grid;
