@@ -71,7 +71,8 @@ def _load_rate_limits(configuration,
     if do_lock:
         rate_limits_lock = _acquire_rate_limits_lock(
             configuration, proto, exclusive=False)
-    result = unpickle(rate_limits_filepath, logger)
+    # NOTE: file is typically on tmpfs so it may or may not exist at this point
+    result = unpickle(rate_limits_filepath, logger, allow_missing=True)
     if do_lock:
         _release_rate_limits_lock(rate_limits_lock)
 
@@ -318,8 +319,8 @@ def expire_rate_limit(configuration, proto,
     user_fails = old_user_fails = 0
     user_hits = old_user_hits = 0
     expired = 0
-    logger.debug("expire %r entries older than %d at %d with delay %d" \
-       % (proto, fail_cache, now, expire_delay))
+    logger.debug("expire %r entries older than %d at %d with delay %d"
+                 % (proto, fail_cache, now, expire_delay))
     check_expire = expire_delay \
         + _get_last_expire(configuration, proto)
     if check_expire > now:

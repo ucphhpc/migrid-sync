@@ -272,7 +272,8 @@ def unpickle(path, logger, allow_missing=False):
         logger.debug('%s was unpickled successfully' % path)
         return data_object
     except Exception, err:
-        if not allow_missing:
+        # NOTE: check that it was in fact due to file does not exist error
+        if not allow_missing or getattr(err, 'errno', None) != errno.ENOENT:
             logger.error('%s could not be opened/unpickled! %s'
                          % (path, err))
         return False
@@ -298,7 +299,8 @@ def load_json(path, logger, allow_missing=False, convert_utf8=True):
             data_object = force_utf8_rec(data_object)
         return data_object
     except Exception, err:
-        if not allow_missing:
+        # NOTE: check that it was in fact due to file does not exist error
+        if not allow_missing or getattr(err, 'errno', None) != errno.ENOENT:
             logger.error('%s could not be opened/loaded! %s'
                          % (path, err))
         return False
