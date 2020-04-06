@@ -383,7 +383,7 @@ def validate_auth_attempt(configuration,
             log_msg += ":%s" % tcp_port
         logger.critical(log_msg)
         authlog(configuration, 'CRITICAL', protocol, authtype,
-                username, ip_addr, auth_msg)
+                username, ip_addr, auth_msg, notify=notify)
 
     elif proto_abuse_hits > 0 and proto_hits > proto_abuse_hits:
         auth_msg = "Abuse limit reached"
@@ -393,6 +393,6 @@ def validate_auth_attempt(configuration,
             log_msg += ":%s" % tcp_port
         logger.critical(log_msg)
         authlog(configuration, 'CRITICAL', protocol, authtype,
-                username, ip_addr, auth_msg)
+                username, ip_addr, auth_msg, notify=notify)
 
     return (authorized, disconnect)
