@@ -134,7 +134,8 @@ function init_about() {
 function init_tips() {
     console.debug("init Tips");
     /* Init Tips as single entry selected based on current date */
-    console.debug("hiding all tips");
+    $("#tips-content .tips-entries").hide();
+    //console.debug("hiding all tips");
     $("#tips-content .tips-entry").hide();
     var now = new Date();
     /* NOTE: select day based on YYYYMMDD for consistent daily increment */
@@ -142,12 +143,34 @@ function init_tips() {
     var total_tips = $("#tips-content .tips-entry").length;
     var show_tip = fulldate % total_tips
     console.debug("show tip number " + show_tip+" : "+fulldate+"%"+total_tips);
+    $("#tips-content .tips-entry h4").each(function (index, title) {
+        /* Prefix: tip title with Tip marker */
+        //console.debug("found title: "+index);
+        /* NOTE: leave a little room between fold icon and info icon */
+        var title_text = "<span class='leftpad'/>";
+        title_text += "<span class='info iconleftpad'>Quick Tip:</span> ";
+        title_text += $(title).html() + " ... ";
+        $(title).html(title_text);
+    });
+                                          
     $("#tips-content .tips-entry").each(function (index, item) {
         if (show_tip === index) {
             console.debug("show tip "+index);
             $(item).fadeIn(500);
         }
     });
+    /* NOTE: we need to specify header to look inside the div.tips-entry */
+    $("#tips-content .tips-entries.accordion").accordion({
+        collapsible: true,
+        active: false,
+        header: "h4",
+        icons: {"header": "ui-icon-plus", "activeHeader": "ui-icon-minus"},
+        heightStyle: "content"
+    });
+    /* fix and reduce accordion spacing */
+    $(".ui-accordion-header").css("padding-top", 0).css("padding-bottom", 0).css("margin", 0);
+    $("#tips-content").removeClass("tips-placeholder");
+    $("#tips-content .tips-entries").show();
 }
 
 function load_quickstart_static(base_url) {

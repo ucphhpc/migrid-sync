@@ -56,15 +56,15 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
 					<div class="home-page__header col-12">
 						<p class="sub-title">Tools from %(short_title)s helps you with storage, sharing and archiving of data. %(short_title)s delivers centralised storage space for personal and shared files.</p>
 					</div>
+
+                                        <div id="tips-container" class="col-12">
+                                            <div id="tips-content" class="tips-placeholder">
+                                                <!-- NOTE: filled by AJAX .. init for space -->
+                                            </div>
+                                        </div>
             ''' % fill_helpers
     html += render_apps(configuration, title_entry, active_menu)
     html += '''
-                                <div id="tips-container" class="col-12">
-                                    <div id="tips-content">
-                                        <!-- NOTE: filled by AJAX -->
-                                    </div>
-                                </div>
-                                
                                 <div class="col-lg-12 vertical-spacer"></div>
 				</div>
 			</div>

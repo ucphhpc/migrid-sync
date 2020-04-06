@@ -1050,17 +1050,11 @@ background: url(/images/icons/code.png) left center no-repeat;
 
 /* Tips in Home page below apps */
 #tips-container {
-    padding-top: 3%;
     width: auto;
-}
-#tips-content .tips-entry {
-    background-color: #eee;
-    border-radius: 8px;
-    padding: 4px 12px;
 }
 #tips-content .tips-entry h4 {
     font-size: 14px;
-    line-height: 18px;
+    line-height: 20px;
     font-weight: 700;
     padding-top: 5px;
     padding-bottom: 0;

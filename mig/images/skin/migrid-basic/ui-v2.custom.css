@@ -68,3 +68,27 @@ h1 {
     background-color: #FFF;
     border-color: #147;
 }
+
+/* 
+   Custom theming of Tips
+
+   NOTE: won't have effect in core.css because they MUST override ui-theme css
+
+*/
+#tips-content .ui-state-default, #tips-content .ui-state-hover, #tips-content .ui-state-focus { 
+    background: transparent;
+    color: #147;
+}
+#tips-content .ui-state-default { 
+    border: 1px solid #147;
+}
+#tips-content .ui-state-focus { 
+    border: 1px solid #369;
+}
+#tips-content .ui-state-hover { 
+    border: 1px solid #369;
+    color: #369;
+}
+#tips-content .ui-icon {
+    background-image: url("images/ui-icons_056b93_256x240.png");
+}

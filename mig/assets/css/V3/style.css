@@ -360,7 +360,7 @@ legend {
 }
 
 .home-page__content {
-    padding-top: 3%;
+    padding-top: 1%;
 }
 
 @media (min-width: 1000px) {
@@ -565,13 +565,8 @@ input[type=checkbox]:checked + label {
 
 /* Tips in Home page below apps */
 #tips-container {
-    padding-top: 3%;
+    padding-top: 1%;
     width: auto;
-}
-#tips-content .tips-entry {
-    background-color: #eee;
-    border-radius: 8px;
-    padding: 4px 12px;
 }
 #tips-content .tips-entry h4 {
     font-size: 16px;
@@ -579,6 +574,7 @@ input[type=checkbox]:checked + label {
     font-weight: 700;
     padding-top: 5px;
     padding-bottom: 5px;
+    margin: 0;
 }
 #tips-content .tips-entry p {
     font-size: 14px;
