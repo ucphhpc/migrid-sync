@@ -117,6 +117,7 @@ static bool mig_pyinit()
         pyrun("from shared.griddaemons.sftp import validate_auth_attempt");
         pyrun("from shared.griddaemons.sftp import active_sessions");
         pyrun("from shared.griddaemons.sftp import expire_rate_limit");
+        pyrun("from shared.griddaemons.sftp import check_twofactor_session");
         pyrun
             ("from shared.logger import daemon_logger, register_hangup_handler");
         pyrun("from shared.conf import get_configuration_object");
@@ -340,6 +341,46 @@ static bool register_auth_attempt(const unsigned int mode,
     } else {
         result = PyObject_IsTrue(py_authorized);
         Py_DECREF(py_authorized);
+    }
+
+    return result;
+}
+
+static bool mig_check_twofactor_session(const char *username,
+                                        const char *address)
+{
+    bool result = false;
+    bool strict_address = false;
+
+    pyrun
+        ("twofactor_strict_address = configuration.site_twofactor_strict_address");
+    PyObject *py_twofactor_strict_address =
+        PyObject_GetAttrString(py_main, "twofactor_strict_address");
+    if (py_twofactor_strict_address == NULL) {
+        WRITELOGMESSAGE(LOG_ERR,
+                        "Missing python variable: py_twofactor_strict_address\n");
+        return result;
+    } else {
+        strict_address = PyObject_IsTrue(py_twofactor_strict_address);
+        Py_DECREF(py_twofactor_strict_address);
+    }
+    if (strict_address) {
+        pyrun
+            ("valid_twofactor = check_twofactor_session(configuration, '%s', '%s', 'sftp-pw')",
+             username, address);
+    } else {
+        pyrun
+            ("valid_twofactor = check_twofactor_session(configuration, '%s', None, 'sftp-pw')",
+             username);
+    }
+    PyObject *py_valid_twofactor =
+        PyObject_GetAttrString(py_main, "valid_twofactor");
+    if (py_valid_twofactor == NULL) {
+        WRITELOGMESSAGE(LOG_ERR,
+                        "Missing python variable: py_valid_twofactor\n");
+    } else {
+        result = PyObject_IsTrue(py_valid_twofactor);
+        Py_DECREF(py_valid_twofactor);
     }
 
     return result;

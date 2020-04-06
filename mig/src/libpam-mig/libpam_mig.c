@@ -1111,11 +1111,12 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 #endif                          /* ENABLE_CHROOT */
 
 #ifdef ENABLE_AUTHHANDLER
-    if (false == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
-                                       | MIG_AUTHTYPE_PASSWORD
-                                       | MIG_AUTHTYPE_ENABLED
-                                       | MIG_VALID_AUTH, pUsername, pAddress,
-                                       pSecret)) {
+    unsigned int mode = MIG_AUTHTYPE_PASSWORD
+        | MIG_AUTHTYPE_ENABLED | MIG_VALID_AUTH;
+    if (true == mig_check_twofactor_session(pUsername, pAddress)) {
+        mode |= MIG_VALID_TWOFA;
+    }
+    if (false == register_auth_attempt(mode, pUsername, pAddress, pSecret)) {
         return pam_sm_authenticate_exit(PAM_AUTH_ERR, pwresp);
     }
 #endif                          /* ENABLE_AUTHHANDLER */

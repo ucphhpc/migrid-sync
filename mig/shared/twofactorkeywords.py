@@ -97,7 +97,8 @@ an authenticated session and then logging into WebDAVS as usual.
             'Context': 'twofactor_dep',
             'Required': False,
         }))
-    if configuration.site_enable_sftp:
+    if configuration.site_enable_sftp \
+            or configuration.site_enable_sftp_subsys:
         specs.append(('SFTP_PASSWORD_TWOFACTOR', {
             'Title': 'Enable 2-FA for SFTP password login',
             'Description': '''Add an extra layer of security to your SFTP password
@@ -112,6 +113,7 @@ an authenticated session and then logging into SFTP as usual.
             'Context': 'twofactor_dep',
             'Required': False,
         }))
+    if configuration.site_enable_sftp:
         specs.append(('SFTP_KEY_TWOFACTOR', {
             'Title': 'Enable 2-FA for SFTP key login',
             'Description': '''Add an extra layer of security to your SFTP key
