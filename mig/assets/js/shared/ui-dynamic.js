@@ -120,13 +120,7 @@ function init_quickstart_dynamic() {
 function init_faq() {
     console.debug("init faq");
     /* Init FAQ as foldable but closed and with individual heights */
-    $(".faq-entries.accordion").accordion({
-        collapsible: true,
-        active: false,
-        heightStyle: "content"
-    });
-    /* fix and reduce accordion spacing */
-    $(".ui-accordion-header").css("padding-top", 0).css("padding-bottom", 0).css("margin", 0);
+    accordion_init(".faq-entries.accordion", false);
 }
 function init_about() {
     console.debug("init About");
@@ -148,7 +142,7 @@ function init_tips() {
         //console.debug("found title: "+index);
         /* NOTE: leave a little room between fold icon and info icon */
         var title_text = "<span class='leftpad'/>";
-        title_text += "<span class='info iconleftpad'>Quick Tip:</span> ";
+        title_text += "<span class='tip iconleftpad'>Quick Tip:</span> ";
         title_text += $(title).html() + " ... ";
         $(title).html(title_text);
     });
@@ -160,15 +154,7 @@ function init_tips() {
         }
     });
     /* NOTE: we need to specify header to look inside the div.tips-entry */
-    $("#tips-content .tips-entries.accordion").accordion({
-        collapsible: true,
-        active: false,
-        header: "h4",
-        icons: {"header": "ui-icon-plus", "activeHeader": "ui-icon-minus"},
-        heightStyle: "content"
-    });
-    /* fix and reduce accordion spacing */
-    $(".ui-accordion-header").css("padding-top", 0).css("padding-bottom", 0).css("margin", 0);
+    accordion_init("#tips-content .tips-entries.accordion", false, "h4");
     $("#tips-content").removeClass("tips-placeholder");
     $("#tips-content .tips-entries").show();
 }
@@ -281,15 +267,20 @@ function load_sitestatus(base_url, system_match, locale) {
 
 
 /* We need to run accordion init as a callback on status event load */
-function accordion_init(accordion_selector, active) {
+function accordion_init(accordion_selector, active, header) {
     /* Init accordion as foldable, with active index entry open and with 
        individual heights. If active is false or left out it stays folded. */
     if (active === undefined) {
         active = false;
     }
+    if (header === undefined) {
+        header = "h4";
+    }
     $(accordion_selector).accordion({
         collapsible: true,
         active: active,
+        header: header,
+        icons: {"header": "ui-icon-plus", "activeHeader": "ui-icon-minus"},
         heightStyle: "content"
     });
     /* fix and reduce accordion spacing */

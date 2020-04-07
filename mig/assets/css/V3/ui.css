@@ -964,6 +964,13 @@ background: url(/images/icons/compress.png) left center no-repeat;
     background-color: #FFF;
     border-radius: 4px;
 }
+.tip {
+    background-image: url('/images/icons/lightbulb_idea.svg');
+    background-repeat: no-repeat;
+    background-size: 16px 16px; 
+    background-color: #FFF;
+    border-radius: 4px;
+}
 .urllink {
     background: url('/images/icons/html.svg') no-repeat; 
     padding-left: 18px;

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ui-v2.custom - UI V2 style overrides for all pages
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -60,28 +60,4 @@
     color: #46743C;
     background-color: #FFF;
     border-color: #46743C;
-}
-
-/* 
-   Custom theming of Tips
-
-   NOTE: won't have effect in core.css because they MUST override ui-theme css
-
-*/
-#tips-content .ui-state-default, #tips-content .ui-state-hover, #tips-content .ui-state-focus { 
-    background: transparent;
-    color: #46743C;
-}
-#tips-content .ui-state-default { 
-    border: 1px solid #46743C;
-}
-#tips-content .ui-state-focus { 
-    border: 1px solid #679c5b;
-}
-#tips-content .ui-state-hover { 
-    border: 1px solid #679c5b;
-    color: #679c5b;
-}
-#tips-content .ui-icon {
-    background-image: url("images/ui-icons_46743c_256x240.png");
 }

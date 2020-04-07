@@ -118,11 +118,6 @@ button.avatar-link:active {
 
 
 /* General style overrides */
-.ui-state-hover .ui-icon,
-.ui-button:hover .ui-icon {
-    background-image: url("images/ui-icons_46743c_256x240.png");
-}
-
 a.greenBtn {
     color: #fff; 
     background-color: #147;
@@ -599,25 +594,4 @@ a {
 
 .pager-select {
     height: unset;
-}
-
-/* Custom theming of tips
-   NOTE: won't have effect in core.css because it must override ui-theme css
- */
-#tips-content .ui-state-default, #tips-content .ui-state-hover, #tips-content .ui-state-focus { 
-    background: transparent;
-    color: #147;
-}
-#tips-content .ui-state-default { 
-    border: 1px solid #147;
-}
-#tips-content .ui-state-focus { 
-    border: 1px solid #369;
-}
-#tips-content .ui-state-hover { 
-    border: 1px solid #369;
-    color: #369;
-}
-#tips-content .ui-icon {
-    background-image: url("images/ui-icons_056b93_256x240.png");
 }

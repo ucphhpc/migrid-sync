@@ -44,3 +44,33 @@
     transition: width 0.5s;
     -webkit-transition: width 0.5s;
 }
+
+/* NOTE: adjust icon color when background is white.
+         We use a custom made skin-colored version of the icons from UI theme
+         and path is taken relative to this skin sub-dir.
+*/
+
+.ui-icon.skin {
+	background-image: url("images/ui-icons_46743c_256x240.png");
+}
+
+/*
+  Support for inverting theme for some components like FAQ and Tips accordion.
+*/
+.invert-theme .ui-state-default, .invert-theme .ui-state-hover, .invert-theme .ui-state-focus { 
+    background: transparent;
+    color: #46743C;
+}
+.invert-theme .ui-state-default { 
+    border: 1px solid #46743C;
+}
+.invert-theme .ui-state-focus { 
+    border: 1px solid #679c5b;
+}
+.invert-theme .ui-state-hover { 
+    border: 1px solid #679c5b;
+    color: #679c5b;
+}
+.invert-theme .ui-icon {
+    background-image: url("images/ui-icons_46743c_256x240.png");
+}

@@ -442,7 +442,7 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
             <!-- Filled by AJAX -->
             </div>
 
-            <div id="faq-content" class="col-lg-12">
+            <div id="faq-content" class="col-lg-12 invert-theme">
             <!-- Filled by AJAX -->
             </div>
 

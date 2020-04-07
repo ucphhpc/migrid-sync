@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # docs - online documentation generator
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -319,6 +319,14 @@ Web interfaces are served with the Apache HTTP Server:"""})
                            'title': 'KDE Crystal Icons HomePage',
                            'text': 'KDE Crystal Icons, LGPL'})
     output_objects.append({'object_type': 'text', 'text': ''})
+    output_objects.append({'object_type': 'link',
+                           'destination':
+                           'https://www.svgrepo.com/',
+                           'class': 'urllink iconspace',
+                           'title': 'SVG Repo Home Page',
+                           'text': 'SVG Repo Icons and Vectors (Creative '
+                           'Commons CC0 / Public Domain license)'})
+    output_objects.append({'object_type': 'text', 'text': ''})
     output_objects.append({'object_type': 'text', 'text':
                            "Core communication with dedicated resources use "
                            "OpenSSH client utilities:"})
@@ -577,6 +585,7 @@ The workflows also requires that the resources provide the SSHFS_MOUNT runtime e
                                'class': 'urllink iconspace',
                                'title': 'The sshfs client available from GitHub used to network mount a user home',
                                'text': 'sshfs client (GNU v2.0)'})
+
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""

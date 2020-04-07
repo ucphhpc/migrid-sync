@@ -358,11 +358,6 @@ a:hover.genericbutton {
     color:#46743C;
 }
 
-/* NOTE: used to reserve space for tips accordion to avoid 'jump' on load */
-.tips-placeholder {
-    height: 22px;
-}
-
 
 /* IMPORTANT: these overrides must come after .*link settings to work */
 .owner {

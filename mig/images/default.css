@@ -998,6 +998,10 @@ div.archive pre {
     background-image: url('/images/icons/accept.png');
     background-repeat: no-repeat;
 }
+.tip {
+    background-image: url('/images/icons/lightbulb.png');
+    background-repeat: no-repeat;
+}
 .urllink {
   background: url('/images/icons/html.png') no-repeat;
   padding-left: 18px;
@@ -1560,6 +1564,11 @@ div.savestatus {
 
 #confirm-dialog {
     background: #fff;
+}
+
+/* NOTE: used to reserve space for tips accordion to avoid 'jump' on load */
+.tips-placeholder {
+    height: 22px;
 }
 
 /* 

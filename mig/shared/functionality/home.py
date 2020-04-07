@@ -57,7 +57,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
 						<p class="sub-title">Tools from %(short_title)s helps you with storage, sharing and archiving of data. %(short_title)s delivers centralised storage space for personal and shared files.</p>
 					</div>
 
-                                        <div id="tips-container" class="col-12">
+                                        <div id="tips-container" class="col-12 invert-theme">
                                             <div id="tips-content" class="tips-placeholder">
                                                 <!-- NOTE: filled by AJAX .. init for space -->
                                             </div>

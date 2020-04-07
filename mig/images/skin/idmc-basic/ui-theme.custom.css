@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ui-theme.custom - style overrides for jquery-ui theme
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -43,4 +43,25 @@
     border-radius: 4px;
     transition: width 0.5s;
     -webkit-transition: width 0.5s;
+}
+
+/*
+  Support for inverting theme for some components like FAQ and Tips accordion.
+*/
+.invert-theme .ui-state-default, .invert-theme .ui-state-hover, .invert-theme .ui-state-focus { 
+    background: transparent;
+    color: #147;
+}
+.invert-theme .ui-state-default { 
+    border: 1px solid #147;
+}
+.invert-theme .ui-state-focus { 
+    border: 1px solid #369;
+}
+.invert-theme .ui-state-hover { 
+    border: 1px solid #369;
+    color: #369;
+}
+.invert-theme .ui-icon {
+    background-image: url("images/ui-icons_056b93_256x240.png");
 }
