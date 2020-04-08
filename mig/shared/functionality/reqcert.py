@@ -165,11 +165,14 @@ jobs and privileges.</p>''' %
 your information in at least the <span class=mandatory>mandatory</span> fields
 below and press the Send button to submit the certificate account request to
 the %(site)s administrators.
+
 <p class='criticaltext highlight_message'>
 IMPORTANT: Please help us verify your identity by providing Organization and
 Email data that we can easily validate!
 </p>
+
 %(site_signup_hint)s
+
 <hr />
     """
 

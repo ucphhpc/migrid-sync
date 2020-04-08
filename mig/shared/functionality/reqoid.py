@@ -162,12 +162,12 @@ to your old files, jobs and privileges. </p>''' %
     html = """
 <p class="sub-title">Please enter your information in at least the <span>mandatory</span> fields below and press the Send button to submit the OpenID account request to the %(site)s administrators.</p>
 
-%(site_signup_hint)s
-
 <p class='criticaltext highlight_message'>
 IMPORTANT: Please help us verify your identity by providing Organization and
 Email data that we can easily validate!
 </p>
+
+%(site_signup_hint)s
 
 <hr />
 
@@ -199,8 +199,7 @@ Email data that we can easily validate!
 <tr><td class='mandatory label'>Password</td><td><input id='password_field' type=password name=password minlength=%(password_min_len)d maxlength=%(password_max_len)d value='%(password)s' required pattern='.{%(password_min_len)d,%(password_max_len)d}' title='Password of your choice, see help box for limitations' /> </td><td class=fill_space><br /></td></tr>
 <tr><td class='mandatory label'>Verify password</td><td><input id='verifypassword_field' type=password name=verifypassword minlength=%(password_min_len)d maxlength=%(password_max_len)d value='%(verifypassword)s' required pattern='.{%(password_min_len)d,%(password_max_len)d}' title='Repeat your chosen password' /></td><td class=fill_space><br /></td></tr>
 <!-- NOTE: we technically allow saving the password on scrambled form hide it by default -->
-<tr class='hidden'><td class='optional label'>Password recovery</td><td class=''><input id='passwordrecovery_checkbox' type=checkbox name=passwordrecovery></td>
-</td><td class=fill_space><br/></td></tr>
+<tr class='hidden'><td class='optional label'>Password recovery</td><td class=''><input id='passwordrecovery_checkbox' type=checkbox name=passwordrecovery></td><td class=fill_space><br/></td></tr>
 <tr><td class='optional label'>Optional comment or reason why you should<br />be granted a %(site)s account:</td><td><textarea id='comment_field' rows=4 name=comment title='A free-form comment where you can explain what you need the account for' ></textarea></td><td class=fill_space><br /></td></tr>
 <tr><td class='label'><!-- empty area --></td><td>
 
