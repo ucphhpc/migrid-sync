@@ -669,8 +669,18 @@ a {
 
 .expanded.vgridpublicweb { background: url(/images/icons/folder_open_table_46743c.svg) left top no-repeat; background-size: 16px 16px; }
 
-.error {background-image: url('/images/icons/exclamation_46743c.svg');}
-.info { background-image: url('/images/icons/information_46743c.svg');}
+/* NOTE: Don't color error and warn in skin */
+/*
+.error {
+    background-image: url('/images/icons/exclamation_46743c.svg');
+}
+.warn {
+    background-image: url('/images/icons/exclamation_46743c.svg');
+}
+*/
+.info { 
+    background-image: url('/images/icons/information_46743c.svg');
+}
 .ok {
     background-image: url('/images/icons/accept_46743c.svg');
 }

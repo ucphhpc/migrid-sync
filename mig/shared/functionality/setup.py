@@ -1382,7 +1382,8 @@ value="%(default_authpassword)s" />
             # TODO: we might want to protect QR code with repeat basic login
             #       or a simple timeout since last login (cookie age).
             html += twofactor_wizard_html(configuration)
-            check_url = '/%s/twofactor.py?action=check' % get_xgi_bin(configuration)
+            check_url = '/%s/twofactor.py?action=check' % get_xgi_bin(
+                configuration)
             fill_helpers.update({'otp_uri': otp_uri, 'b32_key': b32_key,
                                  'otp_interval': otp_interval,
                                  'check_url': check_url, 'demand_twofactor':
@@ -1391,23 +1392,30 @@ value="%(default_authpassword)s" />
 
         twofactor_entries = get_twofactor_specs(configuration)
         html += '''
-        <tr class="otp_ready hidden"><td>
+        <tr class="otp_wizard otp_ready hidden"><td>
         <input type="hidden" name="topic" value="twofactor" />
         </td></tr>
-        <tr class="otp_ready hidden"><td>
+        <tr class="otp_wizard otp_ready hidden"><td>
         </td></tr>
         '''
         for (keyword, val) in twofactor_entries:
             if val.get('Editor', None) == 'hidden':
                 continue
+            # Mark the dependent options to ease hiding when not relevant
+            val['__extra_class__'] = ''
+            if val.get('Context', None) == 'twofactor':
+                val['__extra_class__'] = 'provides-twofactor-base'
+            if val.get('Context', None) == 'twofactor_dep':
+                val['__extra_class__'] = 'requires-twofactor-base'
             entry = """
-            <tr class='otp_ready hidden'><td class='title'>
+            <tr class='otp_wizard otp_ready hidden %(__extra_class__)s'>
+            <td class='title'>
             %(Title)s
             </td></tr>
-            <tr class='otp_ready hidden'><td>
+            <tr class='otp_wizard otp_ready hidden %(__extra_class__)s'><td>
             %(Description)s
             </td></tr>
-            <tr class='otp_ready hidden'><td>
+            <tr class='otp_wizard otp_ready hidden %(__extra_class__)s'><td>
             """ % val
             if val['Type'] == 'multiplestrings':
                 try:
@@ -1471,14 +1479,6 @@ value="%(default_authpassword)s" />
                 current_choice = ''
                 if current_twofactor_dict.has_key(keyword):
                     current_choice = current_twofactor_dict[keyword]
-                #entry += '<select class="styled-select semi-square html-select" name="%s">' % keyword
-                # for choice in valid_choices:
-                #    selected = ''
-                #    if choice == current_choice:
-                #        selected = 'selected'
-                #    entry += '<option %s value="%s">%s</option>'\
-                #             % (selected, choice, choice)
-                #entry += '</select><br />'
                 checked = ''
                 if current_choice == True:
                     checked = 'checked'
@@ -1491,7 +1491,7 @@ value="%(default_authpassword)s" />
             </td></tr>
             """ % entry
 
-        html += '''<tr class="otp_ready hidden"><td>
+        html += '''<tr class="otp_wizard otp_ready hidden"><td>
         %(save_html)s
         <input type="submit" value="Save 2-Factor Auth Settings" />
         <br/>

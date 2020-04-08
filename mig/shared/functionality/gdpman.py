@@ -811,7 +811,8 @@ def html_tmpl(
         # TODO: we might want to protect QR code with repeat basic login
         #       or a simple timeout since last login (cookie age).
         html += twofactor_wizard_html(configuration)
-        check_url = '/%s/twofactor.py?action=check' % get_xgi_bin(configuration)
+        check_url = '/%s/twofactor.py?action=check' % get_xgi_bin(
+            configuration)
         if twofactor_enabled:
             enable_hint = 'enable it (as you already did)'
         else:
@@ -822,12 +823,12 @@ def html_tmpl(
                              'demand', 'enable_hint': enable_hint})
 
         html += """
-        <tr class='otp_ready hidden'><td>
+        <tr class='otp_wizard otp_ready hidden'><td>
         </td></tr>
         """
 
         if not twofactor_enabled:
-            html += """<tr class='otp_ready hidden'><td>
+            html += """<tr class='otp_wizard otp_ready hidden'><td>
         Enable 2-factor authentication and<br/>
         <a class='ui-button' id='enable2fa_button' href='#' onclick='submitform(\"enable2fa\"); return false;'>Start Using %(site)s</a>
 </td></tr>

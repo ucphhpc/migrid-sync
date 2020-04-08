@@ -951,12 +951,23 @@ background: url(/images/icons/compress.png) left center no-repeat;
 .iconleftpad, .leftpad {
     padding-left: 20px;
 }
-.error {background-image: url('/images/icons/exclamation.svg'); background-repeat: no-repeat; background-size: 16px 16px;}
-.warn {
-    background-image: url('/images/icons/error.png');
-    background-repeat: no-repeat;
+.error {
+    background-image: url('/images/icons/exclamation_red.svg'); 
+    background-repeat: no-repeat; 
+    background-size: 16px 16px;
 }
-.info { background-image: url('/images/icons/information.svg'); background-repeat: no-repeat; background-size: 16px 16px; padding-left: 20px;}
+.warn {
+    background-image: url('/images/icons/exclamation_orange.svg');
+    background-repeat: no-repeat;
+    background-size: 16px 16px;
+    padding-left: 20px;
+}
+.info { 
+    background-image: url('/images/icons/information.svg');
+    background-repeat: no-repeat;
+    background-size: 16px 16px;
+    padding-left: 20px;
+}
 .ok {
     background-image: url('/images/icons/accept.svg');
     background-repeat: no-repeat;

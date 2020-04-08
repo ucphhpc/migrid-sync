@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # twofactorkeywords - supported two factor settings
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,6 +27,7 @@
 
 """Keywords in the two factor settings"""
 
+
 def check_twofactor_deps(configuration, client_id, twofactor_dict):
     """Go through 2FA dependencies and return a boolean to indicate if
     all dependencies are satisfied. I.e. web 2FA must be enabled before IO
@@ -46,6 +47,7 @@ def check_twofactor_deps(configuration, client_id, twofactor_dict):
         return False
     return True
 
+
 def get_twofactor_specs(configuration):
     """Return an ordered list of (keywords, spec) tuples. The order is
     used for configuration order consistency.
@@ -58,7 +60,7 @@ def get_twofactor_specs(configuration):
             'Title': 'Enable 2-FA for %s OpenID login' %
             configuration.user_mig_oid_title,
             'Description': '''Add an extra layer of security to your %s OpenID
-logins through a personal auth token generator on your phone or tablet.
+web logins through a personal auth token generator on your phone or tablet.
 ''' % configuration.user_mig_oid_title,
             'Example': 'True',
             'Type': 'boolean',
@@ -73,7 +75,7 @@ logins through a personal auth token generator on your phone or tablet.
             'Title': 'Enable 2-FA for %s OpenID login' %
             configuration.user_ext_oid_title,
             'Description': '''Add an extra layer of security to your %s OpenID
-logins through a personal auth token generator on your phone or tablet.
+web logins through a personal auth token generator on your phone or tablet.
 ''' % configuration.user_ext_oid_title,
             'Example': 'True',
             'Type': 'boolean',
@@ -89,7 +91,7 @@ logins through a personal auth token generator on your phone or tablet.
 logins through a personal auth token generator on your phone or tablet.
 Works by logging in to the %s web site with 2FA enabled to start
 an authenticated session and then logging into WebDAVS as usual.
-''' % configuration.short_title,        
+''' % configuration.short_title,
             'Example': 'True',
             'Type': 'boolean',
             'Value': False,
@@ -135,7 +137,7 @@ an authenticated session and then logging into SFTP as usual.
 logins through a personal auth token generator on your phone or tablet.
 Works by logging in to the %s web site with 2FA enabled to start
 an authenticated session and then logging into FTPS as usual.
-''' % configuration.short_title,        
+''' % configuration.short_title,
             'Example': 'True',
             'Type': 'boolean',
             'Value': False,
@@ -143,7 +145,7 @@ an authenticated session and then logging into FTPS as usual.
             'Context': 'twofactor_dep',
             'Required': False,
         }))
-    
+
     return specs
 
 

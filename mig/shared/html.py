@@ -1349,14 +1349,46 @@ def twofactor_wizard_js(configuration):
         } else {
             console.error("checkOTPVerified failed!");
             $("#warning_dialog").dialog(okOTPDialog);
-            $("#warning_dialog").html("<span class=\'warn leftpad\'>Please use the verify link to confirm correct client setup first!</span>");
+            $("#warning_dialog").html("<span class=\'warn warningtext leftpad\'>Please use the verify link to confirm correct client setup first!</span>");
             $("#warning_dialog").dialog("open");
             return false;
         }
     }
+    function toggleOTPDepends() {
+        var fade_time = 500;
+        //console.debug("display deps if any web 2FA is enabled");
+        if ($(".provides-twofactor-base input[type=checkbox]:checked").length) {
+            console.debug("2FA web enabled - show deps");
+            $(".requires-twofactor-base").fadeIn(fade_time);
+        } else {
+            console.debug("2FA web disabled - hide deps");
+            if ($(".requires-twofactor-base input[type=checkbox]:checked").length) {
+                console.warn("force 2FA off for services requiring web 2FA");
+                $(".requires-twofactor-base input[type=checkbox]:checked").click();
+                /* NOTE: make fade slow enough to let above unchecking show */
+                fade_time *= 4;
+            }
+            $(".requires-twofactor-base").fadeOut(fade_time);
+        }        
+    }
+    function initOTPDepends(static) {
+        //console.debug("init deps");
+        /* NOTE: in GDP mode we force deps on so no need to show them */
+        if (static) {
+            $(".requires-twofactor-base").hide();
+            $(".requires-twofactor-base input[type=checkbox]:not(:checked)").click();
+        } else {
+            /* Dynamic display of deps when provider changes */
+            toggleOTPDepends();
+            $(".provides-twofactor-base input[type=checkbox]").change(toggleOTPDepends);
+        }
+    }
     function switchOTPState(current, next) {
-        $("."+current+".switch_button").hide();
-        $("."+next).show();
+        $(".otp_wizard."+current+".switch_button").hide();
+        $(".otp_wizard."+next).show();
+        if (next === "otp_ready") {
+            initOTPDepends(%s);
+        }
     }
     /* Fast-forward through OTP states like user clicks would do */
     function setOTPProgress(states) {
@@ -1407,7 +1439,7 @@ def twofactor_wizard_js(configuration):
         $("#"+dialog_id).dialog("option", "height", "auto");
         //console.debug("opened verify popup");
     }
-'''
+''' % str(configuration.site_enable_gdp).lower()
     add_ready = ''
     return (add_import, add_init, add_ready)
 
@@ -1415,7 +1447,7 @@ def twofactor_wizard_js(configuration):
 def twofactor_wizard_html(configuration):
     """Build standard html twofactor wizard table content"""
     html = """
-<tr class='otp_intro'><td>
+<tr class='otp_wizard otp_intro'><td>
 <div id='warning_dialog' title='Warning'
     class='centertext hidden'><!-- filled by script --></div>
 <div id='otp_secret_dialog' title='TOTP Secret to Import in Your App'
@@ -1427,16 +1459,16 @@ e.g. your phone or tablet along with your usual login. This combination makes
 account abuse <b>much</b> harder, because even if your password gets stolen,
 it can't be used without your device.</p>
 </td></tr>
-<tr class='otp_intro'><td>
+<tr class='otp_wizard otp_intro'><td>
 <p>Preparing and enabling 2-factor authentication for your login is done in four
 steps.</p>
 </td></tr>
-<tr class='otp_intro switch_button'><td>
+<tr class='otp_wizard otp_intro switch_button'><td>
 <button type=button class='ui-button'
     onClick='switchOTPState(\"otp_intro\", \"otp_install\");'>
 Okay, let's go!</button>
 </td></tr>
-<tr class='otp_install hidden'><td>
+<tr class='otp_wizard otp_install hidden'><td>
 <h3>1. Install an Authenticator App</h3>
 <p>You first need to install a TOTP authenticator client like
 <a href='https://en.wikipedia.org/wiki/Google_Authenticator' target='_blank'>
@@ -1447,12 +1479,12 @@ Google Authenticator</a>,
 or tablet. You can find and install either of them on your device through your
 usual app store.</p>
 </td></tr>
-<tr class='otp_install switch_button hidden'><td>
+<tr class='otp_wizard otp_install switch_button hidden'><td>
 <button type=button class='ui-button'
     onClick='switchOTPState(\"otp_install\", \"otp_import\");'>
 I've got it installed!</button>
 </td></tr>
-<tr class='otp_import hidden'><td>
+<tr class='otp_wizard otp_import hidden'><td>
 <h3>2. Import Secret in Authenticator App</h3>
 <p>Open the chosen authenticator app and import your personal 2-factor secret in one of two ways:</p>
 <ul class='dbllineheight' type='A'>
@@ -1467,12 +1499,12 @@ Enter your personal key</span></li>
 device doesn't support scanning QR codes. Most apps automatically add service
 and account info on QR code scanning, but otherwise you can manually enter it.</p>
 </td></tr>
-<tr class='otp_import switch_button hidden'><td>
+<tr class='otp_wizard otp_import switch_button hidden'><td>
 <button type=button class='ui-button'
     onClick='switchOTPState(\"otp_import\", \"otp_verify\");'>
 Yes, I've imported it!</button>
 </td></tr>
-<tr class='otp_verify hidden'><td>
+<tr class='otp_wizard otp_verify hidden'><td>
 <h3>3. Verify the Authenticator App Setup</h3>
 <p>Please <span id='otp_verify_link' class='fakelink infolink'
     onClick='verifyClientToken(\"otp_verify_dialog\", \"otp_verified_button\", \"%(check_url)s\");'>
@@ -1480,19 +1512,19 @@ verify</span> that your authenticator app displays correct new tokens every 30
 seconds before you actually enable 2-factor authentication. Otherwise you could
 end up locking yourself out once you enable 2-factor authentication!<p/>
 </td></tr>
-<tr class='otp_verify switch_button hidden'><td>
+<tr class='otp_wizard otp_verify switch_button hidden'><td>
 <button type=button id='otp_verified_button' class='ui-button'
     onClick='checkOTPVerified() && switchOTPState(\"otp_verify\", \"otp_ready\");'>
 It works!</button>
 </td></tr>
-<tr class='otp_ready hidden'><td>
+<tr class='otp_wizard otp_ready hidden'><td>
 <h5>4. Enable 2-Factor Authentication</h5>
 Once you've followed the three steps above and verified your authenticator
 app, you can proceed to %(enable_hint)s.<br/>
 Afterwards you can simply logout and login again to verify that a token is
 requested right after your usual %(site)s login.
 </td></tr>
-<tr class='otp_ready hidden'><td>
+<tr class='otp_wizard otp_ready hidden'><td>
 <p class='warningtext'>SECURITY NOTE: please immediately contact the %(site)s admins to
 reset your secret 2-factor authentication key if you ever loose a device with
 it installed or otherwise suspect someone may have gained access to it.
