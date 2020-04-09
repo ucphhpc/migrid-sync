@@ -1359,7 +1359,7 @@ def twofactor_wizard_js(configuration):
         //console.debug("display deps if any web 2FA is enabled");
         if ($(".provides-twofactor-base input[type=checkbox]:checked").length) {
             console.debug("2FA web enabled - show deps");
-            $(".requires-twofactor-base").fadeIn(fade_time);
+            $(".requires-twofactor-base.manual-show").fadeIn(fade_time);
         } else {
             console.debug("2FA web disabled - hide deps");
             if ($(".requires-twofactor-base input[type=checkbox]:checked").length) {
@@ -1368,7 +1368,7 @@ def twofactor_wizard_js(configuration):
                 /* NOTE: make fade slow enough to let above unchecking show */
                 fade_time *= 4;
             }
-            $(".requires-twofactor-base").fadeOut(fade_time);
+            $(".requires-twofactor-base.manual-show").fadeOut(fade_time);
         }        
     }
     function initOTPDepends(static) {
@@ -1385,7 +1385,7 @@ def twofactor_wizard_js(configuration):
     }
     function switchOTPState(current, next) {
         $(".otp_wizard."+current+".switch_button").hide();
-        $(".otp_wizard."+next).show();
+        $(".otp_wizard."+next+":not(.manual-show)").show();
         if (next === "otp_ready") {
             initOTPDepends(%s);
         }

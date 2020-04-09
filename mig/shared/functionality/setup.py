@@ -1406,7 +1406,7 @@ value="%(default_authpassword)s" />
             if val.get('Context', None) == 'twofactor':
                 val['__extra_class__'] = 'provides-twofactor-base'
             if val.get('Context', None) == 'twofactor_dep':
-                val['__extra_class__'] = 'requires-twofactor-base'
+                val['__extra_class__'] = 'requires-twofactor-base manual-show'
             entry = """
             <tr class='otp_wizard otp_ready hidden %(__extra_class__)s'>
             <td class='title'>
