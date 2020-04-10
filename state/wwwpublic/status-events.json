@@ -1,6 +1,27 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2020-04-13T10:00:00", 
+    "systems": [
+      "ERDA"
+    ], 
+    "announce_start": "2020-04-10T10:00:00", 
+    "title": {
+      "EN": "Planned ERDA Seafile Maintenance", 
+      "DK": "Planlagt vedligehold på ERDA Seafile"
+    }, 
+    "services": [
+      "Seafile"
+    ], 
+    "work_end": "2020-04-14T08:00:00", 
+    "description": {
+      "EN": "We have a number of pending system and minor bugfixes on ERDA Seafile. The work will require a full Seafile system restart after the system updates. ERDA Seafile will therefore be down for shorter or longer periods during the work, but all other ERDA services should remain fully available. The work commences on April 13th after 10 and we expect to finish the updates and restart within a few hours. Updates will follow here.", 
+      "DK": "Vi har en række udestående system- og mindre funktionelle opdateringer på ERDAs Seafile. Arbejdet kræver genstart af hele Seafile systemet efter systemopdateringerne. ERDA Seafile vil derfor være utilgængelig i kortere eller længere perioder under opdateringen. Arbejdet begynder den 13. april efter kl 10, og vi forventer at være færdige med opgradering og genstart i løbet af nogle få timer. Opdatering følger her."
+    }, 
+    "announce_end": "2020-04-14T17:00:00"
+  }, 
+  {
+    "status": "AUTO", 
     "work_start": "2020-03-13T08:00:00", 
     "systems": [
         "ALL"
