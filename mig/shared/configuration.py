@@ -38,7 +38,7 @@ from ConfigParser import ConfigParser
 
 from shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, CSRF_FULL, \
     POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, POLICY_CUSTOM, \
-    freeze_flavors, duplicati_protocol_choices, default_css_filename
+    freeze_flavors, duplicati_protocol_choices, default_css_filename, keyword_any
 from shared.logger import Logger, SYSLOG_GDP
 from shared.html import menu_items, vgrid_items
 from shared.fileio import read_file, load_json
@@ -1738,7 +1738,7 @@ location.""" % self.config_file
             self.site_status_system_match = config.get(
                 'SITE', 'status_system_match').split()
         else:
-            self.site_status_system_match = ['ALL']
+            self.site_status_system_match = [keyword_any]
         # Fall back to a static 'random' salt string since we need it to
         # remain constant
         static_rand = 'w\xff\xcft\xaf/\x089 B\x1eG\x84i\x97a'
