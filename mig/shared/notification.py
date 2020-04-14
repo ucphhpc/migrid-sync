@@ -181,16 +181,25 @@ Please contact the %(site)s team for details about expire policies.
             txt += frame_template % request_text
         elif request_type in accept_mapper.keys():
             kind = accept_mapper[request_type]
-            header = '%s %s admission note' % (configuration.short_title, kind)
+            if 'vgrid' == kind:
+                show_kind = configuration.site_vgrid_label
+            else:
+                show_kind = kind
+            header = '%s %s admission note' % (configuration.short_title,
+                                               show_kind)
             txt += """This is a %s admission note sent on behalf of %s:
-""" % (kind, from_id)
+""" % (show_kind, from_id)
             txt += frame_template % request_text
         elif request_type in reject_mapper.keys():
             kind = reject_mapper[request_type]
+            if 'vgrid' == kind:
+                show_kind = configuration.site_vgrid_label
+            else:
+                show_kind = kind
             header = '%s %s access rejection note' \
-                % (configuration.short_title, kind)
+                % (configuration.short_title, show_kind)
             txt += """This is a %s access rejection note sent on behalf of %s:
-""" % (kind, from_id)
+""" % (show_kind, from_id)
             txt += frame_template % request_text
         elif request_type in entity_mapper.keys():
             entity = entity_mapper[request_type]
