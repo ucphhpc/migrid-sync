@@ -230,13 +230,14 @@ static int do_chroot(pam_handle_t * pamh)
     const char *pUsername;
     retval = pam_get_user(pamh, &pUsername, "Username: ");
 
-    if (retval != PAM_SUCCESS || pUsername == NULL || strlen(pUsername) == 0) {
-        WRITELOGMESSAGE(LOG_WARNING, "Did not get a valid username ...\n");
-        if (retval != PAM_SUCCESS) {
-            return retval;
-        } else {
-            return PAM_AUTH_ERR;
-        }
+    if (retval != PAM_SUCCESS) {
+        WRITELOGMESSAGE(LOG_WARNING, "PAM could not lookup username ...\n");
+        return retval;
+    }
+
+    if (pUsername == NULL || strlen(pUsername) == 0) {
+        WRITELOGMESSAGE(LOG_INFO, "Did not get a valid username ...\n");
+        return PAM_AUTH_ERR;
     }
 
     /* Since we rely on mapping the username to a path on disk,
