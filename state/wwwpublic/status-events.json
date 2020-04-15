@@ -1,6 +1,27 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2020-04-22T16:30:00", 
+    "systems": [
+      "SIF"
+    ], 
+    "announce_start": "2020-04-15T10:00:00", 
+    "title": {
+      "EN": "Planned SIF Maintenance", 
+      "DK": "Planlagt SIF systemvedligehold"
+    }, 
+    "services": [
+      "ALL"
+    ], 
+    "work_end": "2020-04-22T23:00:00", 
+    "description": {
+      "EN": "We have a number of pending upgrades of both system and SIF software which will require reboot and service restarts.", 
+      "DK": "Vi har en række udestående opdateringer af både system og SIF software. Disse kræver en reboot og genstart af services."
+    }, 
+    "announce_end": "2020-04-22T23:00:00"
+  },
+  {
+    "status": "AUTO", 
     "work_start": "2020-04-13T10:00:00", 
     "systems": [
       "ERDA"
