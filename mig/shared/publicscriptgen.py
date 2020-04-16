@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # publicscriptgen - Basic script generator functions
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -245,6 +245,51 @@ def basic_usage_options(usage_str, lang):
 # Communication functions #
 # ##########################
 
+# Names of miguser conf variables wrapped in conf container - no credentials
+_conf_pack = ['mig_server', 'auth_cookie_file', 'ca_cert_file', 'auth_redir',
+              'max_time', 'connect_timeout']
+
+
+def pack_conf(lang, conf_name):
+    """Pack each miguser conf variable from _conf_pack for function arg"""
+    s = ''
+    if lang == 'sh':
+        pairs = ['[\"%s\"]=\"${%s}\"' % (name, name) for name in _conf_pack]
+        s += """
+    declare -A %s
+    %s=(%s)
+        """ % (conf_name, conf_name, ' '.join(pairs))
+    elif lang == 'python':
+        pairs = ['\"%s\": %s' % (name, name) for name in _conf_pack]
+        s += """
+    %s = {%s}
+""" % (conf_name, ', '.join(pairs))
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    return s
+
+
+def unpack_conf(lang, conf_name):
+    """Unpack each miguser conf variable from _conf_pack for local function"""
+    s = ''
+    if lang == 'sh':
+        # TODO: implement proper unpack here? not needed due to global args
+        # pairs = ['    %s=${%s["%s"]}' %
+        #         (name, conf_name, name) for name in _conf_pack]
+        pairs = ['    %s="${%s}"' % (name, name) for name in _conf_pack]
+        s += "\n".join(pairs) + "\n"
+    elif lang == 'python':
+        pairs = ['    %s = %s.get("%s", "")' % (name, conf_name, name)
+                 for name in _conf_pack]
+        s += "\n".join(pairs) + "\n"
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    return s
+
 
 def auth_check_init(lang):
     """Init all auth variables"""
@@ -261,10 +306,17 @@ def auth_check_init(lang):
     fi
     declare -a auth_check
     if [ \"$auth_redir\" == \"cert_redirect\" ]; then
-        auth_check=(\"--cert $cert_file\" \"--key $key_file\")
-        put_arg=\"CERTPUT\"
-        # We must set something for form argument
-        auth_data=\"_=certauth\"
+        if [ -z \"$auth_cookie_file\" ]; then
+            auth_check=(\"--cert $cert_file\" \"--key $key_file\")
+            put_arg=\"CERTPUT\"
+            # We must set something for form argument
+            auth_data=\"_=certauth\"
+        else
+            auth_check=(\"--cookie $auth_cookie_file\" \"--cookie-jar $auth_cookie_file\")
+            put_arg=\"PUT\"
+            # We must set something for form argument
+            auth_data=\"_=oidauth\"
+        fi
     else
         auth_check=(\"\")
         put_arg=\"SHAREPUT\"
@@ -285,10 +337,16 @@ def auth_check_init(lang):
     else:
         ca_check = [\"--cacert\", ca_cert_file]
     if auth_redir == \"cert_redirect\":
-        auth_check = [\"--cert\", cert_file, \"--key\", key_file]
-        put_arg = \"CERTPUT\"
-        # We must set something for form argument
-        auth_data = \"_=certauth\"
+        if not auth_cookie_file:
+            auth_check = [\"--cert\", cert_file, \"--key\", key_file]
+            put_arg = \"CERTPUT\"
+            # We must set something for form argument
+            auth_data = \"_=certauth\"
+        else:
+            auth_check = [\"--cookie\", auth_cookie_file, \"--cookie-jar\", auth_cookie_file]
+            put_arg = \"PUT\"
+            # We must set something for form argument
+            auth_data = \"_=oidauth\"
     else:
         auth_check = []
         put_arg = \"SHAREPUT\"
@@ -343,11 +401,14 @@ def curl_perform(
     curl_cmd='curl',
     curl_flags='',
     curl_target="''",
-    curl_stdin="''"
+    curl_stdin="''",
+    override_url_base='""'
 ):
     """Expands relative_url, query and curl_target before
     issuing curl command. Thus those variables should contain
     appropriately escaped or quoted strings.
+    If override_url_base is set it will be prefixed to relative_url instead of
+    automatic mig_server value.
     """
 
     s = ''
@@ -378,6 +439,7 @@ def curl_perform(
     curl=\"%s %s --location --fail --silent --show-error\"
     target_data=%s
     location=%s
+    url_prefix=%s
     post_data=%s
     urlenc_data=%s
     query=%s
@@ -413,8 +475,12 @@ def curl_perform(
             index=$((index+1))
         done
     fi
+    # Use mig_server as base url unless explicitly overridden
+    if [ -z \"$url_prefix\" ]; then
+        url_prefix=\"$mig_server/\"
+    fi
     # Make sure e.g. spaces are encoded since they are not allowed in URL
-    url=\"--url '$mig_server/$(urlquote $location)$query'\"
+    url=\"--url '$url_prefix$(urlquote $location)$query'\"
     if [ -z \"$curl_stdin\" ]; then
         command=\"\"
     else
@@ -423,12 +489,17 @@ def curl_perform(
     command+=\"$curl ${auth_check[@]} ${ca_check[@]} ${password_check[@]} \"
     command+=\"${timeout[@]} ${data[@]} ${urlenc[@]} ${target[@]} $url\"
     #echo \"DEBUG: command: $command\"
+    # TODO: better mimic python return (exit_code, out)?
+    #       doing it like this breaks various things :-(
+    #out=$(eval $command 2>&1)
     eval $command
+    exit_code=$?
 """ % (
             curl_cmd,
             curl_flags,
             curl_target,
             relative_url,
+            override_url_base,
             post_data,
             urlenc_data,
             query,
@@ -451,6 +522,7 @@ def curl_perform(
                                     '--show-error']
     target_data = %s
     location = %s
+    url_prefix = %s
     post_data = %s
     urlenc_data = %s
     query = %s
@@ -476,9 +548,13 @@ def curl_perform(
         else:
             for val in urlenc_data:
                 urlenc += ['--data-urlencode', val]
+
+    if not url_prefix:
+        url_prefix = mig_server + '/'
+
     # Make sure e.g. spaces are encoded since they are not allowed in URL
     from urllib import quote as urlquote
-    url = ['--url', mig_server + '/' + urlquote(location) + query]
+    url = ['--url', url_prefix + urlquote(location) + query]
     input_fd = None
     if curl_stdin:
         input_source = subprocess.PIPE
@@ -514,6 +590,7 @@ def curl_perform(
             curl_flags,
             curl_target,
             relative_url,
+            override_url_base,
             post_data,
             urlenc_data,
             query,
@@ -522,6 +599,403 @@ def curl_perform(
     else:
         print 'Error: %s not supported!' % lang
         return ''
+
+    return s
+
+
+def curl_perform_flex(lang, conf_arg, base_arg, url_arg, post_arg, urlenc_arg,
+                      query_arg, curl_cmd='curl', curl_flags=''):
+    """Helper to use curl_perform with dynamic variables for the X_arg vars"""
+
+    s = ''
+    if lang == 'sh':
+        base_val = "${%s}" % base_arg
+        url_val = "${%s}" % url_arg
+        post_val = "${%s}" % post_arg
+        urlenc_val = "${%s}" % urlenc_arg
+        query_val = "${%s}" % query_arg
+    elif lang == 'python':
+        base_val = "%s" % base_arg
+        url_val = "%s" % url_arg
+        post_val = "%s" % post_arg
+        urlenc_val = "%s" % urlenc_arg
+        query_val = "%s" % query_arg
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+    # NOTE: we pass and unwrap loaded miguser conf values in user_conf container
+    s += begin_function(lang, 'curl_post_flex',
+                        ['user_conf', 'base_val', 'url_val', 'post_val',
+                         'urlenc_val', 'query_val'],
+                        '''Wrap a curl POST for further use of output page''')
+    s += unpack_conf(lang, conf_arg)
+    s += auth_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(lang, url_val, post_val, urlenc_val, query_val, curl_cmd,
+                      curl_flags, override_url_base=base_val)
+    s += end_function(lang, 'curl_post_flex')
+    s += begin_function(lang, 'curl_get_flex',
+                        ['user_conf', 'base_val', 'url_val', 'post_val',
+                         'urlenc_val', 'query_val'],
+                        '''Wrap a curl GET for further use of output page''')
+    s += unpack_conf(lang, conf_arg)
+    s += auth_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(lang, url_val, post_val, urlenc_val, query_val, curl_cmd,
+                      curl_flags + ' -G', override_url_base=base_val)
+    s += end_function(lang, 'curl_get_flex')
+    return s
+
+
+def curl_chain_login_steps(
+    lang,
+    relative_url="''",
+    post_data="''",
+    migoid_base='',
+    extoid_base=''
+):
+    """Run a series of curl commands to initialize a openid login session using
+    relative_url as the target URL to trigger OpenID and any 2-Factor Auth
+    handlers in turn.
+    """
+    s = ''
+    s += """
+    # Run curl and extract location of openid redirector from output
+    # NOTE: no form or query args for initial call
+"""
+    if lang == 'sh':
+        s += """
+    extoid_base='%s'
+    migoid_base='%s'
+    home_url=%s
+    base_val=''
+    url_val=%s
+    post_val=''
+""" % (extoid_base, migoid_base, relative_url, relative_url)
+        base_val = '${base_val}'
+        url_val = '${url_val}'
+        post_val = '${post_val}'
+    elif lang == 'python':
+        s += """
+    extoid_base = '%s'
+    migoid_base = '%s'
+    home_url = %s
+    base_val = ''
+    url_val = %s
+    post_val = ''
+""" % (extoid_base, migoid_base, relative_url, relative_url)
+        base_val = 'base_val'
+        url_val = 'url_val'
+        post_val = 'post_val'
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    if lang == 'sh':
+        s += """
+    # NOTE: curl_post_flex sets return val in $exit_code and curl output to stdout
+    out=$(curl_post_flex \"$user_conf\" \"$base_val\" \"$url_val\" \"$post_val\" '' '')
+    if echo $out | grep -q \"$extoid_base\" ; then
+        # Extract CSRF token
+        ct_value=$(echo $out | sed 's@.* name=\"ct\" value=\"\([0-9a-f]\+\)\".*@\\1@g')
+        if [ ${#ct_value} -ne 40 ]; then
+            echo 'Could not extract extoid CSRF token value'
+            exit 1
+        fi
+        while [ -z \"$username\" ]; do
+            echo -n 'Username: '
+            read username
+        done
+        while [ -z \"$password\" ]; do
+            # Hide typing
+            stty -echo
+            echo -n 'Password: '
+            read password
+            echo
+            stty echo
+        done
+        # Post login and password credentials, redirects to actual site URL
+        base_val=\"${extoid_base}/\" 
+        url_val=\"processTrustResult\" 
+        post_val=\"user=${username}&pwd=${password}&ct=${ct_value};allow=Yes\"
+        out=$(curl_post_flex \"$user_conf\" \"$base_val\" \"$url_val\" \"$post_val\" '' '')
+    elif echo $out | grep -q \"$(dirname ${migoid_base})\" ; then
+        # No CSRF token here
+        while [ -z \"$username\" ]; do
+            echo -n 'Username: '
+            read username
+        done
+        while [ -z \"$password\" ]; do
+            # Hide typing
+            stty -echo
+            echo -n 'Password: '
+            read password
+            echo
+            stty echo
+        done
+        base_val=\"${migoid_base}/\"
+        url_val=\"allow\"
+        post_val=\"identifier=${username}&password=${password}&remember=yes&yes=yes\"
+        out=$(curl_post_flex \"$user_conf\" \"$base_val\" \"$url_val\" \"$post_val\" '' '')
+        # TODO: curl fails hard with retval 22 and 404 Not found on login error
+        if [ -z \"$out\" ]; then
+            out='Authentication failed'
+        fi
+    elif echo $out | grep -q 'Home' ; then
+        echo 'Already completely logged in!'
+        exit 0
+    elif echo $out | grep -q '2-Factor Authentication' ; then
+        echo 'Already logged in to OpenID'
+    else
+        echo 'Unexpected OpenID redirect result - trying to proceed'
+        #echo 'DEBUG: ' $out
+    fi
+
+    if echo $out |grep -q 'Authentication failed' ; then
+        echo 'OpenID login failed!'
+        exit 1
+    fi
+
+    # Optional 2FA at this point
+    twofactor_enabled=0
+    for attempt in 1 2 3; do
+        if echo $out | grep -q '2-Factor Authentication' ; then
+            twofactor_enabled=1
+            token=''
+            while [ -z \"$token\" ]; do
+                echo -n '2-Factor Auth token: '
+                read token
+            done
+            base_val=\"${mig_server}/\"
+            # TODO: extract url from out instead?
+            url_val=\"wsgi-bin/twofactor.py\"
+            post_val=\"output_format=txt&action=auth&token=${token}&redirect_url=/${home_url}\"
+            out=$(curl_post_flex \"$user_conf\" \"$base_val\" \"$url_val\" \"$post_val\" '' '')
+        else
+            #echo 'DEBUG: past 2FA auth'
+            #echo \"DEBUG: $out\"
+            break
+        fi
+    done
+
+    if echo $out | grep -q 'Home' ; then
+        echo 'Login succeeded!'
+        exit 0
+    elif [ $twofactor_enabled -eq 1 ]; then
+        echo '2-Factor Auth failed!'
+        #echo \"DEBUG: $out\"
+        exit 2
+    else
+        echo 'Login failed with unexpected result!'
+        #echo \"DEBUG: $out\"
+        exit 3
+    fi
+        """
+    elif lang == 'python':
+        s += """
+    retval, msg = 0, []
+    (status, out) = curl_post_flex(user_conf, base_val, url_val, post_val, '', '')
+    if [line for line in out if extoid_base in line]:
+        # Extract CSRF token
+        ct_value = ''
+        ct_prefix = ' name=\"ct\" value=\"'
+        ct_suffix = '\">'
+        for line in out:
+            if ct_prefix in line:
+                ct_value = line.split(ct_prefix, 1)[1].split(ct_suffix, 1)[0]
+        if len(ct_value) != 40:
+            msg.append('Could not extract extoid CSRF token value')
+            return (1, msg)
+        while not username:
+            username = raw_input('Username: ').strip()
+        while not password:
+            password = getpass.getpass()
+        # Post login and password credentials, redirects to actual site URL
+        base_val = extoid_base + '/' 
+        url_val = \"processTrustResult\" 
+        post_val = 'user=%s&pwd=%s&ct=%s&allow=Yes' % (username, password, ct_value)
+        (status, out) = curl_post_flex(user_conf, base_val, url_val, post_val, '', '')
+    # NOTE: page only has URL without openid suffix
+    elif [line for line in out if os.path.dirname(migoid_base) in line]:
+        # No CSRF token here
+        while not username:
+            username = raw_input('Username: ').strip()
+        while not password:
+            password = getpass.getpass()
+        base_val = migoid_base + '/'
+        url_val = \"allow\"
+        post_val = 'identifier=%s&password=%s&remember=yes&yes=yes' % (username, password)
+        (status, out) = curl_post_flex(user_conf, base_val, url_val, post_val, '', '')
+        # NOTE: curl fails hard with retval 22 and 404 Not found on login error
+        if status == 22:
+            out.append('Authentication failed')
+    elif [line for line in out if 'Home' in line]:
+        msg.append('Already completely logged in!')
+        return (0, msg)
+    elif [line for line in out if '2-Factor Authentication' in line]:
+        msg.append('Already logged in to OpenID')
+    else:
+        msg.append('Unexpected OpenID redirect result - trying to proceed')
+        #msg.append('DEBUG: %s' % out)
+
+    if [line for line in out if 'Authentication failed' in line]:
+        msg.append('OpenID login failed!')
+        return (1, msg)
+
+    # Optional 2FA at this point
+    twofactor_enabled = False
+    for attempt in range(3):
+        if [line for line in out if '2-Factor Authentication' in line]:
+            twofactor_enabled = True
+            token = ''
+            while not token:
+                token = raw_input('2-Factor Auth token: ')
+            base_val = mig_server + '/'
+            # TODO: extract url from out instead?
+            url_val = \"wsgi-bin/twofactor.py\"
+            post_val = \"output_format=txt&action=auth&token=\"+token+\"&redirect_url=/\"+home_url
+            (status, out) = curl_post_flex(user_conf, base_val, url_val, post_val, '', '')
+        else:
+            #msg.append('DEBUG: past 2FA auth')
+            #msg.append('DEBUG: '+out)
+            break
+
+    #msg.append('DEBUG: '+out)
+    if [line for line in out if 'Home' in line]:
+        msg.append('Login succeeded!')
+        return (0, msg)
+    elif twofactor_enabled:
+        msg.append('2-Factor Auth failed!')
+        return (2, msg)
+    else:
+        msg.append('Login failed with unexpected result!')
+        return (3, msg)
+        """
+
+    return s
+
+
+def curl_chain_logout_steps(
+    lang,
+    relative_url="''",
+    post_data="''",
+    migoid_base='',
+    extoid_base=''
+):
+    """Run a series of curl commands to tear down an active openid login
+    session.
+    """
+    s = ''
+    s += """
+    # Run curl and extract location of openid redirector from output
+    # NOTE: no form or query args for initial call
+"""
+    if lang == 'sh':
+        s += """
+    logout_url=%s
+    extoid_base='%s'
+    migoid_base='%s'
+    url_base=''
+    url_val=%s
+    post_val=''
+""" % (relative_url, extoid_base, migoid_base, relative_url)
+        url_val = '${url_val}'
+        post_val = '${post_val}'
+    elif lang == 'python':
+        s += """
+    logout_url = %s
+    extoid_base = '%s'
+    migoid_base = '%s'
+    url_base = ''
+    url_val = %s
+    post_val = ''
+""" % (relative_url, extoid_base, migoid_base, relative_url)
+        url_val = 'url_val'
+        post_val = 'post_val'
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    if lang == 'sh':
+        s += """
+    # NOTE: curl_post_flex sets return val in $exit_code and curl output on stdout
+    out=$(curl_post_flex \"$user_conf\" \"$url_base\" \"$url_val\" \"$post_val\" '' '')
+    if echo $out | grep -q \"$extoid_base\" ; then
+        url_base=\"${extoid_base}/\"
+        url_val=\"logout\"
+        if echo $out | grep -q $url_val ; then
+            # NOTE: we must use GET rather than POST here
+            post_val=\"return_to=${mig_server}/${logout_url}?logout=true\"
+            out=$(curl_get_flex \"$user_conf\" \"$url_base\" \"$url_val\" \"$post_val\" '' '')
+        else
+            echo 'No active login session found.'
+        fi
+    # NOTE: page only prints URL without openid suffix
+    elif echo $out | grep -q \"$(dirname ${migoid_base})\" ; then
+        url_base=\"${migoid_base}/\"
+        url_val=\"logout\"
+        if echo $out | grep -q \"$url_val\" ; then
+            post_val=\"return_to=${mig_server}/${logout_url}?logout=true\"
+            out=$(curl_post_flex \"$user_conf\" \"$url_base\" \"$url_val\" \"$post_val\" '' '')
+        else
+            echo 'No active login session found.'
+        fi
+    elif echo $out | grep -q 'with a user certificate'; then
+            echo 'Certificate logins do not use login sessions.'    
+    else
+        echo 'Unexpected logout page content - trying to proceed'
+    fi
+
+    if echo $out |grep -q 'You are now logged out' ; then
+        echo 'Logout succeeded!'
+    else
+        echo 'Logout failed!'
+    fi
+
+    # TODO: clear cookies?
+    #rm -f ${auth_cookie_file}
+"""
+    elif lang == 'python':
+        s += """
+    retval, msg = 0, []
+    (status, out) = curl_post_flex(user_conf, url_base, url_val, post_val, '', '')
+    if [line for line in out if extoid_base in line]:
+        url_base = extoid_base + '/'
+        url_val = \"logout\"
+        if [line for line in out if url_val in line]:
+            # NOTE: we must use GET rather than POST here
+            post_val = 'return_to='+mig_server+'/'+logout_url+'?logout=true'
+            (status, out) = curl_get_flex(user_conf, url_base, url_val, post_val, '', '')
+        else:
+            msg.append('No active login session found.')
+    # NOTE: page only prints URL without openid suffix
+    elif [line for line in out if os.path.dirname(migoid_base) in line]:
+        url_base = migoid_base + '/'
+        url_val = \"logout\"
+        if [line for line in out if url_val in line]:
+            post_val = 'return_to='+mig_server+'/'+logout_url+'?logout=true'
+            (status, out) = curl_post_flex(user_conf, url_base, url_val, post_val, '', '')
+        else:
+            msg.append('No active login session found.')
+    elif [line for line in out if 'with a user certificate' in line]:
+        msg.append('Certificate logins do not use login sessions.')
+    else:
+        msg.append('Unexpected logout page content - trying to proceed')
+
+    if [line for line in out if 'You are now logged out' in line]:
+        msg.append('Logout succeeded!')
+        retval = 0
+    else:
+        msg.append('Logout failed!')
+        retval = 1
+
+    #msg.append('DEBUG: '+ '\\n'.join(msg))
+    
+    # TODO: clear cookies?
+    #os.remove(auth_cookie_file)
+
+    return (retval, msg)
+"""
 
     return s
 
@@ -704,6 +1178,10 @@ read_conf $conf 'keyfile'
 eval key_file=\"$conf_value\"
 read_conf $conf 'cacertfile'
 eval ca_cert_file=\"$conf_value\"
+read_conf $conf 'authcookiefile'
+eval auth_cookie_file=\"$conf_value\"
+read_conf $conf 'username'
+eval username=\"$conf_value\"
 read_conf $conf 'password'
 password=\"$conf_value\"
 read_conf $conf 'connect_timeout'
@@ -713,8 +1191,12 @@ max_time=\"$conf_value\"
 
 check_var migserver \"$mig_server\"
 if [ \"$auth_redir\" == \"cert_redirect\" ]; then
-    check_var certfile \"$cert_file\"
-    check_var keyfile \"$key_file\"
+    if [ -z \"$auth_cookie_file\" ]; then
+        check_var certfile \"$cert_file\"
+        check_var keyfile \"$key_file\"
+    else
+        check_var authcookiefile \"$auth_cookie_file\"
+    fi
 fi
 """
     elif lang == 'python':
@@ -738,14 +1220,19 @@ def expand_path(path):
 cert_file = expand_path(read_conf(conf, 'certfile'))
 key_file = expand_path(read_conf(conf, 'keyfile'))
 ca_cert_file = expand_path(read_conf(conf, 'cacertfile'))
+auth_cookie_file = expand_path(read_conf(conf, 'authcookiefile'))
+username = read_conf(conf, 'username')
 password = read_conf(conf, 'password')
 connect_timeout = read_conf(conf, 'connect_timeout')
 max_time = read_conf(conf, 'max_time')
 
 check_var('migserver', mig_server)
 if auth_redir == \"cert_redirect\":
-    check_var('certfile', cert_file)
-    check_var('keyfile', key_file)
+    if not auth_cookie_file:
+        check_var('certfile', cert_file)
+        check_var('keyfile', key_file)
+    else:
+        check_var('authcookiefile', auth_cookie_file)
 """
     else:
         print 'Error: %s not supported!' % lang
@@ -838,7 +1325,7 @@ def init_script(
     header = \
         """
 mig%s - a part of the MiG scripts
-Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 
 This file is part of MiG.
 
@@ -855,14 +1342,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-"""\
-         % name
+""" % name
     intro = \
         """
 This MiG %s script was autogenerated by the MiG User Script Generator !!!
 Any changes should be made in the generator and not here !!!
-"""\
-         % lang
+""" % lang
     s += comment(lang, header)
     s += '\n'
     s += doc_string(lang, intro)
@@ -875,6 +1360,7 @@ Any changes should be made in the generator and not here !!!
             """import sys
 import os
 import getopt
+import getpass
 import subprocess
 import StringIO
 
