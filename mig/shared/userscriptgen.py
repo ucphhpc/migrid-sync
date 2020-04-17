@@ -928,6 +928,23 @@ def truncate_usage_function(lang, extension):
     return s
 
 
+def twofactor_usage_function(lang, extension):
+    """Generate usage help for the corresponding script"""
+
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
+
+    usage_str = 'Usage: %s%s.%s [OPTIONS] ACTION TOKEN [REDIRECT_URL]' % \
+                (mig_prefix, op, extension)
+    s = ''
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
+    s += basic_usage_options(usage_str, lang)
+    s += end_function(lang, 'usage')
+
+    return s
+
+
 def unzip_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
 
@@ -2960,6 +2977,40 @@ def truncate_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         curl_flags,
     )
     s += end_function(lang, 'truncate_file')
+    return s
+
+
+def twofactor_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with action, queue and msg as
+    arguments."""
+
+    relative_url = '"%s/twofactor.py"' % get_xgi_bin(configuration)
+    query = '""'
+    if lang == 'sh':
+        post_data = '"$default_args;flags=$server_flags;action=$action;token=$token"'
+        urlenc_data = '("redirect_url=$redirect_url")'
+    elif lang == 'python':
+        post_data = "'%s;flags=%s;action=%s;token=%s' % (default_args, server_flags, action, token)"
+        urlenc_data = '["redirect_url=" + redirect_url]'
+    else:
+        print 'Error: %s not supported!' % lang
+        return ''
+
+    s = ''
+    s += begin_function(lang, 'twofactor_auth', ['action', 'token', 'redirect_url'],
+                        'Execute the corresponding server operation')
+    s += auth_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        urlenc_data,
+        query,
+        curl_cmd,
+        curl_flags,
+    )
+    s += end_function(lang, 'twofactor_auth')
     return s
 
 
@@ -5147,6 +5198,39 @@ sys.exit(status)
     return s
 
 
+def twofactor_main(lang):
+    """
+    Generate main part of corresponding scripts.
+
+    lang specifies which script language to generate in.
+    """
+
+    s = ''
+    s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
+    s += arg_count_check(lang, 2, 3)
+    s += check_conf_readable(lang)
+    s += configure(lang)
+    if lang == 'sh':
+        s += """
+# optional third argument depending on action - add dummy
+twofactor_auth \"$@\" ''
+"""
+    elif lang == 'python':
+        s += """
+# optional third argument depending on action - add dummy
+sys.argv.append('')
+(status, out) = twofactor_auth(*(sys.argv[1:4]))
+# Trailing comma to prevent double newlines
+print ''.join(out),
+sys.exit(status)
+"""
+    else:
+        print 'Error: %s not supported!' % lang
+
+    return s
+
+
 def unzip_main(lang):
     """
     Generate main part of corresponding scripts.
@@ -6668,6 +6752,34 @@ def generate_truncate(configuration, scripts_languages, dest_dir='.'):
     return True
 
 
+def generate_twofactor(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('generate_', '')
+
+    # Generate op script for each of the languages in scripts_languages
+
+    for (lang, interpreter, extension) in scripts_languages:
+        verbose(verbose_mode, 'Generating %s script for %s' % (op,
+                                                               lang))
+        script_name = '%s%s.%s' % (mig_prefix, op, extension)
+
+        script = ''
+        script += init_script(op, lang, interpreter)
+        script += version_function(lang)
+        script += shared_usage_function(op, lang, extension)
+        script += check_var_function(lang)
+        script += read_conf_function(lang)
+        script += shared_op_function(configuration, op, lang, curl_cmd)
+        script += shared_main(op, lang)
+
+        write_script(script, dest_dir + os.sep + script_name)
+
+    return True
+
+
 def generate_unzip(configuration, scripts_languages, dest_dir='.'):
     """Generate the corresponding script"""
 
@@ -6858,6 +6970,7 @@ script_ops = [
     'tail',
     'touch',
     'truncate',
+    'twofactor',
     'unzip',
     'uploadchunked',
     'wc',
