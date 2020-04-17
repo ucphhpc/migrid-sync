@@ -708,7 +708,7 @@ def curl_chain_login_steps(
     out=$(curl_post_flex \"$user_conf\" \"$base_val\" \"$url_val\" \"$post_val\" '' '')
     if echo $out | grep -q \"$extoid_base\" ; then
         # Extract CSRF token
-        ct_value=$(echo $out | sed 's@.* name=\"ct\" value=\"\([0-9a-f]\+\)\".*@\\1@g')
+        ct_value=$(echo $out | sed 's@.* name=\"ct\" value=\"\([0-9a-f]*\)\".*@\\1@g')
         if [ ${#ct_value} -ne 40 ]; then
             echo 'Could not extract extoid CSRF token value'
             exit 1
