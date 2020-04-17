@@ -44,7 +44,7 @@ from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import man_base_js, man_base_html, console_log_javascript, \
     twofactor_wizard_html, twofactor_wizard_js, twofactor_token_html, \
-    legacy_user_interface, save_settings_js, save_settings_html
+    legacy_user_interface, save_settings_js, save_settings_html, menu_items
 from shared.init import initialize_main_variables, find_entry, extract_menu
 from shared.settings import load_settings, load_widgets, load_profile, \
     load_ssh, load_davs, load_ftps, load_seafile, load_duplicati, load_cloud, \
@@ -391,8 +391,14 @@ def main(client_id, user_arguments_dict):
                         selected = ''
                         if choice == current_choice:
                             selected = 'selected'
+                        display_choice = choice
+                        if keyword == 'DEFAULT_PAGE':
+                            display_choice = menu_items.get(
+                                choice, {}).get('title', choice)
+                            if choice == 'vgrids':
+                                display_choice = "%ss" % configuration.site_vgrid_label
                         entry += '<option %s value="%s">%s</option>'\
-                            % (selected, choice, choice)
+                            % (selected, choice, display_choice)
                     entry += '</select><br />'
                 else:
                     entry += ''

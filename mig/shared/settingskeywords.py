@@ -106,6 +106,15 @@ def get_settings_specs():
         'Context': 'appearance',
         'Required': False,
     }))
+    specs.append(('DEFAULT_PAGE', {
+        'Title': 'Default Page',
+        'Description': 'Your preferred page opened on login',
+        'Example': 'fileman',
+        'Type': 'string',
+        'Value': 'home',
+        'Context': 'appearance',
+        'Required': False,
+    }))
     specs.append(('SUBMITUI', {
         'Title': 'Submit interface',
         'Description': 'Your preferred Submit Job interface',

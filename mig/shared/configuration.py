@@ -523,6 +523,8 @@ class Configuration:
     language = ['English']
     user_interface = ['V2', 'V3']
     submitui = ['fields', 'textarea', 'files']
+    # Init user default page with no selection to use site landing page
+    default_page = ['']
 
     # directory for usage records, initially None (means: do not generate)
 
@@ -1496,6 +1498,14 @@ location.""" % self.config_file
             self.site_user_menu = [i for i in req if menu_items.has_key(i)]
         else:
             self.site_user_menu = []
+
+        # Init helper for user default page select
+        # NOTE: we keep it simple - do not include site_user_menu entries here
+        for page in self.site_default_menu:
+            # Additional pages we want to exclude as default page
+            if not page in ['seafile', 'settings', 'setup', 'logout'] + self.default_page:
+                self.default_page.append(page)
+
         if config.has_option('SITE', 'collaboration_links'):
             valid = ['default', 'simple', 'advanced']
             req = config.get('SITE', 'collaboration_links').split()
