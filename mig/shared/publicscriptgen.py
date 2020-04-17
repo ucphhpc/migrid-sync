@@ -254,11 +254,18 @@ def pack_conf(lang, conf_name):
     """Pack each miguser conf variable from _conf_pack for function arg"""
     s = ''
     if lang == 'sh':
+        # TODO: really implement? for now we just insert dummy for consitency
         pairs = ['[\"%s\"]=\"${%s}\"' % (name, name) for name in _conf_pack]
+        legacy_pairs = ['\"%s=${%s}\"' % (name, name) for name in _conf_pack]
         s += """
-    declare -A %s
+    # TODO: the user conf pack/unpack is unfinished and unused here.
+    #       We do not really need it in BASH where globals work fine and
+    #       The hash map functionality requires BASH 4.
+    #declare -A %s
+    #%s=(%s)
     %s=(%s)
-        """ % (conf_name, conf_name, ' '.join(pairs))
+        """ % (conf_name, conf_name, ' '.join(pairs), conf_name,
+               ' '.join(legacy_pairs))
     elif lang == 'python':
         pairs = ['\"%s\": %s' % (name, name) for name in _conf_pack]
         s += """
@@ -276,10 +283,14 @@ def unpack_conf(lang, conf_name):
     s = ''
     if lang == 'sh':
         # TODO: implement proper unpack here? not needed due to global args
-        # pairs = ['    %s=${%s["%s"]}' %
-        #         (name, conf_name, name) for name in _conf_pack]
-        pairs = ['    %s="${%s}"' % (name, name) for name in _conf_pack]
+        pairs = ['    # %s=${%s["%s"]}' %
+                 (name, conf_name, name) for name in _conf_pack]
+        legacy_pairs = ['    %s="${%s}"' % (name, name) for name in _conf_pack]
+        s += """
+    # TODO: the user conf pack/unpack is unfinished and unused here.
+"""
         s += "\n".join(pairs) + "\n"
+        s += "\n".join(legacy_pairs) + "\n"
     elif lang == 'python':
         pairs = ['    %s = %s.get("%s", "")' % (name, conf_name, name)
                  for name in _conf_pack]
