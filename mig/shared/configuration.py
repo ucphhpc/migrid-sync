@@ -336,6 +336,7 @@ class Configuration:
     workflows_vgrid_patterns_home = ''
     workflows_vgrid_recipes_home = ''
     workflows_vgrid_history_home = ''
+    site_autolaunch_page = ''
     site_landing_page = ''
     site_skin = ''
     site_collaboration_links = ''
@@ -1449,10 +1450,14 @@ location.""" % self.config_file
             self.site_assets = config.get('SITE', 'assets')
         else:
             self.site_assets = "/assets"
+        if config.has_option('SITE', 'autolaunch_page'):
+            self.site_autolaunch_page = config.get('SITE', 'autolaunch_page')
+        else:
+            self.site_autolaunch_page = '/cgi-bin/autolaunch.py'
         if config.has_option('SITE', 'landing_page'):
             self.site_landing_page = config.get('SITE', 'landing_page')
         else:
-            self.site_landing_page = '/cgi-bin/dashboard.py'
+            self.site_landing_page = '/cgi-bin/home.py'
         if config.has_option('SITE', 'skin'):
             self.site_skin = config.get('SITE', 'skin')
         else:

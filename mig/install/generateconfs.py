@@ -101,6 +101,7 @@ if '__main__' == __name__:
         'listen_clause',
         'serveralias_clause',
         'distro',
+        'autolaunch_page',
         'landing_page',
         'skin',
         'short_title',
