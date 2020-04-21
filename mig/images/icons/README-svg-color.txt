@@ -19,3 +19,13 @@ style type="text/css">
 
 Please have a look e.g. at images/icons/lightbulb_idea.svg for an extensive
 example. 
+
+It may also be convenient to make simple content edits like we did for the 
+2fa-code.svg logo based on 
+https://www.svgrepo.com/svg/100647/pin-code
+with the online editor on
+https://unpkg.com/svgedit/editor/svg-editor.html
+Please note that it may appear to hang in 'loading' when you Open SVG there, but
+it helps to click outside the dialog.
+Once done editing the corresponding png icons for UI V2 can be made by importing
+the SVG in gimp entering the desired dimensions and then exporting as PNG.

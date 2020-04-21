@@ -1544,7 +1544,7 @@ def twofactor_token_html(configuration):
 <div id="twofactorstatus"><!-- filled by script --></div>
 <div id="twofactorbox" class="staticpage">
 <img class="sitelogo" src="%(skin_base)s/logo-left.png"><br/>
-<img class="authlogo" src="https://lh3.googleusercontent.com/HPc5gptPzRw3wFhJE1ZCnTqlvEvuVFBAsV9etfouOhdRbkp-zNtYTzKUmUVPERSZ_lAL=w300"><br/>
+<div id="twofactorlogo" class="twofactor authlogo"></div>
     <!-- IMPORTANT: this form should not have an explicit action! -->
     <form id="otp_token_form" method="POST">
         <input class="tokeninput" type="text" id="token" name="token"
