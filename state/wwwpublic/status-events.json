@@ -1,6 +1,27 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2020-04-20T22:30:00", 
+    "systems": [
+      "ERDA"
+    ], 
+    "announce_start": "2020-04-20T22:30:00", 
+    "title": {
+      "EN": "ERDA Web Pages not Responding", 
+      "DK": "ERDA websiderne svarer ikke"
+    }, 
+    "services": [
+      "Web"
+    ], 
+    "work_end": "2020-04-21T07:24:00", 
+    "description": {
+      "EN": "Late last night the ERDA pages requiring login stopped responding and just gave a time out. We've gotten them back online with a web service restart and are looking further into the cause.", 
+      "DK": "Sent i aftes holdt de ERDA websider som kræver login op med at svare, og man fik bare en time out melding. Vi har fået liv i dem igen med en web service genstart og undersøger sagen nærmere."
+    }, 
+    "announce_end": "2020-04-21T10:00:00"
+  },
+  {
+    "status": "AUTO", 
     "work_start": "2020-04-22T16:30:00", 
     "systems": [
       "SIF"
