@@ -80,8 +80,7 @@ def main(client_id, user_arguments_dict):
     title_entry['script']['advanced'] += add_import
     title_entry['script']['init'] += add_init
     title_entry['script']['ready'] += add_ready
-    # NOTE: use wide version to allow inline status messages in V2
-    title_entry['script']['body'] = "class='staticpage wide'"
+    title_entry['script']['body'] = "class='staticpage'"
 #    output_objects.append({'object_type': 'html_form',
 #                           'text': '''
 # <div id="contextual_help">
@@ -90,7 +89,7 @@ def main(client_id, user_arguments_dict):
 # </div>
 # '''})
     header_entry = {'object_type': 'header', 'text':
-                    'Welcome to the %s certificate account request page' %
+                    '%s account request - with certificate login' %
                     configuration.short_title}
     output_objects.append(header_entry)
 
@@ -162,13 +161,13 @@ jobs and privileges.</p>''' %
 
     fill_helpers.update(user_fields)
     html = """Please enter
-your information in at least the <span class=mandatory>mandatory</span> fields
-below and press the Send button to submit the certificate account request to
+your information in at least the <span class=highlight_required>mandatory</span> fields
+below and press the Send button to submit the account request to
 the %(site)s administrators.
 
-<p class='criticaltext highlight_message'>
-IMPORTANT: Please help us verify your identity by providing Organization and
-Email data that we can easily validate!
+<p class='personal leftpad highlight_message'>
+IMPORTANT: we need to verify your identity, so please use an Email address
+clearly affiliated with your Organization!
 </p>
 
 %(site_signup_hint)s

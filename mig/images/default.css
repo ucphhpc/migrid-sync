@@ -985,18 +985,27 @@ div.archive pre {
 .error {
     background-image: url('/images/icons/exclamation.png');
     background-repeat: no-repeat;
- }
+    background-position: left center;
+}
 .warn {
     background-image: url('/images/icons/error.png');
     background-repeat: no-repeat;
- }
+    background-position: left center;
+}
 .info {
     background-image: url('/images/icons/information.png');
     background-repeat: no-repeat;
+    background-position: left center;
 }
 .ok {
     background-image: url('/images/icons/accept.png');
     background-repeat: no-repeat;
+    background-position: left center;
+}
+.personal {
+    background-image: url('/images/icons/personal.png');
+    background-repeat: no-repeat;
+    background-position: left center;
 }
 .tip {
     background-image: url('/images/icons/lightbulb.png');
@@ -1570,6 +1579,34 @@ div.savestatus {
 .tips-placeholder {
     height: 22px;
 }
+
+/* Mark optional and required form fields */
+form.needs-validation input, form.needs-validation select, form.needs-validation textarea {
+  border: 1px solid grey;
+  border-radius: 4px;
+  border-width: 1px;
+  border-left-width: thick;
+}
+form.needs-validation input[type=submit] {
+  border-left-width: thin;
+  padding: 2px 8px;
+}
+form.needs-validation :optional {
+    border-left-color: silver;
+}
+form.needs-validation :required {
+    border-left-color: limegreen;
+}
+form.needs-validation :valid:required {
+    border-left-color: green;
+}
+/* NOTE: text mentions mandatory field marking with this class - keep in sync 
+   with '*:required' color above */
+.highlight_required {
+    color: limegreen;
+    font-weight: bold;
+}
+
 
 /* 
 *************************************************************************

@@ -1057,6 +1057,25 @@ background: url(/images/icons/code.png) left center no-repeat;
     vertical-align: middle;
 }
 
+/* V2 Account request form */
+/* form with field grid */
+#account-request-grid .form-row {
+    display: grid;
+    grid-gap: 10px;
+    grid-template-columns: repeat(auto-fill, 32%);
+    margin: 10px 0px;
+}
+#account-request-grid .form-row.single-entry {
+    grid-template-columns: repeat(auto-fill, 98%);
+}
+#account-request-grid .form-row .single-entry .form-cell{
+    width: 98%;
+    display: block;
+}
+#account-request-grid .form-row select {
+    width: 100%;
+}
+
 /* Tips in Home page below apps */
 #tips-container {
     width: auto;

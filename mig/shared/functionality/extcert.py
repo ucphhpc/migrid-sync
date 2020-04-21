@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # extcert - External certificate account sign up backend
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -86,7 +86,7 @@ def main(client_id, user_arguments_dict):
 # </div>
 # '''})
     header_entry = {'object_type': 'header', 'text':
-                    'Welcome to the %s certificate account sign up page' %
+                    '%s account sign up - with certificate login' %
                     configuration.short_title}
     output_objects.append(header_entry)
 
@@ -134,19 +134,23 @@ instead of requesting a new one.
 <br />
 The page tries to auto load any certificate your browser provides and fill in
 the fields accordingly, but in case it can't guess all
-<span class=mandatory>mandatory</span> fields, you still need to fill in
+<span class=highlight_required>mandatory</span> fields, you still need to fill in
 those.<br />
 Please enter any missing information below and press the Send button to submit
 the external certificate sign up request to the %(site)s administrators.
-<p class='criticaltext highlight_message'>
-IMPORTANT: Please help us verify your identity by providing Organization and
-Email data that we can easily validate!
+<p class='personal leftpad highlight_message'>
+IMPORTANT: we need to verify your identity, so please use an Email address
+clearly affiliated with your Organization!
 </p>
+
 %(site_signup_hint)s
+
 <hr />
 """
 
-    html += account_request_template(configuration, password=False)
+    user_country = new_user.get('country', '')
+    html += account_request_template(configuration, password=False,
+                                     default_country=user_country)
 
     # TODO : remove this legacy version?
     html += """

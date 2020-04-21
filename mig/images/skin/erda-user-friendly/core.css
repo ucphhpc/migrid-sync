@@ -41,9 +41,10 @@ body.staticpage {
   border-right: 1px solid #CCC;
   border-left: 1px solid #CCC;
 }
-/* Wider page for reqoid etc. still allowing e.g. brief inline warnings */
-body.staticpage.wide {
-  width: 1284px;
+/* Hide systemwarn announcement 'hack' for reqoid and similar narrow pages
+   where it almost always leads to overflow. */
+body.staticpage #logotitle span.systemwarn {
+    display: none;
 }
 
 .home-nav-logo {

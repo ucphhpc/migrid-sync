@@ -199,15 +199,15 @@ def account_js_helpers(configuration, fields):
 def account_request_template(configuration, password=True, default_country=''):
     """A general form template used for various account requests"""
     html = """
-<div class=form_container>
+<div id='account-request-grid' class=form_container>
 
 <!-- use post here to avoid field contents in URL -->
 <form method='%(form_method)s' action='%(target_op)s.py' onSubmit='return validate_form();' class="needs-validation" novalidate>
 <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
-  <div class="form-row">
-    <div class="col-md-4 mb-3">
+<div class="form-row">
+    <div class="col-md-4 mb-3 form-cell">
       <label for="validationCustom01">Full name</label>
-      <input type="text" class="form-control" id="full_name_field" placeholder="Full name" type=text name=cert_name value='%(full_name)s' required pattern='[^ ]+([ ][^ ]+)+' required>
+      <input type="text" class="form-control" id="full_name_field" placeholder="Full name" type=text name=cert_name value='%(full_name)s' required pattern='[^ ]+([ ][^ ]+)+' title='Your full name, i.e. two or more names separated by space' />
       <div class="valid-feedback">
         Looks good!
       </div>
@@ -215,9 +215,9 @@ def account_request_template(configuration, password=True, default_country=''):
         Please enter your full name.
       </div>
     </div>
-    <div class="col-md-4 mb-3">
+    <div class="col-md-4 mb-3 form-cell">
       <label for="validationCustom02">Email address</label>
-      <input class="form-control" id="email_field" type=email name=email value='%(email)s' placeholder="username@organization.org or username@company.com" title="Email address should match your organization" required>
+      <input class="form-control" id="email_field" type=email name=email value='%(email)s' placeholder="username@organization.org" required title="Email address should match your organization - and you need to read mail sent there" />
       <div class="valid-feedback">
         Looks good!
       </div>
@@ -225,9 +225,9 @@ def account_request_template(configuration, password=True, default_country=''):
         Please enter your email address matching your organization/company.
       </div>
     </div>
-    <div class="col-md-4 mb-3">
+    <div class="col-md-4 mb-3 form-cell">
       <label for="validationCustom01">Organization</label>
-      <input class="form-control" id="organization_field" type=text name=org value='%(organization)s' required pattern='[^ ]+([ ][^ ]+)*' placeholder="Organization or company" required>
+      <input class="form-control" id="organization_field" type=text name=org value='%(organization)s' required pattern='[^ ]+([ ][^ ]+)*' placeholder="Organization or company" title='Name of your organization or company: one or more words or abbreviations separated by space' />
       <div class="valid-feedback">
         Looks good!
       </div>
@@ -237,14 +237,14 @@ def account_request_template(configuration, password=True, default_country=''):
     </div>
   </div>
   <div class="form-row">
-    <div class="col-md-4 mb-3">
+    <div class="col-md-4 mb-3 form-cell">
       <label for="validationCustom03">Country</label>
     """
     # Generate drop-down of countries and codes if available, else simple input
     sorted_countries = list_country_codes(configuration)
     if sorted_countries:
         html += """
-        <select class="form-control themed-select html-select" id="country_field" name=country minlength=2 maxlength=2 value='%(country)s' required pattern='[A-Z]{2}' placeholder="Two letter country-code">
+        <select class="form-control themed-select html-select" id="country_field" name=country minlength=2 maxlength=2 value='%(country)s' required pattern='[A-Z]{2}' placeholder="Two letter country-code" title='Please select your country from the list'>
 """
         # TODO: detect country based on browser info?
         # Start out without a country selection
@@ -259,7 +259,7 @@ def account_request_template(configuration, password=True, default_country=''):
     """
     else:
         html += """
-        <input class="form-control" id="country_field" type=text name=country value='%(country)s' required pattern='[A-Z]{2}' minlength=2 maxlength=2 placeholder="Two letter country-code" >
+        <input class="form-control" id="country_field" type=text name=country value='%(country)s' required pattern='[A-Z]{2}' minlength=2 maxlength=2 placeholder="Two letter country-code" title='The two capital letters used to abbreviate your country' />
         """
 
     html += """
@@ -267,11 +267,11 @@ def account_request_template(configuration, password=True, default_country=''):
         Looks good!
       </div>
       <div class="invalid-feedback">
-        Please provide your two letter country-code in line with
+        Please select your country or provide your two letter country-code in line with
         https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2.
       </div>
     </div>
-    <div class="col-md-4 mb-3">
+    <div class="col-md-4 mb-3 form-cell">
       <label for="validationCustom04">Optional state code</label>
       <input class="form-control" id="state_field" type=text name=state value='%(state)s' pattern='([A-Z]{2})?' maxlength=2 placeholder="NA" title="Mainly for U.S. users - please just leave empty if in doubt" >
     </div>
@@ -281,9 +281,9 @@ def account_request_template(configuration, password=True, default_country=''):
     if password:
         html += """  
   <div class="form-row">
-    <div class="col-md-4 mb-3">
+    <div class="col-md-4 mb-3 form-cell">
       <label for="validationCustom01">Password</label>
-      <input type="password" class="form-control" id="password_field" type=password name=password minlength=%(password_min_len)d maxlength=%(password_max_len)d value='%(password)s' required pattern='.{%(password_min_len)d,%(password_max_len)d}' placeholder="Your password" required>
+      <input type="password" class="form-control" id="password_field" type=password name=password minlength=%(password_min_len)d maxlength=%(password_max_len)d value='%(password)s' required pattern='.{%(password_min_len)d,%(password_max_len)d}' placeholder="Your password" title='Password of your choice - site policies about password strength apply and will give you feedback below if refused' />
       <div class="valid-feedback">
         Looks good!
       </div>
@@ -292,9 +292,9 @@ def account_request_template(configuration, password=True, default_country=''):
         I.e. %(password_min_len)d to %(password_max_len)d characters from at least %(password_min_classes)d of the 4 different character classes: lowercase, uppercase, digits, other.
       </div>
     </div>
-    <div class="col-md-4 mb-3">
+    <div class="col-md-4 mb-3 form-cell">
       <label for="validationCustom03">Verify password</label>
-      <input type="password" class="form-control" id="verifypassword_field" type=password name=verifypassword minlength=%(password_min_len)d maxlength=%(password_max_len)d value='%(verifypassword)s' required pattern='.{%(password_min_len)d,%(password_max_len)d}' placeholder="Repeat password" required>
+      <input type="password" class="form-control" id="verifypassword_field" type=password name=verifypassword minlength=%(password_min_len)d maxlength=%(password_max_len)d value='%(verifypassword)s' required pattern='.{%(password_min_len)d,%(password_max_len)d}' placeholder="Repeat password" title='Repeat your chosen password to rule out most simple typing errors' />
       <div class="valid-feedback">
         Looks good!
       </div>
@@ -306,8 +306,8 @@ def account_request_template(configuration, password=True, default_country=''):
         """
 
     html += """
-  <div class="form-row">
-    <div class="col-md-12 mb-3">
+  <div class="form-row single-entry">
+    <div class="col-md-12 mb-3 form-cell">
       <label for="validationCustom03">Optional comment or reason why you should be granted a %(site)s account:</label>
       <textarea rows=4 name=comment title='A free-form comment to justify your account needs' placeholder="Typically a note about which collaboration, project or course you need the account for and the name and email of your affiliated contact" ></textarea>
     </div>
