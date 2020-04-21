@@ -702,7 +702,7 @@ table.people td {
 }
 
 /* PAGE - Twofactor */
-#twofactorbox {
+.page-content #twofactorbox {
     /* NOTE: bootstrap shrinks box and we use bigger font here */
     height: 320px;
     width: 300px;
