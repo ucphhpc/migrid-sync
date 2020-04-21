@@ -13,12 +13,12 @@
     "services": [
       "Web"
     ], 
-    "work_end": "2020-04-21T07:24:00", 
+    "work_end": "2020-04-21T20:50:00", 
     "description": {
-      "EN": "Late last night the ERDA pages requiring login stopped responding and just gave a time out. We've gotten them back online with a web service restart and are looking further into the cause.", 
-      "DK": "Sent i aftes holdt de ERDA websider som kræver login op med at svare, og man fik bare en time out melding. Vi har fået liv i dem igen med en web service genstart og undersøger sagen nærmere."
+      "EN": "Late last night the ERDA pages requiring login stopped responding and just gave a time out. We've gotten them back online with a web service restart and are looking further into the cause. We had another case tonight and it appears it was caused by a misconfiguration in our OpenID setup. Probably introduced during the last ERDA upgrade and reboot. It was fixed now so the service should be stable again from now on.", 
+      "DK": "Sent i aftes holdt de ERDA websider som kræver login op med at svare, og man fik bare en time out melding. Vi har fået liv i dem igen med en web service genstart og undersøger sagen nærmere. Til aften oplevede vi problemet igen og kunne se at det skyldtes en konfigurationsfejl i vores OpenID-opsætning - sikkert opstået ifm sidste opgradering og genstart af ERDA. Den er rettet, så servicen skulle køre stabilt igen fra nu af."
     }, 
-    "announce_end": "2020-04-21T10:00:00"
+    "announce_end": "2020-04-22T10:00:00"
   },
   {
     "status": "AUTO", 
