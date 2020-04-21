@@ -128,6 +128,10 @@ menu_items['vmconnect'] = {'class': 'vmconnect fas fa-plug', 'url': 'vmconnect.p
 menu_items['logout'] = {'class': 'logout fas fa-sign-out-alt',
                         'url': 'logout.py', 'title': 'Logout',
                         'legacy_only': True, 'hover': 'Logout'}
+# GDP-only action to close active project login
+menu_items['close'] = {'class': 'close fas fa-cross', 'url': 'gdpman.py?action=close_project',
+                       'title': 'Close Project',
+                       'legacy_only': True, 'hover': 'Close Project'}
 
 # Define all possible VGrid page columns
 vgrid_items = {}

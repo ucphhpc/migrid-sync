@@ -38,7 +38,7 @@ from shared.functional import validate_input_and_cert
 from shared.gdp import ensure_user, get_projects, get_users, \
     get_active_project_client_id, project_accept_user, project_create, \
     project_invite_user, project_login, project_logout, project_remove_user, \
-    validate_user, get_project_info
+    validate_user, get_project_info, get_project_from_client_id
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.html import twofactor_wizard_html, twofactor_wizard_js, \
     twofactor_token_html
@@ -1306,7 +1306,7 @@ Please contact the site admins %s if you think it should be enabled.
                                'text': 'Missing user credentials'})
         return (output_objects, returnvalues.ERROR)
 
-    if action and not safe_handler(
+    if action not in ('', 'logout', 'close_project') and not safe_handler(
         configuration,
         'post',
         op_name,
@@ -1406,9 +1406,8 @@ Please contact the site admins %s if you think it should be enabled.
                                                  return_query_dict)
         elif active_project_client_id:
             dest_op_name = 'fileman'
-            redirect_url = environ.get('REQUEST_URI',
-                                       '').split('?')[0].replace(op_name,
-                                                                 dest_op_name)
+            redirect_url = environ.get('REQUEST_URI', '').split('?')[
+                0].replace(op_name, dest_op_name)
         if redirect_url:
             html = """
             <a id='redirect' href='%s'></a>
@@ -1483,6 +1482,21 @@ Please contact the site admins %s if you think it should be enabled.
             else:
                 action_msg = "ERROR: Login to project: '%s' failed" \
                     % base_vgrid_name
+
+        elif action == 'close_project':
+            active_project_client_id = get_active_project_client_id(
+                configuration, client_id, 'https')
+            if active_project_client_id:
+                project_name = get_project_from_client_id(
+                    configuration, active_project_client_id)
+                status = project_logout(configuration,
+                                        'https',
+                                        client_addr,
+                                        client_id)
+                if status:
+                    action_msg = "OK: Closed project: %s" % project_name
+                else:
+                    action_msg = "ERROR: Closing project: %s" % project_name
         elif action == 'accept_user':
 
             # Project accept user invitation
