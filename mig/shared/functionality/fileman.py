@@ -787,7 +787,7 @@ def main(client_id, user_arguments_dict):
     legacy_buttons = False
     if legacy_user_interface(configuration, user_settings):
         legacy_buttons = True
-        logger.info("enable legacy buttons")
+        logger.debug("enable legacy buttons")
 
     if configuration.site_enable_jobs and \
             'submitjob' in extract_menu(configuration, title_entry):

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # oiddiscover - discover valid openid relying party endpoints for this realm
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -57,7 +57,7 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False, op_menu=False)
     logger = configuration.logger
-    logger.info('oiddiscover: %s' % user_arguments_dict)
+    logger.debug('oiddiscover: %s' % user_arguments_dict)
     output_objects.append({'object_type': 'header', 'text':
                            'OpenID Discovery for %s' %
                            configuration.short_title})

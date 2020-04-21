@@ -220,7 +220,7 @@ def invisible_path(path, allow_vgrid_scripts=False):
     return False
 
 
-def requested_page(environ=None, fallback='dashboard.py'):
+def requested_page(environ=None, fallback='home.py'):
     """Lookup requested page from environ or os.environ if not provided.
     Return fallback if no page was found in environ.
     """

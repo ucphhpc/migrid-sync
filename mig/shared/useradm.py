@@ -1195,7 +1195,7 @@ def get_openid_user_dn(configuration, login_url,
     yet signed up.
     """
     _logger = configuration.logger
-    _logger.info('extracting openid dn from %s' % login_url)
+    _logger.debug('extracting openid dn from %s' % login_url)
     found_openid_prefix = False
     for oid_provider in configuration.user_openid_providers:
         oid_prefix = oid_provider.rstrip('/') + '/'
@@ -1206,7 +1206,7 @@ def get_openid_user_dn(configuration, login_url,
         _logger.error("openid login from invalid provider: %s" % login_url)
         return ''
     raw_login = login_url.replace(found_openid_prefix, '')
-    _logger.info("trying openid raw login: %s" % raw_login)
+    _logger.debug("trying openid raw login: %s" % raw_login)
     # Lookup native user_home from openid user symlink
     link_path = os.path.join(configuration.user_home, raw_login)
     if os.path.islink(link_path):
