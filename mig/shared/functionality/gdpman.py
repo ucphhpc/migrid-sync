@@ -171,6 +171,7 @@ def html_tmpl(
 
     fill_entries = {'csrf_field': csrf_field,
                     'csrf_token': csrf_token,
+                    'short_title': configuration.short_title,
                     }
 
     twofactor_enabled = False
@@ -260,7 +261,7 @@ def html_tmpl(
         <div id='project-tabs'>
         <ul class='fillwidth padspace'>"""
     if accepted_projects:
-        html += """<li><a href='#access_project_tab'>Access Project</a></li>"""
+        html += """<li><a href='#access_project_tab'>Open Project</a></li>"""
         tab_count += 1
     if info_projects:
         html += """<li><a href='#project_info_tab'>Project Info</a></li>"""
@@ -296,6 +297,8 @@ def html_tmpl(
         if action == 'twofactor_auth':
             preselected_tab = tab_count
         tab_count += 1
+    html += """<li><a href='#logout_tab'>Logout</a></li>"""
+    tab_count += 1
 
     html += """</ul>"""
     # Insert category map helper for all known projects
@@ -338,7 +341,7 @@ def html_tmpl(
         <table class='gm_projects_table' style='border-spacing=0;'>
         <thead>
             <tr>
-                <th>Access project:</th>
+                <th>Open project:</th>
             </tr>
         </thead>
         <tbody>
@@ -369,8 +372,7 @@ def html_tmpl(
         <tbody>
             <tr><td>
                 <!-- NOTE: must have href for correct cursor on mouse-over -->
-                <a class='ui-button' id='access_project_button' href='#' onclick='submitform(\"access_project\"); return false;'>Login</a>
-                <a class='ui-button' id='logout_button' href='#' onclick='submitform(\"logout\"); return false;'>Logout</a>
+                <a class='ui-button' id='access_project_button' href='#' onclick='submitform(\"access_project\"); return false;'>Open</a>
             </td></tr>
         </tbody>
         </table>
@@ -420,7 +422,6 @@ def html_tmpl(
             <tr><td>
                 <!-- NOTE: must have href for correct cursor on mouse-over -->
                 <a class='ui-button' id='project_info_button' href='#' onclick='showProjectInfo(); return false;'>Info</a>
-                <a class='ui-button' id='logout_button' href='#' onclick='submitform(\"logout\"); return false;'>Logout</a>
             </td></tr>
         </tbody>
         </table>
@@ -475,7 +476,6 @@ def html_tmpl(
             <tr><td>
                 <!-- NOTE: must have href for correct cursor on mouse-over -->
                 <a class='ui-button' id='accept_user_button' href='#' onclick='submitform(\"accept_user\"); return false;'>Accept</a>
-                <a class='ui-button' id='logout_button' href='#' onclick='submitform(\"logout\"); return false;'>Logout</a>
             </td></tr>
         </tbody>
         </table>
@@ -538,7 +538,6 @@ def html_tmpl(
             <tr><td>
                 <!-- NOTE: must have href for correct cursor on mouse-over -->
                 <a class='ui-button' id='invite_user_button' href='#' onclick='submitform(\"invite_user\"); return false;'>Invite</a>
-                <a class='ui-button' id='logout_button' href='#' onclick='submitform(\"logout\"); return false;'>Logout</a>
             </td></tr>
         </tbody>
         </table>
@@ -605,7 +604,6 @@ def html_tmpl(
             <tr><td>
                 <!-- NOTE: must have href for correct cursor on mouse-over -->
                 <a class='ui-button' id='remove_user_button' href='#' onclick='submitform(\"remove_user\"); return false;'>Remove</a>
-                <a class='ui-button' id='logout_button' href='#' onclick='submitform(\"logout\"); return false;'>Logout</a>
             </td></tr>
         </tbody>
         </table>
@@ -740,7 +738,6 @@ def html_tmpl(
             <tr><td>
                 <!-- NOTE: must have href for correct cursor on mouse-over -->
                 <a class='ui-button' id='create_project_button' href='#' onclick='submitform(\"create_project\"); return false;'>Create</a>
-                <a class='ui-button' id='logout_button' href='#' onclick='submitform(\"logout\"); return false;'>Logout</a>
             </td></tr>
         </tbody>
         </table>
@@ -774,7 +771,6 @@ def html_tmpl(
             </td></tr>
             <tr><td>
                 <!-- NOTE: must have href for correct cursor on mouse-over -->
-                <a class='ui-button' id='logout_button' href='#' onclick='submitform(\"logout\"); return false;'>Logout</a>
             </td></tr>
         </tbody>
         </table>
@@ -833,70 +829,58 @@ def html_tmpl(
         <a class='ui-button' id='enable2fa_button' href='#' onclick='submitform(\"enable2fa\"); return false;'>Start Using %(site)s</a>
 </td></tr>
 """
-
         html += """
-        <tr><td>
-                <a class='ui-button' id='logout_button' href='#' onclick='submitform(\"logout\"); return false;'>Logout</a>
-            </td></tr>
+<tr><td>
+</td></tr>
 </tbody>
 </table>
 </div>
 """
-
     if configuration.site_enable_twofactor and \
         (current_twofactor_dict.get("MIG_OID_TWOFACTOR", False) or
          current_twofactor_dict.get("EXT_OID_TWOFACTOR", False)):
         html += """<script>
     setOTPProgress(['otp_intro', 'otp_install', 'otp_import', 'otp_verify',
                     'otp_ready']);
-</script>"""
-
+</script>
+    <div id='logout_tab'>
+    <table class='gm_projects_table' style='border-spacing=0;'>
+    <thead>
+        <tr>
+            <th>Logout:</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr><td>
+            Are you sure you want to log out of %(short_title)s ?
+        </tr></td>
+    </tbody>
+    <table class='gm_projects_table' style='border-spacing=0;'>
+        <thead>
+            <tr>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>
+                <!-- NOTE: must have href for correct cursor on mouse-over -->
+                <a class='ui-button' id='logout_button' href='#' onclick='submitform(\"logout\"); return false;'>Yes</a>
+            </td></tr>
+        </tbody>
+        </table>
+    </table>
+    </div>
+<!- Tabs and form close tags ->
+</div>    
+</form>
+"""
     fill_helpers.update({
         'client_id': client_id,
     })
 
     fill_entries.update(fill_helpers)
-
-    html += """
-</div>"""
-
-    # Tabs and form close tags
-
-    html += """
-</form>
-"""
     html = html % fill_entries
 
-    return html
-
-
-def html_logout_tmpl(configuration, csrf_token):
-    """HTML logout template for GDP manager"""
-
-    fill_entries = {'csrf_field': csrf_field,
-                    'csrf_token': csrf_token,
-                    }
-
-    html = \
-        """
-    <form id='gm_logout_form' action='gdpman.py' method='post'>
-    <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
-    <input type='hidden' name='action' value='' />
-    <table class='gm_projects_table' style='border-spacing=0;'>
-    <thead>
-        <tr>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr><td>
-            <!-- NOTE: must have href for correct cursor on mouse-over -->
-            <a class='genericbutton' id='logout_button' href='#' onclick='submitform(\"logout\"); return false;'>Logout</a>
-        </td></tr>
-    </tbody>
-    </table>
-    </form>""" \
-        % fill_entries
     return html
 
 
@@ -1305,8 +1289,8 @@ Please contact the site admins %s if you think it should be enabled.
         output_objects.append({'object_type': 'error_text',
                                'text': 'Missing user credentials'})
         return (output_objects, returnvalues.ERROR)
-
-    if action not in ('', 'logout', 'close_project') and not safe_handler(
+    # TODO: Enable csrf in nav menu on 'close_project'
+    if action not in ('', 'close_project') and not safe_handler(
         configuration,
         'post',
         op_name,
@@ -1446,7 +1430,6 @@ Please contact the site admins %s if you think it should be enabled.
             </tbody>
             </table>""" \
             % status_msg
-        html += html_logout_tmpl(configuration, csrf_token)
         output_objects.append({'object_type': 'html_form',
                                'text': html})
     else:
@@ -1690,6 +1673,20 @@ Please contact the site admins %s if you think it should be enabled.
                                        skip_users=[client_id],
                                        project_state='accepted',
                                    )})
+        elif action == 'project_logout':
+            active_project_client_id = get_active_project_client_id(
+                configuration, client_id, 'https')
+            if active_project_client_id:
+                project_name = get_project_from_client_id(
+                    configuration, active_project_client_id)
+                status = project_logout(configuration,
+                                        'https',
+                                        client_addr,
+                                        client_id)
+                if status:
+                    action_msg = "OK: Closed project: %s" % project_name
+                else:
+                    action_msg = "ERROR: Closing project: %s" % project_name
 
         elif action:
             action_msg = 'ERROR: Unknown action: %s' % action
@@ -1700,7 +1697,6 @@ Please contact the site admins %s if you think it should be enabled.
         if output_format != 'json':
             html = html_tmpl(configuration, action, client_id, csrf_token,
                              action_msg)
-            # html += html_logout_tmpl(configuration, csrf_token)
             output_objects.append({'object_type': 'html_form',
                                    'text': html})
 
