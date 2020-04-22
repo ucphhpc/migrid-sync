@@ -46,7 +46,7 @@ from shared.settings import load_twofactor, parse_and_save_twofactor
 from shared.twofactorkeywords import get_keywords_dict as twofactor_keywords
 
 
-def enable2fa(configuration, user_id, verbose, force):
+def enable2fa(configuration, user_id, verbose, force=False):
     """Check if twofactor is enabled and if not enable for all
     services"""
     if verbose:
@@ -208,7 +208,7 @@ if '__main__' == __name__:
             print "Failed to remove two factor setup"
             sys.exit(1)
 
-    if not enable2fa(configuration, user_id, verbose, force=enable_all):
+    if not enable2fa(configuration, user_id, verbose, enable_all):
         print 'Error: Failed to enable two-factor authentication'
         sys.exit(1)
 
