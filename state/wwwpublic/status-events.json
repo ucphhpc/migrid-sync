@@ -36,8 +36,8 @@
     ], 
     "work_end": "2020-04-22T23:00:00", 
     "description": {
-      "EN": "We have a number of pending upgrades of both system and SIF software which will require reboot and service restarts.", 
-      "DK": "Vi har en række udestående opdateringer af både system og SIF software. Disse kræver en reboot og genstart af services."
+      "EN": "We have a number of pending upgrades of both system and SIF software which will require reboot and service restarts. The work commenced on April 22th at 16:30 and we finished the updates and restarts at 20:00. Everything should be back to normal.", 
+      "DK": "Vi har en række udestående opdateringer af både system og SIF software. Disse kræver en reboot og genstart af services. Arbejdet begyndte den 22. april kl 16.30 og vi blev færdige med opgradering og genstarter kl 20.00. Alt skulle være tilbage i normal drift."
     }, 
     "announce_end": "2020-04-22T23:00:00"
   },
