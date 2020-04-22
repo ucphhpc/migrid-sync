@@ -570,28 +570,6 @@ def themed_styles(configuration, base=[], advanced=[], skin=[], user_settings={}
     return styles
 
 
-# TODO: eliminate this legacy wrapper now handled in init
-def jquery_ui_js(configuration, js_import, js_init, js_ready):
-    """Fill standard javascript template for JQuery UI pages. The three args
-    add custom extra javascript in the usual load, init and ready phase used
-    with jquery pages.
-    """
-    return '''
-%(js_import)s
-
-<script type="text/javascript" >
-
-    %(js_init)s
-
-    $(document).ready(function() {
-        //console.log("document ready handler");
-        %(js_ready)s
-    });
-
-</script>
-''' % {'js_import': js_import, 'js_init': js_init, 'js_ready': js_ready}
-
-
 def themed_scripts(configuration, base=[], advanced=[], skin=[], init=[],
                    ready=[], user_settings={}, logged_in=True):
     """Returns a dictionary of basic script snippets for themed JQuery UI

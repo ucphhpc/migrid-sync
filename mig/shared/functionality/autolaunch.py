@@ -32,7 +32,7 @@
 import shared.returnvalues as returnvalues
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables
-from shared.html import themed_styles, menu_items
+from shared.html import themed_styles, themed_scripts, menu_items
 from shared.settings import load_settings
 
 
@@ -47,8 +47,8 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False,
-                                  op_menu=client_id)
+        initialize_main_variables(
+        client_id, op_header=False, op_title=False, op_menu=client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -64,9 +64,10 @@ def main(client_id, user_arguments_dict):
     # IMPORTANT: no title in init above so we MUST call it immediately here
     #            or basic styling will break e.g. on crashes.
     styles = themed_styles(configuration)
+    scripts = themed_scripts(configuration, logged_in=False)
     output_objects.append(
         {'object_type': 'title', 'text': 'Auto Launch',
-         'skipmenu': True, 'style': styles})
+         'skipmenu': True, 'style': styles, 'script': scripts})
 
     user_settings = load_settings(client_id, configuration)
     # NOTE: loaded settings may be the boolean False rather than dict here

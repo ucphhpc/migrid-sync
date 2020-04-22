@@ -46,7 +46,7 @@ from shared.auth import twofactor_available, load_twofactor_key, \
 from shared.defaults import twofactor_cookie_ttl
 from shared.functional import validate_input
 from shared.init import initialize_main_variables
-from shared.html import twofactor_token_html, themed_styles
+from shared.html import twofactor_token_html, themed_styles, themed_scripts
 from shared.settings import load_twofactor
 from shared.twofactorkeywords import get_keywords_dict as twofactor_defaults
 
@@ -104,9 +104,10 @@ def main(client_id, user_arguments_dict, environ=None):
     # IMPORTANT: no title in init above so we MUST call it immediately here
     #            or basic styling will break on e.g. the check token result.
     styles = themed_styles(configuration)
+    scripts = themed_scripts(configuration, logged_in=False)
     output_objects.append(
         {'object_type': 'title', 'text': '2-Factor Authentication',
-         'skipmenu': True, 'style': styles})
+         'skipmenu': True, 'style': styles, 'script': scripts})
 
     if not configuration.site_enable_twofactor:
         output_objects.append({'object_type': 'error_text', 'text':
