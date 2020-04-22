@@ -1673,21 +1673,6 @@ Please contact the site admins %s if you think it should be enabled.
                                        skip_users=[client_id],
                                        project_state='accepted',
                                    )})
-        elif action == 'project_logout':
-            active_project_client_id = get_active_project_client_id(
-                configuration, client_id, 'https')
-            if active_project_client_id:
-                project_name = get_project_from_client_id(
-                    configuration, active_project_client_id)
-                status = project_logout(configuration,
-                                        'https',
-                                        client_addr,
-                                        client_id)
-                if status:
-                    action_msg = "OK: Closed project: %s" % project_name
-                else:
-                    action_msg = "ERROR: Closing project: %s" % project_name
-
         elif action:
             action_msg = 'ERROR: Unknown action: %s' % action
 
