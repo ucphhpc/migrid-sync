@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reset2fakey - (Re)set user 2FA key
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,15 +37,20 @@ import pyotp
 
 
 from shared.auth import reset_twofactor_key, valid_otp_window
+from shared.base import client_id_dir
+from shared.defaults import twofactor_filename, twofactor_key_name, \
+    twofactor_interval_name
 from shared.conf import get_configuration_object
+from shared.fileio import delete_file
 from shared.settings import load_twofactor, parse_and_save_twofactor
 from shared.twofactorkeywords import get_keywords_dict as twofactor_keywords
 
 
-def enable2fa(configuration, user_id, force=False):
+def enable2fa(configuration, user_id, verbose, force):
     """Check if twofactor is enabled and if not enable for all
     services"""
-
+    if verbose:
+        print "Enabling 2FA setup for %r" % user_id
     if not force:
         current_twofactor_dict = load_twofactor(user_id, configuration)
         if current_twofactor_dict:
@@ -63,15 +68,15 @@ def enable2fa(configuration, user_id, force=False):
         os.write(filehandle, topic_mrsl)
         os.close(filehandle)
     except Exception, exc:
-        msg = 'Error: Problem writing temporary topic file on server.'
+        msg = "Error: Problem writing temporary topic file on server."
         print "%s : %s" % (msg, exc)
         return False
     (parse_status, _) = parse_and_save_twofactor(tmptopicfile, user_id,
                                                  configuration)
     if parse_status:
-        print 'Enabled all two-factor services for user: %s' % user_id
+        print "Enabled all two-factor services for user: %r" % user_id
     else:
-        print 'Error parsing and saving two-factor dict'
+        print "Error parsing and saving two-factor dict"
 
     try:
         os.remove(tmptopicfile)
@@ -79,6 +84,41 @@ def enable2fa(configuration, user_id, force=False):
         pass  # probably deleted by parser!
 
     return parse_status
+
+
+def remove2fa(configuration, user_id, verbose, force=False):
+    """Removes two factor secrets and settings for client_id
+    NOTE: Active sessions remain until logout"""
+    _logger = configuration.logger
+    if verbose:
+        print "Removing 2FA setup for %r" % user_id
+    allow_missing = False
+    if force:
+        allow_missing = True
+    client_dir = client_id_dir(user_id)
+    settings_dir = os.path.join(configuration.user_settings, client_dir)
+
+    key_path = os.path.join(settings_dir, twofactor_key_name)
+    if verbose:
+        print "Removing key file: %s" % key_path
+    status = delete_file(key_path, _logger, allow_missing=allow_missing)
+    if not status and not force:
+        return status
+
+    interval_path = os.path.join(settings_dir, twofactor_interval_name)
+    if verbose:
+        print "Removing interval file: %s" % interval_path
+    status = delete_file(interval_path, _logger, allow_missing=True)
+    if not status and not force:
+        return status
+
+    twofactor_settings_path = os.path.join(settings_dir, twofactor_filename)
+    if verbose:
+        print "Removing twofactor file: %s" % twofactor_settings_path
+    status = delete_file(twofactor_settings_path, _logger,
+                         allow_missing=allow_missing)
+
+    return status
 
 
 def usage(name='reset2fakey.py'):
@@ -93,6 +133,7 @@ Where OPTIONS may be one or more of:
    -h                  Show this help
    -i CERT_DN          CERT_DN of user to edit
    -a                  Enable 2fa for all services
+   -r                  Remove 2fa for all services
    -v                  Verbose output
 """\
          % {'name': name}
@@ -109,7 +150,8 @@ if '__main__' == __name__:
     seed = None
     seed_file = None
     interval = None
-    opt_args = 'c:fhai:v'
+    remove = False
+    opt_args = 'c:fhari:v'
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], opt_args)
     except getopt.GetoptError, err:
@@ -129,6 +171,8 @@ if '__main__' == __name__:
             user_id = val
         elif opt == '-a':
             enable_all = True
+        elif opt == '-r':
+            remove = True
         elif opt == '-v':
             verbose = True
         else:
@@ -155,7 +199,16 @@ if '__main__' == __name__:
         usage()
         sys.exit(1)
 
-    if not enable2fa(configuration, user_id, force=enable_all):
+    if remove:
+        status = remove2fa(configuration, user_id, verbose, force)
+        if status:
+            print "Two factor setup succesfully removed"
+            sys.exit(0)
+        else:
+            print "Failed to remove two factor setup"
+            sys.exit(1)
+
+    if not enable2fa(configuration, user_id, verbose, force=enable_all):
         print 'Error: Failed to enable two-factor authentication'
         sys.exit(1)
 
@@ -178,7 +231,7 @@ if '__main__' == __name__:
             if not force:
                 sys.exit(1)
 
-    if len(seed) == 40:
+    if seed and len(seed) == 40:
         if verbose:
             print "Detected HEX seed, re-encoding to base32"
         try:
@@ -187,7 +240,7 @@ if '__main__' == __name__:
             print "Failed to base32 encode seed"
             if not force:
                 sys.exit(1)
-    elif len(seed) != 32:
+    elif seed and len(seed) != 32:
         print "Malformed seed, must be of length 32: %d" % len(seed)
         if not force:
             sys.exit(1)
@@ -201,19 +254,19 @@ if '__main__' == __name__:
 
     if verbose:
         if seed:
-            print 'using seed: %s' % seed
+            print "using seed: %s" % seed
         else:
-            print 'using random seed'
+            print "using random seed"
         if interval:
-            print 'using interval: %s' % interval
+            print "using interval: %s" % interval
 
     twofa_key = reset_twofactor_key(user_id, configuration,
                                     seed=seed, interval=interval)
     if verbose:
-        print 'New two factor key: %s' % twofa_key
+        print "New two factor key: %s" % twofa_key
 
     if twofa_key:
-        print 'Two factor key succesfully reset'
+        print "Two factor key succesfully reset"
         if verbose:
             current_time = datetime.datetime.now()
             totp_default = pyotp.TOTP(twofa_key)
@@ -222,7 +275,8 @@ if '__main__' == __name__:
                 totp_custom_totp = pyotp.TOTP(twofa_key, interval=interval)
 
             if valid_otp_window == 0:
-                print "default interval, code: %s" % totp_default.at(current_time, 0)
+                print "default interval, code: %s" \
+                    % totp_default.at(current_time, 0)
                 if totp_custom_totp:
                     print "interval: %d, code: %s" \
                         % (interval, totp_custom_totp.at(current_time, 0))
@@ -232,9 +286,10 @@ if '__main__' == __name__:
                         % (i, totp_default.at(current_time, i))
                     if totp_custom_totp:
                         print "interval: %d, window: %d, code: %s" \
-                            % (interval, i, totp_custom_totp.at(current_time, i))
+                            % (interval, i,
+                                totp_custom_totp.at(current_time, i))
     else:
-        print 'Failed to reset two factor key'
+        print "Failed to reset two factor key"
         sys.exit(1)
 
     sys.exit(0)
