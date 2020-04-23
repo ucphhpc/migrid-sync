@@ -465,7 +465,7 @@ table th.icon {
   background-image: url('/images/icons/door_in.png');
 }
 .navmenu ul li.close a, #legacy-ui-body .app-grid .fas.close {
-  background-image: url('/images/icons/cross.png');
+  background-image: url('/images/icons/book_previous.png');
 }
 
 #legacy-ui-body .app-grid .fas.fa-plus {

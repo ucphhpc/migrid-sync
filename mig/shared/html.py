@@ -129,9 +129,10 @@ menu_items['logout'] = {'class': 'logout fas fa-sign-out-alt',
                         'url': 'logout.py', 'title': 'Logout',
                         'legacy_only': True, 'hover': 'Logout'}
 # GDP-only action to close active project login
-menu_items['close'] = {'class': 'close fas fa-cross', 'url': 'gdpman.py?action=close_project',
-                       'title': 'Close Project',
-                       'legacy_only': True, 'hover': 'Close Project'}
+menu_items['close'] = {'class': 'close fas fa-arrow-circle-up',
+                       'url': 'gdpman.py?action=close_project',
+                       'title': 'Close', 'legacy_only': True,
+                       'hover': 'Close active project and return to project management'}
 
 # Define all possible VGrid page columns
 vgrid_items = {}
@@ -243,6 +244,13 @@ def render_menu(configuration, menu_class='navmenu',
                                           configuration.site_vgrid_label)
             spec['title'] = title
             spec['hover'] = hover
+        # Tweak tooltips to refer to project structure in GDP mode
+        if configuration.site_enable_gdp:
+            if name == 'files':
+                spec['hover'] = spec['hover'].replace('home', 'project')
+            elif name == 'setup':
+                spec['hover'] = spec['hover'].replace('site', 'project')
+        # Seafile URL needs to be dynamic
         if name == 'seafile':
             spec['url'] = configuration.user_seahub_url
 
