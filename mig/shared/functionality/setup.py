@@ -272,8 +272,9 @@ fingerprint <tt>%s</tt> first time you connect.''' % ' or '.join(fingerprints)
 
 <p>
 You can configure SFTP login to your %(site)s account for efficient file
-access. On Linux/UN*X it also allows transparent access through SSHFS, and some
-Linux distributions even natively integrate SFTP access in the file manager.
+access. On Windows, Mac OS X and Linux/UN*X you can install and use SSHFS for
+transparent access to your data like on a network drive, and some Linux
+distributions even natively integrate SFTP access in the file manager.
 </p>
 <h3>Login Details</h3>
 
