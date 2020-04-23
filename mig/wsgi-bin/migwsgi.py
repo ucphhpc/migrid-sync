@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migwsgi.py - Provides the entire WSGI interface
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,7 +31,7 @@ import cgi
 import time
 
 import shared.returnvalues as returnvalues
-from shared.bailout import bailout_helper, crash_helper
+from shared.bailout import bailout_helper, crash_helper, filter_output_objects
 from shared.base import requested_page, allow_script
 from shared.defaults import download_block_size
 from shared.conf import get_configuration_object
@@ -216,8 +216,9 @@ def application(environ, start_response):
     # Explicit None means error during output formatting - empty string is okay
 
     if output is None:
-        _logger.error("WSGI %s output formatting failed: %s" % (output_format,
-                                                                output_objs))
+        output_filtered = filter_output_objects(configuration, output_objs)
+        _logger.error("WSGI %s output formatting failed: %s" %
+                      (output_format, output_filtered))
         output = 'Error: output could not be correctly delivered!'
 
     content_length = len(output)
