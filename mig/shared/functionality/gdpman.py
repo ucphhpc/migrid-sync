@@ -963,7 +963,7 @@ def js_tmpl_parts(configuration, csrf_token):
         $('#remove_user_tab tr[id=user]').hide();
         if (project_name !== '') {
             ajax_gdp_project_info(renderSelectRemoveUserFromProject,
-                                     project_name);
+                                    project_name, ['accepted', 'invited']);
         }
     }
     function extractProject(project_action) {
@@ -1135,6 +1135,8 @@ def js_tmpl_parts(configuration, csrf_token):
     function showProjectInfoDialog(project_name, project_participants) {
         var html = '';
         var body = '';
+        var active_body = '';
+        var pending_body = '';
         html += '<p><b>Project participants:</b></p>';
 
 
@@ -1150,15 +1152,31 @@ def js_tmpl_parts(configuration, csrf_token):
                         'Warning: '+ project_participants.WARNING[i]+'</p>';
             }
         }
+        
         if (project_participants.OK.length > 0) {
             for (var i=0; i<project_participants.OK.length; i++) {
-                body += '<p>'+project_participants.OK[i].name+' ('+project_participants.OK[i].email+')</p>';
+                if (project_participants.OK[i].state === 'accepted') {
+                    active_body += '<p>'+project_participants.OK[i].name+' ('+project_participants.OK[i].email+')</p>';
+                }
+                else if (project_participants.OK[i].state === 'invited') {
+                    pending_body += '<p>'+project_participants.OK[i].name+' ('+project_participants.OK[i].email+')</p>';
+                }
             }
         }
-        if (body === '') {
+
+        if (body === '' && active_body === '' && pending_body === '') {
             body += '<p>No participants found</p>';
         }
+        if (active_body !== '') {
+            body += '<p><b>Active:</b></p>';
+            body += active_body;
+        }
+        if (pending_body !== '') {
+            body += '<p><b>Pending invites:</b></p>';
+            body += pending_body;
+        }
         html += body;
+
         $('#info_dialog').dialog('option', 'title', project_name);
         $('#info_dialog').html('<p>'+html+'</p>');
         $('#info_dialog').dialog('open');
@@ -1170,7 +1188,8 @@ def js_tmpl_parts(configuration, csrf_token):
         if (project_name === null) {
             return;
         }
-        ajax_gdp_project_info(showProjectInfoDialog, project_name);
+        ajax_gdp_project_info(showProjectInfoDialog, project_name,
+                            ['accepted', 'invited']);
     }
     function showHelp(title, msg) {
         $('#help_dialog').dialog('option', 'title', title);
@@ -1671,7 +1690,6 @@ Please contact the site admins %s if you think it should be enabled.
                                        configuration,
                                        base_vgrid_name,
                                        skip_users=[client_id],
-                                       project_state='accepted',
                                    )})
         elif action:
             action_msg = 'ERROR: Unknown action: %s' % action

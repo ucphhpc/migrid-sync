@@ -850,7 +850,7 @@ function ajax_workflowjobs(vgrid_name, flags) {
   });
 }
 
-function ajax_gdp_project_info(callback, project_name) {
+function ajax_gdp_project_info(callback, project_name, user_states=['accepted']) {
     console.debug("ajax_gdp_project_info: " + project_name);
     var result = { OK: [], WARNING: [], ERROR: [] };
     var target_op = "gdpman";
@@ -881,10 +881,12 @@ function ajax_gdp_project_info(callback, project_name) {
                     var user;
                     for (var j = 0; j < jsonRes[i].info.users.length; j++) {
                         user = jsonRes[i].info.users[j];
-                        console.debug("ajax_gdp_project_info[" + j + "]: "
-                            + JSON.stringify(user)
-                        );
-                        result.OK.push(user);
+                        if (user_states.indexOf(user.state) !== -1) {    
+                            console.debug("ajax_gdp_project_info[" + j + "]: "
+                                + JSON.stringify(user)
+                            );
+                            result.OK.push(user);
+                        }
                     }
                 } else if (jsonRes[i]["object_type"] === "warning") {
                     console.warning(

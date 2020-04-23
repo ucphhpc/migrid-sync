@@ -1499,8 +1499,7 @@ def get_project_info(configuration,
 
     users = []
     # TODO: extract additional project info like workzone, expiry, etc.
-    result = {'project_name': project_name, 'project_state': project_state,
-              'users': users}
+    result = {'project_name': project_name, 'users': users}
     for client_id in user_db.keys():
         if client_id in skip_users:
             continue
@@ -1516,6 +1515,7 @@ def get_project_info(configuration,
                 'short_id': __short_id_from_client_id(configuration, client_id),
                 'client_id': client_id,
                 'project_client_id': project.get('client_id', ''),
+                'state': project.get('state', '')
             })
     return result
 
