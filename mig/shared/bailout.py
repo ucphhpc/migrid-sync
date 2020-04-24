@@ -31,6 +31,30 @@ even when something essential breaks in the backend output delivery.
 
 import time
 
+# IMPORTANT: this is emergency handling so do NOT import any custom modules!
+#            Python standard library modules should be okay, but anything else
+#            should only be imported with exception handling to avoid errors.
+
+
+def bailout_title(configuration=None, title_text=""):
+    """Helper to handle very basic title output in a failsafe way"""
+    # Hide menu to avoid message truncation
+    title = {'object_type': 'title', 'text': title_text, 'skipmenu': True,
+             'style': '', 'script': ''}
+    _logger = None
+    try:
+        if not configuration:
+            from shared.conf import get_configuration_object
+            configuration = get_configuration_object()
+            _logger = configuration.logger
+        from shared.html import themed_styles, themed_scripts
+        title['style'] = themed_styles(configuration)
+        title['script'] = themed_scripts(configuration, logged_in=False)
+    except Exception, exc:
+        if _logger:
+            _logger.error("failed to provide even basic styling for title")
+    return title
+
 
 def filter_output_objects(configuration, out_obj, truncate_out_len=128):
     """Helper to remove noise from out_obj before logging. Strip style and
@@ -65,16 +89,7 @@ def bailout_helper(configuration, backend, out_obj, title_text="Runtime Error",
     _logger = configuration.logger
     if out_obj is None:
         out_obj = []
-    title = {'object_type': 'title', 'text': title_text}
-    # Try hard to display something mildly formatted
-    try:
-        from shared.html import themed_styles, themed_scripts
-        title['style'] = themed_styles(configuration)
-        title['script'] = themed_scripts(configuration, logged_in=False)
-        # Hide menu to avoid message truncation
-        title['skipmenu'] = True
-    except Exception, exc:
-        _logger.error("failed to provide even basic styling for %s" % backend)
+    title = bailout_title(configuration, title_text)
     out_obj.append(title)
     if header_text:
         out_obj.append({'object_type': 'header', 'text': header_text})

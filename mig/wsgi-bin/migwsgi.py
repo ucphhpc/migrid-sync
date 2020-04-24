@@ -147,15 +147,10 @@ def application(environ, start_response):
     from shared.httpsclient import extract_client_id
     client_id = extract_client_id(configuration, environ)
 
-    fieldstorage = cgi.FieldStorage(fp=environ['wsgi.input'],
-                                    environ=environ)
-    user_arguments_dict = fieldstorage_to_dict(fieldstorage)
-
     # default to html
 
+    default_content = 'text/html'
     output_format = 'html'
-    if user_arguments_dict.has_key('output_format'):
-        output_format = user_arguments_dict['output_format'][0]
 
     backend = "UNKNOWN"
     output_objs = []
@@ -163,6 +158,12 @@ def application(environ, start_response):
         if not configuration.site_enable_wsgi:
             _logger.error("WSGI interface is disabled in configuration")
             raise Exception("WSGI interface not enabled for this site")
+
+        fieldstorage = cgi.FieldStorage(fp=environ['wsgi.input'],
+                                        environ=environ)
+        user_arguments_dict = fieldstorage_to_dict(fieldstorage)
+        if user_arguments_dict.has_key('output_format'):
+            output_format = user_arguments_dict['output_format'][0]
 
         # Environment contains python script _somewhere_ , try in turn
         # and fall back to dashboard if all fails
@@ -191,7 +192,6 @@ def application(environ, start_response):
 
     (ret_code, ret_msg) = ret_val
 
-    default_content = 'text/html'
     if 'json' == output_format:
         default_content = 'application/json'
     elif 'html' != output_format:
