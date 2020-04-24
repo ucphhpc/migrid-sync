@@ -807,6 +807,9 @@ def html_tmpl(
         # TODO: we might want to protect QR code with repeat basic login
         #       or a simple timeout since last login (cookie age).
         html += twofactor_wizard_html(configuration)
+        # TODO: renew directly to avoid requesting again right away
+        #       right now it fails to enable2fa upon 2FA wizard save when used!
+        # check_url = '/%s/twofactor.py?action=renew' % get_xgi_bin(
         check_url = '/%s/twofactor.py?action=check' % get_xgi_bin(
             configuration)
         if twofactor_enabled:

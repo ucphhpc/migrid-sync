@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ui-theme.custom - style overrides for jquery-ui theme
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -43,6 +43,13 @@
     border-radius: 4px;
     transition: width 0.5s;
     -webkit-transition: width 0.5s;
+}
+
+/* smaller inline buttons */
+.ui-button.inline-button {
+    border-radius: 4px;
+    /* default from jquery-ui is 0.4em 1em */
+    padding: .1em 1em;
 }
 
 /* NOTE: adjust icon color when background is white.

@@ -45,6 +45,13 @@
     -webkit-transition: width 0.5s;
 }
 
+/* smaller inline buttons */
+.ui-button.inline-button {
+    border-radius: 4px;
+    /* default from jquery-ui is 0.4em 1em */
+    padding: .1em 1em;
+}
+
 /*
   Support for inverting theme for some components like FAQ and Tips accordion.
 */

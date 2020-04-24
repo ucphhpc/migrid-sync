@@ -1240,12 +1240,39 @@ def twofactor_wizard_js(configuration):
         return "<span class=\'errortext error iconleftpad\'>"+msg+"</span>";
     }
 
+    var importedOTP = false;
     var acceptedOTP = false;
     var statusMsg = "";
     var errorMsg = "";
     var okOTPDialog = {buttons: {Ok: function(){ $(this).dialog("close");}},
                        minWidth: 600, width: "auto", autoOpen: false, closeOnEscape: true,
                        modal: true};
+    var importOTPDialog = {
+        buttons: {
+            "Done importing":
+            function() {
+                $(this).dialog("close");
+                importedOTP = true;
+                var imported_id = $(this).dialog("option", "onImportedClick");
+                if (imported_id) {
+                    //console.debug("clicking "+imported_id);
+                    $("#"+imported_id).prop("disabled", false);
+                    autoClickButtonIfVisible(imported_id, 500);
+                } else {
+                    console.warning("no accept id to click");
+                }
+            },
+            "Cancel":
+            function() {
+                $(this).dialog("close");
+                return false;
+            }
+        },
+        minWidth: 600, width: "auto",
+        // Position a bit above center to keep background text visible
+        position: {"my": "center center-250"},
+        autoOpen: false, closeOnEscape: true,
+        modal: true};
     var verifyOTPDialog = {
         buttons: {
             Verify: {
@@ -1275,7 +1302,8 @@ def twofactor_wizard_js(configuration):
                             for (var i=0; i<(responseObject.length); i++) {
                                 if(responseObject[i]["object_type"] === "text") {
                                     statusMsg = responseObject[i]["text"];
-                                    if (statusMsg.indexOf("Correct token") !== -1) {
+                                    /* NOTE: we allow either action check or renew in caller */
+                                    if (statusMsg.indexOf("Correct token") !== -1 || statusMsg.indexOf("Twofactor session renewed") !== -1) {
                                         console.debug(
                                             "Verify success: "+statusMsg);
                                         acceptedOTP = true;
@@ -1292,10 +1320,19 @@ def twofactor_wizard_js(configuration):
                                 }
                             }
                             if (acceptedOTP) {
+                                console.debug("accepted - inform user and proceed");
+                                /* NOTE: we massively chain the effects here
+                                         for sequential action without extra
+                                         timers.
+                                */
                                 $("#twofactorstatus").html(renderSuccess(statusMsg));
-                                console.debug("accepted - close verify popup");
-                                setTimeout(function() {$(dialog_handle).dialog("close")},
-                                           2000);
+                                $("#twofactorstatus").fadeOut(2500, function() {
+                                    $("#twofactorstatus").html(renderWorking("verified - proceeding ...")).fadeIn(1500, function() {
+                                    $("#twofactorstatus").empty();
+                                    $(dialog_handle).dialog("close");
+                                    $("#otp_verified_button").click();
+                                    });
+                                });
                             } else {
                                 if (errorMsg === "") {
                                     errorMsg = "Failed to verify token - please retry";
@@ -1316,8 +1353,14 @@ def twofactor_wizard_js(configuration):
                             $("#token").focus();
                         }
                     }
-                    $("#otp_token_form").ajaxForm(options);
-                    $("#otp_token_form").submit();
+                    if ($("#otp_token_form")[0].checkValidity()) {
+                            $("#otp_token_form").ajaxForm(options);
+                            $("#otp_token_form").submit();
+                        } else {
+                            errorMsg = "Please enter your 6-digit authenticator token";
+                            $("#twofactorstatus").html(renderError(errorMsg));
+                            console.error(errorMsg);                        
+                        }
                 } catch(err) {
                     console.error("ajaxform error: "+ err);
                 }
@@ -1326,21 +1369,45 @@ def twofactor_wizard_js(configuration):
             },
             Cancel: function() { $(this).dialog("close");}
         },
-        //width: 480, minHeight: 640,
+        //width: 480, minHeight: 620,
+        // Position a bit above center to keep background text visible
+        position: {"my": "center center-100"},
         autoOpen: false,
         closeOnEscape: true, modal: true
     };
 
-    function checkOTPVerified() {
-        //console.debug("in checkOTPVerified: "+ acceptedOTP);
-        if (acceptedOTP) {
-            //console.debug("checkOTPVerified passed");
+    /* TODO: merge checkOTPImported and checkOTPVerified */
+    function checkOTPImported(error_dialog, error_log) {
+        //console.debug("in checkOTPImported: "+ importedOTP);
+        if (importedOTP) {
+            console.debug("checkOTPImported passed");
             return true;
         } else {
-            console.error("checkOTPVerified failed!");
-            $("#warning_dialog").dialog(okOTPDialog);
-            $("#warning_dialog").html("<span class=\'warn warningtext leftpad\'>Please use the verify link to confirm correct client setup first!</span>");
-            $("#warning_dialog").dialog("open");
+            if (error_log) {
+                console.error("checkOTPImported failed!");
+            }
+            if (error_dialog) {
+                $("#warning_dialog").dialog(okOTPDialog);
+                $("#warning_dialog").html("<span class=\'warn warningtext leftpad\'>Please use one of the import links to import our 2FA secret and confirm first!</span>");
+                $("#warning_dialog").dialog("open");
+            }
+            return false;
+        }
+    }
+    function checkOTPVerified(error_dialog, error_log) {
+        //console.debug("in checkOTPVerified: "+ acceptedOTP);
+        if (acceptedOTP) {
+            console.debug("checkOTPVerified passed");
+            return true;
+        } else {
+            if (error_log) {
+                console.error("checkOTPVerified failed!");
+            }
+            if (error_dialog) {
+                $("#warning_dialog").dialog(okOTPDialog);
+                $("#warning_dialog").html("<span class=\'warn warningtext leftpad\'>Please use the verify button to confirm correct client setup first!</span>");
+                $("#warning_dialog").dialog("open");
+            }
             return false;
         }
     }
@@ -1375,7 +1442,9 @@ def twofactor_wizard_js(configuration):
     }
     function switchOTPState(current, next) {
         $(".otp_wizard."+current+".switch_button").hide();
-        $(".otp_wizard."+next+":not(.manual-show)").show();
+        $(".otp_wizard."+next+":not(.manual-show)").fadeIn(1000);
+        /* Make sure next step is visible */
+        $(".otp_wizard."+next)[0].scrollIntoView({behavior: \"smooth\"});
         if (next === "otp_ready") {
             initOTPDepends(%s);
         }
@@ -1389,7 +1458,8 @@ def twofactor_wizard_js(configuration):
     }
     function showQRCodeOTPDialog(elem_id, otp_uri) {
           // init OTP dialog for QR code
-          $("#"+elem_id).dialog(okOTPDialog);
+          $("#"+elem_id).dialog(importOTPDialog);
+          $("#"+elem_id).dialog("option", "onImportedClick", "otp_imported_button");
           $("#"+elem_id).dialog("open");
           $("#"+elem_id).html("<canvas id=\'otp_qr\'><!-- filled by script --></canvas>");
           var qr = new QRious({
@@ -1400,7 +1470,8 @@ def twofactor_wizard_js(configuration):
     }
     function showTextOTPDialog(elem_id, otp_key) {
           // init OTP dialog for text key
-          $("#"+elem_id).dialog(okOTPDialog);
+          $("#"+elem_id).dialog(importOTPDialog);
+          $("#"+elem_id).dialog("option", "onImportedClick", "otp_imported_button");
           $("#"+elem_id).dialog("open");
           $("#"+elem_id).html("<span id=\'otp_text\'>"+otp_key+"</span>");
     }
@@ -1427,7 +1498,12 @@ def twofactor_wizard_js(configuration):
         /* Resize to actual dialog contents */
         $("#"+dialog_id).dialog("option", "width", "auto");
         $("#"+dialog_id).dialog("option", "height", "auto");
+        /* Make sure dialog is visible no matter how skin and UI places it */
+        $("#"+dialog_id)[0].scrollIntoView({behavior: \"smooth\"});
         //console.debug("opened verify popup");
+    }
+    function autoClickButtonIfVisible(link_id, delay) {
+        setTimeout(function() {$("#"+link_id).is(":visible") && $("#"+link_id).click(); }, delay);
     }
 ''' % str(configuration.site_enable_gdp).lower()
     add_ready = ''
@@ -1478,41 +1554,41 @@ I've got it installed!</button>
 <h3>2. Import Secret in Authenticator App</h3>
 <p>Open the chosen authenticator app and import your personal 2-factor secret in one of two ways:</p>
 <ul class='dbllineheight' type='A'>
-<li><span id='otp_qr_link' class='fakelink iconspace'
-    onClick='showQRCodeOTPDialog(\"otp_secret_dialog\", \"%(otp_uri)s\");'>
-Scan your personal QR code</span></li>
-<li><span id='otp_key_link' class='fakelink iconspace'
-    onClick='showTextOTPDialog(\"otp_secret_dialog\", \"<p><b>Secret</b>: %(b32_key)s</p><p><b>Interval</b>: %(otp_interval)s</p>\");'>
-Enter your personal key</span></li>
+<li>Scan your personal <button id='otp_qr_link' class='twofactor-qr-code ui-button inline-button'
+    onClick='showQRCodeOTPDialog(\"otp_secret_dialog\", \"%(otp_uri)s\"); return false;'>
+QR code</button></li>
+<li>Type your personal <button id='otp_key_link' class='twofactor-raw-key ui-button inline-button'
+    onClick='showTextOTPDialog(\"otp_secret_dialog\", \"<p><b>Secret</b>: %(b32_key)s</p><p><b>Interval</b>: %(otp_interval)s</p>\"); return false;'>key code</button></li>
 </ul>
 <p><br/>The latter is usually more cumbersome but may be needed if your app or smart
 device doesn't support scanning QR codes. Most apps automatically add service
 and account info on QR code scanning, but otherwise you can manually enter it.</p>
 </td></tr>
 <tr class='otp_wizard otp_import switch_button hidden'><td>
-<button type=button class='ui-button'
-    onClick='switchOTPState(\"otp_import\", \"otp_verify\");'>
+<!-- NOTE: we ignore missing explicit import here as it might not be 1st run -->
+<button type=button id='otp_imported_button' class='ui-button'
+    onClick='checkOTPImported(false, true); switchOTPState(\"otp_import\", \"otp_verify\"); autoClickButtonIfVisible(\"otp_verify_button\", 1000); return false;'>
 Yes, I've imported it!</button>
 </td></tr>
 <tr class='otp_wizard otp_verify hidden'><td>
 <h3>3. Verify the Authenticator App Setup</h3>
-<p>Please <span id='otp_verify_link' class='fakelink infolink'
-    onClick='verifyClientToken(\"otp_verify_dialog\", \"otp_verified_button\", \"%(check_url)s\");'>
-verify</span> that your authenticator app displays correct new tokens every 30
+<p>Please <button id='otp_verify_button' class='twofactor-verify-token ui-button inline-button'
+    onClick='verifyClientToken(\"otp_verify_dialog\", \"otp_verified_button\", \"%(check_url)s\");  return false;'>
+verify</button> that your authenticator app displays correct new tokens every 30
 seconds before you actually enable 2-factor authentication. Otherwise you could
 end up locking yourself out once you enable 2-factor authentication!<p/>
 </td></tr>
 <tr class='otp_wizard otp_verify switch_button hidden'><td>
 <button type=button id='otp_verified_button' class='ui-button'
-    onClick='checkOTPVerified() && switchOTPState(\"otp_verify\", \"otp_ready\");'>
+    onClick='checkOTPVerified(true, true) && switchOTPState(\"otp_verify\", \"otp_ready\");'>
 It works!</button>
 </td></tr>
 <tr class='otp_wizard otp_ready hidden'><td>
-<h5>4. Enable 2-Factor Authentication</h5>
-Once you've followed the three steps above and verified your authenticator
-app, you can proceed to %(enable_hint)s.<br/>
-Afterwards you can simply logout and login again to verify that a token is
-requested right after your usual %(site)s login.
+<h3>4. Enable 2-Factor Authentication</h3>
+Now that you've followed the required steps to prepare and verify your
+authenticator app, you just need to %(enable_hint)s.<br/>
+This ensures that your future %(site)s logins are security-enhanced with a
+request for your current token from your authenticator app.
 </td></tr>
 <tr class='otp_wizard otp_ready hidden'><td>
 <p class='warningtext'>SECURITY NOTE: please immediately contact the %(site)s admins to
@@ -1531,14 +1607,16 @@ def twofactor_token_html(configuration):
     """
     html = '''<!-- make sure content div covers any background pattern -->
 <div class="twofactorbg">
-<div id="twofactorstatus"><!-- filled by script --></div>
+<div id="twofactorstatus" class="centertext"><!-- filled by script --></div>
 <div id="twofactorbox" class="staticpage">
 <img class="sitelogo" src="%(skin_base)s/logo-left.png"><br/>
 <div id="twofactorlogo" class="twofactor authlogo"></div>
     <!-- IMPORTANT: this form should not have an explicit action! -->
     <form id="otp_token_form" method="POST">
         <input class="tokeninput" type="text" id="token" name="token"
-            placeholder="Authentication Token" autocomplete="off" autofocus><br/>
+            placeholder="Authentication Token" autocomplete="off"
+            title="6-digit token from your authenticator"
+            pattern="[0-9]{6}" required autofocus><br/>
         <input id="otp_token_submit" class="submit" type="submit" value="Submit">
     </form>
 </div>
