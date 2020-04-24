@@ -46,7 +46,7 @@
 }
 
 /* smaller inline buttons */
-.ui-button.inline-button {
+.ui-button.inline-button, .ui-button.inline-button:hover {
     border-radius: 4px;
     /* default from jquery-ui is 0.4em 1em */
     padding: .1em 1em;
