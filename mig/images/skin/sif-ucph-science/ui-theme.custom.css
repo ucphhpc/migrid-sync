@@ -45,11 +45,14 @@
     -webkit-transition: width 0.5s;
 }
 
-/* smaller inline buttons */
+/* smaller inline buttons for e.g. 2FA wizard */
 .ui-button.inline-button, .ui-button.inline-button:hover {
     border-radius: 4px;
     /* default from jquery-ui is 0.4em 1em */
     padding: .1em 1em;
+    /* enforce minimum size for visual clarity and uniform look */
+    min-width: 100px;
+    min-height: 24px;
 }
 
 /* NOTE: adjust icon color when background is white.

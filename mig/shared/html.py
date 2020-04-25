@@ -1262,7 +1262,7 @@ def twofactor_wizard_js(configuration):
                     console.warning("no accept id to click");
                 }
             },
-            "Cancel":
+            "Close":
             function() {
                 $(this).dialog("close");
                 return false;
@@ -1537,11 +1537,15 @@ Okay, let's go!</button>
 <tr class='otp_wizard otp_install hidden'><td>
 <h3>1. Install an Authenticator App</h3>
 <p>You first need to install a TOTP authenticator client like
-<a href='https://en.wikipedia.org/wiki/Google_Authenticator' target='_blank'>
+<a href='https://en.wikipedia.org/wiki/Google_Authenticator'
+  class='urllink iconleftpad' target='_blank'>
 Google Authenticator</a>,
-<a href='https://freeotp.github.io/' target='_blank'>FreeOTP</a>,
-<a href='https://www.microfocus.com/en-us/products/netiq-advanced-authentication/overview' target='_blank'>NetIQ Advanced Authentication</a> or
-<a href='https://authy.com/download/' target='_blank'>Authy</a> on your phone
+<a href='https://freeotp.github.io/' class='urllink iconleftpad'
+  target='_blank'>FreeOTP</a>,
+<a href='https://www.microfocus.com/en-us/products/netiq-advanced-authentication/overview'
+  class='urllink iconleftpad' target='_blank'>NetIQ Advanced Authentication</a>
+or <a href='https://authy.com/download/' class='urllink iconleftpad'
+  target='_blank'>Authy</a> on your phone
 or tablet. You can find and install either of them on your device through your
 usual app store.</p>
 </td></tr>

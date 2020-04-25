@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # auth - shared helpers for authentication in init functionality backends
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,6 +34,7 @@ import hashlib
 import os
 import re
 import time
+import urllib
 
 # Only needed for 2FA so ignore import error and only fail on use
 try:
@@ -197,11 +198,7 @@ def get_twofactor_secrets(configuration, client_id):
     # otpauth://<otptype>/(<issuer>:)<accountnospaces>?
     #         secret=<secret>(&issuer=<issuer>)(&image=<imageuri>)
     # which we pull out of pyotp directly.
-    # We could display with Google Charts helper like this example
-    # https://www.google.com/chart?chs=200x200&chld=M|0&cht=qr&
-    #       chl=otpauth://totp/Example:alice@google.com?
-    #       secret=JBSWY3DPEHPK3PXP&issuer=Example
-    # but we prefer to use the QRious JS library to keep it local.
+    # IMPORTANT: we use the QRious JS library to keep rendering local.
     if configuration.user_openid_alias:
         username = extract_field(
             client_id, configuration.user_openid_alias)
@@ -209,14 +206,20 @@ def get_twofactor_secrets(configuration, client_id):
         username = client_id
     otp_uri = totp.provisioning_uri(
         username, issuer_name=configuration.short_title)
+    # Some auth apps like FreeOTP support addition of logo with &image=PNG_URL
+    # Testing is easy with https://freeotp.github.io/qrcode.html
+    if configuration.site_logo_left.endswith('.png'):
+        logo_url = configuration.site_logo_left
+        # NOTE: image URL must a full URL and logo_url is abs or anchored path
+        if not logo_url.startswith('http'):
+            # Remove any leading slashes which would break join
+            logo_url = os.path.join(configuration.migserver_https_sid_url,
+                                    logo_url.lstrip('/'))
+        # Clear 'safe' argument to also encode slashes in url
+        otp_uri += '&image=%s' % urllib.quote(logo_url, '')
+
     # IMPORTANT: pyotp unicode breaks wsgi when inserted - force utf8!
     otp_uri = force_utf8(otp_uri)
-
-    # Google img examle
-    # img_url = 'https://www.google.com/chart?'
-    # img_url += urllib.urlencode([('cht', 'qr'), ('chld', 'M|0'),
-    #                             ('chs', '200x200'), ('chl', otp_uri)])
-    # otp_img = '<img src="%s" />' % img_url
 
     return (b32_key, totp.interval, otp_uri)
 
