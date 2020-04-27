@@ -93,8 +93,11 @@
     height: 12px;
 }
 
+#fancyfileupload .fade,
 .uploadfileslist .fade {
     display: none;
+    /* Override opacity 0 inherited for fade in UI V3*/
+    opacity: 1.0;
 }
 
 .fileupload-loading {

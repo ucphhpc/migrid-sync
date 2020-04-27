@@ -108,7 +108,7 @@ button.avatar-link {
     color: #46743C;
 }
 
-button.avatar-link:active {
+button.avatar-link:active, button.avatar-link:hover {
     color: #46743C;
 }
 
