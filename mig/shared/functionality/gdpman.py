@@ -297,8 +297,9 @@ def html_tmpl(
         if action == 'twofactor_auth':
             preselected_tab = tab_count
         tab_count += 1
-    html += """<li><a href='#logout_tab'>Logout</a></li>"""
-    tab_count += 1
+    if twofactor_enabled:
+        html += """<li><a href='#logout_tab'>Logout</a></li>"""
+        tab_count += 1
 
     html += """</ul>"""
     # Insert category map helper for all known projects
