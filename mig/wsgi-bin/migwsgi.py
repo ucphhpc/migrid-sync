@@ -37,7 +37,7 @@ from shared.defaults import download_block_size
 from shared.conf import get_configuration_object
 from shared.objecttypes import get_object_type_info
 from shared.output import validate, format_output, dummy_main, reject_main
-from shared.safeinput import valid_backend_name, html_escape
+from shared.safeinput import valid_backend_name, html_escape, InputException
 from shared.scriptinput import fieldstorage_to_dict
 
 
@@ -66,12 +66,26 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
 
     try:
         valid_backend_name(backend)
+    except InputException, iex:
+        _logger.error("%s refused to import invalid backend %r (%s): %s" %
+                      (_addr, backend, import_path, iex))
+        bailout_helper(configuration, backend, output_objects,
+                       header_text='User Error')
+        output_objects.extend([
+            {'object_type': 'error_text', 'text':
+             'Invalid backend: %s' % html_escape(backend)},
+            {'object_type': 'link', 'text': 'Go to default interface',
+             'destination': configuration.site_landing_page}
+        ])
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
+    try:
         # Import main from backend module
 
         exec 'from %s import main' % import_path
     except Exception, err:
-        _logger.error("%s could not import %s: %s" % (_addr, import_path, err))
+        _logger.error("%s could not import %r (%s): %s" %
+                      (_addr, backend, import_path, err))
         bailout_helper(configuration, backend, output_objects)
         output_objects.extend([
             {'object_type': 'error_text', 'text':
@@ -154,6 +168,8 @@ def application(environ, start_response):
 
     backend = "UNKNOWN"
     output_objs = []
+    user_arguments_dict = {}
+
     try:
         if not configuration.site_enable_wsgi:
             _logger.error("WSGI interface is disabled in configuration")
@@ -181,6 +197,8 @@ def application(environ, start_response):
                                                  user_arguments_dict)
         status = '200 OK'
     except Exception, exc:
+        import traceback
+        _logger.error("wsgi handling crashed:\n%s" % traceback.format_exc())
         _logger.error("handling of WSGI request for %s from %s failed: %s" %
                       (backend, client_id, exc))
         status = '500 ERROR'

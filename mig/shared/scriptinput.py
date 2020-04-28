@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # scriptinput - Handles html form style input from user
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -62,13 +62,13 @@ def parse_input(user_arguments_dict, fields):
                 try:
                     parsed_entry['raw'] = \
                         user_arguments_dict[name][len(user_arguments_dict[name])
-                             - 1]
+                                                  - 1]
                 except:
                     parsed_entry['raw'] = settings['default']
             else:
                 parsed_entry['raw'] = \
                     user_arguments_dict[name][len(user_arguments_dict[name])
-                         - 1]
+                                              - 1]
         elif 'list' == kind:
             if settings.has_key('default'):
                 try:
@@ -79,7 +79,7 @@ def parse_input(user_arguments_dict, fields):
                 parsed_entry['raw'] = user_arguments_dict[name]
         else:
             error += 'unknown kind %s for %s in parse_input!' % (kind,
-                    name)
+                                                                 name)
             continue
 
         # Check that input is valid
@@ -93,7 +93,7 @@ def parse_input(user_arguments_dict, fields):
             check(parsed_entry['raw'])
         except ValueError, verr:
             error += 'invalid contents of %s in parse_input! (%s)'\
-                 % (name, verr)
+                % (name, verr)
             continue
 
         # Finally add to parsed input dictionary if we got this far
@@ -102,6 +102,7 @@ def parse_input(user_arguments_dict, fields):
 
     return (parsed_input, error)
 
+
 def parse_argument(
     user_arguments_dict,
     name,
@@ -109,7 +110,7 @@ def parse_argument(
     check,
     required=False,
     default=-1,
-    ):
+):
     """Parse user_arguments_dict for argument(s) with supplied name. The kind
     string defines which strategy to use in the value extraction (select
     first, last or list of all). If required is true, the parse will
@@ -132,25 +133,26 @@ def parse_argument(
         raw = user_arguments_dict[name][0]
     elif 'last' == kind:
         raw = user_arguments_dict[name][len(user_arguments_dict[name]
-                 - 1)]
+                                            - 1)]
     elif 'list' == kind:
         raw = user_arguments_dict[name]
     else:
         error = 'unknown kind %s for %s in parse_argument!' % (kind,
-                name)
+                                                               name)
         return ('', '', error)
 
     try:
         check(raw)
     except ValueError, verr:
         error = 'invalid contents of %s in parse_argument! (%s)'\
-             % (name, verr)
+            % (name, verr)
 
     if 'list' == kind:
         safe = [html_escape(item) for item in raw]
     else:
         safe = html_escape(raw)
     return (raw, safe, error)
+
 
 def fieldstorage_to_dict(fieldstorage, fields=[]):
     """Get a plain dictionary, rather than the '.value' system used by
@@ -162,7 +164,7 @@ def fieldstorage_to_dict(fieldstorage, fields=[]):
     """
 
     params = {}
-    if not fields:
+    if not fields and fieldstorage:
         fields = fieldstorage.keys()
     for key in fields:
         try:
@@ -182,7 +184,5 @@ def fieldstorage_to_dict(fieldstorage, fields=[]):
                     pass
         except Exception, err:
             print 'Warning: failed to extract values for %s: %s'\
-                 % (key, err)
+                % (key, err)
     return params
-
-
