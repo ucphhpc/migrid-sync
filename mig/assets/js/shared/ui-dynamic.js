@@ -238,7 +238,9 @@ function load_tips(base_url) {
     console.debug("get content from "+content_url);
     /* Load content: roughly equivalent to $.get(url, data, success) */
     try {
+        $("#tips-content").addClass("spinner");
         $("#tips-content").load(content_url, init_tips);
+        $("#tips-content").removeClass("spinner");
     } catch(err) {
         console.error("load tips failed: "+err);
     }
