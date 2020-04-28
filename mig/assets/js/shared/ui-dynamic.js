@@ -150,7 +150,10 @@ function init_tips() {
     $("#tips-content .tips-entry").each(function (index, item) {
         if (show_tip === index) {
             console.debug("show tip "+index);
-            $(item).fadeIn(500);
+            /* NOTE: chain loading marker removal to delay until visible */
+            $(item).fadeIn(500, function() {
+                $("#tips-content").removeClass("tips-loading");
+            });
         }
     });
     /* NOTE: we need to specify header to look inside the div.tips-entry */
@@ -238,9 +241,8 @@ function load_tips(base_url) {
     console.debug("get content from "+content_url);
     /* Load content: roughly equivalent to $.get(url, data, success) */
     try {
-        $("#tips-content").addClass("spinner");
+        $("#tips-content").addClass("tips-loading");
         $("#tips-content").load(content_url, init_tips);
-        $("#tips-content").removeClass("spinner");
     } catch(err) {
         console.error("load tips failed: "+err);
     }
