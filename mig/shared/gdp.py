@@ -3372,23 +3372,21 @@ This directory is used for hosting private files for the %r %r.
     # Fake 'invite_user' and 'accept_user' to enable owner login
 
     if status:
+        rollback['project'] = True
         (status, _) = project_invite_user(configuration, client_addr,
                                           client_id, client_id, project_name,
                                           category_dict, in_create=True)
-        if status:
-            rollback['project'] = True
-        else:
+        if not status:
             template = ": Automatic invite failed"
             err_msg += template
             _logger.error(log_err_msg + template)
 
     if status:
+        rollback['user'] = True
         (status, _) = project_accept_user(configuration, client_addr,
                                           client_id, project_name,
                                           category_dict, in_create=True)
-        if status:
-            rollback['user'] = True
-        else:
+        if not status:
             template = ": Automatic accept failed"
             err_msg += template
             _logger.error(log_err_msg + template)
