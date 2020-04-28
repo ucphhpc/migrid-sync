@@ -807,10 +807,7 @@ def html_tmpl(
         # TODO: we might want to protect QR code with repeat basic login
         #       or a simple timeout since last login (cookie age).
         html += twofactor_wizard_html(configuration)
-        # TODO: renew directly to avoid requesting again right away
-        #       right now it fails to enable2fa upon 2FA wizard save when used!
-        # check_url = '/%s/twofactor.py?action=renew' % get_xgi_bin(
-        check_url = '/%s/twofactor.py?action=check' % get_xgi_bin(
+        check_url = '/%s/twofactor.py?action=renew' % get_xgi_bin(
             configuration)
         if twofactor_enabled:
             enable_hint = 'enable it (as you already did)'
@@ -1327,13 +1324,6 @@ Please contact the site admins %s if you think it should be enabled.
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if action == 'enable2fa':
-
-        # Expire any exisiting 2FA sessions
-        # Due to browser cookies outdated 2FA sessions may be re-initiated
-
-        expire_twofactor_session(
-            configuration, client_id, environ, allow_missing=False)
-
         keywords_dict = twofactor_keywords(configuration)
         topic_mrsl = ''
         for keyword in keywords_dict.keys():
@@ -1370,23 +1360,15 @@ Please contact the site admins %s if you think it should be enabled.
         except Exception, exc:
             pass  # probably deleted by parser!
 
-        status_msg = 'OK: 2-Factor Authentication enabled'
-        if not parse_status:
+        if parse_status:
+            status_msg = 'OK: 2-Factor Authentication enabled'
+        else:
             status_msg = 'ERROR: Failed to enable 2-Factor Authentication'
             logger.error("%s -> %s" % (status_msg, parse_msg))
-            html = status_msg
-        else:
-            html = """
-            <a id='gdp_twofactorlogin' href='%s'></a>
-            <script type='text/javascript'>
-                document.getElementById('gdp_twofactorlogin').click();
-            </script>""" \
-                % environ['SCRIPT_URI']
+            output_objects.append({'object_type': 'html_form',
+                                   'text': status_msg})
 
-        output_objects.append({'object_type': 'html_form',
-                               'text': html})
-
-        return (output_objects, returnvalues.OK)
+            return (output_objects, returnvalues.OK)
 
     # Make sure user exists in GDP user db
 
@@ -1694,6 +1676,8 @@ Please contact the site admins %s if you think it should be enabled.
                                        base_vgrid_name,
                                        skip_users=[client_id],
                                    )})
+        elif action == 'enable2fa':
+            action_msg = status_msg
         elif action:
             action_msg = 'ERROR: Unknown action: %s' % action
 

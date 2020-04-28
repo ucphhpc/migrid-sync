@@ -268,23 +268,27 @@ def main(client_id, user_arguments_dict, environ=None):
         logger.info("saved 2FA session for %s in %s"
                     % (client_id, session_key))
 
-    if action == 'auth' and redirect_url:
+    if (action == 'auth' and redirect_url) \
+            or action == 'renew':
         headers.append(tuple(str(cookie).split(': ', 1)))
         output_objects.append({'object_type': 'start', 'headers': headers})
         output_objects.append({'object_type': 'script_status'})
+    if (action == 'auth' and redirect_url):
+        reply_status = ""
+        reply_msg = ""
+    elif action == 'auth' and not redirect_url:
+        reply_status = "error"
+        reply_msg = "Missing redirect_url"
+    elif action == 'check':
+        reply_status = "ok"
+        reply_msg = "Correct token provided!"
+    elif action == 'renew':
+        reply_status = "ok"
+        reply_msg = "Twofactor session renewed!"
     else:
-        if action == 'auth':
-            reply_status = "error"
-            reply_msg = "Missing redirect_url"
-        elif action == 'check':
-            reply_status = "ok"
-            reply_msg = "Correct token provided!"
-        elif action == 'renew':
-            reply_status = "ok"
-            reply_msg = "Twofactor session renewed!"
-        else:
-            reply_status = "error"
-            reply_msg = "Unknown action: %r" % action
+        reply_status = "error"
+        reply_msg = "Unknown action: %r" % action
+    if reply_status:
         output_objects.append({'object_type': 'html_form', 'text': '''
 <!-- Keep similar spacing -->
 <div class="twofactorbg">
