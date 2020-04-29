@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # updatevgrid - update or repair vgrid components
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,11 +28,11 @@
 """Update a VGrid with missing components"""
 
 import os
-from binascii import hexlify
 
 import shared.returnvalues as returnvalues
 from shared.base import client_id_dir
 from shared.defaults import csrf_field
+from shared.fileio import make_symlink
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables, find_entry
@@ -114,7 +114,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     base_dir = os.path.abspath(os.path.join(configuration.vgrid_home,
                                vgrid_name)) + os.sep
-    public_base_dir = \
+    public_files_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_public_base,
                         vgrid_name)) + os.sep
     public_scm_dir = \
@@ -123,7 +123,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
     public_tracker_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_public_base,
                         vgrid_name, '.vgridtracker')) + os.sep
-    private_base_dir = \
+    private_files_dir = \
+        os.path.abspath(os.path.join(configuration.vgrid_private_base,
+                        vgrid_name)) + os.sep
+    private_files_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_private_base,
                         vgrid_name)) + os.sep
     private_scm_dir = \
@@ -144,6 +147,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
     vgrid_tracker_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_files_home,
                         vgrid_name, '.vgridtracker')) + os.sep
+    vgrid_files_link = os.path.join(configuration.user_home, client_dir,
+                                    vgrid_name)
 
     output_objects.append({'object_type': 'text', 'text':
                            'Updating %s %s components ...' % \
@@ -151,7 +156,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     
     # Try to create all base directories used for vgrid files
 
-    for path in (base_dir, public_base_dir, private_base_dir, vgrid_files_dir):
+    for path in (base_dir, public_files_dir, private_files_dir, vgrid_files_dir):
         try:
             os.mkdir(path)
         except Exception, exc:
@@ -178,6 +183,44 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 output_objects.append({'object_type': 'error_text', 'text':
                                        'Could not create missing %s list: %s'
                                        % (kind, set_msg)})
+
+    # TODO: add any missing public/private web links, too
+    output_objects.append({'object_type': 'text', 'text':
+                           'Link check warnings:'})
+    if not os.path.exists(vgrid_files_link):
+        src = vgrid_files_dir
+        if not make_symlink(src, vgrid_files_link, logger):
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Could not create link to %s files!' % \
+                                   label
+                                   })
+
+    user_public_base = os.path.join(configuration.user_home,
+                                    client_dir, 'public_base')
+    public_base_dst = os.path.join(user_public_base, vgrid_name)
+    if not os.path.exists(public_base_dst):
+        if not make_symlink(public_files_dir, public_base_dst, logger):
+            output_objects.append({'object_type': 'error_text', 'text'
+                                  : 'Could not create link to public_base dir!'
+                                  })
+    user_private_base = os.path.join(configuration.user_home,
+                                     client_dir, 'private_base')
+    private_base_dst = os.path.join(user_private_base, vgrid_name)
+    if not os.path.exists(private_base_dst):
+        if not make_symlink(private_files_dir, private_base_dst, logger):
+            output_objects.append(
+                {'object_type': 'error_text', 'text'
+                 : 'Could not create link to private_base dir!'
+                 })
+
+    wwwpublic_vgrid_link = os.path.join(configuration.wwwpublic, 'vgrid',
+                                        vgrid_name)
+    if not os.path.exists(wwwpublic_vgrid_link):
+        if not make_symlink(public_files_dir, wwwpublic_vgrid_link, logger,
+                            force=True):
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Could not create public web alias %s' % vgrid_name})
 
     # Try component creation or repair
 
