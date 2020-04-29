@@ -474,7 +474,16 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False)
+        initialize_main_variables(client_id, op_header=False,
+                                  op_menu=client_id)
+    # NOTE: we expose editor e.g. on sharelinks (ls) but do not allow it, yet
+    if not client_id:
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'The inline editor is currently only available for authenticated '
+             'users on this site'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
