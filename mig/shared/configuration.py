@@ -713,7 +713,15 @@ location.""" % self.config_file
         if config.has_option('GLOBAL', 'admin_email'):
             self.admin_email = config.get('GLOBAL', 'admin_email')
         else:
-            self.admin_email = []
+            fqdn = 'localhost'
+            user = 'mig'
+            try:
+                fqdn = socket.getfqdn()
+                user = os.environ['USER']
+            except:
+                pass
+            self.admin_email = '%s@%s' % (user, fqdn)
+
         if config.has_option('GLOBAL', 'ca_fqdn'):
             self.ca_fqdn = config.get('GLOBAL', 'ca_fqdn')
         if config.has_option('GLOBAL', 'ca_user'):
