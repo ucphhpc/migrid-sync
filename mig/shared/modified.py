@@ -32,6 +32,7 @@ import os
 import time
 
 from shared.defaults import keyword_all
+from shared.fileio import acquire_file_lock, release_file_lock
 from shared.serial import load, dump, dumps
 
 
@@ -39,12 +40,14 @@ def mark_entity_modified(configuration, kind, name):
     """Mark name of given kind modified to signal reload before use from other
     locations.
     """
+    _logger = configuration.logger
+    success = False
     modified_path = os.path.join(configuration.mig_system_files,
                                  "%s.modified" % kind)
     lock_path = os.path.join(configuration.mig_system_files, "%s.lock" % kind)
-    lock_handle = open(lock_path, 'a')
-    fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+    lock_handle = None
     try:
+        lock_handle = acquire_file_lock(lock_path, exclusive=True)
         if os.path.exists(modified_path):
             modified_list = load(modified_path)
         else:
@@ -52,10 +55,14 @@ def mark_entity_modified(configuration, kind, name):
         if not name in modified_list:
             modified_list.append(name)
         dump(modified_list, modified_path)
+        success = True
     except Exception, exc:
-        configuration.logger.error("Could not update %s modified mark: %s" %
-                                   (kind, exc))
-    lock_handle.close()
+        _logger.error("Could not update %s modified mark: %s" % (kind, exc))
+    finally:
+        if lock_handle:
+            release_file_lock(lock_handle)
+            lock_handle = None
+    return success
 
 
 def mark_user_modified(configuration, user_name):
@@ -100,24 +107,29 @@ def mark_workflow_r_modified(configuration, workflow_recipe_name):
 def check_entities_modified(configuration, kind):
     """Check and return any name of given kind that are marked as modified
     along with a time stamp for the latest modification"""
+    _logger = configuration.logger
     modified_path = os.path.join(configuration.mig_system_files,
                                  "%s.modified" % kind)
     map_path = os.path.join(configuration.mig_system_files, "%s.map" % kind)
     lock_path = os.path.join(configuration.mig_system_files, "%s.lock" % kind)
-    lock_handle = open(lock_path, 'a')
-    fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+    lock_handle = None
     try:
+        # NOTE: we only need shared lock here to read modified
+        lock_handle = acquire_file_lock(lock_path, exclusive=False)
         if not os.path.isfile(map_path):
-            configuration.logger.warning("%s map doesn't exist, new install?"
-                                         % kind)
             raise Exception("%s map does not exist" % kind)
         modified_list = load(modified_path)
         modified_stamp = os.path.getmtime(modified_path)
     except Exception, exc:
+        # Okay if a new install
+        _logger.warning("could not check %s modified: %s" % (kind, exc))
         # No modified list - probably first time so force update
         modified_list = [keyword_all]
         modified_stamp = time.time()
-    lock_handle.close()
+    finally:
+        if lock_handle:
+            release_file_lock(lock_handle)
+            lock_handle = None
     return (modified_list, modified_stamp)
 
 
@@ -187,17 +199,23 @@ def pending_res_update(configuration):
 
 def reset_entities_modified(configuration, kind):
     """Reset all modified entity marks of given kind"""
+    _logger = configuration.logger
+    success = False
     modified_path = os.path.join(configuration.mig_system_files,
                                  "%s.modified" % kind)
     lock_path = os.path.join(configuration.mig_system_files, "%s.lock" % kind)
-    lock_handle = open(lock_path, 'a')
-    fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+    lock_handle = None
     try:
+        lock_handle = acquire_file_lock(lock_path, exclusive=True)
         dump([], modified_path)
+        success = True
     except Exception, exc:
-        configuration.logger.error("Could not reset %s modified mark: %s" %
-                                   (kind, exc))
-    lock_handle.close()
+        _logger.error("Could not reset %s modified mark: %s" % (kind, exc))
+    finally:
+        if lock_handle:
+            release_file_lock(lock_handle)
+            lock_handle = None
+    return success
 
 
 def reset_users_modified(configuration):

@@ -1050,7 +1050,8 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True,
         finally:
             if lock_handle:
                 release_file_lock(lock_handle)
-
+                lock_handle = None
+                
         if status:
 
             # entries is a list
@@ -1276,10 +1277,14 @@ def mark_nested_vgrids_modified(configuration, vgrid_name):
     refresh before next use. This recursive version can be used to mark all
     child vgrids modified as well upon changes to inherited values.
     """
-    (list_status, sub_vgrids) = vgrid_list_subvgrids(vgrid_name, configuration)
+    _logger = configuration.logger
+    (nest_status, sub_vgrids) = vgrid_list_subvgrids(vgrid_name, configuration)
     for sub in [vgrid_name] + sub_vgrids:
-        mark_vgrid_modified(configuration, sub)
-    return list_status
+        if not mark_vgrid_modified(configuration, sub):
+            _logger.warning("nested mark vgrid %s modified failed for %s" % \
+                            (vgrid_name, sub))
+            nest_status = False
+    return nest_status
 
 
 def is_valid_job_queue_entry(entry):
@@ -1452,7 +1457,7 @@ def vgrid_add_entities(configuration, vgrid_name, kind, id_list,
     status, msg = True, ''
     try:
         vgrid_validate_entities(configuration, vgrid_name, kind, id_list)
-        # Keep load and dump under same exclusive lock
+        # IMPORTANT: keep load and dump under same exclusive lock
         lock_handle = acquire_file_lock(lock_path, exclusive=True)
         if os.path.exists(entity_filepath):
             entities = load(entity_filepath)
@@ -1478,13 +1483,20 @@ def vgrid_add_entities(configuration, vgrid_name, kind, id_list,
         entities = entities[:rank] + id_list + entities[rank:]
         # _logger.debug("added: %s" % entities)
         dump(entities, entity_filepath)
-        mark_nested_vgrids_modified(configuration, vgrid_name)
     except Exception, exc:
         status = False
         msg = "could not add %s for %s: %s" % (kind, vgrid_name, exc)
     finally:
         if lock_handle:
             release_file_lock(lock_handle)
+            lock_handle = None
+
+    # NOTE: only mark entity modified AFTER main lock release to avoid blocking
+    try:
+        mark_nested_vgrids_modified(configuration, vgrid_name)
+    except Exception, exc:
+        status = False
+        msg = " could not mark %s modified for %s after add: %s" % (kind, vgrid_name, exc)
     return (status, msg)
 
 
@@ -1603,13 +1615,21 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
         if not entities and not allow_empty:
             raise ValueError("not allowed to remove last entry of %s" % kind)
         dump(entities, entity_filepath)
-        mark_nested_vgrids_modified(configuration, vgrid_name)
     except Exception, exc:
         status = False
         msg = "could not remove %s for %s: %s" % (kind, vgrid_name, exc)
     finally:
         if lock_handle:
             release_file_lock(lock_handle)
+            lock_handle = None
+
+    # NOTE: only mark entity modified AFTER main lock release to avoid blocking
+    try:
+        mark_nested_vgrids_modified(configuration, vgrid_name)
+    except Exception, exc:
+        status = False
+        msg = " could not mark %s modified for %s after remove: %s" % (kind, vgrid_name, exc)
+
     return (status, msg)
 
 
@@ -1703,13 +1723,20 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
         # Keep dump under exclusive lock
         lock_handle = acquire_file_lock(lock_path, exclusive=True)
         dump(id_list, entity_filepath)
-        mark_nested_vgrids_modified(configuration, vgrid_name)
     except Exception, exc:
         status = False
         msg = "could not set %s for %s: %s" % (kind, vgrid_name, exc)
     finally:
         if lock_handle:
             release_file_lock(lock_handle)
+            lock_handle = None
+
+    # NOTE: only mark entity modified AFTER main lock release to avoid blocking
+    try:
+        mark_nested_vgrids_modified(configuration, vgrid_name)
+    except Exception, exc:
+        status = False
+        msg += " could not mark %s for %s modified: %s" % (kind, vgrid_name, exc)
     return (status, msg)
 
 
