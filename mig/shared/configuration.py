@@ -1898,6 +1898,23 @@ location.""" % self.config_file
                     locations.append(ext_oid_url)
             self.myfiles_py_location = ' '.join(locations)
 
+        # Filter disabled features from vgrid links
+        exclude_features = []
+        if not self.site_enable_jobs:
+            exclude_features += ['monitor']
+        if not self.site_enable_events:
+            exclude_features += ['workflows']
+        if not self.trac_admin_path:
+            exclude_features += ['tracker']
+        if not self.hg_path:
+            exclude_features += ['scm']
+        def_links = self.site_default_vgrid_links            
+        def_links  = [i for i in def_links if i not in exclude_features]
+        self.site_default_vgrid_links = def_links
+        adv_links = self.site_advanced_vgrid_links            
+        adv_links  = [i for i in adv_links if i not in exclude_features]
+        self.site_advanced_vgrid_links = adv_links
+
         # set test modes if requested
 
         if config.has_option('GLOBAL', 'enable_server_dist'):
