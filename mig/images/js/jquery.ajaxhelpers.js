@@ -878,8 +878,8 @@ function ajax_gdp_project_info(callback, project_name) {
             for (var i = 0; i < jsonRes.length; i++) {
                 //console.debug("jsonRes: " + JSON.stringify(jsonRes[i]));
                 if (jsonRes[i].object_type === "project_info") {
-                    console.debug("ajax_gdp_project_info: " \
-                      + JSON.stringify(jsonRes[i].info));
+                    console.debug("ajax_gdp_project_info: " +
+                      JSON.stringify(jsonRes[i].info));
                     result.OK.push(jsonRes[i].info);
                 } else if (jsonRes[i]["object_type"] === "warning") {
                     console.warning(
