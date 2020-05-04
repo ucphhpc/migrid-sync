@@ -850,7 +850,7 @@ function ajax_workflowjobs(vgrid_name, flags) {
   });
 }
 
-function ajax_gdp_project_info(callback, project_name, user_states=['accepted']) {
+function ajax_gdp_project_info(callback, project_name) {
     console.debug("ajax_gdp_project_info: " + project_name);
     var result = { OK: [], WARNING: [], ERROR: [] };
     var target_op = "gdpman";
@@ -878,16 +878,9 @@ function ajax_gdp_project_info(callback, project_name, user_states=['accepted'])
             for (var i = 0; i < jsonRes.length; i++) {
                 //console.debug("jsonRes: " + JSON.stringify(jsonRes[i]));
                 if (jsonRes[i].object_type === "project_info") {
-                    var user;
-                    for (var j = 0; j < jsonRes[i].info.users.length; j++) {
-                        user = jsonRes[i].info.users[j];
-                        if (user_states.indexOf(user.state) !== -1) {    
-                            console.debug("ajax_gdp_project_info[" + j + "]: "
-                                + JSON.stringify(user)
-                            );
-                            result.OK.push(user);
-                        }
-                    }
+                    console.debug("ajax_gdp_project_info: " \
+                      + JSON.stringify(jsonRes[i].info));
+                    result.OK.push(jsonRes[i].info);
                 } else if (jsonRes[i]["object_type"] === "warning") {
                     console.warning(
                         "ajax_gdp_project_info: " + jsonRes[i].text

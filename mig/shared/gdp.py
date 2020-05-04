@@ -1480,36 +1480,90 @@ def get_projects(configuration, client_id, state, owner_only=False):
 
 
 def get_project_info(configuration,
+                     owner_client_id,
                      project_name,
-                     skip_users=[],
-                     project_state=None,
                      do_lock=True):
-    """Extract of project info including list of participants, each entry on the format:
-    {'name': str,
-    'email': str,
-    'short_id': str,
-    'client_id': str,
-    'project_client_id': str}
+    """Extract project information including list of participants.
     """
     _logger = configuration.logger
-    # _logger.debug("get_project_info: project_name: "
-    #    + "%s, skip_users: %s, project_state: %s, do_lock: %s" \
-    #    % (project_name, skip_users, project_state, do_lock))
-    user_db = __load_user_db(configuration, do_lock=do_lock)
+    # _logger.debug("owner_client_id: %r, project_name: %r, do_lock: %s" %
+    #               (owner_client_id, project_name, do_lock))
 
-    users = []
-    # TODO: extract additional project info like workzone, expiry, etc.
-    result = {'project_name': project_name, 'users': users}
+    result = {
+        'name': '',
+        'owner': {
+            'name': '',
+            'email': '',
+            'short_id': '',
+            'client_id': '',
+            'project_client_id': '',
+            'state': '',
+        },
+        'create': {
+            'date': '',
+            'category': '',
+            'references': [],
+        },
+        'users': [],
+    }
+
+    user_db = __load_user_db(configuration, do_lock=do_lock)
+    owner_project = user_db.get(owner_client_id, {}).get(
+        'projects', {}).get(project_name, '')
+    if not owner_project:
+        _logger.warning("Missing project: %s for user: %s"
+                        % (project_name, owner_client_id))
+        return result
+
+    category_map = dict([(i['category_id'], i) for i in
+                         configuration.gdp_data_categories])
+    owner_project_meta = owner_project.get('category_meta', {})
+    category_id = owner_project_meta.get('category_id', '')
+    if not category_map.has_key(category_id):
+        _logger.error("Missing data category: %s used by project: %s"
+                      % (category_id, project_name))
+        return result
+
+    # Fill result dict
+
+    result['name'] = project_name
+
+    # Fill owner info
+
+    result['owner'] = {
+        'name': extract_field(owner_client_id, 'full_name'),
+        'email': extract_field(owner_client_id, 'email'),
+        'short_id': __short_id_from_client_id(configuration, owner_client_id),
+        'client_id': owner_client_id,
+        'project_client_id': owner_project.get('client_id', ''),
+        'state': owner_project.get('state', ''),
+    }
+
+    # Fill info from project create
+
+    owner_project_meta = owner_project.get('category_meta', {})
+    result['create']['category'] = category_map.get(
+        category_id, {}).get('category_title', '')
+    created_meta = {}
+    for ent in owner_project_meta.get('actions', []):
+        if ent.get('action', '') == 'create_project':
+            created_meta = ent
+            break
+    if created_meta:
+        # TODO: Format date to EPOC timestamp ?
+        result['create']['date'] = created_meta.get('date', '')
+        result['create']['references'] = created_meta.get('references', [])
+
+    # Fill users associated with project
+
     for client_id in user_db.keys():
-        if client_id in skip_users:
+        if client_id == owner_client_id:
             continue
         user_projects = user_db.get(client_id, {}).get('projects', {})
         project = user_projects.get(project_name, {})
         #_logger.debug("client: %s, project: %s" % (client_id, project))
-        if project \
-                and (project_state is None
-                     or project_state == project.get('state', None)):
-            users.append({
+        if project:
+            result['users'].append({
                 'name': extract_field(client_id, 'full_name'),
                 'email': extract_field(client_id, 'email'),
                 'short_id': __short_id_from_client_id(configuration, client_id),

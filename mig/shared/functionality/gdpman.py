@@ -30,7 +30,7 @@
 import os
 import tempfile
 
-from shared.auth import expire_twofactor_session, get_twofactor_secrets
+from shared.auth import get_twofactor_secrets
 import shared.returnvalues as returnvalues
 from shared.base import get_xgi_bin
 from shared.defaults import csrf_field
@@ -923,27 +923,36 @@ def js_tmpl_parts(configuration, csrf_token):
         var category_id = category_map[project_name];
         selectRef('accept_user', category_id);
     }
-    function renderSelectRemoveUserFromProject(project_name, project_participants) {
+    function renderSelectRemoveUserFromProject(project_name, project_info) {
         /* Helper to render user select in remove_user tab */
         var select;
         var option;
         var option_desc;
         var option_value;
+        var users = []
+        if (project_info.OK.length == 1) {
+            for (var i=0; i<project_info.OK[0].users.length; i++ ) {
+                if (project_info.OK[0].users[i].state == 'accepted' \
+                    || project_info.OK[0].users[i].state == 'invited') {
+                    users.push(project_info.OK[0].users[i]);
+                }
+            }
+        }
         select = $('#remove_user_tab select[name=remove_user_short_id]');
         select.children().remove().end();
-        if (project_participants.OK.length == 0) {
+        if (users.length == 0) {
             option = new Option('No participants found', '', true, true);
             select.append(option);
         }
-        else if (project_participants.OK.length > 0) {
+        else if (users.length > 0) {
             option = new Option('Choose participant', '', true, true);
             select.append(option);
             option = new Option('───────', '', false, false);
             select.append(option);
-            for (var i=0; i<project_participants.OK.length; i++ ) {
-                option_desc = project_participants.OK[i].name
-                            + ' (' + project_participants.OK[i].email + ')';
-                option_value = project_participants.OK[i].short_id;
+            for (var i=0; i<users.length; i++ ) {
+                option_desc = users[i].name
+                            + ' (' + users[i].email + ')';
+                option_value = users[i].short_id;
                 option = new Option(option_desc, option_value, false, false);
                 select.append(option);
             }
@@ -964,7 +973,7 @@ def js_tmpl_parts(configuration, csrf_token):
         $('#remove_user_tab tr[id=user]').hide();
         if (project_name !== '') {
             ajax_gdp_project_info(renderSelectRemoveUserFromProject,
-                                    project_name, ['accepted', 'invited']);
+                                    project_name);
         }
     }
     function extractProject(project_action) {
@@ -1133,55 +1142,84 @@ def js_tmpl_parts(configuration, csrf_token):
             $('#gm_project_submit_form').submit();
         }
     }
-    function showProjectInfoDialog(project_name, project_participants) {
+    function showProjectInfoDialog(project_name, project_info) {
         var html = '';
         var body = '';
         var active_body = '';
         var pending_body = '';
-        html += '<p><b>Project participants:</b></p>';
+        var show_create_date = null;
+        var create_date = null;
+        var date_milisec_pos = -1;
 
-
-        if (project_participants.ERROR.length > 0) {
-            for (var i=0; i<project_participants.ERROR.length; i++) {
-                body += '<p class=\"errortext\">' +
-                        'Error: '+project_participants.ERROR[i]+'</p>';
+        if (project_info.ERROR.length > 0) {
+            for (var i=0; i<project_info.ERROR.length; i++) {
+                html += '<p class=\"errortext\">' +
+                        'Error: '+project_info.ERROR[i]+'</p>';
             }
         }
-        if (project_participants.WARNING.length > 0) {
-            for (var i=0; i<project_participants.WARNING.length; i++) {
-                body += '<p class=\"warningtext\">' +
-                        'Warning: '+ project_participants.WARNING[i]+'</p>';
+        if (project_info.WARNING.length > 0) {
+            for (var i=0; i<project_info.WARNING.length; i++) {
+                html += '<p class=\"warningtext\">' +
+                        'Warning: '+ project_info.WARNING[i]+'</p>';
             }
         }
-        
-        if (project_participants.OK.length > 0) {
-            for (var i=0; i<project_participants.OK.length; i++) {
-                if (project_participants.OK[i].state === 'accepted') {
-                    active_body += '<p>'+project_participants.OK[i].name+' ('+project_participants.OK[i].email+')</p>';
+        if (html === '' && project_info.OK.length == 1) {
+            console.debug(JSON.stringify(project_info.OK[0].create));
+            create_date = String(project_info.OK[0].create.date);
+            date_milisec_pos = create_date.indexOf('.');
+            if (date_milisec_pos > 0) {
+                show_create_date = create_date.substring(0,
+                                        date_milisec_pos);
+            } else {
+                show_create_date = create_date;
+            }
+            html += '<div class="two-column-grid">';
+            html += '<span>';
+            html += '<b>Created:</b>';
+            html += '</span><span>';
+            html += show_create_date;
+            html += '</span><span>';
+            html += '<b>Owner:</b>';
+            html += '</span><span>';
+            html += project_info.OK[0].owner.name;
+            html += '</span><span>';
+            html += '<b>Category:</b>';
+            html += '</span><span>';
+            html += project_info.OK[0].create.category;
+            html += '</span>';
+            for (var i=0; i<project_info.OK[0].create.references.length; i++) {
+                html += '<span>';
+                html += '<b>'+project_info.OK[0].create.references[i].ref_name+':</b>';
+                html += '</span><span>';
+                html += project_info.OK[0].create.references[i].value;
+                html += '</span>';
+            }
+            html += '</div>';  
+            for (var i=0; i<project_info.OK[0].users.length; i++) {
+                if (project_info.OK[0].users[i].state === 'accepted') {
+                    active_body += '<span>'+project_info.OK[0].users[i].name+' ('+project_info.OK[0].users[i].email+')</span>';
                 }
-                else if (project_participants.OK[i].state === 'invited') {
-                    pending_body += '<p>'+project_participants.OK[i].name+' ('+project_participants.OK[i].email+')</p>';
+                else if (project_info.OK[0].users[i].state === 'invited') {
+                    pending_body += '<span>'+project_info.OK[0].users[i].name+' ('+project_info.OK[0].users[i].email+')</span>';
                 }
             }
-        }
+            html += '<div class="one-column-grid">';
+            if (active_body !== '') {
+                html += '<span>&nbsp;</span>';
+                html += '<span><b>Active participants:</b></span>';
+                html += active_body;
+            }
+            if (pending_body !== '') {
+                html += '<span>&nbsp;</span>';
+                html += '<span><b>Pending invites:</b></span>';
+                html += pending_body;
+            }
+            html += '</div>';
 
-        if (body === '' && active_body === '' && pending_body === '') {
-            body += '<p>No participants found</p>';
         }
-        if (active_body !== '') {
-            body += '<p><b>Active:</b></p>';
-            body += active_body;
-        }
-        if (pending_body !== '') {
-            body += '<p><b>Pending invites:</b></p>';
-            body += pending_body;
-        }
-        html += body;
-
         $('#info_dialog').dialog('option', 'title', project_name);
         $('#info_dialog').html('<p>'+html+'</p>');
         $('#info_dialog').dialog('open');
-
     }
 
     function showProjectInfo() {
@@ -1189,8 +1227,7 @@ def js_tmpl_parts(configuration, csrf_token):
         if (project_name === null) {
             return;
         }
-        ajax_gdp_project_info(showProjectInfoDialog, project_name,
-                            ['accepted', 'invited']);
+        ajax_gdp_project_info(showProjectInfoDialog, project_name);
     }
     function showHelp(title, msg) {
         $('#help_dialog').dialog('option', 'title', title);
@@ -1674,8 +1711,8 @@ Please contact the site admins %s if you think it should be enabled.
             output_objects.append({'object_type': 'project_info',
                                    'info': get_project_info(
                                        configuration,
+                                       client_id,
                                        base_vgrid_name,
-                                       skip_users=[client_id],
                                    )})
         elif action == 'enable2fa':
             action_msg = status_msg
