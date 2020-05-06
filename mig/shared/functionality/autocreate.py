@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # autocreate - auto create user from signed certificate or openid login
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -93,7 +93,7 @@ def signature(login_type):
             'comment': ['(Signed up with OpenID and autocreate)'],
             'proxy_upload': [''],
             'proxy_uploadfilename': [''],
-            }
+        }
     elif login_type == 'cert':
         defaults = {
             'cert_id': REJECT_UNSET,
@@ -107,7 +107,7 @@ def signature(login_type):
             'comment': ['(Signed up with certificate and autocreate)'],
             'proxy_upload': [''],
             'proxy_uploadfilename': [''],
-            }
+        }
     else:
         raise ValueError('no such login_type: %s' % login_type)
     return ['text', defaults]
@@ -128,7 +128,7 @@ def handle_proxy(proxy_string, client_id, config):
 
     if not config.arc_clusters:
         output.append({'object_type': 'error_text',
-                      'text': 'No ARC support!'})
+                       'text': 'No ARC support!'})
         return output
 
     # store the file
@@ -138,8 +138,8 @@ def handle_proxy(proxy_string, client_id, config):
         os.chmod(proxy_path, 0600)
     except Exception, exc:
         output.append({'object_type': 'error_text',
-                      'text': 'Proxy file could not be written (%s)!'
-                      % str(exc).replace(proxy_dir, '')})
+                       'text': 'Proxy file could not be written (%s)!'
+                       % str(exc).replace(proxy_dir, '')})
         return output
 
     # provide information about the uploaded proxy
@@ -152,18 +152,18 @@ def handle_proxy(proxy_string, client_id, config):
             # can rarely happen, constructor will throw exception
 
             output.append({'object_type': 'warning',
-                          'text': 'Proxy certificate is expired.'})
+                           'text': 'Proxy certificate is expired.'})
         else:
             output.append({'object_type': 'text', 'text': 'Proxy for %s'
                            % proxy.GetIdentitySN()})
             output.append({'object_type': 'text',
-                          'text': 'Proxy certificate will expire on %s (in %s sec.)'
+                           'text': 'Proxy certificate will expire on %s (in %s sec.)'
                            % (proxy.Expires(), proxy.getTimeleft())})
     except arc.NoProxyError, err:
 
         output.append({'object_type': 'warning',
-                      'text': 'No proxy certificate to load: %s'
-                      % err.what()})
+                       'text': 'No proxy certificate to load: %s'
+                       % err.what()})
     return output
 
 
@@ -180,10 +180,10 @@ def main(client_id, user_arguments_dict, environ=None):
     prefilter_map = {}
 
     output_objects.append({'object_type': 'header',
-                          'text': 'Automatic %s sign up'
-                          % configuration.short_title})
+                           'text': 'Automatic %s sign up'
+                           % configuration.short_title})
     (_, identity) = extract_client_openid(configuration, environ,
-            lookup_dn=False)
+                                          lookup_dn=False)
     req_url = environ['SCRIPT_URI']
     if client_id and client_id == identity:
         login_type = 'cert'
@@ -195,8 +195,8 @@ def main(client_id, user_arguments_dict, environ=None):
             logger.warning('no match for cert request URL: %s'
                            % req_url)
             output_objects.append({'object_type': 'error_text',
-                                  'text': 'No matching request URL: %s'
-                                  % req_url})
+                                   'text': 'No matching request URL: %s'
+                                   % req_url})
             return (output_objects, returnvalues.SYSTEM_ERROR)
     elif identity:
         login_type = 'oid'
@@ -207,20 +207,20 @@ def main(client_id, user_arguments_dict, environ=None):
         else:
             logger.warning('no match for oid request URL: %s' % req_url)
             output_objects.append({'object_type': 'error_text',
-                                  'text': 'No matching request URL: %s'
-                                  % req_url})
+                                   'text': 'No matching request URL: %s'
+                                   % req_url})
             return (output_objects, returnvalues.SYSTEM_ERROR)
         for name in ('openid.sreg.cn', 'openid.sreg.fullname',
                      'openid.sreg.full_name'):
             prefilter_map[name] = filter_commonname
     else:
         output_objects.append({'object_type': 'error_text',
-                              'text': 'Missing user credentials'})
+                               'text': 'Missing user credentials'})
         return (output_objects, returnvalues.CLIENT_ERROR)
     defaults = signature(login_type)[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
-            defaults, output_objects, allow_rejects=False,
-            prefilter_map=prefilter_map)
+                                                 defaults, output_objects, allow_rejects=False,
+                                                 prefilter_map=prefilter_map)
     if not validate_status:
         logger.warning('%s invalid input: %s' % (op_name, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
@@ -230,8 +230,8 @@ def main(client_id, user_arguments_dict, environ=None):
     # Unfortunately OpenID redirect does not use POST
 
     if login_type != 'oid' and not safe_handler(
-        configuration, 'post', op_name, client_id,
-        get_csrf_limit(configuration), accepted):
+            configuration, 'post', op_name, client_id,
+            get_csrf_limit(configuration), accepted):
         output_objects.append({'object_type': 'error_text', 'text': '''Only
 accepting CSRF-filtered POST requests to prevent unintended updates'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -250,7 +250,7 @@ accepting CSRF-filtered POST requests to prevent unintended updates'''})
         org_unit = ''
         role = ','.join([i for i in accepted['role'] if i])
         association = ','.join([i for i in accepted['association']
-                               if i])
+                                if i])
         locality = ''
         timezone = ''
         email = accepted['email'][-1].strip()
@@ -271,8 +271,8 @@ accepting CSRF-filtered POST requests to prevent unintended updates'''})
 
         role = ','.join([i for i in accepted['openid.sreg.role'] if i])
         association = ','.join([i for i in
-                               accepted['openid.sreg.association']
-                               if i])
+                                accepted['openid.sreg.association']
+                                if i])
         locality = accepted['openid.sreg.locality'][-1].strip()
         timezone = accepted['openid.sreg.timezone'][-1].strip()
 
@@ -314,16 +314,20 @@ accepting CSRF-filtered POST requests to prevent unintended updates'''})
             if org == 'UKENDT':
                 org = 'KU'
                 logger.info('unknown affilition, set organization to %s'
-                             % org)
+                            % org)
 
         # Stay on virtual host - extra useful while we test dual OpenID
 
+        base_url = environ.get('REQUEST_URI', base_url).split('?')[0]
+        backend = 'home.py'
         if configuration.site_enable_gdp:
-            base_url = environ.get('REQUEST_URI', base_url).split('?'
-                    )[0].replace('autocreate', 'gdpman')
-        else:
-            base_url = environ.get('REQUEST_URI', base_url).split('?'
-                    )[0].replace('autocreate', 'fileman')
+            backend = 'gdpman.py'
+        elif configuration.site_autolaunch_page:
+            backend = os.path.basename(configuration.site_autolaunch_page)
+        elif configuration.site_landing_page:
+            backend = os.path.basename(configuration.site_landing_page)
+        base_url = base_url.replace('autocreate.py', backend)
+
         raw_login = None
         for oid_provider in configuration.user_openid_providers:
             openid_prefix = oid_provider.rstrip('/') + '/'
@@ -361,7 +365,7 @@ accepting CSRF-filtered POST requests to prevent unintended updates'''})
         'password': '',
         'comment': '%s: %s' % ('Existing certificate', comment),
         'openid_names': openid_names,
-        }
+    }
     user_dict.update(oid_extras)
 
     # We must receive some ID from the provider
@@ -379,9 +383,9 @@ Auto log out first to avoid sign up problems ...
                 document.getElementById('autologout').click();
             </script>""" \
                 % openid_autologout_url(configuration, identity,
-                    client_id, req_url, user_arguments_dict)
+                                        client_id, req_url, user_arguments_dict)
             output_objects.append({'object_type': 'html_form',
-                                  'text': html})
+                                   'text': html})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     auth = 'unknown'
@@ -394,7 +398,7 @@ Auto log out first to avoid sign up problems ...
             user_dict['distinguished_name'] = uniq_id
         except:
             output_objects.append({'object_type': 'error_text',
-                                  'text': '''Illegal Distinguished name:
+                                   'text': '''Illegal Distinguished name:
 Please note that the distinguished name must be a valid certificate DN with
 multiple "key=val" fields separated by "/".
 '''})
@@ -414,7 +418,7 @@ multiple "key=val" fields separated by "/".
     # we create the user immediately and skip mail
 
     if login_type == 'cert' and configuration.auto_add_cert_user \
-        or login_type == 'oid' and configuration.auto_add_oid_user:
+            or login_type == 'oid' and configuration.auto_add_oid_user:
         fill_user(user_dict)
 
         logger.info('create user: %s' % user_dict)
@@ -427,34 +431,38 @@ multiple "key=val" fields separated by "/".
             create_user(user_dict, configuration.config_file, db_path,
                         ask_renew=False, default_renew=True)
             if configuration.site_enable_griddk \
-                and accepted['proxy_upload'] != ['']:
+                    and accepted['proxy_upload'] != ['']:
 
                 # save the file, display expiration date
 
                 proxy_out = handle_proxy(proxy_content, uniq_id,
-                        configuration)
+                                         configuration)
                 output_objects.extend(proxy_out)
         except Exception, err:
             logger.error('create failed for %s: %s' % (uniq_id, err))
             output_objects.append({'object_type': 'error_text',
-                                  'text': '''Could not create the user account for you:
+                                   'text': '''Could not create the user account for you:
 Please report this problem to the grid administrators (%s).'''
                                    % admin_email})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         logger.info('created user account for %s' % uniq_id)
-        output_objects.append({'object_type': 'html_form',
-                              'text': '''Created the user account for you -
-please open <a href="%s">your personal page</a> to proceed using it.
-'''
-                              % base_url})
+        output_objects.append({'object_type': 'html_form', 'text': '''
+<p>Created the %(short_title)s user account for you!</p>
+<p class="spinner iconspace">
+Redirecting to <a href="%(base_url)s">your personal page</a> in a moment.
+</p>
+<script type="text/javascript">
+    setTimeout(function() { location.href="%(base_url)s";}, 3000);
+</script>
+
+''' % {'short_title': configuration.short_title, 'base_url': base_url}
+        })
         return (output_objects, returnvalues.OK)
     else:
         output_objects.append({'object_type': 'error_text',
-                              'text': '''Automatic user creation disabled on this site.
+                               'text': '''Automatic user creation disabled on this site.
 Please contact the site admins %s if you think it should be enabled.
 '''
-                              % configuration.admin_email})
+                               % configuration.admin_email})
         return (output_objects, returnvalues.ERROR)
-
-
