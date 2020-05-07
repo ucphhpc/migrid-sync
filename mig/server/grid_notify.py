@@ -180,7 +180,7 @@ def recv_notification(configuration, path):
             client_dict['files'] = files_list
         if path in files_list:
             logger.warning(
-                "Skipping prevoursly received notification: '%s'" % path)
+                "Skipping previously received notification: '%s'" % path)
         else:
             files_list.append(path)
             client_dict['timestamp'] = min(

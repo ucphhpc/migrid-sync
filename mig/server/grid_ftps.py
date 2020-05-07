@@ -97,9 +97,9 @@ from shared.griddaemons.ftps import default_max_user_hits, \
     get_fs_path, acceptable_chmod, refresh_user_creds, refresh_share_creds, \
     update_login_map, login_map_lookup, hit_rate_limit, expire_rate_limit, \
     check_twofactor_session, validate_auth_attempt
-from shared.tlsserver import hardened_openssl_context
 from shared.logger import daemon_logger, register_hangup_handler
 from shared.pwhash import make_scramble
+from shared.tlsserver import hardened_openssl_context
 from shared.useradm import check_password_hash
 from shared.validstring import possible_user_id, possible_sharelink_id
 
@@ -228,8 +228,8 @@ class MiGUserAuthorizer(DummyAuthorizer):
 
         if self.last_expire + self.min_expire_delay < time.time():
             self.last_expire = time.time()
-            expire_rate_limit(configuration, "ftps", 
-                expire_delay=self.min_expire_delay)
+            expire_rate_limit(configuration, "ftps",
+                              expire_delay=self.min_expire_delay)
         if hit_rate_limit(configuration, 'ftps', client_ip, username,
                           max_user_hits=max_user_hits):
             exceeded_rate_limit = True

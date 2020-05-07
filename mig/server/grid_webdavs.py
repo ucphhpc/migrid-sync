@@ -76,13 +76,13 @@ from shared.griddaemons.davs import get_fs_path, acceptable_chmod, \
     add_user_object, track_open_session, clear_sessions, \
     track_close_session, track_close_expired_sessions, \
     get_active_session, check_twofactor_session, validate_auth_attempt
-from shared.pwhash import make_scramble
-from shared.sslsession import ssl_session_token
-from shared.tlsserver import hardened_ssl_context
 from shared.logger import daemon_logger, daemon_gdp_logger, \
     register_hangup_handler
 from shared.notification import send_system_notification
-from shared.pwhash import unscramble_digest, assure_password_strength
+from shared.pwhash import make_scramble, unscramble_digest, \
+    assure_password_strength
+from shared.sslsession import ssl_session_token
+from shared.tlsserver import hardened_ssl_context
 from shared.useradm import check_password_hash, generate_password_hash, \
     generate_password_digest
 from shared.validstring import possible_user_id, possible_gdp_user_id, \

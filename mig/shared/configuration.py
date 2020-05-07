@@ -1898,6 +1898,43 @@ location.""" % self.config_file
                     locations.append(ext_oid_url)
             self.myfiles_py_location = ' '.join(locations)
 
+        # Force-disable all incompatible or unsafe features in GDP mode
+        if self.site_enable_gdp:
+            # NOTE: ftps COULD be enabled with GDP tweaks like for sftp/webdavs
+            self.site_enable_ftps = False
+            # NOTE: jupyter and cloud require GDP compatible hosts and tweaks
+            self.site_enable_jupyter = False
+            self.site_enable_cloud = False
+            # NOTE: unlimited transfers or sharelinks are a huge leak risk
+            #       deposit-only versions COULD be developed
+            self.site_enable_transfers = False
+            self.site_enable_sharelinks = False
+            # NOTE: compute jobs will require vast modifications to support GDP
+            self.site_enable_resources = False
+            self.site_enable_jobs = False
+            self.site_enable_sshmux = False
+            self.site_enable_preview = False
+            self.site_enable_vmachines = False
+            self.site_enable_sandboxes = False
+            # NOTE: every operation must be clearly logged with explicit actor
+            #       so at least analyse thoroughly before GDP-enabling these.
+            self.site_enable_crontab = False
+            self.site_enable_events = False
+            self.site_enable_workflows = False
+            # NOTE: duplicati+seafile rely on local files which may be an issue
+            #       so at least analyse thoroughly before GDP-enabling.
+            self.site_enable_duplicati = False
+            self.site_enable_seafile = False
+            # NOTE: GDPR lifetime is likely in conflict with freeze promises
+            #       but a restricted freeze version COULD be developed.
+            self.site_enable_freeze = False
+            # NOTE: disable other probably harmless but non-essential features
+            self.site_enable_imnotify = False
+            self.site_enable_griddk = False
+            self.site_enable_styles = False
+            self.site_enable_widgets = False
+            self.site_enable_gravatars = False
+
         # Filter disabled features from vgrid links
         exclude_features = []
         if not self.site_enable_jobs:
@@ -1908,11 +1945,11 @@ location.""" % self.config_file
             exclude_features += ['tracker']
         if not self.hg_path:
             exclude_features += ['scm']
-        def_links = self.site_default_vgrid_links            
-        def_links  = [i for i in def_links if i not in exclude_features]
+        def_links = self.site_default_vgrid_links
+        def_links = [i for i in def_links if i not in exclude_features]
         self.site_default_vgrid_links = def_links
-        adv_links = self.site_advanced_vgrid_links            
-        adv_links  = [i for i in adv_links if i not in exclude_features]
+        adv_links = self.site_advanced_vgrid_links
+        adv_links = [i for i in adv_links if i not in exclude_features]
         self.site_advanced_vgrid_links = adv_links
 
         # set test modes if requested

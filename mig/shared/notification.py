@@ -801,11 +801,12 @@ def send_system_notification(user_id, category, message, configuration):
         logger.warning("System notify helper is disabled in configuration!")
         return False
     if not user_id:
-        logger.error("Invalid user_id: %s" % user_id)
+        logger.error("Invalid user_id: %r" % user_id)
         return False
     client_id = expand_openid_alias(user_id, configuration)
     if not client_id or not extract_field(client_id, 'email'):
-        logger.error("send_system_notification: Invalid user_id: %s" % user_id)
+        logger.warning(
+            "send_system_notification: Invalid user_id: %r" % user_id)
         return False
     if not isinstance(category, list):
         logger.error("send_system_notification: category must be a list")
