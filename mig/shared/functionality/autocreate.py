@@ -93,6 +93,7 @@ def signature(login_type):
             'comment': ['(Signed up with OpenID and autocreate)'],
             'proxy_upload': [''],
             'proxy_uploadfilename': [''],
+            'authsig': ['']
         }
     elif login_type == 'cert':
         defaults = {
@@ -189,8 +190,10 @@ def main(client_id, user_arguments_dict, environ=None):
         login_type = 'cert'
         if req_url.startswith(configuration.migserver_https_mig_cert_url):
             base_url = configuration.migserver_https_mig_cert_url
+            login_flavor = 'migcert'
         elif req_url.startswith(configuration.migserver_https_ext_cert_url):
             base_url = configuration.migserver_https_ext_cert_url
+            login_flavor = 'extcert'
         else:
             logger.warning('no match for cert request URL: %s'
                            % req_url)
@@ -202,8 +205,10 @@ def main(client_id, user_arguments_dict, environ=None):
         login_type = 'oid'
         if req_url.startswith(configuration.migserver_https_mig_oid_url):
             base_url = configuration.migserver_https_mig_oid_url
+            login_flavor = 'migoid'
         elif req_url.startswith(configuration.migserver_https_ext_oid_url):
             base_url = configuration.migserver_https_ext_oid_url
+            login_flavor = 'extoid'
         else:
             logger.warning('no match for oid request URL: %s' % req_url)
             output_objects.append({'object_type': 'error_text',
@@ -214,6 +219,7 @@ def main(client_id, user_arguments_dict, environ=None):
                      'openid.sreg.full_name'):
             prefilter_map[name] = filter_commonname
     else:
+        logger.error('autocreate without ID rejected for %s' % client_id)
         output_objects.append({'object_type': 'error_text',
                                'text': 'Missing user credentials'})
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -222,16 +228,37 @@ def main(client_id, user_arguments_dict, environ=None):
                                                  defaults, output_objects, allow_rejects=False,
                                                  prefilter_map=prefilter_map)
     if not validate_status:
-        logger.warning('%s invalid input: %s' % (op_name, accepted))
+        logger.warning('%s from %s got invalid input: %s' %
+                       (op_name, client_id, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
 
     logger.debug('Accepted arguments: %s' % accepted)
+    #logger.debug('with environ: %s' % environ)
 
-    # Unfortunately OpenID redirect does not use POST
+    # TODO: improve and enforce full authsig from extoid provider
+    authsig_list = accepted.get('authsig', [])
+    # if len(authsig_list) != 1:
+    #    logger.warning('%s from %s got invalid authsig: %s' %
+    #                   (op_name, client_id, authsig_list))
 
-    if login_type != 'oid' and not safe_handler(
+    # NOTE: Unfortunately external OpenID redirect does not enforce POST
+
+    # Extract helper environments from Apache to verify request authenticity
+
+    redirector = environ.get('HTTP_REFERER', '')
+    extoid_prefix = configuration.user_ext_oid_provider.replace('id/', '')
+    # TODO: extend redirector check to match the full signup request
+    if login_flavor == 'extoid' and not redirector.startswith(extoid_prefix):
+        logger.error('stray extoid autocreate rejected for %r (ref: %r)' %
+                     (client_id, redirector))
+        output_objects.append({'object_type': 'error_text', 'text': '''Only
+accepting authentic requests through %s OpenID''' %
+                               configuration.user_ext_oid_title})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+    elif login_flavor != 'extoid' and not safe_handler(
             configuration, 'post', op_name, client_id,
             get_csrf_limit(configuration), accepted):
+        logger.error('unsafe autocreate rejected for %s' % client_id)
         output_objects.append({'object_type': 'error_text', 'text': '''Only
 accepting CSRF-filtered POST requests to prevent unintended updates'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -372,6 +399,7 @@ accepting CSRF-filtered POST requests to prevent unintended updates'''})
 
     if not uniq_id and not email:
         if accepted.get('openid.sreg.required', '') and identity:
+            logger.warning('autocreate forcing autologut for %s' % client_id)
             output_objects.append({'object_type': 'html_form',
                                    'text': '''<p class="spinner iconleftpad">
 Auto log out first to avoid sign up problems ...
@@ -386,17 +414,22 @@ Auto log out first to avoid sign up problems ...
                                         client_id, req_url, user_arguments_dict)
             output_objects.append({'object_type': 'html_form',
                                    'text': html})
+        else:
+            logger.warning('autocreate without ID refused for %s' % client_id)
+
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     auth = 'unknown'
     if login_type == 'cert':
         auth = 'extcert'
+        # TODO: consider limiting expire to real cert expire if before default?
         user_dict['expire'] = int(time.time() + cert_valid_days * 24
                                   * 60 * 60)
         try:
             distinguished_name_to_user(uniq_id)
             user_dict['distinguished_name'] = uniq_id
         except:
+            logger.error('autocreate with bad DN refused for %s' % client_id)
             output_objects.append({'object_type': 'error_text',
                                    'text': '''Illegal Distinguished name:
 Please note that the distinguished name must be a valid certificate DN with
@@ -409,6 +442,14 @@ multiple "key=val" fields separated by "/".
                                   * 60 * 60)
         fill_distinguished_name(user_dict)
         uniq_id = user_dict['distinguished_name']
+
+    # IMPORTANT: do NOT let a user create with ID different from client_id
+    if login_type == 'cert' and client_id != uniq_id:
+        logger.error('refusing autocreate invalid user for %s: %s' %
+                     (client_id, user_dict))
+        output_objects.append({'object_type': 'error_text', 'text': '''Only
+accepting create matching supplied ID!'''})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Save auth access method
 
@@ -448,9 +489,9 @@ Please report this problem to the grid administrators (%s).'''
 
         logger.info('created user account for %s' % uniq_id)
         output_objects.append({'object_type': 'html_form', 'text': '''
-<p>Created the %(short_title)s user account for you!</p>
+<p>Creating your %(short_title)s user account ...</p>
 <p class="spinner iconspace">
-Redirecting to <a href="%(base_url)s">your personal page</a> in a moment.
+redirecting to your <a href="%(base_url)s">personal pages</a> in a moment.
 </p>
 <script type="text/javascript">
     setTimeout(function() { location.href="%(base_url)s";}, 3000);
@@ -460,6 +501,7 @@ Redirecting to <a href="%(base_url)s">your personal page</a> in a moment.
         })
         return (output_objects, returnvalues.OK)
     else:
+        logger.warning('autocreate disabled and refused for %s' % client_id)
         output_objects.append({'object_type': 'error_text',
                                'text': '''Automatic user creation disabled on this site.
 Please contact the site admins %s if you think it should be enabled.
