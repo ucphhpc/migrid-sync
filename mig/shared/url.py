@@ -44,7 +44,7 @@ def base32urlencode(
     url,
     query_dict=None,
     remove_padding=True,
-    ):
+):
     """Returns base32 urlencoded representation of
     *url* and *query_dict*
     NOTE: base32 uses the alpha-numeric alphabet in order to make the encoded url
@@ -101,9 +101,10 @@ def base32urldecode(configuration, encoded_url,
             query_dict[key] = ast.literal_eval(value)
         except ValueError, exc:
             raise ValueError('Invalid formated input: %s -> %s, error: %s'
-                              % (key, value, exc))
+                             % (key, value, exc))
 
     return (result_url, query_dict)
+
 
 def openid_autologout_url(
     configuration,
@@ -111,7 +112,7 @@ def openid_autologout_url(
     client_id,
     return_url,
     return_query_dict=None,
-    ):
+):
     """Generates OpenID logout URL.
     OpenID logout consists of two steps:
     1) OpenID server: expire session
@@ -152,3 +153,22 @@ def openid_autologout_url(
     return oid_logout_url
 
 
+def openid_basic_logout_url(
+    configuration,
+    openid_identity,
+    return_url,
+):
+    """Generates basic OpenID logout URL to expire session OpenID session
+    then redirect to *return_url*.
+    """
+
+    _logger = configuration.logger
+
+    # OpenID server always returns to autologout.py which then redirects
+    # to return_url
+
+    oid_logout_url = \
+        os.path.join(os.path.dirname(os.path.dirname(openid_identity)),
+                     'logout?return_to=%s' % return_url)
+    _logger.debug("basic openid logout url: %s" % oid_logout_url)
+    return oid_logout_url

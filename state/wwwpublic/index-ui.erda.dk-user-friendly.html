@@ -259,9 +259,18 @@
 	    <h1>Keep everything organized with ERDA</h1>
 	    <p class="sub-title">ERDA - Electronic Research Data Archive is a storage, sharing and archiving facility provided by University of Copenhagen to employees and students.</p>
 	    <button style="color: #fff; background-color: #46743C; border-radius: 30px; width: 120px; height: 40px;" value="log in" onClick="login('extoid');">Log in</button>
+            <div id="signupform" class="hidden">
+            <form method='post' action='https://ui.erda.dk/wsgi-bin/autocreate.py'>
+              <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
+              <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
+              <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
+              <input class="signupbutton" type="submit" value="sign up" />
+
+            </form>
+            </div>
 	    <button style="color: #46743C; background-color: #FFF;
 	    margin-left: 5px; border-radius: 30px; width: 120px; height:
-	    40px; border: 1px solid #46743C" onclick="window.location.href='https://ui.erda.dk/wsgi-bin/autocreate.py'">Sign up</button>
+	    40px; border: 1px solid #46743C" onClick="$('#signupform .signupbutton').click();">Sign up</button>
           </div>
         </div>
       </div>
