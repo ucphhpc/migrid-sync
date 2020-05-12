@@ -235,34 +235,6 @@ def main(client_id, user_arguments_dict, environ=None):
     logger.debug('Accepted arguments: %s' % accepted)
     #logger.debug('with environ: %s' % environ)
 
-    # TODO: improve and enforce full authsig from extoid provider
-    authsig_list = accepted.get('authsig', [])
-    # if len(authsig_list) != 1:
-    #    logger.warning('%s from %s got invalid authsig: %s' %
-    #                   (op_name, client_id, authsig_list))
-
-    # NOTE: Unfortunately external OpenID redirect does not enforce POST
-
-    # Extract helper environments from Apache to verify request authenticity
-
-    redirector = environ.get('HTTP_REFERER', '')
-    extoid_prefix = configuration.user_ext_oid_provider.replace('id/', '')
-    # TODO: extend redirector check to match the full signup request
-    if login_flavor == 'extoid' and not redirector.startswith(extoid_prefix):
-        logger.error('stray extoid autocreate rejected for %r (ref: %r)' %
-                     (client_id, redirector))
-        output_objects.append({'object_type': 'error_text', 'text': '''Only
-accepting authentic requests through %s OpenID''' %
-                               configuration.user_ext_oid_title})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-    elif login_flavor != 'extoid' and not safe_handler(
-            configuration, 'post', op_name, client_id,
-            get_csrf_limit(configuration), accepted):
-        logger.error('unsafe autocreate rejected for %s' % client_id)
-        output_objects.append({'object_type': 'error_text', 'text': '''Only
-accepting CSRF-filtered POST requests to prevent unintended updates'''})
-        return (output_objects, returnvalues.CLIENT_ERROR)
-
     admin_email = configuration.admin_email
     (openid_names, oid_extras) = ([], {})
 
@@ -377,6 +349,12 @@ accepting CSRF-filtered POST requests to prevent unintended updates'''})
 
     comment = comment.replace("'", ' ')
 
+    # TODO: improve and enforce full authsig from extoid provider
+    authsig_list = accepted.get('authsig', [])
+    # if len(authsig_list) != 1:
+    #    logger.warning('%s from %s got invalid authsig: %s' %
+    #                   (op_name, client_id, authsig_list))
+
     user_dict = {
         'short_id': uniq_id,
         'full_name': full_name,
@@ -395,7 +373,8 @@ accepting CSRF-filtered POST requests to prevent unintended updates'''})
     }
     user_dict.update(oid_extras)
 
-    # We must receive some ID from the provider
+    # We must receive some ID from the provider otherwise we probably hit the
+    # already logged in situation and must autologout first
 
     if not uniq_id and not email:
         if accepted.get('openid.sreg.required', '') and identity:
@@ -417,6 +396,29 @@ Auto log out first to avoid sign up problems ...
         else:
             logger.warning('autocreate without ID refused for %s' % client_id)
 
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    # NOTE: Unfortunately external OpenID redirect does not enforce POST
+    # Extract helper environments from Apache to verify request authenticity
+
+    redirector = environ.get('HTTP_REFERER', '')
+    extoid_prefix = configuration.user_ext_oid_provider.replace('id/', '')
+    # TODO: extend redirector check to match the full signup request?
+    #       may not work with recent browser policy changes to limit referrer
+    #       details on cross site requests.
+    if login_flavor == 'extoid' and not redirector.startswith(extoid_prefix):
+        logger.error('stray extoid autocreate rejected for %r (ref: %r)' %
+                     (client_id, redirector))
+        output_objects.append({'object_type': 'error_text', 'text': '''Only
+accepting authentic requests through %s OpenID''' %
+                               configuration.user_ext_oid_title})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+    elif login_flavor != 'extoid' and not safe_handler(
+            configuration, 'post', op_name, client_id,
+            get_csrf_limit(configuration), accepted):
+        logger.error('unsafe autocreate rejected for %s' % client_id)
+        output_objects.append({'object_type': 'error_text', 'text': '''Only
+accepting CSRF-filtered POST requests to prevent unintended updates'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     auth = 'unknown'
