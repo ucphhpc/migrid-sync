@@ -406,7 +406,9 @@ Auto log out first to avoid sign up problems ...
     # TODO: extend redirector check to match the full signup request?
     #       may not work with recent browser policy changes to limit referrer
     #       details on cross site requests.
-    if login_flavor == 'extoid' and not redirector.startswith(extoid_prefix):
+    # NOTE: redirector check breaks for FF default policy so disabled again!
+    if login_flavor == 'extoid' and redirector and \
+            not redirector.startswith(extoid_prefix):
         logger.error('stray extoid autocreate rejected for %r (ref: %r)' %
                      (client_id, redirector))
         output_objects.append({'object_type': 'error_text', 'text': '''Only
