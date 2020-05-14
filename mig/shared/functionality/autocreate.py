@@ -408,7 +408,9 @@ Auto log out first to avoid sign up problems ...
     #       details on cross site requests.
     # NOTE: redirector check breaks for FF default policy so disabled again!
     if login_flavor == 'extoid' and redirector and \
-            not redirector.startswith(extoid_prefix):
+            not redirector.startswith(extoid_prefix) and \
+            not redirector.startswith(configuration.migserver_https_sid_url) \
+            and not redirector.startswith(configuration.migserver_http_url):
         logger.error('stray extoid autocreate rejected for %r (ref: %r)' %
                      (client_id, redirector))
         output_objects.append({'object_type': 'error_text', 'text': '''Only

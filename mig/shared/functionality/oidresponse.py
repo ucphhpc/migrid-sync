@@ -148,13 +148,13 @@ already logged in to the OpenID service.
             # NOTE: for cgi-sid we don't have the oid username so use a dummy
             if not identity:
                 if configuration.user_mig_oid_provider and \
-                    client_refer.find(os.path.dirname(
-                        configuration.user_mig_oid_provider)) != -1:
+                        openid_referrer.startswith(
+                            configuration.migserver_https_mig_oid_url):
                     identity = configuration.user_mig_oid_provider
                     identity = os.path.join(identity, client_id)
                 elif configuration.user_ext_oid_provider and \
-                        client_refer.find(os.path.dirname(
-                            configuration.user_mig_oid_provider)) != -1:
+                        openid_referrer.startswith(
+                            configuration.migserver_https_ext_oid_url):
                     identity = configuration.user_ext_oid_provider
                     identity = os.path.join(identity, client_id)
                 else:

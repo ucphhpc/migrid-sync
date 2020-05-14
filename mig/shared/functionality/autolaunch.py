@@ -49,6 +49,13 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(
         client_id, op_header=False, op_title=False, op_menu=client_id)
+    # IMPORTANT: no title in init above so we MUST call it immediately here
+    #            or basic styling will break e.g. on crashes.
+    styles = themed_styles(configuration)
+    scripts = themed_scripts(configuration, logged_in=False)
+    output_objects.append(
+        {'object_type': 'title', 'text': 'Auto Launch',
+         'skipmenu': True, 'style': styles, 'script': scripts})
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -60,14 +67,6 @@ def main(client_id, user_arguments_dict):
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
-
-    # IMPORTANT: no title in init above so we MUST call it immediately here
-    #            or basic styling will break e.g. on crashes.
-    styles = themed_styles(configuration)
-    scripts = themed_scripts(configuration, logged_in=False)
-    output_objects.append(
-        {'object_type': 'title', 'text': 'Auto Launch',
-         'skipmenu': True, 'style': styles, 'script': scripts})
 
     user_settings = load_settings(client_id, configuration)
     # NOTE: loaded settings may be the boolean False rather than dict here

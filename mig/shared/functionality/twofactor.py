@@ -73,6 +73,13 @@ def main(client_id, user_arguments_dict, environ=None):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(
         client_id, op_header=False, op_title=False, op_menu=client_id)
+    # IMPORTANT: no title in init above so we MUST call it immediately here
+    #            or basic styling will break on e.g. the check token result.
+    styles = themed_styles(configuration)
+    scripts = themed_scripts(configuration, logged_in=False)
+    output_objects.append(
+        {'object_type': 'title', 'text': '2-Factor Authentication',
+         'skipmenu': True, 'style': styles, 'script': scripts})
 
     # Extract raw data first
     if environ is None:
@@ -100,14 +107,6 @@ def main(client_id, user_arguments_dict, environ=None):
     # logger.debug("User: %s executing %s with redirect url %s" %
     #             (client_id, op_name, redirect_url))
     # logger.debug("env: %s" % environ)
-
-    # IMPORTANT: no title in init above so we MUST call it immediately here
-    #            or basic styling will break on e.g. the check token result.
-    styles = themed_styles(configuration)
-    scripts = themed_scripts(configuration, logged_in=False)
-    output_objects.append(
-        {'object_type': 'title', 'text': '2-Factor Authentication',
-         'skipmenu': True, 'style': styles, 'script': scripts})
 
     if not configuration.site_enable_twofactor:
         output_objects.append({'object_type': 'error_text', 'text':
