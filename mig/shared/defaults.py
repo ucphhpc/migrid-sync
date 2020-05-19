@@ -116,6 +116,14 @@ default_https_port = 443
 
 cert_valid_days = 365
 oid_valid_days = 365
+cert_auto_extend_days = 30
+oid_auto_extend_days = 30
+
+# Strictly ordered list of account status values to enable use of filemarks
+# for caching account status using integer timestamps outside user DB.
+# IMPORTANT: generally do NOT rearrange order, and ONLY append new values
+#            unless also purging ALL status filemarks in the process.
+valid_account_status = ['active', 'temporal', 'suspended', 'retired']
 
 auth_openid_mig_db = 'mod_auth_openid-mig-users.db'
 auth_openid_ext_db = 'mod_auth_openid-ext-users.db'
@@ -133,6 +141,8 @@ ftps_conf_dir = '.ftps'
 seafile_conf_dir = '.seafile'
 duplicati_conf_dir = '.duplicati'
 cloud_conf_dir = '.cloud'
+expire_marks_dir = 'expire_marks'
+status_marks_dir = 'status_marks'
 job_output_dir = 'job_output'
 transfer_output_dir = 'transfer_output'
 cron_output_dir = 'cron_output'

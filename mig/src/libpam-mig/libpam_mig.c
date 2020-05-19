@@ -555,6 +555,20 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
             WRITELOGMESSAGE(LOG_WARNING,
                             "MiG registered successful auth despite NOT PAM_SUCCESS");
         }
+    } else {
+        /* Check account active and not expired */
+        valid_username = mig_check_account_accessible(pUsername);
+        if (valid_username == false) {
+            WRITELOGMESSAGE(LOG_DEBUG, "account_accessible: %s\n",
+                            BOOL2STR(valid_username));
+            if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
+                                              | MIG_AUTHTYPE_PASSWORD
+                                              | MIG_ACCOUNT_INACCESSIBLE,
+                                              pUsername, pAddress, NULL)) {
+                WRITELOGMESSAGE(LOG_WARNING,
+                                "MiG registered successful auth despite NOT PAM_SUCCESS");
+            }
+        }
     }
 #endif                          /* ENABLE_AUTHHANDLER */
     if (valid_username == false) {

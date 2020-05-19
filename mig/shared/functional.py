@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # functional - functionality backend helpers
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,14 +30,18 @@ the functionality dir.
 """
 
 import os
+import time
 
 # REJECT_UNSET is not used directly but exposed to functionality
 
+from shared.accountstate import check_account_status, \
+    check_update_account_expire
 from shared.base import requested_page, force_utf8
 from shared.defaults import csrf_field, auth_openid_ext_db
 from shared.findtype import is_user
 from shared.httpsclient import extract_client_cert, extract_client_openid, \
-     extract_base_url
+    extract_base_url
+from shared.init import find_entry, make_title_entry, make_header_entry
 from shared.safeinput import validated_input, REJECT_UNSET
 from shared.useradm import expire_oid_sessions
 
@@ -133,12 +137,38 @@ def validate_input_and_cert(
     if environ is None:
         environ = os.environ
     creds_error = ''
+    pending_expire, account_expire = True, 0
+    account_accessible, account_status = True, 'active'
+    user_dict = None
     if not client_id:
         creds_error = "Invalid or missing user credentials"
     elif require_user and not is_user(client_id, configuration.mig_server_home):
         creds_error = "No such user (%s)" % client_id
+    else:
+        (account_accessible, account_status, _) = check_account_status(
+            configuration, client_id)
+        if not account_accessible:
+            creds_error = "User account is %s!" % account_status
+        else:
+            (pending_expire, account_expire, _) = check_update_account_expire(
+                configuration, client_id, environ)
+            if not pending_expire:
+                creds_error = "User account expired!"
 
-    if creds_error and not requested_page().endswith('logout.py'):
+    if creds_error and not os.path.basename(requested_page()) in \
+            ['logout.py', 'autologout.py']:
+        # Simple init to get page preamble even where initialize_main_variables
+        # was called with most things disabled because no or limited direct
+        # output was expected.
+        title = find_entry(output_objects, 'title')
+        if not title:
+            output_objects.append(make_title_entry(
+                'Account Error', skipmenu=True, skipwidgets=True,
+                skipuserstyle=True, skipuserprofile=True))
+        else:
+            title['text'] = 'Account Error'
+        output_objects.append(make_header_entry('Account Error'))
+
         output_objects.append({'object_type': 'error_text', 'text': creds_error
                                })
 
@@ -163,7 +193,7 @@ def validate_input_and_cert(
     already have access to %s, but you can sign up:''' % configuration.short_title
                      })
                 output_objects.append({'object_type': 'link', 'text':
-                                       '%s sign up page' % \
+                                       '%s sign up page' %
                                        configuration.short_title,
                                        'destination': signup_url + signup_query})
                 output_objects.append(
@@ -171,14 +201,27 @@ def validate_input_and_cert(
     received a user certificate you probably just need to import it in your
     browser.'''})
             else:
-                output_objects.append(
-                    {'object_type': 'text', 'text': '''Apparently you already have
-    suitable credentials and just need to sign up for a local %s account on the''' %
-                     configuration.short_title})
+                if not account_accessible:
+                    output_objects.append(
+                        {'object_type': 'text', 'text':
+                         '''Please contact the %s admins about access: %s''' %
+                         (configuration.short_title,
+                          configuration.admin_email)})
+                elif not pending_expire:
+                    output_objects.append(
+                        {'object_type': 'text', 'text':
+                         '''You probably just need to renew %s account access
+by repeating the steps on the''' % configuration.short_title})
+                else:
+                    output_objects.append(
+                        {'object_type': 'text', 'text':
+                         '''Apparently you already have suitable credentials
+and just need to sign up for a local %s account on the''' %
+                         configuration.short_title})
 
                 base_url = extract_base_url(configuration, environ)
                 if base_url == configuration.migserver_https_ext_cert_url and \
-                       'extcert' in configuration.site_login_methods:
+                        'extcert' in configuration.site_login_methods:
                     signup_query = '?show=extcert'
                 elif base_url in (configuration.migserver_https_ext_oid_url,
                                   configuration.migserver_https_mig_oid_url):
@@ -192,17 +235,17 @@ def validate_input_and_cert(
                         (success, _) = expire_oid_sessions(configuration, oid_db,
                                                            identity)
                         if oid_db == auth_openid_ext_db and \
-                               'extoid' in configuration.site_signup_methods:
+                                'extoid' in configuration.site_signup_methods:
                             signup_query = '?show=extoid'
                         else:
-                            logger.error("unknown migoid client_id %s on %s" \
+                            logger.error("unknown migoid client_id %s on %s"
                                          % (client_id, base_url))
                 else:
-                    logger.warning("unexpected client_id %s on %s" % \
+                    logger.warning("unexpected client_id %s on %s" %
                                    (client_id, base_url))
 
                 output_objects.append({'object_type': 'link', 'text':
-                                       '%s sign up page' % \
+                                       '%s sign up page' %
                                        configuration.short_title,
                                        'destination':
                                        signup_url + signup_query})

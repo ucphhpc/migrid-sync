@@ -229,9 +229,21 @@ def requested_page(environ=None, fallback='home.py'):
     # NOTE: RPC wrappers inject name of actual backend as BACKEND_NAME
     page_path = environ.get('BACKEND_NAME', False) or \
         environ.get('SCRIPT_URL', False) or \
+        environ.get('SCRIPT_URI', False) or \
         environ.get('PATH_INFO', False) or \
         environ.get('REQUEST_URI', fallback).split('?', 1)[0]
     return page_path
+
+
+def requested_url_base(environ=None):
+    """Lookup requested url base from environ or os.environ if not provided.
+    """
+    if not environ:
+        environ = os.environ
+    full_url = environ.get('SCRIPT_URI', None)
+    parts = full_url.split('/', 3)
+    url_base = '/'.join(parts[:3])
+    return url_base
 
 
 def force_utf8(val):

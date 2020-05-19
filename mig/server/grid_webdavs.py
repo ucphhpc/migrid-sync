@@ -63,6 +63,7 @@ except ImportError, ierr:
     print "You may need to install cherrypy if your wsgidav does not bundle it"
     sys.exit(1)
 
+from shared.accountstate import check_account_accessible
 from shared.base import invisible_path, force_unicode
 from shared.conf import get_configuration_object
 from shared.defaults import dav_domain, litmus_id, io_session_timeout
@@ -73,9 +74,9 @@ from shared.griddaemons.davs import get_fs_path, acceptable_chmod, \
     default_proto_abuse_hits, default_max_secret_hits, \
     default_username_validator, refresh_user_creds, refresh_share_creds, \
     update_login_map, login_map_lookup, hit_rate_limit, expire_rate_limit, \
-    add_user_object, track_open_session, clear_sessions, \
-    track_close_session, track_close_expired_sessions, \
-    get_active_session, check_twofactor_session, validate_auth_attempt
+    add_user_object, track_open_session, clear_sessions, track_close_session, \
+    track_close_expired_sessions, get_active_session, \
+    check_twofactor_session, validate_auth_attempt
 from shared.logger import daemon_logger, daemon_gdp_logger, \
     register_hangup_handler
 from shared.notification import send_system_notification
@@ -486,12 +487,13 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
 
         The following is checked before granting auth:
         1) Valid username
-        2) Valid user (Does user exist and enabled WebDAVS)
-        3) Valid 2FA session (if 2FA is enabled)
-        4) Hit rate limit (To many auth attempts)
-        5) Valid pre-authorized SSL session
-        6) Valid password (if password enabled)
-        7) Valid digest (if digest enabled)
+        2) Valid user (Does user exist with enabled WebDAVS)
+        3) Account is active and not expired
+        4) Valid 2FA session (if 2FA is enabled)
+        5) Hit rate limit (To many auth attempts)
+        6) Valid pre-authorized SSL session
+        7) Valid password (if password enabled)
+        8) Valid digest (if digest enabled)
         """
         result = None
         response_ok = False
@@ -506,6 +508,7 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
         exceeded_rate_limit = False
         invalid_username = False
         invalid_user = False
+        account_accessible = False
         ip_addr = _get_addr(environ)
         tcp_port = _get_port(environ)
         daemon_conf = configuration.daemon_conf
@@ -552,6 +555,8 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
             print "auth_username: %s" % auth_username
             print "auth_realm: %s" % auth_realm
             if auth_username and auth_username == username and auth_realm:
+                account_accessible = check_account_accessible(
+                    configuration, username, 'davs', environ)
                 if password_auth:
                     valid_password = True
                 elif digest_auth:
@@ -596,6 +601,7 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
                 secret=secret,
                 invalid_username=invalid_username,
                 invalid_user=invalid_user,
+                account_accessible=account_accessible,
                 valid_twofa=valid_twofa,
                 authtype_enabled=(password_enabled or digest_enabled),
                 valid_auth=(valid_password or valid_digest),

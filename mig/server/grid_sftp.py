@@ -79,6 +79,7 @@ except ImportError:
     print "ERROR: the python paramiko module is required for this daemon"
     sys.exit(1)
 
+from shared.accountstate import check_account_accessible
 from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
 from shared.defaults import keyword_auto, STRONG_SSH_KEXALGOS, \
@@ -1032,12 +1033,13 @@ class SimpleSSHServer(paramiko.ServerInterface):
 
         The following is checked before granting auth:
         1) Valid username
-        2) Valid user (Does user exist and enabled sftp)
-        3) Valid 2FA session (if 2FA is enabled)
-        4) Hit rate limit (Too many auth attempts)
-        5) Max sessions (Too many open sessions)
-        6) Valid password (if password enabled)
-        7) Valid key (if key enabled)
+        2) Valid user (Does user exist with enabled SFTP)
+        3) Account is active and not expired
+        4) Valid 2FA session (if 2FA is enabled)
+        5) Hit rate limit (Too many auth attempts)
+        6) Max sessions (Too many open sessions)
+        7) Valid password (if password enabled)
+        8) Valid key (if key enabled)
         """
         secret = None
         disconnect = False
@@ -1048,6 +1050,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
         key_enabled = False
         invalid_username = False
         invalid_user = False
+        account_accessible = False
         valid_key = False
         valid_password = False
         valid_twofa = False
@@ -1111,6 +1114,8 @@ class SimpleSSHServer(paramiko.ServerInterface):
                     and not os.path.islink(
                         os.path.join(self.conf['root_dir'], username)):
                 invalid_user = True
+            elif check_account_accessible(configuration, username, 'sftp'):
+                account_accessible = True
             for entry in login_map:
                 if password is not None and entry.password is not None:
                     password_enabled = True
@@ -1145,6 +1150,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
                 and not key_enabled \
                 and not invalid_username \
                 and not invalid_user \
+                and account_accessible \
                 and not exceeded_rate_limit:
             # Do not register missing SSH keys attempt
             # if everything else is valid
@@ -1161,6 +1167,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
                 secret=secret,
                 invalid_username=invalid_username,
                 invalid_user=invalid_user,
+                account_accessible=account_accessible,
                 valid_twofa=valid_twofa,
                 authtype_enabled=(key_enabled or password_enabled),
                 valid_auth=(valid_key or valid_password),

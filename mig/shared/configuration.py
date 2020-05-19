@@ -1037,6 +1037,12 @@ location.""" % self.config_file
                 'SITE', 'enable_gravatars')
         else:
             self.site_enable_gravatars = True
+        # Whether to enforce account expire strictly in IO daemons
+        if config.has_option('SITE', 'io_account_expire'):
+            self.site_io_account_expire = config.getboolean(
+                'SITE', 'io_account_expire')
+        else:
+            self.site_io_account_expire = False
         if config.has_option('SITE', 'enable_twofactor'):
             self.site_enable_twofactor = config.getboolean(
                 'SITE', 'enable_twofactor')

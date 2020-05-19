@@ -88,6 +88,7 @@ except ImportError:
     print "WARNING: the python OpenSSL module is required for FTPS"
     OpenSSL = None
 
+from shared.accountstate import check_account_accessible
 from shared.base import invisible_path, force_utf8
 from shared.conf import get_configuration_object
 from shared.fileio import user_chroot_exceptions
@@ -188,10 +189,11 @@ class MiGUserAuthorizer(DummyAuthorizer):
 
         The following is checked before granting auth:
         1) Valid username
-        2) Valid user (Does user exist and enabled ftps)
-        3) Valid 2FA session (if 2FA is enabled)
-        4) Hit rate limit (Too many auth attempts)
-        5) Valid password (if password enabled)
+        2) Valid user (Does user exist with enabled FTPS)
+        3) Account is active and not expired
+        4) Valid 2FA session (if 2FA is enabled)
+        5) Hit rate limit (Too many auth attempts)
+        6) Valid password (if password enabled)
         """
         secret = None
         disconnect = False
@@ -200,6 +202,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
         password_enabled = False
         invalid_username = False
         invalid_user = False
+        account_accessible = False
         valid_password = False
         valid_twofa = False
         exceeded_rate_limit = False
@@ -253,6 +256,8 @@ class MiGUserAuthorizer(DummyAuthorizer):
             else:
                 # list of User login objects for username
                 entries = [self.user_table[username]]
+                account_accessible = check_account_accessible(configuration,
+                                                              username, 'ftps')
             for entry in entries:
                 if entry['pwd'] is not None:
                     password_enabled = True
@@ -280,6 +285,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
             secret=secret,
             invalid_username=invalid_username,
             invalid_user=invalid_user,
+            account_accessible=account_accessible,
             valid_twofa=valid_twofa,
             authtype_enabled=password_enabled,
             valid_auth=valid_password,

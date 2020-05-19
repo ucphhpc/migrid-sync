@@ -89,6 +89,7 @@ if '__main__' == __name__:
     short_id = None
     role = None
     user_dict = {}
+    override_fields = {}
     opt_args = 'c:d:e:fhi:o:rR:u:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
@@ -104,6 +105,7 @@ if '__main__' == __name__:
             db_path = val
         elif opt == '-e':
             expire = int(val)
+            override_fields['expire'] = expire
         elif opt == '-f':
             force = True
         elif opt == '-h':
@@ -113,11 +115,13 @@ if '__main__' == __name__:
             user_id = val
         elif opt == '-o':
             short_id = val
+            override_fields['short_id'] = short_id
         elif opt == '-r':
             default_renew = True
             ask_renew = False
         elif opt == '-R':
             role = val
+            override_fields['role'] = role
         elif opt == '-u':
             user_file = val
         elif opt == '-v':
@@ -193,14 +197,6 @@ if '__main__' == __name__:
             + "[EMAIL] [COMMENT] [PASSWORD]"
         sys.exit(1)
 
-    # Pass optional short_id as well
-    if short_id:
-        user_dict['short_id'] = short_id
-
-    # Pass optional role as well
-    if role:
-        user_dict['role'] = role
-
     # Encode password if set but not already encoded
 
     salt = configuration.site_password_salt
@@ -211,16 +207,21 @@ if '__main__' == __name__:
             user_dict['password'] = scramble_password(
                 salt, user_dict['password'])
 
-    # Set account expire for use with local certificate or OpenID login
-
-    if not user_dict.has_key('expire'):
-        user_dict['expire'] = expire
     if user_id:
         user_dict['distinguished_name'] = user_id
     elif not user_dict.has_key('distinguished_name'):
         fill_distinguished_name(user_dict)
 
     fill_user(user_dict)
+
+    # Make sure account expire is set with local certificate or OpenID login
+
+    if not user_dict.has_key('expire'):
+        override_fields['expire'] = expire
+
+    # NOTE: let non-ID command line values override loaded values
+    for (key, val) in override_fields.items():
+        user_dict[key] = val
 
     # Now all user fields are set and we can begin adding the user
 

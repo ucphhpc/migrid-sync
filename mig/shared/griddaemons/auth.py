@@ -173,6 +173,7 @@ def validate_auth_attempt(configuration,
                           secret=None,
                           invalid_username=False,
                           invalid_user=False,
+                          account_accessible=True,
                           skip_twofa_check=False,
                           valid_twofa=False,
                           authtype_enabled=False,
@@ -210,6 +211,8 @@ def validate_auth_attempt(configuration,
                  % invalid_username
                  + "invalid_user: %s\n"
                  % invalid_user
+                 + "account_accessible: %s\n"
+                 % account_accessible
                  + "skip_twofa_check: %s\n"
                  % skip_twofa_check
                  + "valid_twofa: %s\n"
@@ -231,7 +234,7 @@ def validate_auth_attempt(configuration,
     disconnect = False
     twofa_passed = valid_twofa
     notify = True
-    
+
     if skip_notify or invalid_username or invalid_user:
         notify = False
 
@@ -300,6 +303,16 @@ def validate_auth_attempt(configuration,
     elif invalid_user:
         disconnect = True
         auth_msg = "Invalid user"
+        log_msg = auth_msg + " %s from %s" % (username, ip_addr)
+        if tcp_port > 0:
+            log_msg += ":%s" % tcp_port
+        logger.error(log_msg)
+        authlog(configuration, 'ERROR', protocol, authtype,
+                username, ip_addr,
+                auth_msg, notify=notify)
+    elif not account_accessible:
+        disconnect = True
+        auth_msg = "Account disabled or expired"
         log_msg = auth_msg + " %s from %s" % (username, ip_addr)
         if tcp_port > 0:
             log_msg += ":%s" % tcp_port

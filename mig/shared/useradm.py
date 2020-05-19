@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # useradm - user administration functions
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,6 +36,8 @@ import shutil
 import sqlite3
 import sys
 
+from shared.accountstate import update_account_expire_cache, \
+    update_account_status_cache
 from shared.base import client_id_dir, client_dir_id, client_alias, \
     sandbox_resource, fill_user, fill_distinguished_name, extract_field
 from shared.conf import get_configuration_object
@@ -47,7 +49,7 @@ from shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
     authpasswords_filename, authdigests_filename, cert_field_order, \
     twofactor_filename
 from shared.fileio import filter_pickled_list, filter_pickled_dict, \
-    make_symlink, delete_symlink, acquire_file_lock, release_file_lock
+    make_symlink, delete_symlink
 from shared.modified import mark_user_modified
 from shared.refunctions import list_runtime_environments, \
     update_runtimeenv_owner
@@ -66,6 +68,8 @@ from shared.vgridaccess import get_resource_map, get_vgrid_map, \
     force_update_user_map, force_update_resource_map, force_update_vgrid_map, \
     VGRIDS, OWNERS, MEMBERS
 from shared.twofactorkeywords import get_twofactor_specs
+from shared.userdb import lock_user_db, unlock_user_db, load_user_db, \
+    load_user_dict, save_user_db
 
 ssh_authkeys = os.path.join(ssh_conf_dir, authkeys_filename)
 ssh_authpasswords = os.path.join(ssh_conf_dir, authpasswords_filename)
@@ -91,61 +95,6 @@ def init_user_adm():
         app_dir = '.'
     db_path = os.path.join(app_dir, user_db_filename)
     return (args, app_dir, db_path)
-
-
-def lock_user_db(db_path, exclusive=True):
-    """Lock user db"""
-    db_lock_path = '%s.lock' % db_path
-    return acquire_file_lock(db_lock_path, exclusive=exclusive)
-
-
-def load_user_db(db_path, do_lock=True):
-    """Load pickled user DB"""
-
-    if do_lock:
-        flock = lock_user_db(db_path, exclusive=False)
-    try:
-        result = load(db_path)
-    except Exception, exc:
-        if do_lock:
-            release_file_lock(flock)
-        raise
-
-    if do_lock:
-        release_file_lock(flock)
-
-    return result
-
-
-def load_user_dict(logger, user_id, db_path, verbose=False, do_lock=True):
-    """Load user dictionary from user DB"""
-
-    try:
-        user_db = load_user_db(db_path, do_lock=do_lock)
-        if verbose:
-            print 'Loaded existing user DB from: %s' % db_path
-    except Exception, err:
-        err_msg = 'Failed to load user DB: %s' % err
-        if verbose:
-            print err_msg
-        logger.error(err_msg)
-        return None
-    return user_db.get(user_id, None)
-
-
-def save_user_db(user_db, db_path, do_lock=True):
-    """Save pickled user DB"""
-
-    if do_lock:
-        flock = lock_user_db(db_path)
-    try:
-        dump(user_db, db_path)
-    except Exception, exc:
-        if do_lock:
-            release_file_lock(flock)
-        raise
-    if do_lock:
-        release_file_lock(flock)
 
 
 def delete_dir(path, verbose=False):
@@ -275,7 +224,7 @@ def create_user(
         create_answer = raw_input('Create new user DB? [Y/n] ')
         if create_answer.lower().startswith('n'):
             if do_lock:
-                release_file_lock(flock)
+                unlock_user_db(flock)
             raise Exception("Missing user DB: '%s'" % db_path)
         # Dump empty DB
         save_user_db(user_db, db_path, do_lock=False)
@@ -287,7 +236,7 @@ def create_user(
     except Exception, err:
         if not force:
             if do_lock:
-                release_file_lock(flock)
+                unlock_user_db(flock)
             raise Exception("Failed to load user DB: '%s'" % db_path)
 
     # Prevent alias clashes by preventing addition of new users with same
@@ -306,7 +255,7 @@ def create_user(
         if alias in user_aliases.values() and \
                 user_aliases.get(client_id, None) != alias:
             if do_lock:
-                release_file_lock(flock)
+                unlock_user_db(flock)
             if verbose:
                 print 'Attempting create_user with conflicting alias %s' \
                       % alias
@@ -314,7 +263,10 @@ def create_user(
                 'A conflicting user with alias %s already exists' % alias)
 
     if user_db.has_key(client_id):
-        if ask_renew:
+        account_status = user_db[client_id].get('status', 'active')
+        if account_status != 'active':
+            raise Exception('refusing to renew %s account!' % account_status)
+        elif ask_renew:
             print 'User DB entry for "%s" already exists' % client_id
             renew_answer = raw_input('Renew existing entry? [Y/n] ')
             renew = not renew_answer.lower().startswith('n')
@@ -344,7 +296,7 @@ using their existing credentials to authorize password changes.""" % client_id
                     authorized = accept_answer.lower().startswith('y')
                     if not authorized:
                         if do_lock:
-                            release_file_lock(flock)
+                            unlock_user_db(flock)
                         if verbose:
                             print """Renewal request supplied a different
 password and you didn't accept change anyway - nothing more to do"""
@@ -371,7 +323,7 @@ with certificate or OpenID authentication to authorize the change."""
             user.update(updated_user)
         elif not force:
             if do_lock:
-                release_file_lock(flock)
+                unlock_user_db(flock)
             if verbose:
                 print 'Nothing more to do for existing user %s' % client_id
             raise Exception('Nothing more to do for existing user %s'
@@ -405,13 +357,17 @@ with certificate or OpenID authentication to authorize the change."""
                   % client_id
     except Exception, err:
         if do_lock:
-            release_file_lock(flock)
+            unlock_user_db(flock)
         print err
         if not force:
             raise Exception('Failed to add %s to user DB: %s'
                             % (client_id, err))
     if do_lock:
-        release_file_lock(flock)
+        unlock_user_db(flock)
+
+    # Mark user updated for all logins
+    update_account_expire_cache(configuration, user)
+    update_account_status_cache(configuration, user)
 
     home_dir = os.path.join(configuration.user_home, client_dir)
     settings_dir = os.path.join(configuration.user_settings, client_dir)
@@ -797,13 +753,13 @@ def edit_user(
         except Exception, err:
             if not force:
                 if do_lock:
-                    release_file_lock(flock)
+                    unlock_user_db(flock)
                 raise Exception('Failed to load user DB: %s' % err)
 
         if not user_db.has_key(client_id):
             if not force:
                 if do_lock:
-                    release_file_lock(flock)
+                    unlock_user_db(flock)
                 raise Exception("User DB entry '%s' doesn't exist!"
                                 % client_id)
 
@@ -821,7 +777,7 @@ def edit_user(
         if not meta_only:
             if user_db.has_key(new_id):
                 if do_lock:
-                    release_file_lock(flock)
+                    unlock_user_db(flock)
                 raise Exception("Edit aborted: new user already exists!")
             _logger.info("Force old user renew to fix missing files")
             create_user(old_user, conf_path, db_path, force, verbose,
@@ -829,7 +785,7 @@ def edit_user(
             del user_db[client_id]
         elif new_id != client_id:
             if do_lock:
-                release_file_lock(flock)
+                unlock_user_db(flock)
             raise Exception("Edit aborted: illegal meta_only ID change! %s %s"
                             % (client_id, new_id))
         else:
@@ -846,12 +802,16 @@ def edit_user(
         print traceback.format_exc()
         if not force:
             if do_lock:
-                release_file_lock(flock)
+                unlock_user_db(flock)
             raise Exception('Failed to edit %s with %s in user DB: %s'
                             % (client_id, changes, err))
 
     if do_lock:
-        release_file_lock(flock)
+        unlock_user_db(flock)
+
+    # Mark user updated for all logins
+    update_account_expire_cache(configuration, user_dict)
+    update_account_status_cache(configuration, user_dict)
 
     if meta_only:
         return user_dict
@@ -1088,13 +1048,13 @@ def delete_user(
         except Exception, err:
             if not force:
                 if do_lock:
-                    release_file_lock(flock)
+                    unlock_user_db(flock)
                 raise Exception('Failed to load user DB: %s' % err)
 
         if not user_db.has_key(client_id):
             if not force:
                 if do_lock:
-                    release_file_lock(flock)
+                    unlock_user_db(flock)
                 raise Exception("User DB entry '%s' doesn't exist!"
                                 % client_id)
 
@@ -1108,12 +1068,12 @@ def delete_user(
     except Exception, err:
         if not force:
             if do_lock:
-                release_file_lock(flock)
+                unlock_user_db(flock)
             raise Exception('Failed to remove %s from user DB: %s'
                             % (client_id, err))
 
     if do_lock:
-        release_file_lock(flock)
+        unlock_user_db(flock)
 
     # Remove any OpenID symlinks
 
@@ -1356,7 +1316,7 @@ def migrate_users(
         except Exception, err:
             if not force:
                 if do_lock:
-                    release_file_lock(flock)
+                    unlock_user_db(flock)
                 raise Exception('Failed to load user DB: %s' % err)
 
     targets = {}
@@ -1380,7 +1340,7 @@ def migrate_users(
             if not prune_dupes:
                 if not force:
                     if do_lock:
-                        release_file_lock(flock)
+                        unlock_user_db(flock)
                     raise Exception('new ID %s already exists in user DB!'
                                     % new_id)
             else:
@@ -1392,7 +1352,7 @@ def migrate_users(
             if not prune_dupes:
                 if not force:
                     if do_lock:
-                        release_file_lock(flock)
+                        unlock_user_db(flock)
                     raise Exception('old ID %s is not unique in user DB!'
                                     % old_id)
             else:
@@ -1419,7 +1379,7 @@ def migrate_users(
     save_user_db(user_db, db_path, do_lock=False)
 
     if do_lock:
-        release_file_lock(flock)
+        unlock_user_db(flock)
         flock = None
 
     # Now update the remaining users, i.e. those in latest
@@ -1505,11 +1465,11 @@ def migrate_users(
         except Exception, err:
             if not force:
                 if do_lock and flock:
-                    release_file_lock(flock)
+                    unlock_user_db(flock)
                 raise Exception('Failed to update %s in user DB: %s'
                                 % (client_id, err))
         if do_lock and flock:
-            release_file_lock(flock)
+            unlock_user_db(flock)
 
 
 def fix_entities(
@@ -1604,7 +1564,7 @@ def fix_userdb_keys(
         except Exception, err:
             if not force:
                 if do_lock:
-                    release_file_lock(flock)
+                    unlock_user_db(flock)
                 raise Exception('Failed to load user DB: %s' % err)
 
     for (client_id, user) in user_db.items():
@@ -1629,11 +1589,11 @@ def fix_userdb_keys(
         except Exception, err:
             if not force:
                 if do_lock:
-                    release_file_lock(flock)
+                    unlock_user_db(flock)
                 raise Exception('Failed to update %s in user DB: %s'
                                 % (client_id, err))
     if do_lock:
-        release_file_lock(flock)
+        unlock_user_db(flock)
 
 
 def default_search():

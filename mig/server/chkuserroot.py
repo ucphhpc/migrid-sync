@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # chkuserroot - Simple Apache httpd user chroot helper daemon
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -39,6 +39,8 @@ import re
 import sys
 import time
 
+from shared.accountstate import check_account_accessible
+from shared.base import client_dir_id
 from shared.conf import get_configuration_object
 from shared.logger import daemon_logger, register_hangup_handler
 from shared.validstring import valid_user_path
@@ -117,6 +119,7 @@ unless it is available in mig/server/MiGserver.conf
             home_dir = path.replace(root, "").lstrip(os.sep)
             home_dir = home_dir.split(os.sep, 1)[0]
             logger.debug("found home dir: %s" % home_dir)
+            user_id = client_dir_id(home_dir)
             # No need to expand home_path here - done in valid_user_path
             home_path = os.path.join(root, home_dir) + os.sep
             # Make sure absolute/normalized but unexpanded path is inside home.
@@ -140,6 +143,12 @@ unless it is available in mig/server/MiGserver.conf
                              (client_ip, home_path, raw_path, real_path))
                 print INVALID_MARKER
                 continue
+            elif not check_account_accessible(configuration, user_id, 'https'):
+                logger.error("path from %s in inaccessible %s account: %s (%s)"
+                             % (client_ip, user_id, raw_path, real_path))
+                print INVALID_MARKER
+                continue
+
             logger.info("found valid user chroot path from %s: %s" %
                         (client_ip, real_path))
             print real_path

@@ -56,6 +56,7 @@
 #define MIG_MAX_SECRET_HITS         (0x001000)
 #define MIG_SKIP_NOTIFY             (0x002000)
 #define MIG_AUTHTYPE_PASSWORD       (0x004000)
+#define MIG_ACCOUNT_INACCESSIBLE    (0x008000)
 
 #ifndef MIG_HOME
 #define MIG_HOME "/home/mig/mig"
@@ -121,6 +122,7 @@ static bool mig_pyinit()
         pyrun
             ("from shared.logger import daemon_logger, register_hangup_handler");
         pyrun("from shared.conf import get_configuration_object");
+        pyrun("from shared.accountstate import check_account_accessible");
         pyrun("from shared.pwhash import scramble_digest");
         pyrun("configuration = get_configuration_object(skip_log=True)");
         pyrun("log_level = configuration.loglevel");
@@ -329,6 +331,10 @@ static bool register_auth_attempt(const unsigned int mode,
         strncat(&pycmd[0], "skip_notify=True, ",
                 MAX_PYCMD_LENGTH - strlen(pycmd));
     }
+    if (mode & MIG_ACCOUNT_INACCESSIBLE) {
+        strncat(&pycmd[0], "account_accessible=False, ",
+                MAX_PYCMD_LENGTH - strlen(pycmd));
+    }
     strncat(&pycmd[0], ")", MAX_PYCMD_LENGTH - strlen(pycmd));
     if (MAX_PYCMD_LENGTH == strlen(pycmd)) {
         WRITELOGMESSAGE(LOG_ERR, "register_auth_attempt: pycmd overflow\n");
@@ -381,6 +387,26 @@ static bool mig_check_twofactor_session(const char *username,
     } else {
         result = PyObject_IsTrue(py_valid_twofactor);
         Py_DECREF(py_valid_twofactor);
+    }
+
+    return result;
+}
+
+static bool mig_check_account_accessible(const char *username)
+{
+    bool result = false;
+
+    pyrun
+      ("account_accessible = check_account_accessible(configuration, '%s', 'sftp')",
+       username);
+    PyObject *py_account_accessible =
+        PyObject_GetAttrString(py_main, "account_accessible");
+    if (py_account_accessible == NULL) {
+        WRITELOGMESSAGE(LOG_ERR,
+                        "Missing python variable: py_account_accessible\n");
+    } else {
+        result = PyObject_IsTrue(py_account_accessible);
+        Py_DECREF(py_account_accessible);
     }
 
     return result;

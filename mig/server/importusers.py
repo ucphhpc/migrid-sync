@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # importusers - Import users from text or xml file in provided uri
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -113,6 +113,9 @@ if '__main__' == __name__:
     password = False
     verbose = False
     vgrids = []
+    # Mark users plain 'active' unless expire is given. I.e. allow them to
+    # renew without admin interaction if conf enables it.
+    account_status = 'active'
     opt_args = 'C:c:d:e:fhK:m:p:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
@@ -127,7 +130,9 @@ if '__main__' == __name__:
         elif opt == '-d':
             db_path = val
         elif opt == '-e':
+            # NOTE: set to temporal rather than active to prevent aut renew
             expire = int(val)
+            account_status = 'temporal'
         elif opt == '-f':
             force = True
         elif opt == '-h':
@@ -169,6 +174,7 @@ if '__main__' == __name__:
                 print 'Not adding existing user: %(distinguished_name)s' % \
                       user_dict
             continue
+        user_dict['status'] = account_status
         new_users.append(user_dict)
     #print "DEBUG: new users to import: %s" % new_users
 
