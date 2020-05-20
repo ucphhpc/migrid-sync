@@ -2991,14 +2991,19 @@ function mig_fancyuploadchunked_init(name, options, callback) {
          position: { my: "top", at: "top+100px", of: window},
          buttons: {
              "Close": function() {
-                 /* cancel active uploads if any */
-                 if ($(".uploadfileslist button.cancel").length > 0) {
-                     showWaitInfo("aborting active uploads", 0, 3000);
-                     $(".fileupload-buttons button.cancel").click();
-                 }
-                 callback();
-                 $("#" + name).dialog("close");
+                 /* NOTE: just call standard close handler for consistency */
+                 $(this).dialog("close");
              }
+         },
+         beforeClose: function() {
+             /* Shared close handler for Close and (X) dialog button */
+             /* cancel active uploads if any */
+             if ($(".uploadfileslist button.cancel").length > 0) {
+                 showWaitInfo("aborting active uploads", 0, 3000);
+                 $(".fileupload-buttons button.cancel").click();
+             }
+             /* Any configured callbacks like refresh dir */
+             callback();
          }
         });
 
