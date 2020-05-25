@@ -717,6 +717,13 @@ def _get_entity_map(configuration, key, caching=False):
             _logger.info(
                 "refreshing %s map (%s)" % (name, modified_list))
             map_stamp = load_stamp = time.time()
+            # TODO: this refresh and reset creates a race in user map update!
+            # Any user creation happening during a refresh user map call will
+            # create the user and then effectively block waiting for the same
+            # user lock in order to mark the user modified before returning.
+            # When refresh returns and yields the lock the mark modified and
+            # reset calls will therefore race to edit the modified marker file.
+            # NOTE: reimplementing modified with filemarks should resolve it
             entity_map = helpers['refresh_map'](configuration)
             helpers['reset_modified'](configuration)
         else:
