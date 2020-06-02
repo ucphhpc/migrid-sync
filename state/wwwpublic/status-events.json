@@ -1,5 +1,27 @@
 [
   {
+    "status": "AUTO",
+    "work_start": "2020-06-02T17:00:00",
+    "systems": [
+      "ERDA",
+      "IDMC"
+    ],
+    "announce_start": "2020-06-02T14:30:00",
+    "title": {
+      "EN": "MODI Scratch Space Upgrade",
+      "DK": "MODI Scratch Plads Opgradering"
+    },
+    "services": [
+      "MODI"
+    ],
+    "work_end": "2020-06-02T19:30:00",
+    "description": {
+      "EN": "We are upgrading the shared scratch space for the MODI service, so that each user will now have 50 GB instead of 200 MB of available storage to both stage jobs and save results",
+      "DK": "Vi opgraderer det delte scratch space til MODI-tjenesten, så hver bruger nu har 50 GB i stedet for 200 MB ledig lagerplads til både staging af jobs og til at gemme resultater på"
+    },
+    "announce_end": "2020-06-03T10:00:00"
+  },
+  {
     "status": "AUTO", 
     "work_start": "2020-04-20T22:30:00", 
     "systems": [
