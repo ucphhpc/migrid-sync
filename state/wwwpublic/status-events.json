@@ -16,8 +16,8 @@
     ],
     "work_end": "2020-06-02T19:30:00",
     "description": {
-      "EN": "We are upgrading the shared scratch space for the MODI service, so that each user will now have 50 GB instead of 200 MB of available storage to both stage jobs and save results",
-      "DK": "Vi opgraderer det delte scratch space til MODI-tjenesten, så hver bruger nu har 50 GB i stedet for 200 MB ledig lagerplads til både staging af jobs og til at gemme resultater på"
+      "EN": "We are upgrading the shared scratch space for the MODI service, so that each user will now have 50 GB instead of 200 MB of available storage to both stage jobs and save results. This work was completed successfully and the MODI service is now back online",
+      "DK": "Vi opgraderer det delte scratch space til MODI-tjenesten, så hver bruger nu har 50 GB i stedet for 200 MB ledig lagerplads til både staging af jobs og til at gemme resultater på. Dette arbejde blev afsluttet med succes, og MODI-tjenesten er nu tilbage online"
     },
     "announce_end": "2020-06-03T10:00:00"
   },
