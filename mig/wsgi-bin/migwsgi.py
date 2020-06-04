@@ -244,26 +244,34 @@ def application(environ, start_response):
         # _logger.debug("WSGI adding explicit content length %s" % content_length)
         response_headers.append(('Content-Length', str(content_length)))
 
-    start_response(status, response_headers)
+    # NOTE: send response to client but don't crash e.g. on closed connection
+    try:
+        start_response(status, response_headers)
 
-    # NOTE: we consistently hit download error for archive files reaching ~2GB
-    #       with showfreezefile.py on wsgi but the same on cgi does NOT suffer
-    #       the problem for the exact same files. It seems wsgi has a limited
-    #       output buffer, so we explicitly force significantly smaller chunks
-    #       here as a workaround.
-    chunk_parts = 1
-    if content_length > download_block_size:
-        chunk_parts = content_length / download_block_size
-        if content_length % download_block_size != 0:
-            chunk_parts += 1
-        _logger.info("WSGI %s yielding %d output parts (%db)" %
-                     (backend, chunk_parts, content_length))
-    for i in xrange(chunk_parts):
-        # _logger.debug("WSGI %s yielding part %d / %d output parts" % \
-        #             (backend, i+1, chunk_parts))
-        # end index may be after end of content - but no problem
-        part = output[i*download_block_size:(i+1)*download_block_size]
-        yield part
-    if chunk_parts > 1:
-        _logger.info("WSGI %s finished yielding all %d output parts" %
-                     (backend, chunk_parts))
+        # NOTE: we consistently hit download error for archive files reaching ~2GB
+        #       with showfreezefile.py on wsgi but the same on cgi does NOT suffer
+        #       the problem for the exact same files. It seems wsgi has a limited
+        #       output buffer, so we explicitly force significantly smaller chunks
+        #       here as a workaround.
+        chunk_parts = 1
+        if content_length > download_block_size:
+            chunk_parts = content_length / download_block_size
+            if content_length % download_block_size != 0:
+                chunk_parts += 1
+            _logger.info("WSGI %s yielding %d output parts (%db)" %
+                         (backend, chunk_parts, content_length))
+        for i in xrange(chunk_parts):
+            # _logger.debug("WSGI %s yielding part %d / %d output parts" % \
+            #             (backend, i+1, chunk_parts))
+            # end index may be after end of content - but no problem
+            part = output[i*download_block_size:(i+1)*download_block_size]
+            yield part
+        if chunk_parts > 1:
+            _logger.info("WSGI %s finished yielding all %d output parts" %
+                         (backend, chunk_parts))
+    except IOError, ioe:
+        _logger.warning("WSGI %s for %s could not deliver output: %s" %
+                        (backend, client_id, ioe))
+    except Exception, exc:
+        _logger.error("WSGI %s for %s crashed during response: %s" %
+                      (backend, client_id, exc))
