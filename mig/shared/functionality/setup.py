@@ -28,8 +28,10 @@
 """Provide all the client access setup subpages"""
 
 import os
+import time
 
 import shared.returnvalues as returnvalues
+from shared.accountstate import account_expire_info
 from shared.auth import get_twofactor_secrets
 from shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin
 from shared.defaults import seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
@@ -217,11 +219,32 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     save_html = save_settings_html(configuration)
+    (expire_warn, expire_time, renew_days, extend_days) = account_expire_info(
+        configuration, client_id)
+    expire_html = ''
+    if expire_warn:
+        expire_warn_msg = '''<p class="warningtext">
+NOTE: your %s account access including efficient file service access expires on
+%s. You can always repeat sign up to extend general access with another %s days.
+%s  
+</p>'''
+        auto_renew_msg = '''Alternatively simply either hit Save below now
+<em>or</em> log in here again after that date to quickly extend your access for
+%s days.'''
+        expire_date = time.ctime(expire_time)
+        logger.debug("warn about expire on %s" % expire_date)
+        extend_msg = ''
+        if extend_days > 0:
+            extend_msg = auto_renew_msg % extend_days
+        expire_html = expire_warn_msg % (configuration.short_title,
+                                         expire_date, renew_days, extend_msg)
+
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
     fill_helpers = {'site': configuration.short_title,
                     'form_method': form_method, 'csrf_field': csrf_field,
-                    'csrf_limit': csrf_limit, 'save_html': save_html}
+                    'csrf_limit': csrf_limit, 'save_html': save_html,
+                    'expire_html': expire_html}
 
     if 'sftp' in topic_list:
 
@@ -395,6 +418,7 @@ value="%(default_authpassword)s" />
 '''
 
         html += '''
+%(expire_html)s
 %(save_html)s
 <input type="submit" value="Save SFTP Settings" />
 '''
@@ -558,6 +582,7 @@ value="%(default_authpassword)s" />
 '''
 
         html += '''
+%(expire_html)s
 %(save_html)s
 <input type="submit" value="Save WebDAVS Settings" />
 
@@ -730,6 +755,7 @@ value="%(default_authpassword)s" />
 '''
 
         html += '''
+%(expire_html)s
 %(save_html)s
 <input type="submit" value="Save FTPS Settings" />
 

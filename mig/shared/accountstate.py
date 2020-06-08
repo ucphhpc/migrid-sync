@@ -34,7 +34,8 @@ import time
 
 from shared.base import client_id_dir, client_dir_id, requested_url_base
 from shared.defaults import expire_marks_dir, status_marks_dir, \
-    valid_account_status, oid_auto_extend_days, cert_auto_extend_days
+    valid_account_status, oid_auto_extend_days, cert_auto_extend_days, \
+    cert_valid_days, oid_valid_days
 from shared.filemarks import get_filemark, update_filemark, reset_filemark
 from shared.userdb import load_user_dict, default_db_path, update_user_dict
 
@@ -192,9 +193,13 @@ def check_account_expire(configuration, client_id, environ=None):
     return (pending_expire, account_expire, user_dict)
 
 
-def check_update_account_expire(configuration, client_id, environ=None):
+def check_update_account_expire(configuration, client_id, environ=None,
+                                min_days_left=0):
     """Check and possibly update client_id expire field in cache and user DB
-    if configured.
+    if configured. The optional environ can be used to provide current environ
+    dict instead of the default os.environ. The optional min_days_left
+    argument is used to attempt renew if the account is set to expire before N
+    days from now. Default is zero days to only renew if expired.
     """
     _logger = configuration.logger
     if not environ:
@@ -203,7 +208,7 @@ def check_update_account_expire(configuration, client_id, environ=None):
     (pending_expire, account_expire, user_dict) = check_account_expire(
         configuration, client_id, environ)
     # Now check actual expire
-    if account_expire and account_expire < time.time():
+    if account_expire and account_expire < time.time() + min_days_left * 86400:
         _logger.info("user is marked expired at %s" % account_expire)
         # NOTE: users who got this far obviously has a working auth method
         vhost_url = requested_url_base(environ)
@@ -246,7 +251,7 @@ def check_update_account_expire(configuration, client_id, environ=None):
                 _logger.info("user expire updated to %(expire)s" % user_dict)
                 pending_expire = True
             else:
-                _logger.warning("expire not supported for %s with status %r" %
+                _logger.warning("extend expire refused for %s with status %r" %
                                 (client_id, account_status))
                 pending_expire = False
         else:
@@ -257,6 +262,40 @@ def check_update_account_expire(configuration, client_id, environ=None):
                       (client_id, account_expire))
         pending_expire = True
     return (pending_expire, account_expire, user_dict)
+
+
+def account_expire_info(configuration, username, environ=None,
+                        min_days_left=14):
+    """Helper to lookup when username account expires and details about renew
+    and auto extension support in case account has less than min_days_left
+    before expiry.
+    """
+    _logger = configuration.logger
+    if not environ:
+        environ = os.environ
+    extend_days, renew_days = 0, 0
+    (_, account_expire, _) = check_account_expire(configuration, username)
+    (_, account_status, _) = check_account_status(configuration, username)
+    vhost_url = requested_url_base(environ)
+    expire_warn = False
+    if account_expire and account_expire < time.time() + min_days_left * 86400:
+        expire_warn = True
+        if vhost_url == configuration.migserver_https_ext_oid_url:
+            renew_days = oid_valid_days
+            if account_status == 'active' and configuration.auto_add_oid_user:
+                extend_days = oid_auto_extend_days
+        elif vhost_url == configuration.migserver_https_mig_oid_url:
+            renew_days = oid_valid_days
+        elif vhost_url == configuration.migserver_https_ext_cert_url:
+            renew_days = cert_valid_days
+            if account_status == 'active' and configuration.auto_add_cert_user:
+                extend_days = cert_auto_extend_days
+        elif vhost_url == configuration.migserver_https_mig_cert_url:
+            renew_days = cert_valid_days
+        else:
+            _logger.warning("unexpected vhost in expire detection: %s" %
+                            vhost_url)
+    return (expire_warn, account_expire, renew_days, extend_days)
 
 
 def detect_special_login(configuration, username, proto):

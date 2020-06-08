@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settingsaction - handle user settings updates
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,6 +31,7 @@ import os
 import tempfile
 
 import shared.returnvalues as returnvalues
+from shared.accountstate import check_update_account_expire
 from shared.duplicatikeywords import get_keywords_dict as duplicati_keywords
 from shared.functional import validate_input_and_cert
 from shared.gdp import get_client_id_from_project_client_id
@@ -239,6 +240,12 @@ CSRF-filtered POST requests to prevent unintended updates'''
                     {'object_type': 'warning', 'text':
                      'Only the first key will be activated on instances'})
 
+        # Try to refresh expire if possible to make sure it works for a while
+        if topic in ['sftp', 'webdavs', 'ftps']:
+            (_, account_expire, _) = check_update_account_expire(
+                configuration, client_id, min_days_left=14)
+            logger.debug("check and update account expire returned %s" %
+                         account_expire)
         else:
             output_objects.append({'object_type': 'error_text', 'text':
                                    'No such settings topic: %s' % topic
