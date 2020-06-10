@@ -699,6 +699,27 @@ def acquire_file_lock(lock_path, exclusive=True, blocking=True):
     return lock_handle
 
 
+# TODO: use this function for modify X calls with limited blocking
+def responsive_acquire_lock(lock_path, exclusive, max_attempts=10,
+                            retry_delay=2):
+    """A simple helper to retry locking lock_path in non-blocking way
+    until it either succeeds or the maximum allowed number of attempts failed.
+    The exclusive arg is used to toggle between exclusive or shared locking.
+    The optional max_attempts and retry_delay args can be used to tune the
+    locking retries.
+    """
+    lock_handle = None
+    for i in xrange(max_attempts):
+        lock_handle = acquire_file_lock(lock_path, exclusive, False)
+        if lock_handle is None:
+            time.sleep(retry_delay)
+        else:
+            break
+    if lock_handle is None:
+        raise Exception("gave up locking %s for update" % lock_path)
+    return lock_handle
+
+
 def release_file_lock(lock_handle, close=True):
     """Uses fcntl to release the lock held in lock_handle. We generally lock a
     separate lock file when we wish to modify a shared file in line with the
