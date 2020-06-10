@@ -820,4 +820,6 @@ def user_chroot_exceptions(configuration):
     chroot_exceptions.append(os.path.abspath(configuration.resource_home))
     if configuration.site_enable_seafile and configuration.seafile_mount:
         chroot_exceptions.append(os.path.abspath(configuration.seafile_mount))
+    # Allow access to mig_system_storage used for merging multiple storage backends
+    chroot_exceptions.append(os.path.abspath(configuration.mig_system_storage))
     return chroot_exceptions
