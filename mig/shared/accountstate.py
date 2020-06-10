@@ -56,6 +56,9 @@ def update_account_expire_cache(configuration, user_dict):
     if not expire:
         _logger.info("no expire set for user: %s" % user_dict)
         return True
+    elif isinstance(expire, basestring):
+        _logger.warning("found string expire value for user: %s" % user_dict)
+        return False
     client_dir = client_id_dir(client_id)
     base_dir = os.path.join(configuration.mig_system_run, expire_marks_dir)
     return update_filemark(configuration, base_dir, client_dir, expire)
@@ -179,7 +182,14 @@ def check_account_expire(configuration, client_id, environ=None):
         if not user_dict:
             _logger.error("no such account: %s" % client_id)
             return (False, -42, user_dict)
-        account_expire = user_dict['expire'] = user_dict.get('expire', 0)
+        account_expire = user_dict.get('expire', 0)
+        # NOTE: if e.g. editmeta is used to set expire it ends up as a string
+        #       rather than int so we warn and try to let next update fix it.
+        if isinstance(account_expire, basestring) and account_expire.isdigit():
+            _logger.warning("found string expire value for user: %s" %
+                            user_dict)
+            account_expire = int(account_expire)
+        user_dict['expire'] = account_expire
         update_account_expire_cache(configuration, user_dict)
 
     # Now check actual expire
