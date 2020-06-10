@@ -698,12 +698,10 @@ to avoid typing the full login details every time:</p>
 </ul>
 <p><br/>From then on you can use e.g. lftp or CurlFtpFS to access your %(site)s home:</p>
 <ul>
-<li>lftp -e "set ssl:verify-certificate no; set ftp:ssl-protect-data on; set net:connection-limit %(max_sessions)d" \\
-     -p %(ftps_ctrl_port)s %(ftps_server)s</li>
+<li>lftp -e "set ssl:verify-certificate no; set ftp:ssl-protect-data on; set net:connection-limit %(max_sessions)d" -p %(ftps_ctrl_port)s %(ftps_server)s</li>
 </ul>
 <ul>
-<li>curlftpfs -o ssl %(ftps_server)s:%(ftps_ctrl_port)s remote-home \\
-          -o user=%(username)s -ouid=$(id -u) -o gid=$(id -g) -o no_verify_peer</li>
+<li>curlftpfs -o ssl %(ftps_server)s:%(ftps_ctrl_port)s remote-home -o user=%(username)s -ouid=$(id -u) -o gid=$(id -g) -o no_verify_peer</li>
 </ul>
 </div>
 <div class="div-ftps-client-notes">
