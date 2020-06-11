@@ -496,7 +496,7 @@ Please report this problem to the grid administrators (%s).'''
         logger.info('created user account for %s' % uniq_id)
         output_objects.append({'object_type': 'html_form', 'text': '''
 <p>Creating your %(short_title)s user account ...</p>
-<p class="spinner iconspace">
+<p class="spinner iconleftpad">
 redirecting to your <a href="%(base_url)s">personal pages</a> in a moment.
 </p>
 <script type="text/javascript">
