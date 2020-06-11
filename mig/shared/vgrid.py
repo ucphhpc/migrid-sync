@@ -1862,6 +1862,12 @@ def in_vgrid_writable(configuration, path):
     """
     if not vgrid_restrict_write_support(configuration):
         return False
+    system_storage = in_mig_system_storage(configuration,
+                                           path,
+                                           configuration.vgrid_files_writable,
+                                           )
+    if system_storage:
+        return system_storage
     return __in_vgrid_special(configuration, path,
                               configuration.vgrid_files_writable, flat=True)
 
@@ -1872,6 +1878,13 @@ def in_vgrid_readonly(configuration, path):
     """
     if not vgrid_restrict_write_support(configuration):
         return False
+    system_storage = in_mig_system_storage(configuration,
+                                           path,
+                                           configuration.vgrid_files_readonly,
+                                           readonly=True,
+                                           )
+    if system_storage:
+        return system_storage
     return __in_vgrid_special(configuration, path,
                               configuration.vgrid_files_readonly, flat=True)
 
@@ -1882,6 +1895,36 @@ def in_vgrid_legacy_share(configuration, path):
     """
     return __in_vgrid_special(configuration, path,
                               configuration.vgrid_files_home)
+
+
+def in_mig_system_storage(configuration, path, state_base, readonly=False):
+    """Checks if path is inside mig_system_storage with state_base
+    and returns the name of the deepest such sub-vgrid it is inside if so.
+    """
+    _logger = configuration.logger
+    real_path = os.path.realpath(path)
+    if not real_path.startswith(configuration.mig_system_storage):
+        # _logger.debug("path: %r not in %r" \
+        #     % (real_path, configuration.mig_system_storage))
+        return None
+    basepath = None
+    state = os.path.basename(state_base.strip(os.sep))
+    startpos = real_path.rfind(state)
+    if startpos == -1:
+        # _logger.debug("state: %r not found in %r" % (state, real_path))
+        return None
+    endpos = real_path.rfind(os.sep, startpos)
+    if endpos < startpos:
+        _logger.error("Invalid endpos: %d" % endpos)
+        return None
+    basepath = real_path[:endpos]
+    # _logger.debug("basepath: %r" % basepath)
+    if readonly and not check_readonly(configuration, basepath):
+        return None
+    if not readonly and not check_writable(configuration, basepath):
+        return None
+    return __in_vgrid_special(configuration, path,
+                              basepath, flat=True)
 
 
 def in_vgrid_share(configuration, path):
