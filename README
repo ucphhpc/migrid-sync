@@ -513,7 +513,7 @@ vhost-specific certificates from LetsEncrypt and OpenID with optional
                    --login_methods="extoid migoid migcert" \
                    --skin=migrid-basic --short_title=MiG \
                    --wsgi_procs=25 \
-                   --secscan_addr="\(130.225.213.72\|192.38.10.137\)"
+                   --secscan_addr="\(130.226.158.3\|130.225.213.72\|192.38.10.137\)"
 
 or the same on centos
 ./generateconfs.py --source=. --destination=generated-confs \
@@ -567,7 +567,7 @@ or the same on centos
                    --login_methods="extoid migoid migcert" \
                    --distro=centos --skin=migrid-basic --short_title=MiG \
                    --wsgi_procs=25 \
-                   --secscan_addr="\(130.225.213.72\|192.38.10.137\)"
+                   --secscan_addr="\(130.226.158.3\|130.225.213.72\|192.38.10.137\)"
 
 and a storage-only setup with CentOS 7.x, apache 2.4, WSGI (default web), 
 optimized SFTP, Seafile integration and OpenID login:
@@ -621,7 +621,7 @@ optimized SFTP, Seafile integration and OpenID login:
                    --distro=centos \
                    --skin=erda-ucph-science --short_title=ERDA \
                    --vgrid_label=Workgroup --wsgi_procs=25 \
-                   --secscan_addr="\(130.225.213.72\|192.38.10.137\)"
+                   --secscan_addr="\(130.226.158.3\|130.225.213.72\|192.38.10.137\)"
                    
 and the same with added Jupyter+cloud integration and optional 2FA support:
 ./generateconfs.py --source=. --destination=generated-confs \
@@ -681,7 +681,7 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --vgrid_label=Workgroup --apache_worker_procs=2048 \
                    --davs_port=8020 --openid_port=8001 \
                    --wsgi_procs=100 --sftp_subsys_auth_procs=25 \
-                   --secscan_addr="\(130.225.213.72\|192.38.10.137\)"
+                   --secscan_addr="\(130.226.158.3\|130.225.213.72\|192.38.10.137\)"
 
 and a similar setup with CentOS 7.x, apache 2.4, WSGI (default web), 
 optimized SFTP, job execution, Jupyter integration, previews and OpenID login
@@ -744,7 +744,7 @@ with optional 2-FA support and legacy sftp clients:
                    --vgrid_label=Workgroup --apache_worker_procs=512 \
                    --wsgi_procs=25 --sftp_subsys_auth_procs=25 \
                    --davs_port=8020 --openid_port=8001 \
-                   --secscan_addr="\(130.225.213.72\|192.38.10.137\)"
+                   --secscan_addr="\(130.226.158.3\|130.225.213.72\|192.38.10.137\)"
 
 Finally a storage-only with CentOS 7.x, apache 2.4, WSGI (default web), 
 optimized SFTP, strict access control and extensive logging to comply with the 
