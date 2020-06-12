@@ -514,15 +514,10 @@ def refresh_user_creds(configuration, protocol, username):
             logger.warning("Skipping non-existant auth path %s" % path)
             continue
         # logger.debug("Checking %s" % path)
-        if private_auth_file:
-            user_home = path.replace(os.sep + auth_file, '')
-            user_dir = user_home.replace(conf['root_dir'] + os.sep, '')
-        else:
-            # Expand actual user home from alias
-            user_home = os.path.realpath(os.path.join(configuration.user_home,
-                                                      username))
-            user_dir = os.path.basename(user_home)
-
+        # Expand actual user home from alias
+        user_home = os.path.realpath(os.path.join(configuration.user_home,
+                                                  username))
+        user_dir = os.path.basename(user_home)
         # Check that user home exists
         if not os.path.exists(user_home):
             logger.warning("Skipping user without home %s" % user_home)
