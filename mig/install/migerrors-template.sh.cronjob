@@ -19,7 +19,7 @@
 su - mig -c '{
 # Optional security scanner host address to exclude from log errors.
 # Useful to leave out errors from automated Nessus/OpenVAS scans
-SECSCANIP="__SECSCAN_ADDR__"
+SECSCANIP="__SECSCAN_ADDR_PATTERN__"
 LOGDIR="__MIG_STATE__/log"
 TODAY=$(date +'%Y-%m-%d')
 YESTERDAY=$(date --date=yesterday +%'Y-%m-%d')

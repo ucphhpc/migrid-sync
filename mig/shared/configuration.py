@@ -663,7 +663,7 @@ location.""" % self.config_file
             self.mig_system_files = config.get('GLOBAL',
                                                'mig_system_files')
             self.mig_system_storage = config.get('GLOBAL',
-                                             'mig_system_storage')
+                                                 'mig_system_storage')
             self.mig_system_run = config.get('GLOBAL',
                                              'mig_system_run')
             self.empty_job_name = config.get('GLOBAL', 'empty_job_name')
@@ -1772,6 +1772,11 @@ location.""" % self.config_file
                 'SITE', 'status_system_match').split()
         else:
             self.site_status_system_match = [keyword_any]
+        if config.has_option('SITE', 'security_scanners'):
+            self.site_security_scanners = config.get(
+                'SITE', 'security_scanners').split()
+        else:
+            self.site_security_scanners = []
         # Fall back to a static 'random' salt string since we need it to
         # remain constant
         static_rand = 'w\xff\xcft\xaf/\x089 B\x1eG\x84i\x97a'
