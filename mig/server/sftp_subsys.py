@@ -1,10 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/python -s
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
 #
 # sftp_subsys - SFTP subsys exposing access to MiG user homes through openssh
-# Copyright (C) 2010-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,19 +25,33 @@
 # -- END_HEADER ---
 #
 
+# IMPORTANT: use python -s in the hash-bang at the top to disable user site
+#            directory inclusion in sys.path since it would potentially lead
+#            to arbitrary user code injection if any module X in
+#            user_home/USERID/.local/lib/python2.7/site-packages/X shadowed
+#            the non-stdlib modules imported below (details in PEP 370).
+
 """Provides SFTP access to MiG user homes as a subsys through openssh.
 
 Requires Paramiko module (http://pypi.python.org/pypi/paramiko) and setup of
 our own PAM infrastructure using pam-mig and libnss-mig.
+IMPORTANT: We strongly recommend setting the login shell in libnss_mig.conf to
+/path/to/mig/server/sftp_subsys.py
+or at least /bin/sh if that doesn't work. Using e.g. /bin/bash WILL result in
+unsafe evaluation of any .bashrc in the user home of the user.
+Using /bin/sh requires extra care if running other sshd instances since libnss
+may then allow valid MiG user login with key there, too - unless login as mig
+user/group is actively prohibited or restricted there as well.
 
-Then change /etc/ssh/sshd_config to use this file as sftp subsystem provider:
+When ready point /etc/ssh/sshd_config to this file as sftp subsystem provider:
 Subsystem   sftp    /path/to/mig/server/sftp_subsys.py
 
 Similarly setup those logins to use credentials from individual user home dirs
-and chrooting there like:
+(with implicit chrooting) like:
 Match Group mig
     AuthorizedKeysFile %h/.ssh/authorized_keys
     ForceCommand /path/to/mig/server/sftp_subsys.py
+    # Plus any further limitations here
 
 and restart sshd.
 
@@ -114,8 +128,6 @@ if __name__ == '__main__':
     # Force no log init since we use separate logger
     configuration = get_configuration_object(skip_log=True)
     log_level = configuration.loglevel
-    if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
-        log_level = sys.argv[1]
     # Use separate logger
     logger = daemon_logger('sftp-subsys', configuration.user_sftp_subsys_log,
                            log_level)
@@ -124,6 +136,22 @@ if __name__ == '__main__':
     register_hangup_handler(configuration)
     pid = os.getpid()
     logger.info('(%d) Basic sftp subsystem initialized' % pid)
+    # IMPORTANT: for security reasons we only allow restricted launch
+    #            The login shell should NOT evaluate arbitrary user code from
+    #            profile or shell rc files and should preferably call this
+    #            script directly. More info in the module doc-string above.
+    fallback_shells = ['/bin/sh']
+    login_shell = os.environ.get('SHELL', 'UNKNOWN')
+    if sys.argv[1:] == ['-c', __file__]:
+        login_shell = sys.argv[0]
+    if login_shell in fallback_shells:
+        logger.warning("sftp subsystem not using direct launch but %s" %
+                       login_shell)
+    elif login_shell != __file__:
+        logger.error("sftp subsystem launched with illegal/unsafe shell: %s"
+                     % login_shell)
+        sys.exit(1)
+
     # Lookup chroot exceptions once and for all
     chroot_exceptions = user_chroot_exceptions(configuration)
     # Any extra chmod exceptions here - we already cover invisible_path check
