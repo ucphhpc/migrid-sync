@@ -31,6 +31,7 @@ import time
 import re
 
 from shared.auth import active_twofactor_session
+from shared.base import extract_field
 from shared.defaults import CRACK_USERNAME_REGEX
 from shared.gdp import get_client_id_from_project_client_id
 from shared.griddaemons.ratelimits import default_user_abuse_hits, \
@@ -154,13 +155,17 @@ def authlog(configuration,
     _auth_logger(log_message)
 
     if notify and category:
-        user_msg = "IP: %s, User: %s, Message: %s" % \
-            (user_addr, user_id, log_msg)
-        status = send_system_notification(user_id, category,
-                                          user_msg, configuration)
-        if not status:
-            logger.error("Failed to send notification to: %s" % user_id)
-
+        # Check for valid user before issuing notification
+        client_id = expand_openid_alias(user_id, configuration)
+        if client_id and extract_field(client_id, 'email'):
+            user_msg = "IP: %s, User: %s, Message: %s" % \
+                (user_addr, user_id, log_msg)
+            status = send_system_notification(user_id, category,
+                                              user_msg, configuration)
+        # else:
+        #     logger.debug("Skipped send_system_notification to user: %r" \
+        #         % user_id)
+        
     return status
 
 
@@ -235,7 +240,8 @@ def validate_auth_attempt(configuration,
     twofa_passed = valid_twofa
     notify = True
 
-    if skip_notify or invalid_username or invalid_user:
+    if skip_notify or invalid_username or invalid_user \
+            or ip_addr in configuration.site_security_scanners:
         notify = False
 
     if skip_twofa_check:
