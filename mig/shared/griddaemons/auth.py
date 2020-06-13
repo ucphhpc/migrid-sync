@@ -342,7 +342,7 @@ def validate_auth_attempt(configuration,
         if tcp_port > 0:
             log_msg += ":%s" % tcp_port
         logger.error(log_msg)
-        authlog(configuration, 'ERROR', protocol, authtype,
+        authlog(configuration, 'WARNING', protocol, authtype,
                 username, ip_addr, auth_msg, notify=notify)
     elif authtype_enabled and not valid_auth:
         auth_msg = "Failed %s" % authtype
