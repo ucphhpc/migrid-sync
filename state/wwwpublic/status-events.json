@@ -1,5 +1,26 @@
 [
   {
+    "status": "AUTO", 
+    "work_start": "2020-06-22T16:00:00", 
+    "systems": [
+        "ERDA", "IDMC", "SIF"
+    ], 
+    "announce_start": "2020-06-15T08:00:00", 
+    "title": {
+      "EN": "Planned ERDA, IDMC and SIF Maintenance", 
+      "DK": "Planlagt vedligehold på ERDA, IDMC og SIF"
+    }, 
+    "services": [
+      "ALL"
+    ], 
+    "work_end": "2020-06-23T08:00:00", 
+    "description": {
+      "EN": "We need to expand the underlying storage system and will use the opportunity to apply pending system and minor feature updates on the ERDA, IDMC and SIF frontends. The work will require downtime in relation to the storage and system updates. Thus all ERDA, IDMC and SIF services except ERDA Seafile will be down for shorter or longer periods during the maintenance window. We hope to finish before next morning and will announce status here as usual.", 
+      "DK": "Vi er nødt til at udbygge det underliggende lagersystem og benytter lejligheden til at køre et antal udestående system- og nogle mindre funktionelle opdateringer på ERDA, IDMC og SIF frontends. Arbejdet kræver nedetid ifm lager- og systemopdateringerne. Alle ERDA, IDMC og SIF services bortset fra ERDA Seafile vil være nede i kortere eller længere perioder under arbejdet. Vi håber at arbejdet er overstået inden næste morgen, og status følger som vanligt her."
+    }, 
+    "announce_end": "2020-06-23T12:00:00"
+  }, 
+  {
     "status": "AUTO",
     "work_start": "2020-06-02T17:00:00",
     "systems": [
