@@ -42,6 +42,11 @@ h1 {
   background: url("background_greypattern.png") repeat scroll left center #aaa;
 }
 
+/* NOTE: prevent long systemwarn from making toplogo overflow completely */
+#toplogocenter {
+    max-width: calc(100% - 200px);
+}
+
 /* Hide touchscreen toggle now we have toolbox button on all entries */
 #fm_toggle_touchscreen, #fm_touchscreen_label {
     display: none;
