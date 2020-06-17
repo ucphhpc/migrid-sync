@@ -1,3 +1,9 @@
+# NOTE: Enable next for logging all interactive shell commands with auditd
+#       Requires a working auditd setup and then enables ausearch and
+#       aureport for querying what was entered in interactive shells
+#       except in password prompts.
+#session required pam_tty_audit.so enable=*
+
 # IMPORTANT: we enable MiG password login for sftp-only access and leave the 
 #            defaults disabled as we don't want general ssh password login
 #            and the included required pam_deny rules from there interfere.
