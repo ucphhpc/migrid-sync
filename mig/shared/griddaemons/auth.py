@@ -354,8 +354,7 @@ def validate_auth_attempt(configuration,
                 username, ip_addr, auth_msg, notify=notify)
     elif valid_auth and twofa_passed:
         authorized = True
-        if notify and not configuration.site_enable_gdp:
-            notify = False
+        notify = False
         auth_msg = "Accepted %s" % authtype
         log_msg = auth_msg + " login for %s from %s" % (username, ip_addr)
         if tcp_port > 0:
