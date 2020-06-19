@@ -33,9 +33,10 @@ import time
 import shared.returnvalues as returnvalues
 from shared.accountstate import account_expire_info
 from shared.auth import get_twofactor_secrets
-from shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin
+from shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin, \
+    get_short_id
 from shared.defaults import seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
-    duplicati_protocol_choices, duplicati_schedule_choices, get_short_id
+    duplicati_protocol_choices, duplicati_schedule_choices
 from shared.duplicatikeywords import get_duplicati_specs
 from shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
 from shared.functional import validate_input_and_cert
