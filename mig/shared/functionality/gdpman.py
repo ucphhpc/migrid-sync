@@ -35,7 +35,7 @@ import shared.returnvalues as returnvalues
 from shared.base import get_xgi_bin
 from shared.defaults import csrf_field
 from shared.functional import validate_input_and_cert
-from shared.gdp import ensure_user, get_projects, get_users, \
+from shared.gdp.all import ensure_user, get_projects, get_users, \
     get_active_project_client_id, project_accept_user, project_create, \
     project_invite_user, project_login, project_logout, project_remove_user, \
     validate_user, get_project_info, get_project_from_client_id

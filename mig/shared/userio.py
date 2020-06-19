@@ -43,7 +43,7 @@ import time
 
 from shared.base import invisible_path
 from shared.defaults import trash_destdir, trash_linkname
-from shared.gdp import get_project_from_client_id, project_log
+from shared.gdp.all import get_project_from_client_id, project_log
 from shared.vgrid import in_vgrid_legacy_share, in_vgrid_writable, \
     in_vgrid_priv_web, in_vgrid_pub_web
 

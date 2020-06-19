@@ -32,7 +32,7 @@ import os
 import shared.returnvalues as returnvalues
 from shared.auth import expire_twofactor_session
 from shared.functional import validate_input_and_cert
-from shared.gdp import project_logout, get_client_id_from_project_client_id
+from shared.gdp.all import project_logout, get_client_id_from_project_client_id
 from shared.httpsclient import extract_client_openid
 from shared.init import initialize_main_variables, find_entry
 from shared.useradm import expire_oid_sessions, find_oid_sessions

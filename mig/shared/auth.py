@@ -47,7 +47,7 @@ from shared.defaults import twofactor_key_name, twofactor_interval_name, \
     twofactor_key_bytes, twofactor_cookie_bytes, twofactor_cookie_ttl
 from shared.fileio import read_file, delete_file, delete_symlink, \
     pickle, unpickle, make_symlink
-from shared.gdp import get_base_client_id
+from shared.gdp.all import get_base_client_id
 from shared.pwhash import scramble_password, unscramble_password
 
 valid_otp_window = 1

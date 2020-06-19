@@ -37,7 +37,7 @@ from shared.base import client_dir_id, client_id_dir, client_alias, \
     force_utf8, get_short_id
 from shared.defaults import dav_domain
 from shared.fileio import unpickle
-from shared.gdp import get_project_from_user_id
+from shared.gdp.all import get_project_from_user_id
 from shared.sharelinks import extract_mode_id
 from shared.ssh import parse_pub_key
 from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \

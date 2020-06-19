@@ -34,7 +34,7 @@ import shared.returnvalues as returnvalues
 from shared.accountstate import check_update_account_expire
 from shared.duplicatikeywords import get_keywords_dict as duplicati_keywords
 from shared.functional import validate_input_and_cert
-from shared.gdp import get_client_id_from_project_client_id
+from shared.gdp.all import get_client_id_from_project_client_id
 from shared.handlers import get_csrf_limit, safe_handler
 from shared.init import initialize_main_variables
 from shared.settings import parse_and_save_settings, parse_and_save_widgets, \

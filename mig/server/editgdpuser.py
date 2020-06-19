@@ -33,7 +33,7 @@ import sys
 import getopt
 
 from shared.conf import get_configuration_object
-from shared.gdp import edit_gdp_user, reset_account_roles, \
+from shared.gdp.all import edit_gdp_user, reset_account_roles, \
     set_account_state
 from shared.useradm import init_user_adm
 

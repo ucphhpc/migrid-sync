@@ -33,7 +33,7 @@ from urllib import urlencode
 from urlparse import parse_qsl
 
 from shared.defaults import auth_openid_mig_db, auth_openid_ext_db
-from shared.gdp import get_project_user_dn
+from shared.gdp.all import get_project_user_dn
 from shared.useradm import get_openid_user_dn
 
 # All HTTPS clients coming through apache will have their unique
