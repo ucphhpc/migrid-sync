@@ -44,7 +44,7 @@ except:
     Xvfb = None
 
 from shared.base import client_id_dir, valid_dir_input, extract_field, \
-    fill_distinguished_name
+    fill_distinguished_name, get_short_id, expand_openid_alias
 from shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
     gdp_distinguished_field, io_session_timeout, \
     user_db_filename as mig_user_db_filename, \
@@ -54,7 +54,7 @@ from shared.fileio import touch, make_symlink, write_file, remove_rec, \
 from shared.notification import send_email
 from shared.serial import load, dump
 from shared.useradm import create_user, delete_user, edit_user, \
-    expand_openid_alias, get_full_user_map, get_short_id, lock_user_db
+    get_full_user_map, lock_user_db
 from shared.vgrid import vgrid_flat_name, vgrid_is_owner, vgrid_set_owners, \
     vgrid_add_members, vgrid_set_settings, vgrid_create_allowed, \
     vgrid_remove_members, vgrid_restrict_write_support

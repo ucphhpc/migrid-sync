@@ -31,13 +31,13 @@ from binascii import unhexlify
 import os
 
 from shared.accessrequests import delete_access_request
-from shared.base import client_id_dir
+from shared.base import client_id_dir, expand_openid_alias
 from shared.defaults import any_protocol, csrf_field
 from shared.fileio import make_symlink
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables, find_entry
-from shared.useradm import expand_openid_alias, get_full_user_map
+from shared.useradm import get_full_user_map
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
     vgrid_is_member, vgrid_list_subvgrids, vgrid_add_members, \
     allow_members_adm, vgrid_manage_allowed

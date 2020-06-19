@@ -33,7 +33,8 @@ import urllib
 
 import shared.returnvalues as returnvalues
 from shared.auth import get_twofactor_secrets
-from shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin
+from shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin, \
+    get_short_id
 from shared.defaults import default_mrsl_filename, \
     default_css_filename, profile_img_max_kb, profile_img_extensions, \
     seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
@@ -57,7 +58,7 @@ from shared.settingskeywords import get_settings_specs
 from shared.twofactorkeywords import get_twofactor_specs
 from shared.widgetskeywords import get_widgets_specs
 from shared.useradm import create_alias_link, get_default_mrsl, \
-    get_default_css, get_short_id
+    get_default_css
 
 
 from shared.vgridaccess import get_vgrid_map_vgrids

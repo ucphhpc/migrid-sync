@@ -34,7 +34,7 @@ import socket
 import time
 
 from shared.base import client_dir_id, client_id_dir, client_alias, \
-    force_utf8
+    force_utf8, get_short_id
 from shared.defaults import dav_domain
 from shared.fileio import unpickle
 from shared.gdp import get_project_from_user_id
@@ -44,8 +44,7 @@ from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
     https_authkeys, get_authkeys, ssh_authpasswords, davs_authpasswords, \
     ftps_authpasswords, https_authpasswords, get_authpasswords, \
     ssh_authdigests, davs_authdigests, ftps_authdigests, https_authdigests, \
-    generate_password_hash, generate_password_digest, load_user_dict, \
-    get_short_id
+    generate_password_hash, generate_password_digest, load_user_dict
 from shared.validstring import possible_sharelink_id, possible_job_id, \
     possible_jupyter_mount_id
 

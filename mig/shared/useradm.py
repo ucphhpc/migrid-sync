@@ -1101,18 +1101,6 @@ def delete_user(
     mark_user_modified(configuration, client_id)
 
 
-def expand_openid_alias(alias_id, configuration):
-    """Expand openid alias to full certificate DN from symlink"""
-    home_path = os.path.join(configuration.user_home, alias_id)
-    if os.path.islink(home_path):
-        real_home = os.path.realpath(home_path)
-        client_dir = os.path.basename(real_home)
-        client_id = client_dir_id(client_dir)
-    else:
-        client_id = alias_id
-    return client_id
-
-
 def get_openid_user_map(configuration, do_lock=True):
     """Translate user DB to OpenID mapping between a verified login URL and a
     pseudo certificate DN.
@@ -2120,18 +2108,3 @@ def check_password_digest(configuration, service, realm, username, password,
     except Exception, exc:
         _logger.warning("in check_password_digest: %s" % exc)
         return False
-
-
-def get_short_id(configuration, user_id, user_alias):
-    """Internal helper to translate user_id and user_alias to short_id"""
-    short_id = extract_field(user_id, user_alias)
-
-    if configuration.site_enable_gdp:
-
-        # TODO add 'user_gdp_alias' to configuration ?
-
-        gdp_id = extract_field(user_id, "GDP")
-        if gdp_id is not None:
-            short_id = "%s@%s" % (short_id, gdp_id)
-
-    return short_id

@@ -35,7 +35,7 @@ from shared.accountstate import account_expire_info
 from shared.auth import get_twofactor_secrets
 from shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin
 from shared.defaults import seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
-    duplicati_protocol_choices, duplicati_schedule_choices
+    duplicati_protocol_choices, duplicati_schedule_choices, get_short_id
 from shared.duplicatikeywords import get_duplicati_specs
 from shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
 from shared.functional import validate_input_and_cert
@@ -47,7 +47,7 @@ from shared.init import initialize_main_variables, find_entry, extract_menu
 from shared.settings import load_settings, load_ssh, load_davs, load_ftps, \
     load_seafile, load_duplicati, load_cloud, load_twofactor
 from shared.twofactorkeywords import get_twofactor_specs
-from shared.useradm import create_alias_link, get_short_id
+from shared.useradm import create_alias_link
 
 
 ssh_edit = cm_options.copy()

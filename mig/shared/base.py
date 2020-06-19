@@ -83,6 +83,33 @@ def client_alias(client_id):
     return base64.urlsafe_b64encode(client_id).replace('=', '_')
 
 
+def expand_openid_alias(alias_id, configuration):
+    """Expand openid alias to full certificate DN from symlink"""
+    home_path = os.path.join(configuration.user_home, alias_id)
+    if os.path.islink(home_path):
+        real_home = os.path.realpath(home_path)
+        client_dir = os.path.basename(real_home)
+        client_id = client_dir_id(client_dir)
+    else:
+        client_id = alias_id
+    return client_id
+
+
+def get_short_id(configuration, user_id, user_alias):
+    """Internal helper to translate user_id and user_alias to short_id"""
+    short_id = extract_field(user_id, user_alias)
+
+    if configuration.site_enable_gdp:
+
+        # TODO add 'user_gdp_alias' to configuration ?
+
+        gdp_id = extract_field(user_id, gdp_distinguished_field)
+        if gdp_id is not None:
+            short_id = "%s@%s" % (short_id, gdp_id)
+
+    return short_id
+
+
 def fill_user(target):
     """Fill target user dictionary with all expected fields"""
 
