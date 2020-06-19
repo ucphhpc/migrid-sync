@@ -37,6 +37,7 @@ from shared.defaults import expire_marks_dir, status_marks_dir, \
     valid_account_status, oid_auto_extend_days, cert_auto_extend_days, \
     cert_valid_days, oid_valid_days
 from shared.filemarks import get_filemark, update_filemark, reset_filemark
+from shared.gdp.userid import get_base_client_id
 from shared.userdb import load_user_dict, default_db_path, update_user_dict
 
 
@@ -370,7 +371,10 @@ def check_account_accessible(configuration, username, proto, environ=None,
 
     # NOTE: now we know username must be an ordinary user to check
     client_id = username
-    if expand_alias:
+    if configuration.site_enable_gdp:
+        client_id = get_base_client_id(configuration, client_id,
+                                    expand_oid_alias=expand_alias)
+    elif expand_alias:
         # Use client_id_dir to make it work even if already expanded
         home_dir = os.path.join(configuration.user_home,
                                 client_id_dir(client_id))
