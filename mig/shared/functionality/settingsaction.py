@@ -239,6 +239,11 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 output_objects.append(
                     {'object_type': 'warning', 'text':
                      'Only the first key will be activated on instances'})
+        else:
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'No such settings topic: %s' % topic
+                                   })
+            return (output_objects, returnvalues.CLIENT_ERROR)
 
         # Try to refresh expire if possible to make sure it works for a while
         if topic in ['sftp', 'webdavs', 'ftps']:
@@ -246,11 +251,6 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 configuration, client_id, min_days_left=14)
             logger.debug("check and update account expire returned %s" %
                          account_expire)
-        else:
-            output_objects.append({'object_type': 'error_text', 'text':
-                                   'No such settings topic: %s' % topic
-                                   })
-            return (output_objects, returnvalues.CLIENT_ERROR)
 
         try:
             os.remove(tmptopicfile)
