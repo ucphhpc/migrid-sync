@@ -1861,8 +1861,8 @@ if (jQuery) (function($){
                                 '</div>' + pp_bytes(listing[i]['file_info']['size']) +
                                 '</td><td class="fm_type"><div>' + listing[i]['file_info']['ext'] +
                                 '</div>' + listing[i]['file_info']['ext'] +
-                                '</td><td class="fm_date"><div>' + listing[i]['file_info']['created'] + '</div>' +
-                                pp_date(listing[i]['file_info']['created']) + '</td><td class="fm_toolbox"><button class="more-button">...</button></td></tr>';
+                                '</td><td class="fm_date"><div>' + listing[i]['file_info']['modified'] + '</div>' +
+                                pp_date(listing[i]['file_info']['modified']) + '</td><td class="fm_toolbox"><button class="more-button">...</button></td></tr>';
                             entries_html += entry_html;
                             emptyDir = false;
 
