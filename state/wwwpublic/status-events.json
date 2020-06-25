@@ -1,11 +1,11 @@
 [
   {
     "status": "AUTO", 
-    "work_start": "2020-07-01T16:00:00", 
+    "work_start": "2020-07-01T16:00:00+02:00", 
     "systems": [
         "ERDA", "IDMC", "SIF"
     ], 
-    "announce_start": "2020-06-16T08:00:00", 
+    "announce_start": "2020-06-16T08:00:00+02:00", 
     "title": {
       "EN": "Planned ERDA, IDMC and SIF Maintenance", 
       "DK": "Planlagt vedligehold på ERDA, IDMC og SIF"
@@ -13,21 +13,21 @@
     "services": [
       "ALL"
     ], 
-    "work_end": "2020-07-02T08:00:00", 
+    "work_end": "2020-07-02T08:00:00+02:00", 
     "description": {
       "EN": "We need to expand the underlying storage system and will use the opportunity to apply pending system and minor feature updates on the ERDA, IDMC and SIF frontends. The work will require downtime in relation to the storage and system updates. Thus all ERDA, IDMC and SIF services except ERDA Seafile will be down for shorter or longer periods during the maintenance window. We hope to finish before next morning and will announce status here as usual.", 
       "DK": "Vi er nødt til at udbygge det underliggende lagersystem og benytter lejligheden til at køre et antal udestående system- og nogle mindre funktionelle opdateringer på ERDA, IDMC og SIF frontends. Arbejdet kræver nedetid ifm lager- og systemopdateringerne. Alle ERDA, IDMC og SIF services bortset fra ERDA Seafile vil være nede i kortere eller længere perioder under arbejdet. Vi håber at arbejdet er overstået inden næste morgen, og status følger som vanligt her."
     }, 
-    "announce_end": "2020-07-02T12:00:00"
+    "announce_end": "2020-07-02T12:00:00+02:00"
   }, 
   {
     "status": "AUTO",
-    "work_start": "2020-06-02T17:00:00",
+    "work_start": "2020-06-02T17:00:00+02:00",
     "systems": [
       "ERDA",
       "IDMC"
     ],
-    "announce_start": "2020-06-02T14:30:00",
+    "announce_start": "2020-06-02T14:30:00+02:00",
     "title": {
       "EN": "MODI Scratch Space Upgrade",
       "DK": "MODI Scratch Plads Opgradering"
@@ -35,20 +35,20 @@
     "services": [
       "MODI"
     ],
-    "work_end": "2020-06-02T19:30:00",
+    "work_end": "2020-06-02T19:30:00+02:00",
     "description": {
       "EN": "We are upgrading the shared scratch space for the MODI service, so that each user will now have 50 GB instead of 200 MB of available storage to both stage jobs and save results. This work was completed successfully and the MODI service is now back online",
       "DK": "Vi opgraderer det delte scratch space til MODI-tjenesten, så hver bruger nu har 50 GB i stedet for 200 MB ledig lagerplads til både staging af jobs og til at gemme resultater på. Dette arbejde blev afsluttet med succes, og MODI-tjenesten er nu tilbage online"
     },
-    "announce_end": "2020-06-03T10:00:00"
+    "announce_end": "2020-06-03T10:00:00+02:00"
   },
   {
     "status": "AUTO", 
-    "work_start": "2020-04-20T22:30:00", 
+    "work_start": "2020-04-20T22:30:00+02:00", 
     "systems": [
       "ERDA"
     ], 
-    "announce_start": "2020-04-20T22:30:00", 
+    "announce_start": "2020-04-20T22:30:00+02:00", 
     "title": {
       "EN": "ERDA Web Pages not Responding", 
       "DK": "ERDA websiderne svarer ikke"
@@ -56,20 +56,20 @@
     "services": [
       "Web"
     ], 
-    "work_end": "2020-04-21T20:50:00", 
+    "work_end": "2020-04-21T20:50:00+02:00", 
     "description": {
       "EN": "Late last night the ERDA pages requiring login stopped responding and just gave a time out. We've gotten them back online with a web service restart and are looking further into the cause. We had another case tonight and it appears it was caused by a misconfiguration in our OpenID setup. Probably introduced during the last ERDA upgrade and reboot. It was fixed now so the service should be stable again from now on.", 
       "DK": "Sent i aftes holdt de ERDA websider som kræver login op med at svare, og man fik bare en time out melding. Vi har fået liv i dem igen med en web service genstart og undersøger sagen nærmere. Til aften oplevede vi problemet igen og kunne se at det skyldtes en konfigurationsfejl i vores OpenID-opsætning - sikkert opstået ifm sidste opgradering og genstart af ERDA. Den er rettet, så servicen skulle køre stabilt igen fra nu af."
     }, 
-    "announce_end": "2020-04-22T10:00:00"
+    "announce_end": "2020-04-22T10:00:00+02:00"
   },
   {
     "status": "AUTO", 
-    "work_start": "2020-04-22T16:30:00", 
+    "work_start": "2020-04-22T16:30:00+02:00", 
     "systems": [
       "SIF"
     ], 
-    "announce_start": "2020-04-15T10:00:00", 
+    "announce_start": "2020-04-15T10:00:00+02:00", 
     "title": {
       "EN": "Planned SIF Maintenance", 
       "DK": "Planlagt SIF systemvedligehold"
@@ -77,20 +77,20 @@
     "services": [
       "ALL"
     ], 
-    "work_end": "2020-04-22T23:00:00", 
+    "work_end": "2020-04-22T23:00:00+02:00", 
     "description": {
       "EN": "We have a number of pending upgrades of both system and SIF software which will require reboot and service restarts. The work commenced on April 22th at 16:30 and we finished the updates and restarts at 20:00. Everything should be back to normal.", 
       "DK": "Vi har en række udestående opdateringer af både system og SIF software. Disse kræver en reboot og genstart af services. Arbejdet begyndte den 22. april kl 16.30 og vi blev færdige med opgradering og genstarter kl 20.00. Alt skulle være tilbage i normal drift."
     }, 
-    "announce_end": "2020-04-22T23:00:00"
+    "announce_end": "2020-04-22T23:00:00+02:00"
   },
   {
     "status": "AUTO", 
-    "work_start": "2020-04-13T10:00:00", 
+    "work_start": "2020-04-13T10:00:00+02:00", 
     "systems": [
       "ERDA"
     ], 
-    "announce_start": "2020-04-10T10:00:00", 
+    "announce_start": "2020-04-10T10:00:00+02:00", 
     "title": {
       "EN": "Planned ERDA Seafile Maintenance", 
       "DK": "Planlagt vedligehold på ERDA Seafile"
@@ -98,20 +98,20 @@
     "services": [
       "Seafile"
     ], 
-    "work_end": "2020-04-13T12:00:00", 
+    "work_end": "2020-04-13T12:00:00+02:00", 
     "description": {
       "EN": "We have a number of pending system and minor bugfixes on ERDA Seafile. The work will require a full Seafile system restart after the system updates. ERDA Seafile will therefore be down for shorter or longer periods during the work, but all other ERDA services should remain fully available. The work commenced on April 13th at 10 and was completed at 11 with tests indicating everything to be back online. So we don't expect further outages.", 
       "DK": "Vi har en række udestående system- og mindre funktionelle opdateringer på ERDAs Seafile. Arbejdet kræver genstart af hele Seafile systemet efter systemopdateringerne. ERDA Seafile vil derfor være utilgængelig i kortere eller længere perioder under opdateringen. Arbejdet begyndte den 13. april kl 10, og vi var færdige kl 11 med test af at alt igen er funktionelt. Så vi forventer ikke yderligere nedetid."
     }, 
-    "announce_end": "2020-04-14T17:00:00"
+    "announce_end": "2020-04-14T17:00:00+02:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2020-03-13T08:00:00", 
+    "work_start": "2020-03-13T08:00:00+01:00", 
     "systems": [
         "ALL"
     ], 
-    "announce_start": "2020-03-13T08:00:00", 
+    "announce_start": "2020-03-13T08:00:00+01:00", 
     "title": {
       "EN": "Limited Staff on-site due to COVID-19 Precautions", 
       "DK": "Nedsat lokal bemanding grundet COVID-19 forholdsregler"
@@ -119,20 +119,20 @@
     "services": [
         "ALL"
     ], 
-    "work_end": "2020-04-30T23:59:59", 
+    "work_end": "2020-04-30T23:59:59+02:00", 
     "description": {
       "EN": "Due to the general university policies in relation to the on-going COVID-19 (Corona) virus precautions we will try to work from home as much as possible. This might affect the response time for incidents that require our presence in the data centers. We will still handle any serious incidents the next business day, if not sooner.", 
       "DK": "På grund af universitetets generelle politik om begrænset fysisk adgang under den igangværende COVID-19 (Corona) virus-trussel, arbejder vi mest muligt hjemmefra. Det kan få indflydelse på responstiderne i tilfælde af fejl eller udfald som kræver fysisk tilstedeværelse i datacentrene. Alvorlige problemer vil fortsat behandles næste arbejdsdag, hvis ikke før."
     }, 
-    "announce_end": "2020-04-30T23:59:59"
+    "announce_end": "2020-04-30T23:59:59+02:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2020-03-18T17:00:00", 
+    "work_start": "2020-03-18T17:00:00+01:00", 
     "systems": [
       "ERDA"
     ], 
-    "announce_start": "2020-03-11T08:00:00", 
+    "announce_start": "2020-03-11T08:00:00+01:00", 
     "title": {
       "EN": "Planned ERDA Maintenance", 
       "DK": "Planlagt vedligehold på ERDA"
@@ -140,20 +140,20 @@
     "services": [
       "ALL"
     ], 
-    "work_end": "2020-03-18T19:20:00", 
+    "work_end": "2020-03-18T19:20:00+01:00", 
     "description": {
       "EN": "We have a number of pending system and minor feature updates on the ERDA frontend. The work will require full frontend restarts in relation to the system updates and a little additional downtime to resize a core file system. All ERDA services except Seafile will be down for shorter or longer periods. The work commenced on March 18th at about 17:00 and we finished the updates and restarts about 19:20. Everything should be back to normal.", 
       "DK": "Vi har et antal udestående system- og nogle mindre funktionelle opdateringer på ERDAs frontend. Arbejdet kræver genstart af hele frontend ifm systemopdateringerne og desuden lidt nedetid til at forstørre et centralt filsystem. Alle ERDA services bortset fra Seafile vil være nede i kortere eller længere perioder under opdateringen. Arbejdet begyndte den 18. marts omkring kl 17.00 og vi blev færdige med opgradering og genstarter omkring kl 19.20. Alt skulle være tilbage i normal drift."
     }, 
-    "announce_end": "2020-03-19T16:00:00"
+    "announce_end": "2020-03-19T16:00:00+01:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2019-08-01T00:00:00", 
+    "work_start": "2019-08-01T00:00:00+02:00", 
     "systems": [
         "UI.ERDA"
     ], 
-    "announce_start": "2019-07-31T00:00:00", 
+    "announce_start": "2019-07-31T00:00:00+02:00", 
     "title": {
       "EN": "ERDA User Interface Work", 
       "DK": "ERDA udvikling på brugergrænsefladen"
@@ -161,16 +161,16 @@
     "services": [
         "Web"
     ], 
-    "work_end": "2020-12-31T23:59:59", 
+    "work_end": "2020-12-31T23:59:59+01:00", 
     "description": {
       "EN": "We are developing the new user interface for ERDA and some glitches may appear here as a result.", 
       "DK": "Vi er igang med at udvikle den nye brugergrænseflade til ERDA og det kan give småfejl i visningen her."
     }, 
-    "announce_end": "2020-12-31T23:59:59"
+    "announce_end": "2020-12-31T23:59:59+01:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2020-02-21T00:00:00", 
+    "work_start": "2020-02-21T00:00:00+01:00", 
     "references": {
       "EN": [
         "https://kunet.ku.dk/newsroom/news/Pages/Major-service-window-at-UCPH-in-February.aspx"
@@ -182,7 +182,7 @@
     "systems": [
       "ALL"
     ], 
-    "announce_start": "2020-02-11T00:00:00", 
+    "announce_start": "2020-02-11T00:00:00+01:00", 
     "title": {
       "EN": "Planned Major UCPH Maintenance Weekend", 
       "DK": "Planlagt Stort KU Servicevindue"
@@ -190,16 +190,16 @@
     "services": [
       "ALL"
     ], 
-    "work_end": "2020-02-23T23:59:59", 
+    "work_end": "2020-02-23T23:59:59+01:00", 
     "description": {
       "EN": "UCPH have announced   plans for a major service window from Friday February 21st in the afternoon to Sunday February 23rd late in the evening. ERDA/IDMC/SIF is not directly affected and should remain fully online. Yet, the UCPH OpenID login service may be unstable in that  period, despite their redundancies. Thus, UCPH users  may experience problems especially in relation to ERDA/IDMC/SIF web login during that time frame.", 
       "DK": "KU har udmeldt   planer om et stort servicevindue fra fredag den 21. februar om eftermiddagen til søndag den 23. februar sent om aftenen. ERDA/IDMC/SIF er ikke direkte berørt og skulle forblive online. Ikke desto mindre vil arbejdet berøre KU OpenID login-servicen, som vi benytter. Så det kan ikke udelukkes at den del vil være ustabil i perioden. D.v.s. KU-brugere vil muligvis opleve problemer især omkring login på ERDA/IDMC/SIF web i det givne tidsrum."
     }, 
-    "announce_end": "2020-02-23T23:59:59"
+    "announce_end": "2020-02-23T23:59:59+01:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2020-02-19T00:00:00", 
+    "work_start": "2020-02-19T00:00:00+01:00", 
     "references": {
       "EN": [], 
       "DK": []
@@ -208,7 +208,7 @@
       "ERDA",
       "IDMC"
     ], 
-    "announce_start": "2020-02-19T00:00:00", 
+    "announce_start": "2020-02-19T00:00:00+01:00", 
     "title": {
       "EN": "Jupyter MODI Outage", 
       "DK": "Jupyter MODI udfald"
@@ -216,16 +216,16 @@
     "services": [
       "MODI"
     ], 
-    "work_end": "2020-02-19T23:59:59", 
+    "work_end": "2020-02-19T23:59:59+01:00", 
     "description": {
       "EN": "The MODI compute cluster resource at Jupyter went offline due to a backend network file sysem failure. It has been resolved and MODI is back online.", 
       "DK": "MODI klyngeresursen på Jupyter var nede pga en fejl i dens netværksfilsystem. Vi har fået løst problemet og MODI er tilbage i drift."
     }, 
-    "announce_end": "2020-02-19T23:59:59"
+    "announce_end": "2020-02-19T23:59:59+01:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2020-01-22T00:00:00", 
+    "work_start": "2020-01-22T00:00:00+01:00", 
     "references": {
       "EN": [], 
       "DK": []
@@ -233,7 +233,7 @@
     "systems": [
       "SIF"
     ], 
-    "announce_start": "2020-01-22T00:00:00", 
+    "announce_start": "2020-01-22T00:00:00+01:00", 
     "title": {
       "EN": "Planned SIF Maintenance", 
       "DK": "Planlagt SIF systemvedligehold"
@@ -241,16 +241,16 @@
     "services": [
       "ALL"
     ], 
-    "work_end": "2020-01-22T23:59:59", 
+    "work_end": "2020-01-22T23:59:59+01:00", 
     "description": {
       "EN": "We completed the planned upgrade of both system and SIF software between 16.00 and 22.00. All services are back to normal.", 
       "DK": "Vi har overstået den varslede opdatering af både system og SIF software  imellem 16.00 og 22.00. Alle services kører igen normalt."
     }, 
-    "announce_end": "2020-01-22T23:59:59"
+    "announce_end": "2020-01-22T23:59:59+01:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2020-01-09T00:00:00", 
+    "work_start": "2020-01-09T00:00:00+01:00", 
     "references": {
       "EN": [], 
       "DK": []
@@ -259,7 +259,7 @@
       "ERDA",
       "IDMC"
     ], 
-    "announce_start": "2020-01-09T00:00:00", 
+    "announce_start": "2020-01-09T00:00:00+01:00", 
     "title": {
       "EN": "DAG and MODI introduces user packages", 
       "DK": "DAG og MODI introducerer brugerspecifikke pakker"
@@ -268,16 +268,16 @@
       "DAG", 
       "MODI"
     ], 
-    "work_end": "2020-01-09T23:59:59", 
+    "work_end": "2020-01-09T23:59:59+01:00", 
     "description": {
       "EN": "We updated DAG and MODI, in addition it is possible on DAG to install user packages for our Python environment by installing via pip / pip3 install --user  (as well as via install.packages in R) to one's own home directory. This means that you can now avoid having to reinstall packages every time you start a new Notebook. However, it has the limitation that the package to be imported over the network will make it significantly slower than if packages are directly installed in our Notebook image.", 
       "DK": "Vi opdaterede DAG og MODI, herefter er det muligt på DAG at installere user pakker til  vores Python miljø ved at installere via pip/pip3 install --user  (samt via install.packages i R) til ens eget hjemme bibliotek. Dette gør at man nu kan slippe for at skulle geninstallere  pakker hver gang man starter en ny Notebook. Dog har det den begrænsning at pakken skal  importeres over netværket hvilket vil gøre det væsentlig langsommere end  hvis pakker er direkte installeret i vores Notebook image."
     }, 
-    "announce_end": "2020-01-09T23:59:59"
+    "announce_end": "2020-01-09T23:59:59+01:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2019-12-04T00:00:00", 
+    "work_start": "2019-12-04T00:00:00+01:00", 
     "references": {
       "EN": [], 
       "DK": []
@@ -285,7 +285,7 @@
     "systems": [
       "ERDA"
     ], 
-    "announce_start": "2019-12-04T00:00:00", 
+    "announce_start": "2019-12-04T00:00:00+01:00", 
     "title": {
       "EN": "Planned ERDA Maintenance", 
       "DK": "Planlagt ERDA systemarbejde"
@@ -293,16 +293,16 @@
     "services": [
       "ALL"
     ], 
-    "work_end": "2019-12-04T23:59:59", 
+    "work_end": "2019-12-04T23:59:59+01:00", 
     "description": {
       "EN": "We migrated the ERDA frontend to faster and bigger disks to improve performance of various local operations. The migration commenced on Wednesday December 4th at about 16.50 and meant that ERDA with all services were taken offline for a while. During the maintenance window we also ran some pending DAG system updates. We finished the work within a couple of hours and everything should be back to normal.", 
       "DK": "Vi migrerede ERDAs frontend til større og hurtigere diske for at forbedre ydelsen på forskellige lokale operationer. Migreringsarbejdet begyndte onsdag den 4. december omkring kl 16.50 og betød at ERDA med alle services var utilgængelig i et stykke tid. I samme forbindelse foretog vi nogle udestående systemopdateringer på DAG. Vi færdiggjorde arbejdet i løber af et par timer og alt skulle være tilbage i normal drift."
     }, 
-    "announce_end": "2019-12-04T23:59:59"
+    "announce_end": "2019-12-04T23:59:59+01:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2019-11-09T00:00:00", 
+    "work_start": "2019-11-09T00:00:00+01:00", 
     "references": {
       "EN": [], 
       "DK": []
@@ -311,7 +311,7 @@
       "ERDA",
       "IDMC"
     ], 
-    "announce_start": "2019-11-03T00:00:00", 
+    "announce_start": "2019-11-03T00:00:00+01:00", 
     "title": {
       "EN": "Planned DAG Maintenance", 
       "DK": "Planlagt DAG vedligeholdelse"
@@ -319,16 +319,16 @@
     "services": [
       "DAG"
     ], 
-    "work_end": "2019-11-10T23:59:59", 
+    "work_end": "2019-11-10T23:59:59+01:00", 
     "description": {
       "EN": "We completed the planned update and general hardening of the DAG service with a number of service restarts and general reconfiguration of each node. For now 5 out of 7 nodes are back to normal service with 2 being restored  before they are back to being operational.", 
       "DK": "Vi afsluttede den planlagte opdatering og generelle hærdning af DAG-tjenesten med et antal servicegenstarter og generel rekonfiguration af hver knude. I øjeblikket er 5 ud af 7 noder tilbage til normal service, hvor 2 er under gendannelse før de er tilbage til at være operationelle."
     }, 
-    "announce_end": "2019-11-10T23:59:59"
+    "announce_end": "2019-11-10T23:59:59+01:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2019-11-07T00:00:00", 
+    "work_start": "2019-11-07T00:00:00+01:00", 
     "references": {
       "EN": [], 
       "DK": []
@@ -336,7 +336,7 @@
     "systems": [
       "SIF"
     ], 
-    "announce_start": "2019-11-07T00:00:00", 
+    "announce_start": "2019-11-07T00:00:00+01:00", 
     "title": {
       "EN": "Planned SIF Maintenance", 
       "DK": "Planlagt SIF systemvedligehold"
@@ -344,16 +344,16 @@
     "services": [
       "ALL"
     ], 
-    "work_end": "2019-11-07T23:59:59", 
+    "work_end": "2019-11-07T23:59:59+01:00", 
     "description": {
       "EN": "We completed the planned upgrade of both system and SIF software with a reboot and some shorter service restarts between 17.20 and 18.15. All services are back to normal.", 
       "DK": "Vi har overstået den varslede opdatering af både system og SIF software med en genstart og nogle korte udfald mellem 17.20 og 18.15. Alle services kører igen normalt."
     }, 
-    "announce_end": "2019-11-07T23:59:59"
+    "announce_end": "2019-11-07T23:59:59+01:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2019-11-05T00:00:00", 
+    "work_start": "2019-11-05T00:00:00+01:00", 
     "references": {
       "EN": [], 
       "DK": []
@@ -361,7 +361,7 @@
     "systems": [
       "ERDA"
     ], 
-    "announce_start": "2019-11-05T00:00:00", 
+    "announce_start": "2019-11-05T00:00:00+01:00", 
     "title": {
       "EN": "Planned ERDA Maintenance", 
       "DK": "Planlagt ERDA systemvedligehold"
@@ -369,16 +369,16 @@
     "services": [
       "ALL"
     ], 
-    "work_end": "2019-11-05T23:59:59", 
+    "work_end": "2019-11-05T23:59:59+01:00", 
     "description": {
       "EN": "We completed the planned upgrade of both system and ERDA software with a reboot and some shorter service restarts between 17.25 and 18.10. All services are back to normal.", 
       "DK": "Vi har overstået den varslede opdatering af både system og ERDA software med en genstart og nogle korte udfald mellem 17.25 og 18.10. Alle services kører igen normalt."
     }, 
-    "announce_end": "2019-11-05T23:59:59"
+    "announce_end": "2019-11-05T23:59:59+01:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2019-09-24T00:00:00", 
+    "work_start": "2019-09-24T00:00:00+02:00", 
     "references": {
       "EN": [], 
       "DK": []
@@ -386,7 +386,7 @@
     "systems": [
       "ERDA"
     ], 
-    "announce_start": "2019-09-24T00:00:00", 
+    "announce_start": "2019-09-24T00:00:00+02:00", 
     "title": {
       "EN": "Seafile Migration and Down Time", 
       "DK": "Seafile migrering og nedetid"
@@ -394,16 +394,16 @@
     "services": [
       "Seafile"
     ], 
-    "work_end": "2019-09-24T23:59:59", 
+    "work_end": "2019-09-24T23:59:59+02:00", 
     "description": {
       "EN": "As proclaimed in the June 26th entry we've now migrated the ERDA Seafile service for better performance and scalability. We commenced with the actual migration to the new stand-alone setup on Tuesday at 8 in the morning and the data migration and database sychronization was not complete until Wednesday morning. After additional verification and testing the service was back online Wednesday at about 11.15. The migration unfortunately means that we have to suspend the previous integration with read access to Seafile data through the standard ERDA user home. For the moment we will preserve read-only access to a snapshot of the data from right before the migration in the usual virtual seafile_readonly folder in the ERDA home folder for people using Seafile. It is meant for emergency access to data in case anybody should experience problems after the migration and we will eventually remove it. After the migration we have enabled transparent proxying of Seafile requests from the old address to the new one. So the service should remain functional with the existing configuration, but it may yield better performance to switch the client to use the new location directly. There's more information about the new address and client configuration available under the Seafile section on your ERDA Settings page. Please note that the transparent proxy does not seem to fully work for mobile devices. So if file open/download consistently fails there it is likely necessary to switch them over to the new Seafile address.", 
       "DK": "Som varslet den 26/6 har vi migreret ERDA Seafile-servicen med henblik på at forbedre dens ydelse og skalering. Vi gik igang med den endelige migrering tirsdag kl 8 og datamigreringen og efterfølgende databasesynkroniserig var først færdig onsdag morgen. Efter yderligere kontrol og test var servicen tilbage i drift onsdag omkring kl 11.15. Migreringen betyder at vi på ubestemt tid må suspendere den hidtidige integration med læseadgang til ens Seafile data fra den almindelige ERDA brugermappe. Vi beholder dog for nu læseadgang til et snapshot af data umiddelbart inden migreringen via den virtuelle seafile_readonly mappe i ERDA brugermappen for Seafile-brugere. Den kan benyttes som nødløsning hvis nogen skulle opleve problemer efter migreringen, og vi fjerner den på sigt. Efter migreringen har vi opsat gennemsigtig viderestilling af Seafile-forespørgsler fra den gamle til den nye adresse. Servicen skulle således gerne forblive funktionel med eksisterende konfigurationer, men det vil formodentlig give bedre ydelse at skifte over til den nye placering direkte. Yderligere detaljer om den nye adresse og klient-opsætning findes under Seafile på ens ERDA Settings side. Bemærk at den gennemsigtige viderestilling tilsyneladende ikke virker fuldt ud på mobile enheder, så hvis vis/hent fil fejler der, er det sandsynligvis nødvendigt at skifte dem over til den nye Seafile-adresse."
     }, 
-    "announce_end": "2019-09-24T23:59:59"
+    "announce_end": "2019-09-24T23:59:59+02:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2019-09-18T00:00:00", 
+    "work_start": "2019-09-18T00:00:00+02:00", 
     "references": {
       "EN": [], 
       "DK": []
@@ -411,7 +411,7 @@
     "systems": [
       "SIF"
     ], 
-    "announce_start": "2019-09-18T00:00:00", 
+    "announce_start": "2019-09-18T00:00:00+02:00", 
     "title": {
       "EN": "Planned SIF Maintenance to Allow External Users", 
       "DK": "Planlagt SIF systemvedligehold mhp at tillade eksterne brugere"
@@ -419,16 +419,16 @@
     "services": [
       "ALL"
     ], 
-    "work_end": "2019-09-18T23:59:59", 
+    "work_end": "2019-09-18T23:59:59+02:00", 
     "description": {
       "EN": "For months and months we have worked on getting mainly the legal and of course the technical infrastructure in place to allow external users on SIF. Now it is finally ready to roll out and officially approved.  Thus, it will become possible to invite external users into existing projects on SIF whenever a formal collaboration with people outside UCPH is in place. The update requires at least SIF service restarts and in general some SIF service downtime should be expected in that time frame. We began the updates on Wednesday September 18th starting from 13 and we originally expected to be done sometime before 18 o'clock. However, it turned out that the updates took longer than expected so we did not finish the actual upgrade until a bit after 22 o'clock. Today we completed the remaining verification tasks so we consider everything back in normal service.", 
       "DK": "I adskillige måneder har vi arbejdet på at få organiseret især de juridiske men også tekniske procedurer for at kunne give eksterne brugere adgang til SIF. Nu er det endelig klar og officielt godkendt til at blive sat i drift.  Det bliver derved muligt at invitere eksterne brugere ind i eksisterende projekter på SIF, når der foreligger et formelt samarbejde med folk udenfor KU. I forbindelse med opdateringern er det nødvendigt som minimum at genstarte alle SIF services og generelt må der forventes kortere eller længere SIF nedetid undervejs. Vi begyndte opdateringerne onsdag den 18. september fra kl. 13 og vi forventede oprindeligt at arbejdet ville være overstået inden kl 18. Det viste sig dog mere omfattende end ventet, så vi var først færdige med selve opdateringen lidt efter kl. 22. I dag har vi kørt de resterende verificeringsopgaver og alting er igen at betragte som i normal drift."
     }, 
-    "announce_end": "2019-09-18T23:59:59"
+    "announce_end": "2019-09-18T23:59:59+02:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2019-08-10T00:00:00", 
+    "work_start": "2019-08-10T00:00:00+02:00", 
     "references": {
       "EN": [], 
       "DK": []
@@ -436,7 +436,7 @@
     "systems": [
       "ALL"
     ], 
-    "announce_start": "2019-08-10T00:00:00", 
+    "announce_start": "2019-08-10T00:00:00+02:00", 
     "title": {
       "EN": "Planned UCPH System Maintenance and DOI outages", 
       "DK": "Planlagt KU systemvedligehold og DOI utilgængelighed"
@@ -444,16 +444,16 @@
     "services": [
       "DOI"
     ], 
-    "work_end": "2019-08-10T23:59:59", 
+    "work_end": "2019-08-10T23:59:59+02:00", 
     "description": {
       "EN": "UCPH IT has informed us about planned system maintenance work in multiple areas this coming weekend (August 10th and 11th). It will render various components involved in the DOI assignment which we expose for ERDA freeze archives unavailable in that time period, but the rest of ERDA should remain unaffected.", 
       "DK": "KU IT melder om planlagt systemvedligehold i den kommende weekend (10. og 11. august). Et antal komponenter involveret i den DOI-tildeling vi eksponerer for ERDA freeze archives vil derfor ikke være tilgængelige i den periode, men resten af ERDA skulle forblive i normal drift."
     }, 
-    "announce_end": "2019-08-10T23:59:59"
+    "announce_end": "2019-08-10T23:59:59+02:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2019-07-30T00:00:00", 
+    "work_start": "2019-07-30T00:00:00+02:00", 
     "references": {
       "EN": [], 
       "DK": []
@@ -461,7 +461,7 @@
     "systems": [
       "ALL"
     ], 
-    "announce_start": "2019-07-30T00:00:00", 
+    "announce_start": "2019-07-30T00:00:00+02:00", 
     "title": {
       "EN": "DAG/MODI outages", 
       "DK": "DAG og MODI nede"
@@ -470,16 +470,16 @@
       "DAG", 
       "MODI"
     ], 
-    "work_end": "2019-07-30T23:59:59", 
+    "work_end": "2019-07-30T23:59:59+02:00", 
     "description": {
       "EN": "We lost all contact with the DAG and MODI compute nodes on Sunday morning due to a brief general power outage. Our technicians got around to investigate and got the main DAG hosts back online Monday afternoon and MODI returned on Monday evening. The special DGX-1 GPGPU node on DAG took somewhat longer to handle but it was back online on Tuesday afternoon.", 
       "DK": "Vi mistede al kontakt til maskinerne på DAG og MODI søndag formiddag pga et omfattende strømudfald. Vores teknikere undersøgte sagen nærmere og fik de almindelige DAG maskiner tilbage i drift mandag eftermiddag og MODI kom tilbage mandag aften. Den specielle DGX-1 GPGPU maskine på DAG tog noget længere at håndtere, men den var tilbage i almindelig drift tirsdag eftermiddag."
     }, 
-    "announce_end": "2019-07-30T23:59:59"
+    "announce_end": "2019-07-30T23:59:59+02:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2019-07-22T00:00:00", 
+    "work_start": "2019-07-22T00:00:00+02:00", 
     "references": {
       "EN": [], 
       "DK": []
@@ -487,7 +487,7 @@
     "systems": [
       "ALL"
     ], 
-    "announce_start": "2019-07-22T00:00:00", 
+    "announce_start": "2019-07-22T00:00:00+02:00", 
     "title": {
       "EN": "Power Outage in the HPC center: DAG/MODI outages", 
       "DK": "Strømsvigt i HPC Centeret: DAG og MODI nede"
@@ -496,16 +496,16 @@
       "DAG", 
       "MODI"
     ], 
-    "work_end": "2019-07-22T23:59:59", 
+    "work_end": "2019-07-22T23:59:59+02:00", 
     "description": {
       "EN": "The HPC Center was among the victims of the brief power outage or glitch on multiple campus areas at about 11 this morning. The core services are all on uninterruptible power supply (UPS) and weren't affected, but the DAG and MODI compute nodes are not covered and needed a bit of work to get back online. The affected services were all restored before 14.", 
       "DK": "HPC Centeret var blandt de ramte i strømudfaldet på flere dele af campus omkring kl 11 i formiddags. Alt centralt udstyr og services er på nødstrøm (UPS) og blev derfor ikke berørt. Beregningsmaskinerne i DAG og MODI er ikke dækket og krævede lidt arbejde at få tilbage i drift efter udfaldet. De berørte systemer var tilbage i normal drift inden kl 14."
     }, 
-    "announce_end": "2019-07-22T23:59:59"
+    "announce_end": "2019-07-22T23:59:59+02:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2019-07-05T00:00:00", 
+    "work_start": "2019-07-05T00:00:00+02:00", 
     "references": {
       "EN": [], 
       "DK": []
@@ -513,7 +513,7 @@
     "systems": [
       "ALL"
     ], 
-    "announce_start": "2019-07-05T00:00:00", 
+    "announce_start": "2019-07-05T00:00:00+02:00", 
     "title": {
       "EN": "Outage in the storage backend: additional service outages", 
       "DK": "Udfald i backend-lageret: efter-veer og udfald"
@@ -521,16 +521,16 @@
     "services": [
       "ALL"
     ], 
-    "work_end": "2019-07-05T23:59:59", 
+    "work_end": "2019-07-05T23:59:59+02:00", 
     "description": {
       "EN": "There was some additional fallout after the hardware breakdown yesterday and all services had to be taken offline again for a while this morning. We are done replacing failing componens and the problems should be over. All ERDA/IDMC and SIF services are back online.", 
       "DK": "Der var opstod nogle følgeproblemer af gårsdagens hardwarenedbrud og det førte til yderligere et udfald i morges. Vi er færdige med at udskifte de problematiske komponenter og problemerne skulle være løst. Alle ERDA/IDMC og SIF services er tilbage i almindelig drift."
     }, 
-    "announce_end": "2019-07-05T23:59:59"
+    "announce_end": "2019-07-05T23:59:59+02:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2019-07-04T00:00:00", 
+    "work_start": "2019-07-04T00:00:00+02:00", 
     "references": {
       "EN": [], 
       "DK": []
@@ -538,7 +538,7 @@
     "systems": [
       "ALL"
     ], 
-    "announce_start": "2019-07-04T00:00:00", 
+    "announce_start": "2019-07-04T00:00:00+02:00", 
     "title": {
       "EN": "Outage in the storage backend: all services down!", 
       "DK": "Udfald i backend-lageret: alt offine!"
@@ -546,16 +546,16 @@
     "services": [
       "ALL"
     ], 
-    "work_end": "2019-07-04T23:59:59", 
+    "work_end": "2019-07-04T23:59:59+02:00", 
     "description": {
       "EN": "We had a serious hardware breakdown in the storage backend and had to take all systems offline for emergency maintenance until replacement equipment was ready. All ERDA/IDMC and SIF services were offline, but are now back online.", 
       "DK": "Vi havde et større hardwarenedbrud i backend-lageret til eftermiddag/aften og alt måtte tages offline indtil vi havde nyt maskinel kørt i stilling. Alle ERDA/IDMC og SIF services var nede, men er nu tilbage online."
     }, 
-    "announce_end": "2019-07-04T23:59:59"
+    "announce_end": "2019-07-04T23:59:59+02:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2019-07-04T00:00:00", 
+    "work_start": "2019-07-04T00:00:00+02:00", 
     "references": {
       "EN": [], 
       "DK": []
@@ -563,7 +563,7 @@
     "systems": [
       "SIF"
     ], 
-    "announce_start": "2019-07-04T00:00:00", 
+    "announce_start": "2019-07-04T00:00:00+02:00", 
     "title": {
       "EN": "Warning about Planned SIF Maintenance and Downtime", 
       "DK": "Varsel om planlagt systemarbejde og nedetid på SIF"
@@ -571,16 +571,16 @@
     "services": [
       "ALL"
     ], 
-    "work_end": "2019-07-04T23:59:59", 
+    "work_end": "2019-07-04T23:59:59+02:00", 
     "description": {
       "EN": "We are physically moving the SIF frontend machine and need about an hour of downtime. The work will commence on Thursday July 4th at 10 in the morning and will temporarily remove access to  all SIF services. We expect the task to be complete and all services back online within an hour, i.e. sometime before 11. Update: the move took somewhat longer due to some pending important system updates not behaving as well as expected. We were done and back online at about 12:30.", 
       "DK": "Vi flytter SIF frontend-maskinen og har i den forbindelse brug for omkring en times nedetid. Arbejdet vil starte på torsdag den 4. juli kl 10 om formiddagen og vil midlertidigt gøre alle SIFs services utilgængelige. Vi forventer at arbejdet er overstået i løbet af en time og alt således er tilbage i normal drift inden kl 11. Opdatering: arbejdet blev forsinket af at nogle vigtige systemopdateringer ikke opførte sig helt så pænt som ventet. Vi var færdige og tilbage online omkring kl 12:30."
     }, 
-    "announce_end": "2019-07-04T23:59:59"
+    "announce_end": "2019-07-04T23:59:59+02:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2019-07-01T00:00:00", 
+    "work_start": "2019-07-01T00:00:00+02:00", 
     "references": {
       "EN": [], 
       "DK": []
@@ -588,7 +588,7 @@
     "systems": [
       "ALL"
     ], 
-    "announce_start": "2019-07-01T00:00:00", 
+    "announce_start": "2019-07-01T00:00:00+02:00", 
     "title": {
       "EN": "Slow/Missing Access", 
       "DK": "Begrænset/ingen adgang"
@@ -596,16 +596,16 @@
     "services": [
       "ALL"
     ], 
-    "work_end": "2019-07-01T23:59:59", 
+    "work_end": "2019-07-01T23:59:59+02:00", 
     "description": {
       "EN": "We had an outage in the backend storage around noon affecting access to all services. The problem should now be solved and everything back to normal.", 
       "DK": "Vi havde et udfald i backend-lageret omkring middag og det berørte alle services. Problemet skulle nu være løst og alt tilbage i almindelig drift."
     }, 
-    "announce_end": "2019-07-01T23:59:59"
+    "announce_end": "2019-07-01T23:59:59+02:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2019-06-26T00:00:00", 
+    "work_start": "2019-06-26T00:00:00+02:00", 
     "references": {
       "EN": [], 
       "DK": []
@@ -613,7 +613,7 @@
     "systems": [
       "ALL"
     ], 
-    "announce_start": "2019-06-26T00:00:00", 
+    "announce_start": "2019-06-26T00:00:00+02:00", 
     "title": {
       "EN": "Seafile restructuring and warning about weaker integration", 
       "DK": "Seafile omstrukturering og varsel om nedsat integration"
@@ -621,16 +621,16 @@
     "services": [
       "Seafile"
     ], 
-    "work_end": "2019-06-26T23:59:59", 
+    "work_end": "2019-06-26T23:59:59+02:00", 
     "description": {
       "EN": "Due to a steady increase in load we're planning to migrate the ERDA Seafile service from running side-by-side with the other services on the same frontend to instead run on a stand-alone frontend. That should allow for better performance and significantly help scaling to keep up with a growing number of concurrent users in the future. At the same time it allows for a simpler and more robust backend storage than the current one. The disadvantage of the dedicated frontend is that it makes it much harder to preserve the current ERDA Files integration with transparent read-only access to your Seafile data through the seafile_readonly folder. Alas, that appears to be a necessary loss. We expect to put the new Seafile structure into production some time in August and therefore expect the ERDA Files integration to be phased out in the coming months. At the moment it is unclear if we'll be able to provide a similar integration in the future or if the Seafile service will in practice remain an independent service.", 
       "DK": "Grundet støt stigende belastning planlægger vi at omlægge ERDA Seafile servicen fra at køre på samme frontend som de andre ERDA services til i stedet at køre på sin egen dedikerede frontend. Det skulle give bedre ydelse samt markant bedre mulighed for at kunne skalere til også at kunne håndtere det stigende antal samtidige brugere i fremtiden. Desuden giver det mulighed for at bruge et simplere og mere robust backend-lager end det nuværende. Ulempen ved den udskilning er at vi så ikke længere uden videre kan tilbyde den nuværende tætte integration i ERDA Files med sømløs skrivebeskyttet adgang til ens Seafile data via seafile_readonly mappen. Det lader desværre til at være et nødvendigt offer. Vi forventer at den nye struktur vil komme i drift i løbet af august og at integrationen i ERDA Files derfor vil udfases i løbet af de kommende måneder. Det er på nuværende tidspunkt uvist om vi på sigt igen vil kunne tilbyde en sådan funktionalitet eller om Seafile fremover i praksis forbliver en helt selvstændig service."
     }, 
-    "announce_end": "2019-06-26T23:59:59"
+    "announce_end": "2019-06-26T23:59:59+02:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2019-05-29T00:00:00", 
+    "work_start": "2019-05-29T00:00:00+02:00", 
     "references": {
       "EN": [
         "https://it.ku.dk/driftinfo/"
@@ -642,7 +642,7 @@
     "systems": [
       "ALL"
     ], 
-    "announce_start": "2019-05-29T00:00:00", 
+    "announce_start": "2019-05-29T00:00:00+02:00", 
     "title": {
       "EN": "UCPH Phishing Attack", 
       "DK": "KU i phishing-angreb"
@@ -650,16 +650,16 @@
     "services": [
       "ALL"
     ], 
-    "work_end": "2019-05-29T23:59:59", 
+    "work_end": "2019-05-29T23:59:59+02:00", 
     "description": {
       "EN": "UCPH and KUMail was the target of multiple big phishing attacks recently. Please take proper precautions if you got caught and disclosed you login credentials. E.g. apart from of course changing your UCPH password also remember to change any possibly affected passwords you have set for your ERDA SFTP/FTPS/WebDAVS and Seafile services. While at it we also strongly recommend enabling 2-factor authentication for your ERDA logins by following the 2-Factor Auth wizard on your ERDA Settings page. You can either use one of the common authentictor apps or the NetIQ app, which UCPH recently started promoting for various services.", 
       "DK": "KU og KUMail var mål for et større phishing-angreb på det seneste. Tag venligst dine forholdsregler såfremt du var blandt de fuppede og dermed videregav dine login-oplysninger. D.v.s. husk udover naturligvis at skifte dit KU-kodeord også at skifte evt berørte koder du måtte have valgt for dine ERDA SFTP/FTPS/WebDAVS og Seafile services. Ved samme lejlighed vil vi kraftigt anbefale at tilvælge 2-faktor godkendelse på dine ERDA-logins ved at følge 2-Factor Auth guiden på din ERDA Settings side. Du kan vælge  mellem at benytte en af de populære authentictor apps eller benytte den NetIQ app, som KU for nyligt er begyndt at promovere til forskellige services."
     }, 
-    "announce_end": "2019-05-29T23:59:59"
+    "announce_end": "2019-05-29T23:59:59+02:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2019-05-14T00:00:00", 
+    "work_start": "2019-05-14T00:00:00+02:00", 
     "references": {
       "EN": [], 
       "DK": []
@@ -667,7 +667,7 @@
     "systems": [
       "ALL"
     ], 
-    "announce_start": "2019-05-14T00:00:00", 
+    "announce_start": "2019-05-14T00:00:00+02:00", 
     "title": {
       "EN": "Login and Access Issues", 
       "DK": "Problemer med login og adgang"
@@ -675,16 +675,16 @@
     "services": [
       "ALL"
     ], 
-    "work_end": "2019-05-14T23:59:59", 
+    "work_end": "2019-05-14T23:59:59+02:00", 
     "description": {
       "EN": "We experienced new login and access problems since before noon today. This time it was apparently an issue where our web server and our Jupyter instances ended up in a fight for resources and significanlty limited the chances of ordinary web browser access. After some clean up, tuning and service restarts things are running as expected again.", 
       "DK": "Vi oplevede nye problemer med web-login/adgang her omkring middag.  Denne gang var det så vidt vi har kunnet finde frem til et problem med at vores web-server og Jupyter instanserne endte i en amoktilstand og slugte alle resurser, så man dårligt kunne komme igennem med almindlige web browsere. Efter lidt oprydning, tuning og genstart af services ser det ud til at være løst og tilbage i normal drift."
     }, 
-    "announce_end": "2019-05-14T23:59:59"
+    "announce_end": "2019-05-14T23:59:59+02:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2019-05-10T00:00:00", 
+    "work_start": "2019-05-10T00:00:00+02:00", 
     "references": {
       "EN": [], 
       "DK": []
@@ -692,7 +692,7 @@
     "systems": [
       "ALL"
     ], 
-    "announce_start": "2019-05-10T00:00:00", 
+    "announce_start": "2019-05-10T00:00:00+02:00", 
     "title": {
       "EN": "Jupyter Outage", 
       "DK": "Jupyter nede"
@@ -700,16 +700,16 @@
     "services": [
       "ALL"
     ], 
-    "work_end": "2019-05-10T23:59:59", 
+    "work_end": "2019-05-10T23:59:59+02:00", 
     "description": {
       "EN": "We had a power outage in the HPC center today and the Jupyter nodes went offline as a result. DAG was back online a bit after noon and MODI followed a little later.", 
       "DK": "Vi oplevede en strømafbrydelse i HPC centeret og Jupyter maskinerne var derfor nede. DAG kom tilbage online efter middag og MODI fulgte ikke så længe efter."
     }, 
-    "announce_end": "2019-05-10T23:59:59"
+    "announce_end": "2019-05-10T23:59:59+02:00"
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2019-04-23T00:00:00", 
+    "work_start": "2019-04-23T00:00:00+02:00", 
     "references": {
       "EN": [], 
       "DK": []
@@ -717,7 +717,7 @@
     "systems": [
       "ALL"
     ], 
-    "announce_start": "2019-04-23T00:00:00", 
+    "announce_start": "2019-04-23T00:00:00+02:00", 
     "title": {
       "EN": "Login and Access Issues Again", 
       "DK": "Problemer med KU-login og adgang igen"
@@ -725,12 +725,12 @@
     "services": [
       "ALL"
     ], 
-    "work_end": "2019-04-23T23:59:59", 
+    "work_end": "2019-04-23T23:59:59+02:00", 
     "description": {
       "EN": "It looks like the UCPH OpenID issues have returned this morning. We've contacted University IT about the issue and await a solution. Since noon it seems to be back to normal but we're monitoring it.", 
       "DK": "Det ser desværre ud til at problemet med KU-login er vendt tilbage her til formiddag. Vi har kontaktet KUIT og de ser på sagen. Det ser ud til at være tilbage ved normal drift igen siden middag, men vi holder øje med sagen."
     }, 
-    "announce_end": "2019-04-23T23:59:59"
+    "announce_end": "2019-04-23T23:59:59+02:00"
   }, 
   {
     "status": "AUTO", 
