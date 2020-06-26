@@ -306,6 +306,7 @@ documentation.
         short_title = configuration.short_title
         migoid_title = configuration.user_mig_oid_title
         migoid_url = configuration.migserver_https_mig_oid_url
+        entry_url = configuration.migserver_http_url
         header = 'Re: %s OpenID request for %s' % (short_title, user_name)
         txt += """This is an auto-generated intro message from %s to inform
 about the creation or renewal of your user account with OpenID login.
@@ -313,13 +314,16 @@ about the creation or renewal of your user account with OpenID login.
 You can log in with username %s and your chosen password at
 %s
 
+The terms of use are always available from %s along with our privacy and cookie
+policy.
+
 Please contact the %s admins in case you should ever loose or forget your
 password. The same applies if you suspect or know that someone may have gotten
 hold of your login.
 
 Regards,
 The %s Admins
-""" % (short_title, user_email, migoid_url, short_title, short_title)
+""" % (short_title, user_email, migoid_url, entry_url, short_title, short_title)
     elif status == 'ACCOUNTEXPIRE':
         from_id = args_list[0]
         user_email = args_list[1]

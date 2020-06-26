@@ -10,6 +10,9 @@
 <!--<link rel="stylesheet" type="text/css" href="/images/static-skin.css" media="screen"/>-->
 <link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/core.css" media="screen"/>
 
+<!-- base page styles -->
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
+
 <!-- country-dropdown -->
 <link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/dd.css" />
 <link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/flags.css" />
@@ -24,21 +27,40 @@
 
 <link rel="icon" type="image/vnd.microsoft.icon"
       href="/images/skin/erda-ucph-science/favicon.ico"/>
+
 <script type="text/javascript" src="/images/js/jquery.js"></script>
 <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
-<script type="text/javascript" src="/images/js/jquery.migtools.js"></script>
+<script type="text/javascript" src="/assets/js/V2/ui-dynamic.js"></script>
 <script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
 <script type="text/javascript" >
     $(document).ready(function() {
+        var locale = extract_default_locale();
+        /* Init supported languages to just english and extend based on lang select */
+        var supported_languages = ['en'];
+        var default_lang = supported_languages[0];
+        var user_lang;
+        /* Extend supported_languages with all entries from select elem */
+        $("#langselect option").each(function() {
+            var option_val = $(this).val();
+            if (supported_languages.indexOf(option_val) < 0) {
+              supported_languages.push($(this).val());
+            }
+        });
+        //console.debug("found supported langs: "+supported_languages);
+        if (locale && supported_languages.indexOf(locale) >= 0)  {
+          user_lang = locale;
+        } else {
+          console.warn(locale+" not supported - fall back to: "+default_lang);
+          user_lang = default_lang;
+        }
         $("#langselect").on('change', function() { 
                                           var lang = $(this).val();
                                           //alert("switch_language: "+lang);
                                           switch_language(lang);
                                       }
                             );
-        var default_lang = 'en';
-        $("#langselect").val(default_lang);
-        switch_language(default_lang);
+        $("#langselect").val(user_lang);
+        switch_language(user_lang);
 	$("#langselect").msDropdown();
     });
 </script>
@@ -145,6 +167,12 @@ accuracy, completeness, appropriateness, or legality of files, user
 posts, or any other information you may be able to access using the
 Services.
 </p>
+<p>
+Please refer to the privacy and cookie policy links at the bottom for details
+about our handling of the information you provide during user registration
+and use of the Services as well as which state information we save in
+browser cookies.
+</p>
 
 <h2>Sharing Your Stuff</h2>
 <p>
@@ -245,11 +273,26 @@ Brugervejledning</a><br />Spørgsmål om SIF? <br />Skriv til os på
 </div>
 </div>
 <div id="bottomlogoright">
-<p><img src="/images/copyright.png" id="creditsimage" alt=""/>
+<div id="privacy">
+<div class="privacytext staticpage i18n" lang="en">
+<p class="i18n" lang="en">
+<a href="/public/site-privacy-policy.pdf">Privacy Policy</a>
+&amp; <a href="/public/cookie-policy.pdf">Cookie Policy</a>
+</p>
+</div>
+<div class="privacytext staticpage i18n hidden" lang="da">
+<p class="i18n" lang="da">
+<a href="/public/site-privacy-policy.pdf">Privacy Policy</a>
+&amp; <a href="/public/cookie-policy.pdf">Cookie Policy</a>
+</p>
+</div>
+</div>
+<div id="copyright">
+<img src="/images/copyright.png" id="creditsimage" alt=""/>
 <span id="credits">
 2003-2020, <a href="http://www.migrid.org">The MiG Project</a>
 </span>
-</p>
+</div>
 </div>
 </div>
 <div id="bottomspace">

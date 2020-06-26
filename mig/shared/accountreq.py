@@ -314,7 +314,7 @@ def account_request_template(configuration, password=True, default_country=''):
   </div>
   <div class="form-group">
     <div class="form-check">
-      <span class="switch-label">I accept the %(site)s <a href="/public/site-privacy-policy.pdf" target="_blank">terms and conditions</a></span>
+      <span class="switch-label">I accept the %(site)s <a href="/public/terms.html" target="_blank">terms and conditions</a></span>
       <label class="form-check-label switch" for="acceptTerms">
       <input class="form-check-input" type="checkbox" value="" id="acceptTerms" required>
       <span class="slider round small" title="Required to get an account"></span>
