@@ -43,10 +43,12 @@ IDMC
     function login(user) {
         if (user == "extoid") {
             window.open('https://oid.idmc.dk', '_blank');
-        } else if (user == "cert") {
-            window.open('https://cert.idmc.dk', '_blank');
+        } else if (user == "extcert") {
+            window.open('https://idmc.dk', '_blank');
         } else if (user == "migoid") {
             window.open('https://ext.idmc.dk', '_blank');
+        } else if (user == "migcert") {
+            window.open('https://idmc.dk', '_blank');
         } else {
             window.open('https://sid.idmc.dk/cgi-sid/login.py', '_blank');
         }
@@ -55,32 +57,17 @@ IDMC
         if (user == "extoid") {
             window.open('https://sid.idmc.dk/cgi-sid/signup.py?show=kitoid', 
                         '_blank');
-        } else if (user == "cert") {
-            window.open('https://sid.idmc.dk/cgi-sid/signup.py?show=extcert',
-                        '_blank');
+        } else if (user == "extcert") {
+            window.open('https://idmc.dk/wsgi-bin/extcert.py', '_blank');
         } else if (user == "migoid") {
             window.open('https://sid.idmc.dk/cgi-sid/reqoid.py', '_blank');
+        } else if (user == "migcert") {
+            window.open('https://sid.idmc.dk/cgi-sid/reqcert.py', '_blank');
         } else {
             window.open('https://sid.idmc.dk/cgi-sid/signup.py', '_blank');
         }
     }
     $(document).ready(function() {
-        /* Init links centrally */
-        $("a.reqcert-en-link").attr("target", "_blank").attr("href", 
-            "https://sites.google.com/site/minimumintrusiongrid/" +
-            "getting-started/how-to-get-started");
-        $("a.reqcert-da-link").attr("target", "_blank").attr("href", 
-            "https://sites.google.com/site/minimumintrusiongrid/" +
-            "mig-in-danish/saadan-kommer-du-igang");
-        $("a.migoidsignup-link").attr("target", "_blank").attr("href", 
-            "https://sid.idmc.dk/cgi-sid/signup.py?show=migoid");
-        $("a.migoidlogin-link").attr("target", "_blank").attr("href", 
-            "https://ext.idmc.dk");
-        $("a.extcertsignup-link").attr("target", "_blank").attr("href", 
-            "https://sid.idmc.dk/cgi-sid/signup.py?show=extcert");
-        $("a.extcertlogin-link").attr("target", "_blank").attr("href", 
-            "https://cert.idmc.dk");
-
         var locale = extract_default_locale();
         /* Init supported languages to just english and extend based on lang select */
         var supported_languages = ['en'];
@@ -199,11 +186,12 @@ Can just be disabled by putting it into an html comment when not in use.
 </div>
 
 <div class="staticpage quickstartfields">
-
 <div id="quick-start-tabs-en">
+
 <ul class="fillwidth padspace">
 <li><a href="#ucph-user-tab-en">KU / UCPH Users</a></li>
 <li><a href="#external-user-tab-en">External Users</a></li>
+<li><a href="#cert-user-tab-en">Advanced Access</a></li>
 </ul>
 
 <div id="ucph-user-tab-en">
@@ -244,6 +232,27 @@ Can just be disabled by putting it into an html comment when not in use.
 <form method='get' action='https://ext.idmc.dk' target='_blank'>
 <input class="loginbutton" type="button" value="log in"
        onClick="login('migoid'); return false;" />
+</form>
+<p></p>
+</div>
+</div>
+
+<div id="cert-user-tab-en">
+<div class="staticpage centertext signupfield">
+<p>Sign up to IDMC with your user certificate?</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://idmc.dk/wsgi-bin/extcert.py' target='_blank'>
+<input class="signupbutton" type="submit" value="sign up" /
+       onClick="signup('extcert'); return false;"/>
+</form>
+<p></p>
+</div>
+<div class="staticpage centertext loginfield">
+<p>I'm already signed up to IDMC with my user certificate!</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://idmc.dk' target='_blank'>
+<input class="loginbutton" type="button" value="log in"
+       onClick="login('extcert'); return false;" />
 </form>
 <p></p>
 </div>
@@ -297,9 +306,11 @@ features.
 The <a href="https://sid.erda.dk/public/ucph-erda-user-guide.pdf">User Guide</a> 
 provides basic information about using IDMC, but feel free to contact us using
 the email link at the bottom of the page in case you have any further questions
-or comments (in English or Danish).
+or comments (in English or Danish). Unfortunately we do <em>not</em> have resources
+to offer video or phone support, but we typically reply on email the
+next working-day at the latest.
 <p class="warningtext">
-Be aware that the user guide is made for ERDA, the sister system of IDMC, but 
+Please beware that the user guide is made for ERDA, the sister system of IDMC, but 
 almost all examples are valid with the replacement of erda.dk with idmc.dk.
 </p>
 <h2 class="staticpage">Terms of Use</h2>
@@ -356,10 +367,13 @@ Can just be disabled by putting it into an html comment when not in use.
 
 <div class="staticpage quickstartfields">
 <div id="quick-start-tabs-da">
+
 <ul>
 <li><a href="#ucph-user-tab-da">KU / UCPH brugere</a></li>
 <li><a href="#external-user-tab-da">Eksterne brugere</a></li>
+<li><a href="#cert-user-tab-da">Avanceret adgang</a></li>
 </ul>
+
 <div id="ucph-user-tab-da">
 <div class="staticpage centertext signupfield">
 <p>Tilmeld dig IDMC med din KU-konto?</p>
@@ -398,6 +412,27 @@ Can just be disabled by putting it into an html comment when not in use.
 <form method='get' action='https://ext.idmc.dk' target='_blank'>
 <input class="loginbutton" type="submit" value="log ind"
        onClick="login('migoid'); return false;" />
+</form>
+<p></p>
+</div>
+</div>
+
+<div id="cert-user-tab-da">
+<div class="staticpage centertext signupfield">
+<p>Tilmeld dig IDMC med dit brugercertifikat?</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://idmc.dk/wsgi-bin/extcert.py' target='_blank'>
+<input class="signupbutton" type="submit" value="tilmelding"
+       onClick="signup('extcert'); return false;" />
+</form>
+<p></p>
+</div>
+<div class="staticpage centertext loginfield">
+<p>Jeg er allerede tilmeldt IDMC med mit brugercertifikat!</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://idmc.dk' target='_blank'>
+<input class="loginbutton" type="submit" value="log ind"
+       onClick="login('extcert'); return false;" />
 </form>
 <p></p>
 </div>
@@ -450,7 +485,8 @@ eller ændret funktionalitet.
 <a href="https://sid.erda.dk/public/ucph-store-brugervejledning.pdf">Brugervejledningen</a> 
 indeholder basal information om brugen af IDMC, men kontakt os gerne (på dansk
 eller engelsk) med øvrige spørgsmål og kommentarer v.h.a. email-linket nederst
-på siden.
+på siden. Vi har desværre <em>ikke</em> resurser til at yde video- eller
+telefon-support, men svarer typisk på email senest næste arbejdsdag.
 </p>
 <p class="warningtext">
 <!--
