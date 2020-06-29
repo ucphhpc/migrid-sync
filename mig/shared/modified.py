@@ -238,14 +238,14 @@ def reset_res_modified(configuration):
     return reset_entities_modified(configuration, 'runtimeenvs')
 
 
-def reset_workflow_p_modified(configuraiton):
+def reset_workflow_p_modified(configuration):
     """Reset workflow patterns modified marks"""
-    return reset_entities_modified(configuraiton, 'workflowpatterns')
+    return reset_entities_modified(configuration, 'workflowpatterns')
 
 
-def reset_workflow_r_modified(configuraiton):
+def reset_workflow_r_modified(configuration):
     """Reset workflow recipes modified marks"""
-    return reset_entities_modified(configuraiton, 'workflowrecipes')
+    return reset_entities_modified(configuration, 'workflowrecipes')
 
 
 if __name__ == "__main__":
