@@ -197,8 +197,12 @@ def pending_res_update(configuration):
     return pending_entities_update(configuration, 'runtimeenvs')
 
 
-def reset_entities_modified(configuration, kind):
-    """Reset all modified entity marks of given kind"""
+def reset_entities_modified(configuration, kind, only_before=-1):
+    """Reset all modified entity marks of given kind. If the optional
+    only_before argument is a positive value the reset will ONLY happen if the
+    entities modified file is older than that timestamp. This is important in
+    preventing very recent changes getting lost during the actual map update.
+    """
     _logger = configuration.logger
     success = False
     modified_path = os.path.join(configuration.mig_system_files,
@@ -207,8 +211,12 @@ def reset_entities_modified(configuration, kind):
     lock_handle = None
     try:
         lock_handle = acquire_file_lock(lock_path, exclusive=True)
-        dump([], modified_path)
-        success = True
+        if only_before >= 0 and os.path.exists(modified_path) and \
+                os.path.getmtime(modified_path) > only_before:
+            _logger.info("skip reset of modified mark for on-going operation")
+        else:
+            dump([], modified_path)
+            success = True
     except Exception, exc:
         _logger.error("Could not reset %s modified mark: %s" % (kind, exc))
     finally:
@@ -218,34 +226,36 @@ def reset_entities_modified(configuration, kind):
     return success
 
 
-def reset_users_modified(configuration):
+def reset_users_modified(configuration, only_before=-1):
     """Reset user modified marks"""
-    return reset_entities_modified(configuration, 'user')
+    return reset_entities_modified(configuration, 'user', only_before)
 
 
-def reset_resources_modified(configuration):
+def reset_resources_modified(configuration, only_before=-1):
     """Reset resource modified marks"""
-    return reset_entities_modified(configuration, 'resource')
+    return reset_entities_modified(configuration, 'resource', only_before)
 
 
-def reset_vgrids_modified(configuration):
+def reset_vgrids_modified(configuration, only_before=-1):
     """Reset vgrid modified marks"""
-    return reset_entities_modified(configuration, 'vgrid')
+    return reset_entities_modified(configuration, 'vgrid', only_before)
 
 
-def reset_res_modified(configuration):
+def reset_res_modified(configuration, only_before=-1):
     """Reset res modified marks"""
-    return reset_entities_modified(configuration, 'runtimeenvs')
+    return reset_entities_modified(configuration, 'runtimeenvs', only_before)
 
 
-def reset_workflow_p_modified(configuration):
+def reset_workflow_p_modified(configuration, only_before=-1):
     """Reset workflow patterns modified marks"""
-    return reset_entities_modified(configuration, 'workflowpatterns')
+    return reset_entities_modified(configuration, 'workflowpatterns',
+                                   only_before)
 
 
-def reset_workflow_r_modified(configuration):
+def reset_workflow_r_modified(configuration, only_before=-1):
     """Reset workflow recipes modified marks"""
-    return reset_entities_modified(configuration, 'workflowrecipes')
+    return reset_entities_modified(configuration, 'workflowrecipes',
+                                   only_before)
 
 
 if __name__ == "__main__":

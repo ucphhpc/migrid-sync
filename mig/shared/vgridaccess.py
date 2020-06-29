@@ -725,7 +725,8 @@ def _get_entity_map(configuration, key, caching=False):
             # reset calls will therefore race to edit the modified marker file.
             # NOTE: reimplementing modified with filemarks should resolve it
             entity_map = helpers['refresh_map'](configuration)
-            helpers['reset_modified'](configuration)
+            # WORKAROUND: ignore reset if modified marked after load_stamp
+            helpers['reset_modified'](configuration, load_stamp)
         else:
             _logger.debug("No changes - not refreshing %s map" % name)
             load_stamp = time.time()
