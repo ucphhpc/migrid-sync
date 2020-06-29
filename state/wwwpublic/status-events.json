@@ -15,8 +15,8 @@
     ], 
     "work_end": "2020-06-28T23:00:00+02:00", 
     "description": {
-      "EN": "Both DAG and MODI JupyterHub services needs to be upgraded so that they support the new JupyterLab edition, which includes several UI upgrades and fixes.", 
-      "DK": "Både DAG og MODI JupyterHub-tjenester skal opgraderes, så de understøtter den nye JupyterLab-udgave, der inkluderer flere UI-opgraderinger og rettelser."
+      "EN": "Both DAG and MODI JupyterHub services needs to be upgraded so that they support the new JupyterLab edition, which includes several UI upgrades and fixes. This work was completed successfully and both DAG and MODI are back online as scheduled", 
+      "DK": "Både DAG og MODI JupyterHub-tjenester skal opgraderes, så de understøtter den nye JupyterLab-udgave, der inkluderer flere UI-opgraderinger og rettelser. Dette arbejde blev afsluttet med succes, og både DAG og MODI er tilbage online som planlagt"
     }, 
     "announce_end": "2020-06-29T12:00:00+02:00"
   },
