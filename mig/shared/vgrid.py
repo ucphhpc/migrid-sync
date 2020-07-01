@@ -1921,8 +1921,6 @@ def in_mig_system_storage(configuration, path, state_base, readonly=False):
     # _logger.debug("basepath: %r" % basepath)
     if readonly and not check_readonly(configuration, basepath):
         return None
-    if not readonly and not check_writable(configuration, basepath):
-        return None
     return __in_vgrid_special(configuration, path,
                               basepath, flat=True)
 
