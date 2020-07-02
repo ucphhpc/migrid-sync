@@ -298,6 +298,9 @@ function fill_server_status_accordion(status_events, status_targets, system_matc
     console.debug("AJAX fill server status accordion");
     $(status_targets["EN"]).html("<p class='leftpad spinner'>Loading status and news entries ...</p>");
     $(status_targets["DK"]).html("<p class='leftpad spinner'>Henter status og nyheder ...</p>");
+    var status_res = {"DK": "Alle systemer og services kører planmæssigt.",
+                      "EN": "All systems and services are fully operational.",
+                      "status_icon": "icon_online"};
     try {
         $.getJSON(status_events).done(function(response) {
             //console.debug("Success: "+response);
@@ -443,6 +446,7 @@ function fill_server_status_accordion(status_events, status_targets, system_matc
     } catch(err) {
         console.error("load json server status failed: "+err);
     }
+    return status_res;
 }
 
 function fill_server_status_popup(status_events, system_match, locale) {
