@@ -293,13 +293,17 @@ function accordion_init(accordion_selector, active, header) {
 
 
 /* Site status helpers */
-function fill_server_status_accordion(status_events, status_targets, system_match, locale) {
+function fill_server_status_accordion(status_events, brief_targets, status_targets, system_match, locale) {
     /* Load content: roughly equivalent to $.get(url, data, success) */
     console.debug("AJAX fill server status accordion");
+    
+    $(brief_targets["EN"]).html("Loading status ...").addClass("leftpad").addClass("spinner");
+    $(brief_targets["DK"]).html("Henter status ...").addClass("leftpad").addClass("spinner");
     $(status_targets["EN"]).html("<p class='leftpad spinner'>Loading status and news entries ...</p>");
     $(status_targets["DK"]).html("<p class='leftpad spinner'>Henter status og nyheder ...</p>");
-    var status_res = {"DK": "Alle systemer og services kører planmæssigt.",
-                      "EN": "All systems and services are fully operational.",
+    
+    var status_res = {"EN": "All systems and services are fully operational",
+                      "DK": "Alle systemer og services kører planmæssigt",
                       "status_icon": "icon_online"};
     try {
         $.getJSON(status_events).done(function(response) {
@@ -398,13 +402,27 @@ function fill_server_status_accordion(status_events, status_targets, system_matc
                 if (systems_overlap.length < 1) {
                     //console.debug("skip entry for "+entry_systems+" without match for "+system_match+", "+systems_overlap);
                     show_entry = false;
+                } else if (outage_start < now && now < outage_end) {
+                    title_class += "outage error iconleftpad";
+                    //console.debug("show outage: " + outage_start +" < " +now+ " < "+outage_end);
+                    status_res["status_icon"] = "icon_offline";
+                    status_res["EN"] = "Active service outages";
+                    status_res["DK"] = "Aktuelle serviceudfald";
                 } else if (work_start < now && now < work_end) {
                     title_class += "work warn iconleftpad";
-                    //console.debug("show active: " + work_start +" < " +now+ " < "+work_end );
+                    //console.debug("show active: " + work_start +" < " +now+ " < "+work_end);
+                    if (status_res["status_icon"] != 'icon_offline') {
+                        status_res["status_icon"] = "icon_slack";
+                        status_res["EN"] = "Work tasks in progress";
+                        status_res["DK"] = "Igangværende arbejdsopgaver";
+                    }
                 } else if (announce_start < now && now < announce_end) {
                     title_class += "announce info iconleftpad";
-                    //console.debug("announce ahead: " + announce_start +" < " +now+ " < "+announce_end );
-
+                    //console.debug("announce ahead: " + announce_start +" < " +now+ " < "+announce_end);
+                    if (status_res["status_icon"] == 'icon_online') {
+                        status_res["EN"] += ", but with active announcements";
+                        status_res["DK"] += ", men med aktuelle varsler";
+                    }
                 } else if (now < announce_start) {
                     //console.debug("skip future marker: " + announce_start + " vs "+now);
                     title_class += "waiting iconleftpad";
@@ -434,6 +452,10 @@ function fill_server_status_accordion(status_events, status_targets, system_matc
                 }
                 
             });
+            $(brief_targets["EN"]).removeClass("spinner");
+            $(brief_targets["DK"]).removeClass("spinner");
+            $(brief_targets["EN"]).html(status_res["EN"]).addClass(status_res["status_icon"]);
+            $(brief_targets["DK"]).html(status_res["DK"]).addClass(status_res["status_icon"]);
             $(status_targets["EN"]).html(en_items.join(""));
             $(status_targets["DK"]).html(dk_items.join(""));
             
@@ -446,7 +468,6 @@ function fill_server_status_accordion(status_events, status_targets, system_matc
     } catch(err) {
         console.error("load json server status failed: "+err);
     }
-    return status_res;
 }
 
 function fill_server_status_popup(status_events, system_match, locale) {

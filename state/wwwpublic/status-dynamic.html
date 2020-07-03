@@ -66,12 +66,10 @@ ERDA Status
   var content_url = lookup_site_conf("content_url", "status-events.json");
   var system_match = lookup_site_conf("system_match", ["ANY"]);
   console.debug("get content from "+content_url);
+  brief_targets = {"EN": ".english .brief-status", "DK": ".danish .brief-status"};
   status_targets = {"EN": ".english .news-accordion", "DK": ".danish .news-accordion"};
   console.debug("fill with system_match: "+system_match);
-  var status_res = fill_server_status_accordion(content_url, status_targets, system_match, locale);
-  $("#brief-status-english").html(status_res["EN"]);
-  $("#brief-status-danish").html(status_res["DK"]);
-  $("p.brief-status").removeClass("spinner").addClass(status_res["status_icon"]);
+  fill_server_status_accordion(content_url, brief_targets, status_targets, system_match, locale);
 
   $("#langselect").on('change', function() { 
       var lang = $(this).val();
