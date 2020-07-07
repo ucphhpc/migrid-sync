@@ -544,6 +544,9 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
         elif not default_username_validator(configuration, username):
             invalid_username = True
         elif password_auth or digest_auth:
+            account_accessible = check_account_accessible(configuration,
+                                                          username, 'davs',
+                                                          environ)
             if password_auth:
                 result = super(MiGHTTPAuthenticator, self) \
                     .authBasicAuthRequest(environ, start_response)
@@ -552,11 +555,9 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
                     .authDigestAuthRequest(environ, start_response)
             auth_username = environ.get('http_authenticator.username', None)
             auth_realm = environ.get('http_authenticator.realm', None)
-            print "auth_username: %s" % auth_username
-            print "auth_realm: %s" % auth_realm
+            #print "DEBUG: auth_username: %s" % auth_username
+            #print "DEBUG: auth_realm: %s" % auth_realm
             if auth_username and auth_username == username and auth_realm:
-                account_accessible = check_account_accessible(
-                    configuration, username, 'davs', environ)
                 if password_auth:
                     valid_password = True
                 elif digest_auth:
