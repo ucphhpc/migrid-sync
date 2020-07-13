@@ -91,7 +91,9 @@ menu_items['jupyter'] = {'class': 'jupyter fas fa-jupyter', 'url': 'jupyter.py',
 menu_items['cloud'] = {'class': 'cloud fas fa-cloud', 'url': 'cloud.py',
                        'title': 'Cloud',
                        'hover': 'Access the associated cloud computing services'}
-
+menu_items['peers'] = {'class': 'peers fas fa-address-card', 'url': 'peers.py',
+                       'title': 'Peers',
+                       'hover': 'Vouch for collaboration partner or course participant accounts'}
 menu_items['shell'] = {'class': 'shell fas fa-keyboard', 'url': 'shell.py', 'title': 'Shell',
                        'legacy_only': True, 'hover':
                        'A command line interface, based on javascript and xmlrpc'}

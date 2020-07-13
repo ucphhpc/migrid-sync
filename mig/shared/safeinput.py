@@ -327,6 +327,14 @@ def valid_alphanumeric_and_spaces(contents, min_length=0, max_length=-1,
     valid_alphanumeric(contents, min_length, max_length, ' ' + extra_chars)
 
 
+def valid_date(contents, min_length=10, max_length=10):
+    """Verify that supplied contents only contain something like DD-MM-YYYY
+    date characters"""
+
+    __valid_contents(contents, digits + '-/', min_length,
+                     max_length)
+
+
 def valid_plain_text(
     text,
     min_length=-1,
@@ -1078,6 +1086,12 @@ def filter_alphanumeric_and_spaces(contents):
     return __filter_contents(contents, letters + digits + ' ')
 
 
+def filter_date(contents):
+    """Filter supplied contents to only contain date characters"""
+
+    return __filter_contents(contents, digits + '-/')
+
+
 def filter_commonname(contents):
     """Filter supplied contents to only contain valid commonname characters"""
 
@@ -1479,6 +1493,8 @@ def guess_type(name):
             'storage_port',
         ):
             __type_map[key] = valid_numeric
+        for key in ('peers_expire', ):
+            __type_map[key] = valid_date
         for key in ('offset', ):
             __type_map[key] = valid_integer
         for key in (
@@ -1606,9 +1622,10 @@ def guess_type(name):
             # because the sub level variables are parsed individually
             'execonfig',
             'storeconfig',
+            'peers_form',
         ):
             __type_map[key] = valid_free_text
-        for key in ('show', 'modauthopenid.error'):
+        for key in ('show', 'modauthopenid.error', ):
             __type_map[key] = valid_label_text
 
         # sreg required may have commas - reuse password
@@ -1656,7 +1673,7 @@ def guess_type(name):
             __type_map[key] = valid_cloud_instance_id
         for key in ('cloud_id', 'instance_image', ):
             __type_map[key] = valid_cloud_name
-        for key in ('instance_label', ):
+        for key in ('instance_label', 'peers_label', ):
             __type_map[key] = valid_cloud_label
 
     # Return type checker from __type_map with fall back to alphanumeric
