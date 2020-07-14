@@ -1310,7 +1310,7 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict
     user_dict['__VGRID_ALIAS_REGEX__'] = '(%s)' % '|'.join(vgrid_aliases)
 
     secscan_addr_list = secscan_addr.split()
-    secscan_addr_pattern = '\(' + '\|'.join(secscan_addr_list) + '\)'
+    secscan_addr_pattern = '(' + '|'.join(secscan_addr_list) + ')'
     user_dict['__SECSCAN_ADDR_PATTERN__'] = secscan_addr_pattern
 
     # Collect final variable values for log
