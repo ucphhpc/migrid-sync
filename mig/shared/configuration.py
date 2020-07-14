@@ -352,6 +352,8 @@ class Configuration:
     site_signup_methods = ['extcert']
     site_login_methods = ['extcert']
     site_signup_hint = ""
+    site_peers_permit = [('distinguished_name', '.*')]
+    site_peers_notice = ""
     # TODO: switch to CSRF_FULL when rpc and scripts are ready?
     # Default to medium CSRF protection for now to protect all web access
     site_csrf_protection = CSRF_MEDIUM
@@ -1573,6 +1575,11 @@ location.""" % self.config_file
             self.site_login_methods = self.site_signup_methods
         if config.has_option('SITE', 'signup_hint'):
             self.site_signup_hint = config.get('SITE', 'signup_hint').strip()
+        if config.has_option('SITE', 'peers_permit'):
+            req = config.get('SITE', 'peers_permit').split()
+            self.site_peers_permit = [i.split(':', 2) for i in req]
+        if config.has_option('SITE', 'peers_notice'):
+            self.site_peers_notice = config.get('SITE', 'peers_notice').strip()
         if config.has_option('SITE', 'csrf_protection'):
             csrf_protection = config.get('SITE', 'csrf_protection')
             if csrf_protection in (CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM,

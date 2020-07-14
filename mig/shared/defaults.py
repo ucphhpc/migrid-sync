@@ -75,6 +75,9 @@ final_states = ['FINISHED', 'CANCELED', 'EXPIRED', 'FAILED']
 
 maxfill_fields = ['CPUTIME', 'NODECOUNT', 'CPUCOUNT', 'MEMORY', 'DISK']
 
+peer_kinds = ['course', 'project', 'collaboration']
+peers_fields = ['full_name', 'organization', 'email', 'country']
+
 mqueue_prefix = 'message_queues'
 default_mqueue = 'default'
 mqueue_empty = 'NO MESSAGES'

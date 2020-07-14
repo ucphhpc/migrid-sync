@@ -1622,7 +1622,7 @@ def guess_type(name):
             # because the sub level variables are parsed individually
             'execonfig',
             'storeconfig',
-            'peers_form',
+            'peers_content',
         ):
             __type_map[key] = valid_free_text
         for key in ('show', 'modauthopenid.error', ):

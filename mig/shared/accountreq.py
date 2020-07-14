@@ -39,10 +39,12 @@ except ImportError:
     iso3166 = None
 
 from shared.base import force_utf8
+from shared.defaults import peers_fields
 from shared.fileio import delete_file
 # Expose some helper variables for functionality backends
 from shared.safeinput import name_extras, password_extras, password_min_len, \
-    password_max_len, valid_password_chars, valid_name_chars, dn_max_len
+    password_max_len, valid_password_chars, valid_name_chars, dn_max_len, \
+    html_escape
 from shared.serial import load, dump
 
 
@@ -504,3 +506,68 @@ def forced_org_email_match(org, email, configuration):
         return False
     else:
         return True
+
+
+def peers_permit_allowed(configuration, user_dict):
+    """Check if user with user_dict is allowed to manage peers based on
+    optional configuration limits.
+    """
+    for (key, val) in configuration.site_peers_permit:
+        if not re.match(val, user_dict.get(key, 'NO SUCH FIELD')):
+            return False
+    return True
+
+
+def parse_peers_form(configuration, raw_lines, csv_sep):
+    """Parse CSV form of peers into a list of peers"""
+    _logger = configuration.logger
+    header = None
+    peers = []
+    err = []
+    for line in raw_lines.split('\n'):
+        line = line.split('#', 1)[0].strip()
+        if not line:
+            continue
+        parts = line.split(csv_sep)
+        if not header:
+            missing = [i for i in peers_fields if i not in parts]
+            if missing:
+                err.append("Parsed peers did NOT contain required field(s): %s"
+                           % ', '.join(missing))
+            header = parts
+            continue
+        if len(header) != len(parts):
+            _logger.warning('skip peers line with mismatch in field count: %s'
+                            % line)
+            err.append("Skip peers line not matching header format: %s" %
+                       html_escape(line + ' vs ' + csv_sep.join(header)))
+            continue
+        # NOTE: don't let any unexpected fields pass through
+        filtered = [(i, j) for (i, j) in zip(header, parts)
+                    if i in peers_fields]
+        peers.append(dict(filtered))
+    _logger.debug('parsed form into peers: %s' % peers)
+    return (peers, err)
+
+
+def parse_peers(configuration, peers_content, peers_format, csv_sep=';'):
+    """Parse provided peer formats into a list of peer users"""
+    _logger = configuration.logger
+    if "fields" == peers_format:
+        # TODO: extract fields
+        raw_peers = ''
+        return parse_peers_form(configuration, raw_peers, csv_sep)
+    elif "csvupload" == peers_format:
+        # TODO: extract upload
+        raw_peers = ''
+        return parse_peers_form(configuration, raw_peers, csv_sep)
+    elif "csvform" == peers_format:
+        raw_peers = peers_content
+        return parse_peers_form(configuration, raw_peers, csv_sep)
+    elif "csvurl" == peers_format:
+        # TODO: fetch URL contents
+        raw_peers = ''
+        return parse_peers_form(configuration, raw_peers, csv_sep)
+    else:
+        _logger.error("unknown peers format: %s" % peers_format)
+        return ([], "unknown peers format: %s" % peers_format)
