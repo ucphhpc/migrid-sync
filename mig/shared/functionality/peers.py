@@ -38,7 +38,7 @@ from shared.accountreq import peers_permit_allowed
 from shared.base import pretty_format_user, fill_distinguished_name, \
     client_id_dir
 from shared.defaults import csrf_field, peers_filename, peers_fields, \
-    peer_kinds
+    peer_kinds, default_pager_entries
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import man_base_js, man_base_html, html_post_helper
@@ -49,10 +49,11 @@ from shared.useradm import get_full_user_map
 
 sample_users = [{'full_name': 'Jane Doe', 'country': 'DK', 'email':
                  'jane.doe@phys.au.dk', 'organization':
-                 'University of Aarhus, Dept. of Physics',
+                 'Dept. of Physics at University of Aarhus',
                  },
                 {'full_name': 'John Doe', 'organization': 'DTU', 'country':
                  'DK', 'email': 'john.doe@dtu.dk'}]
+csv_sep = ';'
 
 
 def signature():
@@ -84,8 +85,14 @@ def main(client_id, user_arguments_dict):
 
     logger.info("%s begin for %s" % (op_name, client_id))
 
-    # jquery support for confirmation on "edit"
-    (add_import, add_init, add_ready) = man_base_js(configuration, [])
+    # jquery support for tablesorter and confirmation on delete
+    # table initially sorted by col. 4 (kind), then 0 (name)
+    refresh_call = 'ajax_peers()'
+    table_spec = {'table_id': 'peers', 'sort_order':
+                  '[[4,0],[0,0]]',
+                  'refresh_call': refresh_call}
+    (add_import, add_init, add_ready) = man_base_js(configuration,
+                                                    [table_spec])
     add_ready += '''
         $(".peers-tabs").tabs();
         $(".peers-tabs .accordion").accordion({
@@ -124,13 +131,18 @@ def main(client_id, user_arguments_dict):
                     'peers_permit_class': peers_permit_class,
                     'form_method': form_method,
                     'csrf_field': csrf_field, 'csrf_limit': csrf_limit,
-                    'target_op': target_op, 'csrf_token': csrf_token}
+                    'target_op': target_op, 'csrf_token': csrf_token,
+                    'csv_header': csv_sep.join([i for i in peers_fields])}
     form_prefix_html = '''
 <form class="save_peers save_general" method="%(form_method)s"
 action="%(target_op)s.py">
 '''
     form_suffix_html = '''
 <input type="submit" value="Save Peers" /><br/>
+</form>
+'''
+    form_accept_html = '''
+<input type="submit" value="Accept Peer" /><br/>
 </form>
 '''
     shared_peer_html = '''
@@ -164,6 +176,7 @@ action="%(target_op)s.py">
 ''' % expire.date()
     fill_helpers['form_prefix_html'] = form_prefix_html % fill_helpers
     fill_helpers['form_suffix_html'] = form_suffix_html % fill_helpers
+    fill_helpers['form_accept_html'] = form_accept_html % fill_helpers
     fill_helpers['shared_peer_html'] = shared_peer_html % fill_helpers
 
     peers_path = os.path.join(configuration.user_settings, client_dir,
@@ -182,6 +195,7 @@ action="%(target_op)s.py">
 <!-- TODO: enable these additional methods when ready -->
 <li class="%(peers_permit_class)s hidden"><a href="#fields-tab">Enter Peers</a></li>
 <li class="%(peers_permit_class)s hidden"><a href="#urlfetch-tab">Fetch Peers From URL</a></li>
+<li class="%(peers_permit_class)s"><a href="#requests-tab">Requested Peers</a></li>
 </ul>
 
 <div id="show-tab">
@@ -195,41 +209,45 @@ extensions from any peers until the given time of expiry.
 </p>
 <div class="peer_entries">
 '''
-    csv_sep = ';'
-    for (label, entry) in peers_dict.items():
-        tabs_html += '''<h3>%s</h3>
-<h4>Kind</h4>
-%s
-<h4>Expire</h4>
-%s
-<h4>Peers</h4>
-''' % (label, entry.get('kind', 'UNKNOWN'), entry.get('expire', 'UNKNOWN'))
-        user_lines = []
-        export_lines = [csv_sep.join(peers_fields)]
-        for user in entry.get('peers', []):
-            if not user:
-                continue
-            export_lines.append(csv_sep.join(
-                [user.get(i, '') for i in peers_fields]))
-            fill_distinguished_name(user)
-            user_lines.append(pretty_format_user(
-                user['distinguished_name'], False))
-        tabs_html += '''
-<div class="peers_export init-expanded accordion invert-theme">
-<h4>View Peers</h4>
-<p class="verbatim">%s
-</p>
-<h4>Exportable Peers</h4>
-<p class="verbatim">%s
-</p>
-</div>''' % ('\n'.join(user_lines), '\n'.join(export_lines))
+    output_objects.append(
+        {'object_type': 'html_form', 'text': tabs_html % fill_helpers})
 
-    if not peers_dict:
-        tabs_html += '''<div class="displaybox verbatim">
-No peers registered yet ...
-</div>
-'''
-    tabs_html += '''
+    output_objects.append({'object_type': 'table_pager', 'entry_name': 'peers',
+                           'default_entries': default_pager_entries})
+    peers = []
+    for (peer_id, entry) in peers_dict.items():
+        filled_entry = dict([(field, '') for field in
+                             ('label', 'kind', 'expire')])
+        fill_distinguished_name(entry)
+        filled_entry.update(entry)
+        filled_entry['object_type'] = 'peer'
+        # TODO: create edit dialog to change expire?
+        # filled_entry['editpeerlink'] = {
+        #    'object_type': 'link',
+        #    'destination':
+        #    "javascript: confirmDialog(%s, '%s', %s, %s);" %
+        #    ('peer_action', 'Update %(distinguished_name)s?' % filled_entry,
+        #     'undefined',
+        #     "{action: 'update', peers_label: '%(label)s', peers_kind: '%(kind)s', peers_expire:'%(expire)s', peers_content: '%(distinguished_name)s'}" % filled_entry),
+        #    'class': 'editlink iconspace',
+        #    'title': 'Update %(distinguished_name)s in peers' % filled_entry,
+        #    'text': ''}
+        filled_entry['delpeerlink'] = {
+            'object_type': 'link',
+            'destination':
+            "javascript: confirmDialog(%s, '%s', %s, %s);" %
+            ('peer_action', 'Really remove %(distinguished_name)s?' % filled_entry,
+             'undefined',
+             "{action: 'remove', peers_label: '%(label)s', peers_kind: '%(kind)s', peers_expire:'%(expire)s', peers_content: '%(distinguished_name)s'}" % filled_entry),
+            'class': 'removelink iconspace',
+            'title': 'Remove %(distinguished_name)s from peers' % filled_entry,
+            'text': ''}
+        peers.append(filled_entry)
+    output_objects.append({'object_type': 'peers',
+                           'peers': peers})
+
+    # NOTE: reset tabs_html here
+    tabs_html = '''
 </div>
 </div>
 
@@ -241,6 +259,11 @@ time.
 %(form_prefix_html)s
 %(shared_peer_html)s
 <input type="hidden" name="peers_format" value="fields" />
+<select class="form-control themed-select html-select" name="action">
+    <option value="add">Add</option>
+    <option value="update">Update</option>
+    <option value="remove">Remove</option>
+</select>
 '''
     for field in peers_fields:
         field_extras = 'type="text"'
@@ -253,10 +276,13 @@ time.
 <input %s placeholder="%s" name="%s" />
 ''' % (field_extras, field.replace('_', ' ').capitalize(), field)
     tabs_html += '''
+<!-- TODO: add JS dynamic rows?
 <button class="add_entry fas fas-plus" onClick="addEntry(); return false;">
 Add</button>
 <button class="clean_entry fas fas-clear" onClick="clearEntry(); return false;">
 Clear</button>
+-->
+<!-- TODO: add JS to translate rows to userid format before submit?  -->
 <br/>
 '''
     tabs_html += '''
@@ -277,6 +303,7 @@ example at the bottom.
 %(form_prefix_html)s
 %(shared_peer_html)s
 <input type="hidden" name="peers_format" value="csvform" />
+<input type="hidden" name="action" value="import" />
 <textarea class="fillwidth" name="peers_content" rows=10 title="CSV list of peers"
   placeholder="Paste or enter CSV-formatted list of peers ..."></textarea>
 <br/>
@@ -294,9 +321,9 @@ example at the bottom.
 </p>
 </div>
 </div>
-''' % (';'.join(peers_fields),
-       ';'.join([sample_users[0].get(i, '') for i in peers_fields]),
-       ';'.join([sample_users[-1].get(i, '') for i in peers_fields]))
+''' % (fill_helpers['csv_header'],
+       csv_sep.join([sample_users[0].get(i, '') for i in peers_fields]),
+       csv_sep.join([sample_users[-1].get(i, '') for i in peers_fields]))
 
     tabs_html += '''
 <div id="urlfetch-tab" >
@@ -306,11 +333,73 @@ In case you have a general project participation list online you can specify the
 %(form_prefix_html)s
 %(shared_peer_html)s
 <br/>
+<input type="hidden" name="action" value="import" />
 <input type="hidden" name="peers_format" value="csvurl" />
 <input class="fillwidth" type="text" name="peers_content" value=""
     placeholder="URL to fetch CSV-formatted list of peers from ..." /><br/>
 %(form_suffix_html)s
 </div >
+'''
+
+    pending_peers = []
+    # TODO: load pending requests
+    # for user in sample_users:
+    #    fill_distinguished_name(user)
+    #    pending_peers.append((user['distinguished_name'], user))
+
+    tabs_html += '''
+<div id="requests-tab" >
+<p>
+If an external user requests an %(site)s account and explicitly references you
+as contact the site admins may decide to forward the request so that it shows
+up here for you to accept or reject.
+</p>
+'''
+
+    # Skip already accepted request
+    pending_peers = [i for i in pending_peers if not i[0] in peers_dict]
+    for (peer_id, user) in pending_peers:
+        tabs_html += '''
+%(form_prefix_html)s
+%(shared_peer_html)s
+<br/>
+<input type="hidden" name="peers_format" value="userid" />
+<div class="form-row">
+    <div class="col-md-2 mb-5 form-cell">
+    <label for="action">Action</label>
+    <select class="form-control themed-select html-select" name="action">
+        <option value="add">Add</option>
+        <option value="update">Update</option>
+    </select>
+    </div>
+'''
+        tabs_html += '''
+    <input type="hidden" name="peers_content" value="%(distinguished_name)s" />
+''' % user
+        for field in peers_fields:
+            title = ' '.join([i.capitalize() for i in field.split('_')])
+            tabs_html += '''
+    <div class="col-md-2 mb-5 form-cell">
+        <label for="%(field)s">%(title)s</label>
+        <input class="form-control" type="text" size=40 value="%(value)s"
+          readonly=readonly />
+    </div>''' % {'field': field, 'title': title, 'value': user.get(field, '')}
+        tabs_html += '''
+</div>
+%(form_accept_html)s
+<br/>
+'''
+    if not pending_peers:
+        tabs_html += '''
+<p class="info iconpadding">
+No pending requests ...
+</p>
+'''
+    tabs_html += '''
+</div >
+'''
+    # End wrap-tabs div
+    tabs_html += '''
 </div >
 '''
     output_objects.append(
@@ -318,8 +407,11 @@ In case you have a general project participation list online you can specify the
 
     # Helper form for post
 
-    helper = html_post_helper('savepeers', '%s.py' % target_op,
-                              {'kind': '__DYNAMIC__', 'peers': '__DYNAMIC__',
+    helper = html_post_helper('peer_action', '%s.py' % target_op,
+                              {'action': '__DYNAMIC__', 'peers_label': '__DYNAMIC__',
+                               'peers_kind': '__DYNAMIC__', 'peers_expire': '__DYNAMIC__',
+                               'peers_content': '__DYNAMIC__',
+                               'peers_format': 'userid',
                                csrf_field: csrf_token})
     output_objects.append({'object_type': 'html_form', 'text':
                            helper})

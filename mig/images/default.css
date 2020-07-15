@@ -315,16 +315,9 @@ table.liveio table {
 table th.icon {
   width: 8px;
 }
+table.peers {
+}
 
-div.peer_entries h4 {
- font-weight: 600;
-}
-div.displaybox {
-    border: 1px solid silver;
-    border-radius: 4px;
-    background-color: lightgrey;
-    padding: 4px;
-}
 /* format the contents of any element like a pre element */
 .verbatim {
     display: block;

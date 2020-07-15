@@ -1405,6 +1405,47 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             lines.append('<tr><td>Resources</td><td>%s</td></tr>'
                          % ', '.join(provider_links))
             lines.append('</table>')
+        elif i['object_type'] == 'peers':
+            peers = i['peers']
+            lines.append('''
+<table class="peers columnsort" id="peers">
+<thead class="title">
+    <tr>
+        <th>Full Name</th>
+        <th>Organization</th>
+        <th>Email</th>
+        <th>Country</th>
+        <th>Kind</th>
+        <th>Label</th>
+        <th>Expire</th>
+        <th>Actions</th>
+    </tr>
+</thead>
+<tbody>
+''')
+            if not peers:
+                lines.append('''
+<td colspan=8>No peers registered yet ...</td>
+''')
+
+            for single_peer in peers:
+                editlink = single_peer.get('editpeerlink', '')
+                dellink = single_peer.get('delpeerlink', '')
+                if editlink:
+                    editlink = html_link(editlink)
+                if dellink:
+                    dellink = html_link(dellink)
+                single_peer['action_links'] = "%s %s" % (editlink, dellink)
+                lines.append('''<tr>
+<td>%(full_name)s</td><td>%(organization)s</td><td>%(email)s</td>
+<td>%(country)s</td><td>%(kind)s</td><td>%(label)s</td><td>%(expire)s</td>
+<td>%(action_links)s</td>
+</tr>
+''' % single_peer)
+            lines.append('''
+</tbody>
+</table>''')
+
         elif i['object_type'] == 'frozenarchives':
             frozenarchives = i['frozenarchives']
             lines.append('''

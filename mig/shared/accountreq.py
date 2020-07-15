@@ -38,7 +38,7 @@ try:
 except ImportError:
     iso3166 = None
 
-from shared.base import force_utf8
+from shared.base import force_utf8, canonical_user, distinguished_name_to_user
 from shared.defaults import peers_fields
 from shared.fileio import delete_file
 # Expose some helper variables for functionality backends
@@ -542,32 +542,53 @@ def parse_peers_form(configuration, raw_lines, csv_sep):
             err.append("Skip peers line not matching header format: %s" %
                        html_escape(line + ' vs ' + csv_sep.join(header)))
             continue
-        # NOTE: don't let any unexpected fields pass through
-        filtered = [(i, j) for (i, j) in zip(header, parts)
-                    if i in peers_fields]
-        peers.append(dict(filtered))
+        raw_user = dict(zip(header, parts))
+        peers.append(canonical_user(configuration, raw_user, peers_fields))
     _logger.debug('parsed form into peers: %s' % peers)
     return (peers, err)
 
 
-def parse_peers(configuration, peers_content, peers_format, csv_sep=';'):
-    """Parse provided peer formats into a list of peer users"""
+def parse_peers_userid(configuration, raw_entries):
+    """Parse list of user IDs into a list of peers"""
     _logger = configuration.logger
-    if "fields" == peers_format:
-        # TODO: extract fields
-        raw_peers = ''
+    peers = []
+    err = []
+    for entry in raw_entries:
+        raw_user = distinguished_name_to_user(entry.strip())
+        missing = [i for i in peers_fields if i not in raw_user]
+        if missing:
+            err.append("Parsed peers did NOT contain required field(s): %s"
+                       % ', '.join(missing))
+            continue
+        peers.append(canonical_user(configuration, raw_user, peers_fields))
+    _logger.debug('parsed user id into peers: %s' % peers)
+    return (peers, err)
+
+
+def parse_peers(configuration, peers_content, peers_format, csv_sep=';'):
+    """Parse provided peer formats into a list of peer users.
+    Please note that peers_content is the accepted list of input values.
+    """
+    _logger = configuration.logger
+    if "userid" == peers_format:
+        raw_peers = peers_content
+        return parse_peers_userid(configuration, raw_peers)
+    elif "csvform" == peers_format:
+        # NOTE: first merge the individual textarea(s)
+        raw_peers = '\n'.join(peers_content)
         return parse_peers_form(configuration, raw_peers, csv_sep)
     elif "csvupload" == peers_format:
         # TODO: extract upload
         raw_peers = ''
         return parse_peers_form(configuration, raw_peers, csv_sep)
-    elif "csvform" == peers_format:
-        raw_peers = peers_content
-        return parse_peers_form(configuration, raw_peers, csv_sep)
     elif "csvurl" == peers_format:
         # TODO: fetch URL contents
         raw_peers = ''
         return parse_peers_form(configuration, raw_peers, csv_sep)
+    elif "fields" == peers_format:
+        # TODO: extract fields
+        raw_peers = []
+        return parse_peers_userid(configuration, raw_peers)
     else:
         _logger.error("unknown peers format: %s" % peers_format)
         return ([], "unknown peers format: %s" % peers_format)

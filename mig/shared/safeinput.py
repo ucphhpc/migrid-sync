@@ -1552,6 +1552,8 @@ def guess_type(name):
             'openid.sreg.association',
             'changes',
             'version',
+            'peers_id',
+            'organization',
         ):
             __type_map[key] = valid_commonname
         for key in ('cert_id',

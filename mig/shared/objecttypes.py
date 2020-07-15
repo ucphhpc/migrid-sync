@@ -118,6 +118,10 @@ runtimeenvironment = {
                                                  'environment')],
     'optional': [],
 }
+peer = {'object_type': 'peer', 'required':
+        ['full_name', 'organization', 'email',
+            'country', 'label', 'kind', 'expire'],
+        'optional': []}
 # Used by workflowjsoninterface
 # TODO, add the explicit fields that it uses
 workflow = {
@@ -239,6 +243,7 @@ dir_listings = {'object_type': 'dir_listings',
 runtimeenvironments = {'object_type': 'runtimeenvironments',
                        'required_list': [('runtimeenvironments',
                                           'runtimeenvironment')]}
+peers = {'object_type': 'peers', 'required_list': [('peers', 'peer')]}
 workflows = {'object_type': 'workflows'}
 frozenarchives = {'object_type': 'frozenarchives',
                   'required_list': [('frozenarchives', 'frozenarchive'
@@ -418,6 +423,8 @@ valid_types_list = [
     file_output,
     runtimeenvironment,
     runtimeenvironments,
+    peer,
+    peers,
     workflow,
     workflows,
     frozenfile,

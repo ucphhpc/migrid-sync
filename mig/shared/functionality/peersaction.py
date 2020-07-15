@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# peersaction - handle saving of peers
+# peersaction - handle management of peers
 # Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Peers save action back end"""
+"""Peers management action back end"""
 
 import datetime
 import os
@@ -43,23 +43,23 @@ from shared.handlers import safe_handler, get_csrf_limit
 from shared.html import html_post_helper
 from shared.init import initialize_main_variables, find_entry
 from shared.notification import send_email
-from shared.parseflags import force
 from shared.serial import load, dump
 from shared.useradm import get_full_user_map
 
-default_expire_days = 30
+default_expire_days = 7
+peer_actions = ['import', 'add', 'remove', 'update']
 
 
 def signature():
     """Signature of the main function"""
 
     defaults = {
+        'action': REJECT_UNSET,
         'peers_label': REJECT_UNSET,
         'peers_kind': REJECT_UNSET,
         'peers_expire': [''],
         'peers_format': [],
         'peers_content': [''],
-        'flags': ['']
     }
     return ['text', defaults]
 
@@ -105,17 +105,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
              'Only privileged users can permit external peers!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
-
+    action = accepted['action'][-1].strip()
     label = accepted['peers_label'][-1].strip()
     kind = accepted['peers_kind'][-1].strip()
     raw_expire = accepted['peers_expire'][-1].strip()
-    peers_content = accepted['peers_content'][-1].strip()
+    peers_content = accepted['peers_content']
     peers_format = accepted['peers_format'][-1].strip()
-    # TODO: implement and enable more providers
-    flags = ''.join(accepted['flags']).strip()
 
-    # TODO: check valid kind and date
     try:
         expire = datetime.datetime.strptime(raw_expire, '%Y-%m-%d')
         if datetime.datetime.now() > expire:
@@ -131,16 +127,23 @@ CSRF-filtered POST requests to prevent unintended updates'''
         expire += datetime.timedelta(days=default_expire_days)
     expire = expire.date().isoformat()
 
+    if not action in peer_actions:
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Unsupported peer action %r - only %s are allowed' %
+             (action, ', '.join(peer_actions))})
+        return (output_objects, returnvalues.CLIENT_ERROR)
     if not kind in peer_kinds:
         output_objects.append(
             {'object_type': 'error_text', 'text':
              'Unsupported peer kind %r - only %s are allowed' %
              (kind, ', '.join(peer_kinds))})
         return (output_objects, returnvalues.CLIENT_ERROR)
-    if "csvform" != peers_format:
+    # TODO: implement and enable more formats?
+    if peers_format not in ("csvform", 'userid'):
         output_objects.append(
             {'object_type': 'error_text', 'text':
-             'Only Import Peers is supported so far!'})
+             'Only Import Peers is implemented so far!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     peers_path = os.path.join(configuration.user_settings, client_dir,
@@ -151,13 +154,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
         logger.warning("could not load peers from: %s" % exc)
         all_peers = {}
 
-    if all_peers.get(label, None):
-        actual_action = 'updated'
-    else:
-        actual_action = 'created'
-        all_peers[label] = {}
-
+    # Extract peer(s) from request
     (peers, err) = parse_peers(configuration, peers_content, peers_format)
+    if not err and not peers:
+        err = ["No valid peers provided"]
     if err:
         output_objects.append(
             {'object_type': 'error_text', 'text':
@@ -166,80 +166,87 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                'peers.py', 'text': 'Back to peers'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    if peers:
-        all_peers[label].update({
-            'label': label,
-            'kind': kind,
-            'expire': expire,
-            'peers': peers
-        })
-        pretty_peers = all_peers[label].copy()
-    elif force(flags):
-        actual_action = 'deleted'
-        logger.info('delete %s peers %s in %s' % (client_id, all_peers,
-                                                  peers_path))
-        pretty_peers = all_peers[label].copy()
-        del all_peers[label]
-    else:
-        output_objects.append({'object_type': 'text', 'text': '''
-No peers provided - saving with empty list will result in the %r peers getting
-deleted. Please use either of the links below to confirm or cancel.
-''' % label})
-        # Reuse csrf token from this request
-        target_op = 'peersaction'
-        js_name = target_op
-        csrf_token = accepted[csrf_field][-1]
-        helper = html_post_helper(js_name, '%s.py' % target_op,
-                                  {'peers_label': label, 'peers_kind': kind,
-                                   'peers_expire': raw_expire,
-                                   'peers_content': '',
-                                   'peers_format': 'csvform', 'flags': 'f',
-                                   csrf_field: csrf_token})
-        output_objects.append({'object_type': 'html_form', 'text': helper})
-        output_objects.append({'object_type': 'link', 'destination':
-                               "javascript: %s();" % js_name, 'class':
-                               'removelink iconspace', 'text':
-                               'Really delete %r peers' % label})
-        output_objects.append({'object_type': 'text', 'text': ''})
-        output_objects.append({'object_type': 'link', 'destination':
-                               'peers.py', 'text': 'Back to peers'})
-        return (output_objects, returnvalues.OK)
+    # NOTE: general cases of operation here:
+    # * import multiple peers in one go (add new, update existing)
+    # * add one or more new peers
+    # * update one or more existing peers
+    # * remove one or more existing peers
+    # The kind and expire values are generally applied for all included peers.
+
+    # NOTE: we check all peers before any action
+    for user in peers:
+        fill_distinguished_name(user)
+        peer_id = user['distinguished_name']
+        cur_peer = all_peers.get(peer_id, {})
+        if 'add' == action and cur_peer:
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Peer %r already exists!' % peer_id})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        elif 'update' == action and not cur_peer:
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Peer %r does not exists!' % peer_id})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        elif 'remove' == action and not cur_peer:
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Peer %r does not exists!' % peer_id})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        elif 'import' == action and cur_peer:
+            # Only warn on import with existing match
+            output_objects.append(
+                {'object_type': 'text', 'text':
+                 'Updating existing peer %r' % peer_id})
+
+    # Now apply changes
+    for user in peers:
+        peer_id = user['distinguished_name']
+        cur_peer = all_peers.get(peer_id, {})
+        user.update({'label': label, 'kind': kind, 'expire': expire})
+        if 'add' == action:
+            all_peers[peer_id] = user
+        elif 'update' == action:
+            all_peers[peer_id] = user
+        elif 'remove' == action:
+            del all_peers[peer_id]
+        elif 'import' == action:
+            all_peers[peer_id] = user
+        logger.info("%s peer %s" % (action, peer_id))
 
     try:
         dump(all_peers, peers_path)
-        logger.debug('%s %s peers %s in %s' % (actual_action, client_id,
-                                               all_peers, peers_path))
+        logger.debug('%s %s peers %s in %s' % (client_id, action, all_peers,
+                                               peers_path))
         output_objects.append(
-            {'object_type': 'text', 'text': "Peers %r %s" % (label,
-                                                             actual_action)})
+            {'object_type': 'text', 'text': "Completed %s peers %r" %
+             (action, label)})
     except Exception, exc:
         logger.error('Failed to save %s peers to %s: %s' %
                      (client_id, peers_path, exc))
         output_objects.append({'object_type': 'error_text', 'text': '''
-Peers %r could not be %s. Please contact the site admins on %s if this error
+Could not %s peers %r. Please contact the site admins on %s if this error
 persists.
-''' % (label, actual_action, admin_email)})
+''' % (action, label, admin_email)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    logger.info('%s %r peers for %s in %s' % (actual_action, label, client_id,
-                                              peers_path))
+    logger.info('%s completed for %s peers for %s in %s' % (action, label,
+                                                            client_id,
+                                                            peers_path))
+
+    # TODO: remove IDs from requests here if peers_format is userid
+
     user_lines = []
-    for user in pretty_peers['peers']:
-        fill_distinguished_name(user)
+    pretty_peers = {'label': label, 'kind': kind, 'expire': expire}
+    for user in peers:
         user_lines.append(user['distinguished_name'])
     pretty_peers['user_lines'] = '\n'.join(user_lines)
-    email_header = '%s Peers %s' % (configuration.short_title, actual_action)
+    email_header = '%s Peers %s' % (configuration.short_title, action)
     email_msg = """
-User %s %s peers data
-""" % (client_id, actual_action)
+Received %s peers from %s
+""" % (action, client_id)
     email_msg += """
-Label:
-%(label)s
-Kind:
-%(kind)s
-Expire:
-%(expire)s
-Peers:
+Label: %(label)s , Kind: %(kind)s , Expire: %(expire)s, Peers:
 %(user_lines)s
 """ % pretty_peers
 
@@ -248,10 +255,13 @@ Peers:
     if not send_email(admin_email, email_header, email_msg, logger,
                       configuration):
         output_objects.append({'object_type': 'error_text', 'text': '''
-An error occured trying to send the email about %s peers to the site
-administrators. Please inform them (%s) if the problem persists.
-''' % (actual_action, admin_email)})
+An error occured trying to send the email about your %s peers to the site
+administrators. Please manually inform them (%s) if the problem persists.
+''' % (action, admin_email)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    output_objects.append({'object_type': 'text', 'text': '''
+Informed the site admins about your %s peers action.''' % action})
 
     output_objects.append({'object_type': 'link', 'destination':
                            'peers.py', 'text': 'Back to peers'})

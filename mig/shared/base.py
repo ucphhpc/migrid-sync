@@ -189,6 +189,27 @@ def pretty_format_user(distinguished_name, hide_email=True):
     return "%(full_name)s, %(organization)s &lt;%(email)s&gt;" % user_dict
 
 
+def canonical_user(configuration, user_dict, limit_fields):
+    """Apply basic transformations to user dicts for consistency. Remove
+    unexpected fields, lower-case email, capitalize full name and uppercase
+    country and state.
+    """
+    canonical = {}
+    for (key, val) in user_dict.items():
+        if not key in limit_fields:
+            continue
+        if key == 'full_name':
+            val = ' '.join([i.capitalize() for i in val.split()])
+        elif key == 'email':
+            val = val.lower()
+        elif key == 'country':
+            val = val.upper()
+        elif key == 'state':
+            val = val.upper()
+        canonical[key] = val
+    return canonical
+
+
 def sandbox_resource(unique_resource_name):
     """Returns boolean indicating if the resource is a sandbox"""
     fqdn = unique_resource_name.rsplit('.', 1)[0]
