@@ -38,8 +38,9 @@ try:
 except ImportError:
     iso3166 = None
 
-from shared.base import force_utf8, canonical_user, distinguished_name_to_user
-from shared.defaults import peers_fields
+from shared.base import force_utf8, canonical_user, client_id_dir, \
+    distinguished_name_to_user
+from shared.defaults import peers_fields, pending_peers_filename
 from shared.fileio import delete_file
 # Expose some helper variables for functionality backends
 from shared.safeinput import name_extras, password_extras, password_min_len, \
@@ -592,3 +593,37 @@ def parse_peers(configuration, peers_content, peers_format, csv_sep=';'):
     else:
         _logger.error("unknown peers format: %s" % peers_format)
         return ([], "unknown peers format: %s" % peers_format)
+
+
+def manage_pending_peers(configuration, client_id, action, change_list):
+    """Helper to manage changes to pending peers list of client_id"""
+    _logger = configuration.logger
+    client_dir = client_id_dir(client_id)
+    pending_peers_path = os.path.join(configuration.user_settings, client_dir,
+                                      pending_peers_filename)
+    try:
+        pending_peers = load(pending_peers_path)
+    except Exception, exc:
+        if os.path.exists(pending_peers_path):
+            _logger.warning("could not load pending peers from %s: %s" %
+                            (pending_peers_path, exc))
+        pending_peers = []
+    change_dict = dict(change_list)
+    # NOTE: always remove old first to replace any existing and move them last
+    pending_peers = [(i, j)
+                     for (i, j) in pending_peers if not i in change_dict]
+    if action == "add":
+        pending_peers += change_list
+    elif action == "remove":
+        pass
+    else:
+        _logger.error(
+            "unsupported action in manage pending peers: %s" % action)
+        return False
+    try:
+        dump(pending_peers, pending_peers_path)
+        return True
+    except Exception, exc:
+        _logger.warning("could not save pending peers to %s: %s" %
+                        (pending_peers_path, exc))
+        return False

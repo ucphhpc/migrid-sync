@@ -34,7 +34,8 @@ import base64
 import re
 
 import shared.returnvalues as returnvalues
-from shared.accountreq import parse_peers, peers_permit_allowed
+from shared.accountreq import parse_peers, peers_permit_allowed, \
+    manage_pending_peers
 from shared.base import client_id_dir, fill_distinguished_name
 from shared.defaults import peers_filename, peer_kinds, peers_fields, \
     csrf_field
@@ -47,7 +48,7 @@ from shared.serial import load, dump
 from shared.useradm import get_full_user_map
 
 default_expire_days = 7
-peer_actions = ['import', 'add', 'remove', 'update']
+peer_actions = ['import', 'add', 'remove', 'update', 'accept', 'reject']
 
 
 def signature():
@@ -55,11 +56,11 @@ def signature():
 
     defaults = {
         'action': REJECT_UNSET,
-        'peers_label': REJECT_UNSET,
+        'peers_label': [''],
         'peers_kind': REJECT_UNSET,
-        'peers_expire': [''],
-        'peers_format': [],
-        'peers_content': [''],
+        'peers_expire': REJECT_UNSET,
+        'peers_format': REJECT_UNSET,
+        'peers_content': REJECT_UNSET,
     }
     return ['text', defaults]
 
@@ -171,6 +172,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # * add one or more new peers
     # * update one or more existing peers
     # * remove one or more existing peers
+    # * accept one or more pending requests
+    # * reject one or more pending requests
     # The kind and expire values are generally applied for all included peers.
 
     # NOTE: we check all peers before any action
@@ -193,6 +196,16 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 {'object_type': 'error_text', 'text':
                  'Peer %r does not exists!' % peer_id})
             return (output_objects, returnvalues.CLIENT_ERROR)
+        elif 'accept' == action and cur_peer:
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Peer %r already accepted!' % peer_id})
+            return (output_objects, returnvalues.CLIENT_ERROR)
+        elif 'reject' == action and cur_peer:
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Peer %r already accepted!' % peer_id})
+            return (output_objects, returnvalues.CLIENT_ERROR)
         elif 'import' == action and cur_peer:
             # Only warn on import with existing match
             output_objects.append(
@@ -210,6 +223,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
             all_peers[peer_id] = user
         elif 'remove' == action:
             del all_peers[peer_id]
+        elif 'accept' == action:
+            all_peers[peer_id] = user
+        elif 'reject' == action:
+            pass
         elif 'import' == action:
             all_peers[peer_id] = user
         logger.info("%s peer %s" % (action, peer_id))
@@ -219,8 +236,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
         logger.debug('%s %s peers %s in %s' % (client_id, action, all_peers,
                                                peers_path))
         output_objects.append(
-            {'object_type': 'text', 'text': "Completed %s peers %r" %
-             (action, label)})
+            {'object_type': 'text', 'text': "Completed %s peers" % action})
+        for user in peers:
+            output_objects.append(
+                {'object_type': 'text', 'text': "%(distinguished_name)s" % user})
     except Exception, exc:
         logger.error('Failed to save %s peers to %s: %s' %
                      (client_id, peers_path, exc))
@@ -230,11 +249,15 @@ persists.
 ''' % (action, label, admin_email)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    logger.info('%s completed for %s peers for %s in %s' % (action, label,
-                                                            client_id,
-                                                            peers_path))
+    if action in ["accept", "reject"]:
+        changed = [(i['distinguished_name'], i) for i in peers]
+        if not manage_pending_peers(configuration, client_id, "remove",
+                                    changed):
+            logger.warning('could not update pending peers for %s after %s' %
+                           (client_id, action))
 
-    # TODO: remove IDs from requests here if peers_format is userid
+    logger.info('%s completed for %s peers for %s in %s' %
+                (action, label, client_id, peers_path))
 
     user_lines = []
     pretty_peers = {'label': label, 'kind': kind, 'expire': expire}
@@ -242,11 +265,10 @@ persists.
         user_lines.append(user['distinguished_name'])
     pretty_peers['user_lines'] = '\n'.join(user_lines)
     email_header = '%s Peers %s' % (configuration.short_title, action)
-    email_msg = """
-Received %s peers from %s
+    email_msg = """Received %s peers from %s
 """ % (action, client_id)
     email_msg += """
-Label: %(label)s , Kind: %(kind)s , Expire: %(expire)s, Peers:
+Kind: %(kind)s , Expire: %(expire)s, Label: %(label)s , Peers:
 %(user_lines)s
 """ % pretty_peers
 

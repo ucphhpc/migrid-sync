@@ -1716,8 +1716,8 @@ def user_password_reminder(user_id, targets, conf_path, db_path,
     return (configuration, fields['password'], addresses, errors)
 
 
-def user_migoid_notify(user_id, targets, conf_path, db_path, verbose=False,
-                       admin_copy=False):
+def user_account_notify(user_id, targets, conf_path, db_path, verbose=False,
+                        admin_copy=False):
     """Find notification addresses for user_id and targets"""
     (configuration, fields, addresses, errors) = _user_general_notify(
         user_id, targets, conf_path, db_path, verbose, ['username',
@@ -1735,6 +1735,13 @@ def user_migoid_notify(user_id, targets, conf_path, db_path, verbose=False,
         addresses['email'] += admin_addresses
     return (configuration, fields['username'], fields['full_name'], addresses,
             errors)
+
+
+def user_migoid_notify(user_id, targets, conf_path, db_path, verbose=False,
+                       admin_copy=False):
+    """Alias for user_account_notify"""
+    return user_account_notify(user_id, targets, conf_path, db_path, verbose,
+                               admin_copy)
 
 
 def user_password_check(user_id, conf_path, db_path, verbose=False,

@@ -81,9 +81,12 @@ def create_notify_message(
                 'site': configuration.short_title}
 
     entity_mapper = {'vgridmember': 'member', 'vgridowner': 'owner',
-                     'vgridresource': 'resource', 'resourceowner': 'owner'}
-    accept_mapper = {'vgridaccept': 'vgrid', 'resourceaccept': 'resource'}
-    reject_mapper = {'vgridreject': 'vgrid', 'resourcereject': 'resource'}
+                     'vgridresource': 'resource', 'resourceowner': 'owner',
+                     'peeraccount': 'peer'}
+    accept_mapper = {'vgridaccept': 'vgrid', 'resourceaccept': 'resource',
+                     'peeraccept': 'peer'}
+    reject_mapper = {'vgridreject': 'vgrid', 'resourcereject': 'resource',
+                     'peerreject': 'peer'}
 
     frame_template = """---
 
@@ -213,6 +216,13 @@ Please contact the %(site)s team for details about expire policies.
 who would like it to be added as a %s in %s and included the reason:
 %s
 """ % (request_type, from_id, entity, target_name, request_text)
+            elif request_type == "peeraccount":
+                txt += """This is a %s request sent on behalf of
+%s
+who requested an external user account on %s and specifically pointed to you as
+the local sponsor or representative with the account request comment:
+%s
+""" % (request_type, from_id, target_name, request_text)
             else:
                 txt += """This is a %s request sent on behalf of
 %s
@@ -223,24 +233,38 @@ who would like to be added as a %s in %s and included the reason:
             txt += '''
 If you want to handle the %s request please visit:
 ''' % entity
+
+            vgrid_res_help = ''' and add or
+reject it.
+You can find the request in the Pending Requests table there and either click
+the green plus-icon to accept it or the red minus-icon to reject it.
+
+'''
+
             if request_type.startswith('vgrid'):
                 txt += generate_https_urls(
                     configuration,
                     '%(auto_base)s/%(auto_bin)s/adminvgrid.py?' +
                     'vgrid_name=%(enc_target_name)s',
                     var_dict)
+                txt += vgrid_res_help
             elif request_type.startswith('resource'):
                 txt += generate_https_urls(
                     configuration,
                     '%(auto_base)s/%(auto_bin)s/resadmin.py?' +
                     'unique_resource_name=%(enc_target_name)s',
                     var_dict)
-            txt += ''' and add or
-reject it.
-You can find the request in the Pending Requests table there and either click
-the green plus-icon to accept it or the red minus-icon to reject it.
+                txt += vgrid_res_help
+            elif request_type.startswith('peer'):
+                txt += generate_https_urls(
+                    configuration,
+                    '%(auto_base)s/%(auto_bin)s/peers.py',
+                    var_dict)
+                txt += ''' and accept or
+reject it from the Requested Peers tab.
 
 '''
+
         else:
             txt += 'INVALID REQUEST TYPE: %s\n\n' % request_type
 

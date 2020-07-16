@@ -37,8 +37,8 @@ import shared.returnvalues as returnvalues
 from shared.accountreq import peers_permit_allowed
 from shared.base import pretty_format_user, fill_distinguished_name, \
     client_id_dir
-from shared.defaults import csrf_field, peers_filename, peers_fields, \
-    peer_kinds, default_pager_entries
+from shared.defaults import csrf_field, peers_filename, \
+    pending_peers_filename, peers_fields, peer_kinds, default_pager_entries
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token
 from shared.html import man_base_js, man_base_html, html_post_helper
@@ -54,6 +54,7 @@ sample_users = [{'full_name': 'Jane Doe', 'country': 'DK', 'email':
                 {'full_name': 'John Doe', 'organization': 'DTU', 'country':
                  'DK', 'email': 'john.doe@dtu.dk'}]
 csv_sep = ';'
+edit_entries = 6
 
 
 def signature():
@@ -93,6 +94,36 @@ def main(client_id, user_arguments_dict):
                   'refresh_call': refresh_call}
     (add_import, add_init, add_ready) = man_base_js(configuration,
                                                     [table_spec])
+
+    add_init += '''
+function transfer_id_fields() {
+    //console.log("in transfer_id_fields");
+    var peer_count = 0;
+    var peer_id;
+    $("#fields-tab .save_peers .field_group").each(function() {
+        var group = $(this);
+        peer_id = '';
+        var full_name = $(group).find("input.entry-field.full_name").val();
+        var organization = $(group).find("input.entry-field.organization").val();
+        var email = $(group).find("input.entry-field.email").val();
+        var country = $(group).find("input.entry-field.country").val();
+        if (full_name && organization && email && country) {
+            peer_id = "/C="+country+"/ST=NA/L=NA/O="+organization+"/OU=NA/CN="+full_name+"/emailAddress="+email;
+            //console.debug("built peer_id: "+peer_id);
+            peer_count += 1;
+        }
+        /* Always set peer_id to reset empty rows */
+        $(group).find("input.id-collector").val(peer_id);
+        console.log("set collected peer_id: "+$(group).find("input.id-collector").val());
+    });
+    if (peer_count > 0) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+    '''
     add_ready += '''
         $(".peers-tabs").tabs();
         $(".peers-tabs .accordion").accordion({
@@ -104,6 +135,7 @@ def main(client_id, user_arguments_dict):
         /* fix and reduce accordion spacing */
         $(".peers-tabs .accordion .ui-accordion-header").css("padding-top", 0).css("padding-bottom", 0).css("margin", 0);
         $(".peers-tabs .init-expanded.accordion ").accordion("option", "active", 0);
+        $("#fields-tab .save_peers").on("submit", transfer_id_fields);
     '''
     title_entry['script']['advanced'] += add_import
     title_entry['script']['init'] += add_init
@@ -142,16 +174,16 @@ action="%(target_op)s.py">
 </form>
 '''
     form_accept_html = '''
-<input type="submit" value="Accept Peer" /><br/>
+<input type="submit" value="Apply" /><br/>
 </form>
 '''
     shared_peer_html = '''
     <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
     <div class="form-row">
       <div class="col-md-4 mb-3 form-cell">
-          <label for="peers_label">Name</label>
-          <input class="form-control" type="text" size=30 name="peers_label" value="" required
-            pattern="[^ ]+" title="Name for peers" placeholder="Peers name or label" />
+          <label for="peers_label">Label</label>
+          <input class="form-control" type="text" size=30 name="peers_label" value=""
+            pattern="[^ ]*" title="Label for peers" placeholder="Peers name or label" />
       </div>
       <div class="col-md-4 mb-3 form-cell">
           <label for="peers_kind">Kind</label>
@@ -182,20 +214,29 @@ action="%(target_op)s.py">
     peers_path = os.path.join(configuration.user_settings, client_dir,
                               peers_filename)
     try:
-        peers_dict = load(peers_path)
+        all_peers = load(peers_path)
     except Exception, exc:
-        logger.warning("could not load peers from: %s" % exc)
-        peers_dict = {}
+        logger.warning("could not load peers from %s: %s" % (peers_path, exc))
+        all_peers = {}
+
+    pending_peers_path = os.path.join(configuration.user_settings, client_dir,
+                                      pending_peers_filename)
+    try:
+        pending_peers = load(pending_peers_path)
+    except Exception, exc:
+        logger.warning("could not load pending peers from %s: %s" %
+                       (pending_peers_path, exc))
+        pending_peers = []
 
     tabs_html = '''
 <div id="wrap-tabs" class="peers-tabs">
 <ul>
 <li><a href="#show-tab">Show Peers</a></li>
-<li class="%(peers_permit_class)s"><a href="#import-tab">Import Peers</a></li>
-<!-- TODO: enable these additional methods when ready -->
-<li class="%(peers_permit_class)s hidden"><a href="#fields-tab">Enter Peers</a></li>
-<li class="%(peers_permit_class)s hidden"><a href="#urlfetch-tab">Fetch Peers From URL</a></li>
 <li class="%(peers_permit_class)s"><a href="#requests-tab">Requested Peers</a></li>
+<li class="%(peers_permit_class)s"><a href="#fields-tab">Enter Peers</a></li>
+<li class="%(peers_permit_class)s"><a href="#import-tab">Import Peers</a></li>
+<!-- TODO: enable additional methods when ready? -->
+<li class="%(peers_permit_class)s hidden"><a href="#urlfetch-tab">Fetch Peers From URL</a></li>
 </ul>
 
 <div id="show-tab">
@@ -205,7 +246,7 @@ This is an overview of your registered peers. That is, people that you have
 vouched for to get an account on %(site)s because they need it for a particular
 course/workshop, research project or for general long term collaboration with
 you. The site admins will use this information to accept account requests and
-extensions from any peers until the given time of expiry.
+extensions from your peers until the given time of expiry.
 </p>
 <div class="peer_entries">
 '''
@@ -215,7 +256,7 @@ extensions from any peers until the given time of expiry.
     output_objects.append({'object_type': 'table_pager', 'entry_name': 'peers',
                            'default_entries': default_pager_entries})
     peers = []
-    for (peer_id, entry) in peers_dict.items():
+    for (peer_id, entry) in all_peers.items():
         filled_entry = dict([(field, '') for field in
                              ('label', 'kind', 'expire')])
         fill_distinguished_name(entry)
@@ -253,51 +294,76 @@ extensions from any peers until the given time of expiry.
 
 <div id="fields-tab">
 <p>
-Please enter your peers in the form below and assign a kind and account expiry
-time.
+You may enter your individual peers in the form fields below and assign a
+shared kind and account expiry time for all entries. Just leave the Action
+field to <em>Add</em> unless you want to <em>Update</em> or <em>Remove</em>
+existing peers. You are free to leave rows empty, but each field in a peer row
+MUST be filled for the row to be treated.
 </p>
 %(form_prefix_html)s
 %(shared_peer_html)s
-<input type="hidden" name="peers_format" value="fields" />
-<select class="form-control themed-select html-select" name="action">
-    <option value="add">Add</option>
-    <option value="update">Update</option>
-    <option value="remove">Remove</option>
-</select>
+<input type="hidden" name="peers_format" value="userid" />
+<div class="form-row">
+    <div class="col-md-12 mb-1 form-cell">
+    <label for="action">Action</label>
+    <select class="form-control themed-select html-select" name="action">
+        <option value="add">Add</option>
+        <option value="update">Update</option>
+        <option value="remove">Remove</option>
+    </select>
+    </div>
+</div>
+    
 '''
-    for field in peers_fields:
-        field_extras = 'type="text"'
-        if field.lower() == 'email':
-            field_extras = 'type="email"'
-        elif field.lower() == 'country':
-            field_extras += ' minlen=2 maxlen=2'
-        # TODO: country drop-down?
+
+    # TODO: switch to JS rows with automagic addition to always keep spare row?
+    for index in range(edit_entries):
+        # NOTE: we arrange each entry into a field_group_N div with a hidden
+        #       user ID collector where the field values are merged on submit
+        #       and the actual fields are not passed to the backend.
         tabs_html += '''
-<input %s placeholder="%s" name="%s" />
-''' % (field_extras, field.replace('_', ' ').capitalize(), field)
-    tabs_html += '''
-<!-- TODO: add JS dynamic rows?
-<button class="add_entry fas fas-plus" onClick="addEntry(); return false;">
-Add</button>
-<button class="clean_entry fas fas-clear" onClick="clearEntry(); return false;">
-Clear</button>
--->
-<!-- TODO: add JS to translate rows to userid format before submit?  -->
-<br/>
+<div id="field_group_%s" class="field_group">
+    <input class="id-collector" type="hidden" name="peers_content" value="" />
+    <div class="form-row">
+        ''' % index
+        for field in peers_fields:
+            title = ' '.join([i.capitalize() for i in field.split('_')])
+            placeholder = title
+            field_extras = 'type="text"'
+            if field.lower() == 'email':
+                placeholder = "Email at organization"
+                field_extras = 'type="email"'
+            elif field.lower() == 'country':
+                # TODO: country drop-down instead?
+                title = "Country (ISO 3166)"
+                placeholder = "2-Letter country code"
+                field_extras += ' minlength=2 maxlength=2'
+            tabs_html += '''
+      <div class="col-md-3 mb-3 form-cell">
+          <label for="%(field)s">%(title)s</label>
+          <input class="form-control %(field)s entry-field" size=40 %(extras)s
+            placeholder="%(placeholder)s" />
+      </div>
+''' % {'field': field, 'title': title, 'placeholder': placeholder,
+                'extras': field_extras}
+
+        tabs_html += '''
+    </div>
+</div>
 '''
+
     tabs_html += '''
 %(form_suffix_html)s
 </div>
-
-<div id="import-tab" >
-<p>
-You can paste or enter a CSV-formatted list below to create or update an
-existing group of peers. The contents must start with a single header line to
-define the field order in the following individual user lines as shown in the
-example at the bottom.
-</p>
 '''
     tabs_html += '''
+<div id="import-tab" >
+<p>
+You can paste or enter a CSV-formatted list below to create or update your
+existing peers. The contents must start with a single header line to define
+the field order in the following individual user lines as shown in the example
+at the bottom.
+</p>
 <div id="peers-grid" class="import-form form_container">
 <h2>Import/Update Peers</h2>
 %(form_prefix_html)s
@@ -326,39 +392,23 @@ example at the bottom.
        csv_sep.join([sample_users[-1].get(i, '') for i in peers_fields]))
 
     tabs_html += '''
-<div id="urlfetch-tab" >
-<p>
-In case you have a general project participation list online you can specify the URL here to fetch and parse the list into a peers list. Please note that this memberlist should still be on the machine readbale format described on the upload tab.
-</p>
-%(form_prefix_html)s
-%(shared_peer_html)s
-<br/>
-<input type="hidden" name="action" value="import" />
-<input type="hidden" name="peers_format" value="csvurl" />
-<input class="fillwidth" type="text" name="peers_content" value=""
-    placeholder="URL to fetch CSV-formatted list of peers from ..." /><br/>
-%(form_suffix_html)s
-</div >
-'''
-
-    pending_peers = []
-    # TODO: load pending requests
-    # for user in sample_users:
-    #    fill_distinguished_name(user)
-    #    pending_peers.append((user['distinguished_name'], user))
-
-    tabs_html += '''
 <div id="requests-tab" >
 <p>
-If an external user requests an %(site)s account and explicitly references you
-as contact the site admins may decide to forward the request so that it shows
-up here for you to accept or reject.
+If someone requests an external user account on %(site)s and explicitly
+references you as sponsor or contact person the site admins will generally
+forward the request, so that it shows up here for you to confirm. You can then
+accept or reject the individual requests below to let the site admins proceed
+with account creation or rejection.
 </p>
 '''
 
-    # Skip already accepted request
-    pending_peers = [i for i in pending_peers if not i[0] in peers_dict]
+    pending_count = 0
     for (peer_id, user) in pending_peers:
+        # TODO: consider still showing if expired?
+        # Skip already accepted request
+        if peer_id in all_peers:
+            continue
+        pending_count += 1
         tabs_html += '''
 %(form_prefix_html)s
 %(shared_peer_html)s
@@ -368,8 +418,8 @@ up here for you to accept or reject.
     <div class="col-md-2 mb-5 form-cell">
     <label for="action">Action</label>
     <select class="form-control themed-select html-select" name="action">
-        <option value="add">Add</option>
-        <option value="update">Update</option>
+        <option value="accept">Accept</option>
+        <option value="reject">Reject</option>
     </select>
     </div>
 '''
@@ -389,7 +439,7 @@ up here for you to accept or reject.
 %(form_accept_html)s
 <br/>
 '''
-    if not pending_peers:
+    if pending_count < 1:
         tabs_html += '''
 <p class="info iconpadding">
 No pending requests ...
@@ -398,6 +448,23 @@ No pending requests ...
     tabs_html += '''
 </div >
 '''
+
+    tabs_html += '''
+<div id="urlfetch-tab" >
+<p>
+In case you have a general project participation list online you can specify the URL here to fetch and parse the list into a peers list. Please note that this memberlist should still be on the machine readbale format described on the upload tab.
+</p>
+%(form_prefix_html)s
+%(shared_peer_html)s
+<br/>
+<input type="hidden" name="action" value="import" />
+<input type="hidden" name="peers_format" value="csvurl" />
+<input class="fillwidth" type="text" name="peers_content" value=""
+    placeholder="URL to fetch CSV-formatted list of peers from ..." /><br/>
+%(form_suffix_html)s
+</div >
+'''
+
     # End wrap-tabs div
     tabs_html += '''
 </div >
