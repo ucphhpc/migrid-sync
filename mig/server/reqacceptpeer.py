@@ -94,7 +94,6 @@ if '__main__' == __name__:
         sys.exit(1)
 
     for (opt, val) in opts:
-        print "parsing %s : %s" % (opt, val)
         if opt == '-a':
             raw_targets['email'] = raw_targets.get('email', [])
             raw_targets['email'].append(keyword_auto)

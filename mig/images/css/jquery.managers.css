@@ -908,7 +908,7 @@ background: url(/images/icons/code.png) left center no-repeat;
     width: 40%;
 }
 .form_container input:not([type="checkbox"]):not([type="submit"]), .form_container textarea,
-.form_container select, .form_container fill_space {
+.form_container select, .form_container .fill_space {
     width: 98%;
     display: block;
     padding: 2px;
@@ -916,6 +916,23 @@ background: url(/images/icons/code.png) left center no-repeat;
 .form_container select, .form_container textarea {
     width: 99%;
 }
+.form_container .form-cell {
+    width: 96%;
+}
+.form_container .form-cell .fill-width {
+    width: 98%;
+}
+.form_container .form-row .fill-width {
+    width: 98%;
+}
+/* NOTE: match height of drop-downs with text fields when inside UI-widget
+         like on peers page and without breaking in general on V2 
+*/
+.ui-widget-content .form_container .form-cell .themed-select {
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
 
 #submit_button {
     width: auto;

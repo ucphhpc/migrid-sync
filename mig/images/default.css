@@ -451,6 +451,9 @@ table.peers {
 .navmenu ul li.people a, #legacy-ui-body .app-grid .fas.people {
   background-image: url('/images/icons/group.png');
 }
+.navmenu ul li.peers a, #legacy-ui-body .app-grid .fas.peers {
+  background-image: url('/images/icons/forum.png');
+}
 .navmenu ul li.cloud a, #legacy-ui-body .app-grid .fas.cloud {
   background-image: url('/images/icons/bricks.png');
 }
@@ -552,6 +555,32 @@ table.peers {
 }
 .button-grid > * {
 }
+
+/* Grid layouts with one to four horizontal items */
+.one-col-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96%, auto));
+}
+.two-col-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48%, auto));
+}
+.three-col-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(32%, auto));
+}
+.four-col-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(24%, auto));
+}
+.five-col-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19%, auto));
+}
+.one-col-grid > *, .two-col-grid > *, .three-col-grid > *, .four-col-grid > *,
+.five-col-grid > * {
+}
+
 
 /* Cloud instance grid */
 .cloud-instance-grid {

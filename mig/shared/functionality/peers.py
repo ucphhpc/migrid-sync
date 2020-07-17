@@ -179,11 +179,12 @@ action="%(target_op)s.py">
 '''
     shared_peer_html = '''
     <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
-    <div class="form-row">
+    <div class="form-row three-col-grid">
       <div class="col-md-4 mb-3 form-cell">
           <label for="peers_label">Label</label>
-          <input class="form-control" type="text" size=30 name="peers_label" value=""
-            pattern="[^ ]*" title="Label for peers" placeholder="Peers name or label" />
+          <input class="form-control fill-width" type="text" name="peers_label"
+            value="" pattern="[^ ]*" title="Label for peers"
+            placeholder="Peers name or label" />
       </div>
       <div class="col-md-4 mb-3 form-cell">
           <label for="peers_kind">Kind</label>
@@ -200,9 +201,9 @@ action="%(target_op)s.py">
       </div>
       <div class="col-md-4 mb-3 form-cell">
           <label for="peers_expire">Expire</label>
-          <input class="form-control themed-select html-select" type="date"
-            name="peers_expire" value="%s" required pattern="[0-9/-]+"
-            title="Access expiry date" />
+          <input class="form-control themed-select html-select fill-width"
+            type="date" name="peers_expire" value="%s" required
+            pattern="[0-9/-]+" title="Access expiry date" />
       </div>
     </div>
 ''' % expire.date()
@@ -300,20 +301,20 @@ field to <em>Add</em> unless you want to <em>Update</em> or <em>Remove</em>
 existing peers. You are free to leave rows empty, but each field in a peer row
 MUST be filled for the row to be treated.
 </p>
+<div class="enter-form form_container">
 %(form_prefix_html)s
 %(shared_peer_html)s
 <input type="hidden" name="peers_format" value="userid" />
-<div class="form-row">
+<div class="form-row one-col-grid">
     <div class="col-md-12 mb-1 form-cell">
     <label for="action">Action</label>
-    <select class="form-control themed-select html-select" name="action">
+    <select class="form-control themed-select html-select fill-width" name="action">
         <option value="add">Add</option>
         <option value="update">Update</option>
         <option value="remove">Remove</option>
     </select>
     </div>
 </div>
-    
 '''
 
     # TODO: switch to JS rows with automagic addition to always keep spare row?
@@ -324,15 +325,19 @@ MUST be filled for the row to be treated.
         tabs_html += '''
 <div id="field_group_%s" class="field_group">
     <input class="id-collector" type="hidden" name="peers_content" value="" />
-    <div class="form-row">
+    <div class="form-row four-col-grid">
         ''' % index
         for field in peers_fields:
             title = ' '.join([i.capitalize() for i in field.split('_')])
             placeholder = title
             field_extras = 'type="text"'
-            if field.lower() == 'email':
+            if field.lower() == 'full_name':
+                field_extras = 'minlength=3'
+            elif field.lower() == 'organization':
+                field_extras = 'minlength=2'
+            elif field.lower() == 'email':
                 placeholder = "Email at organization"
-                field_extras = 'type="email"'
+                field_extras = 'type="email" minlength=5'
             elif field.lower() == 'country':
                 # TODO: country drop-down instead?
                 title = "Country (ISO 3166)"
@@ -340,8 +345,8 @@ MUST be filled for the row to be treated.
                 field_extras += ' minlength=2 maxlength=2'
             tabs_html += '''
       <div class="col-md-3 mb-3 form-cell">
-          <label for="%(field)s">%(title)s</label>
-          <input class="form-control %(field)s entry-field" size=40 %(extras)s
+          <label for="%(field)s">%(title)s</label><br/>
+          <input class="form-control %(field)s entry-field fill-width" %(extras)s
             placeholder="%(placeholder)s" />
       </div>
 ''' % {'field': field, 'title': title, 'placeholder': placeholder,
@@ -355,6 +360,7 @@ MUST be filled for the row to be treated.
     tabs_html += '''
 %(form_suffix_html)s
 </div>
+</div>
 '''
     tabs_html += '''
 <div id="import-tab" >
@@ -364,7 +370,7 @@ existing peers. The contents must start with a single header line to define
 the field order in the following individual user lines as shown in the example
 at the bottom.
 </p>
-<div id="peers-grid" class="import-form form_container">
+<div class="import-form form_container">
 <h2>Import/Update Peers</h2>
 %(form_prefix_html)s
 %(shared_peer_html)s
@@ -410,14 +416,15 @@ with account creation or rejection.
             continue
         pending_count += 1
         tabs_html += '''
+<div class="requests-form form_container">
 %(form_prefix_html)s
 %(shared_peer_html)s
 <br/>
 <input type="hidden" name="peers_format" value="userid" />
-<div class="form-row">
+<div class="form-row five-col-grid">
     <div class="col-md-2 mb-5 form-cell">
     <label for="action">Action</label>
-    <select class="form-control themed-select html-select" name="action">
+    <select class="form-control themed-select html-select fill-width" name="action">
         <option value="accept">Accept</option>
         <option value="reject">Reject</option>
     </select>
@@ -431,22 +438,22 @@ with account creation or rejection.
             tabs_html += '''
     <div class="col-md-2 mb-5 form-cell">
         <label for="%(field)s">%(title)s</label>
-        <input class="form-control" type="text" size=40 value="%(value)s"
+        <input class="form-control fill-width" type="text" value="%(value)s"
           readonly=readonly />
     </div>''' % {'field': field, 'title': title, 'value': user.get(field, '')}
         tabs_html += '''
 </div>
 %(form_accept_html)s
-<br/>
+</div>
 '''
     if pending_count < 1:
         tabs_html += '''
-<p class="info iconpadding">
+<p class="info icon iconpadding">
 No pending requests ...
 </p>
 '''
     tabs_html += '''
-</div >
+</div>
 '''
 
     tabs_html += '''
@@ -454,6 +461,7 @@ No pending requests ...
 <p>
 In case you have a general project participation list online you can specify the URL here to fetch and parse the list into a peers list. Please note that this memberlist should still be on the machine readbale format described on the upload tab.
 </p>
+<div class="urlfetch-form form_container">
 %(form_prefix_html)s
 %(shared_peer_html)s
 <br/>
@@ -462,7 +470,8 @@ In case you have a general project participation list online you can specify the
 <input class="fillwidth" type="text" name="peers_content" value=""
     placeholder="URL to fetch CSV-formatted list of peers from ..." /><br/>
 %(form_suffix_html)s
-</div >
+</div>
+</div>
 '''
 
     # End wrap-tabs div
