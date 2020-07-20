@@ -51,6 +51,7 @@ from shared.functional import validate_input, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.httpsclient import extract_client_openid
 from shared.init import initialize_main_variables
+from shared.notification import send_email
 from shared.safeinput import filter_commonname
 from shared.useradm import create_user
 from shared.url import openid_autologout_url
@@ -233,10 +234,14 @@ def main(client_id, user_arguments_dict, environ=None):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     logger.debug('Accepted arguments: %s' % accepted)
-    #logger.debug('with environ: %s' % environ)
+    # logger.debug('with environ: %s' % environ)
 
     admin_email = configuration.admin_email
+    smtp_server = configuration.smtp_server
     (openid_names, oid_extras) = ([], {})
+    tmp_id = 'tmp%s' % time.time()
+
+    logger.info('Received autocreate from %s with ID %s' % (client_id, tmp_id))
 
     # Extract raw values
 
@@ -336,6 +341,7 @@ def main(client_id, user_arguments_dict, environ=None):
 
     if raw_login:
         openid_names.append(raw_login)
+        # TODO: Add additional ext oid provider ID aliases here?
 
     # we should have the proxy file read...
 
@@ -461,6 +467,13 @@ accepting create matching supplied ID!'''})
 
     user_dict['auth'] = [auth]
 
+    fill_helper = {'short_title': configuration.short_title,
+                   'base_url': base_url, 'admin_email': admin_email,
+                   'ext_oid_title': configuration.user_ext_oid_title,
+                   'front_page_url': configuration.migserver_http_url,
+                   'personal_page_url': configuration.migserver_https_ext_oid_url}
+    fill_helper.update(user_dict)
+
     # If server allows automatic addition of users with a CA validated cert
     # we create the user immediately and skip mail
 
@@ -489,28 +502,61 @@ accepting create matching supplied ID!'''})
             logger.error('create failed for %s: %s' % (uniq_id, err))
             output_objects.append({'object_type': 'error_text',
                                    'text': '''Could not create the user account for you:
-Please report this problem to the grid administrators (%s).'''
-                                   % admin_email})
+Please report this problem to the site administrators (%(admin_email)s).'''
+                                   % fill_helper})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         logger.info('created user account for %s' % uniq_id)
-        output_objects.append({'object_type': 'html_form', 'text': '''
-<p>Creating your %(short_title)s user account ...</p>
-<p class="spinner iconleftpad">
-redirecting to your <a href="%(base_url)s">personal pages</a> in a moment.
-</p>
-<script type="text/javascript">
-    setTimeout(function() { location.href="%(base_url)s";}, 3000);
-</script>
 
-''' % {'short_title': configuration.short_title, 'base_url': base_url}
-        })
+        email_header = 'Welcome to %s' % configuration.short_title
+        email_msg = """Hi and welcome to %(short_title)s!
+
+Your account sign up succeeded and you can now log in to your account using
+your usual %(ext_oid_title)s login from
+%(front_page_url)s
+There you'll also find further information about making the most of
+%(short_title)s, including a user guide and answers to Frequently Asked
+Questions, plus site status and support information.
+You're welcome to contact us with questions or comments using the contact
+details there and in the footer of your personal %(short_title)s pages.
+
+Please note that by signing up and using %(short_title)s you also formally
+accept the site Terms of Use, which you'll always find in the current form at
+%(front_page_url)s/terms.html
+
+All the best,
+The %(short_title)s Admins
+""" % fill_helper
+
+        logger.info('Send email: to: %s, header: %s, msg: %s, smtp_server: %s'
+                    % (admin_email, email_header, email_msg, smtp_server))
+        if not send_email(admin_email, email_header, email_msg, logger,
+                          configuration):
+            output_objects.append({
+                'object_type': 'error_text', 'text': """An error occured trying
+to send your account welcome email. Please inform the site admins (%s) manually
+and include the session ID: %s""" % (admin_email, tmp_id)})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
+
+        logger.info('sent welcome email for %s' % uniq_id)
+
+        output_objects.append({'object_type': 'html_form', 'text': """
+<p> Creating your %(short_title)s user account and sending welcome email ... </p>
+<p class='spinner iconleftpad'>
+redirecting to your <a href='%(personal_page_url)s'> personal pages </a> in a
+moment.
+</p>
+<script type='text/javascript'>
+    setTimeout(function() {location.href='%(personal_page_url)s';}, 3000);
+</script>
+""" % fill_helper})
         return (output_objects, returnvalues.OK)
+
     else:
         logger.warning('autocreate disabled and refused for %s' % client_id)
-        output_objects.append({'object_type': 'error_text',
-                               'text': '''Automatic user creation disabled on this site.
-Please contact the site admins %s if you think it should be enabled.
-'''
-                               % configuration.admin_email})
+        output_objects.append({
+            'object_type': 'error_text', 'text': """Automatic user creation
+disabled on this site. Please contact the site admins (%(admin_email)s) if you
+think it should be enabled.
+""" % fill_helper})
         return (output_objects, returnvalues.ERROR)
