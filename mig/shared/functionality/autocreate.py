@@ -529,8 +529,8 @@ The %(short_title)s Admins
 """ % fill_helper
 
         logger.info('Send email: to: %s, header: %s, msg: %s, smtp_server: %s'
-                    % (admin_email, email_header, email_msg, smtp_server))
-        if not send_email(admin_email, email_header, email_msg, logger,
+                    % (email, email_header, email_msg, smtp_server))
+        if not send_email(email, email_header, email_msg, logger,
                           configuration):
             output_objects.append({
                 'object_type': 'error_text', 'text': """An error occured trying
@@ -538,7 +538,7 @@ to send your account welcome email. Please inform the site admins (%s) manually
 and include the session ID: %s""" % (admin_email, tmp_id)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
-        logger.info('sent welcome email for %s' % uniq_id)
+        logger.info('sent welcome email for %s to %s' % (uniq_id, email))
 
         output_objects.append({'object_type': 'html_form', 'text': """
 <p> Creating your %(short_title)s user account and sending welcome email ... </p>
