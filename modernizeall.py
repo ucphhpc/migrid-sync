@@ -38,6 +38,8 @@ import time
 
 exclude_dirs = ['state', 'user-projects', 'doc-src',
                 'MiG-certificates', 'seafile']
+# The import fix breaks our relative imports so disable for now
+disable_import_fix = True
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
@@ -53,9 +55,11 @@ if __name__ == '__main__':
     print('--- ignoring all %s dirs ---' % ', '.join(exclude_dirs))
     mime_helper = mimetypes.MimeTypes()
     modernize_base = ['python-modernize', '-n', '-w']
+    if disable_import_fix:
+        modernize_base += ['-x', 'import']
     # NOTE: fix import lines broken by modernize and leave Copyright line alone
-    sed_rules = ['s/^from .shared/from shared/g',
-                 's/^from . import /import /g']
+    sed_rules = ['s/from .shared/from shared/g',
+                 's/from . import /import /g']
     postprocess_base = ['sed', '-i'] + [';'.join(sed_rules)]
     for (root, dirs, files) in os.walk(target):
         timestamp = time.time()
@@ -96,6 +100,9 @@ if __name__ == '__main__':
             modernize_retval = subprocess.call(modernize_cmd)
             if modernize_retval != 0:
                 print("ERROR: failed to modernize %s" % rel_path)
+                continue
+            # Nothing to fix if import fix is disabled
+            if disable_import_fix:
                 continue
             # Skip postprocessing unless file actually changed
             if timestamp - os.path.getmtime(path) > 0:
