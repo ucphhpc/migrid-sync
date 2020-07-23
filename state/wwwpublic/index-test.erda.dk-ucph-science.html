@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>
+ERDA
+</title>
+
+<!-- site default style -->
+<link rel="stylesheet" type="text/css" href="/images/default.css" media="screen"/>
+
+<!-- site basic skin style -->
+<!--<link rel="stylesheet" type="text/css" href="/images/static-skin.css" media="screen"/>-->
+<link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/core.css" media="screen"/>
+
+<!-- base page styles -->
+<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
+
+<!-- country-dropdown -->
+<link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/dd.css" />
+<link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/flags.css" />
+
+<!-- override with any site-specific styles -->
+<link rel="stylesheet" type="text/css" href="/images/site-custom.css"
+      media="screen"/>
+
+<!-- site skin style -->
+<link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/ui-theme.css" media="screen"/>
+<link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/ui-theme.custom.css" media="screen"/>
+
+
+<link rel="icon" type="image/vnd.microsoft.icon"
+      href="/images/skin/erda-ucph-science/favicon.ico"/>
+
+<script type="text/javascript" src="/images/js/jquery.js"></script>
+<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+<script type="text/javascript" src="/assets/js/V2/ui-dynamic.js"></script>
+<script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
+
+<script type="text/javascript">
+    /* We assume UCPH users here and leave external users to FAQ entry */
+    function login(user) {
+        if (user == "extoid") {
+            window.open('https://test.erda.dk', '_blank');
+        } else if (user == "extcert") {
+            window.open('https://test-cert.erda.dk', '_blank');
+        } else if (user == "migoid") {
+            window.open('https://test-ext.erda.dk', '_blank');
+        } else {
+            window.open('https://test-sid.erda.dk/cgi-sid/login.py', '_blank');
+        }
+    }
+    function signup(user) {
+        if (user == "extoid") {
+            window.open('https://test.erda.dk/wsgi-bin/autocreate.py', 
+                        '_blank');
+        } else if (user == "extcert") {
+            window.open('https://test-cert.erda.dk/wsgi-bin/extcert.py',
+                        '_blank');
+        } else if (user == "migoid") {
+            window.open('https://test-sid.erda.dk/cgi-sid/reqoid.py', 
+                        '_blank');
+        } else {
+            window.open('https://test-sid.erda.dk/cgi-sid/signup.py', '_blank');
+        }
+    }
+    $(document).ready(function() {
+        var locale = extract_default_locale();
+        /* Init supported languages to just english and extend based on lang select */
+        var supported_languages = ['en'];
+        var default_lang = supported_languages[0];
+        var user_lang;
+        /* Extend supported_languages with all entries from select elem */
+        $("#langselect option").each(function() {
+            var option_val = $(this).val();
+            if (supported_languages.indexOf(option_val) < 0) {
+              supported_languages.push($(this).val());
+            }
+        });
+        //console.debug("found supported langs: "+supported_languages);
+        if (locale && supported_languages.indexOf(locale) >= 0)  {
+          user_lang = locale;
+        } else {
+          console.warn(locale+" not supported - fall back to: "+default_lang);
+          user_lang = default_lang;
+        }
+
+        load_faq_content("faq-snippet.html", "english");
+        load_faq_content("faq-snippet.html", "danish");
+        /* Init FAQ as foldable but closed and with individual heights */
+        accordion_init(".faq-accordion");
+
+        $("#langselect").on('change', function() { 
+                                          var lang = $(this).val();
+                                          //alert("switch_language: "+lang);
+                                          switch_language(lang);
+                                          /* init is broken until visible */
+                                          $("#quick-start-tabs-"+lang).tabs("refresh");
+                                      }
+                            );
+        $("#langselect").val(user_lang);
+        switch_language(user_lang);
+	$("#langselect").msDropdown();
+        /* Init Quick Start as tabs to avoid information overload and do
+           last for proper init. */
+        $("#quick-start-tabs-en").tabs({
+            collapsible: false,
+            active: false
+        });
+        $("#quick-start-tabs-da").tabs({
+            collapsible: false,
+            active: false
+        });
+    });
+</script>
+
+</head>
+<body class="staticpage">
+<div id="topspace">
+</div>
+<div id="toplogo" class="staticpage">
+<div id="toplogoleft" class="staticpage">
+</div>
+<div id="toplogocenter" class="staticpage">
+<img src="/images/skin/erda-ucph-science/banner-logo.jpg" id="logoimagecenter"
+     class="staticpage" alt="site logo center"/>
+<span id="logotitle" class="staticpage">
+University of Copenhagen - Electronic Research Data Archive
+</span>
+</div>
+<div id="toplogoright" class="staticpage">
+</div>
+</div>
+
+<div class="contentblock staticpage" id="nomenu">
+<div class="precontentwidgets">
+<!-- begin user supplied pre content widgets -->
+<!-- empty -->
+<!-- end user supplied pre content widgets -->
+</div>
+<div id="migheader">
+</div>
+<div class="staticpage" id="content">
+<div class="righttext langselect">
+<!-- Please refer to /images/lib/country-dropdown/index.html for more choices -->
+<select name="languages" id="langselect">
+  <option value='da' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag dk" data-title="Denmark">Dansk</option>
+  <option value='en' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag us" data-title="United States" selected="selected">English</option>
+</select>
+</div>
+<div class="english i18n" lang="en">
+<h1 class="staticpage">Welcome to UCPH ERDA</h1>
+
+<!-- Next div is used for site wide system maintenance warnings and such:
+First line is for highlighted notice in red and orange and second is for
+optional further explanation.
+Can just be disabled by putting it into an html comment when not in use.
+ -->
+<div class="staticpage systemmessages centertext">
+<!--
+<span class='systemwarn'>IMPORTANT: upcoming system maintenance window
+  on Monday, September 3rd from 13:00 to 15:00.</span><br/><br/>
+<span class='systemnote'>The work will be on the storage backend and
+  will result in shorter or longer complete access outages.</span>
+<span class='systemnote'>The work will mainly be on the UCPH login
+  service, so please beware that any such logins may fail in the given
+  time frame.</span>
+<span class='systemwarn'>IMPORTANT: upcoming system maintenance on May 31st at 10</span><br/><br/><span class='systemnote'>Short service outages may occur due to network reconfiguration, and it is expected complete before noon.</span>
+<span class='systemwarn'>IMPORTANT: we currently see limited data
+  visibility/access</span><br/><br/>
+<span class='systemnote'>The data are intact but the backend storage is
+  currently only partially running.</span>
+<span class='systemnote'>We
+  have encountered a few such problems after the maintenance work
+  yesterday and are working on it.</span>
+<span class='systemwarn'>IMPORTANT: ERDA backend storage is partially offline due to a power outage</span><br/><br/><span class='systemnote'>There's some power and cooling work taking place in the HPC center so technicians are already investigating.</span>
+<span class='systemwarn'>NOTE: we are back online after a massive outage last night</span><br/><br/>
+<span class='systemwarn'>IMPORTANT: Jupyter is limited to the current running notebooks</span><br/><br/>
+<span class='systemnote'>We are currently unable to start additional notebooks.</span>
+<span class='systemnote'>The problems with login/access due to long
+  response time from the UCPH OpenID service should now be fixed.</span><br/><br/>
+<span class='systemwarn'>NOTE: Login/Access may be unstable - it looks like
+  issues with long response times from the UCPH OpenID login service and
+  they are looking into it.</span><br/><br/>
+<span class='systemwarn'>Power outage in the HPC center this morning:
+  Jupyter went offline but is back now</span>
+<span class='systemwarn'>NOTE: Login/Access is unstable - we are looking into it.</span><br/><br/>
+<span class='systemwarn'>IMPORTANT:
+  Please take <a href="http://status.erda.dk">your precautions</a> if
+  you got caught in the recent <a href="https://it.ku.dk/driftinfo/">
+  phishing attacks</a> at KU/KUMail!</span>
+<span class='systemnote'>Everything is back to normal after the <a href="http://status.erda.dk">outage in the backend storage</a> around noon</span>
+<br/><br/>
+<span class='systemwarn'>NOTE: a hardware breakdown took all systems offline last night, but they're back online (<a href="http://status.erda.dk">status.erda.dk</a>)</span>
+<span class='systemwarn'>IMPORTANT: we will migrate ERDA Seafile on Tuesday September 24th (<a href="http://status.erda.dk">status.erda.dk</a>)</span>
+-->
+
+</div>
+
+<div class="staticpage quickstartfields">
+<div id="quick-start-tabs-en">
+
+<ul class="fillwidth padspace">
+<li><a href="#ucph-user-tab-en">KU / UCPH Users</a></li>
+<li><a href="#external-user-tab-en">External Users</a></li>
+<li><a href="#cert-user-tab-en">Advanced Access</a></li>
+</ul>
+
+<div id="ucph-user-tab-en">
+<div class="staticpage centertext signupfield">
+<p>Sign up to ERDA using your KU / UCPH account?</p>
+<form method='post' action='https://test.erda.dk/wsgi-bin/autocreate.py' target='_blank'>
+<input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
+<input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
+<input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
+<input class="signupbutton" type="submit" value="sign up" />
+</form>
+<p></p> 
+</div>
+<div class="staticpage centertext loginfield">
+<p>I'm already signed up to ERDA with my KU / UCPH account!</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://test.erda.dk' target='_blank'>
+<input class="loginbutton" type="submit" value="log in"
+       onClick="login('extoid'); return false;" />
+</form>
+<p></p>
+</div>
+</div>
+
+<div id="external-user-tab-en">
+<div class="staticpage centertext signupfield">
+<p>Sign up to ERDA <em>without</em> a KU / UCPH account?</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://test-sid.erda.dk/cgi-sid/reqoid.py' target='_blank'>
+<input class="signupbutton" type="submit" value="sign up" /
+       onClick="signup('migoid'); return false;"/>
+</form>
+<p></p>
+</div>
+<div class="staticpage centertext loginfield">
+<p>I'm already signed up to ERDA <em>without</em> a KU / UCPH account!</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://test-ext.erda.dk' target='_blank'>
+<input class="loginbutton" type="button" value="log in"
+       onClick="login('migoid'); return false;" />
+</form>
+<p></p>
+</div>
+</div>
+
+<div id="cert-user-tab-en">
+<div class="staticpage centertext signupfield">
+<p>Sign up to ERDA with your user certificate?</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://test-cert.erda.dk/wsgi-bin/extcert.py' target='_blank'>
+<input class="signupbutton" type="submit" value="sign up" /
+       onClick="signup('extcert'); return false;"/>
+</form>
+<p></p>
+</div>
+<div class="staticpage centertext loginfield">
+<p>I'm already signed up to ERDA with my user certificate!</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://test-cert.erda.dk' target='_blank'>
+<input class="loginbutton" type="button" value="log in"
+       onClick="login('extcert'); return false;" />
+</form>
+<p></p>
+</div>
+</div>
+
+</div>
+</div>
+
+<h2 class="staticpage">About UCPH ERDA</h2>
+<p>
+University of Copenhagen - Electronic Research Data Archive (UCPH ERDA or just ERDA) is a 
+storage, sharing and archiving facility provided by University of Copenhagen to
+employees and students. For now it is limited to the faculty of Science,
+but it may be extended to all of UCPH in the future to support the general UCPH
+<a href="https://kunet.ku.dk/work-areas/research/data/data-management-at-UCPH/Pages/default.aspx"
+target="_blank">Data Management Guidelines</a>. 
+ERDA delivers centralized storage space for personal and shared files in
+addition to archiving of e.g. PhD theses and research data for
+safe-keeping and publishing. It also comes with a file synchronization
+service similar to Dropbox, but with the data stored locally at UCPH.
+</p>
+
+<h2 class="staticpage">Sensitive and Personal Data (GDPR)</h2>
+<p>
+Please note that while ERDA comes with a strong security focus, it is
+<em>only</em> a solution approved for general scientific data
+and <em>not</em> for highly sensitive data. In particular it is not for
+personal data classified as sensitive in the EU Regulation 2016/679
+(General Data Protection Regulation). In case you need to work on such
+sensitive data we recommend the ERDA sister
+facility <a href="http://sif.ku.dk">SIF</a>, which <em>is</em>
+intended and approved for exactly that purpose.
+</p>
+
+<div id="faq-content-english" class="col-lg-12">
+  <!-- Filled by AJAX -->
+  <noscript>
+    <h2 class="staticpage">FAQ</h2>
+    <p>
+      You need a browser with JavaScript for the intended
+      dynamic behaviour on this page, but you can still manually 
+      <a href="faq-snippet.html">view the FAQ</a> without.
+    </p>
+  </noscript>
+</div>
+
+<h2 class="staticpage">Status and News</h2>
+<p>
+You can always refer to our
+separate <a href="http://status.erda.dk/status.html">status and news overview</a>
+for the latest ERDA/IDMC/SIF system status as well as information about new or changed
+features.
+</p>
+<h2 class="staticpage">Questions and Support</h2>
+<p>
+The <a href="/public/ucph-erda-user-guide.pdf">User Guide</a> provides basic
+information about using ERDA, but feel free to contact us using the email link
+at the bottom of the page in case you have any further questions or comments
+(in English or Danish). Unfortunately we do <em>not</em> have resources
+to offer video or phone support, but we typically reply on email the
+next working-day at the latest.
+</p>
+<h2 class="staticpage">Terms of Use</h2>
+<p>
+ERDA comes with only few restrictions and they should be in line with
+basic common sense.<br/>
+For the complete details please refer to the
+official <a href="/public/terms.html">terms of use</a> always
+available from here, in addition to our site privacy and cookie policies
+linked at the bottom.
+</p>
+</div>
+<div class="danish i18n hidden" lang="da">
+<h1 class="staticpage">Velkommen til UCPH ERDA</h1>
+
+<!-- Next div is used for site wide system maintenance warnings and such:
+First line is for highlighted notice in red and orange and second is for
+optional further explanation.
+Can just be disabled by putting it into an html comment when not in use.
+ -->
+<div class="staticpage systemmessages centertext">
+<!--
+<span class='systemwarn'>VIGTIGT: der vil blive lavet planlagt systemvedligehold mandag den
+ 3. september fra 13:00 til 15:00.</span><br/><br/>
+<span class='systemnote'>Arbejdet vil være på backend-lageret, så al dataadgang
+ vil forsvinde i kortere eller længere tidsrum.</span>
+<span class='systemwarn'>VIGTIGT: der vil blive lavet planlagt systemvedligehold torsdag den
+ 12. januar fra 17:00 til 18:00.</span><br/><br/>
+<span class='systemnote'>Arbejdet vil hovedsageligt omhandle KU-login
+  servicen, hvorfor disse logins til ERDA må forventes at kunne fejle i det givne tidsrum.</span>
+<span class='systemwarn'>VIGTIGT: planlagt systemvedligehold den 31. maj
+  kl 10</span><br/><br/>
+<span class='systemnote'>Kortere udfald vil forekomme da arbejdet
+  omfatter netværksændringer, og det forventes afsluttet inden middag.</span>
+<span class='systemwarn'>VIGTIGT: vi oplever i øjeblikket delvis
+  synlighed/adgang til data</span><br/><br/>
+<span class='systemnote'>Data er intakte men backend lagersystemet er
+  p.t. kun delvist oppe.</span>
+<span class='systemnote'>Vi har oplevet enkelte sådanne problemer siden
+  vedligeholdelsesarbejdet igår og arbejder på sagen.</span>
+<span class='systemwarn'>VIGTIGT: ERDAs backend-lager er delvist nede pga et strømudfald</span><br/><br/>
+<span class='systemnote'>Der foregår strøm- og kølearbejde i HPC centret, så teknikerne er allerede på sagen.</span>
+<span class='systemwarn'>NB: vi er tilbage i almindelig drift efter et massivt udfald i nat.</span><br/><br/>
+<span class='systemwarn'>VIGTIGT: Jupyter kan i øjeblikket ikke starte nye notebooks</span><br/><br/>
+<span class='systemnote'>Du vil derfor desværre nok ikke kunne starte en ny notebook.</span>
+<span class='systemnote'>Problemerne med login og adgang pga lang
+  svartid på KUs OpenID service skulle nu være løst</span><br/><br/>
+<span class='systemwarn'>Bemærk: Der kan i øjeblikket være problemer med
+  weblogin og -adgang - det ser ud til at skyldes lange svartider hos KUs OpenID service,
+  og de undersøger sagen</span><br/><br/>
+<span class='systemwarn'>Strømudfald i HPC centeret til morgen: Jupyter
+  har været nede, men kører igen nu</span>
+<span class='systemwarn'>Bemærk: Der er i øjeblikket problemer med
+  weblogin og -adgang - vi undersøger sagen</span>
+<span class='systemwarn'>
+  Tag venligst <a href="http://status.erda.dk">dine forholdsregler</a>
+  hvis du blev fanget i den seneste
+  tids  <a href="https://it.ku.dk/driftinfo/">phishing-angreb</a> på
+  KU/KUMail!</span>  
+</span>
+<span class='systemnote'>Vi er tilbage i normal drift efter <a href="http://status.erda.dk">udfaldet i backend-lageret</a> omkring middag</span>
+<span class='systemwarn'>NOTE: et hardwarenedbrud trak alle systemer offline i aftes, men alt er oppe igen (<a href="http://status.erda.dk">status.erda.dk</a>)</span>
+<br/><br/>
+<span class='systemwarn'>VIGTIGT: Vi migrerer ERDA Seafile tirsdag den 24/9 (<a href="http://status.erda.dk">status.erda.dk</a>)</span>
+-->
+
+</div>
+
+<div class="staticpage quickstartfields">
+<div id="quick-start-tabs-da">
+
+<ul>
+<li><a href="#ucph-user-tab-da">KU / UCPH brugere</a></li>
+<li><a href="#external-user-tab-da">Eksterne brugere</a></li>
+<li><a href="#cert-user-tab-da">Avanceret adgang</a></li>
+</ul>
+
+<div id="ucph-user-tab-da">
+<div class="staticpage centertext signupfield">
+<p>Tilmeld dig ERDA med din KU-konto?</p>
+<form method='post' action='https://test.erda.dk/wsgi-bin/autocreate.py' target='_blank'>
+<input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
+<input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
+<input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
+<input class="signupbutton" type="submit" value="tilmelding" />
+</form>
+<p></p>
+</div>
+<div class="staticpage centertext loginfield">
+<p>Jeg er allerede tilmeldt ERDA med min KU-konto!</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://test.erda.dk' target='_blank'>
+<input class="loginbutton" type="submit" value="log ind"
+       onClick="login('extoid'); return false;" />
+</form>
+<p></p>
+</div>
+</div>
+
+<div id="external-user-tab-da">
+<div class="staticpage centertext signupfield">
+<p>Tilmeld dig ERDA <em>uden</em> en KU-konto?</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://test-sid.erda.dk/cgi-sid/reqoid.py' target='_blank'>
+<input class="signupbutton" type="submit" value="tilmelding"
+       onClick="signup('migoid'); return false;" />
+</form>
+<p></p>
+</div>
+<div class="staticpage centertext loginfield">
+<p>Jeg er allerede tilmeldt ERDA <em>uden</em> en KU-konto!</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://test-ext.erda.dk' target='_blank'>
+<input class="loginbutton" type="submit" value="log ind"
+       onClick="login('migoid'); return false;" />
+</form>
+<p></p>
+</div>
+</div>
+
+<div id="cert-user-tab-da">
+<div class="staticpage centertext signupfield">
+<p>Tilmeld dig ERDA med dit brugercertifikat?</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://test-cert.erda.dk/wsgi-bin/extcert.py' target='_blank'>
+<input class="signupbutton" type="submit" value="tilmelding"
+       onClick="signup('extcert'); return false;" />
+</form>
+<p></p>
+</div>
+<div class="staticpage centertext loginfield">
+<p>Jeg er allerede tilmeldt ERDA med mit brugercertifikat!</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://test-cert.erda.dk' target='_blank'>
+<input class="loginbutton" type="submit" value="log ind"
+       onClick="login('extcert'); return false;" />
+</form>
+<p></p>
+</div>
+</div>
+
+</div>
+</div>
+
+<h2 class="staticpage">Om UCPH ERDA</h2>
+<p>
+University of Copenhagen - Electronic Research Data Archive (UCPH ERDA
+eller blot ERDA) er et lager-, delings- og arkiveringssystem leveret af
+Københavns Universitet til ansatte og studerende. I første omgang er det
+begrænset til Det natur- og biovidenskabelige fakultet (Science), men på
+længere sigt vil det muligvis blive udbredt til hele KU for at understøtte KUs
+generelle
+<a href="https://kunet.ku.dk/arbejdsomraader/forskning/data/forskningsdata/Sider/default.aspx"
+target="_blank">data management forskrifter</a>. 
+ERDA leverer centraliseret lagerplads for personlige - og delte filer samt
+arkiveringsfaciliteter til f.eks. Ph.D.-afhandlinger og forskningsdata
+for datasikring og publicering. Desuden tilbydes en
+filsynkroniserings-service i stil med Dropbox, men med datalagringen
+lokalt på KU.
+</p>
+
+<h2 class="staticpage">Følsomme - og personhenførbare data (GDPR)</h2>
+<p>
+Bemærk venligst at selvom ERDA har fokus på stærk sikkerhed, så er det
+<em>kun</em> en løsning til generelle forskningsdata og <em>ikke</em>
+til følsomme data. Herunder specielt ikke personhenførbare data
+klassificeret som følsomme i EUs persondataforordning (forordning
+2016/679, også kendt som GDPR). Såfremt du har behov for at arbejde på
+sådanne sensitive data anbefaler vi i stedet at benytte ERDAs
+søster-facilitet <a href="http://sif.ku.dk">SIF</a>, som
+netop <em>er</em> beregnet og godkendt til det formål.
+</p>
+
+<div id="faq-content-danish" class="col-lg-12">
+  <!-- Filled by AJAX -->
+  <noscript>
+    <h2 class="staticpage">FAQ</h2>
+    <p>
+      Du skal bruge en browser med JavaScript for at få den tiltænkte
+      dynamiske opførsel på denne side, men du kan stadig manuelt
+      <a href="faq-snippet.html">åbne vores FAQ</a> uden.
+    </p>
+  </noscript>
+</div>
+
+<h2 class="staticpage">Status og nyheder</h2>
+<p>
+Man kan altid benytte den særskilte side med 
+<a href="http://status.erda.dk/status.html">status- og nyheds-overblik</a> til at
+se den aktuelle driftstatus for ERDA/IDMC/SIF samt finde nærmere information omkring ny
+eller ændret funktionalitet.
+</p>
+<h2 class="staticpage">Spørgsmål og hjælp</h2>
+<p>
+<a href="/public/ucph-erda-brugervejledning.pdf">Brugervejledningen</a>
+indeholder basal information om brugen af ERDA, men kontakt os gerne (på dansk
+eller engelsk) med øvrige spørgsmål og kommentarer v.h.a. email-linket nederst
+på siden. Vi har desværre <em>ikke</em> resurser til at yde video- eller
+telefon-support, men svarer typisk på email senest næste arbejdsdag.
+</p>
+<!--
+<p class="warningtext">
+Bemærk at ERDA siderne p.t. kun findes på engelsk. Den danske
+brugervejledning kan forhåbentlig afhjælpe eventuelle
+forståelsesvanskeligheder, og en egentlig dansk oversættelse overvejes stadig.
+</p>
+-->
+<h2 class="staticpage">Brugerregler</h2>
+<p>
+ERDA er kun begrænset af få regler, og de skulle gerne være i tråd med
+almindelig sund fornuft.<br/>
+De fuldstændige detaljer vil altid være at finde i de
+officielle <a href="/public/terms.html">terms of use</a> her fra siden,
+i tillæg til vores site privacy og cookie policy via links nederst.
+</p>
+</div>
+</div>
+</div>
+
+<div id="bottomlogo">
+<div id="bottomlogoleft">
+<div id="support">
+<img src="/images/icons/help.png" id="supportimage" alt=""/>
+<div class="supporttext staticpage i18n" lang="en">
+<p class="supporttitle i18n" lang="en">Support</p>
+<p class="i18n" lang="en">
+<a href="/public/ucph-erda-user-guide.pdf">ERDA User Guide</a><br />
+Questions about ERDA?<br />
+Please contact
+us at <a href="mailto:support@erda.dk">support@erda.dk</a>
+</p>
+</div>
+<div class="supporttext staticpage i18n hidden" lang="da">
+<p class="supporttitle i18n" lang="da">Vejledning</p>
+<p class="i18n" lang="da">
+<a href="/public/ucph-erda-brugervejledning.pdf">ERDA Brugervejledning</a><br />
+Spørgsmål om ERDA?<br />
+Skriv til os på 
+<a href="mailto:support@erda.dk">support@erda.dk</a>
+</p>
+</div>
+</div>
+</div>
+<div id="bottomlogoright">
+<div id="privacy">
+<div class="privacytext staticpage i18n" lang="en">
+<p class="privacytitle i18n" lang="en">Privacy and Rights</p>
+<p class="i18n" lang="en">
+<a href="/public/site-privacy-policy.pdf">Privacy Policy</a>
+&amp; <a href="/public/cookie-policy.pdf">Cookie Policy</a>
+</p>
+</div>
+<div class="privacytext staticpage i18n hidden" lang="da">
+<p class="privacytitle i18n" lang="da">Privatliv og rettigheder</p>
+<p class="i18n" lang="da">
+<a href="/public/site-privacy-policy.pdf">Privacy Policy</a>
+&amp; <a href="/public/cookie-policy.pdf">Cookie Policy</a>
+</p>
+</div>
+</div>
+<div id="copyright">
+<img src="/images/copyright.png" id="creditsimage" alt=""/>
+<span id="credits">
+2003-2020, <a href="http://www.migrid.org">The MiG Project</a>
+</span>
+</div>
+</div>
+</div>
+<div id="bottomspace">
+</div>
+
+</body>
+</html>
