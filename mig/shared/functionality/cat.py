@@ -187,7 +187,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                   environ['REMOTE_ADDR'],
                                   'modified',
                                   [dst],
-                                  error=True,
+                                  failed=True,
                                   details=exc)
                     output_objects.append({'object_type': 'error_text',
                                            'text': "write failed: '%s'" % exc})

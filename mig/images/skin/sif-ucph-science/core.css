@@ -48,7 +48,7 @@ body.staticpage #logotitle span.systemwarn {
 }
 
 .home-nav-logo {
-	background-image: url("home-logo.jpg");
+    background-image: url("home-logo.jpg");
 }
 
 a {
@@ -345,6 +345,28 @@ a:hover.genericbutton {
   border: 1px solid #46743c; 
   background-color: #679c5b; 
   color: #fff;
+}
+
+/* TODO: enable entry page side-by-side support text and quick guides? */
+/* Bulb bullet inspired by https://love2dev.com/blog/customize-bulleted-list/ */
+.supporttextbox {
+    width: 480px;
+    float: left;
+}
+.quickguidebox {
+    /* 
+    border: dotted 1px green;
+    border-radius: 8px;
+    */
+    width: 420px;
+    margin-left: 500px;
+    list-style-type: none;
+    text-indent: -1.4em;
+}
+.quickguidebox li::before {
+    float: left;
+    width: 1.4em;
+    content: '\1F4A1';
 }
 
 /* Override colors on 2FA dialog */
