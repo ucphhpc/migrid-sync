@@ -34,8 +34,10 @@ import mimetypes
 import os
 import subprocess
 import sys
+import time
 
-exclude_dirs = ['.svn', 'user-projects']
+exclude_dirs = ['state', 'user-projects', 'doc-src',
+                'MiG-certificates', 'seafile']
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
@@ -50,21 +52,29 @@ if __name__ == '__main__':
     print('Modernizing python code in %s' % target)
     print('--- ignoring all %s dirs ---' % ', '.join(exclude_dirs))
     mime_helper = mimetypes.MimeTypes()
-    modernize_base = ['python-modernize', '-w']
+    modernize_base = ['python-modernize', '-n', '-w']
     # NOTE: fix import lines broken by modernize and leave Copyright line alone
-    sed_rules = ['s/from .shared/from shared/g', 's/from . import /import /g']
+    sed_rules = ['s/^from .shared/from shared/g',
+                 's/^from . import /import /g']
     postprocess_base = ['sed', '-i'] + [';'.join(sed_rules)]
     for (root, dirs, files) in os.walk(target):
-        for exclude in exclude_dirs:
+        timestamp = time.time()
+        # Skip all dot-dirs and explicit removes
+        for exclude in exclude_dirs + [i for i in dirs if i.startswith('.')]:
             if exclude in dirs:
                 dirs.remove(exclude)
-        for name in files:
+        # Skip all dot-files
+        for name in [i for i in files if not i.startswith('.')]:
             path = os.path.normpath(os.path.join(root, name))
+            if os.path.islink(path):
+                #print("DEBUG: skip symlink in %s" % rel_path)
+                continue
             rel_path = path.replace(target+os.sep, '')
             # Python source code either has .py or no extension
             # Detect based on mimetype or hashbang line for the latter.
             file_ext = os.path.splitext(path)[1]
             if not file_ext:
+                #print('DEBUG: detect mime type on %s' % path)
                 mime_type = mime_helper.guess_type(path)[0]
                 if mime_type is None:
                     with open(path, 'r') as src_fd:
@@ -86,6 +96,9 @@ if __name__ == '__main__':
             modernize_retval = subprocess.call(modernize_cmd)
             if modernize_retval != 0:
                 print("ERROR: failed to modernize %s" % rel_path)
+                continue
+            # Skip postprocessing unless file actually changed
+            if timestamp - os.path.getmtime(path) > 0:
                 continue
             #postprocess_cmd = ['echo'] + postprocess_base + [path]
             postprocess_cmd = postprocess_base + [path]
