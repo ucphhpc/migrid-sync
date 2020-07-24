@@ -211,7 +211,7 @@ class Ui:
         Exceptions are forwarded to the caller."""
 
         logger.debug('Ui: Submitting job  .')
-        raise "Dummy module"
+        raise Exception("Dummy module")
 
     def AllJobStatus(self):
         """Query status of jobs in joblist.
@@ -290,7 +290,7 @@ class Ui:
 
         logger.debug('Downloading files from job %s' % jobId )
         # return
-        raise "dummy module"
+        raise Exception("dummy module")
 
     def lsJobDir(self, jobId):
         """List files at a specific URL.
