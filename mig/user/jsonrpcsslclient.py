@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jsonrpcsslclient - JSONRPC client with HTTPS user certificate support
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -42,8 +42,8 @@ import os
 import ssl
 import sys
 import time
-import jsonrpclib.jsonrpc as jsonrpc
-import jsonrpclib.history as rpchist
+
+from jsonrpclib import jsonrpc
 from urlparse import urlparse
 
 
@@ -51,7 +51,7 @@ def read_user_conf():
     """Read and parse 'KEY VAL' formatted user conf file"""
     user_conf = {}
     conf_path = os.path.expanduser(os.path.join('~', '.mig',
-                                   'miguser.conf'))
+                                                'miguser.conf'))
     if not os.path.exists(conf_path):
         print 'mig user configuration not found, %s does not exist'\
             % conf_path
@@ -151,7 +151,8 @@ class SafeCertTransport(jsonrpc.SafeTransport):
         except AttributeError:
             sock = None
 
-        return self._parse_response(resp, sock)
+        # return self._parse_response(resp, sock)
+        return self.parse_response(resp)
 
     def make_connection(self, host):
         """Override default HTTPS Transport to include key/cert support. This
@@ -299,7 +300,7 @@ key/certificate passphrase before you can continue.
     for ele in inlist:
         if ele['object_type'] == 'frozenarchives':
             for ale in ele['frozenarchives']:
-                    print '%(id)s\t%(flavor)s\t%(name)s\t%(frozenfiles)s' % ale
+                print '%(id)s\t%(flavor)s\t%(name)s\t%(frozenfiles)s' % ale
 
     resconfig = \
         r"""::MIGUSER::

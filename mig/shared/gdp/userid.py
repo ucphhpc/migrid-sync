@@ -29,6 +29,8 @@
 
 import base64
 import hashlib
+import os
+
 from shared.base import expand_openid_alias, get_short_id
 from shared.defaults import gdp_distinguished_field
 
@@ -237,7 +239,6 @@ def __scamble_user_id(configuration, user_id):
         result = None
 
     return result
-
 
 
 def get_project_client_id(client_id, project_name):

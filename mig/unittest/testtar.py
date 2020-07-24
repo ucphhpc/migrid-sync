@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# testtar - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# testtar - test server tar module
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,6 +29,9 @@
 
 import sys
 import tarfile
+
+# NOTE: dummy init before inline compile in code to make pylint happy
+LOCK_EX = LOCK_SH = None
 
 
 def run_test(class_name):
@@ -87,9 +90,8 @@ if len(sys.argv) > 1:
 # import selected class
 
 eval(compile('from %s import %s, LOCK_SH, LOCK_EX'
-      % (class_name.lower(), class_name), '', 'single'))
+             % (class_name.lower(), class_name), '', 'single'))
 
 # now test it
 
 run_test(class_name)
-

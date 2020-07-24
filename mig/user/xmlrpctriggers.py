@@ -27,8 +27,11 @@
 
 """XMLRPC client with support for HTTPS using client certificates"""
 
+import os
 import sys
-from xmlrpcsslclient import xmlrpcgetserver
+from urlparse import urlparse
+
+from xmlrpcsslclient import xmlrpcgetserver, read_user_conf
 
 
 if '__main__' == __name__:
@@ -36,9 +39,32 @@ if '__main__' == __name__:
         vgrid_name = sys.argv[1:]
     else:
         vgrid_name = ['eScience']
+    conf = {'script': '/cgi-bin/xmlrpcinterface.py'}
+    user_conf = read_user_conf()
+    conf.update(user_conf)
+    if not os.path.isfile(conf['certfile']):
+        print 'Cert file %(certfile)s not found!' % conf
+        sys.exit(1)
+    if not os.path.isfile(conf['keyfile']):
+        print 'Key file %(keyfile)s not found!' % conf
+        sys.exit(1)
+    # CA cert is not currently used, but we include it for future verification
+    cacert = conf.get('cacertfile', None)
+    if cacert and cacert != 'AUTO' and not os.path.isfile(cacert):
+        print 'specified CA cert file %(cacertfile)s not found!' % conf
+        sys.exit(1)
+    url_tuple = urlparse(conf['migserver'])
+    # second item in tuple is network location part with hostname and optional
+    # port
+    host_port = url_tuple[1].split(':', 1)
+    if len(host_port) < 2:
+        host_port.append('443')
+    host_port[1] = int(host_port[1])
+    conf['host'], conf['port'] = host_port
+
     print 'Testing XMLRPC client over HTTPS with user certificates for triggers'
     print 'You may get prompted for your MiG key/certificate passphrase before you can continue'
-    server = xmlrpcgetserver()
+    server = xmlrpcgetserver(conf)
 
     methods = server.system.listMethods()
     print 'supported remote methods:\n%s' % '\n'.join(methods)

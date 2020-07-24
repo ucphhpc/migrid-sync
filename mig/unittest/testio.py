@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# testio - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# testio - test server io module
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,6 +29,9 @@
 
 import os
 import sys
+
+# NOTE: dummy init before inline compile in code to make pylint happy
+LOCK_EX = LOCK_SH = None
 
 
 def run_test(class_name):
@@ -129,11 +132,10 @@ file_module = file_class.lower()
 # import selected modules
 
 eval(compile('from %s import %s, LOCK_SH, LOCK_EX' % (file_module,
-     file_class), '', 'single'))
+                                                      file_class), '', 'single'))
 eval(compile('from %s import mkdir, rmdir, stat, listdir, walk, remove'
-      % os_module, '', 'single'))
+             % os_module, '', 'single'))
 
 # now test it
 
 run_test(file_class)
-

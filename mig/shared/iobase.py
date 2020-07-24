@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # iobase - wrapper to wrap local and dist io in one
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,12 +35,12 @@ import shutil as realshutil
 import stat as realstat
 import zipfile as realzipfile
 
-import shared.localfile as localfile
-import shared.localos as localos
-import shared.localpickle as localpickle
-import shared.distfile as distfile
-import shared.distos as distos
-import shared.distpickle as distpickle
+from shared import localfile
+from shared import localos
+from shared import localpickle
+from shared import distfile
+from shared import distos
+from shared import distpickle
 
 # export os / os.path functions and variables
 
@@ -344,7 +344,7 @@ def open_file(
     mode,
     bufsize=0,
     location=DISTRIBUTED,
-    ):
+):
 
     if DISTRIBUTED == location:
         return distfile.DistFile(filename, mode, bufsize)
@@ -359,7 +359,7 @@ def __read_kind(
     logger=None,
     location=DISTRIBUTED,
     read_function='read',
-    ):
+):
 
     if DISTRIBUTED == location:
         file_lib = distfile
@@ -403,7 +403,7 @@ def __write_kind(
     logger=None,
     location=DISTRIBUTED,
     write_function='write',
-    ):
+):
 
     if DISTRIBUTED == location:
         os_lib = distos
@@ -441,7 +441,7 @@ def write_file(
     filename,
     logger=None,
     location=DISTRIBUTED,
-    ):
+):
 
     return __write_kind(content, filename, logger, location,
                         write_function='write')
@@ -452,7 +452,7 @@ def write_lines(
     filename,
     logger=None,
     location=DISTRIBUTED,
-    ):
+):
 
     return __write_kind(content, filename, logger, location,
                         write_function='writelines')
@@ -500,7 +500,7 @@ def delete_file(filename, logger=None, location=DISTRIBUTED):
         os_lib = localos
     else:
         raise Exception('Illegal location in delete_file: %s'
-                         % location)
+                        % location)
     if logger:
         logger.debug('deleting file: %s' % filename)
     if os_lib.path.exists(filename):
@@ -510,7 +510,7 @@ def delete_file(filename, logger=None, location=DISTRIBUTED):
         except Exception, err:
             if logger:
                 logger.error('could not delete %s %s %s' % (location,
-                             filename, err))
+                                                            filename, err))
             result = False
     else:
         if logger:
@@ -525,7 +525,7 @@ def make_symlink(
     dst,
     logger=None,
     location=DISTRIBUTED,
-    ):
+):
 
     if DISTRIBUTED == location:
         os_lib = distos
@@ -533,11 +533,11 @@ def make_symlink(
         os_lib = localos
     else:
         raise Exception('Illegal location in make_symlink: %s'
-                         % location)
+                        % location)
     try:
         if logger:
             logger.debug('creating %s symlink: %s %s' % (location, dst,
-                         src))
+                                                         src))
         os_lib.symlink(src, dst)
         return True
     except Exception, err:
@@ -551,7 +551,7 @@ def unpickle_and_change_status(
     newstatus,
     logger=None,
     location=DISTRIBUTED,
-    ):
+):
     """change status in the MiG server mRSL file"""
 
     job_dict = unpickle(filename, logger)
@@ -561,17 +561,17 @@ def unpickle_and_change_status(
     except Exception, err:
         if logger:
             logger.error('could not change job %s status to %s: %s %s'
-                          % (job_dict, newstatus, filename, err))
+                         % (job_dict, newstatus, filename, err))
         return False
     if pickle(job_dict, filename, logger):
         if logger:
             logger.info('job status changed to %s: %s' % (newstatus,
-                        filename))
+                                                          filename))
         return job_dict
     else:
         if logger:
             logger.error('could not re-pickle job with new status %s: %s'
-                          % (newstatus, filename))
+                         % (newstatus, filename))
         return False
 
 
@@ -590,7 +590,7 @@ def unpickle(filename, logger=None, location=DISTRIBUTED):
     except Exception, err:
         if logger:
             logger.error('%s %s could not be opened/unpickled! %s'
-                          % (location, filename, err))
+                         % (location, filename, err))
         return None
 
 
@@ -599,7 +599,7 @@ def pickle(
     filename,
     logger=None,
     location=DISTRIBUTED,
-    ):
+):
 
     if DISTRIBUTED == location:
         pickle_lib = distpickle
@@ -615,7 +615,7 @@ def pickle(
     except Exception, err:
         if logger:
             logger.error('could not pickle %s %s %s' % (location,
-                         filename, err))
+                                                        filename, err))
         return False
 
 
@@ -624,7 +624,7 @@ def write_zipfile(
     paths,
     archive_base='',
     location=DISTRIBUTED,
-    ):
+):
     """Write each of the files/dirs in paths to a zip file with zip_path.
     Given a non-empty archive_base string, that string will be used as the
     directory path of the archived files.
@@ -640,7 +640,7 @@ def write_zipfile(
         file_opener = localfile.LocalFile
     else:
         raise Exception('Illegal location in write_zipfile: %s'
-                         % location)
+                        % location)
     zip_fd = None
     try:
 
@@ -659,14 +659,14 @@ def write_zipfile(
 
             if archive_base:
                 archive_path = '%s/%s' % (archive_base,
-                        os_lib.path.basename(script))
+                                          os_lib.path.basename(script))
             else:
                 archive_path = script
 
             # Files are not necessarily local so we must read and write
 
             zip_file.writestr(archive_path, read_file(script, None,
-                              location))
+                                                      location))
         zip_file.close()
         zip_fd.flush()
         zip_fd.unlock()
@@ -689,7 +689,7 @@ def send_message_to_grid_script(message, logger, configuration):
     except Exception, err:
         print 'could not get exclusive access or write to grid_stdin!'
         logger.error('could not get exclusive access or write to grid_stdin: %s %s'
-                      % (message, err))
+                     % (message, err))
         force_close(pipe)
         return False
 

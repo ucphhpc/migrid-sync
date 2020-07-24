@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # putfuncs - helpers for the put handler
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,12 +30,12 @@ If other scripts needs it then move the function to another file.
 """
 
 import os
-import time
 import re
+import time
 
-import shared.fileio as io
 from shared.base import client_id_dir
 from shared.defaults import job_output_dir
+from shared.fileio import send_message_to_grid_script, pickle, unpickle
 
 
 def template_fits_file(template, filename, allowed_time=3.0):
@@ -93,7 +93,8 @@ def template_fits_file(template, filename, allowed_time=3.0):
         i += 1
         if not re.match(compare, line):
             # print line, "!~" , compare
-            msg = "found mismatch: '%s' vs '%s' (%s)" % (line, compare, line==compare)
+            msg = "found mismatch: '%s' vs '%s' (%s)" % (
+                line, compare, line == compare)
             fit = False
             break
 
@@ -122,10 +123,10 @@ def verify_results(job_dict, logger, configuration):
             elif verify.endswith('.stderr'):
                 check = 'stderr'
             else:
-                logger.warning('unsupported verifyfile %s! must end in .{status,stdout,stderr}'
-                               , verify)
+                logger.warning(
+                    'unsupported verifyfile %s! must end in .{status,stdout,stderr}', verify)
                 job_dict['VERIFIED'] += ' %s: unknown file suffix!'\
-                     % verify
+                    % verify
                 verified = False
                 continue
 
@@ -140,7 +141,7 @@ def verify_results(job_dict, logger, configuration):
                 logger.warning('no such verifyfile %s! (%s)', verify,
                                verifyname)
                 job_dict['VERIFIED'] += ' %s: %s does not exist!'\
-                     % (check, verify)
+                    % (check, verify)
                 verified = False
                 continue
 
@@ -175,18 +176,18 @@ def migrated_job(filename, client_id, configuration):
     logger = configuration.logger
     client_dir = client_id_dir(client_id)
     job_path = os.path.abspath(os.path.join(configuration.server_home,
-                               client_dir, filename))
+                                            client_dir, filename))
 
     # unpickle and enqueue received job file
 
     job_path_spaces = job_path.replace('\\ ', '\\\\\\ ')
-    job = io.unpickle(job_path_spaces, configuration.logger)
+    job = unpickle(job_path_spaces, configuration.logger)
 
     # TODO: update any fields to mark migration?
 
     if not job:
         return (False,
-                'Fatal migration error: loading pickled job (%s) failed! ' % \
+                'Fatal migration error: loading pickled job (%s) failed! ' %
                 job_path_spaces)
 
     job_id = job['JOB_ID']
@@ -195,20 +196,19 @@ def migrated_job(filename, client_id, configuration):
 
     mrsl_filename = \
         os.path.abspath(os.path.join(configuration.mrsl_files_dir,
-                        client_dir, job_id + '.mRSL'))
-    
-    if not io.pickle(job, mrsl_filename, configuration.logger):
+                                     client_dir, job_id + '.mRSL'))
+
+    if not pickle(job, mrsl_filename, configuration.logger):
         return (False, 'Fatal error: Could not write ' + filename)
 
     # tell 'grid_script'
 
     message = 'SERVERJOBFILE ' + client_dir + '/' + job_id + '\n'
 
-    if not io.send_message_to_grid_script(message, logger, configuration):
+    if not send_message_to_grid_script(message, logger, configuration):
         return (False, 'Fatal error: Could not write to grid stdin')
 
     # TODO: do we need to wait for grid_script to ack job reception?
     # ... same question applies to new_job, btw.
 
     return (True, '%s succesfully migrated.' % job_id)
-
