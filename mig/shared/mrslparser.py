@@ -42,7 +42,7 @@ from shared.safeinput import html_escape, valid_path
 from shared.vgridaccess import user_vgrid_access
 
 try:
-    import shared.arcwrapper as arc
+    from shared import arcwrapper
 except:
     # Ignore errors and let it crash if ARC is enabled without the lib
     pass

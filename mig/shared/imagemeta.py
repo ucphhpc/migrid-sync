@@ -32,7 +32,7 @@ import os
 import time
 import traceback
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.defaults import img_trigger_prefix
 from shared.fileio import touch, makedirs_rec, listdirs_rec, \
     delete_file, make_symlink, remove_dir, remove_rec

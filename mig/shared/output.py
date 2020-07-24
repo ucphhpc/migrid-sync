@@ -33,7 +33,7 @@ import time
 import traceback
 from binascii import hexlify
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.bailout import bailout_title
 from shared.defaults import file_dest_sep, keyword_any
 from shared.html import get_xgi_html_header, get_xgi_html_footer, \

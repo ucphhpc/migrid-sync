@@ -32,7 +32,7 @@ methods through platform-independent Remote Procedure Calls.
 import os
 import time
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import force_utf8_rec
 from shared.conf import get_configuration_object
 from shared.httpsclient import extract_client_id
