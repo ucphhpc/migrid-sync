@@ -359,8 +359,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
             # reads uploaded file into memory
 
-            binary = user_arguments_dict.has_key('%s_is_encoded'
-                                                 % fileupload_key)
+            encoded_key = '%s_is_encoded' % fileupload_key
+            binary = user_arguments_dict.has_key(encoded_key)
             if binary:
                 data = user_arguments_dict[fileupload_key][-1]
                 data = str(base64.decodestring(data))
