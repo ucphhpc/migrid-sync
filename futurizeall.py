@@ -26,15 +26,18 @@ http://python-future.org/index.html
 
 A few manual tweaks are needed afterwards to avoid breakage.
 """
+from __future__ import print_function
 
 import mimetypes
 import os
+import re
 import subprocess
 import sys
 import time
 
 exclude_dirs = ['state', 'user-projects', 'doc-src',
                 'MiG-certificates', 'seafile']
+exclude_patterns = ['generated-confs_*']
 
 # Tweak to run stage 1 or stage2 as described on
 # http://python-future.org/automatic_conversion.html
@@ -54,8 +57,9 @@ if __name__ == '__main__':
 
     print('Futurizing python code in %s' % target)
     print('--- ignoring all %s dirs ---' % ', '.join(exclude_dirs))
+    print('--- ignoring all %s patterns ---' % ', '.join(exclude_patterns))
     mime_helper = mimetypes.MimeTypes()
-    futurize_base = ['futurize', '-w']
+    futurize_base = ['futurize', '-n', '-w']
     if safe_only:
         futurize_base += ['--stage1']
     else:
@@ -70,11 +74,14 @@ if __name__ == '__main__':
         for exclude in exclude_dirs + [i for i in dirs if i.startswith('.')]:
             if exclude in dirs:
                 dirs.remove(exclude)
+        for pattern in exclude_patterns:
+            for exclude in [i for i in dirs if re.match(pattern, i)]:
+                dirs.remove(exclude)
         # Skip all dot-files
         for name in [i for i in files if not i.startswith('.')]:
             path = os.path.normpath(os.path.join(root, name))
             if os.path.islink(path):
-                #print("DEBUG: skip symlink in %s" % rel_path)
+                #print("DEBUG: skip symlink in %s" % path)
                 continue
             rel_path = path.replace(target+os.sep, '')
             # Python source code either has .py or no extension
