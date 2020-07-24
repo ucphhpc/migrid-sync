@@ -41,7 +41,7 @@
 import os
 import time
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir, force_utf8, force_unicode, \
     fill_user, distinguished_name_to_user, fill_distinguished_name
 from shared.defaults import user_db_filename, cert_valid_days, \
@@ -57,7 +57,7 @@ from shared.useradm import create_user
 from shared.url import openid_autologout_url
 
 try:
-    import shared.arcwrapper as arc
+    from shared import arcwrapper
 except Exception, exc:
 
     # Ignore errors and let it crash if ARC is enabled without the lib
@@ -126,7 +126,7 @@ def handle_proxy(proxy_string, client_id, config):
     client_dir = client_id_dir(client_id)
     proxy_dir = os.path.join(config.user_home, client_dir)
     proxy_path = os.path.join(config.user_home, client_dir,
-                              arc.Ui.proxy_name)
+                              arcwrapper.Ui.proxy_name)
 
     if not config.arc_clusters:
         output.append({'object_type': 'error_text',
@@ -147,7 +147,7 @@ def handle_proxy(proxy_string, client_id, config):
     # provide information about the uploaded proxy
 
     try:
-        session_ui = arc.Ui(proxy_dir)
+        session_ui = arcwrapper.Ui(proxy_dir)
         proxy = session_ui.getProxy()
         if proxy.IsExpired():
 
@@ -161,7 +161,7 @@ def handle_proxy(proxy_string, client_id, config):
             output.append({'object_type': 'text',
                            'text': 'Proxy certificate will expire on %s (in %s sec.)'
                            % (proxy.Expires(), proxy.getTimeleft())})
-    except arc.NoProxyError, err:
+    except arcwrapper.NoProxyError, err:
 
         output.append({'object_type': 'warning',
                        'text': 'No proxy certificate to load: %s'

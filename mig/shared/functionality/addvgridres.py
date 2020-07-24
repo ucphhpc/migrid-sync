@@ -39,7 +39,7 @@ from shared.useradm import get_full_user_map
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_resource, \
     vgrid_list_subvgrids, vgrid_add_resources, allow_resources_adm, \
     vgrid_manage_allowed
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 
 
 def signature():

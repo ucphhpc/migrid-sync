@@ -30,7 +30,7 @@
 import os
 import glob
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir
 from shared.defaults import default_max_chunks
 from shared.fileio import md5sum_file, sha1sum_file, sha256sum_file, \

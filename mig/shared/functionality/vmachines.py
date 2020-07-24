@@ -31,7 +31,7 @@ import os
 import time
 from binascii import hexlify
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared import vms
 from shared.defaults import any_vgrid, csrf_field
 from shared.functional import validate_input_and_cert

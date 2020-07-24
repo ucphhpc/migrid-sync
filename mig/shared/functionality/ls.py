@@ -35,7 +35,7 @@ import glob
 import stat
 from urllib import quote
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir, invisible_path
 from shared.defaults import seafile_ro_dirname, trash_destdir, csrf_field
 from shared.functional import validate_input

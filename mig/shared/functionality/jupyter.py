@@ -31,7 +31,7 @@ provides a list of buttons based on services defined in the
  configuration.jupyter_services
 """
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 
 from shared.init import find_entry, initialize_main_variables
 from shared.functional import validate_input_and_cert

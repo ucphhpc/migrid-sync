@@ -51,7 +51,7 @@ import shutil
 import random
 import requests
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir, extract_field
 from shared.defaults import session_id_bytes
 from shared.fileio import make_symlink, pickle, unpickle, write_file, \

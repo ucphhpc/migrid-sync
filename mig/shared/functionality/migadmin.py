@@ -29,7 +29,7 @@
 
 import os
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.accountreq import build_accountreqitem_object, list_account_reqs, \
     get_account_req, delete_account_req, accept_account_req
 from shared.defaults import default_pager_entries, csrf_field

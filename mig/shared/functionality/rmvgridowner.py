@@ -30,7 +30,7 @@
 import os
 from binascii import hexlify
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir, distinguished_name_to_user
 from shared.defaults import csrf_field, _dot_vgrid, keyword_members
 from shared.fileio import remove_rec, move_rec, delete_symlink

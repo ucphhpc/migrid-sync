@@ -29,7 +29,7 @@
 
 import datetime
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.defaults import upload_tmp_dir, trash_linkname, csrf_field, \
     freeze_flavors, keyword_final, keyword_pending, keyword_updating, \
     keyword_auto, public_archive_index

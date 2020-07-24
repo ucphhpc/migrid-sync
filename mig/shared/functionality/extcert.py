@@ -29,7 +29,7 @@
 
 import os
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.accountreq import valid_name_chars, dn_max_len, \
     account_css_helpers, account_js_helpers, account_request_template
 from shared.base import distinguished_name_to_user

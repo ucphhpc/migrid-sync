@@ -29,7 +29,7 @@
 """Redirector for saved user default page or site lading page"""
 
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables
 from shared.html import themed_styles, themed_scripts, menu_items

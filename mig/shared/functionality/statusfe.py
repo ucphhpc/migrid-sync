@@ -27,7 +27,7 @@
 
 """ Get frontend status """
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.findtype import is_owner
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.init import initialize_main_variables

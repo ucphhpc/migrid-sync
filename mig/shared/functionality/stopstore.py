@@ -27,7 +27,7 @@
 
 """Stop store unit"""
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.conf import get_all_store_names
 from shared.findtype import is_owner
 from shared.functional import validate_input_and_cert, REJECT_UNSET

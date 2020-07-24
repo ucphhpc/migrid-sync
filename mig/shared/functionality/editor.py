@@ -34,7 +34,7 @@ need to download, edit and upload the files.
 import os
 import time
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir
 from shared.defaults import csrf_field
 from shared.editing import acquire_edit_lock, edit_lock_suffix, cm_css, \

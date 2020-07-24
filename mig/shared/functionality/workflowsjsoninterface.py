@@ -32,7 +32,7 @@
 import sys
 import json
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 
 from shared.base import force_utf8_rec
 from shared.init import initialize_main_variables

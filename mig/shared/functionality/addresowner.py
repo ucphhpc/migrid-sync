@@ -32,7 +32,7 @@
 from binascii import unhexlify
 import os
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.accessrequests import delete_access_request
 from shared.defaults import any_protocol, csrf_field
 from shared.findtype import is_user, is_owner

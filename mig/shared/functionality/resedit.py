@@ -31,8 +31,8 @@
 
 import socket
 
-import shared.resconfkeywords as resconfkeywords
-import shared.returnvalues as returnvalues
+from shared import resconfkeywords
+from shared import returnvalues
 from shared.defaults import csrf_field
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token

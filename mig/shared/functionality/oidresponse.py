@@ -35,7 +35,7 @@ AuthOpenIDLoginPage https://${SID_FQDN}:${SID_PORT}/cgi-sid/oidresponse.py
 
 import os
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.functional import validate_input, REJECT_UNSET
 from shared.init import initialize_main_variables, find_entry
 from shared.url import openid_basic_logout_url

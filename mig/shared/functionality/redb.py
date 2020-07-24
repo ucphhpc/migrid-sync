@@ -27,7 +27,7 @@
 
 """Manage all available runtime environments"""
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.defaults import default_pager_entries, csrf_field
 from shared.functional import validate_input_and_cert
 from shared.refunctions import build_reitem_object

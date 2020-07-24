@@ -32,7 +32,7 @@ import sys
 import fcntl
 import time
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import valid_dir_input
 from shared.cgishared import init_cgiscript_possibly_with_cert
 from shared.conf import get_resource_configuration

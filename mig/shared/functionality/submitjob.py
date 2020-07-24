@@ -29,7 +29,7 @@
 
 import os
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir
 from shared.defaults import any_vgrid, default_mrsl_filename, maxfill_fields, \
     keyword_all, csrf_field

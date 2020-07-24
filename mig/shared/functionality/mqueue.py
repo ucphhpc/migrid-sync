@@ -33,7 +33,7 @@ import os
 import time
 import fcntl
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir
 from shared.defaults import default_mqueue, mqueue_prefix, mqueue_empty, \
      csrf_field

@@ -27,7 +27,7 @@
 
 """This script is the welcome site for sandbox users"""
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.defaults import csrf_field
 from shared.functional import validate_input
 from shared.handlers import get_csrf_limit, make_csrf_token

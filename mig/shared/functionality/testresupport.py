@@ -31,7 +31,7 @@ import base64
 import tempfile
 import os
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir, valid_dir_input
 from shared.defaults import csrf_field
 from shared.fileio import unpickle, write_file

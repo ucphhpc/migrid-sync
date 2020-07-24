@@ -32,7 +32,7 @@ the home directory of a user into a zip/tar file.
 import glob
 import os
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.archives import pack_archive
 from shared.base import client_id_dir
 from shared.fileio import check_write_access

@@ -37,7 +37,7 @@ from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from shared.init import initialize_main_variables, find_entry
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_resource, \
      vgrid_list_subvgrids, vgrid_add_resources
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 
 
 def signature():

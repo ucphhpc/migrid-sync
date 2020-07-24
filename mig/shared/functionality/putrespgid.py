@@ -30,7 +30,7 @@
 import fcntl
 import os
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import valid_dir_input
 from shared.conf import get_resource_configuration
 from shared.functional import validate_input, REJECT_UNSET

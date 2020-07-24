@@ -30,7 +30,7 @@
 import os
 import glob
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir
 from shared.fileio import check_write_access
 from shared.functional import validate_input_and_cert, REJECT_UNSET

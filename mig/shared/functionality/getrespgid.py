@@ -30,7 +30,7 @@
 import os
 import fcntl
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import valid_dir_input
 from shared.findtype import is_owner
 from shared.functional import validate_input, REJECT_UNSET

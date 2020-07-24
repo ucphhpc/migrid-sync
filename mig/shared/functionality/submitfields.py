@@ -30,7 +30,7 @@
 import os
 import tempfile
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir
 from shared.conf import get_configuration_object
 from shared.defaults import default_mrsl_filename

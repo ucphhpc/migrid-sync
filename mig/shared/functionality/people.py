@@ -29,7 +29,7 @@
 
 from urllib import quote
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import pretty_format_user, extract_field
 from shared.defaults import default_pager_entries, any_vgrid, csrf_field
 from shared.functional import validate_input_and_cert

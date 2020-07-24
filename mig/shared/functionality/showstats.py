@@ -41,8 +41,8 @@ import sys
 import time
 import urllib
 
-import shared.returnvalues as returnvalues
-import shared.vgrid as vgrid
+from shared import returnvalues
+from shared import vgrid
 from shared.base import requested_page
 from shared.functional import validate_input
 from shared.init import initialize_main_variables, find_entry

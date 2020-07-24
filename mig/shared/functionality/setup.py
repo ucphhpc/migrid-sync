@@ -30,7 +30,7 @@
 import os
 import time
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.accountstate import account_expire_info
 from shared.auth import get_twofactor_secrets
 from shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin, \

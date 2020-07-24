@@ -32,7 +32,7 @@ import re
 import sys
 import time
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir, extract_field
 from shared.cloud import allowed_cloud_images, status_of_cloud_instance, \
     start_cloud_instance, restart_cloud_instance, stop_cloud_instance, \

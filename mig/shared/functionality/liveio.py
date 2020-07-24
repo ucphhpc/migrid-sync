@@ -32,7 +32,7 @@ import os
 import datetime
 from urllib import quote
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir
 from shared.conf import get_resource_exe
 from shared.defaults import all_jobs, job_output_dir, csrf_field

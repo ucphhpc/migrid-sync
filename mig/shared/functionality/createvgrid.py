@@ -33,7 +33,7 @@ import ConfigParser
 from email.utils import parseaddr
 from tempfile import NamedTemporaryFile
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir, generate_https_urls, valid_dir_input, \
     distinguished_name_to_user
 from shared.defaults import default_vgrid, all_vgrids, any_vgrid, \

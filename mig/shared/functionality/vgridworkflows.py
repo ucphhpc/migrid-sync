@@ -36,7 +36,7 @@ import os
 import re
 import time
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir
 from shared.cmdapi import get_usage_map
 from shared.defaults import keyword_all, keyword_auto, \

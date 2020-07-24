@@ -28,7 +28,7 @@
 
 """Virtual machine request back end functionality"""
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared import vms
 from shared.defaults import csrf_field
 from shared.functional import validate_input_and_cert

@@ -33,7 +33,7 @@ import tempfile
 import base64
 import re
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.accountreq import parse_peers, peers_permit_allowed, \
     manage_pending_peers
 from shared.base import client_id_dir, fill_distinguished_name

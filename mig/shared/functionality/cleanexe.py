@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.conf import get_all_exe_names
 from shared.findtype import is_owner
 from shared.resadm import clean_resource_exe, stop_resource_exe

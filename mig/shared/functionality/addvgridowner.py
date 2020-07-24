@@ -44,7 +44,7 @@ from shared.useradm import get_full_user_map
 from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
     vgrid_is_member, vgrid_list_subvgrids, vgrid_add_owners, \
     vgrid_list_parents, allow_owners_adm, vgrid_manage_allowed
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 
 
 def signature():

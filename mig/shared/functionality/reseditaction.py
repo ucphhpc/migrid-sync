@@ -32,8 +32,8 @@
 import os
 import time
 
-import shared.confparser as confparser
-import shared.returnvalues as returnvalues
+from shared import confparser
+from shared import returnvalues
 from shared.base import client_id_dir
 from shared.defaults import keyword_auto, csrf_field
 from shared.fileio import unpickle

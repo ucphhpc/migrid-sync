@@ -33,7 +33,7 @@ import os
 import time
 import tempfile
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import force_utf8, force_unicode, generate_https_urls, \
      distinguished_name_to_user, fill_distinguished_name, fill_user
 from shared.defaults import user_db_filename, cert_valid_days

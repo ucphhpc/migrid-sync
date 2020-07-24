@@ -29,7 +29,7 @@
 
 import base64
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.defaults import max_software_entries, max_environment_entries, \
      csrf_field
 from shared.functional import validate_input_and_cert

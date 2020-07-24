@@ -29,7 +29,7 @@
 their home directories.
 """
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir
 from shared.defaults import trash_linkname, csrf_backends, csrf_field, \
     default_max_chunks

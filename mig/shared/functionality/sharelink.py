@@ -31,7 +31,7 @@ from binascii import hexlify
 import os
 import datetime
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir, extract_field
 from shared.defaults import default_pager_entries, keyword_owners, \
     keyword_members, csrf_field

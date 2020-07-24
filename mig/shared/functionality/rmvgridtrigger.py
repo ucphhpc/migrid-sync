@@ -27,7 +27,7 @@
 
 """Remove a trigger from a given vgrid"""
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit
 from shared.init import initialize_main_variables, find_entry

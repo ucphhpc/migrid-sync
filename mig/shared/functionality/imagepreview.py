@@ -32,7 +32,7 @@ their home directories.
 
 import os
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir
 from shared.defaults import csrf_field
 from shared.functional import validate_input_and_cert

@@ -32,7 +32,7 @@ import os
 from binascii import hexlify
 from urllib import urlencode
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir, pretty_format_user, extract_field
 from shared.defaults import any_vgrid, csrf_field
 from shared.functional import validate_input_and_cert, REJECT_UNSET

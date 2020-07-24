@@ -27,7 +27,7 @@
 
 """This is a script download helper for SSS sandboxes"""
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.functional import validate_input, REJECT_UNSET
 from shared.init import initialize_main_variables
 from shared.sandbox import get_resource_name

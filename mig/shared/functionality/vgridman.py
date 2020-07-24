@@ -27,7 +27,7 @@
 
 """VGrid management back end functionality"""
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.defaults import default_vgrid, all_vgrids, default_pager_entries, \
     csrf_field
 from shared.functional import validate_input_and_cert

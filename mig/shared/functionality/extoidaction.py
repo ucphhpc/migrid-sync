@@ -33,7 +33,7 @@ import tempfile
 import base64
 import re
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir, generate_https_urls, \
      fill_distinguished_name
 from shared.defaults import oid_valid_days

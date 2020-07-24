@@ -35,7 +35,7 @@ import socket
 import time
 from urllib import quote, urlencode
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir
 from shared.conf import get_resource_exe
 from shared.defaults import all_jobs, job_output_dir, default_pager_entries, \

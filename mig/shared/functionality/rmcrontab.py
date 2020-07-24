@@ -31,7 +31,7 @@ crontab or atjobs textarea and therefore is a bit cumbersome to use from e.g.
 xmlrpc/jsonrpc.
 """
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.events import load_crontab, load_atjobs, \
     parse_and_save_crontab, parse_and_save_atjobs
 from shared.functional import validate_input_and_cert

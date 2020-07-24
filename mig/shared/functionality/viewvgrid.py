@@ -27,7 +27,7 @@
 
 """Get info about a VGrid"""
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.defaults import keyword_owners, keyword_members, keyword_none, \
     keyword_all
 from shared.functional import validate_input_and_cert, REJECT_UNSET

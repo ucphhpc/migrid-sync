@@ -32,7 +32,7 @@ controls to administrate them.
 import os
 from binascii import hexlify
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.defaults import default_pager_entries, keyword_all, keyword_auto, \
     valid_trigger_changes, valid_trigger_actions, keyword_owners, \
     keyword_members, keyword_none, csrf_field, default_vgrid_settings_limit

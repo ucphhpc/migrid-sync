@@ -31,8 +31,8 @@
 
 import os
 
-import shared.mrslkeywords as mrslkeywords
-import shared.returnvalues as returnvalues
+from shared import mrslkeywords
+from shared import returnvalues
 from shared.base import client_id_dir
 from shared.conf import get_configuration_object
 from shared.functional import validate_input_and_cert, REJECT_UNSET

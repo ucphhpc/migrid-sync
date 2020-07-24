@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # scripts - backend to generate user and resource scripts
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,9 +33,9 @@ import os
 import time
 import zipfile
 
-import shared.returnvalues as returnvalues
-import shared.userscriptgen as usergen
-import shared.vgridscriptgen as vgridgen
+from shared import returnvalues
+from shared import userscriptgen
+from shared import vgridscriptgen
 from shared.base import client_id_dir
 from shared.defaults import keyword_all, keyword_auto
 from shared.functional import validate_input_and_cert
@@ -157,9 +157,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         # Add new languages here
 
-        languages = [(usergen.sh_lang, sh_cmd, usergen.sh_ext),
-                     (usergen.python_lang, python_cmd,
-                      usergen.python_ext)]
+        languages = [(userscriptgen.sh_lang, sh_cmd, userscriptgen.sh_ext),
+                     (userscriptgen.python_lang, python_cmd,
+                      userscriptgen.python_ext)]
     else:
         languages = []
 
@@ -168,10 +168,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
         for lang in langs:
             if lang == 'sh':
                 interpreter = sh_cmd
-                extension = usergen.sh_ext
+                extension = userscriptgen.sh_ext
             elif lang == 'python':
                 interpreter = python_cmd
-                extension = usergen.python_ext
+                extension = userscriptgen.python_ext
             else:
                 output_objects.append({'object_type': 'warning', 'text': 'Unknown script language: %s - ignoring!'
                                        % lang})
@@ -234,32 +234,32 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # Generate all scripts
 
         if flavor == 'user':
-            for op in usergen.script_ops:
-                generator = 'usergen.generate_%s' % op
+            for op in userscriptgen.script_ops:
+                generator = 'userscriptgen.generate_%s' % op
                 eval(generator)(configuration, languages, abs_dir)
 
-            if usergen.shared_lib:
-                usergen.generate_lib(configuration, usergen.script_ops,
-                                     languages, abs_dir)
+            if userscriptgen.shared_lib:
+                userscriptgen.generate_lib(configuration, userscriptgen.script_ops,
+                                           languages, abs_dir)
 
-            if usergen.test_script:
-                usergen.generate_test(configuration, languages, abs_dir)
+            if userscriptgen.test_script:
+                userscriptgen.generate_test(configuration, languages, abs_dir)
         elif flavor == 'resource':
-            for op in vgridgen.script_ops_single_arg:
-                vgridgen.generate_single_argument(configuration, op[0], op[1],
-                                                  languages, abs_dir)
-            for op in vgridgen.script_ops_single_upload_arg:
-                vgridgen.generate_single_argument_upload(configuration, op[0],
-                                                         op[1], op[2],
-                                                         languages, abs_dir)
-            for op in vgridgen.script_ops_two_args:
-                vgridgen.generate_two_arguments(configuration, op[0], op[1],
-                                                op[2], languages, abs_dir)
-            for op in vgridgen.script_ops_ten_args:
-                vgridgen.generate_ten_arguments(configuration, op[0], op[1],
-                                                op[2], op[3], op[4], op[5],
-                                                op[6], op[7], op[8], op[9],
-                                                op[10], languages, abs_dir)
+            for op in vgridscriptgen.script_ops_single_arg:
+                vgridscriptgen.generate_single_argument(configuration, op[0], op[1],
+                                                        languages, abs_dir)
+            for op in vgridscriptgen.script_ops_single_upload_arg:
+                vgridscriptgen.generate_single_argument_upload(configuration, op[0],
+                                                               op[1], op[2],
+                                                               languages, abs_dir)
+            for op in vgridscriptgen.script_ops_two_args:
+                vgridscriptgen.generate_two_arguments(configuration, op[0], op[1],
+                                                      op[2], languages, abs_dir)
+            for op in vgridscriptgen.script_ops_ten_args:
+                vgridscriptgen.generate_ten_arguments(configuration, op[0], op[1],
+                                                      op[2], op[3], op[4], op[5],
+                                                      op[6], op[7], op[8], op[9],
+                                                      op[10], languages, abs_dir)
         else:
             output_objects.append(
                 {'object_type': 'warning_text', 'text': 'Unknown flavor: %s' % flavor})
@@ -267,7 +267,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         # Always include license conditions file
 
-        usergen.write_license(configuration, abs_dir)
+        userscriptgen.write_license(configuration, abs_dir)
 
         output_objects.append({'object_type': 'text', 'text': '... Done'
                                })

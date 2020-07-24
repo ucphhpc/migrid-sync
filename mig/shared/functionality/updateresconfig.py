@@ -27,8 +27,8 @@
 
 import os
 
-import shared.confparser as confparser
-import shared.returnvalues as returnvalues
+from shared import confparser
+from shared import returnvalues
 from shared.base import client_id_dir
 from shared.fileio import write_file
 from shared.findtype import is_owner

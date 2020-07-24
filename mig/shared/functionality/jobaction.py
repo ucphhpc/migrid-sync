@@ -32,7 +32,7 @@ changes.
 import os
 import glob
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir
 from shared.defaults import all_jobs
 from shared.fileio import unpickle, unpickle_and_change_status, \

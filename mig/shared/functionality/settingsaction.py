@@ -30,7 +30,7 @@
 import os
 import tempfile
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.accountstate import check_update_account_expire
 from shared.duplicatikeywords import get_keywords_dict as duplicati_keywords
 from shared.functional import validate_input_and_cert

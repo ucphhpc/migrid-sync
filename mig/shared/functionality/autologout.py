@@ -31,7 +31,7 @@
 import os
 
 from shared.auth import expire_twofactor_session
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.defaults import csrf_field
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import trust_handler, get_csrf_limit

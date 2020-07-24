@@ -33,7 +33,7 @@ to offer site access for a time limited period.
 import datetime
 import os
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.accountreq import peers_permit_allowed
 from shared.base import pretty_format_user, fill_distinguished_name, \
     client_id_dir

@@ -39,7 +39,7 @@ import time
 import urllib
 import urlparse
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.auth import twofactor_available, load_twofactor_key, \
     get_twofactor_token, verify_twofactor_token, generate_session_key, \
     save_twofactor_session, expire_twofactor_session

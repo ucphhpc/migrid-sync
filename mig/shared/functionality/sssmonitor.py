@@ -27,7 +27,7 @@
 
 from datetime import datetime, timedelta
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.functional import validate_input
 from shared.init import initialize_main_variables
 from shared.gridstat import GridStat

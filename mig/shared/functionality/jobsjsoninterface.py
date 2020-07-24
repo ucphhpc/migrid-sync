@@ -34,7 +34,7 @@ import os
 import sys
 import tempfile
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 
 from shared.base import force_utf8_rec, client_id_dir
 from shared.fileio import unpickle, unpickle_and_change_status, \

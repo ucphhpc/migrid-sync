@@ -34,7 +34,7 @@ import os
 import glob
 from urllib import quote
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir, invisible_path
 from shared.functional import validate_input
 from shared.handlers import get_csrf_limit, make_csrf_token

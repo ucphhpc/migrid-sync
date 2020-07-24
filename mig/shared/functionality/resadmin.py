@@ -35,7 +35,7 @@ administrating owners.
 import os
 from binascii import hexlify
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.accessrequests import list_access_requests, load_access_request, \
     build_accessrequestitem_object
 from shared.base import sandbox_resource

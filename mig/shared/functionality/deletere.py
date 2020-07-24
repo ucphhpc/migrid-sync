@@ -28,7 +28,7 @@
 
 """Deletion of runtime environments"""
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import valid_dir_input
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit

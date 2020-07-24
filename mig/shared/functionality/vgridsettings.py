@@ -38,7 +38,7 @@ from shared.useradm import get_full_user_map
 from shared.vgrid import init_vgrid_script_add_rem, allow_settings_adm, \
     vgrid_settings, vgrid_set_settings, vgrid_allow_restrict_write, \
     vgrid_restrict_write, vgrid_manage_allowed
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 
 _valid_visible = (keyword_owners, keyword_members, keyword_all)
 _valid_sharelink = (keyword_owners, keyword_members)

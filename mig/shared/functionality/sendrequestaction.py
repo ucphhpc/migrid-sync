@@ -29,7 +29,7 @@
 
 import os
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import extract_field
 from shared.defaults import default_vgrid, any_vgrid, any_protocol, \
     email_keyword_list, default_vgrid_settings_limit

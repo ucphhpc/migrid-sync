@@ -33,7 +33,7 @@ import os
 import time
 import tempfile
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.accountreq import existing_country_code, forced_org_email_match
 from shared.base import client_id_dir, force_utf8, force_unicode, \
     generate_https_urls, fill_distinguished_name

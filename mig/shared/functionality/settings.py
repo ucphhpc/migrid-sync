@@ -31,7 +31,7 @@ import base64
 import os
 import urllib
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.auth import get_twofactor_secrets
 from shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin, \
     get_short_id
@@ -59,12 +59,10 @@ from shared.twofactorkeywords import get_twofactor_specs
 from shared.widgetskeywords import get_widgets_specs
 from shared.useradm import create_alias_link, get_default_mrsl, \
     get_default_css
-
-
 from shared.vgridaccess import get_vgrid_map_vgrids
 
 try:
-    import shared.arcwrapper as arc
+    from shared import arcwrapper
 except Exception, exc:
     # Ignore errors and let it crash if ARC is enabled without the lib
     pass
@@ -2144,7 +2142,7 @@ value="%(default_authpassword)s" />
         # provide information about the available proxy, offer upload
         try:
             home_dir = os.path.normpath(base_dir)
-            session_Ui = arc.Ui(home_dir, require_user_proxy=True)
+            session_Ui = arcwrapper.Ui(home_dir, require_user_proxy=True)
             proxy = session_Ui.getProxy()
             if proxy.IsExpired():
                 # can rarely happen, constructor will throw exception
@@ -2160,12 +2158,12 @@ value="%(default_authpassword)s" />
                      'text': 'Proxy certificate will expire on %s (in %s sec.)'
                      % (proxy.Expires(), proxy.getTimeleft())
                      })
-        except arc.NoProxyError, err:
+        except arcwrapper.NoProxyError, err:
             output_objects.append({'object_type': 'warning',
                                    'text': 'No proxy certificate to load: %s'
                                    % err.what()})
 
-        output_objects = output_objects + arc.askProxy()
+        output_objects = output_objects + arcwrapper.askProxy()
 
     output_objects.append({'object_type': 'html_form', 'text':
                            '<div class="vertical-spacer"></div>'})

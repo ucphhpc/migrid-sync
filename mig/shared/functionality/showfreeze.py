@@ -29,7 +29,7 @@
 
 import os
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.defaults import default_pager_entries, freeze_flavors, \
     csrf_field, keyword_updating, keyword_final
 from shared.freezefunctions import is_frozen_archive, get_frozen_archive, \

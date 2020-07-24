@@ -29,7 +29,7 @@
 
 import datetime
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.defaults import default_vgrid, csrf_field
 from shared.functional import validate_input, REJECT_UNSET
 from shared.gridstat import GridStat

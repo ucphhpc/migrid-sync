@@ -33,7 +33,7 @@ link where they can access them like owners do.
 
 import os
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.forum import list_single_thread, list_threads, reply, new_subject, \
     search_threads, toggle_subscribe, list_subscribers
 from shared.functional import validate_input_and_cert, REJECT_UNSET

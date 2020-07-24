@@ -29,8 +29,8 @@
 
 """Display resource editor help"""
 
-import shared.resconfkeywords as resconfkeywords
-import shared.returnvalues as returnvalues
+from shared import resconfkeywords
+from shared import returnvalues
 from shared.functional import validate_input_and_cert
 from shared.init import initialize_main_variables, find_entry
 

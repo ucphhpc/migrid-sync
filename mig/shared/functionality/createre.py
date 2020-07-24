@@ -31,7 +31,7 @@ import os
 import base64
 import tempfile
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import valid_dir_input
 from shared.defaults import max_software_entries, max_environment_entries, \
      csrf_field

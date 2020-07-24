@@ -35,8 +35,8 @@ import base64
 import os
 import time
 
-import shared.mrslkeywords as mrslkeywords
-import shared.returnvalues as returnvalues
+from shared import mrslkeywords
+from shared import returnvalues
 from shared.base import client_id_dir
 from shared.defaults import default_mrsl_filename, csrf_field
 from shared.fileio import write_file, strip_dir

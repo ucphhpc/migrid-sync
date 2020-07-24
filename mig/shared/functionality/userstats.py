@@ -30,7 +30,7 @@
 import os
 import datetime
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.functional import validate_input
 from shared.init import initialize_main_variables
 from shared.usercache import refresh_disk_stats, refresh_job_stats, \

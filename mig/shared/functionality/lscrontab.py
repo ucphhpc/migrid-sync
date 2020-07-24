@@ -32,7 +32,7 @@ xmlrpc/jsonrpc.
 """
 
 from shared.defaults import keyword_all, csrf_field
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.events import load_crontab, load_atjobs
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token

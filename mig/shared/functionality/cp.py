@@ -31,7 +31,7 @@ import os
 import glob
 import shutil
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir
 from shared.fileio import check_write_access, check_empty_dir, makedirs_rec
 from shared.freezefunctions import is_frozen_archive

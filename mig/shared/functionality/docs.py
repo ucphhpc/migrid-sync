@@ -33,9 +33,9 @@
 import fnmatch
 import os
 
-import shared.mrslkeywords as mrslkeywords
-import shared.resconfkeywords as resconfkeywords
-import shared.returnvalues as returnvalues
+from shared import mrslkeywords
+from shared import resconfkeywords
+from shared import returnvalues
 from shared.functional import validate_input
 from shared.init import initialize_main_variables
 from shared.output import get_valid_outputformats

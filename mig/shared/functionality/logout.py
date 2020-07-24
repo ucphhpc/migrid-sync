@@ -29,7 +29,7 @@
 
 import os
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.auth import expire_twofactor_session
 from shared.functional import validate_input_and_cert
 from shared.gdp.all import project_logout, get_client_id_from_project_client_id

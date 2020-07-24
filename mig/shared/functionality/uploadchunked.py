@@ -36,7 +36,7 @@ files must be non-overlapping to guarantee race-free writing.
 
 import os
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir
 from shared.defaults import upload_block_size, upload_tmp_dir, csrf_field
 from shared.fileio import strip_dir, write_chunk, delete_file, move, \

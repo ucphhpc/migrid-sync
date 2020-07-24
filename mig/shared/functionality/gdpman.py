@@ -31,7 +31,7 @@ import os
 import tempfile
 
 from shared.auth import get_twofactor_secrets
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import get_xgi_bin
 from shared.defaults import csrf_field
 from shared.functional import validate_input_and_cert

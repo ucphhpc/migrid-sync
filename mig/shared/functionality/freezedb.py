@@ -27,7 +27,7 @@
 
 """Manage all owned frozen archives"""
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.defaults import default_pager_entries, csrf_field, keyword_final
 from shared.freezefunctions import build_freezeitem_object, \
     list_frozen_archives, get_frozen_meta, get_frozen_archive, TARGET_ARCHIVE

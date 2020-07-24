@@ -29,7 +29,7 @@
 
 import os
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import client_id_dir, distinguished_name_to_user
 from shared.accountreq import valid_password_chars, valid_name_chars, \
     password_min_len, password_max_len, account_js_helpers, \

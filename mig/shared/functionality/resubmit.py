@@ -37,8 +37,8 @@ import os
 import tempfile
 import glob
 
-import shared.mrslkeywords as mrslkeywords
-import shared.returnvalues as returnvalues
+from shared import mrslkeywords
+from shared import returnvalues
 from shared.base import client_id_dir
 from shared.defaults import all_jobs
 from shared.fileio import unpickle

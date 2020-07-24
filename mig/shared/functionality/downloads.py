@@ -27,7 +27,7 @@
 
 """Simple front end to script generators"""
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.defaults import csrf_field
 from shared.functional import validate_input_and_cert
 from shared.handlers import get_csrf_limit, make_csrf_token

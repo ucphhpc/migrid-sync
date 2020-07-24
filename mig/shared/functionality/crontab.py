@@ -39,7 +39,7 @@ from shared.base import client_id_dir
 from shared.cmdapi import get_usage_map
 from shared.defaults import crontab_name, cron_log_cnt, cron_output_dir, \
     cron_log_name, csrf_field
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
 from shared.events import get_time_expand_map, load_crontab, load_atjobs, \
     parse_and_save_crontab, parse_and_save_atjobs

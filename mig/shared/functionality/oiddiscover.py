@@ -38,7 +38,7 @@ here if OpenID is enabled.
 import os
 import tempfile
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.functional import validate_input
 from shared.init import initialize_main_variables, find_entry
 from shared.httpsclient import generate_openid_discovery_doc

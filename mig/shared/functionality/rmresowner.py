@@ -31,7 +31,7 @@ not required to be that of an existing MiG user.
 
 import os
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.findtype import is_user, is_owner
 from shared.functional import validate_input_and_cert, REJECT_UNSET
 from shared.handlers import safe_handler, get_csrf_limit

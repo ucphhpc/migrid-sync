@@ -34,8 +34,8 @@ import shutil
 from binascii import hexlify
 import fcntl
 
-import shared.resadm as resadm
-import shared.returnvalues as returnvalues
+from shared import resadm
+from shared import returnvalues
 from shared.conf import get_resource_configuration, get_resource_exe
 from shared.defaults import default_vgrid
 from shared.fileio import make_symlink, write_zipfile, copy
