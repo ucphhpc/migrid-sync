@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # textarea - combined text/mrsl writer and file upload
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -83,16 +83,16 @@ def handle_form_input(filenumber, user_arguments_dict, configuration):
 
         while True:
             form_key = '%s_%s_%s_%s' % (keyword.lower(), filenumber,
-                    counter_1, counter_2 + 1)
+                                        counter_1, counter_2 + 1)
             form_key_line = '%s_%s_%s_%s' % (keyword.lower(),
-                    filenumber, counter_1 + 1, counter_2)
+                                             filenumber, counter_1 + 1, counter_2)
 
             if user_arguments_dict.has_key(form_key):
 
                 # Y increased, append value
 
                 output += convert_control_value_to_line(form_key,
-                        user_arguments_dict)
+                                                        user_arguments_dict)
                 counter_2 += 1
             elif user_arguments_dict.has_key(form_key_line):
 
@@ -111,8 +111,8 @@ def handle_form_input(filenumber, user_arguments_dict, configuration):
                         end_with_newline = True
 
                 output += '%s\n'\
-                     % convert_control_value_to_line(form_key_line,
-                        user_arguments_dict)
+                    % convert_control_value_to_line(form_key_line,
+                                                    user_arguments_dict)
                 counter_1 += 1
                 counter_2 = 0
             else:
@@ -136,10 +136,11 @@ def main(client_id, user_arguments_dict):
     defaults = signature()[1]
     # TODO: do we need to cover more non-file fields?
     # All non-file fields must be validated
-    validate_args = dict([(key, user_arguments_dict.get(key, val)) for \
-                         (key, val) in defaults.items()])
+    validate_args = dict([(key, user_arguments_dict.get(key, val)) for
+                          (key, val) in defaults.items()])
     # IMPORTANT: we must explicitly inlude CSRF token
-    validate_args[csrf_field] = user_arguments_dict.get(csrf_field, ['AllowMe'])
+    validate_args[csrf_field] = user_arguments_dict.get(csrf_field,
+                                                        ['AllowMe'])
 
     (validate_status, accepted) = validate_input_and_cert(
         validate_args,
@@ -148,12 +149,13 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    output_objects.append({'object_type': 'header', 'text'
-                          : '%s file handling' % configuration.short_title})
+    output_objects.append(
+        {'object_type': 'header', 'text': '%s file handling' %
+         configuration.short_title})
     submitstatuslist = []
     fileuploadobjs = []
     filenumber = 0
@@ -172,18 +174,18 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     mrsl = ''
     while True:
         (content, file_type) = handle_form_input(filenumber,
-                user_arguments_dict, configuration)
+                                                 user_arguments_dict, configuration)
 
         if not content:
             if filenumber < file_fields:
 
                 # blank field but file_fields indicates more fields
-                    
+
                 filenumber += 1
                 continue
 
@@ -204,7 +206,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         submit_mrslfiles = False
         submitmrsl_key = 'submitmrsl_%s' % filenumber
         if configuration.site_enable_jobs and \
-               user_arguments_dict.has_key(submitmrsl_key):
+                user_arguments_dict.has_key(submitmrsl_key):
             val = str(user_arguments_dict[submitmrsl_key][0]).upper()
             if val == 'ON' or val == 'TRUE':
                 submit_mrslfiles = True
@@ -218,10 +220,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
             filename_key = 'FILENAME_%s' % filenumber
             if not user_arguments_dict.has_key(filename_key):
                 output_objects.append(
-                    {'object_type': 'error_text','text'
-                     : ("The specified file_type is 'plain', but a filename" \
-                        "value was not found. The missing control should be " \
-                        "named %s") % filename_key})
+                    {'object_type': 'error_text', 'text':
+                     ("The specified file_type is 'plain', but a filename"
+                      "value was not found. The missing control should be "
+                      "named %s") % filename_key})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
             filename_val = convert_control_value_to_line(filename_key,
@@ -235,8 +237,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
                     continue
 
                 output_objects.append(
-                    {'object_type': 'error_text', 'text'
-                     : 'No filename found - please make sure you provide a " \
+                    {'object_type': 'error_text', 'text':
+                     'No filename found - please make sure you provide a " \
                      "file to upload'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -252,10 +254,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
             # A new filename was created, write content to file
 
             if not write_file(content, local_filename, logger):
-                logger.error("%s failed to write plain file %s" % \
+                logger.error("%s failed to write plain file %s" %
                              (op_name, local_filename))
                 output_objects.append({'object_type': 'error_text',
-                        'text': 'Could not write: %s' % local_filename})
+                                       'text': 'Could not write: %s' % local_filename})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
             logger.info("%s wrote plain file %s" % (op_name, local_filename))
             fileuploadobj['saved'] = True
@@ -263,11 +265,11 @@ CSRF-filtered POST requests to prevent unintended updates'''
             # msg += "%s created!" % local_filename
 
             fileuploadobj['name'] = os.sep\
-                 + convert_control_value_to_line(filename_key,
-                                                 user_arguments_dict)
+                + convert_control_value_to_line(filename_key,
+                                                user_arguments_dict)
 
             if local_filename.upper().endswith('.MRSL')\
-                 and submit_mrslfiles:
+                    and submit_mrslfiles:
                 mrslfiles_to_parse.append(local_filename)
         elif file_type == 'fileupload':
 
@@ -277,14 +279,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
             # if not fileitem.filename:
 
-            if not user_arguments_dict.has_key(fileupload_key
-                     + 'filename'):
+            if not user_arguments_dict.has_key(fileupload_key + 'filename'):
                 output_objects.append({'object_type': 'error_text',
-                        'text': 'NO FILENAME error'})
+                                       'text': 'NO FILENAME error'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
             base_name = strip_dir(user_arguments_dict[fileupload_key
-                                   + 'filename'])
+                                                      + 'filename'])
             if not base_name:
                 if filenumber < file_fields:
 
@@ -292,13 +293,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
                     # output_objects.append({'object_type': 'text', 'text':
                     #                        'skip item %d' % filenumber})
-                    
+
                     filenumber += 1
                     continue
 
                 output_objects.append(
-                    {'object_type': 'error_text', 'text'
-                     : 'No filename found - please make sure you provide a " \
+                    {'object_type': 'error_text', 'text':
+                     'No filename found - please make sure you provide a " \
                      "file to upload'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -310,8 +311,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
                     extract_packages = True
 
             remote_filename = ''
-            default_remotefilename_key = 'default_remotefilename_%s'\
-                 % filenumber
+            default_remotefilename_key = 'default_remotefilename_%s' % \
+                filenumber
             if user_arguments_dict.has_key(default_remotefilename_key):
                 remote_filename = \
                     user_arguments_dict[default_remotefilename_key][0]
@@ -334,7 +335,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
             if not user_arguments_dict.has_key(fileupload_key):
                 output_objects.append({'object_type': 'error_text',
-                        'text': 'File content not found!'})
+                                       'text': 'File content not found!'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
             local_filename = os.path.abspath(base_dir + remote_filename)
@@ -352,14 +353,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 except Exception:
                     fileuploadobj['message'] = \
                         {'object_type': 'error_text',
-                         'text': 'Exception creating dirs %s'\
+                         'text': 'Exception creating dirs %s'
                          % os.path.dirname(local_filename)}
             fileuploadobj['name'] = remote_filename
 
             # reads uploaded file into memory
 
             binary = user_arguments_dict.has_key('%s_is_encoded'
-                     % fileupload_key)
+                                                 % fileupload_key)
             if binary:
                 data = user_arguments_dict[fileupload_key][-1]
                 data = str(base64.decodestring(data))
@@ -370,7 +371,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
             if not write_file(data, local_filename,
                               configuration.logger):
-                logger.error("%s failed to write upload file %s" % \
+                logger.error("%s failed to write upload file %s" %
                              (op_name, local_filename))
                 output_objects.append(
                     {'object_type': 'error_text',
@@ -399,13 +400,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
             # handle file package
 
             if extract_packages\
-                 and (local_filename.upper().endswith('.ZIP')
-                       or local_filename.upper().endswith('.TAR.GZ')
-                       or local_filename.upper().endswith('.TGZ')
-                       or local_filename.upper().endswith('.TAR.BZ2')):
-                (upload_status, msg) = handle_package_upload(local_filename,
-                        remote_filename, client_id, configuration,
-                        submit_mrslfiles, os.path.dirname(local_filename))
+                and (local_filename.upper().endswith('.ZIP')
+                     or local_filename.upper().endswith('.TAR.GZ')
+                     or local_filename.upper().endswith('.TGZ')
+                     or local_filename.upper().endswith('.TAR.BZ2')):
+                (upload_status, msg) = handle_package_upload(
+                    local_filename, remote_filename, client_id, configuration,
+                    submit_mrslfiles, os.path.dirname(local_filename))
                 if upload_status:
                     if submit_mrslfiles:
                         if isinstance(msg, basestring):
@@ -434,13 +435,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 # a "normal" (non-package) file was uploaded
 
                 try:
-                    output_objects.append({'object_type': 'text', 'text'
-                            : 'File saved: %s' % remote_filename})
+                    output_objects.append(
+                        {'object_type': 'text', 'text': 'File saved: %s' %
+                         remote_filename})
                 except Exception, err:
-                    output_objects.append({'object_type': 'error_text',
-                            'text'
-                            : 'File seems to be saved, but could not get file size %s'
-                             % err})
+                    output_objects.append({
+                        'object_type': 'error_text', 'text':
+                        'File seems to be saved, but could not get file size %s'
+                        % err})
                     return (output_objects, returnvalues.SYSTEM_ERROR)
             fileuploadobj['size'] = os.path.getsize(local_filename)
             fileuploadobj['name'] = remote_filename
@@ -448,7 +450,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             # Check if the extension is .mRSL
 
             if local_filename.upper().endswith('.MRSL')\
-                 and submit_mrslfiles:
+                    and submit_mrslfiles:
 
                 # A .mrsl file was uploaded!
                 # output_objects.append({"object_type":"text", "text":
@@ -463,13 +465,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
             html_generated_mrsl_dir = base_dir + 'html_generated_mrsl'
             if os.path.exists(html_generated_mrsl_dir)\
-                 and not os.path.isdir(html_generated_mrsl_dir):
+                    and not os.path.isdir(html_generated_mrsl_dir):
 
                 # oops, user might have created a file with the same name
 
                 output_objects.append(
-                    {'object_type': 'error_text', 'text'
-                     : 'Please make sure %s does not exist or is a directory!'
+                    {'object_type': 'error_text', 'text':
+                     'Please make sure %s does not exist or is a directory!'
                      % 'html_generated_mrsl/'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
             if not os.path.isdir(html_generated_mrsl_dir):
@@ -483,9 +485,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
                     time_c[3],
                     time_c[4],
                     time_c[5],
-                    )
+                )
                 local_filename = html_generated_mrsl_dir\
-                     + '/TextAreaAt_' + timestamp + '.mRSL'
+                    + '/TextAreaAt_' + timestamp + '.mRSL'
                 if not os.path.isfile(local_filename):
                     break
 
@@ -497,8 +499,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
                      'text': 'Could not write: %s' % local_filename})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
             fileuploadobj['name'] = os.sep\
-                 + 'html_generated_mrsl/TextAreaAt_' + timestamp\
-                 + '.mRSL'
+                + 'html_generated_mrsl/TextAreaAt_' + timestamp\
+                + '.mRSL'
             fileuploadobj['size'] = os.path.getsize(local_filename)
             mrslfiles_to_parse.append(local_filename)
         fileuploadobjs.append(fileuploadobj)
@@ -514,7 +516,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                             'name': relative_filename}
 
             (new_status, newmsg, job_id) = new_job(mrslfile, client_id,
-                    configuration, False, True)
+                                                   configuration, False, True)
             if not new_status:
 
                 # output_objects.append({"object_type":"error_text", "text":"%s"
@@ -537,13 +539,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # prepare next loop
 
         filenumber += 1
-    output_objects.append({'object_type': 'header', 'text'
-                           : 'Uploaded/created files'})
+    output_objects.append(
+        {'object_type': 'header', 'text': 'Uploaded/created files'})
     output_objects.append({'object_type': 'fileuploadobjs',
                            'fileuploadobjs': fileuploadobjs})
     if configuration.site_enable_jobs:
-        output_objects.append({'object_type': 'header', 'text'
-                               : 'Submitted jobs'})
+        output_objects.append(
+            {'object_type': 'header', 'text': 'Submitted jobs'})
         output_objects.append({'object_type': 'submitstatuslist',
                                'submitstatuslist': submitstatuslist})
 
