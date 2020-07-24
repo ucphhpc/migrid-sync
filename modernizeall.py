@@ -38,8 +38,14 @@ import time
 
 exclude_dirs = ['state', 'user-projects', 'doc-src',
                 'MiG-certificates', 'seafile']
+
+# Tweak applied fixers. Details about them can be found at:
+# https://docs.python.org/2/library/2to3.html
 # The import fix breaks our relative imports so disable for now
 disable_import_fix = True
+# Whether to enable additional pythonic style and comma whitespace fixes
+enable_idioms = True
+enable_comma_whitespace = True
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
@@ -54,9 +60,14 @@ if __name__ == '__main__':
     print('Modernizing python code in %s' % target)
     print('--- ignoring all %s dirs ---' % ', '.join(exclude_dirs))
     mime_helper = mimetypes.MimeTypes()
-    modernize_base = ['python-modernize', '-n', '-w']
+    modernize_base = ['python-modernize', '-n', '-w', '-f', 'default']
+    if enable_idioms:
+        modernize_base += ['-f', 'idioms']
+    if enable_comma_whitespace:
+        modernize_base += ['-f', 'ws_comma']
     if disable_import_fix:
         modernize_base += ['-x', 'import']
+
     # NOTE: fix import lines broken by modernize and leave Copyright line alone
     sed_rules = ['s/from .shared/from shared/g',
                  's/from . import /import /g']
