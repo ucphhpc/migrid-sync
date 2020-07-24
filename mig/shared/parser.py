@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # parser - General parser functions for jobs and resource confs
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,7 +33,7 @@ import StringIO
 import tempfile
 
 from shared.defaults import keyword_all, maxfill_fields
-from shared.rekeywords import get_keywords_dict
+from shared.rekeywords import get_keywords_dict as re_get_keywords_dict
 from shared.resconfkeywords import get_keywords_dict as resconf_get_keywords_dict
 from shared.safeinput import valid_job_name, guess_type, html_escape
 
@@ -711,7 +711,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
 
                     # read required and optional sublevel keywords from rekeywords
 
-                    rekeywords_dict = get_keywords_dict()
+                    rekeywords_dict = re_get_keywords_dict()
                     software = rekeywords_dict['SOFTWARE']
                     sublevel_required = []
                     sublevel_optional = []
@@ -744,7 +744,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
 
                     # read required and optional sublevel keywords from rekeywords
 
-                    rekeywords_dict = get_keywords_dict()
+                    rekeywords_dict = re_get_keywords_dict()
                     environmentvariable = \
                         rekeywords_dict['ENVIRONMENTVARIABLE']
                     sublevel_required = []

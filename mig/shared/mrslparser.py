@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mrslparser - Parse mRSL job descriptions
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,12 +31,12 @@ import os
 import time
 import types
 
-import shared.mrslkeywords as mrslkeywords
-import shared.parser as parser
 from shared.base import client_id_dir
 from shared.conf import get_configuration_object
 from shared.defaults import default_vgrid, any_vgrid, src_dst_sep
 from shared.fileio import unpickle, pickle, send_message_to_grid_script
+from shared.mrslkeywords import get_keywords_dict as mrsl_get_keywords_dict
+from shared.parser import parse as core_parse, check_types
 from shared.refunctions import is_runtime_environment
 from shared.safeinput import html_escape, valid_path
 from shared.vgridaccess import user_vgrid_access
@@ -58,6 +58,7 @@ def replace_variables(text, replace_list):
         out = out.replace(key, val)
     return out
 
+
 def expand_variables(job_dict):
     """Expand reserved job variables like +JOBID+ and + JOBNAME+ to actual
     values from the job dictionary.
@@ -70,7 +71,7 @@ def expand_variables(job_dict):
     # Please be careful if adding new expansions here:
     # They are expanded *after* parsing and accepting the raw job so they
     # must be safe against abuse. Simple replacement of keywords with
-    # constant string values should be safe. 
+    # constant string values should be safe.
     var_map = [('+JOBID+', job_dict.get('JOB_ID', '+JOBID+')),
                ('+JOBNAME+', job_dict.get('JOBNAME', '+JOBNAME+'))]
     for (key, value) in job_dict.iteritems():
@@ -99,13 +100,14 @@ def expand_variables(job_dict):
             job_dict[key] = replace_variables(str(value), var_map)
     return job_dict
 
+
 def parse(
     localfile_spaces,
     job_id,
     client_id,
     forceddestination,
     outfile='AUTOMATIC',
-    ):
+):
     """Parse job description and optionally write results to parsed mRSL file.
     If outfile is non-empty it is used as destination file, and the keyword
     AUTOMATIC is replaced by the default mrsl dir destination.
@@ -119,16 +121,15 @@ def parse(
     # are not allowed to print anything before 'the first two special lines'
     # are printed
 
-    result = parser.parse(localfile_spaces)
+    result = core_parse(localfile_spaces)
 
-    external_dict = mrslkeywords.get_keywords_dict(configuration)
+    external_dict = mrsl_get_keywords_dict(configuration)
 
     # The mRSL has the right structure check if the types are correct too
     # and inline update the default external_dict entries with the ones
     # from the actual job specification
 
-    (status, msg) = parser.check_types(result, external_dict,
-            configuration)
+    (status, msg) = check_types(result, external_dict, configuration)
     if not status:
         return (False, 'Parse failed (typecheck) %s' % msg)
 
@@ -185,21 +186,21 @@ def parse(
     # do not check runtime envs if the job is for ARC (submission will
     # fail later)
     if global_dict.get('JOBTYPE', 'unset') != 'arc' \
-        and global_dict.has_key('RUNTIMEENVIRONMENT'):
+            and global_dict.has_key('RUNTIMEENVIRONMENT'):
         re_entries_uppercase = []
         for specified_re in global_dict['RUNTIMEENVIRONMENT']:
             specified_re = specified_re.upper()
             re_entries_uppercase.append(specified_re)
             if not is_runtime_environment(specified_re, configuration):
                 return (False, """You have specified a non-nexisting runtime
-environment '%s', therefore the job can not be run on any resources.""" % \
+environment '%s', therefore the job can not be run on any resources.""" %
                         specified_re)
         if global_dict.get('MOUNT', []) != []:
             if configuration.res_default_mount_re.upper()\
                     not in re_entries_uppercase:
                 re_entries_uppercase.append(
                     configuration.res_default_mount_re.upper())
-            
+
         global_dict['RUNTIMEENVIRONMENT'] = re_entries_uppercase
 
     if global_dict.get('JOBTYPE', 'unset').lower() == 'interactive':
@@ -238,7 +239,7 @@ environment '%s', therefore the job can not be run on any resources.""" % \
                 found = False
                 for verifytype in verifytypes:
                     if verifyfile == 'verify_runtime_env_%s%s' % (re_name,
-                            verifytype):
+                                                                  verifytype):
                         found = True
                 if not found:
                     return (False, '''You are not allowed to specify the
@@ -256,7 +257,7 @@ environment '%s', therefore the job can not be run on any resources.""" % \
             line_parts = line.split(src_dst_sep)
             if len(line_parts) < 1 or len(line_parts) > 2:
                 return (False,
-                        '%s entries must contain 1 or 2 space-separated items'\
+                        '%s entries must contain 1 or 2 space-separated items'
                         % field)
             for part in line_parts:
 
@@ -279,25 +280,25 @@ environment '%s', therefore the job can not be run on any resources.""" % \
                 try:
                     valid_path(check_path)
                 except Exception, exc:
-                    return (False, 'Invalid %s part in %s: %s' % \
+                    return (False, 'Invalid %s part in %s: %s' %
                             (field, html_escape(part), exc))
             normalized_field.append(' '.join(normalized_parts))
         global_dict[field] = normalized_field
 
-    # if this is an ARC job (indicated by a flag), check proxy existence 
+    # if this is an ARC job (indicated by a flag), check proxy existence
     # and lifetime. grid_script will submit the job directly.
-    
+
     if global_dict.get('JOBTYPE', 'unset') == 'arc':
         if not configuration.arc_clusters:
             return (False, 'No ARC support!')
-            
+
         logger.debug('Received job for ARC.')
         user_home = os.path.join(configuration.user_home, client_dir)
         try:
             session = arc.Ui(user_home)
             timeleft = session.getProxy().getTimeleft()
-            req_time = int(global_dict.get('CPUTIME', '0')) 
-            logger.debug('CPU time (%s), proxy lifetime (%s)' \
+            req_time = int(global_dict.get('CPUTIME', '0'))
+            logger.debug('CPU time (%s), proxy lifetime (%s)'
                          % (req_time, timeleft))
             if timeleft < req_time:
                 return (False, 'Proxy time shorter than requested CPU time')
@@ -308,12 +309,12 @@ environment '%s', therefore the job can not be run on any resources.""" % \
             return (False, 'No Proxy found: %s' % err.what())
         except Exception, err:
             return (False, err.__str__())
-    
+
     # save file
     if outfile == 'AUTOMATIC':
         filename = \
             os.path.abspath(os.path.join(configuration.mrsl_files_dir,
-                            client_dir, job_id + '.mRSL'))
+                                         client_dir, job_id + '.mRSL'))
     else:
         filename = outfile
 
@@ -343,7 +344,7 @@ to %s''' % configuration.grid_stdin)
         re_name = forceddestination['RE_NAME']
 
         resource_config_filename = configuration.resource_home\
-             + unique_resource_name + '/config'
+            + unique_resource_name + '/config'
 
         # open resource config
 
@@ -372,7 +373,7 @@ to %s''' % configuration.grid_stdin)
                       logger):
             return (False,
                     'Fatal error pickling resource config: Could not write %s'
-                     % filename)
+                    % filename)
 
     if global_dict.get('JOBTYPE', 'unset').lower() == 'interactive':
         from shared.functionality.vncsession import main

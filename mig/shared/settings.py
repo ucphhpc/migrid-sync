@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settings - helpers for handling user settings
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,7 +29,6 @@ import datetime
 import os
 from binascii import hexlify
 
-import shared.parser as parser
 from shared.base import client_id_dir
 from shared.defaults import settings_filename, profile_filename, \
     widgets_filename, twofactor_filename, duplicati_filename, ssh_conf_dir, \
@@ -40,6 +39,7 @@ from shared.duplicatikeywords import get_keywords_dict as get_duplicati_fields, 
     extract_duplicati_helper, duplicati_conf_templates
 from shared.fileio import pickle, unpickle
 from shared.modified import mark_user_modified
+from shared.parser import parse, check_types
 from shared.profilekeywords import get_keywords_dict as get_profile_fields
 from shared.pwhash import make_hash, make_digest, assure_password_strength
 from shared.safeinput import valid_password
@@ -56,10 +56,9 @@ def parse_and_save_pickle(source, destination, keywords, client_id,
     dictionary in a pickled file in user_settings.
     """
     client_dir = client_id_dir(client_id)
-    result = parser.parse(source, strip_space, strip_comments)
+    result = parse(source, strip_space, strip_comments)
 
-    (status, parsemsg) = parser.check_types(result, keywords,
-                                            configuration)
+    (status, parsemsg) = check_types(result, keywords, configuration)
 
     try:
         os.remove(source)
