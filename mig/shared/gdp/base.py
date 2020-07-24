@@ -131,8 +131,6 @@ def __user_log_filepath(configuration):
     return (log_filepath, log_lock_filepath)
 
 
-
-
 def __create_gdp_user_db_entry(configuration):
     """Create empty GDP user db entry"""
 
@@ -859,7 +857,6 @@ def get_active_project_short_id(configuration, user_id, protocol):
     return result
 
 
-
 def update_category_meta(configuration, client_id, project, category_dict,
                          action, target=None):
     """Update *project* category meta dict with one or more category and
@@ -1300,7 +1297,6 @@ def get_project_info(configuration,
                 'state': project.get('state', '')
             })
     return result
-
 
 
 def get_project_user_dn(configuration, requested_script, client_id, protocol):
@@ -3053,7 +3049,7 @@ def project_create(
             _logger.error(log_err_msg + template)
 
     # Create directory to store vgrid files
- 
+
     if status:
         try:
             os.mkdir(vgrid_home_dir)
@@ -3246,4 +3242,3 @@ This directory is used for hosting private files for the %r %r.
         _logger.info(log_ok_msg)
 
     return (status, ret_msg)
-              
