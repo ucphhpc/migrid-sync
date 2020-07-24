@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # distpickle - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,7 +32,7 @@ Contrary to the native pickle module this version does not separate
 file opening from pickle operations.
 """
 
-import shared.distfile as distfile
+from shared import distfile
 from shared.distfile import LOCK_EX, LOCK_SH
 # Expose loads and dumps from serial
 from shared.serial import loads, dumps
@@ -48,6 +48,7 @@ def dump(obj, path, protocol=0):
     fd.flush()
     fd.unlock()
     fd.close()
+
 
 def load(path):
     """Load a object from the binary representation of it in the
