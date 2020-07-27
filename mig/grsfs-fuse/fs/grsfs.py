@@ -65,7 +65,7 @@ from core.entities import *
 from core.specialized.aux import *
 from core.configuration import *
 
-import core.kernel as kernel
+from core import kernel
 
 
 class grsfs(Fuse):

@@ -32,7 +32,9 @@ Created by Jan Wiberg on 2010-03-22.
 Copyright (c) 2010 __MyCompanyName__. All rights reserved.
 """
 
-import os, syslog, itertools
+import itertools
+import os
+import syslog
 
 def flag2mode(flags):
     """

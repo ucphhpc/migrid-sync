@@ -30,12 +30,14 @@ Created by Jan Wiberg on 2010-03-29.
 Copyright (c) 2010 __MyCompanyName__. All rights reserved.
 """
 
-import sys, time, os
-from core.entities import *
-from core.aux import *
-from core.configuration import *
+import os
+import sys
+import time
 
-import core.kernel as kernel
+from core.entities import *
+from core.specialized.aux import *
+from core.configuration import *
+from core import kernel
 
 
 def main():

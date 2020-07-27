@@ -30,14 +30,14 @@ Created by Jan Wiberg on 2010-03-26.
 Copyright (c) 2010 __MyCompanyName__. All rights reserved.
 """
 
+import errno
 import sys
 import os
-from core.entities import *
-from core.aux import *
-from core.configuration import *
 
-import core.kernel as kernel
-import errno
+from core.entities import *
+from core.specialized.aux import *
+from core.configuration import *
+from core import kernel
 
 
 def main():

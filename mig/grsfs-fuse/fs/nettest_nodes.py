@@ -34,7 +34,7 @@ import sys, time, os
 from core.entities import *
 from core.configuration import *
 
-import core.kernel as kernel
+from core import kernel
 import yappi
 
 
