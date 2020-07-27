@@ -26,19 +26,20 @@
 #
 
 """Creation of runtime environments"""
+from __future__ import absolute_import
 
 import os
 import base64
 import tempfile
 
-from shared import returnvalues
-from shared.base import valid_dir_input
-from shared.defaults import max_software_entries, max_environment_entries, \
+from .shared import returnvalues
+from .shared.base import valid_dir_input
+from .shared.defaults import max_software_entries, max_environment_entries, \
      csrf_field
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables
-from shared.refunctions import create_runtimeenv
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables
+from .shared.refunctions import create_runtimeenv
 
 
 def signature():
@@ -192,7 +193,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         (filehandle, tmpfile) = tempfile.mkstemp(text=True)
         os.write(filehandle, content)
         os.close(filehandle)
-    except Exception, err:
+    except Exception as err:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Error preparing new runtime environment! %s'
                                % err})

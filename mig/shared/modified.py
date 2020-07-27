@@ -26,14 +26,16 @@
 #
 
 """Functions for marking and checking modification status of entities"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import fcntl
 import os
 import time
 
-from shared.defaults import keyword_all
-from shared.fileio import acquire_file_lock, release_file_lock
-from shared.serial import load, dump, dumps
+from .shared.defaults import keyword_all
+from .shared.fileio import acquire_file_lock, release_file_lock
+from .shared.serial import load, dump, dumps
 
 
 def mark_entity_modified(configuration, kind, name):
@@ -56,7 +58,7 @@ def mark_entity_modified(configuration, kind, name):
             modified_list.append(name)
         dump(modified_list, modified_path)
         success = True
-    except Exception, exc:
+    except Exception as exc:
         _logger.error("Could not update %s modified mark: %s" % (kind, exc))
     finally:
         if lock_handle:
@@ -120,7 +122,7 @@ def check_entities_modified(configuration, kind):
             raise Exception("%s map does not exist" % kind)
         modified_list = load(modified_path)
         modified_stamp = os.path.getmtime(modified_path)
-    except Exception, exc:
+    except Exception as exc:
         # Okay if a new install
         _logger.warning("could not check %s modified: %s" % (kind, exc))
         # No modified list - probably first time so force update
@@ -171,7 +173,7 @@ def pending_entities_update(configuration, kind):
     # NOTE: check if modified file exists with size above pickled empty list
     try:
         return os.path.getsize(modified_path) > len(dumps([]))
-    except Exception, exc:
+    except Exception as exc:
         # Probably because modified file doesn't exist so just ignore
         _logger.debug("could not get size of %s: %s" % (modified_path, exc))
         return False
@@ -217,7 +219,7 @@ def reset_entities_modified(configuration, kind, only_before=-1):
         else:
             dump([], modified_path)
             success = True
-    except Exception, exc:
+    except Exception as exc:
         _logger.error("Could not reset %s modified mark: %s" % (kind, exc))
     finally:
         if lock_handle:
@@ -260,12 +262,12 @@ def reset_workflow_r_modified(configuration, only_before=-1):
 
 if __name__ == "__main__":
     import sys
-    from shared.conf import get_configuration_object
+    from .shared.conf import get_configuration_object
     conf = get_configuration_object()
     re_name = 'BASH-ANY-1'
     if sys.argv[1:]:
         re_name = sys.argv[1]
-    print "Check runtime envs modified: %s %s" % check_res_modified(conf)
-    print "Marking runtime envs modified: %s" % re_name
+    print("Check runtime envs modified: %s %s" % check_res_modified(conf))
+    print("Marking runtime envs modified: %s" % re_name)
     mark_re_modified(conf, re_name)
-    print "Check runtime envs modified: %s %s" % check_res_modified(conf)
+    print("Check runtime envs modified: %s %s" % check_res_modified(conf))

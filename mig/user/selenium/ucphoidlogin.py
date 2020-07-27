@@ -26,6 +26,7 @@
 #
 
 """Example UCPH OpenID login using selenium and a webdriver of choice"""
+from __future__ import print_function
 
 import getpass
 import sys
@@ -39,7 +40,7 @@ def main():
     """Main"""
     argc = len(sys.argv) - 1
     if argc < 3:
-        print "USAGE: %s browser url login [password]" % sys.argv[0]
+        print("USAGE: %s browser url login [password]" % sys.argv[0])
         return 1
 
     browser = sys.argv[1]
@@ -59,23 +60,23 @@ def main():
         driver.get(url)
         status = ucph_login(driver, url, login, passwd)
         if not status:
-            print "UCPH OpenID login FAILED!"
+            print("UCPH OpenID login FAILED!")
             return 1
 
         if twofactor_key:
             status = shared_twofactor(driver, url, twofactor_key)
             if not status:
-                print "Post-OpenID 2FA FAILED!"
+                print("Post-OpenID 2FA FAILED!")
                 return 2
 
-        print "Now you can proceed using the browser or interrupt with Ctrl-C"
+        print("Now you can proceed using the browser or interrupt with Ctrl-C")
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        print "User interrupt requested - shutting down"
+        print("User interrupt requested - shutting down")
     except Exception as exc:
-        print "Unexpected exception:"
-        print traceback.format_exc()
+        print("Unexpected exception:")
+        print(traceback.format_exc())
 
 if __name__ == "__main__":
     main()

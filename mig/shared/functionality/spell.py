@@ -26,16 +26,17 @@
 #
 
 """Spell check a file using an native spell checker."""
+from __future__ import absolute_import
 
 import os
 import glob
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.init import initialize_main_variables
-from shared.parseflags import verbose
-from shared.validstring import valid_user_path
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.init import initialize_main_variables
+from .shared.parseflags import verbose
+from .shared.validstring import valid_user_path
 
 
 def signature():
@@ -75,7 +76,7 @@ def spellcheck(
 
                     res.append('%s: %s' % (word,
                                ', '.join(check_dict.suggest(word))))
-    except Exception, err:
+    except Exception as err:
         msg = 'Failed to run spell check: %s' % err
     return (res, msg)
 
@@ -99,7 +100,7 @@ def adv_spellcheck(
         for entry in spell_checker:
             res.append('%s: %s' % (entry.word, entry.suggest()))
         target_fd.close()
-    except Exception, err:
+    except Exception as err:
         msg = 'Failed to run spell check: %s' % err
     return (res, msg)
 
@@ -223,7 +224,7 @@ def main(client_id, user_arguments_dict):
 
                 for line in out:
                     output_lines.append(line + '\n')
-            except Exception, err:
+            except Exception as err:
                 output_objects.append({'object_type': 'error_text',
                         'text': "%s: '%s': %s" % (op_name,
                         relative_path, err)})

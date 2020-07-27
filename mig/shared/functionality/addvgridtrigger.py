@@ -26,22 +26,23 @@
 #
 
 """Add a trigger to a given vgrid"""
+from __future__ import absolute_import
 
 import os
 import shlex
 import time
 
-from shared.base import client_id_dir
-from shared.defaults import any_state, keyword_auto, valid_trigger_actions, \
+from .shared.base import client_id_dir
+from .shared.defaults import any_state, keyword_auto, valid_trigger_actions, \
     valid_trigger_changes, keyword_all
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables, find_entry
-from shared.validstring import valid_user_path
-from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_trigger, \
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables, find_entry
+from .shared.validstring import valid_user_path
+from .shared.vgrid import init_vgrid_script_add_rem, vgrid_is_trigger, \
     vgrid_is_trigger_owner, vgrid_list_subvgrids, vgrid_add_triggers, \
     vgrid_triggers
-from shared import returnvalues
+from .shared import returnvalues
 
 
 def signature():
@@ -274,7 +275,7 @@ a job description file path as argument.'''})
             rule_dict = req_dict
         else:
             for field in user_arguments_dict:
-                if req_dict.has_key(field):
+                if field in req_dict:
                     rule_dict[field] = req_dict[field]
 
         # Now refresh template contents
@@ -294,7 +295,7 @@ a job description file path as argument.'''})
                     temp_fd = open(abs_path)
                     templates.append(temp_fd.read())
                     temp_fd.close()
-                except Exception, err:
+                except Exception as err:
                     logger.error("read submit argument file failed: %s" % err)
                     output_objects.append(
                         {'object_type': 'error_text', 'text':

@@ -31,21 +31,22 @@ resources, tweaking the configuration of existing resources,
 starting, stopping and getting status of resources, and
 administrating owners.
 """
+from __future__ import absolute_import
 
 import os
 from binascii import hexlify
 
-from shared import returnvalues
-from shared.accessrequests import list_access_requests, load_access_request, \
+from .shared import returnvalues
+from .shared.accessrequests import list_access_requests, load_access_request, \
     build_accessrequestitem_object
-from shared.base import sandbox_resource
-from shared.defaults import default_pager_entries, csrf_field
-from shared.functional import validate_input_and_cert
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import man_base_js, man_base_html, html_post_helper
-from shared.init import initialize_main_variables, find_entry
-from shared.refunctions import get_re_dict, list_runtime_environments
-from shared.vgridaccess import res_vgrid_access, get_vgrid_map_vgrids, \
+from .shared.base import sandbox_resource
+from .shared.defaults import default_pager_entries, csrf_field
+from .shared.functional import validate_input_and_cert
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.html import man_base_js, man_base_html, html_post_helper
+from .shared.init import initialize_main_variables, find_entry
+from .shared.refunctions import get_re_dict, list_runtime_environments
+from .shared.vgridaccess import res_vgrid_access, get_vgrid_map_vgrids, \
     get_resource_map, CONF, OWNERS, RESID
 
 
@@ -78,15 +79,15 @@ def display_resource(
     row_name = ('even', 'odd')
 
     if resource_config:
-        if resource_config.has_key('EXECONFIG'):
+        if 'EXECONFIG' in resource_config:
             for exe in resource_config['EXECONFIG']:
                 exe_units.append(exe['name'])
-        if resource_config.has_key('STORECONFIG'):
+        if 'STORECONFIG' in resource_config:
             for store in resource_config['STORECONFIG']:
                 store_units.append(store['name'])
-        if resource_config.has_key('FRONTENDNODE'):
+        if 'FRONTENDNODE' in resource_config:
             frontend = resource_config['FRONTENDNODE']
-        if resource_config.has_key('HOSTURL'):
+        if 'HOSTURL' in resource_config:
             hosturl = resource_config['HOSTURL']
 
     # Try to split resourcename first to support resources where name
@@ -420,7 +421,7 @@ If in doubt, just let the user request access and accept it with the
     for env in re_list:
         (re_dict, re_msg) = get_re_dict(env, configuration)
         if re_dict:
-            if re_dict.has_key('TESTPROCEDURE'):
+            if 'TESTPROCEDURE' in re_dict:
                 if re_dict['TESTPROCEDURE'] != []:
                     html += '<option value=%s>%s' % (env, env)
 
@@ -452,7 +453,7 @@ resource with its current configuration.
     for env in re_list:
         (re_dict, re_msg) = get_re_dict(env, configuration)
         if re_dict:
-            if re_dict.has_key('TESTPROCEDURE'):
+            if 'TESTPROCEDURE' in re_dict:
                 if re_dict['TESTPROCEDURE'] != []:
                     verify_history += '<option value=%s>%s' % (env, env)
 

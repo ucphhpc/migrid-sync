@@ -27,4 +27,5 @@
 
 # "redirect" to restart
 
-from shared.functionality.restartstore import *
+from __future__ import absolute_import
+from .shared.functionality.restartstore import *

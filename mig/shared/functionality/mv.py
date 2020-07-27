@@ -26,21 +26,22 @@
 #
 
 """Emulate the un*x function with the same name"""
+from __future__ import absolute_import
 
 import os
 import glob
 import shutil
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.fileio import check_write_access
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables
-from shared.parseflags import verbose
-from shared.userio import GDPIOLogError, gdp_iolog
-from shared.validstring import valid_user_path
-from shared.vgrid import in_vgrid_share
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.fileio import check_write_access
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables
+from .shared.parseflags import verbose
+from .shared.userio import GDPIOLogError, gdp_iolog
+from .shared.validstring import valid_user_path
+from .shared.vgrid import in_vgrid_share
 
 
 def signature():
@@ -224,7 +225,7 @@ move entire %s shared folders!""" % configuration.site_vgrid_label})
                           [relative_path, relative_dest])
                 shutil.move(abs_path, abs_target)
                 logger.info('%s %s %s done' % (op_name, abs_path, abs_target))
-            except Exception, exc:
+            except Exception as exc:
                 if not isinstance(exc, GDPIOLogError):
                     gdp_iolog(configuration,
                               client_id,

@@ -27,6 +27,7 @@
 
 # Test parsing of a number of price strings
 
+from __future__ import print_function
 import time
 import sys
 import math
@@ -39,10 +40,10 @@ def test(scheduler, s):
     replace_map = {'exec_delay': repr(t)}
     price = scheduler.EvalPrice(s, replace_map)
     if price >= 0:
-        print "string '", s, "' gave price of", price, \
-            'with exec_delay', t
+        print("string '", s, "' gave price of", price, \
+            'with exec_delay', t)
     else:
-        print "string '", s, "' failed to parse with exec_delay", t
+        print("string '", s, "' failed to parse with exec_delay", t)
 
 
         # unsafe_val = eval(s)

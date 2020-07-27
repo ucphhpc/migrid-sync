@@ -50,6 +50,8 @@
 #
 
 """translate a 'job' from MiG format to ARC format"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import string
 import random
@@ -58,7 +60,7 @@ import os
 import sys
 
 # MiG utilities:
-from shared.conf import get_configuration_object
+from .shared.conf import get_configuration_object
 config = get_configuration_object()
 logger = config.logger
 
@@ -292,7 +294,7 @@ def translate(mrsl_dict, session_id=None):
 
         logger.debug('XRSL:\n%s\nScript (%s):\n%s\n)' %
                      (xrsl, script_name, script))
-    except arclib.XrslError, err:
+    except arclib.XrslError as err:
         logger.error('Error generating Xrsl: %s' % err)
         raise err
     return (xrsl, script, script_name)
@@ -376,7 +378,7 @@ def flip_for_input(list):
 
 
 if __name__ == '__main__':
-    print 'starting translation test. Args: ', len(sys.argv)
+    print('starting translation test. Args: ', len(sys.argv))
     logger.debug('translation for file ' + sys.argv[1] + ' starts')
     if len(sys.argv) > 1:
         fname = sys.argv[1]
@@ -384,22 +386,22 @@ if __name__ == '__main__':
         translated = '.'.join([parsed, 'xrsl'])
 
         try:
-            from shared import mrslparser
-            from shared import fileio
+            from .shared import mrslparser
+            from .shared import fileio
 
             (presult, errors) = mrslparser.parse(fname, 'test-id',
                                                  '+No+Client+Id', None, parsed)
             if not presult:
-                print 'Errors:\n%s' % errors
+                print('Errors:\n%s' % errors)
             else:
-                print 'Parsing OK, now translating'
+                print('Parsing OK, now translating')
                 mrsl_dict = fileio.unpickle(parsed, logger)
                 (xrsl, script, name) = translate(mrsl_dict, 'test-name')
-                print '\n'.join(['Job name', name, 'script', script, 'XRSL'])
+                print('\n'.join(['Job name', name, 'script', script, 'XRSL']))
                 fileio.write_file(script, "test-id.sh", logger)
                 print (format_xrsl(xrsl))
                 fileio.write_file("%s" % xrsl, translated, logger)
-                print 'done'
-        except Exception, err:
-            print 'Error.'
-            print err.__str__()
+                print('done')
+        except Exception as err:
+            print('Error.')
+            print(err.__str__())

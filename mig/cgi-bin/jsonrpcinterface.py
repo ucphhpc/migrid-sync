@@ -37,12 +37,13 @@ or
 yum install python-jsonrpclib
 depending on the platform.
 """
+from __future__ import absolute_import
 
 from jsonrpclib.SimpleJSONRPCServer import CGIJSONRPCRequestHandler
 # NOTE: See below for explanation of this XMLRPC dependency 
 from SimpleXMLRPCServer import CGIXMLRPCRequestHandler
 
-from shared.rpcfunctions import expose_functions, system_method_signature, \
+from .shared.rpcfunctions import expose_functions, system_method_signature, \
        system_method_help
 
 

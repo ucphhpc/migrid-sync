@@ -26,23 +26,24 @@
 #
 
 """Job description parser and validator"""
+from __future__ import absolute_import
 
 import os
 import time
 import types
 
-from shared.base import client_id_dir
-from shared.conf import get_configuration_object
-from shared.defaults import default_vgrid, any_vgrid, src_dst_sep
-from shared.fileio import unpickle, pickle, send_message_to_grid_script
-from shared.mrslkeywords import get_keywords_dict as mrsl_get_keywords_dict
-from shared.parser import parse as core_parse, check_types
-from shared.refunctions import is_runtime_environment
-from shared.safeinput import html_escape, valid_path
-from shared.vgridaccess import user_vgrid_access
+from .shared.base import client_id_dir
+from .shared.conf import get_configuration_object
+from .shared.defaults import default_vgrid, any_vgrid, src_dst_sep
+from .shared.fileio import unpickle, pickle, send_message_to_grid_script
+from .shared.mrslkeywords import get_keywords_dict as mrsl_get_keywords_dict
+from .shared.parser import parse as core_parse, check_types
+from .shared.refunctions import is_runtime_environment
+from .shared.safeinput import html_escape, valid_path
+from .shared.vgridaccess import user_vgrid_access
 
 try:
-    from shared import arcwrapper
+    from .shared import arcwrapper
 except:
     # Ignore errors and let it crash if ARC is enabled without the lib
     pass
@@ -78,7 +79,7 @@ def expand_variables(job_dict):
         if isinstance(value, list):
             newlist = []
             for elem in value[:]:
-                if type(elem) is types.TupleType:
+                if type(elem) is tuple:
 
                     # Environment? tuple
 
@@ -87,7 +88,7 @@ def expand_variables(job_dict):
                     val = replace_variables(val, var_map)
                     env = (name, val)
                     newlist.append(env)
-                elif type(elem) is types.StringType:
+                elif type(elem) is bytes:
                     newlist.append(replace_variables(str(elem),
                                                      var_map))
                 else:
@@ -186,7 +187,7 @@ def parse(
     # do not check runtime envs if the job is for ARC (submission will
     # fail later)
     if global_dict.get('JOBTYPE', 'unset') != 'arc' \
-            and global_dict.has_key('RUNTIMEENVIRONMENT'):
+            and 'RUNTIMEENVIRONMENT' in global_dict:
         re_entries_uppercase = []
         for specified_re in global_dict['RUNTIMEENVIRONMENT']:
             specified_re = specified_re.upper()
@@ -223,10 +224,10 @@ environment '%s', therefore the job can not be run on any resources.""" %
     global_dict['STATUS'] = 'PARSE'
     if forceddestination:
         global_dict['FORCEDDESTINATION'] = forceddestination
-        if forceddestination.has_key('UNIQUE_RESOURCE_NAME'):
+        if 'UNIQUE_RESOURCE_NAME' in forceddestination:
             global_dict["RESOURCE"] = "%(UNIQUE_RESOURCE_NAME)s_*" % \
                                       forceddestination
-        if forceddestination.has_key('RE_NAME'):
+        if 'RE_NAME' in forceddestination:
             re_name = forceddestination['RE_NAME']
 
             # verify the verifyfiles entries are not modified (otherwise RE creator
@@ -249,7 +250,7 @@ environment '%s', therefore the job can not be run on any resources.""" %
 
     for field in ('INPUTFILES', 'OUTPUTFILES', 'EXECUTABLES',
                   'VERIFYFILES'):
-        if not global_dict.has_key(field):
+        if field not in global_dict:
             continue
         normalized_field = []
         for line in global_dict[field]:
@@ -279,7 +280,7 @@ environment '%s', therefore the job can not be run on any resources.""" %
                     normalized_parts.append(check_path)
                 try:
                     valid_path(check_path)
-                except Exception, exc:
+                except Exception as exc:
                     return (False, 'Invalid %s part in %s: %s' %
                             (field, html_escape(part), exc))
             normalized_field.append(' '.join(normalized_parts))
@@ -303,11 +304,11 @@ environment '%s', therefore the job can not be run on any resources.""" %
             if timeleft < req_time:
                 return (False, 'Proxy time shorter than requested CPU time')
 
-        except arcwrapper.ARCWrapperError, err:
+        except arcwrapper.ARCWrapperError as err:
             return (False, err.what())
-        except arcwrapper.NoProxyError, err:
+        except arcwrapper.NoProxyError as err:
             return (False, 'No Proxy found: %s' % err.what())
-        except Exception, err:
+        except Exception as err:
             return (False, err.__str__())
 
     # save file
@@ -336,7 +337,7 @@ environment '%s', therefore the job can not be run on any resources.""" %
         return (False, '''Fatal error: Could not get exclusive access or write
 to %s''' % configuration.grid_stdin)
 
-    if forceddestination and forceddestination.has_key('RE_NAME'):
+    if forceddestination and 'RE_NAME' in forceddestination:
 
         # add job_id to runtime environment verification history
 
@@ -357,12 +358,12 @@ to %s''' % configuration.grid_stdin)
 
         # add entry to runtime verification history
 
-        if not resource_config.has_key('RUNTVERIFICATION'):
+        if 'RUNTVERIFICATION' not in resource_config:
             resource_config['RUNTVERIFICATION'] = \
                 {re_name: [dict_entry]}
         else:
             before_runt_dict = resource_config['RUNTVERIFICATION']
-            if not before_runt_dict.has_key(re_name):
+            if re_name not in before_runt_dict:
                 before_runt_dict[re_name] = [].append(dict_entry)
             else:
                 before_runt_dict[re_name].append(dict_entry)
@@ -376,7 +377,7 @@ to %s''' % configuration.grid_stdin)
                     % filename)
 
     if global_dict.get('JOBTYPE', 'unset').lower() == 'interactive':
-        from shared.functionality.vncsession import main
+        from .shared.functionality.vncsession import main
         return main(client_id, {})
 
     # print global_dict

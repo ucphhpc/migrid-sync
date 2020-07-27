@@ -29,6 +29,7 @@
 # Exchange server status data for use by scheduler, pricing, migration, etc
 #
 
+from __future__ import print_function
 import StringIO
 import os
 import sys
@@ -47,11 +48,11 @@ http_success = 200
 
 def print_status(status):
     for section in status.sections():
-        print '%s:' % section
+        print('%s:' % section)
         for name in status.options(section):
-            print name, '=', status.get(section, name)
+            print(name, '=', status.get(section, name))
 
-        print ''
+        print('')
 
 
 def write_status(config, status):
@@ -66,7 +67,7 @@ def write_status(config, status):
     # make sure that path exists
 
     try:
-        os.makedirs(status_dir, mode=0755)
+        os.makedirs(status_dir, mode=0o755)
     except:
 
         # An exception is thrown if the leaf exists
@@ -88,7 +89,7 @@ def write_status(config, status):
             filehandle.write('\n')
 
         filehandle.close()
-    except Exception, e:
+    except Exception as e:
         config.logger.error('Error: failed to write server status to %s (%s)'
                             , status_path, str(e))
         return False
@@ -191,7 +192,7 @@ def put_data(
 
     try:
         curl.perform()
-    except pycurl.error, e:
+    except pycurl.error as e:
 
         # pycurl.error is an (errorcode, errormsg) tuple
 
@@ -308,7 +309,7 @@ def get_data(
     try:
         config.logger.info('get_data: fetch %s', url)
         curl.perform()
-    except pycurl.error, e:
+    except pycurl.error as e:
 
         # pycurl.error is an (errorcode, errormsg) tuple
 
@@ -392,7 +393,7 @@ def dict_to_section(conf, dict, section_key):
 ....NB: Keys in dict are automatically lowercased in the section
 ...."""
 
-    if not dict.has_key(section_key):
+    if section_key not in dict:
         return False
 
     section = dict[section_key]
@@ -419,24 +420,24 @@ def post_data(config, scheduler):
     # write status to config object
 
     for (server_fqdn, server) in scheduler.servers.items():
-        print server_fqdn
+        print(server_fqdn)
         dict_to_section(server_status, server, 'SERVER_ID')
 
     for (res_fqdn, res) in scheduler.resources.items():
-        print res_fqdn
+        print(res_fqdn)
         dict_to_section(server_status, res, 'RESOURCE_ID')
 
     for (user_id, user) in scheduler.users.items():
-        print user_id
+        print(user_id)
         dict_to_section(server_status, user, 'USER_ID')
 
     # Debug:
 
-    print '\n--- Current Status ---'
+    print('\n--- Current Status ---')
     print_status(server_status)
-    print '''
+    print('''
 --- End of status ---
-'''
+''')
 
     status = write_status(config, server_status)
     return status
@@ -523,7 +524,7 @@ def migrate_job(config, job, peer):
 
     # Make sure legacy jobs don't fail
 
-    if not job.has_key('MIGRATE_COUNT'):
+    if 'MIGRATE_COUNT' not in job:
         job['MIGRATE_COUNT'] = str(0)
 
     # Add or increment migration counter
@@ -588,11 +589,11 @@ def balance_prices(config, scheduler):
         job_id = job['JOB_ID']
         config.logger.debug('balance_prices: inspecting job %s', job_id)
 
-        if not job.has_key('SCHEDULE_HINT'):
+        if 'SCHEDULE_HINT' not in job:
             config.logger.info('new job %s not marked yet', job_id)
         elif job['SCHEDULE_HINT'].startswith('MIGRATE '):
             server = job['SCHEDULE_HINT'].replace('MIGRATE ', '')
-            print 'peers:', scheduler.peers
+            print('peers:', scheduler.peers)
             peer = scheduler.peers[server]
             success = migrate_job(config, job, peer)
             if success:
@@ -656,8 +657,8 @@ def refresh_peer_status(
                     'upper')
             peer_users[title] = entity
         else:
-            print 'UpdatePeerStatus: %s: unknown type: %s' % (title,
-                    section_type)
+            print('UpdatePeerStatus: %s: unknown type: %s' % (title,
+                    section_type))
 
     scheduler.UpdatePeerStatus(peer, peer_servers, peer_resources,
                                peer_users)

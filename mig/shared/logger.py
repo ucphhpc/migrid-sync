@@ -26,6 +26,8 @@
 #
 
 """Logging helpers"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import logging
 import os
@@ -47,7 +49,7 @@ def _name_to_level(name):
               "critical": logging.CRITICAL}
     name = name.lower()
     if not name in levels:
-        print 'Unknown logging level %s, using %s!' % (name, _default_level)
+        print('Unknown logging level %s, using %s!' % (name, _default_level))
         name = _default_level
     return levels[name]
 
@@ -58,7 +60,7 @@ def _name_to_format(name):
                "critical": _default_format}
     name = name.lower()
     if not name in formats:
-        print 'Unknown logging format %s, using %s!' % (name, _default_format)
+        print('Unknown logging format %s, using %s!' % (name, _default_format))
         name = _default_format
     return formats[name]
 
@@ -257,63 +259,63 @@ def register_hangup_handler(conf):
 
 
 if __name__ == "__main__":
-    from shared.conf import get_configuration_object
+    from .shared.conf import get_configuration_object
     import os
     conf = get_configuration_object()
-    print "Unit testing logger functions"
-    print "=== Logger object  ==="
+    print("Unit testing logger functions")
+    print("=== Logger object  ===")
     log_path = "/tmp/logger-dummy.log"
     conf.logger_obj = logger_obj = \
         Logger("INFO", logfile=log_path, app="testing")
     conf.logger = logger = logger_obj.logger
-    print "Add some log entries"
+    print("Add some log entries")
     logger.debug("for unit testing")
     logger.info("for unit testing")
     logger.warning("for unit testing")
     logger.error("for unit testing")
-    print "Now log contains:"
+    print("Now log contains:")
     log_fd = open(log_path, "r")
     for line in log_fd:
-        print line.strip()
+        print(line.strip())
     log_fd.close()
-    print "Remove log and force reopen"
+    print("Remove log and force reopen")
     os.remove(log_path)
     logger_obj.reopen()
-    print "Add another log entry"
+    print("Add another log entry")
     logger.info("for unit testing")
-    print "Now log contains:"
+    print("Now log contains:")
     log_fd = open(log_path, "r")
     for line in log_fd:
-        print line.strip()
+        print(line.strip())
     log_fd.close()
-    print "Cleaning up"
+    print("Cleaning up")
     os.remove(log_path)
     logger_obj.hangup()
 
-    print "=== daemon logger functions ==="
+    print("=== daemon logger functions ===")
     log_path = "/tmp/logger-dummy.log"
-    print "Open a daemon logger"
+    print("Open a daemon logger")
     logger = daemon_logger("testing", log_path)
     conf.logger = logger
-    print "Add some log entries"
+    print("Add some log entries")
     logger.debug("for unit testing")
     logger.info("for unit testing")
     logger.warning("for unit testing")
     logger.error("for unit testing")
-    print "Now log contains:"
+    print("Now log contains:")
     log_fd = open(log_path, "r")
     for line in log_fd:
-        print line.strip()
+        print(line.strip())
     log_fd.close()
-    print "Remove log and force reopen"
+    print("Remove log and force reopen")
     os.remove(log_path)
     reopen_log(conf)
-    print "Add another log entry"
+    print("Add another log entry")
     logger.info("for unit testing")
-    print "Now log contains:"
+    print("Now log contains:")
     log_fd = open(log_path, "r")
     for line in log_fd:
-        print line.strip()
+        print(line.strip())
     log_fd.close()
-    print "Cleaning up"
+    print("Cleaning up")
     os.remove(log_path)

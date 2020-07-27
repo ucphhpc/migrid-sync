@@ -26,6 +26,7 @@
 #
 
 """Vicrey Auction Scheduler"""
+from __future__ import print_function
 
 import random
 
@@ -60,7 +61,7 @@ class VickreyAuctionScheduler(Scheduler):
         for i in range(qlen):
             job = self.job_queue.get_job(i)
 
-            print job['JOB_ID']
+            print(job['JOB_ID'])
 
             if job['CPUTIME'] <= res_time:
                 self.filtered_jobs.append(job)
@@ -124,8 +125,8 @@ class VickreyAuctionScheduler(Scheduler):
 
         # payment and scheduling
 
-        print highest[1]
-        print second[1]
+        print(highest[1])
+        print(second[1])
 
         # diff = highest[0] - second[0]
 
@@ -143,7 +144,7 @@ class VickreyAuctionScheduler(Scheduler):
 
         # self.UpdateHistory(winner, resource_conf)
 
-        print winner
+        print(winner)
 
         return winner
 

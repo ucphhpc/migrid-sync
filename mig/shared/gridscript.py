@@ -26,18 +26,20 @@
 #
 
 """Main MiG daemon (grid_script) helper functions"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import time
 
-from shared.base import client_id_dir
-from shared.defaults import job_output_dir
-from shared.fileio import send_message_to_grid_script, pickle, unpickle, \
+from .shared.base import client_id_dir
+from .shared.defaults import job_output_dir
+from .shared.fileio import send_message_to_grid_script, pickle, unpickle, \
     delete_file, touch
-from shared.notification import notify_user_thread
+from .shared.notification import notify_user_thread
 try:
-    from shared import arcwrapper
-except Exception, exc:
+    from .shared import arcwrapper
+except Exception as exc:
     # Ignore errors and let it crash if ARC is enabled without the lib
     pass
 
@@ -159,7 +161,7 @@ def check_mrsl_files(
                 message = 'USERJOBFILE %s/%s\n' % (client_dir, job_id)
                 if not send_message_to_grid_script(message, logger,
                                                    configuration):
-                    print 'Fatal error: Could not write to grid stdin'
+                    print('Fatal error: Could not write to grid stdin')
             elif job_dict['STATUS'] == 'QUEUED'\
                     and not job_queue.get_job_by_id(job_dict['JOB_ID']):
 
@@ -238,9 +240,9 @@ def remove_jobrequest_pending_files(configuration, only_new=True):
                 filename = os.path.join(root, name)
                 try:
                     os.remove(filename)
-                except Exception, err:
-                    print 'could not remove jobrequest_pending file %s %s'\
-                        % (filename, err)
+                except Exception as err:
+                    print('could not remove jobrequest_pending file %s %s'\
+                        % (filename, err))
 
     check_pending_files_end_time = time.time()
     logger.info('finished cleaning pending jobrequests in %fs' %
@@ -268,7 +270,7 @@ def server_cleanup(
         # logger.info("trying to remove: %s" % symlink1)
 
         os.remove(symlink1)
-    except Exception, err:
+    except Exception as err:
         logger.error('error removing symlink during server_clean_up %s'
                      % err)
         success = False
@@ -279,7 +281,7 @@ def server_cleanup(
         # logger.info("trying to remove: %s" % symlink2)
 
         os.remove(symlink2)
-    except Exception, err:
+    except Exception as err:
         logger.error('error removing symlink during server_clean_up %s'
                      % err)
         success = False
@@ -291,7 +293,7 @@ def server_cleanup(
         # logger.info("trying to remove: %s" % symlink3)
 
         os.remove(symlink3)
-    except Exception, err:
+    except Exception as err:
         logger.error('error removing symlink during server_clean_up %s'
                      % err)
         success = False
@@ -304,7 +306,7 @@ def server_cleanup(
         jobfile = os.path.realpath(joblink)
         os.remove(joblink)
         os.remove(jobfile)
-    except Exception, err:
+    except Exception as err:
         logger.error('error removing %s %s' % (jobfile, err))
         success = False
     try:
@@ -313,7 +315,7 @@ def server_cleanup(
         getupdatefilesfile = os.path.realpath(getupdatefileslink)
         os.remove(getupdatefileslink)
         os.remove(getupdatefilesfile)
-    except Exception, err:
+    except Exception as err:
         logger.error('error removing %s %s' % (getupdatefilesfile,
                                                err))
         success = False
@@ -323,7 +325,7 @@ def server_cleanup(
         sendoutputfilesfile = os.path.realpath(sendoutputfileslink)
         os.remove(sendoutputfileslink)
         os.remove(sendoutputfilesfile)
-    except Exception, err:
+    except Exception as err:
         logger.error('error removing %s %s' % (sendoutputfilesfile,
                                                err))
         success = False
@@ -334,7 +336,7 @@ def server_cleanup(
         sendupdatefilesfile = os.path.realpath(sendupdatefileslink)
         os.remove(sendupdatefileslink)
         os.remove(sendupdatefilesfile)
-    except Exception, err:
+    except Exception as err:
         logger.error('error removing %s %s' % (sendupdatefilesfile,
                                                err))
         success = False
@@ -343,7 +345,7 @@ def server_cleanup(
                                              job_id + '.last_live_update')
         if os.path.isfile(last_live_update_file):
             os.remove(last_live_update_file)
-    except Exception, err:
+    except Exception as err:
         logger.error('error removing %s %s' % (last_live_update_file,
                                                err))
         success = False
@@ -353,7 +355,7 @@ def server_cleanup(
                                             '.authorized_keys')
         if os.path.isfile(authorized_keys_file):
             os.remove(authorized_keys_file)
-    except Exception, err:
+    except Exception as err:
         logger.error('error removing %s %s' % (authorized_keys_file,
                                                err))
         success = False
@@ -372,13 +374,13 @@ def server_cleanup(
             if os.path.exists(status_path):
                 try:
                     os.remove(status_path)
-                except Exception, err:
+                except Exception as err:
                     logger.error('could not remove %s during server_clean_up %s'
                                  % (status_path, err))
         if os.path.exists(empty_prefix):
             try:
                 os.rmdir(empty_prefix)
-            except Exception, err:
+            except Exception as err:
                 logger.error('could not remove %s during server_clean_up %s'
                              % (empty_prefix, err))
 
@@ -389,7 +391,7 @@ def server_cleanup(
     if os.path.islink(sandboxgetinputfileslink):
         try:
             os.remove(sandboxgetinputfileslink)
-        except Exception, err:
+        except Exception as err:
             logger.info('could not remove %s during server_clean_up %s'
                         % (sandboxgetinputfileslink, err))
 
@@ -400,7 +402,7 @@ def server_cleanup(
     if os.path.islink(oneclickexelink):
         try:
             os.remove(oneclickexelink)
-        except Exception, err:
+        except Exception as err:
             logger.info('could not remove %s during server_clean_up %s'
                         % (oneclickexelink, err))
 
@@ -418,7 +420,7 @@ def requeue_job(
     """Requeue a failed job by moving it from executing_queue to job_queue"""
     if not job_dict:
         msg = 'requeue_job: %s is no longer in executing queue'
-        print failed_msg
+        print(failed_msg)
         logger.info(failed_msg)
     else:
         executing_queue.dequeue_job_by_id(job_dict['JOB_ID'])
@@ -426,8 +428,8 @@ def requeue_job(
 
         # Clean up the server for files assosiated with the executing job
 
-        if not job_dict.has_key('SESSIONID')\
-            or not job_dict.has_key('IOSESSIONID')\
+        if 'SESSIONID' not in job_dict\
+            or 'IOSESSIONID' not in job_dict\
             or not server_cleanup(
             job_dict['SESSIONID'],
             job_dict['IOSESSIONID'],
@@ -437,7 +439,7 @@ def requeue_job(
             logger,
         ):
             logger.error('could not clean up MiG server')
-            print 'CLEAN UP FAILED'
+            print('CLEAN UP FAILED')
 
         client_dir = client_id_dir(job_dict['USER_CERT'])
 
@@ -452,7 +454,7 @@ def requeue_job(
 
         # Generate execution history
 
-        if not job_dict.has_key('EXECUTION_HISTORY'):
+        if 'EXECUTION_HISTORY' not in job_dict:
             job_dict['EXECUTION_HISTORY'] = []
 
         history_dict = {
@@ -485,13 +487,13 @@ def requeue_job(
             del job_dict['EXE']
             del job_dict['RESOURCE_CONFIG']
             del job_dict['LOCALJOBNAME']
-            if job_dict.has_key('SESSIONID'):
+            if 'SESSIONID' in job_dict:
                 del job_dict['SESSIONID']
-            if job_dict.has_key('IOSESSIONID'):
+            if 'IOSESSIONID' in job_dict:
                 del job_dict['IOSESSIONID']
-            if job_dict.has_key('PUBLICNAME'):
+            if 'PUBLICNAME' in job_dict:
                 del job_dict['PUBLICNAME']
-            if job_dict.has_key('RESOURCE_VGRID'):
+            if 'RESOURCE_VGRID' in job_dict:
                 del job_dict['RESOURCE_VGRID']
 
             pickle(job_dict, mrsl_file, logger)
@@ -504,7 +506,7 @@ def requeue_job(
                 '%s failed to execute job %s - requeue for retry %d of %d'\
                 % (unique_resource_name, job_dict['JOB_ID'],
                    job_dict['RETRY_COUNT'], job_retries)
-            print msg
+            print(msg)
             logger.info(msg)
         else:
 
@@ -517,7 +519,7 @@ def requeue_job(
             msg = 'Gave up on executing job %s after %d retries'\
                 % (job_dict['JOB_ID'], job_retries)
             logger.error(msg)
-            print msg
+            print(msg)
             notify_user_thread(
                 job_dict,
                 configuration.myfiles_py_location,
@@ -545,13 +547,13 @@ def arc_job_status(
         jobinfo = {'status': 'UNKNOWN(TO FINISH)'}
         session = arcwrapper.Ui(userdir)
         jobinfo = session.jobStatus(job_dict['EXE'])
-    except arcwrapper.ARCWrapperError, err:
+    except arcwrapper.ARCWrapperError as err:
         logger.error('Error during ARC status retrieval: %s'
                      % err.what())
-    except arcwrapper.NoProxyError, err:
+    except arcwrapper.NoProxyError as err:
         logger.error('Error during ARC status retrieval: %s'
                      % err.what())
-    except Exception, err:
+    except Exception as err:
         logger.error('Error during ARC status retrieval: %s'
                      % err.__str__())
     return jobinfo['status']
@@ -591,7 +593,7 @@ def clean_arc_job(
     try:
         userdir = os.path.join(configuration.user_home, client_dir)
         arcsession = arcwrapper.Ui(userdir)
-    except Exception, err:
+    except Exception as err:
         logger.error('Error cleaning up ARC job: %s' % err)
         logger.debug('Job was: %s' % job_dict)
     else:
@@ -614,7 +616,7 @@ def clean_arc_job(
         for link in symlinks:
             try:
                 os.remove(link)
-            except Exception, err:
+            except Exception as err:
                 logger.error('Could not remove link %s: %s' % (link, err))
 
     job_dict['STATUS'] = status
@@ -623,7 +625,7 @@ def clean_arc_job(
     if not status == 'FINISHED':
         # Generate execution history
 
-        if not job_dict.has_key('EXECUTION_HISTORY'):
+        if 'EXECUTION_HISTORY' not in job_dict:
             job_dict['EXECUTION_HISTORY'] = []
 
         history_dict = {

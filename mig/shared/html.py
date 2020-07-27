@@ -25,11 +25,13 @@
 # -- END_HEADER ---
 #
 
+from __future__ import print_function
+from __future__ import absolute_import
 import os
 import sys
 
-from shared.base import requested_page
-from shared.defaults import default_pager_entries, trash_linkname, \
+from .shared.base import requested_page
+from .shared.defaults import default_pager_entries, trash_linkname, \
     csrf_field, keyword_all
 
 ICONS_ONLY, TEXT_ONLY = "ICONS_ONLY", "TEXT_ONLY"
@@ -156,7 +158,7 @@ vgrid_items['monitor'] = {'class': 'vgridmonitor', 'title': 'Monitor',
 
 
 def html_print(formatted_text, html=True):
-    print html_add(formatted_text, html)
+    print(html_add(formatted_text, html))
 
 
 def html_add(formatted_text, html=True):
@@ -781,7 +783,7 @@ def man_base_js(configuration, table_dicts, overrides={}):
     """
     confirm_overrides = {}
     for name in ('width', ):
-        if overrides.has_key(name):
+        if name in overrides:
             confirm_overrides[name] = overrides[name]
     filled_table_dicts = []
     tablesort_init = '''
@@ -851,7 +853,7 @@ def man_base_html(configuration, overrides={}):
     """
     confirm_overrides = {}
     for name in ('rows', 'cols', ):
-        if overrides.has_key(name):
+        if name in overrides:
             confirm_overrides[name] = overrides[name]
     return confirm_html(configuration, **confirm_overrides)
 

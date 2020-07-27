@@ -27,6 +27,7 @@
 # -- END_HEADER ---
 #
 
+from __future__ import print_function
 import logging
 import os
 import select
@@ -37,7 +38,7 @@ import time
 try:
     import OpenSSL
 except ImportError:
-    print 'WARNING: the python OpenSSL module is required for vm-proxy'
+    print('WARNING: the python OpenSSL module is required for vm-proxy')
     OpenSSL = None
 
 

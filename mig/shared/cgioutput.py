@@ -32,6 +32,7 @@ in order to allow a consistent format:
 STATUSCODE
 CONTENT
 """
+from __future__ import print_function
 
 import sys
 
@@ -106,7 +107,7 @@ class CGIOutput:
         # newline
 
         if status == self.OK:
-            print '0'
+            print('0')
             sys.stdout.write(client_msg_string)
             self.logger.info("%s .Replied 'OK'" % internal_msg_string)
             sys.exit(0)
@@ -114,7 +115,7 @@ class CGIOutput:
 
             # log with info level
 
-            print '1'
+            print('1')
             sys.stdout.write(client_msg_string)
             self.logger.info("%s .Replied 'ERROR'"
                               % internal_msg_string)
@@ -123,7 +124,7 @@ class CGIOutput:
 
             # log with error level
 
-            print '1'
+            print('1')
             sys.stdout.write(client_msg_string)
             self.logger.error("CGI error: %s .Replied 'ERROR'"
                                % internal_msg_string)

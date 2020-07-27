@@ -26,6 +26,8 @@
 #
 
 """Access request link functions"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 from binascii import hexlify
 import datetime
@@ -34,9 +36,9 @@ import os
 import time
 from urllib import urlencode
 
-from shared.defaults import request_prefix, request_ext
-from shared.fileio import make_temp_file, delete_file
-from shared.serial import dumps, load
+from .shared.defaults import request_prefix, request_ext
+from .shared.fileio import make_temp_file, delete_file
+from .shared.serial import dumps, load
 
 def build_accessrequestitem_object(configuration, request_dict):
     """Build a access request object based on input request_dict"""
@@ -76,7 +78,7 @@ def load_access_request(configuration, request_dir, req_name):
                not req_name.endswith(request_ext):
             raise ValueError("invalid request name: %s" % req_name)
         request = load(req_path)
-    except Exception, err:
+    except Exception as err:
         configuration.logger.error("could not load request in %s: %s" % \
                                    (req_path, err))
     return request
@@ -95,7 +97,7 @@ def save_access_request(configuration, request_dir, request):
         request['request_name'] = os.path.basename(tmpfile)
         os.write(filehandle, dumps(request))
         os.close(filehandle)
-    except Exception, err:
+    except Exception as err:
         configuration.logger.error("could not save request %s in %s: %s" % \
                                    (request, request_dir, err))
         return False
@@ -112,9 +114,9 @@ def delete_access_request(configuration, request_dir, req_name):
     return delete_file(req_path, configuration.logger)
 
 if __name__ == "__main__":
-    print "Unit testing fileio"
+    print("Unit testing fileio")
     import sys
-    from shared.conf import get_configuration_object
+    from .shared.conf import get_configuration_object
     target = 'abc.0'
     if len(sys.argv) > 1:
         target = sys.argv[1]
@@ -123,19 +125,19 @@ if __name__ == "__main__":
                  "target": target, "request_text": "Please add me..."}
     res_home = os.path.join(conf.resource_home, target)
     all_reqs = list_access_requests(conf, res_home)
-    print "found reqs: %s" % ' , '.join(all_reqs)
+    print("found reqs: %s" % ' , '.join(all_reqs))
     for req_name in all_reqs:
         req = load_access_request(conf, res_home, req_name)
-        print "Req: %s" % req
-    print "Saving dummy req: %s" % dummy_req
+        print("Req: %s" % req)
+    print("Saving dummy req: %s" % dummy_req)
     dummy_name = save_access_request(conf, res_home, dummy_req)
     all_reqs = list_access_requests(conf, res_home)
-    print "found reqs: %s" % ' , '.join(all_reqs)
+    print("found reqs: %s" % ' , '.join(all_reqs))
     for req_name in all_reqs:
         req = load_access_request(conf, res_home, req_name)
-        print "Req: %s" % req
-    print "Deleting dummy req %s again" % dummy_name
+        print("Req: %s" % req)
+    print("Deleting dummy req %s again" % dummy_name)
     delete_access_request(conf, res_home, dummy_name)
     all_reqs = list_access_requests(conf, res_home)
-    print "found reqs: %s" % ' , '.join(all_reqs)
+    print("found reqs: %s" % ' , '.join(all_reqs))
         

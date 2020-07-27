@@ -50,6 +50,7 @@
 #
 
 """ARC dummy interface module."""
+from __future__ import absolute_import
 
 import os
 import sys
@@ -59,7 +60,7 @@ import threading
 import tempfile
 
 # MiG utilities:
-from shared.conf import get_configuration_object
+from .shared.conf import get_configuration_object
 config = get_configuration_object()
 logger = config.logger
 
@@ -163,10 +164,10 @@ class Ui:
             self._userdir = userdir
             self._proxy = DummyProxy(userdir + '/dummyproxy')
 
-        except ARCLibError, err:
+        except ARCLibError as err:
             logger.error('Cannot initialise: %s' % err.what())
             raise err
-        except Exception, other:
+        except Exception as other:
             logger.error('Unexpected error during initialisation.\n %s' % other)
             raise ARCWrapperError(other.__str__())
 

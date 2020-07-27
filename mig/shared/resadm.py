@@ -26,6 +26,7 @@
 #
 
 """Resource administration - mostly remote command execution"""
+from __future__ import absolute_import
 
 import os
 import tempfile
@@ -35,13 +36,13 @@ import datetime
 
 # MiG imports
 
-from shared.conf import get_resource_configuration, get_resource_exe, \
+from .shared.conf import get_resource_configuration, get_resource_exe, \
     get_resource_store, get_configuration_object
-from shared.fileio import unpickle, pickle
-from shared.resource import anon_resource_id
-from shared.safeeval import subprocess_popen, subprocess_pipe, \
+from .shared.fileio import unpickle, pickle
+from .shared.resource import anon_resource_id
+from .shared.safeeval import subprocess_popen, subprocess_pipe, \
      subprocess_stdout, subprocess_check_output
-from shared.ssh import execute_on_resource, execute_on_exe, execute_on_store, \
+from .shared.ssh import execute_on_resource, execute_on_exe, execute_on_store, \
     copy_file_to_exe, copy_file_to_resource
 
 ssh_error_code = 255
@@ -180,7 +181,7 @@ def put_exe_pgid(
         fcntl.flock(pgid_file, fcntl.LOCK_UN)
         pgid_file.close()
         status = True
-    except Exception, err:
+    except Exception as err:
         msg = 'File: %s could not be read/written: %s' % (pgid_path,
                 err)
         status = False
@@ -219,7 +220,7 @@ def start_resource_exe_if_continuous(
 
             # Handle old typo gracefully
 
-            if exe.has_key('continuous'):
+            if 'continuous' in exe:
                 continuous = exe['continuous']
             else:
                 continuous = exe['continious']
@@ -354,7 +355,7 @@ def fill_frontend_script(
         os.write(filehandle, newhandle.read())
         newhandle.close()
         return (True, '')
-    except Exception, err:
+    except Exception as err:
         msg = \
             'Error: could not write frontend script file for some reason %s'\
              % err
@@ -392,7 +393,7 @@ def fill_exe_node_script(
         # Please note that execution_precondition gets eval'ed so we escape it
 
         execution_precondition = ''
-        if exe.has_key('execution_precondition'):
+        if 'execution_precondition' in exe:
             execution_precondition = exe['execution_precondition']
         os.write(filehandle, "execution_precondition='"
                   + execution_precondition + "'\n")
@@ -413,27 +414,27 @@ def fill_exe_node_script(
         os.write(filehandle, 'execution_dir=' + exe['execution_dir']
                   + '\n')
         admin_email = ''
-        if resource_config.has_key('ADMINEMAIL'):
+        if 'ADMINEMAIL' in resource_config:
             admin_email = resource_config['ADMINEMAIL']
         os.write(filehandle, "admin_email='%s'\n" % admin_email)
         execution_delay_command = ''
-        if resource_config.has_key('LRMSDELAYCOMMAND'):
+        if 'LRMSDELAYCOMMAND' in resource_config:
             execution_delay_command = resource_config['LRMSDELAYCOMMAND'
                     ]
         os.write(filehandle, "execution_delay_command='%s'\n"
                   % execution_delay_command)
         submit_job_command = ''
-        if resource_config.has_key('LRMSSUBMITCOMMAND'):
+        if 'LRMSSUBMITCOMMAND' in resource_config:
             submit_job_command = resource_config['LRMSSUBMITCOMMAND']
         os.write(filehandle, "submit_job_command='%s'\n"
                   % submit_job_command)
         remove_job_command = ''
-        if resource_config.has_key('LRMSREMOVECOMMAND'):
+        if 'LRMSREMOVECOMMAND' in resource_config:
             remove_job_command = resource_config['LRMSREMOVECOMMAND']
         os.write(filehandle, "remove_job_command='%s'\n"
                   % remove_job_command)
         query_done_command = ''
-        if resource_config.has_key('LRMSDONECOMMAND'):
+        if 'LRMSDONECOMMAND' in resource_config:
             query_done_command = resource_config['LRMSDONECOMMAND']
         os.write(filehandle, "query_done_command='%s'\n"
                   % query_done_command)
@@ -463,7 +464,7 @@ def fill_exe_node_script(
         os.write(filehandle, newhandle.read())
         newhandle.close()
         return (True, '')
-    except Exception, err:
+    except Exception as err:
         return (False, 'could not write exe node script file: %s (%s , %s)' % (err, configuration, os.environ))
 
 
@@ -518,7 +519,7 @@ def get_frontend_script(unique_resource_name, logger):
         os.remove(local_filename)
         logger.debug('got frontend script %s' % local_filename)
         return (True, fe_script)
-    except Exception, err:
+    except Exception as err:
 
         msg = 'could not get frontend script (%s)' % err
         logger.error(msg)
@@ -567,7 +568,7 @@ def get_master_node_script(unique_resource_name, exe_name, logger):
         os.remove(local_filename)
         logger.debug('got master node script %s' % local_filename)
         return (True, exe_script)
-    except Exception, err:
+    except Exception as err:
 
         msg = 'could not get master node script script (%s)' % err
         logger.error(msg)
@@ -671,7 +672,7 @@ def start_resource_exe(
         if lock_pgid_file:
             fcntl.flock(pgid_file, fcntl.LOCK_UN)
         pgid_file.close()
-    except Exception, err:
+    except Exception as err:
         err_msg = "File: '%s' could not be accessed: %s" % (pgid_path,
                 err)
         logger.error(err_msg)
@@ -684,14 +685,14 @@ def start_resource_exe(
          % (resource_home, unique_resource_name, exe_name)
     try:
         os.remove(jobrequest_lock_file)
-    except OSError, ose:
+    except OSError as ose:
 
         # only accept no such file errors - meaning lock wasn't there
 
         if ose.errno != 2:
             logger.error('removing %s failed: %s'
                           % (jobrequest_lock_file, ose))
-    except Exception, err:
+    except Exception as err:
         logger.error('removing %s failed: %s' % (jobrequest_lock_file,
                      err))
 
@@ -734,7 +735,7 @@ def start_resource_exe(
 
         logger.info('wrote %s script into %s' % (exe_kind,
                     local_filename))
-    except Exception, err:
+    except Exception as err:
         msg += '\n%s' % err
         logger.error("couldn't write %s node script file: %s"
                       % (exe_kind, err))
@@ -859,8 +860,8 @@ ssh -o Port=%(SSHPORT)s %(MIGUSER)s@%(HOSTURL)s ssh $*
                 jump_file = open(jump_path, 'w')
                 jump_file.write(jump_script)
                 jump_file.close()
-                os.chmod(jump_path, 0700)
-            except Exception, exc:
+                os.chmod(jump_path, 0o700)
+            except Exception as exc:
                 status = False
                 msg += ' failed to write jump helper script %s: %s. ' % (jump_path, exc)
 
@@ -902,7 +903,7 @@ ssh -o Port=%(SSHPORT)s %(MIGUSER)s@%(HOSTURL)s ssh $*
             try:
                 if not os.path.exists(vgrid_link):
                     os.symlink(mount_point, vgrid_link)
-            except Exception, exc:
+            except Exception as exc:
                 status = False
                 msg += ' failed to link %s into %s: %s. ' % (mount_point, vgrid_link, exc)
                 logger.error('failed to link %s: %s' % (mount_point, exc))
@@ -971,7 +972,7 @@ def start_resource(
             pgid_file.close()
             if pgid.isdigit():
                 raise Exception('FE already started')
-        except Exception, exc:
+        except Exception as exc:
             msg += str(exc)
             return (False, msg)
 
@@ -991,7 +992,7 @@ def start_resource(
             return (False, msg)
         os.close(filehandle)
         logger.debug('wrote frontend script %s' % local_filename)
-    except Exception, err:
+    except Exception as err:
         logger.error('could not write frontend script (%s)', err)
         return (False, msg)
 
@@ -1012,7 +1013,7 @@ def start_resource(
     try:
         if os.path.isfile(local_filename):
             os.remove(local_filename)
-    except Exception, err:
+    except Exception as err:
         logger.error('Could not remove %s (%s)' % (local_filename, err))
 
     if copy_status:
@@ -1149,13 +1150,13 @@ def resource_fe_action(
                     pgid_file.flush()
                     fcntl.flock(pgid_file, fcntl.LOCK_UN)
                     pgid_file.close()
-                except Exception, err:
+                except Exception as err:
                     logger.error("Could not update pgid file: '"
                                   + pgid_path + "'")
 
                 msg += ssh_status_msg
                 return (True, msg)
-    except Exception, err:
+    except Exception as err:
 
         # msg = "FE.PGID could not be read and the status of the frontend is therefore unknown. Could not perform requested action, try (re)starting the frontend"
 
@@ -1218,7 +1219,7 @@ def resource_exe_action(
         if lock_pgid_file:
             fcntl.flock(pgid_file, fcntl.LOCK_EX)
 
-        if exe.has_key('continuous'):
+        if 'continuous' in exe:
             continuous = exe['continuous']
         else:
             continuous = exe['continious']
@@ -1339,7 +1340,7 @@ def resource_exe_action(
         pgid_file.close()
 
         return (status, msg)
-    except Exception, err:
+    except Exception as err:
         err_msg = action + " of '" + unique_resource_name + "' EXE '"\
              + exe_name + "' failed: " + str(err)
         logger.error(err_msg)
@@ -1447,7 +1448,7 @@ def resource_store_action(
         try:
             if os.path.exists(vgrid_link):
                 os.remove(vgrid_link)
-        except Exception, exc:
+        except Exception as exc:
             msg += ' failed to unlink %s: %s. ' % (vgrid_link, exc)
             logger.error('failed to unlink %s: %s' % (vgrid_link, exc))
                 

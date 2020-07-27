@@ -27,6 +27,7 @@
 
 
 """This script removes a given sandbox user from the user list"""
+from __future__ import print_function
 
 import sys
 import os
@@ -45,20 +46,20 @@ RESOURCES = 1
 try:
     username = sys.argv[1]
 except:
-    print 'You must specify a username.'
+    print('You must specify a username.')
     sys.exit(1)
 
 # Load the user file
 
 userdb = load(sandboxdb_file)
 
-if userdb.has_key(username):
+if username in userdb:
 
     # Open the user file in write-mode - this deletes the file!
 
     del userdb[username]
     dump(userdb, sandboxdb_file)
-    print 'Username %s has now been deleted!' % username
+    print('Username %s has now been deleted!' % username)
 else:
-    print 'Sorry, username does not exist: %s' % username
+    print('Sorry, username does not exist: %s' % username)
     sys.exit(0)

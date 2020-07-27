@@ -26,25 +26,26 @@
 #
 
 """Add one or more owners to a vgrid"""
+from __future__ import absolute_import
 
 from binascii import unhexlify
 import os
 
-from shared.accessrequests import delete_access_request
-from shared.base import client_id_dir, distinguished_name_to_user, \
+from .shared.accessrequests import delete_access_request
+from .shared.base import client_id_dir, distinguished_name_to_user, \
     expand_openid_alias
-from shared.defaults import any_protocol, csrf_field
-from shared.fileio import make_symlink
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.init import initialize_main_variables, find_entry
-from shared.safeeval import subprocess_popen, subprocess_pipe, \
+from .shared.defaults import any_protocol, csrf_field
+from .shared.fileio import make_symlink
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from .shared.init import initialize_main_variables, find_entry
+from .shared.safeeval import subprocess_popen, subprocess_pipe, \
     subprocess_stdout
-from shared.useradm import get_full_user_map
-from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
+from .shared.useradm import get_full_user_map
+from .shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
     vgrid_is_member, vgrid_list_subvgrids, vgrid_add_owners, \
     vgrid_list_parents, allow_owners_adm, vgrid_manage_allowed
-from shared import returnvalues
+from .shared import returnvalues
 
 
 def signature():
@@ -95,7 +96,7 @@ def add_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir,
                             (perms_cmd, proc.stdout.read(),
                              proc.returncode))
         return True
-    except Exception, exc:
+    except Exception as exc:
         output_objects.append(
             {'object_type': 'error_text', 'text':
              'Could not give %s tracker admin rights: %s' % (cert_id, exc)
@@ -338,14 +339,14 @@ directory exists with the same name!'''})
 
         try:
             os.mkdir(user_public_base)
-        except Exception, exc:
+        except Exception as exc:
             pass
 
         # create private_base in cert_ids home dir if it does not exists
 
         try:
             os.mkdir(user_private_base)
-        except Exception, exc:
+        except Exception as exc:
             pass
 
         if is_subvgrid:
@@ -375,7 +376,7 @@ directory exists with the same name!'''})
                 priv_dir = user_private_base + vgrid_name_without_last_fragment
                 if not os.path.isdir(priv_dir):
                     os.makedirs(priv_dir)
-            except Exception, exc:
+            except Exception as exc:
 
                 # out of range? should not be possible due to is_subvgrid check
 

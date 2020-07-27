@@ -26,18 +26,20 @@
 #
 
 """Update a VGrid with missing components"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.defaults import csrf_field
-from shared.fileio import make_symlink
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.init import initialize_main_variables, find_entry
-from shared.vgrid import vgrid_is_owner, vgrid_list, vgrid_set_entities
-from shared.functionality.createvgrid import create_scm, create_tracker, \
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.defaults import csrf_field
+from .shared.fileio import make_symlink
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from .shared.init import initialize_main_variables, find_entry
+from .shared.vgrid import vgrid_is_owner, vgrid_list, vgrid_set_entities
+from .shared.functionality.createvgrid import create_scm, create_tracker, \
      create_forum
 
 def signature():
@@ -159,7 +161,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     for path in (base_dir, public_files_dir, private_files_dir, vgrid_files_dir):
         try:
             os.mkdir(path)
-        except Exception, exc:
+        except Exception as exc:
             pass
 
     # Try entity creation or repair
@@ -286,18 +288,18 @@ if __name__ == "__main__":
 
     import sys
 
-    from shared.conf import get_configuration_object
-    from shared.defaults import default_vgrid
-    from shared.output import txt_format
-    from shared.vgridaccess import get_vgrid_map_vgrids
+    from .shared.conf import get_configuration_object
+    from .shared.defaults import default_vgrid
+    from .shared.output import txt_format
+    from .shared.vgridaccess import get_vgrid_map_vgrids
     
     # use dummy owner check
     vgrid_is_owner = dummy_owner_check
     try:
         configuration = get_configuration_object()
-    except IOError, ioe:
-        print "Error loading conf: %s" % ioe
-        print "maybe you need to set MIG_CONF environment?"
+    except IOError as ioe:
+        print("Error loading conf: %s" % ioe)
+        print("maybe you need to set MIG_CONF environment?")
         sys.exit(1)
 
     script = __file__
@@ -305,7 +307,7 @@ if __name__ == "__main__":
     if sys.argv[1:]:
         client_id = sys.argv[1]
     else:
-        print "you must supply a valid user ID to fake run as"
+        print("you must supply a valid user ID to fake run as")
         sys.exit(1)
     extra_environment = {
         'REQUEST_METHOD': 'GET',
@@ -328,7 +330,7 @@ if __name__ == "__main__":
     for vgrid_name in all_vgrids:
         if vgrid_name == default_vgrid:
             continue
-        print "update %s" % vgrid_name
+        print("update %s" % vgrid_name)
         ret_msg = ''
         (output_objects, ret_val) = main(client_id, {'vgrid_name': [vgrid_name]})
-        print txt_format(configuration, ret_val, ret_msg, output_objects)
+        print(txt_format(configuration, ret_val, ret_msg, output_objects))

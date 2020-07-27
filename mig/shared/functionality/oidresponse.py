@@ -32,13 +32,14 @@ It can be used as the target for OpenID handling such OpenID responses by
 setting the AuthOpenIDLoginPage variable in Apache like:
 AuthOpenIDLoginPage https://${SID_FQDN}:${SID_PORT}/cgi-sid/oidresponse.py
 """
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared.functional import validate_input, REJECT_UNSET
-from shared.init import initialize_main_variables, find_entry
-from shared.url import openid_basic_logout_url
+from .shared import returnvalues
+from .shared.functional import validate_input, REJECT_UNSET
+from .shared.init import initialize_main_variables, find_entry
+from .shared.url import openid_basic_logout_url
 
 
 def signature(configuration):

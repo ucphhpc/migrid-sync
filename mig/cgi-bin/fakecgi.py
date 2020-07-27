@@ -33,19 +33,21 @@
 script. Some of the MiG cgi scripts may require the provided RUNAS user
 to exist for actions to work.
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import sys
 
-from shared.base import distinguished_name_to_user
-from shared.conf import get_configuration_object
-from shared.defaults import csrf_field
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.safeeval import subprocess_call
+from .shared.base import distinguished_name_to_user
+from .shared.conf import get_configuration_object
+from .shared.defaults import csrf_field
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.safeeval import subprocess_call
 
 
 def usage():
-    print 'Usage: %s SCRIPT [METHOD] [QUERY] [RUNAS] [REMOTE_USER] [REMOTE_ADDR] [AUTO_CSRF]' % sys.argv[0]
+    print('Usage: %s SCRIPT [METHOD] [QUERY] [RUNAS] [REMOTE_USER] [REMOTE_ADDR] [AUTO_CSRF]' % sys.argv[0])
 
 
 if len(sys.argv) < 2:
@@ -59,7 +61,7 @@ run_as_dn = '/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Test User/emailAddress=nosuch@bogus
 auto_csrf = False
 remote_user = ''
 remote_addr = ''
-print sys.argv
+print(sys.argv)
 if sys.argv[2:]:
     method = sys.argv[2]
 if sys.argv[3:]:
@@ -123,5 +125,5 @@ os.environ.update(extra_environment)
 
 if not os.path.isabs(script):
     script = os.path.abspath(script)
-print "Running %s with environment:\n%s" % (script, os.environ)
+print("Running %s with environment:\n%s" % (script, os.environ))
 subprocess_call(script, stdin=open('/dev/null', 'r'))

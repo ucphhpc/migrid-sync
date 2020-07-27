@@ -26,17 +26,19 @@
 #
 
 """Data transfer functions"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import datetime
 import os
 import time
 
-from shared.base import client_id_dir
-from shared.defaults import datatransfers_filename, user_keys_dir, \
+from .shared.base import client_id_dir
+from .shared.defaults import datatransfers_filename, user_keys_dir, \
      transfer_output_dir
-from shared.fileio import makedirs_rec, delete_file
-from shared.safeeval import subprocess_popen, subprocess_pipe
-from shared.serial import load, dump
+from .shared.fileio import makedirs_rec, delete_file
+from .shared.safeeval import subprocess_popen, subprocess_pipe
+from .shared.serial import load, dump
 
 default_key_type = 'rsa'
 default_key_bits = 2048
@@ -114,7 +116,7 @@ def load_data_transfers(configuration, client_id):
             transfers = load(transfers_path)
         else:
             transfers = {}
-    except Exception, exc:
+    except Exception as exc:
         return (False, "could not load saved data transfers: %s" % exc)
     return (True, transfers)
 
@@ -175,7 +177,7 @@ def modify_data_transfers(configuration, client_id, transfer_dict, action,
         dump(transfers, transfers_path)
         res_dir = get_status_dir(configuration, client_id, transfer_id)
         makedirs_rec(res_dir, configuration)
-    except Exception, err:
+    except Exception as err:
         logger.error("modify_data_transfers failed: %s" % err)
         return (False, 'Error updating data transfers: %s' % err)
     return (True, transfer_id)
@@ -218,7 +220,7 @@ def load_user_keys(configuration, client_id):
                             client_id_dir(client_id), user_keys_dir)
     try:
         hits = os.listdir(keys_dir)
-    except Exception, exc:
+    except Exception as exc:
         # This is common for users without transfer keys
         logger.debug("could not find user keys in %s: %s" % (keys_dir, exc))
         return user_keys
@@ -232,7 +234,7 @@ def load_user_keys(configuration, client_id):
             pubkey = pub_fd.read().strip()
             pub_fd.close()
             created_epoch = os.path.getctime(pubkey_path)
-        except Exception, exc:
+        except Exception as exc:
             logger.warning("load user key did not find a pub key for %s: %s" \
                            % (key_filename, exc))
             continue
@@ -274,7 +276,7 @@ def generate_user_key(configuration, client_id, key_filename, truncate=False):
         pub_fd = open(key_path + '.pub')
         pub_key = pub_fd.read()
         pub_fd.close()
-    except Exception, exc:
+    except Exception as exc:
         logger.error("user key generation %s did not create a pub key: %s" % \
                      (key_path, exc))
         return (False, "user key generation in %s failed!" % key_filename) 
@@ -392,55 +394,55 @@ def kill_sub_pid(configuration, client_id, transfer_id, sub_pid, sig=9):
     try:
         os.kill(sub_pid, sig)
         return True
-    except Exception, exc:
+    except Exception as exc:
         logger.error('could not kill %s %s child process %d' % \
                      (client_id, transfer_id, sub_pid))
         return False
 
 
 if __name__ == "__main__":
-    from shared.conf import get_configuration_object
+    from .shared.conf import get_configuration_object
     conf = get_configuration_object()
-    print "Unit testing transfer functions"
-    print "=== sub pid functions ==="
+    print("Unit testing transfer functions")
+    print("=== sub pid functions ===")
     import multiprocessing
     manager = multiprocessing.Manager()
     sub_procs_map = manager.dict()
     client, transfer = "testuser", "testtransfer"
     sub_procs = sub_pid_list(conf, sub_procs_map, client, transfer)
-    print "initial sub pids: %s" % sub_procs
+    print("initial sub pids: %s" % sub_procs)
     for pid in xrange(3):
-        print "add sub pid: %s" % pid
+        print("add sub pid: %s" % pid)
         add_sub_pid(conf, sub_procs_map, client, transfer, pid)
         sub_procs = sub_pid_list(conf, sub_procs_map, client, transfer)
-        print "current sub pids: %s" % sub_procs
+        print("current sub pids: %s" % sub_procs)
     for pid in xrange(3):
-        print "del sub pid: %s" % pid
+        print("del sub pid: %s" % pid)
         del_sub_pid(conf, sub_procs_map, client, transfer, pid)
         sub_procs = sub_pid_list(conf, sub_procs_map, client, transfer)
-        print "current sub pids: %s" % sub_procs
-    print "=== workers functions ==="
+        print("current sub pids: %s" % sub_procs)
+    print("=== workers functions ===")
     workers_map = {}
     transfer_workers = all_worker_transfers(conf, workers_map)
-    print "initial transfer workers: %s" % transfer_workers
+    print("initial transfer workers: %s" % transfer_workers)
     for i in xrange(3):
         transfer_id = "%s-%d" % (transfer, i)
         worker = "dummy-worker-%d" % i
-        print "add %s %s %s " % (client, transfer_id, worker)
+        print("add %s %s %s " % (client, transfer_id, worker))
         add_worker_transfer(conf, workers_map, client, transfer_id, worker)
         verify_worker = get_worker_transfer(conf, workers_map, client,
                                             transfer_id)
-        print "verify latest transfer worker: %s" % verify_worker
+        print("verify latest transfer worker: %s" % verify_worker)
     transfer_workers = all_worker_transfers(conf, workers_map)
-    print "all transfer workers: %s" % transfer_workers
+    print("all transfer workers: %s" % transfer_workers)
     for i in xrange(3):
         transfer_id = "%s-%d" % (transfer, i)
         worker = "dummy-worker-%d" % i
-        print "remove %s %s %s " % (client, transfer_id, worker)
+        print("remove %s %s %s " % (client, transfer_id, worker))
         del_worker_transfer(conf, workers_map, client,
                             transfer_id, worker)
         verify_worker = get_worker_transfer(conf, workers_map, client,
                                             transfer_id)
-        print "verify transfer worker is no longer found: %s" % verify_worker
+        print("verify transfer worker is no longer found: %s" % verify_worker)
     transfer_workers = all_worker_transfers(conf, workers_map)
-    print "final transfer workers: %s" % transfer_workers
+    print("final transfer workers: %s" % transfer_workers)

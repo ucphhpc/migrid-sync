@@ -26,18 +26,19 @@
 #
 
 """Explicit job file submit"""
+from __future__ import absolute_import
 
 import os
 import glob
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables
-from shared.job import new_job
-from shared.parseflags import verbose
-from shared.validstring import valid_user_path
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables
+from .shared.job import new_job
+from .shared.parseflags import verbose
+from .shared.validstring import valid_user_path
 
 
 def signature():
@@ -146,7 +147,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             try:
                 (job_status, newmsg, job_id) = new_job(abs_path,
                         client_id, configuration, False, True)
-            except Exception, exc:
+            except Exception as exc:
                 logger.error("%s: failed on '%s': %s" % (op_name,
                              relative_path, exc))
                 job_status = False

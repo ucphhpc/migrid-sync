@@ -26,6 +26,8 @@
 #
 
 """Freeze archive functions"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import base64
 import datetime
@@ -44,22 +46,22 @@ except ImportError:
     from os import walk
 from urllib import quote
 
-from shared.base import client_id_dir, distinguished_name_to_user, \
+from .shared.base import client_id_dir, distinguished_name_to_user, \
     brief_list, pretty_format_user
-from shared.defaults import freeze_meta_filename, freeze_lock_filename, \
+from .shared.defaults import freeze_meta_filename, freeze_lock_filename, \
     wwwpublic_alias, public_archive_dir, public_archive_index, \
     public_archive_files, public_archive_doi, freeze_flavors, keyword_final, \
     keyword_pending, keyword_updating, keyword_auto, max_freeze_files, \
     csrf_field
-from shared.fileio import md5sum_file, sha1sum_file, sha256sum_file, \
+from .shared.fileio import md5sum_file, sha1sum_file, sha256sum_file, \
     sha512sum_file, supported_hash_algos, write_file, copy_file, copy_rec, \
     move_file, move_rec, remove_rec, delete_file, delete_symlink, \
     makedirs_rec, make_symlink, make_temp_dir, acquire_file_lock, \
     release_file_lock
-from shared.html import get_xgi_html_preamble, get_xgi_html_footer, \
+from .shared.html import get_xgi_html_preamble, get_xgi_html_footer, \
     man_base_js, themed_styles, themed_scripts, tablesorter_pager
-from shared.pwhash import make_path_hash
-from shared.serial import load, dump
+from .shared.pwhash import make_path_hash
+from .shared.serial import load, dump
 
 TARGET_ARCHIVE = 'ARCHIVE'
 TARGET_PATH = 'PATH'
@@ -411,7 +413,7 @@ def get_frozen_files(client_id, freeze_id, configuration,
             file_map = dict([(entry['name'], entry) for entry in cached])
         else:
             _logger.debug("no cached files info in %s" % cache_path)
-    except Exception, err:
+    except Exception as err:
         _logger.warning("failed to load files cache in %s: %s" %
                         (cache_path, err))
     # Walk archive and fill file data using any cached fields for speed
@@ -433,7 +435,7 @@ def get_frozen_files(client_id, freeze_id, configuration,
                 try:
                     file_ctime = os.path.getctime(frozen_path)
                     file_size = os.path.getsize(frozen_path)
-                except Exception, err:
+                except Exception as err:
                     _logger.warning("failed to update cached %s stats: %s" %
                                     (frozen_path, err))
                 entry['timestamp'] = file_ctime
@@ -469,7 +471,7 @@ def get_frozen_files(client_id, freeze_id, configuration,
         try:
             dump(files, cache_path)
             _logger.info("saved files cache in %s" % cache_path)
-        except Exception, err:
+        except Exception as err:
             _logger.warning("failed to save files cache in %s: %s" %
                             (cache_path, err))
     return (True, files)
@@ -528,7 +530,7 @@ def init_frozen_archive(freeze_meta, client_id, configuration):
     try:
         arch_dir = make_temp_dir(prefix=ARCHIVE_PREFIX,
                                  dir=user_archives)
-    except Exception, err:
+    except Exception as err:
         _logger.error("create dir for %s from %s failed: %s" % (freeze_meta,
                                                                 client_id, err))
         return (False, 'Error preparing new frozen archive: %s' % err)
@@ -969,7 +971,7 @@ def save_frozen_meta(freeze_dict, arch_dir, configuration):
     try:
         meta_lock = acquire_file_lock(lock_path)
         dump(meta_dict, meta_path)
-    except Exception, err:
+    except Exception as err:
         _logger.error("update meta failed: %s" % err)
         status = False
         reply = 'Error saving frozen archive info: %s' % err
@@ -1205,7 +1207,7 @@ def delete_archive_files(freeze_dict, client_id, path_list, configuration):
             dump(cached, cache_path)
             _logger.info("saved %d cache entries in %s" % (len(cached),
                                                            cache_path))
-        except Exception, err:
+        except Exception as err:
             _logger.warning("failed to save pruned cache in %s: %s" %
                             (cache_path, err))
 
@@ -1336,23 +1338,23 @@ def import_freeze_form(configuration, client_id, output_format,
 
 if __name__ == "__main__":
     if not sys.argv[2:]:
-        print "USAGE: freezefunctions.py CLIENT_ID ARCHIVE_ID"
-        print "       Runs basic unit tests for the ARCHIVE_ID of CLIENT_ID"
+        print("USAGE: freezefunctions.py CLIENT_ID ARCHIVE_ID")
+        print("       Runs basic unit tests for the ARCHIVE_ID of CLIENT_ID")
         sys.exit(1)
-    from shared.conf import get_configuration_object
+    from .shared.conf import get_configuration_object
     configuration = get_configuration_object()
     client_id = sys.argv[1]
     freeze_id = sys.argv[2]
-    print "Loading %s of %s" % (freeze_id, client_id)
+    print("Loading %s of %s" % (freeze_id, client_id))
     (load_status, freeze_dict) = get_frozen_archive(client_id, freeze_id,
                                                     configuration)
     if not load_status:
-        print "Failed to load %s for %s: %s" % (freeze_id, client_id,
-                                                freeze_dict)
+        print("Failed to load %s for %s: %s" % (freeze_id, client_id,
+                                                freeze_dict))
         sys.exit(1)
-    print "Metadata for %s is:" % freeze_id
+    print("Metadata for %s is:" % freeze_id)
     for (meta_key, meta_label) in __public_meta:
         meta_value = freeze_dict.get(meta_key, '')
         if meta_value:
             # Preserve any text formatting in e.g. description
-            print "%s: %s" % (meta_label, format_meta(meta_key, meta_value))
+            print("%s: %s" % (meta_label, format_meta(meta_key, meta_value)))

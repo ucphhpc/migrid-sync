@@ -26,6 +26,7 @@
 #
 
 """Runtime Environment functions"""
+from __future__ import absolute_import
 
 import base64
 import datetime
@@ -33,11 +34,11 @@ import fcntl
 import os
 import time
 
-from shared.modified import mark_re_modified, check_res_modified, \
+from .shared.modified import mark_re_modified, check_res_modified, \
     reset_res_modified
-from shared.rekeywords import get_keywords_dict as re_get_keywords_dict
-from shared.parser import parse, check_types
-from shared.serial import load, dump
+from .shared.rekeywords import get_keywords_dict as re_get_keywords_dict
+from .shared.parser import parse, check_types
+from .shared.serial import load, dump
 
 WRITE_LOCK = 'write.lock'
 RTE_SPECIALS = RUNTIMEENVS, CONF, MODTIME = \
@@ -110,7 +111,7 @@ def refresh_re_map(configuration):
 
         # init first time
         re_map[re_name] = re_map.get(re_name, {})
-        if not re_map[re_name].has_key(CONF) or re_mtime >= map_stamp:
+        if CONF not in re_map[re_name] or re_mtime >= map_stamp:
             re_conf = get_re_conf(re_name, configuration)
             if not re_conf:
                 re_conf = {}
@@ -128,7 +129,7 @@ def refresh_re_map(configuration):
         try:
             dump(re_map, map_path)
             os.utime(map_path, (start_time, start_time))
-        except Exception, exc:
+        except Exception as exc:
             configuration.logger.error("Could not save re map: %s" % exc)
 
     last_refresh[RUNTIMEENVS] = start_time
@@ -171,7 +172,7 @@ def list_runtime_environments(configuration):
         if not os.path.isdir(configuration.re_home):
             try:
                 os.mkdir(configuration.re_home)
-            except Exception, err:
+            except Exception as err:
                 configuration.logger.info(
                     'refunctions.py: not able to create directory %s: %s'
                     % (configuration.re_home, err))
@@ -234,7 +235,7 @@ def delete_runtimeenv(re_name, configuration):
         try:
             os.remove(filename)
             mark_re_modified(configuration, re_name)
-        except Exception, err:
+        except Exception as err:
             msg = "Exception during deletion of runtime enviroment '%s': %s"\
                   % (re_name, err)
             status = False
@@ -255,7 +256,7 @@ def create_runtimeenv(filename, client_id, configuration):
 
     try:
         os.remove(filename)
-    except Exception, err:
+    except Exception as err:
         msg = \
             'Exception removing temporary runtime environment file %s, %s'\
             % (filename, err)
@@ -293,7 +294,7 @@ def create_runtimeenv(filename, client_id, configuration):
     try:
         dump(new_dict, re_filename)
         mark_re_modified(configuration, re_name)
-    except Exception, err:
+    except Exception as err:
         status = False
         msg = 'Internal error saving new runtime environment: %s' % err
 
@@ -320,7 +321,7 @@ def update_runtimeenv_owner(re_name, old_owner, new_owner, configuration):
             mark_re_modified(configuration, re_name)
         else:
             status = False
-    except Exception, err:
+    except Exception as err:
         msg = "Failed to edit owner of runtime enviroment '%s': %s" % \
               (re_name, err)
         configuration.logger.warning(msg)

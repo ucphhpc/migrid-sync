@@ -26,6 +26,7 @@
 #
 
 """VNC helper functions"""
+from __future__ import absolute_import
 
 import os
 import tempfile
@@ -33,7 +34,7 @@ import random
 import base64
 import popen2
 
-from shared.defaults import vnc_pw_len
+from .shared.defaults import vnc_pw_len
 
 
 def create_vnc_password():
@@ -54,5 +55,5 @@ def create_vnc_password():
         sdin.write(password + '\n')
         sdin.flush()
         return (True, (password, passwdfile))
-    except Exception, err:
+    except Exception as err:
         return (False, 'Error creating vnc password (%s)' % err)

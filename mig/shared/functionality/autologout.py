@@ -27,19 +27,20 @@
 #
 
 """Automatic logout to force login session expiry"""
+from __future__ import absolute_import
 
 import os
 
-from shared.auth import expire_twofactor_session
-from shared import returnvalues
-from shared.defaults import csrf_field
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import trust_handler, get_csrf_limit
-from shared.httpsclient import extract_client_openid
-from shared.init import initialize_main_variables
-from shared.pwhash import make_csrf_token
-from shared.useradm import expire_oid_sessions, find_oid_sessions
-from shared.url import base32urldecode
+from .shared.auth import expire_twofactor_session
+from .shared import returnvalues
+from .shared.defaults import csrf_field
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import trust_handler, get_csrf_limit
+from .shared.httpsclient import extract_client_openid
+from .shared.init import initialize_main_variables
+from .shared.pwhash import make_csrf_token
+from .shared.useradm import expire_oid_sessions, find_oid_sessions
+from .shared.url import base32urldecode
 
 
 def signature():
@@ -77,7 +78,7 @@ def main(client_id, user_arguments_dict, environ=None):
     try:
         (unpacked_url, unpacked_query) = base32urldecode(configuration,
                                                         packed_url)
-    except Exception, exc:
+    except Exception as exc:
         logger.error('base32urldecode failed: %s' % exc)
         output_objects.append({'object_type': 'error_text', 'text':
                                '''failed to unpack redirect_to value!'''

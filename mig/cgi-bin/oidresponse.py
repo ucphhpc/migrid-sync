@@ -26,9 +26,10 @@
 #
 
 """Front end to handle openid responses from signup and login"""
+from __future__ import absolute_import
 
-from shared.cgiscriptstub import run_cgi_script_possibly_with_cert
-from shared.functionality.oidresponse import main
+from .shared.cgiscriptstub import run_cgi_script_possibly_with_cert
+from .shared.functionality.oidresponse import main
 import cgi
 import cgitb
 cgitb.enable()

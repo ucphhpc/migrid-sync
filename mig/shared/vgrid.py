@@ -26,26 +26,28 @@
 #
 
 """VGrid specific helper functions"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import fnmatch
 import os
 import re
 import time
 
-from shared.base import valid_dir_input, client_id_dir
-from shared.defaults import default_vgrid, keyword_owners, keyword_members, \
+from .shared.base import valid_dir_input, client_id_dir
+from .shared.defaults import default_vgrid, keyword_owners, keyword_members, \
     keyword_all, keyword_auto, keyword_never, keyword_any, keyword_none, \
     csrf_field, default_vgrid_settings_limit, vgrid_nest_sep, _dot_vgrid
-from fileio import make_symlink, move, check_readonly, check_writable, \
+from .fileio import make_symlink, move, check_readonly, check_writable, \
     check_write_access, unpickle, acquire_file_lock, release_file_lock
-from shared.findtype import is_user, is_resource
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import html_post_helper
-from shared.modified import mark_vgrid_modified
-from shared.output import html_link
-from shared.serial import load, dump
-from shared.sharelinkkeywords import get_sharelink_keywords_dict
-from shared.vgridkeywords import get_trigger_keywords_dict, \
+from .shared.findtype import is_user, is_resource
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.html import html_post_helper
+from .shared.modified import mark_vgrid_modified
+from .shared.output import html_link
+from .shared.serial import load, dump
+from .shared.sharelinkkeywords import get_sharelink_keywords_dict
+from .shared.vgridkeywords import get_trigger_keywords_dict, \
     get_settings_keywords_dict
 
 # For synchronization in vgrid state and participation files
@@ -223,7 +225,7 @@ doubt, just let the user request access and accept it with the
 
         for elem in extras:
             extra_fields_html = ''
-            if isinstance(elem, dict) and elem.has_key(id_field):
+            if isinstance(elem, dict) and id_field in elem:
                 for (field, _) in extra_fields:
                     val = elem.get(field, '')
                     if isinstance(val, bool):
@@ -286,7 +288,7 @@ doubt, just let the user request access and accept it with the
         for elem in direct:
             extra_fields_html = ''
             dyn_dict = {}
-            if isinstance(elem, dict) and elem.has_key(id_field):
+            if isinstance(elem, dict) and id_field in elem:
                 elem_id = elem[id_field]
                 for (field, _) in extra_fields:
                     val = elem.get(field, '')
@@ -1044,7 +1046,7 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True,
             # Keep load-only under shared lock
             lock_handle = acquire_file_lock(lock_path, exclusive=False)
             entries = load(name_path)
-        except Exception, exc:
+        except Exception as exc:
             status = False
             err_msg = "Failed to load %s for %s: %s" % (group, vgrid_name, exc)
         finally:
@@ -1419,7 +1421,7 @@ def vgrid_valid_entities(configuration, vgrid_name, kind, id_list):
     for i in check_list:
         try:
             vgrid_validate_entities(configuration, vgrid_name, kind, i)
-        except Exception, exc:
+        except Exception as exc:
             _logger.warning("skipping %s on invalid format %s: %s" %
                             (kind, i, exc))
             continue
@@ -1483,7 +1485,7 @@ def vgrid_add_entities(configuration, vgrid_name, kind, id_list,
         entities = entities[:rank] + id_list + entities[rank:]
         # _logger.debug("added: %s" % entities)
         dump(entities, entity_filepath)
-    except Exception, exc:
+    except Exception as exc:
         status = False
         msg = "could not add %s for %s: %s" % (kind, vgrid_name, exc)
     finally:
@@ -1494,7 +1496,7 @@ def vgrid_add_entities(configuration, vgrid_name, kind, id_list,
     # NOTE: only mark entity modified AFTER main lock release to avoid blocking
     try:
         mark_nested_vgrids_modified(configuration, vgrid_name)
-    except Exception, exc:
+    except Exception as exc:
         status = False
         msg = " could not mark %s modified for %s after add: %s" % (kind, vgrid_name, exc)
     return (status, msg)
@@ -1615,7 +1617,7 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
         if not entities and not allow_empty:
             raise ValueError("not allowed to remove last entry of %s" % kind)
         dump(entities, entity_filepath)
-    except Exception, exc:
+    except Exception as exc:
         status = False
         msg = "could not remove %s for %s: %s" % (kind, vgrid_name, exc)
     finally:
@@ -1626,7 +1628,7 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
     # NOTE: only mark entity modified AFTER main lock release to avoid blocking
     try:
         mark_nested_vgrids_modified(configuration, vgrid_name)
-    except Exception, exc:
+    except Exception as exc:
         status = False
         msg = " could not mark %s modified for %s after remove: %s" % (kind, vgrid_name, exc)
 
@@ -1723,7 +1725,7 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
         # Keep dump under exclusive lock
         lock_handle = acquire_file_lock(lock_path, exclusive=True)
         dump(id_list, entity_filepath)
-    except Exception, exc:
+    except Exception as exc:
         status = False
         msg = "could not set %s for %s: %s" % (kind, vgrid_name, exc)
     finally:
@@ -1734,7 +1736,7 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
     # NOTE: only mark entity modified AFTER main lock release to avoid blocking
     try:
         mark_nested_vgrids_modified(configuration, vgrid_name)
-    except Exception, exc:
+    except Exception as exc:
         status = False
         msg += " could not mark %s for %s modified: %s" % (kind, vgrid_name, exc)
     return (status, msg)
@@ -2016,7 +2018,7 @@ def allow_resources_adm(configuration, vgrid_name, client_id):
 
 
 if __name__ == "__main__":
-    from shared.conf import get_configuration_object
+    from .shared.conf import get_configuration_object
     conf = get_configuration_object()
     client_id = '/C=DK/CN=John Doe/emailAddress=john@doe.org'
     vgrid = "MyGroup"
@@ -2059,12 +2061,12 @@ if __name__ == "__main__":
     del broken_trigger[key]
     test_triggers.append(broken_trigger)
     for check_list in test_triggers:
-        print "check trigger: %(rule_id)s" % check_list
+        print("check trigger: %(rule_id)s" % check_list)
         try:
             vgrid_validate_entities(conf, vgrid, kind, [check_list])
-            print "trigger check succeeded"
-        except Exception, exc:
-            print "trigger check failed: %s" % exc
+            print("trigger check succeeded")
+        except Exception as exc:
+            print("trigger check failed: %s" % exc)
 
     kind = 'settings'
     valid_settings = {'vgrid_name': vgrid,
@@ -2111,27 +2113,27 @@ if __name__ == "__main__":
     del broken_settings[key]
     test_settings.append(broken_settings)
     for check_list in test_settings:
-        print "check settings: %(description)s" % check_list
+        print("check settings: %(description)s" % check_list)
         try:
             # We save settings as a list of tuples
             vgrid_validate_entities(conf, vgrid, kind, check_list.items())
-            print "settings check succeeded"
-        except Exception, exc:
-            print "settings check failed: %s" % exc
+            print("settings check succeeded")
+        except Exception as exc:
+            print("settings check failed: %s" % exc)
 
-    print "= testing vgrid_list ="
+    print("= testing vgrid_list =")
     for name in ['eScience', 'nosuchvgridanywhere']:
-        print vgrid_list(name, 'owners', conf, allow_missing=True)
-        print vgrid_list(name, 'members', conf)
-    print "= testing vgrid_add+remove ="
+        print(vgrid_list(name, 'owners', conf, allow_missing=True))
+        print(vgrid_list(name, 'members', conf))
+    print("= testing vgrid_add+remove =")
     dummy_vgrid = 'DUMMY'
     member_list = ['bardino@nbi.ku.dk', 'bardino@nbi.dk']
     (load_status, orig_members) = vgrid_members(dummy_vgrid, conf)
-    print vgrid_members(dummy_vgrid, conf)
-    print vgrid_add_members(conf, dummy_vgrid, member_list)
-    print vgrid_members(dummy_vgrid, conf)
-    print vgrid_remove_members(conf, dummy_vgrid, member_list[:1])
-    print vgrid_members(dummy_vgrid, conf)
+    print(vgrid_members(dummy_vgrid, conf))
+    print(vgrid_add_members(conf, dummy_vgrid, member_list))
+    print(vgrid_members(dummy_vgrid, conf))
+    print(vgrid_remove_members(conf, dummy_vgrid, member_list[:1]))
+    print(vgrid_members(dummy_vgrid, conf))
     if load_status:
-        print vgrid_set_members(conf, dummy_vgrid, orig_members)
-    print vgrid_members(dummy_vgrid, conf)
+        print(vgrid_set_members(conf, dummy_vgrid, orig_members))
+    print(vgrid_members(dummy_vgrid, conf))

@@ -26,16 +26,17 @@
 #
 
 """This script allows users to administrate their sandboxes"""
+from __future__ import absolute_import
 
 import datetime
 
-from shared import returnvalues
-from shared.defaults import default_vgrid, csrf_field
-from shared.functional import validate_input, REJECT_UNSET
-from shared.gridstat import GridStat
-from shared.handlers import get_csrf_limit, safe_handler, make_csrf_token
-from shared.init import initialize_main_variables
-from shared.sandbox import load_sandbox_db, save_sandbox_db
+from .shared import returnvalues
+from .shared.defaults import default_vgrid, csrf_field
+from .shared.functional import validate_input, REJECT_UNSET
+from .shared.gridstat import GridStat
+from .shared.handlers import get_csrf_limit, safe_handler, make_csrf_token
+from .shared.init import initialize_main_variables
+from .shared.sandbox import load_sandbox_db, save_sandbox_db
 
 # sandbox db has the format: {username: (password, [list_of_resources])}
 
@@ -303,7 +304,7 @@ Please contact the site admins %s if you think they should be enabled.
         # First time - create empty dict
 
         userdb = {}
-    except Exception, exc:
+    except Exception as exc:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Could not read sandbox database! %s'
                                % exc})
@@ -322,7 +323,7 @@ Please contact the site admins %s if you think they should be enabled.
                  })
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-        if userdb.has_key(username):
+        if username in userdb:
             output_objects.append({'object_type': 'error_text', 'text'
                                   : 'Username is already taken - please go back and choose another one...'
                                   })
@@ -350,7 +351,7 @@ Please contact the site admins %s if you think they should be enabled.
                 newuser = {username: (password, [])}
                 userdb.update(newuser)
                 save_sandbox_db(userdb, configuration)
-            except Exception, exc:
+            except Exception as exc:
                 output_objects.append({'object_type': 'error_text',
                         'text'
                         : 'Could not save you in the user database! %s'
@@ -361,7 +362,7 @@ Please contact the site admins %s if you think they should be enabled.
 
     # Existing or just created user: check that username and password is correct
 
-    if not userdb.has_key(username):
+    if username not in userdb:
         output_objects.append({'object_type': 'error_text', 'text'
                                : 'Wrong username - please go back and try again...'
                                })

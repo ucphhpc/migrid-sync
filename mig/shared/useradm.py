@@ -26,6 +26,8 @@
 #
 
 """User administration functions"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 from email.utils import parseaddr
 import datetime
@@ -36,39 +38,39 @@ import shutil
 import sqlite3
 import sys
 
-from shared.accountstate import update_account_expire_cache, \
+from .shared.accountstate import update_account_expire_cache, \
     update_account_status_cache
-from shared.base import client_id_dir, client_dir_id, client_alias, \
+from .shared.base import client_id_dir, client_dir_id, client_alias, \
     sandbox_resource, fill_user, fill_distinguished_name, extract_field
-from shared.conf import get_configuration_object
-from shared.configuration import Configuration
-from shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
+from .shared.conf import get_configuration_object
+from .shared.configuration import Configuration
+from .shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
     davs_conf_dir, ftps_conf_dir, htaccess_filename, welcome_filename, \
     settings_filename, profile_filename, default_css_filename, \
     widgets_filename, seafile_ro_dirname, authkeys_filename, \
     authpasswords_filename, authdigests_filename, cert_field_order, \
     twofactor_filename
-from shared.fileio import filter_pickled_list, filter_pickled_dict, \
+from .shared.fileio import filter_pickled_list, filter_pickled_dict, \
     make_symlink, delete_symlink
-from shared.modified import mark_user_modified
-from shared.refunctions import list_runtime_environments, \
+from .shared.modified import mark_user_modified
+from .shared.refunctions import list_runtime_environments, \
     update_runtimeenv_owner
-from shared.pwhash import make_hash, check_hash, make_digest, check_digest, \
+from .shared.pwhash import make_hash, check_hash, make_digest, check_digest, \
     make_scramble, check_scramble, unscramble_password, unscramble_digest, \
     assure_password_strength
-from shared.resource import resource_add_owners, resource_remove_owners
-from shared.serial import load, dump
-from shared.settings import update_settings, update_profile, update_widgets
-from shared.sharelinks import load_share_links, update_share_link, \
+from .shared.resource import resource_add_owners, resource_remove_owners
+from .shared.serial import load, dump
+from .shared.settings import update_settings, update_profile, update_widgets
+from .shared.sharelinks import load_share_links, update_share_link, \
     get_share_link, mode_chars_map
-from shared.vgrid import vgrid_add_owners, vgrid_remove_owners, \
+from .shared.vgrid import vgrid_add_owners, vgrid_remove_owners, \
     vgrid_add_members, vgrid_remove_members, in_vgrid_share, \
     vgrid_sharelinks, vgrid_add_sharelinks
-from shared.vgridaccess import get_resource_map, get_vgrid_map, \
+from .shared.vgridaccess import get_resource_map, get_vgrid_map, \
     force_update_user_map, force_update_resource_map, force_update_vgrid_map, \
     VGRIDS, OWNERS, MEMBERS
-from shared.twofactorkeywords import get_twofactor_specs
-from shared.userdb import lock_user_db, unlock_user_db, load_user_db, \
+from .shared.twofactorkeywords import get_twofactor_specs
+from .shared.userdb import lock_user_db, unlock_user_db, load_user_db, \
     load_user_dict, save_user_db
 
 ssh_authkeys = os.path.join(ssh_conf_dir, authkeys_filename)
@@ -103,7 +105,7 @@ def delete_dir(path, verbose=False):
     """
 
     if verbose:
-        print 'removing: %s' % path
+        print('removing: %s' % path)
     shutil.rmtree(path)
 
 
@@ -111,7 +113,7 @@ def rename_dir(src, dst, verbose=False):
     """Rename src to dst"""
 
     if verbose:
-        print 'renaming: %s -> %s ' % (src, dst)
+        print('renaming: %s -> %s ' % (src, dst))
     shutil.move(src, dst)
 
 
@@ -136,7 +138,7 @@ def create_alias_link(username, client_id, user_home):
         return True
     try:
         os.symlink(client_dir, link_path)
-    except Exception, err:
+    except Exception as err:
         raise Exception('could not symlink alias %s : %s' % (link_path, err))
     return True
 
@@ -153,7 +155,7 @@ def create_seafile_mount_link(client_id, configuration):
     if os.path.isdir(seafile_home) and not os.path.islink(mount_link):
         try:
             os.symlink(seafile_home, mount_link)
-        except Exception, exc:
+        except Exception as exc:
             _logger.error("failed to link seafile mount %s to %s: %s"
                           % (seafile_home, mount_link, exc))
             raise
@@ -168,7 +170,7 @@ def remove_seafile_mount_link(client_id, configuration):
     if os.path.islink(mount_link):
         try:
             os.remove(mount_link)
-        except Exception, exc:
+        except Exception as exc:
             _logger.error("failed to unlink seafile mount from %s: %s"
                           % (mount_link, exc))
             raise
@@ -206,7 +208,7 @@ def create_user(
     renew = default_renew
     # Requested with existing valid certificate?
     # Used in order to authorize password change
-    if user.has_key('authorized'):
+    if 'authorized' in user:
         authorized = user['authorized']
         # Always remove any authorized fields before DB insert
         del user['authorized']
@@ -214,13 +216,13 @@ def create_user(
         authorized = False
 
     if verbose:
-        print 'User ID: %s\n' % client_id
+        print('User ID: %s\n' % client_id)
 
     if do_lock:
         flock = lock_user_db(db_path)
 
     if not os.path.exists(db_path):
-        print 'User DB in %s does not exist - okay if first user' % db_path
+        print('User DB in %s does not exist - okay if first user' % db_path)
         create_answer = raw_input('Create new user DB? [Y/n] ')
         if create_answer.lower().startswith('n'):
             if do_lock:
@@ -232,8 +234,8 @@ def create_user(
     try:
         user_db = load_user_db(db_path, do_lock=False)
         if verbose:
-            print 'Loaded existing user DB from: %s' % db_path
-    except Exception, err:
+            print('Loaded existing user DB from: %s' % db_path)
+    except Exception as err:
         if not force:
             if do_lock:
                 unlock_user_db(flock)
@@ -257,17 +259,17 @@ def create_user(
             if do_lock:
                 unlock_user_db(flock)
             if verbose:
-                print 'Attempting create_user with conflicting alias %s' \
-                      % alias
+                print('Attempting create_user with conflicting alias %s' \
+                      % alias)
             raise Exception(
                 'A conflicting user with alias %s already exists' % alias)
 
-    if user_db.has_key(client_id):
+    if client_id in user_db:
         account_status = user_db[client_id].get('status', 'active')
         if account_status != 'active':
             raise Exception('refusing to renew %s account!' % account_status)
         elif ask_renew:
-            print 'User DB entry for "%s" already exists' % client_id
+            print('User DB entry for "%s" already exists' % client_id)
             renew_answer = raw_input('Renew existing entry? [Y/n] ')
             renew = not renew_answer.lower().startswith('n')
         else:
@@ -284,13 +286,13 @@ def create_user(
             password_changed = (user['old_password'] != user['password'])
             if password_changed:
                 if authorized:
-                    print "User authorized password update"
+                    print("User authorized password update")
                 elif not user['old_password']:
-                    print "User requested password - previously disabled"
+                    print("User requested password - previously disabled")
                 else:
-                    print """User '%s' exists with *different* password!
+                    print("""User '%s' exists with *different* password!
 Generally users with an existing account should sign up again through Xgi-bin
-using their existing credentials to authorize password changes.""" % client_id
+using their existing credentials to authorize password changes.""" % client_id)
                     accept_answer = raw_input(
                         'Accept password change? [y/N] ')
                     authorized = accept_answer.lower().startswith('y')
@@ -298,14 +300,14 @@ using their existing credentials to authorize password changes.""" % client_id
                         if do_lock:
                             unlock_user_db(flock)
                         if verbose:
-                            print """Renewal request supplied a different
-password and you didn't accept change anyway - nothing more to do"""
+                            print("""Renewal request supplied a different
+password and you didn't accept change anyway - nothing more to do""")
                         err = """Cannot renew account using a new password!
 Please tell user to use the original password or request renewal using Xgi-bin
 with certificate or OpenID authentication to authorize the change."""
                         raise Exception(err)
             if verbose:
-                print 'Renewing existing user'
+                print('Renewing existing user')
             # Take old user details and override fields with new ones but
             # ONLY if actually set. This leaves any openid_names and roles
             # alone on cert re-signup after openid signup.
@@ -325,7 +327,7 @@ with certificate or OpenID authentication to authorize the change."""
             if do_lock:
                 unlock_user_db(flock)
             if verbose:
-                print 'Nothing more to do for existing user %s' % client_id
+                print('Nothing more to do for existing user %s' % client_id)
             raise Exception('Nothing more to do for existing user %s'
                             % client_id)
 
@@ -353,12 +355,12 @@ with certificate or OpenID authentication to authorize the change."""
         user_db[client_id] = user
         save_user_db(user_db, db_path, do_lock=False)
         if verbose:
-            print 'User %s was successfully added/updated in user DB!'\
-                  % client_id
-    except Exception, err:
+            print('User %s was successfully added/updated in user DB!'\
+                  % client_id)
+    except Exception as err:
         if do_lock:
             unlock_user_db(flock)
-        print err
+        print(err)
         if not force:
             raise Exception('Failed to add %s to user DB: %s'
                             % (client_id, err))
@@ -388,11 +390,11 @@ with certificate or OpenID authentication to authorize the change."""
                      davs_dir, ftps_dir)
 
     # Make sure we set permissions tight enough for e.g. ssh auth keys to work
-    os.umask(022)
+    os.umask(0o22)
 
     if not renew:
         if verbose:
-            print 'Creating dirs and files for new user: %s' % client_id
+            print('Creating dirs and files for new user: %s' % client_id)
         try:
             os.mkdir(home_dir)
         except:
@@ -410,11 +412,11 @@ with certificate or OpenID authentication to authorize the change."""
     else:
         if os.path.exists(htaccess_path):
             # Allow temporary write access
-            os.chmod(htaccess_path, 0644)
+            os.chmod(htaccess_path, 0o644)
         for dir_path in required_dirs:
             try:
                 os.makedirs(dir_path)
-            except Exception, exc:
+            except Exception as exc:
                 pass
 
     # Always write/update any openid symlinks
@@ -503,7 +505,7 @@ require user "%(distinguished_name)s"
 
         # try to prevent further user modification
 
-        os.chmod(htaccess_path, 0444)
+        os.chmod(htaccess_path, 0o444)
     except:
         if not force:
             raise Exception('could not create htaccess file: %s'
@@ -612,7 +614,7 @@ def fix_user_sharelinks(old_id, client_id, conf_path, db_path,
     _logger = configuration.logger
 
     if verbose:
-        print 'User ID: %s\n' % client_id
+        print('User ID: %s\n' % client_id)
 
     if os.path.exists(db_path):
         try:
@@ -621,18 +623,18 @@ def fix_user_sharelinks(old_id, client_id, conf_path, db_path,
             else:
                 user_db = load_user_db(db_path, do_lock=do_lock)
                 if verbose:
-                    print 'Loaded existing user DB from: %s' % db_path
-        except Exception, err:
+                    print('Loaded existing user DB from: %s' % db_path)
+        except Exception as err:
             raise Exception('Failed to load user DB: %s' % err)
 
-    if not user_db.has_key(client_id):
+    if client_id not in user_db:
         raise Exception("User DB entry '%s' doesn't exist!" % client_id)
 
     # Loop through moved sharelinks map pickle and update fs paths
 
     (load_status, sharelinks) = load_share_links(configuration, client_id)
     if verbose:
-        print 'Update %d sharelinks' % len(sharelinks)
+        print('Update %d sharelinks' % len(sharelinks))
     if load_status:
         for (share_id, share_dict) in sharelinks.items():
             # Update owner and use generic update helper to replace symlink
@@ -641,14 +643,14 @@ def fix_user_sharelinks(old_id, client_id, conf_path, db_path,
                                                   configuration, sharelinks)
             if verbose:
                 if mod_status:
-                    print 'Updated sharelink %s from %s to %s' % (share_id,
+                    print('Updated sharelink %s from %s to %s' % (share_id,
                                                                   old_id,
-                                                                  client_id)
+                                                                  client_id))
                 elif err:
-                    print 'Could not update owner of %s: %s' % (share_id, err)
+                    print('Could not update owner of %s: %s' % (share_id, err))
     else:
         if verbose:
-            print 'Could not load sharelinks: %s' % sharelinks
+            print('Could not load sharelinks: %s' % sharelinks)
 
 
 def fix_vgrid_sharelinks(conf_path, db_path, verbose=False, force=False):
@@ -690,25 +692,25 @@ def fix_vgrid_sharelinks(conf_path, db_path, verbose=False, force=False):
             if not share_id in links_dict.keys():
                 user_path = os.readlink(sharelink_path)
                 if verbose:
-                    print 'Handle missing vgrid %s sharelink %s to %s (%s)' % \
-                        (vgrid_name, share_id, sharelink_realpath, user_path)
+                    print('Handle missing vgrid %s sharelink %s to %s (%s)' % \
+                        (vgrid_name, share_id, sharelink_realpath, user_path))
                 client_dir = user_path.replace(configuration.user_home, '')
                 client_dir = client_dir.split(os.sep)[0]
                 client_id = client_dir_id(client_dir)
                 (get_status, share_dict) = get_share_link(share_id, client_id,
                                                           configuration)
                 if not get_status:
-                    print 'Error loading sharelink dict for %s of %s' % \
-                        (share_id, client_id)
+                    print('Error loading sharelink dict for %s of %s' % \
+                        (share_id, client_id))
                     continue
 
-                print 'Add missing sharelink %s to vgrid %s' % (share_id,
-                                                                vgrid_name)
+                print('Add missing sharelink %s to vgrid %s' % (share_id,
+                                                                vgrid_name))
 
                 (add_status, add_msg) = vgrid_add_sharelinks(
                     configuration, vgrid_name, [share_dict])
                 if not add_status:
-                    print 'ERROR: add missing sharelink failed: %s' % add_msg
+                    print('ERROR: add missing sharelink failed: %s' % add_msg)
 
 
 def edit_user(
@@ -737,7 +739,7 @@ def edit_user(
     client_dir = client_id_dir(client_id)
 
     if verbose:
-        print 'User ID: %s\n' % client_id
+        print('User ID: %s\n' % client_id)
 
     if do_lock:
         flock = lock_user_db(db_path)
@@ -749,14 +751,14 @@ def edit_user(
             else:
                 user_db = load_user_db(db_path, do_lock=False)
                 if verbose:
-                    print 'Loaded existing user DB from: %s' % db_path
-        except Exception, err:
+                    print('Loaded existing user DB from: %s' % db_path)
+        except Exception as err:
             if not force:
                 if do_lock:
                     unlock_user_db(flock)
                 raise Exception('Failed to load user DB: %s' % err)
 
-        if not user_db.has_key(client_id):
+        if client_id not in user_db:
             if not force:
                 if do_lock:
                     unlock_user_db(flock)
@@ -775,7 +777,7 @@ def edit_user(
         fill_distinguished_name(user_dict)
         new_id = user_dict["distinguished_name"]
         if not meta_only:
-            if user_db.has_key(new_id):
+            if new_id in user_db:
                 if do_lock:
                     unlock_user_db(flock)
                 raise Exception("Edit aborted: new user already exists!")
@@ -795,11 +797,11 @@ def edit_user(
         user_db[new_id] = user_dict
         save_user_db(user_db, db_path, do_lock=False)
         if verbose:
-            print 'User %s was successfully edited in user DB!'\
-                  % client_id
-    except Exception, err:
+            print('User %s was successfully edited in user DB!'\
+                  % client_id)
+    except Exception as err:
         import traceback
-        print traceback.format_exc()
+        print(traceback.format_exc())
         if not force:
             if do_lock:
                 unlock_user_db(flock)
@@ -827,7 +829,7 @@ def edit_user(
     # Make sure (lazy created) freeze home exists
     try:
         os.makedirs(old_arch_home)
-    except Exception, exc:
+    except Exception as exc:
         pass
     delete_symlink(new_arch_home, _logger, allow_missing=True)
 
@@ -849,13 +851,13 @@ def edit_user(
         new_path = os.path.join(base_dir, new_client_dir)
         try:
             rename_dir(old_path, new_path)
-        except Exception, exc:
+        except Exception as exc:
             if not force:
                 raise Exception('could not rename %s to %s: %s'
                                 % (old_path, new_path, exc))
     if verbose:
-        print 'User dirs for %s was successfully renamed!'\
-            % client_id
+        print('User dirs for %s was successfully renamed!'\
+            % client_id)
 
     # Now create freeze_home alias to preserve access to published archives
 
@@ -883,19 +885,19 @@ def edit_user(
                                                         [new_id])
                 if not add_status:
                     if verbose:
-                        print 'Could not add new %s owner of %s: %s' \
-                              % (new_id, res_id, err)
+                        print('Could not add new %s owner of %s: %s' \
+                              % (new_id, res_id, err))
                     continue
                 (del_status, err) = resource_remove_owners(configuration, res_id,
                                                            [client_id])
                 if not del_status:
                     if verbose:
-                        print 'Could not remove old %s owner of %s: %s' \
-                              % (client_id, res_id, err)
+                        print('Could not remove old %s owner of %s: %s' \
+                              % (client_id, res_id, err))
                     continue
                 if verbose:
-                    print 'Updated %s owner from %s to %s' % (res_id, client_id,
-                                                              new_id)
+                    print('Updated %s owner from %s to %s' % (res_id, client_id,
+                                                              new_id))
 
     # Loop through vgrid map and update user owner/membership
     # By using the high level add/remove API the corresponding vgrid components
@@ -910,39 +912,39 @@ def edit_user(
                                                  [new_id])
             if not add_status:
                 if verbose:
-                    print 'Could not add new %s owner of %s: %s' \
-                          % (new_id, vgrid_name, err)
+                    print('Could not add new %s owner of %s: %s' \
+                          % (new_id, vgrid_name, err))
                 continue
             (del_status, err) = vgrid_remove_owners(configuration, vgrid_name,
                                                     [client_id])
             if not del_status:
                 if verbose:
-                    print 'Could not remove old %s owner of %s: %s' \
-                          % (client_id, vgrid_name, err)
+                    print('Could not remove old %s owner of %s: %s' \
+                          % (client_id, vgrid_name, err))
                 continue
             if verbose:
-                print 'Updated %s owner from %s to %s' % (vgrid_name,
+                print('Updated %s owner from %s to %s' % (vgrid_name,
                                                           client_id,
-                                                          new_id)
+                                                          new_id))
         elif client_id in vgrid[MEMBERS]:
             (add_status, err) = vgrid_add_members(configuration, vgrid_name,
                                                   [new_id])
             if not add_status:
                 if verbose:
-                    print 'Could not add new %s member of %s: %s' \
-                          % (new_id, vgrid_name, err)
+                    print('Could not add new %s member of %s: %s' \
+                          % (new_id, vgrid_name, err))
                 continue
             (del_status, err) = vgrid_remove_members(configuration, vgrid_name,
                                                      [client_id])
             if not del_status:
                 if verbose:
-                    print 'Could not remove old %s member of %s: %s' \
-                          % (client_id, vgrid_name, err)
+                    print('Could not remove old %s member of %s: %s' \
+                          % (client_id, vgrid_name, err))
                 continue
             if verbose:
-                print 'Updated %s member from %s to %s' % (vgrid_name,
+                print('Updated %s member from %s to %s' % (vgrid_name,
                                                            client_id,
-                                                           new_id)
+                                                           new_id))
 
     # Loop through runtime envs and update ownership
 
@@ -953,20 +955,20 @@ def edit_user(
                                                        new_id, configuration)
             if verbose:
                 if re_status:
-                    print 'Updated %s owner from %s to %s' % (re_name,
+                    print('Updated %s owner from %s to %s' % (re_name,
                                                               client_id,
-                                                              new_id)
+                                                              new_id))
                 elif err:
-                    print 'Could not change owner of %s: %s' % (re_name, err)
+                    print('Could not change owner of %s: %s' % (re_name, err))
     else:
         if verbose:
-            print 'Could not load runtime env list: %s' % re_list
+            print('Could not load runtime env list: %s' % re_list)
 
     # Loop through moved sharelinks map pickle and update fs paths
 
     (load_status, sharelinks) = load_share_links(configuration, new_id)
     if verbose:
-        print 'Update %d sharelinks' % len(sharelinks)
+        print('Update %d sharelinks' % len(sharelinks))
     if load_status:
         for (share_id, share_dict) in sharelinks.items():
             # Update owner and use generic update helper to replace symlink
@@ -975,14 +977,14 @@ def edit_user(
                                                   configuration, sharelinks)
             if verbose:
                 if mod_status:
-                    print 'Updated sharelink %s from %s to %s' % (share_id,
+                    print('Updated sharelink %s from %s to %s' % (share_id,
                                                                   client_id,
-                                                                  new_id)
+                                                                  new_id))
                 elif err:
-                    print 'Could not update owner of %s: %s' % (share_id, err)
+                    print('Could not update owner of %s: %s' % (share_id, err))
     else:
         if verbose:
-            print 'Could not load sharelinks: %s' % sharelinks
+            print('Could not load sharelinks: %s' % sharelinks)
 
     # TODO: update remaining user credentials in various locations?
     # * queued and active jobs (tricky due to races)
@@ -1032,7 +1034,7 @@ def delete_user(
     client_dir = client_id_dir(client_id)
 
     if verbose:
-        print 'User ID: %s\n' % client_id
+        print('User ID: %s\n' % client_id)
 
     if do_lock:
         flock = lock_user_db(db_path)
@@ -1044,14 +1046,14 @@ def delete_user(
             else:
                 user_db = load_user_db(db_path, do_lock=False)
                 if verbose:
-                    print 'Loaded existing user DB from: %s' % db_path
-        except Exception, err:
+                    print('Loaded existing user DB from: %s' % db_path)
+        except Exception as err:
             if not force:
                 if do_lock:
                     unlock_user_db(flock)
                 raise Exception('Failed to load user DB: %s' % err)
 
-        if not user_db.has_key(client_id):
+        if client_id not in user_db:
             if not force:
                 if do_lock:
                     unlock_user_db(flock)
@@ -1063,9 +1065,9 @@ def delete_user(
         del user_db[client_id]
         save_user_db(user_db, db_path, do_lock=False)
         if verbose:
-            print 'User %s was successfully removed from user DB!'\
-                  % client_id
-    except Exception, err:
+            print('User %s was successfully removed from user DB!'\
+                  % client_id)
+    except Exception as err:
         if not force:
             if do_lock:
                 unlock_user_db(flock)
@@ -1091,13 +1093,13 @@ def delete_user(
         user_path = os.path.join(base_dir, client_dir)
         try:
             delete_dir(user_path)
-        except Exception, exc:
+        except Exception as exc:
             if not force:
                 raise Exception('could not remove %s: %s'
                                 % (user_path, exc))
     if verbose:
-        print 'User dirs for %s was successfully removed!'\
-            % client_id
+        print('User dirs for %s was successfully removed!'\
+            % client_id)
     mark_user_modified(configuration, client_id)
 
 
@@ -1233,7 +1235,7 @@ def __oid_sessions_execute(configuration, db_name, query, query_vars,
         if commit:
             conn.commit()
         conn.close()
-    except Exception, exc:
+    except Exception as exc:
         _logger.error("failed to execute query %s with args %s: %s"
                       % (query, query_vars, exc))
         return (False, sessions)
@@ -1300,8 +1302,8 @@ def migrate_users(
             else:
                 user_db = load_user_db(db_path, do_lock=False)
                 if verbose:
-                    print 'Loaded existing user DB from: %s' % db_path
-        except Exception, err:
+                    print('Loaded existing user DB from: %s' % db_path)
+        except Exception as err:
             if not force:
                 if do_lock:
                     unlock_user_db(flock)
@@ -1314,7 +1316,7 @@ def migrate_users(
         new_id = user['distinguished_name']
         if client_id == new_id:
             if verbose:
-                print 'user %s is already updated to new format' % client_id
+                print('user %s is already updated to new format' % client_id)
             continue
         targets[client_id] = user
 
@@ -1333,8 +1335,8 @@ def migrate_users(
                                     % new_id)
             else:
                 if verbose:
-                    print 'Pruning old duplicate user %s from user DB' \
-                          % client_id
+                    print('Pruning old duplicate user %s from user DB' \
+                          % client_id)
                 del user_db[client_id]
         elif old_id in latest.keys():
             if not prune_dupes:
@@ -1360,7 +1362,7 @@ def migrate_users(
                 else:
                     prune_id = client_id
                 if verbose:
-                    print 'Pruning duplicate user %s from user DB' % prune_id
+                    print('Pruning duplicate user %s from user DB' % prune_id)
                 del user_db[prune_id]
         else:
             latest[old_id] = (client_id, user)
@@ -1375,8 +1377,8 @@ def migrate_users(
         old_id = user['full_name'].replace(' ', '_')
         new_id = user['distinguished_name']
         if verbose:
-            print 'updating user %s on old format %s to new format %s' \
-                  % (client_id, old_id, new_id)
+            print('updating user %s on old format %s to new format %s' \
+                  % (client_id, old_id, new_id))
 
         old_name = client_id_dir(old_id)
         new_name = client_id_dir(new_id)
@@ -1391,7 +1393,7 @@ def migrate_users(
                 old_path = os.path.join(base_dir, old_name)
                 new_path = os.path.join(base_dir, new_name)
                 shutil.move(old_path, new_path)
-            except Exception, exc:
+            except Exception as exc:
 
                 # os.symlink(new_path, old_path)
 
@@ -1406,7 +1408,7 @@ def migrate_users(
                 if not os.path.isfile(mrsl_path):
                     continue
                 filter_pickled_dict(mrsl_path, {old_id: new_id})
-            except Exception, exc:
+            except Exception as exc:
                 if not force:
                     raise Exception('could not update saved mrsl in %s: %s'
                                     % (mrsl_path, exc))
@@ -1418,7 +1420,7 @@ def migrate_users(
                 if not os.path.isfile(re_path):
                     continue
                 filter_pickled_dict(re_path, {old_id: new_id})
-            except Exception, exc:
+            except Exception as exc:
                 if not force:
                     raise Exception('could not update RE user in %s: %s'
                                     % (re_path, exc))
@@ -1432,7 +1434,7 @@ def migrate_users(
                         continue
                     try:
                         filter_pickled_list(kind_path, {old_id: new_id})
-                    except Exception, exc:
+                    except Exception as exc:
                         if not force:
                             raise Exception('could not update %s in %s: %s'
                                             % (kind, kind_path, exc))
@@ -1448,9 +1450,9 @@ def migrate_users(
             user_db[new_id] = user
             save_user_db(user_db, db_path, do_lock=False)
             if verbose:
-                print 'User %s was successfully updated in user DB!'\
-                      % client_id
-        except Exception, err:
+                print('User %s was successfully updated in user DB!'\
+                      % client_id)
+        except Exception as err:
             if not force:
                 if do_lock and flock:
                     unlock_user_db(flock)
@@ -1486,8 +1488,8 @@ def fix_entities(
             else:
                 user_db = load_user_db(db_path, do_lock=do_lock)
                 if verbose:
-                    print 'Loaded existing user DB from: %s' % db_path
-        except Exception, err:
+                    print('Loaded existing user DB from: %s' % db_path)
+        except Exception as err:
             if not force:
                 raise Exception('Failed to load user DB: %s' % err)
 
@@ -1496,8 +1498,8 @@ def fix_entities(
         old_id = user['full_name'].replace(' ', '_')
         new_id = user['distinguished_name']
         if verbose:
-            print 'updating user %s on old format %s to new format %s' \
-                  % (client_id, old_id, new_id)
+            print('updating user %s on old format %s to new format %s' \
+                  % (client_id, old_id, new_id))
 
         for base_dir in (configuration.resource_home,
                          configuration.vgrid_home):
@@ -1509,10 +1511,10 @@ def fix_entities(
                     if sandbox_resource(entry_name):
                         continue
                     if verbose:
-                        print 'updating %s in %s' % (client_id, kind_path)
+                        print('updating %s in %s' % (client_id, kind_path))
                     try:
                         filter_pickled_list(kind_path, {old_id: new_id})
-                    except Exception, exc:
+                    except Exception as exc:
                         if not force:
                             raise Exception('could not update %s in %s: %s'
                                             % (kind, kind_path, exc))
@@ -1548,8 +1550,8 @@ def fix_userdb_keys(
             else:
                 user_db = load_user_db(db_path, do_lock=False)
                 if verbose:
-                    print 'Loaded existing user DB from: %s' % db_path
-        except Exception, err:
+                    print('Loaded existing user DB from: %s' % db_path)
+        except Exception as err:
             if not force:
                 if do_lock:
                     unlock_user_db(flock)
@@ -1561,20 +1563,20 @@ def fix_userdb_keys(
         new_id = user['distinguished_name']
         if old_id == new_id:
             if verbose:
-                print 'user %s is already updated to new format' % client_id
+                print('user %s is already updated to new format' % client_id)
             continue
         if verbose:
-            print 'updating user on old format %s to new format %s' \
-                  % (old_id, new_id)
+            print('updating user on old format %s to new format %s' \
+                  % (old_id, new_id))
 
         try:
             del user_db[client_id]
             user_db[new_id] = user
             save_user_db(user_db, db_path, do_lock=False)
             if verbose:
-                print 'User %s was successfully updated in user DB!'\
-                      % client_id
-        except Exception, err:
+                print('User %s was successfully updated in user DB!'\
+                      % client_id)
+        except Exception as err:
             if not force:
                 if do_lock:
                     unlock_user_db(flock)
@@ -1612,11 +1614,11 @@ def search_users(search_filter, conf_path, db_path,
         else:
             user_db = load_user_db(db_path, do_lock=do_lock)
             if verbose:
-                print 'Loaded existing user DB from: %s' % db_path
-    except Exception, err:
+                print('Loaded existing user DB from: %s' % db_path)
+    except Exception as err:
         err_msg = 'Failed to load user DB: %s' % err
         if verbose:
-            print err_msg
+            print(err_msg)
         _logger.error(err_msg)
         return (configuration, [])
 
@@ -1660,16 +1662,16 @@ def _user_general_notify(user_id, targets, conf_path, db_path,
         else:
             user_db = load_user_db(db_path, do_lock=do_lock)
             if verbose:
-                print 'Loaded existing user DB from: %s' % db_path
-    except Exception, err:
+                print('Loaded existing user DB from: %s' % db_path)
+    except Exception as err:
         err_msg = 'Failed to load user DB: %s' % err
         if verbose:
-            print err_msg
+            print(err_msg)
         _logger.error(err_msg)
         return []
 
     user_fields = {}
-    if user_db.has_key(user_id):
+    if user_id in user_db:
         user_dict = user_db[user_id]
     else:
         user_dict = {}
@@ -1765,15 +1767,15 @@ def user_password_check(user_id, conf_path, db_path, verbose=False,
         else:
             user_db = load_user_db(db_path, do_lock=do_lock)
             if verbose:
-                print 'Loaded existing user DB from: %s' % db_path
-    except Exception, err:
+                print('Loaded existing user DB from: %s' % db_path)
+    except Exception as err:
         err_msg = 'Failed to load user DB: %s' % err
         if verbose:
-            print err_msg
+            print(err_msg)
         _logger.error(err_msg)
         return []
 
-    if not user_db.has_key(user_id):
+    if user_id not in user_db:
         errors.append('No such user: %s' % user_id)
         return (configuration, errors)
 
@@ -1788,7 +1790,7 @@ def user_password_check(user_id, conf_path, db_path, verbose=False,
     else:
         try:
             assure_password_strength(configuration, password)
-        except Exception, exc:
+        except Exception as exc:
             errors.append('password for %s does not satisfy local policy: %s'
                           % (user_id, exc))
 
@@ -1796,11 +1798,11 @@ def user_password_check(user_id, conf_path, db_path, verbose=False,
     digest_path = os.path.join(configuration.user_home, client_dir,
                                davs_conf_dir, authdigests_filename)
     if verbose:
-        print "inspecting %s" % digest_path
+        print("inspecting %s" % digest_path)
     all_digests = []
     if os.path.isfile(digest_path):
         if verbose:
-            print "Checking %s" % digest_path
+            print("Checking %s" % digest_path)
         all_digests = get_authpasswords(digest_path)
     if not all_digests:
         errors.append('No digest set for %s' % user_id)
@@ -1813,13 +1815,13 @@ def user_password_check(user_id, conf_path, db_path, verbose=False,
                                             payload)
             # NOTE: password may contain ':' so limit splits
             _, _, password = unscrambled.split(":", 2)
-        except Exception, exc:
+        except Exception as exc:
             errors.append('digest for %s could not be unpacked (%s): %s'
                           % (user_id, unscrambled, exc))
             continue
         try:
             assure_password_strength(configuration, password)
-        except Exception, exc:
+        except Exception as exc:
             errors.append('digest for %s does not satisfy local policy: %s'
                           % (user_id, exc))
 
@@ -1845,7 +1847,7 @@ def req_password_check(req_path, conf_path, db_path, verbose=False,
     try:
         user_dict = load(req_path)
         user_id = user_dict['distinguished_name']
-    except Exception, exc:
+    except Exception as exc:
         errors.append('could not load request from %s: %s' % (req_path, exc))
         return (configuration, errors)
 
@@ -1861,7 +1863,7 @@ def req_password_check(req_path, conf_path, db_path, verbose=False,
 
     try:
         assure_password_strength(configuration, password)
-    except Exception, exc:
+    except Exception as exc:
         errors.append('password for %s does not satisfy local policy: %s'
                       % (user_id, exc))
     return (configuration, errors)
@@ -1886,15 +1888,15 @@ def user_twofactor_status(user_id, conf_path, db_path, fields,
         else:
             user_db = load_user_db(db_path, do_lock=do_lock)
             if verbose:
-                print 'Loaded existing user DB from: %s' % db_path
-    except Exception, err:
+                print('Loaded existing user DB from: %s' % db_path)
+    except Exception as err:
         err_msg = 'Failed to load user DB: %s' % err
         if verbose:
-            print err_msg
+            print(err_msg)
         _logger.error(err_msg)
         return []
 
-    if not user_db.has_key(user_id):
+    if user_id not in user_db:
         errors.append('No such user: %s' % user_id)
         return (configuration, errors)
 
@@ -1902,14 +1904,14 @@ def user_twofactor_status(user_id, conf_path, db_path, fields,
     twofactor_path = os.path.join(configuration.user_settings, client_dir,
                                   twofactor_filename)
     if verbose:
-        print "inspecting %s" % twofactor_path
+        print("inspecting %s" % twofactor_path)
     twofactor_dict = None
     try:
         twofactor_dict = load(twofactor_path)
-    except Exception, err:
+    except Exception as err:
         err_msg = 'Failed to load twofactor for %s: %s' % (user_id, err)
         if verbose:
-            print err_msg
+            print(err_msg)
 
     if not twofactor_dict:
         errors.append('No twofactor settings saved for %s' % user_id)
@@ -1920,7 +1922,7 @@ def user_twofactor_status(user_id, conf_path, db_path, fields,
         if not twofactor_dict.get(key, False):
             errors.append('%s not enabled for: %s' % (key, user_id))
         elif verbose:
-            print "%s enabled for %s" % (key, user_id)
+            print("%s enabled for %s" % (key, user_id))
     return (configuration, errors)
 
 
@@ -2019,7 +2021,7 @@ def generate_password_hash(configuration, password):
     _logger = configuration.logger
     try:
         return make_hash(password)
-    except Exception, exc:
+    except Exception as exc:
         _logger.warning("in generate_password_hash: %s" % exc)
         return password
 
@@ -2044,7 +2046,7 @@ def check_password_hash(configuration, service, username, password,
     try:
         return check_hash(configuration, service, username, password,
                           stored_hash, hash_cache, strict_policy)
-    except Exception, exc:
+    except Exception as exc:
         _logger.warning("in check_password_hash: %s" % exc)
         return False
 
@@ -2057,7 +2059,7 @@ def generate_password_scramble(configuration, password, salt):
     _logger = configuration.logger
     try:
         return make_scramble(password, salt)
-    except Exception, exc:
+    except Exception as exc:
         _logger.warning("in generate_password_scramble: %s" % exc)
         return password
 
@@ -2081,7 +2083,7 @@ def check_password_scramble(configuration, service, username, password,
         return check_scramble(configuration, service, username, password,
                               stored_scramble, salt, scramble_cache,
                               strict_policy)
-    except Exception, exc:
+    except Exception as exc:
         _logger.warning("in check_password_scramble: %s" % exc)
         return False
 
@@ -2091,7 +2093,7 @@ def generate_password_digest(configuration, realm, username, password, salt):
     _logger = configuration.logger
     try:
         return make_digest(realm, username, password, salt)
-    except Exception, exc:
+    except Exception as exc:
         _logger.warning("in generate_password_digest: %s" % exc)
         return password
 
@@ -2112,6 +2114,6 @@ def check_password_digest(configuration, service, realm, username, password,
     try:
         return check_digest(configuration, service, realm, username, password,
                             stored_digest, salt, digest_cache, strict_policy)
-    except Exception, exc:
+    except Exception as exc:
         _logger.warning("in check_password_digest: %s" % exc)
         return False

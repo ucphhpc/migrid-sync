@@ -28,11 +28,12 @@
 # Martin Rehr martin@rehr.dk August 2005
 
 """Display resource editor help"""
+from __future__ import absolute_import
 
-from shared import resconfkeywords
-from shared import returnvalues
-from shared.functional import validate_input_and_cert
-from shared.init import initialize_main_variables, find_entry
+from .shared import resconfkeywords
+from .shared import returnvalues
+from .shared.functional import validate_input_and_cert
+from .shared.init import initialize_main_variables, find_entry
 
 
 def signature():

@@ -26,15 +26,16 @@
 #
 
 """Entity kind detection"""
+from __future__ import absolute_import
 
 import os
 from string import letters, digits
 
-from shared.defaults import user_db_filename
-from shared.base import client_id_dir
-from shared.listhandling import is_item_in_pickled_list
-from shared.validstring import valid_user_path
-from shared.serial import load
+from .shared.defaults import user_db_filename
+from .shared.base import client_id_dir
+from .shared.listhandling import is_item_in_pickled_list
+from .shared.validstring import valid_user_path
+from .shared.serial import load
 
 VALID_FQDN_CHARACTERS = letters + digits + '.-'
 MIG_SERVER_ID = 'MiG-Server'
@@ -48,7 +49,7 @@ def is_user(entity_id, mig_server_home):
     db_path = os.path.join(mig_server_home, user_db_filename)
     try:
         user_db = load(db_path)
-        if user_db.has_key(entity_id):
+        if entity_id in user_db:
             result = True
     except:
         pass

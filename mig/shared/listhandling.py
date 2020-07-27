@@ -26,8 +26,9 @@
 #
 
 """List functions"""
+from __future__ import absolute_import
 
-from shared.fileio import pickle, unpickle
+from .shared.fileio import pickle, unpickle
 
 
 def frange(start, stop, jump, inc=False, limit=None):

@@ -32,6 +32,7 @@ By default sends instructions on email to the registered notification address
 or email from Distinguished Name field of employee user entry. If user
 configured additional messaging protocols they can also be used.
 """
+from __future__ import print_function
 
 import getopt
 import os
@@ -51,7 +52,7 @@ from shared.useradm import init_user_adm, search_users, default_search, \
 def usage(name='reqacceptpeer.py'):
     """Usage help"""
 
-    print """Request formal acceptance of external account request to user(s)
+    print("""Request formal acceptance of external account request to user(s)
 from user database and send instructions email.
 Usage:
 %(name)s [NOTIFY_OPTIONS] [FULL_NAME ORGANIZATION STATE COUNTRY EMAIL COMMENT]
@@ -69,7 +70,7 @@ Where NOTIFY_OPTIONS may be one or more of:
 
 One or more destinations may be set by combining multiple -e, -s and -a
 options.
-""" % {'name': name}
+""" % {'name': name})
 
 
 if '__main__' == __name__:
@@ -88,8 +89,8 @@ if '__main__' == __name__:
     opt_args = 'ac:Cd:e:hI:s:u:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
-    except getopt.GetoptError, err:
-        print 'Error: ', err.msg
+    except getopt.GetoptError as err:
+        print('Error: ', err.msg)
         usage()
         sys.exit(1)
 
@@ -120,26 +121,26 @@ if '__main__' == __name__:
         elif opt == '-v':
             verbose = True
         else:
-            print 'Error: %s not supported!' % opt
+            print('Error: %s not supported!' % opt)
             usage()
             sys.exit(0)
 
     if conf_path and not os.path.isfile(conf_path):
-        print 'Failed to read configuration file: %s' % conf_path
+        print('Failed to read configuration file: %s' % conf_path)
         sys.exit(1)
 
     if verbose:
         if conf_path:
             if verbose:
-                print 'using configuration in %s' % conf_path
+                print('using configuration in %s' % conf_path)
         else:
             if verbose:
-                print 'using configuration from MIG_CONF (or default)'
+                print('using configuration from MIG_CONF (or default)')
 
     configuration = get_configuration_object(config_file=conf_path)
     logger = configuration.logger
     if user_file and args:
-        print 'Error: Only one kind of user specification allowed at a time'
+        print('Error: Only one kind of user specification allowed at a time')
         usage()
         sys.exit(1)
 
@@ -152,19 +153,19 @@ if '__main__' == __name__:
             peer_dict['email'] = args[4]
             peer_dict['comment'] = args[5]
         except IndexError:
-            print 'Error: too few arguments given (expected 6 got %d)'\
-                % len(args)
+            print('Error: too few arguments given (expected 6 got %d)'\
+                % len(args))
             usage()
             sys.exit(1)
     elif user_file:
         try:
             peer_dict = load(user_file)
-        except Exception, err:
-            print 'Error in user name extraction: %s' % err
+        except Exception as err:
+            print('Error in user name extraction: %s' % err)
             usage()
             sys.exit(1)
     else:
-        print 'No peer specified: please pass peer as args or with -u PATH'
+        print('No peer specified: please pass peer as args or with -u PATH')
         usage()
         sys.exit(1)
 
@@ -172,7 +173,7 @@ if '__main__' == __name__:
     peer_id = peer_dict['distinguished_name']
 
     if verbose:
-        print 'Handling peer %s' % peer_id
+        print('Handling peer %s' % peer_id)
 
     # Lookup users to request formal acceptance from
     (_, hits) = search_users(search_filter, conf_path, db_path, verbose)
@@ -180,31 +181,31 @@ if '__main__' == __name__:
     gdp_prefix = "%s=" % gdp_distinguished_field
     for (user_id, user_dict) in hits:
         if verbose:
-            print 'Check for %s' % user_id
+            print('Check for %s' % user_id)
 
         if configuration.site_enable_gdp and \
                 user_id.split('/')[-1].startswith(gdp_prefix):
             if verbose:
-                print "Skip GDP project account: %s" % user_id
+                print("Skip GDP project account: %s" % user_id)
             continue
 
         if not peers_permit_allowed(configuration, user_dict):
             if verbose:
-                print "Skip account %s without vouching permission" % user_id
+                print("Skip account %s without vouching permission" % user_id)
             continue
 
         if not manage_pending_peers(configuration, user_id, "add",
                                     [(peer_id, peer_dict)]):
-            print "Failed to forward accept peer %s to %s" % (peer_id, user_id)
+            print("Failed to forward accept peer %s to %s" % (peer_id, user_id))
             continue
 
-        print "Added peer request from %s to %s" % (peer_id, user_id)
+        print("Added peer request from %s to %s" % (peer_id, user_id))
 
         (_, _, full_name, addresses, errors) = user_account_notify(
             user_id, raw_targets, conf_path, db_path, verbose, admin_copy)
         if errors:
-            print "Address lookup errors for %s :" % user_id
-            print '\n'.join(errors)
+            print("Address lookup errors for %s :" % user_id)
+            print('\n'.join(errors))
             exit_code += 1
             continue
 
@@ -214,11 +215,11 @@ if '__main__' == __name__:
                 notify_dict['NOTIFY'].append('%s: %s' % (proto, address))
         # Don't actually send unless requested
         if not raw_targets and not admin_copy:
-            print "No email targets for request accept peer %s from %s" % \
-                  (peer_id, user_id)
+            print("No email targets for request accept peer %s from %s" % \
+                  (peer_id, user_id))
             continue
-        print "Send request accept peer message for '%s' to:\n%s" \
-              % (peer_id, '\n'.join(notify_dict['NOTIFY']))
+        print("Send request accept peer message for '%s' to:\n%s" \
+              % (peer_id, '\n'.join(notify_dict['NOTIFY'])))
         notify_user(notify_dict, [peer_id, configuration.short_title,
                                   'peeraccount', peer_dict['comment'],
                                   peer_dict['email']],

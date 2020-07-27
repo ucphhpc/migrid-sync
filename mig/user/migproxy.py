@@ -1,3 +1,4 @@
+from __future__ import print_function
 #!/bin/sh -
 "exec" "python" "-O" "$0" "$@"
 
@@ -43,19 +44,19 @@ class MiGSSLSocket:
         self._closed = False
 
     def send(self, data, flags=None):
-        print "DEBUG: in ssl_send"
+        print("DEBUG: in ssl_send")
         return self._ssl_sock.write(data)
 
     def recv(self, buffersize, flags=None):
-        print "DEBUG: in ssl_recv"
+        print("DEBUG: in ssl_recv")
         return self._ssl_sock.read(buffersize)
 
     def fileno(self):
-        print "DEBUG: in ssl_fileno"
+        print("DEBUG: in ssl_fileno")
         return self._sock.fileno()
 
     def close(self):
-        print "DEBUG: in ssl_close"
+        print("DEBUG: in ssl_close")
         self._ssl_sock = None
         # Try to avoid low level double free error and crash by closing any
         # open file descriptors for the socket
@@ -122,19 +123,19 @@ class ProxyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
         else:
             host_port = netloc, 80
         if netloc in self.wrap_targets:
-            print "\t" "wrapping connection to %s in ssl" % netloc
+            print("\t" "wrapping connection to %s in ssl" % netloc)
             host_port = host_port[0], self.wrap_targets[netloc]['cert_port']
             self.wrap_ssl = True
             self.key = self.wrap_targets[netloc]['ssl_key']
             self.cert = self.wrap_targets[netloc]['ssl_cert']
-        print "\t" "connect to %s:%d" % host_port
+        print("\t" "connect to %s:%d" % host_port)
         try:
             self.sock.connect(host_port)
             if self.wrap_ssl:
                 self.sock = MiGSSLSocket(self.sock, keyfile=self.key,
                                          certfile=self.cert)
-        except socket.error, arg:
-            print "\t" "socket error:" % arg
+        except socket.error as arg:
+            print("\t" "socket error:" % arg)
             try:
                 msg = arg[1]
             except:
@@ -144,7 +145,7 @@ class ProxyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
         return 1
 
     def do_CONNECT(self):
-        print "DEBUG: in connect"
+        print("DEBUG: in connect")
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             if self._connect_to(self.path):
@@ -155,13 +156,13 @@ class ProxyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
                 self.wfile.write("\r\n")
                 self._read_write(300)
         finally:
-            print "\t" "bye"
+            print("\t" "bye")
             self.sock.close()
             self.sock = None
             self.connection.close()
 
     def do_GET(self):
-        print "DEBUG: in get"
+        print("DEBUG: in get")
         (scm, netloc, path, params, query, fragment) = urlparse.urlparse(
             self.path, 'http')
         if scm != 'http' or fragment or not netloc:
@@ -184,7 +185,7 @@ class ProxyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
         except socket.sslerror:
             pass
         finally:
-            print "\t" "bye"
+            print("\t" "bye")
             self.sock.close()
             self.sock = None
             self.connection.close()
@@ -209,7 +210,7 @@ class ProxyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
                         out.send(data)
                         count = 0
             else:
-                print "\t" "idle", count
+                print("\t" "idle", count)
             if count == max_idling:
                 break
 
@@ -252,17 +253,17 @@ class MiGProxy(ThreadingHTTPServer):
 if __name__ == '__main__':
     from sys import argv
     if argv[1:] and argv[1] in ('-h', '--help'):
-        print argv[0], "[port [allowed_client_name ...]]"
+        print(argv[0], "[port [allowed_client_name ...]]")
     else:
         if argv[2:]:
             allowed = []
             for name in argv[2:]:
                 client = socket.gethostbyname(name)
                 allowed.append(client)
-                print "Accept: %s (%s)" % (client, name)
+                print("Accept: %s (%s)" % (client, name))
             ProxyHandler.allowed_clients = allowed
             del argv[2:]
         else:
-            print "Any clients will be served..."
+            print("Any clients will be served...")
 
         BaseHTTPServer.test(ProxyHandler, MiGProxy)

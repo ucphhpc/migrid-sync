@@ -26,16 +26,17 @@
 #
 
 """Emulate the un*x function with the same name"""
+from __future__ import absolute_import
 
 import os
 import glob
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.init import initialize_main_variables
-from shared.parseflags import verbose, binary
-from shared.validstring import valid_user_path
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.init import initialize_main_variables
+from .shared.parseflags import verbose, binary
+from .shared.validstring import valid_user_path
 
 
 def signature():
@@ -154,7 +155,7 @@ def main(client_id, user_arguments_dict):
                 for _ in range(newlines):
                     output_lines.append(filedes.readline())
                 filedes.close()
-            except Exception, exc:
+            except Exception as exc:
                 output_objects.append({'object_type': 'error_text',
                         'text': "%s: '%s': %s" % (op_name,
                         relative_path, exc)})

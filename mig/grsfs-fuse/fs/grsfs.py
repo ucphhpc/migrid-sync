@@ -39,6 +39,8 @@
 """
 migfuse is a fuse frontend to the MiG Distributed Storage System
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 import pprint
 import fuse
@@ -61,11 +63,11 @@ import quopri
 import sys, traceback, re, time, tempfile, array, syslog
 
 # Import our own stuff - put it elsewhere to reduce clutter
-from core.entities import *
-from core.specialized.aux import *
-from core.configuration import *
+from .core.entities import *
+from .core.specialized.aux import *
+from .core.configuration import *
 
-from core import kernel
+from .core import kernel
 
 
 class grsfs(Fuse):
@@ -135,7 +137,7 @@ class grsfs(Fuse):
         self.kernel.mkdir(path, mode, None)
         
     def init(self, arg):
-        print "Init called?!"
+        print("Init called?!")
         
     def fsinit(self):
         # print "fsinit %s" % threading.current_thread()

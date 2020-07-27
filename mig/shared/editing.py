@@ -28,11 +28,13 @@
 """This module contains general functions used for the online
 file editor.
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import time
 
-from shared.defaults import edit_lock_suffix, edit_lock_timeout
+from .shared.defaults import edit_lock_suffix, edit_lock_timeout
 
 # CodeMirror helpers
 
@@ -247,7 +249,7 @@ def acquire_edit_lock(real_path, client_id):
     try:
         os.makedirs(lock_path)
         lock_exists = False
-    except OSError, ose:
+    except OSError as ose:
 
         # lock dir exists - previously locked
 
@@ -265,8 +267,8 @@ def acquire_edit_lock(real_path, client_id):
             owner = info_lines[0].strip()
             timestamp = float(info_lines[1].strip())
             time_left = default_timeout - (now - timestamp)
-        except Exception, err:
-            print 'Error: %s - taking broken lock' % err
+        except Exception as err:
+            print('Error: %s - taking broken lock' % err)
             owner = client_id
             time_left = default_timeout
             take_lock = True
@@ -288,9 +290,9 @@ def acquire_edit_lock(real_path, client_id):
 %f
 ''' % (client_id, now))
             info_fd.close()
-        except Exception, err:
-            print 'Error opening or writing to %s, (%s)' % (info_path,
-                    err)
+        except Exception as err:
+            print('Error opening or writing to %s, (%s)' % (info_path,
+                    err))
 
     return (owner, time_left)
 
@@ -312,7 +314,7 @@ def got_edit_lock(real_path, client_id):
 
         os.rmdir(lock_path)
         return False
-    except OSError, ose:
+    except OSError as ose:
 
         # lock dir exists - previously locked
 
@@ -328,18 +330,18 @@ def got_edit_lock(real_path, client_id):
         owner = info_lines[0].strip()
         timestamp = float(info_lines[1].strip())
         time_left = edit_lock_timeout - (now - timestamp)
-    except Exception, err:
-        print 'Error: %s - not accepting invalid lock' % err
+    except Exception as err:
+        print('Error: %s - not accepting invalid lock' % err)
         return False
 
     if owner != client_id:
-        print "Error: You don't have the lock for %s - %s does"\
-             % (real_path, owner)
+        print("Error: You don't have the lock for %s - %s does"\
+             % (real_path, owner))
         return False
     elif time_left < 0:
 
-        print "Error: You don't have the lock for %s any longer - time out %f seconds ago"\
-             % (real_path, -time_left)
+        print("Error: You don't have the lock for %s any longer - time out %f seconds ago"\
+             % (real_path, -time_left))
         return False
     else:
         return True
@@ -364,11 +366,11 @@ def release_edit_lock(real_path, client_id):
         os.rename(lock_path, stale_lock_path)
         os.remove(stale_info_path)
         os.rmdir(stale_lock_path)
-    except OSError, ose:
+    except OSError as ose:
 
         # rename failed - previously locked
 
-        print 'Error: renaming and removing lock dir: %s' % ose
+        print('Error: renaming and removing lock dir: %s' % ose)
         return False
     return True
 

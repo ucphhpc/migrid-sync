@@ -29,20 +29,21 @@
 """Script to provide users with a means of listing file meta data from
 their home directories.
 """
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.defaults import csrf_field
-from shared.functional import validate_input_and_cert
-from shared.handlers import safe_handler, get_csrf_limit, \
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.defaults import csrf_field
+from .shared.functional import validate_input_and_cert
+from .shared.handlers import safe_handler, get_csrf_limit, \
     make_csrf_token
-from shared.imagemeta import list_settings, get_setting, \
+from .shared.imagemeta import list_settings, get_setting, \
     create_setting, update_setting, remove_setting, reset_settings, \
     get, refresh, remove, clean
-from shared.init import initialize_main_variables, find_entry
-from shared.vgrid import vgrid_is_owner, in_vgrid_share
+from .shared.init import initialize_main_variables, find_entry
+from .shared.vgrid import vgrid_is_owner, in_vgrid_share
 
 get_actions = ['list_settings', 'get_setting', 'get']
 post_actions = [

@@ -26,6 +26,7 @@
 #
 
 """XMLRPC cronhelper with support for HTTPS using client certificates"""
+from __future__ import print_function
 
 import httplib
 import os
@@ -42,8 +43,8 @@ def read_user_conf():
     conf_path = os.path.expanduser(os.path.join('~', '.mig',
                                    'miguser.conf'))
     if not os.path.exists(conf_path):
-        print 'mig user configuration not found, %s does not exist'\
-            % conf_path
+        print('mig user configuration not found, %s does not exist'\
+            % conf_path)
         sys.exit(1)
 
     needed_settings = ['migserver', 'certfile', 'keyfile']
@@ -70,13 +71,13 @@ def read_user_conf():
                 val = os.path.expandvars(os.path.expanduser(val))
             user_conf[key] = val
         conf_fd.close()
-    except IOError, exc:
-        print 'Could not read miguser conf: %s, %s' % (conf_path, exc)
+    except IOError as exc:
+        print('Could not read miguser conf: %s, %s' % (conf_path, exc))
         sys.exit(1)
     for needed_key in needed_settings:
-        if not user_conf.has_key(needed_key):
-            print 'Needed setting %s not found in %s' % (needed_key,
-                                                         conf_path)
+        if needed_key not in user_conf:
+            print('Needed setting %s not found in %s' % (needed_key,
+                                                         conf_path))
             sys.exit(1)
     return user_conf
 
@@ -192,15 +193,15 @@ if '__main__' == __name__:
     user_conf = read_user_conf()
     conf.update(user_conf)
     if not os.path.isfile(conf['certfile']):
-        print 'Cert file %(certfile)s not found!' % conf
+        print('Cert file %(certfile)s not found!' % conf)
         sys.exit(1)
     if not os.path.isfile(conf['keyfile']):
-        print 'Key file %(keyfile)s not found!' % conf
+        print('Key file %(keyfile)s not found!' % conf)
         sys.exit(1)
     # CA cert is not currently used, but we include it for future verification
     cacert = conf.get('cacertfile', None)
     if cacert and cacert != 'AUTO' and not os.path.isfile(cacert):
-        print 'specified CA cert file %(cacertfile)s not found!' % conf
+        print('specified CA cert file %(cacertfile)s not found!' % conf)
         sys.exit(1)
     url_tuple = urlparse(conf['migserver'])
     # second item in tuple is network location part with hostname and optional
@@ -211,52 +212,52 @@ if '__main__' == __name__:
     host_port[1] = int(host_port[1])
     conf['host'], conf['port'] = host_port
 
-    print '''Running XMLRPC cron script against %(migserver)s with user certificate
+    print('''Running XMLRPC cron script against %(migserver)s with user certificate
 from %(certfile)s , key from %(keyfile)s and
 CA certificate %(cacertfile)s . You may get prompted for your MiG
 key/certificate passphrase before you can continue.
-    ''' % conf
+    ''' % conf)
     server = xmlrpcgetserver(conf)
 
     api_methods = ['crontab', 'lscrontab', 'addcrontab', 'rmcrontab']
     for method in api_methods:
-        print '%s() signature: %s' % (method,
-                                      server.system.methodSignature(method))
-        print 'the signature is a tuple of output object type and a list of '
-        print 'expected/default input values'
-        print '%s() help: %s' % (method, server.system.methodHelp(method))
-        print 'please note that help is not yet available for all methods'
-        print
-        print "Info about %s remote method and variable arguments:" % method
+        print('%s() signature: %s' % (method,
+                                      server.system.methodSignature(method)))
+        print('the signature is a tuple of output object type and a list of ')
+        print('expected/default input values')
+        print('%s() help: %s' % (method, server.system.methodHelp(method)))
+        print('please note that help is not yet available for all methods')
+        print()
+        print("Info about %s remote method and variable arguments:" % method)
         signature = server.system.methodSignature(method)
         if 'none' in signature or 'array' in signature:
-            print
+            print()
             continue
         signature_list = eval(signature.replace('none', 'None'))
         var_dict = signature_list[1]
         var_list = var_dict.keys()
-        print '%s : %s' % (method, var_list)
+        print('%s : %s' % (method, var_list))
 
-    print 'Running lscrontab method:'
+    print('Running lscrontab method:')
     lscrontab_args = {}
     (outlist, retval) = server.lscrontab(lscrontab_args)
     (returnval, returnmsg) = retval
     if returnval != 0:
-        print 'Error %s:%s ' % (returnval, returnmsg)
-        print outlist
+        print('Error %s:%s ' % (returnval, returnmsg))
+        print(outlist)
         sys.exit(1)
 
     # print "DEBUG: lscrontab response: %s" % outlist
 
-    print "lscrontab response:"
+    print("lscrontab response:")
     for entry in outlist:
         if entry['object_type'] == 'crontab_listing':
-            print "atjobs:"
+            print("atjobs:")
             for line in entry.get('atjobs', []):
-                print line
-            print "crontab:"
+                print(line)
+            print("crontab:")
             for line in entry.get('crontab', []):
-                print line
+                print(line)
             # Read out csrf helpers for later use in editing
             csrf_helpers.update(entry.get('csrf_helpers', {}))
 
@@ -291,74 +292,74 @@ key/certificate passphrase before you can continue.
     cron_jobs = ['49 13 * * * touch add-cron-job-test.txt']
     at_jobs = ['2019-12-24 12:13:14 touch Christmas-test-+SCHEDYEAR+.txt']
 
-    print 'Running addcrontab method:'
+    print('Running addcrontab method:')
     addcrontab_args = {'crontab': cron_jobs, 'atjobs': at_jobs,
                        csrf_field: [csrf_helpers.get('addcrontab', '')]
                        }
     (outlist, retval) = server.addcrontab(addcrontab_args)
     (returnval, returnmsg) = retval
     if returnval != 0:
-        print 'Error %s:%s ' % (returnval, returnmsg)
-        print outlist
+        print('Error %s:%s ' % (returnval, returnmsg))
+        print(outlist)
         sys.exit(1)
 
     # print "DEBUG: addcrontab response: %s" % outlist
-    print "addcrontab response:"
+    print("addcrontab response:")
     for entry in outlist:
         if entry.get('text', None):
-            print "%(object_type)s: %(text)s" % entry
+            print("%(object_type)s: %(text)s" % entry)
 
-    print 'Running lscrontab method:'
+    print('Running lscrontab method:')
     (outlist, retval) = server.lscrontab(lscrontab_args)
     (returnval, returnmsg) = retval
     if returnval != 0:
-        print 'Error %s:%s ' % (returnval, returnmsg)
-        print outlist
+        print('Error %s:%s ' % (returnval, returnmsg))
+        print(outlist)
         sys.exit(1)
 
-    print "lscrontab response:"
+    print("lscrontab response:")
     for entry in outlist:
         if entry['object_type'] == 'crontab_listing':
-            print "atjobs:"
+            print("atjobs:")
             for line in entry.get('atjobs', []):
-                print line
-            print "crontab:"
+                print(line)
+            print("crontab:")
             for line in entry.get('crontab', []):
-                print line
+                print(line)
 
-    print 'Running rmcrontab method:'
+    print('Running rmcrontab method:')
     rmcrontab_args = {'crontab': cron_jobs, 'atjobs': at_jobs,
                       csrf_field: [csrf_helpers.get('rmcrontab', '')]
                       }
     (outlist, retval) = server.rmcrontab(rmcrontab_args)
     (returnval, returnmsg) = retval
     if returnval != 0:
-        print 'Error %s:%s ' % (returnval, returnmsg)
-        print outlist
+        print('Error %s:%s ' % (returnval, returnmsg))
+        print(outlist)
         sys.exit(1)
 
     # print "DEBUG: rmcrontab response: %s" % outlist
-    print "rmcrontab response:"
+    print("rmcrontab response:")
     for entry in outlist:
         if entry.get('text', None):
-            print "%(object_type)s: %(text)s" % entry
+            print("%(object_type)s: %(text)s" % entry)
 
-    print 'Running lscrontab method:'
+    print('Running lscrontab method:')
     (outlist, retval) = server.lscrontab(lscrontab_args)
     (returnval, returnmsg) = retval
     if returnval != 0:
-        print 'Error %s:%s ' % (returnval, returnmsg)
-        print outlist
+        print('Error %s:%s ' % (returnval, returnmsg))
+        print(outlist)
         sys.exit(1)
 
-    print "lscrontab response:"
+    print("lscrontab response:")
     for entry in outlist:
         if entry['object_type'] == 'crontab_listing':
-            print "atjobs:"
+            print("atjobs:")
             for line in entry.get('atjobs', []):
-                print line
-            print "crontab:"
+                print(line)
+            print("crontab:")
             for line in entry.get('crontab', []):
-                print line
+                print(line)
 
     sys.exit(0)

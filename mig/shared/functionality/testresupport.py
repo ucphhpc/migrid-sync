@@ -26,22 +26,23 @@
 #
 
 """Run a test job to verify support for a certain runtime environment"""
+from __future__ import absolute_import
 
 import base64
 import tempfile
 import os
 
-from shared import returnvalues
-from shared.base import client_id_dir, valid_dir_input
-from shared.defaults import csrf_field
-from shared.fileio import unpickle, write_file
-from shared.findtype import is_owner
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables, find_entry
-from shared.job import new_job
-from shared.refunctions import get_re_dict
-from shared.vgridaccess import user_visible_res_confs
+from .shared import returnvalues
+from .shared.base import client_id_dir, valid_dir_input
+from .shared.defaults import csrf_field
+from .shared.fileio import unpickle, write_file
+from .shared.findtype import is_owner
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables, find_entry
+from .shared.job import new_job
+from .shared.refunctions import get_re_dict
+from .shared.vgridaccess import user_visible_res_confs
 
 
 def signature():
@@ -53,7 +54,7 @@ def signature():
 def create_verify_files(types, re_name, re_dict, base_dir, logger):
     """Create runtime env test files"""
     for ver_type in types:
-        if re_dict.has_key('VERIFY%s' % ver_type.upper()):
+        if 'VERIFY%s' % ver_type.upper() in re_dict:
             if re_dict['VERIFY%s' % ver_type.upper()] != []:
                 file_content = ''
                 for line in re_dict['VERIFY%s' % ver_type.upper()]:
@@ -188,7 +189,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             os.close(filehandle)
             create_verify_files(['status', 'stdout', 'stderr'], re_name,
                                 re_dict, base_dir, logger)
-        except Exception, exc:
+        except Exception as exc:
             output_objects.append(
                 {'object_type': 'error_text', 'text':
                  'Could not write test job for %s: %s' % (visible_res_name,

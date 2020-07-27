@@ -32,6 +32,7 @@ Inspired by the apache google authenticator example at:
 https://github.com/itemir/apache_2fa
 but completely rewritten to fit our infrastructure and on-disk layout.
 """
+from __future__ import absolute_import
 
 import Cookie
 import os
@@ -39,16 +40,16 @@ import time
 import urllib
 import urlparse
 
-from shared import returnvalues
-from shared.auth import twofactor_available, load_twofactor_key, \
+from .shared import returnvalues
+from .shared.auth import twofactor_available, load_twofactor_key, \
     get_twofactor_token, verify_twofactor_token, generate_session_key, \
     save_twofactor_session, expire_twofactor_session
-from shared.defaults import twofactor_cookie_ttl
-from shared.functional import validate_input
-from shared.init import initialize_main_variables
-from shared.html import twofactor_token_html, themed_styles, themed_scripts
-from shared.settings import load_twofactor
-from shared.twofactorkeywords import get_keywords_dict as twofactor_defaults
+from .shared.defaults import twofactor_cookie_ttl
+from .shared.functional import validate_input
+from .shared.init import initialize_main_variables
+from .shared.html import twofactor_token_html, themed_styles, themed_scripts
+from .shared.settings import load_twofactor
+from .shared.twofactorkeywords import get_keywords_dict as twofactor_defaults
 
 
 def signature():

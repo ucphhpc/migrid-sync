@@ -29,6 +29,7 @@
 This test is based on the example at 
 http://docs.python.org/lib/socket-example.html
 """
+from __future__ import print_function
 
 import os
 import sys
@@ -47,7 +48,7 @@ args = input_args[:len(input_args)] + args[len(input_args):]
 
 (server, port, key_path, cert_path) = args
 
-print 'Connecting to %s:%s using key in %s and cert in %s' % tuple(args)
+print('Connecting to %s:%s using key in %s and cert in %s' % tuple(args))
 try:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((server, int(port)))
@@ -56,31 +57,31 @@ try:
     fd.close()
     os.close(0)
     sys.stdin = open('pp.txt', 'r')
-    print sys.stdin.fileno()
+    print(sys.stdin.fileno())
     ssl_sock = socket.ssl(s, key_path, cert_path)
-except Exception, err:
-    print 'Failed to create SSL connnection: %s' % err
+except Exception as err:
+    print('Failed to create SSL connnection: %s' % err)
     sys.exit(1)
 
-print 'Received server certificate data:'
-print repr(ssl_sock.server())
-print 'Received CA certificate data:'
-print repr(ssl_sock.issuer())
+print('Received server certificate data:')
+print(repr(ssl_sock.server()))
+print('Received CA certificate data:')
+print(repr(ssl_sock.issuer()))
 
-print ''
+print('')
 
 request = """GET / HTTP/1.0\r
 Host: %s\r
 \r
 """ % server
-print 'sending request:\n%s' % request
+print('sending request:\n%s' % request)
 ssl_sock.write(request)
 
 # Read a chunk of data.  Will not necessarily
 # read all the data returned by the server.
 
 data = ssl_sock.read()
-print 'received:\n%s' % data
+print('received:\n%s' % data)
 
 # Note that you need to close the underlying socket, not the SSL object.
 

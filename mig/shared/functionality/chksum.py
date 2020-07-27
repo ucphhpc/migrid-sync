@@ -26,20 +26,21 @@
 #
 
 """Emulate the un*x functions like md5sum and sha1sum"""
+from __future__ import absolute_import
 
 import os
 import glob
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.defaults import default_max_chunks
-from shared.fileio import md5sum_file, sha1sum_file, sha256sum_file, \
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.defaults import default_max_chunks
+from .shared.fileio import md5sum_file, sha1sum_file, sha256sum_file, \
     sha512sum_file, write_file, check_write_access
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables
-from shared.parseflags import verbose
-from shared.validstring import valid_user_path
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables
+from .shared.parseflags import verbose
+from .shared.validstring import valid_user_path
 
 _algo_map = {'md5': md5sum_file, 'sha1': sha1sum_file,
              'sha256': sha256sum_file, 'sha512': sha512sum_file}
@@ -190,7 +191,7 @@ def main(client_id, user_arguments_dict):
                     logger.info("%s %s of %s: %s" % (op_name, hash_algo,
                                                      abs_path, checksum))
                     output_lines.append(line)
-                except Exception, exc:
+                except Exception as exc:
                     output_objects.append(
                         {'object_type': 'error_text', 'text': "%s: '%s': %s" %
                          (op_name, relative_path, exc)})

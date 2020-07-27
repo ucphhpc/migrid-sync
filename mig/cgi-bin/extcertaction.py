@@ -26,12 +26,13 @@
 #
 
 """Front end to handle input from external certificate sign up"""
+from __future__ import absolute_import
 
 import cgi
 import cgitb
 cgitb.enable()
 
-from shared.functionality.extcertaction import main
-from shared.cgiscriptstub import run_cgi_script
+from .shared.functionality.extcertaction import main
+from .shared.cgiscriptstub import run_cgi_script
 
 run_cgi_script(main)

@@ -26,6 +26,7 @@
 #
 
 """This module tests the server IO functions through the zipfile framework."""
+from __future__ import print_function
 
 import sys
 import zipfile
@@ -40,48 +41,48 @@ def run_test(class_name):
     local_path = 'input.txt'
     zip_path = 'input.zip'
 
-    print '-locally opening file %s' % local_path
+    print('-locally opening file %s' % local_path)
     fd = open(local_path, 'w')
 
-    print '-writing lines to local file'
+    print('-writing lines to local file')
     lines = ['This is a test!', 'This is another test!\n',
              'This is a third test!\n', '..and a fourth!\n']
     fd.writelines(lines)
     fd.flush()
-    print '-closing local file %s' % local_path
+    print('-closing local file %s' % local_path)
     fd.close()
 
-    print '-opening zip file %s in write mode' % zip_path
+    print('-opening zip file %s in write mode' % zip_path)
     fd = file_class(zip_path, 'w')
-    print '-locking for write'
+    print('-locking for write')
     fd.lock(LOCK_EX)
-    print '-accessing zip archive as ZipFile'
+    print('-accessing zip archive as ZipFile')
     archive = zipfile.ZipFile(fd, 'w')
-    print '-add %s to zip archive %s' % (local_path, archive)
+    print('-add %s to zip archive %s' % (local_path, archive))
     archive.write(local_path)
-    print '-closing ZipFile'
+    print('-closing ZipFile')
     archive.close()
-    print '-unlocking zip file'
+    print('-unlocking zip file')
     fd.unlock()
-    print '-closing zip file %s' % zip_path
+    print('-closing zip file %s' % zip_path)
     fd.close()
 
-    print '-opening zip file %s in read mode' % zip_path
+    print('-opening zip file %s in read mode' % zip_path)
     fd = file_class(zip_path, 'r')
-    print '-locking for read'
+    print('-locking for read')
     fd.lock(LOCK_SH)
-    print '-accessing zip archive as ZipFile'
+    print('-accessing zip archive as ZipFile')
     archive = zipfile.ZipFile(fd, 'r')
-    print '-test integrity of zip archive %s' % archive
+    print('-test integrity of zip archive %s' % archive)
     archive.testzip()
-    print '-list contents of zip archive %s' % archive
+    print('-list contents of zip archive %s' % archive)
     contents = archive.namelist()
-    print contents
-    print '-closing ZipFile'
+    print(contents)
+    print('-closing ZipFile')
     archive.close()
-    print '-unlocking zip file'
+    print('-unlocking zip file')
     fd.unlock()
-    print '-closing zip file %s' % zip_path
+    print('-closing zip file %s' % zip_path)
     fd.close()
 
 

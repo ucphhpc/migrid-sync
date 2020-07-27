@@ -26,6 +26,7 @@
 #
 
 """Manage data imports and exports"""
+from __future__ import absolute_import
 
 from binascii import hexlify
 import glob
@@ -35,19 +36,19 @@ import socket
 import time
 from urllib import quote, urlencode
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.conf import get_resource_exe
-from shared.defaults import all_jobs, job_output_dir, default_pager_entries, \
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.conf import get_resource_exe
+from .shared.defaults import all_jobs, job_output_dir, default_pager_entries, \
     csrf_field
-from shared.fileio import read_tail
-from shared.functional import validate_input_and_cert
-from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.html import man_base_js, man_base_html, html_post_helper
-from shared.init import initialize_main_variables, find_entry
-from shared.parseflags import quiet
-from shared.pwhash import make_digest
-from shared.transferfunctions import build_transferitem_object, \
+from .shared.fileio import read_tail
+from .shared.functional import validate_input_and_cert
+from .shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from .shared.html import man_base_js, man_base_html, html_post_helper
+from .shared.init import initialize_main_variables, find_entry
+from .shared.parseflags import quiet
+from .shared.pwhash import make_digest
+from .shared.transferfunctions import build_transferitem_object, \
     build_keyitem_object, load_data_transfers, create_data_transfer, \
     update_data_transfer, delete_data_transfer, load_user_keys, \
     generate_user_key, delete_user_key

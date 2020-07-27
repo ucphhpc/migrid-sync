@@ -26,6 +26,8 @@
 #
 
 """Interface between CGI and functionality"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import cgi
 import cgitb
@@ -33,13 +35,13 @@ cgitb.enable()
 import os
 import time
 
-from shared.bailout import crash_helper
-from shared.base import requested_page, allow_script
-from shared.conf import get_configuration_object
-from shared.httpsclient import extract_client_id
-from shared.output import format_output, reject_main
-from shared.returnvalues import CLIENT_ERROR
-from shared.scriptinput import fieldstorage_to_dict
+from .shared.bailout import crash_helper
+from .shared.base import requested_page, allow_script
+from .shared.conf import get_configuration_object
+from .shared.httpsclient import extract_client_id
+from .shared.output import format_output, reject_main
+from .shared.returnvalues import CLIENT_ERROR
+from .shared.scriptinput import fieldstorage_to_dict
 
 
 def init_cgi_script(environ, delayed_input=None):
@@ -92,12 +94,12 @@ def finish_cgi_script(configuration, output_format, ret_code, ret_msg,
 
     # configuration.logger.debug("raw output:\n%s\n%s" % (header_out, output))
 
-    print header_out
-    print ''
+    print(header_out)
+    print('')
 
     # Print without adding newline
 
-    print output,
+    print(output, end=' ')
 
 
 def run_cgi_script_possibly_with_cert(main, delayed_input=None,

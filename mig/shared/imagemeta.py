@@ -27,16 +27,17 @@
 #
 
 """Image meta data helper functions"""
+from __future__ import absolute_import
 
 import os
 import time
 import traceback
 
-from shared import returnvalues
-from shared.defaults import img_trigger_prefix
-from shared.fileio import touch, makedirs_rec, listdirs_rec, \
+from .shared import returnvalues
+from .shared.defaults import img_trigger_prefix
+from .shared.fileio import touch, makedirs_rec, listdirs_rec, \
     delete_file, make_symlink, remove_dir, remove_rec
-from shared.imagemetaio import __metapath, __settings_filepath, \
+from .shared.imagemetaio import __metapath, __settings_filepath, \
     __image_metapath, __image_preview_path, __image_xdmf_path, \
     __revision, allowed_image_types, allowed_data_types, \
     allowed_volume_types, allowed_settings_status, \
@@ -50,11 +51,11 @@ from shared.imagemetaio import __metapath, __settings_filepath, \
     get_image_volume_count, get_preview_image_url, \
     get_image_xdmf_filepath, get_image_file_settings_ent_template_dict, \
     get_image_volume_settings_ent_template_dict
-from shared.vgrid import in_vgrid_share, vgrid_add_triggers, \
+from .shared.vgrid import in_vgrid_share, vgrid_add_triggers, \
     vgrid_remove_triggers, vgrid_is_trigger, vgrid_add_imagesettings, \
     vgrid_remove_imagesettings, vgrid_imagesettings, \
     vgrid_list_subvgrids, vgrid_list_parents, vgrid_owners
-from shared.vgridaccess import get_vgrid_map_vgrids
+from .shared.vgridaccess import get_vgrid_map_vgrids
 
 
 def __get_preview_mrsl_template():
@@ -250,7 +251,7 @@ def __fill_image_file_settings_defaults(logger, settings_dict):
         'preview_cutoff_max': 0.0,
         }
     for key in defaults.keys():
-        if not settings_dict.has_key(key):
+        if key not in settings_dict:
             try:
                 settings_dict[key] = template[key].type(defaults[key])
             except Exception:
@@ -278,7 +279,7 @@ def __fill_image_volume_settings_defaults(logger, settings_dict):
         }
 
     for key in defaults.keys():
-        if not settings_dict.has_key(key):
+        if key not in settings_dict:
             try:
                 settings_dict[key] = template[key].type(defaults[key])
             except Exception:
@@ -297,7 +298,7 @@ def __validate_image_file_settings_dict(logger, settings_dict):
 
     template = get_image_file_settings_ent_template_dict(logger)
     for key in settings_dict.keys():
-        if template.has_key(key):
+        if key in template:
             try:
                 result[key] = template[key].type(settings_dict[key])
             except Exception:
@@ -321,7 +322,7 @@ def __validate_image_volume_settings_dict(logger, settings_dict):
 
     template = get_image_volume_settings_ent_template_dict(logger)
     for key in settings_dict.keys():
-        if template.has_key(key):
+        if key in template:
             try:
                 result[key] = template[key].type(settings_dict[key])
             except Exception:

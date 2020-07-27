@@ -8,6 +8,7 @@ contains common functionality that test units can draw on.
 Created by Jan Wiberg on 2010-03-19.
 Copyright (c) 2010 __MyCompanyName__. All rights reserved.
 """
+from __future__ import print_function
 
 import sys, os, inspect, subprocess
 import constants
@@ -15,7 +16,7 @@ import constants
 def todo(msg = ""):
     me = inspect.stack()[1]
     daddy = inspect.stack()[2][3]
-    print "Fun %s:%s() not complete. Msg '%s'" % (me[1], me[3], msg)
+    print("Fun %s:%s() not complete. Msg '%s'" % (me[1], me[3], msg))
 
 def run_external(cmd):
     """docstring for run_external"""
@@ -30,7 +31,7 @@ def return_status(f):
         ret = f()
         if ret:
             return (constants.RET_OK, None)
-    except Exception,v:
+    except Exception as v:
         return (constants.RET_FAIL, v)
 
 class superunit:

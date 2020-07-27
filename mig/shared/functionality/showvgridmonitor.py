@@ -27,15 +27,16 @@
 
 """Show the monitor page for requested vgrids - all_vgrids keyword for all
 allowed vgrids"""
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared.defaults import all_vgrids
-from shared.functional import validate_input_and_cert
-from shared.init import initialize_main_variables, find_entry
-from shared.vgrid import vgrid_is_owner_or_member
-from shared.vgridaccess import user_vgrid_access
+from .shared import returnvalues
+from .shared.defaults import all_vgrids
+from .shared.functional import validate_input_and_cert
+from .shared.init import initialize_main_variables, find_entry
+from .shared.vgrid import vgrid_is_owner_or_member
+from .shared.vgridaccess import user_vgrid_access
 
 
 def signature():
@@ -131,7 +132,7 @@ to access the monitor.''' % (vgrid_name, label)})
                     break
                 html += str(line)
             monitor_fd.close()
-        except Exception, exc:
+        except Exception as exc:
             output_objects.append({'object_type': 'error_text', 'text':
                                    'Error reading %s monitor page (%s)' %
                                    (label, exc)})

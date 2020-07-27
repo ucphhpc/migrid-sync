@@ -21,6 +21,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """Grep for a regular expression in all code files"""
+from __future__ import print_function
 
 import glob
 import sys
@@ -88,8 +89,8 @@ code_files = py_code_files + sh_code_files + js_code_files
 
 if '__main__' == __name__:
     if len(sys.argv) < 2:
-        print 'Usage: %s PATTERN' % sys.argv[0]
-        print 'Grep for PATTERN in all code files'
+        print('Usage: %s PATTERN' % sys.argv[0])
+        print('Grep for PATTERN in all code files')
         sys.exit(1)
 
     pattern = sys.argv[1]

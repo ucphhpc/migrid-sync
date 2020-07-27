@@ -26,6 +26,7 @@
 #
 
 """Check passwords in user database for compliance with site password policy"""
+from __future__ import print_function
 
 import getopt
 import pickle
@@ -41,7 +42,7 @@ from shared.useradm import init_user_adm, search_users, default_search, \
 def usage(name='checkpwpolicy.py'):
     """Usage help"""
 
-    print """Check password policy compliance in user database.
+    print("""Check password policy compliance in user database.
 Usage:
 %(name)s [CHECK_OPTIONS]
 Where CHECK_OPTIONS may be one or more of:
@@ -52,7 +53,7 @@ Where CHECK_OPTIONS may be one or more of:
    -p POLICY           Check against POLICY instead of configured value
    -u USER_FILE        Read user information from pickle file
    -v                  Verbose output
-""" % {'name': name}
+""" % {'name': name})
 
 
 # ## Main ###
@@ -67,8 +68,8 @@ if '__main__' == __name__:
     opt_args = 'c:d:hI:p:u:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
-    except getopt.GetoptError, err:
-        print 'Error: ', err.msg
+    except getopt.GetoptError as err:
+        print('Error: ', err.msg)
         usage()
         sys.exit(1)
 
@@ -89,12 +90,12 @@ if '__main__' == __name__:
         elif opt == '-v':
             verbose = True
         else:
-            print 'Error: %s not supported!' % opt
+            print('Error: %s not supported!' % opt)
             usage()
             sys.exit(0)
 
     if args:
-        print 'Error: Non-option arguments are not supported - missing quotes?'
+        print('Error: Non-option arguments are not supported - missing quotes?')
         usage()
         sys.exit(1)
 
@@ -107,19 +108,19 @@ if '__main__' == __name__:
         (configuration, hits) = search_users(search_filter, conf_path, db_path,
                                              verbose)
         if not hits:
-            print "No matching users in user DB"
+            print("No matching users in user DB")
         else:
             # Load conf only once and reuse hits as a sparse user DB for speed
             conf_path, db_path = configuration, dict(hits)
-            print "Password policy errors:"
+            print("Password policy errors:")
             for (uid, user_dict) in hits:
                 if verbose:
-                    print "Checking %s" % uid
+                    print("Checking %s" % uid)
                 (_, err) = user_password_check(uid, conf_path,
                                                db_path, verbose,
                                                policy)
                 errors += err
     if errors:
-        print '\n'.join(errors)
+        print('\n'.join(errors))
     elif verbose:
-        print "%s: OK" % uid
+        print("%s: OK" % uid)

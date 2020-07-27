@@ -33,6 +33,7 @@
 
 
 """ARC middleware interface module."""
+from __future__ import absolute_import
 
 import os
 import sys
@@ -41,10 +42,10 @@ import commands
 import threading
 import tempfile
 
-from shared.safeeval import subprocess_popen, subprocess_pipe
+from .shared.safeeval import subprocess_popen, subprocess_pipe
 
 # MiG utilities:
-from shared.conf import get_configuration_object
+from .shared.conf import get_configuration_object
 config = get_configuration_object()
 logger = config.logger
 
@@ -99,7 +100,7 @@ class Proxy(arclib.Certificate):
 
         try:
             arclib.Certificate.__init__(self,arclib.PROXY,self.__filename)
-        except arclib.CertificateError, err:
+        except arclib.CertificateError as err:
             raise NoProxyError(err.what())
         # just testing...
         logger.debug('Proxy Certificate %s from %s' \
@@ -222,7 +223,7 @@ def create_grid_proxy(cert_path, key_path, proxy_path):
                                 stderr=subprocess_pipe)
         (out, _) = proc.communicate()
         logger.info(out.replace("\n", "."))
-    except Exception, exc: 
+    except Exception as exc: 
         logger.error("Could not generate a proxy certificate: \n%s" % exc)
         raise
     
@@ -295,13 +296,13 @@ class Ui:
             if self._proxy.IsExpired(): # should not happen
                 raise NoProxyError('Expired.')
     
-        except NoProxyError, err:
+        except NoProxyError as err:
             logger.error('Proxy error: %s' % err.what())
             raise err
-        except arclib.ARCLibError, err:
+        except arclib.ARCLibError as err:
             logger.error('Cannot initialise: %s' % err.what())
             raise ARCWrapperError(err.what())
-        except Exception, other:
+        except Exception as other:
             logger.error('Unexpected error during initialisation.\n %s' % other)
             raise ARCWrapperError(other.__str__())
 
@@ -337,11 +338,11 @@ class Ui:
             for q in self._queues:
                 logger.debug('\t %s' % q)
 
-        except NoProxyError, err:
+        except NoProxyError as err:
             self.__unlockArclib()
             logger.error('Proxy error during queue initialisation: %s' % err )
             raise err
-        except Exception, err:
+        except Exception as err:
             self.__unlockArclib()
             logger.error('ARC queue initialisation error: %s' % err )
             self._clusters = []
@@ -411,7 +412,7 @@ class Ui:
                 result = (self.submit(xrslAll, jobName))
                 os.chdir(currDir)
                 return result
-        except arclib.XrslError, err:
+        except arclib.XrslError as err:
             logger.error('Ui: XrslError: ' + err.what())
             os.chdir(currDir)
             raise ARCWrapperError('XrslError: ' + err.what())
@@ -467,7 +468,7 @@ class Ui:
                     # len(targets) == 0, thus:
                     raise ARCWrapperError("No matching resource for submission.")
 
-        except NoProxyError, err:
+        except NoProxyError as err:
             logger.error('Proxy error during job submission: ' + err.what())
             if self._arclibLock.locked(): 
                 # should not happen!
@@ -475,21 +476,21 @@ class Ui:
                 logger.error('submit: still locked???')
                 self.__unlockArclib()
             raise err
-        except arclib.XrslError, message:
+        except arclib.XrslError as message:
             logger.error('Ui,XRSL' + message.what())
             if self._arclibLock.locked(): # should not happen!
                 self.__unlockArclib()
             raise ARCWrapperError('XrslError: ' + message.what())
-        except arclib.JobSubmissionError, message:
+        except arclib.JobSubmissionError as message:
             logger.error('Ui,Submit: ' + message.what())
             self.__unlockArclib()
             raise ARCWrapperError('JobSubmissionError: ' + message.what())
-        except arclib.TargetError, message:
+        except arclib.TargetError as message:
             logger.error('Ui,Target: ' + str(message))
             if self._arclibLock.locked(): # should not be...
                 self.__unlockArclib()
             raise ARCWrapperError('TargetError: ' + str(message))
-        except Exception, err:
+        except Exception as err:
             if self._arclibLock.locked(): # ...
                 self.__unlockArclib()
             logger.error('Unexpected error: %s' % err )
@@ -538,7 +539,7 @@ class Ui:
                 return jobList
             else: 
                 jobIds = arclib.GetJobIDs()
-        except Exception, err:
+        except Exception as err:
             logger.error('could not get job IDs: %s', err)
             self.__unlockArclib()
             return jobList
@@ -551,7 +552,7 @@ class Ui:
         i = 0
         while i < jobIds.size():
             i = i + 1
-            (jobName,jobId) = iter.next()
+            (jobName,jobId) = next(iter)
 # this is what GetJobIDs really does when called with no arguments
 #        jobListFile = file(os.path.join(self._userdir,
 #                               '.ngjobs'), 'r')
@@ -630,7 +631,7 @@ class Ui:
                 # jobInfo['cpu_time' ] = info.used_cpu_time.__str__() 
                 # jobInfo['wall_time'] = info.used_wall_time.__str__()
 
-            except arclib.ARCLibError, err:
+            except arclib.ARCLibError as err:
                 logger.error('Could not query: %s' % err.what())
                 jobInfo['status'] = 'UNABLE TO RETRIEVE: ' + err.what(),
                 jobInfo['error'] = 255
@@ -653,13 +654,13 @@ class Ui:
         try:
             arclib.CancelJob(jobID)
             success = True
-        except arclib.FTPControlError, err:
+        except arclib.FTPControlError as err:
             logger.error('Error canceling job %s: %s' % (jobID, err.what()))
             if logger.getLogLevel == 'DEBUG':
                 try:
                     info = arclib.GetJobInfoDirect(jobID)
                     logger.debug('Job status: %s' % info.status)
-                except arclib.ARCLibError, err:
+                except arclib.ARCLibError as err:
                     logger.debug('No job status known')
         self.__unlockArclib()
         return success
@@ -675,7 +676,7 @@ class Ui:
         self.__lockArclib()
         try:
             arclib.CleanJob(jobId)
-        except arclib.FTPControlError, err:
+        except arclib.FTPControlError as err:
                 logger.error('Failed to clean job %s: %s' % (jobId, err.what()))
                 arclib.RemoveJobID(jobId)
         self.__unlockArclib()
@@ -720,7 +721,7 @@ class Ui:
                                           +' existing file %s in the way.'\
                                           % jobBasename)
             os.chdir(jobBasename)
-        except Exception, err:
+        except Exception as err:
             logger.error('Error creating job directory: %s' % err)
             os.chdir(currDir)
             raise ARCWrapperError(err.__str__())
@@ -769,15 +770,15 @@ class Ui:
                                 logger.debug('Download %s' % f )
                                 ftp.Download(arclib.URL(jobDir + '/' + f), f)
                                 complete.append( f )
-                        except arclib.ARCLibError, err: 
+                        except arclib.ARCLibError as err: 
                             logger.error('Error downloading %s: %s' \
                                          % (f,err.what()))
-        except arclib.ARCLibError, err:
+        except arclib.ARCLibError as err:
             logger.error('ARCLib error while downloading: %s' % err.what())
             self.__unlockArclib()
             os.chdir(currDir)
             raise ARCWrapperError(err.what())
-        except Exception, err:
+        except Exception as err:
             logger.error('Error while downloading.\n %s' % err)
             self.__unlockArclib()
             os.chdir(currDir)
@@ -811,7 +812,7 @@ class Ui:
         self.__lockArclib()
         try:
             files = ftp.ListDir(url)
-        except arclib.ARCLibError, err:
+        except arclib.ARCLibError as err:
             logger.debug('Error during file listing: %s' % err.what())
             errmsg = arclib.FileInfo()
             errmsg.filename = err.what
@@ -850,7 +851,7 @@ class Ui:
             str = file('tmp').read()
             xrsl = arclib.Xrsl(str)
             os.remove('tmp')
-        except arclib.ARCLibError, err: 
+        except arclib.ARCLibError as err: 
             logger.error('Failed to get Xrsl: %s' % err.what()) 
         self.__unlockArclib()
         logger.debug('Obtained %s' % xrsl)
@@ -869,21 +870,21 @@ class Ui:
             xrsl = self.recoverXrsl(jobId)
             try:
                 outname = xrsl.GetRelation('stdout').GetSingleValue()
-            except arclib.XrslError, err:
+            except arclib.XrslError as err:
                 outname = 'stdout' # try default if name not found
             logger.debug('output file name: %s' % outname)
             try:
                 self.__lockArclib()
                 ftp = arclib.FTPControl()
                 ftp.Download(arclib.URL(jobId + '/' + outname))
-            except Exception, err:
+            except Exception as err:
                 self.__unlockArclib()
                 raise ARCWrapperError(err.__str__())
             self.__unlockArclib()
             logger.debug('output downloaded')
             result = file(outname).read()
             os.remove(outname)
-        except arclib.ARCLibError, err:
+        except arclib.ARCLibError as err:
             result = 'failed to retrieve job output stdout: %s' % err.what()
             logger.error('%s' % result)
         logger.debug('output retrieved')
@@ -907,21 +908,21 @@ class Ui:
             xrsl = self.recoverXrsl(jobId)
             try:
                 outname = xrsl.GetRelation('stderr').GetSingleValue()
-            except arclib.XrslError, err:
+            except arclib.XrslError as err:
                 outname = 'stderr' # try default if name not found
             logger.debug('output file name: %s' % outname)
             try:
                 self.__lockArclib()
                 ftp = arclib.FTPControl()
                 ftp.Download(arclib.URL(jobId + '/' + outname))
-            except Exception, err:
+            except Exception as err:
                 self.__unlockArclib()
                 raise ARCWrapperError(err.__str__())
             self.__unlockArclib()
             logger.debug('output downloaded')
             result = file(outname).read()
             os.remove(outname)
-        except arclib.ARCLibError, err:
+        except arclib.ARCLibError as err:
             result = 'failed to retrieve job output stderr: %s' % err.what()
             logger.error('%s' % result)
         logger.debug('output retrieved')

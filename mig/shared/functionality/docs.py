@@ -29,16 +29,17 @@
 # documentation topics.
 
 """On-demand documentation generator"""
+from __future__ import absolute_import
 
 import fnmatch
 import os
 
-from shared import mrslkeywords
-from shared import resconfkeywords
-from shared import returnvalues
-from shared.functional import validate_input
-from shared.init import initialize_main_variables
-from shared.output import get_valid_outputformats
+from .shared import mrslkeywords
+from .shared import resconfkeywords
+from .shared import returnvalues
+from .shared.functional import validate_input
+from .shared.init import initialize_main_variables
+from .shared.output import get_valid_outputformats
 
 
 def signature():
@@ -194,12 +195,12 @@ The MiG software license follows below:<br />
                 break
             elif line.find('This file is part of') != -1:
                 # skip two lines
-                module_fd.next()
+                next(module_fd)
                 continue
             elif in_license:
                 lic_lines.append(line.strip('#'))
         module_fd.close()
-    except Exception, exc:
+    except Exception as exc:
         configuration.logger.error("could not extract license info: %s" % exc)
         output_objects.append(
             {'object_type': 'error_text', 'text':

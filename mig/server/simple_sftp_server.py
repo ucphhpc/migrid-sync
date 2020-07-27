@@ -212,7 +212,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         logger.debug("mkdir %s" % path)
         real_path = self.get_fs_path(path)
 	# Force MiG default mode
-        os.mkdir(real_path, 0755)
+        os.mkdir(real_path, 0o755)
         return paramiko.SFTP_OK
 
     def rmdir(self, path):
@@ -299,7 +299,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
         return paramiko.OPEN_SUCCEEDED
 
     def check_auth_password(self, username, password):
-        if self.users.has_key(username):
+        if username in self.users:
             if self.users[username].password == password:
                 logger.info("Authenticated %s" % username)
                 return paramiko.AUTH_SUCCESSFUL
@@ -307,7 +307,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
         return paramiko.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
-        if self.users.has_key(username):
+        if username in self.users:
             u = self.users[username]
             if u.public_key is not None:
                 if u.public_key.get_base64() == key.get_base64():
@@ -348,7 +348,7 @@ def accept_client(client, addr, root_dir, users, host_rsa_key, conf={}):
     transport.load_server_moduli()
     transport.add_server_key(host_key)
 
-    if conf.has_key("sftp_implementation"):
+    if "sftp_implementation" in conf:
         mod_name, class_name = conf['sftp_implementation'].split(':')
         fromlist = None
         try:
@@ -384,7 +384,7 @@ def refresh_users(conf):
         conf['users'] = cur_conf['users']
         conf['time_stamp'] = time.time()
         logger.info("Refreshed users from configuration")
-    except Exception, exc:
+    except Exception as exc:
         logger.error("Configuration reload failed: %s" % exc)
     return conf
 

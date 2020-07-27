@@ -26,23 +26,24 @@
 #
 
 """Send request e.g. for ownership or membership action back end"""
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared.base import extract_field
-from shared.defaults import default_vgrid, any_vgrid, any_protocol, \
+from .shared import returnvalues
+from .shared.base import extract_field
+from .shared.defaults import default_vgrid, any_vgrid, any_protocol, \
     email_keyword_list, default_vgrid_settings_limit
-from shared.accessrequests import save_access_request
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables, find_entry
-from shared.notification import notify_user_thread
-from shared.resource import anon_to_real_res_map, resource_owners
-from shared.user import anon_to_real_user_map
-from shared.vgrid import vgrid_owners, vgrid_settings, vgrid_is_owner, \
+from .shared.accessrequests import save_access_request
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables, find_entry
+from .shared.notification import notify_user_thread
+from .shared.resource import anon_to_real_res_map, resource_owners
+from .shared.user import anon_to_real_user_map
+from .shared.vgrid import vgrid_owners, vgrid_settings, vgrid_is_owner, \
     vgrid_is_member, vgrid_is_owner_or_member, vgrid_is_resource
-from shared.vgridaccess import get_user_map, get_resource_map, \
+from .shared.vgridaccess import get_user_map, get_resource_map, \
     user_vgrid_access, CONF, OWNERS, USERID
 
 
@@ -131,9 +132,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         user_id = visible_user_names[-1].strip()
         anon_map = anon_to_real_user_map(configuration)
-        if anon_map.has_key(user_id):
+        if user_id in anon_map:
             user_id = anon_map[user_id]
-        if not user_map.has_key(user_id):
+        if user_id not in user_map:
             output_objects.append({'object_type': 'error_text',
                                    'text': 'No such user: %s' %
                                    user_id
@@ -259,7 +260,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         unique_resource_name = visible_res_names[-1].strip()
         target_name = unique_resource_name
         res_map = get_resource_map(configuration)
-        if not res_map.has_key(unique_resource_name):
+        if unique_resource_name not in res_map:
             output_objects.append({'object_type': 'error_text',
                                    'text': 'No such resource: %s' %
                                    unique_resource_name
@@ -286,11 +287,11 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # NOTE: we support exactly one resource but multiple users here
         unique_resource_name = visible_res_names[-1].strip()
         anon_map = anon_to_real_res_map(configuration.resource_home)
-        if anon_map.has_key(unique_resource_name):
+        if unique_resource_name in anon_map:
             unique_resource_name = anon_map[unique_resource_name]
         target_name = unique_resource_name
         res_map = get_resource_map(configuration)
-        if not res_map.has_key(unique_resource_name):
+        if unique_resource_name not in res_map:
             output_objects.append({'object_type': 'error_text',
                                    'text': 'No such resource: %s' %
                                    unique_resource_name

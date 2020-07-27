@@ -28,14 +28,15 @@
 """Functions in this file should only be called from 'put'.
 If other scripts needs it then move the function to another file.
 """
+from __future__ import absolute_import
 
 import os
 import re
 import time
 
-from shared.base import client_id_dir
-from shared.defaults import job_output_dir
-from shared.fileio import send_message_to_grid_script, pickle, unpickle
+from .shared.base import client_id_dir
+from .shared.defaults import job_output_dir
+from .shared.fileio import send_message_to_grid_script, pickle, unpickle
 
 
 def template_fits_file(template, filename, allowed_time=3.0):
@@ -53,13 +54,13 @@ def template_fits_file(template, filename, allowed_time=3.0):
 
     try:
         comparelines = open(template, 'r').readlines()
-    except Exception, err:
+    except Exception as err:
         msg = "Failed to read template file"
         return (False, msg)
 
     try:
         filelines = open(filename, 'r').readlines()
-    except Exception, err:
+    except Exception as err:
         if len(comparelines) == 0:
 
             # No file matches an empty template
@@ -110,7 +111,7 @@ def verify_results(job_dict, logger, configuration):
     user_home = configuration.user_home
 
     job_dict['VERIFIED'] = 'NO'
-    if job_dict.has_key('VERIFYFILES') and job_dict['VERIFYFILES']:
+    if 'VERIFYFILES' in job_dict and job_dict['VERIFYFILES']:
         verified = True
         job_dict['VERIFIED'] = ''
 

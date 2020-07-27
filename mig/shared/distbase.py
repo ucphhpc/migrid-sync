@@ -28,6 +28,7 @@
 """This module contains various helper functions for distributed
 server IO. It is imported and used by the public interface modules.
 """
+from __future__ import print_function
 
 __version__ = '$Revision: 2084 $'
 __revision__ = __version__
@@ -61,7 +62,7 @@ HOME = getenv('HOME')
 if not HOME:
     cgi_path = getenv('SCRIPT_FILENAME')
     if not cgi_path:
-        print 'Failed to extract HOME from environment: %s' % environ
+        print('Failed to extract HOME from environment: %s' % environ)
         sys.exit(1)
     HOME = cgi_path[:cgi_path.find('/mig/cgi-bin/')]
 KEY_DIR = '%s/MiG-certificates' % HOME
@@ -154,12 +155,12 @@ def get_leader():
 def verify_certificate(ssl_socket):
     try:
         server_id = ssl_socket.server()
-    except Exception, err:
+    except Exception as err:
         raise Exception('Server certificate extraction failed! %s'
                          % err)
     try:
         ca_id = ssl_socket.issuer()
-    except Exception, err:
+    except Exception as err:
         raise Exception('CA certificate extraction failed! %s' % err)
 
     # Debug only print
@@ -204,7 +205,7 @@ def http_no_payload(
         ssl_socket = connection.sock._ssl
         try:
             verify_certificate(ssl_socket)
-        except Exception, err:
+        except Exception as err:
             http_status = -1
             response = StringIO.StringIO('')
             connection.close()
@@ -255,7 +256,7 @@ def http_no_payload(
     reply = ''
     try:
         status = int(status_line)
-    except ValueError, verr:
+    except ValueError as verr:
         status = 255
         reply = status_line
     reply += output.read()
@@ -372,7 +373,7 @@ def http_get(host, port, path):
     ssl_socket = connection.sock._ssl
     try:
         verify_certificate(ssl_socket)
-    except Exception, err:
+    except Exception as err:
         connection.close()
         raise IOError('Error: HTTPS %s session with %s failed!'
                        % (method, host))
@@ -429,7 +430,7 @@ def http_put(
     ssl_socket = connection.sock._ssl
     try:
         verify_certificate(ssl_socket)
-    except Exception, err:
+    except Exception as err:
         connection.close()
         raise IOError('Error: HTTPS %s session with %s failed!'
                        % (method, host))

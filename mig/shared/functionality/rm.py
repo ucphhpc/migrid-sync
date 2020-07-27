@@ -29,23 +29,24 @@
 in his home directory.
 It is possible to supply a recursive flag to enable recursive deletes.
 """
+from __future__ import absolute_import
 
 import os
 import glob
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.defaults import trash_linkname
-from shared.fileio import check_write_access
-from shared.functional import validate_input, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables, find_entry
-from shared.parseflags import verbose, recursive, force
-from shared.sharelinks import extract_mode_id
-from shared.userio import remove_path, delete_path, get_trash_location, \
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.defaults import trash_linkname
+from .shared.fileio import check_write_access
+from .shared.functional import validate_input, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables, find_entry
+from .shared.parseflags import verbose, recursive, force
+from .shared.sharelinks import extract_mode_id
+from .shared.userio import remove_path, delete_path, get_trash_location, \
     GDPIOLogError, gdp_iolog
-from shared.validstring import valid_user_path
-from shared.vgrid import in_vgrid_share
+from .shared.validstring import valid_user_path
+from .shared.vgrid import in_vgrid_share
 
 
 def signature():
@@ -109,7 +110,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     elif share_id:
         try:
             (share_mode, _) = extract_mode_id(configuration, share_id)
-        except ValueError, err:
+        except ValueError as err:
             logger.error('%s called with invalid share_id %s: %s' %
                          (op_name, share_id, err))
             output_objects.append(
@@ -268,7 +269,7 @@ remove entire %s shared folders!""" % configuration.site_vgrid_label})
                                            % relative_path})
                     status = returnvalues.CLIENT_ERROR
                     continue
-            except Exception, err:
+            except Exception as err:
                 logger.error("%s: check trash failed: %s" % (op_name, err))
                 continue
             if not check_write_access(abs_path):
@@ -309,7 +310,7 @@ remove entire %s shared folders!""" % configuration.site_vgrid_label})
                           gdp_iolog_action,
                           gdp_iolog_paths)
                 gdp_iolog_status = True
-            except GDPIOLogError, exc:
+            except GDPIOLogError as exc:
                 gdp_iolog_status = False
                 rm_err = [str(exc)]
             rm_status = False

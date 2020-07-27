@@ -28,18 +28,20 @@
 # Martin Rehr martin@rehr.dk August 2005
 
 """Display resource editor"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import socket
 
-from shared import resconfkeywords
-from shared import returnvalues
-from shared.defaults import csrf_field
-from shared.functional import validate_input_and_cert
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.init import initialize_main_variables, find_entry
-from shared.refunctions import list_runtime_environments
-from shared.resource import init_conf, empty_resource_config
-from shared.vgridaccess import res_vgrid_access
+from .shared import resconfkeywords
+from .shared import returnvalues
+from .shared.defaults import csrf_field
+from .shared.functional import validate_input_and_cert
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.init import initialize_main_variables, find_entry
+from .shared.refunctions import list_runtime_environments
+from .shared.resource import init_conf, empty_resource_config
+from .shared.vgridaccess import res_vgrid_access
 
 
 def signature():
@@ -71,8 +73,8 @@ def available_choices(configuration, client_id, resource_id, field, spec):
     elif spec['Type'] in ('string', 'multiplestrings'):
         try:
             choices = getattr(configuration, '%ss' % field.lower())
-        except AttributeError, exc:
-            print exc
+        except AttributeError as exc:
+            print(exc)
             choices = []
     else:
         choices = []

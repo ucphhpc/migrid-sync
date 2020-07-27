@@ -33,6 +33,7 @@ By default sends the information on email to the registered notification
 address or email from Distinguished Name field of user entry. If user
 configured additional messaging protocols they can also be used.
 """
+from __future__ import print_function
 
 import getopt
 import sys
@@ -45,7 +46,7 @@ from shared.useradm import init_user_adm, user_migoid_notify
 def usage(name='notifymigoid.py'):
     """Usage help"""
 
-    print """Send internal OpenID account create/renew intro to user from user
+    print("""Send internal OpenID account create/renew intro to user from user
 database.
 Usage:
 %(name)s [NOTIFY_OPTIONS]
@@ -62,7 +63,7 @@ Where NOTIFY_OPTIONS may be one or more of:
 
 One or more destinations may be set by combining multiple -e, -s and -a
 options.
-""" % {'name': name}
+""" % {'name': name})
 
 
 if '__main__' == __name__:
@@ -75,8 +76,8 @@ if '__main__' == __name__:
     opt_args = 'ac:Cd:e:hI:s:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
-    except getopt.GetoptError, err:
-        print 'Error: ', err.msg
+    except getopt.GetoptError as err:
+        print('Error: ', err.msg)
         usage()
         sys.exit(1)
 
@@ -105,17 +106,17 @@ if '__main__' == __name__:
         elif opt == '-v':
             verbose = True
         else:
-            print 'Error: %s not supported!' % opt
+            print('Error: %s not supported!' % opt)
             usage()
             sys.exit(0)
 
     if args:
-        print 'Error: Non-option arguments are not supported - missing quotes?'
+        print('Error: Non-option arguments are not supported - missing quotes?')
         usage()
         sys.exit(1)
 
     if not user_id:
-        print "No user_id provided!"
+        print("No user_id provided!")
         sys.exit(1)
 
     (configuration, username, full_name, addresses, errors) = \
@@ -123,21 +124,21 @@ if '__main__' == __name__:
                            admin_copy)
 
     if errors:
-        print "Address lookup errors:"
-        print '\n'.join(errors)
+        print("Address lookup errors:")
+        print('\n'.join(errors))
 
     if not addresses:
-        print "Error: found no suitable addresses"
+        print("Error: found no suitable addresses")
         sys.exit(1)
     if not username:
-        print "Error: found no username"
+        print("Error: found no username")
         sys.exit(1)
     logger = configuration.logger
     notify_dict = {'JOB_ID': 'NOJOBID', 'USER_CERT': user_id, 'NOTIFY': []}
     for (proto, address_list) in addresses.items():
         for address in address_list:
             notify_dict['NOTIFY'].append('%s: %s' % (proto, address))
-    print "Sending internal OpenID account intro for '%s' to:\n%s" % \
-          (user_id, '\n'.join(notify_dict['NOTIFY']))
+    print("Sending internal OpenID account intro for '%s' to:\n%s" % \
+          (user_id, '\n'.join(notify_dict['NOTIFY'])))
     notify_user(notify_dict, [user_id, username, full_name], 'ACCOUNTINTRO',
                 logger, '', configuration)

@@ -26,13 +26,14 @@
 #
 
 """Stop running vnc session"""
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.functional import validate_input_and_cert
-from shared.init import initialize_main_variables
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.functional import validate_input_and_cert
+from .shared.init import initialize_main_variables
 
 
 def signature():
@@ -78,7 +79,7 @@ def main(client_id, user_arguments_dict):
         os.kill(pid, 9)
         output_objects.append({'object_type': 'text', 'text'
                               : 'stopped vnc'})
-    except Exception, err:
+    except Exception as err:
         logger.error('Unable to extract pid and kill vnc process: %s'
                       % err)
         status = returnvalues.CLIENT_ERROR

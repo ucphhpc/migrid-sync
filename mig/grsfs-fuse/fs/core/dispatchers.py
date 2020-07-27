@@ -110,7 +110,7 @@ class _master_dispatcher(_dispatcher):
                 # call remote RPC to persist the change
                 getattr(peer.link, op)(*arguments_combined)
                 count += 1
-            except Exception, v: # TODO: more intelligent error handling
+            except Exception as v: # TODO: more intelligent error handling
                 self.logger.info("_replicate error %s of type %s, removing %s" % (v, type(v), peer)) 
                 self.kernel._handle_dead_peer(peer)
         
@@ -147,7 +147,7 @@ class _master_dispatcher(_dispatcher):
             for m in self.state.get_connected():
                 self.logger.debug("Saying goodbye from me to %s" % m)
                 m.link.node_unregister(self.state.me)
-        except Exception, v:
+        except Exception as v:
             self.logger.error("Error autodropping from group due to internal error, %s" % v)
         raise exc_class(mesg)
 #END_DEF _master_dispatcher
@@ -187,11 +187,12 @@ class _replica_dispatcher(_master_dispatcher):
             # either crash or perform            
                 f = self._resolve_for_storage(internal)         
                 ret = getattr(self.storage, op)(f, *args)
-            except (IOError, OSError) as (eerrno, strerror):
+            except (IOError, OSError) as xxx_todo_changeme:
+                (eerrno, strerror) = xxx_todo_changeme.args
                 if eerrno not in [errno.ENOENT, errno.EPERM]:
                     self.logger.debug("Unacceptable local error occured %s: %s" % (eerrno, strerror))
                     return -errno.EIO                     
-            except Exception, v:                
+            except Exception as v:                
                 self.logger.debug("Undiagnosed local write problem: %s:%s" % (str(type(v)), v)) 
                 return -errno.EIO 
                 
@@ -230,11 +231,11 @@ class _ondemandfetch_dispatcher(_replica_dispatcher):
                 
                 ret = getattr(peer.link, op)(*arguments_combined)
                 return ret
-            except socket.error, vse: # fixme: leaky abstraction
+            except socket.error as vse: # fixme: leaky abstraction
                 self.kernel._handle_dead_peer(peer)
 
                 return self.do_read_op(internal, op, *args)
-            except Exception, v: # this is any kind of normal error
+            except Exception as v: # this is any kind of normal error
                 self.logger.debug("Remote op received error %s of type %s" % (v, type(v))) 
                 raise
             

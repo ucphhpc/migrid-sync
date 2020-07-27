@@ -30,14 +30,16 @@
 """A collection of functions for building virtual machines for grid use and a
 simple handler for invocation as a command line vm build script.
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 import getopt
 import os
 import sys
 from tempfile import mkdtemp
 
-from shared.conf import get_configuration_object
-from shared.safeeval import subprocess_call
+from .shared.conf import get_configuration_object
+from .shared.safeeval import subprocess_call
 
 configuration = get_configuration_object()
 logger = configuration.logger
@@ -120,7 +122,7 @@ def build_vm(vm_specs):
         fill_template(conf_template_path, conf_path, build_specs)
         fill_template(bundle_template_path, bundle_path, build_specs)
         fill_template(postinst_template_path, postinst_path, build_specs)
-        os.chmod(postinst_path, 0755)
+        os.chmod(postinst_path, 0o755)
         cmd_base = "sudo /usr/bin/vmbuilder"
         cmd_args = "%(hypervisor)s %(distro)s %(vmbuilder_opts)s" % build_specs
         cmd_string = "%s %s" % (cmd_base, cmd_args)
@@ -130,7 +132,7 @@ def build_vm(vm_specs):
         if build_res != 0:
             raise Exception("vmbuilder run failed: %s" % build_res)
         logger.info("built vm in %(working_dir)s" % build_specs)
-    except Exception, exc:
+    except Exception as exc:
         logger.error("vm build failed: %s" % exc)
     finally:
         os.remove(conf_path)
@@ -140,14 +142,14 @@ def build_vm(vm_specs):
 
 def usage():
     """Script usage help"""
-    print "%s OPTIONS [EXTRA_PACKAGES]" % sys.argv[0]
-    print "where OPTIONS include the names:"
+    print("%s OPTIONS [EXTRA_PACKAGES]" % sys.argv[0])
+    print("where OPTIONS include the names:")
     for name in default_specs.keys():
         if name in ('add_packages', 'late_adds', 'remove_packages',
                     'late_removes'):
             continue
-        print "    %s (default: %s)" % (name.replace('_', '-'),
-                                        default_specs[name])
+        print("    %s (default: %s)" % (name.replace('_', '-'),
+                                        default_specs[name]))
 
 if __name__ == '__main__':
     specs = {}
@@ -167,7 +169,7 @@ if __name__ == '__main__':
             'blacklist=',
             'vmbuilder-opts=',
             ])
-    except getopt.GetoptError, exc:
+    except getopt.GetoptError as exc:
         logger.error('option parsing failed: %s' % exc)
         sys.exit(1)
         

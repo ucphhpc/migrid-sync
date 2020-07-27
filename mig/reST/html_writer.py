@@ -25,6 +25,7 @@
 # -- END_HEADER ---
 #
 
+from __future__ import print_function
 from docutils.writers.html4css1 import Writer, HTMLTranslator
 from docutils.core import publish_string
 
@@ -76,5 +77,5 @@ Cheers, Jonas
 html = publish_string(reST, settings_overrides={'output_encoding'
                       : 'unicode'}, writer=html_writer)
 
-print html
+print(html)
 

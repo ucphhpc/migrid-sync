@@ -26,28 +26,29 @@
 #
 
 """Remove an owner from a given vgrid"""
+from __future__ import absolute_import
 
 import os
 from binascii import hexlify
 
-from shared import returnvalues
-from shared.base import client_id_dir, distinguished_name_to_user
-from shared.defaults import csrf_field, _dot_vgrid, keyword_members
-from shared.fileio import remove_rec, move_rec, delete_symlink
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.html import html_post_helper
-from shared.init import initialize_main_variables, find_entry
-from shared.parseflags import force
-from shared.safeeval import subprocess_popen, subprocess_pipe, \
+from .shared import returnvalues
+from .shared.base import client_id_dir, distinguished_name_to_user
+from .shared.defaults import csrf_field, _dot_vgrid, keyword_members
+from .shared.fileio import remove_rec, move_rec, delete_symlink
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.html import html_post_helper
+from .shared.init import initialize_main_variables, find_entry
+from .shared.parseflags import force
+from .shared.safeeval import subprocess_popen, subprocess_pipe, \
     subprocess_stdout
-from shared.useradm import get_full_user_map
-from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
+from .shared.useradm import get_full_user_map
+from .shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
     vgrid_is_member, vgrid_owners, vgrid_members, vgrid_resources, \
     vgrid_list_subvgrids, vgrid_remove_owners, vgrid_list_parents, \
     allow_owners_adm, vgrid_restrict_write_paths, vgrid_settings, \
     vgrid_manage_allowed
-from shared.vgridaccess import unmap_vgrid, unmap_inheritance
+from .shared.vgridaccess import unmap_vgrid, unmap_inheritance
 
 
 def signature():
@@ -102,7 +103,7 @@ def rm_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir,
                 raise Exception("tracker permissions %s failed: %s (%d)" %
                                 (perms_cmd, out, retval))
         return True
-    except Exception, exc:
+    except Exception as exc:
         output_objects.append(
             {'object_type': 'error_text', 'text':
              'Could not remove %s tracker admin rights: %s' % (cert_id, exc)
@@ -132,7 +133,7 @@ def unlink_share(user_dir, vgrid):
             path = os.path.dirname(path)
             if os.path.isdir(path) and os.listdir(path) == []:
                 os.removedirs(path)
-    except Exception, err:
+    except Exception as err:
         success = False
         msg += "\nCould not remove link %s: %s" % (path, err)
     return (success, msg[1:])
@@ -162,7 +163,7 @@ def unlink_web_folders(user_dir, vgrid):
                 path = os.path.dirname(path)
                 if os.path.isdir(path) and os.listdir(path) == []:
                     os.removedirs(path)
-        except Exception, err:
+        except Exception as err:
             success = False
             msg += "\nCould not remove link %s: %s" % (path, err)
     return (success, msg[1:])
@@ -201,7 +202,7 @@ def abandon_vgrid_files(vgrid, configuration):
 
     try:
         os.remove(os.path.join(configuration.wwwpublic, 'vgrid', vgrid))
-    except Exception, err:
+    except Exception as err:
         _logger.debug(
             'not removing soft link to public vgrids pages for %s: %s' %
             (vgrid, err))

@@ -26,6 +26,7 @@
 #
 
 """This module tests the server IO functions from Xfile and Xos."""
+from __future__ import print_function
 
 import os
 import sys
@@ -42,7 +43,7 @@ def run_test(class_name):
     dirname = 'no-such-dir'
     path = '%s/input.txt' % dirname
 
-    print '-creating directory %s' % dirname
+    print('-creating directory %s' % dirname)
 
     # ignore missing clean up from previous runs
 
@@ -50,74 +51,74 @@ def run_test(class_name):
         mkdir(dirname)
     except IOError:
         pass
-    print '-opening file %s' % path
+    print('-opening file %s' % path)
     fd = file_class(path, 'w')
-    print '-locking for write'
+    print('-locking for write')
     fd.lock(LOCK_EX)
-    print '-file object: %s\n-closed attribute: %s' % (fd, fd.closed)
-    print '-seek to 15'
+    print('-file object: %s\n-closed attribute: %s' % (fd, fd.closed))
+    print('-seek to 15')
     fd.seek(15)
-    print '-truncating'
+    print('-truncating')
     fd.truncate()
 
-    print '-writing two single lines and a list of two lines'
+    print('-writing two single lines and a list of two lines')
     lines = ['This is a test!', 'This is another test!\n',
              'This is a third test!\n', '..and a fourth!\n']
     status = fd.write(lines[0])
-    print status
+    print(status)
     fd.write(lines[1])
     fd.writelines(lines[2:])
-    print '-get current file position:'
+    print('-get current file position:')
     position = fd.tell()
-    print position
-    print '-flushing'
+    print(position)
+    print('-flushing')
     fd.flush()
-    print '-unlocking'
+    print('-unlocking')
     fd.unlock()
-    print '-closing file %s' % path
+    print('-closing file %s' % path)
     fd.close()
-    print '-file object: %s\n-closed attribute: %s' % (fd, fd.closed)
+    print('-file object: %s\n-closed attribute: %s' % (fd, fd.closed))
 
-    print '-opening file %s' % path
+    print('-opening file %s' % path)
     fd = file_class(path)
-    print '-locking for read'
+    print('-locking for read')
     fd.lock(LOCK_SH)
-    print '-read all lines:'
+    print('-read all lines:')
     lines = fd.readlines()
-    print lines
-    print '-seek to 30'
+    print(lines)
+    print('-seek to 30')
     fd.seek(30)
-    print '-get current file position:'
+    print('-get current file position:')
     position = fd.tell()
-    print position
-    print '-read the rest:'
+    print(position)
+    print('-read the rest:')
     rest = fd.read()
-    print rest
-    print '-get current file position:'
+    print(rest)
+    print('-get current file position:')
     position = fd.tell()
-    print position
-    print '-unlocking'
+    print(position)
+    print('-unlocking')
     fd.unlock()
-    print '-closing file %s' % path
+    print('-closing file %s' % path)
     fd.close()
 
-    print '-calling stat file %s' % path
+    print('-calling stat file %s' % path)
     contents = stat(path)
-    print contents
+    print(contents)
 
-    print '-listing dir %s' % dirname
+    print('-listing dir %s' % dirname)
     contents = listdir(dirname)
-    print contents
+    print(contents)
 
-    print '-walking dir %s' % dirname
+    print('-walking dir %s' % dirname)
     generator = walk(dirname)
-    print generator
+    print(generator)
     for entry in generator:
-        print entry
+        print(entry)
 
-    print '-clean up: remove %s' % path
+    print('-clean up: remove %s' % path)
     remove(path)
-    print '-clean up: rmdir %s' % dirname
+    print('-clean up: rmdir %s' % dirname)
     rmdir(dirname)
 
 

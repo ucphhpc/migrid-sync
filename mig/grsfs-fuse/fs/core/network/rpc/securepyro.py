@@ -28,6 +28,7 @@
 """A SSL/TLS secured version of the external Pyro server and proxy. Requires
 Pyro and m2crypto to provide the SSL functionality.
 """
+from __future__ import print_function
 
 import os
 import sys
@@ -217,22 +218,22 @@ if __name__ == '__main__':
         address_tuple = (address_tuple[0], int(sys.argv[2]))
     if 'client' in sys.argv[3:]:
         if 'insecure' in sys.argv[3:]:
-            print "Open InsecurePyroServerProxy for %s:%s" % address_tuple
+            print("Open InsecurePyroServerProxy for %s:%s" % address_tuple)
             proxy = InsecurePyroServerProxy(address_tuple)
         else:
-            print "Open SecurePyroServerProxy for %s:%s" % address_tuple
+            print("Open SecurePyroServerProxy for %s:%s" % address_tuple)
             proxy = SecurePyroServerProxy(address_tuple)
-        print "requesting list of methods from server on %s:%d" % address_tuple
+        print("requesting list of methods from server on %s:%d" % address_tuple)
         reply = proxy.system.listMethods()
-        print "server replied: %s" % reply
+        print("server replied: %s" % reply)
         reply = proxy.echo_test("hello world!")
-        print "server replied: %s" % reply
+        print("server replied: %s" % reply)
     else:
         if 'insecure' in sys.argv[3:]:
-            print "Starting InsecurePyroServer on %s:%s" % address_tuple
+            print("Starting InsecurePyroServer on %s:%s" % address_tuple)
             server = InsecurePyroServer(address_tuple)
         else:
-            print "Starting SecurePyroServer on %s:%s" % address_tuple
+            print("Starting SecurePyroServer on %s:%s" % address_tuple)
             server = SecurePyroServer(address_tuple)
         server.register_introspection_functions()
         server.register_instance(DummyHelper())

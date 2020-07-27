@@ -26,20 +26,21 @@
 #
 
 """Request OpenID account back end"""
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared.base import client_id_dir, distinguished_name_to_user
-from shared.accountreq import valid_password_chars, valid_name_chars, \
+from .shared import returnvalues
+from .shared.base import client_id_dir, distinguished_name_to_user
+from .shared.accountreq import valid_password_chars, valid_name_chars, \
     password_min_len, password_max_len, account_request_template, \
     account_css_helpers, account_js_helpers, list_country_codes
-from shared.defaults import csrf_field
-from shared.functional import validate_input
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.init import initialize_main_variables, find_entry
-from shared.pwhash import parse_password_policy
-from shared.safeinput import html_escape
+from .shared.defaults import csrf_field
+from .shared.functional import validate_input
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.init import initialize_main_variables, find_entry
+from .shared.pwhash import parse_password_policy
+from .shared.safeinput import html_escape
 
 
 def signature():

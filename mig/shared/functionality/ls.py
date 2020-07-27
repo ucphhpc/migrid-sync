@@ -28,6 +28,7 @@
 """Script to provide users with a means of listing files and directories in
 their home directories. This script tries to mimic GNU ls behaviour.
 """
+from __future__ import absolute_import
 
 import os
 import time
@@ -35,19 +36,19 @@ import glob
 import stat
 from urllib import quote
 
-from shared import returnvalues
-from shared.base import client_id_dir, invisible_path
-from shared.defaults import seafile_ro_dirname, trash_destdir, csrf_field
-from shared.functional import validate_input
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import fancy_upload_js, fancy_upload_html, confirm_js, \
+from .shared import returnvalues
+from .shared.base import client_id_dir, invisible_path
+from .shared.defaults import seafile_ro_dirname, trash_destdir, csrf_field
+from .shared.functional import validate_input
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.html import fancy_upload_js, fancy_upload_html, confirm_js, \
     confirm_html, themed_styles
-from shared.init import initialize_main_variables, find_entry
-from shared.parseflags import all, long_list, recursive, file_info
-from shared.sharelinks import extract_mode_id
-from shared.userio import GDPIOLogError, gdp_iolog
-from shared.validstring import valid_user_path
-from shared.vgrid import in_vgrid_share, in_vgrid_priv_web, in_vgrid_pub_web, \
+from .shared.init import initialize_main_variables, find_entry
+from .shared.parseflags import all, long_list, recursive, file_info
+from .shared.sharelinks import extract_mode_id
+from .shared.userio import GDPIOLogError, gdp_iolog
+from .shared.validstring import valid_user_path
+from .shared.vgrid import in_vgrid_share, in_vgrid_priv_web, in_vgrid_pub_web, \
     in_vgrid_readonly, in_vgrid_writable, in_vgrid_store_res
 
 
@@ -122,7 +123,7 @@ def fileinfo_stat(path):
             file_information['created'] = os.path.getctime(path)
             file_information['modified'] = os.path.getmtime(path)
             file_information['accessed'] = os.path.getatime(path)
-        except OSError, ose:
+        except OSError as ose:
             pass
     return file_information
 
@@ -328,7 +329,7 @@ def handle_ls(
     else:
         try:
             contents = os.listdir(real_path)
-        except Exception, exc:
+        except Exception as exc:
             output_objects.append({'object_type': 'error_text', 'text':
                                    'Failed to list contents of %s: %s'
                                    % (base_name, exc)})
@@ -436,7 +437,7 @@ def main(client_id, user_arguments_dict, environ=None):
     elif share_id:
         try:
             (share_mode, _) = extract_mode_id(configuration, share_id)
-        except ValueError, err:
+        except ValueError as err:
             logger.error('%s called with invalid share_id %s: %s' %
                          (op_name, share_id, err))
             output_objects.append(
@@ -708,7 +709,7 @@ Action on paths selected below
                           environ['REMOTE_ADDR'],
                           'accessed',
                           [relative_path])
-            except GDPIOLogError, exc:
+            except GDPIOLogError as exc:
                 output_objects.append({'object_type': 'error_text',
                                        'text': "%s: '%s': %s"
                                        % (op_name, relative_path, exc)})

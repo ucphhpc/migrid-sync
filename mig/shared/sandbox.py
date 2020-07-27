@@ -26,16 +26,17 @@
 #
 
 """Sandbox functions"""
+from __future__ import absolute_import
 
 import os
 import tempfile
 from binascii import hexlify
 
-from conf import get_configuration_object
-from shared.defaults import default_vgrid, keyword_auto
-from shared.fileio import make_symlink
-from shared.resource import create_resource
-from shared.serial import load, dump
+from .conf import get_configuration_object
+from .shared.defaults import default_vgrid, keyword_auto
+from .shared.fileio import make_symlink
+from .shared.resource import create_resource
+from .shared.serial import load, dump
 
 sandbox_db_name = 'sandbox_users.pkl'
 
@@ -191,7 +192,7 @@ vgrid=%s
         fd = open(exe_pgid_file, 'w')
         fd.write('stopped')
         fd.close()
-    except Exception, exc:
+    except Exception as exc:
         return (False, str(exc))
 
     return (True, resource_name + '.' + str(resource_identifier))
@@ -332,7 +333,7 @@ vgrid=%s
         fd = open(exe_pgid_file, 'w')
         fd.write('stopped')
         fd.close()
-    except Exception, exc:
+    except Exception as exc:
         return (False, str(exc))
 
     return (True, resource_name + '.' + str(resource_identifier))

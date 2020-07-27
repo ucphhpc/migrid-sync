@@ -26,18 +26,19 @@
 #
 
 """VGrid management back end functionality"""
+from __future__ import absolute_import
 
-from shared import returnvalues
-from shared.defaults import default_vgrid, all_vgrids, default_pager_entries, \
+from .shared import returnvalues
+from .shared.defaults import default_vgrid, all_vgrids, default_pager_entries, \
     csrf_field
-from shared.functional import validate_input_and_cert
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import man_base_js, man_base_html, html_post_helper
-from shared.init import initialize_main_variables, find_entry
-from shared.modified import pending_vgrids_update
-from shared.useradm import get_full_user_map
-from shared.vgrid import vgrid_create_allowed
-from shared.vgridaccess import get_vgrid_map, VGRIDS, OWNERS, MEMBERS, SETTINGS
+from .shared.functional import validate_input_and_cert
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.html import man_base_js, man_base_html, html_post_helper
+from .shared.init import initialize_main_variables, find_entry
+from .shared.modified import pending_vgrids_update
+from .shared.useradm import get_full_user_map
+from .shared.vgrid import vgrid_create_allowed
+from .shared.vgridaccess import get_vgrid_map, VGRIDS, OWNERS, MEMBERS, SETTINGS
 
 list_operations = ['showlist', 'list']
 show_operations = ['show', 'showlist']

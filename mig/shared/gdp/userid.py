@@ -47,7 +47,7 @@ def __validate_user_id(configuration, user_id):
     if user_id.find("@") == -1 and user_id.find('/') == -1:
         try:
             result = base64.b64decode(user_id.replace('_', '='))
-        except Exception, exc:
+        except Exception as exc:
             result = None
     else:
         result = user_id
@@ -75,7 +75,7 @@ def __client_id_from_project_client_id(configuration,
         # else:
         #     _logger.debug(
         #         "%r is NOT a GDP project client id" % project_client_id)
-    except Exception, exc:
+    except Exception as exc:
         _logger.error(
             "GDP:__client_id_from_project_client_id failed:"
             + "%r, error: %s" % (project_client_id, exc))
@@ -100,7 +100,7 @@ def __project_name_from_project_client_id(configuration,
         else:
             _logger.warning("%r is NOT a GDP project client id"
                             % project_client_id)
-    except Exception, exc:
+    except Exception as exc:
         _logger.error("GDP:__project_name_from_project_client_id failed:"
                       + "%r, error: %s" % (project_client_id, exc))
 
@@ -233,7 +233,7 @@ def __scamble_user_id(configuration, user_id):
     result = None
     try:
         result = hashlib.sha256(user_id).hexdigest()
-    except Exception, exc:
+    except Exception as exc:
         _logger.error("GDP: __scamble_user_id failed for user: %r: %s"
                       % (user_id, exc))
         result = None

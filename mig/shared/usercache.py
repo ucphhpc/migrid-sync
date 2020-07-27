@@ -26,14 +26,16 @@
 #
 
 """User state caching: disk use, jobs, resource access"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import fcntl
 import time
 
-from shared.base import client_id_dir
-from shared.resource import list_resources
-from shared.serial import load, dump
+from .shared.base import client_id_dir
+from .shared.resource import list_resources
+from .shared.serial import load, dump
 
 # Only refresh stats if at least this many seconds since last refresh
 JOB_REFRESH_DELAY = 120
@@ -79,7 +81,7 @@ def contents_changed(configuration, root, files, ref_stamp):
     for path in all_paths:
         try:
             file_stamp = os.path.getmtime(path)
-        except Exception, exc:
+        except Exception as exc:
             _logger.warning("getmtime failed on %s: %s" % (path, exc))
             file_stamp = -1
         if file_stamp > ref_stamp:
@@ -101,10 +103,10 @@ def update_disk_stats(configuration, stats, root, rel_root, dirs, files,
         # Ignore any access errors
         try:
             size += os.path.getsize(path)
-        except Exception, exc:
+        except Exception as exc:
             _logger.warning("getsize failed on %s: %s" % (path, exc))
 
-    if not stats.has_key(rel_root):
+    if rel_root not in stats:
         stats[rel_root] = {}
         stats[total][FILES] += len(files)
         stats[total][DIRECTORIES] += len(dirs)
@@ -128,7 +130,7 @@ def update_job_stats(stats, job_id, job):
     """Update job stats for job"""
 
     job_status = job["STATUS"]
-    if not stats.has_key(job_id):
+    if job_id not in stats:
         stats[JOBS][job_status] += 1
     else:
         old_status = stats[job_id]["STATUS"]
@@ -189,7 +191,7 @@ def refresh_disk_stats(configuration, client_id):
 
         # Directory and contents unchanged - ignore
 
-        if stats.has_key(rel_root) and \
+        if rel_root in stats and \
                 not contents_changed(configuration, root, files, stats_stamp):
             continue
 
@@ -208,7 +210,7 @@ def refresh_disk_stats(configuration, client_id):
 
             # Directory and contents unchanged - ignore
 
-            if stats.has_key(rel_root) and \
+            if rel_root in stats and \
                 not contents_changed(configuration, root, files,
                                      stats_stamp):
                 continue
@@ -240,7 +242,7 @@ def refresh_disk_stats(configuration, client_id):
         try:
             dump(stats, stats_path)
             stats_stamp = os.path.getmtime(stats_path)
-        except Exception, exc:
+        except Exception as exc:
             _logger.error("Could not save stats cache: %s" % exc)
 
     lock_handle.close()
@@ -289,23 +291,23 @@ def refresh_job_stats(configuration, client_id):
     # Inspect all jobs in user job dir and update the ones that changed
     # since last stats run
     for name in os.listdir(job_base):
-        if stats.has_key(name) and stats[name]["STATUS"] in FINAL_STATES:
+        if name in stats and stats[name]["STATUS"] in FINAL_STATES:
             continue
 
         job_path = os.path.join(job_base, name)
         try:
             job_stamp = os.path.getmtime(job_path)
-        except Exception, exc:
+        except Exception as exc:
             _logger.warning("getmtime failed on %s: %s" % (job_path, exc))
             job_stamp = -1
 
-        if stats.has_key(name) and job_stamp < stats_stamp:
+        if name in stats and job_stamp < stats_stamp:
             continue
 
         dirty = True
         try:
             job = load(job_path)
-        except Exception, exc:
+        except Exception as exc:
             _logger.warning("unpickle failed on %s: %s" % (job_path, exc))
             continue
         update_job_stats(stats, name, job)
@@ -314,7 +316,7 @@ def refresh_job_stats(configuration, client_id):
         try:
             dump(stats, stats_path)
             stats_stamp = os.path.getmtime(stats_path)
-        except Exception, exc:
+        except Exception as exc:
             _logger.error("Could not save stats cache: %s" % exc)
 
     lock_handle.close()
@@ -325,10 +327,10 @@ def refresh_job_stats(configuration, client_id):
 
 if "__main__" == __name__:
     import sys
-    from shared.conf import get_configuration_object
+    from .shared.conf import get_configuration_object
     conf = get_configuration_object()
     raw_stats = refresh_disk_stats(conf, sys.argv[1])
-    print "user totals: %s" % raw_stats[OWN]
-    print "vgrid totals: %s" % raw_stats[VGRID]
+    print("user totals: %s" % raw_stats[OWN])
+    print("vgrid totals: %s" % raw_stats[VGRID])
     raw_stats = refresh_job_stats(conf, sys.argv[1])
-    print "total jobs: %s" % raw_stats[JOBS]
+    print("total jobs: %s" % raw_stats[JOBS])

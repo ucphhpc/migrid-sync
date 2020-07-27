@@ -29,9 +29,10 @@
 changes. Wrapper for jobaction backend kept as separate interface for
 historical reasons.
 """
+from __future__ import absolute_import
 
-from shared.functional import REJECT_UNSET
-from shared.functionality.jobaction import main as real_main
+from .shared.functional import REJECT_UNSET
+from .shared.functionality.jobaction import main as real_main
 
 
 def signature():

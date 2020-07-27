@@ -27,6 +27,7 @@
 
 """Apache handler of the same name which allows direct access to
 this function just like GET and PUT."""
+from __future__ import absolute_import
 
 import cgi
 import cgitb
@@ -36,10 +37,10 @@ import sys
 
 # MiG imports
 
-from shared.cgishared import init_cgiscript_possibly_with_cert
-from shared.handlers import correct_handler, get_path, get_allowed_path
-from shared.safeinput import validated_string
-from shared import localos
+from .shared.cgishared import init_cgiscript_possibly_with_cert
+from .shared.handlers import correct_handler, get_path, get_allowed_path
+from .shared.safeinput import validated_string
+from .shared import localos
 
 # ## Main ###
 
@@ -77,7 +78,7 @@ if not path:
 try:
     target_path = get_allowed_path(configuration, client_id,
                                    path)
-except Exception, err:
+except Exception as err:
 
     # invalid certificate or session id - deny access!
 
@@ -91,7 +92,7 @@ except Exception, err:
 try:
     destination_path = get_allowed_path(configuration,
             client_id, dst)
-except Exception, err:
+except Exception as err:
 
     # invalid certificate or session id - deny access!
 
@@ -105,7 +106,7 @@ except Exception, err:
 
 try:
     localos.rename(target_path, destination_path)
-except Exception, err:
+except Exception as err:
     filtered_err = str(err).replace(target_path,
                                     path).replace(destination_path, dst)
     o.out('Could not %s %s %s: %s' % (handler_name, path, dst,

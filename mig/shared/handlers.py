@@ -28,15 +28,16 @@
 """This module contains general functions used by the HTTP
 handlers.
 """
+from __future__ import absolute_import
 
 import os
 import urllib
 
-from shared.base import client_id_dir
-from shared.defaults import csrf_field, CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
+from .shared.base import client_id_dir
+from .shared.defaults import csrf_field, CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
     CSRF_FULL
-from shared.findtype import is_user, is_server
-from shared.pwhash import make_csrf_token, make_csrf_trust_token
+from .shared.findtype import is_user, is_server
+from .shared.pwhash import make_csrf_token, make_csrf_trust_token
 
 
 def correct_handler(name, environ=None):

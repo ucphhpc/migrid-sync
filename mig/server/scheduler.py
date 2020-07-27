@@ -26,6 +26,7 @@
 #
 
 """General Scheduler framework"""
+from __future__ import print_function
 
 import calendar
 import fnmatch
@@ -322,7 +323,7 @@ class Scheduler:
         try:
             cur_cost = self.server_migrate_cost(cur_server['SERVER_ID'])
             new_cost = float(new_server['MIGRATE_COST'])
-        except Exception, exc:
+        except Exception as exc:
             self.logger.warning('relevant_update: get migrate cost failed! %s %s (%s)'
                                  % (cur_server, new_server, exc))
             return False
@@ -381,9 +382,9 @@ class Scheduler:
         # self.logger.debug("Findserver: %s" % server_id)
 
         server = {}
-        if self.servers.has_key(server_id):
+        if server_id in self.servers:
             server = self.servers[server_id]
-        elif self.servers.has_key(self.conf.server_fqdn):
+        elif self.conf.server_fqdn in self.servers:
             # Did server_fqdn change in MiGserver.conf?
             self.logger.warning("find_server: %s not found - use self" % \
                                 server_id)
@@ -424,18 +425,18 @@ class Scheduler:
         # Update entity timestamp
 
         now = time.time()
-        if entity.has_key('QUEUED'):
+        if 'QUEUED' in entity:
             server = self.find_server(entity)
             server['FIRST_SEEN'] = server.get('FIRST_SEEN', now)
             server['LAST_SEEN'] = now
             server['TYPE'] = 'server'
-        elif entity.has_key('USER_ID'):
+        elif 'USER_ID' in entity:
             user = self.find_user(entity)
             user['FIRST_SEEN'] = user.get('FIRST_SEEN', now)
             user['LAST_SEEN'] = now
             user['SERVER'] = self.conf.mig_server_id
             user['TYPE'] = 'user'
-        elif entity.has_key('CPUCOUNT'):
+        elif 'CPUCOUNT' in entity:
             resource = self.find_resource(entity)
             resource['FIRST_SEEN'] = resource.get('FIRST_SEEN', now)
             resource['LAST_SEEN'] = now
@@ -462,7 +463,7 @@ class Scheduler:
         # Find id of job owner
 
         owner = None
-        if job.has_key('OWNER'):
+        if 'OWNER' in job:
             owner = job['OWNER']
         return owner
 
@@ -475,7 +476,7 @@ class Scheduler:
         # self.logger.debug("find_user: %s" % user_id)
 
         user = {}
-        if self.users.has_key(user_id):
+        if user_id in self.users:
             user = self.users[user_id]
         return user
 
@@ -532,7 +533,7 @@ class Scheduler:
         # self.logger.debug("find_resource: %s" % res_id)
 
         res = {}
-        if self.resources.has_key(res_id):
+        if res_id in self.resources:
             res = self.resources[res_id]
         return res
 
@@ -807,7 +808,7 @@ class Scheduler:
 
         res_dict = self.find_resource(resource_conf)
         if not res_dict:
-            print 'Error: resource not found! %s' % resource_conf
+            print('Error: resource not found! %s' % resource_conf)
             return False
         res_id = res_dict['RESOURCE_ID']
 
@@ -887,7 +888,7 @@ class Scheduler:
         return True
 
     def show_history(self):
-        print 'History:'
+        print('History:')
         for job in self.history:
             print_job(job)
 
@@ -981,12 +982,12 @@ class Scheduler:
         if eval_func:
             try:
                 eval_price = eval_func(expr)
-            except ValueError, err:
+            except ValueError as err:
                 self.logger.error('eval_price: illegal price expression: %s!'
                                    % price_string)
                 self.logger.error('%s' % err)
                 return self.illegal_price
-            except Exception, err:
+            except Exception as err:
                 self.logger.error('eval_price: evaluation of %s caused exception!'
                                    % price_string)
                 self.logger.debug('%s' % err)
@@ -1062,7 +1063,7 @@ class Scheduler:
 
         res_id = resource_conf['RESOURCE_ID']
 
-        if resource_conf.has_key('MINPRICE'):
+        if 'MINPRICE' in resource_conf:
             min_price = self.eval_price(resource_conf['MINPRICE'],
                     replace_map)
         else:
@@ -1190,7 +1191,7 @@ class Scheduler:
 
                 # Backwards compatibility - batch only
 
-                if not res.has_key(attr):
+                if attr not in res:
                     res[attr] = 'batch'
 
                 # keyword to match all
@@ -1212,7 +1213,7 @@ class Scheduler:
                 # self.logger.info("SANDBOX")
                 # hack to ensure that a resource has a sandbox keyword
 
-                if not res.has_key(attr):
+                if attr not in res:
                     res[attr] = False
 
                 # do not schedule non-sandbox jobs on a sandbox resource
@@ -1231,7 +1232,7 @@ class Scheduler:
 
                 # Default value for PLATFORM is the empty string
 
-                if not res.has_key('PLATFORM'):
+                if 'PLATFORM' not in res:
                     res[attr] = ''
 
                 if job[attr].upper() != res[attr].upper():
@@ -1253,7 +1254,7 @@ class Scheduler:
                     # print "job_fits_resource: %s of job does not fit resource (%s,%s)" % (attr, job[attr], res[attr])
 
                     return False
-            except Exception, exc:
+            except Exception as exc:
                 self.logger.error('job_fits_resource: %s check for %s vs %s failed! (%s, %s). Exception: %s'
                                    % (
                     attr,
@@ -1298,7 +1299,7 @@ class Scheduler:
         try:
             res_name = res['RESOURCE_ID']
             job_name = job['JOB_ID']
-        except Exception, err:
+        except Exception as err:
             self.logger.error('scheduler: res or job name error: %s (%s) (%s)'
                               % (err, res, job))
         if match:
@@ -1375,7 +1376,7 @@ class Scheduler:
 
         # Make sure legacy jobs don't fail
 
-        if not job.has_key('MIGRATE_COUNT'):
+        if 'MIGRATE_COUNT' not in job:
             job['MIGRATE_COUNT'] = str(0)
 
         migrate_count = int(job['MIGRATE_COUNT'])
@@ -1640,7 +1641,7 @@ class Scheduler:
         """Copy schedule fields from src to dst job"""
 
         for field in self.__schedule_fields.keys():
-            if src.has_key(field):
+            if field in src:
                 dst[field] = src[field]
         return dst
 
@@ -1648,7 +1649,7 @@ class Scheduler:
         """Remove any scheduling fields from job - used e.g. after time outs"""
 
         for field in self.__schedule_fields.keys():
-            if job.has_key(field):
+            if field in job:
                 del job[field]
         return job
 
@@ -1868,7 +1869,7 @@ class Scheduler:
         err_str = \
             "schedule: You're not supposed to use this base class schedule() method directly! Please use one of the subclasses or create your own function to overload schedule()."
         self.logger.error(err_str)
-        print err_str
+        print(err_str)
         return None
 
 

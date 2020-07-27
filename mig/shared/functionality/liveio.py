@@ -26,22 +26,23 @@
 #
 
 """Request job live input or output from resource"""
+from __future__ import absolute_import
 
 import glob
 import os
 import datetime
 from urllib import quote
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.conf import get_resource_exe
-from shared.defaults import all_jobs, job_output_dir, csrf_field
-from shared.fileio import unpickle, pickle
-from shared.functional import validate_input_and_cert
-from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.init import initialize_main_variables, find_entry
-from shared.ssh import copy_file_to_resource
-from shared.validstring import valid_user_path
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.conf import get_resource_exe
+from .shared.defaults import all_jobs, job_output_dir, csrf_field
+from .shared.fileio import unpickle, pickle
+from .shared.functional import validate_input_and_cert
+from .shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from .shared.init import initialize_main_variables, find_entry
+from .shared.ssh import copy_file_to_resource
+from .shared.validstring import valid_user_path
 
 
 interactive_actions = ['interactive', '']
@@ -326,8 +327,7 @@ jobs before and during execution.
                                        % last_live_update_file})
                 continue
 
-            if not last_live_update_dict_unpickled.has_key(
-                    'LAST_LIVE_UPDATE_REQUEST_TIMESTAMP'):
+            if 'LAST_LIVE_UPDATE_REQUEST_TIMESTAMP' not in last_live_update_dict_unpickled:
                 output_objects.append(
                     {'object_type': 'error_text',
                      'text': 'Could not find needed key in %s.'
@@ -409,7 +409,7 @@ jobs before and during execution.
 
                 # Backward compatible test for shared_fs - fall back to scp
 
-                if exe.has_key('shared_fs') and exe['shared_fs']:
+                if 'shared_fs' in exe and exe['shared_fs']:
                     filehandle.write('copy_command cp\n')
                     filehandle.write('copy_frontend_prefix \n')
                     filehandle.write('copy_execution_prefix \n')
@@ -422,7 +422,7 @@ jobs before and during execution.
 
                 filehandle.write('### END OF SCRIPT ###\n')
                 filehandle.close()
-            except Exception, exc:
+            except Exception as exc:
                 pass
 
         if not os.path.exists(local_file):
@@ -462,7 +462,7 @@ jobs before and during execution.
 
         try:
             os.remove(local_file)
-        except Exception, exc:
+        except Exception as exc:
             pass
 
     return (output_objects, returnvalues.OK)

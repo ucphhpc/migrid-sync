@@ -26,12 +26,13 @@
 #
 
 """Front end to handle external login method selection"""
+from __future__ import absolute_import
 
 import cgi
 import cgitb
 cgitb.enable()
 
-from shared.functionality.login import main
-from shared.cgiscriptstub import run_cgi_script_possibly_with_cert
+from .shared.functionality.login import main
+from .shared.cgiscriptstub import run_cgi_script_possibly_with_cert
 
 run_cgi_script_possibly_with_cert(main)

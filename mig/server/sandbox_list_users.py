@@ -26,6 +26,7 @@
 #
 
 """List sandbox users and print total number of registered users"""
+from __future__ import print_function
 
 import os
 import sys
@@ -40,17 +41,17 @@ sandboxdb_file = configuration.sandbox_home + os.sep\
 
 userdb = None
 if not os.path.isfile(sandboxdb_file):
-    print '%s is not an existing file!' % sandboxdb_file
+    print('%s is not an existing file!' % sandboxdb_file)
     sys.exit(1)
 
 try:
     userdb = load(sandboxdb_file)
-except Exception, exc:
-    print 'Exception reading %s, (%s)' % (sandboxdb_file, exc)
+except Exception as exc:
+    print('Exception reading %s, (%s)' % (sandboxdb_file, exc))
 user_count = 0
 
 for (key, value) in userdb.items():
-    print key, ':', value
+    print(key, ':', value)
     user_count += 1
 
-print 'Total number of registered users: %d' % user_count
+print('Total number of registered users: %d' % user_count)

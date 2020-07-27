@@ -26,17 +26,18 @@
 #
 
 """Emulate the un*x function with the same name"""
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.fileio import check_write_access
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables
-from shared.parseflags import verbose
-from shared.validstring import valid_user_path
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.fileio import check_write_access
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables
+from .shared.parseflags import verbose
+from .shared.validstring import valid_user_path
 
 
 def signature():
@@ -138,10 +139,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
             try:
                 # Create file if missing
                 if not os.path.exists(abs_path):
-                    os.close(os.open(abs_path, os.O_WRONLY|os.O_CREAT, 0666))
+                    os.close(os.open(abs_path, os.O_WRONLY|os.O_CREAT, 0o666))
                 os.utime(abs_path, None)
                 logger.info('%s %s done' % (op_name, abs_path))
-            except Exception, exc:
+            except Exception as exc:
                 output_objects.append({'object_type': 'error_text',
                         'text': "%s: '%s': %s" % (op_name,
                         relative_path, exc)})

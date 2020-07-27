@@ -28,16 +28,17 @@
 # Minimum Intrusion Grid
 
 """Get job on object format"""
+from __future__ import absolute_import
 
 import os
 
-from shared import mrslkeywords
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.conf import get_configuration_object
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.init import initialize_main_variables
-from shared.job import create_job_object_from_pickled_mrsl
+from .shared import mrslkeywords
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.conf import get_configuration_object
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.init import initialize_main_variables
+from .shared.job import create_job_object_from_pickled_mrsl
 
 
 def signature():
@@ -46,7 +47,7 @@ def signature():
     configuration = get_configuration_object()
     external_dict = mrslkeywords.get_keywords_dict(configuration)
     for (key, value_dict) in external_dict.iteritems():
-        if not defaults.has_key(key):
+        if key not in defaults:
 
             # do not overwrite
 

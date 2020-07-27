@@ -26,6 +26,7 @@
 #
 
 """MiG server job queue"""
+from __future__ import print_function
 
 
 def format_job(job_dict, detail=['JOB_ID']):
@@ -39,14 +40,14 @@ def format_job(job_dict, detail=['JOB_ID']):
     else:
 
         for attr in detail:
-            if job_dict.has_key(attr):
+            if attr in job_dict:
                 out.append('\t%s: %s' % (attr, job_dict[attr]))
             else:
                 out.append('\t%s: UNSET' % attr)
     return out
 
 def print_job(job_dict, detail=['JOB_ID']):
-    print '\n'.join(format_job(job_dict, detail))
+    print('\n'.join(format_job(job_dict, detail)))
 
 
 class JobQueue:
@@ -83,8 +84,8 @@ class JobQueue:
     def show_queue(self, detail=['JOB_ID']):
         """Print queue contents"""
 
-        print 'Queue:'
-        print '\n'.join(self.format_queue(detail))
+        print('Queue:')
+        print('\n'.join(self.format_queue(detail)))
 
     def queue_length(self):
         """Count number of jobs in queue"""
@@ -104,7 +105,7 @@ class JobQueue:
                         self.logger.error('enqueue_job called with a job already in the queue! Skipping enqueue_job for job_id %s!'
                                  % job['JOB_ID'])
                         return False
-            except Exception, exc:
+            except Exception as exc:
                 self.logger.error('enqueue_job exception when checking if specified job already is in the queue: %s'
                                    % exc)
 

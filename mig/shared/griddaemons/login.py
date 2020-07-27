@@ -412,7 +412,7 @@ def update_user_objects(configuration, auth_file, path, user_vars, auth_protos,
         # Make sure pub key is valid
         try:
             _ = parse_pub_key(user_key)
-        except Exception, exc:
+        except Exception as exc:
             logger.warning("Skipping broken key %s for user %s (%s)" %
                            (user_key, user_id, exc))
             continue
@@ -697,13 +697,13 @@ def refresh_job_creds(configuration, protocol, username):
     # We only allow connections from executing jobs that
     # has a public key
     if job_dict is not None and isinstance(job_dict, dict) and \
-            job_dict.has_key('STATUS') and \
+            'STATUS' in job_dict and \
             job_dict['STATUS'] == 'EXECUTING' and \
-            job_dict.has_key('SESSIONID') and \
+            'SESSIONID' in job_dict and \
             job_dict['SESSIONID'] == sessionid and \
-            job_dict.has_key('USER_CERT') and \
-            job_dict.has_key('MOUNT') and \
-            job_dict.has_key('MOUNTSSHPUBLICKEY'):
+            'USER_CERT' in job_dict and \
+            'MOUNT' in job_dict and \
+            'MOUNTSSHPUBLICKEY' in job_dict:
         user_alias = sessionid
         user_dir = client_id_dir(job_dict['USER_CERT'])
         user_key = job_dict['MOUNTSSHPUBLICKEY']
@@ -715,7 +715,7 @@ def refresh_job_creds(configuration, protocol, username):
             user_url = job_dict['RESOURCE_CONFIG'].get('HOSTURL', '')
         try:
             user_ip = socket.gethostbyname_ex(user_url)[2][0]
-        except Exception, exc:
+        except Exception as exc:
             user_ip = None
             logger.warning("Skipping key, unresolvable ip for user %s (%s)" %
                            (user_alias, exc))
@@ -724,7 +724,7 @@ def refresh_job_creds(configuration, protocol, username):
         valid_pubkey = True
         try:
             _ = parse_pub_key(user_key)
-        except Exception, exc:
+        except Exception as exc:
             valid_pubkey = False
             logger.warning("Skipping broken key '%s' for user %s (%s)" %
                            (user_key, user_alias, exc))
@@ -784,13 +784,13 @@ def refresh_jobs(configuration, protocol):
         # We only allow connections from executing jobs that
         # has a public key
         if job_dict is not None and isinstance(job_dict, dict) and \
-                job_dict.has_key('STATUS') and \
+                'STATUS' in job_dict and \
                 job_dict['STATUS'] == 'EXECUTING' and \
-                job_dict.has_key('SESSIONID') and \
+                'SESSIONID' in job_dict and \
                 job_dict['SESSIONID'] == sessionid and \
-                job_dict.has_key('USER_CERT') and \
-                job_dict.has_key('MOUNT') and \
-                job_dict.has_key('MOUNTSSHPUBLICKEY'):
+                'USER_CERT' in job_dict and \
+                'MOUNT' in job_dict and \
+                'MOUNTSSHPUBLICKEY' in job_dict:
             user_alias = sessionid
             user_dir = client_id_dir(job_dict['USER_CERT'])
             user_key = job_dict['MOUNTSSHPUBLICKEY']
@@ -803,7 +803,7 @@ def refresh_jobs(configuration, protocol):
                 user_url = job_dict['RESOURCE_CONFIG'].get('HOSTURL', '')
             try:
                 user_ip = socket.gethostbyname_ex(user_url)[2][0]
-            except Exception, exc:
+            except Exception as exc:
                 user_ip = None
                 msg = "Skipping key due to unresolvable ip" \
                     + " for user %s (%s)" % (user_alias, exc)
@@ -813,7 +813,7 @@ def refresh_jobs(configuration, protocol):
             valid_pubkey = True
             try:
                 _ = parse_pub_key(user_key)
-            except Exception, exc:
+            except Exception as exc:
                 valid_pubkey = False
                 logger.warning("Skipping broken key '%s' for user %s (%s)" %
                                (user_key, user_alias, exc))
@@ -873,7 +873,7 @@ def refresh_share_creds(configuration, protocol, username,
 
     try:
         (mode, _) = extract_mode_id(configuration, username)
-    except ValueError, err:
+    except ValueError as err:
         logger.error('refresh share creds called with invalid username %s: %s'
                      % (username, err))
         mode = 'INVALID-SHARELINK'
@@ -894,7 +894,7 @@ def refresh_share_creds(configuration, protocol, username,
             raise ValueError("Invalid base for share: %s" % link_dest)
         if not os.path.isdir(link_dest):
             raise ValueError("Unsupported single-file share: %s" % link_dest)
-    except Exception, err:
+    except Exception as err:
         link_dest = None
         # IMPORTANT: log but don't return as we need to remove user below
         logger.error("invalid share %s: %s" % (username, err))
@@ -919,10 +919,10 @@ def refresh_share_creds(configuration, protocol, username,
 
     # We only allow access to active shares
     if share_dict is not None and isinstance(share_dict, dict) and \
-            share_dict.has_key('share_id') and \
-            share_dict.has_key('share_root') and \
-            share_dict.has_key('share_pw_hash') and \
-            share_dict.has_key('share_pw_digest'):
+            'share_id' in share_dict and \
+            'share_root' in share_dict and \
+            'share_pw_hash' in share_dict and \
+            'share_pw_digest' in share_dict:
         user_alias = share_dict['share_id']
         user_dir = share_dict['share_root']
         user_password = share_dict['share_pw_hash']
@@ -983,7 +983,7 @@ def refresh_shares(configuration, protocol, share_modes=['read-write']):
             link_dest = os.readlink(link_path)
             if not link_dest.startswith(base_dir):
                 raise ValueError("Invalid base for share %s" % link_name)
-        except Exception, err:
+        except Exception as err:
             logger.error("invalid share %s: %s" % (link_name, err))
             continue
         (mode, _) = extract_mode_id(configuration, link_name)
@@ -1007,10 +1007,10 @@ def refresh_shares(configuration, protocol, share_modes=['read-write']):
 
         # We only allow access to active shares
         if share_dict is not None and isinstance(share_dict, dict) and \
-            share_dict.has_key('share_id') and \
-                share_dict.has_key('share_root') and \
-                share_dict.has_key('share_pw_hash') and \
-                share_dict.has_key('share_pw_digest'):
+            'share_id' in share_dict and \
+                'share_root' in share_dict and \
+                'share_pw_hash' in share_dict and \
+                'share_pw_digest' in share_dict:
             user_alias = share_id
             user_dir = share_dict['share_root']
             user_password = share_dict['share_pw_hash']
@@ -1069,10 +1069,10 @@ def refresh_jupyter_creds(configuration, protocol, username):
 
     # We only allow connections from active jupyter credentials
     if jupyter_dict is not None and isinstance(jupyter_dict, dict) and \
-            jupyter_dict.has_key('SESSIONID') and \
+            'SESSIONID' in jupyter_dict and \
             jupyter_dict['SESSIONID'] == sessionid and \
-            jupyter_dict.has_key('USER_CERT') and \
-            jupyter_dict.has_key('MOUNTSSHPUBLICKEY'):
+            'USER_CERT' in jupyter_dict and \
+            'MOUNTSSHPUBLICKEY' in jupyter_dict:
         user_alias = sessionid
         user_dir = client_id_dir(jupyter_dict['USER_CERT'])
         user_key = jupyter_dict['MOUNTSSHPUBLICKEY']
@@ -1081,7 +1081,7 @@ def refresh_jupyter_creds(configuration, protocol, username):
         valid_pubkey = True
         try:
             _ = parse_pub_key(user_key)
-        except Exception, exc:
+        except Exception as exc:
             valid_pubkey = False
             logger.warning("Skipping broken key '%s' for user %s (%s)" %
                            (user_key, user_alias, exc))

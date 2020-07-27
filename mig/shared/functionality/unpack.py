@@ -28,19 +28,20 @@
 """Archive unpacker used to unpack one or more zip/tar files in the home
 directory of a user into a given destination directory also there.
 """
+from __future__ import absolute_import
 
 import os
 import glob
 
-from shared import returnvalues
-from shared.archives import unpack_archive
-from shared.base import client_id_dir
-from shared.fileio import check_write_access
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables, find_entry
-from shared.parseflags import verbose
-from shared.validstring import valid_user_path
+from .shared import returnvalues
+from .shared.archives import unpack_archive
+from .shared.base import client_id_dir
+from .shared.fileio import check_write_access
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables, find_entry
+from .shared.parseflags import verbose
+from .shared.validstring import valid_user_path
 
 
 def signature():

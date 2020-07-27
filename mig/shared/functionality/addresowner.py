@@ -28,18 +28,19 @@
 # Minimum Intrusion Grid
 
 """Add one or more users to the list of administrators for a given resource"""
+from __future__ import absolute_import
 
 from binascii import unhexlify
 import os
 
-from shared import returnvalues
-from shared.accessrequests import delete_access_request
-from shared.defaults import any_protocol, csrf_field
-from shared.findtype import is_user, is_owner
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.init import initialize_main_variables
-from shared.resource import resource_is_owner, resource_add_owners
+from .shared import returnvalues
+from .shared.accessrequests import delete_access_request
+from .shared.defaults import any_protocol, csrf_field
+from .shared.findtype import is_user, is_owner
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from .shared.init import initialize_main_variables
+from .shared.resource import resource_is_owner, resource_add_owners
 
 
 def signature():

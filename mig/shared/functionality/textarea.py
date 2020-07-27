@@ -30,22 +30,23 @@ This is the form handler called by html pages
 @todo detect and notify user if a filenumber is used twice
 @todo better user input validation
 """
+from __future__ import absolute_import
 
 import base64
 import os
 import time
 
-from shared import mrslkeywords
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.defaults import default_mrsl_filename, csrf_field
-from shared.fileio import write_file, strip_dir
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables
-from shared.job import new_job
-from shared.safeinput import valid_user_path_name
-from shared.archives import handle_package_upload
+from .shared import mrslkeywords
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.defaults import default_mrsl_filename, csrf_field
+from .shared.fileio import write_file, strip_dir
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables
+from .shared.job import new_job
+from .shared.safeinput import valid_user_path_name
+from .shared.archives import handle_package_upload
 
 
 def signature():
@@ -87,14 +88,14 @@ def handle_form_input(filenumber, user_arguments_dict, configuration):
             form_key_line = '%s_%s_%s_%s' % (keyword.lower(),
                                              filenumber, counter_1 + 1, counter_2)
 
-            if user_arguments_dict.has_key(form_key):
+            if form_key in user_arguments_dict:
 
                 # Y increased, append value
 
                 output += convert_control_value_to_line(form_key,
                                                         user_arguments_dict)
                 counter_2 += 1
-            elif user_arguments_dict.has_key(form_key_line):
+            elif form_key_line in user_arguments_dict:
 
                 # X increased. If 0_0 write keyword. Write new line.
 
@@ -206,7 +207,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         submit_mrslfiles = False
         submitmrsl_key = 'submitmrsl_%s' % filenumber
         if configuration.site_enable_jobs and \
-                user_arguments_dict.has_key(submitmrsl_key):
+                submitmrsl_key in user_arguments_dict:
             val = str(user_arguments_dict[submitmrsl_key][0]).upper()
             if val == 'ON' or val == 'TRUE':
                 submit_mrslfiles = True
@@ -218,7 +219,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             # get filename
 
             filename_key = 'FILENAME_%s' % filenumber
-            if not user_arguments_dict.has_key(filename_key):
+            if filename_key not in user_arguments_dict:
                 output_objects.append(
                     {'object_type': 'error_text', 'text':
                      ("The specified file_type is 'plain', but a filename"
@@ -279,7 +280,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
             # if not fileitem.filename:
 
-            if not user_arguments_dict.has_key(fileupload_key + 'filename'):
+            if fileupload_key + 'filename' not in user_arguments_dict:
                 output_objects.append({'object_type': 'error_text',
                                        'text': 'NO FILENAME error'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
@@ -305,7 +306,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
             extract_packages = False
             extract_key = 'extract_%s' % filenumber
-            if user_arguments_dict.has_key(extract_key):
+            if extract_key in user_arguments_dict:
                 val = str(user_arguments_dict[extract_key][0]).upper()
                 if val == 'ON' or val == 'TRUE':
                     extract_packages = True
@@ -313,14 +314,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
             remote_filename = ''
             default_remotefilename_key = 'default_remotefilename_%s' % \
                 filenumber
-            if user_arguments_dict.has_key(default_remotefilename_key):
+            if default_remotefilename_key in user_arguments_dict:
                 remote_filename = \
                     user_arguments_dict[default_remotefilename_key][0]
 
             # remotefilename overwrites default_remotefilename if it exists
 
             remotefilename_key = 'remotefilename_%s' % filenumber
-            if user_arguments_dict.has_key(remotefilename_key):
+            if remotefilename_key in user_arguments_dict:
                 remote_filename = \
                     user_arguments_dict[remotefilename_key][0]
 
@@ -333,7 +334,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             if remote_filename.strip().endswith(os.sep):
                 remote_filename += base_name
 
-            if not user_arguments_dict.has_key(fileupload_key):
+            if fileupload_key not in user_arguments_dict:
                 output_objects.append({'object_type': 'error_text',
                                        'text': 'File content not found!'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
@@ -349,7 +350,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
             if not os.path.isdir(os.path.dirname(local_filename)):
                 try:
-                    os.makedirs(os.path.dirname(local_filename), 0775)
+                    os.makedirs(os.path.dirname(local_filename), 0o775)
                 except Exception:
                     fileuploadobj['message'] = \
                         {'object_type': 'error_text',
@@ -360,7 +361,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             # reads uploaded file into memory
 
             encoded_key = '%s_is_encoded' % fileupload_key
-            binary = user_arguments_dict.has_key(encoded_key)
+            binary = encoded_key in user_arguments_dict
             if binary:
                 data = user_arguments_dict[fileupload_key][-1]
                 data = str(base64.decodestring(data))
@@ -438,7 +439,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                     output_objects.append(
                         {'object_type': 'text', 'text': 'File saved: %s' %
                          remote_filename})
-                except Exception, err:
+                except Exception as err:
                     output_objects.append({
                         'object_type': 'error_text', 'text':
                         'File seems to be saved, but could not get file size %s'
@@ -561,7 +562,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             template_fd = open(template_path, 'wb')
             template_fd.write(mrsl)
             template_fd.close()
-        except Exception, err:
+        except Exception as err:
             output_objects.append(
                 {'object_type': 'error_text', 'text':
                  'Failed to write default job template: %s' % err})

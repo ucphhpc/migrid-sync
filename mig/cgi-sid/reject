@@ -26,14 +26,15 @@
 #
 
 """HTTP handler to reject clients in certain locations"""
+from __future__ import print_function
 
-print "Content-type: text/html"
-print
+print("Content-type: text/html")
+print()
 
-print """<html>
+print("""<html>
 <head><title>Operation rejected</title></head>
 <body>
 <h3>The requested operation is not allowed here</h3>
 </body>
 </html>
-"""
+""")

@@ -28,19 +28,20 @@
 # Minimum Intrusion Grid
 
 """Takes a job object/dictionary, writes the mRSL file and submits it"""
+from __future__ import absolute_import
 
 import os
 import tempfile
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.conf import get_configuration_object
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables
-from shared.job import new_job, fields_to_mrsl, \
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.conf import get_configuration_object
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables
+from .shared.job import new_job, fields_to_mrsl, \
     create_job_object_from_pickled_mrsl
-from shared.mrslkeywords import get_job_specs, get_keywords_dict
+from .shared.mrslkeywords import get_job_specs, get_keywords_dict
 
 
 def signature():
@@ -49,7 +50,7 @@ def signature():
     show_fields = get_job_specs(configuration)
 
     for (key, specs) in show_fields:
-        if not defaults.has_key(key):
+        if key not in defaults:
 
             # make sure required fields are set but do not overwrite
 
@@ -104,7 +105,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         relative_path = os.path.basename(real_path)
         os.write(filehandle, mrsl)
         os.close(filehandle)
-    except Exception, err:
+    except Exception as err:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Failed to write temporary mRSL file: %s' % err})
         return (output_objects, returnvalues.SYSTEM_ERROR)

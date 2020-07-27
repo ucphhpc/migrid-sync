@@ -26,6 +26,7 @@
 #
 
 """Wraps the vm-proxy daemon in a way suitable for use in the init script"""
+from __future__ import print_function
 
 import os
 import signal
@@ -40,7 +41,7 @@ configuration, logger = None, None
 
 
 def handle_stop(signum, stack):
-    print "Got signal %s - fake ctrl-c" % signum
+    print("Got signal %s - fake ctrl-c" % signum)
     raise KeyboardInterrupt
 
 
@@ -66,15 +67,15 @@ if __name__ == '__main__':
     if not configuration.site_enable_vmachines:
         err_msg = "VMachines and proxy helper is disabled in configuration!"
         logger.error(err_msg)
-        print err_msg
+        print(err_msg)
         sys.exit(1)
 
-    print """
+    print("""
 Running grid VM proxy helper for users to access VMachines on resources.
 
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
-"""
+""")
 
     vm_proxy_base = os.path.join(configuration.mig_code_base, 'vm-proxy')
     daemon_name = 'migproxy.py'
@@ -82,12 +83,12 @@ unless it is available in mig/server/MiGserver.conf
     if not os.path.exists(daemon_path):
         err_msg = "VMachines proxy helper not found!"
         logger.error(err_msg)
-        print err_msg
+        print(err_msg)
         sys.exit(1)
 
     keep_running = True
 
-    print 'Starting VM proxy helper daemon - Ctrl-C to quit'
+    print('Starting VM proxy helper daemon - Ctrl-C to quit')
     logger.info("Starting VM proxy daemon")
 
     daemon_proc = None
@@ -102,10 +103,10 @@ unless it is available in mig/server/MiGserver.conf
         except KeyboardInterrupt:
             keep_running = False
             break
-        except Exception, exc:
+        except Exception as exc:
             msg = 'Caught unexpected exception: %s' % exc
             logger.error(msg)
-            print msg
+            print(msg)
         # Throttle down
         time.sleep(30)
 
@@ -113,5 +114,5 @@ unless it is available in mig/server/MiGserver.conf
         logger.info('Killing spawned proxy daemon')
         daemon_proc.terminate() or daemon_proc.kill()
 
-    print 'VM proxy daemon shutting down'
+    print('VM proxy daemon shutting down')
     sys.exit(0)

@@ -26,11 +26,12 @@
 #
 
 
+from __future__ import absolute_import
 import cgi
 import cgitb
 cgitb.enable()
 
-from shared.functionality.testresupport import main
-from shared.cgiscriptstub import run_cgi_script
+from .shared.functionality.testresupport import main
+from .shared.cgiscriptstub import run_cgi_script
 
 run_cgi_script(main)

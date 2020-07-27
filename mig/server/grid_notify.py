@@ -28,6 +28,7 @@
 """Notify users about relevant system events and use bulking to avoid message
 flooding.
 """
+from __future__ import print_function
 
 import os
 import multiprocessing
@@ -52,7 +53,7 @@ received_notifications = {}
 def stop_handler(sig, frame):
     """A simple signal handler to quit on Ctrl+C (SIGINT) in main"""
     # Print blank line to avoid mix with Ctrl-C line
-    print ''
+    print('')
     stop_running.set()
 
 
@@ -183,7 +184,7 @@ def recv_notification(configuration, path):
         else:
             files_list.append(path)
             client_dict['timestamp'] = min(
-                client_dict.get('timestamp', sys.maxint),
+                client_dict.get('timestamp', sys.maxsize),
                 new_timestamp)
             messages_dict = client_dict.get('messages', {})
             if not messages_dict:
@@ -223,7 +224,7 @@ def handle_notifications(configuration):
             received_notifications.clear()
             logger.debug("----- Sleeping %s seconds -----" % notify_interval)
             time.sleep(notify_interval)
-    except Exception, err:
+    except Exception as err:
         err_msg = "handle_notifications failed: %s" % err
         return (1, err_msg)
 
@@ -238,10 +239,10 @@ def unittest(configuration, emailaddr, delay):
     """Unit test for grid_notify.py"""
     signal.signal(signal.SIGINT, stop_handler)
     from shared.notification import send_system_notification
-    print "Starting unittest: emailaddr: %s" % emailaddr \
-        + ", delay: %s" % delay
+    print("Starting unittest: emailaddr: %s" % emailaddr \
+        + ", delay: %s" % delay)
     if delay > 0:
-        print "Waiting %s secs before executing unit test" % delay
+        print("Waiting %s secs before executing unit test" % delay)
         time.sleep(delay)
     if stop_running.is_set():
         return
@@ -251,9 +252,9 @@ def unittest(configuration, emailaddr, delay):
         client_ids.append(
             "/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Grid Notify %i/emailAddress=%s"
             % (i, emailaddr))
-    print "============================="
-    print "======= Starting test ======="
-    print "============================="
+    print("=============================")
+    print("======= Starting test =======")
+    print("=============================")
     for client_id in client_ids:
         for i in xrange(5):
             for protocol in ['SFTP', 'WebDAVS']:
@@ -261,8 +262,8 @@ def unittest(configuration, emailaddr, delay):
                     return
                 category = [protocol]
                 msg = "__UNITTEST__: %s" % protocol
-                print "unittest: Sending notification: %s" \
-                    ", category: %s: %s" % (i, category, client_id)
+                print("unittest: Sending notification: %s" \
+                    ", category: %s: %s" % (i, category, client_id))
                 send_system_notification(client_id,
                                          category,
                                          msg,
@@ -272,8 +273,8 @@ def unittest(configuration, emailaddr, delay):
                         return
                     category = [protocol, event]
                     msg = "__UNITTEST__: %s" % client_id
-                    print "unittest: Sending notification: %s" % i \
-                        + ", category: %s: %s" % (category, client_id)
+                    print("unittest: Sending notification: %s" % i \
+                        + ", category: %s: %s" % (category, client_id))
                     send_system_notification(client_id,
                                              category,
                                              msg,
@@ -298,8 +299,8 @@ if __name__ == "__main__":
     if sys.argv[argpos:]:
         try:
             delay = int(sys.argv[argpos])
-        except Exception, err:
-            print "Invalid delay arg: %s" % (sys.argv[argpos])
+        except Exception as err:
+            print("Invalid delay arg: %s" % (sys.argv[argpos]))
             sys.exit(1)
 
     # Use separate logger
@@ -317,7 +318,7 @@ if __name__ == "__main__":
         unittest_proc.start()
         info_msg = "Starting unit test process: email: %s, delay: %s" \
             % (emailaddr, delay)
-        print info_msg
+        print(info_msg)
         logger.info("(%s) %s" % (unittest_proc.pid, info_msg))
 
     # Allow e.g. logrotate to force log re-open after rotates
@@ -329,27 +330,27 @@ if __name__ == "__main__":
     if not configuration.site_enable_notify:
         err_msg = "System notify helper is disabled in configuration!"
         logger.error(err_msg)
-        print err_msg
+        print(err_msg)
         sys.exit(1)
 
-    print '''This is the MiG system notify daemon which notify users about system events.
+    print('''This is the MiG system notify daemon which notify users about system events.
 
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
-'''
+''')
 
     main_pid = os.getpid()
-    print "Starting notify daemon - Ctrl-C to quit"
+    print("Starting notify daemon - Ctrl-C to quit")
     logger.info("(%s) Starting notify daemon" % main_pid)
     (exit_code, exit_msg) = handle_notifications(configuration)
     stop_msg = "Stopping notify daemon"
     if exit_code == 0:
-        print stop_msg
+        print(stop_msg)
         logger.info("(%s) %s"
                     % (main_pid, stop_msg))
     else:
         stop_msg += ", exit_code: %s, %s" % (exit_code, exit_msg)
-        print stop_msg
+        print(stop_msg)
         logger.error("(%s) %s" % (main_pid, stop_msg))
 
     sys.exit(exit_code)

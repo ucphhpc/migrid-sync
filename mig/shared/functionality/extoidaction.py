@@ -26,6 +26,7 @@
 #
 
 """OpenID account sign up action back end"""
+from __future__ import absolute_import
 
 import os
 import time
@@ -33,15 +34,15 @@ import tempfile
 import base64
 import re
 
-from shared import returnvalues
-from shared.base import client_id_dir, generate_https_urls, \
+from .shared import returnvalues
+from .shared.base import client_id_dir, generate_https_urls, \
      fill_distinguished_name
-from shared.defaults import oid_valid_days
-from shared.functional import validate_input, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables, find_entry
-from shared.notification import send_email
-from shared.serial import dumps
+from .shared.defaults import oid_valid_days
+from .shared.functional import validate_input, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables, find_entry
+from .shared.notification import send_email
+from .shared.serial import dumps
 
 
 def signature():
@@ -147,7 +148,7 @@ def main(client_id, user_arguments_dict):
         (os_fd, req_path) = tempfile.mkstemp(dir=user_pending)
         os.write(os_fd, dumps(user_dict))
         os.close(os_fd)
-    except Exception, err:
+    except Exception as err:
         logger.error('Failed to write OpenID account request to %s: %s'
                       % (req_path, err))
         output_objects.append({'object_type': 'error_text', 'text'

@@ -71,7 +71,8 @@ def _iostart(dev, t = 1, maxblock = 4096):# increase t to get a more accurate te
             scores.append(iops)
             
         return sum(scores) / len(scores)
-    except IOError, (err_no, err_str):
+    except IOError as xxx_todo_changeme:
+        (err_no, err_str) = xxx_todo_changeme.args
         raise SystemExit(err_str)
         
 

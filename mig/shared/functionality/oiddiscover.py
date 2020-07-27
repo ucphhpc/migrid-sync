@@ -34,14 +34,15 @@ http://openid.net/specs/openid-authentication-2_0.html#rp_discovery
 We extract the OpenID setting and reply with a suitable YADIS XRDS document
 here if OpenID is enabled.
 """
+from __future__ import absolute_import
 
 import os
 import tempfile
 
-from shared import returnvalues
-from shared.functional import validate_input
-from shared.init import initialize_main_variables, find_entry
-from shared.httpsclient import generate_openid_discovery_doc
+from .shared import returnvalues
+from .shared.functional import validate_input
+from .shared.init import initialize_main_variables, find_entry
+from .shared.httpsclient import generate_openid_discovery_doc
 
 
 def signature():

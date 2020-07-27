@@ -32,6 +32,8 @@ Creates MiG server and Apache configurations to fit the provided settings.
 
 Create MiG developer account with dedicated web server and daemons.
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 import ast
 import base64
@@ -46,16 +48,16 @@ import socket
 import subprocess
 import sys
 
-from shared.defaults import default_http_port, default_https_port, \
+from .shared.defaults import default_http_port, default_https_port, \
     auth_openid_mig_db, auth_openid_ext_db, STRONG_TLS_CIPHERS, \
     STRONG_TLS_CURVES, STRONG_SSH_KEXALGOS, STRONG_SSH_LEGACY_KEXALGOS, \
     STRONG_SSH_CIPHERS, STRONG_SSH_LEGACY_CIPHERS, STRONG_SSH_MACS, \
     STRONG_SSH_LEGACY_MACS, CRACK_USERNAME_REGEX, CRACK_WEB_REGEX
-from shared.jupyter import gen_balancer_proxy_template, gen_openid_template, \
+from .shared.jupyter import gen_balancer_proxy_template, gen_openid_template, \
     gen_rewrite_template
-from shared.pwhash import password_requirements
-from shared.safeeval import subprocess_call, subprocess_popen, subprocess_pipe
-from shared.safeinput import valid_alphanumeric, InputException
+from .shared.pwhash import password_requirements
+from .shared.safeeval import subprocess_call, subprocess_popen, subprocess_pipe
+from .shared.safeinput import valid_alphanumeric, InputException
 
 
 def fill_template(template_file, output_file, settings, eat_trailing_space=[],
@@ -65,9 +67,9 @@ def fill_template(template_file, output_file, settings, eat_trailing_space=[],
         template = open(template_file, 'r')
         contents = template.read()
         template.close()
-    except Exception, err:
-        print 'Error: reading template file %s: %s' % (template_file,
-                                                       err)
+    except Exception as err:
+        print('Error: reading template file %s: %s' % (template_file,
+                                                       err))
         return False
 
     # print "template read:\n", output
@@ -78,8 +80,8 @@ def fill_template(template_file, output_file, settings, eat_trailing_space=[],
             suffix = '\s{0,1}'
         try:
             contents = re.sub(variable + suffix, value, contents)
-        except Exception, exc:
-            print "Error stripping %s: %s" % (variable, [value])
+        except Exception as exc:
+            print("Error stripping %s: %s" % (variable, [value]))
             raise exc
     # print "output:\n", contents
 
@@ -89,8 +91,8 @@ def fill_template(template_file, output_file, settings, eat_trailing_space=[],
         output = open(output_file, 'w')
         output.write(contents)
         output.close()
-    except Exception, err:
-        print 'Error: writing output file %s: %s' % (output_file, err)
+    except Exception as err:
+        print('Error: writing output file %s: %s' % (output_file, err))
         return False
     return True
 
@@ -110,8 +112,8 @@ def template_insert(template_file, insert_identifiers, unique=False):
         template = open(template_file, 'r')
         contents = template.readlines()
         template.close()
-    except Exception, err:
-        print 'Error: reading template file %s: %s' % (template_file, err)
+    except Exception as err:
+        print('Error: reading template file %s: %s' % (template_file, err))
         return False
 
     # print "template read:\n", output
@@ -120,7 +122,7 @@ def template_insert(template_file, insert_identifiers, unique=False):
             # identifier index
             f_index = [i for i in range(
                 len(contents)) if variable in contents[i]][0]
-        except IndexError, err:
+        except IndexError as err:
             print(
                 "Template insert, Identifer: %s not found in %s: %s"
                 % (variable, template_file, err))
@@ -150,8 +152,8 @@ def template_insert(template_file, insert_identifiers, unique=False):
         output = open(template_file, 'w')
         output.writelines(contents)
         output.close()
-    except Exception, err:
-        print 'Error: writing output file %s: %s' % (template_file, err)
+    except Exception as err:
+        print('Error: writing output file %s: %s' % (template_file, err))
         return False
     return True
 
@@ -168,15 +170,15 @@ def template_remove(template_file, remove_pattern):
         template = open(template_file, 'r')
         contents = template.readlines()
         template.close()
-    except Exception, err:
-        print 'Error: reading template file %s: %s' % (template_file, err)
+    except Exception as err:
+        print('Error: reading template file %s: %s' % (template_file, err))
         return False
 
     try:
         # identifier indexes
         f_indexes = [i for i in range(
             len(contents)) if remove_pattern in contents[i]]
-    except IndexError, err:
+    except IndexError as err:
         print(
             "Template remove, Identifer: %s not found in %s: %s"
             % (remove_pattern, template_file, err))
@@ -190,8 +192,8 @@ def template_remove(template_file, remove_pattern):
         output = open(template_file, 'w')
         output.writelines(contents)
         output.close()
-    except Exception, err:
-        print 'Error: writing output file %s: %s' % (template_file, err)
+    except Exception as err:
+        print('Error: writing output file %s: %s' % (template_file, err))
         return False
 
     return True
@@ -482,10 +484,10 @@ def generate_confs(
         user_dict['__IF_SEPARATE_PORTS__'] = ''
 
     if same_fqdn and same_port:
-        print """
+        print("""
 WARNING: you probably have to use either different fqdn or port settings for
 cert, oid and sid based https!
-"""
+""")
 
     # All web ports for Fail2Ban jail
     fail2ban_daemon_ports += enabled_ports
@@ -541,8 +543,8 @@ cert, oid and sid based https!
     # Insert min password length based on policy
     min_len, min_classes, errors = password_requirements(password_policy)
     if errors:
-        print "Invalid password policy %s: %s" % (password_policy,
-                                                  '\n'.join(errors))
+        print("Invalid password policy %s: %s" % (password_policy,
+                                                  '\n'.join(errors)))
         sys.exit(1)
     # Values must be strings
     user_dict['__PASSWORD_MIN_LEN__'] = "%d" % min_len
@@ -667,8 +669,8 @@ cert, oid and sid based https!
             if not line.startswith("Time zone: "):
                 continue
             sys_timezone = line.replace("Time zone: ", "").split(" ", 1)[0]
-    except Exception, exc:
-        print "WARNING: failed to extract system time zone: %s" % exc
+    except Exception as exc:
+        print("WARNING: failed to extract system time zone: %s" % exc)
     user_dict['__SEAFILE_TIMEZONE__'] = sys_timezone
     user_dict['__SEAFILE_SECRET_KEY__'] = base64.b64encode(
         os.urandom(32)).lower()
@@ -749,7 +751,7 @@ cert, oid and sid based https!
         try:
             import requests
         except ImportError:
-            print "ERROR: jupyter use requested but requests is not installed!"
+            print("ERROR: jupyter use requested but requests is not installed!")
             sys.exit(1)
         user_dict['__JUPYTER_COMMENTED__'] = ''
         # Jupyter requires websockets proxy
@@ -762,15 +764,15 @@ cert, oid and sid based https!
 
         try:
             descs = ast.literal_eval(jupyter_services_desc)
-        except SyntaxError, err:
-            print 'Error: jupyter_services_desc ' \
+        except SyntaxError as err:
+            print('Error: jupyter_services_desc ' \
                 'could not be intepreted correctly. Double check that your ' \
-                'formatting is correct, a dictionary formatted string is expected.'
+                'formatting is correct, a dictionary formatted string is expected.')
             sys.exit(1)
 
         if not isinstance(descs, dict):
-            print 'Error: %s was incorrectly formatted,' \
-                ' expects a string formatted as a dictionary' % descs
+            print('Error: %s was incorrectly formatted,' \
+                ' expects a string formatted as a dictionary' % descs)
             sys.exit(1)
 
         service_hosts = {}
@@ -778,19 +780,19 @@ cert, oid and sid based https!
             # TODO, do more checks on format
             name_hosts = service.split(".", 1)
             if len(name_hosts) != 2:
-                print 'Error: You have not correctly formattet ' \
+                print('Error: You have not correctly formattet ' \
                     'the jupyter_services parameter, ' \
                     'expects --jupyter_services="service_name.' \
                     'http(s)://jupyterhost-url-or-ip ' \
-                    'other_service.http(s)://jupyterhost-url-or-ip"'
+                    'other_service.http(s)://jupyterhost-url-or-ip"')
                 sys.exit(1)
             name, host = name_hosts[0], name_hosts[1]
             try:
                 valid_alphanumeric(name)
-            except InputException, err:
-                print 'Error: The --jupyter_services name: %s was incorrectly ' \
+            except InputException as err:
+                print('Error: The --jupyter_services name: %s was incorrectly ' \
                     'formatted, only allows alphanumeric characters %s' % (name,
-                                                                           err)
+                                                                           err))
             if name and host:
                 if name not in service_hosts:
                     service_hosts[name] = {'hosts': []}
@@ -890,7 +892,7 @@ cert, oid and sid based https!
         try:
             import openstack
         except ImportError:
-            print "ERROR: cloud use requested but openstack is not installed!"
+            print("ERROR: cloud use requested but openstack is not installed!")
             sys.exit(1)
         user_dict['__CLOUD_COMMENTED__'] = ''
 
@@ -900,15 +902,15 @@ cert, oid and sid based https!
 
         try:
             descs = ast.literal_eval(cloud_services_desc)
-        except SyntaxError, err:
-            print 'Error: cloud_services_desc ' \
+        except SyntaxError as err:
+            print('Error: cloud_services_desc ' \
                 'could not be intepreted correctly. Double check that your ' \
-                'formatting is correct, a dictionary formatted string is expected.'
+                'formatting is correct, a dictionary formatted string is expected.')
             sys.exit(1)
 
         if not isinstance(descs, dict):
-            print 'Error: %s was incorrectly formatted,' \
-                ' expects a string formatted as a dictionary' % descs
+            print('Error: %s was incorrectly formatted,' \
+                ' expects a string formatted as a dictionary' % descs)
             sys.exit(1)
 
         cloud_service_hosts = {}
@@ -916,19 +918,19 @@ cert, oid and sid based https!
             # TODO: do more checks on format?
             name_hosts = service.split(".", 1)
             if len(name_hosts) != 2:
-                print 'Error: You have not correctly formattet ' \
+                print('Error: You have not correctly formattet ' \
                     'the cloud_services parameter, ' \
                     'expects --cloud_services="service_name.' \
                     'http(s)://cloudhost-url-or-ip ' \
-                    'other_service.http(s)://cloudhost-url-or-ip"'
+                    'other_service.http(s)://cloudhost-url-or-ip"')
                 sys.exit(1)
             name, host = name_hosts[0], name_hosts[1]
             try:
                 valid_alphanumeric(name)
-            except InputException, err:
-                print 'Error: The --cloud_services name: %s was incorrectly ' \
+            except InputException as err:
+                print('Error: The --cloud_services name: %s was incorrectly ' \
                     'formatted, only allows alphanumeric characters %s' % (name,
-                                                                           err)
+                                                                           err))
             if name and host:
                 if name not in cloud_service_hosts:
                     cloud_service_hosts[name] = {'hosts': []}
@@ -1010,7 +1012,7 @@ cert, oid and sid based https!
         try:
             import pyotp
         except ImportError:
-            print "ERROR: twofactor use requested but pyotp is not installed!"
+            print("ERROR: twofactor use requested but pyotp is not installed!")
             sys.exit(1)
         user_dict['__TWOFACTOR_COMMENTED__'] = ''
         user_dict['__CRON_TWOFACTOR_CLEANUP__'] = '1'
@@ -1021,8 +1023,8 @@ cert, oid and sid based https!
     # Enable 2FA strict address only if explicitly requested
     if user_dict['__ENABLE_TWOFACTOR_STRICT_ADDRESS__'].lower() == 'true':
         if not user_dict['__ENABLE_TWOFACTOR__'].lower() == 'true':
-            print "ERROR: twofactor strict address use requested" \
-                + " but twofactor is disabled!"
+            print("ERROR: twofactor strict address use requested" \
+                + " but twofactor is disabled!")
             sys.exit(1)
         user_dict['__TWOFACTOR_STRICT_ADDRESS_COMMENTED__'] = ''
     else:
@@ -1033,7 +1035,7 @@ cert, oid and sid based https!
         try:
             import cracklib
         except ImportError:
-            print "ERROR: cracklib use requested but lib is not installed!"
+            print("ERROR: cracklib use requested but lib is not installed!")
             sys.exit(1)
 
     # Enable events daemon only if requested and deps are installed
@@ -1041,18 +1043,18 @@ cert, oid and sid based https!
         try:
             import nbformat
         except ImportError:
-            print "ERROR: workflows use requested but " \
-                  "nbformat is not installed!"
+            print("ERROR: workflows use requested but " \
+                  "nbformat is not installed!")
             sys.exit(1)
         except SyntaxError:
-            print "ERROR: workflows requires that the more-itertools package" \
-                  "is installed as version 5.0.0"
+            print("ERROR: workflows requires that the more-itertools package" \
+                  "is installed as version 5.0.0")
             sys.exit(1)
         try:
             import nbconvert
         except ImportError:
-            print "ERROR: workflows use requested but " \
-                  "nbconvert is not installed!"
+            print("ERROR: workflows use requested but " \
+                  "nbconvert is not installed!")
             sys.exit(1)
 
     # Enable events daemon only if requested and deps are installed
@@ -1060,7 +1062,7 @@ cert, oid and sid based https!
         try:
             import watchdog
         except ImportError:
-            print "ERROR: events use requested but watchdog is not installed!"
+            print("ERROR: events use requested but watchdog is not installed!")
             sys.exit(1)
 
     # Enable OpenID auth daemon only if requested and installed
@@ -1068,7 +1070,7 @@ cert, oid and sid based https!
         try:
             import openid
         except ImportError:
-            print "ERROR: openid use requested but lib is not installed!"
+            print("ERROR: openid use requested but lib is not installed!")
             sys.exit(1)
     # Enable OpenID auth module only if openid_providers is given
     if user_dict['__EXT_OID_PROVIDER_BASE__'].strip() or \
@@ -1092,18 +1094,18 @@ cert, oid and sid based https!
     if user_dict['__DHPARAMS_PATH__']:
         if not os.path.isfile(os.path.expanduser("%(__DHPARAMS_PATH__)s" %
                                                  user_dict)):
-            print "ERROR: requested dhparams file not found!"
-            print """You can create it with:
-openssl dhparam 2048 -out %(__DHPARAMS_PATH__)s""" % user_dict
+            print("ERROR: requested dhparams file not found!")
+            print("""You can create it with:
+openssl dhparam 2048 -out %(__DHPARAMS_PATH__)s""" % user_dict)
             sys.exit(1)
 
     # Auto-fill fingerprints if daemon key is set
     if user_dict['__DAEMON_KEYCERT__']:
         if not os.path.isfile(os.path.expanduser("%(__DAEMON_KEYCERT__)s" %
                                                  user_dict)):
-            print "ERROR: requested daemon keycert file not found!"
-            print """You can create it with:
-openssl genrsa -out %(__DAEMON_KEYCERT__)s 2048""" % user_dict
+            print("ERROR: requested daemon keycert file not found!")
+            print("""You can create it with:
+openssl genrsa -out %(__DAEMON_KEYCERT__)s 2048""" % user_dict)
             sys.exit(1)
 
         key_path = os.path.expanduser(user_dict['__DAEMON_KEYCERT__'])
@@ -1115,16 +1117,16 @@ openssl genrsa -out %(__DAEMON_KEYCERT__)s 2048""" % user_dict
             raw_sha256 = openssl_proc.stdout.read().strip()
             daemon_keycert_sha256 = raw_sha256.replace("SHA256 Fingerprint=",
                                                        "")
-        except Exception, exc:
-            print "ERROR: failed to extract sha256 fingerprint of %s: %s" % \
-                  (key_path, exc)
+        except Exception as exc:
+            print("ERROR: failed to extract sha256 fingerprint of %s: %s" % \
+                  (key_path, exc))
         user_dict['__DAEMON_KEYCERT_SHA256__'] = daemon_keycert_sha256
     if user_dict['__DAEMON_PUBKEY__']:
         if not os.path.isfile(os.path.expanduser("%(__DAEMON_PUBKEY__)s" %
                                                  user_dict)):
-            print "ERROR: requested daemon pubkey file not found!"
-            print """You can create it with:
-ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict
+            print("ERROR: requested daemon pubkey file not found!")
+            print("""You can create it with:
+ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
             sys.exit(1)
 
         pubkey_path = os.path.expanduser(user_dict['__DAEMON_PUBKEY__'])
@@ -1132,8 +1134,8 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict
             pubkey_fd = open(pubkey_path)
             pubkey = pubkey_fd.read()
             pubkey_fd.close()
-        except Exception, exc:
-            print "Failed to read provided daemon key: %s" % exc
+        except Exception as exc:
+            print("Failed to read provided daemon key: %s" % exc)
         # The desired values are hashes of the base64 encoded actual key
         try:
             b64_key = base64.b64decode(
@@ -1144,9 +1146,9 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict
                                                                raw_md5[1::2]))
             raw_sha256 = hashlib.sha256(b64_key).digest()
             daemon_pubkey_sha256 = base64.b64encode(raw_sha256).rstrip('=')
-        except Exception, exc:
-            print "ERROR: failed to extract fingerprints of %s : %s" % \
-                  (pubkey_path, exc)
+        except Exception as exc:
+            print("ERROR: failed to extract fingerprints of %s : %s" % \
+                  (pubkey_path, exc))
         user_dict['__DAEMON_PUBKEY_MD5__'] = daemon_pubkey_md5
         user_dict['__DAEMON_PUBKEY_SHA256__'] = daemon_pubkey_sha256
 
@@ -1175,8 +1177,8 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict
 
     destination_path = "%s%s" % (destination, destination_suffix)
     if not os.path.islink(destination) and os.path.isdir(destination):
-        print "ERROR: Legacy %s dir in the way - please remove first" % \
-              destination
+        print("ERROR: Legacy %s dir in the way - please remove first" % \
+              destination)
         sys.exit(1)
     try:
         os.makedirs(destination_path)
@@ -1190,15 +1192,15 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict
     if public_fqdn:
         user_dict['__PUBLIC_URL__'] = 'http://%(__PUBLIC_FQDN__)s' % user_dict
         if str(public_port) != str(default_http_port):
-            print "adding explicit public port (%s)" % [public_port,
-                                                        default_http_port]
+            print("adding explicit public port (%s)" % [public_port,
+                                                        default_http_port])
             user_dict['__PUBLIC_URL__'] += ':%(__PUBLIC_PORT__)s' % user_dict
     if public_alias_fqdn:
         user_dict['__PUBLIC_ALIAS_URL__'] = 'https://%(__PUBLIC_ALIAS_FQDN__)s' \
                                             % user_dict
         if str(public_alias_port) != str(default_https_port):
-            print "adding explicit public alias port (%s)" % [public_alias_port,
-                                                              default_https_port]
+            print("adding explicit public alias port (%s)" % [public_alias_port,
+                                                              default_https_port])
             user_dict['__PUBLIC_ALIAS_URL__'] += ':%(__PUBLIC_ALIAS_PORT__)s' \
                                                  % user_dict
         # Apache fails on duplicate listen clauses
@@ -1210,37 +1212,37 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict
         user_dict['__MIG_CERT_URL__'] = 'https://%(__MIG_CERT_FQDN__)s' % \
                                         user_dict
         if str(mig_cert_port) != str(default_https_port):
-            print "adding explicit mig cert port (%s)" % [mig_cert_port,
-                                                          default_https_port]
+            print("adding explicit mig cert port (%s)" % [mig_cert_port,
+                                                          default_https_port])
             user_dict['__MIG_CERT_URL__'] += ':%(__MIG_CERT_PORT__)s' % \
                                              user_dict
     if ext_cert_fqdn:
         user_dict['__EXT_CERT_URL__'] = 'https://%(__EXT_CERT_FQDN__)s' % \
                                         user_dict
         if str(ext_cert_port) != str(default_https_port):
-            print "adding explicit ext cert port (%s)" % [ext_cert_port,
-                                                          default_https_port]
+            print("adding explicit ext cert port (%s)" % [ext_cert_port,
+                                                          default_https_port])
             user_dict['__EXT_CERT_URL__'] += ':%(__EXT_CERT_PORT__)s' % \
                                              user_dict
     if mig_oid_fqdn:
         user_dict['__MIG_OID_URL__'] = 'https://%(__MIG_OID_FQDN__)s' % \
                                        user_dict
         if str(mig_oid_port) != str(default_https_port):
-            print "adding explicit ext oid port (%s)" % [mig_oid_port,
-                                                         default_https_port]
+            print("adding explicit ext oid port (%s)" % [mig_oid_port,
+                                                         default_https_port])
             user_dict['__MIG_OID_URL__'] += ':%(__MIG_OID_PORT__)s' % user_dict
     if ext_oid_fqdn:
         user_dict['__EXT_OID_URL__'] = 'https://%(__EXT_OID_FQDN__)s' % \
                                        user_dict
         if str(ext_oid_port) != str(default_https_port):
-            print "adding explicit org oid port (%s)" % [ext_oid_port,
-                                                         default_https_port]
+            print("adding explicit org oid port (%s)" % [ext_oid_port,
+                                                         default_https_port])
             user_dict['__EXT_OID_URL__'] += ':%(__EXT_OID_PORT__)s' % user_dict
     if sid_fqdn:
         user_dict['__SID_URL__'] = 'https://%(__SID_FQDN__)s' % user_dict
         if str(sid_port) != str(default_https_port):
-            print "adding explicit sid port (%s)" % [sid_port,
-                                                     default_https_port]
+            print("adding explicit sid port (%s)" % [sid_port,
+                                                     default_https_port])
             user_dict['__SID_URL__'] += ':%(__SID_PORT__)s' % user_dict
 
     # Generate random hex salt for scrambling saved digest credentials
@@ -1387,7 +1389,7 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict
             # Sync permissions
             os.chmod(out_path, os.stat(in_path).st_mode)
         else:
-            print "Skipping missing template: %s" % in_path
+            print("Skipping missing template: %s" % in_path)
 
     # Remove lines from templates
     for (temp_file, remove_pattern) in cleanup_list:
@@ -1527,8 +1529,8 @@ sudo cp %(destination)s/migcheckssl /etc/cron.daily
         filehandle = open(instructions_path, "w")
         filehandle.write(instructions)
         filehandle.close()
-    except Exception, err:
-        print "could not write %s %s" % (instructions_path, err)
+    except Exception as err:
+        print("could not write %s %s" % (instructions_path, err))
     return expanded
 
 
@@ -1557,15 +1559,15 @@ def create_user(
     # make sure not to wreak havoc if no user supplied
 
     if not user:
-        print "no user supplied! can't continue"
+        print("no user supplied! can't continue")
         return False
 
     groupadd_cmd = ['groupadd', group]
-    print groupadd_cmd
+    print(groupadd_cmd)
     # NOTE: we use command list here to avoid shell requirement
     status = subprocess_call(groupadd_cmd)
     if status != 0:
-        print 'Warning: groupadd exit code %d' % status
+        print('Warning: groupadd exit code %d' % status)
 
     # Don't use 'o'/'0' and 'l'/'1' since they may confuse users
 
@@ -1584,33 +1586,33 @@ def create_user(
                          + random.choice(valid_chars))
     useradd_cmd = ['useradd', '-m', '-s %s' % shell, '-p %s' % enc_pw,
                    '-g %s' % group, user]
-    print useradd_cmd
+    print(useradd_cmd)
     # NOTE: we use command list here to avoid shell requirement
     status = subprocess_call(useradd_cmd)
     if status != 0:
-        print 'Warning: useradd exit code %d' % status
+        print('Warning: useradd exit code %d' % status)
     else:
-        print '# Created %s in group %s with pw %s' % (user, group, pw)
+        print('# Created %s in group %s with pw %s' % (user, group, pw))
 
     home = '/home/%s' % user
 
     chmod_cmd = ['chmod', '-R', 'g-rwx,o-rwx', home]
-    print chmod_cmd
+    print(chmod_cmd)
     # NOTE: we use command list here to avoid shell requirement
     status = subprocess_call(chmod_cmd)
     if status != 0:
-        print 'Warning: chmod exit code %d' % status
+        print('Warning: chmod exit code %d' % status)
     else:
-        print 'Removed global access to %s' % home
+        print('Removed global access to %s' % home)
 
     addgroup_cmd = ['addgroup', user, ssh_login_group]
-    print addgroup_cmd
+    print(addgroup_cmd)
     # NOTE: we use command list here to avoid shell requirement
     status = subprocess_call(addgroup_cmd)
     if status != 0:
-        print 'Warning: login addgroup exit code %d' % status
+        print('Warning: login addgroup exit code %d' % status)
     else:
-        print '# Added %s to login group %s' % (user, ssh_login_group)
+        print('# Added %s to login group %s' % (user, ssh_login_group))
 
     # NOTE: we use command list here to avoid shell requirement
     idu_proc = subprocess_popen(['id', '-u %s' % user], stdout=subprocess_pipe)
@@ -1625,8 +1627,8 @@ def create_user(
     try:
         uid = int(uid_str)
         gid = int(gid_str)
-    except Exception, err:
-        print 'Error: %s' % err
+    except Exception as err:
+        print('Error: %s' % err)
         if not debug:
             return False
 
@@ -1699,32 +1701,32 @@ def create_user(
     trac_ini_path = '%s/trac.ini' % server_dir
 
     firewall_script = '/root/scripts/firewall'
-    print '# Add the next line to %s and run the script:'\
-        % firewall_script
-    print 'iptables -A INPUT -p tcp --dport %d:%d -j ACCEPT # webserver: %s'\
-        % (reserved_ports[0], reserved_ports[-1], user)
+    print('# Add the next line to %s and run the script:'\
+        % firewall_script)
+    print('iptables -A INPUT -p tcp --dport %d:%d -j ACCEPT # webserver: %s'\
+        % (reserved_ports[0], reserved_ports[-1], user))
 
     sshd_conf = '/etc/ssh/sshd_config'
-    print """# Unless 'AllowGroups %s' is already included, append %s
+    print("""# Unless 'AllowGroups %s' is already included, append %s
 # to the AllowUsers line in %s and restart sshd."""\
-         % (ssh_login_group, user, sshd_conf)
-    print """# Add %s to the sudoers file (visudo) with privileges
+         % (ssh_login_group, user, sshd_conf))
+    print("""# Add %s to the sudoers file (visudo) with privileges
 # to run apache init script in %s
-visudo""" % (user, apache_dir)
-    print """# Set disk quotas for %s using reference user quota:
+visudo""" % (user, apache_dir))
+    print("""# Set disk quotas for %s using reference user quota:
 edquota -u %s -p LOGIN_OF_SIMILAR_USER"""\
-         % (user, user)
+         % (user, user))
     expire = datetime.date.today()
     expire = expire.replace(year=expire.year + 1)
-    print """# Optionally set account expire date for user:
+    print("""# Optionally set account expire date for user:
 chage -E %s %s"""\
-         % (expire, user)
-    print """# Attach full name of user to login:
+         % (expire, user))
+    print("""# Attach full name of user to login:
 usermod -c 'INSERT FULL NAME HERE' %s"""\
-         % user
-    print """# Add mount point for sandbox generator:
+         % user)
+    print("""# Add mount point for sandbox generator:
 echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  auto    user,loop       0       0' >> /etc/fstab"""\
-         % (user, user)
+         % (user, user))
 
     src = os.path.abspath(os.path.dirname(sys.argv[0]))
     dst = os.path.join(src, '%s-confs' % user)
@@ -1843,38 +1845,38 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
                 'base_fqdn': base_fqdn, 'public_fqdn': public_fqdn}
     settings['sudo_cmd'] = 'sudo su - %(user)s -c' % settings
 
-    print '# Clone %s to %s and put config files there:' % (apache_etc,
-                                                            apache_dir)
-    print 'sudo cp -r -u -d -x %s %s' % (apache_etc, apache_dir)
-    print 'sudo rm -f %s/envvars' % apache_dir
-    print 'sudo rm -f %s/apache2.conf' % apache_dir
-    print 'sudo rm -f %s/httpd.conf' % apache_dir
-    print 'sudo rm -f %s/ports.conf' % apache_dir
-    print 'sudo rm -f %s/sites-enabled/*' % apache_dir
-    print 'sudo rm -f %s/conf.d/*' % apache_dir
-    print 'sudo cp -f -d %s %s/' % (apache_envs_conf, apache_dir)
-    print 'sudo cp -f -d %s %s/' % (apache_apache2_conf, apache_dir)
-    print 'sudo cp -f -d %s %s/' % (apache_httpd_conf, apache_dir)
-    print 'sudo cp -f -d %s %s/' % (apache_ports_conf, apache_dir)
-    print 'sudo cp -f -d %s %s/conf.d/' % (apache_mig_conf, apache_dir)
-    print 'sudo mkdir -p %s/conf.extras.d' % (apache_dir)
-    print 'sudo cp -f -d %s %s/conf.extras.d/' % (
-        apache_jupyter_def, apache_dir)
-    print 'sudo cp -f -d %s %s/conf.extras.d/' % (apache_jupyter_openid,
-                                                  apache_dir)
-    print 'sudo cp -f -d %s %s/conf.extras.d/' % (apache_jupyter_proxy,
-                                                  apache_dir)
-    print 'sudo cp -f -d %s %s/conf.extras.d/' % (apache_jupyter_rewrite,
-                                                  apache_dir)
-    print 'sudo cp -f -d %s %s/' % (apache_initd_script, apache_dir)
-    print 'sudo mkdir -p %s %s %s ' % (apache_run, apache_lock, apache_log)
+    print('# Clone %s to %s and put config files there:' % (apache_etc,
+                                                            apache_dir))
+    print('sudo cp -r -u -d -x %s %s' % (apache_etc, apache_dir))
+    print('sudo rm -f %s/envvars' % apache_dir)
+    print('sudo rm -f %s/apache2.conf' % apache_dir)
+    print('sudo rm -f %s/httpd.conf' % apache_dir)
+    print('sudo rm -f %s/ports.conf' % apache_dir)
+    print('sudo rm -f %s/sites-enabled/*' % apache_dir)
+    print('sudo rm -f %s/conf.d/*' % apache_dir)
+    print('sudo cp -f -d %s %s/' % (apache_envs_conf, apache_dir))
+    print('sudo cp -f -d %s %s/' % (apache_apache2_conf, apache_dir))
+    print('sudo cp -f -d %s %s/' % (apache_httpd_conf, apache_dir))
+    print('sudo cp -f -d %s %s/' % (apache_ports_conf, apache_dir))
+    print('sudo cp -f -d %s %s/conf.d/' % (apache_mig_conf, apache_dir))
+    print('sudo mkdir -p %s/conf.extras.d' % (apache_dir))
+    print('sudo cp -f -d %s %s/conf.extras.d/' % (
+        apache_jupyter_def, apache_dir))
+    print('sudo cp -f -d %s %s/conf.extras.d/' % (apache_jupyter_openid,
+                                                  apache_dir))
+    print('sudo cp -f -d %s %s/conf.extras.d/' % (apache_jupyter_proxy,
+                                                  apache_dir))
+    print('sudo cp -f -d %s %s/conf.extras.d/' % (apache_jupyter_rewrite,
+                                                  apache_dir))
+    print('sudo cp -f -d %s %s/' % (apache_initd_script, apache_dir))
+    print('sudo mkdir -p %s %s %s ' % (apache_run, apache_lock, apache_log))
 
     # allow read access to logs
 
-    print 'sudo chgrp -R %s %s' % (user, apache_log)
-    print 'sudo chmod 2755 %s' % apache_log
+    print('sudo chgrp -R %s %s' % (user, apache_log))
+    print('sudo chmod 2755 %s' % apache_log)
 
-    print """# Setup MiG for %(user)s:
+    print("""# Setup MiG for %(user)s:
 %(sudo_cmd)s 'ssh-keygen -t rsa -N \"\" -q -f \\
     %(home)s/.ssh/id_rsa'
 %(sudo_cmd)s 'cp -f -x \\
@@ -1884,20 +1886,20 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
 %(sudo_cmd)s 'svn checkout https://svn.code.sf.net/p/migrid/code/trunk/ %(home)s'
 sudo chown %(user)s:%(group)s %(server_conf)s %(trac_ini)s
 sudo cp -f -p %(server_conf)s %(trac_ini)s %(server_dir)s/
-""" % settings
+""" % settings)
 
     # Only add non-directory paths manually and leave the rest to
     # checkconf.py below
 
-    print """%(sudo_cmd)s 'mkfifo %(server_dir)s/server.stdin'
+    print("""%(sudo_cmd)s 'mkfifo %(server_dir)s/server.stdin'
 %(sudo_cmd)s 'mkfifo %(server_dir)s/notify.stdin'
 %(sudo_cmd)s '%(server_dir)s/checkconf.py'
-""" % settings
+""" % settings)
 
     used_ports = [public_port, mig_cert_port, ext_cert_port, mig_oid_port,
                   ext_oid_port, sid_port]
     extra_ports = [port for port in reserved_ports if not port in used_ports]
-    print """
+    print("""
 #############################################################
 Created %s in group %s with pw %s
 Reserved ports:
@@ -1927,5 +1929,5 @@ sudo %s/%s start
         ', '.join(["%d" % port for port in extra_ports]),
         apache_dir,
         os.path.basename(apache_initd_script),
-    )
+    ))
     return True

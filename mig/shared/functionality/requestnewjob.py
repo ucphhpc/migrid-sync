@@ -26,21 +26,22 @@
 #
 
 """Handle request for a job from a resource"""
+from __future__ import absolute_import
 
 import os
 import sys
 import fcntl
 import time
 
-from shared import returnvalues
-from shared.base import valid_dir_input
-from shared.cgishared import init_cgiscript_possibly_with_cert
-from shared.conf import get_resource_configuration
-from shared.fileio import send_message_to_grid_script
-from shared.findtype import is_resource
-from shared.functional import validate_input, REJECT_UNSET
-from shared.httpsclient import check_source_ip
-from shared.init import initialize_main_variables
+from .shared import returnvalues
+from .shared.base import valid_dir_input
+from .shared.cgishared import init_cgiscript_possibly_with_cert
+from .shared.conf import get_resource_configuration
+from .shared.fileio import send_message_to_grid_script
+from .shared.findtype import is_resource
+from .shared.functional import validate_input, REJECT_UNSET
+from .shared.httpsclient import check_source_ip
+from .shared.init import initialize_main_variables
 
 
 def signature():
@@ -113,7 +114,7 @@ def main(client_id, user_arguments_dict):
     proxy_fqdn = resource_conf.get('FRONTENDPROXY', None)
     try:
         check_source_ip(remote_ip, unique_resource_name, proxy_fqdn)
-    except ValueError, vae:
+    except ValueError as vae:
         logger.error("Invalid requestnewjob: %s (%s)" % (vae, accepted))
         output_objects.append({'object_type': 'error_text', 'text':
                                'invalid request: %s' % vae})
@@ -151,7 +152,7 @@ def main(client_id, user_arguments_dict):
     now = time.time()
     try:
         lock_until = now + min(300.0, float(cputime))
-    except Exception, exc:
+    except Exception as exc:
         logger.error('invalid cputime in requestnewjob: %s (%s)' % (cputime, exc))
         output_objects.append(
             {'object_type': 'error_text', 'text':
@@ -160,7 +161,7 @@ def main(client_id, user_arguments_dict):
 
     try:
         filehandle = open(lock_file, 'r+')
-    except IOError, ioe:
+    except IOError as ioe:
         output_objects.append(
             {'object_type': 'text', 'text':
              'No jobrequest_pending.%s lock found - creating one' % exe})
@@ -194,7 +195,7 @@ def main(client_id, user_arguments_dict):
             filehandle.seek(0, 0)
             filehandle.write('%.2f' % lock_until)
             filehandle.close()
-        except IOError, ioe:
+        except IOError as ioe:
             logger.error('Could not get exclusive lock in requestnewjob')
             output_objects.append(
                 {'object_type': 'error_text', 'text':
@@ -213,7 +214,7 @@ receive this message often, please increase the timeout for job requests.''' \
             filehandle.seek(0, 0)
             filehandle.write('%.2f' % lock_until)
             filehandle.close()
-        except IOError, ioe:
+        except IOError as ioe:
             logger.error('Failed to create jobrequest_pending lock: %s' % ioe)
             output_objects.append(
                 {'object_type': 'error_text', 'text':

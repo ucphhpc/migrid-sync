@@ -224,7 +224,7 @@ def get_update_trigger_dict_and_check_for_unique_clientid(configuration,
             if rule_id != 'system_imagesettings_meta_created' \
                 and rule_id != 'system_imagesettings_dir_deleted':
                 client_id = trigger['run_as']
-                if run_as.has_key(client_id):
+                if client_id in run_as:
                     run_as[client_id] += 1
                 else:
                     run_as[client_id] = 1
@@ -287,7 +287,7 @@ def remove_triggers(configuration, vgrids_dict):
         logger.info('vgridpath: %s' % vgridpath)
         logger.info('----------------------------------------------')
 
-        if not triggers_removed.has_key(vgrid):
+        if vgrid not in triggers_removed:
             triggers_removed[vgrid] = []
 
         for trigger in vgrids_dict[key]['triggers']:

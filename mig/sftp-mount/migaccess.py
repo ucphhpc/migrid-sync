@@ -39,6 +39,7 @@
 # Modified version of Xmp example:
 # simply prevents symlink, link, chmod, chown and mknod operations
 
+from __future__ import print_function
 import os, sys
 from errno import *
 from stat import *
@@ -48,8 +49,7 @@ from fuse import Fuse
 
 
 if not hasattr(fuse, '__version__'):
-    raise RuntimeError, \
-        "your fuse-py doesn't know of fuse.__version__, probably it's too old."
+    raise RuntimeError("your fuse-py doesn't know of fuse.__version__, probably it's too old.")
 
 fuse.fuse_python_api = (0, 2)
 
@@ -305,7 +305,7 @@ Userspace nullfs-alike: mirror the filesystem tree from some point on but preven
         if server.fuse_args.mount_expected():
             os.chdir(server.root)
     except OSError:
-        print >> sys.stderr, "can't enter root of underlying filesystem"
+        print("can't enter root of underlying filesystem", file=sys.stderr)
         sys.exit(1)
 
     server.main()

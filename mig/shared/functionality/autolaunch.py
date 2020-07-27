@@ -27,13 +27,14 @@
 
 
 """Redirector for saved user default page or site lading page"""
+from __future__ import absolute_import
 
 
-from shared import returnvalues
-from shared.functional import validate_input_and_cert
-from shared.init import initialize_main_variables
-from shared.html import themed_styles, themed_scripts, menu_items
-from shared.settings import load_settings
+from .shared import returnvalues
+from .shared.functional import validate_input_and_cert
+from .shared.init import initialize_main_variables
+from .shared.html import themed_styles, themed_scripts, menu_items
+from .shared.settings import load_settings
 
 
 def signature():

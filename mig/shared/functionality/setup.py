@@ -26,29 +26,30 @@
 #
 
 """Provide all the client access setup subpages"""
+from __future__ import absolute_import
 
 import os
 import time
 
-from shared import returnvalues
-from shared.accountstate import account_expire_info
-from shared.auth import get_twofactor_secrets
-from shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin, \
+from .shared import returnvalues
+from .shared.accountstate import account_expire_info
+from .shared.auth import get_twofactor_secrets
+from .shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin, \
     get_short_id
-from shared.defaults import seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
+from .shared.defaults import seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
     duplicati_protocol_choices, duplicati_schedule_choices
-from shared.duplicatikeywords import get_duplicati_specs
-from shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
-from shared.functional import validate_input_and_cert
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import man_base_js, man_base_html, console_log_javascript, \
+from .shared.duplicatikeywords import get_duplicati_specs
+from .shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
+from .shared.functional import validate_input_and_cert
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.html import man_base_js, man_base_html, console_log_javascript, \
     twofactor_wizard_html, twofactor_wizard_js, twofactor_token_html, \
     save_settings_js, save_settings_html
-from shared.init import initialize_main_variables, find_entry, extract_menu
-from shared.settings import load_settings, load_ssh, load_davs, load_ftps, \
+from .shared.init import initialize_main_variables, find_entry, extract_menu
+from .shared.settings import load_settings, load_ssh, load_davs, load_ftps, \
     load_seafile, load_duplicati, load_cloud, load_twofactor
-from shared.twofactorkeywords import get_twofactor_specs
-from shared.useradm import create_alias_link
+from .shared.twofactorkeywords import get_twofactor_specs
+from .shared.useradm import create_alias_link
 
 
 ssh_edit = cm_options.copy()
@@ -1083,7 +1084,7 @@ for %(site)s backup use.</p>
 
                     valid_choices = eval('configuration.%s' % keyword.lower())
                     current_choice = []
-                    if current_duplicati_dict.has_key(keyword):
+                    if keyword in current_duplicati_dict:
                         current_choice = current_duplicati_dict[keyword]
 
                     if valid_choices:
@@ -1099,14 +1100,14 @@ for %(site)s backup use.</p>
                 except:
                     area = """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
                         % (keyword, keyword)
-                    if current_duplicati_dict.has_key(keyword):
+                    if keyword in current_duplicati_dict:
                         area += '\n'.join(current_duplicati_dict[keyword])
                     area += '</textarea>'
                     html += wrap_edit_area(keyword, area, duplicati_edit)
             elif val['Type'] == 'string':
 
                 current_choice = ''
-                if current_duplicati_dict.has_key(keyword):
+                if keyword in current_duplicati_dict:
                     current_choice = current_duplicati_dict[keyword]
                 if val['Editor'] == 'select':
                     # get valid choices from conf
@@ -1137,7 +1138,7 @@ for %(site)s backup use.</p>
 
                 valid_choices = [val['Value'], not val['Value']]
                 current_choice = ''
-                if current_duplicati_dict.has_key(keyword):
+                if keyword in current_duplicati_dict:
                     current_choice = current_duplicati_dict[keyword]
                 #html += '<select class="styled-select semi-square html-select" name="%s">' % keyword
                 # for choice in valid_choices:
@@ -1450,7 +1451,7 @@ value="%(default_authpassword)s" />
 
                     valid_choices = eval('configuration.%s' % keyword.lower())
                     current_choice = []
-                    if current_twofactor_dict.has_key(keyword):
+                    if keyword in current_twofactor_dict:
                         current_choice = current_twofactor_dict[keyword]
 
                     if valid_choices:
@@ -1471,7 +1472,7 @@ value="%(default_authpassword)s" />
                     area = '''
                 <textarea id="%s" cols=40 rows=1 name="%s">''' \
                         % (keyword, keyword)
-                    if current_twofactor_dict.has_key(keyword):
+                    if keyword in current_twofactor_dict:
                         area += '\n'.join(current_twofactor_dict[keyword])
                     area += '</textarea>'
                     entry += wrap_edit_area(keyword, area, twofactor_edit,
@@ -1483,7 +1484,7 @@ value="%(default_authpassword)s" />
 
                 valid_choices = eval('configuration.%s' % keyword.lower())
                 current_choice = ''
-                if current_twofactor_dict.has_key(keyword):
+                if keyword in current_twofactor_dict:
                     current_choice = current_twofactor_dict[keyword]
 
                 if valid_choices:
@@ -1503,7 +1504,7 @@ value="%(default_authpassword)s" />
 
                 valid_choices = [val['Value'], not val['Value']]
                 current_choice = ''
-                if current_twofactor_dict.has_key(keyword):
+                if keyword in current_twofactor_dict:
                     current_choice = current_twofactor_dict[keyword]
                 checked = ''
                 if current_choice == True:

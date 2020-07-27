@@ -25,14 +25,15 @@
 # -- END_HEADER ---
 #
 
-from shared import returnvalues
-from shared.conf import get_all_store_names
-from shared.findtype import is_owner
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables
-from shared.resadm import clean_resource_store, stop_resource_store
-from shared.worker import Worker
+from __future__ import absolute_import
+from .shared import returnvalues
+from .shared.conf import get_all_store_names
+from .shared.findtype import is_owner
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables
+from .shared.resadm import clean_resource_store, stop_resource_store
+from .shared.worker import Worker
 
 
 def signature():

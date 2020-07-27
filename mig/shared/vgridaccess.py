@@ -26,24 +26,26 @@
 #
 
 """User access to VGrids"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import copy
 import os
 import time
 import fcntl
 
-from shared.base import sandbox_resource, client_id_dir
-from shared.conf import get_all_exe_vgrids, get_all_store_vgrids, \
+from .shared.base import sandbox_resource, client_id_dir
+from .shared.conf import get_all_exe_vgrids, get_all_store_vgrids, \
     get_resource_fields, get_resource_configuration
-from shared.defaults import settings_filename, profile_filename, default_vgrid
-from shared.fileio import acquire_file_lock, release_file_lock
-from shared.modified import mark_resource_modified, mark_vgrid_modified, \
+from .shared.defaults import settings_filename, profile_filename, default_vgrid
+from .shared.fileio import acquire_file_lock, release_file_lock
+from .shared.modified import mark_resource_modified, mark_vgrid_modified, \
     check_users_modified, check_resources_modified, check_vgrids_modified, \
     reset_users_modified, reset_resources_modified, reset_vgrids_modified
-from shared.resource import list_resources, real_to_anon_res_map
-from shared.serial import load, dump
-from shared.user import list_users, real_to_anon_user_map, get_user_conf
-from shared.vgrid import vgrid_list_vgrids, vgrid_allowed, vgrid_resources, \
+from .shared.resource import list_resources, real_to_anon_res_map
+from .shared.serial import load, dump
+from .shared.user import list_users, real_to_anon_user_map, get_user_conf
+from .shared.vgrid import vgrid_list_vgrids, vgrid_allowed, vgrid_resources, \
     user_allowed_vgrids, vgrid_owners, vgrid_members, vgrid_settings, \
     vgrid_list_subvgrids, vgrid_list_parents, res_allowed_vgrids, \
     merge_vgrid_settings
@@ -185,7 +187,7 @@ def _save_entity_map_after_update(configuration, kind, entity_map, map_stamp, lo
     try:
         dump(entity_map, map_path)
         os.utime(map_path, (map_stamp, map_stamp))
-    except Exception, exc:
+    except Exception as exc:
         _logger.error("Could not save %s map: %s" % (kind, exc))
 
     _logger.info("Saved %s map changes" % kind)
@@ -194,7 +196,7 @@ def _save_entity_map_after_update(configuration, kind, entity_map, map_stamp, lo
     # Relegate to shared lock to allow other readers during cache update
     try:
         fcntl.flock(lock_handle.fileno(), fcntl.LOCK_SH)
-    except Exception, exc:
+    except Exception as exc:
         # If relegation fails it only hurts performance not consistency
         _logger.warning("failed to relegate %s lock to shared" % kind)
 
@@ -214,7 +216,7 @@ def _save_entity_map_after_update(configuration, kind, entity_map, map_stamp, lo
             else:
                 _logger.warning(
                     "failed to lock cached %s map for update" % kind)
-        except Exception, exc:
+        except Exception as exc:
             _logger.error("failed to update cached %s map: %s" % (kind, exc))
         if cache_lock_handle:
             release_file_lock(cache_lock_handle)
@@ -258,7 +260,7 @@ def refresh_user_map(configuration, clean=False):
             conf_mtime = -1
         # init first time
         user_map[user] = user_map.get(user, {})
-        if not user_map[user].has_key(CONF) or conf_mtime >= map_stamp:
+        if CONF not in user_map[user] or conf_mtime >= map_stamp:
             user_conf = get_user_conf(user, configuration, True)
             if not user_conf:
                 user_conf = {}
@@ -306,7 +308,7 @@ def refresh_resource_map(configuration, clean=False):
     real_map = real_to_anon_res_map(configuration.resource_home)
     for res in all_resources:
         # Sandboxes do not change their configuration
-        if resource_map.has_key(res) and sandbox_resource(res):
+        if res in resource_map and sandbox_resource(res):
             continue
         conf_path = os.path.join(configuration.resource_home, res, "config")
         if not os.path.isfile(conf_path):
@@ -318,7 +320,7 @@ def refresh_resource_map(configuration, clean=False):
         owners_mtime = os.path.getmtime(owners_path)
         # init first time
         resource_map[res] = resource_map.get(res, {})
-        if not resource_map[res].has_key(CONF) or conf_mtime >= map_stamp:
+        if CONF not in resource_map[res] or conf_mtime >= map_stamp:
             (status, res_conf) = get_resource_configuration(
                 configuration.resource_home, res, configuration.logger)
             if not status:
@@ -332,7 +334,7 @@ def refresh_resource_map(configuration, clean=False):
             resource_map[res][RESID] = public_id
             resource_map[res][MODTIME] = map_stamp
             dirty += [res]
-        if not resource_map[res].has_key(OWNERS) or owners_mtime >= map_stamp:
+        if OWNERS not in resource_map[res] or owners_mtime >= map_stamp:
             owners = load(owners_path)
             resource_map[res][OWNERS] = owners
             resource_map[res][MODTIME] = map_stamp
@@ -372,13 +374,13 @@ def refresh_vgrid_map(configuration, clean=False):
     vgrid_helper = {default_vgrid: {RESOURCES: ['*'],
                                     OWNERS: [], MEMBERS: ['*'],
                                     SETTINGS: []}}
-    if not vgrid_map.has_key(VGRIDS):
+    if VGRIDS not in vgrid_map:
         vgrid_map[VGRIDS] = vgrid_helper
         dirty[VGRIDS] = dirty.get(VGRIDS, []) + [default_vgrid]
-    if not vgrid_map.has_key(RESOURCES):
+    if RESOURCES not in vgrid_map:
         vgrid_map[RESOURCES] = {}
         dirty[RESOURCES] = dirty.get(RESOURCES, [])
-    if not vgrid_map.has_key(USERS):
+    if USERS not in vgrid_map:
         vgrid_map[USERS] = {}
         dirty[USERS] = dirty.get(USERS, [])
 
@@ -406,7 +408,7 @@ def refresh_vgrid_map(configuration, clean=False):
                                     conf_path)
                     dirty[VGRIDS] = dirty.get(VGRIDS, []) + [vgrid]
 
-            elif not vgrid_map[VGRIDS].has_key(vgrid) or \
+            elif vgrid not in vgrid_map[VGRIDS] or \
                     os.path.getmtime(conf_path) >= map_stamp:
                 (status, entries) = list_call(vgrid, configuration,
                                               recursive=False)
@@ -438,7 +440,7 @@ def refresh_vgrid_map(configuration, clean=False):
     real_map = real_to_anon_res_map(configuration.resource_home)
     for res in all_resources:
         # Sandboxes do not change their vgrid participation
-        if vgrid_map[RESOURCES].has_key(res) and sandbox_resource(res):
+        if res in vgrid_map[RESOURCES] and sandbox_resource(res):
             continue
         conf_path = os.path.join(configuration.resource_home, res, "config")
         if not os.path.isfile(conf_path):
@@ -1179,7 +1181,7 @@ def unmap_inheritance(configuration, vgrid_name, cert_id):
 
 if "__main__" == __name__:
     import sys
-    from shared.conf import get_configuration_object
+    from .shared.conf import get_configuration_object
     user_id = 'anybody'
     if len(sys.argv) > 1:
         user_id = sys.argv[1]
@@ -1192,88 +1194,88 @@ if "__main__" == __name__:
     conf = get_configuration_object()
     # Test listing alternative to vgrid_list_vgrids
     vgrid_list = get_vgrid_map_vgrids(conf)
-    print "all vgrids: %s" % vgrid_list
+    print("all vgrids: %s" % vgrid_list)
     # Verify that old-fashioned user_allowed_vgrids matches user_vgrid_access
     vgrids_allowed = user_allowed_vgrids(conf, user_id)
     vgrids_allowed.sort()
-    print "user allowed vgrids: %s" % vgrids_allowed
+    print("user allowed vgrids: %s" % vgrids_allowed)
     vgrid_access = user_vgrid_access(conf, user_id)
     vgrid_access.sort()
-    print "user access vgrids: %s" % vgrid_access
-    print "user allow and access match: %s" % (vgrids_allowed == vgrid_access)
+    print("user access vgrids: %s" % vgrid_access)
+    print("user allow and access match: %s" % (vgrids_allowed == vgrid_access))
     # Verify that old-fashioned user_allowed_vgrids matches user_vgrid_access
     vgrids_allowed = user_allowed_vgrids(conf, user_id, inherited=True)
     vgrids_allowed.sort()
-    print "inherit user allowed vgrids: %s" % vgrids_allowed
+    print("inherit user allowed vgrids: %s" % vgrids_allowed)
     vgrid_access = user_vgrid_access(conf, user_id, inherited=True)
     vgrid_access.sort()
-    print "inherit user access vgrids: %s" % vgrid_access
-    print "inherit user allow and access match: %s" % (
-        vgrids_allowed == vgrid_access)
+    print("inherit user access vgrids: %s" % vgrid_access)
+    print("inherit user allow and access match: %s" % (
+        vgrids_allowed == vgrid_access))
     # Verify that old-fashioned res_allowed_vgrids matches res_vgrid_access
     vgrids_allowed = res_allowed_vgrids(conf, res_id)
     vgrids_allowed.sort()
-    print "res allowed vgrids: %s" % vgrids_allowed
+    print("res allowed vgrids: %s" % vgrids_allowed)
     vgrid_access = res_vgrid_access(conf, res_id)
     vgrid_access.sort()
-    print "res access vgrids: %s" % vgrid_access
-    print "res allow and access match: %s" % (vgrids_allowed == vgrid_access)
+    print("res access vgrids: %s" % vgrid_access)
+    print("res allow and access match: %s" % (vgrids_allowed == vgrid_access))
     res_map = get_resource_map(conf)
     # print "raw resource map: %s" % res_map
     all_resources = res_map.keys()
-    print "raw resource IDs: %s" % ', '.join(all_resources)
+    print("raw resource IDs: %s" % ', '.join(all_resources))
     all_anon = [res_map[i][RESID] for i in all_resources]
-    print "raw anon names: %s" % ', '.join(all_anon)
-    print
+    print("raw anon names: %s" % ', '.join(all_anon))
+    print()
     user_map = get_user_map(conf)
     # print "raw user map: %s" % user_map
     all_users = user_map.keys()
-    print "raw user IDs: %s" % ', '.join(all_users)
+    print("raw user IDs: %s" % ', '.join(all_users))
     all_anon = [user_map[i][USERID] for i in all_users]
-    print "raw anon names: %s" % ', '.join(all_anon)
-    print
+    print("raw anon names: %s" % ', '.join(all_anon))
+    print()
     full_map = get_vgrid_map(conf)
     # print "raw vgrid map: %s" % full_map
     all_resources = full_map[RESOURCES].keys()
-    print "raw resource IDs: %s" % ', '.join(all_resources)
+    print("raw resource IDs: %s" % ', '.join(all_resources))
     all_users = full_map[USERS].keys()
-    print "raw user IDs: %s" % ', '.join(all_users)
+    print("raw user IDs: %s" % ', '.join(all_users))
     all_vgrids = full_map[VGRIDS].keys()
-    print "raw vgrid names: %s" % ', '.join(all_vgrids)
-    print
+    print("raw vgrid names: %s" % ', '.join(all_vgrids))
+    print()
     user_access_confs = user_allowed_res_confs(conf, user_id)
     user_access_exes = user_allowed_res_exes(conf, user_id)
     user_access_stores = user_allowed_res_stores(conf, user_id)
-    print "%s can access resources: %s" % \
-          (user_id, ', '.join(user_access_confs.keys()))
+    print("%s can access resources: %s" % \
+          (user_id, ', '.join(user_access_confs.keys())))
     #(user_id, ', '.join([i for (i, j) in user_access_confs.items() if j]))
-    print "%s can access exes: %s" % \
-          (user_id, ', '.join(user_access_exes.keys()))
+    print("%s can access exes: %s" % \
+          (user_id, ', '.join(user_access_exes.keys())))
     #(user_id, ', '.join([i for (i, j) in user_access_exes.items() if j]))
-    print "%s can access stores: %s" % \
-          (user_id, ', '.join(user_access_stores.keys()))
+    print("%s can access stores: %s" % \
+          (user_id, ', '.join(user_access_stores.keys())))
     #(user_id, ', '.join([i for (i, j) in user_access_stores.items() if j]))
     user_owned_confs = user_owned_res_confs(conf, user_id)
     #user_owned_exes = user_owned_res_exes(conf, user_id)
     #user_owned_stores = user_owned_res_stores(conf, user_id)
-    print "%s owns: %s" % \
-          (user_id, ', '.join(user_owned_confs.keys()))
+    print("%s owns: %s" % \
+          (user_id, ', '.join(user_owned_confs.keys())))
     user_visible_confs = user_visible_res_confs(conf, user_id)
     user_visible_exes = user_visible_res_exes(conf, user_id)
     user_visible_stores = user_visible_res_stores(conf, user_id)
-    print "%s can view resources: %s" % \
-          (user_id, ', '.join([i for i in user_visible_confs.keys()]))
+    print("%s can view resources: %s" % \
+          (user_id, ', '.join([i for i in user_visible_confs.keys()])))
     # print "full access exe dicts for %s:\n%s\n%s\n%s" % \
     #      (user_id, user_access_exes, user_owned_exes, user_visible_exes)
     # print "full access conf dicts for %s:\n%s\n%s\n%s" % \
     #      (user_id, user_access_confs, user_owned_confs, user_visible_confs)
     user_visible_users = user_visible_user_confs(conf, user_id)
-    print "%s can view people: %s" % \
-          (user_id, ', '.join([i for i in user_visible_users.keys()]))
+    print("%s can view people: %s" % \
+          (user_id, ', '.join([i for i in user_visible_users.keys()])))
     re_resources = resources_using_re(conf, runtime_env)
-    print "%s in use on resources: %s" % \
-          (runtime_env, ', '.join([i for i in re_resources]))
+    print("%s in use on resources: %s" % \
+          (runtime_env, ', '.join([i for i in re_resources])))
     direct_map = get_vgrid_map(conf, recursive=False)
-    print "direct vgrid map vgrids: %s" % direct_map[VGRIDS]
+    print("direct vgrid map vgrids: %s" % direct_map[VGRIDS])
     inherited_map = get_vgrid_map(conf, recursive=True)
-    print "inherited vgrid map vgrids: %s" % inherited_map[VGRIDS]
+    print("inherited vgrid map vgrids: %s" % inherited_map[VGRIDS])

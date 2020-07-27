@@ -28,16 +28,17 @@
 """Backend functions for use in XMLRPC and JSONRPC interfaces, exposing all XGI
 methods through platform-independent Remote Procedure Calls.
 """
+from __future__ import absolute_import
 
 import os
 import time
 
-from shared import returnvalues
-from shared.base import force_utf8_rec
-from shared.conf import get_configuration_object
-from shared.httpsclient import extract_client_id
-from shared.objecttypes import get_object_type_info
-from shared.output import validate
+from .shared import returnvalues
+from .shared.base import force_utf8_rec
+from .shared.conf import get_configuration_object
+from .shared.httpsclient import extract_client_id
+from .shared.objecttypes import get_object_type_info
+from .shared.output import validate
 
 
 def system_method_signature(method_name):
@@ -45,8 +46,8 @@ def system_method_signature(method_name):
 
     signature = id
     try:
-        exec compile('from shared.functionality.%s import signature'
-                     % method_name, '', 'single')
+        exec(compile('from shared.functionality.%s import signature'
+                     % method_name, '', 'single'))
         signature_string = str(signature())
     except:
         signature_string = 'none, array'
@@ -58,14 +59,14 @@ def system_method_help(method_name):
 
     usage = method_help = id
     try:
-        exec compile('from shared.functionality.%s import usage'
-                     % method_name, '', 'single')
+        exec(compile('from shared.functionality.%s import usage'
+                     % method_name, '', 'single'))
         help_string = str(usage())
     except:
         try:
-            exec compile(
+            exec(compile(
                 'from shared.functionality.%s import __doc__ as method_help' %
-                method_name, '', 'single')
+                method_name, '', 'single'))
             help_string = str(method_help)
         except:
             help_string = ''
@@ -94,8 +95,8 @@ def stub(function, user_arguments_dict):
     output_objects = []
     _logger.debug("import main for function: %s" % function)
     try:
-        exec 'from %s import main' % function
-    except Exception, err:
+        exec('from %s import main' % function)
+    except Exception as err:
         output_objects.extend([
             {'object_type': 'error_text', 'text':
              'Could not import module! %s: %s' % (function, err)}])
@@ -121,7 +122,7 @@ def stub(function, user_arguments_dict):
 
         (output_objects, (ret_code, ret_msg)) = main(client_id,
                                                      user_arguments_dict)
-    except Exception, err:
+    except Exception as err:
         _logger.error("%s main failed: %s" % (function, err))
         import traceback
         _logger.debug("%s main trace:" % traceback.format_exc())

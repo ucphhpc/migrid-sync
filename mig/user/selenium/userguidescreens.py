@@ -30,6 +30,7 @@
 Goes through a number of steps described in the user guide and grabs the
 corresponding screenshots.
 """
+from __future__ import print_function
 
 import getpass
 import os
@@ -60,13 +61,13 @@ def ajax_wait(driver, name, class_name="spinner"):
                 # print "DEBUG: detected ajax started"
                 ajax_started = True
                 continue
-        except Exception, exc:
+        except Exception as exc:
             if ajax_started:
                 # print "DEBUG: detected ajax done"
                 break
             else:
-                print "Warning: exception during ajax wait: %s" % exc
-        print "DEBUG: waiting for ajax to finish: %s" % name
+                print("Warning: exception during ajax wait: %s" % exc)
+        print("DEBUG: waiting for ajax to finish: %s" % name)
         time.sleep(1)
     return True
 
@@ -92,15 +93,15 @@ def management_actions(driver, url, login, passwd, callbacks):
         # Try to find manage tab (availability depends on state and role)
         try:
             link = navmenu.find_element_by_link_text(nav_name)
-        except Exception, exc:
-            print "Warning: no %r tab found - might be okay" % nav_name
+        except Exception as exc:
+            print("Warning: no %r tab found - might be okay" % nav_name)
             continue
         # print "DEBUG: found %s link: %s" % (nav_name, link)
         link.click()
         # ajax_wait(driver, nav_name, "ui-progressbar")
         state = '%s-ready' % nav_name.lower().replace(' ', '-')
         if callbacks.get(state, None):
-            print "INFO: callback for: %s" % state
+            print("INFO: callback for: %s" % state)
             callbacks[state](driver, state)
 
     # Additional concrete project manipulation unless on SIF
@@ -124,15 +125,15 @@ def management_actions(driver, url, login, passwd, callbacks):
             proj_entry.send_keys(sample_project)
             state = '%s-filled' % nav_name.lower().replace(' ', '-')
             if callbacks.get(state, None):
-                print "INFO: callback for: %s" % state
+                print("INFO: callback for: %s" % state)
                 callbacks[state](driver, state)
 
             create_button = active_tab.find_element_by_id(
                 'create_project_button')
             # TODO: actually submit form to create project?
             # create_button.click()
-        except Exception, exc:
-            print "Warning: could not test %r tab: %s" % (nav_name, exc)
+        except Exception as exc:
+            print("Warning: could not test %r tab: %s" % (nav_name, exc))
 
         # Go to Invite project tab and invite a colleague to project
         nav_name = "Invite Participant"
@@ -168,15 +169,15 @@ def management_actions(driver, url, login, passwd, callbacks):
                 state = '%s-%s-filled' % (
                     nav_name.lower().replace(' ', '-'), label)
                 if callbacks.get(state, None):
-                    print "INFO: callback for: %s" % state
+                    print("INFO: callback for: %s" % state)
                     callbacks[state](driver, state)
 
                 invite_button = active_tab.find_element_by_id(
                     'invite_user_button')
                 # TODO: actually submit form to invite to project?
                 # invite_button.click()
-        except Exception, exc:
-            print "Warning: could not test %r tab: %s" % (nav_name, exc)
+        except Exception as exc:
+            print("Warning: could not test %r tab: %s" % (nav_name, exc))
 
 
 def access_project_actions(driver, url, login, passwd, callbacks):
@@ -207,7 +208,7 @@ def home_actions(driver, url, login, passwd, callbacks):
     ajax_wait(driver, nav_name, "tips-loading")
     state = 'home-ready'
     if callbacks.get(state, None):
-        print "INFO: callback for: %s" % state
+        print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
 
 
@@ -221,7 +222,7 @@ def files_actions(driver, url, login, passwd, callbacks):
     ajax_wait(driver, nav_name, "ui-progressbar")
     state = 'files-ready'
     if callbacks.get(state, None):
-        print "INFO: callback for: %s" % state
+        print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
 
 
@@ -235,7 +236,7 @@ def workgroups_actions(driver, url, login, passwd, callbacks):
     ajax_wait(driver, nav_name)
     state = 'workgroups-ready'
     if callbacks.get(state, None):
-        print "INFO: callback for: %s" % state
+        print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
 
 
@@ -249,7 +250,7 @@ def archives_actions(driver, url, login, passwd, callbacks):
     ajax_wait(driver, nav_name)
     state = 'archives-ready'
     if callbacks.get(state, None):
-        print "INFO: callback for: %s" % state
+        print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
 
     create_link = driver.find_element_by_link_text(
@@ -259,7 +260,7 @@ def archives_actions(driver, url, login, passwd, callbacks):
 
     state = 'archive-empty'
     if callbacks.get(state, None):
-        print "INFO: callback for: %s" % state
+        print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
 
     archive_name = "Article Data %s" % time.ctime().replace(':', '.')
@@ -283,7 +284,7 @@ and owner automatically assigned.
     ajax_wait(driver, nav_name + " file select", "ui-progressbar")
     state = 'archive-fileman'
     if callbacks.get(state, None):
-        print "INFO: callback for: %s" % state
+        print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
 
     # Select first txt file (at least welcome.txt is always there)
@@ -300,7 +301,7 @@ and owner automatically assigned.
 
     # NOTE: as a workaround we save path, cancel and manually fill for now
     file_path = select_file.text
-    print "DEBUG: found file path: %s" % file_path
+    print("DEBUG: found file path: %s" % file_path)
     dialog_buttons = driver.find_element_by_class_name("ui-dialog-buttonset")
     action_buttons = driver.find_elements_by_class_name("ui-button")
     for button in action_buttons:
@@ -319,17 +320,17 @@ and owner automatically assigned.
 
     state = 'archive-filled'
     if callbacks.get(state, None):
-        print "INFO: callback for: %s" % state
+        print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
 
     submit_button = driver.find_element_by_xpath(
         "//input[@type='submit' and @value='Save and Preview']")
-    print "DEBUG: click submit: %s" % submit_button
+    print("DEBUG: click submit: %s" % submit_button)
     submit_button.click()
 
     state = 'archive-submitted'
     if callbacks.get(state, None):
-        print "INFO: callback for: %s" % state
+        print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
 
     # TODO: open preview (in new tab) like this
@@ -339,7 +340,7 @@ and owner automatically assigned.
 
     finalize_button = driver.find_element_by_class_name(
         "finalizearchivelink")
-    print "DEBUG: click finalize button: %s" % finalize_button
+    print("DEBUG: click finalize button: %s" % finalize_button)
     finalize_button.click()
 
     dialog_buttons = driver.find_element_by_class_name("ui-dialog-buttonset")
@@ -352,22 +353,22 @@ and owner automatically assigned.
 
     state = 'archive-finalized'
     if callbacks.get(state, None):
-        print "INFO: callback for: %s" % state
+        print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
 
     view_button = driver.find_element_by_class_name(
         "viewarchivelink")
-    print "DEBUG: click view button: %s" % view_button
+    print("DEBUG: click view button: %s" % view_button)
     view_button.click()
     ajax_wait(driver, nav_name)
     state = 'archive-view'
     if callbacks.get(state, None):
-        print "INFO: callback for: %s" % state
+        print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
 
     register_button = driver.find_element_by_class_name(
         "registerarchivelink")
-    print "DEBUG: click register button: %s" % register_button
+    print("DEBUG: click register button: %s" % register_button)
     register_button.click()
 
     dialog_buttons = driver.find_element_by_class_name("ui-dialog-buttonset")
@@ -385,9 +386,9 @@ and owner automatically assigned.
         # Maybe need KU-IT DOI service login if requested
         try:
             logon_button = driver.find_element_by_id("cmdLogon")
-            print "DEBUG: click logon: %s" % logon_button
+            print("DEBUG: click logon: %s" % logon_button)
             logon_button.click()
-        except Exception, exc:
+        except Exception as exc:
             pass
 
         try:
@@ -396,13 +397,13 @@ and owner automatically assigned.
             password_field = driver.find_element_by_id("passwordInput")
             password_field.send_keys(passwd)
             submit_button = driver.find_element_by_id("submitButton")
-            print "DEBUG: click submit: %s" % submit_button
+            print("DEBUG: click submit: %s" % submit_button)
             time.sleep(1)
             submit_button.click()
             login_done = True
-        except Exception, exc:
+        except Exception as exc:
             if not login_done:
-                print "Warning: no login form found: %s" % exc
+                print("Warning: no login form found: %s" % exc)
 
         time.sleep(1)
 
@@ -422,7 +423,7 @@ and owner automatically assigned.
                     break
             # Then find and click accept button
             if popup_dialog.is_displayed():
-                print "DEBUG: found visible popup dialog"
+                print("DEBUG: found visible popup dialog")
                 popup_found = True
                 popup_buttons = popup_dialog.find_elements_by_class_name("btn")
                 for button in popup_buttons:
@@ -436,10 +437,10 @@ and owner automatically assigned.
             #    print "DEBUG: popup dialog invisible"
             if popup_found and not popup_done:
                 raise Exception("Warning: no UNDERSTOOD button")
-        except Exception, exc:
+        except Exception as exc:
             # print "DEBUG: popup accept dialog: %s" % exc
             if popup_found:
-                print "ERROR: popup accept dialog failed: %s" % exc
+                print("ERROR: popup accept dialog failed: %s" % exc)
                 # Try again since popup WAS found
                 time.sleep(1)
                 continue
@@ -449,18 +450,18 @@ and owner automatically assigned.
             doi_idenfier = driver.find_element_by_id("IdentifierType")
             # print "DEBUG: found DOI identifier: %s" % doi_idenfier
             break
-        except Exception, exc:
-            print "DEBUG: DOI page not ready: %s" % exc
+        except Exception as exc:
+            print("DEBUG: DOI page not ready: %s" % exc)
 
         # Keep trying until we get through login and usage accept
-        print "INFO: waiting for access to DOI service"
+        print("INFO: waiting for access to DOI service")
         time.sleep(1)
 
     time.sleep(1)
 
     state = 'archive-register'
     if callbacks.get(state, None):
-        print "INFO: callback for: %s" % state
+        print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
 
     time.sleep(1)
@@ -478,7 +479,7 @@ def settings_actions(driver, url, login, passwd, callbacks):
     # ajax_wait(driver, nav_name)
     state = 'settings-ready'
     if callbacks.get(state, None):
-        print "INFO: callback for: %s" % state
+        print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
 
 
@@ -492,7 +493,7 @@ def setup_actions(driver, url, login, passwd, callbacks):
     # ajax_wait(driver, nav_name)
     state = 'setup-ready'
     if callbacks.get(state, None):
-        print "INFO: callback for: %s" % state
+        print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
 
     for (key, name) in setup_sections:
@@ -509,7 +510,7 @@ def setup_actions(driver, url, login, passwd, callbacks):
 
         state = 'setup-%s-ready' % key
         if callbacks.get(state, None):
-            print "INFO: callback for: %s" % state
+            print("INFO: callback for: %s" % state)
             callbacks[state](driver, state)
 
 
@@ -523,7 +524,7 @@ def jupyter_actions(driver, url, login, passwd, callbacks):
     # ajax_wait(driver, nav_name)
     state = 'jupyter-ready'
     if callbacks.get(state, None):
-        print "INFO: callback for: %s" % state
+        print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
 
 
@@ -537,7 +538,7 @@ def cloud_actions(driver, url, login, passwd, callbacks):
     # ajax_wait(driver, nav_name)
     state = 'cloud-ready'
     if callbacks.get(state, None):
-        print "INFO: callback for: %s" % state
+        print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
 
 
@@ -551,7 +552,7 @@ def people_actions(driver, url, login, passwd, callbacks):
     ajax_wait(driver, nav_name)
     state = 'people-ready'
     if callbacks.get(state, None):
-        print "INFO: callback for: %s" % state
+        print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
 
 
@@ -565,7 +566,7 @@ def crontab_actions(driver, url, login, passwd, callbacks):
     # ajax_wait(driver, nav_name)
     state = 'crontab-ready'
     if callbacks.get(state, None):
-        print "INFO: callback for: %s" % state
+        print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
 
 
@@ -579,7 +580,7 @@ def datatransfer_actions(driver, url, login, passwd, callbacks):
     # ajax_wait(driver, nav_name)
     state = 'datatransfer-ready'
     if callbacks.get(state, None):
-        print "INFO: callback for: %s" % state
+        print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
 
 
@@ -593,7 +594,7 @@ def sharelink_actions(driver, url, login, passwd, callbacks):
     # ajax_wait(driver, nav_name)
     state = 'sharelink-ready'
     if callbacks.get(state, None):
-        print "INFO: callback for: %s" % state
+        print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
 
 
@@ -605,12 +606,12 @@ def user_actions(driver, url, login, passwd, sections, callbacks={}):
     do_stuff(driver, state) .
     """
     status = True
-    print "INFO: run user actions with url: %s" % url
+    print("INFO: run user actions with url: %s" % url)
     for name, actions in sections:
         try:
             actions(driver, url, login, passwd, callbacks)
-        except Exception, exc:
-            print "ERROR: failed in user actions: %s" % exc
+        except Exception as exc:
+            print("ERROR: failed in user actions: %s" % exc)
             status = False
 
     # print "DEBUG: return: %s" % status
@@ -621,7 +622,7 @@ def main():
     """Main"""
     argc = len(sys.argv) - 1
     if argc < 4:
-        print "USAGE: %s browser url openid login [password] [2FAkey]" % sys.argv[0]
+        print("USAGE: %s browser url openid login [password] [2FAkey]" % sys.argv[0])
         return 1
 
     reopen_stdin = False
@@ -660,7 +661,7 @@ def main():
     elif openid.lower() == 'mig':
         active_path = mig_path
     else:
-        print "No such OpenID handler: %s" % openid
+        print("No such OpenID handler: %s" % openid)
         sys.exit(1)
 
     try:
@@ -742,27 +743,27 @@ def main():
         elif openid.lower() == 'mig':
             status = mig_login(driver, url, login, passwd, mig_calls)
         else:
-            print "No such OpenID handler: %s" % openid
+            print("No such OpenID handler: %s" % openid)
             status = False
         if not status:
-            print "%s OpenID login FAILED!" % openid
+            print("%s OpenID login FAILED!" % openid)
             return 1
 
         if twofactor_key:
             status = shared_twofactor(driver, url, twofactor_key, action_calls)
         if not status:
-            print "2FA after %s OpenID login FAILED!" % openid
+            print("2FA after %s OpenID login FAILED!" % openid)
             return 2
 
         # Now proceed with actual actions to document in turn
 
         section_names = [name for (name, _) in all_sections]
-        print "Run user guide actions for: %s" % ', '.join(section_names)
+        print("Run user guide actions for: %s" % ', '.join(section_names))
         status = user_actions(driver, url, login, passwd,
                               all_sections, action_calls)
-        print "Finished user guide actions"
+        print("Finished user guide actions")
 
-        print "Proceed as you wish while logged in or request stop in console"
+        print("Proceed as you wish while logged in or request stop in console")
         action = None
         stop_actions = ['quit', 'exit', 'stop']
         while action not in stop_actions:
@@ -771,31 +772,31 @@ def main():
             action_args = action.split()[1:]
             if action.startswith('save'):
                 if not action_args:
-                    print "You need to provide a file name argument for save"
+                    print("You need to provide a file name argument for save")
                     continue
                 save_screen(driver, active_path % action_args[0])
             elif action not in stop_actions:
-                print "Unknown action: %r" % action
+                print("Unknown action: %r" % action)
             else:
                 time.sleep(1)
 
-        print "Log out before exit"
+        print("Log out before exit")
         status = shared_logout(driver, url, login, passwd, logout_calls)
 
-        print "Now you can proceed using the browser or interrupt with Ctrl-C"
+        print("Now you can proceed using the browser or interrupt with Ctrl-C")
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        print "User interrupt requested - shutting down"
+        print("User interrupt requested - shutting down")
     except Exception as exc:
-        print "Unexpected exception: %s" % exc
-        print traceback.format_exc()
+        print("Unexpected exception: %s" % exc)
+        print(traceback.format_exc())
 
     # Needed to clean up e.g. rust_mozprofile.* tmp dirs
     try:
         driver.quit()
     except Exception as exc:
-        print "Unexpected exception in quit: %s" % exc
+        print("Unexpected exception in quit: %s" % exc)
 
 
 if __name__ == "__main__":

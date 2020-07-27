@@ -38,6 +38,8 @@
 
 # infrastructure imports
 
+from __future__ import print_function
+from __future__ import absolute_import
 import os
 import sys
 import datetime
@@ -48,8 +50,8 @@ from xml.dom import getDOMImplementation,XMLNS_NAMESPACE
 
 # MiG-specific imports
 
-from shared.configuration import Configuration
-from shared.fileio import unpickle,write_file
+from .shared.configuration import Configuration
+from .shared.fileio import unpickle,write_file
 
 # Description of the Usage Record XML format:
 
@@ -417,7 +419,7 @@ class UsageRecord:
         try:
             xml = self.generate_tree()
             result = write_file(xml, filename, self.__logger)
-        except Exception, err:
+        except Exception as err:
             self.__logger.error('Unable to write XML file: %s' % err)
 
     def fill_from_mrsl(self, job_data):
@@ -435,7 +437,7 @@ class UsageRecord:
             else:
                 self.__logger.error('file %s does not exist.'
                                      % job_data)
-        except Exception, err:
+        except Exception as err:
             self.__logger.error('while filling in data from %s: %s'
                                  % (job_data, err))
 
@@ -459,7 +461,7 @@ class UsageRecord:
         def lookup(name):
             """search job dict for a given name"""
 
-            if job.has_key(name) and job[name] != '':
+            if name in job and job[name] != '':
                 return job[name]
             else:
                 raise NotHere(name + ' not found.')
@@ -473,10 +475,10 @@ class UsageRecord:
         try:
             self.record_id = lookup('JOB_ID')
             status = lookup('STATUS')
-            if not __state_map__.has_key(status):
+            if status not in __state_map__:
                 raise NotHere('Unknown status ' + status + '.')
             self.status = __state_map__[status]
-        except NotHere, err:
+        except NotHere as err:
             self.__logger.error('Job data missing mandatory fields: %s'
                                  % err)
             return
@@ -497,7 +499,7 @@ class UsageRecord:
         # opposed to job['VGRID'] which contains a list of potential ones.
         # see http://code.google.com/p/migrid/issues/detail?id=32
 
-        if job.has_key('RESOURCE_VGRID'):
+        if 'RESOURCE_VGRID' in job:
             self.vgrid = job['RESOURCE_VGRID']
 
         # global JOB_ID should always be there if we get here...
@@ -563,7 +565,7 @@ class UsageRecord:
                 self.machine_name = hist[-1].get('UNIQUE_RESOURCE_NAME',None)
 
         # local user on the resource, if available
-        if job.has_key('RESOURCE_CONFIG'):
+        if 'RESOURCE_CONFIG' in job:
             resCfg = job['RESOURCE_CONFIG']
             self.local_user_id = resCfg.get('MIGUSER',None)
             # self.host  = resCfg.get('RESOURCE_ID',None)
@@ -604,7 +606,7 @@ def write_usage_record_from_dict(jobdict, config):
 # testing
 
 if __name__ == '__main__':
-    print len(sys.argv)
+    print(len(sys.argv))
     if len(sys.argv) > 1:
         fname = sys.argv[1]
 

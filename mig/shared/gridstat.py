@@ -26,15 +26,17 @@
 #
 
 """Grid stats by Martin Rehr"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import fcntl
 import datetime
 
-from shared.defaults import default_vgrid, pending_states
-from shared.fileio import pickle, unpickle, touch
-from shared.serial import pickle as py_pickle
-from shared.vgrid import validated_vgrid_list, job_fits_res_vgrid
+from .shared.defaults import default_vgrid, pending_states
+from .shared.fileio import pickle, unpickle, touch
+from .shared.serial import pickle as py_pickle
+from .shared.vgrid import validated_vgrid_list, job_fits_res_vgrid
 
 
 class GridStat:
@@ -61,12 +63,12 @@ class GridStat:
 
         # If stattype doesn't exist create it
 
-        if not self.__gridstat_dict.has_key(stattype_key):
+        if stattype_key not in self.__gridstat_dict:
             self.__gridstat_dict[stattype_key] = {}
 
         # If stattype not in memory, check if pickled file exists
 
-        if not self.__gridstat_dict[stattype_key].has_key(stattype_value):
+        if stattype_value not in self.__gridstat_dict[stattype_key]:
             filename = self.__configuration.gridstat_files_dir\
                  + stattype_key + os.sep + stattype_value.upper()\
                  + '.pck'
@@ -91,7 +93,7 @@ class GridStat:
 
         self.__check_dict(stattype_key, stattype_value)
 
-        if self.__gridstat_dict[stattype_key][stattype_value].has_key(key):
+        if key in self.__gridstat_dict[stattype_key][stattype_value]:
             self.__gridstat_dict[stattype_key][stattype_value][key] += \
                 value
         else:
@@ -109,14 +111,13 @@ class GridStat:
 
         self.__check_dict(stattype_key, stattype_value)
 
-        if not self.__gridstat_dict[stattype_key][stattype_value].has_key('RUNTIMEENVIRONMENT'
-                ):
+        if 'RUNTIMEENVIRONMENT' not in self.__gridstat_dict[stattype_key][stattype_value]:
 
             self.__gridstat_dict[stattype_key][stattype_value]['RUNTIMEENVIRONMENT'
                     ] = {}
 
-        if self.__gridstat_dict[stattype_key][stattype_value]['RUNTIMEENVIRONMENT'
-                ].has_key(key):
+        if key in self.__gridstat_dict[stattype_key][stattype_value]['RUNTIMEENVIRONMENT'
+                ]:
 
             self.__gridstat_dict[stattype_key][stattype_value]['RUNTIMEENVIRONMENT'
                     ][key] += value
@@ -157,7 +158,7 @@ class GridStat:
 
         self.__check_dict(stattype_key, stattype_value)
 
-        if self.__gridstat_dict[stattype_key][stattype_value].has_key(key):
+        if key in self.__gridstat_dict[stattype_key][stattype_value]:
             self.__gridstat_dict[stattype_key][stattype_value][key] = \
                 value
 
@@ -188,8 +189,8 @@ class GridStat:
 
         self.__check_dict(stattype_key, stattype_value)
 
-        if self.__gridstat_dict.has_key(stattype_key)\
-             and self.__gridstat_dict[stattype_key].has_key(stattype_value):
+        if stattype_key in self.__gridstat_dict\
+             and stattype_value in self.__gridstat_dict[stattype_key]:
             result = self.__gridstat_dict[stattype_key][stattype_value]
 
         return result
@@ -207,9 +208,9 @@ class GridStat:
 
         self.__check_dict(stattype_key, stattype_value)
 
-        if self.__gridstat_dict.has_key(stattype_key)\
-             and self.__gridstat_dict[stattype_key].has_key(stattype_value)\
-             and self.__gridstat_dict[stattype_key][stattype_value].has_key(key):
+        if stattype_key in self.__gridstat_dict\
+             and stattype_value in self.__gridstat_dict[stattype_key]\
+             and key in self.__gridstat_dict[stattype_key][stattype_value]:
             result = \
                 self.__gridstat_dict[stattype_key][stattype_value][key]
 
@@ -241,7 +242,7 @@ class GridStat:
         # If the mRSL file was modified and this is the first time
         # we have seen it, add the request info to the statistics.
 
-        if not buildcache_dict.has_key(job_id):
+        if job_id not in buildcache_dict:
             self.__add(self.VGRID, job_vgrid_name, 'NODECOUNT_REQ',
                        int(job_dict['NODECOUNT']))
             self.__add(self.VGRID, job_vgrid_name, 'CPUTIME_REQ',
@@ -257,12 +258,12 @@ class GridStat:
 
         unique_resource_name = None
         resource_id = None
-        if job_dict.has_key('RESOURCE_CONFIG'):
-            if job_dict.has_key('UNIQUE_RESOURCE_NAME'):
+        if 'RESOURCE_CONFIG' in job_dict:
+            if 'UNIQUE_RESOURCE_NAME' in job_dict:
                 unique_resource_name = job_dict['UNIQUE_RESOURCE_NAME'
                         ].upper()
 
-            if job_dict['RESOURCE_CONFIG'].has_key('RESOURCE_ID'):
+            if 'RESOURCE_ID' in job_dict['RESOURCE_CONFIG']:
                 resource_id = job_dict['RESOURCE_CONFIG']['RESOURCE_ID'
                         ].upper()
 
@@ -298,8 +299,8 @@ class GridStat:
             if active_res_vgrid:
                 search_vgrids = [active_res_vgrid]
             else:
-                print "WARNING: no RESOURCE_VGRID for job %(JOB_ID)s" % \
-                      job_dict
+                print("WARNING: no RESOURCE_VGRID for job %(JOB_ID)s" % \
+                      job_dict)
                 resource_config = job_dict['RESOURCE_CONFIG']
 
                 # Fix legacy VGRIDs
@@ -314,8 +315,8 @@ class GridStat:
 
                 # This should not happen - scheduled job to wrong vgrid!
             
-                print "ERROR: %s no match for vgrids: %s vs %s" % \
-                      (job_dict['JOB_ID'], job_dict['VGRID'], search_vgrids)
+                print("ERROR: %s no match for vgrids: %s vs %s" % \
+                      (job_dict['JOB_ID'], job_dict['VGRID'], search_vgrids))
                 active_job_vgrid = '__NO_SUCH_JOB_VGRID__'
                 
             active_vgrid = active_job_vgrid.upper()
@@ -393,11 +394,11 @@ class GridStat:
 
         else:
 
-            print 'Unknown status: ' + job_dict['STATUS']
+            print('Unknown status: ' + job_dict['STATUS'])
 
         # Check and update cache for previous status'
 
-        if buildcache_dict.has_key(job_id) and \
+        if job_id in buildcache_dict and \
                buildcache_dict[job_id] in pending_states:
             self.__add(self.VGRID, job_vgrid_name, buildcache_dict[job_id], -1)
 
@@ -409,7 +410,7 @@ class GridStat:
 
         if job_dict['STATUS'] in pending_states:
             buildcache_dict[job_id] = job_dict['STATUS']
-        elif buildcache_dict.has_key(job_id):
+        elif job_id in buildcache_dict:
             del buildcache_dict[job_id]
 
     def update(self):
@@ -433,10 +434,10 @@ class GridStat:
                 file_handle = open(buildcache_file, 'r+w')
                 fcntl.flock(file_handle.fileno(), fcntl.LOCK_EX)
                 buildcache_dict = py_pickle.load(file_handle)
-            except Exception, err:
+            except Exception as err:
                 msg = 'gridstat::update(): %s could not be loaded! %s'\
                      % (buildcache_file, err)
-                print msg
+                print(msg)
                 self.__logger.error(msg)
                 return False
         else:
@@ -444,7 +445,7 @@ class GridStat:
             try:
                 file_handle = open(buildcache_file, 'w')
                 fcntl.flock(file_handle.fileno(), fcntl.LOCK_EX)
-            except Exception, err:
+            except Exception as err:
                 msg = \
                     'gridstat::update(): %s could not be opened/locked! %s'\
                      % (buildcache_file, err)
@@ -508,7 +509,7 @@ class GridStat:
             self.__flush()
             fcntl.flock(file_handle.fileno(), fcntl.LOCK_UN)
             file_handle.close()
-        except Exception, err:
+        except Exception as err:
             self.__gridstat_dict = {}
             msg = 'gridstat::update(): %s could not be pickled! %s'\
                  % (buildcache_file, err)
@@ -520,7 +521,7 @@ class GridStat:
 if __name__ == '__main__':
     import sys
     import fnmatch
-    from shared.conf import get_configuration_object
+    from .shared.conf import get_configuration_object
     configuration = get_configuration_object()
     root_dir = configuration.mrsl_files_dir
     job_id = '*_2012_*'
@@ -540,7 +541,7 @@ if __name__ == '__main__':
             filename = os.path.join(root, name)
             job_dict = unpickle(filename, configuration.logger)
             if not job_dict:
-                print "could not load %s" % filename
+                print("could not load %s" % filename)
                 continue
 
             runtime_envs = job_dict["RUNTIMEENVIRONMENT"]
@@ -551,7 +552,7 @@ if __name__ == '__main__':
             #print "DEBUG: found matching job %s with vgrids: %s" % (filename,
             #                                                        job_vgrids)
             matches.append(job_dict)
-    print "DEBUG: found %d matching jobs" % len(matches)
+    print("DEBUG: found %d matching jobs" % len(matches))
     finished_count = 0
     default_vgrid_count = 0
     resource_vgrid_map = {}
@@ -588,21 +589,21 @@ if __name__ == '__main__':
                     active_res_vgrid, 0) + 1
 
     
-    print "DEBUG: found %d finished jobs" % \
-          finished_count
-    print "resource vgrid distribution:"
+    print("DEBUG: found %d finished jobs" % \
+          finished_count)
+    print("resource vgrid distribution:")
     for (key, val) in resource_vgrid_map.items():
-        print "\t%s: %d" % (key, val)
-    print " * explicit:"
+        print("\t%s: %d" % (key, val))
+    print(" * explicit:")
     for (key, val) in explicit_vgrids.items():
-        print "\t%s: %d" % (key, val)
-    print " * implicit:"
+        print("\t%s: %d" % (key, val))
+    print(" * implicit:")
     for (key, val) in implicit_vgrids.items():
-        print "\t%s: %d" % (key, val)
-    print " * parent:"
+        print("\t%s: %d" % (key, val))
+    print(" * parent:")
     for (key, val) in parent_vgrids.items():
-        print "\t%s: %d" % (key, val)
-    print "job vgrid distribution:"
+        print("\t%s: %d" % (key, val))
+    print("job vgrid distribution:")
     for (key, val) in job_vgrid_map.items():
-        print "\t%s: %d" % (key, val)
+        print("\t%s: %d" % (key, val))
         

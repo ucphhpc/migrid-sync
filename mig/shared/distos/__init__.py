@@ -30,11 +30,12 @@ server file system operations (think the python 'os' module). In that
 way the underlying distribution of the server FS can be separated
 from the normal server operation.
 """
+from __future__ import absolute_import
 
 __version__ = '$Revision: 1517 $'
 __revision__ = __version__
 
 # $Id: __init__.py 1517 2006-09-22 10:46:34Z jones $
 
-from base import *
-import path
+from .base import *
+from . import path

@@ -31,6 +31,7 @@ and trigger any associated actions based on rule database.
 
 Requires watchdog module (https://pypi.python.org/pypi/watchdog).
 """
+from __future__ import print_function
 
 import fnmatch
 import glob
@@ -53,7 +54,7 @@ try:
         FileModifiedEvent, FileCreatedEvent, FileDeletedEvent, \
         DirModifiedEvent, DirCreatedEvent, DirDeletedEvent
 except ImportError:
-    print 'ERROR: the python watchdog module is required for this daemon'
+    print('ERROR: the python watchdog module is required for this daemon')
     sys.exit(1)
 
 # Use the scandir module version if available:
@@ -68,8 +69,8 @@ try:
         # Important os.walk compatibility utf8 fixes were not added until 1.3
 
         raise ImportError('scandir version is too old >= 1.3 required')
-except ImportError, exc:
-    print 'ERROR: %s' % str(exc)
+except ImportError as exc:
+    print('ERROR: %s' % str(exc))
     sys.exit(1)
 
 from shared.base import force_utf8
@@ -138,7 +139,7 @@ stop_running = multiprocessing.Event()
 def stop_handler(sig, frame):
     """A simple signal handler to quit on Ctrl+C (SIGINT) in main"""
     # Print blank line to avoid mix with Ctrl-C line
-    print ''
+    print('')
     stop_running.set()
 
 
@@ -201,9 +202,9 @@ def extract_time_in_secs(rule, field):
         val_str = limit_str
     try:
         secs = float(val_str) * _unit_periods[unit_key]
-    except Exception, exc:
-        print '(%s) ERROR: failed to parse time %s (%s)!' % (pid,
-                                                             limit_str, exc)
+    except Exception as exc:
+        print('(%s) ERROR: failed to parse time %s (%s)!' % (pid,
+                                                             limit_str, exc))
         secs = 0.0
     secs = max(secs, 0.0)
     return secs
@@ -393,7 +394,7 @@ def recently_modified(path, time_stamp, slack=2.0):
         stat_res = os.stat(path)
         result = stat_res.st_mtime == stat_res.st_atime \
             or stat_res.st_mtime > time_stamp - slack
-    except OSError, exc:
+    except OSError as exc:
 
         # If we get an OSError, *path* is most likely deleted
 
@@ -438,8 +439,8 @@ def run_command(
     main = id
     txt_format = id
     try:
-        exec 'from shared.functionality.%s import main' % function
-        exec 'from shared.output import txt_format'
+        exec('from shared.functionality.%s import main' % function)
+        exec('from shared.output import txt_format')
 
         # logger.debug('(%s) run %s on %s for %s' % \
         #              (pid, function, user_arguments_dict, client_id))
@@ -453,7 +454,7 @@ def run_command(
         os.environ['REMOTE_ADDR'] = '127.0.0.1'
         (output_objects, (ret_code, ret_msg)) = main(client_id,
                                                      user_arguments_dict)
-    except Exception, exc:
+    except Exception as exc:
         logger.error('(%s) failed to run %s main on %s: %s' %
                      (pid, function, user_arguments_dict, exc))
         import traceback
@@ -467,7 +468,7 @@ def run_command(
     try:
         txt_out = txt_format(configuration, ret_code, ret_msg,
                              output_objects)
-    except Exception, exc:
+    except Exception as exc:
         txt_out = 'internal command output text formatting failed'
         logger.error('(%s) text formating failed: %s\nraw output is: %s %s %s'
                      % (pid, exc, ret_code, ret_msg, output_objects))
@@ -514,14 +515,14 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
             # logger.debug('(%s) Updating rule monitor for src_path: %s, event: %s'
             #              % (pid, src_path, state))
 
-            print '(%s) Updating rule monitor for src_path: %s, event: %s' \
-                % (pid, src_path, state)
+            print('(%s) Updating rule monitor for src_path: %s, event: %s' \
+                % (pid, src_path, state))
 
             if os.path.exists(src_path):
 
                 # _rule_monitor_lock.acquire()
 
-                if not shared_state['rule_inotify']._wd_for_path.has_key(src_path):
+                if src_path not in shared_state['rule_inotify']._wd_for_path:
 
                     # logger.debug('(%s) Adding watch for: %s' % (pid,
                     #             src_path))
@@ -583,7 +584,7 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
                 #       this is like if loaded with vgrid_triggers()
                 new_rules = vgrid_valid_entities(configuration, vgrid_name,
                                                  'triggers', raw_rules)
-            except Exception, exc:
+            except Exception as exc:
                 new_rules = []
                 if state != 'deleted':
                     logger.error('(%s) failed to load event handler rules from %s (%s)'
@@ -957,7 +958,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                             job_template, rel_src, state, rule, expand_map,
                             pid, event, target_path, temp_dir)
 
-            except Exception, exc:
+            except Exception as exc:
                 logger.error('(%s) failed to submit job(s) for %s: %s'
                              % (pid, target_path, exc))
                 self.__workflow_err(configuration, rule['vgrid_name'],
@@ -965,7 +966,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                                     % (rel_src, exc))
             try:
                 shutil.rmtree(temp_dir)
-            except Exception, exc:
+            except Exception as exc:
                 logger.warning('(%s) clean up after submit failed: %s'
                                % (pid, exc))
         elif rule['action'] == 'command':
@@ -989,7 +990,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                 self.__workflow_info(configuration, rule['vgrid_name'],
                                      'ran command: %s'
                                      % ' '.join(command_list))
-            except Exception, exc:
+            except Exception as exc:
                 command_str = ' '.join(command_list)
                 logger.error('(%s) failed to run command for %s: %s (%s)' %
                              (pid, target_path, command_str, exc))
@@ -1070,7 +1071,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             # extracts vgrid_name and specific dir_cache ?
 
             vgrid_name = rel_path.split(os.sep)[0]
-            if not dir_cache.has_key(vgrid_name):
+            if vgrid_name not in dir_cache:
                 dir_cache[vgrid_name] = {}
             vgrid_dir_cache = dir_cache[vgrid_name]
 
@@ -1112,7 +1113,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
                             shared_state['file_handler'].dispatch(
                                 FileCreatedEvent(ent.path))
-                except OSError, exc:
+                except OSError as exc:
 
                     # If we get an OSError, src_path was most likely deleted
                     # after os.path.exists check
@@ -1146,7 +1147,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             # logger.debug('(%s) update miss for %s: %s' % (pid, event_id,
             #                                               event.time_stamp))
             miss_cache[event_id] = event.time_stamp
-        elif miss_cache.has_key(event_id):
+        elif event_id in miss_cache:
             # logger.debug('(%s) delete miss cache for %s' % (pid, event_id))
             del miss_cache[event_id]
             return
@@ -1290,7 +1291,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                             worker.daemon = True
                             worker.start()
                             waiting_for_thread_resources = False
-                        except threading.ThreadError, exc:
+                        except threading.ThreadError as exc:
 
                             # logger.debug('(%s) Waiting for thread resources to handle trigger: %s'
                             #              % (pid, str(event)))
@@ -1361,7 +1362,7 @@ def add_vgrid_file_monitor_watch(configuration, path):
     vgrid_files_path = os.path.join(configuration.vgrid_files_home,
                                     path)
 
-    if not shared_state['file_inotify']._wd_for_path.has_key(path):
+    if path not in shared_state['file_inotify']._wd_for_path:
         shared_state['file_inotify'].add_watch(force_utf8(vgrid_files_path))
     else:
 
@@ -1415,7 +1416,7 @@ def add_vgrid_file_monitor(configuration, vgrid_name, path):
                                                              vgrid_sub_path)
 
                 vgrid_dir_cache[path]['mtime'] = vgrid_files_path_mtime
-        except OSError, exc:
+        except OSError as exc:
             # If we get an OSError, src_path was most likely deleted
             # after os.path.exists check or somehow not accessible
 
@@ -1464,7 +1465,7 @@ def generate_vgrid_dir_cache(configuration, vgrid_base_path):
     vgrid_path = os.path.join(configuration.vgrid_files_home,
                               vgrid_base_path)
 
-    if not dir_cache.has_key(vgrid_base_path):
+    if vgrid_base_path not in dir_cache:
         dir_cache[vgrid_base_path] = {}
 
     vgrid_dir_cache = dir_cache[vgrid_base_path]
@@ -1485,7 +1486,7 @@ def generate_vgrid_dir_cache(configuration, vgrid_base_path):
         for dir_name in dir_names:
             dir_path = os.path.join(root, dir_name)
             dir_cache_path = dir_path[shared_state['base_dir_len']:]
-            if not vgrid_dir_cache.has_key(dir_cache_path):
+            if dir_cache_path not in vgrid_dir_cache:
                 vgrid_dir_cache[dir_cache_path] = {}
                 vgrid_dir_cache[dir_cache_path]['mtime'] = \
                     os.path.getmtime(dir_path)
@@ -1536,7 +1537,7 @@ def load_dir_cache(configuration, vgrid_name):
             # Make sure we only have utf8 everywhere to avoid encoding issues
             for old_path in [i for i in loaded_dir_cache.keys() if
                              isinstance(i, unicode)]:
-                print "NOTE: forcing old cache entry %s to utf8" % [old_path]
+                print("NOTE: forcing old cache entry %s to utf8" % [old_path])
                 new_path = force_utf8(old_path)
                 entry = loaded_dir_cache[old_path]
                 del loaded_dir_cache[old_path]
@@ -1617,8 +1618,8 @@ def monitor(configuration, vgrid_name):
 
     # TODO: We loose access to logger when called through multiprocessing
 
-    print 'Starting monitor process with PID: %s for vgrid: %s' % (pid,
-                                                                   vgrid_name)
+    print('Starting monitor process with PID: %s for vgrid: %s' % (pid,
+                                                                   vgrid_name))
     logger.info('Starting monitor process with PID: %s for vgrid: %s'
                 % (pid, vgrid_name))
 
@@ -1750,12 +1751,12 @@ def monitor(configuration, vgrid_name):
         if not activated:
             if active_targets(configuration, vgrid_name, file_monitor_home):
                 # Start paths in vgrid_dir_cache to monitor
-                print '(%s) init trigger handling for: %s' % (pid, vgrid_name)
+                print('(%s) init trigger handling for: %s' % (pid, vgrid_name))
                 add_monitor_t1 = time.time()
                 add_vgrid_file_monitors(configuration, vgrid_name)
                 add_monitor_t2 = time.time()
-                print '(%s) ready to handle triggers for: %s in %s secs' \
-                      % (pid, vgrid_name, add_monitor_t2 - add_monitor_t1)
+                print('(%s) ready to handle triggers for: %s in %s secs' \
+                      % (pid, vgrid_name, add_monitor_t2 - add_monitor_t1))
                 logger.info('(%s) ready to handle triggers for: %s in %s secs'
                             % (pid, vgrid_name, add_monitor_t2
                                - add_monitor_t1))
@@ -1775,17 +1776,17 @@ def monitor(configuration, vgrid_name):
 
             time.sleep(1)
         except KeyboardInterrupt:
-            print '(%s) caught interrupt' % pid
+            print('(%s) caught interrupt' % pid)
             logger.info('(%s) caught interrupt' % pid)
             stop_running.set()
 
     # Only save cache if rules were actually activated so dirs were monitored
     if activated:
-        print '(%s) Saving cache for vgrid: %s' % (pid, vgrid_name)
+        print('(%s) Saving cache for vgrid: %s' % (pid, vgrid_name))
         logger.info('(%s) Saving cache for vgrid: %s' % (pid, vgrid_name))
         save_dir_cache(vgrid_name)
 
-    print '(%s) Exiting monitor for vgrid: %s' % (pid, vgrid_name)
+    print('(%s) Exiting monitor for vgrid: %s' % (pid, vgrid_name))
     logger.info('(%s) Exiting for vgrid: %s' % (pid, vgrid_name))
 
     return 0
@@ -1815,20 +1816,20 @@ if __name__ == '__main__':
     if not configuration.site_enable_events:
         err_msg = "Event trigger support is disabled in configuration!"
         logger.error(err_msg)
-        print err_msg
+        print(err_msg)
         sys.exit(1)
 
-    print '''This is the MiG event handler daemon which monitors VGrid files
+    print('''This is the MiG event handler daemon which monitors VGrid files
 and triggers any configured events when target files are created, modifed or
 deleted. VGrid owners can configure rules to trigger such events based on file
 changes.
 
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
-'''
+''')
 
     main_pid = os.getpid()
-    print 'Starting Event handler daemon - Ctrl-C to quit'
+    print('Starting Event handler daemon - Ctrl-C to quit')
     logger.info('(%s) Starting Event handler daemon' % main_pid)
 
     vgrid_monitors = {}
@@ -1858,7 +1859,7 @@ unless it is available in mig/server/MiGserver.conf
         monitor.start()
 
     logger.debug('(%s) Starting main loop' % main_pid)
-    print "%s: Start main loop" % os.getpid()
+    print("%s: Start main loop" % os.getpid())
     while not stop_running.is_set():
         try:
 
@@ -1869,7 +1870,7 @@ unless it is available in mig/server/MiGserver.conf
             stop_running.set()
             # NOTE: we can't be sure if SIGINT was sent to only main process
             #       so we make sure to propagate to all monitor children
-            print "Interrupt requested - close monitors and shutdown"
+            print("Interrupt requested - close monitors and shutdown")
             logger.info('(%s) Shut down monitors and wait' % os.getpid())
             for monitor in vgrid_monitors.values():
                 mon_pid = monitor.pid
@@ -1892,9 +1893,9 @@ unless it is available in mig/server/MiGserver.conf
                     logger.debug('monitor %s: done' % mon_pid)
 
             logger.info('(%s) Shut down: all monitors done' % os.getpid())
-            print "All monitors finished shutting down"
+            print("All monitors finished shutting down")
 
-    print 'Event handler daemon shutting down'
+    print('Event handler daemon shutting down')
     logger.info('(%s) Event handler daemon shutting down' % main_pid)
 
     sys.exit(0)

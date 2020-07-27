@@ -41,6 +41,8 @@ Finally the user is redirected to the jupyterhub home page where a new notebook
 server can be instantiated and mount the users linked homedrive with the passed
 keyset.
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import re
@@ -51,17 +53,17 @@ import shutil
 import random
 import requests
 
-from shared import returnvalues
-from shared.base import client_id_dir, extract_field
-from shared.defaults import session_id_bytes
-from shared.fileio import make_symlink, pickle, unpickle, write_file, \
+from .shared import returnvalues
+from .shared.base import client_id_dir, extract_field
+from .shared.defaults import session_id_bytes
+from .shared.fileio import make_symlink, pickle, unpickle, write_file, \
     delete_symlink, delete_file
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.httpsclient import unescape
-from shared.init import initialize_main_variables
-from shared.pwhash import generate_random_ascii
-from shared.ssh import generate_ssh_rsa_key_pair, tighten_key_perms
-from shared.workflows import create_workflow_session_id, \
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.httpsclient import unescape
+from .shared.init import initialize_main_variables
+from .shared.pwhash import generate_random_ascii
+from .shared.ssh import generate_ssh_rsa_key_pair, tighten_key_perms
+from .shared.workflows import create_workflow_session_id, \
     get_workflow_session_id
 
 
@@ -533,7 +535,7 @@ def main(client_id, user_arguments_dict):
         # Write auth file
         write_file('\n'.join(auth_content),
                    os.path.join(subsys_path, session_id
-                                + '.authorized_keys'), logger, umask=027)
+                                + '.authorized_keys'), logger, umask=0o27)
 
     logger.debug("User: %s - Creating a new jupyter mount keyset - "
                  "private_key: %s public_key: %s "
@@ -625,7 +627,7 @@ def main(client_id, user_arguments_dict):
 
 
 if __name__ == "__main__":
-    from shared.conf import get_configuration_object
+    from .shared.conf import get_configuration_object
     if not os.environ.get('MIG_CONF', ''):
         conf_path = os.path.join(os.path.dirname(sys.argv[0]),
                                  '..', '..', 'server', 'MiGserver.conf')
@@ -647,4 +649,4 @@ if __name__ == "__main__":
     if sys.argv[3:]:
         client_id = sys.argv[3]
     os.environ['SSL_CLIENT_S_DN'] = client_id
-    print main(client_id, {})
+    print(main(client_id, {}))

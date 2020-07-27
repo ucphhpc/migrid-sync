@@ -31,6 +31,7 @@ Starts the required number of processes to have a full group and then leaves the
 Created by Jan Wiberg on 2010-03-29.
 Copyright (c) 2010 __MyCompanyName__. All rights reserved.
 """
+from __future__ import print_function
 
 import os, subprocess, time
 
@@ -40,5 +41,5 @@ replica1 = subprocess.Popen("python nettest_replica.py 1", shell=True)
 time.sleep(0.5)
 replica2 = subprocess.Popen("python nettest_replica.py 2", shell=True)
 
-print "Should be good now"
+print("Should be good now")
 time.sleep(20)

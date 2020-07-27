@@ -26,12 +26,13 @@
 #
 
 """ Get frontend status """
+from __future__ import absolute_import
 
-from shared import returnvalues
-from shared.findtype import is_owner
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.init import initialize_main_variables
-from shared.resadm import status_resource
+from .shared import returnvalues
+from .shared.findtype import is_owner
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.init import initialize_main_variables
+from .shared.resadm import status_resource
 
 
 def signature():

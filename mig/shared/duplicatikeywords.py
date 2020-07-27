@@ -26,10 +26,11 @@
 #
 
 """Keywords in the duplicati files"""
+from __future__ import absolute_import
 
 from urllib import urlencode
 
-from shared.defaults import duplicati_protocol_choices, \
+from .shared.defaults import duplicati_protocol_choices, \
      duplicati_schedule_choices
 
 duplicati_conf_templates = {'version': '''    "CreatedBy": "%(short_title)s v1.0"''',

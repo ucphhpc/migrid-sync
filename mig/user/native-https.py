@@ -28,6 +28,7 @@
 """Test native python SSL using HTTPSConnection against MiG
 server.
 """
+from __future__ import print_function
 
 import os
 import sys
@@ -46,7 +47,7 @@ args = input_args[:len(input_args)] + args[len(input_args):]
 
 (server, port, key_path, cert_path) = args
 
-print 'Connecting to %s:%s using key in %s and cert in %s' % tuple(args)
+print('Connecting to %s:%s using key in %s and cert in %s' % tuple(args))
 try:
     connection = httplib.HTTPSConnection(server, int(port), key_path,
             cert_path)
@@ -54,31 +55,31 @@ try:
     sys.stdin = os.open('pp.txt', os.O_RDWR)
     connection.connect()
 
-    print 'Received server certificate data:'
+    print('Received server certificate data:')
 
     # print repr(ssl_sock.server())
 
-    print repr(connection.sock._ssl.server())
-    print 'Received CA certificate data:'
+    print(repr(connection.sock._ssl.server()))
+    print('Received CA certificate data:')
 
     # print repr(ssl_sock.issuer())
 
-    print repr(connection.sock._ssl.issuer())
+    print(repr(connection.sock._ssl.issuer()))
 
-    print ''
+    print('')
 
     request = ['GET', '/']
 
-    print 'sending request:\n%s' % request
+    print('sending request:\n%s' % request)
 
     connection.request(request[0], request[1])
     reply = connection.getresponse()
-    print reply.status, reply.reason
+    print(reply.status, reply.reason)
     data = reply.read()
-    print 'received:\n%s' % data
-except Exception, err:
+    print('received:\n%s' % data)
+except Exception as err:
 
-    print 'Failed to create SSL connnection: %s' % err
+    print('Failed to create SSL connnection: %s' % err)
     sys.exit(1)
 
 try:

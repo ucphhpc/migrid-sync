@@ -26,6 +26,8 @@
 #
 
 """Cloud service helper functions"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import base64
 import hashlib
@@ -38,18 +40,18 @@ import time
 
 try:
     import openstack
-except ImportError, err:
+except ImportError as err:
     openstack = None
 try:
     import requests
-except ImportError, err:
+except ImportError as err:
     requests = None
 
-from shared.base import force_utf8, force_utf8_rec, client_id_dir
-from shared.defaults import keyword_all
-from shared.fileio import pickle, unpickle, acquire_file_lock, \
+from .shared.base import force_utf8, force_utf8_rec, client_id_dir
+from .shared.defaults import keyword_all
+from .shared.fileio import pickle, unpickle, acquire_file_lock, \
     release_file_lock
-from shared.safeeval import subprocess_call
+from .shared.safeeval import subprocess_call
 
 # Internal helper to map individual operations to flavored cloud functions
 __cloud_helper_map = {"openstack": None}
@@ -109,7 +111,7 @@ def __wait_available(configuration, client_id, cloud_id, cloud_flavor,
                 time.sleep(__poll_delay_secs)
         _logger.warning("gave up waiting for %s instance %s appearing" %
                         (cloud_id, instance))
-    except Exception, exc:
+    except Exception as exc:
         _logger.warning("wait available for %s cloud instance %s failed: %s"
                         % (cloud_id, instance, exc))
     return False
@@ -130,7 +132,7 @@ def __wait_gone(configuration, client_id, cloud_id, cloud_flavor, instance):
             time.sleep(__poll_delay_secs)
         _logger.warning("gave up waiting for %s instance %s disappearing" %
                         (cloud_id, instance))
-    except Exception, exc:
+    except Exception as exc:
         _logger.warning("wait gone for %s cloud instance %s failed: %s" %
                         (cloud_id, instance, exc))
     return False
@@ -148,7 +150,7 @@ def openstack_cloud_connect(configuration, cloud_id):
         conn = openstack.connect(cloud=internal_id)
         openstack.enable_logging(debug=False)
         _logger.debug("connected to %s" % cloud_id)
-    except Exception, exc:
+    except Exception as exc:
         _logger.error("connect to %s failed: %s" % (cloud_id, exc))
         return None
     return conn
@@ -207,12 +209,12 @@ def openstack_start_cloud_instance(configuration, client_id, cloud_id, instance_
         else:
             _logger.info("%s started cloud %s instance %s" %
                          (client_id, cloud_id, instance_id))
-    except openstack.exceptions.ConflictException, ose:
+    except openstack.exceptions.ConflictException as ose:
         status = False
         msg = "instance start failed - already started!"
         _logger.error("%s failed to start %s cloud instance %s again" %
                       (client_id, instance_id, ose))
-    except Exception, exc:
+    except Exception as exc:
         status = False
         msg = "instance start failed!"
         _logger.error("%s failed to start %s cloud instance: %s" %
@@ -250,12 +252,12 @@ def openstack_stop_cloud_instance(configuration, client_id, cloud_id, instance_i
         else:
             _logger.info("%s stopped cloud %s instance %s" %
                          (client_id, cloud_id, instance_id))
-    except openstack.exceptions.ConflictException, ose:
+    except openstack.exceptions.ConflictException as ose:
         status = False
         msg = "instance stop failed - not started!"
         _logger.error("%s failed to stop %s cloud instance: %s" %
                       (client_id, instance_id, ose))
-    except Exception, exc:
+    except Exception as exc:
         status = False
         msg = "instance stop failed!"
         _logger.error("%s failed to stop %s cloud instance: %s" %
@@ -295,12 +297,12 @@ def openstack_restart_cloud_instance(
         else:
             _logger.info("%s %s restarted cloud %s instance %s" %
                          (client_id, boot_strength, cloud_id, instance_id))
-    except openstack.exceptions.ConflictException, ose:
+    except openstack.exceptions.ConflictException as ose:
         status = False
         msg = "instance restart err - not already running!"
         _logger.error("%s restart on stopped %s cloud instance %s" %
                       (client_id, instance_id, ose))
-    except Exception, exc:
+    except Exception as exc:
         status = False
         msg = "instance restarted failed!"
         _logger.error("%s failed to %s restart %s cloud instance: %s" %
@@ -346,7 +348,7 @@ def openstack_status_of_cloud_instance(configuration, client_id, cloud_id,
             _logger.error("%s failed status for %s cloud instance: %s" %
                           (client_id, instance_id, status_msg))
 
-    except Exception, exc:
+    except Exception as exc:
         status = False
         msg = "instance status failed!"
         _logger.error("%s failed status for %s cloud instance: %s" %
@@ -431,7 +433,7 @@ def openstack_status_all_cloud_instances(configuration, client_id, cloud_id,
         _logger.debug("%s status all for cloud %s instances %s: %s" %
                       (client_id, cloud_id, ', '.join(instance_id_list),
                        status_dict))
-    except Exception, exc:
+    except Exception as exc:
         _logger.error("%s failed status all for %s cloud: %s" %
                       (client_id, cloud_id, exc))
     return status_dict
@@ -476,7 +478,7 @@ def openstack_web_access_cloud_instance(configuration, client_id, cloud_id,
             # API_ENDPOINT is something like
             # https://CLOUD_BASE_URL:8774/v2.1/servers/SERVER_ID/action
             API_ENDPOINT = "%s/action" % instance.links[0]['href']
-        except Exception, exc:
+        except Exception as exc:
             _logger.error("%s failed web console lookup for %s instance %s: %s"
                           % (client_id, cloud_id, instance_id, exc))
             status = False
@@ -503,7 +505,7 @@ def openstack_web_access_cloud_instance(configuration, client_id, cloud_id,
             _logger.error("%s failed web console for %s cloud instance %s"
                           % (client_id, cloud_id, instance_id))
 
-    except Exception, exc:
+    except Exception as exc:
         status = False
         msg = "instance web console access failed!"
         _logger.error("%s failed web console for %s cloud instance %s: %s" %
@@ -543,7 +545,7 @@ def openstack_register_cloud_keys(configuration, client_id, cloud_id,
             else:
                 _logger.info("already done for %s cloud ssh key for %s: %s" %
                              (cloud_id, client_id, key_id))
-    except Exception, exc:
+    except Exception as exc:
         status = False
         msg = "key registration failed!"
         _logger.error("%s failed to register %s cloud ssh key: %s" %
@@ -590,7 +592,7 @@ def openstack_update_cloud_instance_keys(configuration, client_id, cloud_id,
             if not conn.search_keypairs(key_id):
                 conn.create_keypair(key_id, pub_key)
             # TODO: figure out how to assign the keypair here!!
-    except Exception, exc:
+    except Exception as exc:
         status = False
         msg = "key update failed!"
         _logger.error("%s failed to update %s cloud ssh key for %s: %s" %
@@ -693,7 +695,7 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
                 msg = conn.compute.delete_server(instance)
                 if msg:
                     raise Exception(force_utf8(msg))
-            except Exception, exc:
+            except Exception as exc:
                 _logger.error("%s failed to clean up %s cloud instance: %s" %
                               (client_id, instance_id, exc))
             return (status, msg)
@@ -729,7 +731,7 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
             _logger.error("%s %s " % (client_id, msg))
             return (status, msg)
 
-    except Exception, exc:
+    except Exception as exc:
         status = False
         msg = "instance creation failed!"
         _logger.error("%s failed to create %s cloud instance: %s" %
@@ -788,7 +790,7 @@ def openstack_delete_cloud_instance(configuration, client_id, cloud_id,
                   (cloud_id, instance_id)
             _logger.error("%s failed to locate %s cloud instance %s" %
                           (client_id, cloud_id, instance_id))
-    except Exception, exc:
+    except Exception as exc:
         status = False
         msg = "instance deletion failed!"
         _logger.error("%s failed to delete %s cloud instance: %s" %
@@ -861,7 +863,7 @@ def cloud_fqdn_from_ip(configuration, ip_addr):
         return [ip_addr]
     try:
         fqdn = socket.gethostbyaddr(ip_addr)
-    except Exception, exc:
+    except Exception as exc:
         _logger.warning("could not resolve IP addresss %s to FQDN: %s" %
                         (ip_addr, exc))
     return fqdn
@@ -1173,7 +1175,7 @@ def check_cloud_available(configuration, client_id, cloud_id, cloud_flavor):
     try:
         helper(configuration, cloud_id)
         return True
-    except Exception, exc:
+    except Exception as exc:
         _logger.error("%s cloud available check failed: %s" % (cloud_id, exc))
         return False
 
@@ -1319,8 +1321,8 @@ def delete_cloud_instance(configuration, client_id, cloud_id, cloud_flavor,
 
 
 if __name__ == "__main__":
-    from shared.conf import get_configuration_object
-    from shared.settings import load_cloud
+    from .shared.conf import get_configuration_object
+    from .shared.settings import load_cloud
     conf = get_configuration_object()
     client_id = '/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk'
     cloud_id = 'MIST2'
@@ -1338,57 +1340,57 @@ if __name__ == "__main__":
     cloud_settings = load_cloud(client_id, conf)
     auth_keys = cloud_settings['authkeys'].split('\n')
 
-    print cloud_login_jump_host(conf, client_id, cloud_id)
+    print(cloud_login_jump_host(conf, client_id, cloud_id))
     service = cloud_find_service(conf, cloud_id)
-    print lookup_user_service_value(conf, client_id, service,
-                                    'service_sec_group_id')
-    print lookup_user_service_value(conf, client_id, service,
-                                    'service_key_id')
-    print lookup_user_service_value(conf, client_id, service,
-                                    'service_flavor_id')
+    print(lookup_user_service_value(conf, client_id, service,
+                                    'service_sec_group_id'))
+    print(lookup_user_service_value(conf, client_id, service,
+                                    'service_key_id'))
+    print(lookup_user_service_value(conf, client_id, service,
+                                    'service_flavor_id'))
     # print cloud_add_jump_host_key(conf, client_id, cloud_id, auth_keys)
     # print cloud_remove_jump_host_key(conf, client_id, cloud_id, auth_keys)
 
     # TODO: load yaml from custom location or inline
-    print "calling cloud operations for %s in %s with instance %s" % \
-          (client_id, cloud_id, instance_id)
+    print("calling cloud operations for %s in %s with instance %s" % \
+          (client_id, cloud_id, instance_id))
     img_list = list_cloud_images(conf, client_id, cloud_id, cloud_flavor)
-    print img_list
+    print(img_list)
     image_id = ''
     for (img_name, img_id, img_alias) in img_list:
         if instance_image == img_name:
             image_id = img_id
 
     if not reuse_instance:
-        print create_cloud_instance(conf, client_id, cloud_id, cloud_flavor,
-                                    instance_id, image_id, auth_keys)
+        print(create_cloud_instance(conf, client_id, cloud_id, cloud_flavor,
+                                    instance_id, image_id, auth_keys))
         # Start happens automatically on create
         time.sleep(5)
-    print status_of_cloud_instance(conf, client_id, cloud_id, cloud_flavor,
-                                   instance_id)
-    print status_all_cloud_instances(conf, client_id, cloud_id, cloud_flavor,
-                                     [instance_id])
-    print update_cloud_instance_keys(conf, client_id, cloud_id, cloud_flavor,
-                                     instance_id, auth_keys)
+    print(status_of_cloud_instance(conf, client_id, cloud_id, cloud_flavor,
+                                   instance_id))
+    print(status_all_cloud_instances(conf, client_id, cloud_id, cloud_flavor,
+                                     [instance_id]))
+    print(update_cloud_instance_keys(conf, client_id, cloud_id, cloud_flavor,
+                                     instance_id, auth_keys))
     if restart_instance:
-        print restart_cloud_instance(conf, client_id, cloud_id, cloud_flavor,
-                                     instance_id)
+        print(restart_cloud_instance(conf, client_id, cloud_id, cloud_flavor,
+                                     instance_id))
         time.sleep(5)
-        print stop_cloud_instance(conf, client_id, cloud_id, cloud_flavor,
-                                  instance_id)
+        print(stop_cloud_instance(conf, client_id, cloud_id, cloud_flavor,
+                                  instance_id))
         time.sleep(5)
-        print status_of_cloud_instance(conf, client_id, cloud_id, cloud_flavor,
-                                       instance_id)
+        print(status_of_cloud_instance(conf, client_id, cloud_id, cloud_flavor,
+                                       instance_id))
         time.sleep(5)
-        print start_cloud_instance(conf, client_id, cloud_id, cloud_flavor,
-                                   instance_id)
+        print(start_cloud_instance(conf, client_id, cloud_id, cloud_flavor,
+                                   instance_id))
         time.sleep(5)
-        print stop_cloud_instance(conf, client_id, cloud_id, cloud_flavor,
-                                  instance_id)
+        print(stop_cloud_instance(conf, client_id, cloud_id, cloud_flavor,
+                                  instance_id))
         time.sleep(5)
     if not reuse_instance:
-        print delete_cloud_instance(conf, client_id, cloud_id, cloud_flavor,
-                                    instance_id)
+        print(delete_cloud_instance(conf, client_id, cloud_id, cloud_flavor,
+                                    instance_id))
         time.sleep(5)
-    print "done with cloud operations for %s in %s" % (client_id, cloud_id)
+    print("done with cloud operations for %s in %s" % (client_id, cloud_id))
     sys.exit(0)

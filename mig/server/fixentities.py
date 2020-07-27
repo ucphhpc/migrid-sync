@@ -30,6 +30,7 @@
 
 """Fix resource and vgrid owners and members files to contain only migrated
 user IDs from user DB if at all possible"""
+from __future__ import print_function
 
 import sys
 import getopt
@@ -39,7 +40,7 @@ from shared.useradm import init_user_adm, fix_entities
 def usage(name='fixentities.py'):
     """Usage help"""
 
-    print """Update resource and VGrid onwers/members files to match user DB
+    print("""Update resource and VGrid onwers/members files to match user DB
     entries with DN as user identifier.
 
 Usage:
@@ -51,7 +52,7 @@ Where OPTIONS may be one or more of:
    -h                  Show this help
    -v                  Verbose output
 """\
-         % {'name': name}
+         % {'name': name})
 
 if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()
@@ -61,8 +62,8 @@ if '__main__' == __name__:
     opt_args = 'c:d:fhv'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
-    except getopt.GetoptError, err:
-        print 'Error: ', err.msg
+    except getopt.GetoptError as err:
+        print('Error: ', err.msg)
         usage()
         sys.exit(1)
 
@@ -79,11 +80,11 @@ if '__main__' == __name__:
         elif opt == '-v':
             verbose = True
         else:
-            print 'Error: %s not supported!' % opt
+            print('Error: %s not supported!' % opt)
             sys.exit(1)
 
     try:
         fix_entities(conf_path, db_path, force, verbose)
-    except Exception, err:
-        print err
+    except Exception as err:
+        print(err)
         sys.exit(1)

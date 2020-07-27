@@ -26,18 +26,19 @@
 #
 
 """Reject access request to a given vgrid"""
+from __future__ import absolute_import
 
 from binascii import unhexlify
 import os
 
-from shared.accessrequests import load_access_request, delete_access_request
-from shared.defaults import any_protocol, csrf_field
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.init import initialize_main_variables, find_entry
-from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_resource, \
+from .shared.accessrequests import load_access_request, delete_access_request
+from .shared.defaults import any_protocol, csrf_field
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from .shared.init import initialize_main_variables, find_entry
+from .shared.vgrid import init_vgrid_script_add_rem, vgrid_is_resource, \
      vgrid_list_subvgrids, vgrid_add_resources
-from shared import returnvalues
+from .shared import returnvalues
 
 
 def signature():

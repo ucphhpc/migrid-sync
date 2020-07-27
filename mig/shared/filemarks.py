@@ -29,10 +29,11 @@
 simple file marks. I.e. empty files where only the name, existance and
 timestamp carries information.
 """
+from __future__ import absolute_import
 
 import os
 
-from shared.fileio import makedirs_rec, touch
+from .shared.fileio import makedirs_rec, touch
 
 
 def update_filemark(configuration, base_dir, rel_path, timestamp):
@@ -60,7 +61,7 @@ def get_filemark(configuration, base_dir, rel_path):
         return None
     try:
         timestamp = os.path.getmtime(mark_path)
-    except Exception, exc:
+    except Exception as exc:
         _logger.debug("found no timestamp for file mark: %s" % mark_path)
         return None
     return timestamp
@@ -75,7 +76,7 @@ def reset_filemark(configuration, base_dir, mark_list=None):
     if mark_list is None:
         try:
             rel_list = os.listdir(base_dir)
-        except Exception, exc:
+        except Exception as exc:
             _logger.warning("failed to list mark files in %s : %s" %
                             (base_dir, exc))
             return False

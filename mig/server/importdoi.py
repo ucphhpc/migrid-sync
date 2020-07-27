@@ -26,6 +26,7 @@
 #
 
 """Import any missing DOIs from provided URI - useful from cron job"""
+from __future__ import print_function
 
 import json
 import os
@@ -63,7 +64,7 @@ def datacite_full(doi):
 
 if __name__ == '__main__':
     if not sys.argv[1:]:
-        print """USAGE:
+        print("""USAGE:
 importdoi.py VALUE
 where VALUE may be an FQDN, a DOI or a query on the format 'query=BLA' .
  * FQDN results in a lookup for all DOIs matching that FQDN and dumping the
@@ -78,7 +79,7 @@ E.g. to import all DOIs registered by UCPH and hosted here one would run:
   importdoi.py dk.ku
 or to match only those registered to erda.ku.dk:
   importdoi.py erda.ku.dk
-"""
+""")
         sys.exit(1)
 
     configuration = get_configuration_object()
@@ -98,11 +99,11 @@ or to match only those registered to erda.ku.dk:
     if direct:
         try:
             parsed = datacite_full(direct)
-        except Exception, exc:
-            print "ERROR in DataCite request: %s" % exc
+        except Exception as exc:
+            print("ERROR in DataCite request: %s" % exc)
             sys.exit(2)
         if verbose:
-            print "parsed datacite response with %d fields" % len(parsed)
+            print("parsed datacite response with %d fields" % len(parsed))
         # Result should be a plain dict here and we want a list of such dicts
         if isinstance(parsed, list):
             parsed_data = parsed
@@ -111,8 +112,8 @@ or to match only those registered to erda.ku.dk:
     else:
         try:
             parsed = datacite_query(query)
-        except Exception, exc:
-            print "ERROR in DataCite request: %s" % exc
+        except Exception as exc:
+            print("ERROR in DataCite request: %s" % exc)
             sys.exit(2)
         #print "DEBUG: parsed datacite response with %d fields" % len(parsed)
         # parsed is a dicionary with a data entry holding a list of summary
@@ -124,21 +125,21 @@ or to match only those registered to erda.ku.dk:
             attributes = entry.get('attributes', {})
             plain_doi = attributes.get("doi", None)
             if plain_doi is None:
-                print "WARNING skip full lookup of malformed entry: %s" % entry
+                print("WARNING skip full lookup of malformed entry: %s" % entry)
                 continue
             if verbose:
-                print "repeat full lookup for %s" % plain_doi
+                print("repeat full lookup for %s" % plain_doi)
             try:
                 full = datacite_full(plain_doi)
-            except Exception, exc:
-                print "ERROR in DataCite request: %s" % exc
+            except Exception as exc:
+                print("ERROR in DataCite request: %s" % exc)
                 continue
             parsed_data.append(full)
 
     imported, existing, new = 0, 0, 0
     for entry in parsed_data:
         if not isinstance(entry, dict):
-            print "WARNING skip malformed entry: %s" % entry
+            print("WARNING skip malformed entry: %s" % entry)
             continue
         #print "DEBUG: handle entry: %s" % entry
         doi_url = entry.get("id", None)
@@ -146,32 +147,32 @@ or to match only those registered to erda.ku.dk:
         archive_url = entry.get('url', '')
         archive_id = os.path.basename(os.path.dirname(archive_url))
         if not archive_id or not doi_url:
-            print "WARNING DOI or archive ID missing from %s (%s %s)" % \
-                  (entry, archive_id, doi_url)
+            print("WARNING DOI or archive ID missing from %s (%s %s)" % \
+                  (entry, archive_id, doi_url))
             continue
         archive_root = os.path.join(configuration.wwwpublic, 'archives',
                                     archive_id)
         if not os.path.isdir(archive_root):
-            print "ERROR No archive %s for DOI %s data" % (archive_root, doi)
+            print("ERROR No archive %s for DOI %s data" % (archive_root, doi))
             continue
         doi_path = os.path.join(archive_root, public_archive_doi)
         if os.path.exists(doi_path):
             if verbose:
-                print "Found existing DOI data in %s" % doi_path
+                print("Found existing DOI data in %s" % doi_path)
             existing += 1
             continue
         new += 1
         if dump:
-            print "Save DOI %s for archive %s" % (doi, archive_id)
+            print("Save DOI %s for archive %s" % (doi, archive_id))
             doi_fd = open(doi_path, 'w')
             json.dump(entry, doi_fd)
             doi_fd.close()
             imported += 1
         else:
-            print "New DOI %s for archive %s" % (doi, archive_id)
+            print("New DOI %s for archive %s" % (doi, archive_id))
             if verbose:
-                print "\t%s" % entry
+                print("\t%s" % entry)
 
-    print "Found %d existing - and imported %d of %d new DOI entries" % \
-          (existing, imported, new)
+    print("Found %d existing - and imported %d of %d new DOI entries" % \
+          (existing, imported, new))
     sys.exit(0)

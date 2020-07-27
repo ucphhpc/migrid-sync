@@ -25,6 +25,7 @@
 # -- END_HEADER ---
 #
 
+from __future__ import print_function
 import StringIO
 import os
 import sys
@@ -60,7 +61,7 @@ def get_data(
             passphrase = pp_file.readline().strip()
             pp_file.close()
         except:
-            print 'Failed to read passprase from %s', passphrase_file
+            print('Failed to read passprase from %s', passphrase_file)
             return None
 
     # Store output in memory
@@ -119,13 +120,13 @@ def get_data(
         curl.setopt(curl.SSL_VERIFYPEER, 0)
 
     try:
-        print 'get_data: fetch %s', url
+        print('get_data: fetch %s', url)
         curl.perform()
-    except pycurl.error, e:
+    except pycurl.error as e:
 
         # pycurl.error is an (errorcode, errormsg) tuple
 
-        print 'cURL command failed! %s', e[1]
+        print('cURL command failed! %s', e[1])
         return ''
 
     http_status = curl.getinfo(pycurl.HTTP_CODE)
@@ -145,11 +146,11 @@ def get_data(
         try:
             server_status = output.readlines()
         except:
-            print 'Failed to parse server status'
+            print('Failed to parse server status')
             return None
     else:
-        print 'Server returned HTTP code %d, expected %d', http_status, \
-            http_success
+        print('Server returned HTTP code %d, expected %d', http_status, \
+            http_success)
         return None
 
     output.close()
@@ -174,6 +175,6 @@ response = get_data(
     home + '/.MiG/pp.txt',
     )
 
-print response
+print(response)
 
 sys.exit(0)

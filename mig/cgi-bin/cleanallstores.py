@@ -25,13 +25,14 @@
 # -- END_HEADER ---
 #
 
+from __future__ import absolute_import
 import cgi
 import cgitb
 cgitb.enable()
 
 # call cleanstore!
 
-from shared.functionality.cleanstore import main
-from shared.cgiscriptstub import run_cgi_script
+from .shared.functionality.cleanstore import main
+from .shared.cgiscriptstub import run_cgi_script
 
 run_cgi_script(main)

@@ -44,6 +44,7 @@ Please check the global configuration section below if it fails. The comments
 should help you tweak the configuration to solve most common problems.
 
 """
+from __future__ import print_function
 
 import base64
 import getpass
@@ -77,62 +78,62 @@ def test_file_access(sftp, test_path, dummy_file):
     """
     try:
         path_stat = sftp.stat(test_path)
-        print "stat %s:\n%s" % (test_path, path_stat)
-    except Exception, exc:
-        print "stat on %s failed: %s" % (test_path, exc)
+        print("stat %s:\n%s" % (test_path, path_stat))
+    except Exception as exc:
+        print("stat on %s failed: %s" % (test_path, exc))
     try:
-        path_chmod = sftp.chmod(test_path, 02777)
-        print "chmod %s:\n%s" % (test_path, path_chmod)
-    except Exception, exc:
-        print "chmod on %s failed: %s" % (test_path, exc)
+        path_chmod = sftp.chmod(test_path, 0o2777)
+        print("chmod %s:\n%s" % (test_path, path_chmod))
+    except Exception as exc:
+        print("chmod on %s failed: %s" % (test_path, exc))
     try:
         path_chown = sftp.chown(test_path, 0, 0)
-        print "chown %s:\n%s" % (test_path, path_chown)
-    except Exception, exc:
-        print "chown on %s failed: %s" % (test_path, exc)
+        print("chown %s:\n%s" % (test_path, path_chown))
+    except Exception as exc:
+        print("chown on %s failed: %s" % (test_path, exc))
     try:
         sftp.put(dummy_file, test_path)
-        print "put dummy into %s succeeded!" % test_path
-    except Exception, exc:
-        print "put dummy into %s failed: %s" % (test_path, exc)
+        print("put dummy into %s succeeded!" % test_path)
+    except Exception as exc:
+        print("put dummy into %s failed: %s" % (test_path, exc))
     block_size = 1024
     try:
         path_fd = sftp.file(test_path)
         path_md5_digest = path_fd.check("md5", block_size=block_size)
         path_sha1_digest = path_fd.check("sha1", block_size=block_size)
         path_fd.close()
-        print "remote md5 sum %s:\n%s" % (test_path, path_md5_digest.encode('hex'))
-        print "remote sha1 sum %s:\n%s" % (test_path, path_sha1_digest.encode('hex'))
-    except Exception, exc:
-        print "checksum %s failed: %s" % (test_path, exc)
+        print("remote md5 sum %s:\n%s" % (test_path, path_md5_digest.encode('hex')))
+        print("remote sha1 sum %s:\n%s" % (test_path, path_sha1_digest.encode('hex')))
+    except Exception as exc:
+        print("checksum %s failed: %s" % (test_path, exc))
     try:
         sftp.get(test_path, dummy_file)
-        print "download %s succeeded!" % test_path
-    except Exception, exc:
-        print "download %s failed: %s" % (test_path, exc)
+        print("download %s succeeded!" % test_path)
+    except Exception as exc:
+        print("download %s failed: %s" % (test_path, exc))
     try:
         sftp.symlink(test_path, 'illegal-symlink')
-        print "symlink %s succeeded!" % test_path
-    except Exception, exc:
-        print "symlink %s failed: %s" % (test_path, exc)
+        print("symlink %s succeeded!" % test_path)
+    except Exception as exc:
+        print("symlink %s failed: %s" % (test_path, exc))
     trunc_len = 4
     try:
         path_fd = sftp.file(test_path)
         path_fd.truncate(trunc_len)
         path_fd.close()
-        print "open+truncate %s succeeded!" % test_path
-    except Exception, exc:
-        print "open+truncate %s failed: %s" % (test_path, exc)
+        print("open+truncate %s succeeded!" % test_path)
+    except Exception as exc:
+        print("open+truncate %s failed: %s" % (test_path, exc))
     try:
         sftp.truncate(test_path, trunc_len)
-        print "direct truncate %s succeeded!" % test_path
-    except Exception, exc:
-        print "direct truncate %s failed: %s" % (test_path, exc)
+        print("direct truncate %s succeeded!" % test_path)
+    except Exception as exc:
+        print("direct truncate %s failed: %s" % (test_path, exc))
     try:
         sftp.remove(test_path)
-        print "remove %s succeeded!" % test_path
-    except Exception, exc:
-        print "remove %s failed: %s" % (test_path, exc)
+        print("remove %s succeeded!" % test_path)
+    except Exception as exc:
+        print("remove %s failed: %s" % (test_path, exc))
 
 
 def test_dir_access(sftp, test_path, dummy_file):
@@ -142,33 +143,33 @@ def test_dir_access(sftp, test_path, dummy_file):
     show_limit = 4
     try:
         files = sftp.listdir(test_path)
-        print "first %d entries in %s dir:\n%s" % (show_limit, test_path, files)
+        print("first %d entries in %s dir:\n%s" % (show_limit, test_path, files))
         for name in files[:show_limit]:
             rel_path = os.path.join(test_path, name)
             path_stat = sftp.stat(rel_path)
-            print "stat %s:\n%s" % (rel_path, path_stat)
-    except Exception, exc:
-        print "listdir on %s failed: %s" % (test_path, exc)
+            print("stat %s:\n%s" % (rel_path, path_stat))
+    except Exception as exc:
+        print("listdir on %s failed: %s" % (test_path, exc))
     try:
         path_stat = sftp.stat(test_path)
-        print "stat %s:\n%s" % (test_path, path_stat)
-    except Exception, exc:
-        print "stat on %s failed: %s" % (test_path, exc)
+        print("stat %s:\n%s" % (test_path, path_stat))
+    except Exception as exc:
+        print("stat on %s failed: %s" % (test_path, exc))
     try:
         sftp.symlink(test_path, 'illegal-symlink')
-        print "symlink %s succeeded!" % test_path
-    except Exception, exc:
-        print "symlink %s failed: %s" % (test_path, exc)
+        print("symlink %s succeeded!" % test_path)
+    except Exception as exc:
+        print("symlink %s failed: %s" % (test_path, exc))
     try:
         sftp.put(dummy_file, os.path.join(test_path, "dummy"))
-        print "upload to %s succeeded!" % test_path
-    except Exception, exc:
-        print "upload to %s failed: %s" % (test_path, exc)
+        print("upload to %s succeeded!" % test_path)
+    except Exception as exc:
+        print("upload to %s failed: %s" % (test_path, exc))
     try:
         sftp.rmdir(test_path)
-        print "rmdir %s succeeded!" % test_path
-    except Exception, exc:
-        print "rmdir %s failed: %s" % (test_path, exc)
+        print("rmdir %s succeeded!" % test_path)
+    except Exception as exc:
+        print("rmdir %s failed: %s" % (test_path, exc))
 
 
 # Initialize client session ###
@@ -188,8 +189,8 @@ if __name__ == "__main__":
     if sys.argv[5:]:
         server_host_key = sys.argv[5]
     if len(user_name) != 10 and user_name.find('@') == -1:
-        print """Warning: the supplied username is not on expected form!
-Please verify it on your MiG ssh Settings page in case of failure."""
+        print("""Warning: the supplied username is not on expected form!
+Please verify it on your MiG ssh Settings page in case of failure.""")
 
     # Connect with provided settings
 
@@ -239,9 +240,9 @@ Please verify it on your MiG ssh Settings page in case of failure."""
     # file_targets = file_targets[:1]
     # dir_targets = dir_targets[:1]
 
-    print "= Running access tests against %s:%s as %s =" % (server_fqdn,
+    print("= Running access tests against %s:%s as %s =" % (server_fqdn,
                                                             server_port,
-                                                            user_name)
+                                                            user_name))
 
     dummy_path = 'this-is-a-migsftp-dummy-file.txt'
     dummy_text = "sample file\ncontents from client\n"
@@ -252,15 +253,15 @@ Please verify it on your MiG ssh Settings page in case of failure."""
     # path_stat = os.stat(dummy_path)
     # print "local stat %s:\n%s" % (dummy_path, path_stat)
 
-    print "= Running file access tests ="
+    print("= Running file access tests =")
     for target in file_targets:
         test_file_access(sftp, target, dummy_path)
 
-    print "= Running directory access tests ="
+    print("= Running directory access tests =")
     for target in dir_targets:
         test_dir_access(sftp, target, dummy_path)
 
-    print "= Clean up before exit ="
+    print("= Clean up before exit =")
 
     os.remove(dummy_path)
 

@@ -26,17 +26,18 @@
 #
 
 """Display the ARC queues accessible for submission by this server"""
+from __future__ import absolute_import
 
 import os
 import time
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.functional import validate_input_and_cert
-from shared.init import initialize_main_variables, find_entry
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.functional import validate_input_and_cert
+from .shared.init import initialize_main_variables, find_entry
 try:
-    from shared import arcwrapper
-except Exception, exc:
+    from .shared import arcwrapper
+except Exception as exc:
     # Ignore errors and let it crash if ARC is enabled without the lib
     pass
 
@@ -222,12 +223,12 @@ Please contact the site admins %s if you think they should be enabled.
         session = arcwrapper.Ui(user_dir)
         queues = session.getQueues()
 
-    except arcwrapper.NoProxyError, err:
+    except arcwrapper.NoProxyError as err:
         output_objects.append({'object_type': 'error_text', 'text': 'Error while retrieving: %s' % err.what()
                                })
         output_objects += arcwrapper.askProxy()
         return (output_objects, returnvalues.ERROR)
-    except Exception, err:
+    except Exception as err:
         logger.error('Exception while retrieving ARC resources\n%s' % err)
         output_objects.append(
             {'object_type': 'warning', 'text': 'Could not retrieve information: %s' % err})

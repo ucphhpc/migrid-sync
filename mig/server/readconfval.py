@@ -29,6 +29,7 @@
 active MiGserver.conf . Used for extracting e.g. core paths in init scripts and
 other components outside the actual python code.
 """
+from __future__ import print_function
 
 import getopt
 import os
@@ -40,7 +41,7 @@ from shared.conf import get_configuration_object
 def usage(name='chkenabled.py'):
     """Usage help"""
 
-    print """Lookup a evaluated configuration value using MiGserver.conf.
+    print("""Lookup a evaluated configuration value using MiGserver.conf.
 Usage:
 %(name)s [OPTIONS] NAME
 Where OPTIONS may be one or more of:
@@ -48,7 +49,7 @@ Where OPTIONS may be one or more of:
    -f                  Force operations to continue past errors
    -h                  Show this help
    -v                  Verbose output
-""" % {'name': name}
+""" % {'name': name})
 
 
 # ## Main ###
@@ -62,8 +63,8 @@ if '__main__' == __name__:
     opt_args = 'c:fhv'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
-    except getopt.GetoptError, err:
-        print 'Error: ', err.msg
+    except getopt.GetoptError as err:
+        print('Error: ', err.msg)
         usage()
         sys.exit(1)
 
@@ -78,17 +79,17 @@ if '__main__' == __name__:
         elif opt == '-v':
             verbose = True
         else:
-            print 'Error: %s not supported!' % opt
+            print('Error: %s not supported!' % opt)
 
     if conf_path and not os.path.isfile(conf_path):
-        print 'Failed to read configuration file: %s' % conf_path
+        print('Failed to read configuration file: %s' % conf_path)
         sys.exit(1)
 
     if verbose:
         if conf_path:
-            print 'using configuration in %s' % conf_path
+            print('using configuration in %s' % conf_path)
         else:
-            print 'using configuration from MIG_CONF (or default)'
+            print('using configuration from MIG_CONF (or default)')
 
     if len(args) == 2:
         name = args[1]
@@ -97,16 +98,16 @@ if '__main__' == __name__:
         sys.exit(1)
 
     if verbose:
-        print 'Lookup configuration value for %s' % name
+        print('Lookup configuration value for %s' % name)
     retval = 42
     try:
         configuration = get_configuration_object(skip_log=True)
         val = getattr(configuration, name, 'UNKNOWN')
         if val != 'UNKNOWN':
             retval = 0
-        print "%s" % val
-    except Exception, err:
-        print err
+        print("%s" % val)
+    except Exception as err:
+        print(err)
         sys.exit(1)
 
     sys.exit(retval)

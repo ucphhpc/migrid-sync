@@ -26,6 +26,7 @@
 #
 
 """Pickle based serializing"""
+from __future__ import print_function
 
 import cPickle as pickle
 import json
@@ -84,13 +85,13 @@ def load(path, serializer='pickle', mode='rb', **kwargs):
 
 
 if "__main__" == __name__:
-    print "Testing serializer"
+    print("Testing serializer")
     tmp_path = "dummyserial.tmp"
     orig = {'abc': 123, 'def': 'def', 'ghi': 42.0}
-    print "testing serializing to string and back"
+    print("testing serializing to string and back")
     data = loads(dumps(orig))
-    print "original\n%s\nloaded\n%s\nMatch: %s" % (orig, data, orig == data)
-    print "testing serializing to file and back"
+    print("original\n%s\nloaded\n%s\nMatch: %s" % (orig, data, orig == data))
+    print("testing serializing to file and back")
     dump(orig, tmp_path)
     data = load(tmp_path)
-    print "original\n%s\nloaded\n%s\nMatch: %s" % (orig, data, orig == data)
+    print("original\n%s\nloaded\n%s\nMatch: %s" % (orig, data, orig == data))

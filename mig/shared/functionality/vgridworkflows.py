@@ -31,24 +31,25 @@ anywhere in their VGrid shared directory.
 Triggers are personal but the workflows page allows sharing of trigger job
 status and so on to ease workflow collaboration.
 """
+from __future__ import absolute_import
 
 import os
 import re
 import time
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.cmdapi import get_usage_map
-from shared.defaults import keyword_all, keyword_auto, \
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.cmdapi import get_usage_map
+from .shared.defaults import keyword_all, keyword_auto, \
     valid_trigger_changes, valid_trigger_actions, workflows_log_name, \
     workflows_log_cnt, pending_states, final_states, img_trigger_prefix
-from shared.events import get_path_expand_map
-from shared.fileio import unpickle, makedirs_rec, move_file
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.html import man_base_js, man_base_html
-from shared.init import initialize_main_variables, find_entry
-from shared.parseflags import verbose
-from shared.vgrid import vgrid_add_remove_table, vgrid_is_owner_or_member, \
+from .shared.events import get_path_expand_map
+from .shared.fileio import unpickle, makedirs_rec, move_file
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.html import man_base_js, man_base_html
+from .shared.init import initialize_main_variables, find_entry
+from .shared.parseflags import verbose
+from .shared.vgrid import vgrid_add_remove_table, vgrid_is_owner_or_member, \
     vgrid_triggers, vgrid_set_triggers
 
 default_pager_entries = 20

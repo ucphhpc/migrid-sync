@@ -26,6 +26,7 @@
 #
 
 """Execute functions in a background thread with support for return values"""
+from __future__ import print_function
 
 import time
 from threading import Thread
@@ -75,7 +76,7 @@ class Worker(Thread):
 
         try:
             self.__result = self.__target(*self.__args, **self.__kwargs)
-        except Exception, exc:
+        except Exception as exc:
             self.__exception = exc
 
     def finish(self):
@@ -89,9 +90,9 @@ class Worker(Thread):
 
 
 if '__main__' == __name__:
-    print 'creating dummy test worker'
+    print('creating dummy test worker')
     task = Worker(target=dummy_test, args=(10, ))
     task.start()
-    print 'dummy test worker running...'
+    print('dummy test worker running...')
     result = task.finish()
-    print 'dummy test returned: %s' % result
+    print('dummy test returned: %s' % result)

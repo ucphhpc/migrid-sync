@@ -31,11 +31,12 @@ physical location of server files.
 Contrary to the native pickle module this version does not separate
 file opening from pickle operations.
 """
+from __future__ import absolute_import
 
 
-from localfile import LocalFile
+from .localfile import LocalFile
 # Expose loads and dumps from serial
-from shared.serial import loads, dumps
+from .shared.serial import loads, dumps
 
 
 def dump(obj, path, protocol=0):

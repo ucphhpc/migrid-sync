@@ -32,6 +32,7 @@
 their (correct) distinguished_name field as their key instead of the old broken
 key.
 """
+from __future__ import print_function
 
 import sys
 import getopt
@@ -41,7 +42,7 @@ from shared.useradm import init_user_adm, fix_userdb_keys
 def usage(name='fixuserdb.py'):
     """Usage help"""
 
-    print """Update user database to replace any leftover old keys to the
+    print("""Update user database to replace any leftover old keys to the
     current distinguished_name form.
 
 Usage:
@@ -53,7 +54,7 @@ Where OPTIONS may be one or more of:
    -h                  Show this help
    -v                  Verbose output
 """\
-         % {'name': name}
+         % {'name': name})
 
 if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()
@@ -63,8 +64,8 @@ if '__main__' == __name__:
     opt_args = 'c:d:fhv'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
-    except getopt.GetoptError, err:
-        print 'Error: ', err.msg
+    except getopt.GetoptError as err:
+        print('Error: ', err.msg)
         usage()
         sys.exit(1)
 
@@ -81,11 +82,11 @@ if '__main__' == __name__:
         elif opt == '-v':
             verbose = True
         else:
-            print 'Error: %s not supported!' % opt
+            print('Error: %s not supported!' % opt)
             sys.exit(1)
 
     try:
         fix_userdb_keys(conf_path, db_path, force, verbose)
-    except Exception, err:
-        print err
+    except Exception as err:
+        print(err)
         sys.exit(1)

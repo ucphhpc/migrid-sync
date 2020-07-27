@@ -26,6 +26,7 @@
 #
 
 """Peers management action back end"""
+from __future__ import absolute_import
 
 import datetime
 import os
@@ -33,19 +34,19 @@ import tempfile
 import base64
 import re
 
-from shared import returnvalues
-from shared.accountreq import parse_peers, peers_permit_allowed, \
+from .shared import returnvalues
+from .shared.accountreq import parse_peers, peers_permit_allowed, \
     manage_pending_peers
-from shared.base import client_id_dir, fill_distinguished_name
-from shared.defaults import peers_filename, peer_kinds, peers_fields, \
+from .shared.base import client_id_dir, fill_distinguished_name
+from .shared.defaults import peers_filename, peer_kinds, peers_fields, \
     csrf_field
-from shared.functional import validate_input, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.html import html_post_helper
-from shared.init import initialize_main_variables, find_entry
-from shared.notification import send_email
-from shared.serial import load, dump
-from shared.useradm import get_full_user_map
+from .shared.functional import validate_input, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.html import html_post_helper
+from .shared.init import initialize_main_variables, find_entry
+from .shared.notification import send_email
+from .shared.serial import load, dump
+from .shared.useradm import get_full_user_map
 
 default_expire_days = 7
 peer_actions = ['import', 'add', 'remove', 'update', 'accept', 'reject']
@@ -117,7 +118,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         expire = datetime.datetime.strptime(raw_expire, '%Y-%m-%d')
         if datetime.datetime.now() > expire:
             raise ValueError("specified expire value is in the past!")
-    except Exception, exc:
+    except Exception as exc:
         logger.error("expire %r could not be parsed into a (future) date" %
                      raw_expire)
         output_objects.append(
@@ -151,7 +152,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                               peers_filename)
     try:
         all_peers = load(peers_path)
-    except Exception, exc:
+    except Exception as exc:
         logger.warning("could not load peers from: %s" % exc)
         all_peers = {}
 
@@ -240,7 +241,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         for user in peers:
             output_objects.append(
                 {'object_type': 'text', 'text': "%(distinguished_name)s" % user})
-    except Exception, exc:
+    except Exception as exc:
         logger.error('Failed to save %s peers to %s: %s' %
                      (client_id, peers_path, exc))
         output_objects.append({'object_type': 'error_text', 'text': '''

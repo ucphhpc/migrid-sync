@@ -26,12 +26,13 @@
 #
 
 """Dashboard page used as entry page"""
+from __future__ import absolute_import
 
 import cgi
 import cgitb
 cgitb.enable()
 
-from shared.functionality.dashboard import main
-from shared.cgiscriptstub import run_cgi_script
+from .shared.functionality.dashboard import main
+from .shared.cgiscriptstub import run_cgi_script
 
 run_cgi_script(main)

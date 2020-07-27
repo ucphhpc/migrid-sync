@@ -225,7 +225,7 @@ class Server:
 
             # self.logger.debug("migrate_jobs: inspecting job %s", job_id)
 
-            if not job.has_key('SCHEDULE_HINT'):
+            if 'SCHEDULE_HINT' not in job:
 
                 # self.logger.debug("new job %s not marked yet", job_id)
 

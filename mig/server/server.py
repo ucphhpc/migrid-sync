@@ -30,6 +30,7 @@ This wrapper script handles a full MiG server in the failover model.
 If this server is the current group leader, the server runs the necessary
 MiG components, including the main script, monitor and notification.
 """
+from __future__ import print_function
 
 import os
 import sys
@@ -50,7 +51,7 @@ def start_component(app, args=[''], env={}):
         # child - take over this process to catch all signals
 
         os.setsid()
-        print os.getpid(), os.getpgid(0)
+        print(os.getpid(), os.getpgid(0))
         os.execve(app, args, env)
     return pid
 
@@ -61,7 +62,7 @@ def stop_component(pid):
     """
 
     pgid = os.getpgid(pid)
-    print 'Sending INT to pgid %d' % pgid
+    print('Sending INT to pgid %d' % pgid)
     os.killpg(pgid, signal.SIGINT)
     for i in range(15):
         (id, status) = os.waitpid(pid, os.WNOHANG)
@@ -72,12 +73,12 @@ def stop_component(pid):
 
         # Still alive
 
-        print 'Sending KILL to pgid %d' % pgid
+        print('Sending KILL to pgid %d' % pgid)
         os.killpg(pgid, signal.SIGKILL)
         (id, status) = os.waitpid(pid, 0)
-        print 'Process(es) killed forcefully'
+        print('Process(es) killed forcefully')
     else:
-        print 'Process(es) exited cleanly'
+        print('Process(es) exited cleanly')
     return None
 
 
@@ -86,7 +87,7 @@ def start_server(components):
 
     for i in range(len(components)):
         (app, _) = components[i]
-        print 'starting %s' % app
+        print('starting %s' % app)
         components[i] = (app, start_component(app))
 
 
@@ -96,14 +97,14 @@ def stop_server(components):
     for i in range(len(components)):
         (app, pid) = components[i]
         if not pid:
-            print "skipping %s which isn't running" % app
+            print("skipping %s which isn't running" % app)
             continue
-        print 'stopping %s with pid %s' % (app, pid)
+        print('stopping %s with pid %s' % (app, pid))
         components[i] = (app, stop_component(pid))
 
 
 def graceful_shutdown(signum, frame):
-    print '%s: graceful_shutdown called' % sys.argv[0]
+    print('%s: graceful_shutdown called' % sys.argv[0])
     try:
         global components
         stop_server(components)
@@ -145,7 +146,7 @@ components.append(('grid_openid.py', None))
 
 # Use first argument (if given) as path to config file
 
-print 'Starting Full MiG server'
+print('Starting Full MiG server')
 
 own_address = get_address()
 is_leader = False
@@ -159,16 +160,16 @@ while True:
 
     if is_leader:
         if not was_leader:
-            print 'New local leader: starting MiG components'
+            print('New local leader: starting MiG components')
             start_server(components)
         else:
-            print 'Still local leader: keep running MiG components'
+            print('Still local leader: keep running MiG components')
     else:
 
         if not was_leader:
-            print 'Still not the leader - sleeping'
+            print('Still not the leader - sleeping')
         else:
-            print 'No longer local leader: stopping MiG components'
+            print('No longer local leader: stopping MiG components')
             stop_server(components)
 
     time.sleep(10)

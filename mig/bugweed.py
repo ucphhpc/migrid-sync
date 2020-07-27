@@ -21,6 +21,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """Grep for obvious errors in pylint output for all code"""
+from __future__ import print_function
 
 import glob
 import sys
@@ -30,8 +31,8 @@ from shared.safeeval import subprocess_call
 
 if '__main__' == __name__:
     if len(sys.argv) != 1:
-        print 'Usage: %s' % sys.argv[0]
-        print 'Grep for obvious errors in all code files'
+        print('Usage: %s' % sys.argv[0])
+        print('Grep for obvious errors in all code files')
         sys.exit(1)
 
     expanded_paths = []
@@ -39,9 +40,9 @@ if '__main__' == __name__:
         expanded_paths += glob.glob(code_path)
     command_list = ["pylint", "-E"] + expanded_paths
     command = ' '.join(command_list)
-    print "Bug weeding command: %s" % command
-    print "*** Not all lines reported are necessarily errors ***"
-    print
+    print("Bug weeding command: %s" % command)
+    print("*** Not all lines reported are necessarily errors ***")
+    print()
     #subprocess_call(command, only_sanitized_variables=True)
     # NOTE: we use command list to avoid shell requirement    
     subprocess_call(command_list)

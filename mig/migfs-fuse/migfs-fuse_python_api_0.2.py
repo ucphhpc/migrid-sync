@@ -231,7 +231,7 @@ class InodeCache:
         inode = None
         time_stamp = -1
         self.__lock.acquire()
-        if self.__cache.has_key(path):
+        if path in self.__cache:
             (time_stamp, inode) = self.__cache[path]
         self.__lock.release()
         return (time_stamp, inode)
@@ -249,7 +249,7 @@ class InodeCache:
         in a thread safe way"""
 
         self.__lock.acquire()
-        if self.__cache.has_key(path):
+        if path in self.__cache:
             (time_stamp, inode) = self.__cache[path]
             for (key, val) in fields.items():
                 inode[key] = val
@@ -259,7 +259,7 @@ class InodeCache:
         """Delete inode in a thread safe way"""
 
         self.__lock.acquire()
-        if self.__cache.has_key(path):
+        if path in self.__cache:
             del self.__cache[path]
         self.__lock.release()
 
@@ -532,7 +532,7 @@ class OpenFile:
             log.debug('read %d bytes from block %d of %s'
                        % (len(content), readblock, self.tmpfile.name))
             tmp_fd.close()
-        except Exception, err:
+        except Exception as err:
             log.error('failed to read block %s from %s: %s'
                        % (readblock, self.tmpfile, err))
         self.last_block_buffer = content
@@ -566,13 +566,13 @@ class MiGfs(Fuse):
 
         # print "DEBUG: got args and kwargs in MiGFS: %s, %s" % (args, kw)
 
-        if kw.has_key('blocksize'):
+        if 'blocksize' in kw:
             blocksize = kw['blocksize']
 
             # Fuse does and should not know about blocksize - so remove it
 
             del kw['blocksize']
-        if kw.has_key('password'):
+        if 'password' in kw:
 
             # miglib allows overriding global password
 
@@ -611,7 +611,7 @@ class MiGfs(Fuse):
         parent_inode = {
             'dev': 0,
             'ino': 42,
-            'mode': 0755,
+            'mode': 0o755,
             'nlink': 1,
             'uid': 0,
             'gid': 0,
@@ -751,7 +751,7 @@ class MiGfs(Fuse):
                     self.__threads.append(prefetch_thread)
                 for prefetch_thread in self.__threads:
                     prefetch_thread.join()
-        except Exception, exc:
+        except Exception as exc:
             log.error('migfs.py:MiGfs:getdir: %s: %s!' % (path, exc))
             _log_exception('got exception when listing dir: %s' % path)
             dir_list = None
@@ -768,7 +768,7 @@ class MiGfs(Fuse):
                 raise IOError("rm failed on '%s': %s" % (path, out))
             self.__inode_cache.delete_inode(path)
             return status
-        except Exception, exc:
+        except Exception as exc:
             log.error('migfs.py:MiGfs:unlink: %s: %s!' % (path, exc))
             msg = 'Error unlinking file %s' % path
             _log_exception(msg)
@@ -784,7 +784,7 @@ class MiGfs(Fuse):
             (status, out) = self.mig_access.rmdir([path])
             if status != 0:
                 raise IOError("rmdir failed on '%s': %s" % (path, out))
-        except Exception, exc:
+        except Exception as exc:
             log.error('migfs.py:MiGfs:rmdir: %s: %s!' % (path, exc))
             msg = 'Error unlinking dir %s' % path
             err = OSError(msg)
@@ -802,7 +802,7 @@ class MiGfs(Fuse):
                 parent_dir = '/'
             self.__inode_cache.delete_inode(parent_dir)
             return 0
-        except Exception, exc:
+        except Exception as exc:
             log.error('migfs.py:MiGfs:rmdir: %s: %s!' % (path, exc))
             msg = 'Error unlinking dir %s' % path
             _log_exception(msg)
@@ -830,7 +830,7 @@ class MiGfs(Fuse):
                 raise IOError("mv failed on '%s': %s" % (src, out))
             self.__inode_cache.delete_inode(src)
             return status
-        except Exception, exc:
+        except Exception as exc:
             log.error('migfs.py:MiGfs:rename: %s: %s!' % (src, exc))
             msg = 'Could not rename %s to %s' % (src, dst)
             _log_exception(msg)
@@ -899,7 +899,7 @@ class MiGfs(Fuse):
                 'size': size,
                 }
             self.__inode_cache.update_inode(path, updates)
-        except Exception, exc:
+        except Exception as exc:
             log.error('migfs.py:MiGfs:truncate: %s: %s!' % (path, exc))
             msg = 'Could not truncate %s to %s' % (path, size)
             _log_exception(msg)
@@ -942,7 +942,7 @@ class MiGfs(Fuse):
                 parent_dir = '/'
             self.__inode_cache.delete_inode(parent_dir)
             return status
-        except Exception, exc:
+        except Exception as exc:
             log.error('migfs.py:MiGfs:mkdir: %s: %s!' % (path, exc))
             msg = 'Error creating dir %s' % path
             _log_exception(msg)
@@ -965,7 +965,7 @@ class MiGfs(Fuse):
                        'ctime': times[1]}
             self.__inode_cache.update_inode(path, updates)
             return status
-        except Exception, exc:
+        except Exception as exc:
             log.error('migfs.py:MiGfs:utime: %s: %s!' % (path, exc))
             msg = 'Error changing timestamps on %s' % path
             _log_exception(msg)
@@ -981,7 +981,7 @@ class MiGfs(Fuse):
             open_file = OpenFile(path, self.__inode_cache)
             self.__open_files[path] = open_file
             return 0
-        except Exception, exc:
+        except Exception as exc:
             log.error('migfs.py:MiGfs:open: %s: %s!' % (path, exc))
             msg = 'Error opening file %s' % path
             _log_exception(msg)
@@ -1003,7 +1003,7 @@ class MiGfs(Fuse):
             open_file = self.__open_files[path]
             buf = open_file.read(readlen, offset)
             return ''.join(buf)
-        except Exception, exc:
+        except Exception as exc:
             log.error('migfs.py:MiGfs:read: %s: %s!' % (path, exc))
             msg = 'Error reading file: %s' % path
             _log_exception(msg)
@@ -1026,7 +1026,7 @@ class MiGfs(Fuse):
             open_file = self.__open_files[path]
             written = open_file.write(buf, offset)
             return written
-        except Exception, exc:
+        except Exception as exc:
             log.error('migfs.py:MiGfs:write: %s: %s!' % (path, exc))
             msg = 'Error writing file: %s' % path
             _log_exception(msg)
@@ -1042,7 +1042,7 @@ class MiGfs(Fuse):
             open_file = self.__open_files[path]
             open_file.close()
             del self.__open_files[path]
-        except Exception, exc:
+        except Exception as exc:
             log.error('migfs.py:MiGfs:release: %s: %s!' % (path, exc))
             msg = 'Error releasing file: %s' % path
             err = OSError(msg)
@@ -1070,12 +1070,12 @@ class MiGfs(Fuse):
 
         log.debug('migfs.py:MiGfs:statfs')
         block_size = 1024
-        total_blocks = 0L
-        blocks_free = 0L
-        blocks_free_user = 0L
-        files = 0L
-        files_free = 0L
-        files_free_user = 0L
+        total_blocks = 0
+        blocks_free = 0
+        blocks_free_user = 0
+        files = 0
+        files_free = 0
+        files_free_user = 0
         namelen = 255
         (status, out) = self.mig_access.statfs()
         if status != 0:
@@ -1161,7 +1161,7 @@ class MiGfs(Fuse):
                         len(out) - self.head_lines, fields
                          * len(stat_list))
                 raise Exception(msg)
-        except Exception, exc:
+        except Exception as exc:
             _log_exception('failed to stat MiG path: %s'
                             % ', '.join(stat_list))
             return inode_list
@@ -1202,10 +1202,10 @@ class MiGfs(Fuse):
             if now - time_stamp > self.__inode_timeout:
                 log.info('getinode expiring old inode for %s' % path)
                 try:
-                    if self.__open_files.has_key(path):
+                    if path in self.__open_files:
                         self.fsync(path, False)
                         log.debug('getinode synced data for %s' % path)
-                except Exception, err:
+                except Exception as err:
                     log.error('getinode failed to commit file %s: %s'
                                % (path, err))
                     _log_exception('getinode')
@@ -1230,7 +1230,7 @@ class MiGfs(Fuse):
             (status, out) = self.mig_access.stat([path])
             if status != 0:
                 raise IOError("stat failed on '%s': %s" % (path, out))
-        except Exception, exc:
+        except Exception as exc:
             _log_exception('failed to stat MiG path: %s' % path)
             return inode
 
@@ -1327,7 +1327,7 @@ try:
         options = conf.options('caching')
         if 'inode_timeout' in options:
             inode_timeout = conf.getint('caching', 'inode_timeout')
-except Exception, fs_err:
+except Exception as fs_err:
     log.warning('Unable to read configuration file %s: %s'
                  % (migfs_config, fs_err))
 

@@ -32,21 +32,22 @@ make a resubmit like any other job submission (textarea, mRSL file upload).
 The client specifies a job_id, and this script loops all relevant fields,
 generates a temp file in mRSL format and submits the tempfile to new_job()
 """
+from __future__ import absolute_import
 
 import os
 import tempfile
 import glob
 
-from shared import mrslkeywords
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.defaults import all_jobs
-from shared.fileio import unpickle
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables
-from shared.job import new_job
-from shared.validstring import valid_user_path
+from .shared import mrslkeywords
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.defaults import all_jobs
+from .shared.fileio import unpickle
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables
+from .shared.job import new_job
+from .shared.validstring import valid_user_path
 
 
 def signature():

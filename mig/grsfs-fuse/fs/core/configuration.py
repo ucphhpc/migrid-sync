@@ -29,6 +29,7 @@
 Created by Jan Wiberg on 2010-03-22.
 Copyright (c) 2010 __MyCompanyName__. All rights reserved.
 """
+from __future__ import print_function
 
 import os, socket
 
@@ -96,6 +97,6 @@ class Configuration:
             self.network_timeout = float(self.network_timeout)
             
         except Exception:
-            print ">>>>>>>> Configuration validation failed, error follows"
+            print(">>>>>>>> Configuration validation failed, error follows")
             raise
-        print "Configuration validated"
+        print("Configuration validated")

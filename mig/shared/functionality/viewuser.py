@@ -26,25 +26,26 @@
 #
 
 """Get info about a user"""
+from __future__ import absolute_import
 
 import hashlib
 import os
 from binascii import hexlify
 from urllib import urlencode
 
-from shared import returnvalues
-from shared.base import client_id_dir, pretty_format_user, extract_field
-from shared.defaults import any_vgrid, csrf_field
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import confirm_js, confirm_html, html_post_helper
-from shared.init import initialize_main_variables, find_entry
-from shared.output import html_link
-from shared.profilekeywords import get_profile_specs
-from shared.settingskeywords import get_settings_specs
-from shared.user import user_gravatar_url, inline_image
-from shared.vgrid import vgrid_request_and_job_match
-from shared.vgridaccess import user_visible_user_confs, user_vgrid_access, \
+from .shared import returnvalues
+from .shared.base import client_id_dir, pretty_format_user, extract_field
+from .shared.defaults import any_vgrid, csrf_field
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.html import confirm_js, confirm_html, html_post_helper
+from .shared.init import initialize_main_variables, find_entry
+from .shared.output import html_link
+from .shared.profilekeywords import get_profile_specs
+from .shared.settingskeywords import get_settings_specs
+from .shared.user import user_gravatar_url, inline_image
+from .shared.vgrid import vgrid_request_and_job_match
+from .shared.vgridaccess import user_visible_user_confs, user_vgrid_access, \
     CONF
 
 

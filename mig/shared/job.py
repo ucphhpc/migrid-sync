@@ -26,6 +26,7 @@
 #
 
 """Job functions"""
+from __future__ import absolute_import
 
 import fcntl
 import os
@@ -33,11 +34,11 @@ import time
 
 from glob import glob
 
-from shared.base import client_id_dir
-from shared.fileio import send_message_to_grid_script, unpickle
-from shared.mrslparser import parse
-from shared.vgrid import init_vgrid_script_list
-from shared.vgridaccess import get_vgrid_map, OWNERS, MEMBERS, VGRIDS
+from .shared.base import client_id_dir
+from .shared.fileio import send_message_to_grid_script, unpickle
+from .shared.mrslparser import parse
+from .shared.vgrid import init_vgrid_script_list
+from .shared.vgridaccess import get_vgrid_map, OWNERS, MEMBERS, VGRIDS
 
 JOB = 'job'
 QUEUE = 'queue'
@@ -81,7 +82,7 @@ def get_job_id(configuration):
             'job_id_counter')
     try:
         filehandle = open(job_id_counter_path, 'r+')
-    except IOError, ioe:
+    except IOError as ioe:
         logger.error('No job id counter found - creating one (first run?)')
 
     if filehandle:
@@ -91,7 +92,7 @@ def get_job_id(configuration):
             filehandle.seek(0, 0)
             filehandle.write(str(int(val) + 1))
             filehandle.close()
-        except IOError, ioe:
+        except IOError as ioe:
             logger.error('get_job_id: ioerror: %s' % ioe)
             return -1
     else:
@@ -104,7 +105,7 @@ def get_job_id(configuration):
             val = '0'
             filehandle.write(str(int(val) + 1))
             filehandle.close()
-        except IOError, ioe:
+        except IOError as ioe:
             logger.error('get_job_id: Failed to create job id counter file!%s'\
                  % ioe)
             return -1
@@ -174,7 +175,7 @@ def fill_mrsl_template(
         mrsl_fd.flush()
         if do_close:
             mrsl_fd.close()
-    except Exception, exc:
+    except Exception as exc:
         logger.error("failed to fill template %s:\n%s" % \
                      (exc, job_template))
         return False
@@ -279,7 +280,7 @@ def create_job_object_from_pickled_mrsl(filepath, logger,
             # version we use
 
             value = str(value)
-        if external_dict.has_key(key):
+        if key in external_dict:
 
             # ok, this info can be shown to the user (avoid leaking info that
             # break anonymity)
@@ -314,7 +315,7 @@ def get_job_ids_with_specified_project_name(
         job_dict = unpickle(base_dir + os.sep + mrsl_file, logger)
         if not job_dict:
             continue
-        if job_dict.has_key('PROJECT'):
+        if 'PROJECT' in job_dict:
             if job_dict['PROJECT'] == project_name:
                 matching_job_ids.append(job_dict['JOB_ID'])
     return matching_job_ids
@@ -391,7 +392,7 @@ def fields_to_mrsl(configuration, user_arguments_dict, external_dict):
     spec = []
     for key in external_dict.keys():
         attr_name = key
-        if user_arguments_dict.has_key(attr_name):
+        if attr_name in user_arguments_dict:
             spec.append('::%s::' % attr_name)
             attr = user_arguments_dict[attr_name]
 

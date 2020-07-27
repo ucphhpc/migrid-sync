@@ -31,11 +31,12 @@ files can be separated from the normal server operation.
 Contrary to the native pickle module this version does not separate
 file opening from pickle operations.
 """
+from __future__ import absolute_import
 
-from shared import distfile
-from shared.distfile import LOCK_EX, LOCK_SH
+from .shared import distfile
+from .shared.distfile import LOCK_EX, LOCK_SH
 # Expose loads and dumps from serial
-from shared.serial import loads, dumps
+from .shared.serial import loads, dumps
 
 
 def dump(obj, path, protocol=0):

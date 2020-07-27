@@ -27,6 +27,7 @@
 #
 
 """Search code tree and add the required header to all python modules"""
+from __future__ import print_function
 
 import datetime
 import fnmatch
@@ -175,7 +176,7 @@ if __name__ == '__main__':
             src_path = os.path.join(root, name)
             if os.path.islink(src_path):
                 continue
-            print 'Inspecting %s' % src_path
+            print('Inspecting %s' % src_path)
             for pattern in py_code_files + sh_code_files + js_code_files:
                 if pattern in js_code_files:
                     needs_block = True
@@ -187,15 +188,15 @@ if __name__ == '__main__':
                 # print "Testing %s against %s" % (src_path, pattern)
     
                 if src_path == pattern or fnmatch.fnmatch(src_path, pattern):
-                    print 'Matched %s against %s' % (src_path, pattern)
+                    print('Matched %s against %s' % (src_path, pattern))
                     proj_vars['module_name'] = name.replace('.py', '')
                     if check_header(src_path, proj_vars):
-                        print 'Skip %s with existing header' % src_path
+                        print('Skip %s with existing header' % src_path)
                         continue
                     add_header(src_path, proj_vars, block_wrap=needs_block)
-    print
-    print "Added license headers to code in %s" % target
-    print
-    print "Don't forget to include COPYING file in root of source, e.g. run:"
-    print "wget -O COPYING http://www.gnu.org/licenses/gpl2.txt"
-    print "if using the default GPL v2 license here."
+    print()
+    print("Added license headers to code in %s" % target)
+    print()
+    print("Don't forget to include COPYING file in root of source, e.g. run:")
+    print("wget -O COPYING http://www.gnu.org/licenses/gpl2.txt")
+    print("if using the default GPL v2 license here.")

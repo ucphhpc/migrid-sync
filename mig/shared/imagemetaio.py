@@ -27,6 +27,7 @@
 #
 
 """Image meta data helper functions"""
+from __future__ import absolute_import
 
 import os
 import traceback
@@ -37,7 +38,7 @@ from tables import open_file
 import tables.exceptions
 import tables.tableextension
 
-from shared.fileio import acquire_file_lock, release_file_lock
+from .shared.fileio import acquire_file_lock, release_file_lock
 
 __revision = '3332'
 __metapath = '.meta'
@@ -211,7 +212,7 @@ def __ensure_filepath(logger, filepath, makedirs=False):
     if makedirs:
         try:
             os.makedirs(filepath)
-        except Exception, ex:
+        except Exception as ex:
             if not os.path.exists(filepath):
                 logger.debug('__ensure_filepath: %s' % str(ex))
 
@@ -414,14 +415,14 @@ def __close_image_settings_file(logger, metafile):
 
     logger.debug('Closing metafile')
     if metafile is not None:
-        if metafile.has_key('tables'):
+        if 'tables' in metafile:
             try:
                 metafile['tables'].close()
             except Exception:
                 logger.error(traceback.format_exc())
                 result = False
 
-        if metafile.has_key('lock'):
+        if 'lock' in metafile:
             try:
                 __release_file_lock(logger, metafile)
             except Exception:

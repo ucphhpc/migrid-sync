@@ -26,18 +26,19 @@
 #
 
 """Create runtime environment"""
+from __future__ import absolute_import
 
 import base64
 
-from shared import returnvalues
-from shared.defaults import max_software_entries, max_environment_entries, \
+from .shared import returnvalues
+from .shared.defaults import max_software_entries, max_environment_entries, \
      csrf_field
-from shared.functional import validate_input_and_cert
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.init import initialize_main_variables
-from shared.refunctions import is_runtime_environment, \
+from .shared.functional import validate_input_and_cert
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.init import initialize_main_variables
+from .shared.refunctions import is_runtime_environment, \
     list_runtime_environments, get_re_dict
-from shared.rekeywords import get_keywords_dict
+from .shared.rekeywords import get_keywords_dict
 
 
 def signature():
@@ -100,13 +101,13 @@ def main(client_id, user_arguments_dict):
         environment_entries = len(template.get('ENVIRONMENTVARIABLE', [None]))
     if testprocedure_entry < 0:
         testprocedure_entry = len(template.get('TESTPROCEDURE', []))
-    if template.has_key('SOFTWARE'):
+    if 'SOFTWARE' in template:
         new_sw = template['SOFTWARE'][:software_entries]
         template['SOFTWARE'] = new_sw
-    if template.has_key('ENVIRONMENTVARIABLE'):
+    if 'ENVIRONMENTVARIABLE' in template:
         new_env = template['ENVIRONMENTVARIABLE'][:environment_entries]
         template['ENVIRONMENTVARIABLE'] = new_env
-    if template.has_key('TESTPROCEDURE'):
+    if 'TESTPROCEDURE' in template:
         new_test = template['TESTPROCEDURE'][:testprocedure_entry]
         template['TESTPROCEDURE'] = new_test
 
@@ -246,7 +247,7 @@ information.'''
     if software_entries > 0:
         html_form += '<br /><b>Needed Software:</b><br />'
     if template:
-        if template.has_key('SOFTWARE'):
+        if 'SOFTWARE' in template:
             soft_list = template['SOFTWARE']
             for soft in soft_list:
                 html_form += """
@@ -262,7 +263,7 @@ information.'''
     sublevel_required = []
     sublevel_optional = []
 
-    if software.has_key('Sublevel') and software['Sublevel']:
+    if 'Sublevel' in software and software['Sublevel']:
         sublevel_required = software['Sublevel_required']
         sublevel_optional = software['Sublevel_optional']
 
@@ -276,7 +277,7 @@ information.'''
         html_form += '</textarea><br />'
         
     if template and testprocedure_entry == 1:
-        if template.has_key('TESTPROCEDURE'):
+        if 'TESTPROCEDURE' in template:
             html_form += """
 <br /><b>Testprocedure</b> (in mRSL format):<br />
 <textarea class='p80width' rows='15' name='testprocedure'>"""
@@ -294,7 +295,7 @@ information.'''
 <br /><b>Expected .stdout file if testprocedure is executed</b><br />
 <textarea class='p80width' rows='10' name='verifystdout'>"""
 
-            if template.has_key('VERIFYSTDOUT'):
+            if 'VERIFYSTDOUT' in template:
                 for line in template['VERIFYSTDOUT']:
                     html_form += line
             html_form += '</textarea>'
@@ -302,7 +303,7 @@ information.'''
             html_form += """
 <br /><b>Expected .stderr file if testprocedure is executed</b><br />
 <textarea cols='50' rows='10' name='verifystderr'>"""
-            if template.has_key('VERIFYSTDERR'):
+            if 'VERIFYSTDERR' in template:
                 for line in template['VERIFYSTDERR']:
                     html_form += line
             html_form += '</textarea>'
@@ -310,7 +311,7 @@ information.'''
             html_form += """
 <br /><b>Expected .status file if testprocedure is executed</b><br />
 <textarea cols='50' rows='10' name='verifystatus'>"""
-            if template.has_key('VERIFYSTATUS'):
+            if 'VERIFYSTATUS' in template:
                 for line in template['VERIFYSTATUS']:
                     html_form += line
             html_form += '</textarea>'
@@ -336,7 +337,7 @@ ls
     sublevel_required = []
     sublevel_optional = []
 
-    if environmentvariable.has_key('Sublevel')\
+    if 'Sublevel' in environmentvariable\
          and environmentvariable['Sublevel']:
         sublevel_required = environmentvariable['Sublevel_required']
         sublevel_optional = environmentvariable['Sublevel_optional']
@@ -345,7 +346,7 @@ ls
     if environment_entries > 0:
         html_form += '<br /><b>Environments:</b><br />'
     if template:
-        if template.has_key('ENVIRONMENTVARIABLE'):
+        if 'ENVIRONMENTVARIABLE' in template:
             env_list = template['ENVIRONMENTVARIABLE']
             for env in env_list:
                 html_form += """

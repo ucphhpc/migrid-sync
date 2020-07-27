@@ -26,6 +26,7 @@
 #
 
 """Job script generator"""
+from __future__ import print_function
 
 import os
 import time
@@ -45,7 +46,7 @@ from shared.ssh import copy_file_to_resource, generate_ssh_rsa_key_pair
 try:
     from shared import mrsltoxrsl
     from shared import arcwrapper
-except Exception, exc:
+except Exception as exc:
     # Ignore errors and let it crash if ARC is enabled without the lib
     pass
 
@@ -217,7 +218,7 @@ def create_job_script(
             msg = "job generation failed:"
             msg = "%s user_sftp_key_pub: '%s' -> File NOT found" % \
                   (msg, configuration.user_sftp_key_pub)
-            print msg
+            print(msg)
             logger.error(msg)
             return (None, msg)
 
@@ -242,7 +243,7 @@ def create_job_script(
     job_dict['MOUNTSSHPRIVATEKEY'] = mount_private_key
     job_dict['MOUNTSSHKNOWNHOSTS'] = mount_known_hosts
 
-    if not job_dict.has_key('MAXPRICE'):
+    if 'MAXPRICE' not in job_dict:
         job_dict['MAXPRICE'] = '0'
     # Finally expand reserved job variables like +JOBID+ and +JOBNAME+
     job_dict = expand_variables(job_dict)
@@ -328,7 +329,7 @@ def create_job_script(
         msg = \
             'job scripts were not generated. Perhaps you have specified ' + \
             'an invalid SCRIPTLANGUAGE ? '
-        print msg
+        print(msg)
         logger.error(msg)
         return (None, msg)
 
@@ -365,7 +366,7 @@ def create_job_script(
             # Therefore the codebase must be dynamicaly changed
             # for every job
 
-            if resource_config.has_key('PLATFORM') and \
+            if 'PLATFORM' in resource_config and \
                     resource_config['PLATFORM'] == 'ONE-CLICK':
 
                 # A two step link is made.
@@ -408,13 +409,13 @@ def create_job_script(
                 # Make link sandboxkey.oneclick -> sessionid.jvm
 
                 make_symlink(linkintermediate, linkloc, logger)
-        except Exception, err:
+        except Exception as err:
 
             # ######### End JVM SANDBOX HACK ###########
 
             msg = "File '%s' was not copied to the webserver home." % \
                   inputfiles_path
-            print '\nERROR: ' + str(err)
+            print('\nERROR: ' + str(err))
             logger.error(msg)
             return (None, msg)
 
@@ -501,7 +502,7 @@ def create_arc_job(
         logger.debug('translated to xRSL: %s' % xrsl)
         logger.debug('script:\n %s' % script)
 
-    except Exception, err:
+    except Exception as err:
         # error during translation, pass a message
         logger.error('Error during xRSL translation: %s' % err.__str__())
         return (None, err.__str__())
@@ -534,13 +535,13 @@ def create_arc_job(
         result = job_dict
 
     # when errors occurred, pass a message to the caller.
-    except arcwrapper.ARCWrapperError, err:
+    except arcwrapper.ARCWrapperError as err:
         msg = err.what()
         result = None  # unsuccessful
-    except arcwrapper.NoProxyError, err:
+    except arcwrapper.NoProxyError as err:
         msg = 'No Proxy found: %s' % err.what()
         result = None  # unsuccessful
-    except Exception, err:
+    except Exception as err:
         msg = err.__str__()
         result = None  # unsuccessful
 
@@ -576,9 +577,9 @@ def gen_job_script(
 
     script_language = resource_config['SCRIPTLANGUAGE']
     if not script_language in configuration.scriptlanguages:
-        print 'Unknown script language! (conflict with scriptlanguages in ' + \
+        print('Unknown script language! (conflict with scriptlanguages in ' + \
               'configuration?) %s not in %s' % (script_language,
-                                                configuration.scriptlanguages)
+                                                configuration.scriptlanguages))
         return False
 
     if script_language == 'python':
@@ -605,8 +606,8 @@ def gen_job_script(
             configuration.migserver_https_sid_url,
             localjobname, path_without_extension)
     else:
-        print 'Unknown script language! (is in configuration but not in ' + \
-              'jobscriptgenerator) %s ' % script_language
+        print('Unknown script language! (is in configuration but not in ' + \
+              'jobscriptgenerator) %s ' % script_language)
         return False
 
     # String concatenation in python: [X].join is much faster
@@ -850,7 +851,7 @@ def gen_job_script(
         try:
             user_ip = socket.gethostbyname_ex(res_fqdn)[2][0]
             allow_from += ',%s' % user_ip
-        except Exception, exc:
+        except Exception as exc:
             user_ip = None
             logger.warning("Skipping ip in 'from' on job mount key: %s" % exc)
         # Always minimize key access with all restrictions and source address
@@ -867,7 +868,7 @@ def gen_job_script(
     # has been uploaded): Job script can't safely/reliably clean up
     # after itself because of possible user interference.
 
-    if job_dictionary.has_key('JOBTYPE') and \
+    if 'JOBTYPE' in job_dictionary and \
             job_dictionary['JOBTYPE'].lower() == 'interactive':
 
         # interactive jobs have a .job file just containing a curl
@@ -892,7 +893,7 @@ def gen_job_script(
         write_file('\n'.join(job_array), configuration.mig_system_files +
                    job_dictionary['JOB_ID'] + '.interactivejob',
                    logger)
-        print interactivejobfile
+        print(interactivejobfile)
     else:
 
         # write files
@@ -916,6 +917,6 @@ def gen_job_script(
         write_file('\n'.join(jobsshpubkey_array),
                    os.path.join(configuration.mig_system_files,
                                 'job_mount', job_dictionary['SESSIONID'] +
-                                '.authorized_keys'), logger, umask=027)
+                                '.authorized_keys'), logger, umask=0o27)
 
     return True

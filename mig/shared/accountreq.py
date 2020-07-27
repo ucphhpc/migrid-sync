@@ -27,6 +27,7 @@
 
 """This module contains various helper contents for the certificate and OpenID
 account request handlers"""
+from __future__ import absolute_import
 
 import re
 import os
@@ -38,15 +39,15 @@ try:
 except ImportError:
     iso3166 = None
 
-from shared.base import force_utf8, canonical_user, client_id_dir, \
+from .shared.base import force_utf8, canonical_user, client_id_dir, \
     distinguished_name_to_user
-from shared.defaults import peers_fields, pending_peers_filename
-from shared.fileio import delete_file
+from .shared.defaults import peers_fields, pending_peers_filename
+from .shared.fileio import delete_file
 # Expose some helper variables for functionality backends
-from shared.safeinput import name_extras, password_extras, password_min_len, \
+from .shared.safeinput import name_extras, password_extras, password_min_len, \
     password_max_len, valid_password_chars, valid_name_chars, dn_max_len, \
     html_escape
-from shared.serial import load, dump
+from .shared.serial import load, dump
 
 
 def account_css_helpers(configuration):
@@ -373,7 +374,7 @@ def list_account_reqs(configuration):
         if not os.path.isdir(configuration.user_pending):
             try:
                 os.mkdir(configuration.user_pending)
-            except Exception, err:
+            except Exception as err:
                 logger.error(
                     'accountreq.py: not able to create directory %s: %s' %
                     (configuration.accountreq_home, err))
@@ -603,7 +604,7 @@ def manage_pending_peers(configuration, client_id, action, change_list):
                                       pending_peers_filename)
     try:
         pending_peers = load(pending_peers_path)
-    except Exception, exc:
+    except Exception as exc:
         if os.path.exists(pending_peers_path):
             _logger.warning("could not load pending peers from %s: %s" %
                             (pending_peers_path, exc))
@@ -623,7 +624,7 @@ def manage_pending_peers(configuration, client_id, action, change_list):
     try:
         dump(pending_peers, pending_peers_path)
         return True
-    except Exception, exc:
+    except Exception as exc:
         _logger.warning("could not save pending peers to %s: %s" %
                         (pending_peers_path, exc))
         return False

@@ -221,7 +221,7 @@ vgrid=%s"""\
         fd = open(conf_file_src, 'w')
         fd.write(res_conf_string)
         fd.close()
-    except Exception, e:
+    except Exception as e:
         o.out(e)
         o.reply_and_exit(o.ERROR)
 
@@ -242,7 +242,7 @@ vgrid=%s"""\
         fd = open(exe_pgid_file, 'w')
         fd.write('stopped')
         fd.close()
-    except Exception, e:
+    except Exception as e:
         o.out(e)
         o.reply_and_exit(o.ERROR)
 

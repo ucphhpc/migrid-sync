@@ -26,6 +26,7 @@
 #
 
 """Create a new VGrid"""
+from __future__ import absolute_import
 
 import os
 import traceback
@@ -33,23 +34,23 @@ import ConfigParser
 from email.utils import parseaddr
 from tempfile import NamedTemporaryFile
 
-from shared import returnvalues
-from shared.base import client_id_dir, generate_https_urls, valid_dir_input, \
+from .shared import returnvalues
+from .shared.base import client_id_dir, generate_https_urls, valid_dir_input, \
     distinguished_name_to_user
-from shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
+from .shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
     keyword_owners, keyword_members, default_vgrid_settings_limit
-from shared.fileio import write_file, make_symlink, delete_file
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables, find_entry
-from shared.safeeval import subprocess_call, subprocess_popen, \
+from .shared.fileio import write_file, make_symlink, delete_file
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables, find_entry
+from .shared.safeeval import subprocess_call, subprocess_popen, \
     subprocess_stdout, subprocess_pipe
-from shared.useradm import get_full_user_map
-from shared.vgrid import vgrid_is_owner, vgrid_set_owners, vgrid_set_members, \
+from .shared.useradm import get_full_user_map
+from .shared.vgrid import vgrid_is_owner, vgrid_set_owners, vgrid_set_members, \
     vgrid_set_resources, vgrid_set_triggers, vgrid_set_settings, \
     vgrid_set_workflow_jobs, vgrid_create_allowed, \
     vgrid_restrict_write_support, vgrid_flat_name, vgrid_settings
-from shared.vgridkeywords import get_settings_keywords_dict
+from .shared.vgridkeywords import get_settings_keywords_dict
 
 
 def signature():
@@ -156,7 +157,7 @@ the commands and work flows of this distributed SCM.
         if not repair or not os.path.isdir(scm_dir):
             os.mkdir(scm_dir)
         else:
-            os.chmod(scm_dir, 0755)
+            os.chmod(scm_dir, 0o755)
 
         # Create modified Mercurial Xgi scripts that use local scm repo.
         # In this way modification to one vgrid scm will not affect others.
@@ -190,12 +191,12 @@ the commands and work flows of this distributed SCM.
             # prevent users writing in Xgi-bin dirs to avoid remote execution
             # exploits
 
-            os.chmod(target_path, 0555)
-            os.chmod(target_dir, 0555)
+            os.chmod(target_path, 0o555)
+            os.chmod(target_dir, 0o555)
 
         if not repair or not os.path.isdir(target_scm_repo):
             os.mkdir(target_scm_repo)
-            os.chmod(target_scm_repo, 0755)
+            os.chmod(target_scm_repo, 0o755)
             readme_fd = open(repo_readme, 'w')
             readme_fd.write(readme_text)
             readme_fd.close()
@@ -210,16 +211,16 @@ the commands and work flows of this distributed SCM.
                              '-u"%s"' % commit_email, repo_readme])
         if not os.path.exists(repo_rc):
             open(repo_rc, 'w').close()
-        os.chmod(repo_rc, 0644)
+        os.chmod(repo_rc, 0o644)
         rc_fd = open(repo_rc, 'r+')
         rc_fd.seek(0, 2)
         rc_fd.write(rc_text)
         rc_fd.close()
-        os.chmod(repo_rc, 0444)
+        os.chmod(repo_rc, 0o444)
 
-        os.chmod(scm_dir, 0555)
+        os.chmod(scm_dir, 0o555)
         return True
-    except Exception, exc:
+    except Exception as exc:
         logger.error('Could not create vgrid public_base directory: %s' % exc)
         output_objects.append({'object_type': 'error_text', 'text':
                                'Could not create %s scm: %s' %
@@ -302,7 +303,7 @@ def create_tracker(
             os.mkdir(tracker_dir)
         else:
             logger.info('write enable tracker dir: %s' % tracker_dir)
-            os.chmod(tracker_dir, 0755)
+            os.chmod(tracker_dir, 0o755)
 
         # Create Trac project that uses local storage.
         # In this way modification to one vgrid tracker will not affect others.
@@ -406,25 +407,25 @@ def create_tracker(
                                 (deploy_cmd, proc.stdout.read(), retval))
 
         if not repair or not os.path.isdir(target_tracker_cgi_link):
-            os.chmod(target_tracker_var, 0755)
+            os.chmod(target_tracker_var, 0o755)
             os.symlink(target_tracker_bin, target_tracker_cgi_link)
         if not repair or not os.path.isdir(target_tracker_wsgi_link):
-            os.chmod(target_tracker_var, 0755)
+            os.chmod(target_tracker_var, 0o755)
             os.symlink(target_tracker_bin, target_tracker_wsgi_link)
         if not repair or not os.path.isdir(target_tracker_gvcache):
-            os.chmod(target_tracker_var, 0755)
+            os.chmod(target_tracker_var, 0o755)
             os.mkdir(target_tracker_gvcache)
         if not repair or not os.path.isdir(target_tracker_downloads):
-            os.chmod(target_tracker_var, 0755)
+            os.chmod(target_tracker_var, 0o755)
             os.mkdir(target_tracker_downloads)
         if not repair or not os.path.isdir(target_tracker_files):
-            os.chmod(target_tracker_var, 0755)
+            os.chmod(target_tracker_var, 0o755)
             os.mkdir(target_tracker_files)
         if not repair or not os.path.isdir(target_tracker_attachments):
-            os.chmod(target_tracker_var, 0755)
+            os.chmod(target_tracker_var, 0o755)
             os.mkdir(target_tracker_attachments)
         if not repair or not os.path.isfile(target_tracker_log_file):
-            os.chmod(target_tracker_log, 0755)
+            os.chmod(target_tracker_log, 0o755)
             open(target_tracker_log_file, 'w').close()
 
         if not repair or create_cmd:
@@ -591,7 +592,7 @@ body {
             # Touch WSGI scripts to force reload of running instances
             for name in os.listdir(target_tracker_wsgi_link):
                 os.utime(os.path.join(target_tracker_wsgi_link, name), None)
-    except Exception, exc:
+    except Exception as exc:
         create_status = False
         logger.error('create %s tracker failed: %s' % (label, exc))
         logger.error("creation env:\n%s" % admin_env)
@@ -613,25 +614,25 @@ body {
         for real_path in [os.path.join(target_tracker_var, i) for i in
                           ['db', 'attachments', 'files/attachments', 'log',
                            'gvcache', 'downloads']]:
-            perms[real_path] = 0755
+            perms[real_path] = 0o755
         for real_path in [os.path.join(target_tracker_var, 'db', 'trac.db'),
                           target_tracker_log_file]:
-            perms[real_path] = 0644
+            perms[real_path] = 0o644
         for real_path in [os.path.join(target_tracker_bin, i) for i in
                           ['trac.cgi', 'trac.wsgi']]:
-            perms[real_path] = 0555
+            perms[real_path] = 0o555
         for (root, dirs, files) in os.walk(tracker_dir):
             for name in dirs + files:
                 real_path = os.path.join(root, name)
-                if perms.has_key(real_path):
+                if real_path in perms:
                     logger.info('loosen permissions on %s' % real_path)
                     os.chmod(real_path, perms[real_path])
                 elif name in dirs:
-                    os.chmod(real_path, 0555)
+                    os.chmod(real_path, 0o555)
                 else:
-                    os.chmod(real_path, 0444)
-        os.chmod(tracker_dir, 0555)
-    except Exception, exc:
+                    os.chmod(real_path, 0o444)
+        os.chmod(tracker_dir, 0o555)
+    except Exception as exc:
         create_status = False
         logger.error('fix permissions on %s tracker failed: %s' % (label, exc))
         output_objects.append({'object_type': 'error_text', 'text':
@@ -655,7 +656,7 @@ def create_forum(
         if not repair or not os.path.isdir(forum_dir):
             os.mkdir(forum_dir)
         return True
-    except Exception, exc:
+    except Exception as exc:
         logger.error('Could not create forum directory: %s' % exc)
         output_objects.append({'object_type': 'error_text', 'text':
                                'Could not create %s forum: %s'
@@ -875,7 +876,7 @@ name, please try again with a new name!""" % label
 
     try:
         os.mkdir(vgrid_home_dir)
-    except Exception, exc:
+    except Exception as exc:
         logger.error('Could not create vgrid base directory: %s' % exc)
         output_objects.append(
             {'object_type': 'error_text', 'text':
@@ -921,7 +922,7 @@ public_base/%s/index.html to place it here)
 </body>
 </html>""" % (vgrid_name, label),
                 pub_entry_page, logger)
-    except Exception, exc:
+    except Exception as exc:
         logger.error('Could not create vgrid public_base directory: %s' % exc)
         output_objects.append(
             {'object_type': 'error_text', 'text':
@@ -968,7 +969,7 @@ private_base/%s/index.html to place it here)<br>
 </body>
 </html>""" % (vgrid_name, label),
                 priv_entry_page, logger)
-    except Exception, exc:
+    except Exception as exc:
         logger.error('Could not create vgrid private_base directory: %s' % exc)
         output_objects.append(
             {'object_type': 'error_text', 'text':
@@ -998,7 +999,7 @@ user home directory. Therefore it is also usable as source and destination
 for job input and output.
 """ % (vgrid_name, label, vgrid_name),
                 share_readme, logger, make_parent=False)
-    except Exception, exc:
+    except Exception as exc:
         logger.error('Could not create vgrid files directory: %s' % exc)
         output_objects.append({'object_type': 'error_text', 'text':
                                'Could not create %s files directory.' %

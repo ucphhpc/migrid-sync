@@ -28,6 +28,7 @@
 """Helper to traverse archives to do simple statistics e.g. about time to tape
 for finalized archives.
 """
+from __future__ import print_function
 
 import getopt
 import glob
@@ -42,7 +43,7 @@ from shared.serial import load
 def usage(name='archivestats.py'):
     """Usage help"""
 
-    print """Traverse all archives and collect stats about the ones in a particular state
+    print("""Traverse all archives and collect stats about the ones in a particular state
 Usage:
 %(name)s [OPTIONS] STATE
 Where OPTIONS may be one or more of:
@@ -52,7 +53,7 @@ Where OPTIONS may be one or more of:
    -f                  Force operations to continue past errors
    -h                  Show this help
    -v                  Verbose output
-""" % {'name': name}
+""" % {'name': name})
 
 
 # ## Main ###
@@ -69,8 +70,8 @@ if '__main__' == __name__:
     opt_args = 'a:b:c:fhv'
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], opt_args)
-    except getopt.GetoptError, err:
-        print 'Error: ', err.msg
+    except getopt.GetoptError as err:
+        print('Error: ', err.msg)
         usage()
         sys.exit(1)
 
@@ -103,28 +104,28 @@ if '__main__' == __name__:
         elif opt == '-v':
             verbose = True
         else:
-            print 'Error: %s not supported!' % opt
+            print('Error: %s not supported!' % opt)
 
     if conf_path and not os.path.isfile(conf_path):
-        print 'Failed to read configuration file: %s' % conf_path
+        print('Failed to read configuration file: %s' % conf_path)
         sys.exit(1)
 
     if verbose:
         if conf_path:
-            print 'using configuration in %s' % conf_path
+            print('using configuration in %s' % conf_path)
         else:
-            print 'using configuration from MIG_CONF (or default)'
+            print('using configuration from MIG_CONF (or default)')
 
     if len(args) == 1:
         state = args[0]
     else:
-        print "Unexpected args: %s" % args
+        print("Unexpected args: %s" % args)
         usage()
         sys.exit(1)
 
     if verbose:
-        print 'stats for archives in state %r between %s and %s' % (
-            state, after, before)
+        print('stats for archives in state %r between %s and %s' % (
+            state, after, before))
     retval = 0
     configuration = get_configuration_object(skip_log=True)
     meta_pattern = os.path.join(
@@ -153,13 +154,13 @@ if '__main__' == __name__:
             elif loc == 'tape':
                 helper['TAPE_PROMISE'] = "%s" % stamp
             else:
-                print "WARNING: unexpected location entry: %s %s" % (
-                    loc, stamp)
+                print("WARNING: unexpected location entry: %s %s" % (
+                    loc, stamp))
         if verbose:
-            print "%(FLAVOR)s archive %(ID)s created on %(CREATED_TIMESTAMP)s with disk time %(DISK_TIME)s and tape promise %(TAPE_PROMISE)s" % helper
+            print("%(FLAVOR)s archive %(ID)s created on %(CREATED_TIMESTAMP)s with disk time %(DISK_TIME)s and tape promise %(TAPE_PROMISE)s" % helper)
 
         csv.append(
             "%(CREATOR)s;%(ID)s;%(FLAVOR)s;%(CREATED_TIMESTAMP)s;%(DISK_TIME)s;%(TAPE_PROMISE)s" % helper)
 
-    print '\n'.join(csv)+'\n'
+    print('\n'.join(csv)+'\n')
     sys.exit(retval)

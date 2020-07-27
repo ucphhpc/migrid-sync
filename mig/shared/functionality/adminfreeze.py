@@ -26,19 +26,20 @@
 #
 
 """Request freeze of one or more files into a write-once archive"""
+from __future__ import absolute_import
 
 import datetime
 
-from shared import returnvalues
-from shared.defaults import upload_tmp_dir, trash_linkname, csrf_field, \
+from .shared import returnvalues
+from .shared.defaults import upload_tmp_dir, trash_linkname, csrf_field, \
     freeze_flavors, keyword_final, keyword_pending, keyword_updating, \
     keyword_auto, public_archive_index
-from shared.freezefunctions import get_frozen_archive, brief_freeze
-from shared.functional import validate_input_and_cert
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import man_base_js, man_base_html, fancy_upload_js, \
+from .shared.freezefunctions import get_frozen_archive, brief_freeze
+from .shared.functional import validate_input_and_cert
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.html import man_base_js, man_base_html, fancy_upload_js, \
     fancy_upload_html, themed_styles
-from shared.init import initialize_main_variables, find_entry
+from .shared.init import initialize_main_variables, find_entry
 
 
 def signature():

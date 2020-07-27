@@ -26,6 +26,7 @@
 #
 
 """This module tests the server pickle functions."""
+from __future__ import print_function
 
 import sys
 
@@ -36,16 +37,16 @@ def run_test(module_name):
     path = 'pickle.txt'
     pickle_data = {'abc': 123, 'hey': 'ged', 'red': 0x00}
 
-    print '-saving %s as the pickle: %s' % (pickle_data, path)
+    print('-saving %s as the pickle: %s' % (pickle_data, path))
     dump(pickle_data, path)
 
-    print '-truncating data in memory'
+    print('-truncating data in memory')
     pickle_data = None
-    print pickle_data
+    print(pickle_data)
 
-    print '-loading pickled data back from file %s' % path
+    print('-loading pickled data back from file %s' % path)
     pickle_data = load(path)
-    print pickle_data
+    print(pickle_data)
 
 
 module_prefix = 'local'
@@ -56,7 +57,7 @@ module_name = '%s%s' % (module_prefix, 'pickle')
 
 # import selected class
 
-print 'importing from %s' % module_name
+print('importing from %s' % module_name)
 eval(compile('from %s import *' % module_name, '', 'single'))
 
 # now test it

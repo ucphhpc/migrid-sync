@@ -26,15 +26,16 @@
 #
 
 """Get info about a resource"""
+from __future__ import absolute_import
 
-from shared import returnvalues
-from shared.conf import get_resource_configuration
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.init import initialize_main_variables, find_entry
-from shared.resconfkeywords import get_resource_keywords, \
+from .shared import returnvalues
+from .shared.conf import get_resource_configuration
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.init import initialize_main_variables, find_entry
+from .shared.resconfkeywords import get_resource_keywords, \
     get_exenode_keywords, get_storenode_keywords
-from shared.resource import anon_to_real_res_map
-from shared.vgridaccess import user_visible_res_confs, user_vgrid_access, \
+from .shared.resource import anon_to_real_res_map
+from .shared.vgridaccess import user_visible_res_confs, user_vgrid_access, \
     get_resource_map, OWNERS, CONF
 
 

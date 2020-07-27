@@ -26,14 +26,15 @@
 #
 
 """Script initialization helper functions"""
+from __future__ import absolute_import
 
 import os
 import time
 
-from shared.base import requested_page, extract_field
-from shared.conf import get_configuration_object
-from shared.html import themed_styles, themed_scripts
-from shared.settings import load_settings, load_widgets, load_profile
+from .shared.base import requested_page, extract_field
+from .shared.conf import get_configuration_object
+from .shared.html import themed_styles, themed_scripts
+from .shared.settings import load_settings, load_widgets, load_profile
 
 
 def make_basic_entry(kind, values):

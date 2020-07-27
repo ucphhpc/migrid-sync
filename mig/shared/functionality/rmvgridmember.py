@@ -26,19 +26,20 @@
 #
 
 """Remove a member from a vgrid"""
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables, find_entry
-from shared.useradm import get_full_user_map
-from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables, find_entry
+from .shared.useradm import get_full_user_map
+from .shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
     vgrid_is_member, vgrid_remove_members, vgrid_list_subvgrids, \
     allow_members_adm, vgrid_manage_allowed
-from shared.vgridaccess import unmap_inheritance
+from .shared.vgridaccess import unmap_inheritance
 
 
 def signature():
@@ -166,7 +167,7 @@ sub-%(vgrid_label)ss first and then try this operation again.""" %
     dst = user_dir + vgrid_name
     try:
         os.remove(dst)
-    except Exception, exc:
+    except Exception as exc:
 
         # ouch, not good. Email admin?
 
@@ -239,7 +240,7 @@ sub-%(vgrid_label)ss first and then try this operation again.""" %
 
                     try:
                         os.rmdir(current_path)
-                    except Exception, exc:
+                    except Exception as exc:
                         output_objects.append(
                             {'object_type': 'error_text',
                              'text': '''Error removing %s placeholder dirs:

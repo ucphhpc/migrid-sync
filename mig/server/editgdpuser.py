@@ -27,6 +27,7 @@
 
 """Edit MiG GDP user in the GDP database and all related GDP project users
 in the MiG user database and file system"""
+from __future__ import print_function
 
 import os
 import sys
@@ -41,7 +42,7 @@ from shared.useradm import init_user_adm
 def usage(name='editgdpuser.py'):
     """Usage help"""
 
-    print """Edit existing GDP user in the GDP database,
+    print("""Edit existing GDP user in the GDP database,
 and all related GDP project users in the MiG user database and file system.
 Allows user ID changes.
 Usage:
@@ -58,7 +59,7 @@ Where OPTIONS may be one or more of:
    -S ACCOUNT_STATE    Change GDP user account state to ACCOUNT_STATE
    -v                  Verbose output
 """\
-         % {'name': name}
+         % {'name': name})
 
 
 # ## Main ###
@@ -78,8 +79,8 @@ if '__main__' == __name__:
     opt_args = 'c:g:d:fhri:S:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
-    except getopt.GetoptError, err:
-        print 'Error: ', err.msg
+    except getopt.GetoptError as err:
+        print('Error: ', err.msg)
         usage()
         sys.exit(1)
 
@@ -104,22 +105,22 @@ if '__main__' == __name__:
         elif opt == '-v':
             verbose = True
         else:
-            print 'Error: %s not supported!' % opt
+            print('Error: %s not supported!' % opt)
 
     if conf_path and not os.path.isfile(conf_path):
-        print 'Failed to read configuration file: %s' % conf_path
+        print('Failed to read configuration file: %s' % conf_path)
         sys.exit(1)
 
     if verbose:
         if conf_path:
-            print 'using configuration in %s' % conf_path
+            print('using configuration in %s' % conf_path)
         else:
-            print 'using configuration from MIG_CONF (or default)'
+            print('using configuration from MIG_CONF (or default)')
 
     configuration = get_configuration_object(config_file=conf_path)
 
     if not user_id:
-        print 'Error: Existing user ID is required'
+        print('Error: Existing user ID is required')
         usage()
         sys.exit(1)
 
@@ -137,9 +138,9 @@ if '__main__' == __name__:
             pass
 
     elif not (account_state or reset_roles):
-        print "Error: Missing one or more of the arguments: " \
+        print("Error: Missing one or more of the arguments: " \
             + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] " \
-            + "[EMAIL]"
+            + "[EMAIL]")
         sys.exit(1)
 
     # Remove empty value fields
@@ -154,7 +155,7 @@ if '__main__' == __name__:
             user_id,
             account_state,
             gdp_db_path=gdp_db_path)
-        print msg
+        print(msg)
     elif reset_roles:
         (status, msg) = reset_account_roles(
             configuration,
@@ -163,7 +164,7 @@ if '__main__' == __name__:
             verbose=verbose)
     else:
         if force:
-            print "WARNING: -f disables rollback !!!"
+            print("WARNING: -f disables rollback !!!")
         (status, msg) = edit_gdp_user(
             configuration,
             user_id,
@@ -176,19 +177,19 @@ if '__main__' == __name__:
     if not verbose:
         # NOTE: If verbose everything is printed from functions in GDP
         if not status:
-            print "ERROR: " + msg
+            print("ERROR: " + msg)
         else:
-            print msg
+            print(msg)
 
     if status:
         if account_state:
-            print "OK: Account state set successfully"
+            print("OK: Account state set successfully")
         elif reset_roles:
-            print "OK: Project logins reset successfully"
+            print("OK: Project logins reset successfully")
         else:
-            print "OK: User modified successfully"
+            print("OK: User modified successfully")
     if not status:
-        print "ERROR: Failed to edit user: %r" % user_id
+        print("ERROR: Failed to edit user: %r" % user_id)
 
     if not status:
         sys.exit(1)

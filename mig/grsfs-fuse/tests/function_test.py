@@ -14,7 +14,7 @@ class Tests(object):
     def open_nonexisting(self):
         try:
             fd = open("therebutforthegraceofgodgoi", "r")
-        except IOError, v:
+        except IOError as v:
             assert v.errno == errno.ENOENT
             
             
@@ -69,9 +69,9 @@ class Tests(object):
         f = open("file", "w")
         f.write("foo!")
         f.close()
-        os.chmod("file", 0500)
+        os.chmod("file", 0o500)
         filemode = S_IMODE(os.stat("file").st_mode)        
-        assert filemode == 0500
+        assert filemode == 0o500
         
     def chown(self):
         """
@@ -155,7 +155,7 @@ def main():
                     os.unlink("file")
                 obj()
                 result = True
-            except Exception, v:
+            except Exception as v:
                 result = v
             results.append((test, result))
             

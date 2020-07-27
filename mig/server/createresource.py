@@ -29,6 +29,7 @@
 # Modifications by Martin Rehr
 
 """Add MiG resource from pending request file"""
+from __future__ import print_function
 
 import sys
 
@@ -49,7 +50,7 @@ The script adds .COUNTER to the resources unique id"""\
 
 if '__main__' == __name__:
     if not sys.argv[3:]:
-        print usage()
+        print(usage())
         sys.exit(1)
         
     resource_name = sys.argv[1].strip().lower()
@@ -61,6 +62,6 @@ if '__main__' == __name__:
     (create_status, msg) = create_resource(configuration, client_id,
                                            resource_name, pending_file)
     if create_status:
-        print 'Resource created with ID: %s.%s' % (resource_name, msg)
+        print('Resource created with ID: %s.%s' % (resource_name, msg))
     else:
-        print 'Resource creation failed: %s' % msg
+        print('Resource creation failed: %s' % msg)

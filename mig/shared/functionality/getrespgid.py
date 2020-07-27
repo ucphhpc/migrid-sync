@@ -26,16 +26,17 @@
 #
 
 """This is a job kill helper for resources"""
+from __future__ import absolute_import
 
 import os
 import fcntl
 
-from shared import returnvalues
-from shared.base import valid_dir_input
-from shared.findtype import is_owner
-from shared.functional import validate_input, REJECT_UNSET
-from shared.httpsclient import check_source_ip
-from shared.init import initialize_main_variables
+from .shared import returnvalues
+from .shared.base import valid_dir_input
+from .shared.findtype import is_owner
+from .shared.functional import validate_input, REJECT_UNSET
+from .shared.httpsclient import check_source_ip
+from .shared.init import initialize_main_variables
 
 
 def signature():
@@ -108,7 +109,7 @@ exe %s, client_id %s''' % (unique_resource_name, exe_name, client_id))
     # Check that resource address matches request source to make DoS harder
     try:
         check_source_ip(remote_ip, unique_resource_name)
-    except ValueError, vae:
+    except ValueError as vae:
         output_objects.append({'object_type': 'error_text', 'text':
                                'invalid request: %s' % vae})
         logger.error("Invalid put pgid: %s" % vae)
@@ -134,7 +135,7 @@ exe %s, client_id %s''' % (unique_resource_name, exe_name, client_id))
         pgid_file.close()
 
         msg = "%s\n'%s' PGID succesfully retrieved." % (pgid, res_type)
-    except Exception, err:
+    except Exception as err:
         if 'FE' == res_type:
             msg = "Resource frontend: '%s' is stopped." % unique_resource_name
         elif 'EXE' == res_type:

@@ -26,9 +26,10 @@
 #
 
 """Provide the file system specific functions of os.path for distos"""
+from __future__ import absolute_import
 
 import stat
-import base
+from . import base
 
 # publish all relevant path functions and override the ones that are
 # file location specific
@@ -43,7 +44,7 @@ def isfile(path):
     try:
         stat_tuple = base.stat(path)
         mode = stat_tuple[stat.ST_MODE]
-    except OSError, ose:
+    except OSError as ose:
         return False
     return stat.S_ISREG(mode)
 
@@ -54,7 +55,7 @@ def isdir(path):
     try:
         stat_tuple = base.stat(path)
         mode = stat_tuple[stat.ST_MODE]
-    except OSError, ose:
+    except OSError as ose:
         return False
     return stat.S_ISDIR(mode)
 
@@ -65,7 +66,7 @@ def islink(path):
     try:
         stat_tuple = base.lstat(path)
         mode = stat_tuple[stat.ST_MODE]
-    except OSError, ose:
+    except OSError as ose:
         return False
     return stat.S_ISLNK(mode)
 
@@ -75,7 +76,7 @@ def exists(path):
 
     try:
         stat_tuple = base.stat(path)
-    except OSError, ose:
+    except OSError as ose:
         return False
     return True
 
@@ -141,7 +142,7 @@ def samefile(path1, path2):
         inode1 = stat_tuple1[stat.ST_INO]
         stat_tuple2 = base.stat(path2)
         inode2 = stat_tuple2[stat.ST_INO]
-    except OSError, ose:
+    except OSError as ose:
         return False
     return inode1 == inode2
 

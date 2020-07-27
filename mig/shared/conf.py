@@ -26,18 +26,19 @@
 #
 
 """Configuration functions"""
+from __future__ import absolute_import
 
 import os
 import sys
 
-from shared.fileio import unpickle
+from .shared.fileio import unpickle
 
 
 def get_configuration_object(config_file=None, skip_log=False):
     """Simple helper to call the general configuration init. Optional skip_log
     argument is passed on to allow skipping the default log initialization.
     """
-    from shared.configuration import Configuration
+    from .shared.configuration import Configuration
     if config_file:
         _config_file = config_file
     elif os.environ.get('MIG_CONF', None):
@@ -106,7 +107,7 @@ def get_resource_exe(resource_config, exe_name, logger):
 
 def get_resource_all_exes(resource_config, logger):
     msg = ''
-    if not resource_config.has_key('EXECONFIG'):
+    if 'EXECONFIG' not in resource_config:
         msg = 'No exe hosts configured!'
         logger.error(msg)
         return (False, msg)
@@ -160,7 +161,7 @@ def get_resource_store(resource_config, store_name, logger):
 
 def get_resource_all_stores(resource_config, logger):
     msg = ''
-    if not resource_config.has_key('STORECONFIG'):
+    if 'STORECONFIG' not in resource_config:
         msg = 'No store hosts configured!'
         logger.error(msg)
         return (False, msg)

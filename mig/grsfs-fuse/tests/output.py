@@ -6,6 +6,7 @@ output.py
 Created by Jan Wiberg on 2010-03-21.
 Copyright (c) 2010 __MyCompanyName__. All rights reserved.
 """
+from __future__ import print_function
 
 import sys
 import os
@@ -18,10 +19,10 @@ def output_console(result):
         """outputs a single line"""
         name, meta, status = test
         ret, why = status
-        print "%-20s: %s" % (name, "OK" if ret else "Failed! (%s)" % why)
+        print("%-20s: %s" % (name, "OK" if ret else "Failed! (%s)" % why))
     
-    print "TEST RESULTS"
-    print 80*'-'
+    print("TEST RESULTS")
+    print(80*'-')
     for test in result:
         output_test(test)
         

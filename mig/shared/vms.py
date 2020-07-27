@@ -31,6 +31,7 @@
 virtual  machines, creation of mRSL for start, grabbing status, listing
 machines etc.
 """
+from __future__ import absolute_import
 
 import datetime
 import ConfigParser
@@ -41,10 +42,10 @@ import shutil
 from glob import glob
 from tempfile import NamedTemporaryFile
 
-from shared.base import client_id_dir
-from shared.defaults import any_vgrid
-from shared.fileio import unpickle, remove_rec
-from shared.job import new_job
+from .shared.base import client_id_dir
+from .shared.defaults import any_vgrid
+from .shared.fileio import unpickle, remove_rec
+from .shared.job import new_job
 
 sys_location = 'sys_location.txt'
 vm_base = 'vms'

@@ -35,6 +35,8 @@ languages. Called without arguments the generator creates scripts
 for all supported languages. If one or more languages are supplied
 as arguments, only those languages will be generated.
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 import sys
 import getopt
@@ -47,10 +49,10 @@ __version__ = '$Revision$'
 
 _userscript_version = __version__
 
-from shared.base import get_xgi_bin
-from shared.conf import get_configuration_object
-from shared.defaults import file_dest_sep, upload_block_size, keyword_auto
-from shared.publicscriptgen import *
+from .shared.base import get_xgi_bin
+from .shared.conf import get_configuration_object
+from .shared.defaults import file_dest_sep, upload_block_size, keyword_auto
+from .shared.publicscriptgen import *
 _publicscript_version = __version__
 __version__ = '%s,%s' % (_userscript_version, _publicscript_version)
 
@@ -63,23 +65,23 @@ __version__ = '%s,%s' % (_userscript_version, _publicscript_version)
 def usage():
     """ Usage helper"""
 
-    print 'Usage: userscriptgen.py OPTIONS [LANGUAGE ... ]'
-    print 'Where OPTIONS include:'
-    print ' -c CURL_CMD\t: Use curl from CURL_CMD'
-    print ' -d DST_DIR\t: write scripts to DST_DIR'
-    print ' -h\t\t: Print this help'
-    print ' -l\t\t: Do not generate shared library module'
-    print ' -p PYTHON_CMD\t: Use PYTHON_CMD as python interpreter'
-    print ' -s SH_CMD\t: Use SH_CMD as sh interpreter'
-    print ' -t\t\t: Generate self testing script'
-    print ' -v\t\t: Verbose output'
-    print ' -V\t\t: Show version'
+    print('Usage: userscriptgen.py OPTIONS [LANGUAGE ... ]')
+    print('Where OPTIONS include:')
+    print(' -c CURL_CMD\t: Use curl from CURL_CMD')
+    print(' -d DST_DIR\t: write scripts to DST_DIR')
+    print(' -h\t\t: Print this help')
+    print(' -l\t\t: Do not generate shared library module')
+    print(' -p PYTHON_CMD\t: Use PYTHON_CMD as python interpreter')
+    print(' -s SH_CMD\t: Use SH_CMD as sh interpreter')
+    print(' -t\t\t: Generate self testing script')
+    print(' -v\t\t: Verbose output')
+    print(' -V\t\t: Show version')
 
 
 def version():
     """Version info"""
 
-    print 'MiG User Script Generator: %s' % __version__
+    print('MiG User Script Generator: %s' % __version__)
 
 
 def version_function(lang):
@@ -1077,7 +1079,7 @@ def cancel_function(configuration, lang, curl_cmd, curl_flags=''):
         post_data = "'%s;flags=%s;action=cancel' % (default_args, server_flags)"
         urlenc_data = "job_list"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1110,7 +1112,7 @@ def cat_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1143,7 +1145,7 @@ def cp_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = 'src_list + ["dst=" + dst]'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1178,7 +1180,7 @@ def createbackup_function(configuration, lang, curl_cmd, curl_flags='--compresse
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = '["freeze_name=" + freeze_name, "freeze_copy_0=" + src]'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1214,7 +1216,7 @@ def createfreeze_function(configuration, lang, curl_cmd, curl_flags='--compresse
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = '["flavor=" + flavor, "freeze_name=" + freeze_name, "freeze_description=" + freeze_description, "freeze_author=" + freeze_author, "freeze_department=" + freeze_department, "freeze_organization=" + freeze_organization, "freeze_publish=" + freeze_publish, "freeze_copy_0=" + src]'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1255,7 +1257,7 @@ def datatransfer_function(configuration, lang, curl_cmd, curl_flags='--compresse
         urlenc_data = '["transfer_pw=" + transfer_pw, "notify=" + notify] + '
         urlenc_data += 'transfer_src + ["transfer_dst=" + transfer_dst]'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1293,7 +1295,7 @@ def deletebackup_function(configuration, lang, curl_cmd, curl_flags='--compresse
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = '["freeze_id=" + freeze_id]'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1327,7 +1329,7 @@ def deletefreeze_function(configuration, lang, curl_cmd, curl_flags='--compresse
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = '["flavor=" + flavor, "freeze_id=" + freeze_id]'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1362,7 +1364,7 @@ def doc_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = '["search=" + search, "show=" + show]'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1397,7 +1399,7 @@ def expand_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         post_data = "'%s;flags=%s;with_dest=%s' % (default_args, server_flags, destinations)"
         urlenc_data = 'path_list'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1431,7 +1433,7 @@ def freezedb_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     elif lang == 'python':
         post_data = "'%s;operation=showlist;flags=%s' % (default_args, server_flags)"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1468,7 +1470,7 @@ def imagepreview_function(configuration, lang, curl_cmd, curl_flags='--compresse
         urlenc_data = '["path=" + path] + arg_list'
 
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1512,7 +1514,7 @@ def get_function(configuration, lang, curl_cmd,
         relative_url = "'%s/%s' % (auth_redir, src_path.lstrip('/'))"
         curl_target = "['--output', dst_path]"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1548,7 +1550,7 @@ def grep_function(configuration, lang, curl_cmd, curl_flags=''):
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = 'path_list + ["pattern=" + pattern]'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1581,7 +1583,7 @@ def head_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         post_data = "'%s;flags=%s;lines=%s' % (default_args, server_flags, lines)"
         urlenc_data = "path_list"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1616,7 +1618,7 @@ def jobaction_function(configuration, lang, curl_cmd, curl_flags=''):
         post_data = "'%s;flags=%s;action=%s' % (default_args, server_flags, action)"
         urlenc_data = "job_list"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1651,7 +1653,7 @@ def liveio_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         post_data = "'%s;flags=%s;action=%s' % (default_args, server_flags, action)"
         urlenc_data = 'src_list + ["job_id=" + job_id, "dst=" + dst]'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1685,7 +1687,7 @@ def ls_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1717,7 +1719,7 @@ def login_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     elif lang == 'python':
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     # Strip /id suffix from openid provider URL to get the required base form
@@ -1751,7 +1753,7 @@ def logout_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     elif lang == 'python':
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     # Strip /id suffix from openid provider URL to get the required base form
@@ -1788,7 +1790,7 @@ def md5sum_function(configuration, lang, curl_cmd, curl_flags=''):
         post_data = "'%s;flags=%s;hash_algo=md5' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1821,7 +1823,7 @@ def mkdir_function(configuration, lang, curl_cmd, curl_flags=''):
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1855,7 +1857,7 @@ def mqueue_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         post_data = "'%s;flags=%s;action=%s' % (default_args, server_flags, action)"
         urlenc_data = '["queue=" + queue, "msg=" + msg]'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1888,7 +1890,7 @@ def mv_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = 'src_list + ["dst=" + dst]'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1933,7 +1935,7 @@ def put_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         curl_target = \
             "['--upload-file', src_path, '--header', '%s' % content_type, '-X', put_arg]"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -1964,7 +1966,7 @@ def put_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         content_type = 'Content-Type:extractpackage'
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
     s += curl_perform(
         lang,
@@ -2007,7 +2009,7 @@ def read_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         #urlenc_data = '["src_path=%s" % src_path]'
         curl_target = "['--output', dst_path]"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -2042,7 +2044,7 @@ def resubmit_function(configuration, lang, curl_cmd, curl_flags=''):
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "job_list"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -2075,7 +2077,7 @@ def rm_function(configuration, lang, curl_cmd, curl_flags=''):
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -2108,7 +2110,7 @@ def rmdir_function(configuration, lang, curl_cmd, curl_flags=''):
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -2143,7 +2145,7 @@ def scripts_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = '["lang=" + lang, "flavor=" + flavor, "script_dir=" + script_dir]'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -2179,7 +2181,7 @@ def sha1sum_function(configuration, lang, curl_cmd, curl_flags=''):
         post_data = "'%s;flags=%s;hash_algo=sha1' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -2217,7 +2219,7 @@ def sharelink_function(configuration, lang, curl_cmd, curl_flags='--compressed')
         post_data += "write_access, expire)"
         urlenc_data = '["path=" + path, "invite=" + invite, "msg=" + msg]'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -2254,7 +2256,7 @@ def showbackup_function(configuration, lang, curl_cmd, curl_flags='--compressed'
         post_data = "'%s;operation=showlist;flags=%s' % (default_args, server_flags)"
         urlenc_data = '["freeze_id=" + freeze_id]'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -2289,7 +2291,7 @@ def showfreeze_function(configuration, lang, curl_cmd, curl_flags='--compressed'
         post_data = "'%s;operation=showlist;flags=%s' % (default_args, server_flags)"
         urlenc_data = '["flavor=" + flavor, "freeze_id=" + freeze_id]'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -2322,7 +2324,7 @@ def stat_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -2355,7 +2357,7 @@ def status_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         post_data = "'%s;flags=%s;max_jobs=%s' % (default_args, server_flags, max_job_count)"
         urlenc_data = "job_list"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -2388,7 +2390,7 @@ def submit_function(configuration, lang, curl_cmd, curl_flags=''):
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     put_helper = put_function(configuration, lang, curl_cmd, curl_flags)
@@ -2430,7 +2432,7 @@ def tail_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         post_data = "'%s;flags=%s;lines=%s' % (default_args, server_flags, lines)"
         urlenc_data = "path_list"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -2907,7 +2909,7 @@ def test_function(configuration, lang, curl_cmd, curl_flags=''):
     return ret
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s += end_function(lang, 'test_op')
@@ -2926,7 +2928,7 @@ def touch_function(configuration, lang, curl_cmd, curl_flags=''):
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -2959,7 +2961,7 @@ def truncate_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         post_data = "'%s;flags=%s;size=%s' % (default_args, server_flags, size)"
         urlenc_data = "path_list"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -2993,7 +2995,7 @@ def twofactor_function(configuration, lang, curl_cmd, curl_flags='--compressed')
         post_data = "'%s;flags=%s;action=%s;token=%s' % (default_args, server_flags, action, token)"
         urlenc_data = '["redirect_url=" + redirect_url]'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -3028,7 +3030,7 @@ def unzip_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = 'src_list + ["dst=" + dst]'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -3075,7 +3077,7 @@ def uploadchunked_function(configuration, lang, curl_cmd,
         # Don't require external echo, just read first byte from path
         curl_stdin_move = 'path'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -3170,7 +3172,7 @@ def wc_function(configuration, lang, curl_cmd, curl_flags=''):
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -3218,7 +3220,7 @@ def write_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         #urlenc_data = '["path=%s" % dst_path]'
         curl_target = "['--upload-file', src_path]"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -3255,7 +3257,7 @@ def zip_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         post_data = "'%s;flags=%s' % (default_args, server_flags)"
         urlenc_data = 'src_list + ["current_dir=" + current_dir, "dst=" + dst]'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -3372,7 +3374,7 @@ for pattern in %s:
     %s += src_list
 """ % expanded_list
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     return s
@@ -3413,7 +3415,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -3444,7 +3446,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -3494,7 +3496,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -3528,7 +3530,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -3574,7 +3576,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -3638,7 +3640,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -3670,7 +3672,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -3704,7 +3706,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -3760,7 +3762,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -3790,7 +3792,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -3835,7 +3837,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -3903,7 +3905,7 @@ for line in expanded_list:
 sys.exit(status)
 """ % (file_dest_sep, file_dest_sep)
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -3942,7 +3944,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -3981,7 +3983,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4018,7 +4020,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4064,7 +4066,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4118,7 +4120,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4149,7 +4151,7 @@ print('\\n'.join(out))
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4180,7 +4182,7 @@ print('\\n'.join(out))
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4213,7 +4215,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4253,7 +4255,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4286,7 +4288,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4327,7 +4329,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4480,7 +4482,7 @@ for src in src_list:
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4510,7 +4512,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4541,7 +4543,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4586,7 +4588,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4626,7 +4628,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4668,7 +4670,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4701,7 +4703,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4734,7 +4736,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4766,7 +4768,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4800,7 +4802,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4831,7 +4833,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4874,7 +4876,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4936,7 +4938,7 @@ else:
     sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -4975,7 +4977,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -5118,7 +5120,7 @@ for ext in ('txt', 'mRSL'):
     rm_file(['path=' + ext_helper])
 """ % script_ops
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -5153,7 +5155,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -5193,7 +5195,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -5226,7 +5228,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -5267,7 +5269,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -5450,7 +5452,7 @@ for src in src_list:
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -5496,7 +5498,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -5526,7 +5528,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -5577,7 +5579,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -6034,7 +6036,7 @@ def generate_lib(configuration, script_ops, scripts_languages, dest_dir='.'):
         script += check_conf_readable(lang)
         script += configure(lang)
 
-        write_script(script, dest_dir + os.sep + script_name, mode=0644)
+        write_script(script, dest_dir + os.sep + script_name, mode=0o644)
 
     return True
 
@@ -7015,8 +7017,8 @@ if __name__ == '__main__':
     opts_str = 'c:d:hlp:s:tvV'
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], opts_str)
-    except getopt.GetoptError, goe:
-        print 'Error: %s' % goe
+    except getopt.GetoptError as goe:
+        print('Error: %s' % goe)
         usage()
         sys.exit(1)
 
@@ -7044,7 +7046,7 @@ if __name__ == '__main__':
             usage()
             sys.exit(0)
         else:
-            print 'Error: %s not supported!' % opt
+            print('Error: %s not supported!' % opt)
             usage()
             sys.exit(1)
 
@@ -7056,7 +7058,7 @@ if __name__ == '__main__':
     verbose(verbose_mode, 'writing script to: %s' % dest_dir)
 
     if not os.path.isdir(dest_dir):
-        print "Error: destination directory doesn't exist!"
+        print("Error: destination directory doesn't exist!")
         sys.exit(1)
 
     argc = len(args)
@@ -7067,7 +7069,7 @@ if __name__ == '__main__':
         languages = [(sh_lang, sh_cmd, sh_ext), (python_lang,
                                                  python_cmd, python_ext)]
         for (lang, cmd, ext) in languages:
-            print 'Generating %s scripts' % lang
+            print('Generating %s scripts' % lang)
     else:
         languages = []
 
@@ -7081,10 +7083,10 @@ if __name__ == '__main__':
                 interpreter = python_cmd
                 extension = python_ext
             else:
-                print 'Unknown script language: %s - ignoring!' % lang
+                print('Unknown script language: %s - ignoring!' % lang)
                 continue
 
-            print 'Generating %s scripts' % lang
+            print('Generating %s scripts' % lang)
 
             languages.append((lang, interpreter, extension))
 

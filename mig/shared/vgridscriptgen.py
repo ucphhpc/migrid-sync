@@ -30,6 +30,8 @@ without arguments the generator creates scripts for all supported languages. If
 one or more languages are supplied as arguments, only those languages will be
 generated.
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 # Generator version (automagically updated by svn)
 
@@ -39,9 +41,9 @@ import os
 import sys
 import getopt
 
-from shared.base import get_xgi_bin
-from shared.conf import get_configuration_object
-from shared.publicscriptgen import *
+from .shared.base import get_xgi_bin
+from .shared.conf import get_configuration_object
+from .shared.publicscriptgen import *
 
 # ######################################
 # Script generator specific functions #
@@ -51,19 +53,19 @@ from shared.publicscriptgen import *
 
 def usage():
     """Use help"""
-    print 'Usage: vgridscriptgen.py OPTIONS [LANGUAGE ... ]'
-    print 'Where OPTIONS include:'
-    print ' -c CURL_CMD\t: Use curl from CURL_CMD'
-    print ' -h\t\t: Print this help'
-    print ' -p PYTHON_CMD\t: Use PYTHON_CMD as python interpreter'
-    print ' -s SH_CMD\t: Use SH_CMD as sh interpreter'
-    print ' -v\t\t: Verbose output'
-    print ' -V\t\t: Show version'
+    print('Usage: vgridscriptgen.py OPTIONS [LANGUAGE ... ]')
+    print('Where OPTIONS include:')
+    print(' -c CURL_CMD\t: Use curl from CURL_CMD')
+    print(' -h\t\t: Print this help')
+    print(' -p PYTHON_CMD\t: Use PYTHON_CMD as python interpreter')
+    print(' -s SH_CMD\t: Use SH_CMD as sh interpreter')
+    print(' -v\t\t: Verbose output')
+    print(' -V\t\t: Show version')
 
 
 def version():
     """Version info"""
-    print 'MiG VGrid Script Generator: %s' % __version__
+    print('MiG VGrid Script Generator: %s' % __version__)
 
 
 def version_function(lang):
@@ -181,7 +183,7 @@ def vgrid_single_argument_function(
         post_data = "'%s' % default_args"
         urlenc_data = "['%s=' + %s]" % (first_arg, first_arg)
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -223,7 +225,7 @@ def vgrid_single_argument_upload_function(
         curl_target = '"--header Content-Type:%s --upload-file " + %s' % \
                       (content_type, first_arg)
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -266,7 +268,7 @@ def vgrid_two_arguments_function(
         urlenc_data = "['%s=' + %s, '%s=' + %s]" % (first_arg, first_arg,
                                                     second_arg, second_arg)
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -327,7 +329,7 @@ def vgrid_ten_arguments_function(
         urlenc_data += "'%s=' + %s, '%s=' + %s]" % (ninth_arg, ninth_arg,
                                                     tenth_arg, tenth_arg)
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     s = ''
@@ -386,7 +388,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -422,7 +424,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -476,7 +478,7 @@ print ''.join(out),
 sys.exit(status)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -824,8 +826,8 @@ if __name__ == '__main__':
     opts_str = 'c:d:hp:s:tvV'
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], opts_str)
-    except getopt.GetoptError, goe:
-        print 'Error: %s' % goe
+    except getopt.GetoptError as goe:
+        print('Error: %s' % goe)
         usage()
         sys.exit(1)
 
@@ -851,7 +853,7 @@ if __name__ == '__main__':
             usage()
             sys.exit(0)
         else:
-            print 'Error: %s not supported!' % opt
+            print('Error: %s not supported!' % opt)
             usage()
             sys.exit(1)
 
@@ -863,7 +865,7 @@ if __name__ == '__main__':
     verbose(verbose_mode, 'writing script to: %s' % dest_dir)
 
     if not os.path.isdir(dest_dir):
-        print "Error: destination directory doesn't exist!"
+        print("Error: destination directory doesn't exist!")
         sys.exit(1)
 
     argc = len(args)
@@ -874,7 +876,7 @@ if __name__ == '__main__':
         languages = [(sh_lang, sh_cmd, sh_ext), (python_lang,
                                                  python_cmd, python_ext)]
         for (lang, cmd, ext) in languages:
-            print 'Generating %s scripts' % lang
+            print('Generating %s scripts' % lang)
     else:
         languages = []
 
@@ -888,10 +890,10 @@ if __name__ == '__main__':
                 interpreter = python_cmd
                 extension = python_ext
             else:
-                print 'Unknown script language: %s - ignoring!' % lang
+                print('Unknown script language: %s - ignoring!' % lang)
                 continue
 
-            print 'Generating %s scripts' % lang
+            print('Generating %s scripts' % lang)
 
             languages.append((lang, interpreter, extension))
 

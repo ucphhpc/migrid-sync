@@ -27,6 +27,7 @@
 
 # Test correct sfae handling of a number of expressions
 
+from __future__ import print_function
 import sys
 import math
 
@@ -39,13 +40,13 @@ def test(expr):
 
     indent = '\t'
     try:
-        print 'testing expr:', expr
+        print('testing expr:', expr)
         val = SafeEval.math_expr_eval(expr)
-        print indent, '[ OK ]:', indent, val
-    except ValueError, v:
-        print indent, '[ ERROR ]:', indent, 'ValueError:', v
-    except Exception, e:
-        print indent, '[ ERROR ]:', indent, 'Exception:', e
+        print(indent, '[ OK ]:', indent, val)
+    except ValueError as v:
+        print(indent, '[ ERROR ]:', indent, 'ValueError:', v)
+    except Exception as e:
+        print(indent, '[ ERROR ]:', indent, 'Exception:', e)
 
 
 # end test

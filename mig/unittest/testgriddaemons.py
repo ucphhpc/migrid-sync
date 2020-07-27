@@ -26,6 +26,7 @@
 #
 
 """Unit tests for grid daemon helper functions"""
+from __future__ import print_function
 
 import sys
 import time
@@ -50,97 +51,97 @@ if __name__ == "__main__":
         'user@some-domain.org', 'DUMMY_SESSION_ID'
     test_pw = "T3stp4ss"
     invalid_id = 'root'
-    print "Running unit test on rate limit functions"
-    print "Force expire all"
+    print("Running unit test on rate limit functions")
+    print("Force expire all")
     expired = expire_rate_limit(conf, test_proto, fail_cache=0)
-    print "Expired: %s" % expired
+    print("Expired: %s" % expired)
     this_pw = test_pw
-    print "Emulate rate limit"
+    print("Emulate rate limit")
     for i in range(default_max_user_hits-1):
         hit = hit_rate_limit(conf, test_proto, test_address, test_id)
-        print "Blocked: %s" % hit
+        print("Blocked: %s" % hit)
         update_rate_limit(conf, test_proto, test_address, test_id, False,
                           this_pw)
-        print "Updated fail for %s:%s from %s" % \
-              (test_id, this_pw, test_address)
+        print("Updated fail for %s:%s from %s" % \
+              (test_id, this_pw, test_address))
         this_pw += 'x'
         time.sleep(1)
     hit = hit_rate_limit(conf, test_proto, test_address, test_id)
-    print "Blocked: %s" % hit
-    print "Check with original user and password again"
+    print("Blocked: %s" % hit)
+    print("Check with original user and password again")
     update_rate_limit(conf, test_proto, test_address, test_id, False, test_pw)
     hit = hit_rate_limit(conf, test_proto, test_address, test_id)
-    print "Blocked: %s" % hit
-    print "Check with original user and new password again to hit limit"
+    print("Blocked: %s" % hit)
+    print("Check with original user and new password again to hit limit")
     update_rate_limit(conf, test_proto, test_address, test_id, False, this_pw)
     hit = hit_rate_limit(conf, test_proto, test_address, test_id)
-    print "Blocked: %s" % hit
+    print("Blocked: %s" % hit)
     other_proto, other_address = "BOGUS", '127.10.20.30'
     other_id, other_pw = 'other@some.org', "0th3rP4ss"
-    print "Update with other proto"
+    print("Update with other proto")
     update_rate_limit(conf, other_proto, test_address, test_id, False, test_pw)
-    print "Update with other address"
+    print("Update with other address")
     update_rate_limit(conf, test_proto, other_address, test_id, False, test_pw)
-    print "Update with other user"
+    print("Update with other user")
     update_rate_limit(conf, test_proto, test_address, other_id, False, test_pw)
-    print "Check with same user from other address"
+    print("Check with same user from other address")
     hit = hit_rate_limit(conf, test_proto, other_address, test_id)
-    print "Blocked: %s" % hit
-    print "Check with other user from same address"
+    print("Blocked: %s" % hit)
+    print("Check with other user from same address")
     hit = hit_rate_limit(conf, test_proto, test_address, other_id)
-    print "Blocked: %s" % hit
+    print("Blocked: %s" % hit)
     time.sleep(2)
-    print "Force expire some entries"
+    print("Force expire some entries")
     expired = expire_rate_limit(conf, test_proto,
                                 fail_cache=default_max_user_hits)
-    print "Expired: %s" % expired
-    print "Test reset on success"
+    print("Expired: %s" % expired)
+    print("Test reset on success")
     hit = hit_rate_limit(conf, test_proto, test_address, test_id)
-    print "Blocked: %s" % hit
+    print("Blocked: %s" % hit)
     update_rate_limit(conf, test_proto, test_address, test_id, True, test_pw)
-    print "Updated success for %s from %s" % (test_id, test_address)
+    print("Updated success for %s from %s" % (test_id, test_address))
     hit = hit_rate_limit(conf, test_proto, test_address, test_id)
-    print "Blocked: %s" % hit
-    print "Check with same user from other address"
+    print("Blocked: %s" % hit)
+    print("Check with same user from other address")
     hit = hit_rate_limit(conf, test_proto, other_address, test_id)
-    print "Blocked: %s" % hit
-    print "Check with other user from same address"
+    print("Blocked: %s" % hit)
+    print("Check with other user from same address")
     hit = hit_rate_limit(conf, test_proto, test_address, other_id)
-    print "Blocked: %s" % hit
-    print "Check with invalid user from same address"
+    print("Blocked: %s" % hit)
+    print("Check with invalid user from same address")
     hit = hit_rate_limit(conf, test_proto, test_address, invalid_id)
-    print "Blocked: %s" % hit
-    print "Test active session counting"
+    print("Blocked: %s" % hit)
+    print("Test active session counting")
     active_count = active_sessions(conf, test_proto, test_id)
-    print "Open sessions: %d" % active_count
-    print "Clear sessions"
+    print("Open sessions: %d" % active_count)
+    print("Clear sessions")
     clear_sessions(conf, test_proto)
     active_count = active_sessions(conf, test_proto, test_id)
-    print "Open sessions: %d" % active_count
-    print "Track open session"
+    print("Open sessions: %d" % active_count)
+    print("Track open session")
     track_open_session(conf, test_proto, test_id, test_address, test_port)
     active_count = active_sessions(conf, test_proto, test_id)
-    print "Open sessions: %d" % active_count
-    print "Track open session"
+    print("Open sessions: %d" % active_count)
+    print("Track open session")
     track_open_session(conf, test_proto, test_id, test_address, test_port+1)
     active_count = active_sessions(conf, test_proto, test_id)
-    print "Open sessions: %d" % active_count
-    print "Track close session"
+    print("Open sessions: %d" % active_count)
+    print("Track close session")
     track_close_session(conf, test_proto, test_id, test_address, test_port, )
     active_count = active_sessions(conf, test_proto, test_id)
-    print "Open sessions: %d" % active_count
-    print "Track close session"
+    print("Open sessions: %d" % active_count)
+    print("Track close session")
     track_close_session(conf, test_proto, test_id, test_address, test_port+1, )
     active_count = active_sessions(conf, test_proto, test_id)
-    print "Open sessions: %d" % active_count
-    print "Test session tracking functions"
+    print("Open sessions: %d" % active_count)
+    print("Test session tracking functions")
     expected_session_keys = ['ip_addr',
                              'tcp_port',
                              'session_id',
                              'authorized',
                              'client_id',
                              'timestamp']
-    print "Track open session #1"
+    print("Track open session #1")
     open_session = track_open_session(conf,
                                       test_proto,
                                       test_id,
@@ -150,25 +151,25 @@ if __name__ == "__main__":
                                       authorized=True)
     active_count = active_sessions(conf, test_proto, test_id)
     if active_count != 1:
-        print "ERROR: Excpected 1 active session(s) for: %s, found: %d" \
-            % (test_id, active_count)
+        print("ERROR: Excpected 1 active session(s) for: %s, found: %d" \
+            % (test_id, active_count))
         sys.exit(1)
     active_count = active_sessions(conf, test_proto, test_id+"_1")
     if active_count != 0:
-        print "ERROR: Excpected 0 active session(s) for: %s, found: %d" \
-            % (test_id+"_1", active_count)
+        print("ERROR: Excpected 0 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count))
         sys.exit(1)
     if isinstance(open_session, dict):
         if open_session.keys() == expected_session_keys:
-            print "OK"
+            print("OK")
         else:
-            print "ERROR: Invalid session dictionary: '%s'" \
-                % (open_session)
+            print("ERROR: Invalid session dictionary: '%s'" \
+                % (open_session))
             sys.exit(1)
     else:
-        print "ERROR: Expected dictionary: %s" % type(open_session)
+        print("ERROR: Expected dictionary: %s" % type(open_session))
         sys.exit(1)
-    print "Track open session #2"
+    print("Track open session #2")
     open_session = track_open_session(conf,
                                       test_proto,
                                       test_id,
@@ -178,25 +179,25 @@ if __name__ == "__main__":
                                       authorized=True)
     active_count = active_sessions(conf, test_proto, test_id)
     if active_count != 2:
-        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
-            % (test_id, active_count)
+        print("ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id, active_count))
         sys.exit(1)
     active_count = active_sessions(conf, test_proto, test_id+"_1")
     if active_count != 0:
-        print "ERROR: Excpected 0 active session(s) for: %s, found: %d" \
-            % (test_id+"_1", active_count)
+        print("ERROR: Excpected 0 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count))
         sys.exit(1)
     if isinstance(open_session, dict):
         if open_session.keys() == expected_session_keys:
-            print "OK"
+            print("OK")
         else:
-            print "ERROR: Invalid session dictionary: '%s'" \
-                % (open_session)
+            print("ERROR: Invalid session dictionary: '%s'" \
+                % (open_session))
             sys.exit(1)
     else:
-        print "ERROR: Expected dictionary: %s" % type(open_session)
+        print("ERROR: Expected dictionary: %s" % type(open_session))
         sys.exit(1)
-    print "Track open session #3"
+    print("Track open session #3")
     open_session = track_open_session(conf,
                                       test_proto,
                                       test_id+"_1",
@@ -206,25 +207,25 @@ if __name__ == "__main__":
                                       authorized=True)
     active_count = active_sessions(conf, test_proto, test_id)
     if active_count != 2:
-        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
-            % (test_id, active_count)
+        print("ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id, active_count))
         sys.exit(1)
     active_count = active_sessions(conf, test_proto, test_id+"_1")
     if active_count != 1:
-        print "ERROR: Excpected 1 active session(s) for: %s, found: %d" \
-            % (test_id+"_1", active_count)
+        print("ERROR: Excpected 1 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count))
         sys.exit(1)
     if isinstance(open_session, dict):
         if open_session.keys() == expected_session_keys:
-            print "OK"
+            print("OK")
         else:
-            print "ERROR: Invalid session dictionary: '%s'" \
-                % (open_session)
+            print("ERROR: Invalid session dictionary: '%s'" \
+                % (open_session))
             sys.exit(1)
     else:
-        print "ERROR: Expected dictionary: %s" % type(open_session)
+        print("ERROR: Expected dictionary: %s" % type(open_session))
         sys.exit(1)
-    print "Track open session #4"
+    print("Track open session #4")
     open_session = track_open_session(conf,
                                       test_proto,
                                       test_id+"_1",
@@ -234,152 +235,152 @@ if __name__ == "__main__":
                                       authorized=True)
     active_count = active_sessions(conf, test_proto, test_id)
     if active_count != 2:
-        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
-            % (test_id, active_count)
+        print("ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id, active_count))
         sys.exit(1)
     active_count = active_sessions(conf, test_proto, test_id+"_1")
     if active_count != 2:
-        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
-            % (test_id+"_1", active_count)
+        print("ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count))
         sys.exit(1)
     if isinstance(open_session, dict):
         if open_session.keys() == expected_session_keys:
-            print "OK"
+            print("OK")
         else:
-            print "ERROR: Invalid session dictionary: '%s'" \
-                % (open_session)
+            print("ERROR: Invalid session dictionary: '%s'" \
+                % (open_session))
             sys.exit(1)
     else:
-        print "ERROR: Expected dictionary: %s" % type(open_session)
-    print "Track get open sessions #1"
+        print("ERROR: Expected dictionary: %s" % type(open_session))
+    print("Track get open sessions #1")
     cur_open_sessions = get_open_sessions(conf, 'INVALID')
     if isinstance(cur_open_sessions, dict):
         if not cur_open_sessions:
-            print "OK"
+            print("OK")
         else:
-            print "ERROR: Excpected empty dictionary: %s" \
-                % cur_open_sessions
+            print("ERROR: Excpected empty dictionary: %s" \
+                % cur_open_sessions)
             sys.exit(1)
     else:
-        print "ERROR: Expected dictionary: %s" % type(cur_open_sessions)
+        print("ERROR: Expected dictionary: %s" % type(cur_open_sessions))
         sys.exit(1)
-    print "Track get open sessions #2"
+    print("Track get open sessions #2")
     cur_open_sessions = get_open_sessions(conf, test_proto, 'INVALID')
     if isinstance(cur_open_sessions, dict):
         if not cur_open_sessions:
-            print "OK"
+            print("OK")
         else:
-            print "ERROR: Excpected empty dictionary: %s" \
-                % cur_open_sessions
+            print("ERROR: Excpected empty dictionary: %s" \
+                % cur_open_sessions)
             sys.exit(1)
     else:
-        print "ERROR: Expected dictionary: %s" % type(cur_open_sessions)
+        print("ERROR: Expected dictionary: %s" % type(cur_open_sessions))
         sys.exit(1)
-    print "Track get open sessions #3"
+    print("Track get open sessions #3")
     cur_open_sessions = get_open_sessions(conf, test_proto)
     if isinstance(cur_open_sessions, dict):
         if len(cur_open_sessions.keys()) != 4:
-            print "ERROR: Expected dictionary #keys: 4" \
+            print("ERROR: Expected dictionary #keys: 4" \
                 + ", found: %s, %s" % (len(cur_open_sessions.keys()),
-                                       cur_open_sessions.keys())
+                                       cur_open_sessions.keys()))
             sys.exit(1)
         status = True
         for (key, val) in cur_open_sessions.iteritems():
             if not isinstance(val, dict) \
                     or val.keys() != expected_session_keys:
                 status = False
-                print "ERROR: Invalid session dictionary: '%s'" \
-                    % (val)
+                print("ERROR: Invalid session dictionary: '%s'" \
+                    % (val))
                 sys.exit(1)
         if status:
-            print "OK"
+            print("OK")
     else:
-        print "ERROR: Expected dictionary: %s" % type(cur_open_sessions)
+        print("ERROR: Expected dictionary: %s" % type(cur_open_sessions))
         sys.exit(1)
-    print "Track get open sessions #4"
+    print("Track get open sessions #4")
     cur_open_sessions = get_open_sessions(conf,
                                           test_proto,
                                           client_id=test_id)
     if isinstance(cur_open_sessions, dict):
         if len(cur_open_sessions.keys()) != 2:
-            print "ERROR: Expected dictionary #keys: 2" \
+            print("ERROR: Expected dictionary #keys: 2" \
                 + ", found: %s, %s" % (len(cur_open_sessions.keys()),
-                                       cur_open_sessions.keys())
+                                       cur_open_sessions.keys()))
             sys.exit(1)
         status = True
         for (key, val) in cur_open_sessions.iteritems():
             if not isinstance(val, dict) \
                     or val.keys() != expected_session_keys:
                 status = False
-                print "ERROR: Invalid session dictionary: '%s'" \
-                    % (val)
+                print("ERROR: Invalid session dictionary: '%s'" \
+                    % (val))
                 sys.exit(1)
         if status:
-            print "OK"
+            print("OK")
     else:
-        print "ERROR: Expected dictionary: %s" % type(cur_open_sessions)
+        print("ERROR: Expected dictionary: %s" % type(cur_open_sessions))
         sys.exit(1)
-    print "Track get active session #1"
+    print("Track get active session #1")
     active_session = get_active_session(conf,
                                         'INVALID',
                                         test_id,
                                         test_session_id)
     if isinstance(active_session, dict):
         if not active_session:
-            print "OK"
+            print("OK")
         else:
-            print "ERROR: Excpected empty dictionary: %s" \
-                % active_session
+            print("ERROR: Excpected empty dictionary: %s" \
+                % active_session)
             sys.exit(1)
     else:
-        print "ERROR: Expected dictionary: %s" % type(active_session)
+        print("ERROR: Expected dictionary: %s" % type(active_session))
         sys.exit(1)
-    print "Track get active session #2"
+    print("Track get active session #2")
     active_session = get_active_session(conf,
                                         test_proto,
                                         'INVALID',
                                         test_session_id)
     if isinstance(active_session, dict):
         if not active_session:
-            print "OK"
+            print("OK")
         else:
-            print "ERROR: Excpected empty dictionary: %s" \
-                % active_session
+            print("ERROR: Excpected empty dictionary: %s" \
+                % active_session)
             sys.exit(1)
     else:
-        print "ERROR: Expected dictionary: %s" % type(active_session)
+        print("ERROR: Expected dictionary: %s" % type(active_session))
         sys.exit(1)
-    print "Track get active session #3"
+    print("Track get active session #3")
     active_session = get_active_session(conf,
                                         test_proto,
                                         test_id,
                                         'INVALID')
     if isinstance(active_session, dict):
         if not active_session:
-            print "OK"
+            print("OK")
         else:
-            print "ERROR: Excpected empty dictionary: %s" \
-                % active_session
+            print("ERROR: Excpected empty dictionary: %s" \
+                % active_session)
             sys.exit(1)
     else:
-        print "ERROR: Expected dictionary: %s" % type(active_session)
+        print("ERROR: Expected dictionary: %s" % type(active_session))
         sys.exit(1)
-    print "Track get active session #4"
+    print("Track get active session #4")
     active_session = get_active_session(conf,
                                         test_proto,
                                         test_id,
                                         test_session_id)
     if isinstance(active_session, dict):
         if active_session.keys() == expected_session_keys:
-            print "OK"
+            print("OK")
         else:
-            print "ERROR: Invalid session dictionary: '%s'" \
-                % (active_session)
+            print("ERROR: Invalid session dictionary: '%s'" \
+                % (active_session))
             sys.exit(1)
     else:
-        print "ERROR: Expected dictionary: %s" % type(active_session)
+        print("ERROR: Expected dictionary: %s" % type(active_session))
         sys.exit(1)
-    print "Track close session #1"
+    print("Track close session #1")
     close_session = track_close_session(conf,
                                         'INVALID',
                                         test_id,
@@ -388,25 +389,25 @@ if __name__ == "__main__":
                                         session_id=test_session_id)
     active_count = active_sessions(conf, test_proto, test_id)
     if active_count != 2:
-        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
-            % (test_id, active_count)
+        print("ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id, active_count))
         sys.exit(1)
     active_count = active_sessions(conf, test_proto, test_id+"_1")
     if active_count != 2:
-        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
-            % (test_id+"_1", active_count)
+        print("ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count))
         sys.exit(1)
     if isinstance(close_session, dict):
         if not close_session:
-            print "OK"
+            print("OK")
         else:
-            print "ERROR: Excpected empty dictionary: %s" \
-                % close_session
+            print("ERROR: Excpected empty dictionary: %s" \
+                % close_session)
             sys.exit(1)
     else:
-        print "ERROR: Expected dictionary: %s" % type(close_session)
+        print("ERROR: Expected dictionary: %s" % type(close_session))
         sys.exit(1)
-    print "Track close session #2"
+    print("Track close session #2")
     close_session = track_close_session(conf,
                                         test_proto,
                                         'INVALID',
@@ -415,25 +416,25 @@ if __name__ == "__main__":
                                         session_id=test_session_id)
     active_count = active_sessions(conf, test_proto, test_id)
     if active_count != 2:
-        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
-            % (test_id, active_count)
+        print("ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id, active_count))
         sys.exit(1)
     active_count = active_sessions(conf, test_proto, test_id+"_1")
     if active_count != 2:
-        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
-            % (test_id+"_1", active_count)
+        print("ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count))
         sys.exit(1)
     if isinstance(close_session, dict):
         if not close_session:
-            print "OK"
+            print("OK")
         else:
-            print "ERROR: Excpected empty dictionary: %s" \
-                % close_session
+            print("ERROR: Excpected empty dictionary: %s" \
+                % close_session)
             sys.exit(1)
     else:
-        print "ERROR: Expected dictionary: %s" % type(close_session)
+        print("ERROR: Expected dictionary: %s" % type(close_session))
         sys.exit(1)
-    print "Track close session #3"
+    print("Track close session #3")
     close_session = track_close_session(conf,
                                         test_proto,
                                         test_id,
@@ -442,25 +443,25 @@ if __name__ == "__main__":
                                         session_id=None)
     active_count = active_sessions(conf, test_proto, test_id)
     if active_count != 2:
-        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
-            % (test_id, active_count)
+        print("ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id, active_count))
         sys.exit(1)
     active_count = active_sessions(conf, test_proto, test_id+"_1")
     if active_count != 2:
-        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
-            % (test_id+"_1", active_count)
+        print("ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count))
         sys.exit(1)
     if isinstance(close_session, dict):
         if not close_session:
-            print "OK"
+            print("OK")
         else:
-            print "ERROR: Excpected empty dictionary: %s" \
-                % close_session
+            print("ERROR: Excpected empty dictionary: %s" \
+                % close_session)
             sys.exit(1)
     else:
-        print "ERROR: Expected dictionary: %s" % type(close_session)
+        print("ERROR: Expected dictionary: %s" % type(close_session))
         sys.exit(1)
-    print "Track close session #4"
+    print("Track close session #4")
     close_session = track_close_session(conf,
                                         test_proto,
                                         test_id,
@@ -469,84 +470,84 @@ if __name__ == "__main__":
                                         session_id=test_session_id)
     active_count = active_sessions(conf, test_proto, test_id)
     if active_count != 1:
-        print "ERROR: Excpected 1 active session(s) for: %s, found: %d" \
-            % (test_id, active_count)
+        print("ERROR: Excpected 1 active session(s) for: %s, found: %d" \
+            % (test_id, active_count))
         sys.exit(1)
     active_count = active_sessions(conf, test_proto, test_id+"_1")
     if active_count != 2:
-        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
-            % (test_id+"_1", active_count)
+        print("ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count))
         sys.exit(1)
     if isinstance(close_session, dict):
         if close_session.keys() == expected_session_keys:
-            print "OK"
+            print("OK")
         else:
-            print "ERROR: Invalid session dictionary: '%s'" \
-                % (close_session)
+            print("ERROR: Invalid session dictionary: '%s'" \
+                % (close_session))
             sys.exit(1)
     else:
-        print "ERROR: Expected dictionary: %s" % type(close_session)
+        print("ERROR: Expected dictionary: %s" % type(close_session))
         sys.exit(1)
-    print "Track close expired sessions #1"
+    print("Track close expired sessions #1")
     expired_sessions = track_close_expired_sessions(conf,
                                                     'INVALID')
     active_count = active_sessions(conf, test_proto, test_id)
     if active_count != 1:
-        print "ERROR: Excpected 1 active session(s) for: %s, found: %d" \
-            % (test_id, active_count)
+        print("ERROR: Excpected 1 active session(s) for: %s, found: %d" \
+            % (test_id, active_count))
         sys.exit(1)
     active_count = active_sessions(conf, test_proto, test_id+"_1")
     if active_count != 2:
-        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
-            % (test_id+"_1", active_count)
+        print("ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count))
         sys.exit(1)
     if isinstance(expired_sessions, dict):
         if not expired_sessions:
-            print "OK"
+            print("OK")
         else:
-            print "ERROR: Excpected empty dictionary: %s" \
-                % expired_sessions
+            print("ERROR: Excpected empty dictionary: %s" \
+                % expired_sessions)
             sys.exit(1)
     else:
-        print "ERROR: Expected dictionary: %s" % type(expired_sessions)
+        print("ERROR: Expected dictionary: %s" % type(expired_sessions))
         sys.exit(1)
-    print "Track close expired sessions #2"
+    print("Track close expired sessions #2")
     expired_sessions = track_close_expired_sessions(conf,
                                                     test_proto,
                                                     'INVALID')
     active_count = active_sessions(conf, test_proto, test_id)
     if active_count != 1:
-        print "ERROR: Excpected 1 active session(s) for: %s, found: %d" \
-            % (test_id, active_count)
+        print("ERROR: Excpected 1 active session(s) for: %s, found: %d" \
+            % (test_id, active_count))
         sys.exit(1)
     active_count = active_sessions(conf, test_proto, test_id+"_1")
     if active_count != 2:
-        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
-            % (test_id+"_1", active_count)
+        print("ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count))
         sys.exit(1)
     if isinstance(expired_sessions, dict):
         if not expired_sessions:
-            print "OK"
+            print("OK")
         else:
-            print "ERROR: Excpected empty dictionary: %s" \
-                % expired_sessions
+            print("ERROR: Excpected empty dictionary: %s" \
+                % expired_sessions)
             sys.exit(1)
     else:
-        print "ERROR: Expected dictionary: %s" % type(expired_sessions)
+        print("ERROR: Expected dictionary: %s" % type(expired_sessions))
         sys.exit(1)
-    print "Track close expired sessions #3"
+    print("Track close expired sessions #3")
     expired_sessions = track_close_expired_sessions(conf,
                                                     test_proto,
                                                     client_id=test_id)
     active_count = active_sessions(conf, test_proto, test_id)
     if active_count != 0:
-        print "ERROR: Excpected 0 active session(s) for: %s, found: %d" \
-            % (test_id, active_count)
+        print("ERROR: Excpected 0 active session(s) for: %s, found: %d" \
+            % (test_id, active_count))
         sys.exit(1)
     active_count = active_sessions(conf, test_proto, test_id+"_1")
     if active_count != 2:
-        print "ERROR: Excpected 2 active session(s) for: %s, found: %d" \
-            % (test_id+"_1", active_count)
+        print("ERROR: Excpected 2 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count))
         sys.exit(1)
     if isinstance(expired_sessions, dict):
         if len(expired_sessions.keys()) == 1:
@@ -555,30 +556,30 @@ if __name__ == "__main__":
                 if not isinstance(val, dict) \
                         or val.keys() != expected_session_keys:
                     status = False
-                    print "ERROR: Invalid session dictionary: '%s'" \
-                        % (val)
+                    print("ERROR: Invalid session dictionary: '%s'" \
+                        % (val))
                     sys.exit(1)
             if status:
-                print "OK"
+                print("OK")
         else:
-            print "ERROR: Expected 1 expired session, found: %s" \
-                % len(expired_sessions.keys())
+            print("ERROR: Expected 1 expired session, found: %s" \
+                % len(expired_sessions.keys()))
             sys.exit(1)
     else:
-        print "ERROR: Expected dictionary: %s" % type(expired_sessions)
+        print("ERROR: Expected dictionary: %s" % type(expired_sessions))
         sys.exit(1)
-    print "Track close expired sessions #4"
+    print("Track close expired sessions #4")
     expired_sessions = track_close_expired_sessions(conf,
                                                     test_proto)
     active_count = active_sessions(conf, test_proto, test_id)
     if active_count != 0:
-        print "ERROR: Excpected 0 active session(s) for: %s, found: %d" \
-            % (test_id, active_count)
+        print("ERROR: Excpected 0 active session(s) for: %s, found: %d" \
+            % (test_id, active_count))
         sys.exit(1)
     active_count = active_sessions(conf, test_proto, test_id+"_1")
     if active_count != 0:
-        print "ERROR: Excpected 0 active session(s) for: %s, found: %d" \
-            % (test_id+"_1", active_count)
+        print("ERROR: Excpected 0 active session(s) for: %s, found: %d" \
+            % (test_id+"_1", active_count))
         sys.exit(1)
     if isinstance(expired_sessions, dict):
         if len(expired_sessions.keys()) == 2:
@@ -587,15 +588,15 @@ if __name__ == "__main__":
                 if not isinstance(val, dict) \
                         or val.keys() != expected_session_keys:
                     status = False
-                    print "ERROR: Invalid session dictionary: '%s'" \
-                        % (val)
+                    print("ERROR: Invalid session dictionary: '%s'" \
+                        % (val))
                     sys.exit(1)
             if status:
-                print "OK"
+                print("OK")
         else:
-            print "ERROR: Expected 2 expired session, found: %s" \
-                % len(expired_sessions.keys())
+            print("ERROR: Expected 2 expired session, found: %s" \
+                % len(expired_sessions.keys()))
             sys.exit(1)
     else:
-        print "ERROR: Expected dictionary: %s" % type(expired_sessions)
+        print("ERROR: Expected dictionary: %s" % type(expired_sessions))
         sys.exit(1)

@@ -26,17 +26,19 @@
 #
 
 """MiG Python Python debug helpers"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import sys
 try:
     import pygdb.breakpoint
-except Exception, exc:
+except Exception as exc:
     pygdb = None
-    print "ERROR: the python pygdb module is missing: %s" % str(exc)
+    print("ERROR: the python pygdb module is missing: %s" % str(exc))
 
-from shared.conf import get_configuration_object
-from shared.logger import daemon_logger
+from .shared.conf import get_configuration_object
+from .shared.logger import daemon_logger
 
 
 def init_pygdb(logpath=None):

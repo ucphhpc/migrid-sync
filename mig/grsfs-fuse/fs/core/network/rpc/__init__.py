@@ -29,14 +29,16 @@
 Created by Jan Wiberg on 2010-03-21.
 Copyright (c) 2010 Jan Wiberg. All rights reserved.
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 import cPickle as pickle
 import socket
 import threading
 # Select actual RPC implementation here and keep details hidden in the rest 
-from securexmlrpc import SecureXMLRPCServer as SecureRPCServer
-from securexmlrpc import SecureXMLRPCServerProxy as SecureRPCServerProxy
-from securexmlrpc import wrapbinary, unwrapbinary
+from .securexmlrpc import SecureXMLRPCServer as SecureRPCServer
+from .securexmlrpc import SecureXMLRPCServerProxy as SecureRPCServerProxy
+from .securexmlrpc import wrapbinary, unwrapbinary
 #from securepyro import SecurePyroServer as SecureRPCServer
 #from securepyro import SecurePyroServerProxy as SecureRPCServerProxy
 #from securepyro import wrapbinary, unwrapbinary
@@ -51,7 +53,7 @@ class GRSRPCServer(SecureRPCServer, threading.Thread):
     """GRSfs RPC server wrapping our secure RPC server"""
     def __init__(self, kernel, options, **kwargs):
         """Initializes the RPC server"""
-        print "Init rpcServer at port %s" % options.serverport
+        print("Init rpcServer at port %s" % options.serverport)
         kwargs["key_path"] = options.key
         kwargs["cert_path"] = options.cert
         SecureRPCServer.__init__(self, ('', options.serverport), **kwargs)
@@ -120,7 +122,7 @@ def connect_to_peer(peer, ident):
             logger.debug("%s connected - %s returned  '%s'" % (__name__,
                                                                 peer, val))
             return (proxy_link, val)
-        except Exception, serr:
+        except Exception as serr:
             import traceback
             logger.error( "%s unable to connect to %s (%s %s)"  % (__name__,
                                                                 peer, serr,
@@ -134,7 +136,7 @@ def leave_network(options, state):
     for remote in options.connected_peers[:]:
         try:
             remote.node_unregister((socket.gethostname(), options.serverport))
-        except Exception, exc:
+        except Exception as exc:
             raise exc
         finally:
             options.connected_peers.remove(remote) 

@@ -26,23 +26,24 @@
 #
 
 """Simple front end to job and file uploads"""
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.defaults import any_vgrid, default_mrsl_filename, maxfill_fields, \
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.defaults import any_vgrid, default_mrsl_filename, maxfill_fields, \
     keyword_all, csrf_field
-from shared.functional import validate_input_and_cert
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import fancy_upload_js, fancy_upload_html, \
+from .shared.functional import validate_input_and_cert
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.html import fancy_upload_js, fancy_upload_html, \
     themed_styles
-from shared.init import initialize_main_variables, find_entry
-from shared.mrslkeywords import get_job_specs
-from shared.parser import parse_lines
-from shared.refunctions import list_runtime_environments
-from shared.useradm import get_default_mrsl
-from shared.vgridaccess import user_vgrid_access, user_allowed_res_exes
+from .shared.init import initialize_main_variables, find_entry
+from .shared.mrslkeywords import get_job_specs
+from .shared.parser import parse_lines
+from .shared.refunctions import list_runtime_environments
+from .shared.useradm import get_default_mrsl
+from .shared.vgridaccess import user_vgrid_access, user_allowed_res_exes
 
 
 def signature():
@@ -62,7 +63,7 @@ def available_choices(configuration, client_id, field, spec):
     elif spec['Type'] in ('string', 'multiplestrings'):
         try:
             choices = getattr(configuration, '%ss' % field.lower())
-        except AttributeError, exc:
+        except AttributeError as exc:
             configuration.logger.error('%s' % exc)
             choices = []
     else:
@@ -114,7 +115,7 @@ def main(client_id, user_arguments_dict):
     user_settings = title_entry.get('user_settings', {})
     output_objects.append({'object_type': 'header', 'text': 'Submit Job'})
     default_mrsl = get_default_mrsl(template_path)
-    if not user_settings or not user_settings.has_key('SUBMITUI'):
+    if not user_settings or 'SUBMITUI' not in user_settings:
         logger.info('Settings dict does not have SUBMITUI key - using default'
                     )
         submit_style = configuration.submitui[0]

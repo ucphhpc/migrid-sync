@@ -30,6 +30,7 @@
 Use e.g. as in
 ./searchusers.py -f distinguished_name | grep -v 'Matching users' | python countorg.py
 """
+from __future__ import print_function
 
 import fileinput
 
@@ -37,10 +38,10 @@ if __name__ == '__main__':
     org_map = {}
     for line in fileinput.input():
         org_prefix = line.split('/OU=', 1)[0]
-        if not org_map.has_key(org_prefix):
+        if org_prefix not in org_map:
             org_map[org_prefix] = 0
         org_map[org_prefix] += 1
     org_list = org_map.items()
     org_list.sort()
     for (org, cnt) in org_list:
-        print '%d\t%s' % (cnt, org)
+        print('%d\t%s' % (cnt, org))

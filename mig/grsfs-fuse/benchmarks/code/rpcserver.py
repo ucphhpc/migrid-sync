@@ -27,6 +27,7 @@
 
 
 """Minimal RPC benchmark server"""
+from __future__ import print_function
 
 import sys
 import getopt
@@ -130,7 +131,7 @@ if __name__ == '__main__':
         elif opt in ('-p', '--port'):
             try:
                 conf["port"] = int(val)
-            except ValueError, err:
+            except ValueError as err:
                 print('Error in parsing %s value: %s' % (opt, err))
                 sys.exit(1)
         elif opt in ('-t', '--transport'):

@@ -26,6 +26,8 @@
 #
 
 """HTTP PUT handler"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import fcntl
 import cgi
@@ -35,23 +37,23 @@ import sys
 import time
 import urllib
 
-from shared import confparser
-from shared.archives import handle_package_upload
-from shared.base import client_id_dir, invisible_path
-from shared.cgishared import init_cgiscript_possibly_with_cert
-from shared.defaults import keyword_auto
-from shared.fileio import pickle, unpickle
-from shared.findtype import is_user, is_server, is_owner
-from shared.job import new_job, finished_job, failed_restart
-from shared.notification import notify_user_thread, \
+from .shared import confparser
+from .shared.archives import handle_package_upload
+from .shared.base import client_id_dir, invisible_path
+from .shared.cgishared import init_cgiscript_possibly_with_cert
+from .shared.defaults import keyword_auto
+from .shared.fileio import pickle, unpickle
+from .shared.findtype import is_user, is_server, is_owner
+from .shared.job import new_job, finished_job, failed_restart
+from .shared.notification import notify_user_thread, \
     parse_im_relay, send_resource_create_request_mail, \
     send_instant_message
-from shared.putfuncs import verify_results, migrated_job
-from shared.resadm import start_resource_exe_if_continuous
-from shared.refunctions import create_runtimeenv
-from shared.settings import parse_and_save_settings
-from shared.safeinput import valid_path, valid_sid, valid_alphanumeric
-from shared.sharelinks import extract_mode_id
+from .shared.putfuncs import verify_results, migrated_job
+from .shared.resadm import start_resource_exe_if_continuous
+from .shared.refunctions import create_runtimeenv
+from .shared.settings import parse_and_save_settings
+from .shared.safeinput import valid_path, valid_sid, valid_alphanumeric
+from .shared.sharelinks import extract_mode_id
 
 cgitb.enable()
 
@@ -115,7 +117,7 @@ if invisible_path(filename):
 
 try:
     valid_path(filename)
-except Exception, exc:
+except Exception as exc:
     o.out('Invalid path: %s!' % exc)
     o.reply_and_exit(o.CLIENT_ERROR)
 
@@ -130,7 +132,7 @@ if not client_id and filename.startswith('/sid_redirect/'):
 
     try:
         valid_sid(sessionid)
-    except Exception, exc:
+    except Exception as exc:
         o.out('Error in sessionid: %s!' % exc)
         o.reply_and_exit(o.CLIENT_ERROR)
 
@@ -153,8 +155,8 @@ if not client_id and filename.startswith('/sid_redirect/'):
 
         # o.internal("making sure this dir exists, otherwise create:" + dest_dir)
 
-        os.makedirs(dest_dir, mode=0775)
-    except Exception, e:
+        os.makedirs(dest_dir, mode=0o775)
+    except Exception as e:
 
         # An exception is thrown if the leaf exists
 
@@ -169,7 +171,7 @@ if not client_id and filename.startswith('/sid_redirect/'):
                 break
             upload_fd.write(chunk)
         upload_fd.close()
-    except Exception, err:
+    except Exception as err:
         o.out('Could not write file %s: %s' % (dest_path, err))
 
     # if this was an ARC job, we do not have a job file
@@ -231,7 +233,7 @@ if not client_id and filename.startswith('/sid_redirect/'):
 
         # Write 'finished' to PGID file
 
-        print 'Filepath: %s' % filepath
+        print('Filepath: %s' % filepath)
         pgid_file = configuration.resource_home + '/'\
             + dict['UNIQUE_RESOURCE_NAME'] + '/EXE_' + dict['EXE']\
             + '.PGID'
@@ -244,7 +246,7 @@ if not client_id and filename.startswith('/sid_redirect/'):
             fh.write('finished\n')
             fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
             fh.close()
-        except Exception, err:
+        except Exception as err:
 
             o.internal("Could not write to pgid_file: '%s'. Failure: %s"
                        % (pgid_file, err))
@@ -256,7 +258,7 @@ if not client_id and filename.startswith('/sid_redirect/'):
                                      dict['UNIQUE_RESOURCE_NAME'], dict['EXE'], dict['JOB_ID'
                                                                                      ], configuration)
 
-        if dict.has_key('IS_EMPTY_JOB_HELPER_DICT'):
+        if 'IS_EMPTY_JOB_HELPER_DICT' in dict:
             o.internal('%s %s %s is starting a new exe from %s!'
                        % (dict['UNIQUE_RESOURCE_NAME'], dict['EXE'],
                            dict['LOCALJOBNAME'], os.getenv('REMOTE_ADDR')))
@@ -269,7 +271,7 @@ if not client_id and filename.startswith('/sid_redirect/'):
                     start_resource_exe_if_continuous(dict['UNIQUE_RESOURCE_NAME'
                                                           ], dict['EXE'], configuration.resource_home,
                                                      logger)
-            except Exception, exc:
+            except Exception as exc:
                 (stat, err) = (False, 'Exception in start exe call: %s'
                                % exc)
 
@@ -313,7 +315,7 @@ if not client_id and filename.startswith('/sid_redirect/'):
             (stat, err) = \
                 start_resource_exe_if_continuous(dict['UNIQUE_RESOURCE_NAME'
                                                       ], dict['EXE'], configuration.resource_home, logger)
-        except Exception, exc:
+        except Exception as exc:
             (stat, err) = (False, 'Exception in start exe call: %s'
                            % exc)
 
@@ -348,14 +350,14 @@ elif not client_id and filename.startswith('/share_redirect/'):
 
     try:
         valid_alphanumeric(share_id)
-    except Exception, exc:
+    except Exception as exc:
         o.out('Error in sharelink id: %s!' % exc)
         o.reply_and_exit(o.CLIENT_ERROR)
 
     # check that the share_id is ok (does symlink exist?)
     try:
         (access_dir, _) = extract_mode_id(configuration, share_id)
-    except ValueError, err:
+    except ValueError as err:
         logger.error('%s called with invalid share_id %s: %s' %
                      ('put', share_id, err))
         o.out('INVALID SHARE ID! %s' % share_id)
@@ -385,8 +387,8 @@ elif not client_id and filename.startswith('/share_redirect/'):
 
         # o.internal("making sure this dir exists, otherwise create:" + dest_dir)
 
-        os.makedirs(dest_dir, mode=0775)
-    except Exception, e:
+        os.makedirs(dest_dir, mode=0o775)
+    except Exception as e:
 
         # An exception is thrown if the leaf exists
 
@@ -401,7 +403,7 @@ elif not client_id and filename.startswith('/share_redirect/'):
                 break
             upload_fd.write(chunk)
         upload_fd.close()
-    except Exception, err:
+    except Exception as err:
         o.out('Could not write file %s: %s' % (dest_path, err))
         o.reply_and_exit(o.ERROR)
 
@@ -430,7 +432,7 @@ elif is_user(client_id, configuration.mig_server_home):
                     break
                 upload_fd.write(chunk)
             upload_fd.close()
-        except Exception, err:
+        except Exception as err:
             o.out('File: %s was not written! %s' % (pending_file, err))
             o.reply_and_exit(o.ERROR)
 
@@ -487,7 +489,7 @@ Please contact the server administrator.""")
 
             try:
                 os.rename(pending_file, accepted_path)
-            except Exception, e:
+            except Exception as e:
                 o.out('Accepted config, but failed to save it! Failed: %s'
                       % e)
                 o.reply_and_exit(o.ERROR)
@@ -510,7 +512,7 @@ Please contact the server administrator.""")
                     break
                 upload_fd.write(chunk)
             upload_fd.close()
-        except Exception, e:
+        except Exception as e:
             o.out('File: %s was not written!' % pending_file, str(e))
             o.reply_and_exit(o.ERROR)
 
@@ -534,7 +536,7 @@ Please contact the server administrator.""")
                     break
                 upload_fd.write(chunk)
             upload_fd.close()
-        except Exception, e:
+        except Exception as e:
             o.out('File: %s was not written!' % pending_file, str(e))
             o.reply_and_exit(o.ERROR)
 
@@ -575,7 +577,7 @@ Please contact the server administrator.""")
                 break
             upload_fd.write(chunk)
         upload_fd.close()
-    except Exception, exc:
+    except Exception as exc:
         o.out('Could not write %s' % filename, str(exc))
         o.reply_and_exit(o.ERROR)
 
@@ -642,7 +644,7 @@ elif is_server(client_id, configuration.server_home):
     # make sure that path exists
 
     try:
-        os.makedirs(dest_dir, mode=0775)
+        os.makedirs(dest_dir, mode=0o775)
     except Exception:
 
         # An exception is thrown if the leaf exists
@@ -664,7 +666,7 @@ elif is_server(client_id, configuration.server_home):
             upload_fd.write(chunk)
             upload_fd.flush()
         upload_fd.close()
-    except Exception, e:
+    except Exception as e:
         o.out('Could not write %s' % dest_path, str(e))
         o.reply_and_exit(o.ERROR)
 
@@ -686,7 +688,7 @@ elif is_server(client_id, configuration.server_home):
 
         try:
             os.remove(dest_path)
-        except StandardError, err:
+        except Exception as err:
             logger.error('cleaning up after IM relay failed: %s' % err)
         if err:
             o.out('IM relay parsing failed: %s' % err)

@@ -26,17 +26,18 @@
 #
 
 """This is a job kill helper for resources"""
+from __future__ import absolute_import
 
 import fcntl
 import os
 
-from shared import returnvalues
-from shared.base import valid_dir_input
-from shared.conf import get_resource_configuration
-from shared.functional import validate_input, REJECT_UNSET
-from shared.httpsclient import check_source_ip
-from shared.init import initialize_main_variables
-from shared.resadm import put_fe_pgid, put_exe_pgid
+from .shared import returnvalues
+from .shared.base import valid_dir_input
+from .shared.conf import get_resource_configuration
+from .shared.functional import validate_input, REJECT_UNSET
+from .shared.httpsclient import check_source_ip
+from .shared.init import initialize_main_variables
+from .shared.resadm import put_fe_pgid, put_exe_pgid
 
 
 def signature():
@@ -121,7 +122,7 @@ def main(client_id, user_arguments_dict):
     proxy_fqdn = resource_conf.get('FRONTENDPROXY', None)
     try:
         check_source_ip(remote_ip, unique_resource_name, proxy_fqdn)
-    except ValueError, vae:
+    except ValueError as vae:
         logger.error("Invalid put pgid: %s" % vae)
         output_objects.append({'object_type': 'error_text', 'text':
                                'invalid request: %s' % vae})

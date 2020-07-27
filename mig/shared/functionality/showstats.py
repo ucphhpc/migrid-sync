@@ -33,6 +33,7 @@
 graphics. Uses jquery visualization module and views defined in
 couchdb (for sgas-experimental).
 """
+from __future__ import absolute_import
 
 import json
 import os
@@ -41,11 +42,12 @@ import sys
 import time
 import urllib
 
-from shared import returnvalues
-from shared import vgrid
-from shared.base import requested_page
-from shared.functional import validate_input
-from shared.init import initialize_main_variables, find_entry
+from .shared import returnvalues
+from .shared import vgrid
+from .shared.base import requested_page
+from .shared.functional import validate_input
+from .shared.init import initialize_main_variables, find_entry
+from functools import reduce
 
 # allowed parameters, first value is default
 displays = ['machine', 'user', 'vgrid', 'summary']
@@ -255,7 +257,7 @@ Please contact the site admins %s if you think they should be enabled.
         res = urllib.urlopen('http://' + db_url + query, proxies={})
         jsonreply = res.read()
         res.close()
-    except Exception, err:
+    except Exception as err:
         logger.error('Could not get data from database: %s' % err)
         output_objects.append(
             {'object_type': 'error_text', 'text': 'Error accessing the database.'})

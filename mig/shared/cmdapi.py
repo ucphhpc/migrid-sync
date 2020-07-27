@@ -26,6 +26,8 @@
 #
 
 """Helpers to expose functionality backends on command-line form"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import getopt
 
@@ -160,8 +162,8 @@ def parse_command_args(configuration, command_list):
     flags = ''
     try:
         (opts, args) = getopt.getopt(command_list[1:], opts_str)
-    except getopt.GetoptError, goe:
-        print 'Error: %s' % goe
+    except getopt.GetoptError as goe:
+        print('Error: %s' % goe)
         raise ValueError("Error: command parsing failed: %s" % goe)
 
     for (opt, val) in opts:
@@ -177,7 +179,7 @@ def parse_command_args(configuration, command_list):
 
 
 if __name__ == '__main__':
-    from shared.conf import get_configuration_object
+    from .shared.conf import get_configuration_object
     conf = get_configuration_object()
     for cmd_list in [['cp', 'srcfile', 'dstfile'],
                      ['cp', 'srcfile', 'srcfile2', 'dstdir'],
@@ -186,8 +188,8 @@ if __name__ == '__main__':
                      ['cp', '-rf', 'srcdir', 'dstdir'],
                      ['cp', '-r', '-f', 'srcdir', 'dstdir'],
                      ['cp', '-r', 'srcdir', 'srcdir2', 'dstdir']]:
-        print "Parsing %s" % cmd_list
+        print("Parsing %s" % cmd_list)
         (backend, args_dict) = parse_command_args(conf, cmd_list)
-        print "Backend %s received args %s" % (backend, args_dict)
+        print("Backend %s received args %s" % (backend, args_dict))
     for (cmd, usage) in get_usage_map(conf).items():
-        print "Usage for %s\n\t%s" % (cmd, usage)
+        print("Usage for %s\n\t%s" % (cmd, usage))

@@ -26,6 +26,7 @@
 #
 
 """Find all users with given data base field(s)"""
+from __future__ import print_function
 
 import getopt
 import sys
@@ -38,7 +39,7 @@ from shared.useradm import init_user_adm, search_users, default_search
 def usage(name='searchusers.py'):
     """Usage help"""
 
-    print """Search in MiG user database.
+    print("""Search in MiG user database.
 Usage:
 %(name)s [SEARCH_OPTIONS]
 Where SEARCH_OPTIONS may be one or more of:
@@ -59,7 +60,7 @@ Where SEARCH_OPTIONS may be one or more of:
    -v                  Verbose output
 
 Each search value can be a string or a pattern with * and ? as wildcards.
-""" % {'name': name}
+""" % {'name': name})
 
 
 if '__main__' == __name__:
@@ -73,8 +74,8 @@ if '__main__' == __name__:
     only_fields = []
     try:
         (opts, args) = getopt.getopt(args, opt_args)
-    except getopt.GetoptError, err:
-        print 'Error: ', err.msg
+    except getopt.GetoptError as err:
+        print('Error: ', err.msg)
         usage()
         sys.exit(1)
 
@@ -111,16 +112,16 @@ if '__main__' == __name__:
         elif opt == '-v':
             verbose = True
         else:
-            print 'Error: %s not supported!' % opt
+            print('Error: %s not supported!' % opt)
             usage()
             sys.exit(0)
 
     (configuration, hits) = search_users(search_filter, conf_path, db_path,
                                          verbose)
-    print "Matching users:"
+    print("Matching users:")
     for (uid, user_dict) in hits:
         if only_fields:
             field_list = [str(user_dict.get(i, '')) for i in only_fields]
-            print '%s' % ' : '.join(field_list)
+            print('%s' % ' : '.join(field_list))
         else:
-            print '%s : %s' % (uid, user_dict)
+            print('%s : %s' % (uid, user_dict))

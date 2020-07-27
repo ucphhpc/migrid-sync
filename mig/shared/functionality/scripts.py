@@ -28,20 +28,21 @@
 """On demand headless script archive generator used as the base for
 delivering the user and vgrid/resource scripts.
 """
+from __future__ import absolute_import
 
 import os
 import time
 import zipfile
 
-from shared import returnvalues
-from shared import userscriptgen
-from shared import vgridscriptgen
-from shared.base import client_id_dir
-from shared.defaults import keyword_all, keyword_auto
-from shared.functional import validate_input_and_cert
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables, find_entry
-from shared.validstring import valid_user_path
+from .shared import returnvalues
+from .shared import userscriptgen
+from .shared import vgridscriptgen
+from .shared.base import client_id_dir
+from .shared.defaults import keyword_all, keyword_auto
+from .shared.functional import validate_input_and_cert
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables, find_entry
+from .shared.validstring import valid_user_path
 
 sh_cmd_def = '/bin/bash'
 python_cmd_def = '/usr/bin/python'
@@ -219,7 +220,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         if not os.path.isdir(abs_dir):
             try:
                 os.mkdir(abs_dir)
-            except Exception, exc:
+            except Exception as exc:
                 output_objects.append({'object_type': 'error_text',
                                        'text': 'Failed to create destination directory (%s) - aborting script generation'
                                        % exc})

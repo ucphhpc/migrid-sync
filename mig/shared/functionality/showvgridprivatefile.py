@@ -30,14 +30,15 @@ client is an owner or a member of the vgrid. Members are allowed to read private
 files but not write them, therefore they don't have a private_base link where
 they can access them like owners do.
 """
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.init import initialize_main_variables, find_entry
-from shared.validstring import valid_user_path
-from shared.vgrid import vgrid_is_owner_or_member
+from .shared import returnvalues
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.init import initialize_main_variables, find_entry
+from .shared.validstring import valid_user_path
+from .shared.vgrid import vgrid_is_owner_or_member
 
 
 def signature():
@@ -108,7 +109,7 @@ private files dir.''' % label})
                           {'object_type': 'script_status'},
                           {'object_type': 'end'}]
         private_fd.close()
-    except Exception, exc:
+    except Exception as exc:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Error reading %s private file (%s)'
                                % (label, exc)})

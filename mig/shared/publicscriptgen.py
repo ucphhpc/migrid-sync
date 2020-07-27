@@ -30,10 +30,12 @@
 """Shared helper functions for generating public MiG scripts
 for the supported programming languages.
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 
-from shared.base import get_xgi_bin
+from .shared.base import get_xgi_bin
 
 # Generator version (automagically updated by svn)
 
@@ -56,7 +58,7 @@ def doc_string(lang, string, indent=0):
     elif lang == 'python':
         s += '"""%s"""\n' % string.replace('\n', '\n' + indent * ' ')
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
     return s
 
 
@@ -72,7 +74,7 @@ def begin_function(lang, name, arguments, doc=''):
     elif lang == 'python':
         s += 'def %s(%s):\n' % (name, ', '.join(arguments))
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     if doc:
         s += doc_string(lang, doc, 4)
@@ -107,7 +109,7 @@ def end_function(lang, name):
     elif lang == 'python':
         s += '\n'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     s += '\n'
     return s
@@ -147,7 +149,7 @@ separated by whitespace''')
         return ''
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     s += end_function(lang, 'read_conf')
 
@@ -200,7 +202,7 @@ done
 %(list_name)s = [\"%(var_name)s=%%s\" %% i for i in sys.argv[1:]]
 """ % fill
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -236,7 +238,7 @@ def basic_usage_options(usage_str, lang):
     print \"-V\t\tdisplay version\""""\
              % usage_str
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -272,7 +274,7 @@ def pack_conf(lang, conf_name):
     %s = {%s}
 """ % (conf_name, ', '.join(pairs))
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     return s
@@ -296,7 +298,7 @@ def unpack_conf(lang, conf_name):
                  for name in _conf_pack]
         s += "\n".join(pairs) + "\n"
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     return s
@@ -369,7 +371,7 @@ def auth_check_init(lang):
         password_check = [\"--pass\", password]
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     return s
@@ -397,7 +399,7 @@ def timeout_check_init(lang):
         timeout += [\"--connect-timeout\", connect_timeout]
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     return s
@@ -608,7 +610,7 @@ def curl_perform(
             curl_stdin,
         )
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     return s
@@ -632,7 +634,7 @@ def curl_perform_flex(lang, conf_arg, base_arg, url_arg, post_arg, urlenc_arg,
         urlenc_val = "%s" % urlenc_arg
         query_val = "%s" % query_arg
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
     # NOTE: we pass and unwrap loaded miguser conf values in user_conf container
     s += begin_function(lang, 'curl_post_flex',
@@ -699,7 +701,7 @@ def curl_chain_login_steps(
         url_val = 'url_val'
         post_val = 'post_val'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     if lang == 'sh':
@@ -924,7 +926,7 @@ def curl_chain_logout_steps(
         url_val = 'url_val'
         post_val = 'post_val'
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
         return ''
 
     if lang == 'sh':
@@ -1047,7 +1049,7 @@ script_name = os.path.basename(script_path)
 script_dir = os.path.dirname(script_path)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
     return s
 
 
@@ -1132,7 +1134,7 @@ for (opt, val) in opts:
     sys.argv = [arg_zero] + args
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
     return s
 
 
@@ -1160,7 +1162,7 @@ if verbose:
     print \"using configuration in %s\" % (conf)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
     return s
 
 
@@ -1246,7 +1248,7 @@ if auth_redir == \"cert_redirect\":
         check_var('authcookiefile', auth_cookie_file)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
     return s
 
 
@@ -1296,7 +1298,7 @@ if arg_count > max_count:
     sys.exit(1)
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
@@ -1317,7 +1319,7 @@ def comment(lang, string):
     elif lang == 'python':
         s += '# %s\n' % string.replace('\n', '\n# ')
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
     return s
 
 
@@ -1377,19 +1379,19 @@ import StringIO
 
 """
     else:
-        print 'Error: %s not supported!' % lang
+        print('Error: %s not supported!' % lang)
 
     return s
 
 
-def write_script(contents, filename, mode=0755):
+def write_script(contents, filename, mode=0o755):
     try:
         script_file = open(filename, 'w')
         script_file.write(contents)
         script_file.close()
         os.chmod(filename, mode)
-    except Exception, exc:
-        print 'Error: failed to write %s: %s' % (filename, exc)
+    except Exception as exc:
+        print('Error: failed to write %s: %s' % (filename, exc))
         return False
 
     return True
@@ -1397,7 +1399,7 @@ def write_script(contents, filename, mode=0755):
 
 def verbose(verbose_mode, txt):
     if verbose_mode:
-        print txt
+        print(txt)
 
 
 def write_license(configuration, dst_dir, name='COPYING'):
@@ -1410,6 +1412,6 @@ def write_license(configuration, dst_dir, name='COPYING'):
         dst_fd.write(src_fd.read())
         src_fd.close()
         dst_fd.close()
-    except Exception, exc:
-        print 'Error: failed to write license %s: %s' % (dst_path, exc)
+    except Exception as exc:
+        print('Error: failed to write license %s: %s' % (dst_path, exc))
         return False

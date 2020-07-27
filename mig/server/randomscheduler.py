@@ -70,7 +70,7 @@ class RandomScheduler(Scheduler):
             # Ignore job which don't match the filter requirements
 
             for (key, val) in must_match.items():
-                if not job.has_key(key) or val != job[key]:
+                if key not in job or val != job[key]:
                     continue
             self.logger.debug('Schedule treating job %d: %s', i,
                               job['JOB_ID'])

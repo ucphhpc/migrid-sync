@@ -28,22 +28,23 @@
 """This module contains general functions used by the modules in
 the functionality dir.
 """
+from __future__ import absolute_import
 
 import os
 import time
 
 # REJECT_UNSET is not used directly but exposed to functionality
 
-from shared.accountstate import check_account_status, \
+from .shared.accountstate import check_account_status, \
     check_update_account_expire
-from shared.base import requested_page, force_utf8
-from shared.defaults import csrf_field, auth_openid_ext_db
-from shared.findtype import is_user
-from shared.httpsclient import extract_client_cert, extract_client_openid, \
+from .shared.base import requested_page, force_utf8
+from .shared.defaults import csrf_field, auth_openid_ext_db
+from .shared.findtype import is_user
+from .shared.httpsclient import extract_client_cert, extract_client_openid, \
     extract_base_url
-from shared.init import find_entry, make_title_entry, make_header_entry
-from shared.safeinput import validated_input, REJECT_UNSET
-from shared.useradm import expire_oid_sessions
+from .shared.init import find_entry, make_title_entry, make_header_entry
+from .shared.safeinput import validated_input, REJECT_UNSET
+from .shared.useradm import expire_oid_sessions
 
 
 def warn_on_rejects(rejects, output_objects):
@@ -64,14 +65,14 @@ def merge_defaults(user_input, defaults):
     """
 
     for (key, val) in defaults.items():
-        if not user_input.has_key(key):
+        if key not in user_input:
             user_input[key] = val
 
 
 def prefilter_input(user_arguments_dict, prefilter_map):
     """Apply filters from filter_map to user_arguments_dict values inline"""
     for (key, prefilter) in prefilter_map.items():
-        if user_arguments_dict.has_key(key):
+        if key in user_arguments_dict:
             orig = user_arguments_dict[key]
             if isinstance(orig, basestring):
                 res = prefilter(orig)

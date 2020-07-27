@@ -28,10 +28,11 @@
 """Keywords in the sharelink dictionaries:
 Works as a combined specification of and source of information about keywords.
 """
+from __future__ import absolute_import
 
 import datetime
 
-from shared.defaults import keyword_all
+from .shared.defaults import keyword_all
 
 # This is the main location for defining sharelink keywords. All other
 # sharelink handling functions should only operate on keywords defined here.

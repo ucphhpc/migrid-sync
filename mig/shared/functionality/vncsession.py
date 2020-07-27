@@ -26,19 +26,20 @@
 #
 
 """Start a new vnc session"""
+from __future__ import absolute_import
 
 import os
 import socket
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.functional import validate_input_and_cert
-from shared.init import initialize_main_variables, find_entry
-from shared.livedisplaysfunctions import get_users_display_dict, \
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.functional import validate_input_and_cert
+from .shared.init import initialize_main_variables, find_entry
+from .shared.livedisplaysfunctions import get_users_display_dict, \
     get_dict_from_display_number, set_user_display_active, \
     set_user_display_inactive
-from shared.safeeval import subprocess_call
-from shared.vncfunctions import create_vnc_password
+from .shared.safeeval import subprocess_call
+from .shared.vncfunctions import create_vnc_password
 
 
 def signature():
@@ -173,7 +174,7 @@ def main(client_id, user_arguments_dict):
                 display_number = i
                 vnc_port = baseVNCport + display_number
                 free_display_found = True
-            except Exception, exc:
+            except Exception as exc:
                 error = exc
             S.close()
             S = None

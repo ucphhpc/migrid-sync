@@ -26,12 +26,13 @@
 #
 
 """Send request e.g. for access (ownership or membership) back end"""
+from __future__ import absolute_import
 
-from shared import returnvalues
-from shared.defaults import any_protocol, csrf_field
-from shared.functional import validate_input_and_cert
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.init import initialize_main_variables, find_entry
+from .shared import returnvalues
+from .shared.defaults import any_protocol, csrf_field
+from .shared.functional import validate_input_and_cert
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.init import initialize_main_variables, find_entry
 
 
 def signature():

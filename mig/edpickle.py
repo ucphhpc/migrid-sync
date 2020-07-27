@@ -29,6 +29,7 @@
 #
 
 """Edit pickled objects on disk"""
+from __future__ import print_function
 
 import os
 import sys
@@ -37,16 +38,16 @@ from shared.serial import pickle
 
 
 if len(sys.argv) < 2:
-    print 'Usage: %s PATH' % sys.argv[0]
-    print 'Edit pickled object in file PATH'
+    print('Usage: %s PATH' % sys.argv[0])
+    print('Edit pickled object in file PATH')
     sys.exit(1)
 
 dirty = False
 path = sys.argv[1]
-print "opening pickle in %s" % path
+print("opening pickle in %s" % path)
 pickle_fd = open(path, 'rb+')
 obj = pickle.load(pickle_fd)
-print "pickled object loaded as 'obj'"
+print("pickled object loaded as 'obj'")
 while True:
     command = raw_input("Enter command: ")
     command = command.lower().strip()
@@ -55,14 +56,14 @@ while True:
         pickle_fd = open(path, 'rb+')
         obj = pickle.load(pickle_fd)
     elif command in ['h', 'help']:
-        print "Valid commands include:"
-        print "(d)isplay to display the opened pickled object"
-        print "(e)dit to edit the opened pickled object"
-        print "(o)pen to open a new pickle file"
-        print "(c)lose to close the opened pickled object"
-        print "(q)uit to quit pickle editor"
+        print("Valid commands include:")
+        print("(d)isplay to display the opened pickled object")
+        print("(e)dit to edit the opened pickled object")
+        print("(o)pen to open a new pickle file")
+        print("(c)lose to close the opened pickled object")
+        print("(q)uit to quit pickle editor")
     elif command in ['d', 'display']:
-        print obj
+        print(obj)
     elif command in ['e', 'edit']:
         edit = raw_input("Edit command: ")
         # eval(edit)
@@ -77,7 +78,7 @@ while True:
         pickle_fd.close()
         obj = None
         if command in ('q', 'quit'):
-            print "Closing"
+            print("Closing")
             break
     else:
-        print "unknown command '%s'" % command
+        print("unknown command '%s'" % command)

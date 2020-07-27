@@ -83,7 +83,7 @@ class Passthrough(GRSStorage):
             f.write(message+'\n')
             f.close()
             return 0
-        except Exception, v:
+        except Exception as v:
             raise
             
 

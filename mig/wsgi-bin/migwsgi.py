@@ -66,7 +66,7 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
 
     try:
         valid_backend_name(backend)
-    except InputException, iex:
+    except InputException as iex:
         _logger.error("%s refused to import invalid backend %r (%s): %s" %
                       (_addr, backend, import_path, iex))
         bailout_helper(configuration, backend, output_objects,
@@ -82,8 +82,8 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
     try:
         # Import main from backend module
 
-        exec 'from %s import main' % import_path
-    except Exception, err:
+        exec('from %s import main' % import_path)
+    except Exception as err:
         _logger.error("%s could not import %r (%s): %s" %
                       (_addr, backend, import_path, err))
         bailout_helper(configuration, backend, output_objects)
@@ -114,7 +114,7 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
 
         (output_objects, (ret_code, ret_msg)) = main(client_id,
                                                      user_arguments_dict)
-    except Exception, err:
+    except Exception as err:
         import traceback
         _logger.error("%s script crashed:\n%s" % (_addr,
                                                   traceback.format_exc()))
@@ -178,7 +178,7 @@ def application(environ, start_response):
         fieldstorage = cgi.FieldStorage(fp=environ['wsgi.input'],
                                         environ=environ)
         user_arguments_dict = fieldstorage_to_dict(fieldstorage)
-        if user_arguments_dict.has_key('output_format'):
+        if 'output_format' in user_arguments_dict:
             output_format = user_arguments_dict['output_format'][0]
 
         # Environment contains python script _somewhere_ , try in turn
@@ -196,7 +196,7 @@ def application(environ, start_response):
             (output_objs, ret_val) = reject_main(client_id,
                                                  user_arguments_dict)
         status = '200 OK'
-    except Exception, exc:
+    except Exception as exc:
         import traceback
         _logger.error("wsgi handling crashed:\n%s" % traceback.format_exc())
         _logger.error("handling of WSGI request for %s from %s failed: %s" %
@@ -269,9 +269,9 @@ def application(environ, start_response):
         if chunk_parts > 1:
             _logger.info("WSGI %s finished yielding all %d output parts" %
                          (backend, chunk_parts))
-    except IOError, ioe:
+    except IOError as ioe:
         _logger.warning("WSGI %s for %s could not deliver output: %s" %
                         (backend, client_id, ioe))
-    except Exception, exc:
+    except Exception as exc:
         _logger.error("WSGI %s for %s crashed during response: %s" %
                       (backend, client_id, exc))

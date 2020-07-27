@@ -29,6 +29,7 @@
 #
 
 
+from __future__ import print_function
 import sys
 import os
 import time
@@ -48,12 +49,12 @@ EXE_CHECK_DICT = {}
 EXE_CHECKS_BEFORE_RESTART = 10
 
 def usage():
-    print "Usage: keepalive.py resource_description_file"
-    print "Where OPTIONS include:"
-    print "-v               verbose mode"
-    print "-h               display this help"
-    print ""
-    print "Example: keepalive.py resources/lucia.imada.sdu.dk.0"
+    print("Usage: keepalive.py resource_description_file")
+    print("Where OPTIONS include:")
+    print("-v               verbose mode")
+    print("-h               display this help")
+    print("")
+    print("Example: keepalive.py resources/lucia.imada.sdu.dk.0")
         
 def restart_exe(resource_name):
     fh = open(resource_name, "r")
@@ -62,7 +63,7 @@ def restart_exe(resource_name):
         cmd = "%s %s %s 2>/dev/null" % (EXE_RESTART_CMD, resource_name, readline[:-1])
         fd = os.popen(cmd)
         status = int(fd.readline()[:-1])
-        print "%s: %s" % (cmd, str(status))
+        print("%s: %s" % (cmd, str(status)))
         fd.close()
         readline = fh.readline()
         
@@ -90,31 +91,31 @@ def check_exe(resource_description_file):
         if not exe_running:
             # Check how long exe has been down, to avoid restaring healty exe
             # waiting for MiG server to restart it.
-            if not EXE_CHECK_DICT.has_key(exe_name):
+            if exe_name not in EXE_CHECK_DICT:
                 EXE_CHECK_DICT[exe_name] = 0
             elif EXE_CHECK_DICT[exe_name] < EXE_CHECKS_BEFORE_RESTART:
                 EXE_CHECK_DICT[exe_name] += 1
-                print "Adding to '%s' EXE_CHECK_DICT: %s" % (exe_name, EXE_CHECK_DICT[exe_name])
+                print("Adding to '%s' EXE_CHECK_DICT: %s" % (exe_name, EXE_CHECK_DICT[exe_name]))
             else:
                 # Reset check counter
                 EXE_CHECK_DICT[exe_name] = 0
                 
                 # Clean exe
                 cmd = "%s %s %s 2>/dev/null" % (EXE_CLEAN_CMD, resource_name, exe_name)
-                print cmd
+                print(cmd)
                 fd2 = os.popen(cmd)
                 readline3 = fd2.readline()
                 while readline3:
-                    print readline3[:-1]
+                    print(readline3[:-1])
                     readline3 = fd2.readline()
                 fd2.close()
                 
         # Reset check counter, as resource is running
         if exe_running:
             EXE_CHECK_DICT[exe_name] = 0
-            print "%s: '%s' is Running" % (time.strftime("%c"), exe_name)           
+            print("%s: '%s' is Running" % (time.strftime("%c"), exe_name))           
         else:
-            print "%s: '%s' Checks/Restart: %s/%s " % (time.strftime("%c"), exe_name, EXE_CHECK_DICT[exe_name], EXE_CHECKS_BEFORE_RESTART)
+            print("%s: '%s' Checks/Restart: %s/%s " % (time.strftime("%c"), exe_name, EXE_CHECK_DICT[exe_name], EXE_CHECKS_BEFORE_RESTART))
 
         readline = fh.readline()
         #status = int(fd.readline()[:-1])
@@ -147,7 +148,7 @@ def check_fe(resource_description_file):
                 fe_running = True
             readline = fd.readline()
         fd.close()
-        print "%s: Frontend running: %s" % (time.strftime("%c"), str(fe_running))
+        print("%s: Frontend running: %s" % (time.strftime("%c"), str(fe_running)))
         
         if not fe_running:
             # Start FE
@@ -155,9 +156,9 @@ def check_fe(resource_description_file):
             fd = os.popen(cmd)
             status = fd.readline()
             fd.close()
-            print "%s: '%s'" % (cmd, str(status))
+            print("%s: '%s'" % (cmd, str(status)))
     else:
-        print "No such resource: %s " % resource_name
+        print("No such resource: %s " % resource_name)
     
 # === Main ===
 verbose = False
@@ -168,8 +169,8 @@ opt_args = "hv"
 
 try:
     opts, args = getopt.getopt(args, opt_args)
-except getopt.GetoptError, e:
-    print "Error: ", e.msg
+except getopt.GetoptError as e:
+    print("Error: ", e.msg)
     usage()
     sys.exit(1)
     
@@ -180,7 +181,7 @@ for (opt, val) in opts:
         usage()
         sys.exit(0)
     else:
-        print "Error: %s not supported!" % (opt)
+        print("Error: %s not supported!" % (opt))
         
 # Drop options while preserving original sys.argv[0]
 sys.argv = [arg_zero] + args
@@ -189,7 +190,7 @@ arg_count = len(sys.argv) - 1
 min_count = 1
                                                                                                 
 if arg_count < min_count:
-    print "Too few arguments: got %d, expected %d!" % (arg_count, min_count)
+    print("Too few arguments: got %d, expected %d!" % (arg_count, min_count))
     usage()
     sys.exit(1)
 
@@ -198,5 +199,5 @@ sleep_time=60
 while True:
     check_fe(sys.argv[1])
     check_exe(sys.argv[1])
-    print "SLEEPING: %s" % (str(sleep_time))
+    print("SLEEPING: %s" % (str(sleep_time)))
     time.sleep(sleep_time)

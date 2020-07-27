@@ -31,6 +31,7 @@ users.
 
 Requires rsync and lftp binaries to take care of the actual transfers.
 """
+from __future__ import print_function
 
 import datetime
 import glob
@@ -87,7 +88,7 @@ RSYNC_EXCLUDES_LIST = '__RSYNC_EXCLUDES_LIST__'
 def stop_handler(signal, frame):
     """A simple signal handler to quit on Ctrl+C (SIGINT) in main"""
     # Print blank line to avoid mix with Ctrl-C line
-    print ''
+    print('')
     stop_running.set()
 
 
@@ -157,7 +158,7 @@ def transfer_result(configuration, client_id, transfer_dict, exit_code,
                 status_fd = open(path, "w")
             status_fd.write(msg)
             status_fd.close()
-        except Exception, exc:
+        except Exception as exc:
             logger.error("writing status file %s for %s failed: %s" %
                          (path, blind_pw(transfer_dict), exc))
             status = False
@@ -702,7 +703,7 @@ def wrap_run_transfer(configuration, client_id, transfer_dict):
         return save_status
     try:
         run_transfer(configuration, client_id, transfer_dict)
-    except Exception, exc:
+    except Exception as exc:
         logger.error("run transfer failed: %s" % exc)
         logger.error(traceback.format_exc(exc))
         transfer_dict['status'] = "FAILED"
@@ -780,7 +781,7 @@ def handle_transfer(configuration, client_id, transfer_dict):
         # Switch to foreground here for easier debugging
         #foreground_transfer(configuration, client_id, transfer_dict)
         background_transfer(configuration, client_id, transfer_dict)
-    except Exception, exc:
+    except Exception as exc:
         logger.error('failed to run %s %s from %s: %s (%s)'
                      % (transfer_dict['protocol'], transfer_dict['action'],
                         transfer_dict['fqdn'], exc, blind_pw(transfer_dict)))
@@ -860,10 +861,10 @@ if __name__ == '__main__':
     if not configuration.site_enable_transfers:
         err_msg = "Data transfers are disabled in configuration!"
         logger.error(err_msg)
-        print err_msg
+        print(err_msg)
         sys.exit(1)
 
-    print '''This is the MiG data transfer handler daemon which runs requested
+    print('''This is the MiG data transfer handler daemon which runs requested
 data transfers in the background on behalf of the users. It monitors the saved
 data transfer files for changes and launches external client processes to take
 care of the tranfers, writing status and output to a transfer output directory
@@ -871,9 +872,9 @@ in the corresponding user home.
 
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
-'''
+''')
 
-    print 'Starting Data Transfer handler daemon - Ctrl-C to quit'
+    print('Starting Data Transfer handler daemon - Ctrl-C to quit')
 
     logger.info('Starting data transfer handler daemon')
 
@@ -913,11 +914,11 @@ unless it is available in mig/server/MiGserver.conf
             # Throttle down
 
             time.sleep(30)
-        except Exception, exc:
-            print 'Caught unexpected exception: %s' % exc
+        except Exception as exc:
+            print('Caught unexpected exception: %s' % exc)
             time.sleep(10)
 
-    print 'Cleaning up active transfers'
+    print('Cleaning up active transfers')
     logger.info('Cleaning up workers to prepare for exit')
     for (client_id, transfer_id, worker) in \
             all_worker_transfers(configuration, all_workers):
@@ -932,6 +933,6 @@ unless it is available in mig/server/MiGserver.conf
                                                                transfer_id))
         clean_transfer(configuration, client_id, transfer_id, force=True)
 
-    print 'Data transfer handler daemon shutting down'
+    print('Data transfer handler daemon shutting down')
     logger.info('Stop data transfer handler daemon')
     sys.exit(0)

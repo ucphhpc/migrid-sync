@@ -34,20 +34,22 @@ All or individual validations can be omitted through configuration.
 Each job_cond color is a subset of the one above it; in numerical ascension
 i.e. job_cond orange is a subset of job_cond yellow.
 """
+from __future__ import absolute_import
 
 import os
 from time import time
 
-from shared.base import client_id_dir
-from shared.defaults import default_vgrid, keyword_all
-from shared.mrslkeywords import get_keywords_dict
-from shared.resource import anon_resource_id, list_resources, \
+from .shared.base import client_id_dir
+from .shared.defaults import default_vgrid, keyword_all
+from .shared.mrslkeywords import get_keywords_dict
+from .shared.resource import anon_resource_id, list_resources, \
     anon_to_real_res_map
-from shared.resconfkeywords import get_resource_keywords
-from shared.safeinput import is_valid_simple_email
-from shared.vgrid import vgrid_resources
-from shared.vgridaccess import get_vgrid_map, get_resource_map, \
+from .shared.resconfkeywords import get_resource_keywords
+from .shared.safeinput import is_valid_simple_email
+from .shared.vgrid import vgrid_resources
+from .shared.vgridaccess import get_vgrid_map, get_resource_map, \
     real_to_anon_res_map, user_vgrid_access, CONF, RESOURCES, ALLOW
+from functools import reduce
 
 # Condition colors in descending order (order is essential!)
 
@@ -347,7 +349,7 @@ def validate_jobtype(configuration, job, resource, errors):
             (job_value == res_value)):
         errors['JOBTYPE'] = std_err_desc(job_value, res_value)
 
-    return not errors.has_key('JOBTYPE')
+    return 'JOBTYPE' not in errors
 
 
 def validate_maxprice(configuration, job, resource, errors):
@@ -421,7 +423,7 @@ def validate_notify(configuration, job, errors):
         else:
             syntax_is_valid = False
 
-    return not errors.has_key('NOTIFY')
+    return 'NOTIFY' not in errors
 
 
 def validate_platform(configuration, job, resource, errors):
@@ -489,7 +491,7 @@ def validate_retries(configuration, job, errors):
         errors['RETRIES'] = 'Job/Scheduler values: %s / %s' \
             % (job_value, scheduler_value)
 
-    return not errors.has_key('RETRIES')
+    return 'RETRIES' not in errors
 
 
 def validate_runtimeenvironment(configuration, job, resource, errors):
@@ -522,7 +524,7 @@ def validate_runtimeenvironment(configuration, job, resource, errors):
     if runtime_env_errors:
         errors['RUNTIMEENVIRONMENT'] = '; \n'.join(runtime_env_errors)
 
-    return not errors.has_key('RUNTIMEENVIRONMENT')
+    return 'RUNTIMEENVIRONMENT' not in errors
 
 
 def validate_verifyfiles(configuration, job, errors):
@@ -578,7 +580,7 @@ def validate_sandbox(configuration, job, resource, errors):
     if not job_value and res_value:
         errors['SANDBOX'] = std_err_desc(job_value, res_value)
 
-    return not errors.has_key('SANDBOX')
+    return 'SANDBOX' not in errors
 
 
 def validate_resource_seen(configuration, resource, errors, resource_id):
@@ -598,7 +600,7 @@ def validate_resource_seen(configuration, resource, errors, resource_id):
         errors['REGISTERED'] = 'The resource %s is not available' \
             % (resource_id)
 
-    return not errors.has_key('REGISTERED')
+    return 'REGISTERED' not in errors
 
 
 def validate_resource_seen_within_x_hours(configuration, resource, errors,
@@ -618,12 +620,12 @@ def validate_resource_seen_within_x_hours(configuration, resource, errors,
     resource_seen = time() - exe_last_seen(configuration, resource_id)[1]
     hours = int(configuration.resource_seen_within_hours)
 
-    if errors.has_key('REGISTERED') or (hours * 3600 <= resource_seen):
+    if 'REGISTERED' in errors or (hours * 3600 <= resource_seen):
         errors['SEEN_WITHIN_X'] = \
             'The resource %s has not been seen within the last %i hour(s).' \
             % (resource_id, hours)
 
-    return not errors.has_key('SEEN_WITHIN_X')
+    return 'SEEN_WITHIN_X' not in errors
 
 
 def validate_files(configuration, job, errors, mrsl_attribute,
@@ -686,7 +688,7 @@ def validate_files(configuration, job, errors, mrsl_attribute,
                 curl.getinfo(pycurl.RESPONSE_CODE)
                 curl_result = curl.getinfo(pycurl.RESPONSE_CODE)
                 curl.close()
-            except Exception, exc:
+            except Exception as exc:
                 configuration.logger.error('failed to curl check %s : %s'
                                            % (filename, exc))
                 curl_result = -1
@@ -711,7 +713,7 @@ def validate_files(configuration, job, errors, mrsl_attribute,
             + ' (must match status ext): %s' \
             % ', '.join(invalid_verify)
 
-    return not errors.has_key(mrsl_attribute)
+    return mrsl_attribute not in errors
 
 
 def validate_str_case(configuration, job, resource, errors, mrsl_attribute,
@@ -724,7 +726,7 @@ def validate_str_case(configuration, job, resource, errors, mrsl_attribute,
         return True
 
     job_value = job[mrsl_attribute].upper()
-    if resource.has_key(mrsl_attribute):
+    if mrsl_attribute in resource:
         res_value = resource[mrsl_attribute].upper()
     else:
         resource_keywords = get_resource_keywords(configuration)
@@ -737,7 +739,7 @@ def validate_str_case(configuration, job, resource, errors, mrsl_attribute,
         if not job_value == res_value:
             errors[mrsl_attribute] = std_err_desc(job_value, res_value)
 
-    return not errors.has_key(mrsl_attribute)
+    return mrsl_attribute not in errors
 
 
 def validate_int_case(configuration, job, resource, errors, mrsl_attribute,
@@ -752,12 +754,12 @@ def validate_int_case(configuration, job, resource, errors, mrsl_attribute,
     job_value = job[mrsl_attribute]
     res_value = None
 
-    if not resource.has_key(mrsl_attribute):
+    if mrsl_attribute not in resource:
 
         # Get value from one of the execution nodes
 
         for execution_node in resource['EXECONFIG']:
-            if execution_node.has_key(mrsl_attribute.lower()):
+            if mrsl_attribute.lower() in execution_node:
                 res_value = execution_node[mrsl_attribute.lower()]
                 if job_value <= res_value:
                     break
@@ -774,7 +776,7 @@ def validate_int_case(configuration, job, resource, errors, mrsl_attribute,
     if not job_value <= res_value:
         errors[mrsl_attribute] = std_err_desc(job_value, res_value)
 
-    return not errors.has_key(mrsl_attribute)
+    return mrsl_attribute not in errors
 
 
 #
@@ -929,14 +931,14 @@ def skip_validation(configuration, job, mrsl_attribute, *args):
     args_has_key = False
 
     if not is_in_skip_list:
-        job_has_key = job.has_key(mrsl_attribute)
+        job_has_key = mrsl_attribute in job
         if job_has_key:
             it_has_default_value = has_default_value(configuration,
                                                      mrsl_attribute,
                                                      job[mrsl_attribute])
         if args and len(args) == 1:
             args_present = True
-            args_has_key = args[0].has_key(mrsl_attribute)
+            args_has_key = mrsl_attribute in args[0]
 
     if args_present:
         return is_in_skip_list or (not job_has_key) or it_has_default_value \
@@ -951,7 +953,7 @@ def has_default_value(configuration, mrsl_attribute, value):
     default_value = None
 
     keywords_dict = get_keywords_dict(configuration)
-    if keywords_dict.has_key(mrsl_attribute):
+    if mrsl_attribute in keywords_dict:
         default_value = keywords_dict[mrsl_attribute].get('Value')
 
     return default_value == value
@@ -971,7 +973,7 @@ def anon_to_real_resources(configuration, anon_resources):
 
     [specified_resources.add(anon_to_real_map[aasr])
      for aasr in alt_anon_specified_resources
-     if anon_to_real_map.has_key(aasr)]
+     if aasr in anon_to_real_map]
 
     return specified_resources
 
@@ -983,7 +985,7 @@ def real_to_anon_resources(configuration, real_resources):
     anon_not_allowed = set()
     [anon_not_allowed.add(real_to_anon_map[rr])
      for rr in real_resources
-     if real_to_anon_map.has_key(rr)]
+     if rr in real_to_anon_map]
 
     return anon_not_allowed
 

@@ -26,19 +26,20 @@
 #
 
 """Resource management back end functionality"""
+from __future__ import absolute_import
 
 import time
 
-from shared import returnvalues
-from shared.base import sandbox_resource
-from shared.defaults import default_pager_entries, csrf_field
-from shared.functional import validate_input_and_cert
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import man_base_js, man_base_html, html_post_helper
-from shared.init import initialize_main_variables, find_entry
-from shared.modified import pending_resources_update, pending_vgrids_update
-from shared.resource import anon_to_real_res_map
-from shared.vgridaccess import user_visible_res_confs, get_resource_map, \
+from .shared import returnvalues
+from .shared.base import sandbox_resource
+from .shared.defaults import default_pager_entries, csrf_field
+from .shared.functional import validate_input_and_cert
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.html import man_base_js, man_base_html, html_post_helper
+from .shared.init import initialize_main_variables, find_entry
+from .shared.modified import pending_resources_update, pending_vgrids_update
+from .shared.resource import anon_to_real_res_map
+from .shared.vgridaccess import user_visible_res_confs, get_resource_map, \
     OWNERS, CONF
 
 list_operations = ['showlist', 'list']

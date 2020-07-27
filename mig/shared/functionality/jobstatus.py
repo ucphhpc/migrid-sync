@@ -26,29 +26,30 @@
 #
 
 """Job status back end functionality"""
+from __future__ import absolute_import
 
 import glob
 import os
 import time
 from binascii import hexlify
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.defaults import all_jobs, job_output_dir, csrf_field
-from shared.fileio import unpickle
-from shared.functional import validate_input_and_cert
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import html_post_helper
-from shared.init import initialize_main_variables
-from shared.job import get_job_ids_with_specified_project_name
-from shared.mrslparser import expand_variables
-from shared.parseflags import verbose, sorted, interactive
-from shared.resource import anon_resource_id
-from shared.validstring import valid_user_path
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.defaults import all_jobs, job_output_dir, csrf_field
+from .shared.fileio import unpickle
+from .shared.functional import validate_input_and_cert
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.html import html_post_helper
+from .shared.init import initialize_main_variables
+from .shared.job import get_job_ids_with_specified_project_name
+from .shared.mrslparser import expand_variables
+from .shared.parseflags import verbose, sorted, interactive
+from .shared.resource import anon_resource_id
+from .shared.validstring import valid_user_path
 
 try:
-    from shared import arcwrapper
-except Exception, exc:
+    from .shared import arcwrapper
+except Exception as exc:
     # Ignore errors and let it crash if ARC is enabled without the lib
     pass
 
@@ -234,13 +235,13 @@ def main(client_id, user_arguments_dict):
             'CANCELED_TIMESTAMP',
         ]
         for name in time_fields:
-            if job_dict.has_key(name):
+            if name in job_dict:
 
                 # time objects cannot be marshalled, asctime if timestamp
 
                 try:
                     job_obj[name.lower()] = time.asctime(job_dict[name])
-                except Exception, exc:
+                except Exception as exc:
 
                     # not a time object, just add
 
@@ -259,76 +260,76 @@ def main(client_id, user_arguments_dict):
                 arcsession = arcwrapper.Ui(home)
                 arcstatus = arcsession.jobStatus(job_dict['EXE'])
                 job_obj['status'] = arcstatus['status']
-            except arcwrapper.ARCWrapperError, err:
+            except arcwrapper.ARCWrapperError as err:
                 logger.error('Error retrieving ARC job status: %s' %
                              err.what())
                 job_obj['status'] += '(Error: ' + err.what() + ')'
-            except arcwrapper.NoProxyError, err:
+            except arcwrapper.NoProxyError as err:
                 logger.error('While retrieving ARC job status: %s' %
                              err.what())
                 job_obj['status'] += '(Error: ' + err.what() + ')'
-            except Exception, err:
+            except Exception as err:
                 logger.error('Error retrieving ARC job status: %s' % err)
                 job_obj['status'] += '(Error during retrieval)'
 
         exec_histories = []
         if verbose(flags):
-            if job_dict.has_key('EXECUTE'):
+            if 'EXECUTE' in job_dict:
                 command_line = '; '.join(job_dict['EXECUTE'])
                 if len(command_line) > 256:
                     job_obj['execute'] = '%s ...' % command_line[:252]
                 else:
                     job_obj['execute'] = command_line
             res_conf = job_dict.get('RESOURCE_CONFIG', {})
-            if res_conf.has_key('RESOURCE_ID'):
+            if 'RESOURCE_ID' in res_conf:
                 public_id = res_conf['RESOURCE_ID']
                 if res_conf.get('ANONYMOUS', True):
                     public_id = anon_resource_id(public_id)
                 job_obj['resource'] = public_id
             if job_dict.get('PUBLICNAME', False):
                 job_obj['resource'] += ' (alias %(PUBLICNAME)s)' % job_dict
-            if job_dict.has_key('RESOURCE_VGRID'):
+            if 'RESOURCE_VGRID' in job_dict:
                 job_obj['vgrid'] = job_dict['RESOURCE_VGRID']
 
-            if job_dict.has_key('EXECUTION_HISTORY'):
+            if 'EXECUTION_HISTORY' in job_dict:
                 counter = 0
                 for history_dict in job_dict['EXECUTION_HISTORY']:
                     exec_history = \
                         {'object_type': 'execution_history'}
 
-                    if history_dict.has_key('QUEUED_TIMESTAMP'):
+                    if 'QUEUED_TIMESTAMP' in history_dict:
                         exec_history['queued'] = \
                             time.asctime(history_dict['QUEUED_TIMESTAMP'
                                                       ])
-                    if history_dict.has_key('EXECUTING_TIMESTAMP'):
+                    if 'EXECUTING_TIMESTAMP' in history_dict:
                         exec_history['executing'] = \
                             time.asctime(history_dict['EXECUTING_TIMESTAMP'
                                                       ])
-                    if history_dict.has_key('PUBLICNAME'):
+                    if 'PUBLICNAME' in history_dict:
                         if history_dict['PUBLICNAME']:
                             exec_history['resource'] = \
                                 history_dict['PUBLICNAME']
                         else:
                             exec_history['resource'] = 'HIDDEN'
-                    if history_dict.has_key('RESOURCE_VGRID'):
+                    if 'RESOURCE_VGRID' in history_dict:
                         exec_history['vgrid'] = \
                             history_dict['RESOURCE_VGRID']
-                    if history_dict.has_key('FAILED_TIMESTAMP'):
+                    if 'FAILED_TIMESTAMP' in history_dict:
                         exec_history['failed'] = \
                             time.asctime(history_dict['FAILED_TIMESTAMP'
                                                       ])
-                    if history_dict.has_key('FAILED_MESSAGE'):
+                    if 'FAILED_MESSAGE' in history_dict:
                         exec_history['failed_message'] = \
                             history_dict['FAILED_MESSAGE']
                     exec_histories.append(
                         {'execution_history': exec_history, 'count': counter})
                     counter += 1
-        if job_dict.has_key('SCHEDULE_HINT'):
+        if 'SCHEDULE_HINT' in job_dict:
             job_obj['schedule_hint'] = job_dict['SCHEDULE_HINT']
         # We should not show raw schedule_targets due to lack of anonymization
-        if job_dict.has_key('SCHEDULE_TARGETS'):
+        if 'SCHEDULE_TARGETS' in job_dict:
             job_obj['schedule_hits'] = len(job_dict['SCHEDULE_TARGETS'])
-        if job_dict.has_key('EXPECTED_DELAY'):
+        if 'EXPECTED_DELAY' in job_dict:
             # Catch None value
             if not job_dict['EXPECTED_DELAY']:
                 job_obj['expected_delay'] = 0
@@ -347,7 +348,7 @@ def main(client_id, user_arguments_dict):
                                    % job_id,
                                    'text': 'View parsed mRSL contents'}
 
-            if job_dict.has_key('OUTPUTFILES') and job_dict['OUTPUTFILES']:
+            if 'OUTPUTFILES' in job_dict and job_dict['OUTPUTFILES']:
 
                 # Create a single ls link with all supplied outputfiles
 

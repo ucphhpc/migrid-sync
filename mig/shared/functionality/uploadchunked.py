@@ -33,22 +33,23 @@ finished.
 Multiple files can upload chunks in parallel but the chunks of individual
 files must be non-overlapping to guarantee race-free writing.
 """
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.defaults import upload_block_size, upload_tmp_dir, csrf_field
-from shared.fileio import strip_dir, write_chunk, delete_file, move, \
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.defaults import upload_block_size, upload_tmp_dir, csrf_field
+from .shared.fileio import strip_dir, write_chunk, delete_file, move, \
     get_file_size, makedirs_rec, check_write_access
-from shared.functional import validate_input
-from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.init import initialize_main_variables, find_entry
-from shared.parseflags import in_place, verbose
-from shared.safeinput import valid_path
-from shared.sharelinks import extract_mode_id
-from shared.userio import GDPIOLogError, gdp_iolog
-from shared.validstring import valid_user_path
+from .shared.functional import validate_input
+from .shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from .shared.init import initialize_main_variables, find_entry
+from .shared.parseflags import in_place, verbose
+from .shared.safeinput import valid_path
+from .shared.sharelinks import extract_mode_id
+from .shared.userio import GDPIOLogError, gdp_iolog
+from .shared.validstring import valid_user_path
 
 # The input argument for fileupload files
 
@@ -105,7 +106,7 @@ def parse_form_upload(user_args, user_id, configuration, base_dir, dst_dir,
     #    if user_args.has_key(filename_field) and \
     #           len(user_args[filename_field]) > name_index:
     for name_index in [0]:
-        if user_args.has_key(filename_field):
+        if filename_field in user_args:
             if isinstance(user_args[filename_field], basestring):
                 filename = user_args[filename_field]
             else:
@@ -122,7 +123,7 @@ def parse_form_upload(user_args, user_id, configuration, base_dir, dst_dir,
         try:
             filename = strip_dir(filename)
             valid_path(filename)
-        except Exception, exc:
+        except Exception as exc:
             logger.error('invalid filename: %s' % filename)
             rejected.append((filename, 'invalid filename: %s (%s)'
                              % (filename, exc)))
@@ -141,7 +142,7 @@ def parse_form_upload(user_args, user_id, configuration, base_dir, dst_dir,
         #    if user_args.has_key(files_field) and \
         #           len(user_args[files_field]) > chunk_index:
         for chunk_index in [0]:
-            if user_args.has_key(files_field):
+            if files_field in user_args:
                 chunk = user_args[files_field][chunk_index]
             else:
                 break
@@ -226,7 +227,7 @@ def main(client_id, user_arguments_dict, environ=None):
     elif share_id:
         try:
             (share_mode, _) = extract_mode_id(configuration, share_id)
-        except ValueError, err:
+        except ValueError as err:
             logger.error('%s called with invalid share_id %s: %s' %
                          (op_name, share_id, err))
             output_objects.append(
@@ -291,14 +292,14 @@ def main(client_id, user_arguments_dict, environ=None):
     # ... this includes checking for illegal directory traversal attempts
 
     for name in defaults.keys():
-        if user_arguments_dict.has_key(name):
+        if name in user_arguments_dict:
             del user_arguments_dict[name]
 
     try:
         (upload_files, upload_rejected) = parse_form_upload(
             user_arguments_dict, user_id, configuration, base_dir, dst_dir,
             reject_write)
-    except Exception, exc:
+    except Exception as exc:
         logger.error('error extracting required fields: %s' % exc)
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -426,7 +427,7 @@ def main(client_id, user_arguments_dict, environ=None):
                             "failed to create dest_dir: %s" % dest_dir)
                     move(abs_src_path, dest_path)
                     moved = True
-                except Exception, exc:
+                except Exception as exc:
                     if not isinstance(exc, GDPIOLogError):
                         gdp_iolog(configuration,
                                   client_id,

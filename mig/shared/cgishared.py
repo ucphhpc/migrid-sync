@@ -26,13 +26,15 @@
 #
 
 """Common cgi functions"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 
-from shared.base import requested_page
-from shared.cgioutput import CGIOutput
-from shared.conf import get_configuration_object
-from shared.httpsclient import extract_client_id
+from .shared.base import requested_page
+from .shared.cgioutput import CGIOutput
+from .shared.conf import get_configuration_object
+from .shared.httpsclient import extract_client_id
 
 
 def cgiscript_header(header_info=None, content_type='text/html'):
@@ -40,7 +42,7 @@ def cgiscript_header(header_info=None, content_type='text/html'):
 
     # first header line
 
-    print 'Content-Type: %s' % content_type
+    print('Content-Type: %s' % content_type)
 
     if header_info:
 
@@ -48,11 +50,11 @@ def cgiscript_header(header_info=None, content_type='text/html'):
 
         header_array = header_info.split('\n')
         for header_line in header_array:
-            print header_line
+            print(header_line)
 
     # blank line, end of headers
 
-    print ''
+    print('')
 
 
 def init_cgiscript_possibly_with_cert(print_header=True,

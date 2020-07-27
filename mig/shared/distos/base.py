@@ -32,27 +32,25 @@ server file system operations (think the python 'os' module). In that
 way the underlying distribution of the server FS can be separated
 from the normal server operation.
 """
+from __future__ import print_function
 
 __version__ = '$Revision: 2084 $'
 __revision__ = __version__
 
-# $Id: base.py 2084 2007-09-11 08:39:37Z jones $
 
 import sys
 import os
 import stat as realstat
 
-# TODO: change to import shared.distos.path as distpath
-
-import path as distpath
+from shared import distbase
+from shared.distbase import HTTPS_CERT_PORT, BASE_HOME, get_leader
+from shared.distos import path as distpath
 
 # load distbase from parent directory
 
 module_dir = os.path.dirname(__file__)
 parent_dir = os.path.realpath('%s/../' % module_dir)
 sys.path.append(parent_dir)
-import shared.distbase as distbase
-from shared.distbase import HTTPS_CERT_PORT, BASE_HOME, get_leader
 
 # ############################
 # Internal helper classes   #
@@ -77,7 +75,7 @@ class dummystat(object):
         'st_atime',
         'st_mtime',
         'st_ctime',
-        ]
+    ]
 
     def __init__(self, stat_info):
         self.__stat_info = stat_info
@@ -89,10 +87,10 @@ class dummystat(object):
         return self.__fields[name]
 
     def __set(self, value):
-        raise TypeError, 'read-only attribute'
+        raise TypeError('read-only attribute')
 
     def __del(self):
-        raise TypeError, 'read-only attribute'
+        raise TypeError('read-only attribute')
 
     def __repr__(self):
         return str(self.__stat_info)
@@ -211,8 +209,8 @@ def chmod(path, mode):
     for server in servers_string.split(' '):
         try:
             (status, data) = distbase.http_chmod(server,
-                    HTTPS_CERT_PORT, '/%s' % path, mode)
-        except Exception, err:
+                                                 HTTPS_CERT_PORT, '/%s' % path, mode)
+        except Exception as err:
             errors.append('%s: %s' % (server, err))
             continue
     (code, _) = distbase.close_session(path, 'WRITE')
@@ -231,8 +229,8 @@ def listdir(path):
     for server in servers_string.split(' '):
         try:
             (status, data) = distbase.http_listdir(server,
-                    HTTPS_CERT_PORT, '/%s' % path)
-        except Exception, err:
+                                                   HTTPS_CERT_PORT, '/%s' % path)
+        except Exception as err:
             errors.append('%s: %s' % (server, err))
             continue
         if not status:
@@ -248,7 +246,7 @@ def lstat(path):
     return stat(path, _flags='')
 
 
-def makedirs(path, mode=0775):
+def makedirs(path, mode=0o775):
     """remote version of operation with same name"""
 
     # TODO: this trial and error is very suboptimal! move to server
@@ -297,7 +295,7 @@ def makedirs(path, mode=0775):
     mkdir(path, mode)
 
 
-def mkdir(path, mode=0775):
+def mkdir(path, mode=0o775):
     """remote version of operation with same name"""
 
     errors = []
@@ -307,8 +305,8 @@ def mkdir(path, mode=0775):
     for server in servers_string.split(' '):
         try:
             (status, data) = distbase.http_mkdir(server,
-                    HTTPS_CERT_PORT, '/%s' % path, mode)
-        except Exception, err:
+                                                 HTTPS_CERT_PORT, '/%s' % path, mode)
+        except Exception as err:
             errors.append('%s: %s' % (server, err))
             continue
     (code, _) = distbase.close_session(path, 'CREATE')
@@ -327,8 +325,8 @@ def remove(path):
     for server in servers_string.split(' '):
         try:
             (status, data) = distbase.http_remove(server,
-                    HTTPS_CERT_PORT, '/%s' % path)
-        except Exception, err:
+                                                  HTTPS_CERT_PORT, '/%s' % path)
+        except Exception as err:
             errors.append('%s: %s' % (server, err))
             continue
     (code, _) = distbase.close_session(path, 'DELETE')
@@ -340,7 +338,7 @@ def remove(path):
 def removedirs(path):
     """remote version of operation with same name"""
 
-     # TODO: this trial and error is very suboptimal! move to server
+    # TODO: this trial and error is very suboptimal! move to server
 
     path = distpath.normpath(path)
     current_dir = path
@@ -372,8 +370,8 @@ def rename(src, dst):
     for server in servers_string.split(' '):
         try:
             (status, data) = distbase.http_rename(server,
-                    HTTPS_CERT_PORT, '/%s' % src, '/%s' % dst)
-        except Exception, err:
+                                                  HTTPS_CERT_PORT, '/%s' % src, '/%s' % dst)
+        except Exception as err:
             errors.append('%s: %s' % (server, err))
             continue
     (code, _) = distbase.close_session(dst, 'CREATE')
@@ -393,8 +391,8 @@ def rmdir(path):
     for server in servers_string.split(' '):
         try:
             (status, data) = distbase.http_rmdir(server,
-                    HTTPS_CERT_PORT, '/%s' % path)
-        except Exception, err:
+                                                 HTTPS_CERT_PORT, '/%s' % path)
+        except Exception as err:
             errors.append('%s: %s' % (server, err))
             continue
     (code, _) = distbase.close_session(path, 'DELETE')
@@ -413,14 +411,14 @@ def stat(path, _flags='L'):
     for server in servers_string.split(' '):
         try:
             (status, data) = distbase.http_stat(server,
-                    HTTPS_CERT_PORT, '/%s' % path, _flags)
-        except Exception, err:
+                                                HTTPS_CERT_PORT, '/%s' % path, _flags)
+        except Exception as err:
             errors.append('%s: %s' % (server, err))
             continue
         if not status:
             break
-        print 'DEBUG: warning stat %s at %s failed: %s %s' % (path,
-                server, status, data)
+        print('DEBUG: warning stat %s at %s failed: %s %s' % (path,
+                                                              server, status, data))
     (code, _) = distbase.close_session(path, 'READ')
 
     __reraise_errors(errors)
@@ -449,8 +447,8 @@ def symlink(src, dst):
     for server in servers_string.split(' '):
         try:
             (status, data) = distbase.http_symlink(server,
-                    HTTPS_CERT_PORT, '/%s' % src, '/%s' % dst)
-        except Exception, err:
+                                                   HTTPS_CERT_PORT, '/%s' % src, '/%s' % dst)
+        except Exception as err:
             errors.append('%s: %s' % (server, err))
             continue
     (code, _) = distbase.close_session(dst, 'CREATE')
@@ -476,8 +474,8 @@ def walk(path, topdown=True):
     for server in servers_string.split(' '):
         try:
             (status, data) = distbase.http_walk(server,
-                    HTTPS_CERT_PORT, '/%s' % path, topdown)
-        except Exception, err:
+                                                HTTPS_CERT_PORT, '/%s' % path, topdown)
+        except Exception as err:
             errors.append('%s: %s' % (server, err))
             continue
         if not status:
@@ -495,5 +493,3 @@ def walk(path, topdown=True):
 
     tree = eval('%s' % filtered_data)
     return __walk_generator(tree)
-
-

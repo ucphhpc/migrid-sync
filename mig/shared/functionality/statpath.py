@@ -26,16 +26,17 @@
 #
 
 """Emulate the un*x function with the same name"""
+from __future__ import absolute_import
 
 import os
 import glob
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.init import initialize_main_variables
-from shared.parseflags import verbose
-from shared.validstring import valid_user_path
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.init import initialize_main_variables
+from .shared.parseflags import verbose
+from .shared.validstring import valid_user_path
 
 
 def signature():
@@ -49,7 +50,7 @@ def stat_path(real_path, logger):
     """Call OS stat on provided path"""
     try:
         stat_info = os.stat(real_path)
-    except Exception, err:
+    except Exception as err:
 
         # Don't give away FS information - only log full failure reason
 
@@ -69,7 +70,7 @@ def stat_path(real_path, logger):
         stat['atime'] = stat_info.st_atime
         stat['mtime'] = stat_info.st_mtime
         stat['ctime'] = stat_info.st_ctime
-    except Exception, exc:
+    except Exception as exc:
         return (False, 'Could not get all stat info: %s' % exc)
     return (True, stat)
 
@@ -149,7 +150,7 @@ def main(client_id, user_arguments_dict):
                     output_objects.append({'object_type': 'error_text',
                             'text': stat})
                     status = returnvalues.SYSTEM_ERROR
-            except Exception, exc:
+            except Exception as exc:
                 output_objects.append({'object_type': 'error_text',
                         'text': "%s: '%s': %s" % (op_name,
                         relative_path, exc)})

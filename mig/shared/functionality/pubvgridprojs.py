@@ -28,12 +28,13 @@
 """List of public vgrid pages without cert requirement so that we can advertise
 them to the public (unused so far).
 """
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared.functional import validate_input
-from shared.init import initialize_main_variables
+from .shared import returnvalues
+from .shared.functional import validate_input
+from .shared.init import initialize_main_variables
 
 
 def signature():

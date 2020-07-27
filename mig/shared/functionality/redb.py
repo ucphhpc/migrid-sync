@@ -26,16 +26,17 @@
 #
 
 """Manage all available runtime environments"""
+from __future__ import absolute_import
 
-from shared import returnvalues
-from shared.defaults import default_pager_entries, csrf_field
-from shared.functional import validate_input_and_cert
-from shared.refunctions import build_reitem_object
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import man_base_js, man_base_html, html_post_helper
-from shared.init import initialize_main_variables, find_entry
-from shared.refunctions import get_re_map, CONF
-from shared.vgridaccess import resources_using_re, get_re_provider_map
+from .shared import returnvalues
+from .shared.defaults import default_pager_entries, csrf_field
+from .shared.functional import validate_input_and_cert
+from .shared.refunctions import build_reitem_object
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.html import man_base_js, man_base_html, html_post_helper
+from .shared.init import initialize_main_variables, find_entry
+from .shared.refunctions import get_re_map, CONF
+from .shared.vgridaccess import resources_using_re, get_re_provider_map
 
 list_operations = ['showlist', 'list']
 show_operations = ['show', 'showlist']

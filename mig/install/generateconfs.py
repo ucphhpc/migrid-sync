@@ -28,6 +28,7 @@
 """Generate the configurations for a custom MiG server installation.
 Creates MiG server and Apache configurations to fit the provided settings.
 """
+from __future__ import print_function
 
 import datetime
 import getopt
@@ -40,11 +41,11 @@ def usage(options):
     """Usage help"""
     lines = ["--%s=%s" % pair for pair in zip(options,
                                               [i.upper() for i in options])]
-    print '''Usage:
+    print('''Usage:
 %s [OPTIONS]
 Where supported options include -h/--help for this help or the conf settings:
 %s
-''' % (sys.argv[0], '\n'.join(lines))
+''' % (sys.argv[0], '\n'.join(lines)))
 
 
 if '__main__' == __name__:
@@ -183,8 +184,8 @@ if '__main__' == __name__:
     opts_str = ["%s=" % key for key in names] + ["help"]
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], flag_str, opts_str)
-    except getopt.GetoptError, exc:
-        print 'Error: ', exc.msg
+    except getopt.GetoptError as exc:
+        print('Error: ', exc.msg)
         usage(names)
         sys.exit(1)
 
@@ -200,21 +201,21 @@ if '__main__' == __name__:
         elif opt_name in bool_names:
             settings[opt_name] = (val.strip().lower() in ['1', 'true', 'yes'])
         else:
-            print 'Error: %s not supported!' % opt
+            print('Error: %s not supported!' % opt)
             usage(names)
             sys.exit(1)
 
     if args:
-        print 'Error: non-option arguments are no longer supported!'
-        print " ... found: %s" % args
+        print('Error: non-option arguments are no longer supported!')
+        print(" ... found: %s" % args)
         usage(names)
         sys.exit(1)
     if settings['destination_suffix'] == 'DEFAULT':
         suffix = "-%s" % datetime.datetime.now().isoformat()
         settings['destination_suffix'] = suffix
-    print '# Creating confs with:'
+    print('# Creating confs with:')
     for (key, val) in settings.items():
-        print '%s: %s' % (key, val)
+        print('%s: %s' % (key, val))
         # Remove default values to use generate_confs default values
         if val == 'DEFAULT':
             del settings[key]
@@ -225,8 +226,8 @@ if '__main__' == __name__:
         instructions_fd = open(instructions_path, "r")
         instructions = instructions_fd.read()
         instructions_fd.close()
-        print instructions
-    except Exception, exc:
-        print "ERROR: could not read generated instructions: %s" % exc
+        print(instructions)
+    except Exception as exc:
+        print("ERROR: could not read generated instructions: %s" % exc)
         sys.exit(1)
     sys.exit(0)

@@ -26,17 +26,18 @@
 #
 
 """Share link functions"""
+from __future__ import absolute_import
 
 import datetime
 import os
 import time
 from random import SystemRandom
 
-from shared.base import client_id_dir, extract_field
-from shared.defaults import sharelinks_filename, csrf_field, \
+from .shared.base import client_id_dir, extract_field
+from .shared.defaults import sharelinks_filename, csrf_field, \
     share_mode_charset, share_id_charset
-from shared.fileio import makedirs_rec, make_symlink, delete_symlink
-from shared.serial import load, dump
+from .shared.fileio import makedirs_rec, make_symlink, delete_symlink
+from .shared.serial import load, dump
 
 # We split mode charset into ro, rw and rw substrings and pick one char at
 # random from the corresponding substring when generating a share ID. In that
@@ -400,7 +401,7 @@ def load_share_links(configuration, client_id):
             sharelinks = load(sharelinks_path)
         else:
             sharelinks = {}
-    except Exception, exc:
+    except Exception as exc:
         return (False, "could not load saved share links: %s" % exc)
     return (True, sharelinks)
 
@@ -487,7 +488,7 @@ def modify_share_links(action, share_dict, client_id, configuration,
                                        client_id_dir(client_id),
                                        sharelinks_filename)
         dump(share_map, sharelinks_path)
-    except Exception, err:
+    except Exception as err:
         logger.error("modify_share_links failed: %s" % err)
         return (False, 'Error updating share links: %s' % err)
     return (True, share_id)

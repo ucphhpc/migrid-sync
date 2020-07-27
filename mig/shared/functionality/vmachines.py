@@ -26,20 +26,21 @@
 #
 
 """Virtual machine administration back end functionality"""
+from __future__ import absolute_import
 
 import os
 import time
 from binascii import hexlify
 
-from shared import returnvalues
-from shared import vms
-from shared.defaults import any_vgrid, csrf_field
-from shared.functional import validate_input_and_cert
-from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.html import render_menu, confirm_js, confirm_html, \
+from .shared import returnvalues
+from .shared import vms
+from .shared.defaults import any_vgrid, csrf_field
+from .shared.functional import validate_input_and_cert
+from .shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from .shared.html import render_menu, confirm_js, confirm_html, \
     html_post_helper
-from shared.init import initialize_main_variables, find_entry
-from shared.vgridaccess import user_vgrid_access
+from .shared.init import initialize_main_variables, find_entry
+from .shared.vgridaccess import user_vgrid_access
 
 list_actions = ['show', '']
 edit_actions = ['create', 'start', 'stop', 'edit', 'delete']

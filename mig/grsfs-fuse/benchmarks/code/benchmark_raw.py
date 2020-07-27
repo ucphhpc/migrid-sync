@@ -26,6 +26,7 @@
 #
 
 """Benchmark of raw read write access"""
+from __future__ import print_function
 
 import os
 import sys
@@ -109,7 +110,7 @@ if __name__ == '__main__':
             'number=',
             'repeat=',
             ])
-    except getopt.GetoptError, err:
+    except getopt.GetoptError as err:
         print('Error in option parsing: ' + err.msg)
         usage()
         sys.exit(1)
@@ -118,7 +119,7 @@ if __name__ == '__main__':
         if opt in ('-d', '--data-bytes'):
             try:
                 conf["data_bytes"] = int(val)
-            except ValueError, err:
+            except ValueError as err:
                 print('Error in parsing %s value: %s' % (opt, err))
                 sys.exit(1)
         elif opt in ('-h', '--help'):
@@ -127,13 +128,13 @@ if __name__ == '__main__':
         elif opt in ('-n', '--number'):
             try:
                 conf["number"] = int(val)
-            except ValueError, err:
+            except ValueError as err:
                 print('Error in parsing %s value: %s' % (opt, err))
                 sys.exit(1)
         elif opt in ('-r', '--repeat'):
             try:
                 conf["repeat"] = int(val)
-            except ValueError, err:
+            except ValueError as err:
                 print('Error in parsing %s value: %s' % (opt, err))
                 sys.exit(1)
         else:

@@ -22,10 +22,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """A shared collection of map helper functions"""
+from __future__ import absolute_import
 
 import os
 import fcntl
-from shared.serial import load
+from .shared.serial import load
 
 
 def load_system_map(configuration, kind, do_lock):

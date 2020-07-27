@@ -28,14 +28,15 @@
 """List all CNs in the list of administrators for a given resource if user is
 an owner.
 """
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared.findtype import is_owner
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.init import initialize_main_variables
-from shared.listhandling import list_items_in_pickled_list
+from .shared import returnvalues
+from .shared.findtype import is_owner
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.init import initialize_main_variables
+from .shared.listhandling import list_items_in_pickled_list
 
 
 def signature():

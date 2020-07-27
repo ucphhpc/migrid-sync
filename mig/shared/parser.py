@@ -26,16 +26,17 @@
 #
 
 """Parser helper functions"""
+from __future__ import absolute_import
 
 import os
 import base64
 import StringIO
 import tempfile
 
-from shared.defaults import keyword_all, maxfill_fields
-from shared.rekeywords import get_keywords_dict as re_get_keywords_dict
-from shared.resconfkeywords import get_keywords_dict as resconf_get_keywords_dict
-from shared.safeinput import valid_job_name, guess_type, html_escape
+from .shared.defaults import keyword_all, maxfill_fields
+from .shared.rekeywords import get_keywords_dict as re_get_keywords_dict
+from .shared.resconfkeywords import get_keywords_dict as resconf_get_keywords_dict
+from .shared.safeinput import valid_job_name, guess_type, html_escape
 
 comment_char = '#'
 
@@ -87,7 +88,7 @@ def get_config_sub_level_dict(
     else:
         specified_keywords = ', '.join(modify_dict.keys())
     for req_key in required_keywords:
-        if not modify_dict.has_key(req_key):
+        if req_key not in modify_dict:
             return (False,
                     'All required keywords not specified! Specified keywords: %s. Required keywords: %s (at least %s is missing)'
                     % (specified_keywords,
@@ -260,7 +261,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
         job_keyword = keyword_block[0].strip(':')
         keyword_data = keyword_block[1]
 
-        if not external_keyword_dict.has_key(job_keyword):
+        if job_keyword not in external_keyword_dict:
             status = False
             # NOTE: we can't trust keyword to be safe for printing
             msg += 'unknown keyword: %s\n' % html_escape(job_keyword)
@@ -301,7 +302,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     safe_checker = guess_type(job_keyword)
                     for data_val in keyword_data:
                         safe_checker(data_val)
-            except Exception, exc:
+            except Exception as exc:
 
                 # found invalid value
 
@@ -418,7 +419,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                 if job_keyword == 'JOBNAME':
                     try:
                         valid_job_name(str(keyword_data[0]), min_length=0)
-                    except Exception, err:
+                    except Exception as err:
                         status = False
                         msg += format_type_error(job_keyword,
                                                  'specified jobname not valid: %s' % err,
@@ -468,7 +469,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                             tempfile.mkstemp(text=True)
                         os.write(filehandle, testprocedure)
                         os.close(filehandle)
-                    except Exception, err:
+                    except Exception as err:
                         status = False
                         msg += \
                             'Exception writing temporary testprocedure file. New runtime environment not created! %s'\
@@ -476,7 +477,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
 
                 retmsg = ''
                 if status:
-                    from shared.mrslparser import parse as mrslparse
+                    from .shared.mrslparser import parse as mrslparse
                     (status, retmsg) = mrslparse(
                         tmpfile, "testprocedure_job_id",
                         "testprocedure_test_parse__cert_name_not_specified",
@@ -488,7 +489,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     try:
                         os.remove(tmpfile)
                         os.remove('%s.parsed' % tmpfile)
-                    except Exception, err:
+                    except Exception as err:
                         msg += \
                             'Exception removing temporary testprocedure file %s or %s, %s'\
                             % (tmpfile, '%s.parsed' % tmpfile, err)
@@ -540,7 +541,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                 sublevel_required = []
                 sublevel_optional = []
 
-                if exekeywords.has_key('Sublevel')\
+                if 'Sublevel' in exekeywords\
                         and exekeywords['Sublevel']:
                     sublevel_required = exekeywords['Sublevel_required']
                     sublevel_optional = exekeywords['Sublevel_optional']
@@ -588,7 +589,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     exe_dict['vgrid'] = [i.strip() for i in
                                          vgrid_value.split(',') if i.strip()]
                     value.append(exe_dict)
-                except Exception, err:
+                except Exception as err:
                     status = False
                     msg += format_type_error(job_keyword,
                                              'Error getting execonfig value',
@@ -605,7 +606,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                 sublevel_required = []
                 sublevel_optional = []
 
-                if storekeywords.has_key('Sublevel')\
+                if 'Sublevel' in storekeywords\
                         and storekeywords['Sublevel']:
                     sublevel_required = storekeywords['Sublevel_required']
                     sublevel_optional = storekeywords['Sublevel_optional']
@@ -645,7 +646,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     store_dict['vgrid'] = [i.strip() for i in
                                            vgrid_value.split(',') if i.strip()]
                     value.append(store_dict)
-                except Exception, err:
+                except Exception as err:
                     status = False
                     msg += format_type_error(job_keyword,
                                              'Error getting storeconfig value',
@@ -716,7 +717,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     sublevel_required = []
                     sublevel_optional = []
 
-                    if software.has_key('Sublevel')\
+                    if 'Sublevel' in software\
                             and software['Sublevel']:
                         sublevel_required = software['Sublevel_required'
                                                      ]
@@ -734,7 +735,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                                                  keyword_data)
                     else:
                         value.append(software_dict)
-                except Exception, err:
+                except Exception as err:
                     status = False
                     msg += format_type_error(job_keyword,
                                              'Error getting RE_software value',
@@ -750,7 +751,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     sublevel_required = []
                     sublevel_optional = []
 
-                    if environmentvariable.has_key('Sublevel')\
+                    if 'Sublevel' in environmentvariable\
                             and environmentvariable['Sublevel']:
                         sublevel_required = \
                             environmentvariable['Sublevel_required']
@@ -780,7 +781,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                         msg += format_type_error(job_keyword,
                                                  'Error in sub level parsing: %s'
                                                  % env_vars, keyword_dict, keyword_data)
-                except Exception, err:
+                except Exception as err:
 
                     status = False
                     msg += format_type_error(job_keyword,
@@ -803,7 +804,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
 
     for keyword_entry in external_keyword_dict.keys():
         entry = external_keyword_dict[keyword_entry]
-        if entry.has_key('Required'):
+        if 'Required' in entry:
             if entry['Required']:
 
                 # Required keyword not found

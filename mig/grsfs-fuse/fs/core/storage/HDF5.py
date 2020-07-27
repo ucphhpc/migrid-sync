@@ -31,12 +31,13 @@ Pytables/HDF5 storage backend
 Created by Jan Wiberg on 2010-03-22.
 Copyright (c) 2010 __MyCompanyName__. All rights reserved.
 """
+from __future__ import absolute_import
 
 import sys
 import os
-from hierarchical import HierarchicalClass
-from data import data
-from metadata import metadata
+from .hierarchical import HierarchicalClass
+from .data import data
+from .metadata import metadata
 
 try:
     import tables

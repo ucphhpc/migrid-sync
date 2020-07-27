@@ -26,15 +26,16 @@
 #
 
 """String validation"""
+from __future__ import absolute_import
 
 import os.path
 
-from shared.base import invisible_path
-from shared.conf import get_configuration_object
-from shared.defaults import keyword_auto, session_id_length, \
+from .shared.base import invisible_path
+from .shared.conf import get_configuration_object
+from .shared.defaults import keyword_auto, session_id_length, \
     session_id_charset, share_id_charset, share_mode_charset, \
     user_id_charset, user_id_min_length, user_id_max_length
-from shared.fileio import user_chroot_exceptions, untrusted_store_res_symlink
+from .shared.fileio import user_chroot_exceptions, untrusted_store_res_symlink
 
 
 def cert_name_format(input_string):

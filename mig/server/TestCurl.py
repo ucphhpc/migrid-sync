@@ -30,6 +30,7 @@
 # Connect to HTTPS server at mig-1.imada.sdu.dk and retrieve list of MiG files
 #
 
+from __future__ import print_function
 import sys
 import pycurl
 import StringIO
@@ -65,7 +66,7 @@ def GetFile():
     # Init cURL (not strictly necessary, but for symmetry with cleanup)
 
     pycurl.global_init(pycurl.GLOBAL_SSL)
-    print 'cURL:\t\t', pycurl.version
+    print('cURL:\t\t', pycurl.version)
     curl = pycurl.Curl()
     curl.setopt(pycurl.HTTPHEADER, ['User-Agent: MiG HTTP GET'])
     curl.setopt(pycurl.FOLLOWLOCATION, 1)
@@ -99,37 +100,37 @@ def GetFile():
 
     curl.setopt(curl.SSL_VERIFYPEER, 0)
 
-    print 'fetching:\t', url
-    print 'cert:\t\t', server_cert
-    print 'key:\t\t', server_key
-    print 'passwd:\t\t', passwd
+    print('fetching:\t', url)
+    print('cert:\t\t', server_cert)
+    print('key:\t\t', server_key)
+    print('passwd:\t\t', passwd)
 
     # Clean up after cURL
 
     try:
         curl.perform()
-    except pycurl.error, e:
-        print 'cURL command failed!:'
+    except pycurl.error as e:
+        print('cURL command failed!:')
 
         # error is a (errorcode, errormsg) tuple
 
-        print e[1]
+        print(e[1])
         return False
 
     status = curl.getinfo(pycurl.HTTP_CODE)
-    print 'HTTP code:\t', status
+    print('HTTP code:\t', status)
 
     curl.close()
     pycurl.global_cleanup()
 
     if status == http_success:
-        print '--- MiG files ---'
-        print data.getvalue()
-        print '--- Done ---'
+        print('--- MiG files ---')
+        print(data.getvalue())
+        print('--- Done ---')
         ret = True
     else:
-        print 'Server returned HTTP code %d, expected %d' % (status,
-                http_success)
+        print('Server returned HTTP code %d, expected %d' % (status,
+                http_success))
         ret = 1
 
         data.close()
@@ -151,7 +152,7 @@ def PutFile():
     try:
         inputfile = open(filepath, 'rb')
     except:
-        print 'Error: Failed to open %s for reading!' % filepath
+        print('Error: Failed to open %s for reading!' % filepath)
         return (False, 'Invalid filename!')
 
     # Set size of file to be uploaded.
@@ -179,7 +180,7 @@ def PutFile():
         passwd = pw_file.readline().strip()
         pw_file.close()
     except:
-        print 'Failed to read password from file!'
+        print('Failed to read password from file!')
         return ''
 
     # Store output in memory
@@ -232,11 +233,11 @@ def PutFile():
 
     try:
         curl.perform()
-    except pycurl.error, e:
+    except pycurl.error as e:
 
         # pycurl.error is an (errorcode, errormsg) tuple
 
-        print 'Error: cURL command failed! %s' % e[1]
+        print('Error: cURL command failed! %s' % e[1])
         return (404, 'Error!')
 
     status = curl.getinfo(pycurl.HTTP_CODE)
@@ -249,16 +250,16 @@ def PutFile():
     pycurl.global_cleanup()
 
     if status == http_success:
-        print 'PUT request succeeded'
+        print('PUT request succeeded')
 
         # Go to start of buffer
 
         output.seek(0)
         msg = output.readlines()
-        print msg
+        print(msg)
     else:
-        print 'Warning: Server returned HTTP code %d, expected %d'\
-             % (status, http_success)
+        print('Warning: Server returned HTTP code %d, expected %d'\
+             % (status, http_success))
 
     inputfile.close()
     output.close()

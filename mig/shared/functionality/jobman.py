@@ -27,16 +27,17 @@
 #
 
 """Script to provide users with a means of listing and managing jobs"""
+from __future__ import absolute_import
 
 import datetime
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.defaults import default_pager_entries, csrf_backends
-from shared.functional import validate_input_and_cert
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import themed_styles
-from shared.init import initialize_main_variables, find_entry
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.defaults import default_pager_entries, csrf_backends
+from .shared.functional import validate_input_and_cert
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.html import themed_styles
+from .shared.init import initialize_main_variables, find_entry
 
 
 def pager_append():

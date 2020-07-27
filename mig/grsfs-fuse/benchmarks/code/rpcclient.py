@@ -27,6 +27,7 @@
 
 
 """Simple RPC client benchmark"""
+from __future__ import print_function
 
 import sys
 import getopt
@@ -51,8 +52,8 @@ def usage():
                 
 def main(conf):
     """Run timed benchmark"""
-    print timeit.repeat("proxy.x()", setup = conf['setup'],
-                        repeat=conf['repeat'], number=conf['number'])
+    print(timeit.repeat("proxy.x()", setup = conf['setup'],
+                        repeat=conf['repeat'], number=conf['number']))
 
 if __name__ == '__main__':
     conf = default_configuration()
@@ -68,7 +69,7 @@ if __name__ == '__main__':
             'transport=',
             'uri=',
             ])
-    except getopt.GetoptError, err:
+    except getopt.GetoptError as err:
         print('Error in option parsing: ' + err.msg)
         usage()
         sys.exit(1)
@@ -80,13 +81,13 @@ if __name__ == '__main__':
         elif opt in ('-n', '--number'):
             try:
                 conf["number"] = int(val)
-            except ValueError, err:
+            except ValueError as err:
                 print('Error in parsing %s value: %s' % (opt, err))
                 sys.exit(1)
         elif opt in ('-r', '--repeat'):
             try:
                 conf["repeat"] = int(val)
-            except ValueError, err:
+            except ValueError as err:
                 print('Error in parsing %s value: %s' % (opt, err))
                 sys.exit(1)
         elif opt in ('-t', '--transport'):

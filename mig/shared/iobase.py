@@ -26,6 +26,8 @@
 #
 
 """A common entry point to all IO"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import time
@@ -35,12 +37,12 @@ import shutil as realshutil
 import stat as realstat
 import zipfile as realzipfile
 
-from shared import localfile
-from shared import localos
-from shared import localpickle
-from shared import distfile
-from shared import distos
-from shared import distpickle
+from .shared import localfile
+from .shared import localos
+from .shared import localpickle
+from .shared import distfile
+from .shared import distos
+from .shared import distpickle
 
 # export os / os.path functions and variables
 
@@ -229,7 +231,7 @@ def lstat(path, location=DISTRIBUTED):
     return os_lib.lstat(path)
 
 
-def mkdir(path, mode=0775, location=DISTRIBUTED):
+def mkdir(path, mode=0o775, location=DISTRIBUTED):
     if DISTRIBUTED == location:
         os_lib = distos
     elif LOCAL == location:
@@ -239,7 +241,7 @@ def mkdir(path, mode=0775, location=DISTRIBUTED):
     return os_lib.mkdir(path, mode)
 
 
-def makedirs(path, mode=0775, location=DISTRIBUTED):
+def makedirs(path, mode=0o775, location=DISTRIBUTED):
     if DISTRIBUTED == location:
         os_lib = distos
     elif LOCAL == location:
@@ -381,7 +383,7 @@ def __read_kind(
         if logger:
             logger.debug('file read: %s' % filename)
         return contents
-    except Exception, err:
+    except Exception as err:
         if logger:
             logger.error('could not read %s %s' % (filename, err))
         force_close(filehandle)
@@ -429,7 +431,7 @@ def __write_kind(
         if logger:
             logger.debug('file written: %s' % filename)
         return True
-    except Exception, err:
+    except Exception as err:
         if logger:
             logger.error('could not write %s %s' % (filename, err))
         force_close(filehandle)
@@ -487,7 +489,7 @@ def copy_file(src, dst, location=DISTRIBUTED):
         dst_fd.flush()
         dst_fd.unlock()
         dst_fd.close()
-    except Exception, err:
+    except Exception as err:
         force_close(src_fd)
         force_close(dst_fd)
         raise err
@@ -507,7 +509,7 @@ def delete_file(filename, logger=None, location=DISTRIBUTED):
         try:
             os_lib.remove(filename)
             result = True
-        except Exception, err:
+        except Exception as err:
             if logger:
                 logger.error('could not delete %s %s %s' % (location,
                                                             filename, err))
@@ -540,7 +542,7 @@ def make_symlink(
                                                          src))
         os_lib.symlink(src, dst)
         return True
-    except Exception, err:
+    except Exception as err:
         if logger:
             logger.error('make_symlink failed: %s' % err)
         return False
@@ -558,7 +560,7 @@ def unpickle_and_change_status(
     try:
         job_dict['STATUS'] = newstatus
         job_dict[newstatus + '_TIMESTAMP'] = time.gmtime()
-    except Exception, err:
+    except Exception as err:
         if logger:
             logger.error('could not change job %s status to %s: %s %s'
                          % (job_dict, newstatus, filename, err))
@@ -587,7 +589,7 @@ def unpickle(filename, logger=None, location=DISTRIBUTED):
         if logger:
             logger.debug('%s was unpickled successfully' % filename)
         return obj
-    except Exception, err:
+    except Exception as err:
         if logger:
             logger.error('%s %s could not be opened/unpickled! %s'
                          % (location, filename, err))
@@ -612,7 +614,7 @@ def pickle(
         if logger:
             logger.debug('pickle success: %s' % filename)
         return True
-    except Exception, err:
+    except Exception as err:
         if logger:
             logger.error('could not pickle %s %s %s' % (location,
                                                         filename, err))
@@ -671,7 +673,7 @@ def write_zipfile(
         zip_fd.flush()
         zip_fd.unlock()
         zip_fd.close()
-    except Exception, err:
+    except Exception as err:
         force_close(zip_fd)
         raise err
 
@@ -686,8 +688,8 @@ def send_message_to_grid_script(message, logger, configuration):
         pipe.close()
         logger.info('%s written to grid_stdin' % message)
         return True
-    except Exception, err:
-        print 'could not get exclusive access or write to grid_stdin!'
+    except Exception as err:
+        print('could not get exclusive access or write to grid_stdin!')
         logger.error('could not get exclusive access or write to grid_stdin: %s %s'
                      % (message, err))
         force_close(pipe)

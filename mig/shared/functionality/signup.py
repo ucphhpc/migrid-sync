@@ -26,13 +26,14 @@
 #
 
 """Sign up for account with certificate or OpenID back end"""
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared.defaults import keyword_all
-from shared.functional import validate_input
-from shared.init import initialize_main_variables, find_entry
+from .shared import returnvalues
+from .shared.defaults import keyword_all
+from .shared.functional import validate_input
+from .shared.init import initialize_main_variables, find_entry
 
 
 def get_valid_topics(configuration):

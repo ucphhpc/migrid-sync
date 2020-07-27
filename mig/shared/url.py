@@ -27,6 +27,7 @@
 #
 
 """Url functions"""
+from __future__ import absolute_import
 
 import os
 import ast
@@ -34,9 +35,9 @@ import base64
 import urllib
 import urlparse
 
-from shared.defaults import csrf_field
-from shared.handlers import get_csrf_limit
-from shared.pwhash import make_csrf_token, make_csrf_trust_token
+from .shared.defaults import csrf_field
+from .shared.handlers import get_csrf_limit
+from .shared.pwhash import make_csrf_token, make_csrf_trust_token
 
 
 def base32urlencode(
@@ -99,7 +100,7 @@ def base32urldecode(configuration, encoded_url,
     for (key, value) in query_dict.iteritems():
         try:
             query_dict[key] = ast.literal_eval(value)
-        except ValueError, exc:
+        except ValueError as exc:
             raise ValueError('Invalid formated input: %s -> %s, error: %s'
                              % (key, value, exc))
 

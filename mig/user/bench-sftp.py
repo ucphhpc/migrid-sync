@@ -28,6 +28,7 @@
 """Benchmark sft upload/download against paramiko and openssh sftp servers.
 SSH agent is used for the auth if no explicit keys are given.
 """
+from __future__ import print_function
 
 import os
 import sys
@@ -88,7 +89,7 @@ put_time, get_time = {}, {}
 
 def write_tmp(path, size):
     """Efficiently write dummy tmp file of given size in path"""
-    print "Writing %db file for benchmark" % size
+    print("Writing %db file for benchmark" % size)
     written = 0
     chunk_size = 1024
     chunks = size / chunk_size
@@ -100,13 +101,13 @@ def write_tmp(path, size):
         bench_fd.write('0'*cur_size)
         written += cur_size
     bench_fd.close()
-    print "Wrote %db file for benchmark" % written
+    print("Wrote %db file for benchmark" % written)
 
 def show_results(times, bench_sizes):
     """Pretty print results with ratio"""
-    print
-    print "Results:"
-    print "========"
+    print()
+    print("Results:")
+    print("========")
     for (action, target) in times.items():
         output = {}
         output_order = [action] + target.keys() + ['ratio']
@@ -121,8 +122,8 @@ def show_results(times, bench_sizes):
             for name in target.keys():
                 output[name] += '\t%.2f' % target[name][size]
         for field in output_order:
-            print output[field]
-        print
+            print(output[field])
+        print()
 
 def run_bench(conf, bench_specs):
     """Efficiently write dummy tmp file of given size in path"""
@@ -140,8 +141,8 @@ def run_bench(conf, bench_specs):
             # Create file to upload if necessary
             if not os.path.exists(bench_path):
                 write_tmp(bench_path, size)
-            print "Benchmarking %s sftp upload %db to %s" % \
-                  (name, size, target['hostname'])
+            print("Benchmarking %s sftp upload %db to %s" % \
+                  (name, size, target['hostname']))
             before = time.time()
             ssh_transport = paramiko.SSHClient()
             ssh_transport.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -155,10 +156,10 @@ def run_bench(conf, bench_specs):
             ssh_transport.close()
             after = time.time()
             times['put'][name][size] = after - before
-            print "Finished %s sftp upload %db in %fs" % \
-                  (name, size, times['put'][name][size])
-            print "Benchmarking %s sftp download %db from %s" % \
-                  (name, size, target['hostname'])
+            print("Finished %s sftp upload %db in %fs" % \
+                  (name, size, times['put'][name][size]))
+            print("Benchmarking %s sftp download %db from %s" % \
+                  (name, size, target['hostname']))
             before = time.time()
             ssh_transport = paramiko.SSHClient()
             ssh_transport.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -172,8 +173,8 @@ def run_bench(conf, bench_specs):
             ssh_transport.close()
             after = time.time()
             times['get'][name][size] = after - before
-            print "Finished %s sftp download %db in %fs" % \
-                  (name, size, times['get'][name][size])
+            print("Finished %s sftp download %db in %fs" % \
+                  (name, size, times['get'][name][size]))
 
     show_results(times, bench_sizes)
 

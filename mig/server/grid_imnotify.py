@@ -40,6 +40,7 @@
 notification handler: At the moment this is an IRC server with
 multiprotocol transports.
 """
+from __future__ import print_function
 
 import os
 import sys
@@ -75,7 +76,7 @@ def send_msg(
 ):
     """Send IM request through connection"""
 
-    print 'send msg called'
+    print('send msg called')
     global getting_buddy_list
     global latest_contact_online
     global protocol_online_dict
@@ -87,8 +88,8 @@ def send_msg(
     got_online = False
     for _ in range(30):
         if not protocol_online_dict[im_network]:
-            print 'waiting for protocol %s to get online (status for all protocols: %s)'\
-                % (im_network, protocol_online_dict)
+            print('waiting for protocol %s to get online (status for all protocols: %s)'\
+                % (im_network, protocol_online_dict))
             time.sleep(2)
         else:
             got_online = True
@@ -110,7 +111,7 @@ def send_msg(
         for _ in range(30):
             if not getting_buddy_list:
                 break
-            print 'waiting while buddy list is generated'
+            print('waiting while buddy list is generated')
             time.sleep(2)
 
     if not got_buddy_list:
@@ -126,23 +127,23 @@ def send_msg(
     if im_network == 'yahoo':
         if not dest.endswith('@yahoo'):
             dest += '@yahoo'
-    print 'looking for %s_%s in %s' % (replaced_im_network, dest,
-                                       nick_and_id_dict)
-    if nick_and_id_dict.has_key('%s_%s' % (replaced_im_network, dest)):
+    print('looking for %s_%s in %s' % (replaced_im_network, dest,
+                                       nick_and_id_dict))
+    if '%s_%s' % (replaced_im_network, dest) in nick_and_id_dict:
 
         # nick was found in buddy dict. Get the nickname.
 
         id_dict = nick_and_id_dict['%s_%s' % (replaced_im_network,
                                               dest)]
-        print 'account %s_%s found in buddy list: %s' % (
-            replaced_im_network, dest, id_dict)
+        print('account %s_%s found in buddy list: %s' % (
+            replaced_im_network, dest, id_dict))
         nickname = id_dict['nick']
     else:
 
         # nick was not found in buddy dict, add user
 
-        print 'account %s_%s not found in buddy list, adding..'\
-            % (im_network, dest)
+        print('account %s_%s not found in buddy list, adding..'\
+            % (im_network, dest))
 
         # Get protocol ID (called account)
 
@@ -160,8 +161,8 @@ def send_msg(
             id_index += 1
             nickname = 'nick%d' % id_index
 
-        print 'assigned local nick %s to new user %s with %d nicks'\
-            % (nickname, dest, len(nick_and_id_dict))
+        print('assigned local nick %s to new user %s with %d nicks'\
+            % (nickname, dest, len(nick_and_id_dict)))
 
         # give contact a second to get online
 
@@ -169,7 +170,7 @@ def send_msg(
 
         # add contact
 
-        print 'add %s %s %s' % (account_number, dest, nickname)
+        print('add %s %s %s' % (account_number, dest, nickname))
         connection.privmsg('root', 'add %s %s %s' % (account_number,
                                                      dest, nickname))
         time.sleep(2)
@@ -185,11 +186,11 @@ def send_msg(
 
 
 def on_connect(connection, event):
-    print 'on_connect'
+    print('on_connect')
     if irclib.is_channel(target):
         connection.join(target)
     else:
-        print 'target should be a channel!'
+        print('target should be a channel!')
 
 
 def get_account_number(im_network):
@@ -253,7 +254,7 @@ def on_privmsg(connection, event):
 
         nick_and_id_dict['%s_%s' % (im_network, im_id.lower())] = \
             id_dict
-        print 'new dict entry: %s_%s' % (im_network, im_id.lower())
+        print('new dict entry: %s_%s' % (im_network, im_id.lower()))
     elif len(recvd_split) > 2:
 
         if recvd_split[1] == 'buddies':
@@ -262,13 +263,13 @@ def on_privmsg(connection, event):
 
             global getting_buddy_list
             getting_buddy_list = False
-            print 'buddy list end..'
+            print('buddy list end..')
     else:
-        print 'Unknown message: %s' % recvd
+        print('Unknown message: %s' % recvd)
 
 
 def on_pubmsg(connection, event):
-    print 'pubmsg: %s' % event.arguments()[0]
+    print('pubmsg: %s' % event.arguments()[0])
 
 
 def on_join(connection, event):
@@ -280,11 +281,11 @@ def on_join(connection, event):
         # login to bitlbee
 
         login_msg = 'identify %s' % bitlbee_password
-        print login_msg
+        print(login_msg)
         connection.privmsg('root', login_msg)
     else:
-        print 'someone joined channel: %s'\
-            % irclib.nm_to_n(event.source())
+        print('someone joined channel: %s'\
+            % irclib.nm_to_n(event.source()))
 
 
 def on_disconnect(connection, event):
@@ -314,10 +315,10 @@ if __name__ == '__main__':
     if not configuration.site_enable_imnotify:
         err_msg = "IM notify helper is disabled in configuration!"
         logger.error(err_msg)
-        print err_msg
+        print(err_msg)
         sys.exit(1)
 
-    print """
+    print("""
 Running grid IM notify server for instant messenger notifications.
 
 IMPORTANT: This daemon should only be enabled on servers with a dedicated IRC
@@ -329,7 +330,7 @@ running with a dedicated IRC helper account!
 
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
-"""
+""")
 
     server = configuration.user_imnotify_address
     port = configuration.user_imnotify_port
@@ -339,16 +340,16 @@ unless it is available in mig/server/MiGserver.conf
 
     if not server or not port or not target or not nickname or \
             not bitlbee_password:
-        print server, port, target, nickname
+        print(server, port, target, nickname)
         err_msg = "IM notify helper setup is incomplete in configuration!"
         logger.error(err_msg)
-        print err_msg
+        print(err_msg)
         sys.exit(1)
 
     if not irclib:
         err_msg = "IM notify helper requires irclib to run!"
         logger.error(err_msg)
-        print err_msg
+        print(err_msg)
         sys.exit(1)
 
     stdin_path = configuration.im_notify_stdin
@@ -359,40 +360,40 @@ unless it is available in mig/server/MiGserver.conf
 
     try:
         if not os.path.exists(stdin_path):
-            print 'creating im_notify input pipe %s' % stdin_path
+            print('creating im_notify input pipe %s' % stdin_path)
             try:
                 os.mkfifo(stdin_path)
-            except Exception, err:
-                print 'Could not create missing IM stdin pipe %s: %s'\
-                    % (stdin_path, err)
+            except Exception as err:
+                print('Could not create missing IM stdin pipe %s: %s'\
+                    % (stdin_path, err))
     except:
-        print 'error opening IM stdin! %s' % sys.exc_info()[0]
+        print('error opening IM stdin! %s' % sys.exc_info()[0])
         sys.exit(1)
 
     keep_running = True
 
-    print 'Starting Real IM daemon - Ctrl-C to quit'
+    print('Starting Real IM daemon - Ctrl-C to quit')
 
-    print 'Reading commands from %s' % stdin_path
+    print('Reading commands from %s' % stdin_path)
     try:
         im_notify_stdin = open(stdin_path, 'r')
     except KeyboardInterrupt:
         keep_running = False
-    except Exception, err:
-        print 'could not open IM stdin %s, exception: %s' % (stdin_path,
-                                                             err)
+    except Exception as err:
+        print('could not open IM stdin %s, exception: %s' % (stdin_path,
+                                                             err))
         sys.exit(1)
 
     while keep_running:
         try:
             if not irc:
-                print 'Initialising IRC access to %s' % server
+                print('Initialising IRC access to %s' % server)
                 irc = irclib.IRC()
                 try:
                     irc_server = irc.server().connect(server, port,
                                                       nickname)
-                except irclib.ServerConnectionError, exc:
-                    print 'Could not connect to irc server: %s' % exc
+                except irclib.ServerConnectionError as exc:
+                    print('Could not connect to irc server: %s' % exc)
                     irc = None
                     time.sleep(30)
                     continue
@@ -431,28 +432,28 @@ unless it is available in mig/server/MiGserver.conf
 
                 split_line = line.split(' ', 3)
                 if len(split_line) != 4:
-                    print 'received SENDMESSAGE not on correct format %s'\
-                        % line
+                    print('received SENDMESSAGE not on correct format %s'\
+                        % line)
                     continue
 
                 protocol = split_line[1]
                 recipient = split_line[2]
                 message = split_line[3]
 
-                print 'Sending message: protocol: %s to: %s message: %s'\
-                    % (protocol, recipient, message)
+                print('Sending message: protocol: %s to: %s message: %s'\
+                    % (protocol, recipient, message))
                 send_msg(irc_server, recipient, protocol, message)
-                print 'Message sent to %s' % recipient
+                print('Message sent to %s' % recipient)
             elif line.upper().startswith('SHOWBUDDIES'):
-                print 'Buddy list:'
+                print('Buddy list:')
                 for (key, val) in nick_and_id_dict.items():
-                    print '%s:\n\t%s' % (key, val)
-                print '-----'
+                    print('%s:\n\t%s' % (key, val))
+                print('-----')
             elif line.upper().startswith('SHUTDOWN'):
-                print '--- SAFE SHUTDOWN INITIATED ---'
+                print('--- SAFE SHUTDOWN INITIATED ---')
                 break
             elif line:
-                print 'unknown message received: %s' % line
+                print('unknown message received: %s' % line)
             line = None
 
             # Throttle down
@@ -460,10 +461,10 @@ unless it is available in mig/server/MiGserver.conf
             time.sleep(1)
         except KeyboardInterrupt:
             keep_running = False
-        except Exception, exc:
-            print 'Caught unexpected exception: %s' % exc
+        except Exception as exc:
+            print('Caught unexpected exception: %s' % exc)
             irc = None
             attempt += 1
 
-    print 'Real IM daemon shutting down'
+    print('Real IM daemon shutting down')
     sys.exit(0)

@@ -26,15 +26,16 @@
 #
 
 """Stop exe unit"""
+from __future__ import absolute_import
 
-from shared import returnvalues
-from shared.conf import get_all_exe_names
-from shared.findtype import is_owner
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables
-from shared.resadm import stop_resource_exe
-from shared.worker import Worker, throttle_max_concurrent
+from .shared import returnvalues
+from .shared.conf import get_all_exe_names
+from .shared.findtype import is_owner
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables
+from .shared.resadm import stop_resource_exe
+from .shared.worker import Worker, throttle_max_concurrent
 
 
 def signature():

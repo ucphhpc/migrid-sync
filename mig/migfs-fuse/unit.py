@@ -26,6 +26,7 @@
 #
 
 """Unit test migfs"""
+from __future__ import print_function
 
 import os
 import subprocess
@@ -39,7 +40,7 @@ debug_mode = False
 
 def debug(line):
     if debug_mode:
-        print 'DEBUG: %s' % line
+        print('DEBUG: %s' % line)
 
 
 def show_diff(result, expected):
@@ -55,15 +56,15 @@ def show_diff(result, expected):
         second = expected[:part_len] + ' .. ' + expected[-part_len:]
     else:
         second = expected
-    print "\t'%s' != '%s'\n\t(len: %d vs. %d)" % (first, second,
-            len(result), len(expected))
+    print("\t'%s' != '%s'\n\t(len: %d vs. %d)" % (first, second,
+            len(result), len(expected)))
 
 
 def clean_test(test_dir):
     """Clean up everything in test_dir"""
 
     name = 'clean up'
-    print 'Starting %s test' % name
+    print('Starting %s test' % name)
     for (root, dirs, files) in os.walk(test_dir, topdown=False):
         for name in files:
             os.remove(os.path.join(root, name))
@@ -71,48 +72,48 @@ def clean_test(test_dir):
             os.rmdir(os.path.join(root, name))
     os.rmdir(test_dir)
     success = not os.path.exists(test_dir)
-    print 'Got expected result:\t\t%s' % success
+    print('Got expected result:\t\t%s' % success)
 
 
 def prepare_test(test_path):
     """Create and manipulate some subdirs including one for test_path"""
 
     name = 'create parent dir'
-    print 'Starting %s test' % name
+    print('Starting %s test' % name)
     target = os.path.dirname(test_path)
     try:
         os.makedirs(target)
-    except Exception, exc:
-        print '\tFailed to %s (%s): %s' % (name, target, exc)
+    except Exception as exc:
+        print('\tFailed to %s (%s): %s' % (name, target, exc))
     success = os.path.isdir(target)
-    print 'Got expected result:\t\t%s' % success
+    print('Got expected result:\t\t%s' % success)
     name = 'create sub dir'
-    print 'Starting %s test' % name
+    print('Starting %s test' % name)
     target = os.path.join(target, 'sub')
     try:
         os.mkdir(target)
-    except Exception, exc:
-        print '\tFailed to %s (%s): %s' % (name, target, exc)
+    except Exception as exc:
+        print('\tFailed to %s (%s): %s' % (name, target, exc))
     success = os.path.isdir(target)
-    print 'Got expected result:\t\t%s' % success
+    print('Got expected result:\t\t%s' % success)
     name = 'move sub dir'
-    print 'Starting %s test' % name
+    print('Starting %s test' % name)
     tmp_path = target + '.tmp'
     try:
         os.rename(target, tmp_path)
-    except Exception, exc:
-        print '\tFailed to %s (%s): %s' % (name, target, exc)
+    except Exception as exc:
+        print('\tFailed to %s (%s): %s' % (name, target, exc))
     success = os.path.isdir(tmp_path) and not os.path.exists(target)
-    print 'Got expected result:\t\t%s' % success
+    print('Got expected result:\t\t%s' % success)
     name = 'remove sub dir'
-    print 'Starting %s test' % name
+    print('Starting %s test' % name)
     target = tmp_path
     try:
         os.rmdir(target)
-    except Exception, exc:
-        print '\tFailed to %s (%s): %s' % (name, target, exc)
+    except Exception as exc:
+        print('\tFailed to %s (%s): %s' % (name, target, exc))
     success = not os.path.exists(target)
-    print 'Got expected result:\t\t%s' % success
+    print('Got expected result:\t\t%s' % success)
 
 
 def write_test(test_path):
@@ -122,7 +123,7 @@ def write_test(test_path):
     tests = [('create file', ''), ('short write', '123'), ('long write'
              , '123' * default_block_size)]
     for (name, val) in tests:
-        print 'Starting %s test' % name
+        print('Starting %s test' % name)
         fd = open(test_path, 'w')
         debug('opened %s' % test_path)
         if val:
@@ -137,7 +138,7 @@ def write_test(test_path):
         fd.close()
         debug('closed %s' % test_path)
         success = result == val
-        print 'Got expected result:\t\t%s' % success
+        print('Got expected result:\t\t%s' % success)
         if not success:
             show_diff(val, result)
 
@@ -149,7 +150,7 @@ def append_test(test_path):
               * default_block_size)]
     prefix = 'abc'
     for (name, val) in tests:
-        print 'Starting %s test' % name
+        print('Starting %s test' % name)
         fd = open(test_path, 'w')
         fd.write(prefix)
         fd.close()
@@ -161,7 +162,7 @@ def append_test(test_path):
         result = fd.read()
         fd.close()
         success = result[len(prefix):] == val
-        print 'Got expected result:\t\t%s' % success
+        print('Got expected result:\t\t%s' % success)
         if not success:
             show_diff(val, result)
 
@@ -185,7 +186,7 @@ def modify_test(test_path):
         ]
 
     for (name, val, modify_index) in tests:
-        print 'Starting %s test' % name
+        print('Starting %s test' % name)
         fd = open(test_path, 'w')
         fd.write(original)
         fd.close()
@@ -200,7 +201,7 @@ def modify_test(test_path):
         expected_result = original[:modify_index] + val\
              + original[modify_index + len(val):]
         success = result == expected_result
-        print 'Got expected result:\t\t%s' % success
+        print('Got expected result:\t\t%s' % success)
         if not success:
             show_diff(val, result)
 
@@ -221,16 +222,16 @@ test_dir = os.path.join(mount_point, 'migfs-test')
 test_path = os.path.join(test_dir, 'migfs-test', 'child', 'grandchild',
                          'testfile.txt')
 if not os.path.isdir(mount_point):
-    print 'creating missing mount point %s' % mount_point
+    print('creating missing mount point %s' % mount_point)
     try:
         os.mkdir(mount_point)
-    except OSError, ose:
-        print 'Failed to create missing mount point %s: %s'\
-             % (mount_point, ose)
+    except OSError as ose:
+        print('Failed to create missing mount point %s: %s'\
+             % (mount_point, ose))
         sys.exit(1)
 
-print '--- Starting unit tests ---'
-print
+print('--- Starting unit tests ---')
+print()
 if do_mount:
     subprocess.call(['./mount.migfs', 'none', mount_point])
 try:
@@ -239,12 +240,12 @@ try:
     append_test(test_path)
     modify_test(test_path)
     clean_test(test_dir)
-except Exception, err:
-    print 'Error during test: %s' % err
-    print 'DEBUG: %s' % traceback.format_exc()
+except Exception as err:
+    print('Error during test: %s' % err)
+    print('DEBUG: %s' % traceback.format_exc())
 
-print
-print '--- End of unit tests ---'
+print()
+print('--- End of unit tests ---')
 
 if do_mount:
     subprocess.call(['fusermount', '-u', '-z', mount_point])

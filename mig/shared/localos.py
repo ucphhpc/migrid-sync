@@ -59,12 +59,12 @@ def lstat(path):
     return os.lstat(path)
 
 
-def mkdir(path, mode=0775):
+def mkdir(path, mode=0o775):
     return os.mkdir(path, mode)
 
 
-def makedirs(path_list, mode=0775):
-    return os.makedirs(path_list, mode=0775)
+def makedirs(path_list, mode=0o775):
+    return os.makedirs(path_list, mode=0o775)
 
 
 def remove(path):

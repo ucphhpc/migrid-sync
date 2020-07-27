@@ -268,7 +268,7 @@ def update_rate_limit(configuration, proto, client_address, client_id,
                                  proto, _rate_limits, do_lock=False):
             raise IOError("%s save rate limits failed for %s" %
                           (proto, client_id))
-    except Exception, exc:
+    except Exception as exc:
         logger.error("update %s Rate limit failed: %s" % (proto, exc))
         logger.info(traceback.format_exc())
 
@@ -392,7 +392,7 @@ def expire_rate_limit(configuration, proto,
         if not _save_rate_limits(configuration,
                                  proto, _rate_limits, do_lock=False):
             raise IOError("%s save rate limits failed" % proto)
-    except Exception, exc:
+    except Exception as exc:
         logger.error("expire rate limit failed: %s" % exc)
         logger.info(traceback.format_exc())
 

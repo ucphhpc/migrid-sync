@@ -25,14 +25,15 @@
 # -- END_HEADER ---
 #
 
+from __future__ import absolute_import
 from datetime import datetime, timedelta
 
-from shared import returnvalues
-from shared.functional import validate_input
-from shared.init import initialize_main_variables
-from shared.gridstat import GridStat
-from shared.sandbox import load_sandbox_db
-from shared.output import format_timedelta
+from .shared import returnvalues
+from .shared.functional import validate_input
+from .shared.init import initialize_main_variables
+from .shared.gridstat import GridStat
+from .shared.sandbox import load_sandbox_db
+from .shared.output import format_timedelta
 
 # sandbox db has the format: {username: (password, [list_of_resources])}
 
@@ -77,7 +78,7 @@ Please contact the site admins %s if you think they should be enabled.
 
     try:
         userdb = load_sandbox_db(configuration)
-    except Exception, exc:
+    except Exception as exc:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Could not load any sandbox information'})
         return (output_objects, returnvalues.SYSTEM_ERROR)

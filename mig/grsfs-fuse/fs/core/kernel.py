@@ -28,6 +28,7 @@
 """
     Implements operations
 """
+from __future__ import print_function
 
 
 import os, threading, time, errno, socket, signal
@@ -85,9 +86,9 @@ class _system(threading.Thread):
             self.state._mark_can_replicate()
             try: # will detect a deadlock in the kernel, debug only
                 self.kernel.storage.getlock(None).acquireWrite(30) 
-            except Exception, v:
-                print " !!!!!!!!!!!!!!!! THREAD HANG DETECTED !!!!!!!!!!!!!!!!!"
-                print v
+            except Exception as v:
+                print(" !!!!!!!!!!!!!!!! THREAD HANG DETECTED !!!!!!!!!!!!!!!!!")
+                print(v)
                 stacktraces()
                 self.kernel.fshalt()
                 return
@@ -122,7 +123,7 @@ class _system(threading.Thread):
                         # Peer lost us!
                         msg = "%s %s lost contact with us without us noticing - investigate!" % (__name__, peer)
                         self.logger.error(msg)
-                except Exception, v:
+                except Exception as v:
                     # remove peer if anything goes wrong. Lock just around this.
                     self.logger.info("%s lost contact with %s over %s" % (__name__, peer, v))
                     self.kernel._handle_dead_peer(peer)
@@ -177,7 +178,7 @@ class Kernel(object):
         
                 # pick the initial dispatcher
                 self.dispatcher = self._pick_dispatcher()
-            except Exception, v:
+            except Exception as v:
                 self.logger.error("Crash in fsinit - filesystem will hang now %s" % v)
             self.logger.debug("< Leaving Kernel.fsinit")
             
@@ -197,7 +198,7 @@ class Kernel(object):
             for connected_peer in self.state.active_members:
                 try:
                     ret.append((connected_peer, getattr(connected_peer.link, op)(*args)))
-                except Exception, v:
+                except Exception as v:
                     self.logger.error("Broadcast - peer %s faulted, error '%s'"% (connected_peer, v))
                     self._handle_dead_peer(connected_peer, force_election)
             return ret
@@ -356,12 +357,12 @@ class Kernel(object):
                 for i in range(len(all_members)):
                     try:
                         getattr(all_members[i].link, "election_finished")(group_update)
-                    except Exception, v:
+                    except Exception as v:
                         self.logger.error("%s failed to communicate new status to %s (%s)"% (__name__, all_members[i], v))
                         self._handle_dead_peer(all_members[i], False)
                 
                 self.state.must_run_election = False                  
-            except Exception, v:
+            except Exception as v:
                 self.logger.error("Crash in _run_election. Cause '%s'" % v)
                 raise
             finally:
@@ -421,7 +422,7 @@ class Kernel(object):
                     self.logger.debug("Node_register returns %s to %s" % (returnvalue, (server, port)))                
                     return returnvalue                    
                     
-                except Exception, v:
+                except Exception as v:
                     self.logger.error("Node_register failed for %s: %s" % (ident, v))
                     raise
 

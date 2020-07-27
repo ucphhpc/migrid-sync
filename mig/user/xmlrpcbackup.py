@@ -26,6 +26,7 @@
 #
 
 """XMLRPC backuphelper with support for HTTPS using client certificates"""
+from __future__ import print_function
 
 import httplib
 import os
@@ -42,8 +43,8 @@ def read_user_conf():
     conf_path = os.path.expanduser(os.path.join('~', '.mig',
                                    'miguser.conf'))
     if not os.path.exists(conf_path):
-        print 'mig user configuration not found, %s does not exist'\
-            % conf_path
+        print('mig user configuration not found, %s does not exist'\
+            % conf_path)
         sys.exit(1)
 
     needed_settings = ['migserver', 'certfile', 'keyfile']
@@ -70,13 +71,13 @@ def read_user_conf():
                 val = os.path.expandvars(os.path.expanduser(val))
             user_conf[key] = val
         conf_fd.close()
-    except IOError, exc:
-        print 'Could not read miguser conf: %s, %s' % (conf_path, exc)
+    except IOError as exc:
+        print('Could not read miguser conf: %s, %s' % (conf_path, exc))
         sys.exit(1)
     for needed_key in needed_settings:
-        if not user_conf.has_key(needed_key):
-            print 'Needed setting %s not found in %s' % (needed_key,
-                                                         conf_path)
+        if needed_key not in user_conf:
+            print('Needed setting %s not found in %s' % (needed_key,
+                                                         conf_path))
             sys.exit(1)
     return user_conf
 
@@ -192,15 +193,15 @@ if '__main__' == __name__:
     user_conf = read_user_conf()
     conf.update(user_conf)
     if not os.path.isfile(conf['certfile']):
-        print 'Cert file %(certfile)s not found!' % conf
+        print('Cert file %(certfile)s not found!' % conf)
         sys.exit(1)
     if not os.path.isfile(conf['keyfile']):
-        print 'Key file %(keyfile)s not found!' % conf
+        print('Key file %(keyfile)s not found!' % conf)
         sys.exit(1)
     # CA cert is not currently used, but we include it for future verification
     cacert = conf.get('cacertfile', None)
     if cacert and cacert != 'AUTO' and not os.path.isfile(cacert):
-        print 'specified CA cert file %(cacertfile)s not found!' % conf
+        print('specified CA cert file %(cacertfile)s not found!' % conf)
         sys.exit(1)
     url_tuple = urlparse(conf['migserver'])
     # second item in tuple is network location part with hostname and optional
@@ -211,33 +212,33 @@ if '__main__' == __name__:
     host_port[1] = int(host_port[1])
     conf['host'], conf['port'] = host_port
 
-    print '''Running XMLRPC backup script against %(migserver)s with user certificate
+    print('''Running XMLRPC backup script against %(migserver)s with user certificate
 from %(certfile)s , key from %(keyfile)s and
 CA certificate %(cacertfile)s . You may get prompted for your MiG
 key/certificate passphrase before you can continue.
-    ''' % conf
+    ''' % conf)
     server = xmlrpcgetserver(conf)
 
     for method in ['createbackup', 'showfreeze']:
-        print '%s() signature: %s' % (method,
-                                      server.system.methodSignature(method))
-        print 'the signature is a tuple of output object type and a list of '
-        print 'expected/default input values'
-        print '%s() help: %s' % (method, server.system.methodHelp(method))
-        print 'please note that help is not yet available for all methods'
-        print
-        print "Info about %s remote method and variable arguments:" % method
+        print('%s() signature: %s' % (method,
+                                      server.system.methodSignature(method)))
+        print('the signature is a tuple of output object type and a list of ')
+        print('expected/default input values')
+        print('%s() help: %s' % (method, server.system.methodHelp(method)))
+        print('please note that help is not yet available for all methods')
+        print()
+        print("Info about %s remote method and variable arguments:" % method)
         signature = server.system.methodSignature(method)
         if 'none' in signature or 'array' in signature:
-            print
+            print()
             continue
         signature_list = eval(signature.replace('none', 'None'))
         var_dict = signature_list[1]
         var_list = var_dict.keys()
-        print '%s : %s' % (method, var_list)
+        print('%s : %s' % (method, var_list))
 
-    print 'Running createbackup method:'
-    print 'backup files: %s' % ', '.join(path_list)
+    print('Running createbackup method:')
+    print('backup files: %s' % ', '.join(path_list))
     create_args = {'freeze_id': [freeze_id],
                    # csrf_field: [csrf_val]
                    }
@@ -247,17 +248,17 @@ key/certificate passphrase before you can continue.
     (outlist, retval) = server.createbackup(create_args)
     (returnval, returnmsg) = retval
     if returnval != 0:
-        print 'Error %s:%s ' % (returnval, returnmsg)
+        print('Error %s:%s ' % (returnval, returnmsg))
         sys.exit(1)
 
     # print "DEBUG: createbackup response: %s" % outlist
 
-    print "Archive create status:"
+    print("Archive create status:")
     for elem in outlist:
         if elem.get('object_type', 'UNKNOWN') != 'freezestatus':
             continue
-        print "Created %(flavor)s archive %(freeze_id)s: %(freeze_state)s" % \
-              elem
+        print("Created %(flavor)s archive %(freeze_id)s: %(freeze_state)s" % \
+              elem)
 
     # Find actual archive ID from resulting link
     archive_id_list = None
@@ -267,19 +268,19 @@ key/certificate passphrase before you can continue.
 
         link_url = elem.get('destination', False)
         if not link_url:
-            print "WARNING: skip broken link: %s" % elem
+            print("WARNING: skip broken link: %s" % elem)
             continue
         url_query = urlparse(link_url).query
         archive_id_list = parse_qs(url_query).get('freeze_id', [])
         if not archive_id_list:
-            print "WARNING: skip entry without archive_id: %s" % elem
+            print("WARNING: skip entry without archive_id: %s" % elem)
             continue
 
     if not archive_id_list:
-        print "ERROR: found no archive id"
+        print("ERROR: found no archive id")
         sys.exit(1)
 
-    print 'Running showfreeze method for %s:' % archive_id_list
+    print('Running showfreeze method for %s:' % archive_id_list)
     (outlist, retval) = server.showfreeze({'freeze_id': archive_id_list,
                                           'flavor': ['backup'],
                                            'checksum': ['sha1'],
@@ -287,20 +288,20 @@ key/certificate passphrase before you can continue.
                                            })
     (returnval, returnmsg) = retval
     if returnval != 0:
-        print 'Error %s:%s ' % (returnval, returnmsg)
-        print 'DEBUG: %s' % outlist
+        print('Error %s:%s ' % (returnval, returnmsg))
+        print('DEBUG: %s' % outlist)
         sys.exit(1)
 
     # print "DEBUG: showfreeze response: %s" % outlist
 
-    print "Archive sha1 sums:"
+    print("Archive sha1 sums:")
     for elem in outlist:
         if elem.get('object_type', 'UNKNOWN') != 'frozenarchive':
             continue
         if not elem.get('frozenfiles', []):
-            print "WARNING: skip entry without frozenfiles: %s" % elem
+            print("WARNING: skip entry without frozenfiles: %s" % elem)
             continue
         for entry in elem['frozenfiles']:
-            print "%(name)s: %(sha1sum)s" % entry
+            print("%(name)s: %(sha1sum)s" % entry)
 
     sys.exit(0)

@@ -30,18 +30,19 @@ client is an owner or a member of the vgrid. Members are allowed to read
 private files but not write them, therefore they don't have a private_base
 link where they can access them like owners do.
 """
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared.forum import list_single_thread, list_threads, reply, new_subject, \
+from .shared import returnvalues
+from .shared.forum import list_single_thread, list_threads, reply, new_subject, \
     search_threads, toggle_subscribe, list_subscribers
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.html import themed_styles
-from shared.init import initialize_main_variables, find_entry
-from shared.notification import notify_user_thread
-from shared.vgrid import vgrid_is_owner_or_member
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.html import themed_styles
+from .shared.init import initialize_main_variables, find_entry
+from .shared.notification import notify_user_thread
+from .shared.vgrid import vgrid_is_owner_or_member
 
 get_actions = ['show_all', 'show_thread', 'search']
 post_actions = ['new_thread', 'reply', 'toggle_subscribe']
@@ -239,7 +240,7 @@ function toggle_new(form_elem_id, link_elem_id) {
                 notify_subscribers(configuration, forum_base, vgrid_name, '',
                                    client_id, url)
                 thread = thread_hash
-            except ValueError, error:
+            except ValueError as error:
                 post_error = str(error)
         elif action == 'reply':
             try:
@@ -252,12 +253,12 @@ function toggle_new(form_elem_id, link_elem_id) {
                                    client_id, url)
                 notify_subscribers(configuration, forum_base, vgrid_name,
                                    thread_hash, client_id, url)
-            except ValueError, error:
+            except ValueError as error:
                 post_error = str(error)
         elif action == 'toggle_subscribe':
             try:
                 msg = toggle_subscribe(forum_base, client_id, thread)
-            except ValueError, error:
+            except ValueError as error:
                 post_error = str(error)
         else:
             msg = 'unexpected action: %s' % action
@@ -270,7 +271,7 @@ function toggle_new(form_elem_id, link_elem_id) {
     elif thread:
         try:
             message_list = list_single_thread(forum_base, thread, client_id)
-        except ValueError, error:
+        except ValueError as error:
             post_error = str(error)
     else:
         thread_list = list_threads(forum_base, client_id)

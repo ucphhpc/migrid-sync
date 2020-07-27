@@ -26,16 +26,17 @@
 #
 
 """Deletion of a resource"""
+from __future__ import absolute_import
 
 import os
 import fcntl
 
-from shared import returnvalues
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables, find_entry
-from shared.resource import resource_owners
-from shared.vgridaccess import unmap_resource
+from .shared import returnvalues
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables, find_entry
+from .shared.resource import resource_owners
+from .shared.vgridaccess import unmap_resource
 
 
 def signature():
@@ -147,7 +148,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             file_path = os.path.join(res_dir, name)
             if os.path.isfile(file_path):
                 os.unlink(file_path)
-    except Exception, err:
+    except Exception as err:
         output_objects.append({'object_type': 'error_text', 'text'
                                : 'Deletion exception: ' + str(err)})
         output_objects.append({'object_type': 'link', 'destination':

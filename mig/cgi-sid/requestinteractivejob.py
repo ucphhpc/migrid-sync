@@ -107,7 +107,7 @@ if not valid_dir_input(configuration.resource_home,
 # Check that resource address matches request source to make DoS harder
 try:
     check_source_ip(remote_ip, unique_resource_name)
-except ValueError, vae:
+except ValueError as vae:
     o.out("Warning: interactive job request not sent from expected resource address!")
     o.internal("invalid interactive job request: %s" % vae)
     o.reply_and_exit(o.CLIENT_ERROR)
@@ -241,7 +241,7 @@ exit_code = -1
 try:
     (exit_code, executed_command) = execute_on_resource(ssh_command,
             False, resource_conf, logger)
-except Exception, e:
+except Exception as e:
     logger.error('Exception executing remote SSH from requestinteractivejob.py: %s '
                   % e)
     o.reply_and_exit(o.ERROR)

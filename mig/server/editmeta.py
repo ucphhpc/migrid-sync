@@ -26,6 +26,7 @@
 #
 
 """Edit MiG user metadata in user database - only non-ID fields"""
+from __future__ import print_function
 
 import getopt
 import os
@@ -37,7 +38,7 @@ from shared.useradm import init_user_adm, edit_user
 def usage(name='editmeta.py'):
     """Usage help"""
 
-    print """Edit existing user (non-ID) metadata in MiG user database.
+    print("""Edit existing user (non-ID) metadata in MiG user database.
 NOTE: it is necessary to use edituser.py to change any ID fields.
 Usage:
 %(name)s [OPTIONS] USER_ID FIELD VALUE
@@ -47,7 +48,7 @@ Where OPTIONS may be one or more of:
    -f                  Force operations to continue past errors
    -h                  Show this help
    -v                  Verbose output
-""" % {'name': name}
+""" % {'name': name})
 
 
 # ## Main ###
@@ -62,8 +63,8 @@ if '__main__' == __name__:
     opt_args = 'c:d:fhv'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
-    except getopt.GetoptError, err:
-        print 'Error: ', err.msg
+    except getopt.GetoptError as err:
+        print('Error: ', err.msg)
         usage()
         sys.exit(1)
 
@@ -80,17 +81,17 @@ if '__main__' == __name__:
         elif opt == '-v':
             verbose = True
         else:
-            print 'Error: %s not supported!' % opt
+            print('Error: %s not supported!' % opt)
 
     if conf_path and not os.path.isfile(conf_path):
-        print 'Failed to read configuration file: %s' % conf_path
+        print('Failed to read configuration file: %s' % conf_path)
         sys.exit(1)
 
     if verbose:
         if conf_path:
-            print 'using configuration in %s' % conf_path
+            print('using configuration in %s' % conf_path)
         else:
-            print 'using configuration from MIG_CONF (or default)'
+            print('using configuration from MIG_CONF (or default)')
 
     if len(args) == 3:
         user_id = user_dict['distinguished_name'] = args[0]
@@ -100,12 +101,12 @@ if '__main__' == __name__:
         sys.exit(1)
 
     if verbose:
-        print 'Update DB entry for %s: %s' % (user_id, user_dict)
+        print('Update DB entry for %s: %s' % (user_id, user_dict))
     try:
         user = edit_user(user_id, user_dict, conf_path, db_path, force,
                          verbose, True)
-    except Exception, err:
-        print err
+    except Exception as err:
+        print(err)
         sys.exit(1)
-    print '%s\nchanged to\n%s\nin user database' % \
-          (user_id, user)
+    print('%s\nchanged to\n%s\nin user database' % \
+          (user_id, user))

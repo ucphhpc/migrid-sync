@@ -26,6 +26,7 @@
 #
 
 """Main script running on the MiG server"""
+from __future__ import print_function
 
 import sys
 import time
@@ -53,9 +54,9 @@ from shared.vgrid import job_fits_res_vgrid, validated_vgrid_list
 
 try:
     import servercomm
-except ImportError, ime:
-    print 'could not import servercomm, probably due to missing pycurl'
-    print ime
+except ImportError as ime:
+    print('could not import servercomm, probably due to missing pycurl')
+    print(ime)
 
 (configuration, logger) = (None, None)
 (job_queue, executing_queue, scheduler) = (None, None, None)
@@ -120,14 +121,14 @@ def time_out_jobs(stop_event):
                         continue
                     try:
                         delay = int(job['EXECUTION_DELAY'])
-                    except StandardError, err:
+                    except Exception as err:
                         logger.warning(
                             'no execution delay field: %s Exception: %s'
                             % (job, err))
                         delay = 0
                     try:
                         cputime = int(job['CPUTIME'])
-                    except StandardError, err:
+                    except Exception as err:
                         logger.warning('cputime extraction failed for %s! %s'
                                  % (job, err))
                         cputime = 120
@@ -192,7 +193,7 @@ def time_out_jobs(stop_event):
                                 % (jobstatus, job['JOB_ID']))
 
 
-    except Exception, err:
+    except Exception as err:
         logger.error('time_out_jobs: unexpected exception: %s' % err)
     logger.info('time_out_jobs: time out thread terminating')
 
@@ -200,7 +201,7 @@ def time_out_jobs(stop_event):
 def clean_shutdown(signum, frame):
     """Request clean shutdown when pending requests are handled"""
 
-    print '--- REQUESTING SAFE SHUTDOWN ---'
+    print('--- REQUESTING SAFE SHUTDOWN ---')
     shutdown_msg = 'SHUTDOWN\n'
     send_message_to_grid_script(shutdown_msg, logger, configuration)
 
@@ -212,16 +213,16 @@ def graceful_shutdown():
     """
 
     msg = '%s: graceful_shutdown called' % sys.argv[0]
-    print msg
+    print(msg)
     try:
         logger.info(msg)
         job_time_out_stop.set()
-        print 'graceful_shutdown: giving time out thread a chance to terminate'
+        print('graceful_shutdown: giving time out thread a chance to terminate')
 
         # make sure queue gets saved even if timeout thread goes haywire
 
         job_time_out_thread.join(5)
-        print 'graceful_shutdown: saving state'
+        print('graceful_shutdown: saving state')
         if job_queue and not save_queue(job_queue, job_queue_path,
                 logger):
             logger.warning('failed to save job queue')
@@ -231,13 +232,13 @@ def graceful_shutdown():
         if scheduler and not save_schedule_cache(scheduler.get_cache(),
                 schedule_cache_path, logger):
             logger.warning('failed to save scheduler cache')
-        print 'graceful_shutdown: saved state; now blocking for timeout thread'
+        print('graceful_shutdown: saved state; now blocking for timeout thread')
 
         # Now make sure timeout thread finishes
 
         job_time_out_thread.join()
         configuration.logger_obj.shutdown()
-    except StandardError:
+    except Exception:
         pass
     sys.exit(0)
 
@@ -256,16 +257,16 @@ logger = configuration.logger
 if not configuration.site_enable_jobs:
     err_msg = "Job support is disabled in configuration!"
     logger.error(err_msg)
-    print err_msg
+    print(err_msg)
     sys.exit(1)
     
-print """
+print("""
 Running main grid 'daemon'.
 
 Set the MIG_CONF environment to the server configuration path
 unless it is available in the default path
 mig/server/MiGserver.conf
-"""
+""")
 logger.info('Starting MiG server')
 
 # Load queues from file dump if available
@@ -318,8 +319,8 @@ elif configuration.sched_alg == 'FIFO':
     scheduler = FIFOScheduler(logger, configuration)
 else:
     from firstfitscheduler import FirstFitScheduler
-    print 'Unknown sched_alg %s - using FirstFit scheduler'\
-         % configuration.sched_alg
+    print('Unknown sched_alg %s - using FirstFit scheduler'\
+         % configuration.sched_alg)
     scheduler = FirstFitScheduler(logger, configuration)
 
 scheduler.attach_job_queue(job_queue)
@@ -335,12 +336,12 @@ try:
                      % configuration.grid_stdin)
         try:
             os.mkfifo(configuration.grid_stdin)
-        except StandardError, err:
+        except Exception as err:
             logger.error('Could not create missing grid_stdin fifo: '
                           + '%s exception: %s '
                           % (configuration.grid_stdin, err))
     grid_stdin = open(configuration.grid_stdin, 'r')
-except StandardError:
+except Exception:
     logger.error('failed to open grid_stdin! %s' % sys.exc_info()[0])
     sys.exit(1)
 
@@ -355,18 +356,18 @@ if not os.path.exists(empty_home):
     logger.info('creating empty job home dir %s' % empty_home)
     try:
         os.mkdir(empty_home)
-    except Exception, exc:
+    except Exception as exc:
         logger.error('failed to create empty job home dir %s: %s'
                       % (empty_home, exc))
 
 msg = 'Checking for mRSL files with status parse or queued'
-print msg
+print(msg)
 logger.info(msg)
 check_mrsl_files(configuration, job_queue, executing_queue,
                  only_new_jobs, logger)
 
 msg = 'Cleaning up after pending job requests'
-print msg
+print(msg)
 remove_jobrequest_pending_files(configuration)
 
 # start the timer function to check if cputime is exceeded
@@ -378,7 +379,7 @@ job_time_out_thread = threading.Thread(target=time_out_jobs,
 job_time_out_thread.start()
 
 msg = 'Starting main loop'
-print msg
+print(msg)
 logger.info(msg)
 
 # main loop
@@ -416,7 +417,7 @@ while True:
         # *********     USER JOB   *********
         # *********                *********
 
-        print cap_line
+        print(cap_line)
         logger.info(cap_line)
 
         # add to queue
@@ -518,7 +519,7 @@ while True:
         # *********     SERVER JOB   *********
         # *********                  *********
 
-        print cap_line
+        print(cap_line)
         logger.info(cap_line)
 
         # add to queue
@@ -540,7 +541,7 @@ while True:
         # *********     SCHEDULE DUMP   *********
         # *********                     *********
 
-        print cap_line
+        print(cap_line)
         logger.info(cap_line)
 
         if len(linelist) != 2:
@@ -576,7 +577,7 @@ while True:
         # *********    RESOURCE REQUEST   *********
         # *********                       *********
 
-        print cap_line
+        print(cap_line)
         logger.info(cap_line)
         logger.info('RESOURCEREQUEST: %d job(s) in the queue.' % \
                     job_queue.queue_length())
@@ -690,9 +691,9 @@ while True:
                         # Ignore missing fields
 
                         (last_res, last_exe) = ('', '')
-                        if exe_job.has_key('UNIQUE_RESOURCE_NAME'):
+                        if 'UNIQUE_RESOURCE_NAME' in exe_job:
                             last_res = exe_job['UNIQUE_RESOURCE_NAME']
-                        if exe_job.has_key('EXE'):
+                        if 'EXE' in exe_job:
                             last_exe = exe_job['EXE']
 
                     if exe_job and last_res == unique_resource_name\
@@ -700,7 +701,7 @@ while True:
                         logger.info(
                             '%s:%s requested job and was NOT done with last %s'
                             % (unique_resource_name, exe, job_dict['JOB_ID']))
-                        print 'YOU ARE NOT DONE WITH %s' % job_dict['JOB_ID']
+                        print('YOU ARE NOT DONE WITH %s' % job_dict['JOB_ID'])
 
                         # Clear any scheduling data for exe_job before requeue
 
@@ -717,12 +718,12 @@ while True:
                         logger.info(
                             '%s:%s requested job but last %s was rescheduled'
                             % (unique_resource_name, exe, job_dict['JOB_ID']))
-                        print 'YOUR LAST JOB %s WAS RESCHEDULED'\
-                             % job_dict['JOB_ID']
+                        print('YOUR LAST JOB %s WAS RESCHEDULED'\
+                             % job_dict['JOB_ID'])
                 else:
                     logger.info('%s requested job and previous was done'
                                  % unique_resource_name)
-                    print 'OK, last job %s was done' % job_dict['JOB_ID']
+                    print('OK, last job %s was done' % job_dict['JOB_ID'])
 
         # Now update resource config fields with requested attributes
 
@@ -764,7 +765,7 @@ while True:
             exe_conf['vgrid'] = list(exe_conf['vgrid'])
         exe_vgrids = exe_conf['vgrid']
 
-        if last_req.has_key('LAST_VGRID'):
+        if 'LAST_VGRID' in last_req:
 
             # index of last vgrid found
 
@@ -821,11 +822,11 @@ while True:
             # No jobs: Create 'empty' job script and double sleep time if
             # repeated empty job
 
-            if not last_req.has_key('EMPTY_JOB'):
+            if 'EMPTY_JOB' not in last_req:
                 sleep_factor = 1.0
             else:
                 sleep_factor = 2.0
-            print 'N'
+            print('N')
             (empty_job, msg) = jobscriptgenerator.create_empty_job(
                 unique_resource_name,
                 exe,
@@ -872,7 +873,7 @@ while True:
                 logger.info('empty job script created')
             else:
                 msg = 'Failed to create job script: %s' % msg
-                print msg
+                print(msg)
                 logger.error(msg)
                 continue
         else:
@@ -947,7 +948,7 @@ while True:
 
                 # no jobs in the queue fits the resource!
 
-                print 'X'
+                print('X')
                 logger.info('No jobs in the queue can be executed by '
                              + 'resource, queue length: %s'
                              % job_queue.queue_length())
@@ -955,7 +956,7 @@ while True:
                 # Create 'empty' job script and double sleep time if
                 # repeated empty job
 
-                if not last_req.has_key('EMPTY_JOB'):
+                if 'EMPTY_JOB' not in last_req:
                     sleep_factor = 1.0
                 else:
                     sleep_factor = 2.0
@@ -1080,14 +1081,14 @@ while True:
                         try:
                             vgrid_index = vgrids_in_prioritized_order.index(
                                 active_res_vgrid)
-                        except StandardError:
+                        except Exception:
 
                             # fall back to simple increment
 
                             vgrid_index = last_vgrid
                         last_request_dict['LAST_VGRID'] = vgrid_index
 
-                        print 'Job assigned ' + new_job['JOB_ID']
+                        print('Job assigned ' + new_job['JOB_ID'])
                         logger.info('Job %s assigned to %s execution unit %s'
                                     % (new_job['JOB_ID'], 
                                        unique_resource_name, exe))
@@ -1101,8 +1102,8 @@ while True:
                         executing_queue.enqueue_job(active_job,
                                 executing_queue.queue_length())
 
-                        print 'executing_queue length %d'\
-                             % executing_queue.queue_length()
+                        print('executing_queue length %d'\
+                             % executing_queue.queue_length())
                     else:
 
                         # put original job in back in job queue
@@ -1110,7 +1111,7 @@ while True:
                         job_queue.enqueue_job(job_dict,
                                 job_queue.queue_length())
                         msg = 'error creating new job script, job requeued'
-                        print msg
+                        print(msg)
                         logger.error(msg)
                 else:
                     logger.error('error unpickling mRSL: %s'
@@ -1147,7 +1148,7 @@ while True:
 
             # real job scheduled!
 
-            if job_dict.has_key('VGRID'):
+            if 'VGRID' in job_dict:
                 original_last_request_dict_vgrids += job_dict['VGRID']
             else:
 
@@ -1221,7 +1222,7 @@ while True:
                                  'jobrequest_pending.%s' % exe)
         try:
             os.remove(lock_file)
-        except OSError, ose:
+        except OSError as ose:
             logger.error('Error removing %s: %s' % (lock_file, ose))
 
         # Experimental pricing code
@@ -1236,7 +1237,7 @@ while True:
         # *********                       *********
         # format: RESOURCEFINISHEDJOB RESOURCE_ID/LOCALJOBNAME
 
-        print cap_line
+        print(cap_line)
         logger.info(cap_line)
         logger.info('RESOURCEFINISHEDJOB: %d job(s) in the queue.' % \
                     job_queue.queue_length())
@@ -1296,7 +1297,7 @@ while True:
                 logger.error('could not clean up MiG server')
 
             if configuration.enable_server_dist\
-                 and not job_dict.has_key('EMPTY_JOB'):
+                 and 'EMPTY_JOB' not in job_dict:
 
                 # TODO: we should probably support resources migrating and
                 # handing back job as first contact with new server
@@ -1316,7 +1317,7 @@ while True:
         # *********   RESTART EXE FAILED  *********
         # *********                       *********
 
-        print cap_line
+        print(cap_line)
         logger.info(cap_line)
         logger.info(
             'Before restart exe failed: %d job(s) in the executing queue.' % \
@@ -1355,7 +1356,7 @@ while True:
         # *********   JOB STATE CHANGE    *********
         # *********                       *********
 
-        print cap_line
+        print(cap_line)
         logger.info(cap_line)
         logger.info('Job action: %d job(s) in the queue.' % \
                     job_queue.queue_length())
@@ -1478,7 +1479,7 @@ while True:
                             configuration)
     elif cap_line.find('JOBTIMEOUT') == 0:
 
-        print cap_line
+        print(cap_line)
         logger.info(cap_line)
         logger.info('job timeout: %d job(s) in the executing queue.' % \
                     executing_queue.queue_length())
@@ -1494,7 +1495,7 @@ while True:
         jobid = linelist[3]
 
         msg = 'JOBTIMEOUT: %s timed out.' % jobid
-        print msg
+        print(msg)
         logger.info(msg)
 
         # read resource config file
@@ -1548,7 +1549,7 @@ while True:
 
         if job_dict and unique_resource_name\
              == job_dict['UNIQUE_RESOURCE_NAME'] and exe_name == exe:
-            if job_dict.has_key('EMPTY_JOB'):
+            if 'EMPTY_JOB' in job_dict:
 
                 # Empty job timed out, cleanup server and
                 # remove from Executing queue
@@ -1625,7 +1626,7 @@ while True:
             try:
                 job_queue.dequeue_job_by_id(job_id)
                 logger.info("Removed job %s from job queue" % job_id)
-            except Exception, exc:
+            except Exception as exc:
                 logger.error("Failed to remove job %s from job queue: %s" \
                              %  (job_id, exc))
     elif cap_line.find('EXECUTINGQUEUEINFO') == 0:
@@ -1644,7 +1645,7 @@ while True:
             try:
                 executing_queue.dequeue_job_by_id(job_id)
                 logger.info("Removed job %s from executing queue" % job_id)
-            except Exception, exc:
+            except Exception as exc:
                 logger.error("Failed to remove job %s from exe queue: %s" \
                              %  (job_id, exc))
     elif cap_line.find('DONEQUEUEINFO') == 0:
@@ -1663,7 +1664,7 @@ while True:
             try:
                 done_queue.dequeue_job_by_id(job_id)
                 logger.info("Removed job %s from done queue" % job_id)
-            except Exception, exc:
+            except Exception as exc:
                 logger.error("Failed to remove job %s from exe queue: %s" \
                              %  (job_id, exc))
     elif cap_line.find('STARTTIMEOUTTHREAD') == 0:
@@ -1681,10 +1682,10 @@ while True:
         configuration.reload_config(True)
     elif cap_line.find('SHUTDOWN') == 0:
         logger.info('--- SAFE SHUTDOWN INITIATED ---')
-        print '--- SAFE SHUTDOWN INITIATED ---'
+        print('--- SAFE SHUTDOWN INITIATED ---')
         graceful_shutdown()
     else:
-        print 'not understood: %s' % cap_line
+        print('not understood: %s' % cap_line)
         logger.error('not understood: %s' % cap_line)
         time.sleep(1)
 

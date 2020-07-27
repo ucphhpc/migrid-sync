@@ -26,13 +26,14 @@
 #
 
 """This is a job kill helper for sandboxes"""
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared.functional import validate_input
-from shared.init import initialize_main_variables
-from shared.resadm import get_sandbox_exe_stop_command
+from .shared import returnvalues
+from .shared.functional import validate_input
+from .shared.init import initialize_main_variables
+from .shared.resadm import get_sandbox_exe_stop_command
 
 
 def signature():

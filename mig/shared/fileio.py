@@ -26,6 +26,8 @@
 #
 
 """IO operations"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 from hashlib import md5, sha1, sha256, sha512
 import errno
@@ -36,9 +38,9 @@ import tempfile
 import time
 import zipfile
 
-from shared.base import force_utf8_rec
-from shared.defaults import default_chunk_size, default_max_chunks
-from shared.serial import dump, load
+from .shared.base import force_utf8_rec
+from .shared.defaults import default_chunk_size, default_max_chunks
+from .shared.serial import dump, load
 
 __valid_hash_algos = {'md5': md5, 'sha1': sha1, 'sha256': sha256,
                       'sha512': sha512}
@@ -61,12 +63,12 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
     if not os.path.isdir(head):
         try:
             os.mkdir(head)
-        except Exception, err:
+        except Exception as err:
             logger.error('could not create dir %s' % err)
     if not os.path.isfile(path):
         try:
             open(path, "w").close()
-        except Exception, err:
+        except Exception as err:
             logger.error('could not create file %s' % err)
     try:
         filehandle = open(path, mode)
@@ -84,7 +86,7 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
         filehandle.close()
         logger.debug('file chunk written: %s' % path)
         return True
-    except Exception, err:
+    except Exception as err:
         logger.error('could not write %s chunk at %d: %s' %
                      (path, offset, err))
         return False
@@ -103,7 +105,7 @@ def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
         try:
             logger.debug('making directory: %s' % head)
             os.mkdir(head)
-        except Exception, err:
+        except Exception as err:
             logger.error('could not create dir: %s' % err)
     try:
         filehandle = open(path, mode)
@@ -111,7 +113,7 @@ def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
         filehandle.close()
         # logger.debug('file written: %s' % path)
         retval = True
-    except Exception, err:
+    except Exception as err:
         logger.error('could not write file: %s, error: %s' % (path, err))
         retval = False
     if umask is not None:
@@ -128,7 +130,7 @@ def read_file(path, logger):
         content = filehandle.read()
         filehandle.close()
         #logger.debug('read %db from: %s' % (len(content), path))
-    except Exception, err:
+    except Exception as err:
         logger.error('could not read %s: %s' % (path, err))
     return content
 
@@ -155,7 +157,7 @@ def read_tail(path, lines, logger):
             step_size *= 2
             #logger.debug("reading %d lines from %s" % (lines, path))
         tail_fd.close()
-    except Exception, exc:
+    except Exception as exc:
         logger.error("reading %d lines from %s: %s" % (lines, path, exc))
     return out_lines[-lines:]
 
@@ -165,7 +167,7 @@ def get_file_size(path, logger):
     logger.debug('getsize on file: %s' % path)
     try:
         return os.path.getsize(path)
-    except Exception, err:
+    except Exception as err:
         logger.error('could not get size for %s: %s' % (path, err))
         result = -1
 
@@ -179,7 +181,7 @@ def delete_file(path, logger, allow_broken_symlink=False, allow_missing=False):
         try:
             os.remove(path)
             result = True
-        except Exception, err:
+        except Exception as err:
             logger.error('could not delete %s %s' % (path, err))
             result = False
     elif allow_missing:
@@ -201,7 +203,7 @@ def make_symlink(dest, src, logger, force=False):
     try:
         logger.debug('creating symlink: %s %s' % (dest, src))
         os.symlink(dest, src)
-    except Exception, err:
+    except Exception as err:
         logger.error('Could not create symlink %s' % err)
         return False
     return True
@@ -259,7 +261,7 @@ def unpickle_and_change_status(path, newstatus, logger):
         logger.info('job status changed to %s: %s' % (newstatus,
                                                       path))
         return job_dict
-    except Exception, err:
+    except Exception as err:
         logger.error('could not change job status to %s: %s %s'
                      % (newstatus, path, err))
         return False
@@ -271,7 +273,7 @@ def unpickle(path, logger, allow_missing=False):
         data_object = load(path)
         logger.debug('%s was unpickled successfully' % path)
         return data_object
-    except Exception, err:
+    except Exception as err:
         # NOTE: check that it was in fact due to file does not exist error
         if not allow_missing or getattr(err, 'errno', None) != errno.ENOENT:
             logger.error('%s could not be opened/unpickled! %s'
@@ -285,7 +287,7 @@ def pickle(data_object, path, logger):
         dump(data_object, path)
         logger.debug('pickle success: %s' % path)
         return True
-    except Exception, err:
+    except Exception as err:
         logger.error('could not pickle: %s %s' % (path, err))
         return False
 
@@ -298,7 +300,7 @@ def load_json(path, logger, allow_missing=False, convert_utf8=True):
         if convert_utf8:
             data_object = force_utf8_rec(data_object)
         return data_object
-    except Exception, err:
+    except Exception as err:
         # NOTE: check that it was in fact due to file does not exist error
         if not allow_missing or getattr(err, 'errno', None) != errno.ENOENT:
             logger.error('%s could not be opened/loaded! %s'
@@ -314,8 +316,8 @@ def send_message_to_grid_script(message, logger, configuration):
         filehandle.write(message)
         filehandle.close()
         return True
-    except Exception, err:
-        print 'could not get exclusive access or write to grid_stdin!'
+    except Exception as err:
+        print('could not get exclusive access or write to grid_stdin!')
         logger.error('could not write "%s" to grid_stdin: %s' %
                      (message, err))
         return False
@@ -332,15 +334,15 @@ def send_message_to_grid_notify(message, logger, configuration):
         filehandle.write(message)
         filehandle.close()
         return True
-    except Exception, err:
+    except Exception as err:
         logger.error("Failed to send_message_to_grid_notify: %s" % err)
         try:
             filehandle.close()
-        except Exception, err:
+        except Exception as err:
             pass
         try:
             os.remove(filepath)
-        except Exception, err:
+        except Exception as err:
             pass
         return False
 
@@ -359,7 +361,7 @@ def touch(filepath, configuration, timestamp=None):
         if timestamp != None:
             # set timestamp to supplied value
             os.utime(filepath, (timestamp, timestamp))
-    except Exception, err:
+    except Exception as err:
         configuration.logger.error("could not touch file: '%s'" % filepath
                                    + ": %s" % err)
         return False
@@ -381,17 +383,17 @@ def remove_rec(dir_path, configuration):
         if not os.path.isdir(dir_path):
             raise Exception("Directory %s does not exist" % dir_path)
 
-        os.chmod(dir_path, 0777)
+        os.chmod(dir_path, 0o777)
 
         # extend permissions top-down
         for root, dirs, files in os.walk(dir_path, topdown=True):
             for name in files:
-                os.chmod(os.path.join(root, name), 0777)
+                os.chmod(os.path.join(root, name), 0o777)
             for name in dirs:
-                os.chmod(os.path.join(root, name), 0777)
+                os.chmod(os.path.join(root, name), 0o777)
         shutil.rmtree(dir_path)
 
-    except Exception, err:
+    except Exception as err:
         configuration.logger.error("Could not remove_rec %s: %s" %
                                    (dir_path, err))
         return False
@@ -407,7 +409,7 @@ def remove_dir(dir_path, configuration):
     """
     try:
         os.rmdir(dir_path)
-    except Exception, err:
+    except Exception as err:
         configuration.logger.error("Could not remove_dir %s: %s" %
                                    (dir_path, err))
         return False
@@ -441,7 +443,7 @@ def makedirs_rec(dir_path, configuration, accept_existing=True):
             _logger.error("Non-directory in the way: %s" % dir_path)
             return False
         os.makedirs(dir_path)
-    except OSError, err:
+    except OSError as err:
         if not accept_existing or err.errno != errno.EEXIST:
             _logger.error("Could not makedirs_rec %s: %s" % (dir_path, err))
             return False
@@ -458,7 +460,7 @@ def _move_helper(src, dst, configuration, recursive):
     try:
         # Always use the same recursive move
         shutil.move(src, dst)
-    except Exception, exc:
+    except Exception as exc:
         return (False, "move failed: %s" % exc)
     return (True, "")
 
@@ -489,7 +491,7 @@ def _copy_helper(src, dst, configuration, recursive):
             shutil.copytree(src, dst)
         else:
             shutil.copy(src, dst)
-    except Exception, exc:
+    except Exception as exc:
         return (False, "copy failed: %s" % exc)
     return (True, "")
 
@@ -534,7 +536,7 @@ def write_zipfile(zip_path, paths, archive_base=''):
             zip_file.write(script, archive_path)
         zip_file.close()
         return (True, '')
-    except Exception, err:
+    except Exception as err:
         return (False, err)
 
 
@@ -631,7 +633,7 @@ def __checksum_file(path, hash_algo, chunk_size=default_chunk_size,
         if file_fd.read(1):
             msg = ' (of first %d bytes)' % (chunk_size * max_chunks)
         return "%s%s" % (checksum.hexdigest(), msg)
-    except Exception, exc:
+    except Exception as exc:
         return "checksum failed: %s" % exc
 
 
@@ -682,7 +684,7 @@ def acquire_file_lock(lock_path, exclusive=True, blocking=True):
     lock_handle = open(lock_path, "w+")
     try:
         fcntl.flock(lock_handle.fileno(), lock_mode)
-    except IOError, ioe:
+    except IOError as ioe:
         # Clean up
         try:
             lock_handle.close()

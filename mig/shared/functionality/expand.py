@@ -29,19 +29,20 @@
 directories in their home directories. This script tries to mimic basic shell
 wild card expansion.
 """
+from __future__ import absolute_import
 
 import os
 import glob
 from urllib import quote
 
-from shared import returnvalues
-from shared.base import client_id_dir, invisible_path
-from shared.functional import validate_input
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.init import initialize_main_variables, find_entry
-from shared.parseflags import all, long_list, recursive
-from shared.sharelinks import extract_mode_id
-from shared.validstring import valid_user_path
+from .shared import returnvalues
+from .shared.base import client_id_dir, invisible_path
+from .shared.functional import validate_input
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.init import initialize_main_variables, find_entry
+from .shared.parseflags import all, long_list, recursive
+from .shared.sharelinks import extract_mode_id
+from .shared.validstring import valid_user_path
 
 
 def signature():
@@ -130,7 +131,7 @@ def handle_expand(
     else:
         try:
             contents = os.listdir(real_path)
-        except Exception, exc:
+        except Exception as exc:
             output_objects.append({'object_type': 'error_text', 'text': 'Failed to list contents of %s: %s'
                                    % (base_name, exc)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
@@ -231,7 +232,7 @@ def main(client_id, user_arguments_dict):
     elif share_id:
         try:
             (share_mode, _) = extract_mode_id(configuration, share_id)
-        except ValueError, err:
+        except ValueError as err:
             logger.error('%s called with invalid share_id %s: %s' %
                          (op_name, share_id, err))
             output_objects.append(

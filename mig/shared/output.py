@@ -27,20 +27,21 @@
 
 """Module with functions to generate output in format
 specified by the client."""
+from __future__ import absolute_import
 
 import os
 import time
 import traceback
 from binascii import hexlify
 
-from shared import returnvalues
-from shared.bailout import bailout_title
-from shared.defaults import file_dest_sep, keyword_any
-from shared.html import get_xgi_html_header, get_xgi_html_footer, \
+from .shared import returnvalues
+from .shared.bailout import bailout_title
+from .shared.defaults import file_dest_sep, keyword_any
+from .shared.html import get_xgi_html_header, get_xgi_html_footer, \
     vgrid_items, html_post_helper, tablesorter_pager
-from shared.objecttypes import validate
-from shared.prettyprinttable import pprint_table
-from shared.safeinput import html_escape
+from .shared.objecttypes import validate
+from .shared.prettyprinttable import pprint_table
+from .shared.safeinput import html_escape
 
 row_name = ('even', 'odd')
 
@@ -70,7 +71,7 @@ def txt_table_if_have_keys(header, input_dict, keywordlist):
     for dictionary in input_dict:
         this_status_list = []
         for key in keywordlist:
-            if dictionary.has_key(key):
+            if key in dictionary:
                 this_status_list.append(dictionary[key])
             else:
                 this_status_list.append('')
@@ -91,13 +92,13 @@ def txt_cond_summary(job_cond_msg):
         lines.append('No job_cond message.')
     else:
         lines.append('Job Id: %s' % job_cond_msg['job_id'])
-        if job_cond_msg.has_key('suggestion'):
+        if 'suggestion' in job_cond_msg:
             lines.append('%s' % job_cond_msg['suggestion'])
-        if job_cond_msg.has_key('verdict'):
+        if 'verdict' in job_cond_msg:
             lines.append('%s %s' % ('Job readiness condition',
                                     job_cond_msg['color']))
             lines.append(job_cond_msg['verdict'])
-        if job_cond_msg.has_key('error_desc'):
+        if 'error_desc' in job_cond_msg:
             for (mrsl_attrib, desc) in job_cond_msg['error_desc'].items():
                 lines.append('%s' % mrsl_attrib)
                 if desc.find('[') is not -1 or desc.find(']') is not -1:
@@ -400,48 +401,48 @@ ctime\t%(ctime)s
                 for obj in jobs:
                     lines.append('Job Id: %(job_id)s\n' % obj)
                     lines.append('Status: %(status)s\n' % obj)
-                    if obj.has_key('execute'):
+                    if 'execute' in obj:
                         lines.append('Execute: %(execute)s\n' % obj)
-                    if obj.has_key('verified'):
+                    if 'verified' in obj:
                         lines.append('Verified status: %(verified)s\n'
                                      % obj)
-                    if obj.has_key('verified_timestamp'):
+                    if 'verified_timestamp' in obj:
                         lines.append('Verified: %(verified_timestamp)s\n'
                                      % obj)
-                    if obj.has_key('received_timestamp'):
+                    if 'received_timestamp' in obj:
                         lines.append('Received: %(received_timestamp)s\n'
                                      % obj)
-                    if obj.has_key('queued_timestamp'):
+                    if 'queued_timestamp' in obj:
                         lines.append('Queued: %(queued_timestamp)s\n'
                                      % obj)
-                    if obj.has_key('schedule_timestamp'):
+                    if 'schedule_timestamp' in obj:
                         lines.append('Scheduled: %(schedule_timestamp)s\n'
                                      % obj)
-                    if obj.has_key('schedule_hint'):
+                    if 'schedule_hint' in obj:
                         lines.append('Schedule hint: %(schedule_hint)s\n'
                                      % obj)
-                    if obj.has_key('schedule_hits'):
+                    if 'schedule_hits' in obj:
                         lines.append('Suitable resources: %(schedule_hits)s\n'
                                      % obj)
-                    if obj.has_key('expected_delay'):
+                    if 'expected_delay' in obj:
                         lines.append('Expected delay: %(expected_delay)s\n'
                                      % obj)
-                    if obj.has_key('executing_timestamp'):
+                    if 'executing_timestamp' in obj:
                         lines.append('Executing: %(executing_timestamp)s\n'
                                      % obj)
-                    if obj.has_key('resource'):
+                    if 'resource' in obj:
                         lines.append('Resource: %(resource)s\n'
                                      % obj)
-                    if obj.has_key('vgrid'):
+                    if 'vgrid' in obj:
                         lines.append('%s: %s'
                                      % (configuration.site_vgrid_label, obj['vgrid']))
-                    if obj.has_key('finished_timestamp'):
+                    if 'finished_timestamp' in obj:
                         lines.append('Finished: %(finished_timestamp)s\n'
                                      % obj)
-                    if obj.has_key('failed_timestamp'):
+                    if 'failed_timestamp' in obj:
                         lines.append('Failed: %(failed_timestamp)s\n'
                                      % obj)
-                    if obj.has_key('canceled_timestamp'):
+                    if 'canceled_timestamp' in obj:
                         lines.append('Canceled: %(canceled_timestamp)s\n'
                                      % obj)
                     for execution_history in obj['execution_histories']:
@@ -450,23 +451,23 @@ ctime\t%(ctime)s
                             execution_history['execution_history']
                         lines.append('Execution history</td><td>#%s</td></tr>'
                                      % count)
-                        if single_history.has_key('queued'):
+                        if 'queued' in single_history:
                             lines.append('Queued %s: %s\n' % (count,
                                                               single_history['queued']))
-                        if single_history.has_key('executing'):
+                        if 'executing' in single_history:
                             lines.append('Executing %s: %s\n' % (count,
                                                                  single_history['executing']))
-                        if single_history.has_key('resource'):
+                        if 'resource' in single_history:
                             lines.append('Resource %s: %s\n' % (count,
                                                                 single_history['resource']))
-                        if single_history.has_key('vgrid'):
+                        if 'vgrid' in single_history:
                             lines.append('%s %s: %s' %
                                          (configuration.site_vgrid_label,
                                           count, single_history['vgrid']))
-                        if single_history.has_key('failed'):
+                        if 'failed' in single_history:
                             lines.append('Failed %s: %s\n' % (count,
                                                               single_history['failed']))
-                        if single_history.has_key('failed_message'):
+                        if 'failed_message' in single_history:
                             lines.append('Failed message %s: %s\n'
                                          % (count,
                                             single_history['failed_message']))
@@ -481,16 +482,16 @@ ctime\t%(ctime)s
             else:
                 for filewc in filewcs:
                     out = ''
-                    if filewc.has_key('name'):
+                    if 'name' in filewc:
                         out += '%s\t' % filewc['name']
                     out += '\t'
-                    if filewc.has_key('lines'):
+                    if 'lines' in filewc:
                         out += '%s' % filewc['lines']
                     out += '\t'
-                    if filewc.has_key('words'):
+                    if 'words' in filewc:
                         out += '%s' % filewc['words']
                     out += '\t'
-                    if filewc.has_key('bytes'):
+                    if 'bytes' in filewc:
                         out += '%s' % filewc['bytes']
                     out += '\n'
                     lines.append(out)
@@ -508,21 +509,21 @@ ctime\t%(ctime)s
                     line = ''
                     if 'directory' == entry['type']:
                         directory = entry
-                        if directory.has_key('long_format'):
+                        if 'long_format' in directory:
                             if directory == dir_listing['entries'][0]:
                                 lines.append('%s:\ntotal %s\n'
                                              % (dir_listing['relative_path'],
                                                 len(dir_listing['entries'])))
-                        if directory.has_key('actual_dir'):
+                        if 'actual_dir' in directory:
                             line += '%s ' % directory['actual_dir']
                         line += '%s\n' % directory['name']
                         lines.append(line)
                     elif 'file' == entry['type']:
                         this_file = entry
-                        if this_file.has_key('long_format'):
+                        if 'long_format' in this_file:
                             line += '%s ' % this_file['long_format']
                         line += '%s' % this_file['name']
-                        if this_file.has_key('file_dest'):
+                        if 'file_dest' in this_file:
                             line += '%s%s' % (file_dest_sep,
                                               this_file['file_dest'])
                         line += '\n'
@@ -535,7 +536,7 @@ ctime\t%(ctime)s
         elif i['object_type'] == 'html_form':
             pass
         elif i['object_type'] == 'file_output':
-            if i.has_key('path'):
+            if 'path' in i:
                 lines.append('File: %s\n' % i['path'])
             for line in i['lines']:
                 # Do not add newlines here!
@@ -609,16 +610,16 @@ def html_cond_summary(job_cond_msg):
         lines.append('<table class="job_cond_verdict">')
         lines.append('<tr><th>Job Id: %s</th></tr>' %
                      job_cond_msg['job_id'])
-        if job_cond_msg.has_key('suggestion'):
+        if 'suggestion' in job_cond_msg:
             lines.append('<tr><td>%s</td></tr>' %
                          job_cond_msg['suggestion'])
-        if job_cond_msg.has_key('verdict'):
+        if 'verdict' in job_cond_msg:
             img_tag = '<img src="%s" alt="%s %s" />' % \
                       (job_cond_msg['icon'], 'Job readiness condition',
                        job_cond_msg['color'])
             lines.append('<tr><td>%s&nbsp;%s</td></tr>' %
                          (img_tag, job_cond_msg['verdict']))
-        if job_cond_msg.has_key('error_desc'):
+        if 'error_desc' in job_cond_msg:
             lines.append('<tr><td><dl>')
             for (mrsl_attrib, desc) in job_cond_msg['error_desc'].items():
                 lines.append('<dt>%s</dt>' % mrsl_attrib)
@@ -641,7 +642,7 @@ def html_table_if_have_keys(dictionary, keywordlist):
 
     outputstring = ''
     for key in keywordlist:
-        if dictionary.has_key(key):
+        if key in dictionary:
             outputstring += '<td>%s</td>' % dictionary[key]
         else:
             outputstring += '<td></td>'
@@ -756,51 +757,51 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                                  % obj['job_id'])
                     lines.append('<tr><td>Status</td><td>%s</td></tr>'
                                  % obj['status'])
-                    if obj.has_key('execute'):
+                    if 'execute' in obj:
                         lines.append('<tr><td>Execute</td><td>%s</td></tr>'
                                      % obj['execute'])
-                    if obj.has_key('verified'):
+                    if 'verified' in obj:
                         lines.append('<tr><td>Verified status</td>'
                                      '<td>%s</td></tr>' % obj['verified'])
-                    if obj.has_key('verified_timestamp'):
+                    if 'verified_timestamp' in obj:
                         lines.append('<tr><td>Verified</td><td>%s</td></tr>'
                                      % obj['verified_timestamp'])
-                    if obj.has_key('received_timestamp'):
+                    if 'received_timestamp' in obj:
                         lines.append('<tr><td>Received</td><td>%s</td></tr>'
                                      % obj['received_timestamp'])
-                    if obj.has_key('queued_timestamp'):
+                    if 'queued_timestamp' in obj:
                         lines.append('<tr><td>Queued</td><td>%s</td></tr>'
                                      % obj['queued_timestamp'])
-                    if obj.has_key('schedule_timestamp'):
+                    if 'schedule_timestamp' in obj:
                         lines.append('<tr><td>Scheduled</td><td>%s</td></tr>'
                                      % obj['schedule_timestamp'])
-                    if obj.has_key('schedule_hint'):
+                    if 'schedule_hint' in obj:
                         lines.append('<tr><td>Schedule result</td>'
                                      '<td>%s</td></tr>' % obj['schedule_hint'])
-                    if obj.has_key('schedule_hits'):
+                    if 'schedule_hits' in obj:
                         lines.append('<tr><td>Suitable resources</td>'
                                      '<td>%s</td></tr>' % obj['schedule_hits'])
-                    if obj.has_key('expected_delay'):
+                    if 'expected_delay' in obj:
                         lines.append(
                             '<tr><td>Expected delay</td><td>%s</td></tr>' %
                             obj['expected_delay'])
-                    if obj.has_key('executing_timestamp'):
+                    if 'executing_timestamp' in obj:
                         lines.append('<tr><td>Executing</td><td>%s</td></tr>'
                                      % obj['executing_timestamp'])
-                    if obj.has_key('resource'):
+                    if 'resource' in obj:
                         lines.append('<tr><td>Resource</td><td>%s</td></tr>'
                                      % obj['resource'])
-                    if obj.has_key('vgrid'):
+                    if 'vgrid' in obj:
                         lines.append('<tr><td>%s</td><td>%s</td></tr>'
                                      % (configuration.site_vgrid_label,
                                         obj['vgrid']))
-                    if obj.has_key('finished_timestamp'):
+                    if 'finished_timestamp' in obj:
                         lines.append('<tr><td>Finished</td><td>%s</td></tr>'
                                      % obj['finished_timestamp'])
-                    if obj.has_key('failed_timestamp'):
+                    if 'failed_timestamp' in obj:
                         lines.append('<tr><td>Failed</td><td>%s</td></tr>'
                                      % obj['failed_timestamp'])
-                    if obj.has_key('canceled_timestamp'):
+                    if 'canceled_timestamp' in obj:
                         lines.append('<tr><td>Canceled</td><td>%s</td></tr>'
                                      % obj['canceled_timestamp'])
                     for execution_history in obj['execution_histories']:
@@ -809,34 +810,34 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                             execution_history['execution_history']
                         lines.append('<tr><td>Execution history</td>'
                                      '<td>#%s</td></tr>' % count)
-                        if single_history.has_key('queued'):
+                        if 'queued' in single_history:
                             lines.append(
                                 '<tr><td>Queued %s</td><td>%s</td></tr>'
                                 % (count, single_history['queued']))
-                        if single_history.has_key('executing'):
+                        if 'executing' in single_history:
                             lines.append(
                                 '<tr><td>Executing %s</td><td>%s</td></tr>'
                                 % (count, single_history['executing']))
-                        if single_history.has_key('resource'):
+                        if 'resource' in single_history:
                             lines.append(
                                 '<tr><td>Resource %s</td><td>%s</td></tr>'
                                 % (count, single_history['resource']))
-                        if single_history.has_key('vgrid'):
+                        if 'vgrid' in single_history:
                             lines.append(
                                 '<tr><td>%s %s</td><td>%s</td></tr>'
                                 % (configuration.site_vgrid_label, count,
                                    single_history['vgrid']))
-                        if single_history.has_key('failed'):
+                        if 'failed' in single_history:
                             lines.append(
                                 '<tr><td>Failed %s</td><td>%s</td></tr>'
                                 % (count, single_history['failed']))
-                        if single_history.has_key('failed_message'):
+                        if 'failed_message' in single_history:
                             lines.append(
                                 '<tr>'
                                 '<td>Failed message %s</td><td>%s</td></tr>'
                                 % (count, single_history['failed_message']))
 
-                    if obj.has_key('statuslink'):
+                    if 'statuslink' in obj:
                         lines.append('<tr><td>Links</td><td>')
                         lines.append('%s<br />' % html_link(obj['statuslink'
                                                                 ]))
@@ -853,7 +854,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                                      % html_link(obj['jobfeasiblelink']))
                         lines.append('%s<br />'
                                      % html_link(obj['liveiolink']))
-                    if obj.has_key('outputfileslink'):
+                    if 'outputfileslink' in obj:
                         lines.append('<br />%s'
                                      % html_link(obj['outputfileslink']))
                     lines.append('<tr><td colspan=2><br /></td></tr>')
@@ -1060,9 +1061,9 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                         cols += 1
 
                         cls = "file_details"
-                        if directory.has_key('actual_dir'):
+                        if 'actual_dir' in directory:
                             details = directory['actual_dir']
-                        elif directory.has_key('file_info'):
+                        elif 'file_info' in directory:
                             details = txt_file_info(directory['file_info'])
                         else:
                             cls = ""
@@ -1112,9 +1113,9 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 </td>""" % this_file['file_with_dir'])
                         cols += 1
                         cls = "file_details"
-                        if this_file.has_key('long_format'):
+                        if 'long_format' in this_file:
                             details = this_file['long_format']
-                        elif this_file.has_key('file_info'):
+                        elif 'file_info' in this_file:
                             details = txt_file_info(this_file['file_info'])
                         else:
                             cls = ""
@@ -1175,13 +1176,13 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 for filewc in filewcs:
                     lines.append('<tr><td>%s</td>' % filewc['name'])
                     lines.append('<td>')
-                    if filewc.has_key('lines'):
+                    if 'lines' in filewc:
                         lines.append('%s' % filewc['lines'])
                     lines.append('</td><td>')
-                    if filewc.has_key('words'):
+                    if 'words' in filewc:
                         lines.append('%s' % filewc['words'])
                     lines.append('</td><td>')
-                    if filewc.has_key('bytes'):
+                    if 'bytes' in filewc:
                         lines.append('%s' % filewc['bytes'])
                     lines.append('</td></tr>')
                 lines.append('</table>')
@@ -1195,7 +1196,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 for filedu in filedus:
                     lines.append('<tr><td>%s</td>' % filedu['name'])
                     lines.append('<td>')
-                    if filedu.has_key('bytes'):
+                    if 'bytes' in filedu:
                         lines.append('%s' % filedu['bytes'])
                     lines.append('</td></tr>')
                 lines.append('</table>')
@@ -1203,7 +1204,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 
             lines.append('File %s was <b>not</b> found!' % i['name'])
         elif i['object_type'] == 'file_output':
-            if i.has_key('path'):
+            if 'path' in i:
                 lines.append('File: %s<br />' % i['path'])
             lines.append('<pre>%s</pre><br />' % ''.join(i['lines']))
         elif i['object_type'] == 'list':
@@ -1895,11 +1896,11 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                         (res_type, res_type, obj['name']))
                     lines.append('<td class="centertext">')
                     # view or admin link depending on ownership
-                    if obj.has_key('resdetailslink'):
+                    if 'resdetailslink' in obj:
                         lines.append('%s' % html_link(obj['resdetailslink']))
                     lines.append('</td>')
                     lines.append('<td class="centertext">')
-                    if obj.has_key('resownerlink'):
+                    if 'resownerlink' in obj:
                         lines.append('%s' % html_link(obj['resownerlink']))
                     lines.append('</td>')
                     # List number of runtime environments in field and add
@@ -2009,13 +2010,13 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                     lines.append('<td class="user" title="user">%s</td>' %
                                  obj.get('pretty_id', obj['name']))
                     lines.append('<td class="centertext">')
-                    if obj.has_key('userdetailslink'):
+                    if 'userdetailslink' in obj:
                         lines.append('%s' % html_link(obj['userdetailslink']))
                     lines.append('</td>')
                     # Remaining fields
                     for name in user_fields:
                         lines.append('<td class="centertext">')
-                        if obj.has_key(name):
+                        if name in obj:
                             lines.append('%s' % html_link(obj[name]))
                         else:
                             lines.append('---')
@@ -2093,7 +2094,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             else:
                 lines.append('No matching threads found')
             max_subject_len, max_body_len = 100, 10000
-            if i.has_key('vgrid_name'):
+            if 'vgrid_name' in i:
                 lines.append('''
 <p>
 <div id="search_threads">
@@ -2189,7 +2190,7 @@ onclick="javascript:toggle_new('new_form', 'new_link'); return false;"/>
                 lines.append('</table>')
             else:
                 lines.append('No messages in thread')
-            if i.has_key('vgrid_name') and i.has_key('thread'):
+            if 'vgrid_name' in i and 'thread' in i:
                 lines.append('''
 <p>
 <div id="new_link">
@@ -2277,25 +2278,25 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                     lines.append('<tr>')
                     lines.append('<td>%s</td>' % obj['name'])
                     lines.append('<td class="centertext">')
-                    if obj.has_key('viewvgridlink'):
+                    if 'viewvgridlink' in obj:
                         lines.append('%s'
                                      % html_link(obj['viewvgridlink']))
                     lines.append('</td>')
                     lines.append('<td class="centertext">')
-                    if obj.has_key('administratelink'):
+                    if 'administratelink' in obj:
                         lines.append('%s'
                                      % html_link(obj['administratelink']))
                     lines.append('</td>')
                     lines.append('<td class="centertext">')
                     # membership links: should be there in any case
-                    if obj.has_key('memberlink'):
+                    if 'memberlink' in obj:
                         lines.append('%s'
                                      % html_link(obj['memberlink']))
                     lines.append('</td>')
                     for key in components:
                         lines.append('<td class="centertext">')
                         for link in component_links[key]:
-                            if obj.has_key(link):
+                            if link in obj:
                                 lines.append('%s ' % html_link(obj[link]))
                             else:
                                 lines.append('')
@@ -2399,7 +2400,7 @@ def soap_format(configuration, ret_val, ret_msg, out_obj):
 def pickle_helper(configuration, ret_val, ret_msg, out_obj, protocol=None):
     """Generate output in requested pickle protocol format"""
 
-    from shared.serial import dumps
+    from .shared.serial import dumps
     return dumps(out_obj, protocol)
 
 
@@ -2536,7 +2537,7 @@ def format_output(
     try:
         return eval('%s_format(configuration, ret_val, ret_msg, out_obj)' %
                     outputformat)
-    except Exception, err:
+    except Exception as err:
         configuration.logger.error("%s formatting failed: %s\n%s" %
                                    (outputformat, err, traceback.format_exc()))
         return None

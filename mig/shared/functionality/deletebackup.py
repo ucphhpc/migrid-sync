@@ -26,8 +26,9 @@
 #
 
 """Creation of backup archives for write-once files"""
+from __future__ import absolute_import
 
-from shared.functionality.deletefreeze import main as freeze_main, \
+from .shared.functionality.deletefreeze import main as freeze_main, \
      signature as freeze_signature
 
 

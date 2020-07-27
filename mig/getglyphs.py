@@ -33,6 +33,7 @@
 Usage:
 ./getglyphs.py http://practicaltypography.com/common-accented-characters.html
 """
+from __future__ import print_function
 
 import os
 import sys
@@ -66,16 +67,16 @@ class GlyphParser(HTMLParser.HTMLParser):
 
 if __name__ == '__main__':
     if not sys.argv[1:]:
-        print "Usage: %s URL"
-        print "Please refer to inline documentation in script"
+        print("Usage: %s URL")
+        print("Please refer to inline documentation in script")
         sys.exit(1)
     url = sys.argv[1]
-    print "Looking up glyphs from %s" % url
+    print("Looking up glyphs from %s" % url)
     web_sock = urllib.urlopen(url)
     out = web_sock.read()
     web_sock.close()
     parser = GlyphParser()
     parser.feed(out)
-    print "Found glyphs:\n%s" % ''.join(parser.glyphs)
+    print("Found glyphs:\n%s" % ''.join(parser.glyphs))
 
     

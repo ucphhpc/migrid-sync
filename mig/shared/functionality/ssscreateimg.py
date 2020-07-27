@@ -26,6 +26,7 @@
 #
 
 """This script generates a sandbox image"""
+from __future__ import absolute_import
 
 import os
 import time
@@ -34,18 +35,18 @@ import shutil
 from binascii import hexlify
 import fcntl
 
-from shared import resadm
-from shared import returnvalues
-from shared.conf import get_resource_configuration, get_resource_exe
-from shared.defaults import default_vgrid
-from shared.fileio import make_symlink, write_zipfile, copy
-from shared.functional import validate_input, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables
-from shared.sandbox import load_sandbox_db, save_sandbox_db, \
+from .shared import resadm
+from .shared import returnvalues
+from .shared.conf import get_resource_configuration, get_resource_exe
+from .shared.defaults import default_vgrid
+from .shared.fileio import make_symlink, write_zipfile, copy
+from .shared.functional import validate_input, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables
+from .shared.sandbox import load_sandbox_db, save_sandbox_db, \
     create_sss_resource
-from shared.safeeval import subprocess_call
-from shared.vgridaccess import get_vgrid_map_vgrids
+from .shared.safeeval import subprocess_call
+from .shared.vgridaccess import get_vgrid_map_vgrids
 
 # sandbox db has the format: {username: (password, [list_of_resources])}
 
@@ -94,7 +95,7 @@ def main(client_id, user_arguments_dict):
     cputime = 1000000
     sandboxkey = hexlify(open('/dev/urandom').read(32))
     ip_address = 'UNKNOWN'
-    if os.environ.has_key('REMOTE_ADDR'):
+    if 'REMOTE_ADDR' in os.environ:
         ip_address = os.environ['REMOTE_ADDR']
 
     if not configuration.site_enable_sandboxes:
@@ -138,13 +139,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     try:
         userdb = load_sandbox_db(configuration)
-    except Exception, exc:
+    except Exception as exc:
         output_objects.append({'object_type': 'error_text', 'text'
                               : 'Failed to read login info: %s'
                                % exc})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    if not userdb.has_key(username) or userdb[username][PW] != password:
+    if username not in userdb or userdb[username][PW] != password:
         output_objects.append({'object_type': 'error_text', 'text'
                                : 'Wrong username or password - please go back and try again...'
                                })
@@ -181,7 +182,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     try:
         save_sandbox_db(userdb, configuration)
-    except Exception, exc:
+    except Exception as exc:
         output_objects.append({'object_type': 'error_text', 'text':
                                'Could not update sandbox database: %s' % exc
                                })
@@ -244,7 +245,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             return (output_objects, returnvalues.SYSTEM_ERROR)
         os.close(master_node_script_file)
         logger.debug('wrote master node script %s' % mns_fname)
-    except Exception, err:
+    except Exception as err:
         output_objects.append({'object_type': 'error_text', 'text':
                                    'Creating script failed: %s' % msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
@@ -264,7 +265,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             return (output_objects, returnvalues.SYSTEM_ERROR)
         os.close(fe_script_file)
         logger.debug('wrote frontend script %s' % fes_fname)
-    except Exception, err:
+    except Exception as err:
         output_objects.append({'object_type': 'error_text', 'text':
                                    'Creating script failed: %s' % msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
@@ -282,7 +283,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             touch_lockfile = open(lock_path, 'w')
             touch_lockfile.write('this is the lockfile')
             touch_lockfile.close()
-        except Exception, exc:
+        except Exception as exc:
             output_objects.append({'object_type': 'error_text', 'text':
                                    'Could not create lock file: %s' % exc})
             return (output_objects, returnvalues.SYSTEM_ERROR)
@@ -312,7 +313,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         fd = open(server_path, 'w')
         fd.write(configuration.migserver_https_sid_url)
         fd.close()
-    except Exception, err:
+    except Exception as err:
         output_objects.append({'object_type': 'error_text', 'text':
                                    'Creating script failed: %s' % msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
@@ -364,7 +365,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         server_dst = os.path.join(mnt_path, 'mig', 'etc', 'serverfile')
         shutil.copyfile(os.path.join(configuration.sss_home, 'serverfile'),
                         server_dst)
-    except Exception, err:
+    except Exception as err:
         output_objects.append({'object_type': 'error_text', 'text':
                                'Failed to customize image: %s' \
                                % err})

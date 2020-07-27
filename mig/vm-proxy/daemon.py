@@ -175,7 +175,7 @@ class Daemon(object):
 
         try:
             (self.uid, self.gid) = get_uid_gid(cp, self.section)
-        except ValueError, e:
+        except ValueError as e:
             sys.exit(str(e))
 
         self.pidfile = cp.get(self.section, 'pidfile')
@@ -277,7 +277,7 @@ class Daemon(object):
                     # poll the process state
 
                     os.kill(pid, 0)
-                except OSError, why:
+                except OSError as why:
                     if why[0] == errno.ESRCH:
 
                         # process has died
@@ -307,13 +307,15 @@ class Daemon(object):
         if self.gid:
             try:
                 os.setgid(self.gid)
-            except OSError, (code, message):
+            except OSError as xxx_todo_changeme:
+                (code, message) = xxx_todo_changeme.args
                 sys.exit("can't setgid(%d): %s, %s" % (self.gid, code,
                          message))
         if self.uid:
             try:
                 os.setuid(self.uid)
-            except OSError, (code, message):
+            except OSError as xxx_todo_changeme1:
+                (code, message) = xxx_todo_changeme1.args
                 sys.exit("can't setuid(%d): %s, %s" % (self.uid, code,
                          message))
 
@@ -329,7 +331,8 @@ class Daemon(object):
                 gid = os.stat(fn).st_gid
             try:
                 os.chown(fn, uid, gid)
-            except OSError, (code, message):
+            except OSError as xxx_todo_changeme2:
+                (code, message) = xxx_todo_changeme2.args
                 sys.exit("can't chown(%s, %d, %d): %s, %s" % (repr(fn),
                          uid, gid, code, message))
 
@@ -380,7 +383,8 @@ class Daemon(object):
                 sys.exit(msg)
             try:
                 os.kill(pid, 0)
-            except OSError, (code, text):
+            except OSError as xxx_todo_changeme3:
+                (code, text) = xxx_todo_changeme3.args
                 if code == errno.ESRCH:
 
                     # The pid doesn't exist, so remove the stale pidfile.
@@ -477,12 +481,12 @@ def daemonize():
     # if os.fork():   # launch child and...
     #    os._exit(0) # kill off parent again.
 
-    os.umask(077)
+    os.umask(0o77)
     null = os.open('/dev/null', os.O_RDWR)
     for i in range(3):
         try:
             os.dup2(null, i)
-        except OSError, e:
+        except OSError as e:
             if e.errno != errno.EBADF:
                 raise
     os.close(null)

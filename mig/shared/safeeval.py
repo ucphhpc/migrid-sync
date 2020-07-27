@@ -42,6 +42,7 @@ code. I.e. NO direct os.system, os.execX, os.spawnX, os.popen, subprocess.X or
 Also try hard not to use the shell invocation if at all possible.
 """
 
+from future.utils import raise_
 import dis
 import subprocess
 # expose STDOUT and PIPE as vars
@@ -186,14 +187,14 @@ def test_expr(expr, allowed_codes, allowed_args=[]):
         # fixed this print to actually insert expr (original contains ',' instead
         # of '%') - Jonas
 
-        raise ValueError, '%s is not a valid expression' % expr
+        raise_(ValueError, '%s is not a valid expression' % expr)
     codes = _get_opcodes(c)
     for code in codes:
 
         # print "code:", code
 
         if code not in allowed_codes:
-            raise ValueError, 'opcode %s not allowed' % dis.opname[code]
+            raise_(ValueError, 'opcode %s not allowed' % dis.opname[code])
 
     if allowed_args:
         args = _get_opnames(c)
@@ -202,7 +203,7 @@ def test_expr(expr, allowed_codes, allowed_args=[]):
             # print "arg:", arg
 
             if arg not in allowed_args:
-                raise ValueError, 'opname not allowed: ' + str(arg)
+                raise_(ValueError, 'opname not allowed: ' + str(arg))
 
     return c
 

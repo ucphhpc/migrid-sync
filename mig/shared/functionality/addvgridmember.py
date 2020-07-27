@@ -26,22 +26,23 @@
 #
 
 """Add one or more VGrid member"""
+from __future__ import absolute_import
 
 from binascii import unhexlify
 import os
 
-from shared.accessrequests import delete_access_request
-from shared.base import client_id_dir, expand_openid_alias
-from shared.defaults import any_protocol, csrf_field
-from shared.fileio import make_symlink
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.init import initialize_main_variables, find_entry
-from shared.useradm import get_full_user_map
-from shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
+from .shared.accessrequests import delete_access_request
+from .shared.base import client_id_dir, expand_openid_alias
+from .shared.defaults import any_protocol, csrf_field
+from .shared.fileio import make_symlink
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from .shared.init import initialize_main_variables, find_entry
+from .shared.useradm import get_full_user_map
+from .shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
     vgrid_is_member, vgrid_list_subvgrids, vgrid_add_members, \
     allow_members_adm, vgrid_manage_allowed
-from shared import returnvalues
+from .shared import returnvalues
 
 
 def signature():
@@ -269,7 +270,7 @@ directory called %s exists! (%s)''' % (vgrid_name, user_dir + vgrid_name)})
                 dir1 = user_dir + vgrid_name_without_last_fragment
                 if not os.path.isdir(dir1):
                     os.makedirs(dir1)
-            except Exception, exc:
+            except Exception as exc:
 
                 # out of range? should not be possible due to is_subvgrid check
 

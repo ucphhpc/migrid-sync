@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 import os
 import sys
 import logging
@@ -54,7 +55,7 @@ def main():
 
     vgrid_list = get_vgrids_dict(vgrids_dict)
     for name in vgrid_list:
-        print name
+        print(name)
 
 
 if __name__ == '__main__':

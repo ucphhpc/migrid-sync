@@ -516,7 +516,7 @@ def get_object_type_info(object_type_list):
         object_type_list = valid_types_list_strings
     out = []
     for object_t in object_type_list:
-        if valid_types_dict.has_key(object_t):
+        if object_t in valid_types_dict:
             try:
                 out.append((object_t, valid_types_dict[object_t]))
             except:
@@ -545,22 +545,22 @@ def validate(input_object):
 
     for obj in input_object:
         try:
-            obj.has_key('object_type')
-        except Exception, exc:
+            'object_type' in obj
+        except Exception as exc:
             return (False,
                     'input_object does not have object_type key %s (%s)'
                     % (obj, exc))
         try:
-            if not valid_types_dict.has_key(obj['object_type']):
+            if obj['object_type'] not in valid_types_dict:
                 return (False,
                         'specified object_type: %s is not a valid object_type'
                         % obj['object_type'])
 
             this_object_type = obj['object_type']
             valid_object_type = valid_types_dict[this_object_type]
-            if valid_object_type.has_key('required'):
+            if 'required' in valid_object_type:
                 for req in valid_object_type['required']:
-                    if not obj.has_key(req):
+                    if req not in obj:
                         return (False,
                                 'Required key %s for object_type %s not found!'
                                 % (req, this_object_type))
@@ -571,9 +571,9 @@ def validate(input_object):
                     # if not checkele in valid_object_type["required"] and not checkele in valid_object_type["optional"]:
                         # return (False, "%s has an invalid member %s, valid required members: %s, valid optional members: %s" % (obj, checkele, ", ".join(valid_object_type["required"]), ", ".join(valid_object_type["optional"])))
 
-            if valid_object_type.has_key('required_list'):
+            if 'required_list' in valid_object_type:
                 for (req, reqtype) in valid_object_type['required_list']:
-                    if not obj.has_key(req):
+                    if req not in obj:
                         return (False,
                                 'Required list  %s for object_type %s not found!'
                                 % (req, this_object_type))
@@ -584,7 +584,7 @@ def validate(input_object):
                         return (False, 'Required list  %s is not a list'
                                 % req)
                     for list_entry in obj[req]:
-                        if not list_entry.has_key('object_type'):
+                        if 'object_type' not in list_entry:
                             return (False,
                                     '%s key does not have required object_type member'
                                     % req)
@@ -592,6 +592,6 @@ def validate(input_object):
                             return (False,
                                     'elements in %s is not of required type %s'
                                     % (req, reqtype))
-        except Exception, exc:
+        except Exception as exc:
             return (False, 'exc %s, %s' % (exc, obj))
     return (True, '')

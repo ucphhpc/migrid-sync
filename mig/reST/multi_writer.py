@@ -25,6 +25,7 @@
 # -- END_HEADER ---
 #
 
+from __future__ import print_function
 import sys
 from docutils.core import publish_string
 
@@ -71,10 +72,10 @@ Cheers, Jonas
 # Raw reST
 
 if len(sys.argv) == 1 or 'raw' in sys.argv:
-    print 'reST:'
-    print reST
+    print('reST:')
+    print(reST)
 
-    print
+    print()
 
 if len(sys.argv) == 1 or 'rest' in sys.argv:
 
@@ -82,10 +83,10 @@ if len(sys.argv) == 1 or 'rest' in sys.argv:
 
     raw = publish_string(reST, writer=None)
 
-    print 'RAW:'
-    print raw
+    print('RAW:')
+    print(raw)
 
-    print
+    print()
 
 if len(sys.argv) == 1 or 'html' in sys.argv:
     from docutils.writers.html4css1 import Writer
@@ -98,10 +99,10 @@ if len(sys.argv) == 1 or 'html' in sys.argv:
 
     html = publish_string(reST, writer=html_writer)
 
-    print 'HTML:'
-    print html
+    print('HTML:')
+    print(html)
 
-    print
+    print()
 
 if len(sys.argv) == 1 or 'latex' in sys.argv:
 
@@ -114,10 +115,10 @@ if len(sys.argv) == 1 or 'latex' in sys.argv:
 
     latex = publish_string(reST, writer=latex_writer)
 
-    print 'Latex:'
-    print latex
+    print('Latex:')
+    print(latex)
 
-    print
+    print()
 
 if len(sys.argv) == 1 or 'xml' in sys.argv:
 
@@ -130,6 +131,6 @@ if len(sys.argv) == 1 or 'xml' in sys.argv:
 
     xml = publish_string(reST, writer=xml_writer)
 
-    print 'XML:'
-    print xml
+    print('XML:')
+    print(xml)
 

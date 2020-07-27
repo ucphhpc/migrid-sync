@@ -26,18 +26,19 @@
 #
 
 """Emulate the un*x function with the same name"""
+from __future__ import absolute_import
 
 import os
 import glob
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables
-from shared.parseflags import verbose, binary
-from shared.userio import GDPIOLogError, gdp_iolog
-from shared.validstring import valid_user_path
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables
+from .shared.parseflags import verbose, binary
+from .shared.userio import GDPIOLogError, gdp_iolog
+from .shared.validstring import valid_user_path
 
 
 def signature():
@@ -151,7 +152,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 for line in fd:
                     output_lines.append(line)
                 fd.close()
-            except Exception, exc:
+            except Exception as exc:
                 if not isinstance(exc, GDPIOLogError):
                     gdp_iolog(configuration,
                               client_id,
@@ -180,7 +181,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                     out_fd.close()
                     logger.info('%s %s %s done'
                                 % (op_name, abs_path, abs_dest))
-                except Exception, exc:
+                except Exception as exc:
                     if not isinstance(exc, GDPIOLogError):
                         gdp_iolog(configuration,
                                   client_id,
@@ -214,7 +215,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 # This will only work for the first file matching a glob when
                 # using file_format.
                 # And it is supposed to only work for one file.
-                if user_arguments_dict.has_key('output_format'):
+                if 'output_format' in user_arguments_dict:
                     output_format = user_arguments_dict['output_format'][0]
                     if output_format == 'file':
                         output_objects.append(

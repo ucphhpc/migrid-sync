@@ -27,10 +27,12 @@
 
 # TODO: lock access to dict since multiple threads can access this lib simultaniously
 
+from __future__ import print_function
+from __future__ import absolute_import
 import os
 
-from shared.fileio import pickle, unpickle
-from shared.conf import get_configuration_object
+from .shared.fileio import pickle, unpickle
+from .shared.conf import get_configuration_object
 
 
 def initialize_and_get_display_dict_filename(configuration, logger):
@@ -117,11 +119,11 @@ def set_user_display_inactive(
     if dict == False:
         return (False, 'could not unpickle %s' % filename)
 
-    if not dict.has_key(display_number):
+    if display_number not in dict:
         return (False, 'display %s not found in dict' % display_number)
     try:
         del dict[display_number]
-    except Exception, e:
+    except Exception as e:
         return (False,
                 'exception trying to remove %s from display dict. Exception %s'
                  % (display_number, e))
@@ -142,10 +144,10 @@ def get_dict_from_display_number(display_number, configuration, logger):
 
     dict = unpickle(filename, logger)
     if dict == False:
-        print 'dict is %s false' % dict
+        print('dict is %s false' % dict)
         return (False, 'could not unpickle %s' % filename)
 
-    if dict.has_key(display_number):
+    if display_number in dict:
         return (display_number, dict[display_number])
     else:
         return (True, -1)
@@ -229,7 +231,7 @@ def set_user_display_active(
 # test of functions
 
 if '__main__' == __name__:
-    print '*** Testing livedisplayfunctions ***'
+    print('*** Testing livedisplayfunctions ***')
 
     # from shared.cgishared import init_cgiscript_possibly_with_cert
     # (logger, configuration, client_id, o) = init_cgiscript_possibly_with_cert()
@@ -239,4 +241,4 @@ if '__main__' == __name__:
     logger = configuration.logger
     (stat, msg) = get_users_display_dict(client_id, configuration,
             logger)
-    print 'users_display_dict status: %s, msg: %s' % (stat, msg)
+    print('users_display_dict status: %s, msg: %s' % (stat, msg))

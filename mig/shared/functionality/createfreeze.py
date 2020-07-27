@@ -26,24 +26,25 @@
 #
 
 """Creation of frozen archives for write-once files"""
+from __future__ import absolute_import
 
 import datetime
 import os
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.defaults import max_freeze_files, csrf_field, freeze_flavors, \
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.defaults import max_freeze_files, csrf_field, freeze_flavors, \
     keyword_auto, keyword_pending, keyword_final
-from shared.fileio import strip_dir
-from shared.freezefunctions import create_frozen_archive, published_url, \
+from .shared.fileio import strip_dir
+from .shared.freezefunctions import create_frozen_archive, published_url, \
     is_frozen_archive
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.html import man_base_js, man_base_html, html_post_helper
-from shared.init import initialize_main_variables, find_entry
-from shared.safeinput import valid_path
-from shared.validstring import valid_user_path
-from shared.vgrid import in_vgrid_share
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from .shared.html import man_base_js, man_base_html, html_post_helper
+from .shared.init import initialize_main_variables, find_entry
+from .shared.safeinput import valid_path
+from .shared.validstring import valid_user_path
+from .shared.vgrid import in_vgrid_share
 
 
 def signature():
@@ -75,7 +76,7 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
                                             client_dir)) + os.sep
     xfer_pattern = 'freeze_%s_%%d' % xfer
     for i in xrange(max_freeze_files):
-        if user_args.has_key(xfer_pattern % i):
+        if xfer_pattern % i in user_args:
             source_path = user_args[xfer_pattern % i][-1].strip()
             source_path = os.path.normpath(source_path).lstrip(os.sep)
             _logger.debug('found %s entry: %s' % (xfer, source_path))
@@ -83,7 +84,7 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
                 continue
             try:
                 valid_path(source_path)
-            except Exception, exc:
+            except Exception as exc:
                 rejected.append('invalid path: %s (%s)' % (source_path,
                                                            exc))
                 continue
@@ -142,7 +143,7 @@ def parse_form_upload(user_args, client_id, configuration):
     i = 0
     client_dir = client_id_dir(client_id)
     for i in xrange(max_freeze_files):
-        if user_args.has_key('freeze_upload_%d' % i):
+        if 'freeze_upload_%d' % i in user_args:
             file_item = user_args['freeze_upload_%d' % i]
             filename = user_args.get('freeze_upload_%dfilename' % i,
                                      '')
@@ -151,7 +152,7 @@ def parse_form_upload(user_args, client_id, configuration):
             filename = strip_dir(filename)
             try:
                 valid_path(filename)
-            except Exception, exc:
+            except Exception as exc:
                 rejected.append('invalid filename: %s (%s)' % (filename, exc))
                 continue
             files.append((filename, file_item[0]))
@@ -290,7 +291,7 @@ existing archive of yours!""" % freeze_id})
     # Now parse and validate files to archive
 
     for name in defaults.keys():
-        if user_arguments_dict.has_key(name):
+        if name in user_arguments_dict:
             del user_arguments_dict[name]
 
     (copy_files, copy_rejected) = parse_form_copy(user_arguments_dict,

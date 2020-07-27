@@ -6,6 +6,7 @@ testrunner.py
 Created by Jan Wiberg on 2010-03-19.
 Copyright (c) 2010 __MyCompanyName__. All rights reserved.
 """
+from __future__ import print_function
 
 import sys
 from optparse import OptionParser, OptionGroup
@@ -26,7 +27,7 @@ def run_tests(options):
     
     results = []
     
-    print "Run with options %s" % options
+    print("Run with options %s" % options)
     lst = os.listdir(constants.TEST_UNIT_DIR)
     lst.sort()
     res = {}

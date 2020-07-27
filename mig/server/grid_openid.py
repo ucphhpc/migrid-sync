@@ -54,6 +54,7 @@ our local user DB.
 
 Requires OpenID module (https://github.com/openid/python-openid).
 """
+from __future__ import print_function
 
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from SocketServer import ThreadingMixIn
@@ -71,7 +72,7 @@ import types
 try:
     import openid
 except ImportError:
-    print "ERROR: the python openid module is required for this daemon"
+    print("ERROR: the python openid module is required for this daemon")
     sys.exit(1)
 
 from openid.extensions import sreg
@@ -374,10 +375,10 @@ class ServerHandler(BaseHTTPRequestHandler):
 
         except (KeyboardInterrupt, SystemExit):
             raise
-        except InputException, err:
+        except InputException as err:
             logger.error("Input error:\n%s" % cgitb.text(sys.exc_info(),
                                                          context=10))
-            print "ERROR:\n%s" % cgitb.text(sys.exc_info(), context=10)
+            print("ERROR:\n%s" % cgitb.text(sys.exc_info(), context=10))
             err_msg = """<p class='leftpad'>
 Invalid '%s' input: %s
 </p>
@@ -385,11 +386,11 @@ Invalid '%s' input: %s
 <a href='javascript:history.back(-1);'>Back</a>
 </p>""" % (key, err)
             self.showErrorPage(err_msg)
-        except Exception, err:
+        except Exception as err:
             # Do not disclose internal details in production
             logger.error("Internal error:\n%s" % cgitb.text(sys.exc_info(),
                                                             context=10))
-            print "ERROR:\n%s" % cgitb.text(sys.exc_info(), context=10)
+            print("ERROR:\n%s" % cgitb.text(sys.exc_info(), context=10))
             err_msg = """<p class='leftpad'>
 Internal error while handling your request - please contact the system owners
 if this persistently happens.
@@ -438,9 +439,9 @@ if this persistently happens.
 
         except (KeyboardInterrupt, SystemExit):
             raise
-        except InputException, err:
+        except InputException as err:
             logger.error(cgitb.text(sys.exc_info(), context=10))
-            print "ERROR: %s" % cgitb.text(sys.exc_info(), context=10)
+            print("ERROR: %s" % cgitb.text(sys.exc_info(), context=10))
             err_msg = """<p class='leftpad'>
 Invalid '%s' input: %s
 </p>
@@ -454,7 +455,7 @@ Invalid '%s' input: %s
             self.end_headers()
             self.wfile.write(cgitb.html(sys.exc_info(), context=10))
             logger.error(cgitb.text(sys.exc_info(), context=10))
-            print "ERROR: %s" % cgitb.text(sys.exc_info(), context=10)
+            print("ERROR: %s" % cgitb.text(sys.exc_info(), context=10))
 
     def handleAllow(self, query):
         """Handle requests to allow authentication:
@@ -482,7 +483,7 @@ Invalid '%s' input: %s
         if not request:
             try:
                 request = self.server.openid.decodeRequest(query)
-            except server.ProtocolError, why:
+            except server.ProtocolError as why:
                 # NOTE: Do not send exception to displayResponse
                 #       password might be written to screen !!!
                 msg = "handleAllow got broken request"
@@ -634,7 +635,7 @@ Invalid '%s' input: %s
             request = self.server.openid.decodeRequest(query)
             # Pass any errors from previous login attempts on for display
             request.error = query.get('err', '')
-        except server.ProtocolError, why:
+        except server.ProtocolError as why:
             # NOTE: Do not send exception to displayResponse
             #       password might be written to screen !!!
             msg = "serverEndPoint got broken request"
@@ -668,7 +669,7 @@ Invalid '%s' input: %s
         sreg_data = {}
         for field in cert_field_names:
             # Skip fields already set by alias
-            if sreg_data.has_key(field):
+            if field in sreg_data:
                 continue
             # Backends choke on empty fields
             found = user.get(field, None)
@@ -718,7 +719,7 @@ Invalid '%s' input: %s
         """Response helper"""
         try:
             webresponse = self.server.openid.encodeResponse(response)
-        except server.EncodingError, why:
+        except server.EncodingError as why:
             text = why.response.encodeToKVForm()
             self.showErrorPage('<pre>%s</pre>' % cgi.escape(text))
             return
@@ -1442,7 +1443,7 @@ def start_service(configuration):
 
     serve_msg = 'Server running at: %s' % httpserver.base_url
     logger.info(serve_msg)
-    print serve_msg
+    print(serve_msg)
     while True:
         logger.debug('handle next request')
         httpserver.handle_request()
@@ -1484,15 +1485,15 @@ if __name__ == '__main__':
     if not configuration.site_enable_openid:
         err_msg = "OpenID service is disabled in configuration!"
         logger.error(err_msg)
-        print err_msg
+        print(err_msg)
         sys.exit(1)
-    print """
+    print("""
 Running grid openid server for user authentication against MiG user DB.
 
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
-"""
-    print __doc__
+""")
+    print(__doc__)
     address = configuration.user_openid_address
     port = configuration.user_openid_port
     session_store = configuration.openid_store
@@ -1568,13 +1569,13 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
     logger.info("Starting OpenID server")
     info_msg = "Listening on address '%s' and port %d" % (address, port)
     logger.info(info_msg)
-    print info_msg
+    print(info_msg)
     try:
         start_service(configuration)
     except KeyboardInterrupt:
         info_msg = "Received user interrupt"
         logger.info(info_msg)
-        print info_msg
+        print(info_msg)
     info_msg = "Leaving with no more workers active"
     logger.info(info_msg)
-    print info_msg
+    print(info_msg)

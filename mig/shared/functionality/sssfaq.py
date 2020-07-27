@@ -26,10 +26,11 @@
 #
 
 """This script is the welcome site for sandbox users"""
+from __future__ import absolute_import
 
-from shared import returnvalues
-from shared.functional import validate_input
-from shared.init import initialize_main_variables
+from .shared import returnvalues
+from .shared.functional import validate_input
+from .shared.init import initialize_main_variables
 
 default_language = 'english'
 

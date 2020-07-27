@@ -26,6 +26,7 @@
 #
 
 """RSS generator helper functions"""
+from __future__ import absolute_import
 
 
 import datetime
@@ -39,6 +40,7 @@ rss_defaults = {'title': 'no title', 'link': '', 'description': '',
                 'css_url': 'rss.css', 'docs': 'no docs',
                 'publish_date': datetime.datetime.now(), 'guid': None,
                 'build_date': datetime.datetime.now(), 'entries': []}
+
 
 def append_rss_items(rss_feed, items):
     """Append items to rss feed object"""
@@ -55,6 +57,7 @@ def append_rss_items(rss_feed, items):
             pubDate=entry["publish_date"])
         rss_feed.items.append(item)
     return rss_feed
+
 
 def create_rss_feed(contents):
     """Create rss feed object from contents dictionary"""
@@ -73,6 +76,7 @@ def create_rss_feed(contents):
         docs=filled["docs"])
     append_rss_items(rss, contents['entries'])
     return rss
+
 
 def write_rss_feed(rss_feed, destination, insert_header=''):
     """Write rss feed object in destination file"""
@@ -97,14 +101,14 @@ def write_rss_feed(rss_feed, destination, insert_header=''):
 
 
 if __name__ == "__main__":
-    from shared.conf import get_configuration_object
+    from .shared.conf import get_configuration_object
     configuration = get_configuration_object()
     feed_base = "demofeed"
     feed_raw = "%s.xml" % feed_base
     feed_css_style = "%s.css" % feed_base
     feed_page = "%s.html" % feed_base
-    dashboard_url = configuration.https_default_url + '/cgi-bin/dashboard.py'
-    docs_url = configuration.https_default_url + '/cgi-bin/docs.py'
+    dashboard_url = '/wsgi-bin/dashboard.py'
+    docs_url = '/wsgi-bin/docs.py'
     entries = [{'title': 'Dashboard page',
                 'link': dashboard_url,
                 'guid': dashboard_url,

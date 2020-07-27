@@ -30,14 +30,15 @@
 # Martin Rehr
 
 """parse resource configurations"""
+from __future__ import absolute_import
 
-from shared.conf import get_configuration_object
-from shared.parser import parse, check_types
-from shared.refunctions import is_runtime_environment, get_re_dict
-from shared.resconfkeywords import get_keywords_dict as \
+from .shared.conf import get_configuration_object
+from .shared.parser import parse, check_types
+from .shared.refunctions import is_runtime_environment, get_re_dict
+from .shared.resconfkeywords import get_keywords_dict as \
     resconf_get_keywords_dict
-from shared.serial import dumps
-from shared.vgrid import vgrid_is_resource, vgrid_is_default
+from .shared.serial import dumps
+from .shared.vgrid import vgrid_is_resource, vgrid_is_default
 
 
 def get_resource_config_dict(configuration, config_file):
@@ -84,11 +85,11 @@ def run(configuration, localfile_spaces, unique_resource_name,
 
     # verify runtime environments are specified correctly
 
-    if conf.has_key('RUNTIMEENVIRONMENT'):
+    if 'RUNTIMEENVIRONMENT' in conf:
         for re in conf['RUNTIMEENVIRONMENT']:
             try:
                 (name, value) = re
-            except Exception, err:
+            except Exception as err:
                 return (False, 'Runtime environment error: %s' % err)
             if not is_runtime_environment(name, configuration):
                 return (False,
@@ -101,7 +102,7 @@ def run(configuration, localfile_spaces, unique_resource_name,
                         'Runtime environment error, could not open (%s) %s'
                         % (name, msg))
 
-            if not re_dict.has_key('ENVIRONMENTVARIABLE'):
+            if 'ENVIRONMENTVARIABLE' not in re_dict:
                 if value:
 
                     # res conf has envs, but according to the template it should not
@@ -137,7 +138,7 @@ def run(configuration, localfile_spaces, unique_resource_name,
                                 "You have specified the environment '%s' more than once for the '%s' runtime environment."
                                 % (envname, name))
                     used_envnames.append(envname)
-                except Exception, err:
+                except Exception as err:
 
                     return (False,
                             'Runtimeenvironment error: Name and value not found in env: %s'
@@ -233,7 +234,7 @@ owner and ask if you can be included in the %s.""" %
         st = dumps(conf, 0)
         fsock.write(st)
         fsock.close()
-    except Exception, err:
+    except Exception as err:
         return (False, "Fatal error: could not open '" + filename
                 + "' for writing!" + '\n Msg: ' + str(err))
     return (True, 'Everything ok, config updated')

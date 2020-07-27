@@ -26,16 +26,17 @@
 #
 
 """Plain file upload back end"""
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables
-from shared.parseflags import verbose
-from shared.validstring import valid_user_path
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables
+from .shared.parseflags import verbose
+from .shared.validstring import valid_user_path
 
 block_size = 1024 * 1024
 
@@ -65,9 +66,9 @@ def write_chunks(path, file_obj, restrict):
             upload_fd.write(chunk)
         upload_fd.close()
         if restrict:
-            os.chmod(path, 0600)
+            os.chmod(path, 0o600)
         return True
-    except Exception, exc:
+    except Exception as exc:
         os.remove(path)
         raise exc
 
@@ -96,14 +97,14 @@ def main(client_id, user_arguments_dict):
     file_item = None
     file_name = ''
     user_arguments_dict = {}
-    if form.has_key('fileupload'):
+    if 'fileupload' in form:
         file_item = form['fileupload']
         file_name = file_item.filename
         user_arguments_dict['fileupload'] = ['true']
         user_arguments_dict['path'] = [file_name]
-    if form.has_key('path'):
+    if 'path' in form:
         user_arguments_dict['path'] = [form['path'].value]
-    if form.has_key('restrict'):
+    if 'restrict' in form:
         user_arguments_dict['restrict'] = [form['restrict'].value]
     else:
         user_arguments_dict['restrict'] = defaults['restrict']
@@ -205,7 +206,7 @@ Please contact the site admins %s if you think they should be enabled.
                         pass
             else:
                 os._exit(0)
-    except OSError, ose:
+    except OSError as ose:
         output_objects.append({'object_type': 'error_text', 'text': '%s upload could not background! (%s)'
                                % (path, str(ose).replace(base_dir, ''
                                                          ))})
@@ -217,7 +218,7 @@ Please contact the site admins %s if you think they should be enabled.
     if pid == 0:
         try:
             write_chunks(real_path, file_item.file, restrict)
-        except Exception, exc:
+        except Exception as exc:
             pass
     else:
         output_objects.append(

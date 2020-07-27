@@ -30,20 +30,21 @@
 Enable users to make (limited) changes to their files without the
 need to download, edit and upload the files.
 """
+from __future__ import absolute_import
 
 import os
 import time
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.defaults import csrf_field
-from shared.editing import acquire_edit_lock, edit_lock_suffix, cm_css, \
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.defaults import csrf_field
+from .shared.editing import acquire_edit_lock, edit_lock_suffix, cm_css, \
     cm_javascript, cm_options, miu_css, miu_javascript, miu_options, \
     init_editor_js, run_editor_js, change_editor_mode_js, kill_editor_js
-from shared.functional import validate_input_and_cert
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.init import initialize_main_variables, find_entry
-from shared.validstring import valid_user_path
+from .shared.functional import validate_input_and_cert
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.init import initialize_main_variables, find_entry
+from .shared.validstring import valid_user_path
 
 edit_includes = ['switcher', 'newline', 'submit', 'discard', 'spellcheck',
                  'save']
@@ -360,7 +361,7 @@ def edit_file(configuration, client_id, path, abs_path, output_format='html',
             src_fd = open(abs_path, 'rb')
             text = src_fd.read()
             src_fd.close()
-        except Exception, exc:
+        except Exception as exc:
             return 'Failed to open file %s: %s' % (path, exc)
 
     form_method = 'post'

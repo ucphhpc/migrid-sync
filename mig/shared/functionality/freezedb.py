@@ -26,15 +26,16 @@
 #
 
 """Manage all owned frozen archives"""
+from __future__ import absolute_import
 
-from shared import returnvalues
-from shared.defaults import default_pager_entries, csrf_field, keyword_final
-from shared.freezefunctions import build_freezeitem_object, \
+from .shared import returnvalues
+from .shared.defaults import default_pager_entries, csrf_field, keyword_final
+from .shared.freezefunctions import build_freezeitem_object, \
     list_frozen_archives, get_frozen_meta, get_frozen_archive, TARGET_ARCHIVE
-from shared.functional import validate_input_and_cert
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import man_base_js, man_base_html, html_post_helper
-from shared.init import initialize_main_variables, find_entry
+from .shared.functional import validate_input_and_cert
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.html import man_base_js, man_base_html, html_post_helper
+from .shared.init import initialize_main_variables, find_entry
 
 list_operations = ['showlist', 'list']
 show_operations = ['show', 'showlist']

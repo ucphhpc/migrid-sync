@@ -37,6 +37,7 @@ Callers should use join/leave meta-operations rather than operating on the membe
 Created by Jan Wiberg on 2010-03-21.
 Copyright (c) 2010 Jan Wiberg. All rights reserved.
 """
+from __future__ import print_function
 
 import sys, os, itertools, time
 import cPickle as pickle
@@ -161,8 +162,8 @@ class State(object):
             # replication
             self.can_replicate = False
         
-        except Exception, v:
-            print v
+        except Exception as v:
+            print(v)
 
     def _load_state(self):
         bss = self.options.backingstorestate
@@ -215,7 +216,7 @@ class State(object):
             count_actives = len(self.active_members) + 1
             count_upgrades = len([p for p in self.group if p.instancetype >= UPGRADING])
             # Print it out so we can tell whats going on even if logger is disabled
-            print "can_replicate: step %d, actives %s, upgrades %s for group %s" % (self.current_step, count_actives, count_upgrades, self.group)
+            print("can_replicate: step %d, actives %s, upgrades %s for group %s" % (self.current_step, count_actives, count_upgrades, self.group))
             if count_actives >= self.options.maxcopies:
                 self.can_replicate = True
             else:

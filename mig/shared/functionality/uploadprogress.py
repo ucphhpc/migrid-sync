@@ -26,14 +26,15 @@
 #
 
 """Plain file upload progress monitor back end (obsoleted by fancyupload)"""
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.init import initialize_main_variables, find_entry
-from shared.validstring import valid_user_path
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.init import initialize_main_variables, find_entry
+from .shared.validstring import valid_user_path
 
 block_size = 1024 * 1024
 
@@ -136,7 +137,7 @@ Please contact the site admins %s if you think they should be enabled.
                                    total_size, 'percent': percent,
                                    'done': done_list[index], 'progress_type':
                                    'upload'})
-        except Exception, exc:
+        except Exception as exc:
 
             # Don't give away information about actual fs layout
 

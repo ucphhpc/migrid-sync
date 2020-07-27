@@ -43,6 +43,7 @@ should help you tweak the configuration to solve most common problems.
 This example should be a good starting point for writing your own custom sftp
 client acting on your MiG home.
 """
+from __future__ import print_function
 
 import base64
 import getpass
@@ -87,8 +88,8 @@ if __name__ == "__main__":
     if sys.argv[5:]:
         user_auth = sys.argv[5]
     if len(user_name) < 64 and user_name.find('@') == -1:
-        print """Warning: the supplied username is not on expected form!
-Please verify it on your MiG ssh Settings page in case of failure."""
+        print("""Warning: the supplied username is not on expected form!
+Please verify it on your MiG ssh Settings page in case of failure.""")
 
     # Connect with provided settings
 
@@ -127,61 +128,61 @@ Please verify it on your MiG ssh Settings page in case of failure."""
     base = '.ssh'
     files = sftp.listdir(base)
     path_stat = sftp.stat(base)
-    print "stat %s:\n%s" % (base, path_stat)
-    print "files in %s dir:\n%s" % (base, files)
+    print("stat %s:\n%s" % (base, path_stat))
+    print("files in %s dir:\n%s" % (base, files))
     for name in files:
         rel_path = os.path.join(base, name)
         path_stat = sftp.stat(rel_path)
-        print "stat %s:\n%s" % (rel_path, path_stat)
+        print("stat %s:\n%s" % (rel_path, path_stat))
     dummy = 'this-is-a-migsftp-dummy-file.txt'
     dummy_text = "sample file\ncontents from client\n"
     dummy_fd = open(dummy, "w")
     dummy_fd.write(dummy_text)
     dummy_fd.close()
-    print "create dummy in %s" % dummy
+    print("create dummy in %s" % dummy)
     path_stat = os.stat(dummy)
-    print "local stat %s:\n%s" % (dummy, path_stat)
-    print "upload migsftpdummy in %s home" % dummy
+    print("local stat %s:\n%s" % (dummy, path_stat))
+    print("upload migsftpdummy in %s home" % dummy)
     sftp.put(dummy, dummy)
     path_stat = sftp.stat(dummy)
-    print "remote stat %s:\n%s" % (dummy, path_stat)
+    print("remote stat %s:\n%s" % (dummy, path_stat))
     path_fd = sftp.file(dummy)
     block_size = max(len(dummy_text), 256)
     path_md5_digest = path_fd.check("md5", block_size=block_size)
     path_sha1_digest = path_fd.check("sha1", block_size=block_size)
     path_fd.close()
-    print "remote md5 sum %s:\n%s" % (dummy, path_md5_digest.encode('hex'))
-    print "remote sha1 sum %s:\n%s" % (dummy, path_sha1_digest.encode('hex'))
-    print "delete dummy in %s" % dummy
+    print("remote md5 sum %s:\n%s" % (dummy, path_md5_digest.encode('hex')))
+    print("remote sha1 sum %s:\n%s" % (dummy, path_sha1_digest.encode('hex')))
+    print("delete dummy in %s" % dummy)
     os.remove(dummy)
-    print "verify gone: %s" % (dummy not in os.listdir('.'))
-    print "download migsftpdummy from %s home" % dummy
+    print("verify gone: %s" % (dummy not in os.listdir('.')))
+    print("download migsftpdummy from %s home" % dummy)
     sftp.get(dummy, dummy)
     path_stat = os.stat(dummy)
-    print "local stat %s:\n%s" % (dummy, path_stat)
+    print("local stat %s:\n%s" % (dummy, path_stat))
     dummy_fd = open(dummy, "r")
     verify_text = dummy_fd.read()
     dummy_fd.close()
-    print "verify correct contents: %s" % (dummy_text == verify_text)
+    print("verify correct contents: %s" % (dummy_text == verify_text))
     trunc_len = 42
-    print "truncate handle %s to %db" % (dummy, trunc_len)
+    print("truncate handle %s to %db" % (dummy, trunc_len))
     attr = sftp.stat(dummy)
-    print "current size is %db" % attr.st_size
+    print("current size is %db" % attr.st_size)
     dummy_fd = sftp.file(dummy, 'r+b')
     dummy_fd.truncate(trunc_len)
     dummy_fd.close()
     attr = sftp.stat(dummy)
-    print "verify truncated %s to %d: %s" % (dummy, trunc_len,
-                                             (attr.st_size == trunc_len))
+    print("verify truncated %s to %d: %s" % (dummy, trunc_len,
+                                             (attr.st_size == trunc_len)))
     trunc_len = 4
-    print "truncate path %s to %db" % (dummy, trunc_len)
+    print("truncate path %s to %db" % (dummy, trunc_len))
     attr = sftp.stat(dummy)
-    print "current size is %db" % attr.st_size
+    print("current size is %db" % attr.st_size)
     sftp.truncate(dummy, trunc_len)
     attr = sftp.stat(dummy)
-    print "verify truncated %s to %d: %s" % (dummy, trunc_len,
-                                             (attr.st_size == trunc_len))
-    print "delete dummy in %s" % dummy
+    print("verify truncated %s to %d: %s" % (dummy, trunc_len,
+                                             (attr.st_size == trunc_len)))
+    print("delete dummy in %s" % dummy)
     os.remove(dummy)
 
     # Clean up before exit ###

@@ -26,9 +26,10 @@
 #
 
 """Request a jupyter service"""
+from __future__ import absolute_import
 
-from shared.cgiscriptstub import run_cgi_script
-from shared.functionality.reqjupyterservice import main
+from .shared.cgiscriptstub import run_cgi_script
+from .shared.functionality.reqjupyterservice import main
 import cgi
 #import cgitb
 # cgitb.enable()

@@ -28,19 +28,20 @@
 """Forward valid job state requests to grid_script for consistent job status
 changes.
 """
+from __future__ import absolute_import
 
 import os
 import glob
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.defaults import all_jobs
-from shared.fileio import unpickle, unpickle_and_change_status, \
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.defaults import all_jobs
+from .shared.fileio import unpickle, unpickle_and_change_status, \
     send_message_to_grid_script
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables
-from shared.validstring import valid_user_path
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables
+from .shared.validstring import valid_user_path
 
 
 # Valid actions and the corresponding new job state
@@ -226,10 +227,10 @@ jobs!''' % (job_id, action)
         # Avoid key error and make sure grid_script gets expected number of
         # arguments
 
-        if not job_dict.has_key('UNIQUE_RESOURCE_NAME'):
+        if 'UNIQUE_RESOURCE_NAME' not in job_dict:
             job_dict['UNIQUE_RESOURCE_NAME'] = \
                 'UNIQUE_RESOURCE_NAME_NOT_FOUND'
-        if not job_dict.has_key('EXE'):
+        if 'EXE' not in job_dict:
             job_dict['EXE'] = 'EXE_NAME_NOT_FOUND'
 
         # notify queue

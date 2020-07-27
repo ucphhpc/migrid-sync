@@ -26,6 +26,8 @@
 #
 
 """SSH based remote operations"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import base64
 import os
@@ -39,10 +41,10 @@ except ImportError:
     # Paramiko not available - imported fom griddaemons so fail gracefully
     paramiko = None
 
-from shared.base import client_id_dir, force_utf8
-from shared.conf import get_resource_exe, get_configuration_object
-from shared.defaults import ssh_conf_dir
-from shared.safeeval import subprocess_popen, subprocess_pipe
+from .shared.base import client_id_dir, force_utf8
+from .shared.conf import get_resource_exe, get_configuration_object
+from .shared.defaults import ssh_conf_dir
+from .shared.safeeval import subprocess_popen, subprocess_pipe
 
 
 def parse_pub_key(public_key):
@@ -111,7 +113,7 @@ def copy_file_to_resource(
     configuration = get_configuration_object()
     local_filename = os.path.basename(local_path)
     multiplex = '0'
-    if resource_config.has_key('SSHMULTIPLEX'):
+    if 'SSHMULTIPLEX' in resource_config:
         multiplex = str(resource_config['SSHMULTIPLEX'])
     hostkey = resource_config['HOSTKEY']
     host = resource_config['HOSTURL']
@@ -145,7 +147,7 @@ def copy_file_to_resource(
         logger.debug('single_known_hosts for %s written in %s' % (host,
                                                                   key_path))
         logger.debug('value %s' % hostkey)
-    except Exception, err:
+    except Exception as err:
         logger.error('could not write single_known_hosts %s (%s)'
                      % (host, err))
 
@@ -175,7 +177,7 @@ def copy_file_to_resource(
 
     try:
         os.remove(key_path)
-    except Exception, err:
+    except Exception as err:
         logger.error('could not remove %s (%s)' % (key_path, err))
 
     if status != 0:
@@ -188,7 +190,7 @@ def copy_file_to_resource(
             err_fd = open(err_path, 'a')
             err_fd.write(err_msg)
             err_fd.close()
-        except Exception, exc:
+        except Exception as exc:
             logger.error("failed to write scp err log: %s" % exc)
 
         return False
@@ -239,7 +241,7 @@ def copy_file_to_exe(
 
     try:
         os.remove(local_path)
-    except Exception, err:
+    except Exception as err:
         logger.error('Could not remove %s (%s)' % (local_path, err))
 
     if copy_status:
@@ -251,7 +253,7 @@ def copy_file_to_exe(
 
     # copy file to exe - trailing slash is important
 
-    if exe.has_key('shared_fs') and exe['shared_fs']:
+    if 'shared_fs' in exe and exe['shared_fs']:
         ssh_command = 'cp %s %s/' % \
                       (os.path.join(resource_config['RESOURCEHOME'],
                                     dest_path), exe['execution_dir'])
@@ -306,10 +308,10 @@ def execute_on_resource(
     port = resource_config['SSHPORT']
     user = resource_config['MIGUSER']
     job_type = 'batch'
-    if resource_config.has_key('JOBTYPE'):
+    if 'JOBTYPE' in resource_config:
         job_type = resource_config['JOBTYPE']
     multiplex = '0'
-    if resource_config.has_key('SSHMULTIPLEX'):
+    if 'SSHMULTIPLEX' in resource_config:
         multiplex = str(resource_config['SSHMULTIPLEX'])
 
     # Use manually added SSHMULTIPLEXMASTER variable to only run master
@@ -319,7 +321,7 @@ def execute_on_resource(
     # (see http://article.gmane.org/gmane.network.openssh.devel/13839)
 
     multiplex_master = False
-    if resource_config.has_key('SSHMULTIPLEXMASTER'):
+    if 'SSHMULTIPLEXMASTER' in resource_config:
         multiplex_master = bool(resource_config['SSHMULTIPLEXMASTER'])
     identifier = resource_config['HOSTIDENTIFIER']
     unique_id = '%s.%s' % (host, identifier)
@@ -343,7 +345,7 @@ def execute_on_resource(
         os.write(filehandle, hostkey)
         os.close(filehandle)
         logger.debug('wrote hostkey %s to %s' % (hostkey, key_path))
-    except Exception, err:
+    except Exception as err:
         logger.error('could not write tmp host key file (%s)' % err)
         return (-1, '')
 
@@ -403,7 +405,7 @@ def execute_on_resource(
 
     try:
         os.remove(key_path)
-    except Exception, err:
+    except Exception as err:
         logger.error('Could not remove hostkey file %s: %s'
                      % (key_path, err))
 
@@ -519,9 +521,9 @@ def tighten_key_perms(configuration, client_id, keys_dirname=ssh_conf_dir):
     fixed_dirs = []
     for path in check_dirs:
         # check perms and limit if needed
-        if os.path.exists(path) and os.stat(path).st_mode & 022:
-            old_perm = os.stat(path).st_mode & 0777
-            limit_perm = old_perm & 0755
+        if os.path.exists(path) and os.stat(path).st_mode & 0o22:
+            old_perm = os.stat(path).st_mode & 0o777
+            limit_perm = old_perm & 0o755
             _logger.warning("%s has invalid ssh permissions %s, reset to %s"
                             % (path, oct(old_perm), oct(limit_perm)))
             os.chmod(path, limit_perm)
@@ -530,14 +532,14 @@ def tighten_key_perms(configuration, client_id, keys_dirname=ssh_conf_dir):
 
 
 if __name__ == "__main__":
-    from shared.conf import get_resource_configuration
+    from .shared.conf import get_resource_configuration
     unique_resource_name = 'localhost.0'
     exe_name = 'localhost'
     if sys.argv[1:]:
         unique_resource_name = sys.argv[1]
     if sys.argv[2:]:
         exe_name = sys.argv[2]
-    print "running ssh unit tests against %s" % unique_resource_name
+    print("running ssh unit tests against %s" % unique_resource_name)
     configuration = get_configuration_object()
     logger = configuration.logger
     filename = '/tmp/localdummy'
@@ -552,55 +554,55 @@ if __name__ == "__main__":
     (exe_status, exe_config) = get_resource_exe(
         resource_config, exe_name, logger)
     if not res_status:
-        print "Failed to extract resource config for %s: %s" % \
-              (unique_resource_name, resource_config)
+        print("Failed to extract resource config for %s: %s" % \
+              (unique_resource_name, resource_config))
         sys.exit(1)
     if not exe_status:
-        print "Failed to extract exe config for %s: %s" % \
-              (exe_name, exe_config)
+        print("Failed to extract exe config for %s: %s" % \
+              (exe_name, exe_config))
         sys.exit(1)
     copy_res = copy_file_to_resource(filename, res_path, resource_config,
                                      logger)
-    print "copy %s to %s on %s success: %s" % (filename, res_path,
-                                               unique_resource_name, copy_res)
+    print("copy %s to %s on %s success: %s" % (filename, res_path,
+                                               unique_resource_name, copy_res))
     command = "ls"
-    print "Execute %s on %s" % (command, unique_resource_name)
+    print("Execute %s on %s" % (command, unique_resource_name))
     (exec_res, exec_msg) = execute_on_resource(command, False, resource_config,
                                                logger)
-    print " success: %s\n%s" % (exec_res, exec_msg)
+    print(" success: %s\n%s" % (exec_res, exec_msg))
     command = "uname -a && sleep 13"
-    print "bg exec %s on %s" % (command, unique_resource_name)
+    print("bg exec %s on %s" % (command, unique_resource_name))
     (exec_res, exec_msg) = execute_on_resource(command, True, resource_config,
                                                logger)
-    print " success: %s\n%s" % (exec_res, exec_msg)
+    print(" success: %s\n%s" % (exec_res, exec_msg))
 
     command = "mkdir -p %s" % exe_config['execution_dir']
-    print "Execute %s on %s_%s" % (command, unique_resource_name,
-                                   exe_config['name'])
+    print("Execute %s on %s_%s" % (command, unique_resource_name,
+                                   exe_config['name']))
     (exec_res, exec_msg) = execute_on_exe(command, False, resource_config,
                                           exe_config, logger)
-    print " success: %s\n%s" % (exec_res, exec_msg)
+    print(" success: %s\n%s" % (exec_res, exec_msg))
     copy_res = copy_file_to_exe(filename, exe_path, resource_config, exe_name,
                                 logger)
-    print "copy %s to %s on %s success: %s" % (filename, exe_path,
-                                               unique_resource_name, copy_res)
+    print("copy %s to %s on %s success: %s" % (filename, exe_path,
+                                               unique_resource_name, copy_res))
     command = "ls"
-    print "Execute %s on %s" % (command, unique_resource_name)
+    print("Execute %s on %s" % (command, unique_resource_name))
     (exec_res, exec_msg) = execute_on_exe(command, False, resource_config,
                                           exe_config, logger)
-    print " success: %s\n%s" % (exec_res, exec_msg)
+    print(" success: %s\n%s" % (exec_res, exec_msg))
     command = "uname -a && sleep 13"
-    print "bg exec %s on %s_%s" % (command, unique_resource_name, exe_name)
+    print("bg exec %s on %s_%s" % (command, unique_resource_name, exe_name))
     (exec_res, exec_msg) = execute_on_exe(command, True, resource_config,
                                           exe_config, logger)
-    print " success: %s\n%s" % (exec_res, exec_msg)
+    print(" success: %s\n%s" % (exec_res, exec_msg))
 
     # NOTE: emulate res adm status with conf calls on resource *FE*
     command = "%(status_command)s" % exe_config
     command = command.replace('$mig_exe_pgid', "$(cat %s/%s)" %
                               (exe_config['execution_dir'], '%s.pgid' %
                                exe_config['name']))
-    print "Execute %s on %s" % (command, unique_resource_name)
+    print("Execute %s on %s" % (command, unique_resource_name))
     (exec_res, exec_msg) = execute_on_resource(command, False, resource_config,
                                                logger)
-    print " success: %s\n%s" % (exec_res, exec_msg)
+    print(" success: %s\n%s" % (exec_res, exec_msg))

@@ -22,6 +22,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """A set of shared workflows functions"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import fcntl
 import os
@@ -38,23 +40,23 @@ except ImportError:
     PythonExporter = None
     NotebookExporter = None
 
-from shared.base import force_utf8_rec
-from shared.conf import get_configuration_object
-from shared.defaults import src_dst_sep, workflow_id_charset, \
+from .shared.base import force_utf8_rec
+from .shared.conf import get_configuration_object
+from .shared.defaults import src_dst_sep, workflow_id_charset, \
     workflow_id_length, session_id_length, session_id_charset, default_vgrid
-from shared.fileio import delete_file, write_file, makedirs_rec, touch
-from shared.map import load_system_map
-from shared.modified import check_workflow_p_modified, \
+from .shared.fileio import delete_file, write_file, makedirs_rec, touch
+from .shared.map import load_system_map
+from .shared.modified import check_workflow_p_modified, \
     check_workflow_r_modified, reset_workflow_p_modified, \
     reset_workflow_r_modified, mark_workflow_p_modified, \
     mark_workflow_r_modified
-from shared.pwhash import generate_random_ascii
-from shared.serial import dump, load
-from shared.validstring import possible_workflow_session_id
-from shared.vgrid import vgrid_add_triggers, vgrid_remove_triggers, \
+from .shared.pwhash import generate_random_ascii
+from .shared.serial import dump, load
+from .shared.validstring import possible_workflow_session_id
+from .shared.vgrid import vgrid_add_triggers, vgrid_remove_triggers, \
     vgrid_triggers, vgrid_set_triggers, init_vgrid_script_add_rem, \
     init_vgrid_script_list
-from shared.vgridaccess import get_vgrid_map, VGRIDS, user_vgrid_access
+from .shared.vgridaccess import get_vgrid_map, VGRIDS, user_vgrid_access
 
 
 WRITE_LOCK = 'write.lock'
@@ -663,7 +665,7 @@ def __load_wp(configuration, wp_path):
     workflow_pattern = None
     try:
         workflow_pattern = load(wp_path, serializer='json')
-    except Exception, err:
+    except Exception as err:
         configuration.logger.error('WP: could not open workflow pattern %s %s'
                                    % (wp_path, err))
     if workflow_pattern and isinstance(workflow_pattern, dict):
@@ -693,7 +695,7 @@ def __load_wr(configuration, wr_path):
     workflow_recipe = None
     try:
         workflow_recipe = load(wr_path, serializer='json')
-    except Exception, err:
+    except Exception as err:
         configuration.logger.error('WR: could not open workflow recipe %s %s'
                                    % (wr_path, err))
     if workflow_recipe and isinstance(workflow_recipe, dict):
@@ -791,7 +793,7 @@ def __refresh_map(configuration, workflow_type=WORKFLOW_PATTERN,
                 dump(workflow_map, map_path)
                 os.utime(map_path, (start_time, start_time))
                 _logger.debug('Accessed map and updated to %.10f' % start_time)
-            except Exception, err:
+            except Exception as err:
                 _logger.error('Workflows: could not save map, or %s' % err)
         if workflow_type == WORKFLOW_PATTERN:
             last_refresh[WORKFLOW_PATTERNS] = start_time
@@ -1086,7 +1088,7 @@ def init_workflow_home(configuration, vgrid, workflow_type=WORKFLOW_PATTERN):
     if not os.path.exists(path) and not makedirs_rec(path, configuration):
         return (False, "Failed to init workflow home: '%s'" % path)
 
-    os.chmod(path, 0750)
+    os.chmod(path, 0o750)
     return (True, '')
 
 
@@ -1171,7 +1173,7 @@ def init_workflow_task_home(configuration, vgrid):
 
     _logger.debug("Created or found workflow_task_home '%s'" % task_home)
     # TODO. Ensure correct permissions.
-    os.chmod(task_home, 0750)
+    os.chmod(task_home, 0o750)
     return (True, '')
 
 
@@ -1589,7 +1591,7 @@ def __save_workflow(configuration, vgrid, workflow,
         wrote = True
         _logger.debug("WP: new '%s' saved: '%s'."
                       % (workflow_type, workflow['persistence_id']))
-    except Exception, err:
+    except Exception as err:
         _logger.error(
             "WP: failed to write: '%s' to disk: '%s'" % (file_path, err))
         msg = 'Failed to save your workflow, please try and resubmit it'

@@ -34,6 +34,7 @@ where things like remote login, firewalling, home dirs and sudo are set up
 for separated developer accounts. Some paths like for apache and vgrid helpers
 are similarly hard coded to the Debian defaults on those servers.
 """
+from __future__ import print_function
 
 import getopt
 import os
@@ -46,14 +47,14 @@ def usage(options):
     """Usage help"""
     lines = ["--%s=%s" % pair for pair in zip(options,
                                               [i.upper() for i in options])]
-    print '''Usage:
+    print('''Usage:
 %s [OPTIONS] LOGIN [LOGIN ...]
 Create developer account with username LOGIN using OPTIONS.
 Where supported options include -h/--help for this help or the conf settings:
 %s
 
 IMPORTANT: needs to run with privileges to create system user!
-''' % (sys.argv[0], '\n'.join(lines))
+''' % (sys.argv[0], '\n'.join(lines)))
 
 if __name__ == '__main__':
     settings = {
@@ -70,8 +71,8 @@ if __name__ == '__main__':
     
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], flag_str, opts_str)
-    except getopt.GetoptError, exc:
-        print 'Error: ', exc.msg
+    except getopt.GetoptError as exc:
+        print('Error: ', exc.msg)
         usage(settings)
         sys.exit(1)
 
@@ -83,7 +84,7 @@ if __name__ == '__main__':
         elif opt_name in settings.keys():
             settings[opt_name] = val
         else:
-            print 'Error: %s not supported!' % opt
+            print('Error: %s not supported!' % opt)
             usage(settings)
             sys.exit(1)
 
@@ -92,13 +93,13 @@ if __name__ == '__main__':
         sys.exit(1)
 
     if os.getuid() > 0:
-        print "WARNING: needs to run with user management privileges!"
+        print("WARNING: needs to run with user management privileges!")
 
-    print '# Creating dev account with:'
+    print('# Creating dev account with:')
     for (key, val) in settings.items():
-        print '%s: %s' % (key, val)
+        print('%s: %s' % (key, val))
     for login in args:
-        print '# Creating a unprivileged account for %s' % login
+        print('# Creating a unprivileged account for %s' % login)
         create_user(login, login, debug=settings["debug_mode"],
                     public_fqdn=settings["public_fqdn"],
                     mig_cert_fqdn=settings["mig_cert_fqdn"],

@@ -25,6 +25,7 @@
 # -- END_HEADER ---
 #
 
+from __future__ import print_function
 import os
 import sys
 import time
@@ -32,7 +33,7 @@ import cgi
 import cgitb
 cgitb.enable()
 
-print '''Content-type: text/html
+print('''Content-type: text/html
 
 
 
@@ -42,8 +43,8 @@ print '''Content-type: text/html
 <body>
 test
 <p>
-'''
+''')
 time.sleep(10)
-print '''after sleep
+print('''after sleep
 </body>
-'''
+''')

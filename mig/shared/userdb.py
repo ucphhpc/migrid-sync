@@ -26,12 +26,14 @@
 #
 
 """Core user database functions"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 
-from shared.defaults import user_db_filename
-from shared.fileio import acquire_file_lock, release_file_lock
-from shared.serial import load, dump
+from .shared.defaults import user_db_filename
+from .shared.fileio import acquire_file_lock, release_file_lock
+from .shared.serial import load, dump
 
 
 def default_db_path(configuration):
@@ -57,7 +59,7 @@ def load_user_db(db_path, do_lock=True):
         flock = lock_user_db(db_path, exclusive=False)
     try:
         result = load(db_path)
-    except Exception, exc:
+    except Exception as exc:
         if do_lock:
             unlock_user_db(flock)
         raise
@@ -74,7 +76,7 @@ def save_user_db(user_db, db_path, do_lock=True):
         flock = lock_user_db(db_path)
     try:
         dump(user_db, db_path)
-    except Exception, exc:
+    except Exception as exc:
         if do_lock:
             unlock_user_db(flock)
         raise
@@ -88,12 +90,12 @@ def load_user_dict(logger, user_id, db_path, verbose=False, do_lock=True):
     try:
         user_db = load_user_db(db_path, do_lock=do_lock)
         if verbose:
-            print 'Loaded existing user DB from: %s' % db_path
-    except Exception, err:
+            print('Loaded existing user DB from: %s' % db_path)
+    except Exception as err:
         err_msg = 'Failed to load user %s from DB: %s' % (user_id, err)
         logger.error(err_msg)
         if verbose:
-            print err_msg
+            print(err_msg)
         return None
     return user_db.get(user_id, None)
 
@@ -109,11 +111,11 @@ def save_user_dict(logger, user_id, user_dict, db_path, verbose=False, do_lock=T
         user_db[user_id] = user_dict
         save_user_db(user_db, db_path, do_lock=False)
         save_status = True
-    except Exception, err:
+    except Exception as err:
         err_msg = 'Failed to save user %s in DB: %s' % (user_id, err)
         logger.error(err_msg)
         if verbose:
-            print err_msg
+            print(err_msg)
     if do_lock:
         unlock_user_db(flock)
     return save_status
@@ -140,11 +142,11 @@ def update_user_dict(logger, user_id, changes, db_path, verbose=False, do_lock=T
         user_db[user_id] = user_dict
         save_user_db(user_db, db_path, do_lock=False)
         logger.debug("updated user %s to %s" % (user_id, user_dict))
-    except Exception, err:
+    except Exception as err:
         err_msg = 'Failed to update user %s in DB: %s' % (user_id, err)
         logger.error(err_msg)
         if verbose:
-            print err_msg
+            print(err_msg)
     if do_lock:
         unlock_user_db(flock)
     return user_dict

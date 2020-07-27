@@ -26,44 +26,45 @@
 #
 
 """Provide all the settings subpages"""
+from __future__ import absolute_import
 
 import base64
 import os
 import urllib
 
-from shared import returnvalues
-from shared.auth import get_twofactor_secrets
-from shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin, \
+from .shared import returnvalues
+from .shared.auth import get_twofactor_secrets
+from .shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin, \
     get_short_id
-from shared.defaults import default_mrsl_filename, \
+from .shared.defaults import default_mrsl_filename, \
     default_css_filename, profile_img_max_kb, profile_img_extensions, \
     seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
     duplicati_protocol_choices, duplicati_schedule_choices
-from shared.duplicatikeywords import get_duplicati_specs
-from shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
-from shared.functional import validate_input_and_cert
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import man_base_js, man_base_html, console_log_javascript, \
+from .shared.duplicatikeywords import get_duplicati_specs
+from .shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
+from .shared.functional import validate_input_and_cert
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.html import man_base_js, man_base_html, console_log_javascript, \
     twofactor_wizard_html, twofactor_wizard_js, twofactor_token_html, \
     legacy_user_interface, save_settings_js, save_settings_html, menu_items
-from shared.init import initialize_main_variables, find_entry, extract_menu
-from shared.settings import load_settings, load_widgets, load_profile, \
+from .shared.init import initialize_main_variables, find_entry, extract_menu
+from .shared.settings import load_settings, load_widgets, load_profile, \
     load_ssh, load_davs, load_ftps, load_seafile, load_duplicati, load_cloud, \
     load_twofactor
-from shared.profilekeywords import get_profile_specs
-from shared.pwhash import parse_password_policy
-from shared.safeinput import html_escape, password_min_len, password_max_len, \
+from .shared.profilekeywords import get_profile_specs
+from .shared.pwhash import parse_password_policy
+from .shared.safeinput import html_escape, password_min_len, password_max_len, \
     valid_password_chars
-from shared.settingskeywords import get_settings_specs
-from shared.twofactorkeywords import get_twofactor_specs
-from shared.widgetskeywords import get_widgets_specs
-from shared.useradm import create_alias_link, get_default_mrsl, \
+from .shared.settingskeywords import get_settings_specs
+from .shared.twofactorkeywords import get_twofactor_specs
+from .shared.widgetskeywords import get_widgets_specs
+from .shared.useradm import create_alias_link, get_default_mrsl, \
     get_default_css
-from shared.vgridaccess import get_vgrid_map_vgrids
+from .shared.vgridaccess import get_vgrid_map_vgrids
 
 try:
-    from shared import arcwrapper
-except Exception, exc:
+    from .shared import arcwrapper
+except Exception as exc:
     # Ignore errors and let it crash if ARC is enabled without the lib
     pass
 
@@ -348,7 +349,7 @@ def main(client_id, user_arguments_dict):
 
                     valid_choices = eval('configuration.%s' % keyword.lower())
                     current_choice = []
-                    if current_settings_dict.has_key(keyword):
+                    if keyword in current_settings_dict:
                         current_choice = current_settings_dict[keyword]
 
                     if valid_choices:
@@ -369,7 +370,7 @@ def main(client_id, user_arguments_dict):
                     area = '''
                 <textarea id="%s" cols=40 rows=1 name="%s">''' \
                         % (keyword, keyword)
-                    if current_settings_dict.has_key(keyword):
+                    if keyword in current_settings_dict:
                         area += '\n'.join(current_settings_dict[keyword])
                     area += '</textarea>'
                     entry += wrap_edit_area(keyword, area, general_edit,
@@ -381,7 +382,7 @@ def main(client_id, user_arguments_dict):
 
                 valid_choices = eval('configuration.%s' % keyword.lower())
                 current_choice = ''
-                if current_settings_dict.has_key(keyword):
+                if keyword in current_settings_dict:
                     current_choice = current_settings_dict[keyword]
 
                 if valid_choices:
@@ -407,7 +408,7 @@ def main(client_id, user_arguments_dict):
 
                 valid_choices = [val['Value'], not val['Value']]
                 current_choice = ''
-                if current_settings_dict.has_key(keyword):
+                if keyword in current_settings_dict:
                     current_choice = current_settings_dict[keyword]
 
                 checked = ''
@@ -522,7 +523,7 @@ so you may have to avoid blank lines in your text below.
 
                     valid_choices = eval('configuration.%s' % keyword.lower())
                     current_choice = []
-                    if current_profile_dict.has_key(keyword):
+                    if keyword in current_profile_dict:
                         current_choice = current_profile_dict[keyword]
 
                     if valid_choices:
@@ -538,7 +539,7 @@ so you may have to avoid blank lines in your text below.
                 except:
                     area = """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
                         % (keyword, keyword)
-                    if current_profile_dict.has_key(keyword):
+                    if keyword in current_profile_dict:
                         area += '\n'.join(current_profile_dict[keyword])
                     area += '</textarea>'
                     html += wrap_edit_area(keyword, area, profile_edit)
@@ -548,7 +549,7 @@ so you may have to avoid blank lines in your text below.
 
                 valid_choices = [val['Value'], not val['Value']]
                 current_choice = ''
-                if current_profile_dict.has_key(keyword):
+                if keyword in current_profile_dict:
                     current_choice = current_profile_dict[keyword]
                 checked = ''
                 if current_choice == True:
@@ -788,7 +789,7 @@ get the default empty widget spaces.<br />
 
                     valid_choices = eval('configuration.%s' % keyword.lower())
                     current_choice = []
-                    if current_widgets_dict.has_key(keyword):
+                    if keyword in current_widgets_dict:
                         current_choice = current_widgets_dict[keyword]
 
                     if valid_choices:
@@ -804,7 +805,7 @@ get the default empty widget spaces.<br />
                 except:
                     area = """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
                         % (keyword, keyword)
-                    if current_widgets_dict.has_key(keyword):
+                    if keyword in current_widgets_dict:
                         area += '\n'.join(current_widgets_dict[keyword])
                     area += '</textarea>'
                     widgets_html += wrap_edit_area(keyword, area, widgets_edit)
@@ -1694,7 +1695,7 @@ for %(site)s backup use.
 
                     valid_choices = eval('configuration.%s' % keyword.lower())
                     current_choice = []
-                    if current_duplicati_dict.has_key(keyword):
+                    if keyword in current_duplicati_dict:
                         current_choice = current_duplicati_dict[keyword]
 
                     if valid_choices:
@@ -1710,14 +1711,14 @@ for %(site)s backup use.
                 except:
                     area = """<textarea id='%s' cols=78 rows=10 name='%s'>""" \
                         % (keyword, keyword)
-                    if current_duplicati_dict.has_key(keyword):
+                    if keyword in current_duplicati_dict:
                         area += '\n'.join(current_duplicati_dict[keyword])
                     area += '</textarea>'
                     html += wrap_edit_area(keyword, area, duplicati_edit)
             elif val['Type'] == 'string':
 
                 current_choice = ''
-                if current_duplicati_dict.has_key(keyword):
+                if keyword in current_duplicati_dict:
                     current_choice = current_duplicati_dict[keyword]
                 if val['Editor'] == 'select':
                     # get valid choices from conf
@@ -1748,7 +1749,7 @@ for %(site)s backup use.
 
                 valid_choices = [val['Value'], not val['Value']]
                 current_choice = ''
-                if current_duplicati_dict.has_key(keyword):
+                if keyword in current_duplicati_dict:
                     current_choice = current_duplicati_dict[keyword]
                 checked = ''
                 if current_choice == True:
@@ -2045,7 +2046,7 @@ value="%(default_authpassword)s" />
 
                     valid_choices = eval('configuration.%s' % keyword.lower())
                     current_choice = []
-                    if current_twofactor_dict.has_key(keyword):
+                    if keyword in current_twofactor_dict:
                         current_choice = current_twofactor_dict[keyword]
 
                     if valid_choices:
@@ -2066,7 +2067,7 @@ value="%(default_authpassword)s" />
                     area = '''
                 <textarea id="%s" cols=40 rows=1 name="%s">''' \
                         % (keyword, keyword)
-                    if current_twofactor_dict.has_key(keyword):
+                    if keyword in current_twofactor_dict:
                         area += '\n'.join(current_twofactor_dict[keyword])
                     area += '</textarea>'
                     entry += wrap_edit_area(keyword, area, general_edit,
@@ -2078,7 +2079,7 @@ value="%(default_authpassword)s" />
 
                 valid_choices = eval('configuration.%s' % keyword.lower())
                 current_choice = ''
-                if current_twofactor_dict.has_key(keyword):
+                if keyword in current_twofactor_dict:
                     current_choice = current_twofactor_dict[keyword]
 
                 if valid_choices:
@@ -2098,7 +2099,7 @@ value="%(default_authpassword)s" />
 
                 valid_choices = [val['Value'], not val['Value']]
                 current_choice = ''
-                if current_twofactor_dict.has_key(keyword):
+                if keyword in current_twofactor_dict:
                     current_choice = current_twofactor_dict[keyword]
                 checked = ''
                 if current_choice == True:
@@ -2158,7 +2159,7 @@ value="%(default_authpassword)s" />
                      'text': 'Proxy certificate will expire on %s (in %s sec.)'
                      % (proxy.Expires(), proxy.getTimeleft())
                      })
-        except arcwrapper.NoProxyError, err:
+        except arcwrapper.NoProxyError as err:
             output_objects.append({'object_type': 'warning',
                                    'text': 'No proxy certificate to load: %s'
                                    % err.what()})

@@ -269,7 +269,7 @@ def check_new_messages(visit_map, thread_hash, last_update):
     """Check if thread identified by thread_hash contains new messages.
     I.e. if visit_map time stamp for the thread is older than last_update.
     """
-    if visit_map.has_key(thread_hash):
+    if thread_hash in visit_map:
         last_visit_time = time.strptime(visit_map[thread_hash],
                                         DATE_FORMAT)
     else:

@@ -26,6 +26,7 @@
 #
 
 """External certificate sign up action back end"""
+from __future__ import absolute_import
 
 # TODO: this backend is horribly KU/UCPH-specific, should move that to conf
 
@@ -33,16 +34,16 @@ import os
 import time
 import tempfile
 
-from shared import returnvalues
-from shared.base import force_utf8, force_unicode, generate_https_urls, \
+from .shared import returnvalues
+from .shared.base import force_utf8, force_unicode, generate_https_urls, \
      distinguished_name_to_user, fill_distinguished_name, fill_user
-from shared.defaults import user_db_filename, cert_valid_days
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables
-from shared.notification import send_email
-from shared.serial import dumps
-from shared.useradm import create_user
+from .shared.defaults import user_db_filename, cert_valid_days
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables
+from .shared.notification import send_email
+from .shared.serial import dumps
+from .shared.useradm import create_user
 
 
 def signature():
@@ -186,7 +187,7 @@ multiple "key=val" fields separated by "/".
         try:
             create_user(user_dict, configuration.config_file, db_path,
                         ask_renew=False)
-        except Exception, err:
+        except Exception as err:
             logger.error('Failed to create user with existing cert %s: %s'
                      % (cert_id, err))
             output_objects.append(
@@ -208,7 +209,7 @@ Please use the navigation menu to the left to proceed using it.
         (os_fd, req_path) = tempfile.mkstemp(dir=user_pending)
         os.write(os_fd, dumps(user_dict))
         os.close(os_fd)
-    except Exception, err:
+    except Exception as err:
         logger.error('Failed to write existing certificate request to %s: %s'
                      % (req_path, err))
         output_objects.append(

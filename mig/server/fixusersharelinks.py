@@ -31,6 +31,7 @@
 """Fix any leftover sharelinks not previously handled by edituser by relinking
 them to the current user home and updating the pickled owner info.
 """
+from __future__ import print_function
 
 import sys
 import getopt
@@ -41,7 +42,7 @@ from shared.useradm import init_user_adm, fix_user_sharelinks
 def usage(name='fixusersharelinks.py'):
     """Usage help"""
 
-    print """Update user sharelinks to fix any links not previously handled by
+    print("""Update user sharelinks to fix any links not previously handled by
 edituser.
 
 Usage:
@@ -53,7 +54,7 @@ Where OPTIONS may be one or more of:
    -h                  Show this help
    -v                  Verbose output
 """\
-         % {'name': name}
+         % {'name': name})
 
 
 if '__main__' == __name__:
@@ -64,8 +65,8 @@ if '__main__' == __name__:
     opt_args = 'c:d:fhv'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
-    except getopt.GetoptError, err:
-        print 'Error: ', err.msg
+    except getopt.GetoptError as err:
+        print('Error: ', err.msg)
         usage()
         sys.exit(1)
 
@@ -82,7 +83,7 @@ if '__main__' == __name__:
         elif opt == '-v':
             verbose = True
         else:
-            print 'Error: %s not supported!' % opt
+            print('Error: %s not supported!' % opt)
             sys.exit(1)
 
     if len(args) != 2:
@@ -92,6 +93,6 @@ if '__main__' == __name__:
     old_id, new_id = args[0], args[1]
     try:
         fix_user_sharelinks(old_id, new_id, conf_path, db_path, verbose)
-    except Exception, err:
-        print err
+    except Exception as err:
+        print(err)
         sys.exit(1)

@@ -25,13 +25,14 @@
 # -- END_HEADER ---
 #
 
+from __future__ import print_function
 import os
 import sys
 import cgi
 import cgitb
 cgitb.enable()
 
-print '''Content-type: text/html
+print('''Content-type: text/html
 
 
 
@@ -41,4 +42,4 @@ print '''Content-type: text/html
 <body>
 test
 </body>
-'''
+''')

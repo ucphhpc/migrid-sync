@@ -26,6 +26,8 @@
 #
 
 """User related functions - especially for People interface"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import base64
 import dircache
@@ -33,9 +35,9 @@ import hashlib
 import os
 from urllib import urlencode
 
-from shared.base import client_dir_id, client_id_dir
-from shared.defaults import litmus_id
-from shared.settings import load_settings, load_profile
+from .shared.base import client_dir_id, client_id_dir
+from .shared.defaults import litmus_id
+from .shared.settings import load_settings, load_profile
 
 
 def anon_user_id(user_id):
@@ -118,7 +120,7 @@ def inline_image(configuration, path):
         img_fd = open(path)
         img_data = img_fd.read()
         img_fd.close()
-    except Exception, exc:
+    except Exception as exc:
         configuration.logger.error("viewuser: no such image: %s" % path)
         img_data = ''
     data += base64.b64encode(img_data)
@@ -126,12 +128,12 @@ def inline_image(configuration, path):
 
 
 if __name__ == "__main__":
-    print "= Unit Testing ="
-    from shared.conf import get_configuration_object
+    print("= Unit Testing =")
+    from .shared.conf import get_configuration_object
     conf = get_configuration_object()
-    print "== List Users ="
+    print("== List Users =")
     all_users = list_users(conf)
-    print "All users:\n%s" % '\n'.join(all_users)
+    print("All users:\n%s" % '\n'.join(all_users))
     real_map = real_to_anon_user_map(conf)
-    print "Real to anon user map:\n%s" % '\n'.join(["%s -> %s" % pair for pair
-                                                    in real_map.items()])
+    print("Real to anon user map:\n%s" % '\n'.join(["%s -> %s" % pair for pair
+                                                    in real_map.items()]))

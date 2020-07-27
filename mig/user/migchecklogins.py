@@ -39,6 +39,7 @@ on the command line.
 Please check the global configuration section below if it fails. The comments
 should help you tweak the configuration to solve most common problems.
 """
+from __future__ import print_function
 
 import getopt
 import getpass
@@ -50,7 +51,7 @@ import sys
 def usage(name='migchecklogins.py'):
     """Usage help"""
 
-    print """Run a series of IO service logins.
+    print("""Run a series of IO service logins.
 Usage:
 %(name)s [OPTIONS]
 Where OPTIONS may be one or more of:
@@ -62,7 +63,7 @@ Where OPTIONS may be one or more of:
    -v                  Verbose output
 
 Each search value can be a string or a pattern with * and ? as wildcards.
-""" % {'name': name}
+""" % {'name': name})
 
 
 if '__main__' == __name__:
@@ -77,8 +78,8 @@ if '__main__' == __name__:
     opt_args = 'a:hp:s:u:v'
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], opt_args)
-    except getopt.GetoptError, err:
-        print 'Error: ', err.msg
+    except getopt.GetoptError as err:
+        print('Error: ', err.msg)
         usage()
         sys.exit(1)
 
@@ -97,12 +98,12 @@ if '__main__' == __name__:
         elif opt == '-v':
             verbose = True
         else:
-            print 'Error: %s not supported!' % opt
+            print('Error: %s not supported!' % opt)
             usage()
             sys.exit(1)
 
     if args:
-        print 'Error: non-option arguments are not supported!'
+        print('Error: non-option arguments are not supported!')
         usage()
         sys.exit(1)
 
@@ -131,16 +132,16 @@ if '__main__' == __name__:
     sftp_cmd.append('-oUserKnownHostsFile=/tmp/dummy-known_hosts')
 
     sftp_cmd.append(server_fqdn)
-    print "Running %s" % sftp_cmd
+    print("Running %s" % sftp_cmd)
     sftp_proc = subprocess.Popen(sftp_cmd, shell=False,
                                  stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE)
     if user_pw:
-        print "sending password"
+        print("sending password")
         sftp_proc.communicate(input='%s' % user_pw)
-    print "communicate"
+    print("communicate")
     sftp_proc.communicate()
-    print "wait"
+    print("wait")
     sftp_proc.wait()
-    print "sftp login returned %d" % sftp_proc.returncode
+    print("sftp login returned %d" % sftp_proc.returncode)
     sys.exit(0)

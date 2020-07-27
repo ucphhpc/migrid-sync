@@ -30,12 +30,13 @@ A page for dislaying available jupyter services,
 provides a list of buttons based on services defined in the
  configuration.jupyter_services
 """
+from __future__ import absolute_import
 
-from shared import returnvalues
+from .shared import returnvalues
 
-from shared.init import find_entry, initialize_main_variables
-from shared.functional import validate_input_and_cert
-from shared.html import man_base_js
+from .shared.init import find_entry, initialize_main_variables
+from .shared.functional import validate_input_and_cert
+from .shared.html import man_base_js
 
 
 def signature():

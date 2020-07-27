@@ -26,8 +26,9 @@
 #
 
 """One-shot import of contents from sharelink"""
+from __future__ import absolute_import
 
-from shared.functionality.cp import main as importsharelink_main, \
+from .shared.functionality.cp import main as importsharelink_main, \
     signature as importsharelink_signature
 
 

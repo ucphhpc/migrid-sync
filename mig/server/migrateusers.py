@@ -30,6 +30,7 @@
 
 """Upgrade all files and dirs to use the new certificate DN based user ID
 instead of the old CN based ones"""
+from __future__ import print_function
 
 import sys
 import getopt
@@ -39,7 +40,7 @@ from shared.useradm import init_user_adm, migrate_users
 def usage(name='migrateusers.py'):
     """Usage help"""
 
-    print """Update MiG user database and user dirs from old format with CN
+    print("""Update MiG user database and user dirs from old format with CN
 as user idetifier to new format with DN as user identifier.
 
 Usage:
@@ -52,7 +53,7 @@ Where OPTIONS may be one or more of:
    -p                  Prune duplicate users (keeps the one with latest expire)
    -v                  Verbose output
 """\
-         % {'name': name}
+         % {'name': name})
 
 if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()
@@ -63,8 +64,8 @@ if '__main__' == __name__:
     opt_args = 'c:d:fhpv'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
-    except getopt.GetoptError, err:
-        print 'Error: ', err.msg
+    except getopt.GetoptError as err:
+        print('Error: ', err.msg)
         usage()
         sys.exit(1)
 
@@ -83,11 +84,11 @@ if '__main__' == __name__:
         elif opt == '-v':
             verbose = True
         else:
-            print 'Error: %s not supported!' % opt
+            print('Error: %s not supported!' % opt)
             sys.exit(1)
 
     try:
         migrate_users(conf_path, db_path, force, verbose, prune)
-    except Exception, err:
-        print err
+    except Exception as err:
+        print(err)
         sys.exit(1)        

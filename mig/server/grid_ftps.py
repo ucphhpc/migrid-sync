@@ -68,6 +68,7 @@ Extended to fit MiG user auth and access restrictions.
 Requires PyOpenSSL module (http://pypi.python.org/pypi/pyOpenSSL) unless
 only used in plain FTP mode.
 """
+from __future__ import print_function
 
 import os
 import sys
@@ -79,13 +80,13 @@ try:
     from pyftpdlib.servers import ThreadedFTPServer
     from pyftpdlib.filesystems import AbstractedFS, FilesystemError
 except ImportError:
-    print "ERROR: the python pyftpdlib module is required for this daemon"
+    print("ERROR: the python pyftpdlib module is required for this daemon")
     raise
 # PyOpenSSL is required for strong encryption
 try:
     import OpenSSL
 except ImportError:
-    print "WARNING: the python OpenSSL module is required for FTPS"
+    print("WARNING: the python OpenSSL module is required for FTPS")
     OpenSSL = None
 
 from shared.accountstate import check_account_accessible
@@ -118,8 +119,8 @@ class MiGTLSFTPHandler(TLS_FTPHandler):
     def ftp_AUTH(self, line):
         res = super(MiGTLSFTPHandler, self).ftp_AUTH(line)
         # NOTE: fix for https://github.com/giampaolo/pyftpdlib/issues/315
-        print "DEBUG: reset in buffer on switch to secure channel"
-        print "I.e. truncate '%s'" % self.ac_in_buffer
+        print("DEBUG: reset in buffer on switch to secure channel")
+        print("I.e. truncate '%s'" % self.ac_in_buffer)
         self.ac_in_buffer = ''
         return res
 
@@ -170,7 +171,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
             if os.path.islink(home_path):
                 try:
                     home_path = os.readlink(home_path)
-                except Exception, err:
+                except Exception as err:
                     logger.error("could not expand link %s" % home_path)
                     continue
             logger.debug("add user to user_table: %s" % user_obj)
@@ -339,7 +340,7 @@ class MiGRestrictedFilesystem(AbstractedFS):
                         daemon_conf['chroot_exceptions'])
             #logger.debug("accepted access to %s" % path)
             return True
-        except ValueError, err:
+        except ValueError as err:
             logger.warning("rejected illegal access to %s :: %s" % (path, err))
             return False
 
@@ -358,9 +359,9 @@ class MiGRestrictedFilesystem(AbstractedFS):
         # Only allow permission changes that won't give excessive access
         # or remove own access.
         if os.path.isdir(path):
-            new_mode = (mode & 0775) | 0750
+            new_mode = (mode & 0o775) | 0o750
         else:
-            new_mode = (mode & 0775) | 0640
+            new_mode = (mode & 0o775) | 0o640
         logger.info("chmod %s (%s) without damage on %s :: %s" %
                     (new_mode, mode, path, real_path))
         return AbstractedFS.chmod(self, path, new_mode)
@@ -483,15 +484,15 @@ if __name__ == '__main__':
     if not configuration.site_enable_ftps:
         err_msg = "FTPS access to user homes is disabled in configuration!"
         logger.error(err_msg)
-        print err_msg
+        print(err_msg)
         sys.exit(1)
-    print """
+    print("""
 Running grid ftps server for user ftps access to their MiG homes.
 
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
-"""
-    print __doc__
+""")
+    print(__doc__)
     address = configuration.user_ftps_address
     ctrl_port = configuration.user_ftps_ctrl_port
     pasv_ports = configuration.user_ftps_pasv_ports
@@ -536,22 +537,22 @@ unless it is available in mig/server/MiGserver.conf
     logger.info("Starting FTPS server")
     info_msg = "Listening on address '%s' and port %d" % (address, ctrl_port)
     logger.info(info_msg)
-    print info_msg
+    print(info_msg)
     while True:
         try:
             start_service(configuration)
         except KeyboardInterrupt:
             info_msg = "Received user interrupt"
             logger.info(info_msg)
-            print info_msg
+            print(info_msg)
             configuration.daemon_conf['stop_running'].set()
             break
-        except Exception, exc:
+        except Exception as exc:
             err_msg = "Received unexpected error: %s" % exc
             logger.error(err_msg)
-            print err_msg
+            print(err_msg)
             # Throttle a bit
             time.sleep(5)
     info_msg = "Leaving with no more workers active"
     logger.info(info_msg)
-    print info_msg
+    print(info_msg)

@@ -36,6 +36,7 @@ or
 yum install python-jsonrpclib
 depending on the platform.
 """
+from __future__ import print_function
 
 import httplib
 import os
@@ -53,8 +54,8 @@ def read_user_conf():
     conf_path = os.path.expanduser(os.path.join('~', '.mig',
                                                 'miguser.conf'))
     if not os.path.exists(conf_path):
-        print 'mig user configuration not found, %s does not exist'\
-            % conf_path
+        print('mig user configuration not found, %s does not exist'\
+            % conf_path)
         sys.exit(1)
 
     needed_settings = ['migserver', 'certfile', 'keyfile']
@@ -81,13 +82,13 @@ def read_user_conf():
                 val = os.path.expandvars(os.path.expanduser(val))
             user_conf[key] = val
         conf_fd.close()
-    except IOError, exc:
-        print 'Could not read miguser conf: %s, %s' % (conf_path, exc)
+    except IOError as exc:
+        print('Could not read miguser conf: %s, %s' % (conf_path, exc))
         sys.exit(1)
     for needed_key in needed_settings:
-        if not user_conf.has_key(needed_key):
-            print 'Needed setting %s not found in %s' % (needed_key,
-                                                         conf_path)
+        if needed_key not in user_conf:
+            print('Needed setting %s not found in %s' % (needed_key,
+                                                         conf_path))
             sys.exit(1)
     return user_conf
 
@@ -205,15 +206,15 @@ if '__main__' == __name__:
     user_conf = read_user_conf()
     conf.update(user_conf)
     if not os.path.isfile(conf['certfile']):
-        print 'Cert file %(certfile)s not found!' % conf
+        print('Cert file %(certfile)s not found!' % conf)
         sys.exit(1)
     if not os.path.isfile(conf['keyfile']):
-        print 'Key file %(keyfile)s not found!' % conf
+        print('Key file %(keyfile)s not found!' % conf)
         sys.exit(1)
     # CA cert is not currently used, but we include it for future verification
     cacert = conf.get('cacertfile', None)
     if cacert and cacert != 'AUTO' and not os.path.isfile(cacert):
-        print 'specified CA cert file %(cacertfile)s not found!' % conf
+        print('specified CA cert file %(cacertfile)s not found!' % conf)
         sys.exit(1)
     url_tuple = urlparse(conf['migserver'])
     # second item in tuple is network location part with hostname and optional
@@ -224,25 +225,25 @@ if '__main__' == __name__:
     host_port[1] = int(host_port[1])
     conf['host'], conf['port'] = host_port
 
-    print '''Testing JSONRPC client against %(migserver)s with user certificate
+    print('''Testing JSONRPC client against %(migserver)s with user certificate
 from %(certfile)s , key from %(keyfile)s and
 CA certificate %(cacertfile)s . You may get prompted for your MiG
 key/certificate passphrase before you can continue.
-    ''' % conf
+    ''' % conf)
     server = jsonrpcgetserver(conf)
 
     methods = server.system.listMethods()
-    print 'supported remote methods:\n%s' % '\n'.join(methods)
-    print
-    print 'submit() signature: %s'\
-        % server.system.methodSignature('submit')
-    print 'the signature is a tuple of output object type and a list of '
-    print 'expected/default input values'
-    print 'submit() help: %s' % server.system.methodHelp('submit')
-    print 'please note that help is not yet available for all methods'
-    print
+    print('supported remote methods:\n%s' % '\n'.join(methods))
+    print()
+    print('submit() signature: %s'\
+        % server.system.methodSignature('submit'))
+    print('the signature is a tuple of output object type and a list of ')
+    print('expected/default input values')
+    print('submit() help: %s' % server.system.methodHelp('submit'))
+    print('please note that help is not yet available for all methods')
+    print()
 
-    print "supported remote methods and their variable arguments:"
+    print("supported remote methods and their variable arguments:")
     for method in methods:
         signature = server.system.methodSignature(method)
         if 'none' in signature or 'array' in signature:
@@ -250,57 +251,57 @@ key/certificate passphrase before you can continue.
         signature_list = eval(signature.replace('none', 'None'))
         var_dict = signature_list[1]
         var_list = var_dict.keys()
-        print '%s : %s' % (method, var_list)
+        print('%s : %s' % (method, var_list))
 
-    print 'Testing some action methods:'
+    print('Testing some action methods:')
 
-    print 'checking script generation'
+    print('checking script generation')
     (inlist, retval) = server.scripts({'flavor': ['user'], 'lang': ['python']})
     (returnval, returnmsg) = retval
     if returnval != 0:
-        print 'Error %s:%s ' % (returnval, returnmsg)
+        print('Error %s:%s ' % (returnval, returnmsg))
 
     for elem in inlist:
-        if elem.has_key('text'):
-            print elem['text']
+        if 'text' in elem:
+            print(elem['text'])
 
-    print 'checking job status for job(s) with IDs: %s'\
-        % ' '.join(job_id_list)
+    print('checking job status for job(s) with IDs: %s'\
+        % ' '.join(job_id_list))
     (inlist, retval) = server.jobstatus(
         {'job_id': job_id_list, 'flags': 'vs', 'max_jobs': '5'})
     (returnval, returnmsg) = retval
     if returnval != 0:
-        print 'Error %s:%s ' % (returnval, returnmsg)
+        print('Error %s:%s ' % (returnval, returnmsg))
 
     for ele in inlist:
         if ele['object_type'] == 'job_list':
             for el in ele['jobs']:
-                print 'The job with job_id %s: %s' % (el['job_id'],
-                                                      el['status'])
+                print('The job with job_id %s: %s' % (el['job_id'],
+                                                      el['status']))
 
-    print
-    print 'Listing contents of MiG home directory'
+    print()
+    print('Listing contents of MiG home directory')
     (inlist, retval) = server.ls({'path': ['.'], 'flags': 'v'})
     (returnval, returnmsg) = retval
     if returnval != 0:
-        print 'Error %s:%s ' % (returnval, returnmsg)
+        print('Error %s:%s ' % (returnval, returnmsg))
 
     for ele in inlist:
         if ele['object_type'] == 'dir_listings':
             for dle in ele['dir_listings']:
                 for el in dle['entries']:
-                    print '%s %s' % (el['type'], el['name'])
-    print
+                    print('%s %s' % (el['type'], el['name']))
+    print()
 
-    print 'checking archives'
+    print('checking archives')
     (inlist, retval) = server.freezedb({'operation': ['showlist']})
     (returnval, returnmsg) = retval
     if returnval != 0:
-        print 'Error %s:%s ' % (returnval, returnmsg)
+        print('Error %s:%s ' % (returnval, returnmsg))
     for ele in inlist:
         if ele['object_type'] == 'frozenarchives':
             for ale in ele['frozenarchives']:
-                print '%(id)s\t%(flavor)s\t%(name)s\t%(frozenfiles)s' % ale
+                print('%(id)s\t%(flavor)s\t%(name)s\t%(frozenfiles)s' % ale)
 
     resconfig = \
         r"""::MIGUSER::
@@ -434,15 +435,15 @@ vgrid=Generic
     # (inlist, retval) = server.canceljob({"job_id":["%s" % sys.argv[1]]})
 
     try:
-        print "cat as binary file"
+        print("cat as binary file")
         (inlist, retval) = server.cat({"path": path_list, "flags": "vb"})
         for entry in inlist:
             if 'file_output' == entry['object_type']:
-                print ''.join([i for i in entry['lines']])
-    except Exception, exc:
-        print "Error: could not cat as binary file: %s" % exc
+                print(''.join([i for i in entry['lines']]))
+    except Exception as exc:
+        print("Error: could not cat as binary file: %s" % exc)
 
-    print 'testing a basic job flow'
+    print('testing a basic job flow')
     mrsl_path = 'jsonrpc-test-job.mRSL'
     mrsl = """::EXECUTE::
 uname -a
@@ -453,20 +454,20 @@ uname -a
 ::VGRID::
 ANY
 """
-    print 'writing job description to %s file on server' % mrsl_path
+    print('writing job description to %s file on server' % mrsl_path)
     (inlist, retval) = server.editfile(
         {'path': [mrsl_path], 'editarea': ['%s' % mrsl]})
-    print 'write status: %s' % retval
+    print('write status: %s' % retval)
 
     (inlist, retval) = server.textarea({
         "jobname_0_0_0": "abc", "fileupload_0_0_0filename": "newfile.txt",
         "submitmrsl_0": ["OFF"], "fileupload_0_0_0": ["%s" % mrsl]
     })
-    print inlist
+    print(inlist)
 
     # print "DEBUG: %s\n%s" % (inlist, retval)
 
-    print 'submit job description in %s' % mrsl_path
+    print('submit job description in %s' % mrsl_path)
     (inlist, retval) = server.submit({'path': [mrsl_path]})
 
     # print "DEBUG: %s\n%s" % (inlist, retval)
@@ -474,30 +475,30 @@ ANY
     job_id = None
     for entry in inlist:
         if 'submitstatuslist' == entry['object_type']\
-                and entry.has_key('submitstatuslist'):
+                and 'submitstatuslist' in entry:
             submit_status = entry['submitstatuslist'][0].get('status',
                                                              False)
             job_id = entry['submitstatuslist'][0].get('job_id', None)
-            print 'submit status: %s' % submit_status
+            print('submit status: %s' % submit_status)
     while job_id:
-        print 'wait for job %s to finish' % job_id
+        print('wait for job %s to finish' % job_id)
         (inlist, retval) = server.jobstatus({'job_id': ['%s' % job_id]})
 
         # print "DEBUG: %s\n%s" % (inlist, retval)
 
         for entry in inlist:
             if 'job_list' == entry['object_type']\
-                    and entry.has_key('jobs'):
+                    and 'jobs' in entry:
                 job_status = entry['jobs'][0].get('status', 'UNKNOWN')
-                print 'job name:\t\t%s' % job_id
-                print 'job status:\t\t%s' % job_status
+                print('job name:\t\t%s' % job_id)
+                print('job status:\t\t%s' % job_status)
                 for name in ['queued', 'executing', 'finished']:
-                    print '%s date:\t\t%s' % (name, entry['jobs'][0].get(
-                        '%s_timestamp' % name, ''))
-                print
+                    print('%s date:\t\t%s' % (name, entry['jobs'][0].get(
+                        '%s_timestamp' % name, '')))
+                print()
 
                 if 'FINISHED' == job_status:
-                    print 'Read output of job %s' % job_id
+                    print('Read output of job %s' % job_id)
                     for name in ['status', 'stdout', 'stderr']:
                         (inlist, retval) = server.cat({
                             'path': ['job_output/%s/%s.%s' % (job_id,
@@ -507,12 +508,12 @@ ANY
 
                         for entry in inlist:
                             if 'file_output' == entry['object_type']\
-                                    and entry.has_key('lines'):
+                                    and 'lines' in entry:
                                 output_lines = entry['lines']
-                                print '''job %s contents:
+                                print('''job %s contents:
 %s
 '''\
-                                     % (name, '\n'.join(output_lines))
+                                     % (name, '\n'.join(output_lines)))
                     job_id = None
                 else:
                     time.sleep(2)

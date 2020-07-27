@@ -30,6 +30,7 @@
 # -- END_HEADER ---
 #
 
+from __future__ import print_function
 import logging
 import os
 import socket
@@ -44,7 +45,7 @@ from threading import Thread
 try:
     import OpenSSL
 except ImportError:
-    print 'WARNING: the python OpenSSL module is required for vm-proxy'
+    print('WARNING: the python OpenSSL module is required for vm-proxy')
     OpenSSL = None
 
 import daemon
@@ -102,14 +103,14 @@ class ProxyAgent(daemon.Daemon):
         else:
             self.tls_conf = None
 
-        print '%s %d %s %s %s %s' % (
+        print('%s %d %s %s %s %s' % (
             self.proxy_host,
             self.proxy_port,
             self.identifier,
             self.key,
             self.cert,
             self.ca,
-            )
+            ))
 
         # Now connect
 

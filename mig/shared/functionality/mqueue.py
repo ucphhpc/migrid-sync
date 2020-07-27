@@ -28,19 +28,20 @@
 """POSIX like mqueue implementation using MiG user home for job inter-
 communication.
 """
+from __future__ import absolute_import
 
 import os
 import time
 import fcntl
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.defaults import default_mqueue, mqueue_prefix, mqueue_empty, \
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.defaults import default_mqueue, mqueue_prefix, mqueue_empty, \
      csrf_field
-from shared.functional import validate_input, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.init import initialize_main_variables, find_entry
-from shared.validstring import valid_user_path
+from .shared.functional import validate_input, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from .shared.init import initialize_main_variables, find_entry
+from .shared.validstring import valid_user_path
 
 get_actions = ['interactive', 'listqueues', 'listmessages', 'show']
 post_actions = ['create', 'remove', 'send', 'receive']
@@ -223,7 +224,7 @@ for active jobs.
             os.mkdir(queue_path)
             output_objects.append({'object_type': 'text', 'text':
                                    'New "%s" queue created' % queue})
-        except Exception, err:
+        except Exception as err:
             output_objects.append({'object_type': 'error_text', 'text'
                                    : 'Could not create "%s" queue: "%s"' % \
                                    (queue, err)})
@@ -235,7 +236,7 @@ for active jobs.
             os.rmdir(queue_path)
             output_objects.append({'object_type': 'text', 'text':
                                    'Existing "%s" queue removed' % queue})
-        except Exception, err:
+        except Exception as err:
             output_objects.append({'object_type': 'error_text', 'text'
                                    : 'Could not remove "%s" queue: "%s"' % \
                                    (queue, err)})
@@ -250,7 +251,7 @@ for active jobs.
             msg_fd.close()
             output_objects.append({'object_type': 'text', 'text':
                                    'Message sent to "%s" queue' % queue})
-        except Exception, err:
+        except Exception as err:
             output_objects.append({'object_type': 'error_text', 'text'
                                    : 'Could not send to "%s" queue: "%s"' % \
                                    (queue, err)})
@@ -273,7 +274,7 @@ for active jobs.
                 message = [mqueue_empty]
             # Update file_output entry for raw data with output_format=file
             file_entry['lines'] = message
-        except Exception, err:
+        except Exception as err:
             output_objects.append({'object_type': 'error_text', 'text'
                                    : 'Could not receive from "%s" queue: "%s"'
                                    % (queue, err)})
@@ -295,7 +296,7 @@ for active jobs.
                 message = [mqueue_empty]
             # Update file_output entry for raw data with output_format=file
             file_entry['lines'] = message
-        except Exception, err:
+        except Exception as err:
             output_objects.append({'object_type': 'error_text', 'text'
                                    : 'Could not show %s from "%s" queue: "%s"'
                                    % (msg_id, queue, err)})
@@ -305,7 +306,7 @@ for active jobs.
             messages = os.listdir(queue_path)
             messages.sort()
             output_objects.append({'object_type': 'list', 'list': messages})
-        except Exception, err:
+        except Exception as err:
             output_objects.append({'object_type': 'error_text', 'text'
                                    : 'Could not list "%s" queue: "%s"' % \
                                    (queue, err)})
@@ -316,7 +317,7 @@ for active jobs.
                       os.path.isdir(os.path.join(mqueue_base, i))]
             queues.sort()
             output_objects.append({'object_type': 'list', 'list': queues})
-        except Exception, err:
+        except Exception as err:
             output_objects.append({'object_type': 'error_text', 'text'
                                    : 'Could not list queues: "%s"' % err})
             status = returnvalues.CLIENT_ERROR

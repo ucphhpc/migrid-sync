@@ -29,22 +29,23 @@
 partners, course/workshop participants and similar users that one user needs
 to offer site access for a time limited period.
 """
+from __future__ import absolute_import
 
 import datetime
 import os
 
-from shared import returnvalues
-from shared.accountreq import peers_permit_allowed
-from shared.base import pretty_format_user, fill_distinguished_name, \
+from .shared import returnvalues
+from .shared.accountreq import peers_permit_allowed
+from .shared.base import pretty_format_user, fill_distinguished_name, \
     client_id_dir
-from shared.defaults import csrf_field, peers_filename, \
+from .shared.defaults import csrf_field, peers_filename, \
     pending_peers_filename, peers_fields, peer_kinds, default_pager_entries
-from shared.functional import validate_input_and_cert
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.html import man_base_js, man_base_html, html_post_helper
-from shared.init import initialize_main_variables, find_entry
-from shared.serial import load
-from shared.useradm import get_full_user_map
+from .shared.functional import validate_input_and_cert
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.html import man_base_js, man_base_html, html_post_helper
+from .shared.init import initialize_main_variables, find_entry
+from .shared.serial import load
+from .shared.useradm import get_full_user_map
 
 
 sample_users = [{'full_name': 'Jane Doe', 'country': 'DK', 'email':
@@ -216,7 +217,7 @@ action="%(target_op)s.py">
                               peers_filename)
     try:
         all_peers = load(peers_path)
-    except Exception, exc:
+    except Exception as exc:
         logger.warning("could not load peers from %s: %s" % (peers_path, exc))
         all_peers = {}
 
@@ -224,7 +225,7 @@ action="%(target_op)s.py">
                                       pending_peers_filename)
     try:
         pending_peers = load(pending_peers_path)
-    except Exception, exc:
+    except Exception as exc:
         logger.warning("could not load pending peers from %s: %s" %
                        (pending_peers_path, exc))
         pending_peers = []

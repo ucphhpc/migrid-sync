@@ -26,6 +26,7 @@
 #
 
 """Resource configuration functions"""
+from __future__ import absolute_import
 
 import os
 import dircache
@@ -36,16 +37,16 @@ try:
 except ImportError:
     from md5 import new as hash_algo
 
-from shared.base import client_id_dir
-from shared.confparser import get_resource_config_dict, run
-from shared.defaults import exe_leader_name, keyword_auto
-from shared.fileio import pickle, move
-from shared.modified import mark_resource_modified, mark_vgrid_modified
-from shared.resconfkeywords import get_resource_specs, get_exenode_specs, \
+from .shared.base import client_id_dir
+from .shared.confparser import get_resource_config_dict, run
+from .shared.defaults import exe_leader_name, keyword_auto
+from .shared.fileio import pickle, move
+from .shared.modified import mark_resource_modified, mark_vgrid_modified
+from .shared.resconfkeywords import get_resource_specs, get_exenode_specs, \
     get_storenode_specs, get_resource_keywords, get_exenode_keywords, \
     get_storenode_keywords
-from shared.serial import load, dump
-from shared.ssh import default_ssh_options
+from .shared.serial import load, dump
+from .shared.ssh import default_ssh_options
 
 
 def get_regex_non_numeric():
@@ -492,7 +493,7 @@ def init_conf(configuration, hosturl='', hostidentifier=''):
 
             # Handle old typo gracefully
 
-            if first.has_key('continuous'):
+            if 'continuous' in first:
                 all['continuous'] = first['continuous']
             else:
                 all['continuous'] = first['continious']
@@ -616,8 +617,8 @@ def prepare_conf(configuration, input_args, resource_id):
     for i in range(field_count):
         runtime_env = 'runtimeenvironment' + str(i)
         env_values = 're_values' + str(i)
-        if user_args.has_key(runtime_env):
-            if user_args.has_key(env_values):
+        if runtime_env in user_args:
+            if env_values in user_args:
                 # re_valuesX is a single line, A=vx yz\nB=def, with all assignments
                 var_lines = user_args[env_values].split('\n')
                 re_values = [tuple(line.split('=', 1)) for line in var_lines]
@@ -938,7 +939,7 @@ above - there should be some error output
 """ % unique_resource_name
         try:
             os.rmdir(newdir)
-        except Exception, err:
+        except Exception as err:
             pass
         return (status, msg)
     else:
@@ -995,12 +996,12 @@ def remove_resource(configuration, client_id, resource_name, resource_identifier
         for filename in files:
             try:
                 os.remove(os.path.join(root, filename))
-            except Exception, err:
+            except Exception as err:
                 msg += "\n  Could not remove file: '%s'. Failure: %s"\
                     % (os.path.join(root, filename), err)
     try:
         os.rmdir(resource_path)
-    except Exception, err:
+    except Exception as err:
         msg += "\n  Could not remove dir: '%s' Failure: %s"\
             % (resource_path, err)
         return (False, msg)
@@ -1089,7 +1090,7 @@ Failure:
             readline = fr.readline()
         fw.close()
         fr.close()
-    except Exception, err:
+    except Exception as err:
 
         msg += \
             'Failed to apply hostidentifier to configfile. Failure: %s'\
@@ -1106,7 +1107,7 @@ Failure:
 
     try:
         move(tmpfile, new_configfile)
-    except Exception, err:
+    except Exception as err:
         msg += '\nAccepted config, but failed to save it! Failed: %s'\
             % err
         return (False, msg)
@@ -1116,7 +1117,7 @@ Failure:
 
     try:
         os.remove(pending_file)
-    except Exception, err:
+    except Exception as err:
         pass
     msg += '\nNew configfile successfully applied.'
     return (True, msg)
@@ -1129,7 +1130,7 @@ def resource_owners(configuration, unique_resource_name):
     try:
         owners = load(owners_file)
         return (True, owners)
-    except Exception, exc:
+    except Exception as exc:
         return (False, "could not load owners for %s: %s" %
                 (unique_resource_name, exc))
 
@@ -1150,7 +1151,7 @@ def resource_add_owners(configuration, unique_resource_name, clients):
         dump(owners, owners_file)
         mark_resource_modified(configuration, unique_resource_name)
         return (True, '')
-    except Exception, exc:
+    except Exception as exc:
         return (False, "could not add owners for %s: %s" %
                 (unique_resource_name, exc))
 
@@ -1171,7 +1172,7 @@ def resource_remove_owners(configuration, unique_resource_name, clients,
         dump(owners, owners_file)
         mark_resource_modified(configuration, unique_resource_name)
         return (True, '')
-    except Exception, exc:
+    except Exception as exc:
         return (False, "could not remove owners for %s: %s" %
                 (unique_resource_name, exc))
 
@@ -1184,6 +1185,6 @@ def resource_set_owners(configuration, unique_resource_name, clients):
         dump(clients, owners_file)
         mark_resource_modified(configuration, unique_resource_name)
         return (True, '')
-    except Exception, exc:
+    except Exception as exc:
         return (False, "could not set owners for %s: %s" %
                 (unique_resource_name, exc))

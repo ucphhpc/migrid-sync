@@ -30,13 +30,14 @@ alternative to the full crontab back end, which expects a complete crontab or
 atjobs textarea and therefore is a bit cumbersome to use from e.g.
 xmlrpc/jsonrpc.
 """
+from __future__ import absolute_import
 
-from shared.defaults import keyword_all, csrf_field
-from shared import returnvalues
-from shared.events import load_crontab, load_atjobs
-from shared.functional import validate_input_and_cert
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.init import initialize_main_variables, find_entry
+from .shared.defaults import keyword_all, csrf_field
+from .shared import returnvalues
+from .shared.events import load_crontab, load_atjobs
+from .shared.functional import validate_input_and_cert
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.init import initialize_main_variables, find_entry
 
 
 def signature():

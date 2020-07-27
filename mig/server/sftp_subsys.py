@@ -212,7 +212,7 @@ if __name__ == '__main__':
                 logger.info("(%d) Received user interrupt" % pid)
                 configuration.daemon_conf['stop_running'].set()
         logger.info('(%d) Finished sftp subsys server' % pid)
-    except Exception, exc:
+    except Exception as exc:
         logger.error('(%d) Failed to run sftp subsys server: %s' % (pid, exc))
         import traceback
         logger.error(traceback.format_exc())

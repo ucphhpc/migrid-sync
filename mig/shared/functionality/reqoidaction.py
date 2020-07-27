@@ -26,6 +26,7 @@
 #
 
 """Request OpenID account action back end"""
+from __future__ import absolute_import
 
 # TODO: this backend is horribly KU/UCPH-specific, should move that to conf
 
@@ -33,18 +34,18 @@ import os
 import time
 import tempfile
 
-from shared import returnvalues
-from shared.accountreq import existing_country_code, forced_org_email_match
-from shared.base import client_id_dir, force_utf8, force_unicode, \
+from .shared import returnvalues
+from .shared.accountreq import existing_country_code, forced_org_email_match
+from .shared.base import client_id_dir, force_utf8, force_unicode, \
     generate_https_urls, fill_distinguished_name
-from shared.defaults import cert_valid_days
-from shared.functional import validate_input, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables, find_entry
-from shared.notification import send_email
-from shared.pwhash import scramble_password, assure_password_strength, \
+from .shared.defaults import cert_valid_days
+from .shared.functional import validate_input, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables, find_entry
+from .shared.notification import send_email
+from .shared.pwhash import scramble_password, assure_password_strength, \
     make_hash
-from shared.serial import dumps
+from .shared.serial import dumps
 
 
 def signature():
@@ -146,7 +147,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     try:
         assure_password_strength(configuration, password)
-    except Exception, exc:
+    except Exception as exc:
         logger.warning(
             "%s invalid password for '%s' (policy %s): %s" %
             (op_name, cert_name, configuration.site_password_policy, exc))
@@ -230,7 +231,7 @@ resources anyway.
         (os_fd, req_path) = tempfile.mkstemp(dir=user_pending)
         os.write(os_fd, dumps(user_dict))
         os.close(os_fd)
-    except Exception, err:
+    except Exception as err:
         logger.error('Failed to write OpenID account request to %s: %s'
                      % (req_path, err))
         output_objects.append({'object_type': 'error_text', 'text':

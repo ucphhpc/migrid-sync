@@ -28,20 +28,21 @@
 """Archiver used to pack a one or more files and directories in
 the home directory of a user into a zip/tar file.
 """
+from __future__ import absolute_import
 
 import glob
 import os
 
-from shared import returnvalues
-from shared.archives import pack_archive
-from shared.base import client_id_dir
-from shared.fileio import check_write_access
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables, find_entry
-from shared.parseflags import verbose
-from shared.validstring import valid_user_path
-from shared.vgrid import in_vgrid_share
+from .shared import returnvalues
+from .shared.archives import pack_archive
+from .shared.base import client_id_dir
+from .shared.fileio import check_write_access
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables, find_entry
+from .shared.parseflags import verbose
+from .shared.validstring import valid_user_path
+from .shared.vgrid import in_vgrid_share
 
 
 def signature():

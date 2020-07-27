@@ -28,16 +28,17 @@
 """Show the requested file located in a given frozen archive belonging to the
 client.
 """
+from __future__ import absolute_import
 
 import mimetypes
 import os
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.init import initialize_main_variables
-from shared.validstring import valid_user_path
-from shared.freezefunctions import is_frozen_archive
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.init import initialize_main_variables
+from .shared.validstring import valid_user_path
+from .shared.freezefunctions import is_frozen_archive
 
 
 def signature():
@@ -124,7 +125,7 @@ archive dir.'''})
                           {'object_type': 'script_status'},
                           {'object_type': 'end'}]
         private_fd.close()
-    except Exception, exc:
+    except Exception as exc:
         logger.error('Error reading archive private file %s' % exc)
         output_objects.append({'object_type': 'error_text', 'text'
                                : 'Error reading archive private file %s'

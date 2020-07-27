@@ -27,6 +27,7 @@
 # -- END_HEADER ---
 #
 
+from __future__ import print_function
 import logging
 import os
 import socket
@@ -38,7 +39,7 @@ import SocketServer
 try:
     import OpenSSL
 except ImportError:
-    print 'WARNING: the python OpenSSL module is required for vm-proxy'
+    print('WARNING: the python OpenSSL module is required for vm-proxy')
     OpenSSL = None
 
 from shared.conf import get_configuration_object
@@ -52,8 +53,8 @@ class Whitelist:
     peers = []
 
     def verify_request(self, request, client_address):
-        print request
-        print client_address
+        print(request)
+        print(client_address)
         return False
 
     def peerAllowed(self, peer):

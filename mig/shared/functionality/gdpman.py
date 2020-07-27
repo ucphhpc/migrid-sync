@@ -26,29 +26,30 @@
 #
 
 """Entry page with project access and management for GDP-enabled sites"""
+from __future__ import absolute_import
 
 import os
 import tempfile
 
-from shared.auth import get_twofactor_secrets
-from shared import returnvalues
-from shared.base import get_xgi_bin
-from shared.defaults import csrf_field
-from shared.functional import validate_input_and_cert
-from shared.gdp.all import ensure_user, get_projects, get_users, \
+from .shared.auth import get_twofactor_secrets
+from .shared import returnvalues
+from .shared.base import get_xgi_bin
+from .shared.defaults import csrf_field
+from .shared.functional import validate_input_and_cert
+from .shared.gdp.all import ensure_user, get_projects, get_users, \
     get_active_project_client_id, project_accept_user, project_create, \
     project_invite_user, project_login, project_logout, project_remove_user, \
     validate_user, get_project_info, get_project_from_client_id
-from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.html import twofactor_wizard_html, twofactor_wizard_js, \
+from .shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from .shared.html import twofactor_wizard_html, twofactor_wizard_js, \
     twofactor_token_html
-from shared.httpsclient import extract_client_openid
-from shared.init import initialize_main_variables, find_entry
-from shared.settings import load_twofactor, parse_and_save_twofactor
-from shared.useradm import get_full_user_map
-from shared.url import openid_autologout_url
-from shared.vgrid import vgrid_create_allowed, vgrid_manage_allowed
-from shared.twofactorkeywords import get_keywords_dict as twofactor_keywords
+from .shared.httpsclient import extract_client_openid
+from .shared.init import initialize_main_variables, find_entry
+from .shared.settings import load_twofactor, parse_and_save_twofactor
+from .shared.useradm import get_full_user_map
+from .shared.url import openid_autologout_url
+from .shared.vgrid import vgrid_create_allowed, vgrid_manage_allowed
+from .shared.twofactorkeywords import get_keywords_dict as twofactor_keywords
 
 
 def signature():
@@ -80,7 +81,7 @@ def fill_category(configuration, category_id, action, ref_dict):
     #              (category_id, action, configuration.gdp_data_categories))
     category_map = dict([(i['category_id'], i) for i in
                          configuration.gdp_data_categories])
-    if not category_map.has_key(category_id):
+    if category_id not in category_map:
         raise ValueError('no such data category: %s' % category_id)
     category_dict.update(category_map[category_id])
     # _logger.debug('fill %s dict %s with %s values' % (category_id,
@@ -88,7 +89,7 @@ def fill_category(configuration, category_id, action, ref_dict):
     #                                                  ref_dict))
     for ref_fill in category_dict.get('references', {}).get(action, []):
         key = ref_fill['ref_id']
-        if not ref_dict.has_key(key):
+        if key not in ref_dict:
             _logger.error('no %s %s value in ref dict: %s' %
                           (category_id, key, ref_dict))
             raise ValueError('no %s value' % key)
@@ -1383,7 +1384,7 @@ Please contact the site admins %s if you think it should be enabled.
             (filehandle, tmptopicfile) = tempfile.mkstemp(text=True)
             os.write(filehandle, topic_mrsl)
             os.close(filehandle)
-        except Exception, exc:
+        except Exception as exc:
             msg = 'Problem writing temporary topic file on server.'
             logger.error("%s : %s" % (msg, exc))
             output_objects.append(
@@ -1395,7 +1396,7 @@ Please contact the site admins %s if you think it should be enabled.
 
         try:
             os.remove(tmptopicfile)
-        except Exception, exc:
+        except Exception as exc:
             pass  # probably deleted by parser!
 
         if parse_status:
@@ -1555,7 +1556,7 @@ Please contact the site admins %s if you think it should be enabled.
                     category_entry = fill_category(configuration,
                                                    gdp_category_id, action,
                                                    dict(gdp_ref_pairs))
-                except ValueError, err:
+                except ValueError as err:
                     status = False
                     msg = "missing reference: %s" % err
 
@@ -1609,7 +1610,7 @@ Please contact the site admins %s if you think it should be enabled.
                     category_entry = fill_category(configuration,
                                                    gdp_category_id, action,
                                                    dict(gdp_ref_pairs))
-                except ValueError, err:
+                except ValueError as err:
                     status = False
                     msg = "missing reference: %s" % err
 
@@ -1660,7 +1661,7 @@ Please contact the site admins %s if you think it should be enabled.
                     category_entry = fill_category(configuration,
                                                    gdp_category_id, action,
                                                    dict(gdp_ref_pairs))
-                except ValueError, err:
+                except ValueError as err:
                     status = False
                     msg = "missing reference: %s" % err
 
@@ -1693,7 +1694,7 @@ Please contact the site admins %s if you think it should be enabled.
             try:
                 category_entry = fill_category(configuration, gdp_category_id,
                                                action, dict(gdp_ref_pairs))
-            except ValueError, err:
+            except ValueError as err:
                 status = False
                 msg = "missing reference: %s" % err
 

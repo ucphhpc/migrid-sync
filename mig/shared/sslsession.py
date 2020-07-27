@@ -26,16 +26,17 @@
 #
 
 """Functions for extracting SSL session information"""
+from __future__ import absolute_import
 
 import binascii
 
 # NOTE: We avoid import failure to support modules where SSL is optional
 try:
     import _sslsession
-except ImportError, ierr:
+except ImportError as ierr:
     _sslsession = None
 
-from shared.pwhash import make_digest
+from .shared.pwhash import make_digest
 
 SSL_SESSION_ID_LENGTH = 64
 SSL_MASTER_KEY_LENGTH = 96
@@ -55,7 +56,7 @@ def ssl_master_key(configuration, ssl_sock):
         if len(master_key) != SSL_MASTER_KEY_LENGTH \
                 or master_key.isdigit() and int(master_key) == 0:
             raise TypeError("Invalid SSL master_key: %s" % master_key)
-    except Exception, exc:
+    except Exception as exc:
         master_key = None
         logger.error(exc)
 
@@ -80,7 +81,7 @@ def ssl_session_id(configuration, ssl_sock):
             # https://tools.ietf.org/html/rfc5246
             logger.warning("Found empty SSL session_id: %s" % session_id)
             session_id = None
-    except Exception, exc:
+    except Exception as exc:
         session_id = None
         logger.error(exc)
 

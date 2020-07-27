@@ -28,13 +28,15 @@
 """This module contains CGI/WSGI/... specific functions for
 handling user input.
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 # Expose some safeinput functions here, too
 
-from shared.safeinput import validated_boolean, validated_string, \
+from .shared.safeinput import validated_boolean, validated_string, \
     validated_path, validated_fqdn, validated_commonname, \
     validated_integer, validated_job_id, html_escape
-from shared.safeinput import InputException as CgiInputException
+from .shared.safeinput import InputException as CgiInputException
 
 
 def parse_input(user_arguments_dict, fields):
@@ -44,13 +46,13 @@ def parse_input(user_arguments_dict, fields):
     error = ''
     for (name, settings) in fields.items():
         parsed_entry = {}
-        if not settings.has_key('kind'):
+        if 'kind' not in settings:
             error += 'missing kind for %s in parse_input!\n' % name
             continue
 
         kind = settings['kind']
         if 'first' == kind:
-            if settings.has_key('default'):
+            if 'default' in settings:
                 try:
                     parsed_entry['raw'] = user_arguments_dict[name][0]
                 except:
@@ -58,7 +60,7 @@ def parse_input(user_arguments_dict, fields):
             else:
                 parsed_entry['raw'] = user_arguments_dict[name][0]
         elif 'last' == kind:
-            if settings.has_key('default'):
+            if 'default' in settings:
                 try:
                     parsed_entry['raw'] = \
                         user_arguments_dict[name][len(user_arguments_dict[name])
@@ -70,7 +72,7 @@ def parse_input(user_arguments_dict, fields):
                     user_arguments_dict[name][len(user_arguments_dict[name])
                                               - 1]
         elif 'list' == kind:
-            if settings.has_key('default'):
+            if 'default' in settings:
                 try:
                     parsed_entry['raw'] = user_arguments_dict[name]
                 except:
@@ -84,14 +86,14 @@ def parse_input(user_arguments_dict, fields):
 
         # Check that input is valid
 
-        if not settings.has_key('check'):
+        if 'check' not in settings:
             error += 'missing check for %s in parse_input!' % name
             continue
 
         check = settings['check']
         try:
             check(parsed_entry['raw'])
-        except ValueError, verr:
+        except ValueError as verr:
             error += 'invalid contents of %s in parse_input! (%s)'\
                 % (name, verr)
             continue
@@ -125,7 +127,7 @@ def parse_argument(
     error = ''
     raw = ''
 
-    if required and not user_arguments_dict.has_key(name):
+    if required and name not in user_arguments_dict:
         error = '%s argument required but not found!' % name
         return ('', '', error)
 
@@ -143,7 +145,7 @@ def parse_argument(
 
     try:
         check(raw)
-    except ValueError, verr:
+    except ValueError as verr:
         error = 'invalid contents of %s in parse_argument! (%s)'\
             % (name, verr)
 
@@ -175,14 +177,14 @@ def fieldstorage_to_dict(fieldstorage, fields=[]):
             # do not overwrite
 
             filename_key = key + 'filename'
-            if not params.has_key(filename_key):
+            if filename_key not in params:
                 try:
                     if fieldstorage[key].filename != None:
                         params[filename_key] = \
                             fieldstorage[key].filename
-                except Exception, exc:
+                except Exception as exc:
                     pass
-        except Exception, err:
-            print 'Warning: failed to extract values for %s: %s'\
-                % (key, err)
+        except Exception as err:
+            print('Warning: failed to extract values for %s: %s'\
+                % (key, err))
     return params

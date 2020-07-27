@@ -26,18 +26,19 @@
 #
 
 """Show summary contents of frozen archive"""
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared.defaults import default_pager_entries, freeze_flavors, \
+from .shared import returnvalues
+from .shared.defaults import default_pager_entries, freeze_flavors, \
     csrf_field, keyword_updating, keyword_final
-from shared.freezefunctions import is_frozen_archive, get_frozen_archive, \
+from .shared.freezefunctions import is_frozen_archive, get_frozen_archive, \
     build_freezeitem_object, brief_freeze, supported_hash_algos, TARGET_PATH
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.html import man_base_js, man_base_html, html_post_helper
-from shared.init import initialize_main_variables, find_entry
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from .shared.html import man_base_js, man_base_html, html_post_helper
+from .shared.init import initialize_main_variables, find_entry
 
 list_operations = ['showlist', 'list']
 show_operations = ['show', 'showlist']

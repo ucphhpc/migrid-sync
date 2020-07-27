@@ -28,12 +28,13 @@
 """Call fsync sys call on provided paths to force buffer sync to disk without requiring general sync of all buffered files as in sync command.
 This is intended as a workaround for delayed writes on NFS.
 """
+from __future__ import print_function
 
 import os
 import sys
 
 if len(sys.argv) < 2:
-    print 'Usage: %s PATH [PATH ...]' % os.path.basename(sys.argv[0])
+    print('Usage: %s PATH [PATH ...]' % os.path.basename(sys.argv[0]))
     sys.exit(1)
 
 for path in sys.argv[1:]:

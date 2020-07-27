@@ -27,14 +27,15 @@
 #
 
 """Virtual machine connection back end functionality"""
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared import vms
-from shared.functional import validate_input_and_cert
-from shared.init import initialize_main_variables, find_entry
-from shared.settings import load_settings
+from .shared import returnvalues
+from .shared import vms
+from .shared.functional import validate_input_and_cert
+from .shared.init import initialize_main_variables, find_entry
+from .shared.settings import load_settings
 
 
 def signature():
@@ -75,7 +76,7 @@ Please contact the site admins %s if you think they should be enabled.
         return (output_objects, returnvalues.OK)
 
     settings_dict = load_settings(client_id, configuration)
-    if not settings_dict or not settings_dict.has_key('VNCDISPLAY'):
+    if not settings_dict or 'VNCDISPLAY' not in settings_dict:
         logger.info('Settings dict does not have VNCDISPLAY key - using default'
                     )
         (vnc_display_width, vnc_display_height) = (1024, 768)

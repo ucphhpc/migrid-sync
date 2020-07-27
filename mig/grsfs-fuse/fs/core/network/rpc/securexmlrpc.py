@@ -28,6 +28,7 @@
 """A SSL/TLS secured version of the built-in XMLRPC server and proxy. Requires
 python-2.7 or later to provide the ssl module.
 """
+from __future__ import print_function
 
 import os
 import re
@@ -202,15 +203,15 @@ if __name__ == '__main__':
         address_tuple = (address_tuple[0], int(sys.argv[2]))
     if 'client' in sys.argv[3:]:
         proxy = SecureXMLRPCServerProxy(address_tuple)
-        print "requesting list of methods from server on %s:%d" % address_tuple
+        print("requesting list of methods from server on %s:%d" % address_tuple)
         reply = proxy.system.listMethods()
-        print "server replied: %s" % reply
+        print("server replied: %s" % reply)
     else:
         # Create server
         server = SecureXMLRPCServer(address_tuple)
         server.register_introspection_functions()
         # Run the server's main loop
-        print "Starting SecureXMLRPCServer on %s:%s" % address_tuple
+        print("Starting SecureXMLRPCServer on %s:%s" % address_tuple)
         server.serve_forever()
 
         

@@ -26,8 +26,9 @@
 #
 
 """Delete an existing sharelink e.g. in a scheduled task"""
+from __future__ import absolute_import
 
-from shared.functionality.sharelink import main as sharelink_main, \
+from .shared.functionality.sharelink import main as sharelink_main, \
     signature as sharelink_signature
 
 

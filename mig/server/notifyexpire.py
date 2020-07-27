@@ -33,6 +33,7 @@ By default sends the information on email to the registered notification
 address or email from Distinguished Name field of user entry. If user
 configured additional messaging protocols they can also be used.
 """
+from __future__ import print_function
 
 import datetime
 import getopt
@@ -48,7 +49,7 @@ from shared.useradm import init_user_adm, search_users, default_search, \
 def usage(name='notifyexpire.py'):
     """Usage help"""
 
-    print """Check internal OpenID account expire for user(s) from user
+    print("""Check internal OpenID account expire for user(s) from user
 database and send warning email if imminent.
 Usage:
 %(name)s [NOTIFY_OPTIONS]
@@ -67,7 +68,7 @@ Where NOTIFY_OPTIONS may be one or more of:
 
 One or more destinations may be set by combining multiple -e, -s and -a
 options.
-""" % {'name': name}
+""" % {'name': name})
 
 
 if '__main__' == __name__:
@@ -87,8 +88,8 @@ if '__main__' == __name__:
     opt_args = 'aA:B:c:Cd:e:hI:s:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
-    except getopt.GetoptError, err:
-        print 'Error: ', err.msg
+    except getopt.GetoptError as err:
+        print('Error: ', err.msg)
         usage()
         sys.exit(1)
 
@@ -135,12 +136,12 @@ if '__main__' == __name__:
         elif opt == '-v':
             verbose = True
         else:
-            print 'Error: %s not supported!' % opt
+            print('Error: %s not supported!' % opt)
             usage()
             sys.exit(0)
 
     if args:
-        print 'Error: Non-option arguments are not supported - missing quotes?'
+        print('Error: Non-option arguments are not supported - missing quotes?')
         usage()
         sys.exit(1)
 
@@ -154,40 +155,40 @@ if '__main__' == __name__:
     after = datetime.datetime.fromtimestamp(search_filter['expire_after'])
     if verbose:
         if hits:
-            print "Check %d expire(s) between %s and %s for user ID '%s'" % \
-                  (len(hits), after, before, search_dn)
+            print("Check %d expire(s) between %s and %s for user ID '%s'" % \
+                  (len(hits), after, before, search_dn))
         else:
-            print "No expires between %s and %s for user ID '%s'" % \
-                  (after, before, search_dn)
+            print("No expires between %s and %s for user ID '%s'" % \
+                  (after, before, search_dn))
     for (user_id, user_dict) in hits:
         if verbose:
-            print 'Check for %s' % user_id
+            print('Check for %s' % user_id)
 
         if configuration.site_enable_gdp and \
                 user_id.split('/')[-1].startswith(gdp_prefix):
             if verbose:
-                print "Skip GDP project account: %s" % user_id
+                print("Skip GDP project account: %s" % user_id)
             continue
 
         if not user_dict.get('password', '') and \
                 not user_dict.get('password_hash', ''):
             if verbose:
-                print "Skip account %s without local password" % user_id
+                print("Skip account %s without local password" % user_id)
             continue
 
         (_, username, full_name, addresses, errors) = user_migoid_notify(
             user_id, raw_targets, conf_path, db_path, verbose, admin_copy)
         if errors:
-            print "Address lookup errors for %s :" % user_id
-            print '\n'.join(errors)
+            print("Address lookup errors for %s :" % user_id)
+            print('\n'.join(errors))
             exit_code += 1
             continue
         if not username:
-            print "Error: found no username for %s" % user_id
+            print("Error: found no username for %s" % user_id)
             exit_code += 1
             continue
         expire = datetime.datetime.fromtimestamp(user_dict['expire'])
-        print "Account %s expires on %s" % (user_id, expire)
+        print("Account %s expires on %s" % (user_id, expire))
         notify_dict = {'JOB_ID': 'NOJOBID', 'USER_CERT': user_id, 'NOTIFY': []}
         for (proto, address_list) in addresses.items():
             for address in address_list:
@@ -195,8 +196,8 @@ if '__main__' == __name__:
         # Don't actually send unless requested
         if not raw_targets and not admin_copy:
             continue
-        print "Send internal OpenID account expire warning for '%s' to:\n%s" \
-              % (user_id, '\n'.join(notify_dict['NOTIFY']))
+        print("Send internal OpenID account expire warning for '%s' to:\n%s" \
+              % (user_id, '\n'.join(notify_dict['NOTIFY'])))
         notify_user(notify_dict, [user_id, username, full_name, user_dict],
                     'ACCOUNTEXPIRE', logger, '', configuration)
 

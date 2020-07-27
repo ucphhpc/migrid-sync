@@ -158,7 +158,7 @@ def track_open_session(configuration,
                               proto, _active_sessions, do_lock=False):
             raise IOError("%s save sessions failed for %s" %
                           (proto, client_id))
-    except Exception, exc:
+    except Exception as exc:
         result = None
         logger.error("track open session failed: %s" % exc)
 
@@ -234,7 +234,7 @@ def track_close_session(configuration,
             configuration, proto, exclusive=True)
     _active_sessions = _load_sessions(configuration, proto, do_lock=False)
     open_sessions = _active_sessions.get(client_id, {}).get(proto, {})
-    if open_sessions and open_sessions.has_key(session_id):
+    if open_sessions and session_id in open_sessions:
         try:
             result = open_sessions[session_id]
             del open_sessions[session_id]
@@ -242,7 +242,7 @@ def track_close_session(configuration,
                                   proto, _active_sessions, do_lock=False):
                 raise IOError("%s save sessions failed for %s" %
                               (proto, client_id))
-        except Exception, exc:
+        except Exception as exc:
             result = None
             msg = "track close session failed for client: %s" % client_id \
                 + "with session id: %s" % session_id \

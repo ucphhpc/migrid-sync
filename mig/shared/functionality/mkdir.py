@@ -26,19 +26,20 @@
 #
 
 """Emulate the un*x function with the same name"""
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared.base import client_id_dir
-from shared.fileio import check_write_access
-from shared.functional import validate_input, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit
-from shared.init import initialize_main_variables, find_entry
-from shared.parseflags import parents, verbose
-from shared.sharelinks import extract_mode_id
-from shared.userio import GDPIOLogError, gdp_iolog
-from shared.validstring import valid_user_path
+from .shared import returnvalues
+from .shared.base import client_id_dir
+from .shared.fileio import check_write_access
+from .shared.functional import validate_input, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit
+from .shared.init import initialize_main_variables, find_entry
+from .shared.parseflags import parents, verbose
+from .shared.sharelinks import extract_mode_id
+from .shared.userio import GDPIOLogError, gdp_iolog
+from .shared.validstring import valid_user_path
 
 
 def signature():
@@ -100,7 +101,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     elif share_id:
         try:
             (share_mode, _) = extract_mode_id(configuration, share_id)
-        except ValueError, err:
+        except ValueError as err:
             logger.error('%s called with invalid share_id %s: %s' %
                          (op_name, share_id, err))
             output_objects.append(
@@ -217,7 +218,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 else:
                     os.mkdir(abs_path)
                 logger.info('%s %s done' % (op_name, abs_path))
-            except Exception, exc:
+            except Exception as exc:
                 if not isinstance(exc, GDPIOLogError):
                     gdp_iolog(configuration,
                               client_id,

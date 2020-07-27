@@ -27,13 +27,14 @@
 #
 
 """JSON interface for workflows related requests"""
+from __future__ import absolute_import
 
 import cgi
 import cgitb
 cgitb.enable()
 
-from shared.functionality.workflowsjsoninterface import main
-from shared.cgiscriptstub import run_cgi_script_possibly_with_cert
+from .shared.functionality.workflowsjsoninterface import main
+from .shared.cgiscriptstub import run_cgi_script_possibly_with_cert
 
 # Expect requests with a JSON formatted body and no field values
 run_cgi_script_possibly_with_cert(main, delayed_input=True, delay_format=True)

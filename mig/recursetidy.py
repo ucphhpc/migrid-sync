@@ -108,7 +108,7 @@ def tidy_recursively(orig_dir, tidied_dir, filter_pattern):
                 logging.info("tidy %s into %s" % (orig_path, tidied_path))
                 tidy_up(orig_path, tidied_path)
                 tidied_path_list.append(tidied_path)
-            except StandardError, tidy_err:
+            except Exception as tidy_err:
                 logging.error("tidy failed for %s: %s" % (orig_path, tidy_err))
     return tidied_path_list
 
@@ -206,7 +206,7 @@ if __name__ == "__main__":
         tidy_all(in_path, out_path, target_pattern)
         after_tidy = time.time()
         logging.info("finished in %.1f seconds" % (after_tidy - before_tidy))
-    except StandardError, err:
+    except Exception as err:
         logging.error("%s" % err)
         sys.exit(1)
     logging.shutdown()

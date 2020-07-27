@@ -29,6 +29,7 @@
 #
 
 """Grep for sftp negotiation in sftp.log and translate source IP to FQDN"""
+from __future__ import print_function
 
 import getopt
 import multiprocessing
@@ -44,7 +45,7 @@ from shared.useradm import init_user_adm
 def usage(name='sftpfailinfo.py'):
     """Usage help"""
 
-    print """%(doc)s
+    print("""%(doc)s
 
 Usage:
 %(name)s [OPTIONS]
@@ -54,7 +55,7 @@ Where OPTIONS may be one or more of:
    -v                  Verbose output
    -x TRUSTED_IP       Trust IPs starting with this prefix (multiple allowed)
    -X TRUSTED_DOMAIN   Trust FQDNs ending with this suffix (multiple allowed)
-""" % {'doc': __doc__, 'name': name}
+""" % {'doc': __doc__, 'name': name})
 
 
 def dns_lookup(ip_addr):
@@ -79,8 +80,8 @@ if '__main__' == __name__:
     opt_args = 'c:hvx:X:'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
-    except getopt.GetoptError, err:
-        print 'Error: ', err.msg
+    except getopt.GetoptError as err:
+        print('Error: ', err.msg)
         usage()
         sys.exit(1)
 
@@ -97,7 +98,7 @@ if '__main__' == __name__:
         elif opt == '-X':
             trust_fqdn_list.append(val.strip())
         else:
-            print 'Error: %s not supported!' % opt
+            print('Error: %s not supported!' % opt)
             sys.exit(1)
 
     if conf_path:
@@ -110,14 +111,14 @@ if '__main__' == __name__:
     extract_regex = re.compile(extract_pattern)
     sftp_log = configuration.user_sftp_log
     if verbose:
-        print "Searching for SFTP negotiation errors in %s" % sftp_log
+        print("Searching for SFTP negotiation errors in %s" % sftp_log)
     log_fd = open(sftp_log)
     for line in log_fd:
         if line.find('WARNING client negotiation errors ') != -1:
             matches.append(line)
     log_fd.close()
     if verbose:
-        print "Found %s matching log lines" % len(matches)
+        print("Found %s matching log lines" % len(matches))
     ip_fail_map = {}
     for line in matches:
         match = extract_regex.match(line)
@@ -132,11 +133,11 @@ if '__main__' == __name__:
 
     if not ip_fail_map:
         if verbose:
-            print "No errors to report"
+            print("No errors to report")
         sys.exit(0)
 
     if verbose:
-        print "Reverse DNS lookup %d source IP(s)" % len(ip_fail_map.keys())
+        print("Reverse DNS lookup %d source IP(s)" % len(ip_fail_map.keys()))
     # Reverse DNS lookup is horribly slow with timeout - use multiprocessing
     workers = multiprocessing.Pool(processes=64)
     rdns_results = workers.map(dns_lookup, ip_fail_map.keys())
@@ -144,9 +145,9 @@ if '__main__' == __name__:
     for (source_ip, source_fqdn) in rdns_results:
         fqdn_fail_map[source_fqdn] = ip_fail_map[source_ip]
 
-    print ""
-    print "Full error statistics:"
-    print "----------------------"
+    print("")
+    print("Full error statistics:")
+    print("----------------------")
     sorted_hosts = fqdn_fail_map.keys()
     # Try to sort in a more intuitive way where TLD is considered first
     sorted_hosts.sort(cmp=lambda a, b: cmp(a.split(".")[::-1],
@@ -176,15 +177,15 @@ if '__main__' == __name__:
             if source_fqdn.endswith(trust_suffix):
                 trust = True
         if trust:
-            print host_stats
-            print " * You may want to look into these trusted origin failures"
-            print ""
+            print(host_stats)
+            print(" * You may want to look into these trusted origin failures")
+            print("")
             continue
         if total > show_limit:
-            print host_stats
+            print(host_stats)
             if total > offender_limit:
-                print " *  You may want to verify origin and block if fishy:"
-                print "\twhois %(source_ip)s|grep 'descr:'" % err_map
-                print "\tsudo iptables -I INPUT -s %(source_ip)s/32 -j DROP" \
-                      % err_map
-            print ""
+                print(" *  You may want to verify origin and block if fishy:")
+                print("\twhois %(source_ip)s|grep 'descr:'" % err_map)
+                print("\tsudo iptables -I INPUT -s %(source_ip)s/32 -j DROP" \
+                      % err_map)
+            print("")

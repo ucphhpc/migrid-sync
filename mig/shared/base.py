@@ -26,12 +26,14 @@
 #
 
 """Base helper functions"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import base64
 import os
 
 # IMPORTANT: do not import any other MiG modules here - to avoid import loops
-from shared.defaults import sandbox_names, _user_invisible_files, \
+from .shared.defaults import sandbox_names, _user_invisible_files, \
     _user_invisible_dirs, _vgrid_xgi_scripts, cert_field_order, \
     gdp_distinguished_field, valid_gdp_auth_scripts, valid_gdp_anon_scripts
 
@@ -479,25 +481,25 @@ if __name__ == '__main__':
          [('prefix', ''), ('somedir/prefix', ''), ('', 'suffix'),
           ('', 'suffix/somedir'), ('prefix', 'suffix')]]
     legal += ['sample.txt', 'somedir/sample.txt', '/somedir/sample.txt']
-    print "orig id %s, dir %s, id %s (match %s)" % \
-          (orig_id, client_dir, client_id, orig_id == client_id)
-    print "invisible tests"
-    print "check that these are invisible:"
+    print("orig id %s, dir %s, id %s (match %s)" % \
+          (orig_id, client_dir, client_id, orig_id == client_id))
+    print("invisible tests")
+    print("check that these are invisible:")
     for path in illegal:
-        print "  %s: %s" % (path, invisible_path(path))
-    print "make sure these are not invisible:"
+        print("  %s: %s" % (path, invisible_path(path)))
+    print("make sure these are not invisible:")
     for path in legal:
-        print "  %s: %s" % (path, not invisible_path(path))
+        print("  %s: %s" % (path, not invisible_path(path)))
 
-    from shared.conf import get_configuration_object
+    from .shared.conf import get_configuration_object
     configuration = get_configuration_object()
-    print "check script restrictions:"
+    print("check script restrictions:")
     for script_name in ['reqoid.py', 'ls.py', 'sharelink.py', 'put']:
         (allow, msg) = allow_script(configuration, script_name, '')
-        print "check %s without client id: %s %s" % (script_name, allow, msg)
+        print("check %s without client id: %s %s" % (script_name, allow, msg))
         (allow, msg) = allow_script(configuration, script_name, client_id)
-        print "check %s with client id '%s': %s %s" % (script_name, client_id,
-                                                       allow, msg)
-    print "brief format of short list: %s" % brief_list(range(5))
-    print "brief format of long list: %s" % brief_list(range(30))
-    print "brief format of huge list: %s" % brief_list(range(200))
+        print("check %s with client id '%s': %s %s" % (script_name, client_id,
+                                                       allow, msg))
+    print("brief format of short list: %s" % brief_list(range(5)))
+    print("brief format of long list: %s" % brief_list(range(30)))
+    print("brief format of huge list: %s" % brief_list(range(200)))

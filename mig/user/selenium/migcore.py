@@ -34,6 +34,7 @@ driver.get(url)
 mig_login(driver, url, login, passwd)
 ...
 """
+from __future__ import print_function
 
 # Robust import - only fail if used without being available
 try:
@@ -61,7 +62,7 @@ def init_driver(browser):
     elif browser.lower() == 'phantomjs':
         driver = webdriver.PhantomJS()
     else:
-        print "ERROR: Browser _NOT_ supported: %s" % browser
+        print("ERROR: Browser _NOT_ supported: %s" % browser)
         driver = None
     return driver
 
@@ -107,11 +108,11 @@ def ucph_login(driver, url, login, passwd, callbacks={}):
             state = 'login-ready'
             if callbacks.get(state, None):
                 callbacks[state](driver, state)
-    except Exception, exc:
-        print "ERROR: failed in UCPH login: %s" % exc
+    except Exception as exc:
+        print("ERROR: failed in UCPH login: %s" % exc)
 
     if do_login:
-        print "Starting UCPH OpenID login"
+        print("Starting UCPH OpenID login")
         login_elem = driver.find_element_by_name("user")
         pass_elem = driver.find_element_by_name("pwd")
         login_elem.send_keys(login)
@@ -124,15 +125,15 @@ def ucph_login(driver, url, login, passwd, callbacks={}):
         try:
             error_elem = driver.find_element_by_class_name("alert")
             if error_elem:
-                print "UCPH OpenID login error: %s" % error_elem.text
+                print("UCPH OpenID login error: %s" % error_elem.text)
                 status = False
         except Exception:
             pass
     else:
         status = False
-        print "UCPH OpenID login _NOT_ found"
+        print("UCPH OpenID login _NOT_ found")
 
-    print "UCPH OpenID login result: %s" % status
+    print("UCPH OpenID login result: %s" % status)
     return status
 
 
@@ -153,11 +154,11 @@ def mig_login(driver, url, login, passwd, callbacks={}):
             state = 'login-ready'
             if callbacks.get(state, None):
                 callbacks[state](driver, state)
-    except Exception, exc:
-        print "ERROR: failed in MiG login: %s" % exc
+    except Exception as exc:
+        print("ERROR: failed in MiG login: %s" % exc)
 
     if do_login:
-        print "Starting MiG OpenID login"
+        print("Starting MiG OpenID login")
         login_elem = driver.find_element_by_name("identifier")
         pass_elem = driver.find_element_by_name("password")
         login_elem.send_keys(login)
@@ -170,15 +171,15 @@ def mig_login(driver, url, login, passwd, callbacks={}):
         try:
             error_elem = driver.find_element_by_class_name("errortext")
             if error_elem:
-                print "UCPH OpenID login error: %s" % error_elem.text
+                print("UCPH OpenID login error: %s" % error_elem.text)
                 status = False
         except Exception:
             pass
     else:
         status = False
-        print "MiG OpenID login _NOT_ found"
+        print("MiG OpenID login _NOT_ found")
 
-    print "MiG OpenID login result: %s" % status
+    print("MiG OpenID login result: %s" % status)
     return status
 
 
@@ -201,8 +202,8 @@ def shared_twofactor(driver, url, twofactor_key, callbacks={}):
             if pyotp is None:
                 raise Exception("2FA form found but no pyotp helper installed")
             twofactor_token = pyotp.TOTP(twofactor_key).now()
-    except Exception, exc:
-        print "ERROR: failed in UCPH 2FA: %s" % exc
+    except Exception as exc:
+        print("ERROR: failed in UCPH 2FA: %s" % exc)
 
     if twofactor_token:
         # print "DEBUG: send token %s" % twofactor_token
@@ -213,9 +214,9 @@ def shared_twofactor(driver, url, twofactor_key, callbacks={}):
         driver.find_element_by_class_name("submit").click()
     else:
         status = False
-        print "Post-OpenID 2FA _NOT_ found"
+        print("Post-OpenID 2FA _NOT_ found")
 
-    print "2-Factor Auth result: %s" % status
+    print("2-Factor Auth result: %s" % status)
     return status
 
 
@@ -227,7 +228,7 @@ def shared_logout(driver, url, login, passwd, callbacks={}):
     """
     status = True
     do_logout = False
-    print "Do logout"
+    print("Do logout")
     try:
         link = driver.find_element_by_link_text('Logout')
         # print "DEBUG: found link: %s" % link
@@ -240,11 +241,11 @@ def shared_logout(driver, url, login, passwd, callbacks={}):
                 callbacks[state](driver, state)
             # print "DEBUG: click link: %s" % link
             link.click()
-    except Exception, exc:
-        print "ERROR: failed in logout: %s" % exc
+    except Exception as exc:
+        print("ERROR: failed in logout: %s" % exc)
 
     if do_logout:
-        print "Confirm logout"
+        print("Confirm logout")
         confirm_elem = driver.find_element_by_link_text("Yes")
         # print "DEBUG: found confirm elem: %s" % confirm_elem
         state = 'logout-confirm'
@@ -254,7 +255,7 @@ def shared_logout(driver, url, login, passwd, callbacks={}):
         confirm_elem.click()
     else:
         status = False
-        print "Confirm login _NOT_ found"
+        print("Confirm login _NOT_ found")
 
-    print "Finished logout: %s" % status
+    print("Finished logout: %s" % status)
     return status

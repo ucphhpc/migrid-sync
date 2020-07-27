@@ -31,6 +31,7 @@ configured.
 
 Requires watchdog module (https://pypi.python.org/pypi/watchdog).
 """
+from __future__ import print_function
 
 import datetime
 import fnmatch
@@ -51,7 +52,7 @@ try:
         FileModifiedEvent, FileCreatedEvent, FileDeletedEvent, \
         DirModifiedEvent, DirCreatedEvent, DirDeletedEvent
 except ImportError:
-    print 'ERROR: the python watchdog module is required for this daemon'
+    print('ERROR: the python watchdog module is required for this daemon')
     sys.exit(1)
 
 # Use the scandir module version if available:
@@ -66,8 +67,8 @@ try:
         # Important os.walk compatibility utf8 fixes were not added until 1.3
 
         raise ImportError('scandir version is too old >= 1.3 required')
-except ImportError, exc:
-    print 'ERROR: %s' % str(exc)
+except ImportError as exc:
+    print('ERROR: %s' % str(exc))
     sys.exit(1)
 
 from shared.base import force_utf8, client_dir_id, client_id_dir
@@ -104,7 +105,7 @@ stop_running = multiprocessing.Event()
 def stop_handler(sig, frame):
     """A simple signal handler to quit on Ctrl+C (SIGINT) in main"""
     # Print blank line to avoid mix with Ctrl-C line
-    print ''
+    print('')
     stop_running.set()
 
 
@@ -142,8 +143,8 @@ def run_command(
     main = id
     txt_format = id
     try:
-        exec 'from shared.functionality.%s import main' % function
-        exec 'from shared.output import txt_format'
+        exec('from shared.functionality.%s import main' % function)
+        exec('from shared.output import txt_format')
 
         # logger.debug('(%s) run %s on %s for %s' % \
         #              (pid, function, user_arguments_dict, client_id))
@@ -157,7 +158,7 @@ def run_command(
         os.environ['REMOTE_ADDR'] = '127.0.0.1'
         (output_objects, (ret_code, ret_msg)) = main(client_id,
                                                      user_arguments_dict)
-    except Exception, exc:
+    except Exception as exc:
         logger.error('(%s) failed to run %s main on %s: %s' %
                      (pid, function, user_arguments_dict, exc))
         import traceback
@@ -171,7 +172,7 @@ def run_command(
     try:
         txt_out = txt_format(configuration, ret_code, ret_msg,
                              output_objects)
-    except Exception, exc:
+    except Exception as exc:
         txt_out = 'internal command output text formatting failed'
         logger.error('(%s) text formating failed: %s\nraw output is: %s %s %s'
                      % (pid, exc, ret_code, ret_msg, output_objects))
@@ -218,14 +219,14 @@ class MiGCrontabEventHandler(PatternMatchingEventHandler):
             # logger.debug('(%s) Updating crontab monitor for src_path: %s, event: %s'
             #              % (pid, src_path, state))
 
-            print '(%s) Updating crontab monitor for src_path: %s, event: %s' \
-                % (pid, src_path, state)
+            print('(%s) Updating crontab monitor for src_path: %s, event: %s' \
+                % (pid, src_path, state))
 
             if os.path.exists(src_path):
 
                 # _crontab_monitor_lock.acquire()
 
-                if not shared_state['crontab_inotify']._wd_for_path.has_key(src_path):
+                if src_path not in shared_state['crontab_inotify']._wd_for_path:
 
                     # logger.debug('(%s) Adding watch for: %s' % (pid,
                     #             src_path))
@@ -414,7 +415,7 @@ def __handle_cronjob(configuration, client_id, timestamp, crontab_entry):
                     (pid, client_id, ' '.join(command_list)))
         __cron_info(configuration, client_id,
                     'ran command: %s' % ' '.join(command_list))
-    except Exception, exc:
+    except Exception as exc:
         command_str = ' '.join(command_list)
         logger.error('(%s) failed to run command for %s: %s (%s)' %
                      (pid, client_id, command_str, exc))
@@ -439,7 +440,7 @@ def run_handler(configuration, client_id, timestamp, crontab_entry):
             worker.daemon = True
             worker.start()
             waiting_for_thread_resources = False
-        except threading.ThreadError, exc:
+        except threading.ThreadError as exc:
 
             # logger.debug('(%s) Waiting for thread resources to handle crontab: %s'
             #              % (pid, crontab_entry))
@@ -452,7 +453,7 @@ def monitor(configuration):
 
     pid = multiprocessing.current_process().pid
 
-    print 'Starting global crontab monitor process'
+    print('Starting global crontab monitor process')
     logger.info('Starting global crontab monitor process')
 
     # Set base_dir and base_dir_len
@@ -558,12 +559,12 @@ def monitor(configuration):
                 else:
                     del all_atjobs[atjobs_path]
         except KeyboardInterrupt:
-            print '(%s) caught interrupt' % pid
+            print('(%s) caught interrupt' % pid)
             stop_running.set()
-        except Exception, exc:
+        except Exception as exc:
             logger.error('unexpected exception in monitor: %s' % exc)
             import traceback
-            print traceback.format_exc()
+            print(traceback.format_exc())
 
         # Throttle down until next minute
 
@@ -580,7 +581,7 @@ def monitor(configuration):
         # print('main loop sleeping %ds' % sleep_time)
         time.sleep(sleep_time)
 
-    print '(%s) Exiting crontab monitor' % pid
+    print('(%s) Exiting crontab monitor' % pid)
     logger.info('(%s) Exiting crontab monitor' % pid)
     return 0
 
@@ -609,18 +610,18 @@ if __name__ == '__main__':
     if not configuration.site_enable_crontab:
         err_msg = "Cron support is disabled in configuration!"
         logger.error(err_msg)
-        print err_msg
+        print(err_msg)
         sys.exit(1)
 
-    print '''This is the MiG cron handler daemon which monitors user crontab
+    print('''This is the MiG cron handler daemon which monitors user crontab
 files and reacts to any configured actions when time is up.
 
 Set the MIG_CONF environment to the server configuration path
 unless it is available in mig/server/MiGserver.conf
-'''
+''')
 
     main_pid = os.getpid()
-    print 'Starting Cron handler daemon - Ctrl-C to quit'
+    print('Starting Cron handler daemon - Ctrl-C to quit')
     logger.info('(%s) Starting Cron handler daemon' % main_pid)
 
     # Start a single global monitor for all crontabs
@@ -630,7 +631,7 @@ unless it is available in mig/server/MiGserver.conf
     crontab_monitor.start()
 
     logger.debug('(%s) Starting main loop' % main_pid)
-    print "%s: Start main loop" % os.getpid()
+    print("%s: Start main loop" % os.getpid())
     while not stop_running.is_set():
         try:
             time.sleep(1)
@@ -638,14 +639,14 @@ unless it is available in mig/server/MiGserver.conf
             stop_running.set()
             # NOTE: we can't be sure if SIGINT was sent to only main process
             #       so we make sure to propagate to monitor child
-            print "Interrupt requested - close monitor and shutdown"
+            print("Interrupt requested - close monitor and shutdown")
             logger.info('(%s) Shut down monitor and wait' % os.getpid())
             mon_pid = crontab_monitor.pid
             if mon_pid is not None:
                 logger.debug('send exit signal to monitor %s' % mon_pid)
                 os.kill(mon_pid, signal.SIGINT)
             break
-        except Exception, exc:
+        except Exception as exc:
             logger.error('(%s) Caught unexpected exception: %s' % (os.getpid(),
                                                                    exc))
 
@@ -659,7 +660,7 @@ unless it is available in mig/server/MiGserver.conf
     else:
         logger.debug('crontab monitor %s: done' % mon_pid)
 
-    print 'Cron handler daemon shutting down'
+    print('Cron handler daemon shutting down')
     logger.info('(%s) Cron handler daemon shutting down' % main_pid)
 
     sys.exit(0)

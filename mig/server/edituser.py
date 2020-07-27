@@ -26,6 +26,7 @@
 #
 
 """Edit MiG user in user database and file system"""
+from __future__ import print_function
 
 import getopt
 import os
@@ -38,7 +39,7 @@ from shared.useradm import init_user_adm, edit_user
 def usage(name='edituser.py'):
     """Usage help"""
 
-    print """Edit existing user in MiG user database and file system. Allows
+    print("""Edit existing user in MiG user database and file system. Allows
 user ID changes.
 NOTE: It's usually easier to use editmeta.py for non-ID field changes.
 Usage:
@@ -54,7 +55,7 @@ Where OPTIONS may be one or more of:
    -R ROLES            Change user affiliation to ROLES
    -v                  Verbose output
 """\
-         % {'name': name}
+         % {'name': name})
 
 
 # ## Main ###
@@ -71,8 +72,8 @@ if '__main__' == __name__:
     opt_args = 'c:d:fhi:o:R:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
-    except getopt.GetoptError, err:
-        print 'Error: ', err.msg
+    except getopt.GetoptError as err:
+        print('Error: ', err.msg)
         usage()
         sys.exit(1)
 
@@ -95,22 +96,22 @@ if '__main__' == __name__:
         elif opt == '-v':
             verbose = True
         else:
-            print 'Error: %s not supported!' % opt
+            print('Error: %s not supported!' % opt)
 
     if conf_path and not os.path.isfile(conf_path):
-        print 'Failed to read configuration file: %s' % conf_path
+        print('Failed to read configuration file: %s' % conf_path)
         sys.exit(1)
 
     if verbose:
         if conf_path:
-            print 'using configuration in %s' % conf_path
+            print('using configuration in %s' % conf_path)
         else:
-            print 'using configuration from MIG_CONF (or default)'
+            print('using configuration from MIG_CONF (or default)')
 
     configuration = get_configuration_object(config_file=conf_path, skip_log=True)
     
     if not user_id:
-        print 'Error: Existing user ID is required'
+        print('Error: Existing user ID is required')
         usage()
         sys.exit(1)
 
@@ -130,17 +131,17 @@ if '__main__' == __name__:
             pass
     elif not configuration.site_enable_gdp:
         # NOTE: We do not allow interactive user management on GDP systems 
-        print 'Please enter the new details for %s:' % user_id
-        print '[enter to skip field]'
+        print('Please enter the new details for %s:' % user_id)
+        print('[enter to skip field]')
         user_dict['full_name'] = raw_input('Full Name: ').title()
         user_dict['organization'] = raw_input('Organization: ')
         user_dict['state'] = raw_input('State: ')
         user_dict['country'] = raw_input('2-letter Country Code: ')
         user_dict['email'] = raw_input('Email: ')
     else:
-        print "Error: Missing one or more of the arguments: " \
+        print("Error: Missing one or more of the arguments: " \
             + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] " \
-            + "[EMAIL] [COMMENT] [PASSWORD]"
+            + "[EMAIL] [COMMENT] [PASSWORD]")
         sys.exit(1)
 
     # Pass optional short_id as well
@@ -158,14 +159,14 @@ if '__main__' == __name__:
             del user_dict[key]
 
     if verbose:
-        print 'Update DB entry and dirs for %s: %s' % (user_id, user_dict)
+        print('Update DB entry and dirs for %s: %s' % (user_id, user_dict))
     try:
         user = edit_user(user_id, user_dict, conf_path, db_path, force,
                          verbose)
-    except Exception, err:
-        print err
+    except Exception as err:
+        print(err)
         sys.exit(1)
-    print '%s\nchanged to\n%s\nin user database and file system' % \
-          (user_id, user['distinguished_name'])
-    print
-    print 'Please revoke/reissue any related certificates!'
+    print('%s\nchanged to\n%s\nin user database and file system' % \
+          (user_id, user['distinguished_name']))
+    print()
+    print('Please revoke/reissue any related certificates!')

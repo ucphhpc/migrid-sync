@@ -26,6 +26,8 @@
 #
 
 """Notification functions"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 import datetime
 import os
@@ -44,22 +46,22 @@ from urllib import quote
 # Optional gnupg support - delay any error until use
 try:
     import gnupg
-except ImportError, ierr:
+except ImportError as ierr:
     gnupg = None
 
-from shared.base import force_utf8, generate_https_urls
-from shared.defaults import email_keyword_list, job_output_dir, \
+from .shared.base import force_utf8, generate_https_urls
+from .shared.defaults import email_keyword_list, job_output_dir, \
     transfer_output_dir
-from shared.fileio import send_message_to_grid_notify
-from shared.safeinput import is_valid_simple_email
-from shared.settings import load_settings
+from .shared.fileio import send_message_to_grid_notify
+from .shared.safeinput import is_valid_simple_email
+from .shared.settings import load_settings
 
 # might be python 2.4, without xml.etree
 # ...in which case: better not configure usage_record_dir
 
 try:
-    from shared.usagerecord import UsageRecord
-except Exception, err:
+    from .shared.usagerecord import UsageRecord
+except Exception as err:
     pass
 
 
@@ -117,7 +119,7 @@ The job commands and their exit codes:
             status_fd = open(statusfile, 'r')
             txt += str(status_fd.read())
             status_fd.close()
-        except Exception, err:
+        except Exception as err:
             txt += 'Could not be read (Internal error?): %s' % err
         var_dict['generated_stdout'] = generate_https_urls(
             configuration,
@@ -445,11 +447,11 @@ def send_instant_message(
         logger.info('%s written to %s' % (message, im_in_path))
         im_in_fd.close()
         return True
-    except Exception, err:
+    except Exception as err:
         logger.error('could not get exclusive access or write to %s: %s %s'
                      % (im_in_path, message, err))
-        print 'could not get exclusive access or write to %s!'\
-            % im_in_path
+        print('could not get exclusive access or write to %s!'\
+            % im_in_path)
         return False
 
 
@@ -552,7 +554,7 @@ def send_email(
         else:
             logger.debug('Email was sent to %s' % recipients)
             return True
-    except Exception, err:
+    except Exception as err:
         logger.error('Sending email to %s through %s failed!: %s'
                      % (recipients, configuration.smtp_server,
                          str(err)))
@@ -620,7 +622,7 @@ def notify_user(
                 settings_dict = load_settings(jobdict['USER_CERT'],
                                               configuration)
                 if not settings_dict\
-                        or not settings_dict.has_key(protocol.upper()):
+                        or protocol.upper() not in settings_dict:
                     logger.info('Settings dict does not have %s key'
                                 % protocol.upper())
                     continue
@@ -671,7 +673,7 @@ def notify_user(
                     if not settings_dict:
                         logger.info('Could not load settings_dict')
                         continue
-                    if not settings_dict.has_key('EMAIL'):
+                    if 'EMAIL' not in settings_dict:
                         logger.info('Settings dict does not have EMAIL key'
                                     )
                         continue
@@ -719,7 +721,7 @@ def notify_user_wrap(jobdict, args_list, status, logger, statusfile,
     try:
         notify_user(jobdict, args_list, status, logger, statusfile,
                     configuration)
-    except Exception, exc:
+    except Exception as exc:
         logger.error("notify_user failed: %s" % exc)
 
 
@@ -815,7 +817,7 @@ def parse_im_relay(path):
         if not (protocol and address and header and msg):
             status += 'Invalid contents: %s;%s;%s;%s' % (protocol,
                                                          address, header, msg)
-    except StandardError, err:
+    except Exception as err:
         status += 'IM relay parsing failed: %s' % err
 
     return (status, protocol, address, header, msg)

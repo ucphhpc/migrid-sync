@@ -31,6 +31,7 @@
 #
 # Debug issue with truncate operation on sshfs mounted MiG home
 
+from __future__ import print_function
 import os
 import sys
 
@@ -41,15 +42,15 @@ try:
     local_fd = open(local_path, "w+")
     local_fd.truncate(0)
     local_fd.close()
-    print "local truncate on %s succeeded" % local_path
+    print("local truncate on %s succeeded" % local_path)
     
-except Exception, exc:
-    print "local truncate on %s failed: %s" % (local_path, exc) 
+except Exception as exc:
+    print("local truncate on %s failed: %s" % (local_path, exc)) 
 try:
     remote_fd = open(remote_path, "w+")
     remote_fd.truncate(0)
     remote_fd.close()
-    print "remote truncate on %s succeeded" % remote_path
-except Exception, exc:
-    print "remote truncate on %s failed: %s" % (remote_path, exc) 
+    print("remote truncate on %s succeeded" % remote_path)
+except Exception as exc:
+    print("remote truncate on %s failed: %s" % (remote_path, exc)) 
       

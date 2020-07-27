@@ -30,6 +30,7 @@
 Use e.g. as in
 ./searchusers.py -f email | grep -v 'Matching users' | python countemail.py
 """
+from __future__ import print_function
 
 import fileinput
 
@@ -37,10 +38,10 @@ if __name__ == '__main__':
     domain_map = {}
     for line in fileinput.input():
         domain_suffix = line.split('@', 1)[1].strip()
-        if not domain_map.has_key(domain_suffix):
+        if domain_suffix not in domain_map:
             domain_map[domain_suffix] = 0
         domain_map[domain_suffix] += 1
     domain_list = domain_map.items()
     domain_list.sort()
     for (domain, cnt) in domain_list:
-        print '%d\t%s' % (cnt, domain)
+        print('%d\t%s' % (cnt, domain))

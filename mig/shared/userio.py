@@ -26,6 +26,8 @@
 #
 
 """All I/O operations on behalf of users - needed for e.g. trash/undelete"""
+from __future__ import print_function
+from __future__ import absolute_import
 
 # NOTE: Use faster scandir if available
 try:
@@ -41,10 +43,10 @@ import shutil
 import sys
 import time
 
-from shared.base import invisible_path
-from shared.defaults import trash_destdir, trash_linkname
-from shared.gdp.all import get_project_from_client_id, project_log
-from shared.vgrid import in_vgrid_legacy_share, in_vgrid_writable, \
+from .shared.base import invisible_path
+from .shared.defaults import trash_destdir, trash_linkname
+from .shared.gdp.all import get_project_from_client_id, project_log
+from .shared.vgrid import in_vgrid_legacy_share, in_vgrid_writable, \
     in_vgrid_priv_web, in_vgrid_pub_web
 
 ACTIONS = (CREATE, MODIFY, MOVE, DELETE) = "create", "modify", "move", "delete"
@@ -148,7 +150,7 @@ def _fill_changes(configuration, changeset, action, target_list):
             cfd.write("%s:%s\n" % (action, target))
         cfd.close()
         return pending_path
-    except Exception, err:
+    except Exception as err:
         _logger.error("Failed to save events: %s %s %s: %s" %
                       (changeset, action, target_list, err))
         return None
@@ -211,7 +213,7 @@ def commit_changes(configuration, changeset):
     try:
         os.rename(pending_path, changeset_path)
         return changeset_path
-    except Exception, err:
+    except Exception as err:
         _logger.error("Failed to commit %s events in %s: %s" %
                       (changeset, pending_path, err))
         return None
@@ -231,7 +233,7 @@ def abort_changes(configuration, changeset):
 
         os.remove(pending_path)
         return True
-    except Exception, err:
+    except Exception as err:
         _logger.error("failed to clean up after %s in %s" % (changeset,
                                                              pending_path))
         return None
@@ -268,7 +270,7 @@ def delete_path(configuration, path):
             shutil.rmtree(path)
         else:
             os.remove(path)
-    except Exception, err:
+    except Exception as err:
         _logger.error('could not delete %s: %s' % (path, err))
         result = False
         errors.append("%s" % err)
@@ -341,7 +343,7 @@ def remove_path(configuration, path):
             shutil.rmtree(trash_path)
         _logger.info('actually moving user path %s to %s' % (path, trash_path))
         shutil.move(path, trash_path)
-    except Exception, err:
+    except Exception as err:
         _logger.error('could not remove %s: %s' % (path, err))
         result = False
         errors.append("%s" % err)
@@ -374,7 +376,7 @@ def touch_path(configuration, path, timestamp=None):
                         False)
         os.utime(path, (timestamp, timestamp))
         commit_changes(configuration, changeset)
-    except Exception, err:
+    except Exception as err:
         _logger.error("could not touch %s: %s" % (path, err))
         result = False
         errors.append("%s" % err)
@@ -464,10 +466,10 @@ def __clean_test_files(configuration, test_path):
 
 
 if __name__ == "__main__":
-    from shared.base import client_id_dir
-    from shared.conf import get_configuration_object
-    from shared.defaults import htaccess_filename
-    print "Unit testing user I/O"
+    from .shared.base import client_id_dir
+    from .shared.conf import get_configuration_object
+    from .shared.defaults import htaccess_filename
+    print("Unit testing user I/O")
     client_id = "/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk"
     sub_dir = '.'
     if sys.argv[1:]:
@@ -479,7 +481,7 @@ if __name__ == "__main__":
     tmp_dir = "userio-testdir"
     real_tmp = os.path.normpath(os.path.join(configuration.user_home,
                                              client_dir, tmp_dir))
-    print "Using client tmp dir \n%s\nfor tests" % real_tmp
+    print("Using client tmp dir \n%s\nfor tests" % real_tmp)
     basic_test = ([], ["test1.txt"], [])
     rec_test = (["sub1", "sub1/sub2", "sub1/sub2/sub3"],
                 ["sub1/test1.txt", "sub1/test2.txt", "sub1/sub2/test4.txt",
@@ -491,11 +493,11 @@ if __name__ == "__main__":
         real_target = os.path.join(real_tmp, (dirs + files + links)[0])
         for edit_func in (touch_path, ):
             __make_test_files(configuration, real_tmp, dirs, files, links)
-            print "Run %s on %s" % (edit_func, real_target)
-            print edit_func(configuration, real_target)
+            print("Run %s on %s" % (edit_func, real_target))
+            print(edit_func(configuration, real_target))
             __clean_test_files(configuration, real_tmp)
         for del_func in (delete_path, remove_path):
             __make_test_files(configuration, real_tmp, dirs, files, links)
-            print "Run %s on %s" % (del_func, real_target)
-            print del_func(configuration, real_target)
+            print("Run %s on %s" % (del_func, real_target))
+            print(del_func(configuration, real_target))
             __clean_test_files(configuration, real_tmp)

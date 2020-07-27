@@ -26,6 +26,7 @@
 #
 
 """Simple test CGI server"""
+from __future__ import print_function
 
 import sys
 import CGIHTTPServer
@@ -55,11 +56,11 @@ class ForkingServer(SocketServer.ForkingMixIn,
 IP = '127.0.0.1'
 PORT = 8080
 
-print 'Serving at %s port %d' % (IP, PORT)
+print('Serving at %s port %d' % (IP, PORT))
 
-print 'before attr override: have fork: %s' % Handler.have_fork
+print('before attr override: have fork: %s' % Handler.have_fork)
 Handler.have_fork = False
-print 'after attr override: have fork: %s' % Handler.have_fork
+print('after attr override: have fork: %s' % Handler.have_fork)
 
 # server = BaseHTTPServer.HTTPServer((IP, PORT), Handler)
 # server.serve_forever()
@@ -68,12 +69,12 @@ print 'after attr override: have fork: %s' % Handler.have_fork
 
 server = ForkingServer((IP, PORT), Handler)
 
-print 'server attr: have fork: %s'\
-     % server.RequestHandlerClass.have_fork
+print('server attr: have fork: %s'\
+     % server.RequestHandlerClass.have_fork)
 try:
     while True:
         sys.stdout.flush()
         server.handle_request()
 except KeyboardInterrupt:
-    print 'Server killed'
+    print('Server killed')
 

@@ -26,6 +26,7 @@
 #
 
 """Benchmark alternating file reads and writes"""
+from __future__ import print_function
 
 import os
 import sys
@@ -66,7 +67,7 @@ class Writer(threading.Thread):
             self.writefile.flush()
             #time.sleep(0.001)
         self.endtime = (clock_fun() - self.start_time)
-        print "Write finished at %0.3f" % (self.endtime * 1000)
+        print("Write finished at %0.3f" % (self.endtime * 1000))
             
 
 class Reader(threading.Thread):
@@ -86,7 +87,7 @@ class Reader(threading.Thread):
                 self.readfile.seek(0)
             #time.sleep(0.001)
         self.endtime = (clock_fun() - self.start_time)
-        print "Read finished at %0.3f" % (self.endtime * 1000)
+        print("Read finished at %0.3f" % (self.endtime * 1000))
 
 def prepare_files(conf):
     """Set up files used in benchmark"""
@@ -121,7 +122,7 @@ def main(conf):
         worker.join()
 
     end = time.time()
-    print "Time for pure writes %d" % (end - start_time)    
+    print("Time for pure writes %d" % (end - start_time))    
 
     # MIXED MODE 
     threads = []
@@ -145,7 +146,7 @@ def main(conf):
     end = time.time()
     
     # READ/ONLY MODE
-    print "Time for mixed reads/writes %d" % (end - start_time)    
+    print("Time for mixed reads/writes %d" % (end - start_time))    
     threads = []
     readfile = open("readfile", "rb")
 
@@ -163,7 +164,7 @@ def main(conf):
 
     end = time.time()
 
-    print "Time for just reads %d" % (end - start_time)
+    print("Time for just reads %d" % (end - start_time))
 
 
 if __name__ == '__main__':
@@ -178,7 +179,7 @@ if __name__ == '__main__':
             'help',
             'number=',
             ])
-    except getopt.GetoptError, err:
+    except getopt.GetoptError as err:
         print('Error in option parsing: ' + err.msg)
         usage()
         sys.exit(1)
@@ -187,7 +188,7 @@ if __name__ == '__main__':
         if opt in ('-d', '--data-bytes'):
             try:
                 conf["data_bytes"] = int(val)
-            except ValueError, err:
+            except ValueError as err:
                 print('Error in parsing %s value: %s' % (opt, err))
                 sys.exit(1)
         elif opt in ('-h', '--help'):
@@ -196,7 +197,7 @@ if __name__ == '__main__':
         elif opt in ('-n', '--number'):
             try:
                 conf["number"] = int(val)
-            except ValueError, err:
+            except ValueError as err:
                 print('Error in parsing %s value: %s' % (opt, err))
                 sys.exit(1)
         else:

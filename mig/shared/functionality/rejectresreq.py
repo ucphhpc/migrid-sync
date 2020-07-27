@@ -26,18 +26,19 @@
 #
 
 """Reject access request to a given resource"""
+from __future__ import absolute_import
 
 from binascii import unhexlify
 import os
 
-from shared.accessrequests import load_access_request, delete_access_request
-from shared.defaults import any_protocol, csrf_field
-from shared.findtype import is_owner
-from shared.functional import validate_input_and_cert, REJECT_UNSET
-from shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from shared.init import initialize_main_variables
-from shared.validstring import valid_user_path
-from shared import returnvalues
+from .shared.accessrequests import load_access_request, delete_access_request
+from .shared.defaults import any_protocol, csrf_field
+from .shared.findtype import is_owner
+from .shared.functional import validate_input_and_cert, REJECT_UNSET
+from .shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from .shared.init import initialize_main_variables
+from .shared.validstring import valid_user_path
+from .shared import returnvalues
 
 
 def signature():

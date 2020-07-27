@@ -33,6 +33,7 @@ DELETE http requests.
 NOTE: ranges (filepositions) are handled according to the w3c HTTP
 standard rfc2616.
 """
+from __future__ import absolute_import
 
 import cgi
 import cgitb
@@ -44,9 +45,9 @@ import sys
 
 # MiG imports
 
-from shared.base import client_id_dir, invisible_path
-from shared.scriptinput import fieldstorage_to_dict
-from shared.cgishared import init_cgiscript_possibly_with_cert
+from .shared.base import client_id_dir, invisible_path
+from .shared.scriptinput import fieldstorage_to_dict
+from .shared.cgishared import init_cgiscript_possibly_with_cert
 
 
 def get(o, fileinfo_dict):
@@ -73,7 +74,7 @@ def get(o, fileinfo_dict):
     try:
         filelen = os.path.getsize(local_path)
         filehandle = open(local_path, 'rb')
-    except Exception, err:
+    except Exception as err:
         o.out('%s' % err)
         return False
 
@@ -113,7 +114,7 @@ def get(o, fileinfo_dict):
 
     try:
         filehandle.seek(file_startpos, 0)
-    except Exception, err:
+    except Exception as err:
         o.out("Seeking File: '%s' failed: %s\n" % (err,
               fileinfo_dict['path']))
         return False
@@ -142,7 +143,7 @@ def get(o, fileinfo_dict):
             sys.stdout.write(filehandle.read(block_size))
             sys.stdout.flush()
             bytes_left -= block_size
-    except Exception, err:
+    except Exception as err:
         o.out("""
 Reading File: '%s' failed: %s
 """ % (err,
@@ -153,7 +154,7 @@ Reading File: '%s' failed: %s
 
     try:
         filehandle.close()
-    except Exception, err:
+    except Exception as err:
         o.out("Closing File: '%s' failed: %s\n" % (err,
               fileinfo_dict['path']))
         read_status = False
@@ -184,7 +185,7 @@ def put(o, fileinfo_dict):
 
     try:
         content_length = int(os.getenv('CONTENT_LENGTH'))
-    except Exception, err:
+    except Exception as err:
         content_length = 0
 
     local_path = fileinfo_dict['base_path'] + fileinfo_dict['path']
@@ -197,13 +198,13 @@ def put(o, fileinfo_dict):
 
         try:
             filehandle = open(local_path, 'r+b')
-        except Exception, err:
+        except Exception as err:
             o.out('\n%s' % err)
             return False
     else:
         try:
             filehandle = open(local_path, 'w+b')
-        except Exception, err:
+        except Exception as err:
 
             # o.logger.debug("opening 'w+b': " + local_path)
 
@@ -244,13 +245,13 @@ def put(o, fileinfo_dict):
         try:
             filehandle.seek(file_startpos, 0)
             filehandle.write(sys.stdin.read(datalen))
-        except Exception, err:
+        except Exception as err:
             o.out('\n%s' % err)
             return False
 
         try:
             filehandle.close()
-        except Exception, err:
+        except Exception as err:
             o.out('\n%s' % err)
             return False
 
@@ -294,10 +295,10 @@ for (key, value_list) in fileinfo_dict.items():
 
 # Backwards compatibility
 
-if fileinfo_dict.has_key('filename'):
+if 'filename' in fileinfo_dict:
     fileinfo_dict['path'] = fileinfo_dict['filename']
 
-if not fileinfo_dict.has_key('path'):
+if 'path' not in fileinfo_dict:
 
     # Check if path was in querystring.
 
@@ -320,7 +321,7 @@ if client_id:
     fileinfo_dict['base_path'] = \
         os.path.normpath(os.path.join(configuration.user_home,
                          client_dir)) + os.sep
-elif fileinfo_dict.has_key('iosessionid'):
+elif 'iosessionid' in fileinfo_dict:
 
     fileinfo_dict['base_path'] = configuration.webserver_home\
          + fileinfo_dict['iosessionid'] + '/'
@@ -354,7 +355,7 @@ elif action == 'DELETE':
         # o.logger.debug("\nFile: '" + fileinfo_dict["path"] + "' <- deleted successfully.")
 
         o.reply_and_exit(o.OK)
-    except Exception, err:
+    except Exception as err:
 
         # o.logger.debug("\nFile: '" + fileinfo_dict["path"] + "' <- not deleted: %s" % err)
 

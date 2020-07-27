@@ -28,6 +28,7 @@
 # --- END_HEADER ---
 #
 
+from __future__ import print_function
 import logging
 import os
 import sys
@@ -39,7 +40,7 @@ from SimpleHTTPServer import SimpleHTTPRequestHandler
 try:
     import OpenSSL
 except ImportError:
-    print 'WARNING: the python OpenSSL module is required for vm-proxy'
+    print('WARNING: the python OpenSSL module is required for vm-proxy')
     OpenSSL = None
 
 # TODO: switch from private tls conf to this general conf
@@ -81,14 +82,14 @@ class Proxy(daemon.Daemon):
         else:
             self.tls_conf = None
 
-        print '%d %d %d %s %s %s' % (
+        print('%d %d %d %s %s %s' % (
             self.clientPort,
             self.agentPort,
             self.appletPort,
             self.key,
             self.cert,
             self.ca,
-            )
+            ))
 
         # Get it on!
 

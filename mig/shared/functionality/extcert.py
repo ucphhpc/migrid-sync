@@ -26,18 +26,19 @@
 #
 
 """Request account sign up with external certificate back end"""
+from __future__ import absolute_import
 
 import os
 
-from shared import returnvalues
-from shared.accountreq import valid_name_chars, dn_max_len, \
+from .shared import returnvalues
+from .shared.accountreq import valid_name_chars, dn_max_len, \
     account_css_helpers, account_js_helpers, account_request_template
-from shared.base import distinguished_name_to_user
-from shared.defaults import csrf_field
-from shared.functional import validate_input_and_cert
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.init import initialize_main_variables, find_entry
-from shared.safeinput import html_escape
+from .shared.base import distinguished_name_to_user
+from .shared.defaults import csrf_field
+from .shared.functional import validate_input_and_cert
+from .shared.handlers import get_csrf_limit, make_csrf_token
+from .shared.init import initialize_main_variables, find_entry
+from .shared.safeinput import html_escape
 
 
 def signature():

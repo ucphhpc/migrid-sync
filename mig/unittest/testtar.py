@@ -26,6 +26,7 @@
 #
 
 """This module tests the server IO functions through the tarfile framework."""
+from __future__ import print_function
 
 import sys
 import tarfile
@@ -40,46 +41,46 @@ def run_test(class_name):
     local_path = 'input.txt'
     tar_path = 'input.tar'
 
-    print '-locally opening file %s' % local_path
+    print('-locally opening file %s' % local_path)
     fd = open(local_path, 'w')
 
-    print '-writing lines to local file'
+    print('-writing lines to local file')
     lines = ['This is a test!', 'This is another test!\n',
              'This is a third test!\n', '..and a fourth!\n']
     fd.writelines(lines)
     fd.flush()
-    print '-closing local file %s' % local_path
+    print('-closing local file %s' % local_path)
     fd.close()
 
-    print '-opening tar file %s in write mode' % tar_path
+    print('-opening tar file %s in write mode' % tar_path)
     tar_fd = file_class(tar_path, 'w')
-    print '-locking for write'
+    print('-locking for write')
     tar_fd.lock(LOCK_EX)
-    print '-accessing tar archive as TarFile'
+    print('-accessing tar archive as TarFile')
     archive = tarfile.TarFile(tar_path, 'w', tar_fd)
-    print '-add %s to tar archive %s' % (local_path, archive)
+    print('-add %s to tar archive %s' % (local_path, archive))
     archive.add(local_path)
-    print '-closing TarFile'
+    print('-closing TarFile')
     archive.close()
-    print '-unlocking tar file'
+    print('-unlocking tar file')
     tar_fd.unlock()
-    print '-closing tar file %s' % tar_path
+    print('-closing tar file %s' % tar_path)
     tar_fd.close()
 
-    print '-opening tar file %s in read mode' % tar_path
+    print('-opening tar file %s in read mode' % tar_path)
     tar_fd = file_class(tar_path, 'r')
-    print '-locking for read'
+    print('-locking for read')
     tar_fd.lock(LOCK_SH)
-    print '-accessing tar archive as TarFile'
+    print('-accessing tar archive as TarFile')
     archive = tarfile.TarFile(tar_path, 'r', tar_fd)
-    print '-list contents of tar archive %s' % archive
+    print('-list contents of tar archive %s' % archive)
     contents = archive.getnames()
-    print contents
-    print '-closing TarFile'
+    print(contents)
+    print('-closing TarFile')
     archive.close()
-    print '-unlocking tar file'
+    print('-unlocking tar file')
     tar_fd.unlock()
-    print '-closing tar file %s' % tar_path
+    print('-closing tar file %s' % tar_path)
     tar_fd.close()
 
 

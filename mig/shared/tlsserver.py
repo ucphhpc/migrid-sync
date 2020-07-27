@@ -28,11 +28,12 @@
 """Common HTTPS/WebDAVS/FTPS server functions for e.g. SSL/TLS setup with
 strong security settings.
 """
+from __future__ import absolute_import
 
 import ssl
 import sys
 
-from shared.defaults import STRONG_TLS_CIPHERS, STRONG_TLS_CURVES
+from .shared.defaults import STRONG_TLS_CIPHERS, STRONG_TLS_CURVES
 
 
 def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
@@ -69,7 +70,7 @@ def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
         try:
             ssl_ctx.load_dh_params(dhparamsfile)
             pfs_available = True
-        except Exception, exc:
+        except Exception as exc:
             _logger.warning("Could not load optional dhparams from %s" %
                             dhparamsfile)
             _logger.info("""You can create a suitable dhparams file with:
@@ -89,7 +90,7 @@ openssl dhparam 2048 -out %s""" % dhparamsfile)
                 activated_curve = curve_name
                 pfs_available = True
                 break
-            except Exception, exc:
+            except Exception as exc:
                 _logger.warning("Couldn't init elliptic curve %s: %s" %
                                 (curve_name, exc))
         if not activated_curve:
@@ -140,7 +141,7 @@ def hardened_openssl_context(configuration, OpenSSL, keyfile, certfile,
         try:
             ssl_ctx.load_tmp_dh(dhparamsfile)
             pfs_available = True
-        except Exception, exc:
+        except Exception as exc:
             _logger.warning("Could not load optional dhparams from %s" %
                             dhparamsfile)
             _logger.info("""You can create a suitable dhparams file with:
@@ -164,7 +165,7 @@ openssl dhparam 2048 -out %s""" % dhparamsfile)
                           (', '.join(curve_map.keys()), use_curve.name))
             ssl_ctx.set_tmp_ecdh(use_curve)
             pfs_available = True
-        except Exception, exc:
+        except Exception as exc:
             _logger.warning("Couldn't init elliptic curve ciphers: %s" %
                             exc)
             _logger.info("""You need a recent pyopenssl built with elliptic

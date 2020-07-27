@@ -29,15 +29,17 @@
 Created by Jan Wiberg on 2010-03-29.
 Copyright (c) 2010 __MyCompanyName__. All rights reserved.
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import sys
 import time
 
-from core.entities import *
-from core.specialized.aux import *
-from core.configuration import *
-from core import kernel
+from .core.entities import *
+from .core.specialized.aux import *
+from .core.configuration import *
+from .core import kernel
 
 
 def main():
@@ -53,33 +55,33 @@ def main():
     
     k = kernel.Kernel(opt)
     k.fsinit()
-    print "Spare instance started"
+    print("Spare instance started")
     
     
-    print "Getattr on '/':", 
+    print("Getattr on '/':", end=' ') 
     ret = k.getattr(None, "/")
     assert ret is not None and ret >= 1 # breaks if not int
-    print ret
-    print "Success"
+    print(ret)
+    print("Success")
     
     #d = GRSDirectory('/')
-    print "Readdir on '/':",
+    print("Readdir on '/':", end=' ')
     ret = k.readdir(None, "/", 0)
     assert ret is not None and ret >= 1 # breaks if not int
-    print ret
-    print "Success"
+    print(ret)
+    print("Success")
     
-    print "Attempting to read /hello file"
+    print("Attempting to read /hello file")
     f = GRSFile('/hello', os.O_RDONLY)
     assert f.file is not None and f.file >= 1
-    print f.read(-1, 0)
+    print(f.read(-1, 0))
 
-    print "Sleeping ten seconds before trying again"
+    print("Sleeping ten seconds before trying again")
     time.sleep(10)
-    print "Attempting to read /hello file"
+    print("Attempting to read /hello file")
     f = GRSFile('/hello', os.O_RDONLY)
     assert f.file is not None and f.file >= 1
-    print f.read(-1, 0)
+    print(f.read(-1, 0))
 
 
 if __name__ == '__main__':

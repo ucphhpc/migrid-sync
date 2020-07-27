@@ -26,6 +26,7 @@
 #
 
 """Import any missing users from provided URI"""
+from __future__ import print_function
 
 import os
 import sys
@@ -52,7 +53,7 @@ from shared.vgridaccess import refresh_user_map
 def usage(name='importusers.py'):
     """Usage help"""
 
-    print """Import users from an external plain text or XML source URI.
+    print("""Import users from an external plain text or XML source URI.
 Creates a local MiG user identified by DISTINGUISHED_NAME for each
 new <item>DISTINGUISHED_NAME</item> in the XML or for each DISTINGUISHED_NAME
 line in the text file.
@@ -70,7 +71,7 @@ Where URI may be an URL or local file and OPTIONS may be one or more of:
    -m VGRID            Make user a member of VGRID (multiple occurences allowed)
    -p PASSWORD         Optional PASSWORD to set for user (AUTO to generate one)
    -v                  Verbose output
-""" % {'name': name}
+""" % {'name': name})
 
 
 def dump_contents(url, key_path=None, cert_path=None):
@@ -119,8 +120,8 @@ if '__main__' == __name__:
     opt_args = 'C:c:d:e:fhK:m:p:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
-    except getopt.GetoptError, err:
-        print 'Error: ', err.msg
+    except getopt.GetoptError as err:
+        print('Error: ', err.msg)
         usage()
         sys.exit(1)
 
@@ -149,11 +150,11 @@ if '__main__' == __name__:
         elif opt == '-v':
             verbose = True
         else:
-            print 'Error: %s not supported!' % opt
+            print('Error: %s not supported!' % opt)
             sys.exit(1)
 
     if not args:
-        print 'Must provide one or more URIs to import from'
+        print('Must provide one or more URIs to import from')
         usage()
         sys.exit(1)
 
@@ -171,8 +172,8 @@ if '__main__' == __name__:
                                              verbose)
         if hits:
             if verbose:
-                print 'Not adding existing user: %(distinguished_name)s' % \
-                      user_dict
+                print('Not adding existing user: %(distinguished_name)s' % \
+                      user_dict)
             continue
         user_dict['status'] = account_status
         new_users.append(user_dict)
@@ -184,19 +185,19 @@ if '__main__' == __name__:
         client_id = user_dict['distinguished_name']
         user_dict['comment'] = 'imported from external URI'
         if password == keyword_auto:
-            print 'Auto generating password for user: %s' % client_id
+            print('Auto generating password for user: %s' % client_id)
             user_dict['password'] = generate_random_password(configuration)
         elif password:
-            print 'Setting provided password for user: %s' % client_id
+            print('Setting provided password for user: %s' % client_id)
             user_dict['password'] = password
         else:
-            print 'Setting empty password for user: %s' % client_id
+            print('Setting empty password for user: %s' % client_id)
             user_dict['password'] = ''
 
         # Encode password if set but not already encoded
         if user_dict['password']:
             if verbose:
-                print 'Scrambling password for user: %s' % client_id
+                print('Scrambling password for user: %s' % client_id)
             user_dict['password'] = scramble_password(
                 configuration.site_password_salt, user_dict['password'])
 
@@ -205,10 +206,10 @@ if '__main__' == __name__:
 
         try:
             create_user(user_dict, conf_path, db_path, force, verbose)
-        except Exception, exc:
-            print exc
+        except Exception as exc:
+            print(exc)
             continue
-        print 'Created %s in user database and in file system' % client_id
+        print('Created %s in user database and in file system' % client_id)
 
     # NOTE: force update user_map before calling sendrequestaction!
     #       create_user does NOT necessarily update it due to caching time.
@@ -232,11 +233,11 @@ if '__main__' == __name__:
                        csrf_field: [csrf_token]}
             (output_objs, status) = main(client_id, request)
             if status == returnvalues.OK:
-                print 'Request for %s membership in %s sent to owners' % \
-                      (client_id, name)
+                print('Request for %s membership in %s sent to owners' % \
+                      (client_id, name))
             else:
-                print 'Request for %s membership in %s with %s failed:' % \
-                      (client_id, name, request)
+                print('Request for %s membership in %s with %s failed:' % \
+                      (client_id, name, request))
                 output_format = 'text'
                 (ret_code, ret_msg) = status
                 output = format_output(configuration, ret_code,
@@ -245,10 +246,10 @@ if '__main__' == __name__:
                 # Explicit None means error during output formatting
 
                 if output is None:
-                    print "ERROR: %s output formatting failed: %s" % \
-                          (output_format, output_objs)
+                    print("ERROR: %s output formatting failed: %s" % \
+                          (output_format, output_objs))
                     output = 'Error: output could not be correctly delivered!'
                 else:
-                    print output
+                    print(output)
 
-    print '%d new users imported' % len(new_users)
+    print('%d new users imported' % len(new_users))

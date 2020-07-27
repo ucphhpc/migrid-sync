@@ -26,6 +26,7 @@
 #
 
 """Python job script generator and functions"""
+from __future__ import print_function
 
 import os
 
@@ -65,8 +66,8 @@ class GenJobScriptPython:
                                             self.job_dict['JOB_ID'])
         self.io_log = '%s.io-status' % self.job_dict['JOB_ID']
 
-        print """Python resource scripts are *not* fully supported!
-Please use Sh as SCRIPTLANGUAGE on your resources if this fails!"""
+        print("""Python resource scripts are *not* fully supported!
+Please use Sh as SCRIPTLANGUAGE on your resources if this fails!""")
 
     def __curl_cmd_send(self, resource_filename, mig_server_filename):
         """Upload files"""
@@ -355,7 +356,7 @@ io_log.flush()''' % (io_type, result)
 
             fe_move = resource_filename.split('/', 1)[0]
 
-            if not fe_move_dict.has_key(fe_move):
+            if fe_move not in fe_move_dict:
                 fe_move_dict[fe_move] = True
 
         for executables in self.job_dict['EXECUTABLES']:
@@ -386,7 +387,7 @@ io_log.flush()''' % (io_type, result)
 
             fe_move = resource_filename.split('/', 1)[0]
 
-            if not fe_move_dict.has_key(fe_move):
+            if fe_move not in fe_move_dict:
                 fe_move_dict[fe_move] = True
 
         cmd += 'input_fd = open("%s.inputfiles", "w")\n' % self.localjobname
@@ -435,7 +436,7 @@ if os.path.isfile("%s"):
 
             exe_move = resource_filename.split('/', 1)[0]
 
-            if not exe_move_dict.has_key(exe_move):
+            if exe_move not in exe_move_dict:
                 exe_move_dict[exe_move] = True
 
         for filename in exe_move_dict.keys():
@@ -585,7 +586,7 @@ if not os.environ.get("MIG_JOBDIR", ""):
         return cmd
 
     def mount(self, login, host, port, result='mount_status'):
-        print "WARNING: genjobscriptpython.mount NOT implemented"
+        print("WARNING: genjobscriptpython.mount NOT implemented")
 
         return '# TODO: Implement MiG home mount\n'
 
@@ -624,7 +625,7 @@ if not os.environ.get("MIG_JOBDIR", ""):
         return cmd
 
     def umount(self, status='umount_status'):
-        print "WARNING: genjobscriptpython.umount NOT implemented"
+        print("WARNING: genjobscriptpython.umount NOT implemented")
 
         return '# TODO: Implement MiG home umount\n'
 

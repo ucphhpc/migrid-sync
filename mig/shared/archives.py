@@ -26,15 +26,16 @@
 #
 
 """Helpers for zip/tar archive packing and unpacking"""
+from __future__ import absolute_import
 
 import os
 import zipfile
 import tarfile
 
-from shared.base import client_id_dir, invisible_path, force_utf8
-from shared.fileio import write_file
-from shared.job import new_job
-from shared.safeinput import valid_user_path_name
+from .shared.base import client_id_dir, invisible_path, force_utf8
+from .shared.fileio import write_file
+from .shared.job import new_job
+from .shared.safeinput import valid_user_path_name
 
 
 def handle_package_upload(
@@ -82,7 +83,7 @@ def handle_package_upload(
         msg += "Received '%s' for unpacking. " % relative_src
         try:
             zip_object = zipfile.ZipFile(real_src, 'r', allowZip64=True)
-        except Exception, exc:
+        except Exception as exc:
             logger.error("open zip failed: %s" % exc)
             msg += 'Could not open zipfile: %s! ' % exc
             return (False, msg)
@@ -114,8 +115,8 @@ def handle_package_upload(
             if not os.path.isdir(zip_entry_dir):
                 msg += 'Creating dir %s . ' % entry_filename
                 try:
-                    os.makedirs(zip_entry_dir, 0775)
-                except Exception, exc:
+                    os.makedirs(zip_entry_dir, 0o775)
+                except Exception as exc:
                     logger.error("create directory failed: %s" % exc)
                     msg += 'Error creating directory: %s! ' % exc
                     status = False
@@ -128,7 +129,7 @@ def handle_package_upload(
 
             try:
                 zip_data = zip_object.read(zip_entry.filename)
-            except Exception, exc:
+            except Exception as exc:
                 logger.error("read data in %s failed: %s" % \
                              (zip_entry.filename, exc))
                 msg += 'Error reading %s :: %s! ' % (zip_entry.filename, exc)
@@ -157,7 +158,7 @@ def handle_package_upload(
 
             try:
                 __ = os.path.getsize(local_zip_entry_name)
-            except Exception, exc:
+            except Exception as exc:
                 logger.warning("unpack may have failed: %s" % exc)
                 msg += \
                     'File %s unpacked, but could not get file size %s! '\
@@ -186,7 +187,7 @@ def handle_package_upload(
             try:
                 tar_object = tarfile.open(real_src, 'r:gz')
                 tar_file_content = tarfile.TarFile.gzopen(real_src)
-            except Exception, exc:
+            except Exception as exc:
                 logger.error("open tar gz failed: %s" % exc)
                 msg += 'Could not open .tar.gz file: %s! ' % exc
                 return (False, msg)
@@ -196,7 +197,7 @@ def handle_package_upload(
             try:
                 tar_object = tarfile.open(real_src, 'r:bz2')
                 tar_file_content = tarfile.TarFile.bz2open(real_src)
-            except Exception, exc:
+            except Exception as exc:
                 logger.error("open tar bz failed: %s" % exc)
                 msg += 'Could not open .tar.bz2 file: %s! ' % exc
                 return (False, msg)
@@ -204,7 +205,7 @@ def handle_package_upload(
             try:
                 tar_object = tarfile.open(real_src, 'r')
                 tar_file_content = tarfile.TarFile.open(real_src)
-            except Exception, exc:
+            except Exception as exc:
                 logger.error("open tar failed: %s" % exc)
                 msg += 'Could not open .tar file: %s! ' % exc
                 return (False, msg)
@@ -244,8 +245,8 @@ def handle_package_upload(
                 logger.debug("make tar parent dir: %s" % tar_entry_dir)
                 msg += 'Creating dir %s . ' % entry_filename
                 try:
-                    os.makedirs(tar_entry_dir, 0775)
-                except Exception, exc:
+                    os.makedirs(tar_entry_dir, 0o775)
+                except Exception as exc:
                     logger.error("create directory failed: %s" % exc)
                     msg += 'Error creating directory %s! ' % exc
                     status = False
@@ -281,7 +282,7 @@ def handle_package_upload(
 
             try:
                 __ = os.path.getsize(local_tar_entry_name)
-            except Exception, exc:
+            except Exception as exc:
                 logger.warning("file save may have failed: %s" % exc)
                 msg += \
                     'File %s unpacked, but could not get file size %s! ' % \
@@ -406,8 +407,8 @@ def pack_archive(
         logger.debug("make zip parent dir: %s" % zip_entry_dir)
         msg += 'Creating dir %s . ' % zip_entry_dir
         try:
-            os.makedirs(zip_entry_dir, 0775)
-        except Exception, exc:
+            os.makedirs(zip_entry_dir, 0o775)
+        except Exception as exc:
             logger.error("create directory failed: %s" % exc)
             msg += 'Error creating parent directory %s! ' % exc
             return (False, msg)
@@ -424,7 +425,7 @@ def pack_archive(
             # Force compression and allow files bigger than 2GB
             pack_file = zipfile.ZipFile(real_dst, open_mode,
                                         zipfile.ZIP_DEFLATED, allowZip64=True)
-        except Exception, exc:
+        except Exception as exc:
             logger.error("create zip failed: %s" % exc)
             msg += 'Could not create zipfile: %s! ' % exc
             return (False, msg)
@@ -450,7 +451,7 @@ def pack_archive(
                 logger.debug("pack file %s" % relative_target)
                 try:
                     pack_file.write(real_target, relative_target)
-                except Exception, exc:
+                except Exception as exc:
                     logger.error('write of %s failed: %s' % \
                                  (real_target, exc))
                     msg += 'Failed to write file %s . ' % relative_target
@@ -462,7 +463,7 @@ def pack_archive(
                 try:
                     dir_info = zipfile.ZipInfo(relative_root + os.sep)
                     pack_file.writestr(dir_info, '')
-                except Exception, exc:
+                except Exception as exc:
                     logger.error('write of %s failed: %s' % \
                                  (real_target, exc))
                     msg += 'Failed to write dir %s . ' % relative_root
@@ -476,7 +477,7 @@ def pack_archive(
             pack_file = zipfile.ZipFile(real_dst, 'r', allowZip64=True)
             pack_file.testzip()
             pack_file.close()
-        except Exception, exc:
+        except Exception as exc:
             logger.error("verify zip failed: %s" % exc)
             msg += "Could not open and verify zip file: %s! " % exc
             status = False
@@ -499,7 +500,7 @@ def pack_archive(
             
         try:
             pack_file = tarfile.open(real_dst, open_mode)
-        except Exception, exc:
+        except Exception as exc:
             logger.error("create tar (%s) failed: %s" % (open_mode, exc))
             msg += 'Could not open .tar file: %s! ' % exc
             return (False, msg)
@@ -527,7 +528,7 @@ def pack_archive(
                 logger.debug("pack file %s" % entry)
                 try:
                     pack_file.add(real_target, relative_target, recursive=False)
-                except Exception, exc:
+                except Exception as exc:
                     logger.error('write of %s failed: %s' % \
                                  (real_target, exc))
                     msg += 'Failed to write file %s . ' % relative_target
@@ -538,7 +539,7 @@ def pack_archive(
                 logger.debug("pack dir %s" % relative_root)
                 try:
                     pack_file.add(root, relative_root, recursive=False)
-                except Exception, exc:
+                except Exception as exc:
                     logger.error('write of %s failed: %s' % \
                                  (real_target, exc))
                     msg += 'Failed to write dir %s . ' % relative_root

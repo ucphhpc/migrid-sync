@@ -26,12 +26,13 @@
 #
 
 """This is a script download helper for SSS sandboxes"""
+from __future__ import absolute_import
 
-from shared import returnvalues
-from shared.functional import validate_input, REJECT_UNSET
-from shared.init import initialize_main_variables
-from shared.sandbox import get_resource_name
-from shared.resadm import get_frontend_script, get_master_node_script
+from .shared import returnvalues
+from .shared.functional import validate_input, REJECT_UNSET
+from .shared.init import initialize_main_variables
+from .shared.sandbox import get_resource_name
+from .shared.resadm import get_frontend_script, get_master_node_script
 
 
 def signature():

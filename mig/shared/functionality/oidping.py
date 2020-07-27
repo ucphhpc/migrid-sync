@@ -26,12 +26,13 @@
 #
 
 """Check availability of OpenID server back end"""
+from __future__ import absolute_import
 
 import urllib
 
-from shared import returnvalues
-from shared.functional import validate_input
-from shared.init import initialize_main_variables
+from .shared import returnvalues
+from .shared.functional import validate_input
+from .shared.init import initialize_main_variables
 
 def signature():
     """Signature of the main function"""
@@ -77,7 +78,7 @@ def main(client_id, user_arguments_dict):
                 openid_status['status'] = "down"
                 openid_status['error'] = "server returned error code %s" % \
                                          http_status
-        except Exception, exc:
+        except Exception as exc:
             openid_status['status'] = "down"
             openid_status['error'] = "unexpected server response (%s)" % exc
         if openid_status['status'] == "online":
