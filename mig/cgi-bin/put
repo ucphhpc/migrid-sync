@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # put - HTTP PUT handler
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,16 +27,15 @@
 
 """HTTP PUT handler"""
 
-import os
-import sys
+import fcntl
 import cgi
 import cgitb
-cgitb.enable()
-import urllib
-import fcntl
+import os
+import sys
 import time
+import urllib
 
-import shared.confparser as confparser
+from shared import confparser
 from shared.archives import handle_package_upload
 from shared.base import client_id_dir, invisible_path
 from shared.cgishared import init_cgiscript_possibly_with_cert
@@ -45,14 +44,16 @@ from shared.fileio import pickle, unpickle
 from shared.findtype import is_user, is_server, is_owner
 from shared.job import new_job, finished_job, failed_restart
 from shared.notification import notify_user_thread, \
-     parse_im_relay, send_resource_create_request_mail, \
-     send_instant_message
+    parse_im_relay, send_resource_create_request_mail, \
+    send_instant_message
 from shared.putfuncs import verify_results, migrated_job
 from shared.resadm import start_resource_exe_if_continuous
 from shared.refunctions import create_runtimeenv
 from shared.settings import parse_and_save_settings
 from shared.safeinput import valid_path, valid_sid, valid_alphanumeric
 from shared.sharelinks import extract_mode_id
+
+cgitb.enable()
 
 
 block_size = 1024 * 1024
@@ -143,7 +144,7 @@ if not client_id and filename.startswith('/sid_redirect/'):
         o.internal('Session id OK: %s' % sessionid)
 
     dest_dir = configuration.webserver_home + \
-               redir_path[:redir_path.rfind('/')]
+        redir_path[:redir_path.rfind('/')]
     dest_file = redir_path[redir_path.rfind('/') + 1:]
 
     # make sure that path exists
@@ -181,14 +182,14 @@ if not client_id and filename.startswith('/sid_redirect/'):
 
     # ARC jobs: no job file:
     if not os.path.exists(joblink):
-        # we have no job script => ARC job returned a file 
+        # we have no job script => ARC job returned a file
 
-        logger.debug('Received file %s from ARC (session id %s)' \
-                      % (filename, sessionid))
-        
+        logger.debug('Received file %s from ARC (session id %s)'
+                     % (filename, sessionid))
+
         # An ARC job can have several, or no, output files, so we cannot
-        # depend on them to clean up. In addition, ARC expects a reply 
-        # for the upload before the job status is "FINISHED". 
+        # depend on them to clean up. In addition, ARC expects a reply
+        # for the upload before the job status is "FINISHED".
         # Job status is handled inside the timeout thread only, not here.
 
         o.reply_and_exit(o.OK)
@@ -200,14 +201,14 @@ if not client_id and filename.startswith('/sid_redirect/'):
         # open .mRSL file containing all info about the job
 
         filepath = configuration.sessid_to_mrsl_link_home + sessionid\
-             + '.mRSL'
+            + '.mRSL'
         dict = unpickle(filepath, logger)
 
         # TODO: do something if dict could not be unpickled.
 
         if not dict:
             o.out('put: could not unpickle dict with job info! %s'
-                   % filepath)
+                  % filepath)
             o.reply_and_exit(o.ERROR)
 
         # if not dict.has_key("EMPTY_JOB"):
@@ -217,7 +218,7 @@ if not client_id and filename.startswith('/sid_redirect/'):
         dict['FINISHED_TIMESTAMP'] = time.gmtime()
 
         # verify results and add VERIFIED field to job
-        
+
         o.internal('starting to verify results')
         verify_results(dict, logger, configuration)
 
@@ -232,8 +233,8 @@ if not client_id and filename.startswith('/sid_redirect/'):
 
         print 'Filepath: %s' % filepath
         pgid_file = configuration.resource_home + '/'\
-             + dict['UNIQUE_RESOURCE_NAME'] + '/EXE_' + dict['EXE']\
-             + '.PGID'
+            + dict['UNIQUE_RESOURCE_NAME'] + '/EXE_' + dict['EXE']\
+            + '.PGID'
 
         try:
             fh = open(pgid_file, 'r+')
@@ -246,19 +247,19 @@ if not client_id and filename.startswith('/sid_redirect/'):
         except Exception, err:
 
             o.internal("Could not write to pgid_file: '%s'. Failure: %s"
-                        % (pgid_file, err))
+                       % (pgid_file, err))
 
         # Tell server that job finished so that it is possible to
         # return results to user even if job migrated
 
         (status, msg) = finished_job(sessionid,
-                dict['UNIQUE_RESOURCE_NAME'], dict['EXE'], dict['JOB_ID'
-                ], configuration)
+                                     dict['UNIQUE_RESOURCE_NAME'], dict['EXE'], dict['JOB_ID'
+                                                                                     ], configuration)
 
         if dict.has_key('IS_EMPTY_JOB_HELPER_DICT'):
             o.internal('%s %s %s is starting a new exe from %s!'
-                        % (dict['UNIQUE_RESOURCE_NAME'], dict['EXE'],
-                       dict['LOCALJOBNAME'], os.getenv('REMOTE_ADDR')))
+                       % (dict['UNIQUE_RESOURCE_NAME'], dict['EXE'],
+                           dict['LOCALJOBNAME'], os.getenv('REMOTE_ADDR')))
 
             # This try should not be necessary but log indicates possible
             # uncaught exceptions somewhere in the call
@@ -266,11 +267,11 @@ if not client_id and filename.startswith('/sid_redirect/'):
             try:
                 (stat, err) = \
                     start_resource_exe_if_continuous(dict['UNIQUE_RESOURCE_NAME'
-                        ], dict['EXE'], configuration.resource_home,
-                        logger)
+                                                          ], dict['EXE'], configuration.resource_home,
+                                                     logger)
             except Exception, exc:
                 (stat, err) = (False, 'Exception in start exe call: %s'
-                                % exc)
+                               % exc)
 
             # clean up removed during cvs update 04122006 by henrik
             # Clean up links etc before reply and exit
@@ -283,16 +284,15 @@ if not client_id and filename.startswith('/sid_redirect/'):
                 o.reply_and_exit(o.OK)
             else:
                 logger.error('could not restart exe after empty job: %s'
-                              % err)
+                             % err)
 
                 # Tell server to try restart again later
 
                 failed_restart(dict['UNIQUE_RESOURCE_NAME'], dict['EXE'
-                               ], dict['JOB_ID'], configuration)
+                                                                  ], dict['JOB_ID'], configuration)
                 o.out('put empty job.status: Error in restart of resource if continuous: %s'
-                       % err)
+                      % err)
                 o.reply_and_exit(o.ERROR)
-
 
         # ####### NOTIFY USER ########
         notifier = notify_user_thread(
@@ -302,7 +302,7 @@ if not client_id and filename.startswith('/sid_redirect/'):
             logger,
             configuration.webserver_home + redir_path,
             configuration,
-            )
+        )
 
         # ####### CLEAN UP RESOURCE #########
 
@@ -312,10 +312,10 @@ if not client_id and filename.startswith('/sid_redirect/'):
         try:
             (stat, err) = \
                 start_resource_exe_if_continuous(dict['UNIQUE_RESOURCE_NAME'
-                    ], dict['EXE'], configuration.resource_home, logger)
+                                                      ], dict['EXE'], configuration.resource_home, logger)
         except Exception, exc:
             (stat, err) = (False, 'Exception in start exe call: %s'
-                            % exc)
+                           % exc)
 
         if stat:
             o.out('put normal job.status: Restart of resource if continuous: OK'
@@ -323,14 +323,14 @@ if not client_id and filename.startswith('/sid_redirect/'):
             out_status = o.OK
         else:
             logger.error('could not restart exe after real job: %s'
-                          % err)
+                         % err)
 
             # Tell server to try restart again later
 
             failed_restart(dict['UNIQUE_RESOURCE_NAME'], dict['EXE'],
                            dict['JOB_ID'], configuration)
             o.out('put normal job.status: Error in restart of resource if continuous: %s'
-                   % err)
+                  % err)
             out_status = o.ERROR
 
         # Wait for notify thread before leaving
@@ -356,8 +356,8 @@ elif not client_id and filename.startswith('/share_redirect/'):
     try:
         (access_dir, _) = extract_mode_id(configuration, share_id)
     except ValueError, err:
-        logger.error('%s called with invalid share_id %s: %s' % \
-                         ('put', share_id, err))
+        logger.error('%s called with invalid share_id %s: %s' %
+                     ('put', share_id, err))
         o.out('INVALID SHARE ID! %s' % share_id)
         o.reply_and_exit(o.ERROR)
     symlink_path = os.path.join(configuration.sharelink_home, access_dir,
@@ -367,16 +367,16 @@ elif not client_id and filename.startswith('/share_redirect/'):
         o.internal('invalid share_id from filename %s' % filename)
         o.reply_and_exit(o.ERROR)
     elif access_dir == "read-only" or \
-             not os.path.isdir(os.path.realpath(symlink_path)):
-        o.out('INVALID SHARE ID %s - NOT A WRITABLE DIRECTORY SHARE! %s' % \
-                       share_id)
+            not os.path.isdir(os.path.realpath(symlink_path)):
+        o.out('INVALID SHARE ID %s - NOT A WRITABLE DIRECTORY SHARE! %s' %
+              share_id)
         o.internal('invalid upload share_id from filename %s' % filename)
         o.reply_and_exit(o.ERROR)
     else:
         o.internal('Share id OK: %s' % share_id)
 
     dest_dir = configuration.sharelink_home + os.sep + access_dir + os.sep + \
-               redir_path[:redir_path.rfind('/')]
+        redir_path[:redir_path.rfind('/')]
     dest_file = redir_path[redir_path.rfind('/') + 1:]
 
     # make sure that path exists
@@ -413,7 +413,7 @@ elif is_user(client_id, configuration.mig_server_home):
 
     # We are switching to explicit cert_redirect in PUT for symmetry with GET
     # but leave it optional for now to remain backward compatible
-    
+
     filename = filename.replace('/cert_redirect/', '')
     rel_name = filename.lstrip(os.sep)
 
@@ -421,7 +421,7 @@ elif is_user(client_id, configuration.mig_server_home):
         pending_file = os.path.join(configuration.resource_pending,
                                     client_dir, rel_name + '.' + str(time.time()))
         o.internal("'%s' sent a resource update file '%s', saving file in '%s'"
-                    % (client_id, filename, pending_file))
+                   % (client_id, filename, pending_file))
         try:
             upload_fd = open(pending_file, 'wb')
             while True:
@@ -444,44 +444,44 @@ elif is_user(client_id, configuration.mig_server_home):
             o.reply_and_exit(o.CLIENT_ERROR)
 
         resource_hostname = '%s.%s' % (config_dict['HOSTURL'],
-                config_dict['HOSTIDENTIFIER'])
+                                       config_dict['HOSTIDENTIFIER'])
         if os.path.exists(configuration.resource_home
-                           + resource_hostname):
+                          + resource_hostname):
             if not is_owner(client_id, resource_hostname,
                             configuration.resource_home, logger):
                 o.out('Failure: You (%s) must be an owner of %s to submit a new configuration!'
-                       % (client_id, resource_hostname))
+                      % (client_id, resource_hostname))
                 o.reply_and_exit(o.CLIENT_ERROR)
         elif keyword_auto == str(config_dict['HOSTIDENTIFIER']):
             (status, msg) = \
                 send_resource_create_request_mail(client_id,
-                    config_dict['HOSTURL'], pending_file, logger,
+                                                  config_dict['HOSTURL'], pending_file, logger,
                                                   configuration)
             o.internal(msg)
             if not status:
                 o.client("""Failed to send an email to the Grid server administrator, your configuration was saved on the server in:
 
 '"""
-                          + pending_file
-                          + """'
+                         + pending_file
+                         + """'
 
 Please contact the server administrator.""")
                 o.reply_and_exit(o.CLIENT_ERROR)
             else:
                 o.client("Your creation request of the resource: '%s'\nhas been send to the Grid server administration and will be processed as soon as possible."
-                          % config_dict['HOSTURL'])
+                         % config_dict['HOSTURL'])
                 o.reply_and_exit(o.OK)
         else:
             o.out("Failure: '%s' with identifier: '%s' doesn't exist!"
-                   % (config_dict['HOSTURL'],
-                  config_dict['HOSTIDENTIFIER']))
+                  % (config_dict['HOSTURL'],
+                      config_dict['HOSTIDENTIFIER']))
             o.reply_and_exit(o.CLIENT_ERROR)
 
         (status, msg) = confparser.run(configuration, pending_file,
                                        resource_hostname)
         if status:
             accepted_path = configuration.resource_home + '/'\
-                 + resource_hostname + '/config.MiG'
+                + resource_hostname + '/config.MiG'
 
             # truncate old conf with new accepted file
 
@@ -489,7 +489,7 @@ Please contact the server administrator.""")
                 os.rename(pending_file, accepted_path)
             except Exception, e:
                 o.out('Accepted config, but failed to save it! Failed: %s'
-                       % e)
+                      % e)
                 o.reply_and_exit(o.ERROR)
             o.out(msg)
             o.reply_and_exit(o.OK)
@@ -515,10 +515,10 @@ Please contact the server administrator.""")
             o.reply_and_exit(o.ERROR)
 
         (retval, retmsg) = create_runtimeenv(pending_file,
-                client_id, configuration)
+                                             client_id, configuration)
         if not retval:
             o.out('Error during creation of new runtime environment: %s'
-                   % retmsg)
+                  % retmsg)
             o.reply_and_exit(o.ERROR)
 
         o.out('New runtime environment successfuly created!')
@@ -539,16 +539,15 @@ Please contact the server administrator.""")
             o.reply_and_exit(o.ERROR)
 
         (retval, retmsg) = parse_and_save_settings(pending_file,
-                client_id, configuration)
+                                                   client_id, configuration)
         if not retval:
             o.out('Error during parsing or saving settings: %s'
-                   % retmsg)
+                  % retmsg)
             o.reply_and_exit(o.ERROR)
 
         o.out('New settings saved!')
         o.reply_and_exit(o.OK)
 
-        
     real_path = os.path.normpath(os.path.join(configuration.user_home,
                                               client_dir, rel_name))
     dest_dir = os.path.dirname(real_path)
@@ -557,13 +556,13 @@ Please contact the server administrator.""")
     if os.path.isdir(real_path):
         msg = 'Cannot write file %s: directory in the way!' % filename
         o.out('%s: please end the destination in a slash if it is a directory!'
-               % msg)
+              % msg)
         o.reply_and_exit(o.CLIENT_ERROR)
     if not os.path.isdir(dest_dir):
         msg = "You're trying to write to an invalid directory: %s"\
-             % os.path.dirname(filename)
+            % os.path.dirname(filename)
         o.out('%s: please make sure to that the target directory exists!'
-               % msg)
+              % msg)
         o.reply_and_exit(o.CLIENT_ERROR)
 
     # logger.info("put: %s writing %s" % (client_id, real_path))
@@ -598,8 +597,8 @@ Please contact the server administrator.""")
     # handle file package
 
     if extractpackage and (filename.upper().endswith('.ZIP')
-                            or filename.upper().endswith('.TAR.GZ')
-                            or filename.upper().endswith('.TAR.BZ2')):
+                           or filename.upper().endswith('.TAR.GZ')
+                           or filename.upper().endswith('.TAR.BZ2')):
         (status, msg) = handle_package_upload(real_path, filename, client_id,
                                               configuration, submitmrsl,
                                               os.path.dirname(real_path))
@@ -626,12 +625,12 @@ Please contact the server administrator.""")
     else:
 
         o.client("A 'normal' file was uploaded (%s). It can now be used as an inputfile in your .mRSL files"
-                  % filename)
+                 % filename)
         o.reply_and_exit(o.OK)
 elif is_server(client_id, configuration.server_home):
 
     logger.info('Certificate found as a server cert: %s'
-                 % client_id)
+                % client_id)
     dest_file = os.path.normpath(os.path.join(configuration.server_home,
                                               client_dir, rel_name))
     dest_file = dest_file.replace('//', '/')
@@ -652,7 +651,7 @@ elif is_server(client_id, configuration.server_home):
 
     if not os.path.isdir(dest_dir):
         msg = "You're trying to write to an invalid directory: %s"\
-             % dest_dir
+            % dest_dir
         o.client("make sure that you don't have a regular file with same name as DEST!"
                  )
         o.reply_and_exit(o.CLIENT_ERROR)
@@ -673,7 +672,7 @@ elif is_server(client_id, configuration.server_home):
 
     if filename.upper().endswith('.MRSL'):
         (status, msg) = migrated_job(dest_path, client_id,
-                configuration)
+                                     configuration)
         o.out(msg)
         if status:
             o.reply_and_exit(o.OK)
@@ -699,11 +698,11 @@ elif is_server(client_id, configuration.server_home):
             o.reply_and_exit(o.ERROR)
     else:
         o.out("A 'normal' file was uploaded (%s). Don't know what to do with it..."
-               % filename)
+              % filename)
         o.reply_and_exit(o.OK)
 else:
     o.out('Person with certificate thats neither found as user, server nor resource cert is trying to use http put %s'
-           % client_id)
+          % client_id)
     o.reply_and_exit(o.ERROR)
 
 # if code gets here everything was ok

@@ -36,7 +36,7 @@ import time
 
 from math import exp, floor
 
-import shared.safeeval as safeeval
+from shared import safeeval
 from jobqueue import print_job
 from shared.defaults import maxfill_fields, keyword_all
 from shared.resource import anon_resource_id

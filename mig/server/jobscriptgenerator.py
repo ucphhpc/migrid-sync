@@ -43,8 +43,8 @@ from shared.mrslparser import expand_variables
 from shared.ssh import copy_file_to_resource, generate_ssh_rsa_key_pair
 
 try:
-    import shared.mrsltoxrsl as mrsltoxrsl
-    import shared.arcwrapper as arc
+    from shared import mrsltoxrsl
+    from shared import arcwrapper
 except Exception, exc:
     # Ignore errors and let it crash if ARC is enabled without the lib
     pass
@@ -410,7 +410,7 @@ def create_job_script(
                 make_symlink(linkintermediate, linkloc, logger)
         except Exception, err:
 
-                # ######### End JVM SANDBOX HACK ###########
+            # ######### End JVM SANDBOX HACK ###########
 
             msg = "File '%s' was not copied to the webserver home." % \
                   inputfiles_path
@@ -522,7 +522,7 @@ def create_arc_job(
 
     try:
         logger.debug('submitting job to ARC')
-        session = arc.Ui(user_home)
+        session = arcwrapper.Ui(user_home)
         arc_job_ids = session.submit(xrsl)
 
         # if no exception occurred, we are done:
@@ -534,10 +534,10 @@ def create_arc_job(
         result = job_dict
 
     # when errors occurred, pass a message to the caller.
-    except arc.ARCWrapperError, err:
+    except arcwrapper.ARCWrapperError, err:
         msg = err.what()
         result = None  # unsuccessful
-    except arc.NoProxyError, err:
+    except arcwrapper.NoProxyError, err:
         msg = 'No Proxy found: %s' % err.what()
         result = None  # unsuccessful
     except Exception, err:

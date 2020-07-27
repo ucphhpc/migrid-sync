@@ -34,7 +34,7 @@ import re
 import time
 import urllib
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.base import fill_user, distinguished_name_to_user
 from shared.conf import get_configuration_object
 from shared.defaults import csrf_field, keyword_auto, cert_valid_days

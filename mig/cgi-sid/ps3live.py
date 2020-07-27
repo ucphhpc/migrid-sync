@@ -42,7 +42,7 @@ from shared.sandbox import get_resource_name
 from shared.resadm import get_frontend_script, get_master_node_script
 from shared.resadm import fill_frontend_script, \
     fill_master_node_script, get_resource_exe
-import shared.confparser as confparser
+from shared import confparser
 
 
 def create_ps3_resource(configuration, sandboxkey):

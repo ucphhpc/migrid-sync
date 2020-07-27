@@ -28,7 +28,7 @@
 import os
 import sys
 
-import shared.confparser as confparser
+from shared import confparser
 from shared.conf import get_configuration_object
 
 if os.getenv('HTTP_METHOD'):

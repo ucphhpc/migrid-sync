@@ -30,7 +30,7 @@ import sys
 import cgi
 import time
 
-import shared.returnvalues as returnvalues
+from shared import returnvalues
 from shared.bailout import bailout_helper, crash_helper, filter_output_objects
 from shared.base import requested_page, allow_script
 from shared.defaults import download_block_size
