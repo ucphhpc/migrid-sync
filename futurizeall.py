@@ -47,13 +47,17 @@ enable_postprocessing = False
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print('Usage: %s TARGET' % sys.argv[0])
+        print('Usage: %s TARGET [ONLYSAFE]' % sys.argv[0])
         print('Run futurize on all python source code in TARGET and fix breakage')
+        print('The optional ONLYSAFE argument can be used to override the ')
+        print('default of only applying supposedly safe transformations.')
         sys.exit(1)
 
     target = os.getcwd()
     if sys.argv[1:]:
         target = os.path.abspath(sys.argv[1])
+    if sys.argv[2:]:
+        safe_only = (sys.argv[2].lower() in ('true', 'yes'))
 
     print('Futurizing python code in %s' % target)
     print('--- ignoring all %s dirs ---' % ', '.join(exclude_dirs))
@@ -65,7 +69,7 @@ if __name__ == '__main__':
     else:
         futurize_base += ['--stage2']
 
-    # TODO: use sed tool to fix any lines broken by futurize
+    # TODO: use sed tool to fix any lines broken by futurize / 2to3
     sed_rules = ['']
     postprocess_base = ['sed', '-i'] + [';'.join(sed_rules)]
     for (root, dirs, files) in os.walk(target):
