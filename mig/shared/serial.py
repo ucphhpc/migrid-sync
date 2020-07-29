@@ -28,7 +28,11 @@
 """Pickle based serializing"""
 from __future__ import print_function
 
-import cPickle as pickle
+# Python 2 requires explicit cPickle where as python 3 defaults to it
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 import json
 import yaml
 
