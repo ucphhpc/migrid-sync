@@ -51,7 +51,7 @@ from .shared.fileio import read_file, delete_file, delete_symlink, \
 from .shared.gdp.all import get_base_client_id
 from .shared.pwhash import scramble_password, unscramble_password
 
-valid_otp_window = 1
+valid_otp_window = 10
 
 
 def get_totp(client_id,
