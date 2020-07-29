@@ -81,7 +81,7 @@ import time
 # TODO: can we add sticky posts somehow? add priority field for admins?
 # TODO: should we anonymize user IDs?
 
-### Constants
+# Constants
 # File lock to avoid races on writes
 LOCK_NAME = 'forum.lock'
 
@@ -112,9 +112,11 @@ def get_thread_path(data_dir, hash_string):
     """build thread path from data_dir and hash_string"""
     return os.path.join(data_dir, "%s-%s" % (THREAD_NAME, hash_string))
 
+
 def get_visited_path(data_dir, hash_string):
     """build visited path from data_dir and hash_string"""
     return os.path.join(data_dir, "%s-%s" % (VISITED_NAME, hash_string))
+
 
 def get_subscriber_path(data_dir, hash_string=''):
     """build index path from data_dir and optional hash_string"""
@@ -124,9 +126,11 @@ def get_subscriber_path(data_dir, hash_string=''):
         suffix = 'index'
     return os.path.join(data_dir, "%s-%s" % (SUBSCRIBER_NAME, suffix))
 
+
 def get_index_path(data_dir):
     """build index path from data_dir"""
     return os.path.join(data_dir, INDEX_NAME)
+
 
 def get_lock_path(data_dir):
     """build lock path from data_dir"""
@@ -172,20 +176,23 @@ def is_valid_hash(data_dir, hash_string):
         return False
     return True
 
+
 def read_common(path):
     """Load list of common single line entries"""
     try:
-        common_file = file(path, 'r')
+        common_file = open(path, 'rb')
         common = [i.strip() for i in common_file.readlines()]
         common_file.close()
     except:
         common = []
     return common
 
+
 def read_visited(data_dir, author):
     """Load list of thread visits for author"""
     path = get_visited_path(data_dir, md5_hash(author).hexdigest())
     return read_common(path)
+
 
 def read_subscribers(data_dir, thread_hash):
     """Load list of subscribers to index or thread identified by thread_hash.
@@ -193,24 +200,29 @@ def read_subscribers(data_dir, thread_hash):
     """
     return read_common(get_subscriber_path(data_dir, thread_hash))
 
+
 def read_threads(data_dir):
     """Load list of threads"""
     return read_common(get_index_path(data_dir))
+
 
 def read_messages(data_dir, thread_hash):
     """Load list of messages in thread identified by thread_hash"""
     return read_common(get_thread_path(data_dir, thread_hash))
 
+
 def write_common(path, lines):
     """Save list of lines to common flat file in path"""
-    common_file = file(path, 'w')
+    common_file = open(path, 'wb')
     common_file.write('\n'.join(lines))
     common_file.close()
+
 
 def write_visited(data_dir, author, visited):
     """Write list of thread visits to for author"""
     path = get_visited_path(data_dir, md5_hash(author).hexdigest())
     return write_common(path, visited)
+
 
 def write_subscribers(data_dir, thread_hash, subscribers):
     """Write list of subscribers to the subscribers file for index or
@@ -219,24 +231,27 @@ def write_subscribers(data_dir, thread_hash, subscribers):
     path = get_subscriber_path(data_dir, thread_hash)
     return write_common(path, subscribers)
 
+
 def write_threads(data_dir, threads):
     """Write list of threads to index file"""
     path = get_index_path(data_dir)
     return write_common(path, threads)
+
 
 def write_messages(data_dir, thread_hash, messages):
     """Write list of messages to thread file"""
     path = get_thread_path(data_dir, thread_hash)
     return write_common(path, messages)
 
+
 def append_common(path, line):
     """Append line to common flat file in path. Includes file creation if path
     doesn't exits already.
     """
     try:
-        common_file = file(path, 'a')
+        common_file = open(path, 'ab')
     except:
-        common_file = file(path, 'w')
+        common_file = open(path, 'wb')
     common_file.write(line)
     common_file.close()
 
@@ -253,6 +268,7 @@ def update_timestamp(visited, thread_hash):
         visited.append(new_entry)
     return visited
 
+
 def parse_visited(visited):
     """Create a dictionary mapping thread_hash values to time stamps by
     parsing the lines in visited list.
@@ -264,6 +280,7 @@ def parse_visited(visited):
             continue
         visit_map[parts[0]] = parts[1]
     return visit_map
+
 
 def check_new_messages(visit_map, thread_hash, last_update):
     """Check if thread identified by thread_hash contains new messages.
@@ -279,6 +296,7 @@ def check_new_messages(visit_map, thread_hash, last_update):
         return False
     else:
         return True
+
 
 def update_thread(data_dir, author, subject=None, key=None):
     """Update the thread, creating a new thread if key is None. Returns the
@@ -307,14 +325,14 @@ def update_thread(data_dir, author, subject=None, key=None):
     if not key:
         # A new thread, put at the top.
         new_threads.append('\t'.join(
-                (row_hash, now, '0', '-', author, subject)))
+            (row_hash, now, '0', '-', author, subject)))
 
     for thread in threads:
         if thread.startswith(row_hash):
             # insert the updated thread at the beginning.
             # (_ ignore last reply - we're setting it to now)
             _, date, num_replies, _, author, subject = \
-                    thread.strip().split('\t')
+                thread.strip().split('\t')
             num_replies = str(int(num_replies) + 1)
             new_threads.insert(0, '\t'.join(
                 (row_hash, date, num_replies, now, author, subject)))
@@ -368,6 +386,7 @@ def new_post(data_dir, author, subject, body, key):
     messages.append('%s\t%s\t%s' % (date, author, body))
     write_messages(data_dir, key, messages)
 
+
 def reply(data_dir, author, body, key):
     """Reply to an existing post.
 
@@ -394,6 +413,7 @@ def reply(data_dir, author, body, key):
     lock_handle.close()
     return (key, 'Succesfully posted reply')
 
+
 def list_subscribers(data_dir, key=''):
     """Load a list of authors subscribing to the forum or a specific thread if
     key is provided. The subscribers are looked up in the corresponding
@@ -403,6 +423,7 @@ def list_subscribers(data_dir, key=''):
     """
     subscribers = read_subscribers(data_dir, key)
     return [line.strip() for line in subscribers]
+
 
 def toggle_subscribe(data_dir, author, key=''):
     """Toggle notification about new messages for author, by updating the
@@ -424,6 +445,7 @@ def toggle_subscribe(data_dir, author, key=''):
 settings to %s updates''' % subscribe_type
     write_subscribers(data_dir, key, subscribers)
     return out
+
 
 def list_threads(data_dir, author):
     """List the existing threads."""
@@ -482,6 +504,7 @@ def list_single_thread(data_dir, thread_hash, author):
                  body.decode('string_escape'), 'new': new_message}
         message_list.append(entry)
     return message_list
+
 
 def search_threads(data_dir, subject, body, author=""):
     """Search the existing threads."""

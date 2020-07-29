@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # recursetidy - recursively tidy python code in file tree or archive
-# Copyright (C) 2012  Jonas Bardino
+# Copyright (C) 2012-2020  Jonas Bardino
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,8 @@
 # -- END_HEADER ---
 #
 
-"""Clean up an entire tree or archive of python code using PythonTidy from
+"""NOTE: should be mostly obsoleted by autopep8, but we keep it for reference.
+Clean up an entire tree or archive of python code using PythonTidy from
 http://pypi.python.org/pypi/PythonTidy/
 Just save the latest version of PythonTidy in ./PythonTidy.py or in your
 PYTHONPATH before running this program.
@@ -68,6 +69,7 @@ def check_zip(path, mode_prefix):
         status = True
     return (status, mode)
 
+
 def check_tar(path, mode_prefix):
     """Return a tuple with a boolean to indicate if path is a tar file of some
     kind and a mode suitable for tarfile opening with expected compression
@@ -86,6 +88,7 @@ def check_tar(path, mode_prefix):
     elif True in [path.endswith(ext) for ext in bz_exts]:
         mode += ':bz2'
     return (status, mode)
+
 
 def tidy_recursively(orig_dir, tidied_dir, filter_pattern):
     """Tidy code in src_path recursively using PythonTidy and write results
@@ -112,6 +115,7 @@ def tidy_recursively(orig_dir, tidied_dir, filter_pattern):
                 logging.error("tidy failed for %s: %s" % (orig_path, tidy_err))
     return tidied_path_list
 
+
 def tidy_all(src_path, dst_path, filter_pattern):
     """Tidy code in src_path recursively using PythonTidy and write results
     accordingly in dst_path. If src_path is an archive the files are extracted
@@ -131,13 +135,13 @@ def tidy_all(src_path, dst_path, filter_pattern):
     (tar_target, tar_mode) = check_tar(src_path, "r")
     if os.path.isfile(src_path):
         if zip_target:
-            logging.info("Extracting original code from zip archive %s" % \
+            logging.info("Extracting original code from zip archive %s" %
                          src_path)
             arch = zipfile.ZipFile(src_path)
             arch.extractall(orig_dir)
             arch.close()
         elif tar_target:
-            logging.info("Extracting original code from tar archive %s" % \
+            logging.info("Extracting original code from tar archive %s" %
                          src_path)
             arch = tarfile.open(src_path)
             arch.extractall(orig_dir)
@@ -160,11 +164,11 @@ def tidy_all(src_path, dst_path, filter_pattern):
         logging.info("Writing tidied code in directory %s" % dst_path)
         tidied_dir = dst_path
     else:
-        raise ValueError("%s not recognised as archive or existing dir" % \
+        raise ValueError("%s not recognised as archive or existing dir" %
                          dst_path)
 
     tidied_path_list = tidy_recursively(orig_dir, tidied_dir, filter_pattern)
-    
+
     if zip_target:
         # Force compression
         arch = zipfile.ZipFile(dst_path, zip_mode, zipfile.ZIP_DEFLATED)
@@ -184,7 +188,7 @@ def tidy_all(src_path, dst_path, filter_pattern):
     logging.info("Cleaning up tmp files")
     shutil.rmtree(tmp_dir)
 
-        
+
 if __name__ == "__main__":
     in_path = 'code.zip'
     if sys.argv[1:]:
@@ -210,4 +214,3 @@ if __name__ == "__main__":
         logging.error("%s" % err)
         sys.exit(1)
     logging.shutdown()
-
