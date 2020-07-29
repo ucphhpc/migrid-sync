@@ -51,7 +51,15 @@ from .shared.fileio import read_file, delete_file, delete_symlink, \
 from .shared.gdp.all import get_base_client_id
 from .shared.pwhash import scramble_password, unscramble_password
 
-valid_otp_window = 10
+# Set OTP windows range (+/-) to compensate for offset 
+# and drifting offline clocks
+# NOTE: valid_otp_window = 1 : compensates for drifting clocks
+#       valid_otp_window >= 1 : compensates for drifting clocks 
+#                               and a clock offset of valid_otp_window-1
+# IMPORTANT: Do not change without consulting:
+# bardino@science.ku.dk or 
+# rehr@science.ku.dk
+valid_otp_window = 2
 
 
 def get_totp(client_id,
