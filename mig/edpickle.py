@@ -1,12 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 #
 # --- BEGIN_HEADER ---
 #
-#
 # edpickle - a simple pickled object editor.
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,13 +27,13 @@
 #
 
 """Edit pickled objects on disk"""
+
 from __future__ import print_function
-from __future__ import absolute_import
 
 import os
 import sys
 
-from .shared.serial import pickle
+from shared.serial import pickle
 
 
 if len(sys.argv) < 2:

@@ -1,8 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
+# --- BEGIN_HEADER ---
+#
 # bugweed - a simple helper to locate simple error in the project code.
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -18,17 +20,20 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301, USA.
+#
+# --- END_HEADER ---
+#
 
 """Grep for obvious errors in pylint output for all code"""
 from __future__ import print_function
-from __future__ import absolute_import
 
 import glob
 import sys
 
-from .codegrep import py_code_files
-from .shared.safeeval import subprocess_call
+from shared.projcode import py_code_files
+from shared.safeeval import subprocess_call
 
 if '__main__' == __name__:
     if len(sys.argv) != 1:
@@ -44,6 +49,6 @@ if '__main__' == __name__:
     print("Bug weeding command: %s" % command)
     print("*** Not all lines reported are necessarily errors ***")
     print()
-    #subprocess_call(command, only_sanitized_variables=True)
-    # NOTE: we use command list to avoid shell requirement    
+    # subprocess_call(command, only_sanitized_variables=True)
+    # NOTE: we use command list to avoid shell requirement
     subprocess_call(command_list)

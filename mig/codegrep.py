@@ -1,8 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
+# --- BEGIN_HEADER ---
+#
 # codegrep - a simple helper to locate strings in the project code.
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -18,75 +20,22 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301, USA.
+#
+# --- END_HEADER ---
+#
 
 """Grep for a regular expression in all code files"""
+
 from __future__ import print_function
-from __future__ import absolute_import
 
 import glob
 import sys
 
-from .shared.safeeval import subprocess_call
+from shared.projcode import code_files
+from shared.safeeval import subprocess_call
 
-# Ignore backup and dot files in wild card match
-plain = '[a-zA-Z0-9]*.py'
-py_code_files = [
-    '%s' % plain,
-    'cgi-bin/%s' % plain,
-    'cgi-sid/%s' % plain,
-    'wsgi-bin/%s' % plain,
-    'install/%s' % plain,
-    'migfs-fuse/%s' % plain,
-    'resource/bin/%s' % plain,
-    'resource/image-scripts/%s' % plain,
-    'resource/keepalive-scripts/%s' % plain,
-    'server/%s' % plain,
-    'shared/%s' % plain,
-    'shared/functionality/%s' % plain,
-    'shared/distos/%s' % plain,
-    'simulation/%s' % plain,
-    'user/%s' % plain,
-    'vm-proxy/%s' % plain,
-    'webserver/%s' % plain,
-    'wsgi-bin/%s' % plain,
-]
-py_code_files += ['cgi-sid/%s' % name for name in ['requestnewjob',
-                                                   'putrespgid']]
-
-py_code_files += ['cgi-bin/%s' % name for name in [
-    'listdir',
-    'mkdir',
-    'put',
-    'remove',
-    'rename',
-    'rmdir',
-    'stat',
-    'walk',
-    'getrespgid',
-]]
-sh_code_files = [
-    'resource/frontend_script.sh',
-    'resource/master_node_script.sh',
-    'resource/leader_node_script.sh',
-    'resource/dummy_node_script.sh',
-]
-js_code_files = [
-    'images/js/jquery.ajaxhelpers.js',
-    'images/js/jquery.confirm.js',
-    'images/js/jquery.filemanager.js',
-    'images/js/jquery.jobmanager.js',
-    'images/js/jquery.migtools.js',
-    'images/js/jquery.prettyprint.js',
-    'images/js/preview-caman.js',
-    'images/js/preview.js',
-    'images/js/preview-paraview.js',
-    'assets/js/V2/ui-dynamic.js',
-    'assets/js/V3/ui-dynamic.js',
-    'assets/js/V3/ui-global.js',
-    'assets/js/V3/ui-extra.js',
-]
-code_files = py_code_files + sh_code_files + js_code_files
 
 if '__main__' == __name__:
     if len(sys.argv) < 2:

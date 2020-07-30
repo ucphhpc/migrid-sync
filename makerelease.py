@@ -1,8 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
+# --- BEGIN_HEADER ---
+#
 # makerelease - a simple helper to create a MiG project code release.
-# Copyright (C) 2009  Jonas Bardino
+# Copyright (C) 2009-2020  Jonas Bardino
 #
 # This file is part of MiG.
 #
@@ -18,9 +20,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301, USA.
+#
+# --- END_HEADER ---
+#
 
 """Pack relevant parts of the code in a versioned tarball"""
+
 from __future__ import print_function
 
 import os
@@ -29,7 +36,8 @@ import tarfile
 
 if len(sys.argv) < 2:
     print('Usage: %s VERSION TARGET' % sys.argv[0])
-    print('Make a release tarball of all code in TARGET and stamp it as VERSION')
+    print(
+        'Make a release tarball of all code in TARGET and stamp it as VERSION')
     sys.exit(1)
 
 version = sys.argv[1]
@@ -60,10 +68,9 @@ if '__main__' == __name__:
             if name.startswith(tar_path):
                 continue
             path = os.path.normpath(os.path.join(root, name))
-            rel_path = path.replace(target+os.sep, '')
+            rel_path = path.replace(target + os.sep, '')
             archive_path = os.path.join(archive_base, rel_path)
             print('Adding %s' % archive_path)
             tar_ball.add(rel_path, archive_path, recursive=False)
     tar_ball.close()
     print('Wrote release of %s in %s' % (target, tar_path))
-

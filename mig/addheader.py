@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addheader - add license header to all code modules.
-# Copyright (C) 2009-2017  Jonas Bardino
+# Copyright (C) 2009-2020  Jonas Bardino
 #
 # This file is part of MiG.
 #
@@ -28,14 +28,13 @@
 
 """Search code tree and add the required header to all python modules"""
 from __future__ import print_function
-from __future__ import absolute_import
 
 import datetime
 import fnmatch
 import os
 import sys
 
-from .codegrep import py_code_files, sh_code_files, js_code_files
+from shared.projcode import py_code_files, sh_code_files, js_code_files
 
 # Modify these to fit actual project
 proj_vars = {}
@@ -70,16 +69,17 @@ license_text += """#
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # %(project_name)s is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
 # USA."""
+
 
 def check_header(path, var_dict, preamble_size=4096):
     """Check if path already has a credible license header. Only looks inside
@@ -89,11 +89,12 @@ def check_header(path, var_dict, preamble_size=4096):
     module_preamble = module_fd.read(4096)
     module_fd.close()
     if begin_marker in module_preamble or \
-           proj_vars['authors'] in module_preamble:
+            proj_vars['authors'] in module_preamble:
         return True
     else:
         return False
-    
+
+
 def add_header(path, var_dict, explicit_border=True, block_wrap=False):
     """Add the required copyright and license header to module in path.
     The optional explicit_border argument can be set to wrap the license
@@ -127,7 +128,7 @@ def add_header(path, var_dict, explicit_border=True, block_wrap=False):
         if module_lines and module_lines[0].startswith("#!"):
             module_header.append(module_lines[0].strip())
             module_lines = module_lines[1:]
-        
+
     if var_dict['module_encoding']:
         module_header.append(enc)
         if module_lines and module_lines[0].startswith("# -*- coding"):
@@ -149,12 +150,11 @@ def add_header(path, var_dict, explicit_border=True, block_wrap=False):
 %s
 */
 """ % lic
-        
+
     module_header.append(lic)
     module_text = '\n'.join(module_header) % var_dict + '\n'\
-         + ''.join(module_lines)
+        + ''.join(module_lines)
 
-        
     module_fd = open(path, 'w')
     module_fd.write(module_text)
     module_fd.close()
@@ -170,7 +170,7 @@ if __name__ == '__main__':
     for (root, dirs, files) in os.walk(target):
 
         # skip all dot dirs - they are from repos etc and _not_ jobs
-    
+
         if root.find(os.sep + '.') != -1:
             continue
         for name in files:
@@ -183,11 +183,11 @@ if __name__ == '__main__':
                     needs_block = True
                 else:
                     needs_block = False
-                    
+
                 pattern = os.path.join(mig_code_base, pattern)
 
                 # print "Testing %s against %s" % (src_path, pattern)
-    
+
                 if src_path == pattern or fnmatch.fnmatch(src_path, pattern):
                     print('Matched %s against %s' % (src_path, pattern))
                     proj_vars['module_name'] = name.replace('.py', '')
