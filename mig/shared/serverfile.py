@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# serverfile - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# serverfile - shared wrapper for interfacing local and remote files
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -48,7 +48,7 @@ LOCK_EX = fcntl.LOCK_EX
 # File operations
 
 
-class ServerFile(file):
+class ServerFile(object):
 
     """File object wrapper to provide the usual file interface with
     local or distributed files underneath. We simply inherit file
@@ -56,34 +56,81 @@ class ServerFile(file):
     subclassed in order to provide remote server file operation.
     """
 
-    def __init__(
-        self,
-        path,
-        mode='r',
-        bufsize=-1,
-        ):
-        """Create local file and set default object attributes"""
+    mode = None
+    closed = None
 
-        file.__init__(self, path, mode, bufsize)
+    def __init__(self, path, mode='r', bufsize=-1):
+        """Any general setup"""
+        self.mode = mode
+        self.closed = False
+
+    def close(self):
+        """Close any open local or remote file handle"""
+        raise NotImplementedError(
+            "This is an interface class: subclass and implement!")
+
+    def fileno(self):
+        """Get low level file descriptor for any open local or remote file handle"""
+        raise NotImplementedError(
+            "This is an interface class: subclass and implement!")
+
+    def flush(self):
+        """Flush any open local or remote file handle"""
+        raise NotImplementedError(
+            "This is an interface class: subclass and implement!")
+
+    def read(self, size=-1):
+        """Read size bytes from local or remote file handle"""
+        raise NotImplementedError(
+            "This is an interface class: subclass and implement!")
+
+    def readlines(self, size=-1):
+        """Read size bytes from local or remote file handle"""
+        raise NotImplementedError(
+            "This is an interface class: subclass and implement!")
+
+    def seek(self, offset, whence=0):
+        """Seek to offset in local or remote file handle"""
+        raise NotImplementedError(
+            "This is an interface class: subclass and implement!")
+
+    def tell(self):
+        """Tell offset in local or remote file handle"""
+        raise NotImplementedError(
+            "This is an interface class: subclass and implement!")
+
+    def truncate(self, size=0):
+        """Truncate local or remote file handle"""
+        raise NotImplementedError(
+            "This is an interface class: subclass and implement!")
+
+    def write(self, str):
+        """Write str to local or remote file handle"""
+        raise NotImplementedError(
+            "This is an interface class: subclass and implement!")
+
+    def writelines(self, lines):
+        """Write lines to local or remote file handle"""
+        raise NotImplementedError(
+            "This is an interface class: subclass and implement!")
 
     def lock(self, mode):
         """Additional method interface to integrate file locking with
-        file objects. 
+        file objects.
         """
-
-        raise LockingException('This is an interface class! use a subclass and implement locking there!'
-                               )
+        raise NotImplementedError(
+            "This is an interface class: subclass and implement!")
 
     def unlock(self):
         """Additional method interface to integrate file locking with
-        file objects. 
+        file objects.
         """
-
-        raise LockingException('This is an interface class! use a subclass and implement locking there!'
-                               )
+        raise NotImplementedError(
+            "This is an interface class: subclass and implement!")
 
     def __str__(self):
-        return file.__str__(self)
+        raise NotImplementedError(
+            "This is an interface class: subclass and implement!")
 
 
 class LockingException(Exception):
@@ -93,5 +140,3 @@ class LockingException(Exception):
 
     def __str__(self):
         return repr(self.value)
-
-

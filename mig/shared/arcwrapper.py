@@ -54,7 +54,7 @@ logger = config.logger
 if not config.arc_clusters:
     raise Exception('ignoring arcwrapper import without ARC enabled!')
 
-# to make this succeed: 
+# to make this succeed:
 # install nordugrid-arc-client and nordugrid-arc-python
 # set LD_LIBRARY_PATH="$NORDUGRID_LOCATION/lib:$GLOBUS_LOCATION/lib
 #     PYTHONPATH="$NORDUGRID_LOCATION/lib/python2.4/site-packages"
@@ -63,34 +63,42 @@ try:
 except:
     logger.error('problems importing arclib... trying workaround')
     try:
-        logger.debug('Current sys.path is %s' % sys.path )
-        sys.path.append(os.environ['NORDUGRID_LOCATION'] 
+        logger.debug('Current sys.path is %s' % sys.path)
+        sys.path.append(os.environ['NORDUGRID_LOCATION']
                         + '/lib/python2.4/site-packages')
         import arclib
     except:
         raise Exception('arclib not found - no problem unless using ARC')
 
 # (trivially inheriting) exception class of our own
+
+
 class ARCWrapperError(arclib.ARCLibError):
-    def __init__(self,msg):
+
+    def __init__(self, msg):
         arclib.ARCLibError.__init__(self, msg)
 
+
 class NoProxyError(arclib.ARCLibError):
+
     """ A special error which can occur in this setting:
         The user did not provide a valid proxy certificate, or the one
         she provided is expired. We need to treat this error case
         specially (advise to update, or create a new proxy)."""
 
-    def __init(self,msg):
-        arclib.ARCLibError.__init__(self,('No proxy available: %s' % msg))
+    def __init(self, msg):
+        arclib.ARCLibError.__init__(self, ('No proxy available: %s' % msg))
+
 
 class Proxy(arclib.Certificate):
+
     """Proxy management class.
-    
+
     This class handles a X509 proxy certificate."""
+
     def __init__(self, filename):
         """Class constructor.
-        
+
         @type  filename: string
         @param filename: Proxy filename"""
 
@@ -99,11 +107,11 @@ class Proxy(arclib.Certificate):
             raise NoProxyError('Proxy file ' + filename + ' does not exist.')
 
         try:
-            arclib.Certificate.__init__(self,arclib.PROXY,self.__filename)
+            arclib.Certificate.__init__(self, arclib.PROXY, self.__filename)
         except arclib.CertificateError as err:
             raise NoProxyError(err.what())
         # just testing...
-        logger.debug('Proxy Certificate %s from %s' \
+        logger.debug('Proxy Certificate %s from %s'
                      % (self.GetSN(), self.getFilename()))
         logger.debug('time left in seconds: %d' % self.getTimeleft())
 
@@ -113,30 +121,30 @@ class Proxy(arclib.Certificate):
 
     def getTimeleft(self):
         """Return the amount of time left on the proxy certificate (int)."""
-        
+
         timeleft = 0
         if not self.IsExpired():
             timeLeftStr = self.ValidFor()
-            factor = {'days':24*60*60,'day':24*60*60
-                     ,'hours':60*60, 'hour':60*60
-                      ,'minutes':60, 'minute':60
-                      ,'seconds':1, 'second':1}
+            factor = {'days': 24 * 60 * 60, 'day': 24 * 60 * 60, 'hours': 60 * 60, 'hour': 60 *
+                      60, 'minutes': 60, 'minute': 60, 'seconds': 1, 'second': 1}
             timeLeftParts = timeLeftStr.split(',')
             for part in timeLeftParts:
-                [val,item] = part.split()
+                [val, item] = part.split()
                 f = factor[item]
-                if f: 
-                    timeleft = timeleft + int(val)*f
+                if f:
+                    timeleft = timeleft + int(val) * f
         return timeleft
 
-# small helpers: 
+# small helpers:
 
 # splitting up an ARC job ID
+
+
 def splitJobId(jobId):
     """ Splits off the last part of the path from an ARC Job ID.
         Reason: The job ID is a valid URL to the job directory on the
         ARC resource, and all jobs have a common URL prefix. In addition,
-        job information on the ARC resource is usually obtained by 
+        job information on the ARC resource is usually obtained by
         inspecting files at URL <JobID-prefix>/info/<JobID-last-part>
         (see ARC/arclib/jobinfo.cpp).
 
@@ -146,59 +154,61 @@ def splitJobId(jobId):
         jobId = jobId + '/'
     jobURL = arclib.URL(jobId)
     path = os.path.split(jobURL.Path())[0]
-    return (jobURL.Protocol() + '://' + jobURL.Host() + ':' 
-            + str(jobURL.Port()) + os.path.dirname(path) + '/'
-           , os.path.basename(path))
+    return (jobURL.Protocol() + '://' + jobURL.Host() + ':'
+            + str(jobURL.Port()) + os.path.dirname(path) + '/', os.path.basename(path))
 
 # hack: issue a command line, return output and exit code
+
+
 def getstatusoutput(cmd, env=None, startDir=""):
-    
+
     variableDefs = ""
-    
+
     if env:
         for variableName in env.keys():
             variableDefs = variableDefs + "%s=%s " % \
-                            (variableName, env[variableName])
-    
+                (variableName, env[variableName])
+
     execCmd = variableDefs + cmd
 
     if startDir == "":
         resultVal, result = commands.getstatusoutput(execCmd)
     else:
-        resultVal, result = commands.getstatusoutput('cd "%s";set;%s' % (startDir, execCmd))
-    
+        resultVal, result = commands.getstatusoutput(
+            'cd "%s";set;%s' % (startDir, execCmd))
+
     resultLines = result.split('\n')
-    
+
     logger.debug("Executing: %s, result = %d" % (execCmd, resultVal))
-    
+
     if logger.getLogLevel() == 'DEBUG':
-        if len(resultLines)<200:
+        if len(resultLines) < 200:
             i = 0
             for line in resultLines:
-                logger.debug("\t"+str(i)+": "+line.strip())
+                logger.debug("\t" + str(i) + ": " + line.strip())
                 i = i + 1
-    
+
     return resultVal, resultLines
 
 
-# asking the user for a proxy. This will be called from many places, 
+# asking the user for a proxy. This will be called from many places,
 # thus centralised here (though too specific ).
 def askProxy():
         output_objects = []
-        output_objects.append({'object_type':'sectionheader',
-                               'text':'Proxy upload'})
-        output_objects.append({'object_type':'html_form',
-                              'text':"""
+        output_objects.append({'object_type': 'sectionheader',
+                               'text': 'Proxy upload'})
+        output_objects.append({'object_type': 'html_form',
+                              'text': """
 <form action="upload.py"
 enctype="multipart/form-data" method="post">
 <p>
 Please specify a proxy file to upload:<br>
-Such a proxy file can be created using the command-line tool 
+Such a proxy file can be created using the command-line tool
 voms-proxy-init, and can be found in /tmp/x509up_u&lt;your UID&gt;.<br>
 <input type="file" name="fileupload" size="40">
-<input type="hidden" name="path" value=""" + \
-                                     '"' + Ui.proxy_name + '"' + \
-                                     """>
+<input type="hidden" name="path" value=""" +
+                               '"' + Ui.proxy_name + '"' +
+                               """>
 <input type="hidden" name="restrict" value="true">
 &nbsp;
 <input type="submit" value="Send file">
@@ -209,9 +219,9 @@ voms-proxy-init, and can be found in /tmp/x509up_u&lt;your UID&gt;.<br>
 
 def create_grid_proxy(cert_path, key_path, proxy_path):
     """
-    Create a default proxy cert. Uses grid-proxy-init. 
-    In this way no additional voms information is added.  
-    
+    Create a default proxy cert. Uses grid-proxy-init.
+    In this way no additional voms information is added.
+
     Returns the absolute path of the generated proxy. By standard placed in
     the /tmp/ folder.
     """
@@ -223,40 +233,41 @@ def create_grid_proxy(cert_path, key_path, proxy_path):
                                 stderr=subprocess_pipe)
         (out, _) = proc.communicate()
         logger.info(out.replace("\n", "."))
-    except Exception as exc: 
+    except Exception as exc:
         logger.error("Could not generate a proxy certificate: \n%s" % exc)
         raise
-    
+
+
 class Ui:
 
     """ARC middleware user interface class."""
 
-    # static information: 
+    # static information:
     # service URL (Danish resources)
-    giis=arclib.URL('ldap://gridsrv4.nbi.dk:2135/O=Grid/Mds-Vo-Name=Denmark')
+    giis = arclib.URL('ldap://gridsrv4.nbi.dk:2135/O=Grid/Mds-Vo-Name=Denmark')
     #  and benedict cluster URL... for first tests
     benedict =\
-      arclib.URL('ldap://benedict.grid.aau.dk:2135/o=grid/mds-vo-name=local')
+        arclib.URL('ldap://benedict.grid.aau.dk:2135/o=grid/mds-vo-name=local')
     fyrgrid =\
-      arclib.URL('ldap://fyrgrid.grid.aau.dk:2135/o=grid/mds-vo-name=local')
+        arclib.URL('ldap://fyrgrid.grid.aau.dk:2135/o=grid/mds-vo-name=local')
     # hard-wired: expected proxy name
     proxy_name = '.proxy.pem'
 
     def __init__(self, userdir, require_user_proxy=False):
         """Class constructor"""
 
-        # would be nice to hold the Ui instance and have the resources 
-        # set up on instantiation. but several problems arise: 
+        # would be nice to hold the Ui instance and have the resources
+        # set up on instantiation. but several problems arise:
         # - A stateless web interface cannot carry over the Ui object
         #  between several calls. We cannot pickle this information if
         #  it contains SWIG proxy objects. userdir, proxy and lock can
         #  be pickled, but _clusters and _queues are the interesting ones.
         # - Different users should not share the same Ui! So running the
         #  whole server with just one Ui will not work either.
-        #  Allowed _clusters and _queues might depend on the user's 
+        #  Allowed _clusters and _queues might depend on the user's
         #  permissions, but we can work with a superset and rely on
         #  ConstructTargets to filter out the allowed ones.
-        self._clusters = None # SWIG
+        self._clusters = None  # SWIG
         self._queues = None   # SWIG
 
         self._userdir = None  # holds user config, job cache, and proxy file
@@ -264,24 +275,25 @@ class Ui:
 
         self._arclibLock = threading.Lock()
         proxy_path = os.path.join(userdir, self.proxy_name)
-        
+
         try:
-                
+
             if not os.path.isdir(userdir):
                 raise ARCWrapperError('Given user directory ' + userdir
-                                          + ' does not exist.')
+                                      + ' does not exist.')
             self._userdir = userdir
-        
-            # if a proxy is not explicitly required and the user does not have a valid one 
-            # then use the shared default proxy cert        
+
+            # if a proxy is not explicitly required and the user does not have a valid one
+            # then use the shared default proxy cert
             if not require_user_proxy and \
-                ( not os.path.exists(proxy_path) or Proxy(proxy_path).IsExpired() ):
-                
+                    (not os.path.exists(proxy_path) or Proxy(proxy_path).IsExpired()):
+
                 logger.info("Using default proxy certificate.")
-                                               
-                # Check if there is already a default proxy certificate and get its location
+
+                # Check if there is already a default proxy certificate and get
+                # its location
                 proxy_path = config.nordugrid_proxy
-                
+
                 # it there is no default proxy or it is expired
                 if not os.path.exists(proxy_path) or Proxy(proxy_path).IsExpired():
                     cert_path = config.nordugrid_cert
@@ -290,12 +302,12 @@ class Ui:
                     create_grid_proxy(cert_path, key_path, proxy_path)
             else:
                 logger.info("Using personal proxy certificate.")
-                
+
             # proxy constructor might raise an exception as well
             self._proxy = Proxy(proxy_path)
-            if self._proxy.IsExpired(): # should not happen
+            if self._proxy.IsExpired():  # should not happen
                 raise NoProxyError('Expired.')
-    
+
         except NoProxyError as err:
             logger.error('Proxy error: %s' % err.what())
             raise err
@@ -303,17 +315,17 @@ class Ui:
             logger.error('Cannot initialise: %s' % err.what())
             raise ARCWrapperError(err.what())
         except Exception as other:
-            logger.error('Unexpected error during initialisation.\n %s' % other)
+            logger.error(
+                'Unexpected error during initialisation.\n %s' % other)
             raise ARCWrapperError(other.__str__())
 
-            
     def __initQueues(self):
         """ Initialises possible queues for a job submission."""
 
         logger.debug('init queues (for job submission/resource display)')
 
         try:
-            # init data: cluster information (obtained per user) 
+            # init data: cluster information (obtained per user)
             self.__lockArclib()
 
             # this takes ages:
@@ -323,12 +335,12 @@ class Ui:
             for url_str in config.arc_clusters:
                 if url_str.startswith('ldap://'):
                     self._clusters.append(arclib.URL(url_str))
-                elif url_str in ['benedict','fyrgrid']:
+                elif url_str in ['benedict', 'fyrgrid']:
                     self._clusters.append(eval('Ui.' + url_str))
             logger.debug('clusters: ')
             for c in self._clusters:
                 logger.debug('\t %s' % c)
-            
+
             self._queues = []
             for cl in self._clusters:
                 qs = arclib.GetQueueInfo(cl)
@@ -340,36 +352,36 @@ class Ui:
 
         except NoProxyError as err:
             self.__unlockArclib()
-            logger.error('Proxy error during queue initialisation: %s' % err )
+            logger.error('Proxy error during queue initialisation: %s' % err)
             raise err
         except Exception as err:
             self.__unlockArclib()
-            logger.error('ARC queue initialisation error: %s' % err )
+            logger.error('ARC queue initialisation error: %s' % err)
             self._clusters = []
             self._queues = []
             raise ARCWrapperError(err.__str__())
 
     def __lockArclib(self):
         """ ensures exclusive access to the interface and sets the environment
-            so that the user's proxy and home are used. 
-            Locking is perhaps not needed in our setup, where anyway users 
-            cannot share the same Ui (needed if _arclib.so not thread-safe, 
-            though).""" 
+            so that the user's proxy and home are used.
+            Locking is perhaps not needed in our setup, where anyway users
+            cannot share the same Ui (needed if _arclib.so not thread-safe,
+            though)."""
 
         self._arclibLock.acquire()
         self.__setupEnviron()
         return
 
     def __unlockArclib(self):
-        """ Releases the mutex lock of the interface. 
+        """ Releases the mutex lock of the interface.
             Perhaps not needed."""
 
         self._arclibLock.release()
         return
 
     def __setupEnviron(self):
-        """Make sure the API acts on behalf of the calling user. 
-           Called by __lockArclib. 
+        """Make sure the API acts on behalf of the calling user.
+           Called by __lockArclib.
         """
         os.environ['X509_USER_PROXY'] = self._proxy.getFilename()
         os.environ['HOME'] = self._userdir
@@ -381,27 +393,27 @@ class Ui:
 
     def getQueues(self):
         """ returns the queues we discovered for the clusters.
-            TODO: should only return _allowed_ queues 
-            (__initQueues to change).""" 
+            TODO: should only return _allowed_ queues
+            (__initQueues to change)."""
         self.__initQueues()
         return self._queues
-    
+
     def submitFile(self, xrslFilename, jobName=''):
         """Submit xrsl file as job to available ARC resources.
-        
+
         @type  xrslFilename: string
         @param xrslFilename: Filename containing a job description in XRSL.
         @rtype list:
         @return: list containing ARC jobIds (strings).
         Throws an ARCWrapperError if unsuccessful."""
 
-        logger.debug( 'Submitting a job from file %s...' % xrslFilename )
+        logger.debug('Submitting a job from file %s...' % xrslFilename)
         currDir = os.getcwd()
         try:
 
                 # Convert XRSL file into a string
 
-                f = file(xrslFilename, 'r')
+                f = open(xrslFilename, 'rb')
                 xrslString = f.read()
                 f.close()
                 xrslAll = arclib.Xrsl(xrslString)
@@ -421,13 +433,13 @@ class Ui:
         """Submit xrsl object as job to available ARC resources.
         The method expects an arclib.Xrsl object and its current
         working directory to contain the referenced files (rel. paths).
-        
+
         @type  xrslAll: arclib.Xrsl
         @param xrslAll: job description in XRSL (arclib object).
         @rtype list:
         @return: list of jobIds(strings).
 
-        Any error is raised as an exception to the caller, as 
+        Any error is raised as an exception to the caller, as
         ARCWrapperError or NoProxyError."""
 
         try:
@@ -459,18 +471,19 @@ class Ui:
                         logger.debug('Ui:' + jobId + 'submitted.')
 
                         jobName = xrsl.GetRelation('jobName'
-                                ).GetSingleValue()
+                                                   ).GetSingleValue()
 
                         arclib.AddJobID(jobId, jobName)
                     self.__unlockArclib()
                     return jobIds
                 else:
                     # len(targets) == 0, thus:
-                    raise ARCWrapperError("No matching resource for submission.")
+                    raise ARCWrapperError(
+                        "No matching resource for submission.")
 
         except NoProxyError as err:
             logger.error('Proxy error during job submission: ' + err.what())
-            if self._arclibLock.locked(): 
+            if self._arclibLock.locked():
                 # should not happen!
                 # we come here from initQueues
                 logger.error('submit: still locked???')
@@ -478,7 +491,7 @@ class Ui:
             raise err
         except arclib.XrslError as message:
             logger.error('Ui,XRSL' + message.what())
-            if self._arclibLock.locked(): # should not happen!
+            if self._arclibLock.locked():  # should not happen!
                 self.__unlockArclib()
             raise ARCWrapperError('XrslError: ' + message.what())
         except arclib.JobSubmissionError as message:
@@ -487,22 +500,22 @@ class Ui:
             raise ARCWrapperError('JobSubmissionError: ' + message.what())
         except arclib.TargetError as message:
             logger.error('Ui,Target: ' + str(message))
-            if self._arclibLock.locked(): # should not be...
+            if self._arclibLock.locked():  # should not be...
                 self.__unlockArclib()
             raise ARCWrapperError('TargetError: ' + str(message))
         except Exception as err:
-            if self._arclibLock.locked(): # ...
+            if self._arclibLock.locked():  # ...
                 self.__unlockArclib()
-            logger.error('Unexpected error: %s' % err )
+            logger.error('Unexpected error: %s' % err)
             raise ARCWrapperError(err.__str__())
 
     def AllJobStatus(self):
         """Query status of jobs in joblist.
-        
+
         The command returns a dictionary of jobIDs. Each item
         in the dictionary consists of an additional dictionary with the
         attributes:
-        
+
             name = Job name
             status = ARC job states, ACCPTED, SUBMIT, INLRMS etc
             error = Error status
@@ -512,14 +525,14 @@ class Ui:
             wall_time = string(used_wall_time)
 
         If there was an error, an empty dictionary is returned.
-            
+
         Example:
-        
+
             jobList = ui.jobStatus()
-        
+
             print jobList['gsiftp://...3217']['name']
             print jobList['gsiftp://...3217']['status']
-            
+
         @rtype: dict
         @return: job status dictionary."""
 
@@ -530,14 +543,14 @@ class Ui:
 # GetJobIDs returns a multimap, mapping job names to JobIDs...
         self.__lockArclib()
         try:
-            # ATTENTION: GetJobIDs does not throw an exception 
-            # if the .ngjobs file is not found. Instead, it 
+            # ATTENTION: GetJobIDs does not throw an exception
+            # if the .ngjobs file is not found. Instead, it
             # only complains on stderr and returns {}.
-            if not os.path.isfile( \
-                        os.path.join(self._userdir, '.ngjobs')):
+            if not os.path.isfile(
+                    os.path.join(self._userdir, '.ngjobs')):
                 logger.debug('No Job file found, skipping')
                 return jobList
-            else: 
+            else:
                 jobIds = arclib.GetJobIDs()
         except Exception as err:
             logger.error('could not get job IDs: %s', err)
@@ -552,14 +565,14 @@ class Ui:
         i = 0
         while i < jobIds.size():
             i = i + 1
-            (jobName,jobId) = next(iter)
+            (jobName, jobId) = next(iter)
 # this is what GetJobIDs really does when called with no arguments
-#        jobListFile = file(os.path.join(self._userdir,
-#                               '.ngjobs'), 'r')
+#        jobListFile = open(os.path.join(self._userdir,
+#                               '.ngjobs'), 'rb')
 #        lines = jobListFile.readlines()
 #        jobListFile.close()
 #        for line in lines:
-#            (jobId, jobName) = line.strip().split('#')
+# (jobId, jobName) = line.strip().split('#')
             logger.debug('Querying job %s (%s)' % (jobId, jobName))
             jobList[jobId] = {}
             jobList[jobId]['name'] = jobName
@@ -570,11 +583,11 @@ class Ui:
             self.__lockArclib()
             try:
                 # jobInfo = arclib.GetJobInfoDirect(jobId)
-                jobInfo  = arclib.GetJobInfo(jobId)
-                status   = jobInfo.status
+                jobInfo = arclib.GetJobInfo(jobId)
+                status = jobInfo.status
                 exitCode = jobInfo.exitcode
                 sub_time = jobInfo.submission_time.__str__()
-                completed= jobInfo.completion_time.__str__()
+                completed = jobInfo.completion_time.__str__()
                 # cpu_time = jobInfo.used_cpu_time.__str__()
                 # wall_time= jobInfo.used_wall_time.__str__()
 
@@ -588,7 +601,7 @@ class Ui:
             self.__unlockArclib()
 
             jobList[jobId]['status'] = status
-            jobList[jobId]['error' ] = exitCode
+            jobList[jobId]['error'] = exitCode
             jobList[jobId]['submitted'] = sub_time
             jobList[jobId]['completed'] = completed
             # jobList[jobId]['cpu_time' ] = sub_time
@@ -599,36 +612,36 @@ class Ui:
 
     def jobStatus(self, jobId):
         """Retrieve status of a particular job.
-        
+
            returns: dictionary containing keys name, status, error...
            (see allJobStatus)."""
 
         logger.debug('Requesting job status for %s.' % jobId)
 
-        jobInfo = { 'name':'UNKNOWN','status':'NOT FOUND','error':-1 }
+        jobInfo = {'name': 'UNKNOWN', 'status': 'NOT FOUND', 'error': -1}
 
         # check if we know this job at all:
         self.__lockArclib()
         job_ = arclib.GetJobIDs([jobId])
         self.__unlockArclib()
-        
+
         # ugly! GetJobIDs return some crap if not found...
-        jobName = [ j for j in job_ ][0]
-        if jobName == '': # job not found
+        jobName = [j for j in job_][0]
+        if jobName == '':  # job not found
             logger.debug('Job %s was not found.' % jobId)
         else:
-            jobInfo['name'] =jobName
+            jobInfo['name'] = jobName
             # ASSERT(jobId = jobs[jobName])
 
-            self.__lockArclib()   
-            try: 
-                logger.debug('Querying job %s (%s)' % (jobId,jobName))
+            self.__lockArclib()
+            try:
+                logger.debug('Querying job %s (%s)' % (jobId, jobName))
                 info = arclib.GetJobInfo(jobId)
                 jobInfo['status'] = info.status
-                jobInfo['error']  = info.exitcode
+                jobInfo['error'] = info.exitcode
                 jobInfo['submitted'] = info.submission_time.__str__()
                 jobInfo['completed'] = info.completion_time.__str__()
-                # jobInfo['cpu_time' ] = info.used_cpu_time.__str__() 
+                # jobInfo['cpu_time' ] = info.used_cpu_time.__str__()
                 # jobInfo['wall_time'] = info.used_wall_time.__str__()
 
             except arclib.ARCLibError as err:
@@ -642,12 +655,12 @@ class Ui:
 
     def cancel(self, jobID):
         """Kill a (running?) job.
-        
+
         If this fails, complain, and retrieve the job status.
         @type  jobID: string
         @param jobID: jobId URL identifier."""
 
-        logger.debug('Trying to stop job %s' % jobID )
+        logger.debug('Trying to stop job %s' % jobID)
         success = False
 
         self.__lockArclib()
@@ -672,18 +685,19 @@ class Ui:
         @type  jobID: string
         @param jobID: jobId URL identifier."""
 
-        logger.debug('Cleaning up job %s' % jobId )
+        logger.debug('Cleaning up job %s' % jobId)
         self.__lockArclib()
         try:
             arclib.CleanJob(jobId)
         except arclib.FTPControlError as err:
-                logger.error('Failed to clean job %s: %s' % (jobId, err.what()))
+                logger.error(
+                    'Failed to clean job %s: %s' % (jobId, err.what()))
                 arclib.RemoveJobID(jobId)
         self.__unlockArclib()
 
     def getResults(self, jobId, downloadDir=''):
         """Download results from grid job.
-        
+
         @type  jobId: string
         @param jobID: jobId URL identifier.
         @type  downloadDir: string
@@ -691,7 +705,7 @@ class Ui:
         @rtype: list
         @return: list of downloaded files (strings)"""
 
-        logger.debug('Downloading files from job %s' % jobId )
+        logger.debug('Downloading files from job %s' % jobId)
         complete = []
         currDir = os.getcwd()
 
@@ -701,16 +715,16 @@ class Ui:
         # of ngget: downloaddir  _prefixes_ the dir to which we download).
 
         try:
-            (jobPath,jobBasename) = splitJobId(jobId)
-            jobInfoDir= jobPath + '/info/' + jobBasename
-            jobDir    = jobPath + '/' + jobBasename
+            (jobPath, jobBasename) = splitJobId(jobId)
+            jobInfoDir = jobPath + '/info/' + jobBasename
+            jobDir = jobPath + '/' + jobBasename
 
             os.chdir(self._userdir)
             if not downloadDir == '':
                 if not os.path.exists(downloadDir):
-                    os.mkdir(downloadDir) 
+                    os.mkdir(downloadDir)
                 elif not os.path.isdir(downloadDir):
-                    raise ARCWrapperError(downloadDir 
+                    raise ARCWrapperError(downloadDir
                                           + ' exists, not a directory.')
                 os.chdir(downloadDir)
             if not os.path.exists(jobBasename):
@@ -718,7 +732,7 @@ class Ui:
             else:
                 if not os.path.isdir(jobBasename):
                     raise ARCWrapperError('Cannot create job directory,'
-                                          +' existing file %s in the way.'\
+                                          + ' existing file %s in the way.'
                                           % jobBasename)
             os.chdir(jobBasename)
         except Exception as err:
@@ -732,47 +746,47 @@ class Ui:
             ftp = arclib.FTPControl()
 
             # We could just download the whole directory.
-            # But better use the contents of "output" in 
+            # But better use the contents of "output" in
             # the info-directory... (specified by user)
             # to avoid downloading large input files.
             # ftp.DownloadDirectory(jobURL, jobBasename)
             #
             # We use a temp file to get this information first
 
-            (tmp,tmpname) = tempfile.mkstemp(prefix='output', text=True)
+            (tmp, tmpname) = tempfile.mkstemp(prefix='output', text=True)
             os.close(tmp)
             ftp.Download(arclib.URL(jobInfoDir + '/output'), tmpname)
-            lines = file(tmpname).readlines()
+            lines = open(tmpname, 'rb').readlines()
             os.remove(tmpname)
-            files = [ l.strip().strip('/') for l in lines ]
+            files = [l.strip().strip('/') for l in lines]
 
             # also get the entire directory listing from the server
-            dir = ftp.ListDir(arclib.URL(jobDir),True)
-            basenames = [os.path.basename(x.filename) for x in dir ]
+            dir = ftp.ListDir(arclib.URL(jobDir), True)
+            basenames = [os.path.basename(x.filename) for x in dir]
 
             if '' in files:
                 logger.debug('downloading _all_ files')
                 # TODO for files which are already there?
-                ftp.DownloadDirectory(arclib.URL(jobDir),'.')
+                ftp.DownloadDirectory(arclib.URL(jobDir), '.')
                 complete = basenames
             else:
                 for f in files:
                     if f in basenames:
                         # we should download this one
                         try:
-                            if x.isdir:
-                                logger.debug('DownloadDir %s' % f )
-                                ftp.DownloadDirectory(\
+                            if f.isdir:
+                                logger.debug('DownloadDir %s' % f)
+                                ftp.DownloadDirectory(
                                     arclib.URL(jobDir + '/' + f), f)
                                 # ... which operates recursively
-                                complete.append( f + '/ (dir)')
+                                complete.append(f + '/ (dir)')
                             else:
-                                logger.debug('Download %s' % f )
+                                logger.debug('Download %s' % f)
                                 ftp.Download(arclib.URL(jobDir + '/' + f), f)
-                                complete.append( f )
-                        except arclib.ARCLibError as err: 
-                            logger.error('Error downloading %s: %s' \
-                                         % (f,err.what()))
+                                complete.append(f)
+                        except arclib.ARCLibError as err:
+                            logger.error('Error downloading %s: %s'
+                                         % (f, err.what()))
         except arclib.ARCLibError as err:
             logger.error('ARCLib error while downloading: %s' % err.what())
             self.__unlockArclib()
@@ -791,21 +805,21 @@ class Ui:
 
     def lsJobDir(self, jobId):
         """List files at a specific URL.
-        
+
         @type  jobId: string
         @param jobId: jobId, which is URL location of job dir.
         @rtype: list
         @return: list of FileInfo
         """
 
-        # the jobID is a valid URL to the job directory. We can use it to 
+        # the jobID is a valid URL to the job directory. We can use it to
         # inspect its contents.
         #
-        # For other directories (gmlog or other), using FTPControl, we do 
-        # not get accurate file sizes, only for the real output 
-        # and for scripts/files in the proper job directory. 
+        # For other directories (gmlog or other), using FTPControl, we do
+        # not get accurate file sizes, only for the real output
+        # and for scripts/files in the proper job directory.
 
-        logger.debug('ls in JobDir for job %s' % jobId )
+        logger.debug('ls in JobDir for job %s' % jobId)
         ftp = arclib.FTPControl()
         url = arclib.URL(jobId)
 
@@ -818,22 +832,22 @@ class Ui:
             errmsg.filename = err.what
             errmsg.size = 0
             errmsg.isDir = False
-            files = [ errmsg ]
+            files = [errmsg]
 
         self.__unlockArclib()
 
         # filter out the gmlog if present
         def notGmlog(file):
-            return ((not file.isDir) or (file.filename != 'gmlog')) 
+            return ((not file.isDir) or (file.filename != 'gmlog'))
 
         return (filter(notGmlog, files))
 
 
 # stdout of a job can be found directly in its job directory, but might have
-# a different name (user can give the name). For a "live output request", 
-# we download the xrsl description from the info directory and look for 
+# a different name (user can give the name). For a "live output request",
+# we download the xrsl description from the info directory and look for
 # the respective names.
-# For jobs with "joined" stdout and stderr, we get an error when retrieving 
+# For jobs with "joined" stdout and stderr, we get an error when retrieving
 # the latter, and fall back to retrieving stdout instead.
 
     def recoverXrsl(self, jobId):
@@ -843,23 +857,23 @@ class Ui:
         xrsl = arclib.Xrsl('')
         self.__lockArclib()
         try:
-            (jobPath,jobBasename) = splitJobId(jobId)
-            xrslURL = arclib.URL(jobPath + '/info/' 
+            (jobPath, jobBasename) = splitJobId(jobId)
+            xrslURL = arclib.URL(jobPath + '/info/'
                                  + jobBasename + '/description')
             ftp = arclib.FTPControl()
             ftp.Download(xrslURL, 'tmp')
-            str = file('tmp').read()
+            str = open('tmp', 'rb').read()
             xrsl = arclib.Xrsl(str)
             os.remove('tmp')
-        except arclib.ARCLibError as err: 
-            logger.error('Failed to get Xrsl: %s' % err.what()) 
+        except arclib.ARCLibError as err:
+            logger.error('Failed to get Xrsl: %s' % err.what())
         self.__unlockArclib()
         logger.debug('Obtained %s' % xrsl)
         return xrsl
 
     def getStandardOutput(self, jobId):
         """Get the standard output of a running job.
-        
+
         @type  jobID: string
         @param jobID: jobId URL identifier.
         @rtype: string
@@ -871,7 +885,7 @@ class Ui:
             try:
                 outname = xrsl.GetRelation('stdout').GetSingleValue()
             except arclib.XrslError as err:
-                outname = 'stdout' # try default if name not found
+                outname = 'stdout'  # try default if name not found
             logger.debug('output file name: %s' % outname)
             try:
                 self.__lockArclib()
@@ -882,7 +896,7 @@ class Ui:
                 raise ARCWrapperError(err.__str__())
             self.__unlockArclib()
             logger.debug('output downloaded')
-            result = file(outname).read()
+            result = open(outname, 'rb').read()
             os.remove(outname)
         except arclib.ARCLibError as err:
             result = 'failed to retrieve job output stdout: %s' % err.what()
@@ -897,7 +911,7 @@ class Ui:
 
     def getStandardError(self, jobId):
         """Get the standard error of a running job.
-        
+
         @type  jobID: string
         @param jobID: jobId URL identifier.
         @rtype: list
@@ -909,7 +923,7 @@ class Ui:
             try:
                 outname = xrsl.GetRelation('stderr').GetSingleValue()
             except arclib.XrslError as err:
-                outname = 'stderr' # try default if name not found
+                outname = 'stderr'  # try default if name not found
             logger.debug('output file name: %s' % outname)
             try:
                 self.__lockArclib()
@@ -920,7 +934,7 @@ class Ui:
                 raise ARCWrapperError(err.__str__())
             self.__unlockArclib()
             logger.debug('output downloaded')
-            result = file(outname).read()
+            result = open(outname, 'rb').read()
             os.remove(outname)
         except arclib.ARCLibError as err:
             result = 'failed to retrieve job output stderr: %s' % err.what()
@@ -933,38 +947,38 @@ class Ui:
 #
 #        return result
 
-######################### old code:
+# old code:
 
     def getGridLog(self, jobId):
         """Get the grid log of a running job.
-        
+
         @type  jobID: string
         @param jobID: jobId URL identifier.
         @rtype: list
         @return: list of return value from ARC and output from job."""
 
         (resultVal, result) = getstatusoutput('ngcat -l %s'
-                 % jobId, self._env)
+                                              % jobId, self._env)
 
         return result
 
     def copy(self, source, dest=''):
         """Copy file from source URL to dest URL.
-        
+
         @type  source: string
         @param source: URL of file to copy from.
         @type  dest: string
         @param dest: destination file name on server."""
 
         (resultVal, result) = getstatusoutput('ngcp %s %s'
-                 % (source, dest), self._env)
+                                              % (source, dest), self._env)
 
         return resultVal
 
     def pcopy(self, source):
         """Open the ngcp command as a popen process, redirecting output
         to stdout and return process file handle.
-        
+
         @type  source: string
         @param source: URL to open"""
 
@@ -972,7 +986,7 @@ class Ui:
         # f = popen('ngcp %s /dev/stdout' % source, self._env)
         # and haven't tested afterwards
         # -Jonas
-        
+
         command_list = ['ngcp', source, '/dev/stdout']
         # NOTE: we use command list to avoid the need for shell
         return subprocess_popen(command_list, stdout=subprocess_pipe,
@@ -980,12 +994,11 @@ class Ui:
 
     def sync(self):
         """Query grid for jobs and update job list.
-        
+
         @rtype: list
         @return: list of [resultVal, result], where resultVal is the return value
         from the ARC command and result is a list of command output."""
 
         (resultVal, result) = \
             getstatusoutput('ngsync -f -d %d'
-                 % self._debugLevel, self._env)
-
+                            % self._debugLevel, self._env)

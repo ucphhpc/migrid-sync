@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# localfile - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# localfile - implementation of serverfile with local IO
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,11 @@
 # -- END_HEADER ---
 #
 
-"""This module contains various wrapper functions for server IO. In that way the underlying distribution of server files can be separated from the normal server operation."""
+"""This module contains various wrapper functions for server IO. In that way
+the underlying distribution of server files can be separated from the normal
+server operation.
+"""
+
 from __future__ import absolute_import
 
 import fcntl
@@ -44,15 +48,53 @@ class LocalFile(ServerFile):
     operations from builtin file class here and override as needed.
     """
 
-    def __init__(
-        self,
-        path,
-        mode='r',
-        bufsize=-1,
-        ):
-
+    def __init__(self, path, mode='r', bufsize=-1):
+        """Create local file and set default object attributes"""
         ServerFile.__init__(self, path, mode, bufsize)
+        self._file = open(path, mode, bufsize)
+        self.mode = self._file.mode
+        self.closed = self._file.closed
         self.__locking = LOCK_UN
+
+    def close(self):
+        """Close any open local or remote file handle"""
+        self._file.close()
+
+    def fileno(self):
+        """Get low level file descriptor for any open local or remote file handle"""
+        return self._file.fileno()
+
+    def flush(self):
+        """Flush any open local or remote file handle"""
+        self._file.flush()
+
+    def read(self, size=-1):
+        """Read size bytes from local or remote file handle"""
+        return self._file.read(size)
+
+    def readlines(self, size=-1):
+        """Read size bytes from local or remote file handle"""
+        return self._file.readlines(size)
+
+    def seek(self, offset, whence=0):
+        """Seek to offset in local or remote file handle"""
+        self._file.seek(offset, whence)
+
+    def tell(self):
+        """Tell offset in local or remote file handle"""
+        return self._file.tell()
+
+    def truncate(self, size=0):
+        """Truncate local or remote file handle"""
+        self._file.truncate(size)
+
+    def write(self, str):
+        """Write str to local or remote file handle"""
+        self._file.write(str)
+
+    def writelines(self, lines):
+        """Write lines to local or remote file handle"""
+        self._file.writelines(lines)
 
     def lock(self, mode):
         """Additional method to integrate file locking with file
@@ -69,9 +111,9 @@ class LocalFile(ServerFile):
         except IOError as ioe:
             if ioe.errno in [EACCES, EAGAIN]:
                 raise LockingException('Locking failed: locking timed out!'
-                        )
-        except Exception as e:
-            raise
+                                       )
+        except Exception as exc:
+            raise(exc)
         self.__locking = mode
 
     def unlock(self):
@@ -83,6 +125,4 @@ class LocalFile(ServerFile):
         return self.__locking
 
     def __str__(self):
-        return '%s %s' % (self.__locking, file.__str__(self))
-
-
+        return '%s %s' % (self.__locking, ServerFile.__str__(self))

@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# distfile - [insert a few words of module description on this line]
+# distfile - implementation of serverfile with remote IO
 # Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,13 +25,13 @@
 # -- END_HEADER ---
 #
 
-# Script version (automagically updated by cvs)
-
 """This module contains various wrapper functions for distributed
 server IO. In that way the underlying distribution of server
 files can be separated from the normal server operation.
 """
 from __future__ import absolute_import
+
+# Script version (automagically updated by cvs)
 
 __version__ = '$Revision: 2084 $'
 __revision__ = __version__
@@ -74,9 +74,9 @@ def _line_read(data, size=-1):
     return line_data[:index + 1]
 
 
-# ####################
+#
 # Public file class #
-# ####################
+#
 
 
 class DistFile(ServerFile):
@@ -88,16 +88,11 @@ class DistFile(ServerFile):
 
     fd_str = "<%s remote file '%s', mode %s at %s >"
 
-    def __init__(
-        self,
-        path,
-        mode='r',
-        bufsize=-1,
-    ):
+    def __init__(self, path, mode='r', bufsize=-1):
         """Setup DistFile object"""
 
         # Make sure we don't run into trouble if server doesn't recognize
-    # that /test//file/ is equivalent to /test/file
+        # that /test//file/ is equivalent to /test/file
 
         path = _normpath(path)
 
