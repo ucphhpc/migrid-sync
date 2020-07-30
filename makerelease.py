@@ -21,14 +21,15 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """Pack relevant parts of the code in a versioned tarball"""
+from __future__ import print_function
 
 import os
 import sys
 import tarfile
 
 if len(sys.argv) < 2:
-    print 'Usage: %s VERSION TARGET' % sys.argv[0]
-    print 'Make a release tarball of all code in TARGET and stamp it as VERSION'
+    print('Usage: %s VERSION TARGET' % sys.argv[0])
+    print('Make a release tarball of all code in TARGET and stamp it as VERSION')
     sys.exit(1)
 
 version = sys.argv[1]
@@ -42,8 +43,8 @@ archive_base = 'mig-%s' % version
 tar_path = '%s.tgz' % archive_base
 
 if '__main__' == __name__:
-    print 'Creating release of %s in %s' % (target, tar_path)
-    print '--- ignoring all %s dirs ---' % ', '.join(exclude_dirs)
+    print('Creating release of %s in %s' % (target, tar_path))
+    print('--- ignoring all %s dirs ---' % ', '.join(exclude_dirs))
     tar_ball = tarfile.open(tar_path, 'w:gz')
     for (root, dirs, files) in os.walk(target):
         for exclude in exclude_dirs:
@@ -61,8 +62,8 @@ if '__main__' == __name__:
             path = os.path.normpath(os.path.join(root, name))
             rel_path = path.replace(target+os.sep, '')
             archive_path = os.path.join(archive_base, rel_path)
-            print 'Adding %s' % archive_path
+            print('Adding %s' % archive_path)
             tar_ball.add(rel_path, archive_path, recursive=False)
     tar_ball.close()
-    print 'Wrote release of %s in %s' % (target, tar_path)
+    print('Wrote release of %s in %s' % (target, tar_path))
 

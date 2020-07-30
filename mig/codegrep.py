@@ -22,11 +22,12 @@
 
 """Grep for a regular expression in all code files"""
 from __future__ import print_function
+from __future__ import absolute_import
 
 import glob
 import sys
 
-from shared.safeeval import subprocess_call
+from .shared.safeeval import subprocess_call
 
 # Ignore backup and dot files in wild card match
 plain = '[a-zA-Z0-9]*.py'

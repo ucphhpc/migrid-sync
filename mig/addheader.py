@@ -28,13 +28,14 @@
 
 """Search code tree and add the required header to all python modules"""
 from __future__ import print_function
+from __future__ import absolute_import
 
 import datetime
 import fnmatch
 import os
 import sys
 
-from codegrep import py_code_files, sh_code_files, js_code_files
+from .codegrep import py_code_files, sh_code_files, js_code_files
 
 # Modify these to fit actual project
 proj_vars = {}

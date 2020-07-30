@@ -22,12 +22,13 @@
 
 """Grep for obvious errors in pylint output for all code"""
 from __future__ import print_function
+from __future__ import absolute_import
 
 import glob
 import sys
 
-from codegrep import py_code_files
-from shared.safeeval import subprocess_call
+from .codegrep import py_code_files
+from .shared.safeeval import subprocess_call
 
 if '__main__' == __name__:
     if len(sys.argv) != 1:
