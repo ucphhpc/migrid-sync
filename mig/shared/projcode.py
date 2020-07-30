@@ -66,6 +66,7 @@ sh_code_files = [
     'resource/dummy_node_script.sh',
 ]
 js_code_files = [
+    'images/js/jquery.accountform.js',
     'images/js/jquery.ajaxhelpers.js',
     'images/js/jquery.confirm.js',
     'images/js/jquery.filemanager.js',
@@ -75,8 +76,7 @@ js_code_files = [
     'images/js/preview-caman.js',
     'images/js/preview.js',
     'images/js/preview-paraview.js',
-    'assets/js/V2/ui-dynamic.js',
-    'assets/js/V3/ui-dynamic.js',
+    'assets/js/shared/ui-dynamic.js',
     'assets/js/V3/ui-global.js',
     'assets/js/V3/ui-extra.js',
 ]
