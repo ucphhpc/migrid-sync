@@ -12,7 +12,7 @@ now=$(date +"%s")
 for min_day in ${days_left[@]}; do
     after=$((now+$min_day*3600*24))
     before=$((after+3600*24))
-    su - mig -c "python mig/server/notifyexpire.py -A $after -B $before $flags"
+    su - mig -c "PYTHONPATH=__MIG_BASE__ mig/server/notifyexpire.py -A $after -B $before $flags"
 done
 
 exit 0

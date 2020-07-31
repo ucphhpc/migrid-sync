@@ -27,12 +27,13 @@
 
 """Edit MiG user metadata in user database - only non-ID fields"""
 from __future__ import print_function
+from __future__ import absolute_import
 
 import getopt
 import os
 import sys
 
-from shared.useradm import init_user_adm, edit_user
+from mig.shared.useradm import init_user_adm, edit_user
 
 
 def usage(name='editmeta.py'):

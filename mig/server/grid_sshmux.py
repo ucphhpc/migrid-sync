@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_sshmux - open ssh multiplexing master connections
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,7 +31,9 @@ to all resources that specify persistent access support. Each
 connection is relatively short lived to allow better connection
 error tolerance.
 """
+
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import signal
@@ -39,11 +41,11 @@ import sys
 import threading
 from time import sleep
 
-from shared.base import sandbox_resource
-from shared.conf import get_resource_configuration, \
+from mig.shared.base import sandbox_resource
+from mig.shared.conf import get_resource_configuration, \
     get_configuration_object
-from shared.logger import daemon_logger, register_hangup_handler
-from shared.ssh import execute_on_resource
+from mig.shared.logger import daemon_logger, register_hangup_handler
+from mig.shared.ssh import execute_on_resource
 
 configuration, logger = None, None
 
@@ -168,8 +170,8 @@ unless it is available in mig/server/MiGserver.conf
             # else:
             #    print "ignoring non-multiplexing resource %s" % unique_resource_name
 
-            print("Failed to open resource conf '%s': %s"\
-                % (unique_resource_name, err))
+            print("Failed to open resource conf '%s': %s"
+                  % (unique_resource_name, err))
 
     threads = {}
 

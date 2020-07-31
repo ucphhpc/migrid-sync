@@ -26,8 +26,9 @@
 #
 
 """First Fit Scheduler"""
+from __future__ import absolute_import
 
-from scheduler import Scheduler
+from mig.server.scheduler import Scheduler
 
 
 class FirstFitScheduler(Scheduler):
@@ -70,14 +71,14 @@ class FirstFitScheduler(Scheduler):
             # PrintJob(job)
 
             if 'GO' == job['SCHEDULE_HINT']\
-                 and resource_conf['RESOURCE_ID']\
-                 in job['SCHEDULE_TARGETS']:
+                    and resource_conf['RESOURCE_ID']\
+                    in job['SCHEDULE_TARGETS']:
                 job['EXEC_RESOURCE'] = resource_conf['RESOURCE_ID']
                 self.job_queue.dequeue_job(i)
                 self.update_history(job, resource_conf)
                 self.logger.info('schedule: scheduling job %s for %s'
-                                  % (job['JOB_ID'],
-                                 resource_conf['HOSTURL']))
+                                 % (job['JOB_ID'],
+                                     resource_conf['HOSTURL']))
 
                 # PrintJob(job)
 
@@ -92,8 +93,6 @@ class FirstFitScheduler(Scheduler):
         # No job was found that can be executed on the resource
 
         self.logger.info('schedule: found no suitable job for %s'
-                          % resource_conf['HOSTURL'])
+                         % resource_conf['HOSTURL'])
 
         return None
-
-

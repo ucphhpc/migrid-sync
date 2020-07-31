@@ -27,13 +27,14 @@
 
 """Find all users with given data base field(s)"""
 from __future__ import print_function
+from __future__ import absolute_import
 
 import getopt
 import sys
 import time
 
-from shared.defaults import cert_valid_days, oid_valid_days
-from shared.useradm import init_user_adm, search_users, default_search
+from mig.shared.defaults import cert_valid_days, oid_valid_days
+from mig.shared.useradm import init_user_adm, search_users, default_search
 
 
 def usage(name='searchusers.py'):

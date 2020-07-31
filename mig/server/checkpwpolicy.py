@@ -27,15 +27,16 @@
 
 """Check passwords in user database for compliance with site password policy"""
 from __future__ import print_function
+from __future__ import absolute_import
 
 import getopt
 import pickle
 import sys
 
-from shared.conf import get_configuration_object
-from shared.defaults import keyword_auto
-from shared.pwhash import assure_password_strength, unscramble_password
-from shared.useradm import init_user_adm, search_users, default_search, \
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import keyword_auto
+from mig.shared.pwhash import assure_password_strength, unscramble_password
+from mig.shared.useradm import init_user_adm, search_users, default_search, \
     user_password_check, req_password_check
 
 

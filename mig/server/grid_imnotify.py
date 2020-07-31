@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_imnotify - IM notifier daemon
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -40,7 +40,9 @@
 notification handler: At the moment this is an IRC server with
 multiprotocol transports.
 """
+
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import sys
@@ -52,8 +54,8 @@ try:
 except ImportError:
     irclib = None
 
-from shared.conf import get_configuration_object
-from shared.logger import daemon_logger, register_hangup_handler
+from mig.shared.conf import get_configuration_object
+from mig.shared.logger import daemon_logger, register_hangup_handler
 
 getting_buddy_list = False
 protocol_online_dict = {
@@ -88,8 +90,8 @@ def send_msg(
     got_online = False
     for _ in range(30):
         if not protocol_online_dict[im_network]:
-            print('waiting for protocol %s to get online (status for all protocols: %s)'\
-                % (im_network, protocol_online_dict))
+            print('waiting for protocol %s to get online (status for all protocols: %s)'
+                  % (im_network, protocol_online_dict))
             time.sleep(2)
         else:
             got_online = True
@@ -142,8 +144,8 @@ def send_msg(
 
         # nick was not found in buddy dict, add user
 
-        print('account %s_%s not found in buddy list, adding..'\
-            % (im_network, dest))
+        print('account %s_%s not found in buddy list, adding..'
+              % (im_network, dest))
 
         # Get protocol ID (called account)
 
@@ -161,8 +163,8 @@ def send_msg(
             id_index += 1
             nickname = 'nick%d' % id_index
 
-        print('assigned local nick %s to new user %s with %d nicks'\
-            % (nickname, dest, len(nick_and_id_dict)))
+        print('assigned local nick %s to new user %s with %d nicks'
+              % (nickname, dest, len(nick_and_id_dict)))
 
         # give contact a second to get online
 
@@ -284,8 +286,8 @@ def on_join(connection, event):
         print(login_msg)
         connection.privmsg('root', login_msg)
     else:
-        print('someone joined channel: %s'\
-            % irclib.nm_to_n(event.source()))
+        print('someone joined channel: %s'
+              % irclib.nm_to_n(event.source()))
 
 
 def on_disconnect(connection, event):
@@ -364,8 +366,8 @@ unless it is available in mig/server/MiGserver.conf
             try:
                 os.mkfifo(stdin_path)
             except Exception as err:
-                print('Could not create missing IM stdin pipe %s: %s'\
-                    % (stdin_path, err))
+                print('Could not create missing IM stdin pipe %s: %s'
+                      % (stdin_path, err))
     except:
         print('error opening IM stdin! %s' % sys.exc_info()[0])
         sys.exit(1)
@@ -432,16 +434,16 @@ unless it is available in mig/server/MiGserver.conf
 
                 split_line = line.split(' ', 3)
                 if len(split_line) != 4:
-                    print('received SENDMESSAGE not on correct format %s'\
-                        % line)
+                    print('received SENDMESSAGE not on correct format %s'
+                          % line)
                     continue
 
                 protocol = split_line[1]
                 recipient = split_line[2]
                 message = split_line[3]
 
-                print('Sending message: protocol: %s to: %s message: %s'\
-                    % (protocol, recipient, message))
+                print('Sending message: protocol: %s to: %s message: %s'
+                      % (protocol, recipient, message))
                 send_msg(irc_server, recipient, protocol, message)
                 print('Message sent to %s' % recipient)
             elif line.upper().startswith('SHOWBUDDIES'):

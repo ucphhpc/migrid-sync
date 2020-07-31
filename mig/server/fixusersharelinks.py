@@ -32,11 +32,12 @@
 them to the current user home and updating the pickled owner info.
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
 import sys
 import getopt
 
-from shared.useradm import init_user_adm, fix_user_sharelinks
+from mig.shared.useradm import init_user_adm, fix_user_sharelinks
 
 
 def usage(name='fixusersharelinks.py'):

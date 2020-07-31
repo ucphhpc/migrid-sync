@@ -29,12 +29,13 @@
 detecting which daemons to handle and ignore in init scripts.
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
 import getopt
 import os
 import sys
 
-from shared.conf import get_configuration_object
+from mig.shared.conf import get_configuration_object
 
 
 def usage(name='chkenabled.py'):

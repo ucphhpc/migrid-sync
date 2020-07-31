@@ -34,17 +34,18 @@ actual real path to stdout so that apache can use the daemon from RewriteMap
 and rewrite to fail or success depending on output.
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import re
 import sys
 import time
 
-from shared.accountstate import check_account_accessible
-from shared.base import client_dir_id
-from shared.conf import get_configuration_object
-from shared.logger import daemon_logger, register_hangup_handler
-from shared.validstring import valid_user_path
+from mig.shared.accountstate import check_account_accessible
+from mig.shared.base import client_dir_id
+from mig.shared.conf import get_configuration_object
+from mig.shared.logger import daemon_logger, register_hangup_handler
+from mig.shared.validstring import valid_user_path
 
 configuration, logger = None, None
 

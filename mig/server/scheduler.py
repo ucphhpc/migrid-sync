@@ -27,6 +27,7 @@
 
 """General Scheduler framework"""
 from __future__ import print_function
+from __future__ import absolute_import
 
 import calendar
 import fnmatch
@@ -37,11 +38,12 @@ import time
 
 from math import exp, floor
 
-from shared import safeeval
-from jobqueue import print_job
-from shared.defaults import maxfill_fields, keyword_all
-from shared.resource import anon_resource_id
-from shared.vgrid import vgrid_access_match, validated_vgrid_list
+# TODO: move all scheduler modules to mig/shared/scheduler/
+from mig.server.jobqueue import print_job
+from mig.shared import safeeval
+from mig.shared.defaults import maxfill_fields, keyword_all
+from mig.shared.resource import anon_resource_id
+from mig.shared.vgrid import vgrid_access_match, validated_vgrid_list
 
 
 class Scheduler:
@@ -142,13 +144,13 @@ class Scheduler:
         'EXEC_PRICE': None,
         'EXEC_DIFF': None,
         'EXEC_RAWDIFF': None,
-        }
+    }
 
     def __init__(self, logger, config):
         self.conf = config
         self.logger = logger
         self.logger.debug('initialised scheduler with job expire after %d secs'
-                           % self.conf.expire_after)
+                          % self.conf.expire_after)
 
         # Init dynamic structures here to avoid sharing between objects
 
@@ -264,14 +266,14 @@ class Scheduler:
             new_timestamp = float(new_entity['LAST_SEEN'])
         except:
             self.logger.warning('updated_data: failed to get timestamp! %s %s'
-                                 % (cur_entity, new_entity))
+                                % (cur_entity, new_entity))
             return False
 
         if cur_timestamp >= new_timestamp:
             return False
 
         self.logger.debug('found new data for entity (%f, %f)'
-                           % (cur_timestamp, new_timestamp))
+                          % (cur_timestamp, new_timestamp))
         return True
 
     def outdated_data(self, entity, expire_after):
@@ -282,7 +284,7 @@ class Scheduler:
             timestamp = float(entity['LAST_SEEN'])
         except:
             self.logger.warning('outdated_data: failed to get timestamp! %s'
-                                 % entity)
+                                % entity)
             return True
 
         now = time.time()
@@ -291,7 +293,7 @@ class Scheduler:
             return True
         elif timestamp > now:
             self.logger.warning('found time in the future! (%f, %f) %s'
-                                 % (timestamp, now, entity))
+                                % (timestamp, now, entity))
 
         # self.logger.info("found valid data for entity (%f, %f)" % \
         #                 (timestamp, now))
@@ -304,18 +306,18 @@ class Scheduler:
 
         if self.outdated_data(new_server, self.conf.expire_peer):
             self.logger.debug('ignoring stale information for %s'
-                               % new_server['SERVER_ID'])
+                              % new_server['SERVER_ID'])
             return False
         elif not self.updated_data(cur_server, new_server):
             self.logger.debug('ignoring stale information for %s'
-                               % new_server['SERVER_ID'])
+                              % new_server['SERVER_ID'])
             return False
 
         # Don't try to extract migrate costs if no existing server data
 
         if not cur_server:
             self.logger.info('found new server %s'
-                              % new_server['SERVER_ID'])
+                             % new_server['SERVER_ID'])
             return True
 
         # Make sure this path has same or cheaper cost
@@ -325,17 +327,17 @@ class Scheduler:
             new_cost = float(new_server['MIGRATE_COST'])
         except Exception as exc:
             self.logger.warning('relevant_update: get migrate cost failed! %s %s (%s)'
-                                 % (cur_server, new_server, exc))
+                                % (cur_server, new_server, exc))
             return False
 
         if cur_cost < new_cost:
             self.logger.info('ignoring expensive path to %s'
-                              % new_server['SERVER_ID'])
+                             % new_server['SERVER_ID'])
             return False
 
         self.logger.info('found same or cheaper path to %s (%f, %f)'
-                          % (new_server['SERVER_ID'], cur_cost,
-                         new_cost))
+                         % (new_server['SERVER_ID'], cur_cost,
+                             new_cost))
         return True
 
     def update_local_server(self):
@@ -367,11 +369,11 @@ class Scheduler:
         for (entity_id, entity) in entities.items():
             if self.outdated_data(entity, self.cache_ttl):
                 self.logger.info('Dropping stale cache data for %s'
-                                  % entity_id)
+                                 % entity_id)
                 del entities[entity_id]
             else:
                 self.logger.info('Keeping cache data for %s'
-                                  % entity_id)
+                                 % entity_id)
 
     def find_server(self, server_conf):
 
@@ -386,7 +388,7 @@ class Scheduler:
             server = self.servers[server_id]
         elif self.conf.server_fqdn in self.servers:
             # Did server_fqdn change in MiGserver.conf?
-            self.logger.warning("find_server: %s not found - use self" % \
+            self.logger.warning("find_server: %s not found - use self" %
                                 server_id)
             server = self.servers[self.conf.server_fqdn]
         return server
@@ -456,7 +458,7 @@ class Scheduler:
             resource['DIFF_HIST'].append(0.0)
         else:
             self.logger.error('update_seen: unknown type: %s, %s'
-                               % entity)
+                              % entity)
 
     def find_owner(self, job):
 
@@ -596,7 +598,7 @@ class Scheduler:
         peer_servers,
         peer_resources,
         peer_users,
-        ):
+    ):
 
         # For each server dictionary that contains updated data update
         # connected users and resources if newer information is available
@@ -610,7 +612,7 @@ class Scheduler:
             dist = int(server['DISTANCE']) + 1
             server['DISTANCE'] = str(dist)
             cost = float(server['MIGRATE_COST'])\
-                 + float(self.peers[peer_id]['migrate_cost'])
+                + float(self.peers[peer_id]['migrate_cost'])
             server['MIGRATE_COST'] = str(cost)
             server['MIGRATE_DIRECTION'] = peer_id
 
@@ -619,13 +621,13 @@ class Scheduler:
 
             if not self.relevant_update(cur_server, server):
                 self.logger.info("update_peer_status: don't update %s"
-                                  % server_id)
+                                 % server_id)
                 self.remove_peer_resources(server_id, peer_resources)
                 self.remove_peer_users(server_id, peer_users)
                 continue
 
             self.logger.info('update_peer_status: update %s'
-                              % server_id)
+                             % server_id)
 
             # Update is relevant
 
@@ -648,10 +650,10 @@ class Scheduler:
 
         if peer_users:
             self.logger.warning('Unbound user(s) from peer! %s'
-                                 % peer_users)
+                                % peer_users)
         if peer_resources:
             self.logger.warning('Unbound resource(s) from peer! %s'
-                                 % peer_resources)
+                                % peer_resources)
 
         return True
 
@@ -669,7 +671,7 @@ class Scheduler:
                 # Remove resource from local list
 
                 self.logger.info('prune_peer_resources: remove %s'
-                                  % cur_id)
+                                 % cur_id)
                 del self.resources[cur_id]
 
     def prune_peer_users(self, server_id, users):
@@ -696,7 +698,7 @@ class Scheduler:
 
             if res['SERVER'] != server_id:
                 self.logger.info('update_peer_resources: ignore %s'
-                                  % res_id)
+                                 % res_id)
                 continue
 
             # Update if newer timestamp
@@ -792,7 +794,7 @@ class Scheduler:
 
             if self.outdated_data(server, self.conf.expire_peer):
                 self.logger.info('Dropping stale data for %s'
-                                  % server_id)
+                                 % server_id)
                 del self.servers[server_id]
                 self.remove_peer_resources(server_id, self.resources)
                 self.remove_peer_users(server_id, self.users)
@@ -818,14 +820,14 @@ class Scheduler:
         price_hist = res_dict['PRICE_HIST']
         diff_hist = res_dict['DIFF_HIST']
         res_dict['LOAD'] = (1.0 * sched_hist.count(1))\
-             / self.res_backlog
+            / self.res_backlog
 
         # load = res_dict["LOAD"]
 
         short_len = 10
         short_load = (1.0 * sched_hist[self.res_backlog
-                       - short_len:self.res_backlog].count(1))\
-             / short_len
+                                       - short_len:self.res_backlog].count(1))\
+            / short_len
         mult = res_dict['LOAD_MULTIPLY']
 
         cur_sched = sched_hist[self.res_backlog - 1]
@@ -841,7 +843,7 @@ class Scheduler:
             res_dict['LOAD_MULTIPLY'] = 1 + 0.9 * (mult - 1)
             mult = res_dict['LOAD_MULTIPLY']
             self.logger.info('update_price: Fallback! multiplier decreased to %f'
-                              % mult)
+                             % mult)
 
         if cur_sched == 0:
 
@@ -906,7 +908,7 @@ class Scheduler:
             'date': repr(utc_time.tm_mday),
             'month': repr(utc_time.tm_mon),
             'year': repr(utc_time.tm_year),
-            }
+        }
 
         # Replace required REs with 1 and rest with 0
         # print res_re
@@ -930,7 +932,7 @@ class Scheduler:
         # Calculate current value of MAXPRICE function for job
 
         exec_delay = time.mktime(time.gmtime())\
-             - time.mktime(job['RECEIVED_TIMESTAMP'])
+            - time.mktime(job['RECEIVED_TIMESTAMP'])
         job_replace_map = {'exec_delay': repr(exec_delay)}
         return self.eval_price(job['MAXPRICE'], job_replace_map)
 
@@ -984,12 +986,12 @@ class Scheduler:
                 eval_price = eval_func(expr)
             except ValueError as err:
                 self.logger.error('eval_price: illegal price expression: %s!'
-                                   % price_string)
+                                  % price_string)
                 self.logger.error('%s' % err)
                 return self.illegal_price
             except Exception as err:
                 self.logger.error('eval_price: evaluation of %s caused exception!'
-                                   % price_string)
+                                  % price_string)
                 self.logger.debug('%s' % err)
                 return self.illegal_price
 
@@ -1000,7 +1002,7 @@ class Scheduler:
             eval_price = float(eval_price)
         except TypeError:
             self.logger.error('eval_price: conversion of %s to float failed!'
-                               % eval_price)
+                              % eval_price)
             return self.illegal_price
 
         # Treat negative price function values as zero cost
@@ -1065,16 +1067,16 @@ class Scheduler:
 
         if 'MINPRICE' in resource_conf:
             min_price = self.eval_price(resource_conf['MINPRICE'],
-                    replace_map)
+                                        replace_map)
         else:
             min_price = 0.0
             self.logger.warning('unit_price: no MINPRICE for %s, using %f'
-                                 % (res_id, min_price))
+                                % (res_id, min_price))
             self.logger.warning('unit_price: %s' % resource_conf)
 
         if min_price == self.illegal_price:
             self.logger.error("unit_price: failed to evaluate '%s'"
-                               % resource_conf['MINPRICE'])
+                              % resource_conf['MINPRICE'])
 
             # Set to something big to avoid free resource because of typos
             # ... Admin will probably notice no jobs and debug!
@@ -1099,7 +1101,7 @@ class Scheduler:
         executing the job now.
         If price is broken we just ignore it and leave job to expire.
         """
-        
+
         attr = 'MAXPRICE'
         # Bump requested values to any resource specs requested in MAXFILL
         job_maxfill = job.get('MAXFILL', [])
@@ -1143,7 +1145,7 @@ class Scheduler:
 
         if job_price == self.illegal_price:
             self.logger.error("current_prices: job %s: failed to evaluate '%s'"
-                               % (job['JOB_ID'], job[attr]))
+                              % (job['JOB_ID'], job[attr]))
         elif job_price < res_price:
 
             # self.logger.debug("current_prices: %s of job %s does not fit resource (%s,%s)" % (attr, job["JOB_ID"], job_price, res_price))
@@ -1165,7 +1167,7 @@ class Scheduler:
         public_id = res_id
         if res.get('ANONYMOUS', True):
             public_id = anon_resource_id(public_id)
-            
+
         if job.get('RESOURCE', []):
             res_match = False
             for job_dest in job['RESOURCE']:
@@ -1206,7 +1208,7 @@ class Scheduler:
 
                 if job[attr] != res[attr]:
                     self.logger.info('job_fits_resource: %s of job does not fit resource (%s, %s)'
-                             % (attr, job[attr], res[attr]))
+                                     % (attr, job[attr], res[attr]))
                     return False
             if attr == 'SANDBOX':
 
@@ -1221,7 +1223,8 @@ class Scheduler:
                 if not job[attr] and res[attr]:
 
                     # job is not allowed to run in a sandbox resource
-                    self.logger.info("job is not allowed to run on a sandbox resource")
+                    self.logger.info(
+                        "job is not allowed to run on a sandbox resource")
                     return False
 
                 # sandbox jobs on non-sandbox resources are ok, however
@@ -1256,14 +1259,14 @@ class Scheduler:
                     return False
             except Exception as exc:
                 self.logger.error('job_fits_resource: %s check for %s vs %s failed! (%s, %s). Exception: %s'
-                                   % (
-                    attr,
-                    job,
-                    res,
-                    job[attr],
-                    res[attr],
-                    exc,
-                    ))
+                                  % (
+                                      attr,
+                                      job,
+                                      res,
+                                      job[attr],
+                                      res[attr],
+                                      exc,
+                                  ))
                 return False
 
         # RUNTIMEENVIRONMENT checks - compare lists
@@ -1293,7 +1296,7 @@ class Scheduler:
         job['VGRID'] = validated_vgrid_list(self.conf, job)
         (match, job_vgrid, res_vgrid) = vgrid_access_match(
             self.conf, job['USER_CERT'], job, res_id.split('_')[0], res)
-        self.logger.info('scheduler: res and job vgrid match: %s %s' % \
+        self.logger.info('scheduler: res and job vgrid match: %s %s' %
                          (res_vgrid, job_vgrid))
         res_name = job_name = 'Unknown'
         try:
@@ -1350,17 +1353,17 @@ class Scheduler:
             #                 (i+1, qlen))
 
             queued_time = time.mktime(time.gmtime())\
-                 - time.mktime(job['QUEUED_TIMESTAMP'])
+                - time.mktime(job['QUEUED_TIMESTAMP'])
             if queued_time > self.conf.expire_after:
                 self.logger.info('expire_jobs: removing expired job %s (%f, %f)'
-                                  % (job['JOB_ID'], queued_time,
-                                 self.conf.expire_after))
+                                 % (job['JOB_ID'], queued_time,
+                                     self.conf.expire_after))
                 self.job_queue.dequeue_job(i)
                 expired.append(job)
 
         if expired:
             self.logger.info('expire_jobs: expired %d job(s)'
-                              % len(expired))
+                             % len(expired))
 
         return expired
 
@@ -1505,7 +1508,7 @@ class Scheduler:
             'price': None,
             'raw': None,
             'equiv': None,
-            }
+        }
 
         # Local resources are tested first
 
@@ -1523,8 +1526,8 @@ class Scheduler:
             # Prefer shortest migration path to minimize  delay
 
             if not best['res'] or price_diff > best['diff']\
-                 or price_diff == best['diff'] and res_dist\
-                 < best['dist']:
+                    or price_diff == best['diff'] and res_dist\
+                    < best['dist']:
 
                 # self.logger.info("%s offers a better price (%f) for %s" % \
                 # ........ (res_id, res_price, job_id))
@@ -1537,9 +1540,9 @@ class Scheduler:
                     'price': res_price,
                     'raw': res_raw,
                     'equiv': [],
-                    }
+                }
             elif price_diff == best['diff'] and res_dist == best['dist'
-                    ]:
+                                                                 ]:
 
                 # Append alternatives with same price
 
@@ -1609,7 +1612,7 @@ class Scheduler:
                 'price': res_price,
                 'raw': res_raw,
                 'equiv': equiv,
-                }
+            }
         elif best['res'] and self.job_fits_resource(job, request_res):
 
             # Jobs that fit but are two far back in the queue should
@@ -1622,7 +1625,7 @@ class Scheduler:
             # Update delay expectation
 
             request_res['EXPECTED_DELAY'] += schedule_chance\
-                 * float(job['CPUTIME'])
+                * float(job['CPUTIME'])
 
             # self.logger.info("requesting resource %s updated expected delay to (%d)" % (res_id, request_res.get("EXPECTED_DELAY", -1)))
 
@@ -1671,7 +1674,7 @@ class Scheduler:
         """
 
         self.logger.info('running schedule filter on queue (%s)'
-                          % resource_conf)
+                         % resource_conf)
         local_jobs = self.job_queue.queue_length()
 
         # Find current resource once and for all
@@ -1715,7 +1718,7 @@ class Scheduler:
             # -we recently scheduled job
 
             if schedule_time > first_request and job['SCHEDULE_HINT']\
-                 and schedule_age < self.reschedule_interval:
+                    and schedule_age < self.reschedule_interval:
 
                 # self.logger.info("cached schedule %s for %s" % \
                 #                 (job["SCHEDULE_HINT"], job_id))
@@ -1744,7 +1747,7 @@ class Scheduler:
             elif job['STATUS'] == 'FROZEN':
 
                 # self.logger.debug("hold frozen job %s" % job_id)
-                
+
                 job['SCHEDULE_HINT'] = 'STAY'
                 continue
 
@@ -1809,7 +1812,7 @@ class Scheduler:
         res = self.find_resource(resource_conf)
         if not res:
             self.logger.error('finished_job: unknown resource %s'
-                               % res_id)
+                              % res_id)
             return 0
 
         res['DONE_HIST'].pop(0)
@@ -1834,7 +1837,7 @@ class Scheduler:
         for job in job_list:
             for key in ['MEMORY', 'DISK', 'NODECOUNT', 'CPUCOUNT']:
                 res_conf[key] = '%s' % (int(res_conf[key])
-                         - int(job[key]))
+                                        - int(job[key]))
         return res_conf
 
     def backfill(self, best_job, resource_conf):
@@ -1846,20 +1849,20 @@ class Scheduler:
 
         backfill_list = []
         self.logger.info('backfill best: %(JOB_ID)s (%(JOBTYPE)s)'
-                          % best_job)
+                         % best_job)
         if 'bulk' != best_job['JOBTYPE']:
             return backfill_list
         while True:
             remaining = self.remaining_slot([best_job] + backfill_list,
-                    resource_conf)
+                                            resource_conf)
             self.logger.info('backfill remaining: %(CPUCOUNT)s %(NODECOUNT)s'
-                              % remaining)
-            next_job = self.schedule(remaining, must_match={'USER_CERT'
-                    : best_job['USER_CERT'], 'JOBTYPE': 'bulk'})
+                             % remaining)
+            next_job = self.schedule(remaining, must_match={
+                                     'USER_CERT': best_job['USER_CERT'], 'JOBTYPE': 'bulk'})
             if not next_job:
                 break
             self.logger.info('backfill next: %(JOB_ID)s (%(JOBTYPE)s)'
-                              % next_job)
+                             % next_job)
             backfill_list.append(next_job)
         return backfill_list
 
@@ -1871,5 +1874,3 @@ class Scheduler:
         self.logger.error(err_str)
         print(err_str)
         return None
-
-

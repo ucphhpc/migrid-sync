@@ -27,14 +27,15 @@
 
 """Find all users in user_home and compare with data base"""
 from __future__ import print_function
+from __future__ import absolute_import
 
 import fnmatch
 import os
 import sys
 import getopt
 
-from shared.base import client_dir_id, distinguished_name_to_user
-from shared.useradm import init_user_adm, search_users, default_search
+from mig.shared.base import client_dir_id, distinguished_name_to_user
+from mig.shared.useradm import init_user_adm, search_users, default_search
 
 
 def usage(name='missingusers.py'):
@@ -109,7 +110,7 @@ if '__main__' == __name__:
 
     fs_users = {}
     fs_hits = []
-    from shared.conf import get_configuration_object
+    from mig.shared.conf import get_configuration_object
     configuration = get_configuration_object()
     for user_dir in os.listdir(configuration.user_home):
         home_path = os.path.join(configuration.user_home, user_dir)

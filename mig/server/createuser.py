@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createuser - Create or renew a MiG user with all the necessary directories
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,19 +27,21 @@
 
 """Add or renew MiG user in user DB and in file system"""
 from __future__ import print_function
+from __future__ import absolute_import
 
+from builtins import input
 import sys
 import time
 import os
 import getopt
 from getpass import getpass
 
-from shared.base import fill_distinguished_name, fill_user
-from shared.conf import get_configuration_object
-from shared.defaults import cert_valid_days
-from shared.pwhash import unscramble_password, scramble_password
-from shared.serial import load
-from shared.useradm import init_user_adm, create_user, load_user_dict
+from mig.shared.base import fill_distinguished_name, fill_user
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import cert_valid_days
+from mig.shared.pwhash import unscramble_password, scramble_password
+from mig.shared.serial import load
+from mig.shared.useradm import init_user_adm, create_user, load_user_dict
 
 cert_warn = \
     """
@@ -161,8 +163,8 @@ if '__main__' == __name__:
             user_dict['comment'] = args[5]
             user_dict['password'] = args[6]
         except IndexError:
-            print('Error: too few arguments given (expected 7 got %d)'\
-                % len(args))
+            print('Error: too few arguments given (expected 7 got %d)'
+                  % len(args))
             usage()
             sys.exit(1)
     elif user_file:
@@ -185,17 +187,17 @@ if '__main__' == __name__:
             print('''Entering interactive mode
 %s''' % cert_warn)
         print('Please enter the details for the new user:')
-        user_dict['full_name'] = raw_input('Full Name: ').title()
-        user_dict['organization'] = raw_input('Organization: ')
-        user_dict['state'] = raw_input('State: ')
-        user_dict['country'] = raw_input('2-letter Country Code: ')
-        user_dict['email'] = raw_input('Email: ')
-        user_dict['comment'] = raw_input('Comment: ')
+        user_dict['full_name'] = input('Full Name: ').title()
+        user_dict['organization'] = input('Organization: ')
+        user_dict['state'] = input('State: ')
+        user_dict['country'] = input('2-letter Country Code: ')
+        user_dict['email'] = input('Email: ')
+        user_dict['comment'] = input('Comment: ')
         user_dict['password'] = getpass('Password: ')
     else:
-        print("Error: Missing one or more of the arguments: " \
-            + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] " \
-            + "[EMAIL] [COMMENT] [PASSWORD]")
+        print("Error: Missing one or more of the arguments: "
+              + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] "
+              + "[EMAIL] [COMMENT] [PASSWORD]")
         sys.exit(1)
 
     # Encode password if set but not already encoded
@@ -221,7 +223,7 @@ if '__main__' == __name__:
         override_fields['expire'] = expire
 
     # NOTE: let non-ID command line values override loaded values
-    for (key, val) in override_fields.items():
+    for (key, val) in list(override_fields.items()):
         user_dict[key] = val
 
     # Now all user fields are set and we can begin adding the user
@@ -234,7 +236,7 @@ if '__main__' == __name__:
     except Exception as exc:
         print(exc)
         sys.exit(1)
-    print('Created or updated %s in user database and in file system' % \
+    print('Created or updated %s in user database and in file system' %
           user_dict['distinguished_name'])
     if user_file:
         if verbose:

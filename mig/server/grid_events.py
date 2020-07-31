@@ -1,11 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 #
 # --- BEGIN_HEADER ---
 #
 # grid_events - event handler to monitor files and trigger actions
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,13 +30,16 @@ and trigger any associated actions based on rule database.
 
 Requires watchdog module (https://pypi.python.org/pypi/watchdog).
 """
+
 from __future__ import print_function
+from __future__ import absolute_import
 
 import fnmatch
 import glob
 import itertools
 import logging
 import logging.handlers
+import multiprocessing
 import os
 import re
 import shutil
@@ -46,7 +48,6 @@ import sys
 import tempfile
 import time
 import threading
-import multiprocessing
 
 try:
     from watchdog.observers import Observer
@@ -73,23 +74,23 @@ except ImportError as exc:
     print('ERROR: %s' % str(exc))
     sys.exit(1)
 
-from shared.base import force_utf8
-from shared.cmdapi import parse_command_args
-from shared.conf import get_configuration_object
-from shared.defaults import valid_trigger_changes, workflows_log_name, \
+from mig.shared.base import force_utf8
+from mig.shared.cmdapi import parse_command_args
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import valid_trigger_changes, workflows_log_name, \
     workflows_log_size, workflows_log_cnt, csrf_field, default_vgrid
-from shared.events import get_path_expand_map
-from shared.fileio import makedirs_rec, pickle, unpickle
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.job import fill_mrsl_template, new_job
-from shared.listhandling import frange
-from shared.logger import daemon_logger, register_hangup_handler
-from shared.safeinput import PARAM_START, PARAM_STOP, PARAM_JUMP
-from shared.serial import load
-from shared.vgrid import vgrid_valid_entities, vgrid_add_workflow_jobs, \
+from mig.shared.events import get_path_expand_map
+from mig.shared.fileio import makedirs_rec, pickle, unpickle
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.job import fill_mrsl_template, new_job
+from mig.shared.listhandling import frange
+from mig.shared.logger import daemon_logger, register_hangup_handler
+from mig.shared.safeinput import PARAM_START, PARAM_STOP, PARAM_JUMP
+from mig.shared.serial import load
+from mig.shared.vgrid import vgrid_valid_entities, vgrid_add_workflow_jobs, \
     JOB_ID, JOB_CLIENT
-from shared.vgridaccess import check_vgrid_access
-from shared.workflows import get_wp_map, CONF
+from mig.shared.vgridaccess import check_vgrid_access
+from mig.shared.workflows import get_wp_map, CONF
 
 # Global trigger rule dictionaries with rules for all VGrids
 
@@ -439,8 +440,8 @@ def run_command(
     main = id
     txt_format = id
     try:
-        exec('from shared.functionality.%s import main' % function)
-        exec('from shared.output import txt_format')
+        exec('from mig.shared.functionality.%s import main' % function)
+        exec('from mig.shared.output import txt_format')
 
         # logger.debug('(%s) run %s on %s for %s' % \
         #              (pid, function, user_arguments_dict, client_id))
@@ -515,8 +516,8 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
             # logger.debug('(%s) Updating rule monitor for src_path: %s, event: %s'
             #              % (pid, src_path, state))
 
-            print('(%s) Updating rule monitor for src_path: %s, event: %s' \
-                % (pid, src_path, state))
+            print('(%s) Updating rule monitor for src_path: %s, event: %s'
+                  % (pid, src_path, state))
 
             if os.path.exists(src_path):
 
@@ -919,7 +920,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             try:
                 for job_template in rule['templates']:
                     pattern_id = rule['pattern_id']
-                    pattern_map = get_wp_map(configuration).get(pattern_id, None)
+                    pattern_map = get_wp_map(
+                        configuration).get(pattern_id, None)
 
                     if not pattern_map:
                         raise Exception('(%s) pattern entry %s is missing'
@@ -1755,7 +1757,7 @@ def monitor(configuration, vgrid_name):
                 add_monitor_t1 = time.time()
                 add_vgrid_file_monitors(configuration, vgrid_name)
                 add_monitor_t2 = time.time()
-                print('(%s) ready to handle triggers for: %s in %s secs' \
+                print('(%s) ready to handle triggers for: %s in %s secs'
                       % (pid, vgrid_name, add_monitor_t2 - add_monitor_t1))
                 logger.info('(%s) ready to handle triggers for: %s in %s secs'
                             % (pid, vgrid_name, add_monitor_t2

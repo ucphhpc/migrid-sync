@@ -63,20 +63,25 @@ setup.
 
 Inspired by https://gist.github.com/lonetwin/3b5982cf88c598c0e169
 """
+from __future__ import absolute_import
 
 import os
 import sys
 import threading
 import time
 
-from paramiko.server import ServerInterface
-from paramiko.sftp_server import SFTPServer, SFTPServerInterface
-from paramiko.transport import Transport
+try:
+    from paramiko.server import ServerInterface
+    from paramiko.sftp_server import SFTPServer, SFTPServerInterface
+    from paramiko.transport import Transport
+except ImportError:
+    print("ERROR: the python paramiko module is required for this daemon")
+    sys.exit(1)
 
-from shared.conf import get_configuration_object
-from shared.fileio import user_chroot_exceptions
-from shared.logger import daemon_logger, register_hangup_handler
-from grid_sftp import SimpleSftpServer as SftpServerImpl
+from mig.server.grid_sftp import SimpleSftpServer as SftpServerImpl
+from mig.shared.conf import get_configuration_object
+from mig.shared.fileio import user_chroot_exceptions
+from mig.shared.logger import daemon_logger, register_hangup_handler
 
 configuration, logger = None, None
 

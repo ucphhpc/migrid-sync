@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_notify - Notify users about relevant system events
-# Copyright (C) 2010-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,7 +28,9 @@
 """Notify users about relevant system events and use bulking to avoid message
 flooding.
 """
+
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import multiprocessing
@@ -37,12 +39,12 @@ import sys
 import time
 from datetime import datetime
 
-from shared.base import extract_field, expand_openid_alias
-from shared.conf import get_configuration_object
-from shared.fileio import unpickle, delete_file
-from shared.logger import daemon_logger, \
+from mig.shared.base import extract_field, expand_openid_alias
+from mig.shared.conf import get_configuration_object
+from mig.shared.fileio import unpickle, delete_file
+from mig.shared.logger import daemon_logger, \
     register_hangup_handler
-from shared.notification import send_email
+from mig.shared.notification import send_email
 
 
 stop_running = multiprocessing.Event()
@@ -238,9 +240,9 @@ def handle_notifications(configuration):
 def unittest(configuration, emailaddr, delay):
     """Unit test for grid_notify.py"""
     signal.signal(signal.SIGINT, stop_handler)
-    from shared.notification import send_system_notification
-    print("Starting unittest: emailaddr: %s" % emailaddr \
-        + ", delay: %s" % delay)
+    from mig.shared.notification import send_system_notification
+    print("Starting unittest: emailaddr: %s" % emailaddr
+          + ", delay: %s" % delay)
     if delay > 0:
         print("Waiting %s secs before executing unit test" % delay)
         time.sleep(delay)
@@ -262,8 +264,8 @@ def unittest(configuration, emailaddr, delay):
                     return
                 category = [protocol]
                 msg = "__UNITTEST__: %s" % protocol
-                print("unittest: Sending notification: %s" \
-                    ", category: %s: %s" % (i, category, client_id))
+                print("unittest: Sending notification: %s"
+                      ", category: %s: %s" % (i, category, client_id))
                 send_system_notification(client_id,
                                          category,
                                          msg,
@@ -273,8 +275,8 @@ def unittest(configuration, emailaddr, delay):
                         return
                     category = [protocol, event]
                     msg = "__UNITTEST__: %s" % client_id
-                    print("unittest: Sending notification: %s" % i \
-                        + ", category: %s: %s" % (category, client_id))
+                    print("unittest: Sending notification: %s" % i
+                          + ", category: %s: %s" % (category, client_id))
                     send_system_notification(client_id,
                                              category,
                                              msg,

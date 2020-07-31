@@ -31,13 +31,14 @@ If this server is the current group leader, the server runs the necessary
 MiG components, including the main script, monitor and notification.
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import sys
 import signal
 import time
 
-from shared.distbase import get_leader, get_address
+from mig.shared.distbase import get_leader, get_address
 
 
 def start_component(app, args=[''], env={}):

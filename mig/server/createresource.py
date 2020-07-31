@@ -30,11 +30,12 @@
 
 """Add MiG resource from pending request file"""
 from __future__ import print_function
+from __future__ import absolute_import
 
 import sys
 
-from shared.conf import get_configuration_object
-from shared.resource import create_resource
+from mig.shared.conf import get_configuration_object
+from mig.shared.resource import create_resource
 
 
 def usage(name='createresource.py'):

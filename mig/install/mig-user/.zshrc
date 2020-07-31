@@ -109,6 +109,9 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/X11R6/bin:/usr/local/bin:/usr/local/sbin
 PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin:$HOME/bin:$HOME/scripts
 export PATH
 
+# NOTE: include home in PYTHONPATH to allow general access to mig.X imports
+export PYTHONPATH=$HOME
+
 HISTSIZE=4000
 if [ -z "$SILENT" ]; then
 	HISTFILE=~/.zsh_history

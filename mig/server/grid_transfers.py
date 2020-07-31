@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_transfers - transfer handler to run background data transfers
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,7 +31,9 @@ users.
 
 Requires rsync and lftp binaries to take care of the actual transfers.
 """
+
 from __future__ import print_function
+from __future__ import absolute_import
 
 import datetime
 import glob
@@ -44,20 +46,20 @@ import sys
 import time
 import traceback
 
-from shared.base import client_dir_id, client_id_dir
-from shared.conf import get_configuration_object
-from shared.defaults import datatransfers_filename, transfers_log_size, \
+from mig.shared.base import client_dir_id, client_id_dir
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import datatransfers_filename, transfers_log_size, \
     transfers_log_cnt, user_keys_dir, _user_invisible_paths
-from shared.fileio import makedirs_rec, pickle
-from shared.logger import daemon_logger, register_hangup_handler
-from shared.notification import notify_user_thread
-from shared.pwhash import unscramble_digest
-from shared.safeeval import subprocess_popen, subprocess_pipe
-from shared.transferfunctions import blind_pw, load_data_transfers, \
+from mig.shared.fileio import makedirs_rec, pickle
+from mig.shared.logger import daemon_logger, register_hangup_handler
+from mig.shared.notification import notify_user_thread
+from mig.shared.pwhash import unscramble_digest
+from mig.shared.safeeval import subprocess_popen, subprocess_pipe
+from mig.shared.transferfunctions import blind_pw, load_data_transfers, \
     update_data_transfer, get_status_dir, sub_pid_list, add_sub_pid, \
     del_sub_pid, kill_sub_pid, add_worker_transfer, del_worker_transfer, \
     all_worker_transfers, get_worker_transfer
-from shared.validstring import valid_user_path
+from mig.shared.validstring import valid_user_path
 
 # Global helper dictionaries with requests for all users
 

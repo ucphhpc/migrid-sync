@@ -27,6 +27,7 @@
 
 """Import any missing users from provided URI"""
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import sys
@@ -35,19 +36,19 @@ import re
 import time
 import urllib
 
-from shared import returnvalues
-from shared.base import fill_user, distinguished_name_to_user
-from shared.conf import get_configuration_object
-from shared.defaults import csrf_field, keyword_auto, cert_valid_days
-from shared.functionality.sendrequestaction import main
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.output import format_output
-from shared.pwhash import generate_random_password, unscramble_password, \
+from mig.shared import returnvalues
+from mig.shared.base import fill_user, distinguished_name_to_user
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import csrf_field, keyword_auto, cert_valid_days
+from mig.shared.functionality.sendrequestaction import main
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.output import format_output
+from mig.shared.pwhash import generate_random_password, unscramble_password, \
     scramble_password
-from shared.safeinput import valid_password_chars
-from shared.useradm import init_user_adm, default_search, create_user, \
+from mig.shared.safeinput import valid_password_chars
+from mig.shared.useradm import init_user_adm, default_search, create_user, \
     search_users
-from shared.vgridaccess import refresh_user_map
+from mig.shared.vgridaccess import refresh_user_map
 
 
 def usage(name='importusers.py'):

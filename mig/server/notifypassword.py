@@ -30,13 +30,14 @@ reminder to saved notification address or email from Distinguished Name field
 of user entry.
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
 import sys
 import getopt
 
-from shared.defaults import keyword_auto
-from shared.notification import notify_user
-from shared.useradm import init_user_adm, user_password_reminder
+from mig.shared.defaults import keyword_auto
+from mig.shared.notification import notify_user
+from mig.shared.useradm import init_user_adm, user_password_reminder
 
 
 def usage(name='notifypassword.py'):

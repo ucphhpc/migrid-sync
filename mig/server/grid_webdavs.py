@@ -34,7 +34,9 @@ Requires wsgidav module (https://github.com/mar10/wsgidav) in a recent version
 or with a minor patch (see https://github.com/mar10/wsgidav/issues/29) to allow
 per-user subdir chrooting inside root_dir.
 """
+
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import sys
@@ -64,13 +66,13 @@ except ImportError as ierr:
     print("You may need to install cherrypy if your wsgidav does not bundle it")
     sys.exit(1)
 
-from shared.accountstate import check_account_accessible
-from shared.base import invisible_path, force_unicode
-from shared.conf import get_configuration_object
-from shared.defaults import dav_domain, litmus_id, io_session_timeout
-from shared.fileio import check_write_access, user_chroot_exceptions
-from shared.gdp.all import project_open, project_close, project_log
-from shared.griddaemons.davs import get_fs_path, acceptable_chmod, \
+from mig.shared.accountstate import check_account_accessible
+from mig.shared.base import invisible_path, force_unicode
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import dav_domain, litmus_id, io_session_timeout
+from mig.shared.fileio import check_write_access, user_chroot_exceptions
+from mig.shared.gdp.all import project_open, project_close, project_log
+from mig.shared.griddaemons.davs import get_fs_path, acceptable_chmod, \
     default_max_user_hits, default_user_abuse_hits, \
     default_proto_abuse_hits, default_max_secret_hits, \
     default_username_validator, refresh_user_creds, refresh_share_creds, \
@@ -78,16 +80,16 @@ from shared.griddaemons.davs import get_fs_path, acceptable_chmod, \
     add_user_object, track_open_session, clear_sessions, track_close_session, \
     track_close_expired_sessions, get_active_session, \
     check_twofactor_session, validate_auth_attempt
-from shared.logger import daemon_logger, daemon_gdp_logger, \
+from mig.shared.logger import daemon_logger, daemon_gdp_logger, \
     register_hangup_handler
-from shared.notification import send_system_notification
-from shared.pwhash import make_scramble, unscramble_digest, \
+from mig.shared.notification import send_system_notification
+from mig.shared.pwhash import make_scramble, unscramble_digest, \
     assure_password_strength
-from shared.sslsession import ssl_session_token
-from shared.tlsserver import hardened_ssl_context
-from shared.useradm import check_password_hash, generate_password_hash, \
+from mig.shared.sslsession import ssl_session_token
+from mig.shared.tlsserver import hardened_ssl_context
+from mig.shared.useradm import check_password_hash, generate_password_hash, \
     generate_password_digest
-from shared.validstring import possible_user_id, possible_gdp_user_id, \
+from mig.shared.validstring import possible_user_id, possible_gdp_user_id, \
     possible_sharelink_id
 
 configuration, logger = None, None

@@ -30,6 +30,7 @@
 #
 
 from __future__ import print_function
+from __future__ import absolute_import
 import StringIO
 import os
 import sys
@@ -39,8 +40,8 @@ import ConfigParser
 
 import pycurl
 
-from shared.base import client_id_dir
-from shared.fileio import pickle
+from mig.shared.base import client_id_dir
+from mig.shared.fileio import pickle
 
 server_section = 'serverstatus'
 http_success = 200

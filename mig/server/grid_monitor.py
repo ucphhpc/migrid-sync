@@ -26,23 +26,25 @@
 #
 
 """Creating the MiG monitor page"""
+
 from __future__ import print_function
+from __future__ import absolute_import
 
 import datetime
 import os
 import sys
 import time
 
-from shared.conf import get_configuration_object
-from shared.defaults import default_vgrid
-from shared.fileio import unpickle
-from shared.gridstat import GridStat
-from shared.html import get_xgi_html_header, get_xgi_html_footer, \
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import default_vgrid
+from mig.shared.fileio import unpickle
+from mig.shared.gridstat import GridStat
+from mig.shared.html import get_xgi_html_header, get_xgi_html_footer, \
     themed_styles, themed_scripts
-from shared.logger import daemon_logger, register_hangup_handler
-from shared.output import format_timedelta
-from shared.resource import anon_resource_id
-from shared.vgridaccess import get_vgrid_map_vgrids
+from mig.shared.logger import daemon_logger, register_hangup_handler
+from mig.shared.output import format_timedelta
+from mig.shared.resource import anon_resource_id
+from mig.shared.vgridaccess import get_vgrid_map_vgrids
 
 configuration, logger = None, None
 
@@ -337,12 +339,12 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 print('found ' + mon_file_name)
                 last_request_dict = unpickle(mon_file_name, logger)
                 if not last_request_dict:
-                    print('could not open and unpickle: '\
-                        + mon_file_name)
+                    print('could not open and unpickle: '
+                          + mon_file_name)
                     continue
                 if 'CREATED_TIME' not in last_request_dict:
-                    print('skip broken last request dict: '\
-                        + mon_file_name)
+                    print('skip broken last request dict: '
+                          + mon_file_name)
                     continue
 
                 difference = datetime.datetime.now()\
@@ -359,8 +361,8 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 elif 'cputime' in last_request_dict:
                     cputime = last_request_dict['cputime']
                 else:
-                    print('ERROR: last request does not contain cputime field!: %s'\
-                        % last_request_dict)
+                    print('ERROR: last request does not contain cputime field!: %s'
+                          % last_request_dict)
                     continue
 
                 try:
@@ -369,8 +371,8 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                     try:
                         cpusec = int(float(cputime))
                     except ValueError as verr:
-                        print('ERROR: failed to parse cputime %s: %s'\
-                            % (cputime, verr))
+                        print('ERROR: failed to parse cputime %s: %s'
+                              % (cputime, verr))
 
                 # Include execution delay guesstimate for strict fill
                 # LRMS resources
@@ -393,12 +395,12 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
 
                 if time_remaining.days < -7:
                     try:
-                        print('removing: %s as we havent seen him for %s days.'\
-                            % (mon_file_name, abs(time_remaining).days))
+                        print('removing: %s as we havent seen him for %s days.'
+                              % (mon_file_name, abs(time_remaining).days))
                         os.remove(mon_file_name)
                     except Exception as err:
-                        print("could not remove: '%s' Error: %s"\
-                            % (mon_file_name, str(err)))
+                        print("could not remove: '%s' Error: %s"
+                              % (mon_file_name, str(err)))
                     pass
                 else:
                     unique_res_name_and_exe_list = \
@@ -512,12 +514,12 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                 print('found ' + mon_file_name)
                 last_status_dict = unpickle(mon_file_name, logger)
                 if not last_status_dict:
-                    print('could not open and unpickle: '\
-                        + mon_file_name)
+                    print('could not open and unpickle: '
+                          + mon_file_name)
                     continue
                 if 'CREATED_TIME' not in last_status_dict:
-                    print('skip broken last request dict: '\
-                        + mon_file_name)
+                    print('skip broken last request dict: '
+                          + mon_file_name)
                     continue
 
                 difference = datetime.datetime.now()\
@@ -532,11 +534,11 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                         last_status_dict['CREATED_TIME']
                     if time_stopped.days > 7:
                         try:
-                            print('removing: %s as we havent seen him for %s days.'\
+                            print('removing: %s as we havent seen him for %s days.'
                                   % (mon_file_name, abs(time_stopped).days))
                             os.remove(mon_file_name)
                         except Exception as err:
-                            print("could not remove: '%s' Error: %s"\
+                            print("could not remove: '%s' Error: %s"
                                   % (mon_file_name, str(err)))
                         continue
 
@@ -580,8 +582,8 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                     last_timetuple = datetime.datetime.now().timetuple()
                     days, hours, minutes, seconds = 0, 0, 0, 0
                 except OSError as ose:
-                    print('could not stat mount point %s: %s' % \
-                        (mount_point, ose))
+                    print('could not stat mount point %s: %s' %
+                          (mount_point, ose))
                     is_live = False
                 if last_status_dict['STATUS'] == 'stopped':
                     resource_status = 'offline'

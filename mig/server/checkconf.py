@@ -30,6 +30,7 @@ Currently only checks that files and dirs exist, but could be
 extended to include other variable checks.
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import re
@@ -37,8 +38,8 @@ import sys
 import types
 from ConfigParser import ConfigParser
 
-from shared.configuration import Configuration
-from shared.configuration import fix_missing
+from mig.shared.configuration import Configuration
+from mig.shared.configuration import fix_missing
 
 YES = 0
 NO = 1

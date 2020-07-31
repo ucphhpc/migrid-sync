@@ -33,19 +33,20 @@ or email from Distinguished Name field of employee user entry. If user
 configured additional messaging protocols they can also be used.
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
 import getopt
 import os
 import sys
 
-from shared.accountreq import peers_permit_allowed, manage_pending_peers
-from shared.base import fill_distinguished_name, client_id_dir
-from shared.conf import get_configuration_object
-from shared.defaults import keyword_auto, gdp_distinguished_field, \
+from mig.shared.accountreq import peers_permit_allowed, manage_pending_peers
+from mig.shared.base import fill_distinguished_name, client_id_dir
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import keyword_auto, gdp_distinguished_field, \
     pending_peers_filename
-from shared.notification import notify_user
-from shared.serial import load, dump
-from shared.useradm import init_user_adm, search_users, default_search, \
+from mig.shared.notification import notify_user
+from mig.shared.serial import load, dump
+from mig.shared.useradm import init_user_adm, search_users, default_search, \
     user_account_notify
 
 

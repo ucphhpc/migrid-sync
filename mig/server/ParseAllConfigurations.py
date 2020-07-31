@@ -26,11 +26,12 @@
 #
 
 from __future__ import print_function
+from __future__ import absolute_import
 import os
 import sys
 
-from shared import confparser
-from shared.conf import get_configuration_object
+from mig.shared import confparser
+from mig.shared.conf import get_configuration_object
 
 if os.getenv('HTTP_METHOD'):
     print('CGI access disabled because of security implications')

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_vmproxy - VM proxy wrapper daemon
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,16 +26,18 @@
 #
 
 """Wraps the vm-proxy daemon in a way suitable for use in the init script"""
+
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import signal
 import sys
 import time
 
-from shared.conf import get_configuration_object
-from shared.logger import daemon_logger, register_hangup_handler
-from shared.safeeval import subprocess_popen
+from mig.shared.conf import get_configuration_object
+from mig.shared.logger import daemon_logger, register_hangup_handler
+from mig.shared.safeeval import subprocess_popen
 
 configuration, logger = None, None
 

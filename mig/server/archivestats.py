@@ -28,7 +28,9 @@
 """Helper to traverse archives to do simple statistics e.g. about time to tape
 for finalized archives.
 """
+
 from __future__ import print_function
+from __future__ import absolute_import
 
 import getopt
 import glob
@@ -36,8 +38,8 @@ import os
 import sys
 import time
 
-from shared.conf import get_configuration_object
-from shared.serial import load
+from mig.shared.conf import get_configuration_object
+from mig.shared.serial import load
 
 
 def usage(name='archivestats.py'):

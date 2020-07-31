@@ -34,15 +34,16 @@ address or email from Distinguished Name field of user entry. If user
 configured additional messaging protocols they can also be used.
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
 import datetime
 import getopt
 import sys
 import time
 
-from shared.defaults import keyword_auto, gdp_distinguished_field
-from shared.notification import notify_user
-from shared.useradm import init_user_adm, search_users, default_search, \
+from mig.shared.defaults import keyword_auto, gdp_distinguished_field
+from mig.shared.notification import notify_user
+from mig.shared.useradm import init_user_adm, search_users, default_search, \
     user_migoid_notify
 
 

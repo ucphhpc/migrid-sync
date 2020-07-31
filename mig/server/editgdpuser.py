@@ -28,15 +28,16 @@
 """Edit MiG GDP user in the GDP database and all related GDP project users
 in the MiG user database and file system"""
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import sys
 import getopt
 
-from shared.conf import get_configuration_object
-from shared.gdp.all import edit_gdp_user, reset_account_roles, \
+from mig.shared.conf import get_configuration_object
+from mig.shared.gdp.all import edit_gdp_user, reset_account_roles, \
     set_account_state
-from shared.useradm import init_user_adm
+from mig.shared.useradm import init_user_adm
 
 
 def usage(name='editgdpuser.py'):

@@ -64,6 +64,12 @@ fi
 if [ -z "$MIG_SFTPSUBSYS_CONF" ]; then 
     MIG_SFTPSUBSYS_CONF=/etc/ssh/sshd_config-MiG-sftp-subsys
 fi
+# Needed for absolute mig.X imports which are now required by PEP8
+if [ -z "$PYTHONPATH" ]; then
+    export PYTHONPATH=${MIG_PATH}
+else
+    export PYTHONPATH=${MIG_PATH}:$PYTHONPATH
+fi
 # you probably do not want to modify these...
 PID_DIR=${PID_DIR:-/var/run}
 MIG_LOG=${MIG_STATE}/log
@@ -92,7 +98,7 @@ show_usage() {
 }
 
 check_enabled() {
-    su - ${MIG_USER} -c "python ${MIG_CODE}/server/chkenabled.py $1" > /dev/null
+    su - ${MIG_USER} -c "PYTHONPATH=${PYTHONPATH} ${MIG_CODE}/server/chkenabled.py $1" > /dev/null
     DAEMON_ENABLED=$?
     if [ ${DAEMON_ENABLED} -ne 0 ]; then
         echo "$1 not enabled in MiGserver conf - skipping"

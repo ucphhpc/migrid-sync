@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobscriptgenerator - dynamically generate job script right before job handout
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,7 +26,9 @@
 #
 
 """Job script generator"""
+
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import time
@@ -34,18 +36,18 @@ import socket
 from binascii import hexlify
 from copy import deepcopy
 
-import genjobscriptpython
-import genjobscriptsh
-import genjobscriptjava
-from shared.base import client_id_dir
-from shared.defaults import session_id_bytes, maxfill_fields, keyword_all
-from shared.fileio import write_file, pickle, make_symlink
-from shared.mrslparser import expand_variables
-from shared.ssh import copy_file_to_resource, generate_ssh_rsa_key_pair
+from mig.server import genjobscriptpython
+from mig.server import genjobscriptsh
+from mig.server import genjobscriptjava
+from mig.shared.base import client_id_dir
+from mig.shared.defaults import session_id_bytes, maxfill_fields, keyword_all
+from mig.shared.fileio import write_file, pickle, make_symlink
+from mig.shared.mrslparser import expand_variables
+from mig.shared.ssh import copy_file_to_resource, generate_ssh_rsa_key_pair
 
 try:
-    from shared import mrsltoxrsl
-    from shared import arcwrapper
+    from mig.shared import mrsltoxrsl
+    from mig.shared import arcwrapper
 except Exception as exc:
     # Ignore errors and let it crash if ARC is enabled without the lib
     pass
@@ -577,7 +579,7 @@ def gen_job_script(
 
     script_language = resource_config['SCRIPTLANGUAGE']
     if not script_language in configuration.scriptlanguages:
-        print('Unknown script language! (conflict with scriptlanguages in ' + \
+        print('Unknown script language! (conflict with scriptlanguages in ' +
               'configuration?) %s not in %s' % (script_language,
                                                 configuration.scriptlanguages))
         return False
@@ -606,7 +608,7 @@ def gen_job_script(
             configuration.migserver_https_sid_url,
             localjobname, path_without_extension)
     else:
-        print('Unknown script language! (is in configuration but not in ' + \
+        print('Unknown script language! (is in configuration but not in ' +
               'jobscriptgenerator) %s ' % script_language)
         return False
 

@@ -27,11 +27,12 @@
 
 """Vicrey Auction Scheduler"""
 from __future__ import print_function
+from __future__ import absolute_import
 
 import random
 
-from scheduler import Scheduler
-from shared.conf import get_configuration_object
+from mig.server.scheduler import Scheduler
+from mig.shared.conf import get_configuration_object
 
 
 class VickreyAuctionScheduler(Scheduler):
@@ -84,7 +85,7 @@ class VickreyAuctionScheduler(Scheduler):
 
             if job['MAXPRICE'] >= resource_conf['MINPRICE']:
                 self.sealed_bids.append((job['MAXPRICE'], job['JOB_ID'
-                        ]))
+                                                              ]))
 
         # sorting bids
 

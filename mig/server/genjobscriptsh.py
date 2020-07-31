@@ -26,11 +26,12 @@
 #
 
 """Bourne shell job script generator and functions"""
+from __future__ import absolute_import
 
 from urllib import quote as urlquote
 import os
 
-from shared.defaults import job_output_dir, src_dst_sep
+from mig.shared.defaults import job_output_dir, src_dst_sep
 
 
 class GenJobScriptSh:

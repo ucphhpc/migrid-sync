@@ -27,6 +27,7 @@
 
 """(Re)set user 2FA key"""
 from __future__ import print_function
+from __future__ import absolute_import
 
 import getopt
 import os
@@ -37,14 +38,14 @@ import tempfile
 import pyotp
 
 
-from shared.auth import reset_twofactor_key, valid_otp_window
-from shared.base import client_id_dir
-from shared.defaults import twofactor_filename, twofactor_key_name, \
+from mig.shared.auth import reset_twofactor_key, valid_otp_window
+from mig.shared.base import client_id_dir
+from mig.shared.defaults import twofactor_filename, twofactor_key_name, \
     twofactor_interval_name
-from shared.conf import get_configuration_object
-from shared.fileio import delete_file
-from shared.settings import load_twofactor, parse_and_save_twofactor
-from shared.twofactorkeywords import get_keywords_dict as twofactor_keywords
+from mig.shared.conf import get_configuration_object
+from mig.shared.fileio import delete_file
+from mig.shared.settings import load_twofactor, parse_and_save_twofactor
+from mig.shared.twofactorkeywords import get_keywords_dict as twofactor_keywords
 
 
 def enable2fa(configuration, user_id, verbose, force=False):

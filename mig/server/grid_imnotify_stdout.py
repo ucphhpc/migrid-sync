@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_imnotify_stdout - Dummy IM daemon
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,14 +26,16 @@
 #
 
 """Dummy IM daemon writing requests to stdout instead of sending them"""
+
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import sys
 import time
 
-from shared.conf import get_configuration_object
-from shared.logger import daemon_logger, register_hangup_handler
+from mig.shared.conf import get_configuration_object
+from mig.shared.logger import daemon_logger, register_hangup_handler
 
 configuration, logger = None, None
 
@@ -82,8 +84,8 @@ if __name__ == '__main__':
             try:
                 os.mkfifo(stdin_path)
             except Exception as err:
-                print('Could not create missing IM stdin pipe %s: %s'\
-                    % (stdin_path, err))
+                print('Could not create missing IM stdin pipe %s: %s'
+                      % (stdin_path, err))
     except:
         print('error opening IM stdin! %s' % sys.exc_info()[0])
         sys.exit(1)

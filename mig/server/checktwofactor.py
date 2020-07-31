@@ -27,13 +27,14 @@
 
 """Check twofactor activation status for users"""
 from __future__ import print_function
+from __future__ import absolute_import
 
 import getopt
 import pickle
 import sys
 
-from shared.defaults import keyword_auto
-from shared.useradm import init_user_adm, search_users, default_search, \
+from mig.shared.defaults import keyword_auto
+from mig.shared.useradm import init_user_adm, search_users, default_search, \
     user_twofactor_status
 
 

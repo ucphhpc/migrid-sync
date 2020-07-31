@@ -29,10 +29,11 @@
 with an absolute and a relative waiting-time bonus to counter inherent
 starvation tendencies of pure best-fit scheduling.
 """
+from __future__ import absolute_import
 
 import time
 
-from bestfitscheduler import BestFitScheduler
+from mig.server.bestfitscheduler import BestFitScheduler
 
 
 class FairFitScheduler(BestFitScheduler):
@@ -73,7 +74,7 @@ class FairFitScheduler(BestFitScheduler):
         self.logger.debug('fitness: %f without time bonus', job_fitness)
 
         queue_time = time.mktime(time.gmtime()) - \
-                     time.mktime(job['QUEUED_TIMESTAMP'])
+            time.mktime(job['QUEUED_TIMESTAMP'])
         job_time = int(job.get('CPUTIME', 60))
 
         # Force rel_bonus between 0 and 1 to avoid very short job "gaming"
@@ -87,5 +88,3 @@ class FairFitScheduler(BestFitScheduler):
                           job_fitness, queue_time, job_time, rel_bonus)
 
         return job_fitness
-
-

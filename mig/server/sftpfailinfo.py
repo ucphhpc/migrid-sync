@@ -30,6 +30,7 @@
 
 """Grep for sftp negotiation in sftp.log and translate source IP to FQDN"""
 from __future__ import print_function
+from __future__ import absolute_import
 
 import getopt
 import multiprocessing
@@ -38,8 +39,8 @@ import re
 import socket
 import sys
 
-from shared.conf import get_configuration_object
-from shared.useradm import init_user_adm
+from mig.shared.conf import get_configuration_object
+from mig.shared.useradm import init_user_adm
 
 
 def usage(name='sftpfailinfo.py'):

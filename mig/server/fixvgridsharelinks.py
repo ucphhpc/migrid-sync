@@ -39,11 +39,12 @@ the new vgrid_files_writable and vgrid_files_readonly so the vgrid sharelink
 pickle didn't get updated for recent vgrids. 
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
 import sys
 import getopt
 
-from shared.useradm import init_user_adm, fix_vgrid_sharelinks
+from mig.shared.useradm import init_user_adm, fix_vgrid_sharelinks
 
 
 def usage(name='fixvgridsharelinks.py'):

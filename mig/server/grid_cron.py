@@ -1,11 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 #
 # --- BEGIN_HEADER ---
 #
 # grid_cron - daemon to monitor user crontabs and trigger actions
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,7 +30,9 @@ configured.
 
 Requires watchdog module (https://pypi.python.org/pypi/watchdog).
 """
+
 from __future__ import print_function
+from __future__ import absolute_import
 
 import datetime
 import fnmatch
@@ -71,17 +72,17 @@ except ImportError as exc:
     print('ERROR: %s' % str(exc))
     sys.exit(1)
 
-from shared.base import force_utf8, client_dir_id, client_id_dir
-from shared.cmdapi import parse_command_args
-from shared.conf import get_configuration_object
-from shared.defaults import crontab_name, atjobs_name, cron_output_dir, \
+from mig.shared.base import force_utf8, client_dir_id, client_id_dir
+from mig.shared.cmdapi import parse_command_args
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import crontab_name, atjobs_name, cron_output_dir, \
     cron_log_name, cron_log_size, cron_log_cnt, csrf_field
-from shared.events import get_time_expand_map, parse_crontab, cron_match, \
+from mig.shared.events import get_time_expand_map, parse_crontab, cron_match, \
     parse_atjobs, at_remain
-from shared.fileio import makedirs_rec
-from shared.handlers import get_csrf_limit, make_csrf_token
-from shared.job import fill_mrsl_template, new_job
-from shared.logger import daemon_logger, register_hangup_handler
+from mig.shared.fileio import makedirs_rec
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.job import fill_mrsl_template, new_job
+from mig.shared.logger import daemon_logger, register_hangup_handler
 
 # Global cron entry dictionaries with crontabs for all users
 
@@ -219,8 +220,8 @@ class MiGCrontabEventHandler(PatternMatchingEventHandler):
             # logger.debug('(%s) Updating crontab monitor for src_path: %s, event: %s'
             #              % (pid, src_path, state))
 
-            print('(%s) Updating crontab monitor for src_path: %s, event: %s' \
-                % (pid, src_path, state))
+            print('(%s) Updating crontab monitor for src_path: %s, event: %s'
+                  % (pid, src_path, state))
 
             if os.path.exists(src_path):
 

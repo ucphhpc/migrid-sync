@@ -68,7 +68,9 @@ Extended to fit MiG user auth and access restrictions.
 Requires PyOpenSSL module (http://pypi.python.org/pypi/pyOpenSSL) unless
 only used in plain FTP mode.
 """
+
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import sys
@@ -89,21 +91,21 @@ except ImportError:
     print("WARNING: the python OpenSSL module is required for FTPS")
     OpenSSL = None
 
-from shared.accountstate import check_account_accessible
-from shared.base import invisible_path, force_utf8
-from shared.conf import get_configuration_object
-from shared.fileio import user_chroot_exceptions
-from shared.griddaemons.ftps import default_max_user_hits, \
+from mig.shared.accountstate import check_account_accessible
+from mig.shared.base import invisible_path, force_utf8
+from mig.shared.conf import get_configuration_object
+from mig.shared.fileio import user_chroot_exceptions
+from mig.shared.griddaemons.ftps import default_max_user_hits, \
     default_user_abuse_hits, default_proto_abuse_hits, \
     default_max_secret_hits, default_username_validator, \
     get_fs_path, acceptable_chmod, refresh_user_creds, refresh_share_creds, \
     update_login_map, login_map_lookup, hit_rate_limit, expire_rate_limit, \
     check_twofactor_session, validate_auth_attempt
-from shared.logger import daemon_logger, register_hangup_handler
-from shared.pwhash import make_scramble
-from shared.tlsserver import hardened_openssl_context
-from shared.useradm import check_password_hash
-from shared.validstring import possible_user_id, possible_sharelink_id
+from mig.shared.logger import daemon_logger, register_hangup_handler
+from mig.shared.pwhash import make_scramble
+from mig.shared.tlsserver import hardened_openssl_context
+from mig.shared.useradm import check_password_hash
+from mig.shared.validstring import possible_user_id, possible_sharelink_id
 
 
 configuration, logger = None, None

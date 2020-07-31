@@ -61,7 +61,9 @@
 
 Requires Paramiko module (http://pypi.python.org/pypi/paramiko).
 """
+
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import shutil
@@ -80,15 +82,15 @@ except ImportError:
     print("ERROR: the python paramiko module is required for this daemon")
     sys.exit(1)
 
-from shared.accountstate import check_account_accessible
-from shared.base import invisible_path, force_utf8
-from shared.conf import get_configuration_object
-from shared.defaults import keyword_auto, STRONG_SSH_KEXALGOS, \
+from mig.shared.accountstate import check_account_accessible
+from mig.shared.base import invisible_path, force_utf8
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import keyword_auto, STRONG_SSH_KEXALGOS, \
     STRONG_SSH_CIPHERS, STRONG_SSH_MACS, STRONG_SSH_LEGACY_KEXALGOS, \
     STRONG_SSH_LEGACY_MACS
-from shared.fileio import check_write_access, user_chroot_exceptions
-from shared.gdp.all import project_open, project_close, project_log
-from shared.griddaemons.sftp import default_username_validator, \
+from mig.shared.fileio import check_write_access, user_chroot_exceptions
+from mig.shared.gdp.all import project_open, project_close, project_log
+from mig.shared.griddaemons.sftp import default_username_validator, \
     default_max_user_hits, default_user_abuse_hits, \
     default_proto_abuse_hits, default_max_secret_hits, \
     get_fs_path, strip_root, flags_to_mode, acceptable_chmod, \
@@ -97,12 +99,12 @@ from shared.griddaemons.sftp import default_username_validator, \
     hit_rate_limit, expire_rate_limit, clear_sessions, \
     track_open_session, track_close_session, active_sessions, \
     check_twofactor_session, validate_auth_attempt
-from shared.logger import daemon_logger, daemon_gdp_logger, \
+from mig.shared.logger import daemon_logger, daemon_gdp_logger, \
     register_hangup_handler
-from shared.notification import send_system_notification
-from shared.pwhash import make_scramble
-from shared.useradm import check_password_hash
-from shared.validstring import possible_user_id, possible_gdp_user_id, \
+from mig.shared.notification import send_system_notification
+from mig.shared.pwhash import make_scramble
+from mig.shared.useradm import check_password_hash
+from mig.shared.validstring import possible_user_id, possible_gdp_user_id, \
     possible_job_id, possible_sharelink_id, possible_jupyter_mount_id
 
 configuration, logger = None, None

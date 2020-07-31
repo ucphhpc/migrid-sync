@@ -27,15 +27,16 @@
 
 """Remove MiG user from user database and file system"""
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import sys
 import getopt
 
-from shared.base import fill_distinguished_name, fill_user, \
+from mig.shared.base import fill_distinguished_name, fill_user, \
      distinguished_name_to_user
-from shared.conf import get_configuration_object
-from shared.useradm import init_user_adm, delete_user
+from mig.shared.conf import get_configuration_object
+from mig.shared.useradm import init_user_adm, delete_user
 
 
 def usage(name='deleteuser.py'):

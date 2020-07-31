@@ -26,8 +26,9 @@
 #
 
 """Max Throughput Scheduler"""
+from __future__ import absolute_import
 
-from scheduler import Scheduler
+from mig.server.scheduler import Scheduler
 
 
 class MaxThroughputScheduler(Scheduler):
@@ -52,7 +53,7 @@ class MaxThroughputScheduler(Scheduler):
 
         For now we always select the shortest job in the hope that
         it will reduce the time before we get a new timeslot.
-        
+
         All jobs are filtered against must_match first so that only
         jobs that match all attribute values there are considered
         for scheduling.
@@ -81,7 +82,7 @@ class MaxThroughputScheduler(Scheduler):
                 if key not in job or val != job[key]:
                     continue
             self.logger.debug('Schedule treating job %d: %s' % (i,
-                              job['JOB_ID']))
+                                                                job['JOB_ID']))
             if self.job_fits_resource(job, resource_conf):
                 self.logger.debug('schedule: found suitable job')
                 fit_list.append((i, job))
@@ -91,7 +92,7 @@ class MaxThroughputScheduler(Scheduler):
             # No job was found that can be executed on the resource
 
             self.logger.info('schedule: found no suitable job for %s'
-                              % resource_conf['HOSTURL'])
+                             % resource_conf['HOSTURL'])
             return None
 
         best_job = None
@@ -109,7 +110,5 @@ class MaxThroughputScheduler(Scheduler):
         self.update_history(job, resource_conf)
 
         self.logger.info('schedule: returning best job: %s %d %f'
-                          % (best_job['JOB_ID'], best_i, best_fitness))
+                         % (best_job['JOB_ID'], best_i, best_fitness))
         return best_job
-
-

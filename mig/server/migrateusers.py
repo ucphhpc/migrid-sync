@@ -31,11 +31,12 @@
 """Upgrade all files and dirs to use the new certificate DN based user ID
 instead of the old CN based ones"""
 from __future__ import print_function
+from __future__ import absolute_import
 
 import sys
 import getopt
 
-from shared.useradm import init_user_adm, migrate_users
+from mig.shared.useradm import init_user_adm, migrate_users
 
 def usage(name='migrateusers.py'):
     """Usage help"""

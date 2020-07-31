@@ -8,6 +8,6 @@
 doi_fqdn="url:__PUBLIC_ALIAS_FQDN__" 
 
 # No more edits below
-su - mig -c "python mig/server/importdoi.py $doi_fqdn"
+su - mig -c "PYTHONPATH=__MIG_BASE__ mig/server/importdoi.py $doi_fqdn"
 
 exit 0

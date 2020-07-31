@@ -33,11 +33,12 @@ their (correct) distinguished_name field as their key instead of the old broken
 key.
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
 import sys
 import getopt
 
-from shared.useradm import init_user_adm, fix_userdb_keys
+from mig.shared.useradm import init_user_adm, fix_userdb_keys
 
 def usage(name='fixuserdb.py'):
     """Usage help"""

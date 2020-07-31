@@ -48,10 +48,11 @@ Afterwards one would then typically use notifymigoid and notifypassword to
 inform imported users about their login.
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
 import fileinput
 
-from shared.base import fill_distinguished_name
+from mig.shared.base import fill_distinguished_name
 
 if __name__ == '__main__':
     user_list = []

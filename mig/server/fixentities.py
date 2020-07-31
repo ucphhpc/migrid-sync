@@ -31,11 +31,12 @@
 """Fix resource and vgrid owners and members files to contain only migrated
 user IDs from user DB if at all possible"""
 from __future__ import print_function
+from __future__ import absolute_import
 
 import sys
 import getopt
 
-from shared.useradm import init_user_adm, fix_entities
+from mig.shared.useradm import init_user_adm, fix_entities
 
 def usage(name='fixentities.py'):
     """Usage help"""

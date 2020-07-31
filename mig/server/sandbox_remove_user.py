@@ -28,12 +28,13 @@
 
 """This script removes a given sandbox user from the user list"""
 from __future__ import print_function
+from __future__ import absolute_import
 
 import sys
 import os
 
-from shared.serial import load, dump
-from shared.conf import get_configuration_object
+from mig.shared.serial import load, dump
+from mig.shared.conf import get_configuration_object
 
 configuration = get_configuration_object()
 

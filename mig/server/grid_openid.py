@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_openid - openid server authenticating users against user database
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -54,7 +54,9 @@ our local user DB.
 
 Requires OpenID module (https://github.com/openid/python-openid).
 """
+
 from __future__ import print_function
+from __future__ import absolute_import
 
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from SocketServer import ThreadingMixIn
@@ -80,25 +82,25 @@ from openid.server import server
 from openid.store.filestore import FileOpenIDStore
 from openid.consumer import discover
 
-from shared.accountstate import check_account_accessible
-from shared.base import client_id_dir, cert_field_map
-from shared.conf import get_configuration_object
-from shared.defaults import user_db_filename
-from shared.griddaemons.openid import default_max_user_hits, \
+from mig.shared.accountstate import check_account_accessible
+from mig.shared.base import client_id_dir, cert_field_map
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import user_db_filename
+from mig.shared.griddaemons.openid import default_max_user_hits, \
     default_user_abuse_hits, default_proto_abuse_hits, \
     default_username_validator, refresh_user_creds, update_login_map, \
     login_map_lookup, hit_rate_limit, expire_rate_limit, \
     validate_auth_attempt
-from shared.html import openid_page_template
-from shared.logger import daemon_logger, register_hangup_handler
-from shared.pwhash import make_scramble
-from shared.safeinput import valid_distinguished_name, valid_password, \
+from mig.shared.html import openid_page_template
+from mig.shared.logger import daemon_logger, register_hangup_handler
+from mig.shared.pwhash import make_scramble
+from mig.shared.safeinput import valid_distinguished_name, valid_password, \
     valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url, \
     valid_complex_url, InputException
-from shared.tlsserver import hardened_ssl_context
-from shared.useradm import get_openid_user_dn, check_password_scramble, \
+from mig.shared.tlsserver import hardened_ssl_context
+from mig.shared.useradm import get_openid_user_dn, check_password_scramble, \
     check_hash
-from shared.validstring import possible_user_id
+from mig.shared.validstring import possible_user_id
 
 configuration, logger = None, None
 

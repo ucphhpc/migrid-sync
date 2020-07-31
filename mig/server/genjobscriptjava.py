@@ -29,8 +29,9 @@
 the remote java mechanism where to retrieve the executable 
  and corresponding files.
 """
+from __future__ import absolute_import
 
-from shared.defaults import job_output_dir
+from mig.shared.defaults import job_output_dir
 
 
 class GenJobScriptJava:

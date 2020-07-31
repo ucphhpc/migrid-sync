@@ -27,14 +27,15 @@
 
 """Import any missing DOIs from provided URI - useful from cron job"""
 from __future__ import print_function
+from __future__ import absolute_import
 
 import json
 import os
 import requests
 import sys
 
-from shared.conf import get_configuration_object
-from shared.defaults import public_archive_doi
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import public_archive_doi
 
 
 def __datacite_req(format, query):
