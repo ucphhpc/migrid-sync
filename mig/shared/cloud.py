@@ -47,11 +47,11 @@ try:
 except ImportError as err:
     requests = None
 
-from .shared.base import force_utf8, force_utf8_rec, client_id_dir
-from .shared.defaults import keyword_all
-from .shared.fileio import pickle, unpickle, acquire_file_lock, \
+from mig.shared.base import force_utf8, force_utf8_rec, client_id_dir
+from mig.shared.defaults import keyword_all
+from mig.shared.fileio import pickle, unpickle, acquire_file_lock, \
     release_file_lock
-from .shared.safeeval import subprocess_call
+from mig.shared.safeeval import subprocess_call
 
 # Internal helper to map individual operations to flavored cloud functions
 __cloud_helper_map = {"openstack": None}
@@ -1321,8 +1321,8 @@ def delete_cloud_instance(configuration, client_id, cloud_id, cloud_flavor,
 
 
 if __name__ == "__main__":
-    from .shared.conf import get_configuration_object
-    from .shared.settings import load_cloud
+    from mig.shared.conf import get_configuration_object
+    from mig.shared.settings import load_cloud
     conf = get_configuration_object()
     client_id = '/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk'
     cloud_id = 'MIST2'

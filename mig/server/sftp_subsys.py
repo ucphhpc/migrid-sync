@@ -64,6 +64,7 @@ setup.
 Inspired by https://gist.github.com/lonetwin/3b5982cf88c598c0e169
 """
 from __future__ import absolute_import
+from __future__ import print_function
 
 import os
 import sys

@@ -34,19 +34,19 @@ import tempfile
 import base64
 import re
 
-from .shared import returnvalues
-from .shared.accountreq import parse_peers, peers_permit_allowed, \
+from mig.shared import returnvalues
+from mig.shared.accountreq import parse_peers, peers_permit_allowed, \
     manage_pending_peers
-from .shared.base import client_id_dir, fill_distinguished_name
-from .shared.defaults import peers_filename, peer_kinds, peers_fields, \
+from mig.shared.base import client_id_dir, fill_distinguished_name
+from mig.shared.defaults import peers_filename, peer_kinds, peers_fields, \
     csrf_field
-from .shared.functional import validate_input, REJECT_UNSET
-from .shared.handlers import safe_handler, get_csrf_limit
-from .shared.html import html_post_helper
-from .shared.init import initialize_main_variables, find_entry
-from .shared.notification import send_email
-from .shared.serial import load, dump
-from .shared.useradm import get_full_user_map
+from mig.shared.functional import validate_input, REJECT_UNSET
+from mig.shared.handlers import safe_handler, get_csrf_limit
+from mig.shared.html import html_post_helper
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.notification import send_email
+from mig.shared.serial import load, dump
+from mig.shared.useradm import get_full_user_map
 
 default_expire_days = 7
 peer_actions = ['import', 'add', 'remove', 'update', 'accept', 'reject']

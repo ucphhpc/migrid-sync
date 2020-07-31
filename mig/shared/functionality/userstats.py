@@ -31,13 +31,13 @@ from __future__ import absolute_import
 import os
 import datetime
 
-from .shared import returnvalues
-from .shared.functional import validate_input
-from .shared.init import initialize_main_variables
-from .shared.usercache import refresh_disk_stats, refresh_job_stats, \
+from mig.shared import returnvalues
+from mig.shared.functional import validate_input
+from mig.shared.init import initialize_main_variables
+from mig.shared.usercache import refresh_disk_stats, refresh_job_stats, \
      format_bytes, OWN, VGRID, JOBS, FILES, DIRECTORIES, BYTES, PARSE, \
      QUEUED, EXECUTING, FINISHED, RETRY, CANCELED, EXPIRED, FAILED, FROZEN
-from .shared.vgridaccess import user_allowed_res_exes
+from mig.shared.vgridaccess import user_allowed_res_exes
 
 
 def signature():

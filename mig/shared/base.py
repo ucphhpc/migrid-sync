@@ -33,7 +33,7 @@ import base64
 import os
 
 # IMPORTANT: do not import any other MiG modules here - to avoid import loops
-from .shared.defaults import sandbox_names, _user_invisible_files, \
+from mig.shared.defaults import sandbox_names, _user_invisible_files, \
     _user_invisible_dirs, _vgrid_xgi_scripts, cert_field_order, \
     gdp_distinguished_field, valid_gdp_auth_scripts, valid_gdp_anon_scripts
 
@@ -491,7 +491,7 @@ if __name__ == '__main__':
     for path in legal:
         print("  %s: %s" % (path, not invisible_path(path)))
 
-    from .shared.conf import get_configuration_object
+    from mig.shared.conf import get_configuration_object
     configuration = get_configuration_object()
     print("check script restrictions:")
     for script_name in ['reqoid.py', 'ls.py', 'sharelink.py', 'put']:

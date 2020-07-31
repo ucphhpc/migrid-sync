@@ -32,17 +32,17 @@ import base64
 import tempfile
 import os
 
-from .shared import returnvalues
-from .shared.base import client_id_dir, valid_dir_input
-from .shared.defaults import csrf_field
-from .shared.fileio import unpickle, write_file
-from .shared.findtype import is_owner
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.handlers import safe_handler, get_csrf_limit
-from .shared.init import initialize_main_variables, find_entry
-from .shared.job import new_job
-from .shared.refunctions import get_re_dict
-from .shared.vgridaccess import user_visible_res_confs
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir, valid_dir_input
+from mig.shared.defaults import csrf_field
+from mig.shared.fileio import unpickle, write_file
+from mig.shared.findtype import is_owner
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.handlers import safe_handler, get_csrf_limit
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.job import new_job
+from mig.shared.refunctions import get_re_dict
+from mig.shared.vgridaccess import user_visible_res_confs
 
 
 def signature():

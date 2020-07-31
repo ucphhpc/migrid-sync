@@ -37,23 +37,23 @@ import sys
 import time
 import urllib
 
-from .shared import confparser
-from .shared.archives import handle_package_upload
-from .shared.base import client_id_dir, invisible_path
-from .shared.cgishared import init_cgiscript_possibly_with_cert
-from .shared.defaults import keyword_auto
-from .shared.fileio import pickle, unpickle
-from .shared.findtype import is_user, is_server, is_owner
-from .shared.job import new_job, finished_job, failed_restart
-from .shared.notification import notify_user_thread, \
+from mig.shared import confparser
+from mig.shared.archives import handle_package_upload
+from mig.shared.base import client_id_dir, invisible_path
+from mig.shared.cgishared import init_cgiscript_possibly_with_cert
+from mig.shared.defaults import keyword_auto
+from mig.shared.fileio import pickle, unpickle
+from mig.shared.findtype import is_user, is_server, is_owner
+from mig.shared.job import new_job, finished_job, failed_restart
+from mig.shared.notification import notify_user_thread, \
     parse_im_relay, send_resource_create_request_mail, \
     send_instant_message
-from .shared.putfuncs import verify_results, migrated_job
-from .shared.resadm import start_resource_exe_if_continuous
-from .shared.refunctions import create_runtimeenv
-from .shared.settings import parse_and_save_settings
-from .shared.safeinput import valid_path, valid_sid, valid_alphanumeric
-from .shared.sharelinks import extract_mode_id
+from mig.shared.putfuncs import verify_results, migrated_job
+from mig.shared.resadm import start_resource_exe_if_continuous
+from mig.shared.refunctions import create_runtimeenv
+from mig.shared.settings import parse_and_save_settings
+from mig.shared.safeinput import valid_path, valid_sid, valid_alphanumeric
+from mig.shared.sharelinks import extract_mode_id
 
 cgitb.enable()
 

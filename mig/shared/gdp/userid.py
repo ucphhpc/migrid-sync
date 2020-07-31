@@ -31,8 +31,8 @@ import base64
 import hashlib
 import os
 
-from shared.base import expand_openid_alias, get_short_id
-from shared.defaults import gdp_distinguished_field
+from mig.shared.base import expand_openid_alias, get_short_id
+from mig.shared.defaults import gdp_distinguished_field
 
 client_id_project_postfix = '/%s=' % gdp_distinguished_field
 

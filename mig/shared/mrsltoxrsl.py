@@ -60,7 +60,7 @@ import os
 import sys
 
 # MiG utilities:
-from .shared.conf import get_configuration_object
+from mig.shared.conf import get_configuration_object
 config = get_configuration_object()
 logger = config.logger
 
@@ -386,8 +386,8 @@ if __name__ == '__main__':
         translated = '.'.join([parsed, 'xrsl'])
 
         try:
-            from .shared import mrslparser
-            from .shared import fileio
+            from mig.shared import mrslparser
+            from mig.shared import fileio
 
             (presult, errors) = mrslparser.parse(fname, 'test-id',
                                                  '+No+Client+Id', None, parsed)

@@ -29,7 +29,7 @@ import cgi
 import cgitb
 cgitb.enable()
 
-from shared.functionality.pubvgridprojs import main
-from shared.cgiscriptstub import run_cgi_script_possibly_with_cert
+from mig.shared.functionality.pubvgridprojs import main
+from mig.shared.cgiscriptstub import run_cgi_script_possibly_with_cert
 
 run_cgi_script_possibly_with_cert(main)

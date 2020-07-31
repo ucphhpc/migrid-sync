@@ -33,10 +33,10 @@ import os
 import fcntl
 import datetime
 
-from .shared.defaults import default_vgrid, pending_states
-from .shared.fileio import pickle, unpickle, touch
-from .shared.serial import pickle as py_pickle
-from .shared.vgrid import validated_vgrid_list, job_fits_res_vgrid
+from mig.shared.defaults import default_vgrid, pending_states
+from mig.shared.fileio import pickle, unpickle, touch
+from mig.shared.serial import pickle as py_pickle
+from mig.shared.vgrid import validated_vgrid_list, job_fits_res_vgrid
 
 
 class GridStat:
@@ -521,7 +521,7 @@ class GridStat:
 if __name__ == '__main__':
     import sys
     import fnmatch
-    from .shared.conf import get_configuration_object
+    from mig.shared.conf import get_configuration_object
     configuration = get_configuration_object()
     root_dir = configuration.mrsl_files_dir
     job_id = '*_2012_*'

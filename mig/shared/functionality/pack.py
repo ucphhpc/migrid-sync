@@ -33,16 +33,16 @@ from __future__ import absolute_import
 import glob
 import os
 
-from .shared import returnvalues
-from .shared.archives import pack_archive
-from .shared.base import client_id_dir
-from .shared.fileio import check_write_access
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.handlers import safe_handler, get_csrf_limit
-from .shared.init import initialize_main_variables, find_entry
-from .shared.parseflags import verbose
-from .shared.validstring import valid_user_path
-from .shared.vgrid import in_vgrid_share
+from mig.shared import returnvalues
+from mig.shared.archives import pack_archive
+from mig.shared.base import client_id_dir
+from mig.shared.fileio import check_write_access
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.handlers import safe_handler, get_csrf_limit
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.parseflags import verbose
+from mig.shared.validstring import valid_user_path
+from mig.shared.vgrid import in_vgrid_share
 
 
 def signature():

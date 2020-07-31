@@ -38,7 +38,7 @@ from tables import open_file
 import tables.exceptions
 import tables.tableextension
 
-from .shared.fileio import acquire_file_lock, release_file_lock
+from mig.shared.fileio import acquire_file_lock, release_file_lock
 
 __revision = '3332'
 __metapath = '.meta'

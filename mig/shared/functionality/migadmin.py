@@ -30,17 +30,17 @@ from __future__ import absolute_import
 
 import os
 
-from .shared import returnvalues
-from .shared.accountreq import build_accountreqitem_object, list_account_reqs, \
+from mig.shared import returnvalues
+from mig.shared.accountreq import build_accountreqitem_object, list_account_reqs, \
     get_account_req, delete_account_req, accept_account_req
-from .shared.defaults import default_pager_entries, csrf_field
-from .shared.fileio import send_message_to_grid_script, read_tail
-from .shared.findtype import is_admin
-from .shared.functional import validate_input_and_cert
-from .shared.handlers import get_csrf_limit, make_csrf_token
-from .shared.html import man_base_js, man_base_html, html_post_helper
-from .shared.init import initialize_main_variables, find_entry
-from .shared.safeeval import subprocess_popen, subprocess_pipe, \
+from mig.shared.defaults import default_pager_entries, csrf_field
+from mig.shared.fileio import send_message_to_grid_script, read_tail
+from mig.shared.findtype import is_admin
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.html import man_base_js, man_base_html, html_post_helper
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.safeeval import subprocess_popen, subprocess_pipe, \
     subprocess_stdout
 
 grid_actions = {'reloadconfig': 'RELOADCONFIG',

@@ -43,10 +43,10 @@ import shutil
 import sys
 import time
 
-from .shared.base import invisible_path
-from .shared.defaults import trash_destdir, trash_linkname
-from .shared.gdp.all import get_project_from_client_id, project_log
-from .shared.vgrid import in_vgrid_legacy_share, in_vgrid_writable, \
+from mig.shared.base import invisible_path
+from mig.shared.defaults import trash_destdir, trash_linkname
+from mig.shared.gdp.all import get_project_from_client_id, project_log
+from mig.shared.vgrid import in_vgrid_legacy_share, in_vgrid_writable, \
     in_vgrid_priv_web, in_vgrid_pub_web
 
 ACTIONS = (CREATE, MODIFY, MOVE, DELETE) = "create", "modify", "move", "delete"
@@ -466,9 +466,9 @@ def __clean_test_files(configuration, test_path):
 
 
 if __name__ == "__main__":
-    from .shared.base import client_id_dir
-    from .shared.conf import get_configuration_object
-    from .shared.defaults import htaccess_filename
+    from mig.shared.base import client_id_dir
+    from mig.shared.conf import get_configuration_object
+    from mig.shared.defaults import htaccess_filename
     print("Unit testing user I/O")
     client_id = "/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk"
     sub_dir = '.'

@@ -34,7 +34,7 @@ import random
 import base64
 import popen2
 
-from .shared.defaults import vnc_pw_len
+from mig.shared.defaults import vnc_pw_len
 
 
 def create_vnc_password():

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # simulation - [insert a few words of module description on this line]
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,26 +25,26 @@
 # -- END_HEADER ---
 #
 
-#
-# MiG simulation of a setup with a number of resources, users and servers
-#
+"""MiG simulation of a setup with a number of resources, users and servers"""
 
 # import pychecker.checker
 
 from __future__ import print_function
+from __future__ import absolute_import
+
+import getopt
+import ConfigParser
 import logging
+import math
 import random
 import os
 import sys
 import time
-import getopt
-import ConfigParser
-import math
 
-from user import User
-from resource import Resource
-from server import Server
-from configuration import Configuration
+from .user import User
+from .resource import Resource
+from .server import Server
+from mig.shared.configuration import Configuration
 
 
 def usage():
@@ -119,9 +119,9 @@ def set_peers(servers, topology, migrate_cost):
         for (peer_name, peer) in servers.items():
             if server_name != peer_name:
                 server.peers[peer_name] = server_to_dict(peer,
-                        migrate_cost)
+                                                         migrate_cost)
                 peer.peers[server_name] = server_to_dict(server,
-                        migrate_cost)
+                                                         migrate_cost)
     elif topology == 'mesh':
 
         # fill a square from left to right, top to bottom:
@@ -149,36 +149,36 @@ def set_peers(servers, topology, migrate_cost):
 
             if j - 1 >= 0:
                 (peer_name, peer) = (server_names[above],
-                        server_list[above])
+                                     server_list[above])
                 server.peers[peer_name] = server_to_dict(peer,
-                        migrate_cost)
+                                                         migrate_cost)
             if j + 1 < y and below < server_cnt:
                 (peer_name, peer) = (server_names[below],
-                        server_list[below])
+                                     server_list[below])
                 server.peers[peer_name] = server_to_dict(peer,
-                        migrate_cost)
+                                                         migrate_cost)
             if i - 1 >= 0:
                 (peer_name, peer) = (server_names[left],
-                        server_list[left])
+                                     server_list[left])
                 server.peers[peer_name] = server_to_dict(peer,
-                        migrate_cost)
+                                                         migrate_cost)
             if i + 1 < x and right < server_cnt:
                 (peer_name, peer) = (server_names[right],
-                        server_list[right])
+                                     server_list[right])
                 server.peers[peer_name] = server_to_dict(peer,
-                        migrate_cost)
+                                                         migrate_cost)
 
             index += 1
     elif topology == 'full':
 
         # print row
-    # elif topology == "cube":
+        # elif topology == "cube":
 
         for (server_name, server) in servers.items():
             for (peer_name, peer) in servers.items():
                 if server_name != peer_name:
                     server.peers[peer_name] = server_to_dict(peer,
-                            migrate_cost)
+                                                             migrate_cost)
     else:
         print('Unsupported topology:', topology)
 
@@ -190,11 +190,11 @@ def show_status(level):
     for server in servers.values():
         qlen = server.job_queue.queue_length()
         print('%s: queued %d, migrated %d, returned %d' % (server.id,
-                qlen, server.migrated_jobs, server.returned_jobs))
+                                                           qlen, server.migrated_jobs, server.returned_jobs))
         (avg_dist, avg_price, avg_paid, avg_diff, avg_load) = (0.0,
-                0.0, 0.0, 0.0, 0.0)
+                                                               0.0, 0.0, 0.0, 0.0)
         (avg_done, avg_empty, avg_requests, avg_delay) = (0.0, 0.0,
-                0.0, 0.0)
+                                                          0.0, 0.0)
         cnt = 0
         print(' res fqdn:\tdist\tload\tprice\tpaid\tdiff\tjobs\tdelay')
         for (res_fqdn, resource_conf) in server.resources.items():
@@ -233,7 +233,7 @@ def show_status(level):
                 done,
                 requests,
                 delay,
-                ))
+            ))
             cnt += 1
         cnt = max(1, cnt)
         avg_dist /= cnt
@@ -245,17 +245,17 @@ def show_status(level):
         avg_empty /= cnt
         avg_requests /= cnt
         avg_delay /= cnt
-        print(' average:\t%.1f\t%.3f\t%.2f\t%.2f\t%.2f\t%.0f/%.0f\t%.2f'\
-             % (
-            avg_dist,
-            avg_load,
-            avg_price,
-            avg_paid,
-            avg_diff,
-            avg_done,
-            avg_requests,
-            avg_delay,
-            ))
+        print(' average:\t%.1f\t%.3f\t%.2f\t%.2f\t%.2f\t%.0f/%.0f\t%.2f'
+              % (
+                  avg_dist,
+                  avg_load,
+                  avg_price,
+                  avg_paid,
+                  avg_diff,
+                  avg_done,
+                  avg_requests,
+                  avg_delay,
+              ))
 
         print(' user ID:\tjobs\tprice\tdiff\tlast/min/avg/max paid\tlast/min/avg/max delay\tlast/min/avg/max dist')
         for (user_id, user_conf) in server.users.items():
@@ -276,7 +276,7 @@ def show_status(level):
             if jobs_done > 0:
                 last_done = done_jobs[done_total - 1]
                 last_execute = time.mktime(last_done['EXECUTE_TIMESTAMP'
-                        ])
+                                                     ])
                 last_received = \
                     time.mktime(last_done['RECEIVED_TIMESTAMP'])
                 last_paid = last_done['EXEC_PRICE']
@@ -310,7 +310,7 @@ def show_status(level):
 
                     if real_jobs == 1:
 
-                # Init using first real job
+                        # Init using first real job
 
                         job_paid = job['EXEC_PRICE']
                         job_execute = \
@@ -329,7 +329,7 @@ def show_status(level):
                     job_paid = job['EXEC_PRICE']
                     job_execute = time.mktime(job['EXECUTE_TIMESTAMP'])
                     job_received = time.mktime(job['RECEIVED_TIMESTAMP'
-                            ])
+                                                   ])
                     job_delay = job_execute - job_received
                     job_dist = int(job['MIGRATE_COUNT'])
 
@@ -347,26 +347,26 @@ def show_status(level):
                 avg_delay /= jobs_done
                 avg_dist /= jobs_done
 
-            print('  %s:\t%d/%d\t%.2f\t%.2f\t%.2f/%.2f/%.2f/%.2f\t%d/%d/%.2f/%d\t\t%d/%d/%.2f/%d'\
-                 % (
-                user_id,
-                done_cnt,
-                queue_cnt,
-                last_price,
-                last_diff,
-                last_paid,
-                min_paid,
-                avg_paid,
-                max_paid,
-                last_delay,
-                min_delay,
-                avg_delay,
-                max_delay,
-                last_dist,
-                min_dist,
-                avg_dist,
-                max_dist,
-                ))
+            print('  %s:\t%d/%d\t%.2f\t%.2f\t%.2f/%.2f/%.2f/%.2f\t%d/%d/%.2f/%d\t\t%d/%d/%.2f/%d'
+                  % (
+                      user_id,
+                      done_cnt,
+                      queue_cnt,
+                      last_price,
+                      last_diff,
+                      last_paid,
+                      min_paid,
+                      avg_paid,
+                      max_paid,
+                      last_delay,
+                      min_delay,
+                      avg_delay,
+                      max_delay,
+                      last_dist,
+                      min_dist,
+                      avg_dist,
+                      max_dist,
+                  ))
             cnt += 1
 
 
@@ -413,7 +413,7 @@ try:
         'random=',
         'steps=',
         'topology=',
-        ])
+    ])
 except getopt.GetoptError as e:
     print('Error: ' + e.msg)
     usage()
@@ -429,16 +429,16 @@ for (opt, val) in opts:
         try:
             override_expire = int(val)
         except ValueError as e:
-            print('Error: invalid expire argument %s - expected integer'\
-                 % val)
+            print('Error: invalid expire argument %s - expected integer'
+                  % val)
             print(e)
             sys.exit(1)
     elif opt in ('-f', '--frequency'):
         try:
             override_freq = int(val)
         except ValueError as e:
-            print('Error: invalid frequency argument %s - expected integer'\
-                 % val)
+            print('Error: invalid frequency argument %s - expected integer'
+                  % val)
             print(e)
             sys.exit(1)
     elif opt in ('-l', '--log'):
@@ -451,8 +451,8 @@ for (opt, val) in opts:
         try:
             override_steps = int(val)
         except ValueError as e:
-            print('Error: invalid steps argument %s - expected integer'\
-                 % val)
+            print('Error: invalid steps argument %s - expected integer'
+                  % val)
             print(e)
             sys.exit(1)
     elif opt in ('-t', '--topology'):
@@ -545,7 +545,7 @@ if arg.count(':') == 2:
             str(42.0 + i / 3.0),
             server,
             [''],
-            )
+        )
 
     for i in range(user_cnt):
         name = 'user-' + str(i)
@@ -559,7 +559,7 @@ if arg.count(':') == 2:
             str(56.5 + i),
             server,
             [''],
-            )
+        )
 else:
 
     input_name = arg
@@ -581,7 +581,7 @@ else:
         'expire': str(timesteps),
         'migrate_cost': str(migrate_cost),
         'seed': str(seed),
-        }
+    }
     for (opt, val) in defaults.items():
         scenario.set(general, opt, val)
 
@@ -677,7 +677,7 @@ else:
             minprice,
             server,
             [''],
-            )
+        )
 
     for (name, conf) in user_confs.items():
         server_fqdn = conf['server']
@@ -692,7 +692,7 @@ else:
             maxprice,
             server,
             [''],
-            )
+        )
 
 set_peers(servers, topology, migrate_cost)
 

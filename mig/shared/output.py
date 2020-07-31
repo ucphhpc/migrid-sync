@@ -34,14 +34,14 @@ import time
 import traceback
 from binascii import hexlify
 
-from .shared import returnvalues
-from .shared.bailout import bailout_title
-from .shared.defaults import file_dest_sep, keyword_any
-from .shared.html import get_xgi_html_header, get_xgi_html_footer, \
+from mig.shared import returnvalues
+from mig.shared.bailout import bailout_title
+from mig.shared.defaults import file_dest_sep, keyword_any
+from mig.shared.html import get_xgi_html_header, get_xgi_html_footer, \
     vgrid_items, html_post_helper, tablesorter_pager
-from .shared.objecttypes import validate
-from .shared.prettyprinttable import pprint_table
-from .shared.safeinput import html_escape
+from mig.shared.objecttypes import validate
+from mig.shared.prettyprinttable import pprint_table
+from mig.shared.safeinput import html_escape
 
 row_name = ('even', 'odd')
 
@@ -2400,7 +2400,7 @@ def soap_format(configuration, ret_val, ret_msg, out_obj):
 def pickle_helper(configuration, ret_val, ret_msg, out_obj, protocol=None):
     """Generate output in requested pickle protocol format"""
 
-    from .shared.serial import dumps
+    from mig.shared.serial import dumps
     return dumps(out_obj, protocol)
 
 

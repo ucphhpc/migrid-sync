@@ -30,15 +30,15 @@ from __future__ import absolute_import
 
 import base64
 
-from .shared import returnvalues
-from .shared.defaults import max_software_entries, max_environment_entries, \
+from mig.shared import returnvalues
+from mig.shared.defaults import max_software_entries, max_environment_entries, \
      csrf_field
-from .shared.functional import validate_input_and_cert
-from .shared.handlers import get_csrf_limit, make_csrf_token
-from .shared.init import initialize_main_variables
-from .shared.refunctions import is_runtime_environment, \
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.init import initialize_main_variables
+from mig.shared.refunctions import is_runtime_environment, \
     list_runtime_environments, get_re_dict
-from .shared.rekeywords import get_keywords_dict
+from mig.shared.rekeywords import get_keywords_dict
 
 
 def signature():

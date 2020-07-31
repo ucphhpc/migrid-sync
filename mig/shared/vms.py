@@ -42,10 +42,10 @@ import shutil
 from glob import glob
 from tempfile import NamedTemporaryFile
 
-from .shared.base import client_id_dir
-from .shared.defaults import any_vgrid
-from .shared.fileio import unpickle, remove_rec
-from .shared.job import new_job
+from mig.shared.base import client_id_dir
+from mig.shared.defaults import any_vgrid
+from mig.shared.fileio import unpickle, remove_rec
+from mig.shared.job import new_job
 
 sys_location = 'sys_location.txt'
 vm_base = 'vms'

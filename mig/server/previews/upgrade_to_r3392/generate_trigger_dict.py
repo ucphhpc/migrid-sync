@@ -14,9 +14,9 @@ METAPATH = '.meta'
 os.environ['MIG_CONF'] = MIG_CONF
 sys.path.append(MIG_HOME)
 
-from shared.conf import get_configuration_object
-from shared.logger import _debug_format, _default_format
-from shared.fileio import pickle, unpickle
+from mig.shared.conf import get_configuration_object
+from mig.shared.logger import _debug_format, _default_format
+from mig.shared.fileio import pickle, unpickle
 
 
 def get_logger(loglevel=logging.INFO):

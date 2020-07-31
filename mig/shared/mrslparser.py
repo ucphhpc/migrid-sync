@@ -32,18 +32,18 @@ import os
 import time
 import types
 
-from .shared.base import client_id_dir
-from .shared.conf import get_configuration_object
-from .shared.defaults import default_vgrid, any_vgrid, src_dst_sep
-from .shared.fileio import unpickle, pickle, send_message_to_grid_script
-from .shared.mrslkeywords import get_keywords_dict as mrsl_get_keywords_dict
-from .shared.parser import parse as core_parse, check_types
-from .shared.refunctions import is_runtime_environment
-from .shared.safeinput import html_escape, valid_path
-from .shared.vgridaccess import user_vgrid_access
+from mig.shared.base import client_id_dir
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import default_vgrid, any_vgrid, src_dst_sep
+from mig.shared.fileio import unpickle, pickle, send_message_to_grid_script
+from mig.shared.mrslkeywords import get_keywords_dict as mrsl_get_keywords_dict
+from mig.shared.parser import parse as core_parse, check_types
+from mig.shared.refunctions import is_runtime_environment
+from mig.shared.safeinput import html_escape, valid_path
+from mig.shared.vgridaccess import user_vgrid_access
 
 try:
-    from .shared import arcwrapper
+    from mig.shared import arcwrapper
 except:
     # Ignore errors and let it crash if ARC is enabled without the lib
     pass
@@ -377,7 +377,7 @@ to %s''' % configuration.grid_stdin)
                     % filename)
 
     if global_dict.get('JOBTYPE', 'unset').lower() == 'interactive':
-        from .shared.functionality.vncsession import main
+        from mig.shared.functionality.vncsession import main
         return main(client_id, {})
 
     # print global_dict

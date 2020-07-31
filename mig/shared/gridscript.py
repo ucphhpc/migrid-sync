@@ -32,13 +32,13 @@ from __future__ import absolute_import
 import os
 import time
 
-from .shared.base import client_id_dir
-from .shared.defaults import job_output_dir
-from .shared.fileio import send_message_to_grid_script, pickle, unpickle, \
+from mig.shared.base import client_id_dir
+from mig.shared.defaults import job_output_dir
+from mig.shared.fileio import send_message_to_grid_script, pickle, unpickle, \
     delete_file, touch
-from .shared.notification import notify_user_thread
+from mig.shared.notification import notify_user_thread
 try:
-    from .shared import arcwrapper
+    from mig.shared import arcwrapper
 except Exception as exc:
     # Ignore errors and let it crash if ARC is enabled without the lib
     pass

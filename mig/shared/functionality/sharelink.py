@@ -32,22 +32,22 @@ from binascii import hexlify
 import os
 import datetime
 
-from .shared import returnvalues
-from .shared.base import client_id_dir, extract_field
-from .shared.defaults import default_pager_entries, keyword_owners, \
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir, extract_field
+from mig.shared.defaults import default_pager_entries, keyword_owners, \
     keyword_members, csrf_field
-from .shared.functional import validate_input_and_cert
-from .shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from .shared.html import man_base_js, man_base_html, html_post_helper
-from .shared.init import initialize_main_variables, find_entry
-from .shared.notification import notify_user_thread
-from .shared.pwhash import make_hash
-from .shared.sharelinks import build_sharelinkitem_object, load_share_links, \
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from mig.shared.html import man_base_js, man_base_html, html_post_helper
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.notification import notify_user_thread
+from mig.shared.pwhash import make_hash
+from mig.shared.sharelinks import build_sharelinkitem_object, load_share_links, \
     create_share_link, update_share_link, delete_share_link, \
     create_share_link_form, invite_share_link_form, \
     invite_share_link_message, generate_sharelink_id
-from .shared.validstring import valid_user_path
-from .shared.vgrid import in_vgrid_share, vgrid_is_owner, vgrid_settings, \
+from mig.shared.validstring import valid_user_path
+from mig.shared.vgrid import in_vgrid_share, vgrid_is_owner, vgrid_settings, \
     vgrid_add_sharelinks, vgrid_remove_sharelinks
 
 get_actions = ['show', 'edit']

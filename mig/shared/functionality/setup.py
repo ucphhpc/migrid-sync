@@ -31,25 +31,25 @@ from __future__ import absolute_import
 import os
 import time
 
-from .shared import returnvalues
-from .shared.accountstate import account_expire_info
-from .shared.auth import get_twofactor_secrets
-from .shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin, \
+from mig.shared import returnvalues
+from mig.shared.accountstate import account_expire_info
+from mig.shared.auth import get_twofactor_secrets
+from mig.shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin, \
     get_short_id
-from .shared.defaults import seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
+from mig.shared.defaults import seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
     duplicati_protocol_choices, duplicati_schedule_choices
-from .shared.duplicatikeywords import get_duplicati_specs
-from .shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
-from .shared.functional import validate_input_and_cert
-from .shared.handlers import get_csrf_limit, make_csrf_token
-from .shared.html import man_base_js, man_base_html, console_log_javascript, \
+from mig.shared.duplicatikeywords import get_duplicati_specs
+from mig.shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.html import man_base_js, man_base_html, console_log_javascript, \
     twofactor_wizard_html, twofactor_wizard_js, twofactor_token_html, \
     save_settings_js, save_settings_html
-from .shared.init import initialize_main_variables, find_entry, extract_menu
-from .shared.settings import load_settings, load_ssh, load_davs, load_ftps, \
+from mig.shared.init import initialize_main_variables, find_entry, extract_menu
+from mig.shared.settings import load_settings, load_ssh, load_davs, load_ftps, \
     load_seafile, load_duplicati, load_cloud, load_twofactor
-from .shared.twofactorkeywords import get_twofactor_specs
-from .shared.useradm import create_alias_link
+from mig.shared.twofactorkeywords import get_twofactor_specs
+from mig.shared.useradm import create_alias_link
 
 
 ssh_edit = cm_options.copy()

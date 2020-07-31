@@ -34,13 +34,13 @@ from __future__ import absolute_import
 import os
 import time
 
-from .shared.base import client_id_dir, client_dir_id, requested_url_base
-from .shared.defaults import expire_marks_dir, status_marks_dir, \
+from mig.shared.base import client_id_dir, client_dir_id, requested_url_base
+from mig.shared.defaults import expire_marks_dir, status_marks_dir, \
     valid_account_status, oid_auto_extend_days, cert_auto_extend_days, \
     cert_valid_days, oid_valid_days
-from .shared.filemarks import get_filemark, update_filemark, reset_filemark
-from .shared.gdp.userid import get_base_client_id
-from .shared.userdb import load_user_dict, default_db_path, update_user_dict
+from mig.shared.filemarks import get_filemark, update_filemark, reset_filemark
+from mig.shared.gdp.userid import get_base_client_id
+from mig.shared.userdb import load_user_dict, default_db_path, update_user_dict
 
 
 def update_account_expire_cache(configuration, user_dict):
@@ -401,7 +401,7 @@ def check_account_accessible(configuration, username, proto, environ=None,
 
 
 if __name__ == "__main__":
-    from .shared.conf import get_configuration_object
+    from mig.shared.conf import get_configuration_object
     conf = get_configuration_object()
     active_user = '/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk'
     suspended_user = '/C=DK/ST=NA/L=NA/O=FAKSEK/OU=NA/CN=Jonas Bardino/emailAddress=bardino@science.ku.dk'

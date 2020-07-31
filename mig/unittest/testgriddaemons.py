@@ -32,16 +32,16 @@ import sys
 import time
 import logging
 
-from shared.griddaemons.ratelimits import default_max_user_hits, \
+from mig.shared.griddaemons.ratelimits import default_max_user_hits, \
     expire_rate_limit, hit_rate_limit, update_rate_limit
-from shared.griddaemons.sessions import active_sessions, \
+from mig.shared.griddaemons.sessions import active_sessions, \
     clear_sessions, get_active_session, get_open_sessions, \
     track_open_session, track_close_session, track_close_expired_sessions
 
 # TODO: Add unit test for validate_auth_attempt ?
 
 if __name__ == "__main__":
-    from shared.conf import get_configuration_object
+    from mig.shared.conf import get_configuration_object
     conf = get_configuration_object()
     logging.basicConfig(filename=None, level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(message)s")

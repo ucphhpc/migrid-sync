@@ -49,10 +49,10 @@ except ImportError:
 
     _devnull = '/dev/null'
 
-from .shared import distbase
-from .shared.distbase import HTTPS_SID_PORT, HTTPS_CERT_PORT, BASE_ID, \
+from mig.shared import distbase
+from mig.shared.distbase import HTTPS_SID_PORT, HTTPS_CERT_PORT, BASE_ID, \
     BASE_HOME, HTTP_OK
-from .shared.serverfile import ServerFile, LOCK_UN, LOCK_SH, LOCK_EX, \
+from mig.shared.serverfile import ServerFile, LOCK_UN, LOCK_SH, LOCK_EX, \
     LockingException
 
 # Provide user agent string for use in distfile recursion check

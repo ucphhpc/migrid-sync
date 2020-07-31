@@ -38,39 +38,39 @@ import shutil
 import sqlite3
 import sys
 
-from .shared.accountstate import update_account_expire_cache, \
+from mig.shared.accountstate import update_account_expire_cache, \
     update_account_status_cache
-from .shared.base import client_id_dir, client_dir_id, client_alias, \
+from mig.shared.base import client_id_dir, client_dir_id, client_alias, \
     sandbox_resource, fill_user, fill_distinguished_name, extract_field
-from .shared.conf import get_configuration_object
-from .shared.configuration import Configuration
-from .shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
+from mig.shared.conf import get_configuration_object
+from mig.shared.configuration import Configuration
+from mig.shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
     davs_conf_dir, ftps_conf_dir, htaccess_filename, welcome_filename, \
     settings_filename, profile_filename, default_css_filename, \
     widgets_filename, seafile_ro_dirname, authkeys_filename, \
     authpasswords_filename, authdigests_filename, cert_field_order, \
     twofactor_filename
-from .shared.fileio import filter_pickled_list, filter_pickled_dict, \
+from mig.shared.fileio import filter_pickled_list, filter_pickled_dict, \
     make_symlink, delete_symlink
-from .shared.modified import mark_user_modified
-from .shared.refunctions import list_runtime_environments, \
+from mig.shared.modified import mark_user_modified
+from mig.shared.refunctions import list_runtime_environments, \
     update_runtimeenv_owner
-from .shared.pwhash import make_hash, check_hash, make_digest, check_digest, \
+from mig.shared.pwhash import make_hash, check_hash, make_digest, check_digest, \
     make_scramble, check_scramble, unscramble_password, unscramble_digest, \
     assure_password_strength
-from .shared.resource import resource_add_owners, resource_remove_owners
-from .shared.serial import load, dump
-from .shared.settings import update_settings, update_profile, update_widgets
-from .shared.sharelinks import load_share_links, update_share_link, \
+from mig.shared.resource import resource_add_owners, resource_remove_owners
+from mig.shared.serial import load, dump
+from mig.shared.settings import update_settings, update_profile, update_widgets
+from mig.shared.sharelinks import load_share_links, update_share_link, \
     get_share_link, mode_chars_map
-from .shared.vgrid import vgrid_add_owners, vgrid_remove_owners, \
+from mig.shared.vgrid import vgrid_add_owners, vgrid_remove_owners, \
     vgrid_add_members, vgrid_remove_members, in_vgrid_share, \
     vgrid_sharelinks, vgrid_add_sharelinks
-from .shared.vgridaccess import get_resource_map, get_vgrid_map, \
+from mig.shared.vgridaccess import get_resource_map, get_vgrid_map, \
     force_update_user_map, force_update_resource_map, force_update_vgrid_map, \
     VGRIDS, OWNERS, MEMBERS
-from .shared.twofactorkeywords import get_twofactor_specs
-from .shared.userdb import lock_user_db, unlock_user_db, load_user_db, \
+from mig.shared.twofactorkeywords import get_twofactor_specs
+from mig.shared.userdb import lock_user_db, unlock_user_db, load_user_db, \
     load_user_dict, save_user_db
 
 ssh_authkeys = os.path.join(ssh_conf_dir, authkeys_filename)

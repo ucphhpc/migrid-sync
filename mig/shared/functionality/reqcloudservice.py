@@ -34,23 +34,23 @@ import re
 import sys
 import time
 
-from .shared import returnvalues
-from .shared.base import client_id_dir, extract_field
-from .shared.cloud import allowed_cloud_images, status_of_cloud_instance, \
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir, extract_field
+from mig.shared.cloud import allowed_cloud_images, status_of_cloud_instance, \
     start_cloud_instance, restart_cloud_instance, stop_cloud_instance, \
     update_cloud_instance_keys, create_cloud_instance, delete_cloud_instance, \
     web_access_cloud_instance, cloud_access_allowed, cloud_login_username, \
     cloud_ssh_login_help, cloud_build_instance_id, cloud_split_instance_id, \
     cloud_load_instance, cloud_save_instance, cloud_purge_instance, \
     lookup_user_service_value, cloud_edit_actions, cloud_manage_actions
-from .shared.defaults import session_id_bytes, keyword_all
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.handlers import safe_handler, get_csrf_limit
-from .shared.init import find_entry, initialize_main_variables
-from .shared.pwhash import generate_random_ascii
-from .shared.settings import load_cloud
-from .shared.ssh import generate_ssh_rsa_key_pair
-from .shared.useradm import get_full_user_map
+from mig.shared.defaults import session_id_bytes, keyword_all
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.handlers import safe_handler, get_csrf_limit
+from mig.shared.init import find_entry, initialize_main_variables
+from mig.shared.pwhash import generate_random_ascii
+from mig.shared.settings import load_cloud
+from mig.shared.ssh import generate_ssh_rsa_key_pair
+from mig.shared.useradm import get_full_user_map
 
 valid_actions = cloud_edit_actions + cloud_manage_actions
 

@@ -35,14 +35,14 @@ import os
 import glob
 from urllib import quote
 
-from .shared import returnvalues
-from .shared.base import client_id_dir, invisible_path
-from .shared.functional import validate_input
-from .shared.handlers import get_csrf_limit, make_csrf_token
-from .shared.init import initialize_main_variables, find_entry
-from .shared.parseflags import all, long_list, recursive
-from .shared.sharelinks import extract_mode_id
-from .shared.validstring import valid_user_path
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir, invisible_path
+from mig.shared.functional import validate_input
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.parseflags import all, long_list, recursive
+from mig.shared.sharelinks import extract_mode_id
+from mig.shared.validstring import valid_user_path
 
 
 def signature():

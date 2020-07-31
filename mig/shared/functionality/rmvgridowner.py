@@ -31,24 +31,24 @@ from __future__ import absolute_import
 import os
 from binascii import hexlify
 
-from .shared import returnvalues
-from .shared.base import client_id_dir, distinguished_name_to_user
-from .shared.defaults import csrf_field, _dot_vgrid, keyword_members
-from .shared.fileio import remove_rec, move_rec, delete_symlink
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.handlers import safe_handler, get_csrf_limit
-from .shared.html import html_post_helper
-from .shared.init import initialize_main_variables, find_entry
-from .shared.parseflags import force
-from .shared.safeeval import subprocess_popen, subprocess_pipe, \
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir, distinguished_name_to_user
+from mig.shared.defaults import csrf_field, _dot_vgrid, keyword_members
+from mig.shared.fileio import remove_rec, move_rec, delete_symlink
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.handlers import safe_handler, get_csrf_limit
+from mig.shared.html import html_post_helper
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.parseflags import force
+from mig.shared.safeeval import subprocess_popen, subprocess_pipe, \
     subprocess_stdout
-from .shared.useradm import get_full_user_map
-from .shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
+from mig.shared.useradm import get_full_user_map
+from mig.shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
     vgrid_is_member, vgrid_owners, vgrid_members, vgrid_resources, \
     vgrid_list_subvgrids, vgrid_remove_owners, vgrid_list_parents, \
     allow_owners_adm, vgrid_restrict_write_paths, vgrid_settings, \
     vgrid_manage_allowed
-from .shared.vgridaccess import unmap_vgrid, unmap_inheritance
+from mig.shared.vgridaccess import unmap_vgrid, unmap_inheritance
 
 
 def signature():

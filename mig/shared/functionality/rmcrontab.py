@@ -32,12 +32,12 @@ xmlrpc/jsonrpc.
 """
 from __future__ import absolute_import
 
-from .shared import returnvalues
-from .shared.events import load_crontab, load_atjobs, \
+from mig.shared import returnvalues
+from mig.shared.events import load_crontab, load_atjobs, \
     parse_and_save_crontab, parse_and_save_atjobs
-from .shared.functional import validate_input_and_cert
-from .shared.handlers import safe_handler, get_csrf_limit
-from .shared.init import initialize_main_variables, find_entry
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.handlers import safe_handler, get_csrf_limit
+from mig.shared.init import initialize_main_variables, find_entry
 
 
 def signature():

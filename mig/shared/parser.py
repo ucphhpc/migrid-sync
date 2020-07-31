@@ -33,10 +33,10 @@ import base64
 import StringIO
 import tempfile
 
-from .shared.defaults import keyword_all, maxfill_fields
-from .shared.rekeywords import get_keywords_dict as re_get_keywords_dict
-from .shared.resconfkeywords import get_keywords_dict as resconf_get_keywords_dict
-from .shared.safeinput import valid_job_name, guess_type, html_escape
+from mig.shared.defaults import keyword_all, maxfill_fields
+from mig.shared.rekeywords import get_keywords_dict as re_get_keywords_dict
+from mig.shared.resconfkeywords import get_keywords_dict as resconf_get_keywords_dict
+from mig.shared.safeinput import valid_job_name, guess_type, html_escape
 
 comment_char = '#'
 
@@ -477,7 +477,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
 
                 retmsg = ''
                 if status:
-                    from .shared.mrslparser import parse as mrslparse
+                    from mig.shared.mrslparser import parse as mrslparse
                     (status, retmsg) = mrslparse(
                         tmpfile, "testprocedure_job_id",
                         "testprocedure_test_parse__cert_name_not_specified",

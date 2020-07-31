@@ -31,11 +31,11 @@ from __future__ import absolute_import
 import os
 from string import letters, digits
 
-from .shared.defaults import user_db_filename
-from .shared.base import client_id_dir
-from .shared.listhandling import is_item_in_pickled_list
-from .shared.validstring import valid_user_path
-from .shared.serial import load
+from mig.shared.defaults import user_db_filename
+from mig.shared.base import client_id_dir
+from mig.shared.listhandling import is_item_in_pickled_list
+from mig.shared.validstring import valid_user_path
+from mig.shared.serial import load
 
 VALID_FQDN_CHARACTERS = letters + digits + '.-'
 MIG_SERVER_ID = 'MiG-Server'

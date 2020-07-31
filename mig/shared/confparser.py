@@ -32,13 +32,13 @@
 """parse resource configurations"""
 from __future__ import absolute_import
 
-from .shared.conf import get_configuration_object
-from .shared.parser import parse, check_types
-from .shared.refunctions import is_runtime_environment, get_re_dict
-from .shared.resconfkeywords import get_keywords_dict as \
+from mig.shared.conf import get_configuration_object
+from mig.shared.parser import parse, check_types
+from mig.shared.refunctions import is_runtime_environment, get_re_dict
+from mig.shared.resconfkeywords import get_keywords_dict as \
     resconf_get_keywords_dict
-from .shared.serial import dumps
-from .shared.vgrid import vgrid_is_resource, vgrid_is_default
+from mig.shared.serial import dumps
+from mig.shared.vgrid import vgrid_is_resource, vgrid_is_default
 
 
 def get_resource_config_dict(configuration, config_file):

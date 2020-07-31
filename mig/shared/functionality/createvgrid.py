@@ -34,23 +34,23 @@ import ConfigParser
 from email.utils import parseaddr
 from tempfile import NamedTemporaryFile
 
-from .shared import returnvalues
-from .shared.base import client_id_dir, generate_https_urls, valid_dir_input, \
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir, generate_https_urls, valid_dir_input, \
     distinguished_name_to_user
-from .shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
+from mig.shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
     keyword_owners, keyword_members, default_vgrid_settings_limit
-from .shared.fileio import write_file, make_symlink, delete_file
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.handlers import safe_handler, get_csrf_limit
-from .shared.init import initialize_main_variables, find_entry
-from .shared.safeeval import subprocess_call, subprocess_popen, \
+from mig.shared.fileio import write_file, make_symlink, delete_file
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.handlers import safe_handler, get_csrf_limit
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.safeeval import subprocess_call, subprocess_popen, \
     subprocess_stdout, subprocess_pipe
-from .shared.useradm import get_full_user_map
-from .shared.vgrid import vgrid_is_owner, vgrid_set_owners, vgrid_set_members, \
+from mig.shared.useradm import get_full_user_map
+from mig.shared.vgrid import vgrid_is_owner, vgrid_set_owners, vgrid_set_members, \
     vgrid_set_resources, vgrid_set_triggers, vgrid_set_settings, \
     vgrid_set_workflow_jobs, vgrid_create_allowed, \
     vgrid_restrict_write_support, vgrid_flat_name, vgrid_settings
-from .shared.vgridkeywords import get_settings_keywords_dict
+from mig.shared.vgridkeywords import get_settings_keywords_dict
 
 
 def signature():

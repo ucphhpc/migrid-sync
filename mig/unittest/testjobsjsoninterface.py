@@ -27,13 +27,13 @@ import os
 import unittest
 import nbformat
 
-from shared.conf import get_configuration_object
-from shared.defaults import default_vgrid
-from shared.fileio import makedirs_rec, remove_rec
-from shared.functionality.jobsjsoninterface import job_api_create, \
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import default_vgrid
+from mig.shared.fileio import makedirs_rec, remove_rec
+from mig.shared.functionality.jobsjsoninterface import job_api_create, \
     job_api_read, job_api_update
-from shared.job import JOB, QUEUE
-from shared.workflows import touch_workflow_sessions_db, \
+from mig.shared.job import JOB, QUEUE
+from mig.shared.workflows import touch_workflow_sessions_db, \
     load_workflow_sessions_db, create_workflow_session_id, \
     delete_workflow_sessions_db, reset_workflows
 

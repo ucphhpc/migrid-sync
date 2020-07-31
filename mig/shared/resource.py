@@ -37,16 +37,16 @@ try:
 except ImportError:
     from md5 import new as hash_algo
 
-from .shared.base import client_id_dir
-from .shared.confparser import get_resource_config_dict, run
-from .shared.defaults import exe_leader_name, keyword_auto
-from .shared.fileio import pickle, move
-from .shared.modified import mark_resource_modified, mark_vgrid_modified
-from .shared.resconfkeywords import get_resource_specs, get_exenode_specs, \
+from mig.shared.base import client_id_dir
+from mig.shared.confparser import get_resource_config_dict, run
+from mig.shared.defaults import exe_leader_name, keyword_auto
+from mig.shared.fileio import pickle, move
+from mig.shared.modified import mark_resource_modified, mark_vgrid_modified
+from mig.shared.resconfkeywords import get_resource_specs, get_exenode_specs, \
     get_storenode_specs, get_resource_keywords, get_exenode_keywords, \
     get_storenode_keywords
-from .shared.serial import load, dump
-from .shared.ssh import default_ssh_options
+from mig.shared.serial import load, dump
+from mig.shared.ssh import default_ssh_options
 
 
 def get_regex_non_numeric():

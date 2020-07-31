@@ -34,15 +34,15 @@ import os
 import time
 import zipfile
 
-from .shared import returnvalues
-from .shared import userscriptgen
-from .shared import vgridscriptgen
-from .shared.base import client_id_dir
-from .shared.defaults import keyword_all, keyword_auto
-from .shared.functional import validate_input_and_cert
-from .shared.handlers import safe_handler, get_csrf_limit
-from .shared.init import initialize_main_variables, find_entry
-from .shared.validstring import valid_user_path
+from mig.shared import returnvalues
+from mig.shared import userscriptgen
+from mig.shared import vgridscriptgen
+from mig.shared.base import client_id_dir
+from mig.shared.defaults import keyword_all, keyword_auto
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.handlers import safe_handler, get_csrf_limit
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.validstring import valid_user_path
 
 sh_cmd_def = '/bin/bash'
 python_cmd_def = '/usr/bin/python'

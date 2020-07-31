@@ -33,12 +33,12 @@ from __future__ import absolute_import
 import os
 import time
 
-from .shared import returnvalues
-from .shared.base import force_utf8_rec
-from .shared.conf import get_configuration_object
-from .shared.httpsclient import extract_client_id
-from .shared.objecttypes import get_object_type_info
-from .shared.output import validate
+from mig.shared import returnvalues
+from mig.shared.base import force_utf8_rec
+from mig.shared.conf import get_configuration_object
+from mig.shared.httpsclient import extract_client_id
+from mig.shared.objecttypes import get_object_type_info
+from mig.shared.output import validate
 
 
 def system_method_signature(method_name):
@@ -46,7 +46,7 @@ def system_method_signature(method_name):
 
     signature = id
     try:
-        exec(compile('from shared.functionality.%s import signature'
+        exec(compile('from mig.shared.functionality.%s import signature'
                      % method_name, '', 'single'))
         signature_string = str(signature())
     except:
@@ -59,13 +59,13 @@ def system_method_help(method_name):
 
     usage = method_help = id
     try:
-        exec(compile('from shared.functionality.%s import usage'
+        exec(compile('from mig.shared.functionality.%s import usage'
                      % method_name, '', 'single'))
         help_string = str(usage())
     except:
         try:
             exec(compile(
-                'from shared.functionality.%s import __doc__ as method_help' %
+                'from mig.shared.functionality.%s import __doc__ as method_help' %
                 method_name, '', 'single'))
             help_string = str(method_help)
         except:

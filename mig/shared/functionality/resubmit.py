@@ -38,16 +38,16 @@ import os
 import tempfile
 import glob
 
-from .shared import mrslkeywords
-from .shared import returnvalues
-from .shared.base import client_id_dir
-from .shared.defaults import all_jobs
-from .shared.fileio import unpickle
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.handlers import safe_handler, get_csrf_limit
-from .shared.init import initialize_main_variables
-from .shared.job import new_job
-from .shared.validstring import valid_user_path
+from mig.shared import mrslkeywords
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir
+from mig.shared.defaults import all_jobs
+from mig.shared.fileio import unpickle
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.handlers import safe_handler, get_csrf_limit
+from mig.shared.init import initialize_main_variables
+from mig.shared.job import new_job
+from mig.shared.validstring import valid_user_path
 
 
 def signature():

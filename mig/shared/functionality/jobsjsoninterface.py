@@ -35,22 +35,22 @@ import os
 import sys
 import tempfile
 
-from .shared import returnvalues
+from mig.shared import returnvalues
 
-from .shared.base import force_utf8_rec, client_id_dir
-from .shared.fileio import unpickle, unpickle_and_change_status, \
+from mig.shared.base import force_utf8_rec, client_id_dir
+from mig.shared.fileio import unpickle, unpickle_and_change_status, \
     send_message_to_grid_script
-from .shared.handlers import correct_handler
-from .shared.init import initialize_main_variables
-from .shared.job import new_job
-from .shared.mrslkeywords import get_keywords_dict
-from .shared.safeinput import REJECT_UNSET, valid_sid, validated_input, \
+from mig.shared.handlers import correct_handler
+from mig.shared.init import initialize_main_variables
+from mig.shared.job import new_job
+from mig.shared.mrslkeywords import get_keywords_dict
+from mig.shared.safeinput import REJECT_UNSET, valid_sid, validated_input, \
     html_escape, valid_job_id, valid_job_vgrid, valid_job_attributes, \
     valid_job_type, valid_job_operation
-from .shared.job import JOB_TYPES, JOB, QUEUE, get_job_with_id, fields_to_mrsl
-from .shared.workflows import valid_session_id, load_workflow_sessions_db, \
+from mig.shared.job import JOB_TYPES, JOB, QUEUE, get_job_with_id, fields_to_mrsl
+from mig.shared.workflows import valid_session_id, load_workflow_sessions_db, \
     touch_workflow_sessions_db
-from .shared.vgrid import get_vgrid_workflow_jobs, init_vgrid_script_list
+from mig.shared.vgrid import get_vgrid_workflow_jobs, init_vgrid_script_list
 
 JOB_API_CREATE = 'create'
 JOB_API_READ = 'read'

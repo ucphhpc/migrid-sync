@@ -26,12 +26,12 @@ import os
 import unittest
 import nbformat
 
-from shared.conf import get_configuration_object
-from shared.defaults import default_vgrid
-from shared.fileio import makedirs_rec, remove_rec
-from shared.serial import load
-from shared.vgrid import vgrid_set_triggers
-from shared.workflows import reset_workflows, WORKFLOW_PATTERN, \
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import default_vgrid
+from mig.shared.fileio import makedirs_rec, remove_rec
+from mig.shared.serial import load
+from mig.shared.vgrid import vgrid_set_triggers
+from mig.shared.workflows import reset_workflows, WORKFLOW_PATTERN, \
     WORKFLOW_RECIPE, WORKFLOW_ANY, get_workflow_with, \
     delete_workflow, create_workflow, update_workflow, \
     get_workflow_trigger, get_task_parameter_path

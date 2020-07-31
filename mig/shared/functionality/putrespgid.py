@@ -31,13 +31,13 @@ from __future__ import absolute_import
 import fcntl
 import os
 
-from .shared import returnvalues
-from .shared.base import valid_dir_input
-from .shared.conf import get_resource_configuration
-from .shared.functional import validate_input, REJECT_UNSET
-from .shared.httpsclient import check_source_ip
-from .shared.init import initialize_main_variables
-from .shared.resadm import put_fe_pgid, put_exe_pgid
+from mig.shared import returnvalues
+from mig.shared.base import valid_dir_input
+from mig.shared.conf import get_resource_configuration
+from mig.shared.functional import validate_input, REJECT_UNSET
+from mig.shared.httpsclient import check_source_ip
+from mig.shared.init import initialize_main_variables
+from mig.shared.resadm import put_fe_pgid, put_exe_pgid
 
 
 def signature():

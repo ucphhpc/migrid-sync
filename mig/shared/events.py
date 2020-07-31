@@ -35,8 +35,8 @@ import os
 import re
 import shlex
 
-from .shared.base import client_id_dir
-from .shared.defaults import crontab_name, atjobs_name
+from mig.shared.base import client_id_dir
+from mig.shared.defaults import crontab_name, atjobs_name
 
 # Init global crontab regexp once and for all
 # Format: minute hour dayofmonth month dayofweek command
@@ -292,7 +292,7 @@ def at_remain(configuration, at_time, entry):
 
 
 if __name__ == '__main__':
-    from .shared.conf import get_configuration_object
+    from mig.shared.conf import get_configuration_object
     conf = get_configuration_object()
     client_id = '/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk'
     now = datetime.datetime.now()

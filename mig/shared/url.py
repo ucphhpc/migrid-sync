@@ -35,9 +35,9 @@ import base64
 import urllib
 import urlparse
 
-from .shared.defaults import csrf_field
-from .shared.handlers import get_csrf_limit
-from .shared.pwhash import make_csrf_token, make_csrf_trust_token
+from mig.shared.defaults import csrf_field
+from mig.shared.handlers import get_csrf_limit
+from mig.shared.pwhash import make_csrf_token, make_csrf_trust_token
 
 
 def base32urlencode(

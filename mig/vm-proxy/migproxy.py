@@ -44,7 +44,7 @@ except ImportError:
     OpenSSL = None
 
 # TODO: switch from private tls conf to this general conf
-# from shared.conf import get_configuration_object
+# from mig.shared.conf import get_configuration_object
 
 import daemon
 from migtcpserver import MiGTCPServer

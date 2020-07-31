@@ -37,19 +37,19 @@ from __future__ import absolute_import
 
 import os
 
-from .shared import returnvalues
-from .shared.base import client_id_dir
-from .shared.defaults import upload_block_size, upload_tmp_dir, csrf_field
-from .shared.fileio import strip_dir, write_chunk, delete_file, move, \
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir
+from mig.shared.defaults import upload_block_size, upload_tmp_dir, csrf_field
+from mig.shared.fileio import strip_dir, write_chunk, delete_file, move, \
     get_file_size, makedirs_rec, check_write_access
-from .shared.functional import validate_input
-from .shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from .shared.init import initialize_main_variables, find_entry
-from .shared.parseflags import in_place, verbose
-from .shared.safeinput import valid_path
-from .shared.sharelinks import extract_mode_id
-from .shared.userio import GDPIOLogError, gdp_iolog
-from .shared.validstring import valid_user_path
+from mig.shared.functional import validate_input
+from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.parseflags import in_place, verbose
+from mig.shared.safeinput import valid_path
+from mig.shared.sharelinks import extract_mode_id
+from mig.shared.userio import GDPIOLogError, gdp_iolog
+from mig.shared.validstring import valid_user_path
 
 # The input argument for fileupload files
 

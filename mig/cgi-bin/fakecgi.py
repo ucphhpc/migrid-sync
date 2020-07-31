@@ -39,11 +39,11 @@ from __future__ import absolute_import
 import os
 import sys
 
-from .shared.base import distinguished_name_to_user
-from .shared.conf import get_configuration_object
-from .shared.defaults import csrf_field
-from .shared.handlers import get_csrf_limit, make_csrf_token
-from .shared.safeeval import subprocess_call
+from mig.shared.base import distinguished_name_to_user
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import csrf_field
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.safeeval import subprocess_call
 
 
 def usage():

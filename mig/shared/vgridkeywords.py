@@ -30,7 +30,7 @@ Works as a combined specification of and source of information about keywords.
 """
 from __future__ import absolute_import
 
-from .shared.defaults import default_vgrid, any_vgrid, keyword_owners, \
+from mig.shared.defaults import default_vgrid, any_vgrid, keyword_owners, \
      keyword_members, keyword_all, keyword_auto, keyword_never, \
      keyword_any, default_vgrid_settings_limit
 

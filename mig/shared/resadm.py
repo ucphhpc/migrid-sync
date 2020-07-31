@@ -36,13 +36,13 @@ import datetime
 
 # MiG imports
 
-from .shared.conf import get_resource_configuration, get_resource_exe, \
+from mig.shared.conf import get_resource_configuration, get_resource_exe, \
     get_resource_store, get_configuration_object
-from .shared.fileio import unpickle, pickle
-from .shared.resource import anon_resource_id
-from .shared.safeeval import subprocess_popen, subprocess_pipe, \
+from mig.shared.fileio import unpickle, pickle
+from mig.shared.resource import anon_resource_id
+from mig.shared.safeeval import subprocess_popen, subprocess_pipe, \
      subprocess_stdout, subprocess_check_output
-from .shared.ssh import execute_on_resource, execute_on_exe, execute_on_store, \
+from mig.shared.ssh import execute_on_resource, execute_on_exe, execute_on_store, \
     copy_file_to_exe, copy_file_to_resource
 
 ssh_error_code = 255

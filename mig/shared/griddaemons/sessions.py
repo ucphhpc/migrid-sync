@@ -29,8 +29,8 @@
 
 import os
 import time
-from shared.defaults import io_session_timeout
-from shared.fileio import pickle, unpickle, acquire_file_lock, \
+from mig.shared.defaults import io_session_timeout
+from mig.shared.fileio import pickle, unpickle, acquire_file_lock, \
     release_file_lock
 
 _sessions_filename = "sessions.pck"

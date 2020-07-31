@@ -28,7 +28,7 @@
 """Keywords in the profile files"""
 from __future__ import absolute_import
 
-from .shared.defaults import profile_img_max_kb
+from mig.shared.defaults import profile_img_max_kb
 
 def get_profile_specs():
     """Return an ordered list of (keywords, spec) tuples. The order is

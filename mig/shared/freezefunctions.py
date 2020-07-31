@@ -46,22 +46,22 @@ except ImportError:
     from os import walk
 from urllib import quote
 
-from .shared.base import client_id_dir, distinguished_name_to_user, \
+from mig.shared.base import client_id_dir, distinguished_name_to_user, \
     brief_list, pretty_format_user
-from .shared.defaults import freeze_meta_filename, freeze_lock_filename, \
+from mig.shared.defaults import freeze_meta_filename, freeze_lock_filename, \
     wwwpublic_alias, public_archive_dir, public_archive_index, \
     public_archive_files, public_archive_doi, freeze_flavors, keyword_final, \
     keyword_pending, keyword_updating, keyword_auto, max_freeze_files, \
     csrf_field
-from .shared.fileio import md5sum_file, sha1sum_file, sha256sum_file, \
+from mig.shared.fileio import md5sum_file, sha1sum_file, sha256sum_file, \
     sha512sum_file, supported_hash_algos, write_file, copy_file, copy_rec, \
     move_file, move_rec, remove_rec, delete_file, delete_symlink, \
     makedirs_rec, make_symlink, make_temp_dir, acquire_file_lock, \
     release_file_lock
-from .shared.html import get_xgi_html_preamble, get_xgi_html_footer, \
+from mig.shared.html import get_xgi_html_preamble, get_xgi_html_footer, \
     man_base_js, themed_styles, themed_scripts, tablesorter_pager
-from .shared.pwhash import make_path_hash
-from .shared.serial import load, dump
+from mig.shared.pwhash import make_path_hash
+from mig.shared.serial import load, dump
 
 TARGET_ARCHIVE = 'ARCHIVE'
 TARGET_PATH = 'PATH'
@@ -1341,7 +1341,7 @@ if __name__ == "__main__":
         print("USAGE: freezefunctions.py CLIENT_ID ARCHIVE_ID")
         print("       Runs basic unit tests for the ARCHIVE_ID of CLIENT_ID")
         sys.exit(1)
-    from .shared.conf import get_configuration_object
+    from mig.shared.conf import get_configuration_object
     configuration = get_configuration_object()
     client_id = sys.argv[1]
     freeze_id = sys.argv[2]

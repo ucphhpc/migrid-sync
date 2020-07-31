@@ -179,7 +179,7 @@ def parse_command_args(configuration, command_list):
 
 
 if __name__ == '__main__':
-    from .shared.conf import get_configuration_object
+    from mig.shared.conf import get_configuration_object
     conf = get_configuration_object()
     for cmd_list in [['cp', 'srcfile', 'dstfile'],
                      ['cp', 'srcfile', 'srcfile2', 'dstdir'],

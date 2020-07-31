@@ -40,16 +40,16 @@ import time
 import urllib
 import urlparse
 
-from .shared import returnvalues
-from .shared.auth import twofactor_available, load_twofactor_key, \
+from mig.shared import returnvalues
+from mig.shared.auth import twofactor_available, load_twofactor_key, \
     get_twofactor_token, verify_twofactor_token, generate_session_key, \
     save_twofactor_session, expire_twofactor_session
-from .shared.defaults import twofactor_cookie_ttl
-from .shared.functional import validate_input
-from .shared.init import initialize_main_variables
-from .shared.html import twofactor_token_html, themed_styles, themed_scripts
-from .shared.settings import load_twofactor
-from .shared.twofactorkeywords import get_keywords_dict as twofactor_defaults
+from mig.shared.defaults import twofactor_cookie_ttl
+from mig.shared.functional import validate_input
+from mig.shared.init import initialize_main_variables
+from mig.shared.html import twofactor_token_html, themed_styles, themed_scripts
+from mig.shared.settings import load_twofactor
+from mig.shared.twofactorkeywords import get_keywords_dict as twofactor_defaults
 
 
 def signature():

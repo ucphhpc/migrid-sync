@@ -33,7 +33,7 @@ from __future__ import absolute_import
 import ssl
 import sys
 
-from .shared.defaults import STRONG_TLS_CIPHERS, STRONG_TLS_CURVES
+from mig.shared.defaults import STRONG_TLS_CIPHERS, STRONG_TLS_CURVES
 
 
 def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,

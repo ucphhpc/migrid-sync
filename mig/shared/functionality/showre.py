@@ -28,13 +28,13 @@
 """Get info about a runtime environtment"""
 from __future__ import absolute_import
 
-from .shared import returnvalues
-from .shared.base import valid_dir_input
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.init import initialize_main_variables, find_entry
-from .shared.refunctions import is_runtime_environment, get_re_dict, \
+from mig.shared import returnvalues
+from mig.shared.base import valid_dir_input
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.refunctions import is_runtime_environment, get_re_dict, \
     build_reitem_object
-from .shared.vgridaccess import resources_using_re
+from mig.shared.vgridaccess import resources_using_re
 
 
 def signature():

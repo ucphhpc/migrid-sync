@@ -31,9 +31,9 @@ from __future__ import absolute_import
 
 import os
 
-from .shared.defaults import user_db_filename
-from .shared.fileio import acquire_file_lock, release_file_lock
-from .shared.serial import load, dump
+from mig.shared.defaults import user_db_filename
+from mig.shared.fileio import acquire_file_lock, release_file_lock
+from mig.shared.serial import load, dump
 
 
 def default_db_path(configuration):

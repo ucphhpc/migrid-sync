@@ -36,20 +36,20 @@ import os
 import re
 import time
 
-from .shared.base import client_id_dir
-from .shared.cmdapi import get_usage_map
-from .shared.defaults import crontab_name, cron_log_cnt, cron_output_dir, \
+from mig.shared.base import client_id_dir
+from mig.shared.cmdapi import get_usage_map
+from mig.shared.defaults import crontab_name, cron_log_cnt, cron_output_dir, \
     cron_log_name, csrf_field
-from .shared import returnvalues
-from .shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
-from .shared.events import get_time_expand_map, load_crontab, load_atjobs, \
+from mig.shared import returnvalues
+from mig.shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
+from mig.shared.events import get_time_expand_map, load_crontab, load_atjobs, \
     parse_and_save_crontab, parse_and_save_atjobs
-from .shared.fileio import makedirs_rec
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from .shared.html import man_base_js, man_base_html
-from .shared.init import initialize_main_variables, find_entry
-from .shared.parseflags import verbose
+from mig.shared.fileio import makedirs_rec
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from mig.shared.html import man_base_js, man_base_html
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.parseflags import verbose
 
 
 get_actions = ['show']

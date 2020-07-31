@@ -33,12 +33,12 @@ import glob
 import re
 import time
 
-from .shared import returnvalues
-from .shared.base import client_id_dir
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.init import initialize_main_variables
-from .shared.parseflags import verbose, binary
-from .shared.validstring import valid_user_path
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.init import initialize_main_variables
+from mig.shared.parseflags import verbose, binary
+from mig.shared.validstring import valid_user_path
 
 
 def signature():

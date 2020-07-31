@@ -30,25 +30,25 @@ import datetime
 import os
 from binascii import hexlify
 
-from .shared.base import client_id_dir
-from .shared.defaults import settings_filename, profile_filename, \
+from mig.shared.base import client_id_dir
+from mig.shared.defaults import settings_filename, profile_filename, \
     widgets_filename, twofactor_filename, duplicati_filename, ssh_conf_dir, \
     davs_conf_dir, ftps_conf_dir, seafile_conf_dir, duplicati_conf_dir, \
     cloud_conf_dir, authkeys_filename, authpasswords_filename, \
     authdigests_filename, keyword_unchanged, dav_domain
-from .shared.duplicatikeywords import get_keywords_dict as get_duplicati_fields, \
+from mig.shared.duplicatikeywords import get_keywords_dict as get_duplicati_fields, \
     extract_duplicati_helper, duplicati_conf_templates
-from .shared.fileio import pickle, unpickle
-from .shared.modified import mark_user_modified
-from .shared.parser import parse, check_types
-from .shared.profilekeywords import get_keywords_dict as get_profile_fields
-from .shared.pwhash import make_hash, make_digest, assure_password_strength
-from .shared.safeinput import valid_password
-from .shared.settingskeywords import get_keywords_dict as get_settings_fields
-from .shared.ssh import parse_pub_key, tighten_key_perms
-from .shared.twofactorkeywords import get_keywords_dict as get_twofactor_fields, \
+from mig.shared.fileio import pickle, unpickle
+from mig.shared.modified import mark_user_modified
+from mig.shared.parser import parse, check_types
+from mig.shared.profilekeywords import get_keywords_dict as get_profile_fields
+from mig.shared.pwhash import make_hash, make_digest, assure_password_strength
+from mig.shared.safeinput import valid_password
+from mig.shared.settingskeywords import get_keywords_dict as get_settings_fields
+from mig.shared.ssh import parse_pub_key, tighten_key_perms
+from mig.shared.twofactorkeywords import get_keywords_dict as get_twofactor_fields, \
     check_twofactor_deps
-from .shared.widgetskeywords import get_keywords_dict as get_widgets_fields
+from mig.shared.widgetskeywords import get_keywords_dict as get_widgets_fields
 
 
 def parse_and_save_pickle(source, destination, keywords, client_id,

@@ -40,23 +40,23 @@ except ImportError:
     PythonExporter = None
     NotebookExporter = None
 
-from .shared.base import force_utf8_rec
-from .shared.conf import get_configuration_object
-from .shared.defaults import src_dst_sep, workflow_id_charset, \
+from mig.shared.base import force_utf8_rec
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import src_dst_sep, workflow_id_charset, \
     workflow_id_length, session_id_length, session_id_charset, default_vgrid
-from .shared.fileio import delete_file, write_file, makedirs_rec, touch
-from .shared.map import load_system_map
-from .shared.modified import check_workflow_p_modified, \
+from mig.shared.fileio import delete_file, write_file, makedirs_rec, touch
+from mig.shared.map import load_system_map
+from mig.shared.modified import check_workflow_p_modified, \
     check_workflow_r_modified, reset_workflow_p_modified, \
     reset_workflow_r_modified, mark_workflow_p_modified, \
     mark_workflow_r_modified
-from .shared.pwhash import generate_random_ascii
-from .shared.serial import dump, load
-from .shared.validstring import possible_workflow_session_id
-from .shared.vgrid import vgrid_add_triggers, vgrid_remove_triggers, \
+from mig.shared.pwhash import generate_random_ascii
+from mig.shared.serial import dump, load
+from mig.shared.validstring import possible_workflow_session_id
+from mig.shared.vgrid import vgrid_add_triggers, vgrid_remove_triggers, \
     vgrid_triggers, vgrid_set_triggers, init_vgrid_script_add_rem, \
     init_vgrid_script_list
-from .shared.vgridaccess import get_vgrid_map, VGRIDS, user_vgrid_access
+from mig.shared.vgridaccess import get_vgrid_map, VGRIDS, user_vgrid_access
 
 
 WRITE_LOCK = 'write.lock'

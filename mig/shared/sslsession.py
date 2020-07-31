@@ -36,7 +36,7 @@ try:
 except ImportError as ierr:
     _sslsession = None
 
-from .shared.pwhash import make_digest
+from mig.shared.pwhash import make_digest
 
 SSL_SESSION_ID_LENGTH = 64
 SSL_MASTER_KEY_LENGTH = 96

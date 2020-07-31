@@ -32,38 +32,38 @@ import base64
 import os
 import urllib
 
-from .shared import returnvalues
-from .shared.auth import get_twofactor_secrets
-from .shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin, \
+from mig.shared import returnvalues
+from mig.shared.auth import get_twofactor_secrets
+from mig.shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin, \
     get_short_id
-from .shared.defaults import default_mrsl_filename, \
+from mig.shared.defaults import default_mrsl_filename, \
     default_css_filename, profile_img_max_kb, profile_img_extensions, \
     seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
     duplicati_protocol_choices, duplicati_schedule_choices
-from .shared.duplicatikeywords import get_duplicati_specs
-from .shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
-from .shared.functional import validate_input_and_cert
-from .shared.handlers import get_csrf_limit, make_csrf_token
-from .shared.html import man_base_js, man_base_html, console_log_javascript, \
+from mig.shared.duplicatikeywords import get_duplicati_specs
+from mig.shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.html import man_base_js, man_base_html, console_log_javascript, \
     twofactor_wizard_html, twofactor_wizard_js, twofactor_token_html, \
     legacy_user_interface, save_settings_js, save_settings_html, menu_items
-from .shared.init import initialize_main_variables, find_entry, extract_menu
-from .shared.settings import load_settings, load_widgets, load_profile, \
+from mig.shared.init import initialize_main_variables, find_entry, extract_menu
+from mig.shared.settings import load_settings, load_widgets, load_profile, \
     load_ssh, load_davs, load_ftps, load_seafile, load_duplicati, load_cloud, \
     load_twofactor
-from .shared.profilekeywords import get_profile_specs
-from .shared.pwhash import parse_password_policy
-from .shared.safeinput import html_escape, password_min_len, password_max_len, \
+from mig.shared.profilekeywords import get_profile_specs
+from mig.shared.pwhash import parse_password_policy
+from mig.shared.safeinput import html_escape, password_min_len, password_max_len, \
     valid_password_chars
-from .shared.settingskeywords import get_settings_specs
-from .shared.twofactorkeywords import get_twofactor_specs
-from .shared.widgetskeywords import get_widgets_specs
-from .shared.useradm import create_alias_link, get_default_mrsl, \
+from mig.shared.settingskeywords import get_settings_specs
+from mig.shared.twofactorkeywords import get_twofactor_specs
+from mig.shared.widgetskeywords import get_widgets_specs
+from mig.shared.useradm import create_alias_link, get_default_mrsl, \
     get_default_css
-from .shared.vgridaccess import get_vgrid_map_vgrids
+from mig.shared.vgridaccess import get_vgrid_map_vgrids
 
 try:
-    from .shared import arcwrapper
+    from mig.shared import arcwrapper
 except Exception as exc:
     # Ignore errors and let it crash if ARC is enabled without the lib
     pass

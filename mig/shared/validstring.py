@@ -30,12 +30,12 @@ from __future__ import absolute_import
 
 import os.path
 
-from .shared.base import invisible_path
-from .shared.conf import get_configuration_object
-from .shared.defaults import keyword_auto, session_id_length, \
+from mig.shared.base import invisible_path
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import keyword_auto, session_id_length, \
     session_id_charset, share_id_charset, share_mode_charset, \
     user_id_charset, user_id_min_length, user_id_max_length
-from .shared.fileio import user_chroot_exceptions, untrusted_store_res_symlink
+from mig.shared.fileio import user_chroot_exceptions, untrusted_store_res_symlink
 
 
 def cert_name_format(input_string):
@@ -209,7 +209,7 @@ def valid_user_path(configuration, path, home_dir, allow_equal=False,
     certificate data.
     Thus this function should *only* be used in relation to
     checking user home related paths. Other paths should be
-    validated with the valid_dir_input from shared.base instead.
+    validated with the valid_dir_input from mig.shared.base instead.
 
     IMPORTANT: additionally uses a chroot_exceptions list to follow symlinks
     e.g. into vgrid shared folders and verify their validity. This should be

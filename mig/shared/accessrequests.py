@@ -36,9 +36,9 @@ import os
 import time
 from urllib import urlencode
 
-from .shared.defaults import request_prefix, request_ext
-from .shared.fileio import make_temp_file, delete_file
-from .shared.serial import dumps, load
+from mig.shared.defaults import request_prefix, request_ext
+from mig.shared.fileio import make_temp_file, delete_file
+from mig.shared.serial import dumps, load
 
 def build_accessrequestitem_object(configuration, request_dict):
     """Build a access request object based on input request_dict"""
@@ -116,7 +116,7 @@ def delete_access_request(configuration, request_dir, req_name):
 if __name__ == "__main__":
     print("Unit testing fileio")
     import sys
-    from .shared.conf import get_configuration_object
+    from mig.shared.conf import get_configuration_object
     target = 'abc.0'
     if len(sys.argv) > 1:
         target = sys.argv[1]

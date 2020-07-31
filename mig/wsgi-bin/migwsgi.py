@@ -30,15 +30,15 @@ import sys
 import cgi
 import time
 
-from shared import returnvalues
-from shared.bailout import bailout_helper, crash_helper, filter_output_objects
-from shared.base import requested_page, allow_script
-from shared.defaults import download_block_size
-from shared.conf import get_configuration_object
-from shared.objecttypes import get_object_type_info
-from shared.output import validate, format_output, dummy_main, reject_main
-from shared.safeinput import valid_backend_name, html_escape, InputException
-from shared.scriptinput import fieldstorage_to_dict
+from mig.shared import returnvalues
+from mig.shared.bailout import bailout_helper, crash_helper, filter_output_objects
+from mig.shared.base import requested_page, allow_script
+from mig.shared.defaults import download_block_size
+from mig.shared.conf import get_configuration_object
+from mig.shared.objecttypes import get_object_type_info
+from mig.shared.output import validate, format_output, dummy_main, reject_main
+from mig.shared.safeinput import valid_backend_name, html_escape, InputException
+from mig.shared.scriptinput import fieldstorage_to_dict
 
 
 def object_type_info(object_type):
@@ -158,7 +158,7 @@ def application(environ, start_response):
     # We can't import helper before environ is ready because it indirectly
     # tries to use pre-mangled environ for conf loading
 
-    from shared.httpsclient import extract_client_id
+    from mig.shared.httpsclient import extract_client_id
     client_id = extract_client_id(configuration, environ)
 
     # default to html

@@ -33,9 +33,9 @@ import fcntl
 import os
 import time
 
-from .shared.defaults import keyword_all
-from .shared.fileio import acquire_file_lock, release_file_lock
-from .shared.serial import load, dump, dumps
+from mig.shared.defaults import keyword_all
+from mig.shared.fileio import acquire_file_lock, release_file_lock
+from mig.shared.serial import load, dump, dumps
 
 
 def mark_entity_modified(configuration, kind, name):
@@ -262,7 +262,7 @@ def reset_workflow_r_modified(configuration, only_before=-1):
 
 if __name__ == "__main__":
     import sys
-    from .shared.conf import get_configuration_object
+    from mig.shared.conf import get_configuration_object
     conf = get_configuration_object()
     re_name = 'BASH-ANY-1'
     if sys.argv[1:]:

@@ -10,8 +10,8 @@ MIG_HOME = '%s/mig' % os.environ['HOME']
 SETTINGS_LIST = 'settings.h5.list.txt'
 sys.path.append(MIG_HOME)
 
-from shared.logger import _debug_format, _default_format
-from shared.imagemetaio import __close_image_settings_file, \
+from mig.shared.logger import _debug_format, _default_format
+from mig.shared.imagemetaio import __close_image_settings_file, \
     __acquire_file_lock, __ensure_tables_format, __get_table, \
     __modify_table_rows, allowed_volume_types
 from tables import open_file

@@ -37,19 +37,19 @@ import os
 import re
 import time
 
-from .shared import returnvalues
-from .shared.base import client_id_dir
-from .shared.cmdapi import get_usage_map
-from .shared.defaults import keyword_all, keyword_auto, \
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir
+from mig.shared.cmdapi import get_usage_map
+from mig.shared.defaults import keyword_all, keyword_auto, \
     valid_trigger_changes, valid_trigger_actions, workflows_log_name, \
     workflows_log_cnt, pending_states, final_states, img_trigger_prefix
-from .shared.events import get_path_expand_map
-from .shared.fileio import unpickle, makedirs_rec, move_file
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.html import man_base_js, man_base_html
-from .shared.init import initialize_main_variables, find_entry
-from .shared.parseflags import verbose
-from .shared.vgrid import vgrid_add_remove_table, vgrid_is_owner_or_member, \
+from mig.shared.events import get_path_expand_map
+from mig.shared.fileio import unpickle, makedirs_rec, move_file
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.html import man_base_js, man_base_html
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.parseflags import verbose
+from mig.shared.vgrid import vgrid_add_remove_table, vgrid_is_owner_or_member, \
     vgrid_triggers, vgrid_set_triggers
 
 default_pager_entries = 20

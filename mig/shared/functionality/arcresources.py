@@ -31,12 +31,12 @@ from __future__ import absolute_import
 import os
 import time
 
-from .shared import returnvalues
-from .shared.base import client_id_dir
-from .shared.functional import validate_input_and_cert
-from .shared.init import initialize_main_variables, find_entry
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.init import initialize_main_variables, find_entry
 try:
-    from .shared import arcwrapper
+    from mig.shared import arcwrapper
 except Exception as exc:
     # Ignore errors and let it crash if ARC is enabled without the lib
     pass

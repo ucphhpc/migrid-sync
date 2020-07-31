@@ -41,9 +41,9 @@ import os
 import sys
 import getopt
 
-from .shared.base import get_xgi_bin
-from .shared.conf import get_configuration_object
-from .shared.publicscriptgen import *
+from mig.shared.base import get_xgi_bin
+from mig.shared.conf import get_configuration_object
+from mig.shared.publicscriptgen import *
 
 # ######################################
 # Script generator specific functions #

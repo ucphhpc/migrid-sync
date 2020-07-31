@@ -30,8 +30,8 @@ from __future__ import absolute_import
 import os
 import sys
 
-from .shared.base import requested_page
-from .shared.defaults import default_pager_entries, trash_linkname, \
+from mig.shared.base import requested_page
+from mig.shared.defaults import default_pager_entries, trash_linkname, \
     csrf_field, keyword_all
 
 ICONS_ONLY, TEXT_ONLY = "ICONS_ONLY", "TEXT_ONLY"

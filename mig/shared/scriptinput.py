@@ -33,10 +33,10 @@ from __future__ import absolute_import
 
 # Expose some safeinput functions here, too
 
-from .shared.safeinput import validated_boolean, validated_string, \
+from mig.shared.safeinput import validated_boolean, validated_string, \
     validated_path, validated_fqdn, validated_commonname, \
     validated_integer, validated_job_id, html_escape
-from .shared.safeinput import InputException as CgiInputException
+from mig.shared.safeinput import InputException as CgiInputException
 
 
 def parse_input(user_arguments_dict, fields):

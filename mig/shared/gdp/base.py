@@ -42,31 +42,31 @@ try:
 except:
     Xvfb = None
 
-from shared.base import client_id_dir, valid_dir_input, extract_field, \
+from mig.shared.base import client_id_dir, valid_dir_input, extract_field, \
     fill_distinguished_name, expand_openid_alias, get_short_id
-from shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
+from mig.shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
     gdp_distinguished_field, io_session_timeout, \
     user_db_filename as mig_user_db_filename, \
     valid_gdp_auth_scripts as valid_auth_scripts
-from shared.fileio import touch, make_symlink, write_file, remove_rec, \
+from mig.shared.fileio import touch, make_symlink, write_file, remove_rec, \
     acquire_file_lock, release_file_lock, copy_file
-from shared.gdp.userid import __validate_user_id, \
+from mig.shared.gdp.userid import __validate_user_id, \
     __client_id_from_project_client_id, \
     __project_name_from_project_client_id, \
     __short_id_from_client_id, __project_short_id_from_project_client_id, \
     __client_id_from_user_id, __project_client_id_from_user_id, \
     __project_short_id_from_user_id, __scamble_user_id, \
     get_project_from_user_id, get_project_client_id
-from shared.notification import send_email
-from shared.serial import load, dump
-from shared.useradm import create_user, delete_user, edit_user, \
+from mig.shared.notification import send_email
+from mig.shared.serial import load, dump
+from mig.shared.useradm import create_user, delete_user, edit_user, \
     get_full_user_map, lock_user_db
-from shared.vgrid import vgrid_flat_name, vgrid_is_owner, vgrid_set_owners, \
+from mig.shared.vgrid import vgrid_flat_name, vgrid_is_owner, vgrid_set_owners, \
     vgrid_add_members, vgrid_set_settings, vgrid_create_allowed, \
     vgrid_remove_members, vgrid_restrict_write_support
-from shared.vgridaccess import force_update_user_map, \
+from mig.shared.vgridaccess import force_update_user_map, \
     force_update_vgrid_map, force_update_resource_map
-from shared.vgridkeywords import get_settings_keywords_dict
+from mig.shared.vgridkeywords import get_settings_keywords_dict
 
 user_db_filename = 'gdp-users.db'
 user_log_filename = 'gdp-users.log'
@@ -2981,7 +2981,7 @@ def project_create(
     # This is done explicitly here as not all operations from
     # shared.functionality.createvgrid apply to GDP
     # TODO:
-    # Move vgridcreate functions from shared.functionality.createvgrid
+    # Move vgridcreate functions from mig.shared.functionality.createvgrid
     # to a commen helper module
 
     if project_name.find('/') != -1:

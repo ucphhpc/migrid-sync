@@ -36,7 +36,7 @@ import sys
 import time
 
 exclude_dirs = ['state', 'user-projects', 'doc-src',
-                'MiG-certificates', 'seafile']
+                'MiG-certificates', 'seafile', 'assets', 'images', 'previews']
 exclude_patterns = ['generated-confs_*']
 
 # Tweak to run stage 1 or stage2 as described on

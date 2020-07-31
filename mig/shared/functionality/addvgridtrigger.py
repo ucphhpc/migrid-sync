@@ -32,17 +32,17 @@ import os
 import shlex
 import time
 
-from .shared.base import client_id_dir
-from .shared.defaults import any_state, keyword_auto, valid_trigger_actions, \
+from mig.shared.base import client_id_dir
+from mig.shared.defaults import any_state, keyword_auto, valid_trigger_actions, \
     valid_trigger_changes, keyword_all
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.handlers import safe_handler, get_csrf_limit
-from .shared.init import initialize_main_variables, find_entry
-from .shared.validstring import valid_user_path
-from .shared.vgrid import init_vgrid_script_add_rem, vgrid_is_trigger, \
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.handlers import safe_handler, get_csrf_limit
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.validstring import valid_user_path
+from mig.shared.vgrid import init_vgrid_script_add_rem, vgrid_is_trigger, \
     vgrid_is_trigger_owner, vgrid_list_subvgrids, vgrid_add_triggers, \
     vgrid_triggers
-from .shared import returnvalues
+from mig.shared import returnvalues
 
 
 def signature():

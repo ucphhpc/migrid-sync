@@ -31,8 +31,8 @@ from __future__ import print_function
 from __future__ import absolute_import
 import os
 
-from .shared.fileio import pickle, unpickle
-from .shared.conf import get_configuration_object
+from mig.shared.fileio import pickle, unpickle
+from mig.shared.conf import get_configuration_object
 
 
 def initialize_and_get_display_dict_filename(configuration, logger):
@@ -233,7 +233,7 @@ def set_user_display_active(
 if '__main__' == __name__:
     print('*** Testing livedisplayfunctions ***')
 
-    # from shared.cgishared import init_cgiscript_possibly_with_cert
+    # from mig.shared.cgishared import init_cgiscript_possibly_with_cert
     # (logger, configuration, client_id, o) = init_cgiscript_possibly_with_cert()
 
     client_id = 'Henrik_Hoey_Karlsen3'

@@ -30,20 +30,20 @@ from __future__ import absolute_import
 
 import os
 
-from .shared import returnvalues
-from .shared.base import extract_field
-from .shared.defaults import default_vgrid, any_vgrid, any_protocol, \
+from mig.shared import returnvalues
+from mig.shared.base import extract_field
+from mig.shared.defaults import default_vgrid, any_vgrid, any_protocol, \
     email_keyword_list, default_vgrid_settings_limit
-from .shared.accessrequests import save_access_request
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.handlers import safe_handler, get_csrf_limit
-from .shared.init import initialize_main_variables, find_entry
-from .shared.notification import notify_user_thread
-from .shared.resource import anon_to_real_res_map, resource_owners
-from .shared.user import anon_to_real_user_map
-from .shared.vgrid import vgrid_owners, vgrid_settings, vgrid_is_owner, \
+from mig.shared.accessrequests import save_access_request
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.handlers import safe_handler, get_csrf_limit
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.notification import notify_user_thread
+from mig.shared.resource import anon_to_real_res_map, resource_owners
+from mig.shared.user import anon_to_real_user_map
+from mig.shared.vgrid import vgrid_owners, vgrid_settings, vgrid_is_owner, \
     vgrid_is_member, vgrid_is_owner_or_member, vgrid_is_resource
-from .shared.vgridaccess import get_user_map, get_resource_map, \
+from mig.shared.vgridaccess import get_user_map, get_resource_map, \
     user_vgrid_access, CONF, OWNERS, USERID
 
 

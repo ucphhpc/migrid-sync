@@ -32,10 +32,10 @@ import os
 import zipfile
 import tarfile
 
-from .shared.base import client_id_dir, invisible_path, force_utf8
-from .shared.fileio import write_file
-from .shared.job import new_job
-from .shared.safeinput import valid_user_path_name
+from mig.shared.base import client_id_dir, invisible_path, force_utf8
+from mig.shared.fileio import write_file
+from mig.shared.job import new_job
+from mig.shared.safeinput import valid_user_path_name
 
 
 def handle_package_upload(

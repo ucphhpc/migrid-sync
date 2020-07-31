@@ -34,18 +34,18 @@ import os
 import time
 import fcntl
 
-from .shared.base import sandbox_resource, client_id_dir
-from .shared.conf import get_all_exe_vgrids, get_all_store_vgrids, \
+from mig.shared.base import sandbox_resource, client_id_dir
+from mig.shared.conf import get_all_exe_vgrids, get_all_store_vgrids, \
     get_resource_fields, get_resource_configuration
-from .shared.defaults import settings_filename, profile_filename, default_vgrid
-from .shared.fileio import acquire_file_lock, release_file_lock
-from .shared.modified import mark_resource_modified, mark_vgrid_modified, \
+from mig.shared.defaults import settings_filename, profile_filename, default_vgrid
+from mig.shared.fileio import acquire_file_lock, release_file_lock
+from mig.shared.modified import mark_resource_modified, mark_vgrid_modified, \
     check_users_modified, check_resources_modified, check_vgrids_modified, \
     reset_users_modified, reset_resources_modified, reset_vgrids_modified
-from .shared.resource import list_resources, real_to_anon_res_map
-from .shared.serial import load, dump
-from .shared.user import list_users, real_to_anon_user_map, get_user_conf
-from .shared.vgrid import vgrid_list_vgrids, vgrid_allowed, vgrid_resources, \
+from mig.shared.resource import list_resources, real_to_anon_res_map
+from mig.shared.serial import load, dump
+from mig.shared.user import list_users, real_to_anon_user_map, get_user_conf
+from mig.shared.vgrid import vgrid_list_vgrids, vgrid_allowed, vgrid_resources, \
     user_allowed_vgrids, vgrid_owners, vgrid_members, vgrid_settings, \
     vgrid_list_subvgrids, vgrid_list_parents, res_allowed_vgrids, \
     merge_vgrid_settings
@@ -1181,7 +1181,7 @@ def unmap_inheritance(configuration, vgrid_name, cert_id):
 
 if "__main__" == __name__:
     import sys
-    from .shared.conf import get_configuration_object
+    from mig.shared.conf import get_configuration_object
     user_id = 'anybody'
     if len(sys.argv) > 1:
         user_id = sys.argv[1]

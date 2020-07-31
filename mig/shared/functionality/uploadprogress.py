@@ -30,11 +30,11 @@ from __future__ import absolute_import
 
 import os
 
-from .shared import returnvalues
-from .shared.base import client_id_dir
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.init import initialize_main_variables, find_entry
-from .shared.validstring import valid_user_path
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.validstring import valid_user_path
 
 block_size = 1024 * 1024
 

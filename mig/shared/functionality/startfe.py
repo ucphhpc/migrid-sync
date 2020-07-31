@@ -28,4 +28,4 @@
 # "redirect" to restart
 
 from __future__ import absolute_import
-from .shared.functionality.restartfe import *
+from mig.shared.functionality.restartfe import *

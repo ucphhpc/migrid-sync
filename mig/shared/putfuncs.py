@@ -34,9 +34,9 @@ import os
 import re
 import time
 
-from .shared.base import client_id_dir
-from .shared.defaults import job_output_dir
-from .shared.fileio import send_message_to_grid_script, pickle, unpickle
+from mig.shared.base import client_id_dir
+from mig.shared.defaults import job_output_dir
+from mig.shared.fileio import send_message_to_grid_script, pickle, unpickle
 
 
 def template_fits_file(template, filename, allowed_time=3.0):

@@ -35,7 +35,7 @@ from __future__ import absolute_import
 
 import os
 
-from .shared.base import get_xgi_bin
+from mig.shared.base import get_xgi_bin
 
 # Generator version (automagically updated by svn)
 

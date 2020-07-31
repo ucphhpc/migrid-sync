@@ -34,14 +34,14 @@ import os
 import time
 import fcntl
 
-from .shared import returnvalues
-from .shared.base import client_id_dir
-from .shared.defaults import default_mqueue, mqueue_prefix, mqueue_empty, \
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir
+from mig.shared.defaults import default_mqueue, mqueue_prefix, mqueue_empty, \
      csrf_field
-from .shared.functional import validate_input, REJECT_UNSET
-from .shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from .shared.init import initialize_main_variables, find_entry
-from .shared.validstring import valid_user_path
+from mig.shared.functional import validate_input, REJECT_UNSET
+from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.validstring import valid_user_path
 
 get_actions = ['interactive', 'listqueues', 'listmessages', 'show']
 post_actions = ['create', 'remove', 'send', 'receive']

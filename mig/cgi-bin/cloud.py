@@ -26,8 +26,8 @@
 #
 
 from __future__ import absolute_import
-from .shared.cgiscriptstub import run_cgi_script
-from .shared.functionality.cloud import main
+from mig.shared.cgiscriptstub import run_cgi_script
+from mig.shared.functionality.cloud import main
 import cgi
 import cgitb
 cgitb.enable()

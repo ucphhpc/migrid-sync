@@ -42,10 +42,10 @@ import commands
 import threading
 import tempfile
 
-from .shared.safeeval import subprocess_popen, subprocess_pipe
+from mig.shared.safeeval import subprocess_popen, subprocess_pipe
 
 # MiG utilities:
-from .shared.conf import get_configuration_object
+from mig.shared.conf import get_configuration_object
 config = get_configuration_object()
 logger = config.logger
 

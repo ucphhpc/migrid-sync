@@ -34,11 +34,11 @@ from __future__ import absolute_import
 
 import os
 
-from .shared import returnvalues
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.init import initialize_main_variables, find_entry
-from .shared.validstring import valid_user_path
-from .shared.vgrid import vgrid_is_owner_or_member
+from mig.shared import returnvalues
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.validstring import valid_user_path
+from mig.shared.vgrid import vgrid_is_owner_or_member
 
 
 def signature():

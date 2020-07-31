@@ -52,8 +52,8 @@ import daemon
 import mip
 from plumber import PlumberTS
 
-from shared.conf import get_configuration_object
-from shared.tlsserver import hardened_openssl_context
+from mig.shared.conf import get_configuration_object
+from mig.shared.tlsserver import hardened_openssl_context
 
 
 class ProxyAgent(daemon.Daemon):

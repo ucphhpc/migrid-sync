@@ -62,7 +62,7 @@ except ImportError:
     # Optional cracklib not available - fail gracefully and check before use
     cracklib = None
 
-from .shared.defaults import POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, \
+from mig.shared.defaults import POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, \
     POLICY_HIGH, POLICY_CUSTOM
 
 # Parameters to PBKDF2. Only affect new passwords.
@@ -443,7 +443,7 @@ def generate_random_password(configuration, tries=42):
 
 
 if __name__ == "__main__":
-    from .shared.conf import get_configuration_object
+    from mig.shared.conf import get_configuration_object
     configuration = get_configuration_object()
     for pw in ('', 'abc', 'abcdefgh', '12345678', 'test1234', 'password',
                'Password123', 'P4s5W0rd', 'Goof1234', 'MinimumIntrusionGrid',

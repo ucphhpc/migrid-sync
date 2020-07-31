@@ -31,14 +31,14 @@ from __future__ import absolute_import
 import os
 import glob
 
-from .shared import returnvalues
-from .shared.base import client_id_dir
-from .shared.fileio import unpickle
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.init import initialize_main_variables
-from .shared.mrslkeywords import get_keywords_dict
-from .shared.parseflags import verbose
-from .shared.validstring import valid_user_path
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir
+from mig.shared.fileio import unpickle
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.init import initialize_main_variables
+from mig.shared.mrslkeywords import get_keywords_dict
+from mig.shared.parseflags import verbose
+from mig.shared.validstring import valid_user_path
 
 
 def signature():

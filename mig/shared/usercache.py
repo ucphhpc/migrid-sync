@@ -33,9 +33,9 @@ import os
 import fcntl
 import time
 
-from .shared.base import client_id_dir
-from .shared.resource import list_resources
-from .shared.serial import load, dump
+from mig.shared.base import client_id_dir
+from mig.shared.resource import list_resources
+from mig.shared.serial import load, dump
 
 # Only refresh stats if at least this many seconds since last refresh
 JOB_REFRESH_DELAY = 120
@@ -327,7 +327,7 @@ def refresh_job_stats(configuration, client_id):
 
 if "__main__" == __name__:
     import sys
-    from .shared.conf import get_configuration_object
+    from mig.shared.conf import get_configuration_object
     conf = get_configuration_object()
     raw_stats = refresh_disk_stats(conf, sys.argv[1])
     print("user totals: %s" % raw_stats[OWN])

@@ -35,13 +35,13 @@ cgitb.enable()
 import os
 import time
 
-from .shared.bailout import crash_helper
-from .shared.base import requested_page, allow_script
-from .shared.conf import get_configuration_object
-from .shared.httpsclient import extract_client_id
-from .shared.output import format_output, reject_main
-from .shared.returnvalues import CLIENT_ERROR
-from .shared.scriptinput import fieldstorage_to_dict
+from mig.shared.bailout import crash_helper
+from mig.shared.base import requested_page, allow_script
+from mig.shared.conf import get_configuration_object
+from mig.shared.httpsclient import extract_client_id
+from mig.shared.output import format_output, reject_main
+from mig.shared.returnvalues import CLIENT_ERROR
+from mig.shared.scriptinput import fieldstorage_to_dict
 
 
 def init_cgi_script(environ, delayed_input=None):

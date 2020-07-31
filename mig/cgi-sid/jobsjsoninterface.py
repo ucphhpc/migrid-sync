@@ -32,8 +32,8 @@ import cgi
 import cgitb
 cgitb.enable()
 
-from shared.functionality.jobsjsoninterface import main
-from shared.cgiscriptstub import run_cgi_script_possibly_with_cert
+from mig.shared.functionality.jobsjsoninterface import main
+from mig.shared.cgiscriptstub import run_cgi_script_possibly_with_cert
 
 # Expect requests with a JSON formatted body and no field values
 run_cgi_script_possibly_with_cert(main, delayed_input=True, delay_format=True)

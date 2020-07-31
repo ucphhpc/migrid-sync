@@ -30,15 +30,15 @@ from __future__ import absolute_import
 
 import os
 
-from .shared import returnvalues
-from .shared.accountreq import valid_name_chars, dn_max_len, \
+from mig.shared import returnvalues
+from mig.shared.accountreq import valid_name_chars, dn_max_len, \
     account_css_helpers, account_js_helpers, account_request_template
-from .shared.base import distinguished_name_to_user
-from .shared.defaults import csrf_field
-from .shared.functional import validate_input_and_cert
-from .shared.handlers import get_csrf_limit, make_csrf_token
-from .shared.init import initialize_main_variables, find_entry
-from .shared.safeinput import html_escape
+from mig.shared.base import distinguished_name_to_user
+from mig.shared.defaults import csrf_field
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.safeinput import html_escape
 
 
 def signature():

@@ -32,7 +32,7 @@ cgitb.enable()
 
 # call restartexe!
 
-from .shared.functionality.restartexe import main
-from .shared.cgiscriptstub import run_cgi_script
+from mig.shared.functionality.restartexe import main
+from mig.shared.cgiscriptstub import run_cgi_script
 
 run_cgi_script(main)

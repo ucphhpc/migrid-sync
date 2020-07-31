@@ -33,10 +33,10 @@ import tempfile
 from binascii import hexlify
 
 from .conf import get_configuration_object
-from .shared.defaults import default_vgrid, keyword_auto
-from .shared.fileio import make_symlink
-from .shared.resource import create_resource
-from .shared.serial import load, dump
+from mig.shared.defaults import default_vgrid, keyword_auto
+from mig.shared.fileio import make_symlink
+from mig.shared.resource import create_resource
+from mig.shared.serial import load, dump
 
 sandbox_db_name = 'sandbox_users.pkl'
 

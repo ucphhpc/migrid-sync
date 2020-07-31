@@ -33,11 +33,11 @@ import os
 import time
 from random import SystemRandom
 
-from .shared.base import client_id_dir, extract_field
-from .shared.defaults import sharelinks_filename, csrf_field, \
+from mig.shared.base import client_id_dir, extract_field
+from mig.shared.defaults import sharelinks_filename, csrf_field, \
     share_mode_charset, share_id_charset
-from .shared.fileio import makedirs_rec, make_symlink, delete_symlink
-from .shared.serial import load, dump
+from mig.shared.fileio import makedirs_rec, make_symlink, delete_symlink
+from mig.shared.serial import load, dump
 
 # We split mode charset into ro, rw and rw substrings and pick one char at
 # random from the corresponding substring when generating a share ID. In that

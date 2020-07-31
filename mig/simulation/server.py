@@ -31,8 +31,8 @@ and resources
 
 import time
 
-from jobqueue import JobQueue
-from fairfitscheduler import FairFitScheduler
+from mig.server.jobqueue import JobQueue
+from mig.server.fairfitscheduler import FairFitScheduler
 
 
 class Server:
@@ -57,7 +57,7 @@ class Server:
         id,
         logger,
         conf,
-        ):
+    ):
 
         self.id = id
         self.logger = logger
@@ -81,7 +81,7 @@ class Server:
         length,
         maxprice,
         vgrid,
-        ):
+    ):
 
         self.logger.info('%s received job from %s', self.id, user_id)
 
@@ -133,7 +133,7 @@ class Server:
         length,
         minprice,
         vgrid,
-        ):
+    ):
 
         res_conf = {'RESOURCE_ID': res_id}
         res = self.scheduler.find_resource(res_conf)
@@ -179,7 +179,7 @@ class Server:
                 res['LOAD'],
                 res['CUR_PRICE'],
                 res['LOAD_MULTIPLY'],
-                )
+            )
         else:
             self.logger.info(
                 '%s scheduled empty job to %s (%s, %s, %s)',
@@ -188,7 +188,7 @@ class Server:
                 res['LOAD'],
                 res['CUR_PRICE'],
                 res['LOAD_MULTIPLY'],
-                )
+            )
 
         self.scheduler.update_price(res)
 
@@ -205,7 +205,7 @@ class Server:
 
     def migrate_jobs(self):
 
-    # Migrate all jobs that can be executed cheaper at a remote resource
+        # Migrate all jobs that can be executed cheaper at a remote resource
 
         local_jobs = self.job_queue.queue_length()
         migrate_count = 0
@@ -240,8 +240,8 @@ class Server:
                     job = self.job_queue.dequeue_job(next_i)
                     migrate_count += 1
                 else:
-                    self.logger.error('Migration to %s failed! leaving job %s at index %d'
-                            , server, job['JOB_ID'], next_i)
+                    self.logger.error(
+                        'Migration to %s failed! leaving job %s at index %d', server, job['JOB_ID'], next_i)
             else:
 
                 # self.logger.debug("%s not marked for migration", job_id)
@@ -274,7 +274,7 @@ class Server:
 
     def return_result(self):
 
-    # Return migrated jobs to source
+        # Return migrated jobs to source
 
         done_jobs = self.done_queue.queue_length()
         return_count = 0
@@ -315,8 +315,8 @@ class Server:
             # information for. If so, just leave job for later return.
 
             if not user:
-                self.logger.info("return_result: don't know %s - delay return of %s"
-                                 , owner, job_id)
+                self.logger.info(
+                    "return_result: don't know %s - delay return of %s", owner, job_id)
                 continue
 
             peer_id = self.scheduler.user_direction(user)
@@ -335,8 +335,8 @@ class Server:
             if return_count >= self.conf.migrate_limit:
                 break
 
-        self.logger.info('%s actually returned %d local and %d remote jobs'
-                         , self.id, local_count, return_count)
+        self.logger.info('%s actually returned %d local and %d remote jobs',
+                         self.id, local_count, return_count)
 
         self.returned_jobs += return_count
 
@@ -407,11 +407,11 @@ class Server:
             peer_users[name] = self.scheduler._clone_dict(user)
 
         self.scheduler.update_peer_status(peer.id, peer_servers,
-                peer_resources, peer_users)
+                                          peer_resources, peer_users)
 
     def exchange_status(self):
 
-    # migrate every time for now
+        # migrate every time for now
         # Migrate using previous status and scheduling
         # information.
 
@@ -430,7 +430,7 @@ class Server:
 
         # self.sleep()
 
-    # communicate every time for now
+        # communicate every time for now
 
         comm_freq = 1
         if timestep % comm_freq == 0:
@@ -444,5 +444,3 @@ class Server:
             self.scheduler.filter_jobs()
         qlen = self.job_queue.queue_length()
         self.logger.info('%s: %d jobs in queue', self.id, qlen)
-
-

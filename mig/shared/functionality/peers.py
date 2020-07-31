@@ -34,18 +34,18 @@ from __future__ import absolute_import
 import datetime
 import os
 
-from .shared import returnvalues
-from .shared.accountreq import peers_permit_allowed
-from .shared.base import pretty_format_user, fill_distinguished_name, \
+from mig.shared import returnvalues
+from mig.shared.accountreq import peers_permit_allowed
+from mig.shared.base import pretty_format_user, fill_distinguished_name, \
     client_id_dir
-from .shared.defaults import csrf_field, peers_filename, \
+from mig.shared.defaults import csrf_field, peers_filename, \
     pending_peers_filename, peers_fields, peer_kinds, default_pager_entries
-from .shared.functional import validate_input_and_cert
-from .shared.handlers import get_csrf_limit, make_csrf_token
-from .shared.html import man_base_js, man_base_html, html_post_helper
-from .shared.init import initialize_main_variables, find_entry
-from .shared.serial import load
-from .shared.useradm import get_full_user_map
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.html import man_base_js, man_base_html, html_post_helper
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.serial import load
+from mig.shared.useradm import get_full_user_map
 
 
 sample_users = [{'full_name': 'Jane Doe', 'country': 'DK', 'email':

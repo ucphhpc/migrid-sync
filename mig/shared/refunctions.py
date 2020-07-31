@@ -34,11 +34,11 @@ import fcntl
 import os
 import time
 
-from .shared.modified import mark_re_modified, check_res_modified, \
+from mig.shared.modified import mark_re_modified, check_res_modified, \
     reset_res_modified
-from .shared.rekeywords import get_keywords_dict as re_get_keywords_dict
-from .shared.parser import parse, check_types
-from .shared.serial import load, dump
+from mig.shared.rekeywords import get_keywords_dict as re_get_keywords_dict
+from mig.shared.parser import parse, check_types
+from mig.shared.serial import load, dump
 
 WRITE_LOCK = 'write.lock'
 RTE_SPECIALS = RUNTIMEENVS, CONF, MODTIME = \

@@ -144,8 +144,8 @@ def run_command(
     main = id
     txt_format = id
     try:
-        exec('from shared.functionality.%s import main' % function)
-        exec('from shared.output import txt_format')
+        exec('from mig.shared.functionality.%s import main' % function)
+        exec('from mig.shared.output import txt_format')
 
         # logger.debug('(%s) run %s on %s for %s' % \
         #              (pid, function, user_arguments_dict, client_id))

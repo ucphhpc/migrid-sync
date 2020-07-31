@@ -33,16 +33,16 @@ import os
 import datetime
 from urllib import quote
 
-from .shared import returnvalues
-from .shared.base import client_id_dir
-from .shared.conf import get_resource_exe
-from .shared.defaults import all_jobs, job_output_dir, csrf_field
-from .shared.fileio import unpickle, pickle
-from .shared.functional import validate_input_and_cert
-from .shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from .shared.init import initialize_main_variables, find_entry
-from .shared.ssh import copy_file_to_resource
-from .shared.validstring import valid_user_path
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir
+from mig.shared.conf import get_resource_exe
+from mig.shared.defaults import all_jobs, job_output_dir, csrf_field
+from mig.shared.fileio import unpickle, pickle
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.ssh import copy_file_to_resource
+from mig.shared.validstring import valid_user_path
 
 
 interactive_actions = ['interactive', '']

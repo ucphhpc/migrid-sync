@@ -33,18 +33,18 @@ from __future__ import absolute_import
 import os
 from binascii import hexlify
 
-from .shared import returnvalues
-from .shared.defaults import default_pager_entries, keyword_all, keyword_auto, \
+from mig.shared import returnvalues
+from mig.shared.defaults import default_pager_entries, keyword_all, keyword_auto, \
     valid_trigger_changes, valid_trigger_actions, keyword_owners, \
     keyword_members, keyword_none, csrf_field, default_vgrid_settings_limit
-from .shared.accessrequests import list_access_requests, load_access_request, \
+from mig.shared.accessrequests import list_access_requests, load_access_request, \
     build_accessrequestitem_object
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.handlers import get_csrf_limit, make_csrf_token
-from .shared.html import man_base_js, man_base_html, html_post_helper
-from .shared.init import initialize_main_variables, find_entry
-from .shared.sharelinks import build_sharelinkitem_object
-from .shared.vgrid import vgrid_add_remove_table, vgrid_list, vgrid_is_owner, \
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.html import man_base_js, man_base_html, html_post_helper
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.sharelinks import build_sharelinkitem_object
+from mig.shared.vgrid import vgrid_add_remove_table, vgrid_list, vgrid_is_owner, \
     vgrid_settings, vgrid_sharelinks, vgrid_list_parents, vgrid_owners, \
     vgrid_members, vgrid_resources, vgrid_restrict_write_support
 

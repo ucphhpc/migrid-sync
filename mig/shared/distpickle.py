@@ -33,10 +33,10 @@ file opening from pickle operations.
 """
 from __future__ import absolute_import
 
-from .shared import distfile
-from .shared.distfile import LOCK_EX, LOCK_SH
+from mig.shared import distfile
+from mig.shared.distfile import LOCK_EX, LOCK_SH
 # Expose loads and dumps from serial
-from .shared.serial import loads, dumps
+from mig.shared.serial import loads, dumps
 
 
 def dump(obj, path, protocol=0):

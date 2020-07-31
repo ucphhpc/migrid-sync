@@ -28,7 +28,7 @@
 """One-shot creation of final backup archives for write-once files"""
 from __future__ import absolute_import
 
-from .shared.functionality.createfreeze import main as createfreeze_main, \
+from mig.shared.functionality.createfreeze import main as createfreeze_main, \
     signature as createfreeze_signature, keyword_final
 
 

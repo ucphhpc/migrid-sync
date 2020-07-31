@@ -34,18 +34,18 @@ from __future__ import absolute_import
 
 import os
 
-from .shared import returnvalues
+from mig.shared import returnvalues
 
-from .shared.base import client_id_dir
-from .shared.cloud import check_cloud_available, allowed_cloud_images, \
+from mig.shared.base import client_id_dir
+from mig.shared.cloud import check_cloud_available, allowed_cloud_images, \
      status_all_cloud_instances, cloud_access_allowed, cloud_edit_actions, \
      cloud_load_instance
-from .shared.defaults import csrf_field, keyword_all
-from .shared.functional import validate_input_and_cert
-from .shared.handlers import get_csrf_limit, make_csrf_token
-from .shared.init import find_entry, initialize_main_variables
-from .shared.html import man_base_js, man_base_html, html_post_helper
-from .shared.useradm import get_full_user_map
+from mig.shared.defaults import csrf_field, keyword_all
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.init import find_entry, initialize_main_variables
+from mig.shared.html import man_base_js, man_base_html, html_post_helper
+from mig.shared.useradm import get_full_user_map
 
 
 def signature():

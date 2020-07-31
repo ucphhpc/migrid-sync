@@ -32,7 +32,7 @@ cgitb.enable()
 
 # call startstore!
 
-from .shared.functionality.startstore import main
-from .shared.cgiscriptstub import run_cgi_script
+from mig.shared.functionality.startstore import main
+from mig.shared.cgiscriptstub import run_cgi_script
 
 run_cgi_script(main)

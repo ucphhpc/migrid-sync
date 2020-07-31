@@ -35,16 +35,16 @@ from __future__ import absolute_import
 import os
 import time
 
-from .shared import returnvalues
-from .shared.base import client_id_dir
-from .shared.defaults import csrf_field
-from .shared.editing import acquire_edit_lock, edit_lock_suffix, cm_css, \
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir
+from mig.shared.defaults import csrf_field
+from mig.shared.editing import acquire_edit_lock, edit_lock_suffix, cm_css, \
     cm_javascript, cm_options, miu_css, miu_javascript, miu_options, \
     init_editor_js, run_editor_js, change_editor_mode_js, kill_editor_js
-from .shared.functional import validate_input_and_cert
-from .shared.handlers import get_csrf_limit, make_csrf_token
-from .shared.init import initialize_main_variables, find_entry
-from .shared.validstring import valid_user_path
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.validstring import valid_user_path
 
 edit_includes = ['switcher', 'newline', 'submit', 'discard', 'spellcheck',
                  'save']

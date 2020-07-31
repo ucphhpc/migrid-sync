@@ -49,10 +49,10 @@ __version__ = '$Revision$'
 
 _userscript_version = __version__
 
-from .shared.base import get_xgi_bin
-from .shared.conf import get_configuration_object
-from .shared.defaults import file_dest_sep, upload_block_size, keyword_auto
-from .shared.publicscriptgen import *
+from mig.shared.base import get_xgi_bin
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import file_dest_sep, upload_block_size, keyword_auto
+from mig.shared.publicscriptgen import *
 _publicscript_version = __version__
 __version__ = '%s,%s' % (_userscript_version, _publicscript_version)
 

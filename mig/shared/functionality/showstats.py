@@ -42,11 +42,11 @@ import sys
 import time
 import urllib
 
-from .shared import returnvalues
-from .shared import vgrid
-from .shared.base import requested_page
-from .shared.functional import validate_input
-from .shared.init import initialize_main_variables, find_entry
+from mig.shared import returnvalues
+from mig.shared import vgrid
+from mig.shared.base import requested_page
+from mig.shared.functional import validate_input
+from mig.shared.init import initialize_main_variables, find_entry
 from functools import reduce
 
 # allowed parameters, first value is default

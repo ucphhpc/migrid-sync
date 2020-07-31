@@ -30,7 +30,7 @@ import cgi
 import cgitb
 cgitb.enable()
 
-from .shared.functionality.settings import main
-from .shared.cgiscriptstub import run_cgi_script
+from mig.shared.functionality.settings import main
+from mig.shared.cgiscriptstub import run_cgi_script
 
 run_cgi_script(main)

@@ -43,13 +43,13 @@ try:
 except ImportError:
     pyotp = None
 
-from .shared.base import client_id_dir, extract_field, force_utf8
-from .shared.defaults import twofactor_key_name, twofactor_interval_name, \
+from mig.shared.base import client_id_dir, extract_field, force_utf8
+from mig.shared.defaults import twofactor_key_name, twofactor_interval_name, \
     twofactor_key_bytes, twofactor_cookie_bytes, twofactor_cookie_ttl
-from .shared.fileio import read_file, delete_file, delete_symlink, \
+from mig.shared.fileio import read_file, delete_file, delete_symlink, \
     pickle, unpickle, make_symlink
-from .shared.gdp.all import get_base_client_id
-from .shared.pwhash import scramble_password, unscramble_password
+from mig.shared.gdp.all import get_base_client_id
+from mig.shared.pwhash import scramble_password, unscramble_password
 
 # Set OTP windows range (+/-) to compensate for offset 
 # and drifting offline clocks

@@ -60,7 +60,7 @@ import threading
 import tempfile
 
 # MiG utilities:
-from .shared.conf import get_configuration_object
+from mig.shared.conf import get_configuration_object
 config = get_configuration_object()
 logger = config.logger
 

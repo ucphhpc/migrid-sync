@@ -29,14 +29,14 @@
 """Deletion of runtime environments"""
 from __future__ import absolute_import
 
-from .shared import returnvalues
-from .shared.base import valid_dir_input
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.handlers import safe_handler, get_csrf_limit
-from .shared.init import initialize_main_variables, find_entry
-from .shared.refunctions import is_runtime_environment, \
+from mig.shared import returnvalues
+from mig.shared.base import valid_dir_input
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.handlers import safe_handler, get_csrf_limit
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.refunctions import is_runtime_environment, \
      get_re_dict, delete_runtimeenv
-from .shared.vgridaccess import resources_using_re
+from mig.shared.vgridaccess import resources_using_re
 
 
 def signature():

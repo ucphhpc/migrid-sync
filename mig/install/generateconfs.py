@@ -34,7 +34,7 @@ import datetime
 import getopt
 import sys
 
-from shared.install import generate_confs
+from mig.shared.install import generate_confs
 
 
 def usage(options):

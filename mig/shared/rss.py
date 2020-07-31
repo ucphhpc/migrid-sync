@@ -101,7 +101,7 @@ def write_rss_feed(rss_feed, destination, insert_header=''):
 
 
 if __name__ == "__main__":
-    from .shared.conf import get_configuration_object
+    from mig.shared.conf import get_configuration_object
     configuration = get_configuration_object()
     feed_base = "demofeed"
     feed_raw = "%s.xml" % feed_base

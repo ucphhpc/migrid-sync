@@ -29,9 +29,9 @@
 
 import os
 
-from shared.base import invisible_path
-from shared.safeinput import valid_path
-from shared.validstring import possible_user_id, possible_gdp_user_id, \
+from mig.shared.base import invisible_path
+from mig.shared.safeinput import valid_path
+from mig.shared.validstring import possible_user_id, possible_gdp_user_id, \
     possible_sharelink_id, possible_job_id, possible_jupyter_mount_id, \
     valid_user_path, is_valid_email_address
 

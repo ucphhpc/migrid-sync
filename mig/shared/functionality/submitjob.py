@@ -30,20 +30,20 @@ from __future__ import absolute_import
 
 import os
 
-from .shared import returnvalues
-from .shared.base import client_id_dir
-from .shared.defaults import any_vgrid, default_mrsl_filename, maxfill_fields, \
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir
+from mig.shared.defaults import any_vgrid, default_mrsl_filename, maxfill_fields, \
     keyword_all, csrf_field
-from .shared.functional import validate_input_and_cert
-from .shared.handlers import get_csrf_limit, make_csrf_token
-from .shared.html import fancy_upload_js, fancy_upload_html, \
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.html import fancy_upload_js, fancy_upload_html, \
     themed_styles
-from .shared.init import initialize_main_variables, find_entry
-from .shared.mrslkeywords import get_job_specs
-from .shared.parser import parse_lines
-from .shared.refunctions import list_runtime_environments
-from .shared.useradm import get_default_mrsl
-from .shared.vgridaccess import user_vgrid_access, user_allowed_res_exes
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.mrslkeywords import get_job_specs
+from mig.shared.parser import parse_lines
+from mig.shared.refunctions import list_runtime_environments
+from mig.shared.useradm import get_default_mrsl
+from mig.shared.vgridaccess import user_vgrid_access, user_allowed_res_exes
 
 
 def signature():

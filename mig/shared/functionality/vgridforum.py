@@ -34,15 +34,15 @@ from __future__ import absolute_import
 
 import os
 
-from .shared import returnvalues
-from .shared.forum import list_single_thread, list_threads, reply, new_subject, \
+from mig.shared import returnvalues
+from mig.shared.forum import list_single_thread, list_threads, reply, new_subject, \
     search_threads, toggle_subscribe, list_subscribers
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.handlers import safe_handler, get_csrf_limit
-from .shared.html import themed_styles
-from .shared.init import initialize_main_variables, find_entry
-from .shared.notification import notify_user_thread
-from .shared.vgrid import vgrid_is_owner_or_member
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.handlers import safe_handler, get_csrf_limit
+from mig.shared.html import themed_styles
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.notification import notify_user_thread
+from mig.shared.vgrid import vgrid_is_owner_or_member
 
 get_actions = ['show_all', 'show_thread', 'search']
 post_actions = ['new_thread', 'reply', 'toggle_subscribe']

@@ -29,11 +29,12 @@
 """Edit pickled objects on disk"""
 
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import sys
 
-from shared.serial import pickle
+from mig.shared.serial import pickle
 
 
 if len(sys.argv) < 2:

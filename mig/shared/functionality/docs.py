@@ -34,12 +34,12 @@ from __future__ import absolute_import
 import fnmatch
 import os
 
-from .shared import mrslkeywords
-from .shared import resconfkeywords
-from .shared import returnvalues
-from .shared.functional import validate_input
-from .shared.init import initialize_main_variables
-from .shared.output import get_valid_outputformats
+from mig.shared import mrslkeywords
+from mig.shared import resconfkeywords
+from mig.shared import returnvalues
+from mig.shared.functional import validate_input
+from mig.shared.init import initialize_main_variables
+from mig.shared.output import get_valid_outputformats
 
 
 def signature():

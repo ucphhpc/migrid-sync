@@ -26,7 +26,7 @@ from __future__ import absolute_import
 
 import os
 import fcntl
-from .shared.serial import load
+from mig.shared.serial import load
 
 
 def load_system_map(configuration, kind, do_lock):

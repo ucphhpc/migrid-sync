@@ -38,9 +38,9 @@ import tempfile
 import time
 import zipfile
 
-from .shared.base import force_utf8_rec
-from .shared.defaults import default_chunk_size, default_max_chunks
-from .shared.serial import dump, load
+from mig.shared.base import force_utf8_rec
+from mig.shared.defaults import default_chunk_size, default_max_chunks
+from mig.shared.serial import dump, load
 
 __valid_hash_algos = {'md5': md5, 'sha1': sha1, 'sha256': sha256,
                       'sha512': sha512}

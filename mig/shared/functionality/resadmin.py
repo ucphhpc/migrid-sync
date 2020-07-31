@@ -36,17 +36,17 @@ from __future__ import absolute_import
 import os
 from binascii import hexlify
 
-from .shared import returnvalues
-from .shared.accessrequests import list_access_requests, load_access_request, \
+from mig.shared import returnvalues
+from mig.shared.accessrequests import list_access_requests, load_access_request, \
     build_accessrequestitem_object
-from .shared.base import sandbox_resource
-from .shared.defaults import default_pager_entries, csrf_field
-from .shared.functional import validate_input_and_cert
-from .shared.handlers import get_csrf_limit, make_csrf_token
-from .shared.html import man_base_js, man_base_html, html_post_helper
-from .shared.init import initialize_main_variables, find_entry
-from .shared.refunctions import get_re_dict, list_runtime_environments
-from .shared.vgridaccess import res_vgrid_access, get_vgrid_map_vgrids, \
+from mig.shared.base import sandbox_resource
+from mig.shared.defaults import default_pager_entries, csrf_field
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.html import man_base_js, man_base_html, html_post_helper
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.refunctions import get_re_dict, list_runtime_environments
+from mig.shared.vgridaccess import res_vgrid_access, get_vgrid_map_vgrids, \
     get_resource_map, CONF, OWNERS, RESID
 
 

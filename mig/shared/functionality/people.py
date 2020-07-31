@@ -30,16 +30,16 @@ from __future__ import absolute_import
 
 from urllib import quote
 
-from .shared import returnvalues
-from .shared.base import pretty_format_user, extract_field
-from .shared.defaults import default_pager_entries, any_vgrid, csrf_field
-from .shared.functional import validate_input_and_cert
-from .shared.handlers import get_csrf_limit, make_csrf_token
-from .shared.html import man_base_js, man_base_html, html_post_helper
-from .shared.init import initialize_main_variables, find_entry
-from .shared.modified import pending_users_update, pending_vgrids_update
-from .shared.user import anon_to_real_user_map, user_gravatar_url
-from .shared.vgridaccess import user_visible_user_confs, user_vgrid_access, \
+from mig.shared import returnvalues
+from mig.shared.base import pretty_format_user, extract_field
+from mig.shared.defaults import default_pager_entries, any_vgrid, csrf_field
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.html import man_base_js, man_base_html, html_post_helper
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.modified import pending_users_update, pending_vgrids_update
+from mig.shared.user import anon_to_real_user_map, user_gravatar_url
+from mig.shared.vgridaccess import user_visible_user_confs, user_vgrid_access, \
     CONF
 
 list_operations = ['showlist', 'list']

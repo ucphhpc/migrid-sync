@@ -32,7 +32,7 @@ cgitb.enable()
 
 # call restartst0re!
 
-from .shared.functionality.restartstore import main
-from .shared.cgiscriptstub import run_cgi_script
+from mig.shared.functionality.restartstore import main
+from mig.shared.cgiscriptstub import run_cgi_script
 
 run_cgi_script(main)

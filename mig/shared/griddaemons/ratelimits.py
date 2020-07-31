@@ -30,7 +30,7 @@
 import os
 import time
 import traceback
-from shared.fileio import pickle, unpickle, acquire_file_lock, \
+from mig.shared.fileio import pickle, unpickle, acquire_file_lock, \
     release_file_lock, touch
 
 default_max_user_hits, default_fail_cache = 5, 120

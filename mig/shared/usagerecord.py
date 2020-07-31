@@ -50,8 +50,8 @@ from xml.dom import getDOMImplementation,XMLNS_NAMESPACE
 
 # MiG-specific imports
 
-from .shared.configuration import Configuration
-from .shared.fileio import unpickle,write_file
+from mig.shared.configuration import Configuration
+from mig.shared.fileio import unpickle,write_file
 
 # Description of the Usage Record XML format:
 

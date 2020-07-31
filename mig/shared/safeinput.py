@@ -42,12 +42,12 @@ from email.utils import parseaddr, formataddr
 from string import letters, digits, printable
 from unicodedata import category, normalize, name as unicode_name
 
-from .shared.base import force_unicode, force_utf8
-from .shared.defaults import src_dst_sep, user_id_charset, user_id_max_length, \
+from mig.shared.base import force_unicode, force_utf8
+from mig.shared.defaults import src_dst_sep, user_id_charset, user_id_max_length, \
     session_id_charset, session_id_length, workflow_id_length, MAX_SWEEP
-from .shared.listhandling import frange
-from .shared.validstring import valid_user_path
-from .shared.valuecheck import lines_value_checker, \
+from mig.shared.listhandling import frange
+from mig.shared.validstring import valid_user_path
+from mig.shared.valuecheck import lines_value_checker, \
     max_jobs_value_checker
 
 VALID_WORKFLOW_ATTRIBUTES = [

@@ -28,8 +28,8 @@
 """Request a cloud service"""
 from __future__ import absolute_import
 
-from .shared.cgiscriptstub import run_cgi_script
-from .shared.functionality.reqcloudservice import main
+from mig.shared.cgiscriptstub import run_cgi_script
+from mig.shared.functionality.reqcloudservice import main
 import cgi
 #import cgitb
 # cgitb.enable()

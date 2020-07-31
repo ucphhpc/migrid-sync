@@ -30,13 +30,13 @@ from __future__ import absolute_import
 
 import datetime
 
-from .shared import returnvalues
-from .shared.defaults import default_vgrid, csrf_field
-from .shared.functional import validate_input, REJECT_UNSET
-from .shared.gridstat import GridStat
-from .shared.handlers import get_csrf_limit, safe_handler, make_csrf_token
-from .shared.init import initialize_main_variables
-from .shared.sandbox import load_sandbox_db, save_sandbox_db
+from mig.shared import returnvalues
+from mig.shared.defaults import default_vgrid, csrf_field
+from mig.shared.functional import validate_input, REJECT_UNSET
+from mig.shared.gridstat import GridStat
+from mig.shared.handlers import get_csrf_limit, safe_handler, make_csrf_token
+from mig.shared.init import initialize_main_variables
+from mig.shared.sandbox import load_sandbox_db, save_sandbox_db
 
 # sandbox db has the format: {username: (password, [list_of_resources])}
 

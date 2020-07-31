@@ -42,9 +42,9 @@ import sys
 import os
 import stat as realstat
 
-from shared import distbase
-from shared.distbase import HTTPS_CERT_PORT, BASE_HOME, get_leader
-from shared.distos import path as distpath
+from mig.shared import distbase
+from mig.shared.distbase import HTTPS_CERT_PORT, BASE_HOME, get_leader
+from mig.shared.distos import path as distpath
 
 # load distbase from parent directory
 

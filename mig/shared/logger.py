@@ -259,7 +259,7 @@ def register_hangup_handler(conf):
 
 
 if __name__ == "__main__":
-    from .shared.conf import get_configuration_object
+    from mig.shared.conf import get_configuration_object
     import os
     conf = get_configuration_object()
     print("Unit testing logger functions")

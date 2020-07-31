@@ -33,15 +33,15 @@ import sys
 import fcntl
 import time
 
-from .shared import returnvalues
-from .shared.base import valid_dir_input
-from .shared.cgishared import init_cgiscript_possibly_with_cert
-from .shared.conf import get_resource_configuration
-from .shared.fileio import send_message_to_grid_script
-from .shared.findtype import is_resource
-from .shared.functional import validate_input, REJECT_UNSET
-from .shared.httpsclient import check_source_ip
-from .shared.init import initialize_main_variables
+from mig.shared import returnvalues
+from mig.shared.base import valid_dir_input
+from mig.shared.cgishared import init_cgiscript_possibly_with_cert
+from mig.shared.conf import get_resource_configuration
+from mig.shared.fileio import send_message_to_grid_script
+from mig.shared.findtype import is_resource
+from mig.shared.functional import validate_input, REJECT_UNSET
+from mig.shared.httpsclient import check_source_ip
+from mig.shared.init import initialize_main_variables
 
 
 def signature():

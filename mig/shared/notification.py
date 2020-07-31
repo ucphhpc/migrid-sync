@@ -49,18 +49,18 @@ try:
 except ImportError as ierr:
     gnupg = None
 
-from .shared.base import force_utf8, generate_https_urls
-from .shared.defaults import email_keyword_list, job_output_dir, \
+from mig.shared.base import force_utf8, generate_https_urls
+from mig.shared.defaults import email_keyword_list, job_output_dir, \
     transfer_output_dir
-from .shared.fileio import send_message_to_grid_notify
-from .shared.safeinput import is_valid_simple_email
-from .shared.settings import load_settings
+from mig.shared.fileio import send_message_to_grid_notify
+from mig.shared.safeinput import is_valid_simple_email
+from mig.shared.settings import load_settings
 
 # might be python 2.4, without xml.etree
 # ...in which case: better not configure usage_record_dir
 
 try:
-    from .shared.usagerecord import UsageRecord
+    from mig.shared.usagerecord import UsageRecord
 except Exception as err:
     pass
 

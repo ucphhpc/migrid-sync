@@ -32,7 +32,7 @@ from __future__ import absolute_import
 
 import datetime
 
-from .shared.defaults import keyword_all
+from mig.shared.defaults import keyword_all
 
 # This is the main location for defining sharelink keywords. All other
 # sharelink handling functions should only operate on keywords defined here.

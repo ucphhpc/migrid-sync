@@ -34,11 +34,11 @@ import time
 
 from glob import glob
 
-from .shared.base import client_id_dir
-from .shared.fileio import send_message_to_grid_script, unpickle
-from .shared.mrslparser import parse
-from .shared.vgrid import init_vgrid_script_list
-from .shared.vgridaccess import get_vgrid_map, OWNERS, MEMBERS, VGRIDS
+from mig.shared.base import client_id_dir
+from mig.shared.fileio import send_message_to_grid_script, unpickle
+from mig.shared.mrslparser import parse
+from mig.shared.vgrid import init_vgrid_script_list
+from mig.shared.vgridaccess import get_vgrid_map, OWNERS, MEMBERS, VGRIDS
 
 JOB = 'job'
 QUEUE = 'queue'

@@ -33,12 +33,12 @@ import datetime
 import os
 import time
 
-from .shared.base import client_id_dir
-from .shared.defaults import datatransfers_filename, user_keys_dir, \
+from mig.shared.base import client_id_dir
+from mig.shared.defaults import datatransfers_filename, user_keys_dir, \
      transfer_output_dir
-from .shared.fileio import makedirs_rec, delete_file
-from .shared.safeeval import subprocess_popen, subprocess_pipe
-from .shared.serial import load, dump
+from mig.shared.fileio import makedirs_rec, delete_file
+from mig.shared.safeeval import subprocess_popen, subprocess_pipe
+from mig.shared.serial import load, dump
 
 default_key_type = 'rsa'
 default_key_bits = 2048
@@ -401,7 +401,7 @@ def kill_sub_pid(configuration, client_id, transfer_id, sub_pid, sig=9):
 
 
 if __name__ == "__main__":
-    from .shared.conf import get_configuration_object
+    from mig.shared.conf import get_configuration_object
     conf = get_configuration_object()
     print("Unit testing transfer functions")
     print("=== sub pid functions ===")

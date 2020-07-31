@@ -35,9 +35,9 @@ import hashlib
 import os
 from urllib import urlencode
 
-from .shared.base import client_dir_id, client_id_dir
-from .shared.defaults import litmus_id
-from .shared.settings import load_settings, load_profile
+from mig.shared.base import client_dir_id, client_id_dir
+from mig.shared.defaults import litmus_id
+from mig.shared.settings import load_settings, load_profile
 
 
 def anon_user_id(user_id):
@@ -129,7 +129,7 @@ def inline_image(configuration, path):
 
 if __name__ == "__main__":
     print("= Unit Testing =")
-    from .shared.conf import get_configuration_object
+    from mig.shared.conf import get_configuration_object
     conf = get_configuration_object()
     print("== List Users =")
     all_users = list_users(conf)

@@ -33,15 +33,15 @@ from __future__ import absolute_import
 
 import socket
 
-from .shared import resconfkeywords
-from .shared import returnvalues
-from .shared.defaults import csrf_field
-from .shared.functional import validate_input_and_cert
-from .shared.handlers import get_csrf_limit, make_csrf_token
-from .shared.init import initialize_main_variables, find_entry
-from .shared.refunctions import list_runtime_environments
-from .shared.resource import init_conf, empty_resource_config
-from .shared.vgridaccess import res_vgrid_access
+from mig.shared import resconfkeywords
+from mig.shared import returnvalues
+from mig.shared.defaults import csrf_field
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.refunctions import list_runtime_environments
+from mig.shared.resource import init_conf, empty_resource_config
+from mig.shared.vgridaccess import res_vgrid_access
 
 
 def signature():

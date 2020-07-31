@@ -28,11 +28,11 @@
 """Remove a trigger from a given vgrid"""
 from __future__ import absolute_import
 
-from .shared import returnvalues
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.handlers import safe_handler, get_csrf_limit
-from .shared.init import initialize_main_variables, find_entry
-from .shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
+from mig.shared import returnvalues
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.handlers import safe_handler, get_csrf_limit
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
      vgrid_is_trigger, vgrid_remove_triggers
 
 

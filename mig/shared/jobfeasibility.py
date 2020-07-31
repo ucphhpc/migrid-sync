@@ -39,15 +39,15 @@ from __future__ import absolute_import
 import os
 from time import time
 
-from .shared.base import client_id_dir
-from .shared.defaults import default_vgrid, keyword_all
-from .shared.mrslkeywords import get_keywords_dict
-from .shared.resource import anon_resource_id, list_resources, \
+from mig.shared.base import client_id_dir
+from mig.shared.defaults import default_vgrid, keyword_all
+from mig.shared.mrslkeywords import get_keywords_dict
+from mig.shared.resource import anon_resource_id, list_resources, \
     anon_to_real_res_map
-from .shared.resconfkeywords import get_resource_keywords
-from .shared.safeinput import is_valid_simple_email
-from .shared.vgrid import vgrid_resources
-from .shared.vgridaccess import get_vgrid_map, get_resource_map, \
+from mig.shared.resconfkeywords import get_resource_keywords
+from mig.shared.safeinput import is_valid_simple_email
+from mig.shared.vgrid import vgrid_resources
+from mig.shared.vgridaccess import get_vgrid_map, get_resource_map, \
     real_to_anon_res_map, user_vgrid_access, CONF, RESOURCES, ALLOW
 from functools import reduce
 

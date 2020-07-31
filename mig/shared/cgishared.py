@@ -31,10 +31,10 @@ from __future__ import absolute_import
 
 import os
 
-from .shared.base import requested_page
-from .shared.cgioutput import CGIOutput
-from .shared.conf import get_configuration_object
-from .shared.httpsclient import extract_client_id
+from mig.shared.base import requested_page
+from mig.shared.cgioutput import CGIOutput
+from mig.shared.conf import get_configuration_object
+from mig.shared.httpsclient import extract_client_id
 
 
 def cgiscript_header(header_info=None, content_type='text/html'):

@@ -33,19 +33,19 @@ import os
 import socket
 import time
 
-from shared.base import client_dir_id, client_id_dir, client_alias, \
+from mig.shared.base import client_dir_id, client_id_dir, client_alias, \
     force_utf8, get_short_id
-from shared.defaults import dav_domain
-from shared.fileio import unpickle
-from shared.gdp.all import get_project_from_user_id
-from shared.sharelinks import extract_mode_id
-from shared.ssh import parse_pub_key
-from shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
+from mig.shared.defaults import dav_domain
+from mig.shared.fileio import unpickle
+from mig.shared.gdp.all import get_project_from_user_id
+from mig.shared.sharelinks import extract_mode_id
+from mig.shared.ssh import parse_pub_key
+from mig.shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
     https_authkeys, get_authkeys, ssh_authpasswords, davs_authpasswords, \
     ftps_authpasswords, https_authpasswords, get_authpasswords, \
     ssh_authdigests, davs_authdigests, ftps_authdigests, https_authdigests, \
     generate_password_hash, generate_password_digest, load_user_dict
-from shared.validstring import possible_sharelink_id, possible_job_id, \
+from mig.shared.validstring import possible_sharelink_id, possible_job_id, \
     possible_jupyter_mount_id
 
 # NOTE: auth keys file may easily contain only blank lines, so we decide to

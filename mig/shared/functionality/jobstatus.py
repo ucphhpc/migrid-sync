@@ -33,22 +33,22 @@ import os
 import time
 from binascii import hexlify
 
-from .shared import returnvalues
-from .shared.base import client_id_dir
-from .shared.defaults import all_jobs, job_output_dir, csrf_field
-from .shared.fileio import unpickle
-from .shared.functional import validate_input_and_cert
-from .shared.handlers import get_csrf_limit, make_csrf_token
-from .shared.html import html_post_helper
-from .shared.init import initialize_main_variables
-from .shared.job import get_job_ids_with_specified_project_name
-from .shared.mrslparser import expand_variables
-from .shared.parseflags import verbose, sorted, interactive
-from .shared.resource import anon_resource_id
-from .shared.validstring import valid_user_path
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir
+from mig.shared.defaults import all_jobs, job_output_dir, csrf_field
+from mig.shared.fileio import unpickle
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.html import html_post_helper
+from mig.shared.init import initialize_main_variables
+from mig.shared.job import get_job_ids_with_specified_project_name
+from mig.shared.mrslparser import expand_variables
+from mig.shared.parseflags import verbose, sorted, interactive
+from mig.shared.resource import anon_resource_id
+from mig.shared.validstring import valid_user_path
 
 try:
-    from .shared import arcwrapper
+    from mig.shared import arcwrapper
 except Exception as exc:
     # Ignore errors and let it crash if ARC is enabled without the lib
     pass

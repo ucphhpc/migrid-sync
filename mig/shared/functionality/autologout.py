@@ -31,16 +31,16 @@ from __future__ import absolute_import
 
 import os
 
-from .shared.auth import expire_twofactor_session
-from .shared import returnvalues
-from .shared.defaults import csrf_field
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.handlers import trust_handler, get_csrf_limit
-from .shared.httpsclient import extract_client_openid
-from .shared.init import initialize_main_variables
-from .shared.pwhash import make_csrf_token
-from .shared.useradm import expire_oid_sessions, find_oid_sessions
-from .shared.url import base32urldecode
+from mig.shared.auth import expire_twofactor_session
+from mig.shared import returnvalues
+from mig.shared.defaults import csrf_field
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.handlers import trust_handler, get_csrf_limit
+from mig.shared.httpsclient import extract_client_openid
+from mig.shared.init import initialize_main_variables
+from mig.shared.pwhash import make_csrf_token
+from mig.shared.useradm import expire_oid_sessions, find_oid_sessions
+from mig.shared.url import base32urldecode
 
 
 def signature():

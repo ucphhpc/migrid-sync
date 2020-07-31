@@ -28,7 +28,7 @@
 """One-shot import of contents from archive"""
 from __future__ import absolute_import
 
-from .shared.functionality.cp import main as importfreeze_main, \
+from mig.shared.functionality.cp import main as importfreeze_main, \
     signature as importfreeze_signature
 
 

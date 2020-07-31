@@ -35,18 +35,18 @@ import shutil
 from binascii import hexlify
 import fcntl
 
-from .shared import resadm
-from .shared import returnvalues
-from .shared.conf import get_resource_configuration, get_resource_exe
-from .shared.defaults import default_vgrid
-from .shared.fileio import make_symlink, write_zipfile, copy
-from .shared.functional import validate_input, REJECT_UNSET
-from .shared.handlers import safe_handler, get_csrf_limit
-from .shared.init import initialize_main_variables
-from .shared.sandbox import load_sandbox_db, save_sandbox_db, \
+from mig.shared import resadm
+from mig.shared import returnvalues
+from mig.shared.conf import get_resource_configuration, get_resource_exe
+from mig.shared.defaults import default_vgrid
+from mig.shared.fileio import make_symlink, write_zipfile, copy
+from mig.shared.functional import validate_input, REJECT_UNSET
+from mig.shared.handlers import safe_handler, get_csrf_limit
+from mig.shared.init import initialize_main_variables
+from mig.shared.sandbox import load_sandbox_db, save_sandbox_db, \
     create_sss_resource
-from .shared.safeeval import subprocess_call
-from .shared.vgridaccess import get_vgrid_map_vgrids
+from mig.shared.safeeval import subprocess_call
+from mig.shared.vgridaccess import get_vgrid_map_vgrids
 
 # sandbox db has the format: {username: (password, [list_of_resources])}
 

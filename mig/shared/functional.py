@@ -35,16 +35,16 @@ import time
 
 # REJECT_UNSET is not used directly but exposed to functionality
 
-from .shared.accountstate import check_account_status, \
+from mig.shared.accountstate import check_account_status, \
     check_update_account_expire
-from .shared.base import requested_page, force_utf8
-from .shared.defaults import csrf_field, auth_openid_ext_db
-from .shared.findtype import is_user
-from .shared.httpsclient import extract_client_cert, extract_client_openid, \
+from mig.shared.base import requested_page, force_utf8
+from mig.shared.defaults import csrf_field, auth_openid_ext_db
+from mig.shared.findtype import is_user
+from mig.shared.httpsclient import extract_client_cert, extract_client_openid, \
     extract_base_url
-from .shared.init import find_entry, make_title_entry, make_header_entry
-from .shared.safeinput import validated_input, REJECT_UNSET
-from .shared.useradm import expire_oid_sessions
+from mig.shared.init import find_entry, make_title_entry, make_header_entry
+from mig.shared.safeinput import validated_input, REJECT_UNSET
+from mig.shared.useradm import expire_oid_sessions
 
 
 def warn_on_rejects(rejects, output_objects):

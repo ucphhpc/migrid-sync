@@ -41,7 +41,7 @@ import os
 import socket
 import sys
 
-from shared.install import create_user
+from mig.shared.install import create_user
 
 def usage(options):
     """Usage help"""

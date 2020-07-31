@@ -32,12 +32,12 @@ import sys
 import time
 import logging
 
-from shared.base import client_id_dir, client_dir_id, get_short_id, \
+from mig.shared.base import client_id_dir, client_dir_id, get_short_id, \
     invisible_path, allow_script, brief_list
 
 
 if __name__ == "__main__":
-    from shared.conf import get_configuration_object
+    from mig.shared.conf import get_configuration_object
     configuration = get_configuration_object()
     logging.basicConfig(filename=None, level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(message)s")
@@ -72,7 +72,7 @@ if __name__ == "__main__":
               (client_dir, test_dir))
         sys.exit(1)
     if client_short != test_short:
-        print("ERROR: Expected match on % but found: %s vs %s" %
+        print("ERROR: Expected match on %s but found: %s vs %s" %
               (short_alias, client_short, test_short))
         sys.exit(1)
 

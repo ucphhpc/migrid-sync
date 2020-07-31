@@ -39,15 +39,15 @@ try:
 except ImportError:
     iso3166 = None
 
-from .shared.base import force_utf8, canonical_user, client_id_dir, \
+from mig.shared.base import force_utf8, canonical_user, client_id_dir, \
     distinguished_name_to_user
-from .shared.defaults import peers_fields, pending_peers_filename
-from .shared.fileio import delete_file
+from mig.shared.defaults import peers_fields, pending_peers_filename
+from mig.shared.fileio import delete_file
 # Expose some helper variables for functionality backends
-from .shared.safeinput import name_extras, password_extras, password_min_len, \
+from mig.shared.safeinput import name_extras, password_extras, password_min_len, \
     password_max_len, valid_password_chars, valid_name_chars, dn_max_len, \
     html_escape
-from .shared.serial import load, dump
+from mig.shared.serial import load, dump
 
 
 def account_css_helpers(configuration):

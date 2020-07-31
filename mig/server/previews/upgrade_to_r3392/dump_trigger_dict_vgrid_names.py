@@ -13,9 +13,9 @@ TRIGGER_DICT_FILE = 'trigger_dict.pck'
 os.environ['MIG_CONF'] = MIG_CONF
 sys.path.append(MIG_HOME)
 
-from shared.conf import get_configuration_object
-from shared.logger import _debug_format, _default_format
-from shared.fileio import unpickle
+from mig.shared.conf import get_configuration_object
+from mig.shared.logger import _debug_format, _default_format
+from mig.shared.fileio import unpickle
 
 
 def get_logger(loglevel=logging.INFO):

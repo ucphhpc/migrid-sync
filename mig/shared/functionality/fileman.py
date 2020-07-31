@@ -30,19 +30,19 @@ their home directories.
 """
 from __future__ import absolute_import
 
-from .shared import returnvalues
-from .shared.base import client_id_dir
-from .shared.defaults import trash_linkname, csrf_backends, csrf_field, \
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir
+from mig.shared.defaults import trash_linkname, csrf_backends, csrf_field, \
     default_max_chunks
-from .shared.freezefunctions import import_freeze_form
-from .shared.functional import validate_input_and_cert
-from .shared.functionality.editor import advanced_editor_css_deps, \
+from mig.shared.freezefunctions import import_freeze_form
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.functionality.editor import advanced_editor_css_deps, \
     advanced_editor_js_deps, lock_info, edit_file
-from .shared.gdp.all import get_project_from_client_id
-from .shared.handlers import get_csrf_limit, make_csrf_token
-from .shared.html import themed_styles, legacy_user_interface
-from .shared.init import initialize_main_variables, find_entry, extract_menu
-from .shared.sharelinks import create_share_link_form, import_share_link_form
+from mig.shared.gdp.all import get_project_from_client_id
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.html import themed_styles, legacy_user_interface
+from mig.shared.init import initialize_main_variables, find_entry, extract_menu
+from mig.shared.sharelinks import create_share_link_form, import_share_link_form
 
 
 def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
@@ -74,7 +74,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     for (target_op, token) in csrf_map.items():
         fill_entries["%s_csrf_token" % target_op] = token
 
-    # TODO: switch to use shared fancy_upload_html from shared.html!
+    # TODO: switch to use shared fancy_upload_html from mig.shared.html!
     html = '''
     <div id="fm_debug"></div>
     <div id="fm_filemanager">

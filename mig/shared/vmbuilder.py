@@ -38,8 +38,8 @@ import os
 import sys
 from tempfile import mkdtemp
 
-from .shared.conf import get_configuration_object
-from .shared.safeeval import subprocess_call
+from mig.shared.conf import get_configuration_object
+from mig.shared.safeeval import subprocess_call
 
 configuration = get_configuration_object()
 logger = configuration.logger

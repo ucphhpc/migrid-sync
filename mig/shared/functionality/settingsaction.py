@@ -31,22 +31,22 @@ from __future__ import absolute_import
 import os
 import tempfile
 
-from .shared import returnvalues
-from .shared.accountstate import check_update_account_expire
-from .shared.duplicatikeywords import get_keywords_dict as duplicati_keywords
-from .shared.functional import validate_input_and_cert
-from .shared.gdp.all import get_client_id_from_project_client_id
-from .shared.handlers import get_csrf_limit, safe_handler
-from .shared.init import initialize_main_variables
-from .shared.settings import parse_and_save_settings, parse_and_save_widgets, \
+from mig.shared import returnvalues
+from mig.shared.accountstate import check_update_account_expire
+from mig.shared.duplicatikeywords import get_keywords_dict as duplicati_keywords
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.gdp.all import get_client_id_from_project_client_id
+from mig.shared.handlers import get_csrf_limit, safe_handler
+from mig.shared.init import initialize_main_variables
+from mig.shared.settings import parse_and_save_settings, parse_and_save_widgets, \
     parse_and_save_profile, parse_and_save_ssh, parse_and_save_davs, \
     parse_and_save_ftps, parse_and_save_seafile, parse_and_save_duplicati, \
     parse_and_save_cloud, parse_and_save_twofactor
-from .shared.profilekeywords import get_keywords_dict as profile_keywords
-from .shared.settingskeywords import get_keywords_dict as settings_keywords
-from .shared.useradm import create_seafile_mount_link, remove_seafile_mount_link
-from .shared.twofactorkeywords import get_keywords_dict as twofactor_keywords
-from .shared.widgetskeywords import get_keywords_dict as widgets_keywords
+from mig.shared.profilekeywords import get_keywords_dict as profile_keywords
+from mig.shared.settingskeywords import get_keywords_dict as settings_keywords
+from mig.shared.useradm import create_seafile_mount_link, remove_seafile_mount_link
+from mig.shared.twofactorkeywords import get_keywords_dict as twofactor_keywords
+from mig.shared.widgetskeywords import get_keywords_dict as widgets_keywords
 
 
 def extend_defaults(configuration, defaults, user_args):

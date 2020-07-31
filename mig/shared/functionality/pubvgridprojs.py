@@ -32,9 +32,9 @@ from __future__ import absolute_import
 
 import os
 
-from .shared import returnvalues
-from .shared.functional import validate_input
-from .shared.init import initialize_main_variables
+from mig.shared import returnvalues
+from mig.shared.functional import validate_input
+from mig.shared.init import initialize_main_variables
 
 
 def signature():

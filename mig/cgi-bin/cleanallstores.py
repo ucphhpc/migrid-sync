@@ -32,7 +32,7 @@ cgitb.enable()
 
 # call cleanstore!
 
-from .shared.functionality.cleanstore import main
-from .shared.cgiscriptstub import run_cgi_script
+from mig.shared.functionality.cleanstore import main
+from mig.shared.cgiscriptstub import run_cgi_script
 
 run_cgi_script(main)

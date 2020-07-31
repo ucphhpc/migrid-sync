@@ -30,7 +30,7 @@ Works as a combined specification of and source of information about keywords.
 """
 from __future__ import absolute_import
 
-from .shared.defaults import default_vgrid, any_vgrid, src_dst_sep
+from mig.shared.defaults import default_vgrid, any_vgrid, src_dst_sep
 
 # This is the main location for defining job keywords. All other job handling
 # functions should only operate on keywords defined here.

@@ -34,20 +34,20 @@ import os
 import re
 import time
 
-from .shared.base import valid_dir_input, client_id_dir
-from .shared.defaults import default_vgrid, keyword_owners, keyword_members, \
+from mig.shared.base import valid_dir_input, client_id_dir
+from mig.shared.defaults import default_vgrid, keyword_owners, keyword_members, \
     keyword_all, keyword_auto, keyword_never, keyword_any, keyword_none, \
     csrf_field, default_vgrid_settings_limit, vgrid_nest_sep, _dot_vgrid
 from .fileio import make_symlink, move, check_readonly, check_writable, \
     check_write_access, unpickle, acquire_file_lock, release_file_lock
-from .shared.findtype import is_user, is_resource
-from .shared.handlers import get_csrf_limit, make_csrf_token
-from .shared.html import html_post_helper
-from .shared.modified import mark_vgrid_modified
-from .shared.output import html_link
-from .shared.serial import load, dump
-from .shared.sharelinkkeywords import get_sharelink_keywords_dict
-from .shared.vgridkeywords import get_trigger_keywords_dict, \
+from mig.shared.findtype import is_user, is_resource
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.html import html_post_helper
+from mig.shared.modified import mark_vgrid_modified
+from mig.shared.output import html_link
+from mig.shared.serial import load, dump
+from mig.shared.sharelinkkeywords import get_sharelink_keywords_dict
+from mig.shared.vgridkeywords import get_trigger_keywords_dict, \
     get_settings_keywords_dict
 
 # For synchronization in vgrid state and participation files
@@ -2018,7 +2018,7 @@ def allow_resources_adm(configuration, vgrid_name, client_id):
 
 
 if __name__ == "__main__":
-    from .shared.conf import get_configuration_object
+    from mig.shared.conf import get_configuration_object
     conf = get_configuration_object()
     client_id = '/C=DK/CN=John Doe/emailAddress=john@doe.org'
     vgrid = "MyGroup"

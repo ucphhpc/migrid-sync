@@ -31,11 +31,11 @@ from __future__ import absolute_import
 
 import os
 
-from .shared import returnvalues
-from .shared import vms
-from .shared.functional import validate_input_and_cert
-from .shared.init import initialize_main_variables, find_entry
-from .shared.settings import load_settings
+from mig.shared import returnvalues
+from mig.shared import vms
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.settings import load_settings
 
 
 def signature():

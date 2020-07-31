@@ -27,7 +27,7 @@
 
 """GDP wrapper for specific public helper functions"""
 
-from shared.gdp.base import skip_client_id_rewrite, valid_log_actions, \
+from mig.shared.gdp.base import skip_client_id_rewrite, valid_log_actions, \
     valid_project_states, valid_account_states, valid_protocols, \
     get_active_project_client_id, get_active_project_short_id, \
     update_category_meta, project_log, validate_user,  get_users, \
@@ -36,7 +36,7 @@ from shared.gdp.base import skip_client_id_rewrite, valid_log_actions, \
     set_account_state, edit_gdp_user, create_project_user, \
     project_accept_user, project_login, project_logout, project_open, \
     project_close, project_create
-from shared.gdp.userid import client_id_project_postfix, \
+from mig.shared.gdp.userid import client_id_project_postfix, \
     get_project_client_id, get_base_client_id, \
     get_client_id_from_project_client_id, \
     get_project_from_client_id, get_project_from_short_id, \

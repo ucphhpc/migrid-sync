@@ -31,13 +31,13 @@ from __future__ import absolute_import
 
 import datetime
 
-from .shared import returnvalues
-from .shared.base import client_id_dir
-from .shared.defaults import default_pager_entries, csrf_backends
-from .shared.functional import validate_input_and_cert
-from .shared.handlers import get_csrf_limit, make_csrf_token
-from .shared.html import themed_styles
-from .shared.init import initialize_main_variables, find_entry
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir
+from mig.shared.defaults import default_pager_entries, csrf_backends
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.html import themed_styles
+from mig.shared.init import initialize_main_variables, find_entry
 
 
 def pager_append():

@@ -41,10 +41,10 @@ except ImportError:
     # Paramiko not available - imported fom griddaemons so fail gracefully
     paramiko = None
 
-from .shared.base import client_id_dir, force_utf8
-from .shared.conf import get_resource_exe, get_configuration_object
-from .shared.defaults import ssh_conf_dir
-from .shared.safeeval import subprocess_popen, subprocess_pipe
+from mig.shared.base import client_id_dir, force_utf8
+from mig.shared.conf import get_resource_exe, get_configuration_object
+from mig.shared.defaults import ssh_conf_dir
+from mig.shared.safeeval import subprocess_popen, subprocess_pipe
 
 
 def parse_pub_key(public_key):
@@ -532,7 +532,7 @@ def tighten_key_perms(configuration, client_id, keys_dirname=ssh_conf_dir):
 
 
 if __name__ == "__main__":
-    from .shared.conf import get_resource_configuration
+    from mig.shared.conf import get_resource_configuration
     unique_resource_name = 'localhost.0'
     exe_name = 'localhost'
     if sys.argv[1:]:

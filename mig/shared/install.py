@@ -48,16 +48,16 @@ import socket
 import subprocess
 import sys
 
-from .shared.defaults import default_http_port, default_https_port, \
+from mig.shared.defaults import default_http_port, default_https_port, \
     auth_openid_mig_db, auth_openid_ext_db, STRONG_TLS_CIPHERS, \
     STRONG_TLS_CURVES, STRONG_SSH_KEXALGOS, STRONG_SSH_LEGACY_KEXALGOS, \
     STRONG_SSH_CIPHERS, STRONG_SSH_LEGACY_CIPHERS, STRONG_SSH_MACS, \
     STRONG_SSH_LEGACY_MACS, CRACK_USERNAME_REGEX, CRACK_WEB_REGEX
-from .shared.jupyter import gen_balancer_proxy_template, gen_openid_template, \
+from mig.shared.jupyter import gen_balancer_proxy_template, gen_openid_template, \
     gen_rewrite_template
-from .shared.pwhash import password_requirements
-from .shared.safeeval import subprocess_call, subprocess_popen, subprocess_pipe
-from .shared.safeinput import valid_alphanumeric, InputException
+from mig.shared.pwhash import password_requirements
+from mig.shared.safeeval import subprocess_call, subprocess_popen, subprocess_pipe
+from mig.shared.safeinput import valid_alphanumeric, InputException
 
 
 def fill_template(template_file, output_file, settings, eat_trailing_space=[],
@@ -516,7 +516,7 @@ cert, oid and sid based https!
         user_dict['__APACHE_PRE2.4__'] = ''
         user_dict['__APACHE_RECENT__'] = '#'
 
-    # We use strong Apache and OpenSSH settings from shared.defaults everywhere
+    # We use strong Apache and OpenSSH settings from mig.shared.defaults everywhere
     user_dict['__APACHE_CIPHERS__'] = STRONG_TLS_CIPHERS
     # TODO: Actually enforce curves for apache 2.4.8+ with OpenSSL 1.0.2+
     user_dict['__APACHE_CURVES__'] = STRONG_TLS_CURVES

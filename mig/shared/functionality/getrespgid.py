@@ -31,12 +31,12 @@ from __future__ import absolute_import
 import os
 import fcntl
 
-from .shared import returnvalues
-from .shared.base import valid_dir_input
-from .shared.findtype import is_owner
-from .shared.functional import validate_input, REJECT_UNSET
-from .shared.httpsclient import check_source_ip
-from .shared.init import initialize_main_variables
+from mig.shared import returnvalues
+from mig.shared.base import valid_dir_input
+from mig.shared.findtype import is_owner
+from mig.shared.functional import validate_input, REJECT_UNSET
+from mig.shared.httpsclient import check_source_ip
+from mig.shared.init import initialize_main_variables
 
 
 def signature():

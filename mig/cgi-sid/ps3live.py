@@ -33,16 +33,16 @@ cgitb.enable()
 import os
 import tempfile
 
-from shared.cgishared import init_cgiscript_possibly_with_cert, \
+from mig.shared.cgishared import init_cgiscript_possibly_with_cert, \
     cgiscript_header
-from shared.defaults import default_vgrid
-from shared.fileio import make_symlink
-from shared.resource import create_resource_home
-from shared.sandbox import get_resource_name
-from shared.resadm import get_frontend_script, get_master_node_script
-from shared.resadm import fill_frontend_script, \
+from mig.shared.defaults import default_vgrid
+from mig.shared.fileio import make_symlink
+from mig.shared.resource import create_resource_home
+from mig.shared.sandbox import get_resource_name
+from mig.shared.resadm import get_frontend_script, get_master_node_script
+from mig.shared.resadm import fill_frontend_script, \
     fill_master_node_script, get_resource_exe
-from shared import confparser
+from mig.shared import confparser
 
 
 def create_ps3_resource(configuration, sandboxkey):

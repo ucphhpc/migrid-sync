@@ -30,15 +30,15 @@
 from __future__ import absolute_import
 
 
-from .shared import returnvalues
-from .shared.defaults import csrf_field
-from .shared.functional import validate_input_and_cert
-from .shared.init import initialize_main_variables, find_entry, extract_menu
-from .shared.handlers import get_csrf_limit, make_csrf_token
-from .shared.html import save_settings_js, save_settings_html, render_apps, \
+from mig.shared import returnvalues
+from mig.shared.defaults import csrf_field
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.init import initialize_main_variables, find_entry, extract_menu
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.html import save_settings_js, save_settings_html, render_apps, \
     menu_items, legacy_user_interface
-from .shared.settings import load_settings
-from .shared.settingskeywords import get_keywords_dict
+from mig.shared.settings import load_settings
+from mig.shared.settingskeywords import get_keywords_dict
 
 
 def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):

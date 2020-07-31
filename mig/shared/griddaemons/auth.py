@@ -30,16 +30,16 @@
 import time
 import re
 
-from shared.auth import active_twofactor_session
-from shared.base import extract_field, expand_openid_alias
-from shared.defaults import CRACK_USERNAME_REGEX
-from shared.gdp.all import get_client_id_from_project_client_id
-from shared.griddaemons.ratelimits import default_user_abuse_hits, \
+from mig.shared.auth import active_twofactor_session
+from mig.shared.base import extract_field, expand_openid_alias
+from mig.shared.defaults import CRACK_USERNAME_REGEX
+from mig.shared.gdp.all import get_client_id_from_project_client_id
+from mig.shared.griddaemons.ratelimits import default_user_abuse_hits, \
     default_proto_abuse_hits, default_max_secret_hits, update_rate_limit
-from shared.griddaemons.sessions import active_sessions
-from shared.notification import send_system_notification
-from shared.settings import load_twofactor
-from shared.twofactorkeywords import get_keywords_dict as twofactor_defaults
+from mig.shared.griddaemons.sessions import active_sessions
+from mig.shared.notification import send_system_notification
+from mig.shared.settings import load_twofactor
+from mig.shared.twofactorkeywords import get_keywords_dict as twofactor_defaults
 
 
 def valid_twofactor_session(configuration, client_id, addr=None):

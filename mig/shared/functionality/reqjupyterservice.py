@@ -53,17 +53,17 @@ import shutil
 import random
 import requests
 
-from .shared import returnvalues
-from .shared.base import client_id_dir, extract_field
-from .shared.defaults import session_id_bytes
-from .shared.fileio import make_symlink, pickle, unpickle, write_file, \
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir, extract_field
+from mig.shared.defaults import session_id_bytes
+from mig.shared.fileio import make_symlink, pickle, unpickle, write_file, \
     delete_symlink, delete_file
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.httpsclient import unescape
-from .shared.init import initialize_main_variables
-from .shared.pwhash import generate_random_ascii
-from .shared.ssh import generate_ssh_rsa_key_pair, tighten_key_perms
-from .shared.workflows import create_workflow_session_id, \
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.httpsclient import unescape
+from mig.shared.init import initialize_main_variables
+from mig.shared.pwhash import generate_random_ascii
+from mig.shared.ssh import generate_ssh_rsa_key_pair, tighten_key_perms
+from mig.shared.workflows import create_workflow_session_id, \
     get_workflow_session_id
 
 
@@ -627,7 +627,7 @@ def main(client_id, user_arguments_dict):
 
 
 if __name__ == "__main__":
-    from .shared.conf import get_configuration_object
+    from mig.shared.conf import get_configuration_object
     if not os.environ.get('MIG_CONF', ''):
         conf_path = os.path.join(os.path.dirname(sys.argv[0]),
                                  '..', '..', 'server', 'MiGserver.conf')

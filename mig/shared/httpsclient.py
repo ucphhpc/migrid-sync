@@ -34,9 +34,9 @@ import socket
 from urllib import urlencode
 from urlparse import parse_qsl
 
-from .shared.defaults import auth_openid_mig_db, auth_openid_ext_db
-from .shared.gdp.all import get_project_user_dn
-from .shared.useradm import get_openid_user_dn
+from mig.shared.defaults import auth_openid_mig_db, auth_openid_ext_db
+from mig.shared.gdp.all import get_project_user_dn
+from mig.shared.useradm import get_openid_user_dn
 
 # All HTTPS clients coming through apache will have their unique
 # certificate distinguished name available in this field
@@ -256,7 +256,7 @@ def generate_openid_discovery_doc(configuration):
 
 
 if __name__ == "__main__":
-    from .shared.conf import get_configuration_object
+    from mig.shared.conf import get_configuration_object
     conf = get_configuration_object()
     print("""OpenID discovery infomation XML which may be pasted into
 state/wwwpublic/oiddiscover.xml if site uses OpenId but doesn't enable the

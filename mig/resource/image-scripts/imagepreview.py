@@ -33,7 +33,7 @@ import re
 import cv2
 import traceback
 
-from shared.imagemetaio import __tables_image_volumes_preview_data_group, \
+from mig.shared.imagemetaio import __tables_image_volumes_preview_data_group, \
     __settings_file, __get_data_node_name, get_image_xdmf_path, \
     allowed_data_types, allowed_xdmf_data_types, allowed_volume_types, \
     allowed_xdmf_precisions, add_image_file, get_image_file_setting, \

@@ -36,19 +36,19 @@ import glob
 import stat
 from urllib import quote
 
-from .shared import returnvalues
-from .shared.base import client_id_dir, invisible_path
-from .shared.defaults import seafile_ro_dirname, trash_destdir, csrf_field
-from .shared.functional import validate_input
-from .shared.handlers import get_csrf_limit, make_csrf_token
-from .shared.html import fancy_upload_js, fancy_upload_html, confirm_js, \
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir, invisible_path
+from mig.shared.defaults import seafile_ro_dirname, trash_destdir, csrf_field
+from mig.shared.functional import validate_input
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.html import fancy_upload_js, fancy_upload_html, confirm_js, \
     confirm_html, themed_styles
-from .shared.init import initialize_main_variables, find_entry
-from .shared.parseflags import all, long_list, recursive, file_info
-from .shared.sharelinks import extract_mode_id
-from .shared.userio import GDPIOLogError, gdp_iolog
-from .shared.validstring import valid_user_path
-from .shared.vgrid import in_vgrid_share, in_vgrid_priv_web, in_vgrid_pub_web, \
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.parseflags import all, long_list, recursive, file_info
+from mig.shared.sharelinks import extract_mode_id
+from mig.shared.userio import GDPIOLogError, gdp_iolog
+from mig.shared.validstring import valid_user_path
+from mig.shared.vgrid import in_vgrid_share, in_vgrid_priv_web, in_vgrid_pub_web, \
     in_vgrid_readonly, in_vgrid_writable, in_vgrid_store_res
 
 

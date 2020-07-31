@@ -37,10 +37,10 @@ import sys
 
 # MiG imports
 
-from .shared.cgishared import init_cgiscript_possibly_with_cert
-from .shared.handlers import correct_handler, get_path, get_allowed_path
-from .shared.safeinput import validated_string
-from .shared import localos
+from mig.shared.cgishared import init_cgiscript_possibly_with_cert
+from mig.shared.handlers import correct_handler, get_path, get_allowed_path
+from mig.shared.safeinput import validated_string
+from mig.shared import localos
 
 # ## Main ###
 

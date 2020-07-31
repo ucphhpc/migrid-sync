@@ -31,14 +31,14 @@ from __future__ import absolute_import
 import os
 import sys
 
-from .shared.fileio import unpickle
+from mig.shared.fileio import unpickle
 
 
 def get_configuration_object(config_file=None, skip_log=False):
     """Simple helper to call the general configuration init. Optional skip_log
     argument is passed on to allow skipping the default log initialization.
     """
-    from .shared.configuration import Configuration
+    from mig.shared.configuration import Configuration
     if config_file:
         _config_file = config_file
     elif os.environ.get('MIG_CONF', None):

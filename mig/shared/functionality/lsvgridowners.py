@@ -31,10 +31,10 @@ owner of the vgrid.
 """
 from __future__ import absolute_import
 
-from .shared import returnvalues
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.init import initialize_main_variables
-from .shared.vgrid import init_vgrid_script_list, vgrid_list
+from mig.shared import returnvalues
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.init import initialize_main_variables
+from mig.shared.vgrid import init_vgrid_script_list, vgrid_list
 
 
 def signature():

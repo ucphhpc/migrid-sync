@@ -27,14 +27,14 @@ import os
 import unittest
 import nbformat
 
-from shared.conf import get_configuration_object
-from shared.defaults import default_vgrid
-from shared.fileio import makedirs_rec, remove_rec
-from shared.functionality.workflowsjsoninterface import workflow_api_create, \
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import default_vgrid
+from mig.shared.fileio import makedirs_rec, remove_rec
+from mig.shared.functionality.workflowsjsoninterface import workflow_api_create, \
     workflow_api_delete, workflow_api_read, workflow_api_update
-from shared.pwhash import generate_random_ascii
-from shared.validstring import possible_workflow_session_id
-from shared.workflows import touch_workflow_sessions_db, \
+from mig.shared.pwhash import generate_random_ascii
+from mig.shared.validstring import possible_workflow_session_id
+from mig.shared.workflows import touch_workflow_sessions_db, \
     load_workflow_sessions_db, create_workflow_session_id, \
     delete_workflow_sessions_db, new_workflow_session_id, \
     delete_workflow_session_id, reset_workflows, get_workflow_with, \

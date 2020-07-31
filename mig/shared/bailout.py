@@ -45,10 +45,10 @@ def bailout_title(configuration=None, title_text=""):
     _logger = None
     try:
         if not configuration:
-            from .shared.conf import get_configuration_object
+            from mig.shared.conf import get_configuration_object
             configuration = get_configuration_object()
             _logger = configuration.logger
-        from .shared.html import themed_styles, themed_scripts
+        from mig.shared.html import themed_styles, themed_scripts
         title['style'] = themed_styles(configuration)
         title['script'] = themed_scripts(configuration, logged_in=False)
     except Exception as exc:

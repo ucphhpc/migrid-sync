@@ -33,7 +33,7 @@ from __future__ import absolute_import
 
 import os
 
-from .shared.fileio import makedirs_rec, touch
+from mig.shared.fileio import makedirs_rec, touch
 
 
 def update_filemark(configuration, base_dir, rel_path, timestamp):

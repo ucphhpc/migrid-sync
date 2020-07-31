@@ -31,15 +31,15 @@ from __future__ import absolute_import
 
 import os
 
-from .shared import returnvalues
-from .shared.base import client_id_dir
-from .shared.defaults import csrf_field
-from .shared.fileio import make_symlink
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from .shared.init import initialize_main_variables, find_entry
-from .shared.vgrid import vgrid_is_owner, vgrid_list, vgrid_set_entities
-from .shared.functionality.createvgrid import create_scm, create_tracker, \
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir
+from mig.shared.defaults import csrf_field
+from mig.shared.fileio import make_symlink
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.vgrid import vgrid_is_owner, vgrid_list, vgrid_set_entities
+from mig.shared.functionality.createvgrid import create_scm, create_tracker, \
      create_forum
 
 def signature():
@@ -288,10 +288,10 @@ if __name__ == "__main__":
 
     import sys
 
-    from .shared.conf import get_configuration_object
-    from .shared.defaults import default_vgrid
-    from .shared.output import txt_format
-    from .shared.vgridaccess import get_vgrid_map_vgrids
+    from mig.shared.conf import get_configuration_object
+    from mig.shared.defaults import default_vgrid
+    from mig.shared.output import txt_format
+    from mig.shared.vgridaccess import get_vgrid_map_vgrids
     
     # use dummy owner check
     vgrid_is_owner = dummy_owner_check

@@ -36,7 +36,7 @@ from __future__ import absolute_import
 
 from .localfile import LocalFile
 # Expose loads and dumps from serial
-from .shared.serial import loads, dumps
+from mig.shared.serial import loads, dumps
 
 
 def dump(obj, path, protocol=0):

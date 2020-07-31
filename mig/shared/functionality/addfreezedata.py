@@ -28,7 +28,7 @@
 """Add a file or folder to existing freeze archive e.g. in background job"""
 from __future__ import absolute_import
 
-from .shared.functionality.createfreeze import main as freeze_main, \
+from mig.shared.functionality.createfreeze import main as freeze_main, \
     signature as freeze_signature
 
 

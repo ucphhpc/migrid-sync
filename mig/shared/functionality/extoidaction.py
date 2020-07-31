@@ -34,15 +34,15 @@ import tempfile
 import base64
 import re
 
-from .shared import returnvalues
-from .shared.base import client_id_dir, generate_https_urls, \
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir, generate_https_urls, \
      fill_distinguished_name
-from .shared.defaults import oid_valid_days
-from .shared.functional import validate_input, REJECT_UNSET
-from .shared.handlers import safe_handler, get_csrf_limit
-from .shared.init import initialize_main_variables, find_entry
-from .shared.notification import send_email
-from .shared.serial import dumps
+from mig.shared.defaults import oid_valid_days
+from mig.shared.functional import validate_input, REJECT_UNSET
+from mig.shared.handlers import safe_handler, get_csrf_limit
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.notification import send_email
+from mig.shared.serial import dumps
 
 
 def signature():

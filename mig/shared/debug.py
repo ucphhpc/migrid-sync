@@ -37,8 +37,8 @@ except Exception as exc:
     pygdb = None
     print("ERROR: the python pygdb module is missing: %s" % str(exc))
 
-from .shared.conf import get_configuration_object
-from .shared.logger import daemon_logger
+from mig.shared.conf import get_configuration_object
+from mig.shared.logger import daemon_logger
 
 
 def init_pygdb(logpath=None):
@@ -48,7 +48,7 @@ def init_pygdb(logpath=None):
           2) When debugging NON-daemons make sure to use 'cgi-bin'
     USAGE cgi-bin:
         1) At top-most-level: cgi-bin/X.py:
-            from shared.debug import init_pygdb
+            from mig.shared.debug import init_pygdb
             pygdb = init_pygdb()
         2) In any of the descendant modules:
             import pygdb.breakpoint

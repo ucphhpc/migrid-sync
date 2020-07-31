@@ -32,11 +32,11 @@ provides a list of buttons based on services defined in the
 """
 from __future__ import absolute_import
 
-from .shared import returnvalues
+from mig.shared import returnvalues
 
-from .shared.init import find_entry, initialize_main_variables
-from .shared.functional import validate_input_and_cert
-from .shared.html import man_base_js
+from mig.shared.init import find_entry, initialize_main_variables
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.html import man_base_js
 
 
 def signature():

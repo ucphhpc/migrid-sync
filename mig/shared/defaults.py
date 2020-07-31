@@ -178,7 +178,7 @@ trash_linkname = 'Trash'
 # can't let users edit them because it would result in arbitrary code execution
 # holes.
 #
-# IMPORTANT: please use the invisible_{path,file,dir} helpers from shared.base
+# IMPORTANT: please use the invisible_{path,file,dir} helpers from mig.shared.base
 #            instead of using these variables directly.
 _dot_vgrid = ['.vgrid%s' % i for i in ['wiki', 'scm', 'tracker', 'forum']]
 _protected_dirs = [trash_destdir]

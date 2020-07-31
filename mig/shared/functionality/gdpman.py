@@ -31,25 +31,25 @@ from __future__ import absolute_import
 import os
 import tempfile
 
-from .shared.auth import get_twofactor_secrets
-from .shared import returnvalues
-from .shared.base import get_xgi_bin
-from .shared.defaults import csrf_field
-from .shared.functional import validate_input_and_cert
-from .shared.gdp.all import ensure_user, get_projects, get_users, \
+from mig.shared.auth import get_twofactor_secrets
+from mig.shared import returnvalues
+from mig.shared.base import get_xgi_bin
+from mig.shared.defaults import csrf_field
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.gdp.all import ensure_user, get_projects, get_users, \
     get_active_project_client_id, project_accept_user, project_create, \
     project_invite_user, project_login, project_logout, project_remove_user, \
     validate_user, get_project_info, get_project_from_client_id
-from .shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from .shared.html import twofactor_wizard_html, twofactor_wizard_js, \
+from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from mig.shared.html import twofactor_wizard_html, twofactor_wizard_js, \
     twofactor_token_html
-from .shared.httpsclient import extract_client_openid
-from .shared.init import initialize_main_variables, find_entry
-from .shared.settings import load_twofactor, parse_and_save_twofactor
-from .shared.useradm import get_full_user_map
-from .shared.url import openid_autologout_url
-from .shared.vgrid import vgrid_create_allowed, vgrid_manage_allowed
-from .shared.twofactorkeywords import get_keywords_dict as twofactor_keywords
+from mig.shared.httpsclient import extract_client_openid
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.settings import load_twofactor, parse_and_save_twofactor
+from mig.shared.useradm import get_full_user_map
+from mig.shared.url import openid_autologout_url
+from mig.shared.vgrid import vgrid_create_allowed, vgrid_manage_allowed
+from mig.shared.twofactorkeywords import get_keywords_dict as twofactor_keywords
 
 
 def signature():

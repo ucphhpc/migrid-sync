@@ -36,17 +36,17 @@ import base64
 import os
 import time
 
-from .shared import mrslkeywords
-from .shared import returnvalues
-from .shared.base import client_id_dir
-from .shared.defaults import default_mrsl_filename, csrf_field
-from .shared.fileio import write_file, strip_dir
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.handlers import safe_handler, get_csrf_limit
-from .shared.init import initialize_main_variables
-from .shared.job import new_job
-from .shared.safeinput import valid_user_path_name
-from .shared.archives import handle_package_upload
+from mig.shared import mrslkeywords
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir
+from mig.shared.defaults import default_mrsl_filename, csrf_field
+from mig.shared.fileio import write_file, strip_dir
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.handlers import safe_handler, get_csrf_limit
+from mig.shared.init import initialize_main_variables
+from mig.shared.job import new_job
+from mig.shared.safeinput import valid_user_path_name
+from mig.shared.archives import handle_package_upload
 
 
 def signature():

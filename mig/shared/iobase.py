@@ -37,12 +37,12 @@ import shutil as realshutil
 import stat as realstat
 import zipfile as realzipfile
 
-from .shared import localfile
-from .shared import localos
-from .shared import localpickle
-from .shared import distfile
-from .shared import distos
-from .shared import distpickle
+from mig.shared import localfile
+from mig.shared import localos
+from mig.shared import localpickle
+from mig.shared import distfile
+from mig.shared import distos
+from mig.shared import distpickle
 
 # export os / os.path functions and variables
 

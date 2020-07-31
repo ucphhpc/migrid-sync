@@ -34,7 +34,7 @@ from __future__ import absolute_import
 import os
 import time
 
-from .shared.defaults import edit_lock_suffix, edit_lock_timeout
+from mig.shared.defaults import edit_lock_suffix, edit_lock_timeout
 
 # CodeMirror helpers
 

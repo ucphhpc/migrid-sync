@@ -42,23 +42,23 @@ from __future__ import absolute_import
 import os
 import time
 
-from .shared import returnvalues
-from .shared.base import client_id_dir, force_utf8, force_unicode, \
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir, force_utf8, force_unicode, \
     fill_user, distinguished_name_to_user, fill_distinguished_name
-from .shared.defaults import user_db_filename, cert_valid_days, \
+from mig.shared.defaults import user_db_filename, cert_valid_days, \
     oid_valid_days
-from .shared.fileio import write_file
-from .shared.functional import validate_input, REJECT_UNSET
-from .shared.handlers import safe_handler, get_csrf_limit
-from .shared.httpsclient import extract_client_openid
-from .shared.init import initialize_main_variables
-from .shared.notification import send_email
-from .shared.safeinput import filter_commonname
-from .shared.useradm import create_user
-from .shared.url import openid_autologout_url
+from mig.shared.fileio import write_file
+from mig.shared.functional import validate_input, REJECT_UNSET
+from mig.shared.handlers import safe_handler, get_csrf_limit
+from mig.shared.httpsclient import extract_client_openid
+from mig.shared.init import initialize_main_variables
+from mig.shared.notification import send_email
+from mig.shared.safeinput import filter_commonname
+from mig.shared.useradm import create_user
+from mig.shared.url import openid_autologout_url
 
 try:
-    from .shared import arcwrapper
+    from mig.shared import arcwrapper
 except Exception as exc:
 
     # Ignore errors and let it crash if ARC is enabled without the lib

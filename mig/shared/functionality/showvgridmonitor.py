@@ -31,12 +31,12 @@ from __future__ import absolute_import
 
 import os
 
-from .shared import returnvalues
-from .shared.defaults import all_vgrids
-from .shared.functional import validate_input_and_cert
-from .shared.init import initialize_main_variables, find_entry
-from .shared.vgrid import vgrid_is_owner_or_member
-from .shared.vgridaccess import user_vgrid_access
+from mig.shared import returnvalues
+from mig.shared.defaults import all_vgrids
+from mig.shared.functional import validate_input_and_cert
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.vgrid import vgrid_is_owner_or_member
+from mig.shared.vgridaccess import user_vgrid_access
 
 
 def signature():

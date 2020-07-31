@@ -31,20 +31,20 @@ from __future__ import absolute_import
 import datetime
 import os
 
-from .shared import returnvalues
-from .shared.base import client_id_dir
-from .shared.defaults import max_freeze_files, csrf_field, freeze_flavors, \
+from mig.shared import returnvalues
+from mig.shared.base import client_id_dir
+from mig.shared.defaults import max_freeze_files, csrf_field, freeze_flavors, \
     keyword_auto, keyword_pending, keyword_final
-from .shared.fileio import strip_dir
-from .shared.freezefunctions import create_frozen_archive, published_url, \
+from mig.shared.fileio import strip_dir
+from mig.shared.freezefunctions import create_frozen_archive, published_url, \
     is_frozen_archive
-from .shared.functional import validate_input_and_cert, REJECT_UNSET
-from .shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from .shared.html import man_base_js, man_base_html, html_post_helper
-from .shared.init import initialize_main_variables, find_entry
-from .shared.safeinput import valid_path
-from .shared.validstring import valid_user_path
-from .shared.vgrid import in_vgrid_share
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
+from mig.shared.html import man_base_js, man_base_html, html_post_helper
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.safeinput import valid_path
+from mig.shared.validstring import valid_user_path
+from mig.shared.vgrid import in_vgrid_share
 
 
 def signature():
