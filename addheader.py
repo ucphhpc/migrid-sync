@@ -35,7 +35,8 @@ import fnmatch
 import os
 import sys
 
-from mig.shared.projcode import py_code_files, sh_code_files, js_code_files
+from mig.shared.projcode import code_root, py_code_files, sh_code_files, \
+    js_code_files
 
 # Modify these to fit actual project
 proj_vars = {}
@@ -185,7 +186,7 @@ if __name__ == '__main__':
                 else:
                     needs_block = False
 
-                pattern = os.path.join(mig_code_base, pattern)
+                pattern = os.path.join(mig_code_base, code_root, pattern)
 
                 # print "Testing %s against %s" % (src_path, pattern)
 

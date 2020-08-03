@@ -31,9 +31,10 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import glob
+import os
 import sys
 
-from mig.shared.projcode import py_code_files
+from mig.shared.projcode import code_root, py_code_files
 from mig.shared.safeeval import subprocess_call
 
 if '__main__' == __name__:
@@ -42,9 +43,11 @@ if '__main__' == __name__:
         print('Grep for obvious errors in all code files')
         sys.exit(1)
 
+    mig_code_base = os.path.dirname(sys.argv[0])
     expanded_paths = []
     for code_path in py_code_files:
-        expanded_paths += glob.glob(code_path)
+        path_pattern = os.path.join(mig_code_base, code_root, code_path)
+        expanded_paths += glob.glob(os.path.normpath(path_pattern))
     command_list = ["pylint", "-E"] + expanded_paths
     command = ' '.join(command_list)
     print("Bug weeding command: %s" % command)

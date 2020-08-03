@@ -1,12 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 #
 # --- BEGIN_HEADER ---
 #
 #
 # mrsltoxrsl - [optionally add short module description on this line]
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -97,10 +96,10 @@ def format_xrsl(xrsl):
         if not s:
             return acc
         if s[0] == '(':
-            start = '\n' + ' '*n
-            return(indent(acc + start + '(', n+2, s[1:]))
+            start = '\n' + ' ' * n
+            return(indent(acc + start + '(', n + 2, s[1:]))
         elif s[0] == ')':
-            return(indent(acc + ')', n-2, s[1:]))
+            return(indent(acc + ')', n - 2, s[1:]))
 
         return(indent(acc + s[0], n, s[1:]))
 
@@ -111,7 +110,7 @@ def format_xrsl(xrsl):
 #              -> (Xrsl,Job Script,name for Job script)
 def translate(mrsl_dict, session_id=None):
     """Translate an (already checked) mRSL dictionary into xRSL,
-       suitable for submitting to an ARC resource. 
+       suitable for submitting to an ARC resource.
 
        Returns arclib.Xrsl object.
        Throws exception if errors in the xRSL generation occur."""
@@ -167,10 +166,10 @@ def translate(mrsl_dict, session_id=None):
             j_name = mrsl_dict['JOB_ID']
         else:
             # random string. should not happen anyway...
-            j_name = ''.join(random.choice(string.letters)
+            j_name = ''.join(random.choice(string.ascii_letters)
                              for i in xrange(12))
 #        j_name = mrsl_dict.get('JOB_ID',
-#                               ''.join(random.choice(string.letters)  \
+#                               ''.join(random.choice(string.ascii_letters) \
 #                                       for i in xrange(12)))
 
         # use JOBID as ARC jobname to avoid presenting only ARC IDs
@@ -247,7 +246,7 @@ def translate(mrsl_dict, session_id=None):
         # requested runtime, given in minutes in (user) xrsl ...
         time = mrsl_dict.get('CPUTIME')
         if time:
-            addRel(xrsl, 'cputime', str(int(math.ceil(float(time)/60))))
+            addRel(xrsl, 'cputime', str(int(math.ceil(float(time) / 60))))
 
         # simply copy the values for these:
         copy_items = ['MEMORY', 'DISK', 'NODECOUNT']
@@ -286,8 +285,8 @@ def translate(mrsl_dict, session_id=None):
                 if address != 'SETTINGS':
                     addresses.append(address)
 #                else:
-#                    # this should be replaced already, but...
-#                    # FIXME: get it from the settings :-P
+# this should be replaced already, but...
+# FIXME: get it from the settings :-P
 #                    addresses.append('*FROM THE SETTINGS*')
             if addresses:
                 addRel(xrsl, 'notify', 'ec ' + ' '.join(addresses))
@@ -354,7 +353,7 @@ def is_mail(str):
 
 
 def file_mapping(line):
-    """Splits the given line of the expected format 
+    """Splits the given line of the expected format
           local_name <space> remote_name
        into a 2-element list [local_name,remote_name]
        If remote_name is empty, the empty string is returned as the 2nd part.

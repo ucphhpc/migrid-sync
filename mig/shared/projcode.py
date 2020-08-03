@@ -23,9 +23,14 @@
 
 """Helpers to transform or search project code files"""
 
+# Top dir with all code
+code_root = 'mig'
+
 # Ignore backup and dot files in wild card match
 plain = '[a-zA-Z0-9]*.py'
 py_code_files = [
+    # a few scripts are in parent dir of code_root
+    '../%s' % plain,
     '%s' % plain,
     'cgi-bin/%s' % plain,
     'cgi-sid/%s' % plain,
