@@ -49,12 +49,13 @@
 #
 
 """translate a 'job' from MiG format to ARC format"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
-import string
-import random
+from string import ascii_letters
 import math
+import random
 import os
 import sys
 
@@ -90,7 +91,7 @@ def format_xrsl(xrsl):
     """
 
     # raw string, without old indentation and newlines
-    raw = ''.join(map(string.strip, ('%s' % xrsl).split('\n')))
+    raw = ''.join([i.strip() for i in str(xrsl).split('\n')])
 
     def indent(acc, n, s):
         if not s:
@@ -166,10 +167,10 @@ def translate(mrsl_dict, session_id=None):
             j_name = mrsl_dict['JOB_ID']
         else:
             # random string. should not happen anyway...
-            j_name = ''.join(random.choice(string.ascii_letters)
+            j_name = ''.join(random.choice(ascii_letters)
                              for i in xrange(12))
 #        j_name = mrsl_dict.get('JOB_ID',
-#                               ''.join(random.choice(string.ascii_letters) \
+#                               ''.join(random.choice(ascii_letters) \
 #                                       for i in xrange(12)))
 
         # use JOBID as ARC jobname to avoid presenting only ARC IDs
@@ -187,7 +188,8 @@ def translate(mrsl_dict, session_id=None):
 
         # make double lists, 2nd part perhaps empty
         # output files, always including stdout
-        tmpoutfiles = map(file_mapping, mrsl_dict.get('OUTPUTFILES', []))
+        tmpoutfiles = [file_mapping(i)
+                       for i in mrsl_dict.get('OUTPUTFILES', [])]
         outfiles = []
         for [f, target] in tmpoutfiles:
             if target == '':
@@ -225,21 +227,23 @@ def translate(mrsl_dict, session_id=None):
         addRel(xrsl, 'arguments', script_name)
 
         # executable input files, always including the execute script
-        execfiles = map(file_mapping, mrsl_dict.get('EXECUTABLES', []))
+        execfiles = [file_mapping(i) for i in mrsl_dict.get('EXECUTABLES', [])]
+
         # HEADS UP: the script name again!
         execfiles.append([script_name, ''])
 
         # (non-executable) input files
-        infiles = map(file_mapping, mrsl_dict.get('INPUTFILES', []))
+        infiles = [file_mapping(i) for i in mrsl_dict.get('INPUTFILES', [])]
 
         # both execfiles and infiles are inputfiles for ARC
-        addRel(xrsl, 'inputfiles', map(flip_for_input, execfiles + infiles))
+        addRel(xrsl, 'inputfiles', [flip_for_input(i)
+               for i in execfiles + infiles])
 
         # execfiles are made executable
         # (specified as the remote name, relative to the session dir)
         def fst(list):
             return list[0]
-        addRel(xrsl, 'executables', map(fst, execfiles))
+        addRel(xrsl, 'executables', [fst(i) for i in execfiles])
 
         # more stuff...
 
@@ -271,7 +275,8 @@ def translate(mrsl_dict, session_id=None):
             #                var_val.append(vv.strip())
             #            addRel(xrsl,'environment',var_val)
 
-            addRel(xrsl, 'environment', map(list, mrsl_dict['ENVIRONMENT']))
+            addRel(xrsl, 'environment', [list(i)
+                   for i in mrsl_dict['ENVIRONMENT']])
 
         if 'RUNTIMEENVIRONMENT' in mrsl_dict:
             for line in mrsl_dict['RUNTIMEENVIRONMENT']:
@@ -279,7 +284,8 @@ def translate(mrsl_dict, session_id=None):
 
         if 'NOTIFY' in mrsl_dict:
             addresses = []
-            for line in filter(is_mail, mrsl_dict['NOTIFY'])[:3]:  # max 3
+            # NOTE: max 3
+            for line in [i for i in mrsl_dict['NOTIFY'] if is_mail(i)][:3]:
                 # remove whites before, then "email:" prefix, then strip
                 address = line.lstrip()[6:].strip()
                 if address != 'SETTINGS':
@@ -355,10 +361,11 @@ def is_mail(str):
 def file_mapping(line):
     """Splits the given line of the expected format
           local_name <space> remote_name
-       into a 2-element list [local_name,remote_name]
-       If remote_name is empty, the empty string is returned as the 2nd part.
-       No additional checks are performed.
-       TODO should perhaps also check for valid path characters."""
+    into a 2-element list [local_name,remote_name]
+    If remote_name is empty, the empty string is returned as the 2nd part.
+    No additional checks are performed.
+    TODO: should perhaps also check for valid path characters.
+    """
     line = line.strip()
     parts = line.split()
     local = parts[0]

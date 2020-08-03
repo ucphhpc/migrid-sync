@@ -6,7 +6,7 @@
 #
 #
 # pwhash - helpers for passwords and hashing
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -44,6 +44,7 @@
     License: BSD
 
 """
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -52,9 +53,10 @@ from os import urandom
 from base64 import b64encode, b64decode, b16encode, b16decode
 from itertools import izip
 from random import SystemRandom
-from string import lowercase, uppercase, digits
+from string import ascii_lowercase, ascii_uppercase, digits
+
 # From https://github.com/mitsuhiko/python-pbkdf2
-from .pbkdf2 import pbkdf2_bin
+from mig.shared.pbkdf2 import pbkdf2_bin
 
 try:
     import cracklib
@@ -243,7 +245,8 @@ def check_scramble(configuration, service, username, password, scrambled,
         password = password.encode('utf-8')
     if isinstance(scramble_cache, dict) and \
             scramble_cache.get(password, None) == scrambled:
-        # print "found cached scramble: %s" % scramble_cache.get(password, None)
+        # print "found cached scramble: %s" % scramble_cache.get(password,
+        # None)
         return True
     # We check policy AFTER cache lookup since it is already verified for those
     try:
@@ -267,7 +270,7 @@ def make_csrf_token(configuration, method, operation, client_id, limit=None):
     """
     salt = configuration.site_digest_salt
     merged = "%s:%s:%s:%s" % (method, operation, client_id, limit)
-    #configuration.logger.debug("CSRF for %s" % merged)
+    # configuration.logger.debug("CSRF for %s" % merged)
     xor_id = "%s" % (int(salt, 16) ^ int(b16encode(merged), 16))
     token = hashlib.sha256(xor_id).hexdigest()
     return token
@@ -359,7 +362,8 @@ def assure_password_strength(configuration, password):
             (policy_fail_msg, min_len)
         _logger.warning(err_msg)
         raise ValueError(err_msg)
-    char_class_map = {'lower': lowercase, 'upper': uppercase, 'digits': digits}
+    char_class_map = {'lower': ascii_lowercase, 'upper': ascii_uppercase,
+                      'digits': digits}
     base_chars = ''.join(char_class_map.values())
     pw_classes = []
     for i in password:
@@ -421,9 +425,9 @@ def generate_random_password(configuration, tries=42):
     _logger = configuration.logger
     count, classes = parse_password_policy(configuration)
     # TODO: use the password charset from safeinput instead?
-    charset = lowercase
+    charset = ascii_lowercase
     if classes > 1:
-        charset += uppercase
+        charset += ascii_uppercase
     if classes > 2:
         charset += digits
     if classes > 3:

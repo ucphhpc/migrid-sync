@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # arcwrapper: main ARC middleware wrapper module
-# Copyright (C) 2009-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2009-2020  The MiG Project lead by Brian Vinter
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,14 +33,14 @@
 
 
 """ARC middleware interface module."""
+
 from __future__ import absolute_import
 
+import commands
 import os
 import sys
-import string
-import commands
-import threading
 import tempfile
+import threading
 
 from mig.shared.safeeval import subprocess_popen, subprocess_pipe
 
@@ -519,10 +519,10 @@ class Ui:
             name = Job name
             status = ARC job states, ACCPTED, SUBMIT, INLRMS etc
             error = Error status
-            sub_time = string(submission_time)
-            completion = string(completion_time)
-            cpu_time = string(used_cpu_time)
-            wall_time = string(used_wall_time)
+            sub_time = str(submission_time)
+            completion = str(completion_time)
+            cpu_time = str(used_cpu_time)
+            wall_time = str(used_wall_time)
 
         If there was an error, an empty dictionary is returned.
 
@@ -799,7 +799,7 @@ class Ui:
             raise ARCWrapperError(err.__str__())
 
         # return
-        logger.debug(string.join(['downloaded:'] + complete, ' '))
+        logger.debug(' '.join(['downloaded:'] + complete))
         os.chdir(currDir)
         return complete
 

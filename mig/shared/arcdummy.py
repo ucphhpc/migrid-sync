@@ -54,7 +54,6 @@ from __future__ import absolute_import
 
 import os
 import sys
-import string
 import commands
 import threading
 import tempfile
