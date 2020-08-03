@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resource - resource configuration functions
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,13 +29,25 @@
 from __future__ import absolute_import
 
 import os
-import dircache
 import re
 import socket
 try:
     from hashlib import md5 as hash_algo
 except ImportError:
     from md5 import new as hash_algo
+
+# TODO: move to os.scandir with py3
+# NOTE: Use faster scandir if available
+try:
+    from distutils.version import StrictVersion
+    from scandir import scandir, __version__ as scandir_version
+    if StrictVersion(scandir_version) < StrictVersion("1.3"):
+        # Important os.scandir compatibility utf8 fixes were not added until
+        # 1.3
+        raise ImportError(
+            "scandir version is too old: fall back to os.listdir")
+except ImportError:
+    scandir = None
 
 from mig.shared.base import client_id_dir
 from mig.shared.confparser import get_resource_config_dict, run
@@ -619,7 +631,8 @@ def prepare_conf(configuration, input_args, resource_id):
         env_values = 're_values' + str(i)
         if runtime_env in user_args:
             if env_values in user_args:
-                # re_valuesX is a single line, A=vx yz\nB=def, with all assignments
+                # re_valuesX is a single line, A=vx yz\nB=def, with all
+                # assignments
                 var_lines = user_args[env_values].split('\n')
                 re_values = [tuple(line.split('=', 1)) for line in var_lines]
                 del user_args[env_values]
@@ -867,19 +880,27 @@ def write_resource_config(configuration, resource_conf, conf_path):
 
 def list_resources(resource_home, only_valid=False):
     """Return a list of all resources by listing the resource configuration
-    directories in resource_home. Uses dircache for efficiency when used more
-    than once per session.
+    directories in resource_home. Uses scandir for efficiency when available.
     Use only_valid parameter to filter out deleted and broken resources.
     """
     resources = []
-    children = dircache.listdir(resource_home)
-    for name in children:
-        path = os.path.join(resource_home, name)
+    if scandir:
+        children = scandir(resource_home)
+    else:
+        children = os.listdir(resource_home)
+    for entry in children:
+        # skip all files and dot dirs - they are NOT resources
+        if scandir:
+            name = entry.name
+            path = entry.path
+            if not entry.is_dir():
+                continue
+        else:
+            name = entry
+            path = os.path.join(resource_home, name)
+            if not os.path.isdir(path):
+                continue
 
-        # skip all files and dot dirs - they are _not_ resources
-
-        if not os.path.isdir(path):
-            continue
         if path.find(os.sep + '.') != -1:
             continue
         if only_valid and not os.path.isfile(os.path.join(path, 'config')):

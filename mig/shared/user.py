@@ -30,10 +30,22 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import base64
-import dircache
 import hashlib
 import os
 from urllib import urlencode
+
+# TODO: move to os.scandir with py3
+# NOTE: Use faster scandir if available
+try:
+    from distutils.version import StrictVersion
+    from scandir import scandir, __version__ as scandir_version
+    if StrictVersion(scandir_version) < StrictVersion("1.3"):
+        # Important os.scandir compatibility utf8 fixes were not added until
+        # 1.3
+        raise ImportError(
+            "scandir version is too old: fall back to os.listdir")
+except ImportError:
+    scandir = None
 
 from mig.shared.base import client_dir_id, client_id_dir
 from mig.shared.defaults import litmus_id
@@ -51,17 +63,26 @@ def anon_user_id(user_id):
 
 def list_users(configuration):
     """Return a list of all users by listing the user homes in user_home.
-    Uses dircache for efficiency when used more than once per session.
+    Uses scandir for efficiency when available.
     """
     users = []
-    children = dircache.listdir(configuration.user_home)
-    for name in children:
-        path = os.path.join(configuration.user_home, name)
+    if scandir:
+        children = scandir(configuration.user_home)
+    else:
+        children = os.listdir(configuration.user_home)
+    for entry in children:
+        # skip all files and dot dirs - they are NOT users
+        if scandir:
+            name = entry.name
+            path = entry.path
+            if entry.is_symlink() or not entry.is_dir():
+                continue
+        else:
+            name = entry
+            path = os.path.join(configuration.user_home, name)
+            if os.path.islink(path) or not os.path.isdir(path):
+                continue
 
-        # skip all files and dot dirs - they are _not_ users
-
-        if os.path.islink(path) or not os.path.isdir(path):
-            continue
         if name.startswith('.'):
             continue
         # We assume user IDs on the form /A=bla/B=bla/... here
