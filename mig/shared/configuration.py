@@ -1781,7 +1781,7 @@ location.""" % self.config_file)
             self.site_security_scanners = []
         # Fall back to a static 'random' salt string since we need it to
         # remain constant
-        static_rand = 'w\xff\xcft\xaf/\x089 B\x1eG\x84i\x97a'
+        static_rand = b'w\xff\xcft\xaf/\x089 B\x1eG\x84i\x97a'
         self.site_digest_salt = base64.b16encode(static_rand)
         if config.has_option('SITE', 'digest_salt'):
             # Salt must be upper case hex
