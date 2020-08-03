@@ -3,7 +3,7 @@
 #
 # workflows.py - Collection of workflows related functions
 #
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -19,7 +19,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301, USA.
 
 """A set of shared workflows functions"""
 from __future__ import print_function
@@ -43,7 +44,8 @@ except ImportError:
 from mig.shared.base import force_utf8_rec
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import src_dst_sep, workflow_id_charset, \
-    workflow_id_length, session_id_length, session_id_charset, default_vgrid
+    workflow_id_length, session_id_length, session_id_charset, default_vgrid, \
+    workflows_db_filename, workflows_db_lockfile
 from mig.shared.fileio import delete_file, write_file, makedirs_rec, touch
 from mig.shared.map import load_system_map
 from mig.shared.modified import check_workflow_p_modified, \
@@ -220,9 +222,9 @@ def touch_workflow_sessions_db(configuration, force=False):
     _logger = configuration.logger
     _logger.debug('WP: touch_workflow_sessions_db, '
                   'creating empty db if it does not exist')
-    _db_path = configuration.workflows_db
     _db_home = configuration.workflows_db_home
-    _db_lock_path = configuration.workflows_db_lock
+    _db_path = os.path.join(_db_home, workflows_db_filename)
+    _db_lock_path = os.path.join(_db_home, workflows_db_lockfile)
 
     if os.path.exists(_db_path) and os.path.exists(_db_lock_path) \
             and not force:
@@ -241,7 +243,7 @@ def touch_workflow_sessions_db(configuration, force=False):
         if not touch(_db_lock_path, configuration):
             _logger.debug("WP: touch_workflow_sessions_db"
                           "failed to create dependent lock file: '%s'"
-                          % configuration.workflows_db_lock)
+                          % _db_lock_path)
             return False
 
     if not os.path.exists(_db_path):
@@ -268,10 +270,13 @@ def delete_workflow_sessions_db(configuration):
     _logger.debug('WP: delete_workflow_sessions_db, '
                   'deleting the sessions db if it exists')
     result = False
+    _db_home = configuration.workflows_db_home
+    _db_path = os.path.join(_db_home, workflows_db_filename)
+    _db_lock_path = os.path.join(_db_home, workflows_db_lockfile)
     try:
-        with open(configuration.workflows_db_lock, 'a') as lock_file:
+        with open(_db_lock_path, 'a') as lock_file:
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
-            result = delete_file(configuration.workflows_db, _logger)
+            result = delete_file(_db_path, _logger)
     except OSError as err:
         _logger.warning("WP: Failed to properly lock and delete '%s'" % err)
     return result
@@ -281,22 +286,24 @@ def load_workflow_sessions_db(configuration, do_lock=True):
     """
     Read the workflow DB dictionary.
     :param configuration: The MiG configuration object.
-    :param do_lock: Bool, whether the function should lock via the
-    configuration.workflows_db_lock file.
+    :param do_lock: Bool, whether the function should lock via the workflows_db
+    lock file.
     :return: (dictionary) database of current workflow session ids. These are
     used by the MiG to track valid users interacting with
     workflowsjsoninterface.py. Format is {session_id: 'owner': client_id}.
     """
     _logger = configuration.logger
     lock_handle = None
-    if not os.path.exists(configuration.workflows_db_lock) \
-            or not os.path.exists(configuration.workflows_db):
+    _db_home = configuration.workflows_db_home
+    _db_path = os.path.join(_db_home, workflows_db_filename)
+    _db_lock_path = os.path.join(_db_home, workflows_db_lockfile)
+    if not os.path.exists(_db_lock_path) or not os.path.exists(_db_path):
         created = touch_workflow_sessions_db(configuration)
         _logger.info("Created %s" % created)
 
     if do_lock:
         try:
-            lock_handle = open(configuration.workflows_db_lock, 'a')
+            lock_handle = open(_db_lock_path, 'a')
             fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
         except OSError as err:
             _logger.warning("Failed to set lock on load "
@@ -307,7 +314,7 @@ def load_workflow_sessions_db(configuration, do_lock=True):
 
     db = {}
     try:
-        db = load(configuration.workflows_db)
+        db = load(_db_path)
     except IOError as err:
         _logger.warning("Failed to load workflow_session_db '%s'" % err)
 
@@ -322,8 +329,8 @@ def save_workflow_sessions_db(configuration, workflow_sessions_db,
     Write a dictionary of workflow session ids.
     :param configuration: The MiG configuration object.
     :param workflow_sessions_db: dictionary of workflow session ids. These are
-    :param do_lock: Bool, whether the function should lock via the
-    configuration.workflows_db_lock file.
+    :param do_lock: Bool, whether the function should lock via the workflows_db
+    lock file.
     used by the MiG to track valid users interacting with
     workflowsjsoninterface.py. Format is {session_id: 'owner': client_id}.
     :return: (boolean) True/False dependent of if provided dictionary is
@@ -331,10 +338,13 @@ def save_workflow_sessions_db(configuration, workflow_sessions_db,
     """
     _logger = configuration.logger
     lock_handle = None
+    _db_home = configuration.workflows_db_home
+    _db_path = os.path.join(_db_home, workflows_db_filename)
+    _db_lock_path = os.path.join(_db_home, workflows_db_lockfile)
     success = True
     try:
         if do_lock:
-            lock_handle = open(configuration.workflows_db_lock, 'a')
+            lock_handle = open(_db_lock_path, 'a')
             fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
     except OSError as err:
         _logger.warning("Failed to set lock on save workflow_session_db '%s'"
@@ -343,10 +353,10 @@ def save_workflow_sessions_db(configuration, workflow_sessions_db,
 
     if success:
         try:
-            dump(workflow_sessions_db, configuration.workflows_db)
+            dump(workflow_sessions_db, _db_path)
         except IOError as err:
             _logger.error("WP: save_workflow_sessions_db, Failed to open '%s', "
-                          "err: '%s'" % (configuration.workflows_db, err))
+                          "err: '%s'" % (_db_path, err))
             success = False
 
     if do_lock and lock_handle and not lock_handle.closed:
@@ -368,9 +378,12 @@ def create_workflow_session_id(configuration, client_id):
     _logger = configuration.logger
     # Generate session id
     workflow_session_id = new_workflow_session_id()
+    _db_home = configuration.workflows_db_home
+    _db_path = os.path.join(_db_home, workflows_db_filename)
+    _db_lock_path = os.path.join(_db_home, workflows_db_lockfile)
     # Lock between load and save
     try:
-        with open(configuration.workflows_db_lock, 'a') as lock_file:
+        with open(_db_lock_path, 'a') as lock_file:
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
             db = load_workflow_sessions_db(configuration, do_lock=False)
             if isinstance(db, dict) and workflow_session_id not in db:
@@ -401,8 +414,11 @@ def delete_workflow_session_id(configuration, client_id, workflow_session_id):
     within the database
     """
     _logger = configuration.logger
+    _db_home = configuration.workflows_db_home
+    _db_path = os.path.join(_db_home, workflows_db_filename)
+    _db_lock_path = os.path.join(_db_home, workflows_db_lockfile)
     try:
-        with open(configuration.workflows_db_lock, 'a') as lock_file:
+        with open(_db_lock_path, 'a') as lock_file:
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
             db = load_workflow_sessions_db(configuration, do_lock=False)
             if not isinstance(db, dict):
@@ -763,7 +779,7 @@ def __refresh_map(configuration, workflow_type=WORKFLOW_PATTERN,
             wp_mtime = os.path.getmtime(os.path.join(workflow_dir,
                                                      workflow_file))
             if CONF not in workflow_map[
-                workflow_file] or wp_mtime >= map_stamp:
+                    workflow_file] or wp_mtime >= map_stamp:
                 workflow_object = ''
                 if workflow_type == WORKFLOW_PATTERN:
                     workflow_object = __load_wp(configuration,
@@ -2016,9 +2032,9 @@ def __update_workflow_pattern(configuration, client_id, vgrid,
                             for name_or_id, recipe in recipes.items()]
 
         remove_recipes = set([name for name, _ in existing_recipes]) - \
-                         set(workflow_pattern['recipes'])
+            set(workflow_pattern['recipes'])
         missing_recipes = set(workflow_pattern['recipes']) - \
-                          set([name for name, _ in existing_recipes])
+            set([name for name, _ in existing_recipes])
 
         for name, rule_id in existing_recipes:
             # Remove recipe
@@ -2158,7 +2174,7 @@ def __update_workflow_recipe(configuration, client_id, vgrid, workflow_recipe,
 
     for variable in workflow_recipe.keys():
         recipe[variable] = workflow_recipe[variable]
-        
+
     # TODO, update workflow task file if new is provided
 
     recipe, msg = __build_wr_object(configuration, **recipe)
@@ -2268,7 +2284,7 @@ NODECOUNT
 ::RETRIES::
 0
 
-::MEMORY:: 
+::MEMORY::
 64
 
 ::DISK::
@@ -2609,7 +2625,7 @@ def get_task_parameter_path(configuration, vgrid, pattern, extension='.yaml',
     task_home = get_workflow_task_home(configuration, vgrid)
     if not task_home:
         _logger.warning("Could not find task home in vgrid '%s' "
-                       "for paramater path" % vgrid)
+                        "for paramater path" % vgrid)
         return False
     return os.path.join(task_home, pattern['persistence_id'] + extension)
 

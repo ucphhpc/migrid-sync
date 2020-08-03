@@ -113,8 +113,6 @@ def fix_missing(config_file, verbose=True):
         'gdp_home': '~/state/gdp_home/',
         'workflows_home': '~/state/workflows_home/',
         'workflows_db_home': '~/state/workflows_home/workflows_db_home/',
-        'workflows_db': '~/state/workflows_home/workflows_db_home/workflows_db.pickle',
-        'workflows_db_lock': '~/state/workflows_home/workflows_db_home/workflows_db.lock',
         'notify_home': '~/state/notify_home',
         'site_vgrid_links': 'files web tracker workflows monitor',
         'site_vgrid_creators': 'distinguished_name:.*',
@@ -266,8 +264,8 @@ def fix_missing(config_file, verbose=True):
                 modified = True
     if modified:
         backup_path = '%s.%d' % (config_file, time.time())
-        print('Backing up existing configuration to %s as update removes all comments'\
-            % backup_path)
+        print('Backing up existing configuration to %s as update removes all comments'
+              % backup_path)
         fd = open(config_file, 'r')
         backup_fd = open(backup_path, 'w')
         backup_fd.writelines(fd.readlines())
@@ -279,6 +277,7 @@ def fix_missing(config_file, verbose=True):
 
 
 class Configuration:
+
     """Server configuration in parsed form"""
 
     mig_server_id = None
@@ -329,8 +328,6 @@ class Configuration:
     gdp_home = ''
     workflows_home = ''
     workflows_db_home = ''
-    workflows_db = ''
-    workflows_db_lock = ''
     notify_home = ''
     seafile_mount = ''
     openid_store = ''
@@ -774,10 +771,6 @@ location.""" % self.config_file)
         if config.has_option('GLOBAL', 'workflows_db_home'):
             self.workflows_db_home = config.get('GLOBAL',
                                                 'workflows_db_home')
-        if config.has_option('GLOBAL', 'workflows_db'):
-            self.workflows_db = config.get('GLOBAL', 'workflows_db')
-        if config.has_option('GLOBAL', 'workflows_db_lock'):
-            self.workflows_db_lock = config.get('GLOBAL', 'workflows_db_lock')
         if config.has_option('GLOBAL', 'notify_home'):
             self.notify_home = config.get('GLOBAL', 'notify_home')
         if config.has_option('GLOBAL', 'vm_home'):
