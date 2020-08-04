@@ -107,6 +107,8 @@ miss_cache = {}
 shared_state = {}
 shared_state['base_dir'] = None
 shared_state['base_dir_len'] = 0
+shared_state['writable_dir'] = None
+shared_state['writable_dir_len'] = 0
 shared_state['file_inotify'] = None
 shared_state['file_handler'] = None
 shared_state['rule_handler'] = None
@@ -482,6 +484,15 @@ def run_command(
     #                                               ret_msg, txt_out))
 
 
+def strip_base_dirs(path):
+    """strips base directories from a given path"""
+    if shared_state['base_dir'] in path:
+        return path[shared_state['base_dir_len']:]
+    if shared_state['writable_dir'] in path:
+        return path[shared_state['writable_dir_len']:]
+    return path
+
+
 class MiGRuleEventHandler(PatternMatchingEventHandler):
 
     """Rule pattern-matching event handler to take care of VGrid rule changes
@@ -791,7 +802,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         src_path = event.src_path
         time_stamp = event.time_stamp
         _chain = getattr(event, '_chain', [(src_path, state)])
-        rel_src = src_path[shared_state['base_dir_len']:].lstrip(os.sep)
+        rel_src = strip_base_dirs(src_path).lstrip(os.sep)
         vgrid_prefix = os.path.join(
             shared_state['base_dir'], rule['vgrid_name'])
         logger.info('(%s) in handling of %s for %s %s' %
@@ -884,7 +895,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                                      (argument, filled_argument))
                 pattern = os.path.join(vgrid_prefix, filled_argument)
                 for path in glob.glob(pattern):
-                    rel_path = path[shared_state['base_dir_len']:]
+                    rel_path = strip_base_dirs(path)
                     _chain += [(path, change)]
 
                     # Prevent obvious trigger chain cycles
@@ -893,8 +904,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                         flat_chain = ['%s : %s' % pair for pair in
                                       _chain]
                         chain_str = ' <-> '.join(flat_chain)
-                        rel_chain_str = chain_str[
-                            shared_state['base_dir_len']:]
+                        rel_chain_str = strip_base_dirs(chain_str)
 
                         logger.warning('(%s) breaking trigger cycle %s'
                                        % (pid, chain_str))
@@ -1056,6 +1066,22 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         else:
             raise Exception(msg)
 
+    def __detect_symlink(self, event):
+        """detect symlink to directory creation events and correct them
+        accordingly"""
+
+        pid = multiprocessing.current_process().pid
+        src_path = event.src_path
+
+        # Check if really is not a dir, could be a symlink.
+        if not event.is_directory \
+                and os.path.islink(src_path) \
+                and os.path.isdir(src_path):
+            logger.debug(
+                "(%s) path %s is symlink to a directory. Updating "
+                "event accordingly" % (pid, src_path))
+            event.is_directory = True
+
     def __update_file_monitor(self, event):
         """Updates file monitor using the global dir_cache"""
 
@@ -1067,7 +1093,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         # If dir_modified is due to a file event we ignore it
 
         if is_directory and state == 'created':
-            rel_path = src_path[shared_state['base_dir_len']:]
+            rel_path = strip_base_dirs(src_path)
 
             # TODO: Optimize this such that only '.'
             # extracts vgrid_name and specific dir_cache ?
@@ -1095,8 +1121,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
                     for ent in scandir(src_path):
                         if ent.is_dir(follow_symlinks=True):
-                            vgrid_sub_path = ent.path[
-                                shared_state['base_dir_len']:]
+                            vgrid_sub_path = strip_base_dirs(ent.path)
 
                             if not vgrid_sub_path in \
                                     vgrid_dir_cache.keys() or \
@@ -1320,6 +1345,10 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
         event.time_stamp = time.time()
 
+        # Check for symlink creation
+
+        self.__detect_symlink(event)
+
         # Update file_monitor and dir cache
 
         self.__update_file_monitor(event)
@@ -1361,16 +1390,22 @@ def add_vgrid_file_monitor_watch(configuration, path):
 
     pid = multiprocessing.current_process().pid
 
-    vgrid_files_path = os.path.join(configuration.vgrid_files_home,
-                                    path)
+    vgrid_files_path = os.path.join(configuration.vgrid_files_home, path)
+    vgrid_files_writable = os.path.join(configuration.vgrid_files_writable, path)
 
     if path not in shared_state['file_inotify']._wd_for_path:
         shared_state['file_inotify'].add_watch(force_utf8(vgrid_files_path))
+
+        # logger.debug('(%s) Adding watch for: %s with path: %s' % (pid,
+        #             vgrid_files_path, path))
+
+        if os.path.sep not in path:
+            shared_state['file_inotify'].add_watch(force_utf8(vgrid_files_writable))
+
+            # logger.debug('(%s) Adding watch for: %s' % (pid,
+            #             vgrid_files_writable))
+
     else:
-
-        # logger.debug('(%s) Adding watch for: %s' % (pid,
-        #             vgrid_files_path))
-
         logger.warning('(%s) file_monitor already exists for: %s'
                        % (pid, path))
 
@@ -1389,8 +1424,7 @@ def add_vgrid_file_monitor(configuration, vgrid_name, path):
 
     retval = True
     vgrid_dir_cache = dir_cache[vgrid_name]
-    vgrid_files_path = os.path.join(configuration.vgrid_files_home,
-                                    path)
+    vgrid_files_path = os.path.join(configuration.vgrid_files_home, path)
 
     if os.path.exists(vgrid_files_path):
         vgrid_files_path_mtime = os.path.getmtime(vgrid_files_path)
@@ -1408,8 +1442,7 @@ def add_vgrid_file_monitor(configuration, vgrid_name, path):
 
                 for ent in scandir(vgrid_files_path):
                     if ent.is_dir(follow_symlinks=True):
-                        vgrid_sub_path = ent.path[
-                            shared_state['base_dir_len']:]
+                        vgrid_sub_path = strip_base_dirs(ent.path)
                         # Force utf8 everywhere to avoid encoding issues
                         vgrid_sub_path = force_utf8(vgrid_sub_path)
                         if not vgrid_sub_path in vgrid_dir_cache.keys():
@@ -1487,7 +1520,7 @@ def generate_vgrid_dir_cache(configuration, vgrid_base_path):
     for (root, dir_names, _) in walk(vgrid_path, followlinks=True):
         for dir_name in dir_names:
             dir_path = os.path.join(root, dir_name)
-            dir_cache_path = dir_path[shared_state['base_dir_len']:]
+            dir_cache_path = strip_base_dirs(dir_path)
             if dir_cache_path not in vgrid_dir_cache:
                 vgrid_dir_cache[dir_cache_path] = {}
                 vgrid_dir_cache[dir_cache_path]['mtime'] = \
@@ -1625,10 +1658,13 @@ def monitor(configuration, vgrid_name):
     logger.info('Starting monitor process with PID: %s for vgrid: %s'
                 % (pid, vgrid_name))
 
-    # Set base_dir and base_dir_len
+    # Set base directories and appropriate lengths
 
     shared_state['base_dir'] = os.path.join(configuration.vgrid_files_home)
     shared_state['base_dir_len'] = len(shared_state['base_dir'])
+
+    shared_state['writable_dir'] = os.path.join(configuration.vgrid_files_writable)
+    shared_state['writable_dir_len'] = len(shared_state['writable_dir'])
 
     # Allow e.g. logrotate to force log re-open after rotates
     register_hangup_handler(configuration)
@@ -1638,10 +1674,12 @@ def monitor(configuration, vgrid_name):
     if vgrid_name == '.':
         vgrid_home = configuration.vgrid_home
         file_monitor_home = shared_state['base_dir']
+        writable_dir = shared_state['writable_dir']
         recursive_rule_monitor = False
     else:
         vgrid_home = os.path.join(configuration.vgrid_home, vgrid_name)
         file_monitor_home = os.path.join(shared_state['base_dir'], vgrid_name)
+        writable_dir = os.path.join(shared_state['writable_dir'], vgrid_name)
         recursive_rule_monitor = True
 
     rule_monitor = Observer()
@@ -1668,7 +1706,14 @@ def monitor(configuration, vgrid_name):
     # monitor actual files to handle events for vgrid_files_home
 
     file_monitor = Observer()
-    file_patterns = [os.path.join(file_monitor_home, '*')]
+    file_patterns = [
+        os.path.join(file_monitor_home, '*'),
+        os.path.join(writable_dir, '*')
+    ]
+
+    logger.info('(%s) initializing listener with patterns: %s'
+                % (pid, file_patterns))
+
     shared_state['file_handler'] = MiGFileEventHandler(
         patterns=file_patterns, ignore_directories=False, case_sensitive=True)
     file_monitor.schedule(shared_state['file_handler'], file_monitor_home,
