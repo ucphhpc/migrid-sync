@@ -79,6 +79,12 @@ except ImportError:
     print("ERROR: the python paramiko module is required for this daemon")
     sys.exit(1)
 
+# IMPORTANT: sshd sftp subsys calls this script directly without user env so
+#            we cannot rely on PYTHONPATH and instead explictly set load path
+#            to include user home to allow from mig.X import Y
+# NOTE: __file__ is /MIG_BASE/mig/server/sftp_subsys.py and we need MIG_BASE
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+
 from mig.server.grid_sftp import SimpleSftpServer as SftpServerImpl
 from mig.shared.conf import get_configuration_object
 from mig.shared.fileio import user_chroot_exceptions

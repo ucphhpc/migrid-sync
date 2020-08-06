@@ -59,11 +59,11 @@
 #define MIG_ACCOUNT_INACCESSIBLE    (0x008000)
 
 #ifndef MIG_HOME
-#define MIG_HOME "/home/mig/mig"
+#define MIG_HOME "/home/mig"
 #endif
 
 #ifndef MIG_CONF
-#define MIG_CONF MIG_HOME"/server/MiGserver.conf"
+#define MIG_CONF MIG_HOME"/mig/server/MiGserver.conf"
 #endif
 
 #ifndef RATE_LIMIT_EXPIRE_DELAY
@@ -112,18 +112,19 @@ static bool mig_pyinit()
         pyrun("import os");
         pyrun("os.environ['MIG_CONF'] = '%s';", MIG_CONF);
         pyrun("import sys");
+        /* NOTE: it's essential to add mig code root here to allow imports */
         pyrun("sys.path.append('%s')", MIG_HOME);
-        pyrun("from shared.griddaemons.sftp import hit_rate_limit");
-        pyrun("from shared.griddaemons.sftp import default_username_validator");
-        pyrun("from shared.griddaemons.sftp import validate_auth_attempt");
-        pyrun("from shared.griddaemons.sftp import active_sessions");
-        pyrun("from shared.griddaemons.sftp import expire_rate_limit");
-        pyrun("from shared.griddaemons.sftp import check_twofactor_session");
+        pyrun("from mig.shared.griddaemons.sftp import hit_rate_limit");
+        pyrun("from mig.shared.griddaemons.sftp import default_username_validator");
+        pyrun("from mig.shared.griddaemons.sftp import validate_auth_attempt");
+        pyrun("from mig.shared.griddaemons.sftp import active_sessions");
+        pyrun("from mig.shared.griddaemons.sftp import expire_rate_limit");
+        pyrun("from mig.shared.griddaemons.sftp import check_twofactor_session");
         pyrun
-            ("from shared.logger import daemon_logger, register_hangup_handler");
-        pyrun("from shared.conf import get_configuration_object");
-        pyrun("from shared.accountstate import check_account_accessible");
-        pyrun("from shared.pwhash import scramble_digest");
+            ("from mig.shared.logger import daemon_logger, register_hangup_handler");
+        pyrun("from mig.shared.conf import get_configuration_object");
+        pyrun("from mig.shared.accountstate import check_account_accessible");
+        pyrun("from mig.shared.pwhash import scramble_digest");
         pyrun("configuration = get_configuration_object(skip_log=True)");
         pyrun("log_level = configuration.loglevel");
         pyrun
