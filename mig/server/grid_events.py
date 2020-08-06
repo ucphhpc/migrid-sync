@@ -1217,10 +1217,19 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         state = event.event_type
         src_path = event.src_path
 
+        # match events within writable directory to trigger in files directory.
+        # Once migration to new structure is complete this can probably be
+        # removed.
+        src_path = src_path.replace(
+            configuration.vgrid_files_writable,
+            configuration.vgrid_files_home)
+
         is_directory = event.is_directory
 
         # logger.debug('(%s) got %s event for src_path: %s, directory: %s' % \
         #             (pid, state, src_path, is_directory))
+        # logger.debug('(%s) event at %s was really at %s' %
+        #              (pid, src_path, event.src_path))
         # logger.debug('(%s) filter %s against %s' % (pid,
         #             all_rules.keys(), src_path))
 
