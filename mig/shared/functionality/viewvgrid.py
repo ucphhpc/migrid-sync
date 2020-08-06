@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # viewvgrid - Display public details about a vgrid
-# Copyright (C) 2003-2019 The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020 The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -47,6 +47,21 @@ def signature():
     return ['vgrid_info', defaults]
 
 
+def translate_legacy_value(name, vgrid_dict, keyword_map):
+    """Legacy vgrids may have True or False values where we now expect keys to
+    be a group constant. Translate any such legacy values to the modern value.
+    """
+    raw_val = vgrid_dict.get(name, True)
+    if raw_val in keyword_map:
+        return raw_val
+    translate_map = {'write_shared_files': {True: keyword_members, False: keyword_none},
+                     'write_priv_web': {True: keyword_owners, False: keyword_none},
+                     'write_pub_web': {True: keyword_owners, False: keyword_none}}
+    if not name in translate_map:
+        return keyword_none
+    return translate_map[name].get(raw_val, keyword_none)
+
+
 def build_vgriditem_object_from_vgrid_dict(configuration, vgrid_name,
                                            vgrid_dict, allow_vgrids):
     """Build a vgrid object based on input vgrid_dict"""
@@ -72,12 +87,17 @@ def build_vgriditem_object_from_vgrid_dict(configuration, vgrid_name,
     resource_visibility = keyword_map[visible_resources]
     create_sharelink = vgrid_dict.get('create_sharelink', keyword_owners)
     sharelink_access = keyword_map[create_sharelink]
-    write_shared_files = keyword_map[vgrid_dict.get('write_shared_files',
-                                                    keyword_members)]
-    write_priv_web = keyword_map[vgrid_dict.get('write_priv_web',
-                                                keyword_owners)]
-    write_pub_web = keyword_map[vgrid_dict.get('write_pub_web',
-                                               keyword_owners)]
+
+    # NOTE: legacy vgrids may have True or False value here instead
+    write_val = translate_legacy_value('write_shared_files', vgrid_dict,
+                                       keyword_map)
+    write_shared_files = keyword_map[write_val]
+    write_val = translate_legacy_value('write_priv_web', vgrid_dict,
+                                       keyword_map)
+    write_priv_web = keyword_map[write_val]
+    write_val = translate_legacy_value('write_pub_web', vgrid_dict,
+                                       keyword_map)
+    write_pub_web = keyword_map[write_val]
     hidden = bool_map[vgrid_dict.get('hidden', False)]
     vgrid_item['fields'].append(('Description', description))
     vgrid_item['fields'].append(('Owners', '\n'.join(owners)))
