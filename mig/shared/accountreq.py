@@ -643,5 +643,5 @@ def get_accepted_peers(configuration, client_id):
         if os.path.exists(peers_path):
             _logger.warning("could not load peers from %s: %s" %
                             (peers_path, exc))
-        accepted_peers = []
+        accepted_peers = {}
     return accepted_peers

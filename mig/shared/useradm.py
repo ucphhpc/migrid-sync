@@ -255,13 +255,21 @@ def create_user(
         for (user_id, _) in hits:
             _logger.debug("check %s in peers for %s" % (client_id, user_id))
             accepted_peers = get_accepted_peers(configuration, user_id)
-            if client_id in accepted_peers:
-                _logger.debug("validated %s as peer for %s" % (user_id,
-                                                               client_id))
-                accepted_peer_list.append(client_id)
-            else:
+            peer_entry = accepted_peers.get(client_id, None)
+            if not peer_entry:
                 _logger.warning("could not validate %s as peer for %s" %
                                 (user_id, client_id))
+                continue
+            peer_expire = datetime.datetime.strptime(
+                peer_entry.get('expire', 0), '%Y-%m-%d')
+            user_expire = datetime.datetime.fromtimestamp(user['expire'])
+            if peer_expire < user_expire:
+                _logger.warning("expire %s vs %s prevents %s as peer for %s" %
+                                (peer_expire, user_expire, user_id, client_id))
+                continue
+            _logger.debug("validated %s as peer for %s" % (user_id,
+                                                           client_id))
+            accepted_peer_list.append(client_id)
         if not accepted_peer_list:
             _logger.error("requested peer validation with %r for %s failed" %
                           (verify_pattern, client_id))
