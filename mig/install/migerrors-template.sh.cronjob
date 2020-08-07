@@ -23,22 +23,29 @@ SECSCANIP="__SECSCAN_ADDR_PATTERN__"
 LOGDIR="__MIG_STATE__/log"
 TODAY=$(date +'%Y-%m-%d')
 YESTERDAY=$(date --date=yesterday +%'Y-%m-%d')
+# Number of lines to allow from each log 
+MAXLINES=1000
 
-grep -H "Internal Server Error" $LOGDIR/webdavs.out
-grep -H -A 12 "Traceback" $LOGDIR/webdavs.out
+grep -H "Internal Server Error" $LOGDIR/webdavs.out | tail -n $MAXLINES
+grep -H -A 12 "Traceback" $LOGDIR/webdavs.out | tail -n $MAXLINES
 
 grep -H ERROR $LOGDIR/ftps.log | \
-        grep -v "ERROR Invalid user(name)? .* from $SECSCANIP"
+        grep -E -v "ERROR Invalid user(name)? .* from ${SECSCANIP}" | tail -n $MAXLINES
+
 grep -H ERROR $LOGDIR/sftp.log | \
-	grep -v "Password authentication failed for\|Socket exception: Connection reset by peer\|Error reading SSH protocol banner\|check_banner\|list_folder on missing path\|chmod \(292\|365\) rejected on path\|symlink rejected on path\|ERROR Exception: Incompatible ssh\|ERROR Exception: Incompatible version \|ERROR Exception: no moduli available\|ERROR Invalid user(name)? .* from $SECSCANIP\|ERROR $"
-grep -H ERROR $LOGDIR/davs.log | grep -v "The handshake operation timed out\|decryption failed or bad record mac\|length too short\|no ciphers specified\|unknown error \(_ssl.c:579\)\|Failed password login for .* from $SECSCANIP\|ERROR Invalid user(name)? .* from $SECSCANIP\|invalid share mode \(write\|read\)-only for "
-grep -H ERROR $LOGDIR/chkchroot.log | grep -v " from $SECSCANIP "
+	grep -E -v "Password authentication failed for|Socket exception: Connection reset by peer|Error reading SSH protocol banner|check_banner|list_folder on missing path|chmod (292|365) rejected on path|symlink rejected on path|ERROR Exception: Incompatible ssh|ERROR Exception: Incompatible version |ERROR Exception: no moduli available|ERROR Invalid user(name)? .* from ${SECSCANIP}|ERROR $" | tail -n $MAXLINES
+
+grep -H ERROR $LOGDIR/davs.log | grep -E -v "The handshake operation timed out|decryption failed or bad record mac|length too short|no ciphers specified|unknown error \(_ssl.c:579\)|Failed password login for .* from ${SECSCANIP}|ERROR Invalid user(name)? .* from ${SECSCANIP}|invalid share mode (write|read)-only for " | tail -n $MAXLINES
+
+grep -H ERROR $LOGDIR/chkchroot.log | grep -E -v " from ${SECSCANIP} " | tail -n $MAXLINES
+
 # NOTE: we ignore script crashed errors here and treat specifically next
 grep -H ERROR $LOGDIR/mig.log | \
-	grep -v "problems importing arclib\|disabled in configuration\|\(settings\|userprofile\) could not be opened/unpickled\|load \(ssh\|ftps\|davs\|seafile\) publickeys failed\|is not a valid openid provider\|script crashed:\|INFO Content-Length missing or zero\|$SECSCANIP \(refused to\|could not\) import .*shared\.functionality\."
+	grep -E -v "problems importing arclib|disabled in configuration|(settings|userprofile) could not be opened/unpickled|load (ssh|ftps|davs|seafile) publickeys failed|is not a valid openid provider|script crashed:|INFO Content-Length missing or zero|${SECSCANIP} (refused to|could not) import .*shared\.functionality\." | tail -n $MAXLINES
 # Extract variable length script crash tracebacks terminated with a blank line
-sed -n "/ERROR script crashed:/""{ :a; $p; N; /\n$/!ba; p; }" $LOGDIR/mig.log
-grep -H "CSRF check failed" $LOGDIR/mig.log
-} | grep "$YESTERDAY\|$TODAY\|^[^0-9]"'
+sed -n "/ERROR.* script crashed:/""{ :a; $p; N; /\n$/!ba; p; }" $LOGDIR/mig.log | tail -n $MAXLINES
+
+grep -H "CSRF check failed" $LOGDIR/mig.log | tail -n $MAXLINES
+} | grep -E "${YESTERDAY}|${TODAY}|^[^0-9]"'
 
 exit 0
