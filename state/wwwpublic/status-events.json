@@ -1,6 +1,27 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2020-08-16T09:00:00+02:00", 
+    "systems": [
+        "ERDA", "IDMC",
+    ], 
+    "announce_start": "2020-08-07T08:00:00+02:00", 
+    "title": {
+      "EN": "Planned DAG Maintenance", 
+      "DK": "Planlagt vedligehold af DAGF"
+    }, 
+    "services": [
+      "DAG"
+    ], 
+    "work_end": "2020-08-16T15:00:00+02:00", 
+    "description": {
+      "EN": "Update and general maintenance of the DAG service",
+      "DA": "Opdatering og generel vedligeholdelse af DAG-tjenesten"
+    }, 
+    "announce_end": "2020-07-02T12:00:00+02:00"
+  },
+  {
+    "status": "AUTO", 
     "work_start": "2020-07-01T16:00:00+02:00", 
     "systems": [
         "ERDA", "IDMC", "SIF"
