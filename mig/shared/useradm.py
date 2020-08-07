@@ -267,9 +267,9 @@ def create_user(
                 _logger.warning("expire %s vs %s prevents %s as peer for %s" %
                                 (peer_expire, user_expire, user_id, client_id))
                 continue
-            _logger.debug("validated %s as peer for %s" % (user_id,
-                                                           client_id))
-            accepted_peer_list.append(client_id)
+            _logger.debug("validated %s accepts %s as peer" % (user_id,
+                                                               client_id))
+            accepted_peer_list.append(user_id)
         if not accepted_peer_list:
             _logger.error("requested peer validation with %r for %s failed" %
                           (verify_pattern, client_id))
@@ -328,7 +328,7 @@ def create_user(
             if do_lock:
                 unlock_user_db(flock)
             if verbose:
-                print('Attempting create_user with conflicting alias %s' \
+                print('Attempting create_user with conflicting alias %s'
                       % alias)
             raise Exception(
                 'A conflicting user with alias %s already exists' % alias)
@@ -424,7 +424,7 @@ with certificate or OpenID authentication to authorize the change."""
         user_db[client_id] = user
         save_user_db(user_db, db_path, do_lock=False)
         if verbose:
-            print('User %s was successfully added/updated in user DB!'\
+            print('User %s was successfully added/updated in user DB!'
                   % client_id)
     except Exception as err:
         if do_lock:
@@ -761,16 +761,16 @@ def fix_vgrid_sharelinks(conf_path, db_path, verbose=False, force=False):
             if not share_id in links_dict.keys():
                 user_path = os.readlink(sharelink_path)
                 if verbose:
-                    print('Handle missing vgrid %s sharelink %s to %s (%s)' % \
-                        (vgrid_name, share_id, sharelink_realpath, user_path))
+                    print('Handle missing vgrid %s sharelink %s to %s (%s)' %
+                          (vgrid_name, share_id, sharelink_realpath, user_path))
                 client_dir = user_path.replace(configuration.user_home, '')
                 client_dir = client_dir.split(os.sep)[0]
                 client_id = client_dir_id(client_dir)
                 (get_status, share_dict) = get_share_link(share_id, client_id,
                                                           configuration)
                 if not get_status:
-                    print('Error loading sharelink dict for %s of %s' % \
-                        (share_id, client_id))
+                    print('Error loading sharelink dict for %s of %s' %
+                          (share_id, client_id))
                     continue
 
                 print('Add missing sharelink %s to vgrid %s' % (share_id,
@@ -866,7 +866,7 @@ def edit_user(
         user_db[new_id] = user_dict
         save_user_db(user_db, db_path, do_lock=False)
         if verbose:
-            print('User %s was successfully edited in user DB!'\
+            print('User %s was successfully edited in user DB!'
                   % client_id)
     except Exception as err:
         import traceback
@@ -925,8 +925,8 @@ def edit_user(
                 raise Exception('could not rename %s to %s: %s'
                                 % (old_path, new_path, exc))
     if verbose:
-        print('User dirs for %s was successfully renamed!'\
-            % client_id)
+        print('User dirs for %s was successfully renamed!'
+              % client_id)
 
     # Now create freeze_home alias to preserve access to published archives
 
@@ -954,14 +954,14 @@ def edit_user(
                                                         [new_id])
                 if not add_status:
                     if verbose:
-                        print('Could not add new %s owner of %s: %s' \
+                        print('Could not add new %s owner of %s: %s'
                               % (new_id, res_id, err))
                     continue
                 (del_status, err) = resource_remove_owners(configuration, res_id,
                                                            [client_id])
                 if not del_status:
                     if verbose:
-                        print('Could not remove old %s owner of %s: %s' \
+                        print('Could not remove old %s owner of %s: %s'
                               % (client_id, res_id, err))
                     continue
                 if verbose:
@@ -981,14 +981,14 @@ def edit_user(
                                                  [new_id])
             if not add_status:
                 if verbose:
-                    print('Could not add new %s owner of %s: %s' \
+                    print('Could not add new %s owner of %s: %s'
                           % (new_id, vgrid_name, err))
                 continue
             (del_status, err) = vgrid_remove_owners(configuration, vgrid_name,
                                                     [client_id])
             if not del_status:
                 if verbose:
-                    print('Could not remove old %s owner of %s: %s' \
+                    print('Could not remove old %s owner of %s: %s'
                           % (client_id, vgrid_name, err))
                 continue
             if verbose:
@@ -1000,14 +1000,14 @@ def edit_user(
                                                   [new_id])
             if not add_status:
                 if verbose:
-                    print('Could not add new %s member of %s: %s' \
+                    print('Could not add new %s member of %s: %s'
                           % (new_id, vgrid_name, err))
                 continue
             (del_status, err) = vgrid_remove_members(configuration, vgrid_name,
                                                      [client_id])
             if not del_status:
                 if verbose:
-                    print('Could not remove old %s member of %s: %s' \
+                    print('Could not remove old %s member of %s: %s'
                           % (client_id, vgrid_name, err))
                 continue
             if verbose:
@@ -1134,7 +1134,7 @@ def delete_user(
         del user_db[client_id]
         save_user_db(user_db, db_path, do_lock=False)
         if verbose:
-            print('User %s was successfully removed from user DB!'\
+            print('User %s was successfully removed from user DB!'
                   % client_id)
     except Exception as err:
         if not force:
@@ -1167,8 +1167,8 @@ def delete_user(
                 raise Exception('could not remove %s: %s'
                                 % (user_path, exc))
     if verbose:
-        print('User dirs for %s was successfully removed!'\
-            % client_id)
+        print('User dirs for %s was successfully removed!'
+              % client_id)
     mark_user_modified(configuration, client_id)
 
 
@@ -1404,7 +1404,7 @@ def migrate_users(
                                     % new_id)
             else:
                 if verbose:
-                    print('Pruning old duplicate user %s from user DB' \
+                    print('Pruning old duplicate user %s from user DB'
                           % client_id)
                 del user_db[client_id]
         elif old_id in latest.keys():
@@ -1446,7 +1446,7 @@ def migrate_users(
         old_id = user['full_name'].replace(' ', '_')
         new_id = user['distinguished_name']
         if verbose:
-            print('updating user %s on old format %s to new format %s' \
+            print('updating user %s on old format %s to new format %s'
                   % (client_id, old_id, new_id))
 
         old_name = client_id_dir(old_id)
@@ -1519,7 +1519,7 @@ def migrate_users(
             user_db[new_id] = user
             save_user_db(user_db, db_path, do_lock=False)
             if verbose:
-                print('User %s was successfully updated in user DB!'\
+                print('User %s was successfully updated in user DB!'
                       % client_id)
         except Exception as err:
             if not force:
@@ -1567,7 +1567,7 @@ def fix_entities(
         old_id = user['full_name'].replace(' ', '_')
         new_id = user['distinguished_name']
         if verbose:
-            print('updating user %s on old format %s to new format %s' \
+            print('updating user %s on old format %s to new format %s'
                   % (client_id, old_id, new_id))
 
         for base_dir in (configuration.resource_home,
@@ -1635,7 +1635,7 @@ def fix_userdb_keys(
                 print('user %s is already updated to new format' % client_id)
             continue
         if verbose:
-            print('updating user on old format %s to new format %s' \
+            print('updating user on old format %s to new format %s'
                   % (old_id, new_id))
 
         try:
@@ -1643,7 +1643,7 @@ def fix_userdb_keys(
             user_db[new_id] = user
             save_user_db(user_db, db_path, do_lock=False)
             if verbose:
-                print('User %s was successfully updated in user DB!'\
+                print('User %s was successfully updated in user DB!'
                       % client_id)
         except Exception as err:
             if not force:
