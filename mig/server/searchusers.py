@@ -117,8 +117,13 @@ if '__main__' == __name__:
             usage()
             sys.exit(0)
 
+    regex_patterns = []
+    for (key, val) in search_filter.items():
+        if val.find('|') != -1:
+            regex_patterns.append(key)
+
     (configuration, hits) = search_users(search_filter, conf_path, db_path,
-                                         verbose)
+                                         verbose, regex_match=regex_patterns)
     print("Matching users:")
     for (uid, user_dict) in hits:
         if only_fields:

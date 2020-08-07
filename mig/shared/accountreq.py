@@ -41,7 +41,8 @@ except ImportError:
 
 from mig.shared.base import force_utf8, canonical_user, client_id_dir, \
     distinguished_name_to_user
-from mig.shared.defaults import peers_fields, pending_peers_filename
+from mig.shared.defaults import peers_fields, peers_filename, \
+    pending_peers_filename
 from mig.shared.fileio import delete_file
 # Expose some helper variables for functionality backends
 from mig.shared.safeinput import name_extras, password_extras, password_min_len, \
@@ -628,3 +629,19 @@ def manage_pending_peers(configuration, client_id, action, change_list):
         _logger.warning("could not save pending peers to %s: %s" %
                         (pending_peers_path, exc))
         return False
+
+
+def get_accepted_peers(configuration, client_id):
+    """Helper to get the list of peers accepted by client_id"""
+    _logger = configuration.logger
+    client_dir = client_id_dir(client_id)
+    peers_path = os.path.join(configuration.user_settings, client_dir,
+                              peers_filename)
+    try:
+        accepted_peers = load(peers_path)
+    except Exception as exc:
+        if os.path.exists(peers_path):
+            _logger.warning("could not load peers from %s: %s" %
+                            (peers_path, exc))
+        accepted_peers = []
+    return accepted_peers

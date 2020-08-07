@@ -38,6 +38,7 @@ import shutil
 import sqlite3
 import sys
 
+from mig.shared.accountreq import get_accepted_peers
 from mig.shared.accountstate import update_account_expire_cache, \
     update_account_status_cache
 from mig.shared.base import client_id_dir, client_dir_id, client_alias, \
@@ -63,6 +64,7 @@ from mig.shared.serial import load, dump
 from mig.shared.settings import update_settings, update_profile, update_widgets
 from mig.shared.sharelinks import load_share_links, update_share_link, \
     get_share_link, mode_chars_map
+from mig.shared.validstring import possible_user_id
 from mig.shared.vgrid import vgrid_add_owners, vgrid_remove_owners, \
     vgrid_add_members, vgrid_remove_members, in_vgrid_share, \
     vgrid_sharelinks, vgrid_add_sharelinks
@@ -185,6 +187,7 @@ def create_user(
     ask_renew=True,
     default_renew=False,
     do_lock=True,
+    verify_peer=None,
 ):
     """Add user"""
     flock = None
@@ -214,6 +217,64 @@ def create_user(
         del user['authorized']
     else:
         authorized = False
+
+    verify_pattern = verify_peer
+    if verify_peer == keyword_auto:
+        _logger.debug('auto-detect peers for: %s' % client_id)
+        peer_email_list = []
+        # extract email of vouchee from comment if possible
+        comment = user.get('comment', '')
+        all_matches = re.findall(r'[\w\.-]+@[\w\.-]+', comment)
+        for i in all_matches:
+            peer_email = "%s" % i
+            if not possible_user_id(configuration, peer_email):
+                _logger.warning('skip invalid peer: %s' % peer_email)
+                continue
+            peer_email_list.append(peer_email)
+
+        if not peer_email_list:
+            _logger.error("requested peer auto-detect failed for %s" %
+                          client_id)
+            raise Exception("Failed auto-detect peers in request for %s: %r"
+                            % (client_id, comment))
+        verify_pattern = '|'.join(['.*emailAddress=%s' %
+                                   i for i in peer_email_list])
+
+    if verify_pattern:
+        _logger.debug('verify peers for %s with %s' % (client_id,
+                                                       verify_pattern))
+        accepted_peer_list = []
+        search_filter = default_search()
+        search_filter['distinguished_name'] = verify_pattern
+        if verify_peer == keyword_auto or verify_pattern.find('|') != -1:
+            regex_patterns = ['distinguished_name']
+        else:
+            regex_patterns = []
+        (_, hits) = search_users(search_filter, conf_path, db_path,
+                                 verbose, regex_match=regex_patterns)
+        for (user_id, _) in hits:
+            _logger.debug("check %s in peers for %s" % (client_id, user_id))
+            accepted_peers = get_accepted_peers(configuration, user_id)
+            if client_id in accepted_peers:
+                _logger.debug("validated %s as peer for %s" % (user_id,
+                                                               client_id))
+                accepted_peer_list.append(client_id)
+            else:
+                _logger.warning("could not validate %s as peer for %s" %
+                                (user_id, client_id))
+        if not accepted_peer_list:
+            _logger.error("requested peer validation with %r for %s failed" %
+                          (verify_pattern, client_id))
+            raise Exception("Failed verify peers for %s using pattern %r" %
+                            (client_id, verify_pattern))
+
+        # Save peers in user DB for updates etc.
+        user['peers'] = accepted_peer_list
+        _logger.info("accept create user %s with peer validator(s): %s" %
+                     (user_id, ', '.join(accepted_peer_list)))
+
+    else:
+        _logger.info('Skip peer verification for %s' % client_id)
 
     if verbose:
         print('User ID: %s\n' % client_id)
@@ -1596,8 +1657,11 @@ def default_search():
 
 
 def search_users(search_filter, conf_path, db_path,
-                 verbose=False, do_lock=True):
-    """Search for matching users"""
+                 verbose=False, do_lock=True, regex_match=[]):
+    """Search for matching users. The optional regex_match is a list of keys in
+    search_filter to apply regular expression match rather than the usual
+    fnmatch for.
+    """
 
     if conf_path:
         if isinstance(conf_path, basestring):
@@ -1634,9 +1698,15 @@ def search_users(search_filter, conf_path, db_path,
                 if user_dict.get('expire', 0) > val:
                     match = False
                     break
-            elif not fnmatch.fnmatch(str(user_dict.get(key, '')), val):
+            elif key in regex_match and \
+                    not re.match(val, str(user_dict.get(key, ''))):
                 match = False
                 break
+            elif key not in regex_match and \
+                    not fnmatch.fnmatch(str(user_dict.get(key, '')), val):
+                match = False
+                break
+
         if not match:
             continue
         hits.append((uid, user_dict))

@@ -37,7 +37,8 @@ import re
 from mig.shared import returnvalues
 from mig.shared.accountreq import parse_peers, peers_permit_allowed, \
     manage_pending_peers
-from mig.shared.base import client_id_dir, fill_distinguished_name
+from mig.shared.base import client_id_dir, fill_distinguished_name, \
+    extract_field
 from mig.shared.defaults import peers_filename, peer_kinds, peers_fields, \
     csrf_field
 from mig.shared.functional import validate_input, REJECT_UNSET
@@ -241,6 +242,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
         for user in peers:
             output_objects.append(
                 {'object_type': 'text', 'text': "%(distinguished_name)s" % user})
+        if action in ['import', 'add', 'update']:
+            client_email = extract_field(client_id, 'email')
+            output_objects.append(
+                {'object_type': 'text', 'text': """Please tell your peers to
+request an account at %s with the exact ID fields you provided here and
+importantly mentioning the purpose and your email (%s) in the sign up Comment
+field.""" % (configuration.short_title, client_email)})
     except Exception as exc:
         logger.error('Failed to save %s peers to %s: %s' %
                      (client_id, peers_path, exc))
@@ -284,7 +292,8 @@ administrators. Please manually inform them (%s) if the problem persists.
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text': '''
-Informed the site admins about your %s peers action.''' % action})
+Informed the site admins about your %s peers action to let them accept peer
+account requests you already validated.''' % action})
 
     output_objects.append({'object_type': 'link', 'destination':
                            'peers.py', 'text': 'Back to peers'})

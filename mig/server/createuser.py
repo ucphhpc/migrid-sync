@@ -48,7 +48,7 @@ cert_warn = \
 Please note that you *must* use either the -i CERT_DN option to createuser
 or use importuser instead if you want to use other certificate DN formats
 than the one expected by MiG (/C=.*/ST=.*/L=NA/O=.*/CN=.*/emailAddress=.*)
-Otherwise those users will not be able to access their MiG interfaces!
+Otherwise those users will NOT be able to access their MiG interfaces!
 """
 
 
@@ -70,8 +70,9 @@ Where OPTIONS may be one or more of:
    -e EXPIRE           Set user account expiration to EXPIRE (epoch)
    -f                  Force operations to continue past errors
    -h                  Show this help
-   -i CERT_DN          Use CERT_DN as user ID no matter what other fields suggest
+   -i CERT_DN          Use CERT_DN as user ID despite what other fields suggest
    -o SHORT_ID         Add SHORT_ID as OpenID alias for user
+   -p PEER_PATTERN     Verify in Peers of existing account matching PEER_PATTERN
    -r                  Renew user account with existing values
    -R ROLES            Set user affiliation to ROLES
    -u USER_FILE        Read user information from pickle file
@@ -91,9 +92,10 @@ if '__main__' == __name__:
     user_id = None
     short_id = None
     role = None
+    peer_pattern = None
     user_dict = {}
     override_fields = {}
-    opt_args = 'c:d:e:fhi:o:rR:u:v'
+    opt_args = 'c:d:e:fhi:o:p:rR:u:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
@@ -119,6 +121,9 @@ if '__main__' == __name__:
         elif opt == '-o':
             short_id = val
             override_fields['short_id'] = short_id
+        elif opt == '-p':
+            peer_pattern = val
+            override_fields['peer_pattern'] = peer_pattern
         elif opt == '-r':
             default_renew = True
             ask_renew = False
@@ -232,7 +237,7 @@ if '__main__' == __name__:
         print('using user dict: %s' % user_dict)
     try:
         create_user(user_dict, conf_path, db_path, force, verbose, ask_renew,
-                    default_renew)
+                    default_renew, verify_peer=peer_pattern)
     except Exception as exc:
         print(exc)
         sys.exit(1)
