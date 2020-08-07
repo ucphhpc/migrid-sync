@@ -279,7 +279,7 @@ def create_user(
         # Save peers in user DB for updates etc.
         user['peers'] = accepted_peer_list
         _logger.info("accept create user %s with peer validator(s): %s" %
-                     (user_id, ', '.join(accepted_peer_list)))
+                     (client_id, ', '.join(accepted_peer_list)))
 
     else:
         _logger.info('Skip peer verification for %s' % client_id)
