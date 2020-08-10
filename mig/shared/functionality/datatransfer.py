@@ -572,7 +572,7 @@ into.<br/>
 <tr><td>
 <label for="fqdn">Host and port</label>
 <input type=text size=37 name=fqdn value="%(fqdn)s" required
-    pattern="[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)+"
+    pattern="[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+"
     title="A fully qualified domain name or Internet IP address for the remote location"/>
 <input id="port_input" type=number step=1 min=1 max=65535 name=port
     value="%(port)s" required />
