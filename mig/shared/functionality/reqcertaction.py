@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqcertaction - handle certificate account requests and send email to admins
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -95,6 +95,7 @@ def main(client_id, user_arguments_dict):
     smtp_server = configuration.smtp_server
     user_pending = os.path.abspath(configuration.user_pending)
 
+    # TODO: switch to canonical_user fra mig.shared.base instead?
     # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
     # please note that we get utf8 coded bytes here and title() treats such
     # chars as word termination. Temporarily force to unicode.
@@ -105,7 +106,7 @@ def main(client_id, user_arguments_dict):
     except Exception:
         cert_name = raw_name.title()
     country = accepted['country'][-1].strip().upper()
-    state = accepted['state'][-1].strip().title()
+    state = accepted['state'][-1].strip().upper()
     org = accepted['org'][-1].strip()
 
     # lower case email address

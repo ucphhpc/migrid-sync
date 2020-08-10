@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # base - shared base helper functions
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -201,7 +201,9 @@ def canonical_user(configuration, user_dict, limit_fields):
         if not key in limit_fields:
             continue
         if key == 'full_name':
-            val = ' '.join([i.capitalize() for i in val.split()])
+            # IMPORTANT: we get utf8 coded bytes here and title() treats such
+            # chars as word termination. Temporarily force to unicode.
+            val = force_utf8(force_unicode(val).title())
         elif key == 'email':
             val = val.lower()
         elif key == 'country':
@@ -481,7 +483,7 @@ if __name__ == '__main__':
          [('prefix', ''), ('somedir/prefix', ''), ('', 'suffix'),
           ('', 'suffix/somedir'), ('prefix', 'suffix')]]
     legal += ['sample.txt', 'somedir/sample.txt', '/somedir/sample.txt']
-    print("orig id %s, dir %s, id %s (match %s)" % \
+    print("orig id %s, dir %s, id %s (match %s)" %
           (orig_id, client_dir, client_id, orig_id == client_id))
     print("invisible tests")
     print("check that these are invisible:")

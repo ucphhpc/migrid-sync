@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reseditaction - Resource editor action handler back end
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -137,7 +137,7 @@ def handle_update(configuration, client_id, resource_id, user_vars,
                                    '''Failed to send request with ID "%s" to
 the %s administrator(s):
 %s
-Please manually contact the %s grid administrator(s) (%s)
+Please manually contact the %s site administrator(s) (%s)
 and provide this information''' % (tmp_id, msg,
                                        configuration.short_title,
                                        configuration.short_title,

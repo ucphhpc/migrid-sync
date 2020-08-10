@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settingskeywords - keywords for basic user settings
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -154,7 +154,7 @@ def get_settings_specs():
     }))
     specs.append(('ENABLE_WIDGETS', {
         'Title': 'Enable widgets',
-        'Description': 'If you want to be able to customize your grid pages '
+        'Description': 'If you want to be able to customize your site pages '
         'with custom content. Widgets are specified on your widgets settings '
         'page when enabled.',
         'Example': 'True',

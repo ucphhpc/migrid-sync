@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # extoidaction - handle account sign up with external OpenID credentials
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,7 +36,7 @@ import re
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir, generate_https_urls, \
-     fill_distinguished_name
+    fill_distinguished_name
 from mig.shared.defaults import oid_valid_days
 from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
@@ -60,7 +60,7 @@ def signature():
         'state': [''],
         'password': [''],
         'comment': [''],
-        }
+    }
     return ['text', defaults]
 
 
@@ -72,26 +72,26 @@ def main(client_id, user_arguments_dict):
     defaults = signature()[1]
     logger.debug('in extoidaction: %s' % user_arguments_dict)
     (validate_status, accepted) = validate_input(user_arguments_dict,
-            defaults, output_objects, allow_rejects=False)
+                                                 defaults, output_objects,
+                                                 allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
     # Unfortunately OpenID does not use POST
-    #if not safe_handler(configuration, 'post', op_name, client_id,
+    # if not safe_handler(configuration, 'post', op_name, client_id,
     #                    get_csrf_limit(configuration), accepted):
     #    output_objects.append(
     #        {'object_type': 'error_text', 'text': '''Only accepting
-#CSRF-filtered POST requests to prevent unintended updates'''
+# CSRF-filtered POST requests to prevent unintended updates'''
     #         })
     #    return (output_objects, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s OpenID account sign up' % configuration.short_title
     title_entry['skipmenu'] = True
-    output_objects.append({'object_type': 'header', 'text'
-                          : '%s OpenID account sign up' % \
-                            configuration.short_title 
-                           })
+    output_objects.append({'object_type': 'header', 'text':
+                           '%s OpenID account sign up' %
+                           configuration.short_title})
 
     admin_email = configuration.admin_email
     smtp_server = configuration.smtp_server
@@ -136,7 +136,7 @@ def main(client_id, user_arguments_dict):
         'expire': int(time.time() + oid_valid_days * 24 * 60 * 60),
         'openid_names': [raw_login],
         'auth': ['extoid'],
-        }
+    }
     fill_distinguished_name(user_dict)
     user_id = user_dict['distinguished_name']
     if configuration.user_openid_providers and configuration.user_openid_alias:
@@ -150,23 +150,24 @@ def main(client_id, user_arguments_dict):
         os.close(os_fd)
     except Exception as err:
         logger.error('Failed to write OpenID account request to %s: %s'
-                      % (req_path, err))
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Request could not be sent to grid administrators. Please contact them manually on %s if this error persists.'
-                               % admin_email})
+                     % (req_path, err))
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             '''Request could not be sent to site administrators. Please
+contact them manually on %s if this error persists.''' % admin_email})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     logger.info('Wrote OpenID account request to %s' % req_path)
     tmp_id = req_path.replace(user_pending, '')
     user_dict['tmp_id'] = tmp_id
 
-    # TODO: remove cert generation or generate pw for it 
+    # TODO: remove cert generation or generate pw for it
     mig_user = os.environ.get('USER', 'mig')
     if not configuration.ca_fqdn or not configuration.ca_user:
         command_cert_create = '[Disabled On This Site]'
     else:
         command_cert_create = \
-        """
+            """
 on CA host (%s):
 sudo su - %s
 rsync -aP %s@%s:mig/server/MiG-users.db ~/
@@ -190,12 +191,12 @@ cd ~/mig/server
         command_cert_revoke = '[Disabled On This Site]'
     else:
         command_cert_revoke = \
-        """
+            """
 on CA host (%s):
 sudo su - %s
-./ca-scripts/revokeusercert.py -a '%s' -d ~/MiG-users.db -u '%s'"""\
-         % (configuration.ca_fqdn, configuration.ca_user,
-            configuration.admin_email, user_id)
+./ca-scripts/revokeusercert.py -a '%s' -d ~/MiG-users.db -u '%s'""" % \
+            (configuration.ca_fqdn, configuration.ca_user,
+             configuration.admin_email, user_id)
 
     user_dict['command_user_create'] = command_user_create
     user_dict['command_user_delete'] = command_user_delete
@@ -249,20 +250,22 @@ Command to delete user again on %(site)s server:
 """ % user_dict
 
     logger.info('Sending email: to: %s, header: %s, msg: %s, smtp_server: %s'
-                 % (admin_email, email_header, email_msg, smtp_server))
+                % (admin_email, email_header, email_msg, smtp_server))
     if not send_email(admin_email, email_header, email_msg, logger,
                       configuration):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'An error occured trying to send the email requesting the grid administrators to create a new user account. Please email them (%s) manually and include the session ID: %s'
-                               % (admin_email, tmp_id)})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             '''An error occured trying to send the email requesting your new
+user account. Please email the site administrators (%s) manually and include
+the session ID: %s''' % (admin_email, tmp_id)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append(
-        {'object_type': 'text', 'text'
-         : """Request sent to grid administrators: Your user account will
-be created as soon as possible, so please be patient. Once
-handled an email will be sent to the account you have specified ('%s') with
-further information. In case of inquiries about this request, please email
-the grid administrators (%s) and include the session ID: %s"""
+        {'object_type': 'text', 'text':
+         """Request sent to site administrators: Your user account will
+be created as soon as possible, so please be patient. Once handled an email
+will be sent to the account you have specified ('%s') with further information.
+In case of inquiries about this request, please email the site administrators
+(%s) and include the session ID: %s"""
          % (email, configuration.admin_email, tmp_id)})
     return (output_objects, returnvalues.OK)

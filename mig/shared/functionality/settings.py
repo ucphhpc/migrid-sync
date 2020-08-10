@@ -825,7 +825,7 @@ get the default empty widget spaces.<br />
 <br/>
 <div class="warningtext">
 Widgets are disabled on your <em>General</em> settings page. Please enable
-them there first if you want to customize your grid pages.
+them there first if you want to customize your site pages.
 </div>
 '''
         html += '''

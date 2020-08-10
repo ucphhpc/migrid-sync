@@ -1180,7 +1180,7 @@ def init_workflow_task_home(configuration, vgrid):
     task_home = os.path.join(vgrid_path,
                              configuration.workflows_vgrid_tasks_home)
     if not task_home:
-        return (False, "Failed to setup tasks workflow home '%s' in grid '%s'"
+        return (False, "Failed to setup tasks workflow home '%s' in vgrid '%s'"
                 % (task_home, vgrid_path))
 
     if not os.path.exists(task_home) and \
@@ -1887,7 +1887,7 @@ def __create_workflow_recipe_entry(configuration, client_id, vgrid,
     if existing_recipe:
         return (False, "An existing recipe in vgrid '%s'"
                        " already exist with name '%s'" % (
-                        vgrid, workflow_recipe['name']))
+                           vgrid, workflow_recipe['name']))
 
     # Create an associated task file that contains the code to be executed
     converted, source_code = convert_to(configuration,

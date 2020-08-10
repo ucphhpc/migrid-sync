@@ -285,6 +285,7 @@ def main(client_id, user_arguments_dict, environ=None):
 
         email = accepted['openid.sreg.email'][-1].strip() or uniq_id
 
+    # TODO: switch to canonical_user fra mig.shared.base instead?
     # Fix case of values:
     # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
     # please note that we get utf8 coded bytes here and title() treats such
