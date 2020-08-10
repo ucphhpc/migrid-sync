@@ -709,6 +709,13 @@ location.""" % self.config_file)
                 'SITE', 'user_interface').split()
         else:
             self.user_interface = ['V2']
+        # Allow gradual transition to new user interface - only new sign ups
+        if config.has_option('SITE', 'new_user_default_ui'):
+            self.new_user_default_ui = config.get(
+                'SITE', 'new_user_default_ui').strip()
+        else:
+            self.new_user_default_ui = self.user_interface[0]
+
         if config.has_option('GLOBAL', 'admin_list'):
             # Parse semi-colon separated list of admins with optional spaces
             admins = config.get('GLOBAL', 'admin_list')

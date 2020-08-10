@@ -333,7 +333,10 @@ def create_user(
             raise Exception(
                 'A conflicting user with alias %s already exists' % alias)
 
-    if client_id in user_db:
+    if client_id not in user_db:
+        default_ui = configuration.new_user_default_ui
+    else:
+        default_ui = None
         account_status = user_db[client_id].get('status', 'active')
         if account_status != 'active':
             raise Exception('refusing to renew %s account!' % account_status)
@@ -612,6 +615,8 @@ The %(short_title)s admins
     user_email = user.get('email', '')
     if user_email:
         settings_defaults['EMAIL'] = [user_email]
+    if default_ui:
+        settings_defaults['USER_INTERFACE'] = default_ui
     settings_defaults['CREATOR'] = client_id
     settings_defaults['CREATED_TIMESTAMP'] = datetime.datetime.now()
     try:
