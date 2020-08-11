@@ -41,6 +41,8 @@ from mig.shared.defaults import expire_marks_dir, status_marks_dir, \
 from mig.shared.filemarks import get_filemark, update_filemark, reset_filemark
 from mig.shared.gdp.userid import get_base_client_id
 from mig.shared.userdb import load_user_dict, default_db_path, update_user_dict
+from mig.shared.validstring import possible_sharelink_id, possible_job_id, \
+     possible_jupyter_mount_id
 
 
 def update_account_expire_cache(configuration, user_dict):
@@ -318,7 +320,7 @@ def detect_special_login(configuration, username, proto):
     _logger = configuration.logger
     try:
         if proto in ('sftp', 'ftps', 'davs') and \
-                configuration.site_enable_sharelinks:
+                possible_sharelink_id(configuration, username):
             for mode in ['read-write']:
                 real_path = os.path.realpath(os.path.join(
                     configuration.sharelink_home, mode, username))
@@ -326,16 +328,17 @@ def detect_special_login(configuration, username, proto):
                     _logger.info("%s sharelink %s detected - always accessible" %
                                  (mode, username))
                     return True
-        elif proto == 'sftp' and configuration.site_enable_jobs:
+        if proto == 'sftp' and possible_job_id(configuration, username):
             real_path = os.path.realpath(os.path.join(
-                configuration.sessid_to_mrsl_link_home))
+                configuration.sessid_to_mrsl_link_home, username + '.mRSL'))
             if os.path.exists(real_path):
                 _logger.info(
                     "job mount %s detected - always accessible" % username)
                 return True
-        elif proto == 'sftp' and configuration.site_enable_jupyter:
+        if proto == 'sftp' and possible_jupyter_mount_id(configuration,
+                                                         username):
             real_path = os.path.realpath(os.path.join(
-                configuration.sessid_to_jupyter_mount_link_home))
+                configuration.sessid_to_jupyter_mount_link_home, username))
             if os.path.exists(real_path):
                 _logger.info(
                     "jupyter mount %s detected - always accessible" % username)
@@ -343,6 +346,7 @@ def detect_special_login(configuration, username, proto):
     except Exception as exc:
         _logger.error("detect special login for %r failed: %s" %
                       (username, exc))
+    _logger.debug("login for %s was detected as normal login" % username)
     return False
 
 
@@ -369,6 +373,7 @@ def check_account_accessible(configuration, username, proto, environ=None,
     # jupyter mounts. We should let all but actual user logins pass for now.
     # TODO: consider checking underlying user for other types eventually?
     if detect_special_login(configuration, username, proto):
+        _logger.debug("found %s as special %s login" % (username, proto))
         return True
 
     # NOTE: now we know username must be an ordinary user to check
@@ -438,3 +443,7 @@ if __name__ == "__main__":
     sharelink = 'JFPyQ7Gt2p'
     print("check account accessible for %s" % sharelink)
     print(check_account_accessible(conf, sharelink, 'sftp', expand_alias=True))
+
+    job_id = 'eaeeff724b8d0d73b55b50b880a4c76873eb44cbfe1f97e67dd251d1002ad748'
+    print("check account accessible for %s" % job_id)
+    print(check_account_accessible(conf, job_id, 'sftp', expand_alias=True))
