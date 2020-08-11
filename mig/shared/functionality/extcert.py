@@ -33,8 +33,9 @@ import os
 from mig.shared import returnvalues
 from mig.shared.accountreq import valid_name_chars, dn_max_len, \
     account_css_helpers, account_js_helpers, account_request_template
-from mig.shared.base import distinguished_name_to_user, canonical_user
-from mig.shared.defaults import csrf_field
+from mig.shared.base import distinguished_name_to_user, canonical_user, \
+    cert_field_map
+from mig.shared.defaults import csrf_field, keyword_auto
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.init import initialize_main_variables, find_entry
@@ -141,9 +142,12 @@ def main(client_id, user_arguments_dict):
     fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
     fill_helpers.update({'site_signup_hint': configuration.site_signup_hint})
     # Write-protect ID fields if requested
-    for field in user_fields:
+    for field in cert_field_map:
         fill_helpers['readonly_%s' % field] = ''
-    for field in accepted['ro_fields']:
+    ro_fields = [i for i in accepted['ro_fields'] if i in cert_field_map]
+    if keyword_auto in accepted['ro_fields']:
+        ro_fields += [i for i in cert_field_map if not i in ro_fields]
+    for field in ro_fields:
         fill_helpers['readonly_%s' % field] = 'readonly'
     fill_helpers.update(user_fields)
 

@@ -41,7 +41,7 @@ from mig.shared.accountreq import parse_peers, peers_permit_allowed, \
 from mig.shared.base import client_id_dir, fill_distinguished_name, \
     extract_field
 from mig.shared.defaults import peers_filename, peer_kinds, peers_fields, \
-    csrf_field
+    keyword_auto, csrf_field
 from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.html import html_post_helper
@@ -274,10 +274,9 @@ site administrators (%s).
                         peer_req[field] = peer_user.get(field, '')
                     peer_req['comment'] = 'Invited by %s (%s) for %s purposes' \
                                           % (client_name, client_email, kind)
-                    peer_url += '?%s' % urllib.urlencode(peer_req)
                     # Mark ID fields as readonly in the form to limit errors
-                    peer_url += '&ro_fields=' + \
-                        '&ro_fields='.join(peers_fields + ['state'])
+                    peer_req['ro_fields'] = keyword_auto
+                    peer_url += '?%s' % urllib.urlencode(peer_req)
                     email_msg = email_msg_template % (peer_name, peer_url)
                     logger.info('Sending invitation: to: %s, header: %s, msg: %s, smtp_server: %s'
                                 % (peer_email, email_header, email_msg,

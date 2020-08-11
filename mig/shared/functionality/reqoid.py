@@ -32,11 +32,11 @@ import os
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir, distinguished_name_to_user, \
-    canonical_user
+    canonical_user, cert_field_map
 from mig.shared.accountreq import valid_password_chars, valid_name_chars, \
     password_min_len, password_max_len, account_request_template, \
     account_css_helpers, account_js_helpers, list_country_codes
-from mig.shared.defaults import csrf_field
+from mig.shared.defaults import csrf_field, keyword_auto
 from mig.shared.functional import validate_input
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.init import initialize_main_variables, find_entry
@@ -177,9 +177,12 @@ to your old files, jobs and privileges. </p>''' %
 
     fill_helpers.update({'site_signup_hint': configuration.site_signup_hint})
     # Write-protect ID fields if requested
-    for field in user_fields:
+    for field in cert_field_map:
         fill_helpers['readonly_%s' % field] = ''
-    for field in accepted['ro_fields']:
+    ro_fields = [i for i in accepted['ro_fields'] if i in cert_field_map]
+    if keyword_auto in accepted['ro_fields']:
+        ro_fields += [i for i in cert_field_map if not i in ro_fields]
+    for field in ro_fields:
         fill_helpers['readonly_%s' % field] = 'readonly'
     fill_helpers.update(user_fields)
     html = """
