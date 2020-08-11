@@ -201,61 +201,61 @@ def account_js_helpers(configuration, fields):
     return (add_import, add_init, add_ready)
 
 
-def account_request_template(configuration, password=True, default_country=''):
+def account_request_template(configuration, password=True, default_values={}):
     """A general form template used for various account requests"""
     html = """
 <div id='account-request-grid' class=form_container>
 
 <!-- use post here to avoid field contents in URL -->
-<form method='%(form_method)s' action='%(target_op)s.py' onSubmit='return validate_form();' class="needs-validation" novalidate>
+<form method='%(form_method)s' action='%(target_op)s.py' onSubmit='return validate_form();' class='needs-validation' novalidate>
 <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
-<div class="form-row">
-    <div class="col-md-4 mb-3 form-cell">
-      <label for="validationCustom01">Full name</label>
-      <input type="text" class="form-control" id="full_name_field" placeholder="Full name" type=text name=cert_name value='%(full_name)s' required pattern='[^ ]+([ ][^ ]+)+' title='Your full name, i.e. two or more names separated by space' />
-      <div class="valid-feedback">
+<div class='form-row'>
+    <div class='col-md-4 mb-3 form-cell'>
+      <label for='validationCustom01'>Full name</label>
+      <input type='text' class='form-control' id='full_name_field' type=text name=cert_name value='%(full_name)s' placeholder='Full name' required pattern='[^ ]+([ ][^ ]+)+' %(readonly_full_name)s title='Your full name, i.e. two or more names separated by space' />
+      <div class='valid-feedback'>
         Looks good!
       </div>
-      <div class="invalid-feedback">
+      <div class='invalid-feedback'>
         Please enter your full name.
       </div>
     </div>
-    <div class="col-md-4 mb-3 form-cell">
-      <label for="validationCustom02">Email address</label>
-      <input class="form-control" id="email_field" type=email name=email value='%(email)s' placeholder="username@organization.org" required title="Email address should match your organization - and you need to read mail sent there" />
-      <div class="valid-feedback">
+    <div class='col-md-4 mb-3 form-cell'>
+      <label for='validationCustom02'>Email address</label>
+      <input class='form-control' id='email_field' type=email name=email value='%(email)s' placeholder='username@organization.org' required  %(readonly_email)s title='Email address should match your organization - and you need to read mail sent there' />
+      <div class='valid-feedback'>
         Looks good!
       </div>
-      <div class="invalid-feedback">
+      <div class='invalid-feedback'>
         Please enter your email address matching your organization/company.
       </div>
     </div>
-    <div class="col-md-4 mb-3 form-cell">
-      <label for="validationCustom01">Organization</label>
-      <input class="form-control" id="organization_field" type=text name=org value='%(organization)s' required pattern='[^ ]+([ ][^ ]+)*' placeholder="Organization or company" title='Name of your organization or company: one or more words or abbreviations separated by space' />
-      <div class="valid-feedback">
+    <div class='col-md-4 mb-3 form-cell'>
+      <label for='validationCustom01'>Organization</label>
+      <input class='form-control' id='organization_field' type=text name=org value='%(organization)s' placeholder='Organization or company' required pattern='[^ ]+([ ][^ ]+)*' %(readonly_organization)s title='Name of your organization or company: one or more words or abbreviations separated by space' />
+      <div class='valid-feedback'>
         Looks good!
       </div>
-      <div class="invalid-feedback">
+      <div class='invalid-feedback'>
         Please enter the name of your organization or company.
       </div>
     </div>
   </div>
-  <div class="form-row">
-    <div class="col-md-4 mb-3 form-cell">
-      <label for="validationCustom03">Country</label>
+  <div class='form-row'>
+    <div class='col-md-4 mb-3 form-cell'>
+      <label for='validationCustom03'>Country</label>
     """
     # Generate drop-down of countries and codes if available, else simple input
     sorted_countries = list_country_codes(configuration)
-    if sorted_countries:
+    if sorted_countries and not default_values.get('readonly_country', ''):
         html += """
-        <select class="form-control themed-select html-select" id="country_field" name=country minlength=2 maxlength=2 value='%(country)s' required pattern='[A-Z]{2}' placeholder="Two letter country-code" title='Please select your country from the list'>
+        <select class='form-control themed-select html-select' id='country_field' name=country minlength=2 maxlength=2 value='%(country)s' placeholder='Two letter country-code' required pattern='[A-Z]{2}' title='Please select your country from the list'>
 """
         # TODO: detect country based on browser info?
         # Start out without a country selection
         for (name, code) in [('', '')] + sorted_countries:
             selected = ''
-            if default_country == code:
+            if default_values.get('country', '') == code:
                 selected = 'selected'
             html += "        <option value='%s' %s>%s</option>\n" % \
                     (code, selected, name)
@@ -264,46 +264,46 @@ def account_request_template(configuration, password=True, default_country=''):
     """
     else:
         html += """
-        <input class="form-control" id="country_field" type=text name=country value='%(country)s' required pattern='[A-Z]{2}' minlength=2 maxlength=2 placeholder="Two letter country-code" title='The two capital letters used to abbreviate your country' />
+        <input class='form-control' id='country_field' type=text name=country value='%(country)s' placeholder='Two letter country-code' required pattern='[A-Z]{2}' %(readonly_country)s minlength=2 maxlength=2 title='The two capital letters used to abbreviate your country' />
         """
 
     html += """
-        <div class="valid-feedback">
+        <div class='valid-feedback'>
         Looks good!
       </div>
-      <div class="invalid-feedback">
+      <div class='invalid-feedback'>
         Please select your country or provide your two letter country-code in line with
         https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2.
       </div>
     </div>
-    <div class="col-md-4 mb-3 form-cell">
-      <label for="validationCustom04">Optional state code</label>
-      <input class="form-control" id="state_field" type=text name=state value='%(state)s' pattern='([A-Z]{2})?' maxlength=2 placeholder="NA" title="Mainly for U.S. users - please just leave empty if in doubt" >
+    <div class='col-md-4 mb-3 form-cell'>
+      <label for='validationCustom04'>Optional state code</label>
+      <input class='form-control' id='state_field' type=text name=state value='%(state)s' placeholder='NA' pattern='([A-Z]{2})?' %(readonly_state)s maxlength=2 title='Mainly for U.S. users - please just leave empty if in doubt' >
     </div>
   </div>
     """
 
     if password:
         html += """  
-  <div class="form-row">
-    <div class="col-md-4 mb-3 form-cell">
-      <label for="validationCustom01">Password</label>
-      <input type="password" class="form-control" id="password_field" type=password name=password minlength=%(password_min_len)d maxlength=%(password_max_len)d value='%(password)s' required pattern='.{%(password_min_len)d,%(password_max_len)d}' placeholder="Your password" title='Password of your choice - site policies about password strength apply and will give you feedback below if refused' />
-      <div class="valid-feedback">
+  <div class='form-row'>
+    <div class='col-md-4 mb-3 form-cell'>
+      <label for='validationCustom01'>Password</label>
+      <input type='password' class='form-control' id='password_field' type=password name=password minlength=%(password_min_len)d maxlength=%(password_max_len)d value='%(password)s' placeholder='Your password' required pattern='.{%(password_min_len)d,%(password_max_len)d}' title='Password of your choice - site policies about password strength apply and will give you feedback below if refused' />
+      <div class='valid-feedback'>
         Looks good!
       </div>
-      <div class="invalid-feedback">
+      <div class='invalid-feedback'>
         Please provide a valid and sufficiently strong password.<br/>
         I.e. %(password_min_len)d to %(password_max_len)d characters from at least %(password_min_classes)d of the 4 different character classes: lowercase, uppercase, digits, other.
       </div>
     </div>
-    <div class="col-md-4 mb-3 form-cell">
-      <label for="validationCustom03">Verify password</label>
-      <input type="password" class="form-control" id="verifypassword_field" type=password name=verifypassword minlength=%(password_min_len)d maxlength=%(password_max_len)d value='%(verifypassword)s' required pattern='.{%(password_min_len)d,%(password_max_len)d}' placeholder="Repeat password" title='Repeat your chosen password to rule out most simple typing errors' />
-      <div class="valid-feedback">
+    <div class='col-md-4 mb-3 form-cell'>
+      <label for='validationCustom03'>Verify password</label>
+      <input type='password' class='form-control' id='verifypassword_field' type=password name=verifypassword minlength=%(password_min_len)d maxlength=%(password_max_len)d value='%(verifypassword)s' placeholder='Repeat password' required pattern='.{%(password_min_len)d,%(password_max_len)d}' title='Repeat your chosen password to rule out most simple typing errors' />
+      <div class='valid-feedback'>
         Looks good!
       </div>
-      <div class="invalid-feedback">
+      <div class='invalid-feedback'>
         Please repeat your chosen password to verify.
       </div>
     </div>
@@ -311,30 +311,30 @@ def account_request_template(configuration, password=True, default_country=''):
         """
 
     html += """
-  <div class="form-row single-entry">
-    <div class="col-md-12 mb-3 form-cell">
-      <label for="validationCustom03">Optional comment or reason why you should be granted a %(site)s account:</label>
-      <textarea rows=4 name=comment title='A free-form comment to justify your account needs' placeholder="Typically a note about which collaboration, project or course you need the account for and the name and email of your affiliated contact" ></textarea>
+  <div class='form-row single-entry'>
+    <div class='col-md-12 mb-3 form-cell'>
+      <label for='validationCustom03'>Optional comment or reason why you should be granted a %(site)s account:</label>
+      <textarea rows=4 name=comment placeholder='Typically a note about which collaboration, project or course you need the account for and the name and email of your affiliated contact' title='A free-form comment to justify your account needs'>%(comment)s</textarea>
     </div>
   </div>
-  <div class="form-group">
-    <div class="form-check">
-      <span class="switch-label">I accept the %(site)s <a href="/public/terms.html" target="_blank">terms and conditions</a></span>
-      <label class="form-check-label switch" for="acceptTerms">
-      <input class="form-check-input" type="checkbox" value="" id="acceptTerms" required>
-      <span class="slider round small" title="Required to get an account"></span>
+  <div class='form-group'>
+    <div class='form-check'>
+      <span class='switch-label'>I accept the %(site)s <a href='/public/terms.html' target='_blank'>terms and conditions</a></span>
+      <label class='form-check-label switch' for='acceptTerms'>
+      <input class='form-check-input' type='checkbox' value='' id='acceptTerms' required>
+      <span class='slider round small' title='Required to get an account'></span>
       <br/>
-      <div class="valid-feedback">
+      <div class='valid-feedback'>
         Looks good!
       </div>
-      <div class="invalid-feedback">
+      <div class='invalid-feedback'>
         You <em>must</em> agree to terms and conditions before sending.
       </div>
       </label>
     </div>
   </div>
-  <div class="vertical-spacer"></div>
-  <input id="submit_button" type=submit value=Send />
+  <div class='vertical-spacer'></div>
+  <input id='submit_button' type=submit value=Send />
 </form>
 
 </div>

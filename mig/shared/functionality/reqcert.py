@@ -31,7 +31,8 @@ from __future__ import absolute_import
 import os
 
 from mig.shared import returnvalues
-from mig.shared.base import client_id_dir, distinguished_name_to_user
+from mig.shared.base import client_id_dir, distinguished_name_to_user, \
+    canonical_user
 from mig.shared.accountreq import valid_password_chars, valid_name_chars, \
     password_min_len, password_max_len, account_js_helpers, \
     account_css_helpers, account_request_template
@@ -46,7 +47,14 @@ from mig.shared.safeinput import html_escape
 def signature():
     """Signature of the main function"""
 
-    defaults = {}
+    defaults = {'full_name': [''],
+                'organization': [''],
+                'email': [''],
+                'country': [''],
+                'state': [''],
+                'comment': [''],
+                'ro_fields': [''],
+                }
     return ['html_form', defaults]
 
 
@@ -102,7 +110,7 @@ def main(client_id, user_arguments_dict):
 
     user_fields = {'full_name': '', 'organization': '', 'email': '',
                    'state': '', 'country': '', 'password': '',
-                   'verifypassword': ''}
+                   'verifypassword': '', 'comment': ''}
     if not os.path.isdir(base_dir) and client_id:
 
         # Redirect to extcert page with certificate requirement but without
@@ -140,6 +148,16 @@ jobs and privileges.</p>''' %
                                configuration.short_title})
         user_fields.update(distinguished_name_to_user(client_id))
 
+    # Override with arg values if set
+    for field in user_fields:
+        if not field in accepted:
+            continue
+        override_val = accepted[field][-1].strip()
+        if override_val:
+            user_fields[field] = override_val
+    user_fields = canonical_user(configuration, user_fields,
+                                 user_fields.keys())
+
     # Site policy dictates min length greater or equal than password_min_len
     policy_min_len, policy_min_classes = parse_password_policy(configuration)
     user_fields.update({
@@ -159,7 +177,11 @@ jobs and privileges.</p>''' %
                                  client_id, csrf_limit)
     fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
     fill_helpers.update({'site_signup_hint': configuration.site_signup_hint})
-
+    # Write-protect ID fields if requested
+    for field in user_fields:
+        fill_helpers['readonly_%s' % field] = ''
+    for field in accepted['ro_fields']:
+        fill_helpers['readonly_%s' % field] = 'readonly'
     fill_helpers.update(user_fields)
     html = """Please enter
 your information in at least the <span class=highlight_required>mandatory</span> fields
@@ -176,9 +198,8 @@ clearly affiliated with your Organization!
 <hr />
     """
 
-    user_country = user_fields.get('country', '')
     html += account_request_template(configuration,
-                                     default_country=user_country)
+                                     default_values=fill_helpers)
 
     # TODO : remove this legacy version?
     html += """

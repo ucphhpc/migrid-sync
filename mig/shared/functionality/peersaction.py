@@ -28,11 +28,12 @@
 """Peers management action back end"""
 from __future__ import absolute_import
 
+import base64
 import datetime
 import os
-import tempfile
-import base64
 import re
+import tempfile
+import urllib
 
 from mig.shared import returnvalues
 from mig.shared.accountreq import parse_peers, peers_permit_allowed, \
@@ -63,6 +64,7 @@ def signature():
         'peers_expire': REJECT_UNSET,
         'peers_format': REJECT_UNSET,
         'peers_content': REJECT_UNSET,
+        'peers_invite': [''],
     }
     return ['text', defaults]
 
@@ -114,6 +116,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
     raw_expire = accepted['peers_expire'][-1].strip()
     peers_content = accepted['peers_content']
     peers_format = accepted['peers_format'][-1].strip()
+    peers_invite = accepted['peers_invite'][-1].strip()
+    do_invite = (peers_invite.lower() in ['on', 'true', 'yes', '1'])
 
     try:
         expire = datetime.datetime.strptime(raw_expire, '%Y-%m-%d')
@@ -243,12 +247,67 @@ CSRF-filtered POST requests to prevent unintended updates'''
             output_objects.append(
                 {'object_type': 'text', 'text': "%(distinguished_name)s" % user})
         if action in ['import', 'add', 'update']:
+            client_name = extract_field(client_id, 'full_name')
             client_email = extract_field(client_id, 'email')
-            output_objects.append(
-                {'object_type': 'text', 'text': """Please tell your peers to
-request an account at %s with the exact ID fields you provided here and
+
+            if do_invite:
+                succeeded, failed = [], []
+                email_header = '%s Invitation' % configuration.short_title
+                email_msg_template = """Hi %%s,
+This is an automatic email sent on behalf of %s who vouched for you to get a
+user account on %s. You can accept the invitation by going to
+%%s
+entering a password of your choice and submitting the form.
+If you do not want a user account you can safely ignore this email.
+
+We would be grateful if you report any abuse of the invitation system to the
+site administrators (%s).
+""" % (client_name, configuration.short_title, admin_email)
+                for peer_user in peers:
+                    peer_name = peer_user['full_name']
+                    peer_email = peer_user['email']
+                    peer_url = os.path.join(
+                        configuration.migserver_https_sid_url, 'cgi-sid',
+                        'reqoid.py')
+                    peer_req = {}
+                    for field in peers_fields:
+                        peer_req[field] = peer_user.get(field, '')
+                    peer_req['comment'] = 'Invited by %s (%s) for %s purposes' \
+                                          % (client_name, client_email, kind)
+                    peer_url += '?%s' % urllib.urlencode(peer_req)
+                    # Mark ID fields as readonly in the form to limit errors
+                    peer_url += '&ro_fields=' + \
+                        '&ro_fields='.join(peers_fields + ['state'])
+                    email_msg = email_msg_template % (peer_name, peer_url)
+                    logger.info('Sending invitation: to: %s, header: %s, msg: %s, smtp_server: %s'
+                                % (peer_email, email_header, email_msg,
+                                   smtp_server))
+                    if send_email(peer_email, email_header, email_msg, logger,
+                                  configuration):
+                        succeeded.append(peer_email)
+                    else:
+                        failed.append(peer_email)
+
+                if failed:
+                    output_objects.append(
+                        {'object_type': 'error_text', 'text':
+                         """An error occured trying to email the peer
+invitation to %s . Please inform the site admins (%s) if the problem persists.
+""" % (', '.join(failed), admin_email)})
+                if succeeded:
+                    output_objects.append(
+                        {'object_type': 'text', 'text':
+                         """Sent invitation to %s with a link to a mostly pre-filled %s account request
+form with the exact ID fields you provided here.""" %
+                         (', '.join(succeeded), configuration.short_title)})
+            else:
+                output_objects.append(
+                    {'object_type': 'text', 'text': """Please tell your peers
+to request an account at %s with the exact ID fields you provided here and
 importantly mentioning the purpose and your email (%s) in the sign up Comment
-field.""" % (configuration.short_title, client_email)})
+field. Alternatively you can use the invite button to send out an email with a
+link to a mostly prefilled request form.""" % (configuration.short_title,
+                                               client_email)})
     except Exception as exc:
         logger.error('Failed to save %s peers to %s: %s' %
                      (client_id, peers_path, exc))

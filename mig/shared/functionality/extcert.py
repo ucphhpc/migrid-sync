@@ -33,7 +33,7 @@ import os
 from mig.shared import returnvalues
 from mig.shared.accountreq import valid_name_chars, dn_max_len, \
     account_css_helpers, account_js_helpers, account_request_template
-from mig.shared.base import distinguished_name_to_user
+from mig.shared.base import distinguished_name_to_user, canonical_user
 from mig.shared.defaults import csrf_field
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
@@ -44,7 +44,14 @@ from mig.shared.safeinput import html_escape
 def signature():
     """Signature of the main function"""
 
-    defaults = {}
+    defaults = {'full_name': [''],
+                'organization': [''],
+                'email': [''],
+                'country': [''],
+                'state': [''],
+                'comment': [''],
+                'ro_fields': [''],
+                }
     return ['html_form', defaults]
 
 
@@ -91,6 +98,9 @@ def main(client_id, user_arguments_dict):
                     configuration.short_title}
     output_objects.append(header_entry)
 
+    user_fields = {'full_name': '', 'organization': '', 'email': '',
+                   'state': '', 'country': '', 'comment': ''}
+
     # Redirect to reqcert page without certificate requirement but without
     # changing access method (CGI vs. WSGI).
 
@@ -99,7 +109,17 @@ def main(client_id, user_arguments_dict):
     certreq_link = {'object_type': 'link', 'destination': certreq_url,
                     'text': 'Request a new %s certificate account' %
                             configuration.short_title}
-    new_user = distinguished_name_to_user(client_id)
+    user_fields.update(distinguished_name_to_user(client_id))
+
+    # Override with arg values if set
+    for field in user_fields:
+        if not field in accepted:
+            continue
+        override_val = accepted[field][-1].strip()
+        if override_val:
+            user_fields[field] = override_val
+    user_fields = canonical_user(configuration, user_fields,
+                                 user_fields.keys())
 
     # If cert auto create is on, add user without admin interaction
 
@@ -108,11 +128,6 @@ def main(client_id, user_arguments_dict):
     fill_helpers = {'valid_name_chars': valid_name_chars,
                     'client_id': client_id,
                     'dn_max_len': dn_max_len,
-                    'full_name': new_user.get('full_name', ''),
-                    'organization': new_user.get('organization', ''),
-                    'email': new_user.get('email', ''),
-                    'state': new_user.get('state', ''),
-                    'country': new_user.get('country', ''),
                     'site': configuration.short_title,
                     'form_method': form_method,
                     'csrf_field': csrf_field,
@@ -125,6 +140,12 @@ def main(client_id, user_arguments_dict):
                                  client_id, csrf_limit)
     fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
     fill_helpers.update({'site_signup_hint': configuration.site_signup_hint})
+    # Write-protect ID fields if requested
+    for field in user_fields:
+        fill_helpers['readonly_%s' % field] = ''
+    for field in accepted['ro_fields']:
+        fill_helpers['readonly_%s' % field] = 'readonly'
+    fill_helpers.update(user_fields)
 
     html = """This page is
 used to sign up for %(site)s with an existing certificate from a Certificate
@@ -149,9 +170,8 @@ clearly affiliated with your Organization!
 <hr />
 """
 
-    user_country = new_user.get('country', '')
     html += account_request_template(configuration, password=False,
-                                     default_country=user_country)
+                                     default_values=fill_helpers)
 
     # TODO : remove this legacy version?
     html += """

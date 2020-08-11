@@ -138,15 +138,15 @@ ALLOW_UNSAFE = \
 # Allow these chars in addition to plain letters and digits
 # We explicitly allow email chars in CN to work around broken DNs
 
-#*****************************************************************************
-#* IMPORTANT: never allow '+' or '_' in name: reserved for path translation! *
-#*****************************************************************************
+# *****************************************************************************
+# * IMPORTANT: never allow '+' or '_' in name: reserved for path translation! *
+# *****************************************************************************
 
 name_extras = ' -@.'
 
-#*****************************************************************************
-#* IMPORTANT: never allow '+' in DN: reserved for path translation!          *
-#*****************************************************************************
+# *****************************************************************************
+# * IMPORTANT: never allow '+' in DN: reserved for path translation!          *
+# *****************************************************************************
 # We allow ':' in DN, however, as it is used by e.g. DanID:
 # /C=DK/O=Ingen organisatorisk tilknytning/CN=${NAME}/serialNumber=PID:${SERIAL}
 # Similarly we must allow '_' in DN since it is valid in emailAddress. We only
@@ -320,7 +320,7 @@ def valid_alphanumeric(contents, min_length=0, max_length=-1, extra_chars=''):
 
     __valid_contents(
         contents, ascii_letters + digits + extra_chars, min_length,
-                     max_length)
+        max_length)
 
 
 def valid_alphanumeric_and_spaces(contents, min_length=0, max_length=-1,
@@ -1548,6 +1548,7 @@ def guess_type(name):
             __type_map[key] = lambda x: valid_vgrid_name(x, min_length=0,
                                                          extra_chars=",")
         for key in (
+            'full_name',
             'cert_name',
             'org',
             'machine_software',
@@ -1618,7 +1619,7 @@ def guess_type(name):
             'adminemail',
         ):
             __type_map[key] = valid_email_address
-        for key in ('username', ):
+        for key in ('username', 'ro_fields', ):
             __type_map[key] = valid_username
         for key in (
             'editarea',

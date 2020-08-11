@@ -275,6 +275,16 @@ extensions from your peers until the given time of expiry.
         #    'class': 'editlink iconspace',
         #    'title': 'Update %(distinguished_name)s in peers' % filled_entry,
         #    'text': ''}
+        filled_entry['invitepeerlink'] = {
+            'object_type': 'link',
+            'destination':
+            "javascript: confirmDialog(%s, '%s', %s, %s);" %
+            ('peer_action', 'Send invitation email to %(distinguished_name)s?' % filled_entry,
+             'undefined',
+             "{action: 'update', peers_label: '%(label)s', peers_kind: '%(kind)s', peers_expire:'%(expire)s', peers_content: '%(distinguished_name)s', peers_invite: true}" % filled_entry),
+            'class': 'invitelink iconspace',
+            'title': 'Invite %(distinguished_name)s as peer' % filled_entry,
+            'text': ''}
         filled_entry['delpeerlink'] = {
             'object_type': 'link',
             'destination':
@@ -359,6 +369,12 @@ MUST be filled for the row to be treated.
 '''
 
     tabs_html += '''
+<span class="switch-label">Invite on email</span>
+<label class="switch" for="peers_invite">
+<input class="" type="checkbox" name="peers_invite">
+<span class="slider round small" title="Optional email invitation"></span>
+<br/>
+</label>
 %(form_suffix_html)s
 </div>
 </div>
@@ -380,6 +396,12 @@ at the bottom.
 <textarea class="fillwidth" name="peers_content" rows=10 title="CSV list of peers"
   placeholder="Paste or enter CSV-formatted list of peers ..."></textarea>
 <br/>
+<span class="switch-label">Invite on email</span>
+<label class="switch" for="peers_invite">
+<input class="" type="checkbox" name="peers_invite">
+<span class="slider round small" title="Optional email invitation"></span>
+<br/>
+</label>
 %(form_suffix_html)s
 </div>
 '''
@@ -485,9 +507,12 @@ In case you have a general project participation list online you can specify the
     # Helper form for post
 
     helper = html_post_helper('peer_action', '%s.py' % target_op,
-                              {'action': '__DYNAMIC__', 'peers_label': '__DYNAMIC__',
-                               'peers_kind': '__DYNAMIC__', 'peers_expire': '__DYNAMIC__',
+                              {'action': '__DYNAMIC__',
+                               'peers_label': '__DYNAMIC__',
+                               'peers_kind': '__DYNAMIC__',
+                               'peers_expire': '__DYNAMIC__',
                                'peers_content': '__DYNAMIC__',
+                               'peers_invite': '__DYNAMIC__',
                                'peers_format': 'userid',
                                csrf_field: csrf_token})
     output_objects.append({'object_type': 'html_form', 'text':

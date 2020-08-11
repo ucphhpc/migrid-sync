@@ -1431,12 +1431,16 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 
             for single_peer in peers:
                 editlink = single_peer.get('editpeerlink', '')
+                invitelink = single_peer.get('invitepeerlink', '')
                 dellink = single_peer.get('delpeerlink', '')
                 if editlink:
                     editlink = html_link(editlink)
+                if invitelink:
+                    invitelink = html_link(invitelink)
                 if dellink:
                     dellink = html_link(dellink)
-                single_peer['action_links'] = "%s %s" % (editlink, dellink)
+                single_peer['action_links'] = "%s %s %s" % \
+                                              (editlink, invitelink, dellink)
                 lines.append('''<tr>
 <td>%(full_name)s</td><td>%(organization)s</td><td>%(email)s</td>
 <td>%(country)s</td><td>%(kind)s</td><td>%(label)s</td><td>%(expire)s</td>
