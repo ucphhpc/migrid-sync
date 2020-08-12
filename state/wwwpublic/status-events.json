@@ -3,7 +3,7 @@
     "status": "AUTO", 
     "work_start": "2020-08-16T09:00:00+02:00", 
     "systems": [
-        "ERDA", "IDMC",
+        "ERDA", "IDMC"
     ], 
     "announce_start": "2020-08-07T08:00:00+02:00", 
     "title": {
