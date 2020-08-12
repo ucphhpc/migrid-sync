@@ -209,6 +209,14 @@ def account_request_template(configuration, password=True, default_values={}):
 <!-- use post here to avoid field contents in URL -->
 <form method='%(form_method)s' action='%(target_op)s.py' onSubmit='return validate_form();' class='needs-validation' novalidate>
 <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
+"""
+    # A few cert backends require cert_id as well
+    cert_id = default_values.get('cert_id', '')
+    if cert_id:
+        html += """
+<input type='hidden' name='cert_id' value='%(cert_id)s' />
+"""
+    html += """
 <div class='form-row'>
     <div class='col-md-4 mb-3 form-cell'>
       <label for='validationCustom01'>Full name</label>
@@ -321,7 +329,7 @@ def account_request_template(configuration, password=True, default_values={}):
     <div class='form-check'>
       <span class='switch-label'>I accept the %(site)s <a href='/public/terms.html' target='_blank'>terms and conditions</a></span>
       <label class='form-check-label switch' for='acceptTerms'>
-      <input class='form-check-input' type='checkbox' value='' id='acceptTerms' required>
+      <input class='form-check-input' type='checkbox' name='accept_terms' id='acceptTerms' required>
       <span class='slider round small' title='Required to get an account'></span>
       <br/>
       <div class='valid-feedback'>

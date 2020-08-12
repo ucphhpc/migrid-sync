@@ -128,6 +128,7 @@ def main(client_id, user_arguments_dict):
     csrf_limit = get_csrf_limit(configuration)
     fill_helpers = {'valid_name_chars': valid_name_chars,
                     'client_id': client_id,
+                    'cert_id': client_id,
                     'dn_max_len': dn_max_len,
                     'site': configuration.short_title,
                     'form_method': form_method,

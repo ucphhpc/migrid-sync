@@ -61,6 +61,7 @@ def signature():
         'verifypassword': REJECT_UNSET,
         'passwordrecovery': ['false'],
         'comment': [''],
+        'accept_terms': [''],
     }
     return ['text', defaults]
 
@@ -128,6 +129,8 @@ def main(client_id, user_arguments_dict):
     # single quotes break command line format - remove
 
     comment = comment.replace("'", ' ')
+    accept_terms = (accepted['accept_terms'][-1].strip().lower() in
+                    ('1', 'o', 'y', 't', 'on', 'yes', 'true'))
 
     if not safe_handler(configuration, 'post', op_name, client_id,
                         get_csrf_limit(configuration), accepted):
@@ -135,6 +138,14 @@ def main(client_id, user_arguments_dict):
             {'object_type': 'error_text', 'text': '''Only accepting
 CSRF-filtered POST requests to prevent unintended updates'''
              })
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    if not accept_terms:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'You must accept the terms of use in sign up!'})
+        output_objects.append(
+            {'object_type': 'link', 'destination': 'javascript:history.back();',
+             'class': 'genericbutton', 'text': "Try again"})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if password != verifypassword:

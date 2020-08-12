@@ -93,6 +93,7 @@ def signature(login_type):
             'openid.ns': [''],
             'password': [''],
             'comment': ['(Signed up with OpenID and autocreate)'],
+            'accept_terms': [''],
             'proxy_upload': [''],
             'proxy_uploadfilename': [''],
             'authsig': ['']
@@ -108,6 +109,7 @@ def signature(login_type):
             'role': [''],
             'association': [''],
             'comment': ['(Signed up with certificate and autocreate)'],
+            'accept_terms': [''],
             'proxy_upload': [''],
             'proxy_uploadfilename': [''],
         }
@@ -300,8 +302,14 @@ def main(client_id, user_arguments_dict, environ=None):
     country = country.upper()
     state = state.upper()
     email = email.lower()
+    accept_terms = (accepted['accept_terms'][-1].strip().lower() in
+                    ('1', 'o', 'y', 't', 'on', 'yes', 'true'))
 
     if login_type == 'oid':
+
+        # KU OpenID sign up does not deliver accept_terms so we implicitly
+        # let it imply acceptance for now
+        accept_terms = True
 
         # Remap some oid attributes if on KIT format with faculty in
         # organization and institute in organizational_unit. We can add them
@@ -436,6 +444,8 @@ accepting CSRF-filtered POST requests to prevent unintended updates'''})
     auth = 'unknown'
     if login_type == 'cert':
         auth = 'extcert'
+        ext_login_title = "%s certificate" % configuration.user_ext_cert_title
+        personal_page_url = configuration.migserver_https_ext_cert_url
         # TODO: consider limiting expire to real cert expire if before default?
         user_dict['expire'] = int(time.time() + cert_valid_days * 24
                                   * 60 * 60)
@@ -452,6 +462,8 @@ multiple "key=val" fields separated by "/".
             return (output_objects, returnvalues.CLIENT_ERROR)
     elif login_type == 'oid':
         auth = 'extoid'
+        ext_login_title = "%s login" % configuration.user_ext_oid_title
+        personal_page_url = configuration.migserver_https_ext_oid_url
         user_dict['expire'] = int(time.time() + oid_valid_days * 24
                                   * 60 * 60)
         fill_distinguished_name(user_dict)
@@ -465,15 +477,23 @@ multiple "key=val" fields separated by "/".
 accepting create matching supplied ID!'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    if not accept_terms:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'You must accept the terms of use in sign up!'})
+        output_objects.append(
+            {'object_type': 'link', 'destination': 'javascript:history.back();',
+             'class': 'genericbutton', 'text': "Try again"})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     # Save auth access method
 
     user_dict['auth'] = [auth]
 
     fill_helper = {'short_title': configuration.short_title,
                    'base_url': base_url, 'admin_email': admin_email,
-                   'ext_oid_title': configuration.user_ext_oid_title,
+                   'ext_login_title': ext_login_title,
                    'front_page_url': configuration.migserver_http_url,
-                   'personal_page_url': configuration.migserver_https_ext_oid_url}
+                   'personal_page_url': personal_page_url}
     fill_helper.update(user_dict)
 
     # If server allows automatic addition of users with a CA validated cert
@@ -514,7 +534,7 @@ Please report this problem to the site administrators (%(admin_email)s).'''
         email_msg = """Hi and welcome to %(short_title)s!
 
 Your account sign up succeeded and you can now log in to your account using
-your usual %(ext_oid_title)s login from
+your %(ext_login_title)s from
 %(front_page_url)s
 There you'll also find further information about making the most of
 %(short_title)s, including a user guide and answers to Frequently Asked
@@ -543,7 +563,7 @@ and include the session ID: %s""" % (admin_email, tmp_id)})
         logger.info('sent welcome email for %s to %s' % (uniq_id, email))
 
         output_objects.append({'object_type': 'html_form', 'text': """
-<p> Creating your %(short_title)s user account and sending welcome email ... </p>
+<p>Creating your %(short_title)s user account and sending welcome email ... </p>
 <p class='spinner iconleftpad'>
 redirecting to your <a href='%(personal_page_url)s'> personal pages </a> in a
 moment.
