@@ -69,6 +69,12 @@ Where NOTIFY_OPTIONS may be one or more of:
    -u USER_FILE        Read user request information from pickle file
    -v                  Verbose output
 
+You should always provide the -I 'CLIENT_ID' argument where CLIENT_ID may be
+either a complete user ID or a wild-card pattern similar to the one used in
+searchusers.
+The user to request acceptance for can either be provided with -u REQUEST_PATH
+argument or with the trailing ID arguments mentioned above.
+
 One or more destinations may be set by combining multiple -e, -s and -a
 options.
 """ % {'name': name})
@@ -83,8 +89,8 @@ if '__main__' == __name__:
     user_file = None
     user_id = None
     search_filter = default_search()
-    # Default to all users
-    search_filter['distinguished_name'] = '*'
+    # IMPORTANT: Default to nobody to avoid spam if called without -I CLIENT_ID
+    search_filter['distinguished_name'] = ''
     peer_dict = {}
     exit_code = 0
     opt_args = 'ac:Cd:e:hI:s:u:v'
@@ -154,8 +160,8 @@ if '__main__' == __name__:
             peer_dict['email'] = args[4]
             peer_dict['comment'] = args[5]
         except IndexError:
-            print('Error: too few arguments given (expected 6 got %d)'\
-                % len(args))
+            print('Error: too few arguments given (expected 6 got %d)'
+                  % len(args))
             usage()
             sys.exit(1)
     elif user_file:
@@ -174,12 +180,29 @@ if '__main__' == __name__:
     peer_id = peer_dict['distinguished_name']
 
     if verbose:
-        print('Handling peer %s' % peer_id)
+        print('Handling peer %s request to %s' %
+              (peer_id, search_filter['distinguished_name']))
 
     # Lookup users to request formal acceptance from
     (_, hits) = search_users(search_filter, conf_path, db_path, verbose)
     logger = configuration.logger
     gdp_prefix = "%s=" % gdp_distinguished_field
+
+    if len(hits) < 1:
+        print(
+            "Aborting attempt to request peer acceptance without target users")
+        print(" ... did you forget or supply too rigid -I CLIENT_ID argument?")
+        sys.exit(1)
+    elif len(hits) > 3:
+        print("Aborting attempt to request peer acceptance from %d users!" %
+              len(hits))
+        print(" ... did you supply too lax -I CLIENT_ID argument?")
+        sys.exit(1)
+    else:
+        if verbose:
+            print("Attempt to request peer acceptance from users: %s" %
+                  '\n'.join([i[0] for i in hits]))
+
     for (user_id, user_dict) in hits:
         if verbose:
             print('Check for %s' % user_id)
@@ -197,7 +220,8 @@ if '__main__' == __name__:
 
         if not manage_pending_peers(configuration, user_id, "add",
                                     [(peer_id, peer_dict)]):
-            print("Failed to forward accept peer %s to %s" % (peer_id, user_id))
+            print("Failed to forward accept peer %s to %s" %
+                  (peer_id, user_id))
             continue
 
         print("Added peer request from %s to %s" % (peer_id, user_id))
@@ -216,10 +240,10 @@ if '__main__' == __name__:
                 notify_dict['NOTIFY'].append('%s: %s' % (proto, address))
         # Don't actually send unless requested
         if not raw_targets and not admin_copy:
-            print("No email targets for request accept peer %s from %s" % \
+            print("No email targets for request accept peer %s from %s" %
                   (peer_id, user_id))
             continue
-        print("Send request accept peer message for '%s' to:\n%s" \
+        print("Send request accept peer message for '%s' to:\n%s"
               % (peer_id, '\n'.join(notify_dict['NOTIFY'])))
         notify_user(notify_dict, [peer_id, configuration.short_title,
                                   'peeraccount', peer_dict['comment'],
