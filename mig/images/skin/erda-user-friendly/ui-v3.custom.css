@@ -272,6 +272,13 @@ h1, h2, h3, .supporttitle, .privacytitle {
 h1 {
     border: 0;
 }
+/* Slightly smaller font for h1 to keep e.g. Home title on a single line */
+@media (min-width: 1000px) {
+    h1 {
+	font-size: 90px;
+    }
+}
+
 
 a {
     color: #46743C;
