@@ -42,7 +42,7 @@ from mig.shared.filemarks import get_filemark, update_filemark, reset_filemark
 from mig.shared.gdp.userid import get_base_client_id
 from mig.shared.userdb import load_user_dict, default_db_path, update_user_dict
 from mig.shared.validstring import possible_sharelink_id, possible_job_id, \
-     possible_jupyter_mount_id
+    possible_jupyter_mount_id
 
 
 def update_account_expire_cache(configuration, user_dict):
@@ -154,7 +154,7 @@ def check_account_status(configuration, client_id):
         user_dict = load_user_dict(_logger, client_id,
                                    default_db_path(configuration))
         if not user_dict:
-            _logger.error("no such account: %s" % client_id)
+            _logger.warning("no such account: %s" % client_id)
             return (False, "missing", user_dict)
         account_status = user_dict['status'] = user_dict.get('status',
                                                              'active')
@@ -380,7 +380,7 @@ def check_account_accessible(configuration, username, proto, environ=None,
     client_id = username
     if configuration.site_enable_gdp:
         client_id = get_base_client_id(configuration, client_id,
-                                    expand_oid_alias=expand_alias)
+                                       expand_oid_alias=expand_alias)
     elif expand_alias:
         # Use client_id_dir to make it work even if already expanded
         home_dir = os.path.join(configuration.user_home,
