@@ -16,9 +16,30 @@
     "work_end": "2020-08-16T15:00:00+02:00", 
     "description": {
       "EN": "Update and general maintenance of the DAG service",
-      "DA": "Opdatering og generel vedligeholdelse af DAG-tjenesten"
+      "DK": "Opdatering og generel vedligeholdelse af DAG-tjenesten"
     }, 
-    "announce_end": "2020-07-02T12:00:00+02:00"
+    "announce_end": "2020-08-17T10:00:00+02:00"
+  },
+  {
+    "status": "AUTO", 
+    "work_start": "2020-08-14T10:00:00+02:00", 
+    "systems": [
+        "ERDA", "IDMC"
+    ], 
+    "announce_start": "2020-08-14T10:00:00+02:00", 
+    "title": {
+      "EN": "Power Outage - DAG Unstable", 
+      "DK": "Strømudfald - DAG ustabil"
+    }, 
+    "services": [
+      "DAG"
+    ], 
+    "work_end": "2020-08-14T12:00:00+02:00", 
+    "description": {
+      "EN": "There was a big power outage at HCØ also affecting the HPC Center and in particular the physical hosts not on UPS (emergency power). We experienced a few DAG compute nodes failing and causing instability to DAG sessions. The hosts are back online and things should be fully functional again. You may have to restart any active sessions to recover from the outages.",
+      "DK": "Vi oplevede et større strømudfald på HCØ idag og det berørte også HPC Centeret og specielt maskiner uden UPS (nødstrøm). Vi oplevede at flere DAG beregningsknuder fejlede og førte til ustabile DAG-sessioner. Maskinerne er tilbage og alting skulle fungere igen. Det kan dog være nødvendigt at genstarte igangværende DAG-sessioner for at adressere udfaldet."
+    }, 
+    "announce_end": "2020-08-14T16:00:00+02:00"
   },
   {
     "status": "AUTO", 
