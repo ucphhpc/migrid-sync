@@ -51,13 +51,13 @@ from mig.shared.fileio import read_file, delete_file, delete_symlink, \
 from mig.shared.gdp.all import get_base_client_id
 from mig.shared.pwhash import scramble_password, unscramble_password
 
-# Set OTP windows range (+/-) to compensate for offset 
+# Set OTP windows range (+/-) to compensate for offset
 # and drifting offline clocks
 # NOTE: valid_otp_window = 1 : compensates for drifting clocks
-#       valid_otp_window >= 1 : compensates for drifting clocks 
+#       valid_otp_window >= 1 : compensates for drifting clocks
 #                               and a clock offset of valid_otp_window-1
 # IMPORTANT: Do not change without consulting:
-# bardino@science.ku.dk or 
+# bardino@science.ku.dk or
 # rehr@science.ku.dk
 valid_otp_window = 2
 
@@ -307,7 +307,7 @@ def client_twofactor_session(configuration,
         client_id = get_base_client_id(
             configuration, client_id, expand_oid_alias=False)
     session_cookie = Cookie.SimpleCookie()
-    session_cookie.load(environ.get('HTTP_COOKIE', None))
+    session_cookie.load(environ.get('HTTP_COOKIE', ""))
     session_cookie = session_cookie.get('2FA_Auth', None)
     if session_cookie is None:
         return None
