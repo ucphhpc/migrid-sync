@@ -1,23 +1,23 @@
 [
   {
-    "status": "AUTO", 
-    "work_start": "2020-08-16T09:00:00+02:00", 
+    "status": "AUTO",
+    "work_start": "2020-08-16T09:00:00+02:00",
     "systems": [
         "ERDA", "IDMC"
-    ], 
-    "announce_start": "2020-08-07T08:00:00+02:00", 
+    ],
+    "announce_start": "2020-08-07T08:00:00+02:00",
     "title": {
-      "EN": "Planned DAG Maintenance", 
+      "EN": "Planned DAG Maintenance",
       "DK": "Planlagt vedligehold af DAG"
-    }, 
+    },
     "services": [
       "DAG"
-    ], 
-    "work_end": "2020-08-16T15:00:00+02:00", 
+    ],
+    "work_end": "2020-08-16T15:00:00+02:00",
     "description": {
-      "EN": "Update and general maintenance of the DAG service",
-      "DK": "Opdatering og generel vedligeholdelse af DAG-tjenesten"
-    }, 
+      "EN": "Update and general maintenance of the DAG service. This work was completed successfully and DAG is back online as scheduled",
+      "DK": "Opdatering og generel vedligeholdelse af DAG-tjenesten. Dette arbejde blev afsluttet med succes, og DAG er online igen som planlagt"
+    },
     "announce_end": "2020-08-17T10:00:00+02:00"
   },
   {
