@@ -369,12 +369,13 @@ MUST be filled for the row to be treated.
 '''
 
     tabs_html += '''
+<p>
 <span class="switch-label">Invite on email</span>
-<label class="switch" for="peers_invite">
-<input class="" type="checkbox" name="peers_invite">
+<label class="switch" for="fields_invite">
+<input id="fields_invite" type="checkbox" name="peers_invite">
 <span class="slider round small" title="Optional email invitation"></span>
-<br/>
 </label>
+</p>
 %(form_suffix_html)s
 </div>
 </div>
@@ -395,13 +396,13 @@ at the bottom.
 <input type="hidden" name="action" value="import" />
 <textarea class="fillwidth" name="peers_content" rows=10 title="CSV list of peers"
   placeholder="Paste or enter CSV-formatted list of peers ..."></textarea>
-<br/>
+<p>
 <span class="switch-label">Invite on email</span>
-<label class="switch" for="peers_invite">
-<input class="" type="checkbox" name="peers_invite">
+<label class="switch" for="import_invite">
+<input id="import_invite" type="checkbox" name="peers_invite">
 <span class="slider round small" title="Optional email invitation"></span>
-<br/>
 </label>
+</p>
 %(form_suffix_html)s
 </div>
 '''
