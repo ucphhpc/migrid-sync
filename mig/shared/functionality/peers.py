@@ -291,7 +291,7 @@ extensions from your peers until the given time of expiry.
             "javascript: confirmDialog(%s, '%s', %s, %s);" %
             ('peer_action', 'Really remove %(distinguished_name)s?' % filled_entry,
              'undefined',
-             "{action: 'remove', peers_label: '%(label)s', peers_kind: '%(kind)s', peers_expire:'%(expire)s', peers_content: '%(distinguished_name)s'}" % filled_entry),
+             "{action: 'remove', peers_label: '%(label)s', peers_kind: '%(kind)s', peers_expire:'%(expire)s', peers_content: '%(distinguished_name)s', peers_invite: false}" % filled_entry),
             'class': 'removelink iconspace',
             'title': 'Remove %(distinguished_name)s from peers' % filled_entry,
             'text': ''}
