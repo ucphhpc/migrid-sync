@@ -1,7 +1,28 @@
 [
   {
-    "status": "AUTO",
-    "work_start": "2020-08-16T09:00:00+02:00",
+    "status": "AUTO", 
+    "work_start": "2020-08-23T10:00:00+02:00", 
+    "systems": [
+        "IDMC"
+    ],
+    "announce_start": "2020-08-20T08:00:00+02:00",
+    "title": {
+      "EN": "Planned IDMC Maintenance",
+      "DK": "Planlagt vedligehold af IDMC"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2020-08-23T20:00:00+02:00",
+    "description": {
+      "EN": "Update and general maintenance of IDMC to roll out the latest software versions. The actual update should not take long and hopefully go by unnoticed. We may need to briefly reboot to apply core updates, however. Status updates will follow here.",
+      "DK": "Opdatering og generel vedligeholdelse af IDMC for at opdatere til nyeste software. Selve opdateringen burde ikke tage lang tid og forhåbentlig forløbe i ubemærkethed. Det kan dog være vi bliver nødt til kort at genstarte for nogle grundlæggende opdateringer. Status vil blive meldt ud her."
+    },
+    "announce_end": "2020-08-24T12:00:00+02:00"
+  },
+  {
+    "status": "AUTO", 
+    "work_start": "2020-08-16T09:00:00+02:00", 
     "systems": [
         "ERDA", "IDMC"
     ],
