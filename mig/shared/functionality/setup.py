@@ -35,7 +35,7 @@ from mig.shared import returnvalues
 from mig.shared.accountstate import account_expire_info
 from mig.shared.auth import get_twofactor_secrets
 from mig.shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin, \
-    get_short_id
+    get_short_id, requested_url_base
 from mig.shared.defaults import seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
     duplicati_protocol_choices, duplicati_schedule_choices
 from mig.shared.duplicatikeywords import get_duplicati_specs
@@ -1425,6 +1425,16 @@ value="%(default_authpassword)s" />
         <tr class="otp_wizard otp_ready hidden"><td>
         </td></tr>
         '''
+        cur_url = requested_url_base()
+        is_mig = cur_url.startswith(configuration.migserver_https_mig_oid_url)
+        is_ext = cur_url.startswith(configuration.migserver_https_ext_oid_url)
+        # NOTE: re-order to show active access method openid first
+        if is_ext and twofactor_entries[0][0] == 'MIG_OID_TWOFACTOR' and \
+                twofactor_entries[1][0] == 'EXT_OID_TWOFACTOR' or \
+                is_mig and twofactor_entries[1][0] == 'MIG_OID_TWOFACTOR' and \
+                twofactor_entries[0][0] == 'EXT_OID_TWOFACTOR':
+            twofactor_entries[0], twofactor_entries[1] = \
+                twofactor_entries[1], twofactor_entries[0]
         for (keyword, val) in twofactor_entries:
             if val.get('Editor', None) == 'hidden':
                 continue
@@ -1432,6 +1442,9 @@ value="%(default_authpassword)s" />
             val['__extra_class__'] = ''
             if val.get('Context', None) == 'twofactor':
                 val['__extra_class__'] = 'provides-twofactor-base'
+                if keyword == 'MIG_OID_TWOFACTOR' and is_mig or \
+                        keyword == 'EXT_OID_TWOFACTOR' and is_ext:
+                    val['__extra_class__'] += ' active-openid-access'
             if val.get('Context', None) == 'twofactor_dep':
                 val['__extra_class__'] = 'requires-twofactor-base manual-show'
             entry = """
