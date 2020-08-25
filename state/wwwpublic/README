@@ -7,4 +7,12 @@ necessary to add about-snippet.html, faq-snippet.html and
 quickstart-snippet.html files or symlinks to the sample site files with a
 similar prefix.
 
+In order to support the standard security reporting framework 
+https://securitytxt.org/
+one should also add a security.txt file in the .well-known/ folder or symlink
+it to one of the existing site specific files there.
+
+The letsencrypt symlink and the .well-known/acme-challenge are used for the
+optional LetsEncrypt certificate setup.
+
 The monitor, archives and public vgrid files should automatically be included here.

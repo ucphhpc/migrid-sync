@@ -37,7 +37,9 @@ grep -H ERROR $LOGDIR/sftp.log | \
 
 grep -H ERROR $LOGDIR/davs.log | grep -E -v "The handshake operation timed out|decryption failed or bad record mac|length too short|no ciphers specified|unknown error \(_ssl.c:579\)|Failed password login for .* from ${SECSCANIP}|ERROR Invalid user(name)? .* from ${SECSCANIP}|invalid share mode (write|read)-only for " | tail -n $MAXLINES
 
-grep -H ERROR $LOGDIR/chkchroot.log | grep -E -v " from ${SECSCANIP} " | tail -n $MAXLINES
+grep -H ERROR $LOGDIR/chkchroot.log | grep -E -v " from ${SECSCANIP} "| \
+        grep -E -v "__CRACK_WEB_REGEX__" | \
+        tail -n $MAXLINES
 
 # NOTE: we ignore script crashed errors here and treat specifically next
 grep -H ERROR $LOGDIR/mig.log | \

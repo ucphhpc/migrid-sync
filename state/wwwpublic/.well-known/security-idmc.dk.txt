@@ -1,0 +1,2 @@
+# Public security reporting info in line with https://securitytxt.org/
+Contact: mailto:security@idmc.dk
