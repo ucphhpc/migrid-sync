@@ -98,7 +98,7 @@ from mig.shared.griddaemons.sftp import default_username_validator, \
     refresh_jupyter_creds, update_login_map, login_map_lookup, \
     hit_rate_limit, expire_rate_limit, clear_sessions, \
     track_open_session, track_close_session, active_sessions, \
-    check_twofactor_session, validate_auth_attempt
+    check_twofactor_session, validate_auth_attempt, authlog
 from mig.shared.logger import daemon_logger, daemon_gdp_logger, \
     register_hangup_handler
 from mig.shared.notification import send_system_notification
@@ -347,6 +347,9 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
     logger = None
     transport = None
     root = None
+    ip_addr = None
+    src_port = None
+    active_session = None
 
     def __init__(self, server, *largs, **kwargs):
         """Init"""
@@ -386,7 +389,9 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             # untrusted transport.get_username() here
             # logger.debug('extract authenticated user from server')
             self.user_name = server.get_authenticated_user()
-            self.ip_addr = self.transport.getpeername()[0]
+            self.ip_addr, self.src_port = self.transport.getpeername()
+            logger.debug('setting up session for %s from %s:%s' %
+                         (self.user_name, self.ip_addr, self.src_port))
         else:
             # logger.debug('active env: %s' % os.environ)
             username = force_utf8(os.environ.get('USER', 'INVALID'))
@@ -396,7 +401,46 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             update_sftp_login_map(daemon_conf, username,
                                   password=True, key=True)
             self.user_name = username
-            self.ip_addr = "unknown"
+
+            # NOTE: we do not yet have session limit in sftp subsys handler
+            #       so we implement it as a workaround here and in __del__
+            #       handler for now.
+            # TODO: implement session limit in subsys and disable workaround
+            # Env holds client info in 'SSH_CLIENT' as 'a.b.c.d rport lport'
+            ssh_client = force_utf8(os.environ.get('SSH_CLIENT', 'NONE'))
+            # Pad with zeros to make sure exraction fails gracefully if missing
+            ssh_client += ' 0 0'
+            src_ip, src_port = ssh_client.split()[0:2]
+            self.ip_addr = src_ip
+            self.src_port = src_port
+            active_count = active_sessions(configuration, 'sftp',
+                                           self.user_name)
+            if configuration.user_sftp_max_sessions > 0 and \
+                    active_count >= configuration.user_sftp_max_sessions:
+                notify = True
+                if self.ip_addr in configuration.site_security_scanners:
+                    notify = False
+                auth_msg = "Too many open sessions"
+                log_msg = auth_msg + " %d for %s" \
+                    % (active_count, username)
+                logger.warning(log_msg)
+                authlog(configuration, 'WARNING', 'sftp', 'unknown',
+                        self.user_name, self.ip_addr, auth_msg, notify=notify)
+
+                raise Exception("reject further sessions for %s" % username)
+
+            logger.info("proceed with session for %s with %d active sessions"
+                        % (self.user_name, active_count))
+            active_session = track_open_session(configuration,
+                                                'sftp',
+                                                self.user_name,
+                                                self.ip_addr,
+                                                self.src_port,
+                                                authorized=True)
+            if not active_session:
+                raise Exception("failed to track open session for %s" %
+                                self.user_name)
+            self.active_session = active_session
 
         # logger.debug('auth user is %s' % self.user_name)
 
@@ -413,6 +457,30 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                 self.root = force_utf8("%s/%s" % (self.root, entry.home))
                 break
         # logger.debug('auth user chroot is %s' % self.root)
+
+    def __del__(self):
+        """Called on session shutdown. Only really needed to finish session
+        tracking in sftp subsys mode.
+        """
+
+        # TODO: remove this function along with max session workaround above
+
+        if self.transport is None and self.active_session is not None:
+            logger.debug("session clean up for %s from %s:%s" %
+                         (self.user_name, self.ip_addr, self.src_port))
+            try:
+                self.active_session = None
+                track_close_session(configuration, 'sftp',
+                                    self.user_name, self.ip_addr, self.src_port)
+                active_count = active_sessions(configuration, 'sftp',
+                                               self.user_name)
+                logger.info("remaining %d active sessions for %s"
+                            % (active_count, self.user_name))
+            except Exception, exc:
+                logger.error("failed in clean up: %s" % exc)
+        else:
+            logger.debug("no session to clean up for %s from %s:%s" %
+                         (self.user_name, self.ip_addr, self.src_port))
 
     def __gdp_log(self,
                   operation,
