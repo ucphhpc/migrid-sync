@@ -63,6 +63,7 @@ setup.
 
 Inspired by https://gist.github.com/lonetwin/3b5982cf88c598c0e169
 """
+
 from __future__ import absolute_import
 from __future__ import print_function
 
@@ -83,12 +84,19 @@ except ImportError:
 #            we cannot rely on PYTHONPATH and instead explictly set load path
 #            to include user home to allow from mig.X import Y
 # NOTE: __file__ is /MIG_BASE/mig/server/sftp_subsys.py and we need MIG_BASE
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from mig.server.grid_sftp import SimpleSftpServer as SftpServerImpl
-from mig.shared.conf import get_configuration_object
-from mig.shared.fileio import user_chroot_exceptions
-from mig.shared.logger import daemon_logger, register_hangup_handler
+# NOTE: moved mig imports into try/except to avoid autopep8 moving to top!
+try:
+    from mig.shared.logger import daemon_logger, register_hangup_handler
+    from mig.shared.fileio import user_chroot_exceptions
+    from mig.shared.conf import get_configuration_object
+    from mig.server.grid_sftp import SimpleSftpServer as SftpServerImpl
+except ImportError:
+    print("ERROR: the migrid modules must be in PYTHONPATH")
+    sys.exit(1)
+
 
 configuration, logger = None, None
 
