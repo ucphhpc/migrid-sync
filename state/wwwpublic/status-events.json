@@ -1,6 +1,27 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2020-08-30T10:00:00+02:00", 
+    "systems": [
+        "ERDA"
+    ],
+    "announce_start": "2020-08-27T10:00:00+02:00",
+    "title": {
+      "EN": "Planned ERDA Maintenance",
+      "DK": "Planlagt vedligehold af ERDA"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2020-08-30T20:00:00+02:00",
+    "description": {
+      "EN": "Update and general maintenance of ERDA to roll out the latest software versions. The actual update should not take that long, but we may have to do a system reboot to complete some core updates. If so it will result in some down time for all services. Further progress information will follow here.",
+      "DK": "Opdatering og generel vedligeholdelse af ERDA for at opdatere til nyeste software. Selve opdateringen burde ikke vare ret længe, men det kan være vi er nødt til at køre en system-genstart for at gennemtvinge nogle kerneopdateringer. Det vil i så fald give nedetid for alle services. Yderligere status følger her."
+    },
+    "announce_end": "2020-08-31T10:00:00+02:00"
+  },
+  {
+    "status": "AUTO", 
     "work_start": "2020-08-23T10:00:00+02:00", 
     "systems": [
         "IDMC"
