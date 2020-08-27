@@ -222,7 +222,13 @@ sudo pip install pygdb
 The optional workflows module relies on the python special modules 
 nbformat, nbconvert to validate and produce correct Jupyter Notebook formatted files.
 Nbformat specifically requires that the more_itertools module is both installed beforehand
-and that it is pinned to version 5.0.0 to ensure Python2.7 support.
+and that it is pinned to version 5.0.0 to ensure Python2.7 support. Other versioned
+dependencies were needed, too, on CentOS 7:
+sudo pip install more_itertools==5.0.0
+sudo pip install zipp==0.6.0
+sudo pip install nbformat==4.4.0
+sudo pip install pygments==2.4.2
+sudo pip install nbconvert==5.6.1
 In addition the workflows module creates yaml parameter files via the pyyaml module.
 To schedule and execute workflow tasks, the execution nodes are required to 
 provide the papermill module via the PAPERMILL environment variable,
@@ -725,7 +731,7 @@ with optional 2-FA support and legacy sftp clients:
                    --enable_freeze=False --enable_imnotify=False \
                    --enable_twofactor=True --enable_cracklib=True \
                    --enable_notify=True --enable_preview=True \
-                   --enable_hsts=True \
+                   --enable_workflows=True ---enable_hsts=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
                    --enable_jupyter=True \
                    --jupyter_services='DAG.http://dag002.science DAG.http://dag003.science DAG.http://dag004.science DAG.http://dag005.science DAG.http://dag006.science DAG.http://dag007.science DAG.http://dag200.science MODI.http://130.225.104.218' \
