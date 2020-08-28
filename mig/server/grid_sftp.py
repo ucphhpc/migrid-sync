@@ -65,6 +65,7 @@ Requires Paramiko module (http://pypi.python.org/pypi/paramiko).
 from __future__ import print_function
 from __future__ import absolute_import
 
+import base64
 import os
 import shutil
 import socket
@@ -102,7 +103,7 @@ from mig.shared.griddaemons.sftp import default_username_validator, \
 from mig.shared.logger import daemon_logger, daemon_gdp_logger, \
     register_hangup_handler
 from mig.shared.notification import send_system_notification
-from mig.shared.pwhash import make_scramble
+from mig.shared.pwhash import make_simple_hash
 from mig.shared.useradm import check_password_hash
 from mig.shared.validstring import possible_user_id, possible_gdp_user_id, \
     possible_job_id, possible_sharelink_id, possible_jupyter_mount_id
@@ -1112,7 +1113,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
         7) Valid password (if password enabled)
         8) Valid key (if key enabled)
         """
-        secret = None
+        hashed_secret = None
         disconnect = False
         strict_password_policy = True
         password_offered = None
@@ -1168,12 +1169,16 @@ class SimpleSSHServer(paramiko.ServerInterface):
             if key is not None:
                 update_key_map = True
                 key_offered = key.get_base64()
-                secret = key_offered
+                hashed_secret = key_offered
             if password is not None:
                 update_password_map = True
                 hash_cache = daemon_conf['hash_cache']
                 password_offered = password
-                secret = make_scramble(password_offered, None)
+                # IMPORTANT: pass a hash of password to register_auth_attempt
+                # since we NEVER want to save passwords to disk. We base64
+                # encode it before hashing for symmetry with how we do in PAM.
+                hashed_secret = make_simple_hash(base64.b64encode(
+                    password_offered))
                 # Only sharelinks should be excluded from strict password policy
                 if possible_sharelink_id(configuration, username):
                     strict_password_policy = False
@@ -1235,7 +1240,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
                 username,
                 client_ip,
                 tcp_port,
-                secret=secret,
+                secret=hashed_secret,
                 invalid_username=invalid_username,
                 invalid_user=invalid_user,
                 account_accessible=account_accessible,

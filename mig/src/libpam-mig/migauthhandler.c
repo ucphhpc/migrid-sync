@@ -124,7 +124,7 @@ static bool mig_pyinit()
             ("from mig.shared.logger import daemon_logger, register_hangup_handler");
         pyrun("from mig.shared.conf import get_configuration_object");
         pyrun("from mig.shared.accountstate import check_account_accessible");
-        pyrun("from mig.shared.pwhash import scramble_digest");
+        pyrun("from mig.shared.pwhash import make_simple_hash");
         pyrun("configuration = get_configuration_object(skip_log=True)");
         pyrun("log_level = configuration.loglevel");
         pyrun
@@ -146,19 +146,20 @@ static bool mig_pyexit()
     return true;
 }
 
-static char *mig_scramble_digest(const char *key)
+static char *mig_make_simple_hash(const char *key)
 {
-    char *digest = NULL;
-    pyrun("digest = scramble_digest(configuration.site_digest_salt, '%s')",
-          key);
-    PyObject *py_digest = PyObject_GetAttrString(py_main, "digest");
-    if (py_digest == NULL) {
-        WRITELOGMESSAGE(LOG_ERR, "Missing python variable: digest\n");
+    char *hashed = NULL;
+    /* NOTE: key is already base64-encoded here, so it's safe to expand inside
+       single quotes even if the raw value also contained single quote. */
+    pyrun("hashed = make_simple_hash('%s')", key);
+    PyObject *py_hashed = PyObject_GetAttrString(py_main, "hashed");
+    if (py_hashed == NULL) {
+        WRITELOGMESSAGE(LOG_ERR, "Missing python variable: hashed\n");
     } else {
-        digest = PyString_AsString(py_digest);
-        Py_DECREF(py_digest);
+        hashed = PyString_AsString(py_hashed);
+        Py_DECREF(py_hashed);
     }
-    return digest;
+    return hashed;
 }
 
 static int mig_expire_rate_limit()

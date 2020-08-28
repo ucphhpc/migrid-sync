@@ -394,6 +394,11 @@ def assure_password_strength(configuration, password):
     return True
 
 
+def make_simple_hash(val):
+    """Generate a simple md5 hash for val and return the 32-char hexdigest"""
+    return hashlib.md5(val).hexdigest()
+
+
 def make_path_hash(configuration, path):
     """Generate a 128-bit md5 hash for path and return the 32 char hexdigest.
     Used to compress long paths into a fixed length string ID without
@@ -406,8 +411,7 @@ def make_path_hash(configuration, path):
     """
     _logger = configuration.logger
     _logger.debug("make path hash for %s" % path)
-    hexdigest = hashlib.md5(path).hexdigest()
-    return hexdigest
+    return make_simple_hash(path)
 
 
 def generate_random_ascii(count, charset):

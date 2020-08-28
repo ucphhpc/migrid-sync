@@ -62,6 +62,7 @@ from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from SocketServer import ThreadingMixIn
 from urlparse import urlparse
 
+import base64
 import Cookie
 import cgi
 import cgitb
@@ -93,7 +94,7 @@ from mig.shared.griddaemons.openid import default_max_user_hits, \
     validate_auth_attempt
 from mig.shared.html import openid_page_template
 from mig.shared.logger import daemon_logger, register_hangup_handler
-from mig.shared.pwhash import make_scramble
+from mig.shared.pwhash import make_simple_hash
 from mig.shared.safeinput import valid_distinguished_name, valid_password, \
     valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url, \
     valid_complex_url, InputException
@@ -465,7 +466,7 @@ Invalid '%s' input: %s
         pair against user DB.
         """
         # Use client address directly but with optional local proxy override
-        secret = None
+        hashed_secret = None
         exceeded_rate_limit = False
         invalid_username = False
         account_accessible = False
@@ -536,7 +537,8 @@ Invalid '%s' input: %s
                 if 'password' in self.query:
                     logger.debug("setting password")
                     self.password = self.query['password']
-                    secret = make_scramble(self.password, None)
+                    hashed_secret = make_simple_hash(
+                        base64.b64encode(self.password))
                 else:
                     logger.debug("no password in query")
                     self.password = None
@@ -554,7 +556,7 @@ Invalid '%s' input: %s
                 self.user,
                 client_ip,
                 tcp_port,
-                secret=secret,
+                secret=hashed_secret,
                 invalid_username=invalid_username,
                 account_accessible=account_accessible,
                 skip_twofa_check=True,
@@ -786,7 +788,7 @@ Invalid '%s' input: %s
 
     def doLogin(self):
         """Login handler"""
-        secret = None
+        hashed_secret = None
         exceeded_rate_limit = False
         invalid_username = False
         account_accessible = False
@@ -820,7 +822,8 @@ Invalid '%s' input: %s
             else:
                 if 'password' in self.query:
                     self.password = self.query['password']
-                    secret = make_scramble(self.password, None)
+                    hashed_secret = make_simple_hash(base64.b64encode(
+                        self.password))
                 else:
                     self.password = None
 
@@ -843,7 +846,7 @@ Invalid '%s' input: %s
                 self.user,
                 client_ip,
                 tcp_port,
-                secret=secret,
+                secret=hashed_secret,
                 invalid_username=invalid_username,
                 account_accessible=account_accessible,
                 skip_twofa_check=True,

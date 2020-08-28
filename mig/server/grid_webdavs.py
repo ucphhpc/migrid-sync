@@ -38,6 +38,7 @@ per-user subdir chrooting inside root_dir.
 from __future__ import print_function
 from __future__ import absolute_import
 
+import base64
 import os
 import sys
 import threading
@@ -84,7 +85,7 @@ from mig.shared.logger import daemon_logger, daemon_gdp_logger, \
     register_hangup_handler
 from mig.shared.notification import send_system_notification
 from mig.shared.pwhash import make_scramble, unscramble_digest, \
-    assure_password_strength
+    make_simple_hash, assure_password_strength
 from mig.shared.sslsession import ssl_session_token
 from mig.shared.tlsserver import hardened_ssl_context
 from mig.shared.useradm import check_password_hash, generate_password_hash, \
@@ -501,7 +502,7 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
         result = None
         response_ok = False
         pre_authorized = False
-        secret = None
+        hashed_secret = None
         authorized = False
         disconnect = False
         valid_session = False
@@ -585,9 +586,10 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
             # and therefore we do not have any other unique identifiers
 
             if password_auth:
-                secret = authheader.get('password', '')
-            if not secret:
-                secret = environ.get('SSL_SESSION_TOKEN', None)
+                hashed_secret = make_simple_hash(base64.b64encode(
+                    authheader.get('password', '')))
+            if not hashed_secret:
+                hashed_secret = environ.get('SSL_SESSION_TOKEN', None)
 
             # Update rate limits and write to auth log
 
@@ -602,7 +604,7 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
                 username,
                 ip_addr,
                 tcp_port,
-                secret=secret,
+                secret=hashed_secret,
                 invalid_username=invalid_username,
                 invalid_user=invalid_user,
                 account_accessible=account_accessible,

@@ -72,6 +72,7 @@ only used in plain FTP mode.
 from __future__ import print_function
 from __future__ import absolute_import
 
+import base64
 import os
 import sys
 import time
@@ -102,7 +103,7 @@ from mig.shared.griddaemons.ftps import default_max_user_hits, \
     update_login_map, login_map_lookup, hit_rate_limit, expire_rate_limit, \
     check_twofactor_session, validate_auth_attempt
 from mig.shared.logger import daemon_logger, register_hangup_handler
-from mig.shared.pwhash import make_scramble
+from mig.shared.pwhash import make_simple_hash
 from mig.shared.tlsserver import hardened_openssl_context
 from mig.shared.useradm import check_password_hash
 from mig.shared.validstring import possible_user_id, possible_sharelink_id
@@ -198,7 +199,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
         5) Hit rate limit (Too many auth attempts)
         6) Valid password (if password enabled)
         """
-        secret = None
+        hashed_secret = None
         disconnect = False
         strict_password_policy = True
         password_offered = None
@@ -244,7 +245,8 @@ class MiGUserAuthorizer(DummyAuthorizer):
         elif daemon_conf['allow_password']:
             hash_cache = daemon_conf['hash_cache']
             password_offered = password
-            secret = make_scramble(password_offered, None)
+            hashed_secret = make_simple_hash(
+                base64.b64encode(password_offered))
             # Only sharelinks should be excluded from strict password policy
             if configuration.site_enable_sharelinks and \
                     possible_sharelink_id(configuration, username):
@@ -285,7 +287,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
             username,
             client_ip,
             client_port,
-            secret=secret,
+            secret=hashed_secret,
             invalid_username=invalid_username,
             invalid_user=invalid_user,
             account_accessible=account_accessible,

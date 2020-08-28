@@ -632,8 +632,27 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         return pam_sm_authenticate_exit(retval, pwresp);
     }
 #ifdef ENABLE_AUTHHANDLER
-    char *pSecret = mig_scramble_digest(pPassword);
-    WRITELOGMESSAGE(LOG_DEBUG, "pSecret: %s\n", pSecret);
+    /* IMPORTANT: pass a hashed version of the base64 encoded password to
+       register_auth_attempt, since we NEVER want raw passwords on disk.
+       The base64 encoding is applied to make sure we have a quoting-safe 
+       version to string-expand in the python function call. Otherwise we
+       might hit quoting issues for raw passwords containing single or double
+       quotes, because we only check valid chars later.
+    */
+    char encpw[MAX_DIGEST_SIZE];
+    size_t encpw_size = b64_get_encoded_buffer_size(strlen(pPassword));
+    if (encpw_size >= MAX_DIGEST_SIZE) {
+        WRITELOGMESSAGE(LOG_WARNING,
+                        "Cannot build hash from password of extreme length: %d\n",
+                        (uint)strlen(pPassword));
+        return pam_sm_authenticate_exit(PAM_AUTH_ERR, pwresp);
+    }
+    b64_encode((const uint8_t *)pPassword, encpw_size, (uint8_t *) & encpw);
+    //b64 encode does not null terminate the string
+    encpw[encpw_size] = 0;
+
+    char *pHash = mig_make_simple_hash(encpw);
+    WRITELOGMESSAGE(LOG_DEBUG, "pHash: %s\n", pHash);
 #endif
 #ifdef ENABLE_SHARELINK
     /* Optional anonymous share link access:
@@ -666,7 +685,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                                    | MIG_AUTHTYPE_ENABLED
                                                    | MIG_VALID_AUTH,
                                                    pUsername, pAddress,
-                                                   pSecret)) {
+                                                   pHash)) {
                     return pam_sm_authenticate_exit(PAM_AUTH_ERR, pwresp);
                 }
 #endif                          /* ENABLE_AUTHHANDLER */
@@ -682,7 +701,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                                   | MIG_AUTHTYPE_ENABLED
                                                   | MIG_INVALID_AUTH,
                                                   pUsername, pAddress,
-                                                  pSecret)) {
+                                                  pHash)) {
                     WRITELOGMESSAGE(LOG_WARNING,
                                     "MiG registered successful auth despite NOT PAM_SUCCESS");
                 }
@@ -728,7 +747,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
             if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
                                               | MIG_AUTHTYPE_PASSWORD
                                               | MIG_AUTHTYPE_DISABLED,
-                                              pUsername, pAddress, pSecret)) {
+                                              pUsername, pAddress, pHash)) {
                 WRITELOGMESSAGE(LOG_WARNING,
                                 "MiG registered successful auth despite NOT PAM_SUCCESS");
             }
@@ -746,7 +765,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                                    | MIG_AUTHTYPE_ENABLED
                                                    | MIG_VALID_AUTH,
                                                    pUsername, pAddress,
-                                                   pSecret)) {
+                                                   pHash)) {
                     return pam_sm_authenticate_exit(PAM_AUTH_ERR, pwresp);
                 }
 #endif                          /* ENABLE_AUTHHANDLER */
@@ -762,7 +781,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                                   | MIG_AUTHTYPE_ENABLED
                                                   | MIG_INVALID_AUTH,
                                                   pUsername, pAddress,
-                                                  pSecret)) {
+                                                  pHash)) {
                     WRITELOGMESSAGE(LOG_WARNING,
                                     "MiG registered successful auth despite NOT PAM_SUCCESS");
                 }
@@ -808,7 +827,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
             if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
                                               | MIG_AUTHTYPE_PASSWORD
                                               | MIG_AUTHTYPE_DISABLED,
-                                              pUsername, pAddress, pSecret)) {
+                                              pUsername, pAddress, pHash)) {
                 WRITELOGMESSAGE(LOG_WARNING,
                                 "MiG registered successful auth despite NOT PAM_SUCCESS");
             }
@@ -823,7 +842,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                                    | MIG_AUTHTYPE_ENABLED
                                                    | MIG_VALID_AUTH,
                                                    pUsername, pAddress,
-                                                   pSecret)) {
+                                                   pHash)) {
                     return pam_sm_authenticate_exit(PAM_AUTH_ERR, pwresp);
                 }
 #endif                          /* ENABLE_AUTHHANDLER */
@@ -839,7 +858,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                                   | MIG_AUTHTYPE_ENABLED
                                                   | MIG_INVALID_AUTH,
                                                   pUsername, pAddress,
-                                                  pSecret)) {
+                                                  pHash)) {
                     WRITELOGMESSAGE(LOG_WARNING,
                                     "MiG registered successful auth despite NOT PAM_SUCCESS");
                 }
@@ -873,7 +892,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                           | MIG_AUTHTYPE_PASSWORD
                                           | MIG_AUTHTYPE_ENABLED
                                           | MIG_INVALID_AUTH, pUsername,
-                                          pAddress, pSecret)) {
+                                          pAddress, pHash)) {
             WRITELOGMESSAGE(LOG_WARNING,
                             "MiG registered successful auth despite NOT PAM_SUCCESS");
         }
@@ -899,7 +918,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
                                           | MIG_AUTHTYPE_PASSWORD
                                           | MIG_AUTHTYPE_DISABLED,
-                                          pUsername, pAddress, pSecret)) {
+                                          pUsername, pAddress, pHash)) {
             WRITELOGMESSAGE(LOG_WARNING,
                             "MiG registered successful auth despite NOT PAM_SUCCESS");
         }
@@ -930,7 +949,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         if (true == register_auth_attempt(MIG_SKIP_TWOFA_CHECK
                                           | MIG_AUTHTYPE_PASSWORD
                                           | MIG_AUTHTYPE_DISABLED,
-                                          pUsername, pAddress, pSecret)) {
+                                          pUsername, pAddress, pHash)) {
             WRITELOGMESSAGE(LOG_WARNING,
                             "MiG registered successful auth despite NOT PAM_SUCCESS");
         }
@@ -1087,8 +1106,8 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                       strlen(pBase64Salt),
                       iteration_count, hash_size, (unsigned char *)pResult);
 
-    size_t expaded_hash_size = b64_get_encoded_buffer_size(hash_size);
-    if (expaded_hash_size >= MAX_DIGEST_SIZE) {
+    size_t expanded_hash_size = b64_get_encoded_buffer_size(hash_size);
+    if (expanded_hash_size >= MAX_DIGEST_SIZE) {
         WRITELOGMESSAGE(LOG_WARNING,
                         "Failed to base64 encode hash from file: %s\n",
                         auth_filename);
@@ -1097,7 +1116,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 
     b64_encode((const uint8_t *)pResult, hash_size, (uint8_t *) & pbkdf);
     //b64 encode does not null terminate the string
-    pbkdf[expaded_hash_size] = 0;
+    pbkdf[expanded_hash_size] = 0;
 
     if (strcmp(pBase64Hash, pbkdf) != 0) {
         WRITELOGMESSAGE(LOG_INFO,
@@ -1110,7 +1129,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                           | MIG_AUTHTYPE_PASSWORD
                                           | MIG_AUTHTYPE_ENABLED
                                           | MIG_INVALID_AUTH, pUsername,
-                                          pAddress, pSecret)) {
+                                          pAddress, pHash)) {
             WRITELOGMESSAGE(LOG_WARNING,
                             "MiG registered successful auth despite NOT PAM_SUCCESS");
         }
@@ -1131,7 +1150,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     if (true == mig_check_twofactor_session(pUsername, pAddress)) {
         mode |= MIG_VALID_TWOFA;
     }
-    if (false == register_auth_attempt(mode, pUsername, pAddress, pSecret)) {
+    if (false == register_auth_attempt(mode, pUsername, pAddress, pHash)) {
         return pam_sm_authenticate_exit(PAM_AUTH_ERR, pwresp);
     }
 #endif                          /* ENABLE_AUTHHANDLER */
