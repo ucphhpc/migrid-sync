@@ -13,10 +13,10 @@
     "services": [
       "ALL"
     ],
-    "work_end": "2020-08-30T20:00:00+02:00",
+    "work_end": "2020-08-30T18:05:00+02:00",
     "description": {
-      "EN": "Update and general maintenance of ERDA to roll out the latest software versions. The actual update should not take that long, but we may have to do a system reboot to complete some core updates. If so it will result in some down time for all services. Further progress information will follow here.",
-      "DK": "Opdatering og generel vedligeholdelse af ERDA for at opdatere til nyeste software. Selve opdateringen burde ikke vare ret længe, men det kan være vi er nødt til at køre en system-genstart for at gennemtvinge nogle kerneopdateringer. Det vil i så fald give nedetid for alle services. Yderligere status følger her."
+      "EN": "Update and general maintenance of ERDA to roll out the latest software versions. The actual update was kept limited and resulted in less than 10 minutes of downtime. Everything should be back online.",
+      "DK": "Opdatering og generel vedligeholdelse af ERDA for at opdatere til nyeste software. Selve opdateringen blev holdt begrænset og resulterede i under 10 minutters nedetid. Alt er tilbage i normal drift."
     },
     "announce_end": "2020-08-31T10:00:00+02:00"
   },
