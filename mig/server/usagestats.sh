@@ -3,11 +3,15 @@
 # Show basic stats about migrid users and storage use
 # Optionally limits df output to any file system types given on command-line
 
-# NOTE: We assume that script is in ~/mig/server/ and state is in ~/state
+# NOTE: We expect script to be in ~/mig/server/ and state in ~/state but we
+#       dynamically deduct the root to only really rely on the sub-structure.
 SCRIPTPATH=$(realpath $0)
 SERVERDIR=$(dirname $SCRIPTPATH)
 MIGDIR=$(dirname $SERVERDIR)
-STATEDIR=$(dirname $MIGDIR)"/state"
+BASEDIR=$(dirname $MIGDIR)
+STATEDIR="$BASEDIR/state"
+# For absolute mig.X imports
+export PYTHONPATH="$BASEDIR"
 
 declare -a DFOPTS
 for FSTYPE in $@; do
