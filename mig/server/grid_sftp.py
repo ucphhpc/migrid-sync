@@ -644,8 +644,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         # silently ignore them otherwise. It turns out to have caused problems
         # if we rejected those other attribute changes in the past but it may
         # not be a problem anymore. If it ain't broken...
-        self.logger.info("chattr %s for path %s :: %s" %
-                         (repr(attr), path, real_path))
+        # self.logger.debug("chattr %s for path %s :: %s" %
+        #                  (repr(attr), path, real_path))
         ignored = True
         if getattr(attr, 'st_mode', None) is not None and attr.st_mode > 0:
             # self.logger.debug('_chattr st_mode: %s' % attr.st_mode)
@@ -681,7 +681,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                 os.ftruncate(file_obj.fileno(), attr.st_size)
             self.logger.info("truncated file: %s to size: %s" %
                              (real_path, attr.st_size))
-        if ignored:
+        # NOTE: chmod 0 PATH are very common - silently ignore to reduce noise
+        if ignored and getattr(attr, 'st_mode', 0) > 0:
             self.logger.warning("chattr %s ignored on path %s :: %s" %
                                 (repr(attr), path, real_path))
         return paramiko.SFTP_OK
