@@ -1,24 +1,24 @@
 [
   {
     "status": "AUTO", 
-    "work_start": "2020-09-02T09:00:00+02:00", 
+    "work_start": "2020-09-02T09:20:00+02:00", 
     "systems": [
         "ERDA"
     ],
     "announce_start": "2020-09-02T09:00:00+02:00", 
     "title": {
-      "EN": "ERDA is unavailable, we are looking into the problem",
-      "DK": "ERDA er nede, vi arbejder på at komme op igen"
+      "EN": "ERDA Down",
+      "DK": "ERDA nede"
     },
     "services": [
       "ALL"
     ],
-    "work_end": "2020-09-02T12:00:00+02:00",
+    "work_end": "2020-09-02T11:08:00+02:00",
     "description": {
-      "EN": "",
-      "DK": ""
+      "EN": "The ERDA frontend crashed because it ran out of space on a central log disk. We had to investigate and prepare additional disk space to get it back online. This unfortunately took a couple of hours, but things should be back to normal now.",
+      "DK": "ERDAs frontend gik ned fordi den løb tør for plads på en central log-disk. Det tog desværre et par timer at fejlfinde og skaffe mere diskplads derpå, men alting skulle være tilbage i almindelig drift nu."
     },
-    "announce_end": "2020-09-02T12:00:00+02:00"
+    "announce_end": "2020-09-03T10:00:00+02:00"
   },
   {
     "status": "AUTO", 
