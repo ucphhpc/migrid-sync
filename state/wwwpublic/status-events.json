@@ -1,6 +1,27 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2020-09-02T9:00:00+02:00", 
+    "systems": [
+        "ERDA"
+    ],
+    "announce_start": "2020-09-02T9:00:00+02:00", 
+    "title": {
+      "EN": "ERDA is unavailable, we are looking into the problem",
+      "DK": "ERDA er nede, vi arbejder på at komme op igen"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2020-09-02T12:00:00+02:00",
+    "description": {
+      "EN": "",
+      "DK": ""
+    },
+    "announce_end": "2020-09-02T12:00:00+02:00"
+  },
+  {
+    "status": "AUTO", 
     "work_start": "2020-08-30T10:00:00+02:00", 
     "systems": [
         "ERDA"
