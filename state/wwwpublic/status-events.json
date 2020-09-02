@@ -1,11 +1,11 @@
 [
   {
     "status": "AUTO", 
-    "work_start": "2020-09-02T9:00:00+02:00", 
+    "work_start": "2020-09-02T09:00:00+02:00", 
     "systems": [
         "ERDA"
     ],
-    "announce_start": "2020-09-02T9:00:00+02:00", 
+    "announce_start": "2020-09-02T09:00:00+02:00", 
     "title": {
       "EN": "ERDA is unavailable, we are looking into the problem",
       "DK": "ERDA er nede, vi arbejder på at komme op igen"
