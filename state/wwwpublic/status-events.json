@@ -1,6 +1,27 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2020-09-03T13:29:00+02:00", 
+    "systems": [
+      "ERDA", "IDMC", "SIF"
+    ], 
+    "announce_start": "2020-09-03T16:35:00:00+02:00", 
+    "title": {
+      "EN": "Partial Data Access and Login Problems", 
+      "DK": "Delvis dataadgang og loginproblemer"
+    }, 
+    "services": [
+      "ALL"
+    ], 
+    "work_end": "2020-09-03T16:40:00+02:00", 
+    "description": {
+      "EN": "One of the backend storage bricks started misbehaving and as a result yielded partial data visibility, meaning that some files would appear missing even though they are actually intact. For some users this might include important login files, in effect preventing log in. We have investigated and found the direct cause and gotten it back online, but there might be underlying issues still lurking. We keep monitoring the situation for now.", 
+      "DK": "En af maskinerne i backend-lageret opførte sig sygt hvilket resulterede i delvis datasynlighed, så en stribe filer kunne se ud til at mangle selv om de faktisk er intakte. For enkelte brugere kunne det involvere centrale loginfiler, og derved i praksis betyde afvist login. Vi har undersøgt sagen og håndteret det direkte problem så alt er online igen. Der kan dog være underliggende skjulte årsager vi endnu ikke har opdaget, så vi holder fortsat øje med situationen."
+    }, 
+    "announce_end": "2020-09-04T10:00:00+02:00"
+  }, 
+  {
+    "status": "AUTO", 
     "work_start": "2020-09-02T09:20:00+02:00", 
     "systems": [
         "ERDA"
