@@ -119,7 +119,7 @@ if '__main__' == __name__:
 
     regex_patterns = []
     for (key, val) in search_filter.items():
-        if val.find('|') != -1:
+        if isinstance(val, basestring) and val.find('|') != -1:
             regex_patterns.append(key)
 
     (configuration, hits) = search_users(search_filter, conf_path, db_path,
