@@ -187,13 +187,13 @@ jobs and privileges.</p>''' %
         fill_helpers['readonly_%s' % field] = 'readonly'
     fill_helpers.update(user_fields)
     html = """Please enter
-your information in at least the <span class=highlight_required>mandatory</span> fields
-below and press the Send button to submit the account request to
+your information in at least the <span class=highlight_required>mandatory</span>
+fields below and press the Send button to submit the account request to
 the %(site)s administrators.
 
 <p class='personal leftpad highlight_message'>
-IMPORTANT: we need to verify your identity, so please use an Email address
-clearly affiliated with your Organization!
+IMPORTANT: we need to identify and notify you about login info, so please use a
+working Email address clearly affiliated with your Organization!
 </p>
 
 %(site_signup_hint)s

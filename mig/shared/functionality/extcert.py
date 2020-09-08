@@ -161,13 +161,14 @@ instead of requesting a new one.
 <br />
 The page tries to auto load any certificate your browser provides and fill in
 the fields accordingly, but in case it can't guess all
-<span class=highlight_required>mandatory</span> fields, you still need to fill in
-those.<br />
+<span class=highlight_required>mandatory</span> fields, you still need to fill
+in those.<br />
 Please enter any missing information below and press the Send button to submit
 the external certificate sign up request to the %(site)s administrators.
+
 <p class='personal leftpad highlight_message'>
-IMPORTANT: we need to verify your identity, so please use an Email address
-clearly affiliated with your Organization!
+IMPORTANT: we need to identify and notify you about login info, so please use a
+working Email address clearly affiliated with your Organization!
 </p>
 
 %(site_signup_hint)s
