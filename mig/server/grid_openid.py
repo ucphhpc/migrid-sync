@@ -539,12 +539,12 @@ Invalid '%s' input: %s
                     self.password = self.query['password']
                     hashed_secret = make_simple_hash(
                         base64.b64encode(self.password))
+                    account_accessible = check_account_accessible(
+                        configuration, self.user, 'openid')
                 else:
                     logger.debug("no password in query")
                     self.password = None
                 if self.checkLogin(self.user, self.password, client_ip):
-                    account_accessible = check_account_accessible(
-                        configuration, self.user, 'openid')
                     valid_password = True
 
             # Update rate limits and write to auth log
@@ -824,12 +824,12 @@ Invalid '%s' input: %s
                     self.password = self.query['password']
                     hashed_secret = make_simple_hash(base64.b64encode(
                         self.password))
+                    account_accessible = check_account_accessible(
+                        configuration, self.user, 'openid')
                 else:
                     self.password = None
 
                 if self.checkLogin(self.user, self.password, client_ip):
-                    account_accessible = check_account_accessible(
-                        configuration, self.user, 'openid')
                     valid_password = True
                     if not self.query['success_to']:
                         self.query['success_to'] = '%s/id/' \
