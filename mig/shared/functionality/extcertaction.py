@@ -35,6 +35,7 @@ import time
 import tempfile
 
 from mig.shared import returnvalues
+from mig.shared.accountreq import user_manage_commands
 from mig.shared.base import force_utf8, force_unicode, generate_https_urls, \
     distinguished_name_to_user, fill_distinguished_name, fill_user
 from mig.shared.defaults import user_db_filename, cert_valid_days
@@ -236,21 +237,9 @@ contact them manually on %s if this error persists.""" %
     user_dict['tmp_id'] = tmp_id
 
     mig_user = os.environ.get('USER', 'mig')
-    command_user_create = \
-        """
-As '%s' on %s:
-cd ~/mig/server
-./createuser.py -i '%s' -u '%s'"""\
-         % (mig_user, configuration.server_fqdn, cert_id, req_path)
-    command_user_delete = \
-        """
-As '%s' user on %s:
-cd ~/mig/server
-./deleteuser.py -i '%s'"""\
-         % (mig_user, configuration.server_fqdn, cert_id)
-
-    user_dict['command_user_create'] = command_user_create
-    user_dict['command_user_delete'] = command_user_delete
+    helper_commands = user_manage_commands(configuration, mig_user, req_path,
+                                           user_id, user_dict, 'cert')
+    user_dict.update(helper_commands)
     user_dict['site'] = configuration.short_title
     user_dict['vgrid_label'] = configuration.site_vgrid_label
     user_dict['vgridman_links'] = generate_https_urls(
@@ -278,12 +267,15 @@ to any relevant %(vgrid_label)ss using one of the management links:
 %(vgridman_links)s
 
 ---
+
+Command to suspend user on %(site)s server:
+%(command_user_suspend)s
+
 Command to delete user again on %(site)s server:
 %(command_user_delete)s
 ---
 
-"""\
-         % user_dict
+""" % user_dict
 
     logger.info('Sending email: to: %s, header: %s, msg: %s, smtp_server: %s'
                 % (admin_email, email_header, email_msg, smtp_server))

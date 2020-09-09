@@ -787,8 +787,8 @@ Hosturl: '%s'
 
 Configfile: '%s'
 
-Resource creation command to run from mig/server/ directory:
-./createresource.py '%s' '%s' '%s'
+Resource creation command to run from 'mig' base directory:
+./mig/server/createresource.py '%s' '%s' '%s'
 """\
          % (
         client_id,

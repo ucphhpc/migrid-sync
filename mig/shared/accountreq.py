@@ -519,6 +519,48 @@ def forced_org_email_match(org, email, configuration):
         return True
 
 
+def user_manage_commands(configuration, mig_user, req_path, user_id, user_dict,
+                         kind):
+    """Generate user create and delete commands for sign up backends"""
+    cmd_helpers = {}
+    if not configuration.ca_fqdn or not configuration.ca_user:
+        cmd_helpers['command_cert_create'] = '[Disabled On This Site]'
+        cmd_helpers['command_cert_revoke'] = '[Disabled On This Site]'
+    else:
+        cmd_helpers['command_cert_create'] = """on CA host (%s):
+sudo su - %s
+rsync -aP %s@%s:mig/server/MiG-users.db ~/
+./ca-scripts/createusercert.py -a '%s' -d ~/MiG-users.db -s '%s' -u '%s'""" % \
+            (configuration.ca_fqdn, configuration.ca_user, mig_user,
+             configuration.server_fqdn, configuration.admin_email,
+             configuration.server_fqdn, user_id)
+        cmd_helpers['command_cert_revoke'] = """on CA host (%s):
+sudo su - %s
+./ca-scripts/revokeusercert.py -a '%s' -d ~/MiG-users.db -u '%s'""" % \
+            (configuration.ca_fqdn, configuration.ca_user,
+             configuration.admin_email, user_id)
+
+    if kind == 'cert':
+        cmd_helpers['command_user_notify'] = '[Automatic for certificates]'
+    else:
+        cmd_helpers['command_user_notify'] = """As '%s' on %s:
+./mig/server/notifymigoid.py -a -C -I '%s'""" % (mig_user, configuration.server_fqdn,
+                                                 user_id)
+
+    # TODO: integrate peers detection from comment and add -p arg here
+    cmd_helpers['command_user_create'] = """As '%s' on %s:
+./mig/server/createuser.py -u '%s'""" % (mig_user, configuration.server_fqdn,
+                                         req_path)
+    cmd_helpers['command_user_suspend'] = """As '%s' on %s:
+./mig/server/editmeta.py '%s' status suspended""" % (mig_user,
+                                                     configuration.server_fqdn,
+                                                     user_id)
+    cmd_helpers['command_user_delete'] = """As '%s' on %s:
+./mig/server/deleteuser.py -i '%s'""" % (mig_user, configuration.server_fqdn,
+                                         user_id)
+    return cmd_helpers
+
+
 def peers_permit_allowed(configuration, user_dict):
     """Check if user with user_dict is allowed to manage peers based on
     optional configuration limits.

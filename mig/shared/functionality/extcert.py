@@ -60,7 +60,7 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False)
+        initialize_main_variables(client_id, op_header=False, op_menu=False)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -73,6 +73,12 @@ def main(client_id, user_arguments_dict):
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
+
+    if not 'extcert' in configuration.site_signup_methods:
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             '''X.509 certificate login is not enabled on this site'''})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s certificate account sign up' % \

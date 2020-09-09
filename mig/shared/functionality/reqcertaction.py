@@ -35,7 +35,8 @@ import time
 import tempfile
 
 from mig.shared import returnvalues
-from mig.shared.accountreq import existing_country_code, forced_org_email_match
+from mig.shared.accountreq import existing_country_code, forced_org_email_match, \
+    user_manage_commands
 from mig.shared.base import client_id_dir, force_utf8, force_unicode, \
     generate_https_urls, fill_distinguished_name
 from mig.shared.defaults import cert_valid_days
@@ -242,39 +243,9 @@ contact them manually on %s if this error persists.""" % admin_email})
     user_dict['tmp_id'] = tmp_id
 
     mig_user = os.environ.get('USER', 'mig')
-    command_cert_create = \
-        """
-on CA host (%s):
-sudo su - %s
-rsync -aP %s@%s:mig/server/MiG-users.db ~/
-./ca-scripts/createusercert.py -a '%s' -d ~/MiG-users.db -s '%s' -u '%s'""" % \
-        (configuration.ca_fqdn, configuration.ca_user, mig_user,
-         configuration.server_fqdn, configuration.admin_email,
-         configuration.server_fqdn, user_id)
-    command_user_create = \
-        """
-As '%s' on %s:
-cd ~/mig/server
-./createuser.py -u '%s'"""\
-         % (mig_user, configuration.server_fqdn, req_path)
-    command_user_delete = \
-        """
-As '%s' user on %s:
-cd ~/mig/server
-./deleteuser.py -i '%s'"""\
-         % (mig_user, configuration.server_fqdn, user_id)
-    command_cert_revoke = \
-        """
-on CA host (%s):
-sudo su - %s
-./ca-scripts/revokeusercert.py -a '%s' -d ~/MiG-users.db -u '%s'"""\
-         % (configuration.ca_fqdn, configuration.ca_user,
-            configuration.admin_email, user_id)
-
-    user_dict['command_user_create'] = command_user_create
-    user_dict['command_user_delete'] = command_user_delete
-    user_dict['command_cert_create'] = command_cert_create
-    user_dict['command_cert_revoke'] = command_cert_revoke
+    helper_commands = user_manage_commands(configuration, mig_user, req_path,
+                                           user_id, user_dict, 'cert')
+    user_dict.update(helper_commands)
     user_dict['site'] = configuration.short_title
     user_dict['vgrid_label'] = configuration.site_vgrid_label
     user_dict['vgridman_links'] = generate_https_urls(
@@ -315,6 +286,9 @@ Command to revoke user certificate:
 %(command_cert_revoke)s
 You need to copy the resulting signed certificate revocation list (crl.pem)
 to the web server(s) for the revocation to take effect.
+
+Command to suspend user on %(site)s server:
+%(command_user_suspend)s
 
 Command to delete user again on %(site)s server:
 %(command_user_delete)s
