@@ -67,6 +67,7 @@ import Cookie
 import cgi
 import cgitb
 import os
+import re
 import socket
 import sys
 import time
@@ -112,6 +113,11 @@ cert_field_names = cert_field_map.keys()
 cert_field_values = cert_field_map.values()
 cert_field_aliases = {}
 
+# NOTE: response may contain password on the form
+# (<Symbol Bare namespace>, 'password'): 'S3cr3tP4ssw0rd'
+pw_pattern = "\(<Symbol Bare namespace>, 'password'\): '(.+)'"
+pw_regexp = re.compile(pw_pattern)
+
 
 def quoteattr(val):
     """Escape string for safe printing"""
@@ -149,6 +155,42 @@ def valid_session_hash(arg):
 def invalid_argument(arg):
     """Always raise exception to mark argument invalid"""
     raise ValueError("Unexpected query variable: %s" % quoteattr(arg))
+
+
+def strip_password(configuration, obj):
+    """Always filter out password entries from obj, which might be a string or
+    a query dictionary.
+    """
+    _logger = configuration.logger
+    if isinstance(obj, basestring):
+        pw_match = pw_regexp.search(obj)
+        if pw_match:
+            msg_pw = pw_match.group(1)
+            filtered = obj.replace(msg_pw, '*' * len(msg_pw))
+            _logger.debug("filtered string for password: %s" % filtered)
+        else:
+            filtered = obj
+    elif isinstance(obj, dict):
+        filtered = obj.copy()
+        if 'password' in obj:
+            filtered['password'] = '*' * len(obj['password'])
+        _logger.debug("filtered dict for password: %s" % filtered)
+    else:
+        _logger.error(
+            "not filtering unexpected obj in strip_password: %s" % obj)
+        return obj
+    return filtered
+
+
+def filter_why_pw(configuration, why):
+    """Helper to wrap strip_password around exceptions"""
+    _logger = configuration.logger
+    if isinstance(why, server.EncodingError):
+        text = why.response.encodeToKVForm()
+        return strip_password(configuration, text)
+    else:
+        _logger.warning("can't filter password in unknown 'why': %s" % why)
+    return why
 
 
 def lookup_full_user(username):
@@ -487,11 +529,11 @@ Invalid '%s' input: %s
             try:
                 request = self.server.openid.decodeRequest(query)
             except server.ProtocolError as why:
-                # NOTE: Do not send exception to displayResponse
-                #       password might be written to screen !!!
-                msg = "handleAllow got broken request"
-                logger.error("%s: %s, error: %s" % (msg, query, why))
-                self.displayResponse(msg)
+                # IMPORTANT: NEVER log or show raw why or query with password!
+                safe_query = strip_password(configuration, query)
+                logger.error("handleAllow got broken request: %s" % safe_query)
+                # NOTE: let displayResponse filter pw
+                self.displayResponse(why)
                 return
 
         logger.debug("handleAllow with last request %s from user %s" %
@@ -539,11 +581,12 @@ Invalid '%s' input: %s
                     self.password = self.query['password']
                     hashed_secret = make_simple_hash(
                         base64.b64encode(self.password))
-                    account_accessible = check_account_accessible(
-                        configuration, self.user, 'openid')
                 else:
                     logger.debug("no password in query")
                     self.password = None
+
+                account_accessible = check_account_accessible(
+                    configuration, self.user, 'openid')
                 if self.checkLogin(self.user, self.password, client_ip):
                     valid_password = True
 
@@ -640,11 +683,11 @@ Invalid '%s' input: %s
             # Pass any errors from previous login attempts on for display
             request.error = query.get('err', '')
         except server.ProtocolError as why:
-            # NOTE: Do not send exception to displayResponse
-            #       password might be written to screen !!!
-            msg = "serverEndPoint got broken request"
-            logger.error("%s: %s, error: %s" % (msg, query, why))
-            self.displayResponse(msg)
+            # IMPORTANT: NEVER log or show raw why or query with password!
+            safe_query = strip_password(configuration, query)
+            logger.error("serverEndPoint got broken request: %s" % safe_query)
+            # NOTE: let displayResponse filter pw
+            self.displayResponse(why)
             return
 
         if request is None:
@@ -724,8 +767,18 @@ Invalid '%s' input: %s
         try:
             webresponse = self.server.openid.encodeResponse(response)
         except server.EncodingError as why:
-            text = why.response.encodeToKVForm()
-            self.showErrorPage('<pre>%s</pre>' % cgi.escape(text))
+            # IMPORTANT: always mask passwords in output for security
+            text = filter_why_pw(configuration, why)
+            self.showErrorPage('''<h2>Error in Communication</h2>
+<p>
+You may have discovered a bug in the OpenID service. Please report it to the
+site admins if you keep getting here. If you arrived here using the browser
+"back" button, however, that is expected since it results in inconsistent
+session state.
+</p>
+<h3>Error details:</h3>
+<pre>%s</pre>
+''' % cgi.escape(text))
             return
 
         self.send_response(webresponse.code)
@@ -824,11 +877,11 @@ Invalid '%s' input: %s
                     self.password = self.query['password']
                     hashed_secret = make_simple_hash(base64.b64encode(
                         self.password))
-                    account_accessible = check_account_accessible(
-                        configuration, self.user, 'openid')
                 else:
                     self.password = None
 
+                account_accessible = check_account_accessible(
+                    configuration, self.user, 'openid')
                 if self.checkLogin(self.user, self.password, client_ip):
                     valid_password = True
                     if not self.query['success_to']:
@@ -1310,7 +1363,7 @@ Invalid '%s' input: %s
 
         if err is not None:
             body += '''\
-            <div class="error">
+            <div class="error leftpad">
               %s
             </div>
             ''' % err
