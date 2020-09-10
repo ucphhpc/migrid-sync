@@ -252,6 +252,9 @@ def create_user(
             regex_patterns = []
         (_, hits) = search_users(search_filter, conf_path, db_path,
                                  verbose, regex_match=regex_patterns)
+        peer_notes = []
+        if not hits:
+            peer_notes.append("no match for peers")
         for (user_id, _) in hits:
             _logger.debug("check %s in peers for %s" % (client_id, user_id))
             accepted_peers = get_accepted_peers(configuration, user_id)
@@ -264,8 +267,10 @@ def create_user(
                 peer_entry.get('expire', 0), '%Y-%m-%d')
             user_expire = datetime.datetime.fromtimestamp(user['expire'])
             if peer_expire < user_expire:
-                _logger.warning("expire %s vs %s prevents %s as peer for %s" %
-                                (peer_expire, user_expire, user_id, client_id))
+                warn_msg = "expire %s vs %s prevents %s as peer for %s" % \
+                           (peer_expire, user_expire, user_id, client_id)
+                _logger.warning(warn_msg)
+                peer_notes.append(warn_msg)
                 continue
             _logger.debug("validated %s accepts %s as peer" % (user_id,
                                                                client_id))
@@ -273,8 +278,8 @@ def create_user(
         if not accepted_peer_list:
             _logger.error("requested peer validation with %r for %s failed" %
                           (verify_pattern, client_id))
-            raise Exception("Failed verify peers for %s using pattern %r" %
-                            (client_id, verify_pattern))
+            raise Exception("Failed verify peers for %s using pattern %r: %s" %
+                            (client_id, verify_pattern, '\n'.join(peer_notes)))
 
         # Save peers in user DB for updates etc.
         user['peers'] = accepted_peer_list
