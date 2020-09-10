@@ -247,7 +247,7 @@ if '__main__' == __name__:
               % (peer_id, '\n'.join(notify_dict['NOTIFY'])))
         notify_user(notify_dict, [peer_id, configuration.short_title,
                                   'peeraccount', peer_dict['comment'],
-                                  peer_dict['email']],
+                                  peer_dict['email'], user_id],
                     'SENDREQUEST', logger, '', configuration)
 
     sys.exit(exit_code)

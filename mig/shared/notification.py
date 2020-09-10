@@ -50,7 +50,7 @@ except ImportError as ierr:
     gnupg = None
 
 from mig.shared.base import force_utf8, generate_https_urls, canonical_user, \
-    cert_field_map
+    cert_field_map, extract_field
 from mig.shared.defaults import email_keyword_list, job_output_dir, \
     transfer_output_dir, keyword_auto
 from mig.shared.fileio import send_message_to_grid_notify
@@ -220,12 +220,16 @@ who would like it to be added as a %s in %s and included the reason:
 %s
 """ % (request_type, from_id, entity, target_name, request_text)
             elif request_type == "peeraccount":
+                recipient_id = args_list[5]
+                recipient_email = extract_field(recipient_id, 'email')
+                from_name = extract_field(from_id, 'full_name')
+                header += ' for %s' % from_name
                 txt += """This is a %s request sent on behalf of
 %s
-who requested an external user account on %s and specifically pointed to you as
-the local sponsor or representative with the account request comment:
+who requested an external user account on %s and specifically pointed to you
+(%s) as the local sponsor or representative with the account request comment:
 %s
-""" % (request_type, from_id, target_name, request_text)
+""" % (request_type, from_id, target_name, recipient_email, request_text)
             else:
                 txt += """This is a %s request sent on behalf of
 %s

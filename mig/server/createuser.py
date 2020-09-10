@@ -111,6 +111,7 @@ if '__main__' == __name__:
         elif opt == '-e':
             expire = int(val)
             override_fields['expire'] = expire
+            override_fields['status'] = 'temporal'
         elif opt == '-f':
             force = True
         elif opt == '-h':
@@ -124,6 +125,7 @@ if '__main__' == __name__:
         elif opt == '-p':
             peer_pattern = val
             override_fields['peer_pattern'] = peer_pattern
+            override_fields['status'] = 'temporal'
         elif opt == '-r':
             default_renew = True
             ask_renew = False
