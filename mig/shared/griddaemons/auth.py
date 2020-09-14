@@ -164,7 +164,7 @@ def authlog(configuration,
         # else:
         #     logger.debug("Skipped send_system_notification to user: %r" \
         #         % user_id)
-        
+
     return status
 
 
@@ -286,6 +286,7 @@ def validate_auth_attempt(configuration,
         auth_msg = "Too many open sessions"
         log_msg = auth_msg + " %d for %s" \
             % (active_count, username)
+        # Only warn since it can get rather noise and it's intermittent
         logger.warning(log_msg)
         authlog(configuration, 'WARNING', protocol, authtype,
                 username, ip_addr, auth_msg, notify=notify)
@@ -340,7 +341,8 @@ def validate_auth_attempt(configuration,
         log_msg = auth_msg + " for %s from %s" % (username, ip_addr)
         if tcp_port > 0:
             log_msg += ":%s" % tcp_port
-        logger.error(log_msg)
+        # Only warn since it can get rather noise and it's intermittent
+        logger.warning(log_msg)
         authlog(configuration, 'WARNING', protocol, authtype,
                 username, ip_addr, auth_msg, notify=notify)
     elif authtype_enabled and not valid_auth:

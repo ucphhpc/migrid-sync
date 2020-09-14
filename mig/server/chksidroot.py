@@ -131,8 +131,9 @@ unless it is available in mig/server/MiGserver.conf
                 # Build proper root base terminated with a single slash
                 root = session_prefix.rstrip(os.sep) + os.sep
             else:
-                logger.error("got path from %s with invalid root: %s" %
-                             (client_ip, path))
+                # Only warn to avoid excessive noise from scanners
+                logger.warning("got path from %s with invalid root: %s" %
+                               (client_ip, path))
                 print(INVALID_MARKER)
                 continue
             # Extract sid name as first component after root base
@@ -178,8 +179,9 @@ unless it is available in mig/server/MiGserver.conf
                 link_target = None
                 real_target = None
             if not link_target or not os.path.exists(link_path):
-                logger.error("not a valid link from %s for path %s: %s" %
-                             (client_ip, path, link_path))
+                # Only warn to avoid excessive noise from scanners
+                logger.warning("not a valid link from %s for path %s: %s" %
+                               (client_ip, path, link_path))
                 print(INVALID_MARKER)
                 continue
 

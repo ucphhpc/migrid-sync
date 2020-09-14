@@ -44,6 +44,8 @@ py_code_files = [
     'shared/%s' % plain,
     'shared/functionality/%s' % plain,
     'shared/distos/%s' % plain,
+    'shared/gdp/%s' % plain,
+    'shared/griddaemons/%s' % plain,
     'simulation/%s' % plain,
     'user/%s' % plain,
     'vm-proxy/%s' % plain,
