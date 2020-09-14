@@ -32,9 +32,16 @@ echo " * freeze_home is frozen archives from all users"
 
 echo ""
 
+NOW=$(date +'%s')
+
 echo "== Totals =="
 echo "=== Registered Local Users ==="
-$SERVERDIR/searchusers.py -f distinguished_name | grep -v 'Matching users' | sort | uniq | wc -l
+$SERVERDIR/searchusers.py -f distinguished_name | grep -v 'Matching users' | \
+    sort | uniq | wc -l
+
+echo "=== Active Local Users ==="
+$SERVERDIR/searchusers.py -f distinguished_name -a $NOW | \
+    grep -v 'Matching users' | sort | uniq | wc -l
 
 echo "=== Registered VGrids ==="
 # NOTE: no maxdepth since nested vgrids are allowed, mindepth is known for target, however
@@ -42,17 +49,25 @@ find $STATEDIR/vgrid_home -mindepth 1 -type d | grep -v '/\.' | wc -l
 
 echo "=== Frozen Archives ==="
 # TODO: update to fit only new client_id location when migrated
-find $STATEDIR/freeze_home -mindepth 2 -maxdepth 3 -type f -name meta.pck | wc -l
+find $STATEDIR/freeze_home -mindepth 2 -maxdepth 3 -type f -name meta.pck | \
+    wc -l
 
 echo ""
 
 echo "== This Week =="
 echo "=== Registered and Renewed Local Users ==="
+# TODO: this is inaccurate as it does not apply for e.g. short term peers.
+#       We can eventually switch to the new created and renewed user fields.
 # NOTE: first or repeat signup sets expire field to 365 days into the future.
 # We simply lookup all users with expire more than 358 days from now.
-RECENT=$(date +'%s')
-RECENT=$((RECENT+(365-7)*24*3600))
-$SERVERDIR/searchusers.py -f distinguished_name -a $RECENT | grep -v 'Matching users' | sort | uniq | wc -l
+NEARLY_A_YEAR=$((NOW+(365-7)*24*3600))
+$SERVERDIR/searchusers.py -f distinguished_name -a $NEARLY_A_YEAR | \
+    grep -v 'Matching users' | sort | uniq | wc -l
+
+echo "=== Recently expired Local Users ==="
+A_WEEK_AGO=$((NOW-7*24*3600))
+$SERVERDIR/searchusers.py -f distinguished_name -a $A_WEEK_AGO -b $NOW | \
+    grep -v 'Matching users' | sort | uniq | wc -l
 
 echo "=== Registered and Updated VGrids ==="
 # NOTE: no maxdepth since nested vgrids are allowed, mindepth is known for target, however

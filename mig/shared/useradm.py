@@ -37,6 +37,7 @@ import re
 import shutil
 import sqlite3
 import sys
+import time
 
 from mig.shared.accountreq import get_accepted_peers
 from mig.shared.accountstate import update_account_expire_cache, \
@@ -218,6 +219,7 @@ def create_user(
     else:
         authorized = False
 
+    accepted_peer_list = []
     verify_pattern = verify_peer
     if verify_peer == keyword_auto:
         _logger.debug('auto-detect peers for: %s' % client_id)
@@ -243,7 +245,6 @@ def create_user(
     if verify_pattern:
         _logger.debug('verify peers for %s with %s' % (client_id,
                                                        verify_pattern))
-        accepted_peer_list = []
         search_filter = default_search()
         search_filter['distinguished_name'] = verify_pattern
         if verify_peer == keyword_auto or verify_pattern.find('|') != -1:
@@ -340,12 +341,20 @@ def create_user(
 
     if client_id not in user_db:
         default_ui = configuration.new_user_default_ui
+        user['created'] = time.time()
     else:
         default_ui = None
         account_status = user_db[client_id].get('status', 'active')
-        if account_status != 'active':
-            raise Exception('refusing to renew %s account!' % account_status)
-        elif ask_renew:
+        # Only allow renew if account is active or if temporal with peer list
+        if account_status == 'active':
+            _logger.debug("proceed with %s account" % account_status)
+        elif account_status == 'temporal' and accepted_peer_list:
+            _logger.debug("proceed with %s account and accepted peers %s" %
+                          (account_status, accepted_peer_list))
+        else:
+            raise Exception('refusing to renew %s account! (%s)' %
+                            (account_status, accepted_peer_list))
+        if ask_renew:
             print('User DB entry for "%s" already exists' % client_id)
             renew_answer = raw_input('Renew existing entry? [Y/n] ')
             renew = not renew_answer.lower().startswith('n')
@@ -400,6 +409,7 @@ with certificate or OpenID authentication to authorize the change."""
                     updated_user[key] = val
             user.clear()
             user.update(updated_user)
+            user['renewed'] = time.time()
         elif not force:
             if do_lock:
                 unlock_user_db(flock)

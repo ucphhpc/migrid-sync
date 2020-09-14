@@ -544,20 +544,18 @@ sudo su - %s
         cmd_helpers['command_user_notify'] = '[Automatic for certificates]'
     else:
         cmd_helpers['command_user_notify'] = """As '%s' on %s:
-./mig/server/notifymigoid.py -a -C -I '%s'""" % (mig_user, configuration.server_fqdn,
-                                                 user_id)
+./mig/server/notifymigoid.py -a -C -I '%s'""" % \
+            (mig_user, configuration.server_fqdn, user_id)
 
-    # TODO: integrate peers detection from comment and add -p arg here
     cmd_helpers['command_user_create'] = """As '%s' on %s:
-./mig/server/createuser.py -u '%s'""" % (mig_user, configuration.server_fqdn,
-                                         req_path)
+./mig/server/createuser.py -p AUTO -u '%s'""" % \
+        (mig_user, configuration.server_fqdn, req_path)
     cmd_helpers['command_user_suspend'] = """As '%s' on %s:
-./mig/server/editmeta.py '%s' status suspended""" % (mig_user,
-                                                     configuration.server_fqdn,
-                                                     user_id)
+./mig/server/editmeta.py '%s' status suspended""" % \
+        (mig_user, configuration.server_fqdn, user_id)
     cmd_helpers['command_user_delete'] = """As '%s' on %s:
-./mig/server/deleteuser.py -i '%s'""" % (mig_user, configuration.server_fqdn,
-                                         user_id)
+./mig/server/deleteuser.py -i '%s'""" % \
+        (mig_user, configuration.server_fqdn, user_id)
     return cmd_helpers
 
 
