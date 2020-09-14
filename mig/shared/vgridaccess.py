@@ -30,9 +30,9 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import copy
+import fcntl
 import os
 import time
-import fcntl
 
 from mig.shared.base import sandbox_resource, client_id_dir
 from mig.shared.conf import get_all_exe_vgrids, get_all_store_vgrids, \
@@ -1246,34 +1246,34 @@ if "__main__" == __name__:
     user_access_confs = user_allowed_res_confs(conf, user_id)
     user_access_exes = user_allowed_res_exes(conf, user_id)
     user_access_stores = user_allowed_res_stores(conf, user_id)
-    print("%s can access resources: %s" % \
+    print("%s can access resources: %s" %
           (user_id, ', '.join(user_access_confs.keys())))
     #(user_id, ', '.join([i for (i, j) in user_access_confs.items() if j]))
-    print("%s can access exes: %s" % \
+    print("%s can access exes: %s" %
           (user_id, ', '.join(user_access_exes.keys())))
     #(user_id, ', '.join([i for (i, j) in user_access_exes.items() if j]))
-    print("%s can access stores: %s" % \
+    print("%s can access stores: %s" %
           (user_id, ', '.join(user_access_stores.keys())))
     #(user_id, ', '.join([i for (i, j) in user_access_stores.items() if j]))
     user_owned_confs = user_owned_res_confs(conf, user_id)
     #user_owned_exes = user_owned_res_exes(conf, user_id)
     #user_owned_stores = user_owned_res_stores(conf, user_id)
-    print("%s owns: %s" % \
+    print("%s owns: %s" %
           (user_id, ', '.join(user_owned_confs.keys())))
     user_visible_confs = user_visible_res_confs(conf, user_id)
     user_visible_exes = user_visible_res_exes(conf, user_id)
     user_visible_stores = user_visible_res_stores(conf, user_id)
-    print("%s can view resources: %s" % \
+    print("%s can view resources: %s" %
           (user_id, ', '.join([i for i in user_visible_confs.keys()])))
     # print "full access exe dicts for %s:\n%s\n%s\n%s" % \
     #      (user_id, user_access_exes, user_owned_exes, user_visible_exes)
     # print "full access conf dicts for %s:\n%s\n%s\n%s" % \
     #      (user_id, user_access_confs, user_owned_confs, user_visible_confs)
     user_visible_users = user_visible_user_confs(conf, user_id)
-    print("%s can view people: %s" % \
+    print("%s can view people: %s" %
           (user_id, ', '.join([i for i in user_visible_users.keys()])))
     re_resources = resources_using_re(conf, runtime_env)
-    print("%s in use on resources: %s" % \
+    print("%s in use on resources: %s" %
           (runtime_env, ', '.join([i for i in re_resources])))
     direct_map = get_vgrid_map(conf, recursive=False)
     print("direct vgrid map vgrids: %s" % direct_map[VGRIDS])

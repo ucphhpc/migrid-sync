@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # find - find backend
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,12 +28,13 @@
 """Emulate the un*x function with the same name"""
 from __future__ import absolute_import
 
-import os
-import glob
 import fnmatch
+import glob
+import os
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir
+from mig.shared.fileio import walk
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.init import initialize_main_variables
 from mig.shared.parseflags import verbose
@@ -62,7 +63,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -74,20 +75,19 @@ def main(client_id, user_arguments_dict):
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     if verbose(flags):
         for flag in flags:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : '%s using flag: %s' % (op_name,
-                                  flag)})
+            output_objects.append({'object_type': 'text', 'text':
+                                   '%s using flag: %s' % (op_name, flag)})
 
     dir_listings = []
     output_objects.append({
         'object_type': 'dir_listings',
         'dir_listings': dir_listings,
         'flags': flags,
-        })
+    })
 
     for pattern in patterns:
 
@@ -116,7 +116,7 @@ def main(client_id, user_arguments_dict):
 
         if not match:
             output_objects.append({'object_type': 'file_not_found',
-                                  'name': pattern})
+                                   'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
 
         for abs_path in match:
@@ -128,16 +128,16 @@ def main(client_id, user_arguments_dict):
                 'relative_path': relative_path,
                 'entries': entries,
                 'flags': flags,
-                }
+            }
             dir_listings.append(dir_listing)
             try:
-                for (root, dirs, files) in os.walk(abs_path):
+                for (root, dirs, files) in walk(abs_path):
                     for filename in fnmatch.filter(files, name_pattern):
                         # IMPORTANT: this join always yields abs expanded path
                         abs_path = os.path.join(root, filename)
                         relative_path = abs_path.replace(base_dir, '')
                         if not valid_user_path(configuration, abs_path, base_dir,
-                                True):
+                                               True):
                             continue
                         file_obj = {
                             'object_type': 'direntry',
@@ -146,23 +146,21 @@ def main(client_id, user_arguments_dict):
                             'file_with_dir': relative_path,
                             'flags': flags,
                             'special': '',
-                            }
+                        }
                         entries.append(file_obj)
             except Exception as exc:
                 output_objects.append({'object_type': 'error_text',
-                        'text': "%s: '%s': %s" % (op_name,
-                        relative_path, exc)})
+                                       'text': "%s: '%s': %s" % (op_name,
+                                                                 relative_path, exc)})
                 logger.error("%s: failed on '%s': %s" % (op_name,
-                             relative_path, exc))
+                                                         relative_path, exc))
                 status = returnvalues.SYSTEM_ERROR
                 continue
             if verbose(flags):
                 output_objects.append({'object_type': 'file_output',
-                        'path': relative_path, 'lines': output_lines})
+                                       'path': relative_path, 'lines': output_lines})
             else:
                 output_objects.append({'object_type': 'file_output',
-                        'lines': output_lines})
+                                       'lines': output_lines})
 
     return (output_objects, status)
-
-

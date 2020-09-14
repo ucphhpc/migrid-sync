@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # du - Show disk use for one or more files
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,18 +30,10 @@ from __future__ import absolute_import
 
 import os
 import glob
-# NOTE: Use faster scandir if available
-try:
-    from distutils.version import StrictVersion
-    from scandir import walk, __version__ as scandir_version
-    if StrictVersion(scandir_version) < StrictVersion("1.3"):
-        # Important os.walk compatibility utf8 fixes were not added until 1.3
-        raise ImportError("scandir version is too old: fall back to os.walk")
-except ImportError:
-    from os import walk
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir, invisible_path
+from mig.shared.fileio import walk
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.init import initialize_main_variables
 from mig.shared.parseflags import verbose, summarize

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # archives - zip/tar packing and unpacking helpers
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,11 +29,11 @@
 from __future__ import absolute_import
 
 import os
-import zipfile
 import tarfile
+import zipfile
 
 from mig.shared.base import client_id_dir, invisible_path, force_utf8
-from mig.shared.fileio import write_file
+from mig.shared.fileio import write_file, walk
 from mig.shared.job import new_job
 from mig.shared.safeinput import valid_user_path_name
 
@@ -45,7 +45,7 @@ def handle_package_upload(
     configuration,
     submit_mrslfiles,
     dst,
-    ):
+):
     """A file package was uploaded (eg. .zip file). Extract the content and
     submit mrsl files if submit_mrsl_files is True.
     """
@@ -53,7 +53,7 @@ def handle_package_upload(
     msg = ''
     status = True
 
-    logger.info("handle_package_upload %s %s %s" % \
+    logger.info("handle_package_upload %s %s %s" %
                 (real_src, relative_src, dst))
 
     client_dir = client_id_dir(client_id)
@@ -62,7 +62,7 @@ def handle_package_upload(
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     # Unpack in same directory unless real_dst is given
 
@@ -88,8 +88,8 @@ def handle_package_upload(
             msg += 'Could not open zipfile: %s! ' % exc
             return (False, msg)
 
-        logger.info("unpack entries of %s to %s" % \
-                                  (real_src, real_dst))
+        logger.info("unpack entries of %s to %s" %
+                    (real_src, real_dst))
         for zip_entry in zip_object.infolist():
             entry_filename = force_utf8(zip_entry.filename)
             msg += 'Extracting: %s . ' % entry_filename
@@ -123,19 +123,19 @@ def handle_package_upload(
                     continue
 
             if os.path.isdir(local_zip_entry_name):
-                logger.debug("nothing more to do for dir entry: %s" % \
-                            local_zip_entry_name)
+                logger.debug("nothing more to do for dir entry: %s" %
+                             local_zip_entry_name)
                 continue
 
             try:
                 zip_data = zip_object.read(zip_entry.filename)
             except Exception as exc:
-                logger.error("read data in %s failed: %s" % \
+                logger.error("read data in %s failed: %s" %
                              (zip_entry.filename, exc))
                 msg += 'Error reading %s :: %s! ' % (zip_entry.filename, exc)
                 status = False
                 continue
-            
+
             # TODO: can we detect and ignore symlinks?
             # Zip format is horribly designed/documented:
             # http://www.pkware.com/documents/casestudies/APPNOTE.TXT
@@ -149,7 +149,7 @@ def handle_package_upload(
             # NB: Needs to use undecoded filename here
 
             if not write_file(zip_data, local_zip_entry_name, logger) and \
-                   not os.path.exists(local_zip_entry_name):
+                    not os.path.exists(local_zip_entry_name):
                 msg += 'Error unpacking %s to disk! ' % entry_filename
                 status = False
                 continue
@@ -162,7 +162,7 @@ def handle_package_upload(
                 logger.warning("unpack may have failed: %s" % exc)
                 msg += \
                     'File %s unpacked, but could not get file size %s! '\
-                     % (entry_filename, exc)
+                    % (entry_filename, exc)
                 status = False
                 continue
 
@@ -174,15 +174,15 @@ def handle_package_upload(
 
                 mrslfiles_to_parse.append(local_zip_entry_name)
     elif real_src_lower.endswith('.tar') or \
-             real_src_lower.endswith('.tar.gz') or \
-             real_src_lower.endswith('.tgz') or \
-             real_src_lower.endswith('.tar.bz2')  or \
-             real_src_lower.endswith('.tbz'):
+            real_src_lower.endswith('.tar.gz') or \
+            real_src_lower.endswith('.tgz') or \
+            real_src_lower.endswith('.tar.bz2') or \
+            real_src_lower.endswith('.tbz'):
 
         # Handle possibly compressed .tar files
 
         if real_src_lower.endswith('.tar.gz') or \
-               real_src_lower.endswith('.tgz'):
+                real_src_lower.endswith('.tgz'):
             msg += "Received '%s' for unpacking. " % relative_src
             try:
                 tar_object = tarfile.open(real_src, 'r:gz')
@@ -192,7 +192,7 @@ def handle_package_upload(
                 msg += 'Could not open .tar.gz file: %s! ' % exc
                 return (False, msg)
         elif real_src_lower.endswith('.tar.bz2') or \
-                 real_src_lower.endswith('.tbz'):
+                real_src_lower.endswith('.tbz'):
             msg += "Received '%s' for unpacking. " % relative_src
             try:
                 tar_object = tarfile.open(real_src, 'r:bz2')
@@ -210,8 +210,8 @@ def handle_package_upload(
                 msg += 'Could not open .tar file: %s! ' % exc
                 return (False, msg)
 
-        logger.info("unpack entries of %s to %s" % \
-                                  (real_src, real_dst))
+        logger.info("unpack entries of %s to %s" %
+                    (real_src, real_dst))
         for tar_entry in tar_object:
             entry_filename = force_utf8(tar_entry.name)
             msg += 'Extracting: %s . ' % entry_filename
@@ -233,8 +233,8 @@ def handle_package_upload(
             # Found empty dir - make sure  dirname doesn't strip to parent
 
             if tar_entry.isdir():
-                logger.debug("empty dir %s - include in parent creation" % \
-                            local_tar_entry_name)
+                logger.debug("empty dir %s - include in parent creation" %
+                             local_tar_entry_name)
                 local_tar_entry_name += os.sep
 
             # create sub dir(s) if missing
@@ -300,13 +300,13 @@ def handle_package_upload(
     else:
         logger.error("Unpack called on unsupported archive: %s" % real_src)
         msg += "Unknown/unsupported archive format: %s" % relative_src
-        return (False, msg)        
+        return (False, msg)
 
     if not status:
         msg = """Unpacked archive with one or more errors: 
 %s""" % msg
         return (status, msg)
-    
+
     # submit mrsl files to the parser. It should be done from within this
     # function to keep the right order if multiple files are created in the
     # html form.
@@ -319,10 +319,10 @@ def handle_package_upload(
 
         base_dir = \
             os.path.abspath(os.path.join(configuration.user_home,
-                            client_dir)) + os.sep
+                                         client_dir)) + os.sep
         for mrslfile in mrslfiles_to_parse:
             (job_status, parse_msg, job_id) = new_job(mrslfile, client_id,
-                    configuration, False, True)
+                                                      configuration, False, True)
             relative_filename = os.sep + mrslfile.replace(base_dir, '')
             submitstatus = {'object_type': 'submitstatus',
                             'name': relative_filename}
@@ -351,7 +351,7 @@ def unpack_archive(
     client_id,
     src,
     dst,
-    ):
+):
     """Inside the user home of client_id: unpack the src zip or tar
     archive into the dst dir. Both src and dst are expected to be relative
     paths.
@@ -364,7 +364,7 @@ def unpack_archive(
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
     real_src = os.path.join(base_dir, src.lstrip(os.sep))
     return handle_package_upload(real_src, src, client_id,
                                  configuration, False, dst)
@@ -375,7 +375,7 @@ def pack_archive(
     client_id,
     src,
     dst,
-    ):
+):
     """Inside the user home of client_id: pack the src_path into a zip or tar
     archive in dst. Both src and dst are expected to be relative
     paths.
@@ -391,7 +391,7 @@ def pack_archive(
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
     real_src = os.path.join(base_dir, src.lstrip(os.sep))
     real_dst = os.path.join(base_dir, dst.lstrip(os.sep))
 
@@ -431,7 +431,7 @@ def pack_archive(
             return (False, msg)
 
         if os.path.isdir(real_src):
-            walker = os.walk(real_src)
+            walker = walk(real_src)
         else:
             (root, filename) = os.path.split(real_src)
             walker = ((root + os.sep, [], [filename]), )
@@ -442,8 +442,8 @@ def pack_archive(
                 relative_target = os.path.join(relative_root,
                                                entry)
                 if invisible_path(real_target):
-                    logger.warning('skipping hidden file: %s' \
-                                                 % real_target)
+                    logger.warning('skipping hidden file: %s'
+                                   % real_target)
                     continue
                 elif real_dst == real_target:
                     msg += 'Skipping destination file %s . ' % dst
@@ -452,19 +452,19 @@ def pack_archive(
                 try:
                     pack_file.write(real_target, relative_target)
                 except Exception as exc:
-                    logger.error('write of %s failed: %s' % \
+                    logger.error('write of %s failed: %s' %
                                  (real_target, exc))
                     msg += 'Failed to write file %s . ' % relative_target
                     status = False
                     continue
-                    
+
             if not files and not invisible_path(relative_root):
                 logger.debug("pack dir %s" % relative_root)
                 try:
                     dir_info = zipfile.ZipInfo(relative_root + os.sep)
                     pack_file.writestr(dir_info, '')
                 except Exception as exc:
-                    logger.error('write of %s failed: %s' % \
+                    logger.error('write of %s failed: %s' %
                                  (real_target, exc))
                     msg += 'Failed to write dir %s . ' % relative_root
                     status = False
@@ -482,22 +482,22 @@ def pack_archive(
             msg += "Could not open and verify zip file: %s! " % exc
             status = False
     elif real_dst_lower.endswith('.tar') or \
-             real_dst_lower.endswith('.tar.gz') or \
-             real_dst_lower.endswith('.tgz') or \
-             real_dst_lower.endswith('.tar.bz2') or \
-             real_dst_lower.endswith('.tbz'):
+            real_dst_lower.endswith('.tar.gz') or \
+            real_dst_lower.endswith('.tgz') or \
+            real_dst_lower.endswith('.tar.bz2') or \
+            real_dst_lower.endswith('.tbz'):
 
         # Handle possibly compressed .tar files
         if real_dst_lower.endswith('.tar.gz') or \
-               real_dst_lower.endswith('.tgz'):
+                real_dst_lower.endswith('.tgz'):
             open_mode += ':gz'
         elif real_dst_lower.endswith('.tar.bz2') or \
-               real_dst_lower.endswith('.tbz'):
+                real_dst_lower.endswith('.tbz'):
             open_mode += ':bz2'
         else:
             # uncompressed tar
             pass
-            
+
         try:
             pack_file = tarfile.open(real_dst, open_mode)
         except Exception as exc:
@@ -505,11 +505,11 @@ def pack_archive(
             msg += 'Could not open .tar file: %s! ' % exc
             return (False, msg)
 
-        logger.info("pack entries of %s to %s" % \
-                                  (real_src, real_dst))
+        logger.info("pack entries of %s to %s" %
+                    (real_src, real_dst))
 
         if os.path.isdir(real_src):
-            walker = os.walk(real_src)
+            walker = walk(real_src)
         else:
             (root, filename) = os.path.split(real_src)
             walker = ((root + os.sep, [], [filename]), )
@@ -519,33 +519,34 @@ def pack_archive(
                 real_target = os.path.join(root, entry)
                 relative_target = os.path.join(relative_root, entry)
                 if invisible_path(real_target):
-                    logger.warning('skipping hidden file: %s' \
-                                                 % real_target)
+                    logger.warning('skipping hidden file: %s'
+                                   % real_target)
                     continue
                 elif real_dst == real_target:
                     msg += 'Skipping destination file %s . ' % dst
                     continue
                 logger.debug("pack file %s" % entry)
                 try:
-                    pack_file.add(real_target, relative_target, recursive=False)
+                    pack_file.add(real_target, relative_target,
+                                  recursive=False)
                 except Exception as exc:
-                    logger.error('write of %s failed: %s' % \
+                    logger.error('write of %s failed: %s' %
                                  (real_target, exc))
                     msg += 'Failed to write file %s . ' % relative_target
                     status = False
                     continue
-                    
+
             if not files and not invisible_path(relative_root):
                 logger.debug("pack dir %s" % relative_root)
                 try:
                     pack_file.add(root, relative_root, recursive=False)
                 except Exception as exc:
-                    logger.error('write of %s failed: %s' % \
+                    logger.error('write of %s failed: %s' %
                                  (real_target, exc))
                     msg += 'Failed to write dir %s . ' % relative_root
                     status = False
                     continue
-                    
+
         pack_file.close()
     else:
         logger.error("Pack called with unsupported archive format: %s" % dst)

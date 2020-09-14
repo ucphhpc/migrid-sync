@@ -39,7 +39,8 @@ from mig.shared.defaults import default_vgrid, keyword_owners, keyword_members, 
     keyword_all, keyword_auto, keyword_never, keyword_any, keyword_none, \
     csrf_field, default_vgrid_settings_limit, vgrid_nest_sep, _dot_vgrid
 from .fileio import make_symlink, move, check_readonly, check_writable, \
-    check_write_access, unpickle, acquire_file_lock, release_file_lock
+    check_write_access, unpickle, acquire_file_lock, release_file_lock, walk, \
+    slow_walk
 from mig.shared.findtype import is_user, is_resource
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.html import html_post_helper
@@ -650,10 +651,13 @@ def vgrid_list_vgrids(configuration, include_default=True, root_vgrid=''):
     below that vgrid.
     """
 
+    _logger = configuration.logger
     vgrids_list = []
     search_root = os.path.join(configuration.vgrid_home,
                                root_vgrid.strip(os.sep))
-    for (root, dirs, _) in os.walk(search_root):
+    if slow_walk:
+        _logger.warning("no optimized walk available - using old os.walk")
+    for (root, dirs, _) in walk(search_root):
 
         # skip all dot dirs - they are from repos etc and _not_ vgrids
 
@@ -1053,7 +1057,7 @@ def vgrid_list(vgrid_name, group, configuration, recursive=True,
             if lock_handle:
                 release_file_lock(lock_handle)
                 lock_handle = None
-                
+
         if status:
 
             # entries is a list
@@ -1283,7 +1287,7 @@ def mark_nested_vgrids_modified(configuration, vgrid_name):
     (nest_status, sub_vgrids) = vgrid_list_subvgrids(vgrid_name, configuration)
     for sub in [vgrid_name] + sub_vgrids:
         if not mark_vgrid_modified(configuration, sub):
-            _logger.warning("nested mark vgrid %s modified failed for %s" % \
+            _logger.warning("nested mark vgrid %s modified failed for %s" %
                             (vgrid_name, sub))
             nest_status = False
     return nest_status
@@ -1498,7 +1502,8 @@ def vgrid_add_entities(configuration, vgrid_name, kind, id_list,
         mark_nested_vgrids_modified(configuration, vgrid_name)
     except Exception as exc:
         status = False
-        msg = " could not mark %s modified for %s after add: %s" % (kind, vgrid_name, exc)
+        msg = " could not mark %s modified for %s after add: %s" % (
+            kind, vgrid_name, exc)
     return (status, msg)
 
 
@@ -1630,7 +1635,8 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
         mark_nested_vgrids_modified(configuration, vgrid_name)
     except Exception as exc:
         status = False
-        msg = " could not mark %s modified for %s after remove: %s" % (kind, vgrid_name, exc)
+        msg = " could not mark %s modified for %s after remove: %s" % (
+            kind, vgrid_name, exc)
 
     return (status, msg)
 
@@ -1738,7 +1744,8 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
         mark_nested_vgrids_modified(configuration, vgrid_name)
     except Exception as exc:
         status = False
-        msg += " could not mark %s for %s modified: %s" % (kind, vgrid_name, exc)
+        msg += " could not mark %s for %s modified: %s" % (
+            kind, vgrid_name, exc)
     return (status, msg)
 
 

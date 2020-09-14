@@ -52,7 +52,7 @@ except ImportError:
 from mig.shared.base import client_id_dir
 from mig.shared.confparser import get_resource_config_dict, run
 from mig.shared.defaults import exe_leader_name, keyword_auto
-from mig.shared.fileio import pickle, move
+from mig.shared.fileio import pickle, move, walk
 from mig.shared.modified import mark_resource_modified, mark_vgrid_modified
 from mig.shared.resconfkeywords import get_resource_specs, get_exenode_specs, \
     get_storenode_specs, get_resource_keywords, get_exenode_keywords, \
@@ -1013,7 +1013,7 @@ def remove_resource(configuration, client_id, resource_name, resource_identifier
     resource_path = os.path.join(
         configuration.resource_home, unique_resource_name)
 
-    for (root, dirs, files) in os.walk(resource_path):
+    for (root, dirs, files) in walk(resource_path):
         for filename in files:
             try:
                 os.remove(os.path.join(root, filename))

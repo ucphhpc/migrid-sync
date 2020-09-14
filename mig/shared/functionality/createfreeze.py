@@ -35,7 +35,7 @@ from mig.shared import returnvalues
 from mig.shared.base import client_id_dir
 from mig.shared.defaults import max_freeze_files, csrf_field, freeze_flavors, \
     keyword_auto, keyword_pending, keyword_final
-from mig.shared.fileio import strip_dir
+from mig.shared.fileio import strip_dir, walk
 from mig.shared.freezefunctions import create_frozen_archive, published_url, \
     is_frozen_archive
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
@@ -116,7 +116,7 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
 
             # expand any dirs recursively
             if os.path.isdir(abs_path):
-                for (root, dirnames, filenames) in os.walk(abs_path):
+                for (root, dirnames, filenames) in walk(abs_path):
                     for subname in filenames:
                         abs_sub = os.path.join(root, subname)
                         sub_base = root.replace(abs_path, source_path)

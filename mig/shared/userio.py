@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userio - wrappers to keep user file I/O in a single replaceable module
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,18 +26,10 @@
 #
 
 """All I/O operations on behalf of users - needed for e.g. trash/undelete"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
-# NOTE: Use faster scandir if available
-try:
-    from distutils.version import StrictVersion
-    from scandir import walk, __version__ as scandir_version
-    if StrictVersion(scandir_version) < StrictVersion("1.3"):
-        # Important os.walk compatibility utf8 fixes were not added until 1.3
-        raise ImportError("scandir version is too old: fall back to os.walk")
-except ImportError:
-    from os import walk
 import os
 import shutil
 import sys
@@ -45,6 +37,7 @@ import time
 
 from mig.shared.base import invisible_path
 from mig.shared.defaults import trash_destdir, trash_linkname
+from mig.shared.fileio import walk, slow_walk
 from mig.shared.gdp.all import get_project_from_client_id, project_log
 from mig.shared.vgrid import in_vgrid_legacy_share, in_vgrid_writable, \
     in_vgrid_priv_web, in_vgrid_pub_web
@@ -182,6 +175,8 @@ def prepare_changes(configuration, operation, changeset, action, path,
     # Use walk for recursive dir path - silently ignored for file path
     if not recursive or not os.path.isdir(path):
         return pending_path
+    if slow_walk:
+        _logger.warning("no optimized walk available - using old os.walk")
     _logger.info('%s walking: %s' % (operation, [path]))
     for (root, dirs, files) in walk(path, topdown=False, followlinks=True):
         for (kind, target) in [('files', files), ('dirs', dirs)]:

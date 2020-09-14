@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # usercache - User state caching
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,11 +29,12 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
-import os
 import fcntl
+import os
 import time
 
 from mig.shared.base import client_id_dir
+from mig.shared.fileio import walk
 from mig.shared.resource import list_resources
 from mig.shared.serial import load, dump
 
@@ -181,7 +182,7 @@ def refresh_disk_stats(configuration, client_id):
     cur_roots = []
     vgrid_dirs = []
     total = OWN
-    for (root, dirs, files) in os.walk(user_base):
+    for (root, dirs, files) in walk(user_base):
         rel_root = root.replace(user_base, '').lstrip(os.sep)
         cur_roots.append(rel_root)
         for dir_name in dirs:
@@ -203,7 +204,7 @@ def refresh_disk_stats(configuration, client_id):
     # Now walk vgrid dir symlinks explicitly
     total = VGRID
     for vgrid_base in vgrid_dirs:
-        for (root, dirs, files) in os.walk(vgrid_base):
+        for (root, dirs, files) in walk(vgrid_base):
             # Still use path relative to user base!
             rel_root = root.replace(user_base, '').lstrip(os.sep)
             cur_roots.append(rel_root)
@@ -327,10 +328,15 @@ def refresh_job_stats(configuration, client_id):
 
 if "__main__" == __name__:
     import sys
+    if not sys.argv[1:]:
+        print("USAGE: usercache.py CLIENT_ID")
+        print("       Runs basic unit tests for CLIENT_ID")
+        sys.exit(1)
+    client_id = sys.argv[1]
     from mig.shared.conf import get_configuration_object
     conf = get_configuration_object()
-    raw_stats = refresh_disk_stats(conf, sys.argv[1])
+    raw_stats = refresh_disk_stats(conf, client_id)
     print("user totals: %s" % raw_stats[OWN])
     print("vgrid totals: %s" % raw_stats[VGRID])
-    raw_stats = refresh_job_stats(conf, sys.argv[1])
+    raw_stats = refresh_job_stats(conf, client_id)
     print("total jobs: %s" % raw_stats[JOBS])

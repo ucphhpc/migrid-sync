@@ -58,21 +58,22 @@ except ImportError:
     print('ERROR: the python watchdog module is required for this daemon')
     sys.exit(1)
 
-# Use the scandir module version if available:
-# https://github.com/benhoyt/scandir
-# Otherwise fail
+# Use the native os.scandir function on python 3+ or rely on similar function
+# from the stand-alone module of the same name when on python 2.
+if sys.version_info[0] >= 3:
+    from os import scandir
+else:
+    try:
+        from distutils.version import StrictVersion
+        from scandir import scandir, __version__ as scandir_version
+        if StrictVersion(scandir_version) < StrictVersion("1.3"):
 
-try:
-    from distutils.version import StrictVersion
-    from scandir import scandir, walk, __version__ as scandir_version
-    if StrictVersion(scandir_version) < StrictVersion("1.3"):
+            # Important os.walk compatibility utf8 fixes were not added until 1.3
 
-        # Important os.walk compatibility utf8 fixes were not added until 1.3
-
-        raise ImportError('scandir version is too old >= 1.3 required')
-except ImportError as exc:
-    print('ERROR: %s' % str(exc))
-    sys.exit(1)
+            raise ImportError('scandir version is too old >= 1.3 required')
+    except ImportError as exc:
+        print('ERROR: this daemon requires the scandir module on python 2')
+        sys.exit(1)
 
 from mig.shared.base import force_utf8
 from mig.shared.cmdapi import parse_command_args
@@ -80,7 +81,7 @@ from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import valid_trigger_changes, workflows_log_name, \
     workflows_log_size, workflows_log_cnt, csrf_field, default_vgrid
 from mig.shared.events import get_path_expand_map
-from mig.shared.fileio import makedirs_rec, pickle, unpickle
+from mig.shared.fileio import makedirs_rec, pickle, unpickle, walk
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.job import fill_mrsl_template, new_job
 from mig.shared.listhandling import frange
@@ -1400,7 +1401,8 @@ def add_vgrid_file_monitor_watch(configuration, path):
     pid = multiprocessing.current_process().pid
 
     vgrid_files_path = os.path.join(configuration.vgrid_files_home, path)
-    vgrid_files_writable = os.path.join(configuration.vgrid_files_writable, path)
+    vgrid_files_writable = os.path.join(
+        configuration.vgrid_files_writable, path)
 
     if path not in shared_state['file_inotify']._wd_for_path:
         shared_state['file_inotify'].add_watch(force_utf8(vgrid_files_path))
@@ -1409,7 +1411,8 @@ def add_vgrid_file_monitor_watch(configuration, path):
         #             vgrid_files_path, path))
 
         if os.path.sep not in path:
-            shared_state['file_inotify'].add_watch(force_utf8(vgrid_files_writable))
+            shared_state['file_inotify'].add_watch(
+                force_utf8(vgrid_files_writable))
 
             # logger.debug('(%s) Adding watch for: %s' % (pid,
             #             vgrid_files_writable))
@@ -1672,7 +1675,8 @@ def monitor(configuration, vgrid_name):
     shared_state['base_dir'] = os.path.join(configuration.vgrid_files_home)
     shared_state['base_dir_len'] = len(shared_state['base_dir'])
 
-    shared_state['writable_dir'] = os.path.join(configuration.vgrid_files_writable)
+    shared_state['writable_dir'] = os.path.join(
+        configuration.vgrid_files_writable)
     shared_state['writable_dir_len'] = len(shared_state['writable_dir'])
 
     # Allow e.g. logrotate to force log re-open after rotates

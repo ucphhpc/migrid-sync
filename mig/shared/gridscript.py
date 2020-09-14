@@ -35,7 +35,7 @@ import time
 from mig.shared.base import client_id_dir
 from mig.shared.defaults import job_output_dir
 from mig.shared.fileio import send_message_to_grid_script, pickle, unpickle, \
-    delete_file, touch
+    delete_file, touch, walk, slow_walk
 from mig.shared.notification import notify_user_thread
 try:
     from mig.shared import arcwrapper
@@ -111,9 +111,12 @@ def check_mrsl_files(
 
     check_mrsl_files_start_time = time.time()
 
+    if slow_walk:
+        logger.warning("no optimized walk available - using old os.walk")
+
     # TODO: switch to listdir or glob? all files are in mrsl_files_dir/*/*.mRSL
 
-    for (root, _, files) in os.walk(configuration.mrsl_files_dir):
+    for (root, _, files) in walk(configuration.mrsl_files_dir):
 
         # skip all dot dirs - they are from repos etc and _not_ jobs
 
@@ -241,8 +244,8 @@ def remove_jobrequest_pending_files(configuration, only_new=True):
                 try:
                     os.remove(filename)
                 except Exception as err:
-                    print('could not remove jobrequest_pending file %s %s'\
-                        % (filename, err))
+                    print('could not remove jobrequest_pending file %s %s'
+                          % (filename, err))
 
     check_pending_files_end_time = time.time()
     logger.info('finished cleaning pending jobrequests in %fs' %
@@ -429,15 +432,15 @@ def requeue_job(
         # Clean up the server for files assosiated with the executing job
 
         if 'SESSIONID' not in job_dict\
-            or 'IOSESSIONID' not in job_dict\
-            or not server_cleanup(
-            job_dict['SESSIONID'],
-            job_dict['IOSESSIONID'],
-            job_dict['LOCALJOBNAME'],
-            job_dict['JOB_ID'],
-            configuration,
-            logger,
-        ):
+                or 'IOSESSIONID' not in job_dict\
+                or not server_cleanup(
+                    job_dict['SESSIONID'],
+                    job_dict['IOSESSIONID'],
+                    job_dict['LOCALJOBNAME'],
+                    job_dict['JOB_ID'],
+                    configuration,
+                    logger,
+                ):
             logger.error('could not clean up MiG server')
             print('CLEAN UP FAILED')
 

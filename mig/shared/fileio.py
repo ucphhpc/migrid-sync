@@ -26,6 +26,7 @@
 #
 
 """IO operations"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -34,9 +35,29 @@ import errno
 import fcntl
 import os
 import shutil
+import sys
 import tempfile
 import time
 import zipfile
+
+# NOTE: We expose optimized walk function directly for ease and efficiency.
+#       Requires stand-alone scandir module on python 2 whereas the native os
+#       functions are built-in and optimized similarly on python 3+
+slow_walk = False
+if sys.version_info[0] < 3:
+    from os import walk
+else:
+    try:
+        from distutils.version import StrictVersion
+        from scandir import walk, __version__ as scandir_version
+        if StrictVersion(scandir_version) < StrictVersion("1.3"):
+            # Important os.walk compatibility utf8 fixes were not added until 1.3
+            raise ImportError(
+                "scandir version is too old: fall back to os.walk")
+    except ImportError as err:
+        #print("DEBUG: not using scandir: %s" % err)
+        slow_walk = True
+        walk = os.walk
 
 from mig.shared.base import force_utf8_rec
 from mig.shared.defaults import default_chunk_size, default_max_chunks
@@ -378,7 +399,9 @@ def remove_rec(dir_path, configuration):
 
     Returns Boolean to indicate success, writes messages to log.
     """
-
+    _logger = configuration.logger
+    if slow_walk:
+        _logger.warning("no optimized walk available - using old os.walk")
     try:
         if not os.path.isdir(dir_path):
             raise Exception("Directory %s does not exist" % dir_path)
@@ -386,7 +409,7 @@ def remove_rec(dir_path, configuration):
         os.chmod(dir_path, 0o777)
 
         # extend permissions top-down
-        for root, dirs, files in os.walk(dir_path, topdown=True):
+        for root, dirs, files in walk(dir_path, topdown=True):
             for name in files:
                 os.chmod(os.path.join(root, name), 0o777)
             for name in dirs:
@@ -394,8 +417,7 @@ def remove_rec(dir_path, configuration):
         shutil.rmtree(dir_path)
 
     except Exception as err:
-        configuration.logger.error("Could not remove_rec %s: %s" %
-                                   (dir_path, err))
+        _logger.error("Could not remove_rec %s: %s" % (dir_path, err))
         return False
 
     return True
@@ -422,14 +444,6 @@ def move(src, dst):
     even in cases rename does not - e.g. for src and dst on different devices.
     """
     return shutil.move(src, dst)
-
-
-def listdirs_rec(dir_path, topdown=True, onerror=None, followlinks=False):
-    """Recursively iterate over all sub directories in dir_path"""
-
-    for (dirpath, _, _) in os.walk(dir_path, topdown=topdown, onerror=onerror, followlinks=followlinks):
-        if dirpath != dir_path:
-            yield dirpath
 
 
 def makedirs_rec(dir_path, configuration, accept_existing=True):

@@ -35,15 +35,6 @@ import json
 import os
 import sys
 import time
-# NOTE: Use faster scandir if available
-try:
-    from distutils.version import StrictVersion
-    from scandir import walk, __version__ as scandir_version
-    if StrictVersion(scandir_version) < StrictVersion("1.3"):
-        # Important os.walk compatibility utf8 fixes were not added until 1.3
-        raise ImportError("scandir version is too old: fall back to os.walk")
-except ImportError:
-    from os import walk
 from urllib import quote
 
 from mig.shared.base import client_id_dir, distinguished_name_to_user, \
@@ -57,7 +48,7 @@ from mig.shared.fileio import md5sum_file, sha1sum_file, sha256sum_file, \
     sha512sum_file, supported_hash_algos, write_file, copy_file, copy_rec, \
     move_file, move_rec, remove_rec, delete_file, delete_symlink, \
     makedirs_rec, make_symlink, make_temp_dir, acquire_file_lock, \
-    release_file_lock
+    release_file_lock, walk
 from mig.shared.html import get_xgi_html_preamble, get_xgi_html_footer, \
     man_base_js, themed_styles, themed_scripts, tablesorter_pager
 from mig.shared.pwhash import make_path_hash
