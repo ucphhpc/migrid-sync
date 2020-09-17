@@ -1,3 +1,14 @@
+<script>
+function show_faq() {
+    /* UI V3 uses toggle_info to show inline FAQ while V2 opens front page */
+    if (typeof toggle_info === 'function') {
+        toggle_info('supportInfo');
+    } else {
+        window.location.href='http://erda.ku.dk';
+    }
+}
+
+</script>
 <p>
 Data Analysis Gateway or DAG provides a set of interactive data
 analysis nodes for intermediate computation, which can be completed in a
@@ -14,5 +25,5 @@ mount directory (i.e. ~/work)<br/> <br/>
 For more information about how you can ease the task of configuring your
 instances and our future roadmap for allowing customization, check out
 the FAQ section  "How do I install and run software XYZ in Jupyter?"
-at <a href="#" onclick="toggle_info('supportInfo')">ERDA FAQ</a>
+at <a href="#" onclick="show_faq()">ERDA FAQ</a>
 </p> 
