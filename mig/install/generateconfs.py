@@ -32,7 +32,20 @@ from __future__ import print_function
 
 import datetime
 import getopt
+import os
 import sys
+
+# Ensure that the generateconfs.py script is able to execute from a fresh checkout
+# when the cwd is not the parent directory where it was checked out.
+# Solve this by ensuring that the MIG_PATH is part of the sys.path
+if "MIG_USER" not in os.environ:
+    os.environ["MIG_USER"] = "mig"
+
+if "MIG_PATH" not in os.environ:
+    os.environ["MIG_PATH"] = os.path.join(os.sep, "home", os.environ["MIG_USER"])
+
+if os.environ["MIG_PATH"] not in sys.path:
+    sys.path.append(os.environ["MIG_PATH"])
 
 from mig.shared.install import generate_confs
 
