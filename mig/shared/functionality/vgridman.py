@@ -533,7 +533,7 @@ below''' % fill_helpers})
             <option value="vgridowner">ownership</option>
         </select>
         <br/>
-        <input class="p60width" type="text" name="request_text" required />
+        <input class="p60width" type="text" name="request_text" />
         <input type="hidden" name="output_format" value="html" />
         <input type="submit" value="Request %(vgrid_label)s access" />
         </form>
