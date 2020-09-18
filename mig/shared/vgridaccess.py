@@ -41,6 +41,7 @@ from mig.shared.defaults import settings_filename, profile_filename, default_vgr
 from mig.shared.fileio import acquire_file_lock, release_file_lock
 from mig.shared.modified import mark_resource_modified, mark_vgrid_modified, \
     check_users_modified, check_resources_modified, check_vgrids_modified, \
+    pending_users_update, pending_resources_update, pending_vgrids_update, \
     reset_users_modified, reset_resources_modified, reset_vgrids_modified
 from mig.shared.resource import list_resources, real_to_anon_res_map
 from mig.shared.serial import load, dump
@@ -171,7 +172,8 @@ def _load_entity_map_before_update(configuration, kind, flush):
     return (entity_map, map_stamp, lock_handle)
 
 
-def _save_entity_map_after_update(configuration, kind, entity_map, map_stamp, lock_handle):
+def _save_entity_map_after_update(configuration, kind, entity_map, map_stamp,
+                                  lock_handle):
     """Helper to save entity map of given kind in the refresh process.
     With optional saving of cache if requested.
     """
@@ -685,16 +687,19 @@ def _get_entity_map(configuration, key, caching=False):
     map_helpers = {
         USERS: {'name': 'user', 'load_map': load_user_map,
                 'check_modified': check_users_modified,
+                'pending_update': pending_users_update,
                 'refresh_map': refresh_user_map,
                 'reset_modified': reset_users_modified
                 },
         RESOURCES: {'name': 'resource', 'load_map': load_resource_map,
                     'check_modified': check_resources_modified,
+                    'pending_update': pending_resources_update,
                     'refresh_map': refresh_resource_map,
                     'reset_modified': reset_resources_modified
                     },
         VGRIDS: {'name': 'vgrid', 'load_map': load_vgrid_map,
                  'check_modified': check_vgrids_modified,
+                 'pending_update': pending_vgrids_update,
                  'refresh_map': refresh_vgrid_map,
                  'reset_modified': reset_vgrids_modified
                  }
@@ -704,36 +709,51 @@ def _get_entity_map(configuration, key, caching=False):
         raise ValueError("invalid entity last_X key: %s" % key)
     helpers = map_helpers[key]
     name = helpers['name']
+    start_time = time.time()
+    # NOTE: this is a cheap non-locking check for pending updates
+    pending_update = helpers['pending_update'](configuration)
 
-    if last_load[key] + MAP_CACHE_SECONDS > time.time():
+    if last_load[key] + MAP_CACHE_SECONDS > start_time:
         _logger.debug("reusing recent %s map" % name)
         entity_map = last_map[key]
-    elif caching:
-        _logger.debug("force cached %s map" % name)
+    # NOTE: always check pending updates here to limit concurrent vgridman load
+    elif caching or not pending_update:
+        _logger.debug("force cached %s map (pending %s)" %
+                      (name, pending_update))
         entity_map, map_stamp = helpers['load_map'](
             configuration, caching=caching)
     else:
+        # NOTE: we potentially race on update/load here with concurrent clients
+        #       so first load map without caching to lock and wait for ongoing
+        #       updates, and only then check/act on additional modifications to
+        #       avoid excess refresh calls.
+        _logger.debug("not using cached %s map - check for update" % name)
+        load_stamp = time.time()
+        entity_map, map_stamp = helpers['load_map'](configuration,
+                                                    caching=False)
         # NOTE: Check modified requires main map locking so avoid when caching
-        modified_list, _ = helpers['check_modified'](configuration)
-        if modified_list:
+        modified_list, modified_stamp = helpers['check_modified'](
+            configuration)
+        if not modified_list:
+            _logger.debug("no changes - not refreshing %s map" % name)
+        elif modified_stamp > start_time:
+            # Recently modified but already got the original pending update
+            _logger.debug("already recent - not refreshing %s map" % name)
+        else:
             _logger.info(
                 "refreshing %s map (%s)" % (name, modified_list))
             map_stamp = load_stamp = time.time()
-            # TODO: this refresh and reset creates a race in user map update!
+            # NOTE: refresh and reset can create a race in user map update.
             # Any user creation happening during a refresh user map call will
             # create the user and then effectively block waiting for the same
             # user lock in order to mark the user modified before returning.
             # When refresh returns and yields the lock the mark modified and
             # reset calls will therefore race to edit the modified marker file.
+            # WORKAROUND: ignore reset if modified marked after load_stamp
             # NOTE: reimplementing modified with filemarks should resolve it
             entity_map = helpers['refresh_map'](configuration)
-            # WORKAROUND: ignore reset if modified marked after load_stamp
+            _logger.debug("reset modified %s before %f" % (name, load_stamp))
             helpers['reset_modified'](configuration, load_stamp)
-        else:
-            _logger.debug("No changes - not refreshing %s map" % name)
-            load_stamp = time.time()
-            entity_map, map_stamp = helpers['load_map'](
-                configuration, caching=caching)
         last_map[key] = entity_map
         last_refresh[key] = map_stamp
         last_load[key] = load_stamp
