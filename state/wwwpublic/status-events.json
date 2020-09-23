@@ -21,6 +21,27 @@
     "announce_end": "2020-09-28T09:00:00+02:00"
   },
   {
+    "status": "AUTO",
+    "work_start": "2020-09-23T10:00:00+02:00", 
+    "systems": [
+        "MiGrid"
+    ], 
+    "announce_start": "2020-09-23T08:00:00+02:00", 
+    "title": {
+      "EN": "MiGrid Maintenance", 
+      "DK": "Vedligehold på MiGrid"
+    }, 
+    "services": [
+      "ALL"
+    ], 
+    "work_end": "2020-09-23T12:00:00+02:00", 
+    "description": {
+      "EN": "The old MiGrid server is long overdue for retirement and we're finally migrating the migrid.org site to run on a new virtualized environment at the SCIENCE HPC Center. All services were briefly offline during the move. Everything should be back to normal now running from the new location, but please report any issues.", 
+      "DK": "Den gamle MiGrid server trænger alvorligt til at blive pensioneret og vi migrerer lang om længe sitet til i stedet at køre i et virtualiseret miljø på SCIENCE HPC Centeret. Alle services var kortvarigt nede i forbindelse med selve skiftet. De skulle være tilbage i normal drift nu på den nye placering, men meld gerne evt fejl."
+    }, 
+    "announce_end": "2020-09-25T09:00:00+02:00"
+  },
+  {
     "status": "AUTO", 
     "work_start": "2020-09-03T13:29:00+02:00", 
     "systems": [
