@@ -87,6 +87,9 @@ def main(client_id, user_arguments_dict):
 
     logger.info("%s begin for %s" % (op_name, client_id))
 
+    # IMPORTANT: single line here to avoid breaking javascript inlining
+    expire_help = "For security reasons peer accounts should be closed when no longer required. Expire is used to limit account access time for that purpose, and you can always extend it later if needed. For courses and workshops a few weeks or months should usually suffice, while projects and long-term collaboration often extend to months or years. Peer accounts still need to be renewed at least annually, but the peer users can do so themselves without your repeated explicit acceptance, as long as it does not exceed your provided expire date."
+
     # jquery support for tablesorter and confirmation on delete
     # table initially sorted by col. 4 (kind), then 0 (name)
     refresh_call = 'ajax_peers()'
@@ -97,6 +100,12 @@ def main(client_id, user_arguments_dict):
                                                     [table_spec])
 
     add_init += '''
+function show_info(title, msg) {
+    $("#info_dialog").dialog("option", "title", title);
+    $("#info_dialog").html("<p>"+msg+"</p>");
+    $("#info_dialog").dialog("open");
+}
+
 function transfer_id_fields() {
     //console.log("in transfer_id_fields");
     var peer_count = 0;
@@ -137,6 +146,14 @@ function transfer_id_fields() {
         $(".peers-tabs .accordion .ui-accordion-header").css("padding-top", 0).css("padding-bottom", 0).css("margin", 0);
         $(".peers-tabs .init-expanded.accordion ").accordion("option", "active", 0);
         $("#fields-tab .save_peers").on("submit", transfer_id_fields);
+        $("#info_dialog").dialog(
+              { autoOpen: false,
+                width: 500,
+                modal: true,
+                closeOnEscape: true,
+
+                buttons: { "Ok": function() { $(this).dialog("close"); }}
+              });
     '''
     title_entry['script']['advanced'] += add_import
     title_entry['script']['init'] += add_init
@@ -165,6 +182,7 @@ function transfer_id_fields() {
                     'form_method': form_method,
                     'csrf_field': csrf_field, 'csrf_limit': csrf_limit,
                     'target_op': target_op, 'csrf_token': csrf_token,
+                    'expire_help': expire_help,
                     'csv_header': csv_sep.join([i for i in peers_fields])}
     form_prefix_html = '''
 <form class="save_peers save_general" method="%(form_method)s"
@@ -191,8 +209,6 @@ action="%(target_op)s.py">
           <label for="peers_kind">Kind</label>
           <select class="form-control themed-select html-select" name="peers_kind">
 '''
-    expire = datetime.datetime.now()
-    expire += datetime.timedelta(days=30)
     for name in peer_kinds:
         shared_peer_html += '''
               <option value="%s">%s
@@ -201,13 +217,16 @@ action="%(target_op)s.py">
           </select>
       </div>
       <div class="col-md-4 mb-3 form-cell">
-          <label for="peers_expire">Expire</label>
+          <label for="peers_expire">Expire&nbsp;
+            <span class="info leftpad iconspace" title="%(expire_help)s"
+                onClick="show_info(\'Expire Help\', \'%(expire_help)s\');"/>
+          </label>
           <input class="form-control themed-select html-select fill-width"
-            type="date" name="peers_expire" value="%s" required
-            pattern="[0-9/-]+" title="Access expiry date" />
+            type="date" name="peers_expire" required pattern="[0-9/-]+"
+            title="Access expiry date" />
       </div>
     </div>
-''' % expire.date()
+'''
     fill_helpers['form_prefix_html'] = form_prefix_html % fill_helpers
     fill_helpers['form_suffix_html'] = form_suffix_html % fill_helpers
     fill_helpers['form_accept_html'] = form_accept_html % fill_helpers
@@ -231,6 +250,7 @@ action="%(target_op)s.py">
         pending_peers = []
 
     tabs_html = '''
+<div id="info_dialog" class="hidden"></div>
 <div id="wrap-tabs" class="peers-tabs">
 <ul>
 <li><a href="#show-tab">Show Peers</a></li>
@@ -428,7 +448,8 @@ If someone requests an external user account on %(site)s and explicitly
 references you as sponsor or contact person the site admins will generally
 forward the request, so that it shows up here for you to confirm. You can then
 accept or reject the individual requests below to let the site admins proceed
-with account creation or rejection.
+with account creation or rejection. Please select an expire date to provide
+limited but sufficiently long account access - it can always be extended later.
 </p>
 '''
 
