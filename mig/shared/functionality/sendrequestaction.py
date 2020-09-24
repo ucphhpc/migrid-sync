@@ -449,8 +449,15 @@ CSRF-filtered POST requests to prevent unintended updates'''
     output_objects.append({'object_type': 'text', 'text':
                            'Sent %s message to %d people' %
                            (request_type, len(target_list))})
+    im_notify_protocols = [i for i in configuration.notify_protocols
+                           if i != 'email']
+    if im_notify_protocols:
+        enabled_notify = 'IM / email'
+    else:
+        enabled_notify = 'email'
     output_objects.append({'object_type': 'text', 'text':
-                           """Please make sure you have notifications
-configured on your Setings page if you expect a reply to this message"""})
+                           """Please make sure you have %s notifications
+configured on your Setings page if you expect a reply to this message""" %
+                           enabled_notify})
 
     return (output_objects, returnvalues.OK)
