@@ -284,17 +284,19 @@ extensions from your peers until the given time of expiry.
         fill_distinguished_name(entry)
         filled_entry.update(entry)
         filled_entry['object_type'] = 'peer'
-        # TODO: create edit dialog to change expire?
-        # filled_entry['editpeerlink'] = {
-        #    'object_type': 'link',
-        #    'destination':
-        #    "javascript: confirmDialog(%s, '%s', %s, %s);" %
-        #    ('peer_action', 'Update %(distinguished_name)s?' % filled_entry,
-        #     'undefined',
-        #     "{action: 'update', peers_label: '%(label)s', peers_kind: '%(kind)s', peers_expire:'%(expire)s', peers_content: '%(distinguished_name)s'}" % filled_entry),
-        #    'class': 'editlink iconspace',
-        #    'title': 'Update %(distinguished_name)s in peers' % filled_entry,
-        #    'text': ''}
+        # NOTE: very simple edit dialog to change only expire through confirm.
+        # We could add similar buttons for kind and label fields but they can
+        # be edited with Update in Edit Peers until we make a dedicated dialog
+        filled_entry['editpeerlink'] = {
+            'object_type': 'link',
+            'destination':
+            "javascript: confirmDialog(%s, '%s', '%s', %s);" %
+            ('peer_action', 'Update %(full_name)s (%(email)s) expire date (YYYY-MM-DD)?' % filled_entry,
+             'peers_expire',
+             "{action: 'update', peers_label: '%(label)s', peers_kind: '%(kind)s', peers_content: '%(distinguished_name)s', peers_invite: false}" % filled_entry),
+            'class': 'editlink iconspace',
+            'title': 'Update %(distinguished_name)s Expire value in peers' % filled_entry,
+            'text': ''}
         filled_entry['invitepeerlink'] = {
             'object_type': 'link',
             'destination':
