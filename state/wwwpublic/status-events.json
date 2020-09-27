@@ -15,8 +15,8 @@
     ], 
     "work_end": "2020-09-27T18:00:00+02:00", 
     "description": {
-      "EN": "DAG needs to be updated with a new configuration to distribute Notebook images to hosts in accordance with where they are used. Also a bug was discovered in the software we use to mount ERDA/IDMC that caused stale mounts to not be cleared out properly in certain circumstances.", 
-      "DK": "DAG skal opdateres med en ny konfiguration for at distribuere Notebook images til hosts i overensstemmelse med, hvor de bruges. Der blev også opdaget en fejl i den software, vi bruger til at montere ERDA / IDMC, der forårsagede, at forældede mounts ikke blev ryddet korrekt under visse omstændigheder"
+      "EN": "DAG needs to be updated with a new configuration to distribute Notebook images to hosts in accordance with where they are used. Also a bug was discovered in the software we use to mount ERDA/IDMC that caused stale mounts to not be cleared out properly in certain circumstances. This work was completed as expected and both DAG/MODI should be back online.", 
+      "DK": "DAG skal opdateres med en ny konfiguration for at distribuere Notebook images til hosts i overensstemmelse med, hvor de bruges. Der blev også opdaget en fejl i den software, vi bruger til at montere ERDA / IDMC, der forårsagede, at forældede mounts ikke blev ryddet korrekt under visse omstændigheder. Dette arbejde blev afsluttet som forventet, og både DAG/MODI skulle være tilbage online."
     }, 
     "announce_end": "2020-09-28T09:00:00+02:00"
   },
