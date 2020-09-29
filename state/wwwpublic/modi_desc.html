@@ -1,5 +1,25 @@
-MPI Oriented Development and Investigation or MODI provides a cluster of 8 compute nodes that can be utilized for long running batch jobs. <br>
-The system is configured as a SLURM cluster in which regular slurm commands can be utilized. <br>
-This includes functionality such as 'sbatch', 'squeue', 'sinfo' and friends. <br> <br>
+<script>
+function show_faq() {
+    /* UI V3 uses toggle_info to show inline FAQ while V2 opens front page */
+    if (typeof toggle_info === 'function') {
+        toggle_info('supportInfo');
+    } else {
+        window.location.href='http://erda.ku.dk';
+    }
+}
 
-The current setup does not at the moment support interactive functionalities such as 'srun' and similar.</p>
+</script>
+<p>
+MPI Oriented Development and Investigation or MODI provides a cluster of 8 compute nodes that can be utilized for long running batch jobs. <br/>
+The system is configured as a SLURM cluster in which regular slurm commands can be utilized.<br/>
+This includes functionality such as 'sbatch', 'squeue', 'sinfo' and friends. <br/><br/>
+
+The current setup does not at the moment support interactive functionalities
+such as 'srun' and similar.<br/><br/>
+
+Please refer to the separate 
+<a href="/public/MODI-user-guide.pdf" target=_blank>MODI user guide</a> for
+details about using MODI. In particular the part about running 'sbatch' commands
+using the shared modi mount directory is important for jobs to succeed. 
+
+</p>
