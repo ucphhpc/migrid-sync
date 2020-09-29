@@ -1,5 +1,26 @@
 [
   {
+    "status": "AUTO", 
+    "work_start": "2020-10-04T10:00:00+02:00", 
+    "systems": [
+        "ERDA"
+    ],
+    "announce_start": "2020-09-29T10:00:00+02:00",
+    "title": {
+      "EN": "Planned ERDA Maintenance",
+      "DK": "Planlagt vedligehold af ERDA"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2020-10-04T20:00:00+02:00",
+    "description": {
+      "EN": "Update and general maintenance of ERDA to roll out the latest software versions. The update will likely require a reboot for low-level updates to complete. Thus all services will briefly be unavailable. More information to follow here.",
+      "DK": "Opdatering og generel vedligeholdelse af ERDA for at opdatere til nyeste software. Opdateringen kræver sandsynligvis en systemgenstart og vil derfor give et kort udfald i alle services. Mere information følger her."
+    },
+    "announce_end": "2020-10-05T10:00:00+02:00"
+  },
+  {
     "status": "AUTO",
     "work_start": "2020-09-27T10:00:00+02:00", 
     "systems": [
