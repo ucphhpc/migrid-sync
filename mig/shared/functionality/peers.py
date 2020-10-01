@@ -35,7 +35,7 @@ import datetime
 import os
 
 from mig.shared import returnvalues
-from mig.shared.accountreq import peers_permit_allowed
+from mig.shared.accountreq import peers_permit_allowed, list_country_codes
 from mig.shared.base import pretty_format_user, fill_distinguished_name, \
     client_id_dir
 from mig.shared.defaults import csrf_field, peers_filename, \
@@ -48,12 +48,12 @@ from mig.shared.serial import load
 from mig.shared.useradm import get_full_user_map
 
 
-sample_users = [{'full_name': 'Jane Doe', 'country': 'DK', 'email':
-                 'jane.doe@phys.au.dk', 'organization':
+sample_users = [{'full_name': 'Jane Doe', 'country': 'DK', 'state': '',
+                 'email': 'jane.doe@phys.au.dk', 'organization':
                  'Dept. of Physics at University of Aarhus',
                  },
                 {'full_name': 'John Doe', 'organization': 'DTU', 'country':
-                 'DK', 'email': 'john.doe@dtu.dk'}]
+                 'DK', 'state': '', 'email': 'john.doe@dtu.dk'}]
 csv_sep = ';'
 edit_entries = 6
 
@@ -91,19 +91,38 @@ def main(client_id, user_arguments_dict):
     expire_help = "For security reasons peer accounts should be closed when no longer required. Expire is used to limit account access time for that purpose, and you can always extend it later if needed. For courses and workshops a few weeks or months should usually suffice, while projects and long-term collaboration often extend to months or years. Peer accounts still need to be renewed at least annually, but the peer users can do so themselves without your repeated explicit acceptance, as long as it does not exceed your provided expire date."
 
     # jquery support for tablesorter and confirmation on delete
-    # table initially sorted by col. 4 (kind), then 0 (name)
+    # table initially sorted by col. 5 (kind), then 0 (name)
     refresh_call = 'ajax_peers()'
     table_spec = {'table_id': 'peers', 'sort_order':
-                  '[[4,0],[0,0]]',
+                  '[[5,0],[0,0]]',
                   'refresh_call': refresh_call}
     (add_import, add_init, add_ready) = man_base_js(configuration,
                                                     [table_spec])
 
     add_init += '''
+/* Helper to define countries for which State field makes sense */
+var enable_state = ["US", "CA", "AU"];
+
 function show_info(title, msg) {
     $("#info_dialog").dialog("option", "title", title);
     $("#info_dialog").html("<p>"+msg+"</p>");
     $("#info_dialog").dialog("open");
+}
+
+function toggle_state() {
+    $("#fields-tab .save_peers .field_group").each(function() {
+        var country = $(this).find(".entry-field.country").val();
+        if (country && enable_state.indexOf(country) > -1) {
+            //console.debug("enable state for "+country);
+            $(this).find("input.entry-field.state").prop("disabled", false);
+        } else {
+            //console.debug("disable state for "+country);
+            $(this).find("input.entry-field.state").prop("disabled", true);
+            /* NOTE: reset state on change to other country */
+            $(this).find("input.entry-field.state").val("");
+        }
+      }
+    );
 }
 
 function transfer_id_fields() {
@@ -116,9 +135,13 @@ function transfer_id_fields() {
         var full_name = $(group).find("input.entry-field.full_name").val();
         var organization = $(group).find("input.entry-field.organization").val();
         var email = $(group).find("input.entry-field.email").val();
-        var country = $(group).find("input.entry-field.country").val();
-        if (full_name && organization && email && country) {
-            peer_id = "/C="+country+"/ST=NA/L=NA/O="+organization+"/OU=NA/CN="+full_name+"/emailAddress="+email;
+        var country = $(group).find(".entry-field.country").val();
+        var state = $(group).find("input.entry-field.state").val();
+        if (!state) {
+            state = "NA"
+        }
+        if (full_name && organization && email && country && state) {
+            peer_id = "/C="+country+"/ST="+state+"/L=NA/O="+organization+"/OU=NA/CN="+full_name+"/emailAddress="+email;
             //console.debug("built peer_id: "+peer_id);
             peer_count += 1;
         }
@@ -350,6 +373,7 @@ MUST be filled for the row to be treated.
 </div>
 '''
 
+    sorted_countries = list_country_codes(configuration)
     # TODO: switch to JS rows with automagic addition to always keep spare row?
     for index in range(edit_entries):
         # NOTE: we arrange each entry into a field_group_N div with a hidden
@@ -358,12 +382,15 @@ MUST be filled for the row to be treated.
         tabs_html += '''
 <div id="field_group_%s" class="field_group">
     <input class="id-collector" type="hidden" name="peers_content" value="" />
-    <div class="form-row four-col-grid">
+    <div class="form-row five-col-grid">
         ''' % index
         for field in peers_fields:
             title = ' '.join([i.capitalize() for i in field.split('_')])
             placeholder = title
             field_extras = 'type="text"'
+            # Leave state field disabled until applicable (JS)
+            disabled = ""
+            cols = "col-md-3 mb-3"
             if field.lower() == 'full_name':
                 field_extras = 'minlength=3'
             elif field.lower() == 'organization':
@@ -371,19 +398,46 @@ MUST be filled for the row to be treated.
             elif field.lower() == 'email':
                 placeholder = "Email at organization"
                 field_extras = 'type="email" minlength=5'
+                cols = "col-md-2 mb-2"
             elif field.lower() == 'country':
-                # TODO: country drop-down instead?
+                # NOTE: use country drop-down if available
                 title = "Country (ISO 3166)"
                 placeholder = "2-Letter country code"
-                field_extras += ' minlength=2 maxlength=2'
+                field_extras = 'minlength=2 maxlength=2'
+                cols = "col-md-2 mb-2"
+            elif field.lower() == 'state':
+                title = "State (if applicable)"
+                placeholder = "2-Letter state code"
+                field_extras += ' minlength=0 maxlength=2'
+                disabled = "disabled"
+                cols = "col-md-2 mb-2"
+            entry_fill = {'field': field, 'title': title, 'placeholder':
+                          placeholder, 'extras': field_extras, 'disabled':
+                          disabled, 'cols': cols}
             tabs_html += '''
-      <div class="col-md-3 mb-3 form-cell">
+      <div class="%(cols)s form-cell %(field)s-cell">
           <label for="%(field)s">%(title)s</label><br/>
+          ''' % entry_fill
+            if field == 'country' and sorted_countries:
+                # Generate drop-down of countries and codes if available, else simple input
+                tabs_html += '''
+        <select class="form-control %(field)s themed-select html-select entry-field fill-with"
+          %(extras)s placeholder="%(placeholder)s" %(disabled)s onChange="toggle_state();">
+''' % entry_fill
+                for (name, code) in [('', '')] + sorted_countries:
+                    tabs_html += "        <option value='%s'>%s</option>\n" % \
+                                 (code, name)
+                tabs_html += """
+        </select>
+    """
+            else:
+                tabs_html += '''
           <input class="form-control %(field)s entry-field fill-width" %(extras)s
-            placeholder="%(placeholder)s" />
+            placeholder="%(placeholder)s" %(disabled)s onBlur="toggle_state();" />
+            ''' % entry_fill
+            tabs_html += '''            
       </div>
-''' % {'field': field, 'title': title, 'placeholder': placeholder,
-                'extras': field_extras}
+''' % entry_fill
 
         tabs_html += '''
     </div>
@@ -468,8 +522,8 @@ limited but sufficiently long account access - it can always be extended later.
 %(shared_peer_html)s
 <br/>
 <input type="hidden" name="peers_format" value="userid" />
-<div class="form-row five-col-grid">
-    <div class="col-md-2 mb-5 form-cell">
+<div class="form-row six-col-grid">
+    <div class="col-md-2 mb-6 form-cell">
     <label for="action">Action</label>
     <select class="form-control themed-select html-select fill-width" name="action">
         <option value="accept">Accept</option>
@@ -483,7 +537,7 @@ limited but sufficiently long account access - it can always be extended later.
         for field in peers_fields:
             title = ' '.join([i.capitalize() for i in field.split('_')])
             tabs_html += '''
-    <div class="col-md-2 mb-5 form-cell">
+    <div class="col-md-2 mb-6 form-cell">
         <label for="%(field)s">%(title)s</label>
         <input class="form-control fill-width" type="text" value="%(value)s"
           readonly=readonly />

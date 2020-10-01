@@ -577,8 +577,12 @@ table.peers {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(19%, auto));
 }
+.six-col-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16%, auto));
+}
 .one-col-grid > *, .two-col-grid > *, .three-col-grid > *, .four-col-grid > *,
-.five-col-grid > * {
+.five-col-grid > *, .six-col-grid > * {
 }
 
 

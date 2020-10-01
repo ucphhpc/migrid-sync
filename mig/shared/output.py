@@ -1416,6 +1416,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
         <th>Organization</th>
         <th>Email</th>
         <th>Country</th>
+        <th>State</th>
         <th>Kind</th>
         <th>Label</th>
         <th>Expire</th>
@@ -1441,9 +1442,12 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                     dellink = html_link(dellink)
                 single_peer['action_links'] = "%s %s %s" % \
                                               (editlink, invitelink, dellink)
+                single_peer['state'] = single_peer.get('state', '')
+                if not single_peer['state']:
+                    single_peer['state'] = 'NA'
                 lines.append('''<tr>
 <td>%(full_name)s</td><td>%(organization)s</td><td>%(email)s</td>
-<td>%(country)s</td><td>%(kind)s</td><td>%(label)s</td><td>%(expire)s</td>
+<td>%(country)s</td><td>%(state)s</td><td>%(kind)s</td><td>%(label)s</td><td>%(expire)s</td>
 <td>%(action_links)s</td>
 </tr>
 ''' % single_peer)
