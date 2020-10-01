@@ -67,6 +67,9 @@ def account_js_helpers(configuration, fields):
 <script type="text/javascript" src="/images/js/jquery.accountform.js"></script>
     '''
     add_init = """
+  /* Helper to define countries for which State field makes sense */
+  var enable_state = ['US', 'CA', 'AU'];
+  
   function rtfm_warn(message) {
       return confirm(message + ': Proceed anyway? (If you read and followed the instructions!)');
   }
@@ -117,9 +120,9 @@ def account_js_helpers(configuration, fields):
   }
   function check_state() {
       //alert('#state_help');
-      if ($('#country_field').val().search('US') == -1) {
+      if (enable_state.indexOf($('#country_field').val()) == -1) {
           if ($('#state_field').val() && $('#state_field').val() != 'NA') {
-              return rtfm_warn('State only makes sense for US users');
+              return rtfm_warn('State only makes sense for '+enable_state.join(', ')+' users');
           }
       }
       return true;
@@ -149,6 +152,17 @@ def account_js_helpers(configuration, fields):
       return true;
   }
 
+  function toggle_state() {
+      var country = $('#country_field').val();
+      if (country && enable_state.indexOf(country) > -1) {
+          $('#state_field').prop('disabled', false);
+      } else {
+          $('#state_field').prop('disabled', true);
+          /* NOTE: reset state on change to other country */
+          $('#state_field').val('');
+      }
+  }
+  
   function init_context_help() {
       /* move help text just right of connecting gfx bubble */
       var contextualHelpMessage = $('#contextual_help').find('.help_message');
@@ -257,7 +271,7 @@ def account_request_template(configuration, password=True, default_values={}):
     sorted_countries = list_country_codes(configuration)
     if sorted_countries and not default_values.get('readonly_country', ''):
         html += """
-        <select class='form-control themed-select html-select' id='country_field' name=country minlength=2 maxlength=2 value='%(country)s' placeholder='Two letter country-code' required pattern='[A-Z]{2}' title='Please select your country from the list'>
+        <select class='form-control themed-select html-select' id='country_field' name=country minlength=2 maxlength=2 value='%(country)s' placeholder='Two letter country-code' required pattern='[A-Z]{2}' title='Please select your country from the list' onChange='toggle_state();'>
 """
         # TODO: detect country based on browser info?
         # Start out without a country selection
@@ -272,7 +286,7 @@ def account_request_template(configuration, password=True, default_values={}):
     """
     else:
         html += """
-        <input class='form-control' id='country_field' type=text name=country value='%(country)s' placeholder='Two letter country-code' required pattern='[A-Z]{2}' %(readonly_country)s minlength=2 maxlength=2 title='The two capital letters used to abbreviate your country' />
+        <input class='form-control' id='country_field' type=text name=country value='%(country)s' placeholder='Two letter country-code' required pattern='[A-Z]{2}' %(readonly_country)s minlength=2 maxlength=2 title='The two capital letters used to abbreviate your country' onBlur='toggle_state();' />
         """
 
     html += """
@@ -286,7 +300,7 @@ def account_request_template(configuration, password=True, default_values={}):
     </div>
     <div class='col-md-4 mb-3 form-cell'>
       <label for='validationCustom04'>Optional state code</label>
-      <input class='form-control' id='state_field' type=text name=state value='%(state)s' placeholder='NA' pattern='([A-Z]{2})?' %(readonly_state)s maxlength=2 title='Mainly for U.S. users - please just leave empty if in doubt' >
+      <input class='form-control' id='state_field' type=text name=state value='%(state)s' placeholder='NA' pattern='([A-Z]{2})?' %(readonly_state)s maxlength=2 title='Mainly for U.S. users - please just leave empty if in doubt' disabled>
     </div>
   </div>
     """
