@@ -113,11 +113,11 @@ function toggle_state() {
     $("#fields-tab .save_peers .field_group").each(function() {
         var country = $(this).find(".entry-field.country").val();
         if (country && enable_state.indexOf(country) > -1) {
-            //console.debug("enable state for "+country);
-            $(this).find("input.entry-field.state").prop("disabled", false);
+            //console.debug("unlock state for "+country);
+            $(this).find("input.entry-field.state").prop("readonly", false);
         } else {
-            //console.debug("disable state for "+country);
-            $(this).find("input.entry-field.state").prop("disabled", true);
+            //console.debug("lock state for "+country);
+            $(this).find("input.entry-field.state").prop("readonly", true);
             /* NOTE: reset state on change to other country */
             $(this).find("input.entry-field.state").val("");
         }
@@ -388,8 +388,8 @@ MUST be filled for the row to be treated.
             title = ' '.join([i.capitalize() for i in field.split('_')])
             placeholder = title
             field_extras = 'type="text"'
-            # Leave state field disabled until applicable (JS)
-            disabled = ""
+            # Lock state field until applicable (JS)
+            locked = ""
             cols = "col-md-3 mb-3"
             if field.lower() == 'full_name':
                 field_extras = 'minlength=3'
@@ -409,20 +409,21 @@ MUST be filled for the row to be treated.
                 title = "State (if applicable)"
                 placeholder = "2-Letter state code"
                 field_extras += ' minlength=0 maxlength=2'
-                disabled = "disabled"
+                locked = "readonly"
                 cols = "col-md-2 mb-2"
             entry_fill = {'field': field, 'title': title, 'placeholder':
-                          placeholder, 'extras': field_extras, 'disabled':
-                          disabled, 'cols': cols}
+                          placeholder, 'extras': field_extras, 'locked':
+                          locked, 'cols': cols}
             tabs_html += '''
       <div class="%(cols)s form-cell %(field)s-cell">
           <label for="%(field)s">%(title)s</label><br/>
           ''' % entry_fill
             if field == 'country' and sorted_countries:
-                # Generate drop-down of countries and codes if available, else simple input
+                # Generate drop-down of countries and codes if available, else
+                # simple input
                 tabs_html += '''
         <select class="form-control %(field)s themed-select html-select entry-field fill-with"
-          %(extras)s placeholder="%(placeholder)s" %(disabled)s onChange="toggle_state();">
+          %(extras)s placeholder="%(placeholder)s" %(locked)s onChange="toggle_state();">
 ''' % entry_fill
                 for (name, code) in [('', '')] + sorted_countries:
                     tabs_html += "        <option value='%s'>%s</option>\n" % \
@@ -433,9 +434,9 @@ MUST be filled for the row to be treated.
             else:
                 tabs_html += '''
           <input class="form-control %(field)s entry-field fill-width" %(extras)s
-            placeholder="%(placeholder)s" %(disabled)s onBlur="toggle_state();" />
+            placeholder="%(placeholder)s" %(locked)s onBlur="toggle_state();" />
             ''' % entry_fill
-            tabs_html += '''            
+            tabs_html += '''
       </div>
 ''' % entry_fill
 
@@ -540,7 +541,7 @@ limited but sufficiently long account access - it can always be extended later.
     <div class="col-md-2 mb-6 form-cell">
         <label for="%(field)s">%(title)s</label>
         <input class="form-control fill-width" type="text" value="%(value)s"
-          readonly=readonly />
+          readonly />
     </div>''' % {'field': field, 'title': title, 'value': user.get(field, '')}
         tabs_html += '''
 </div>

@@ -69,11 +69,11 @@ def account_js_helpers(configuration, fields):
     add_init = """
   /* Helper to define countries for which State field makes sense */
   var enable_state = ['US', 'CA', 'AU'];
-  
+
   function rtfm_warn(message) {
       return confirm(message + ': Proceed anyway? (If you read and followed the instructions!)');
   }
-  
+
   function check_account_id() {
       //alert('#account_id_help');
       if ($('#cert_id_field').val().indexOf('/') == -1) {
@@ -155,14 +155,14 @@ def account_js_helpers(configuration, fields):
   function toggle_state() {
       var country = $('#country_field').val();
       if (country && enable_state.indexOf(country) > -1) {
-          $('#state_field').prop('disabled', false);
+          $('#state_field').prop('readonly', false);
       } else {
-          $('#state_field').prop('disabled', true);
+          $('#state_field').prop('readonly', true);
           /* NOTE: reset state on change to other country */
           $('#state_field').val('');
       }
   }
-  
+
   function init_context_help() {
       /* move help text just right of connecting gfx bubble */
       var contextualHelpMessage = $('#contextual_help').find('.help_message');
@@ -300,13 +300,13 @@ def account_request_template(configuration, password=True, default_values={}):
     </div>
     <div class='col-md-4 mb-3 form-cell'>
       <label for='validationCustom04'>Optional state code</label>
-      <input class='form-control' id='state_field' type=text name=state value='%(state)s' placeholder='NA' pattern='([A-Z]{2})?' %(readonly_state)s maxlength=2 title='Mainly for U.S. users - please just leave empty if in doubt' disabled>
+      <input class='form-control' id='state_field' type=text name=state value='%(state)s' placeholder='NA' pattern='([A-Z]{2})?' %(readonly_state)s maxlength=2 title='Mainly for U.S. users - please just leave empty if in doubt' readonly>
     </div>
   </div>
     """
 
     if password:
-        html += """  
+        html += """
   <div class='form-row'>
     <div class='col-md-4 mb-3 form-cell'>
       <label for='validationCustom01'>Password</label>
@@ -483,7 +483,7 @@ def list_country_codes(configuration):
     country_list = []
     for entry in iso3166.countries:
         name, code = force_utf8(entry.name), force_utf8(entry.alpha2)
-        #logger.debug("found country %s for code %s" % (name, code))
+        # logger.debug("found country %s for code %s" % (name, code))
         country_list.append((name, code))
     return country_list
 
