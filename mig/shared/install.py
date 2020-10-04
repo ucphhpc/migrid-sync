@@ -851,7 +851,7 @@ cert, oid and sid based https!
             for i_h, host in enumerate(values['hosts']):
                 name_index = '%s_%s' % (u_name, i_h)
                 # https://httpd.apache.org/docs/2.4/mod/mod_proxy.html
-                member = "BalancerMember %s route=%s retry=600 timeout=60 keepalive=On\n" \
+                member = "BalancerMember %s route=%s retry=600 timeout=60 keepalive=On connectiontimeout=60\n" \
                     % ("${JUPYTER_%s}" % name_index, i_h)
                 ws_member = member.replace("${JUPYTER_%s}" % name_index,
                                            "${WS_JUPYTER_%s}" % name_index)
