@@ -117,10 +117,14 @@ default_pager_entries = 25
 default_http_port = 80
 default_https_port = 443
 
+# Account types and their default validity
+valid_auth_types = ('cert', 'oid', 'custom')
 cert_valid_days = 365
 oid_valid_days = 365
+custom_valid_days = 365
 cert_auto_extend_days = 30
 oid_auto_extend_days = 30
+custom_auto_extend_days = 30
 
 # Strictly ordered list of account status values to enable use of filemarks
 # for caching account status using integer timestamps outside user DB.

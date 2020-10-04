@@ -33,7 +33,6 @@ import getopt
 import sys
 import time
 
-from mig.shared.defaults import cert_valid_days, oid_valid_days
 from mig.shared.useradm import init_user_adm, search_users, default_search
 
 

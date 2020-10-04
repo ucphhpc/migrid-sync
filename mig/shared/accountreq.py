@@ -562,8 +562,8 @@ sudo su - %s
             (mig_user, configuration.server_fqdn, user_id)
 
     cmd_helpers['command_user_create'] = """As '%s' on %s:
-./mig/server/createuser.py -p AUTO -u '%s'""" % \
-        (mig_user, configuration.server_fqdn, req_path)
+./mig/server/createuser.py -a %s -p AUTO -u '%s'""" % \
+        (mig_user, configuration.server_fqdn, kind, req_path)
     cmd_helpers['command_user_suspend'] = """As '%s' on %s:
 ./mig/server/editmeta.py '%s' status suspended""" % \
         (mig_user, configuration.server_fqdn, user_id)

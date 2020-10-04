@@ -36,9 +36,10 @@ import os
 import getopt
 from getpass import getpass
 
+from mig.shared.accountstate import default_account_expire
 from mig.shared.base import fill_distinguished_name, fill_user
 from mig.shared.conf import get_configuration_object
-from mig.shared.defaults import cert_valid_days
+from mig.shared.defaults import valid_auth_types
 from mig.shared.pwhash import unscramble_password, scramble_password
 from mig.shared.serial import load
 from mig.shared.useradm import init_user_adm, create_user, load_user_dict
@@ -65,6 +66,7 @@ or
 or
 %(name)s [OPTIONS] -i CERT_DN
 Where OPTIONS may be one or more of:
+   -a AUTH_TYPE        Prepare account for AUTH_TYPE login (mainly expire)
    -c CONF_FILE        Use CONF_FILE as server configuration
    -d DB_FILE          Use DB_FILE as user data base file
    -e EXPIRE           Set user account expiration to EXPIRE (epoch)
@@ -83,7 +85,8 @@ Where OPTIONS may be one or more of:
 if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()
     conf_path = None
-    expire = int(time.time() + cert_valid_days * 24 * 60 * 60)
+    auth_type = 'custom'
+    expire = None
     force = False
     verbose = False
     ask_renew = True
@@ -95,7 +98,7 @@ if '__main__' == __name__:
     peer_pattern = None
     user_dict = {}
     override_fields = {}
-    opt_args = 'c:d:e:fhi:o:p:rR:u:v'
+    opt_args = 'a:c:d:e:fhi:o:p:rR:u:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
@@ -104,7 +107,9 @@ if '__main__' == __name__:
         sys.exit(1)
 
     for (opt, val) in opts:
-        if opt == '-c':
+        if opt == '-a':
+            auth_type = val
+        elif opt == '-c':
             conf_path = val
         elif opt == '-d':
             db_path = val
@@ -159,6 +164,15 @@ if '__main__' == __name__:
         print('Error: Only one kind of user specification allowed at a time')
         usage()
         sys.exit(1)
+
+    if auth_type not in valid_auth_types:
+        print('Error: invalid account auth type %r requested (allowed: %s)' %
+              (auth_type, ', '.join(valid_auth_types)))
+        usage()
+        sys.exit(1)
+
+    if expire is None:
+        expire = default_account_expire(configuration, auth_type)
 
     if args:
         try:

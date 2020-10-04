@@ -141,11 +141,10 @@ User certificate requests are not supported on this site!"""})
         output_objects.append({'object_type': 'html_form', 'text': '''<p>
 Apparently you already have a valid %s certificate, but if it is about to
 expire you can renew it by posting the form below. Renewal with changed fields
-is <span class=mandatory>not</span> supported, so all fields except maybe your
+is <span class="warningtext">not</span> supported, so all fields except maybe your
 password must remain unchanged for renew to work. Otherwise it results in a
 request for a new account and certificate without access to your old files,
-jobs and privileges.</p>''' %
-                               configuration.short_title})
+jobs and privileges.</p>''' % configuration.short_title})
         user_fields.update(distinguished_name_to_user(client_id))
 
     # Override with arg values if set

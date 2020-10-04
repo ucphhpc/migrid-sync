@@ -36,9 +36,10 @@ import tempfile
 
 from mig.shared import returnvalues
 from mig.shared.accountreq import user_manage_commands
+from mig.shared.accountstate import default_account_expire
 from mig.shared.base import force_utf8, force_unicode, generate_https_urls, \
     distinguished_name_to_user, fill_distinguished_name, fill_user
-from mig.shared.defaults import user_db_filename, cert_valid_days
+from mig.shared.defaults import user_db_filename
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables
@@ -177,7 +178,7 @@ multiple "key=val" fields separated by "/".
         'email': email,
         'password': '',
         'comment': '%s: %s' % ('Existing certificate', comment),
-        'expire': int(time.time() + cert_valid_days * 24 * 60 * 60),
+        'expire': default_account_expire(configuration, 'cert'),
         'openid_names': [],
         'auth': ['extcert'],
     }

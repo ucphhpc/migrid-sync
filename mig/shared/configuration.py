@@ -38,9 +38,11 @@ import sys
 import time
 from ConfigParser import ConfigParser
 
-from mig.shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, CSRF_FULL, \
-    POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, POLICY_CUSTOM, \
-    freeze_flavors, duplicati_protocol_choices, default_css_filename, keyword_any
+from mig.shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
+    CSRF_FULL, POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, \
+    POLICY_CUSTOM, freeze_flavors, duplicati_protocol_choices, \
+    default_css_filename, keyword_any, cert_valid_days, oid_valid_days, \
+    custom_valid_days
 from mig.shared.logger import Logger, SYSLOG_GDP
 from mig.shared.html import menu_items, vgrid_items
 from mig.shared.fileio import read_file, load_json
@@ -2072,6 +2074,21 @@ location.""" % self.config_file)
         if config.has_option('GLOBAL', 'auto_add_resource'):
             self.auto_add_resource = config.getboolean('GLOBAL',
                                                        'auto_add_resource')
+
+        # Allow override of account valid days from shared.defaults
+        if config.has_option('GLOBAL', 'cert_valid_days'):
+            self.cert_valid_days = config.getint('GLOBAL', 'cert_valid_days')
+        else:
+            self.cert_valid_days = cert_valid_days
+        if config.has_option('GLOBAL', 'oid_valid_days'):
+            self.oid_valid_days = config.getint('GLOBAL', 'oid_valid_days')
+        else:
+            self.oid_valid_days = oid_valid_days
+        if config.has_option('GLOBAL', 'custom_valid_days'):
+            self.custom_valid_days = config.getint('GLOBAL',
+                                                   'custom_valid_days')
+        else:
+            self.custom_valid_days = custom_valid_days
 
         # if arc cluster URLs configured, read them in:
 

@@ -37,9 +37,9 @@ import tempfile
 from mig.shared import returnvalues
 from mig.shared.accountreq import existing_country_code, forced_org_email_match, \
     user_manage_commands
+from mig.shared.accountstate import default_account_expire
 from mig.shared.base import client_id_dir, force_utf8, force_unicode, \
     generate_https_urls, fill_distinguished_name
-from mig.shared.defaults import cert_valid_days
 from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables, find_entry
@@ -219,7 +219,7 @@ resources anyway.
         'comment': comment,
         'password': scrambled_pw,
         'password_hash': make_hash(password),
-        'expire': int(time.time() + cert_valid_days * 24 * 60 * 60),
+        'expire': default_account_expire(configuration, 'oid'),
         'openid_names': [],
         'auth': ['migoid'],
     }

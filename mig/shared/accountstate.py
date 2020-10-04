@@ -36,13 +36,31 @@ import time
 
 from mig.shared.base import client_id_dir, client_dir_id, requested_url_base
 from mig.shared.defaults import expire_marks_dir, status_marks_dir, \
-    valid_account_status, oid_auto_extend_days, cert_auto_extend_days, \
-    cert_valid_days, oid_valid_days
+    valid_account_status, oid_auto_extend_days, cert_auto_extend_days
 from mig.shared.filemarks import get_filemark, update_filemark, reset_filemark
 from mig.shared.gdp.userid import get_base_client_id
 from mig.shared.userdb import load_user_dict, default_db_path, update_user_dict
 from mig.shared.validstring import possible_sharelink_id, possible_job_id, \
     possible_jupyter_mount_id
+
+
+def default_account_valid_days(configuration, auth_type):
+    """Lookup default account valid days from configuration"""
+
+    _valid_map = {'cert_valid_days': configuration.cert_valid_days,
+                  'oid_valid_days': configuration.oid_valid_days,
+                  'custom_valid_days': configuration.custom_valid_days}
+    valid_days = _valid_map.get('%s_valid_days' % auth_type,
+                                configuration.custom_valid_days)
+    return valid_days
+
+
+def default_account_expire(configuration, auth_type, start_time=int(time.time())):
+    """Lookup default account expire value (epoch) based on start_time"""
+
+    valid_days = default_account_valid_days(configuration, auth_type)
+    expire = int(start_time + valid_days * 24 * 60 * 60)
+    return expire
 
 
 def update_account_expire_cache(configuration, user_dict):
@@ -296,17 +314,17 @@ def account_expire_info(configuration, username, environ=None,
     if account_expire and account_expire < time.time() + min_days_left * 86400:
         expire_warn = True
         if vhost_url == configuration.migserver_https_ext_oid_url:
-            renew_days = oid_valid_days
+            renew_days = default_account_valid_days(configuration, 'oid')
             if account_status == 'active' and configuration.auto_add_oid_user:
                 extend_days = oid_auto_extend_days
         elif vhost_url == configuration.migserver_https_mig_oid_url:
-            renew_days = oid_valid_days
+            renew_days = default_account_valid_days(configuration, 'oid')
         elif vhost_url == configuration.migserver_https_ext_cert_url:
-            renew_days = cert_valid_days
+            renew_days = default_account_valid_days(configuration, 'cert')
             if account_status == 'active' and configuration.auto_add_cert_user:
                 extend_days = cert_auto_extend_days
         elif vhost_url == configuration.migserver_https_mig_cert_url:
-            renew_days = cert_valid_days
+            renew_days = default_account_valid_days(configuration, 'cert')
         else:
             _logger.warning("unexpected vhost in expire detection: %s" %
                             vhost_url)

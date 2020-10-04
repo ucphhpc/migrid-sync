@@ -116,7 +116,8 @@ def main(client_id, user_arguments_dict):
     certreq_link = {'object_type': 'link', 'destination': certreq_url,
                     'text': 'Request a new %s certificate account' %
                             configuration.short_title}
-    user_fields.update(distinguished_name_to_user(client_id))
+    id_fields = distinguished_name_to_user(client_id)
+    user_fields.update(id_fields)
 
     # Override with arg values if set
     for field in user_fields:
@@ -154,6 +155,8 @@ def main(client_id, user_arguments_dict):
     ro_fields = [i for i in accepted['ro_fields'] if i in cert_field_map]
     if keyword_auto in accepted['ro_fields']:
         ro_fields += [i for i in cert_field_map if not i in ro_fields]
+    # NOTE: lock all ID fields to current certificate here
+    ro_fields += [i for i in id_fields if not i in ro_fields]
     for field in ro_fields:
         fill_helpers['readonly_%s' % field] = 'readonly'
     fill_helpers.update(user_fields)

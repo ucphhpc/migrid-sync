@@ -36,9 +36,9 @@ import re
 
 from mig.shared import returnvalues
 from mig.shared.accountreq import user_manage_commands
+from mig.shared.accountstate import default_account_expire
 from mig.shared.base import client_id_dir, generate_https_urls, \
     fill_distinguished_name
-from mig.shared.defaults import oid_valid_days
 from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables, find_entry
@@ -153,7 +153,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         'email': email,
         'password': password,
         'comment': comment,
-        'expire': int(time.time() + oid_valid_days * 24 * 60 * 60),
+        'expire': default_account_expire(configuration, 'oid'),
         'openid_names': [raw_login],
         'auth': ['extoid'],
     }

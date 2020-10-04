@@ -43,10 +43,10 @@ import os
 import time
 
 from mig.shared import returnvalues
+from mig.shared.accountstate import default_account_expire
 from mig.shared.base import client_id_dir, force_utf8, force_unicode, \
     fill_user, distinguished_name_to_user, fill_distinguished_name
-from mig.shared.defaults import user_db_filename, cert_valid_days, \
-    oid_valid_days
+from mig.shared.defaults import user_db_filename
 from mig.shared.fileio import write_file
 from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
@@ -447,8 +447,7 @@ accepting CSRF-filtered POST requests to prevent unintended updates'''})
         ext_login_title = "%s certificate" % configuration.user_ext_cert_title
         personal_page_url = configuration.migserver_https_ext_cert_url
         # TODO: consider limiting expire to real cert expire if before default?
-        user_dict['expire'] = int(time.time() + cert_valid_days * 24
-                                  * 60 * 60)
+        user_dict['expire'] = default_account_expire(configuration, 'cert')
         try:
             distinguished_name_to_user(uniq_id)
             user_dict['distinguished_name'] = uniq_id
@@ -464,8 +463,7 @@ multiple "key=val" fields separated by "/".
         auth = 'extoid'
         ext_login_title = "%s login" % configuration.user_ext_oid_title
         personal_page_url = configuration.migserver_https_ext_oid_url
-        user_dict['expire'] = int(time.time() + oid_valid_days * 24
-                                  * 60 * 60)
+        user_dict['expire'] = default_account_expire(configuration, 'oid')
         fill_distinguished_name(user_dict)
         uniq_id = user_dict['distinguished_name']
 

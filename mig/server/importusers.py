@@ -37,9 +37,10 @@ import time
 import urllib
 
 from mig.shared import returnvalues
+from mig.shared.accountstate import default_account_expire
 from mig.shared.base import fill_user, distinguished_name_to_user
 from mig.shared.conf import get_configuration_object
-from mig.shared.defaults import csrf_field, keyword_auto, cert_valid_days
+from mig.shared.defaults import csrf_field, keyword_auto, valid_auth_types
 from mig.shared.functionality.sendrequestaction import main
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.output import format_output
@@ -62,6 +63,7 @@ line in the text file.
 Usage:
 %(name)s [OPTIONS] URI [URI [...]]
 Where URI may be an URL or local file and OPTIONS may be one or more of:
+   -a AUTH_TYPE        Prepare account for AUTH_TYPE login (mainly expire)
    -C CERT_PATH        Use CERT_PATH as client certificate
    -c CONF_FILE        Use CONF_FILE as server configuration
    -d DB_FILE          Use DB_FILE as user data base file
@@ -70,7 +72,8 @@ Where URI may be an URL or local file and OPTIONS may be one or more of:
    -h                  Show this help
    -K KEY_PATH         Use KEY_PATH as client key
    -m VGRID            Make user a member of VGRID (multiple occurences allowed)
-   -p PASSWORD         Optional PASSWORD to set for user (AUTO to generate one)
+   -p PEER_PATTERN     Verify in Peers of existing account matching PEER_PATTERN
+   -P PASSWORD         Optional PASSWORD to set for user (AUTO to generate one)
    -v                  Verbose output
 """ % {'name': name})
 
@@ -108,17 +111,16 @@ def parse_contents(user_data):
 if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()
     conf_path = None
+    auth_type = 'custom'
     key_path = None
     cert_path = None
-    expire = int(time.time() + cert_valid_days * 24 * 60 * 60)
+    expire = None
     force = False
     password = False
     verbose = False
     vgrids = []
-    # Mark users plain 'active' unless expire is given. I.e. allow them to
-    # renew without admin interaction if conf enables it.
-    account_status = 'active'
-    opt_args = 'C:c:d:e:fhK:m:p:v'
+    override_fields = {}
+    opt_args = 'a:C:c:d:e:fhK:m:p:P:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
@@ -127,14 +129,16 @@ if '__main__' == __name__:
         sys.exit(1)
 
     for (opt, val) in opts:
-        if opt == '-c':
+        if opt == '-a':
+            auth_type = val
+        elif opt == '-c':
             conf_path = val
         elif opt == '-d':
             db_path = val
         elif opt == '-e':
-            # NOTE: set to temporal rather than active to prevent aut renew
             expire = int(val)
-            account_status = 'temporal'
+            override_fields['expire'] = expire
+            override_fields['status'] = 'temporal'
         elif opt == '-f':
             force = True
         elif opt == '-h':
@@ -147,6 +151,10 @@ if '__main__' == __name__:
         elif opt == '-m':
             vgrids.append(val)
         elif opt == '-p':
+            peer_pattern = val
+            override_fields['peer_pattern'] = peer_pattern
+            override_fields['status'] = 'temporal'
+        elif opt == '-P':
             password = val
         elif opt == '-v':
             verbose = True
@@ -165,6 +173,12 @@ if '__main__' == __name__:
         users += parse_contents(url_dump)
     #print "DEBUG: raw users to import: %s" % users
 
+    if auth_type not in valid_auth_types:
+        print('Error: invalid account auth type %r requested (allowed: %s)' %
+              (auth_type, ', '.join(valid_auth_types)))
+        usage()
+        sys.exit(1)
+
     new_users = []
     for user_dict in users:
         id_search = default_search()
@@ -173,14 +187,17 @@ if '__main__' == __name__:
                                              verbose)
         if hits:
             if verbose:
-                print('Not adding existing user: %(distinguished_name)s' % \
+                print('Not adding existing user: %(distinguished_name)s' %
                       user_dict)
             continue
-        user_dict['status'] = account_status
         new_users.append(user_dict)
     #print "DEBUG: new users to import: %s" % new_users
 
     configuration = get_configuration_object()
+
+    if expire is None:
+        expire = default_account_expire(configuration, auth_type)
+
     for user_dict in new_users:
         fill_user(user_dict)
         client_id = user_dict['distinguished_name']
@@ -204,6 +221,10 @@ if '__main__' == __name__:
 
         # Force expire
         user_dict['expire'] = expire
+
+        # NOTE: let non-ID command line values override loaded values
+        for (key, val) in list(override_fields.items()):
+            user_dict[key] = val
 
         try:
             create_user(user_dict, conf_path, db_path, force, verbose)
@@ -234,10 +255,10 @@ if '__main__' == __name__:
                        csrf_field: [csrf_token]}
             (output_objs, status) = main(client_id, request)
             if status == returnvalues.OK:
-                print('Request for %s membership in %s sent to owners' % \
+                print('Request for %s membership in %s sent to owners' %
                       (client_id, name))
             else:
-                print('Request for %s membership in %s with %s failed:' % \
+                print('Request for %s membership in %s with %s failed:' %
                       (client_id, name, request))
                 output_format = 'text'
                 (ret_code, ret_msg) = status
@@ -247,7 +268,7 @@ if '__main__' == __name__:
                 # Explicit None means error during output formatting
 
                 if output is None:
-                    print("ERROR: %s output formatting failed: %s" % \
+                    print("ERROR: %s output formatting failed: %s" %
                           (output_format, output_objs))
                     output = 'Error: output could not be correctly delivered!'
                 else:
