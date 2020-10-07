@@ -372,6 +372,7 @@ settings:
 --sftp_subsys_auth_procs=SFTP_SUBSYS_AUTH_PROCS
 --wsgi_procs=WSGI_PROCS
 --public_port=PUBLIC_PORT
+--public_https_port=PUBLIC_HTTPS_PORT
 --public_alias_port=PUBLIC_ALIAS_PORT
 --mig_cert_port=MIG_CERT_PORT
 --ext_cert_port=EXT_CERT_PORT
@@ -466,20 +467,20 @@ checked out directly in the home directory and Debian apache 2.4 without OpenID:
                    --skin=migrid-basic \
                    --short_title=MiG
                     
-or the same with HSTS, WSGI (default web), Seafile, optimized SFTP,
+or the same with HSTS, WSGI (default web), optimized SFTP,
 vhost-specific certificates from LetsEncrypt and OpenID with optional
 2FA support:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --destination_suffix="_svn$(svnversion -n ~/)" \
                    --base_fqdn=migrid.org \
                    --public_fqdn=www.migrid.org \
+                   --public_alias_fqdn=migrid-www.erda.dk \
                    --mig_cert_fqdn=dk-cert.migrid.org \
                    --ext_cert_fqdn= \
                    --mig_oid_fqdn=dk-ext.migrid.org \
                    --ext_oid_fqdn=dk-oid.migrid.org \
                    --sid_fqdn=dk-sid.migrid.org \
                    --io_fqdn=dk-io.migrid.org \
-                   --seafile_fqdn=dk-sid.migrid.org \
                    --user=mig --group=mig \
                    --apache_version=2.4 \
                    --apache_etc=/etc/apache2 \
@@ -494,7 +495,8 @@ vhost-specific certificates from LetsEncrypt and OpenID with optional
                    --hgweb_scripts=/usr/share/doc/mercurial-common/examples \
                    --trac_admin_path=/usr/bin/trac-admin \
                    --trac_ini_path=/home/mig/mig/server/trac.ini \
-                   --public_port=80 --ext_cert_port=443 --mig_oid_port=443 \
+                   --public_port=80 --public_https_port=443 \
+                   --ext_cert_port=443 --mig_oid_port=443 \
                    --ext_oid_port=443 --sid_port=443 \
                    --mig_oid_provider=https://dk-ext.migrid.org/openid/ \
                    --ext_oid_provider=https://openid.ku.dk/ \
@@ -527,13 +529,13 @@ or the same on centos
                    --destination_suffix="_svn$(svnversion -n ~/)" \
                    --base_fqdn=migrid.org \
                    --public_fqdn=www.migrid.org \
+                   --public_alias_fqdn=migrid-www.erda.dk \
                    --mig_cert_fqdn=dk-cert.migrid.org \
                    --ext_cert_fqdn= \
                    --mig_oid_fqdn=dk-ext.migrid.org \
                    --ext_oid_fqdn=dk-oid.migrid.org \
                    --sid_fqdn=dk-sid.migrid.org \
                    --io_fqdn=dk-io.migrid.org \
-                   --seafile_fqdn=dk-sid.migrid.org \
                    --user=mig --group=mig \
                    --apache_version=2.4 \
                    --apache_etc=/etc/httpd \
@@ -548,14 +550,15 @@ or the same on centos
                    --hgweb_scripts=/usr/share/doc/mercurial-2.6.2 \
                    --trac_admin_path=/usr/bin/trac-admin \
                    --trac_ini_path=/home/mig/mig/server/trac.ini \
-                   --public_port=80 --ext_cert_port=443 --mig_oid_port=443 \
+                   --public_port=80 --public_https_port=443 \
+                   --ext_cert_port=443 --mig_oid_port=443 \
                    --ext_oid_port=443 --sid_port=443 \
                    --mig_oid_provider=https://dk-ext.migrid.org/openid/ \
                    --ext_oid_provider=https://openid.ku.dk/ \
                    --enable_openid=True --enable_wsgi=True \
                    --enable_sftp=False --enable_sftp_subsys=True \
                    --enable_davs=True --enable_ftps=True \
-                   --enable_duplicati=False --enable_seafile=True \
+                   --enable_duplicati=False --enable_seafile=False \
                    --enable_sandboxes=True --enable_vmachines=False \
                    --enable_crontab=True --enable_jobs=True \
                    --enable_resources=True --enable_notify=True \
@@ -603,7 +606,8 @@ optimized SFTP, Seafile integration and OpenID login:
                    --hg_path=/usr/bin/hg \
                    --hgweb_scripts=/usr/share/doc/mercurial-2.6.2 \
                    --trac_admin_path='' --trac_ini_path='' \
-                   --public_port=80 --ext_cert_port=443 --mig_oid_port=443 \
+                   --public_port=80 --public_https_port=443 \
+                   --ext_cert_port=443 --mig_oid_port=443 \
                    --ext_oid_port=443 --sid_port=443 \
                    --mig_oid_provider=https://ext.erda.dk/openid/ \
                    --ext_oid_provider=https://openid.ku.dk/ \
@@ -656,7 +660,8 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --hg_path=/usr/bin/hg \
                    --hgweb_scripts=/usr/share/doc/mercurial-2.6.2 \
                    --trac_admin_path='' --trac_ini_path='' \
-                   --public_port=80 --ext_cert_port=443 --mig_oid_port=443 \
+                   --public_port=80 --public_https_port=443 \
+                   --ext_cert_port=443 --mig_oid_port=443 \
                    --ext_oid_port=443 --sid_port=443 \
                    --mig_oid_provider=https://ext.erda.dk/openid/ \
                    --ext_oid_provider=https://openid.ku.dk/ \
@@ -716,7 +721,8 @@ with optional 2-FA support and legacy sftp clients:
                    --hg_path=/usr/bin/hg \
                    --hgweb_scripts=/usr/share/doc/mercurial-2.6.2 \
                    --trac_admin_path='' --trac_ini_path='' \
-                   --public_port=80 --ext_cert_port=443 --mig_oid_port=443 \
+                   --public_port=80 --public_https_port=443 \
+                   --ext_cert_port=443 --mig_oid_port=443 \
                    --ext_oid_port=443 --sid_port=443 \
                    --mig_oid_provider=https://ext.idmc.dk/openid/ \
                    --ext_oid_provider=https://openid.ku.dk/ \
@@ -780,7 +786,8 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --hg_path='' \
                    --hgweb_scripts='' \
                    --trac_admin_path='' --trac_ini_path='' \
-                   --public_port=80 --ext_cert_port=443 --mig_oid_port=443 \
+                   --public_port=80 --public_https_port=443 \
+                   --ext_cert_port=443 --mig_oid_port=443 \
                    --ext_oid_port=443 --sid_port=443 \
                    --mig_oid_provider=https://sif-ext.erda.dk/openid/ \
                    --ext_oid_provider=https://openid.ku.dk/ \

@@ -288,6 +288,7 @@ def generate_confs(
     trac_admin_path='',
     trac_ini_path='',
     public_port=default_http_port,
+    public_https_port=default_https_port,
     public_alias_port=default_https_port,
     mig_cert_port=default_https_port,
     ext_cert_port=default_https_port + 1,
@@ -353,6 +354,7 @@ def generate_confs(
     user_dict['__USER__'] = user
     user_dict['__GROUP__'] = group
     user_dict['__PUBLIC_PORT__'] = str(public_port)
+    user_dict['__PUBLIC_HTTPS_PORT__'] = str(public_https_port)
     user_dict['__PUBLIC_ALIAS_PORT__'] = str(public_alias_port)
     user_dict['__MIG_CERT_PORT__'] = str(mig_cert_port)
     user_dict['__EXT_CERT_PORT__'] = str(ext_cert_port)
@@ -414,6 +416,7 @@ def generate_confs(
     user_dict['__EXT_OID_PROVIDER_ID__'] = ext_oid_provider
     user_dict['__EXT_OID_AUTH_DB__'] = auth_openid_ext_db
     user_dict['__PUBLIC_URL__'] = ''
+    user_dict['__PUBLIC_HTTPS_URL__'] = ''
     user_dict['__PUBLIC_ALIAS_URL__'] = ''
     user_dict['__MIG_CERT_URL__'] = ''
     user_dict['__EXT_CERT_URL__'] = ''
@@ -562,6 +565,9 @@ cert, oid and sid based https!
     user_dict['__IFDEF_PUBLIC_PORT__'] = 'UnDefine'
     if user_dict['__PUBLIC_PORT__']:
         user_dict['__IFDEF_PUBLIC_PORT__'] = 'Define'
+    user_dict['__IFDEF_PUBLIC_HTTPS_PORT__'] = 'UnDefine'
+    if user_dict['__PUBLIC_HTTPS_PORT__']:
+        user_dict['__IFDEF_PUBLIC_HTTPS_PORT__'] = 'Define'
 
     user_dict['__IFDEF_PUBLIC_ALIAS_FQDN__'] = 'UnDefine'
     if user_dict['__PUBLIC_ALIAS_FQDN__']:
@@ -765,14 +771,14 @@ cert, oid and sid based https!
         try:
             descs = ast.literal_eval(jupyter_services_desc)
         except SyntaxError as err:
-            print('Error: jupyter_services_desc ' \
-                'could not be intepreted correctly. Double check that your ' \
-                'formatting is correct, a dictionary formatted string is expected.')
+            print('Error: jupyter_services_desc '
+                  'could not be intepreted correctly. Double check that your '
+                  'formatting is correct, a dictionary formatted string is expected.')
             sys.exit(1)
 
         if not isinstance(descs, dict):
-            print('Error: %s was incorrectly formatted,' \
-                ' expects a string formatted as a dictionary' % descs)
+            print('Error: %s was incorrectly formatted,'
+                  ' expects a string formatted as a dictionary' % descs)
             sys.exit(1)
 
         service_hosts = {}
@@ -780,19 +786,19 @@ cert, oid and sid based https!
             # TODO, do more checks on format
             name_hosts = service.split(".", 1)
             if len(name_hosts) != 2:
-                print('Error: You have not correctly formattet ' \
-                    'the jupyter_services parameter, ' \
-                    'expects --jupyter_services="service_name.' \
-                    'http(s)://jupyterhost-url-or-ip ' \
-                    'other_service.http(s)://jupyterhost-url-or-ip"')
+                print('Error: You have not correctly formattet '
+                      'the jupyter_services parameter, '
+                      'expects --jupyter_services="service_name.'
+                      'http(s)://jupyterhost-url-or-ip '
+                      'other_service.http(s)://jupyterhost-url-or-ip"')
                 sys.exit(1)
             name, host = name_hosts[0], name_hosts[1]
             try:
                 valid_alphanumeric(name)
             except InputException as err:
-                print('Error: The --jupyter_services name: %s was incorrectly ' \
-                    'formatted, only allows alphanumeric characters %s' % (name,
-                                                                           err))
+                print('Error: The --jupyter_services name: %s was incorrectly '
+                      'formatted, only allows alphanumeric characters %s' % (name,
+                                                                             err))
             if name and host:
                 if name not in service_hosts:
                     service_hosts[name] = {'hosts': []}
@@ -903,14 +909,14 @@ cert, oid and sid based https!
         try:
             descs = ast.literal_eval(cloud_services_desc)
         except SyntaxError as err:
-            print('Error: cloud_services_desc ' \
-                'could not be intepreted correctly. Double check that your ' \
-                'formatting is correct, a dictionary formatted string is expected.')
+            print('Error: cloud_services_desc '
+                  'could not be intepreted correctly. Double check that your '
+                  'formatting is correct, a dictionary formatted string is expected.')
             sys.exit(1)
 
         if not isinstance(descs, dict):
-            print('Error: %s was incorrectly formatted,' \
-                ' expects a string formatted as a dictionary' % descs)
+            print('Error: %s was incorrectly formatted,'
+                  ' expects a string formatted as a dictionary' % descs)
             sys.exit(1)
 
         cloud_service_hosts = {}
@@ -918,19 +924,19 @@ cert, oid and sid based https!
             # TODO: do more checks on format?
             name_hosts = service.split(".", 1)
             if len(name_hosts) != 2:
-                print('Error: You have not correctly formattet ' \
-                    'the cloud_services parameter, ' \
-                    'expects --cloud_services="service_name.' \
-                    'http(s)://cloudhost-url-or-ip ' \
-                    'other_service.http(s)://cloudhost-url-or-ip"')
+                print('Error: You have not correctly formattet '
+                      'the cloud_services parameter, '
+                      'expects --cloud_services="service_name.'
+                      'http(s)://cloudhost-url-or-ip '
+                      'other_service.http(s)://cloudhost-url-or-ip"')
                 sys.exit(1)
             name, host = name_hosts[0], name_hosts[1]
             try:
                 valid_alphanumeric(name)
             except InputException as err:
-                print('Error: The --cloud_services name: %s was incorrectly ' \
-                    'formatted, only allows alphanumeric characters %s' % (name,
-                                                                           err))
+                print('Error: The --cloud_services name: %s was incorrectly '
+                      'formatted, only allows alphanumeric characters %s' % (name,
+                                                                             err))
             if name and host:
                 if name not in cloud_service_hosts:
                     cloud_service_hosts[name] = {'hosts': []}
@@ -1023,8 +1029,8 @@ cert, oid and sid based https!
     # Enable 2FA strict address only if explicitly requested
     if user_dict['__ENABLE_TWOFACTOR_STRICT_ADDRESS__'].lower() == 'true':
         if not user_dict['__ENABLE_TWOFACTOR__'].lower() == 'true':
-            print("ERROR: twofactor strict address use requested" \
-                + " but twofactor is disabled!")
+            print("ERROR: twofactor strict address use requested"
+                  + " but twofactor is disabled!")
             sys.exit(1)
         user_dict['__TWOFACTOR_STRICT_ADDRESS_COMMENTED__'] = ''
     else:
@@ -1043,17 +1049,17 @@ cert, oid and sid based https!
         try:
             import nbformat
         except ImportError:
-            print("ERROR: workflows use requested but " \
+            print("ERROR: workflows use requested but "
                   "nbformat is not installed!")
             sys.exit(1)
         except SyntaxError:
-            print("ERROR: workflows requires that the more-itertools package" \
+            print("ERROR: workflows requires that the more-itertools package"
                   "is installed as version 5.0.0")
             sys.exit(1)
         try:
             import nbconvert
         except ImportError:
-            print("ERROR: workflows use requested but " \
+            print("ERROR: workflows use requested but "
                   "nbconvert is not installed!")
             sys.exit(1)
 
@@ -1118,7 +1124,7 @@ openssl genrsa -out %(__DAEMON_KEYCERT__)s 2048""" % user_dict)
             daemon_keycert_sha256 = raw_sha256.replace("SHA256 Fingerprint=",
                                                        "")
         except Exception as exc:
-            print("ERROR: failed to extract sha256 fingerprint of %s: %s" % \
+            print("ERROR: failed to extract sha256 fingerprint of %s: %s" %
                   (key_path, exc))
         user_dict['__DAEMON_KEYCERT_SHA256__'] = daemon_keycert_sha256
     if user_dict['__DAEMON_PUBKEY__']:
@@ -1147,7 +1153,7 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
             raw_sha256 = hashlib.sha256(b64_key).digest()
             daemon_pubkey_sha256 = base64.b64encode(raw_sha256).rstrip('=')
         except Exception as exc:
-            print("ERROR: failed to extract fingerprints of %s : %s" % \
+            print("ERROR: failed to extract fingerprints of %s : %s" %
                   (pubkey_path, exc))
         user_dict['__DAEMON_PUBKEY_MD5__'] = daemon_pubkey_md5
         user_dict['__DAEMON_PUBKEY_SHA256__'] = daemon_pubkey_sha256
@@ -1177,7 +1183,7 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
 
     destination_path = "%s%s" % (destination, destination_suffix)
     if not os.path.islink(destination) and os.path.isdir(destination):
-        print("ERROR: Legacy %s dir in the way - please remove first" % \
+        print("ERROR: Legacy %s dir in the way - please remove first" %
               destination)
         sys.exit(1)
     try:
@@ -1195,6 +1201,11 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
             print("adding explicit public port (%s)" % [public_port,
                                                         default_http_port])
             user_dict['__PUBLIC_URL__'] += ':%(__PUBLIC_PORT__)s' % user_dict
+        user_dict['__PUBLIC_HTTPS_URL__'] = 'https://%(__PUBLIC_FQDN__)s' % user_dict
+        if str(public_https_port) != str(default_https_port):
+            print("adding explicit public https port (%s)" %
+                  [public_https_port, default_https_port])
+            user_dict['__PUBLIC_HTTPS_URL__'] += ':%(__PUBLIC_HTTPS_PORT__)s' % user_dict
     if public_alias_fqdn:
         user_dict['__PUBLIC_ALIAS_URL__'] = 'https://%(__PUBLIC_ALIAS_FQDN__)s' \
                                             % user_dict
@@ -1205,7 +1216,8 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
                                                  % user_dict
         # Apache fails on duplicate listen clauses
         if public_alias_fqdn == public_fqdn and \
-                public_alias_port == public_port:
+                (public_alias_port == public_port or
+                 public_alias_port == public_https_port):
             user_dict['__PUBLIC_ALIAS_LISTEN__'] = "# %s" % listen_clause
 
     if mig_cert_fqdn:
@@ -1701,32 +1713,32 @@ def create_user(
     trac_ini_path = '%s/trac.ini' % server_dir
 
     firewall_script = '/root/scripts/firewall'
-    print('# Add the next line to %s and run the script:'\
-        % firewall_script)
-    print('iptables -A INPUT -p tcp --dport %d:%d -j ACCEPT # webserver: %s'\
-        % (reserved_ports[0], reserved_ports[-1], user))
+    print('# Add the next line to %s and run the script:'
+          % firewall_script)
+    print('iptables -A INPUT -p tcp --dport %d:%d -j ACCEPT # webserver: %s'
+          % (reserved_ports[0], reserved_ports[-1], user))
 
     sshd_conf = '/etc/ssh/sshd_config'
     print("""# Unless 'AllowGroups %s' is already included, append %s
-# to the AllowUsers line in %s and restart sshd."""\
-         % (ssh_login_group, user, sshd_conf))
+# to the AllowUsers line in %s and restart sshd."""
+          % (ssh_login_group, user, sshd_conf))
     print("""# Add %s to the sudoers file (visudo) with privileges
 # to run apache init script in %s
 visudo""" % (user, apache_dir))
     print("""# Set disk quotas for %s using reference user quota:
-edquota -u %s -p LOGIN_OF_SIMILAR_USER"""\
-         % (user, user))
+edquota -u %s -p LOGIN_OF_SIMILAR_USER"""
+          % (user, user))
     expire = datetime.date.today()
     expire = expire.replace(year=expire.year + 1)
     print("""# Optionally set account expire date for user:
-chage -E %s %s"""\
-         % (expire, user))
+chage -E %s %s"""
+          % (expire, user))
     print("""# Attach full name of user to login:
-usermod -c 'INSERT FULL NAME HERE' %s"""\
-         % user)
+usermod -c 'INSERT FULL NAME HERE' %s"""
+          % user)
     print("""# Add mount point for sandbox generator:
-echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  auto    user,loop       0       0' >> /etc/fstab"""\
-         % (user, user))
+echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  auto    user,loop       0       0' >> /etc/fstab"""
+          % (user, user))
 
     src = os.path.abspath(os.path.dirname(sys.argv[0]))
     dst = os.path.join(src, '%s-confs' % user)
@@ -1816,6 +1828,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         trac_admin_path,
         trac_ini_path,
         public_port,
+        '',
         '',
         mig_cert_port,
         ext_cert_port,
@@ -1915,19 +1928,19 @@ The dedicated apache server can be started with the command:
 sudo %s/%s start
 
 #############################################################
-"""\
-         % (
-        user,
-        group,
-        pw,
-        public_port,
-        mig_cert_port,
-        ext_cert_port,
-        mig_oid_port,
-        ext_oid_port,
-        sid_port,
-        ', '.join(["%d" % port for port in extra_ports]),
-        apache_dir,
-        os.path.basename(apache_initd_script),
-    ))
+"""
+          % (
+              user,
+              group,
+              pw,
+              public_port,
+              mig_cert_port,
+              ext_cert_port,
+              mig_oid_port,
+              ext_oid_port,
+              sid_port,
+              ', '.join(["%d" % port for port in extra_ports]),
+              apache_dir,
+              os.path.basename(apache_initd_script),
+          ))
     return True

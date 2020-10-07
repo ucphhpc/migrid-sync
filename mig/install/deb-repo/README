@@ -11,9 +11,9 @@ Thus any old references to the mig@www.migrid.org should be replaced by
 the new key ID mig@migrid.org.
 
 Signing is achieved by mounting the mig user home on the build host during build:
-[prepare ssh login as mig at dk-cert.migrid.org]
-mkdir -p  ~/mnt/mig@dk-cert.migrid.org
-sshfs mig@dk-cert.migrid.org: ~/mnt/mig@dk-cert.migrid.org  -o uid=$(id -u) -o gid=$(id -g)
+[prepare ssh login as mig at migrid.org]
+mkdir -p  ~/mnt/mig@migrid.org
+sshfs mig@migrid.org: ~/mnt/mig@migrid.org  -o uid=$(id -u) -o gid=$(id -g)
 [add deb-src https://dk-sid.migrid.org/public/deb stable main to your APT sources]
 sudo apt-get update
 mkdir -p  ~/build
@@ -23,11 +23,25 @@ cd mig-user-scripts-VERSION
 EMAIL="Minimum intrusion Grid <mig@migrid.org>" dch -i
 [edit changelog and save - possibly cd to new dir if it mentions rename]
 [make your changes]
-GNUPGHOME=~/mnt/mig@dk-cert.migrid.org/.gnupg dpkg-buildpackage -rfakeroot
-[copy package files to ~/mnt/mig@dk-cert.migrid.org/state/wwwpublic/deb/pool/main/]
+GNUPGHOME=~/mnt/mig@migrid.org/.gnupg dpkg-buildpackage -rfakeroot
+[copy package files to ~/mnt/mig@migrid.org/state/wwwpublic/deb/pool/main/]
 
-Finally login as mig on dk.migrid.org and run the updaterep.sh script from
-~mig/state/wwwpublic/deb/ .
+If the signing with sshfs mounted key causes trouble it can instead be split 
+into a separate build step without signing followed by a remote signing:
+dpkg-buildpackage -rfakeroot -b -uc -us
+[upload files as above]
+ssh mig@migrid.org
+debsign -k mig@migrid.org state/wwwpublic/deb/pool/main/mig-user-scripts-VERSION.dsc
+
+
+Finally login as mig on migrid.org and run the updaterep.sh script from
+cd ~mig/state/wwwpublic/deb/ && bash updaterepo.sh
+
+Please note that this only works if the migrid.org host runs a debian/ubuntu
+flavor with devscripts and apt-utils installed. Again it can also be done in a
+two-step process instead by first running the script inside a sshfs mount on a
+debian/ubuntu system where signing may fail and then repeating on the
+migrid.org host where the debian commands are ignored to just do the signing. 
 
 On clients add the package repo line
 deb https://dk-sid.migrid.org/public/deb stable main

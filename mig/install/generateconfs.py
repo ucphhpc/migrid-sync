@@ -35,19 +35,20 @@ import getopt
 import os
 import sys
 
-# Ensure that the generateconfs.py script is able to execute from a fresh checkout
-# when the cwd is not the parent directory where it was checked out.
-# Solve this by ensuring that the MIG_PATH is part of the sys.path
-if "MIG_USER" not in os.environ:
-    os.environ["MIG_USER"] = "mig"
+# Ensure that the generateconfs.py script is able to execute from a fresh
+# checkout when the cwd is not the parent directory where it was checked out.
+# Solve this by ensuring that the chckout is part of the sys.path
 
-if "MIG_PATH" not in os.environ:
-    os.environ["MIG_PATH"] = os.path.join(os.sep, "home", os.environ["MIG_USER"])
+# NOTE: __file__ is /MIG_BASE/mig/install/generateconfs.py and we need MIG_BASE
 
-if os.environ["MIG_PATH"] not in sys.path:
-    sys.path.append(os.environ["MIG_PATH"])
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from mig.shared.install import generate_confs
+# NOTE: moved mig imports into try/except to avoid autopep8 moving to top!
+try:
+    from mig.shared.install import generate_confs
+except ImportError:
+    print("ERROR: the migrid modules must be in PYTHONPATH")
+    sys.exit(1)
 
 
 def usage(options):
@@ -128,6 +129,7 @@ if '__main__' == __name__:
         'sftp_subsys_auth_procs',
         'wsgi_procs',
         'public_port',
+        'public_https_port',
         'public_alias_port',
         'mig_cert_port',
         'ext_cert_port',
