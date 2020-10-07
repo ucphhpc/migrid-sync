@@ -737,7 +737,7 @@ with optional 2-FA support and legacy sftp clients:
                    --enable_freeze=False --enable_imnotify=False \
                    --enable_twofactor=True --enable_cracklib=True \
                    --enable_notify=True --enable_preview=True \
-                   --enable_workflows=True ---enable_hsts=True \
+                   --enable_workflows=True --enable_hsts=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
                    --enable_jupyter=True \
                    --jupyter_services='DAG.http://dag002.science DAG.http://dag003.science DAG.http://dag004.science DAG.http://dag005.science DAG.http://dag006.science DAG.http://dag007.science DAG.http://dag200.science MODI.http://130.225.104.218' \
