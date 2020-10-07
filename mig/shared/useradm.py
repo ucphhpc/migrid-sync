@@ -282,8 +282,10 @@ def create_user(
             raise Exception("Failed verify peers for %s using pattern %r: %s" %
                             (client_id, verify_pattern, '\n'.join(peer_notes)))
 
-        # Save peers in user DB for updates etc.
+        # Save peers in user DB for updates etc. but ignore peer search pattern
         user['peers'] = accepted_peer_list
+        if user.get('peer_pattern', None):
+            del user['peer_pattern']
         _logger.info("accept create user %s with peer validator(s): %s" %
                      (client_id, ', '.join(accepted_peer_list)))
 
