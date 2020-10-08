@@ -129,8 +129,8 @@ if '__main__' == __name__:
         'sftp_subsys_auth_procs',
         'wsgi_procs',
         'public_port',
+        'public_http_port',
         'public_https_port',
-        'public_alias_port',
         'mig_cert_port',
         'ext_cert_port',
         'mig_oid_port',
@@ -187,6 +187,7 @@ if '__main__' == __name__:
         'enable_sitestatus',
         'daemon_pubkey_from_dns',
         'seafile_ro_access',
+        'public_use_https',
     ]
     names = str_names + int_names + bool_names
     settings = {}

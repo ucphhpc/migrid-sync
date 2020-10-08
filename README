@@ -372,8 +372,8 @@ settings:
 --sftp_subsys_auth_procs=SFTP_SUBSYS_AUTH_PROCS
 --wsgi_procs=WSGI_PROCS
 --public_port=PUBLIC_PORT
+--public_http_port=PUBLIC_HTTP_PORT
 --public_https_port=PUBLIC_HTTPS_PORT
---public_alias_port=PUBLIC_ALIAS_PORT
 --mig_cert_port=MIG_CERT_PORT
 --ext_cert_port=EXT_CERT_PORT
 --mig_oid_port=MIG_OID_PORT
@@ -454,7 +454,7 @@ checked out directly in the home directory and Debian apache 2.4 without OpenID:
                    --hgweb_scripts=/usr/share/doc/mercurial-common/examples \
                    --trac_admin_path=/usr/bin/trac-admin \
                    --trac_ini_path=/home/mig/mig/server/trac.ini \
-                   --public_port=80 --mig_cert_port=443 --mig_oid_port=443 \
+                   --public_http_port=80 --mig_cert_port=443 --mig_oid_port=443 \
                    --ext_oid_port=443 --sid_port=443 \
                    --enable_openid=False --enable_wsgi=True \
                    --enable_sftp=False --enable_sftp_subsys=True \
@@ -495,7 +495,7 @@ vhost-specific certificates from LetsEncrypt and OpenID with optional
                    --hgweb_scripts=/usr/share/doc/mercurial-common/examples \
                    --trac_admin_path=/usr/bin/trac-admin \
                    --trac_ini_path=/home/mig/mig/server/trac.ini \
-                   --public_port=80 --public_https_port=443 \
+                   --public_http_port=80 --public_https_port=443 \
                    --ext_cert_port=443 --mig_oid_port=443 \
                    --ext_oid_port=443 --sid_port=443 \
                    --mig_oid_provider=https://dk-ext.migrid.org/openid/ \
@@ -509,8 +509,8 @@ vhost-specific certificates from LetsEncrypt and OpenID with optional
                    --enable_resources=True --enable_notify=True \
                    --enable_events=True --enable_imnotify=True \
                    --enable_twofactor=True --enable_cracklib=True \
-                   --enable_hsts=True \
-                   --enable_vhost_certs=True --enable_verify_certs=True \
+                   --enable_hsts=True --enable_vhost_certs=True \
+                   --enable_verify_certs=True --public_use_https=True \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='ServerAlias' --alias_field=email \
@@ -550,7 +550,7 @@ or the same on centos
                    --hgweb_scripts=/usr/share/doc/mercurial-2.6.2 \
                    --trac_admin_path=/usr/bin/trac-admin \
                    --trac_ini_path=/home/mig/mig/server/trac.ini \
-                   --public_port=80 --public_https_port=443 \
+                   --public_http_port=80 --public_https_port=443 \
                    --ext_cert_port=443 --mig_oid_port=443 \
                    --ext_oid_port=443 --sid_port=443 \
                    --mig_oid_provider=https://dk-ext.migrid.org/openid/ \
@@ -564,8 +564,8 @@ or the same on centos
                    --enable_resources=True --enable_notify=True \
                    --enable_events=True --enable_imnotify=True \
                    --enable_twofactor=True --enable_cracklib=True \
-                   --enable_hsts=True \
-                   --enable_vhost_certs=True --enable_verify_certs=True \
+                   --enable_hsts=True --enable_vhost_certs=True \
+                   --enable_verify_certs=True --public_use_https=True \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='ServerAlias' --alias_field=email \
@@ -606,7 +606,7 @@ optimized SFTP, Seafile integration and OpenID login:
                    --hg_path=/usr/bin/hg \
                    --hgweb_scripts=/usr/share/doc/mercurial-2.6.2 \
                    --trac_admin_path='' --trac_ini_path='' \
-                   --public_port=80 --public_https_port=443 \
+                   --public_http_port=80 --public_https_port=443 \
                    --ext_cert_port=443 --mig_oid_port=443 \
                    --ext_oid_port=443 --sid_port=443 \
                    --mig_oid_provider=https://ext.erda.dk/openid/ \
@@ -620,6 +620,7 @@ optimized SFTP, Seafile integration and OpenID login:
                    --enable_resources=False --enable_events=True \
                    --enable_freeze=True --enable_hsts=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
+                   --public_use_https=True \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='#ServerAlias' --alias_field=email \
@@ -660,7 +661,7 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --hg_path=/usr/bin/hg \
                    --hgweb_scripts=/usr/share/doc/mercurial-2.6.2 \
                    --trac_admin_path='' --trac_ini_path='' \
-                   --public_port=80 --public_https_port=443 \
+                   --public_http_port=80 --public_https_port=443 \
                    --ext_cert_port=443 --mig_oid_port=443 \
                    --ext_oid_port=443 --sid_port=443 \
                    --mig_oid_provider=https://ext.erda.dk/openid/ \
@@ -679,7 +680,9 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --enable_notify=True --enable_jupyter=True \
                    --jupyter_services='DAG.http://dag002.science DAG.http://dag003.science DAG.http://dag004.science DAG.http://dag005.science DAG.http://dag006.science DAG.http://dag007.science DAG.http://dag200.science MODI.http://130.225.104.218' \
                    --jupyter_services_desc="{'DAG': '/home/mig/state/wwwpublic/dag_desc.html', 'MODI': '/home/mig/state/wwwpublic/modi_desc.html'}" \
-                   --enable_cloud=True --user_clause=User --group_clause=Group \
+                   --enable_cloud=True \
+                   --public_use_https=True \
+                   --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='#ServerAlias' --alias_field=email \
                    --dhparams_path=~/certs/dhparams.pem \
@@ -721,7 +724,7 @@ with optional 2-FA support and legacy sftp clients:
                    --hg_path=/usr/bin/hg \
                    --hgweb_scripts=/usr/share/doc/mercurial-2.6.2 \
                    --trac_admin_path='' --trac_ini_path='' \
-                   --public_port=80 --public_https_port=443 \
+                   --public_http_port=80 --public_https_port=443 \
                    --ext_cert_port=443 --mig_oid_port=443 \
                    --ext_oid_port=443 --sid_port=443 \
                    --mig_oid_provider=https://ext.idmc.dk/openid/ \
@@ -742,6 +745,7 @@ with optional 2-FA support and legacy sftp clients:
                    --enable_jupyter=True \
                    --jupyter_services='DAG.http://dag002.science DAG.http://dag003.science DAG.http://dag004.science DAG.http://dag005.science DAG.http://dag006.science DAG.http://dag007.science DAG.http://dag200.science MODI.http://130.225.104.218' \
                    --jupyter_services_desc="{'DAG': '/home/mig/state/wwwpublic/dag_desc.html', 'MODI': '/home/mig/state/wwwpublic/modi_desc.html'}" \
+                   --public_use_https=True \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='#ServerAlias' --alias_field=email \
@@ -767,6 +771,7 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --destination_suffix="_svn$(svnversion -n ~/)" \
                    --base_fqdn=sif.erda.dk \
                    --public_fqdn=sif-www.erda.dk \
+                   --public_alias_fqdn=sif.ku.dk \
                    --mig_cert_fqdn= \
                    --ext_cert_fqdn= \
                    --mig_oid_fqdn=sif-ext.erda.dk \
@@ -786,7 +791,7 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --hg_path='' \
                    --hgweb_scripts='' \
                    --trac_admin_path='' --trac_ini_path='' \
-                   --public_port=80 --public_https_port=443 \
+                   --public_http_port=80 --public_https_port=443 \
                    --ext_cert_port=443 --mig_oid_port=443 \
                    --ext_oid_port=443 --sid_port=443 \
                    --mig_oid_provider=https://sif-ext.erda.dk/openid/ \
@@ -805,6 +810,7 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --enable_twofactor_strict_address=True \
                    --enable_cracklib=True --enable_hsts=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
+                   --public_use_https=True \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='#ServerAlias' --alias_field=email \

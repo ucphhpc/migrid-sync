@@ -288,8 +288,8 @@ def generate_confs(
     trac_admin_path='',
     trac_ini_path='',
     public_port=default_http_port,
+    public_http_port=default_http_port,
     public_https_port=default_https_port,
-    public_alias_port=default_https_port,
     mig_cert_port=default_https_port,
     ext_cert_port=default_https_port + 1,
     mig_oid_port=default_https_port + 3,
@@ -309,6 +309,7 @@ def generate_confs(
     seafile_client_port=13419,
     seafile_quota=2,
     seafile_ro_access=True,
+    public_use_https=False,
     user_clause='User',
     group_clause='Group',
     listen_clause='#Listen',
@@ -326,6 +327,10 @@ def generate_confs(
     # Read out dictionary of args with defaults and overrides
 
     expanded = locals()
+
+    # Backwards compatibility with old name
+    if public_port and not public_http_port:
+        public_http_port = public_port
 
     user_dict = {}
     user_dict['__GENERATECONFS_COMMAND__'] = generateconfs_command
@@ -353,9 +358,8 @@ def generate_confs(
     user_dict['__CLOUD_SECTIONS__'] = ''
     user_dict['__USER__'] = user
     user_dict['__GROUP__'] = group
-    user_dict['__PUBLIC_PORT__'] = str(public_port)
+    user_dict['__PUBLIC_HTTP_PORT__'] = str(public_http_port)
     user_dict['__PUBLIC_HTTPS_PORT__'] = str(public_https_port)
-    user_dict['__PUBLIC_ALIAS_PORT__'] = str(public_alias_port)
     user_dict['__MIG_CERT_PORT__'] = str(mig_cert_port)
     user_dict['__EXT_CERT_PORT__'] = str(ext_cert_port)
     user_dict['__MIG_OID_PORT__'] = str(mig_oid_port)
@@ -416,8 +420,10 @@ def generate_confs(
     user_dict['__EXT_OID_PROVIDER_ID__'] = ext_oid_provider
     user_dict['__EXT_OID_AUTH_DB__'] = auth_openid_ext_db
     user_dict['__PUBLIC_URL__'] = ''
+    user_dict['__PUBLIC_HTTP_URL__'] = ''
     user_dict['__PUBLIC_HTTPS_URL__'] = ''
-    user_dict['__PUBLIC_ALIAS_URL__'] = ''
+    user_dict['__PUBLIC_ALIAS_HTTP_URL__'] = ''
+    user_dict['__PUBLIC_ALIAS_HTTPS_URL__'] = ''
     user_dict['__MIG_CERT_URL__'] = ''
     user_dict['__EXT_CERT_URL__'] = ''
     user_dict['__MIG_OID_URL__'] = ''
@@ -445,6 +451,7 @@ def generate_confs(
     user_dict['__SEAFILE_CLIENT_PORT__'] = str(seafile_client_port)
     user_dict['__SEAFILE_QUOTA__'] = str(seafile_quota)
     user_dict['__SEAFILE_RO_ACCESS__'] = str(seafile_ro_access)
+    user_dict['__PUBLIC_USE_HTTPS__'] = str(public_use_https)
     user_dict['__ALIAS_FIELD__'] = alias_field
     user_dict['__SIGNUP_METHODS__'] = signup_methods
     user_dict['__LOGIN_METHODS__'] = login_methods
@@ -463,7 +470,8 @@ def generate_confs(
     user_dict['__SHORT_TITLE__'] = short_title
     user_dict['__VGRID_LABEL__'] = vgrid_label
     user_dict['__SECSCAN_ADDR__'] = secscan_addr
-    user_dict['__PUBLIC_ALIAS_LISTEN__'] = listen_clause
+    user_dict['__PUBLIC_HTTPS_LISTEN__'] = listen_clause
+    user_dict['__PUBLIC_ALIAS_HTTPS_LISTEN__'] = listen_clause
 
     # Needed for PAM/NSS
     pw_info = pwd.getpwnam(user)
@@ -562,9 +570,9 @@ cert, oid and sid based https!
     user_dict['__IFDEF_PUBLIC_FQDN__'] = 'UnDefine'
     if user_dict['__PUBLIC_FQDN__']:
         user_dict['__IFDEF_PUBLIC_FQDN__'] = 'Define'
-    user_dict['__IFDEF_PUBLIC_PORT__'] = 'UnDefine'
-    if user_dict['__PUBLIC_PORT__']:
-        user_dict['__IFDEF_PUBLIC_PORT__'] = 'Define'
+    user_dict['__IFDEF_PUBLIC_HTTP_PORT__'] = 'UnDefine'
+    if user_dict['__PUBLIC_HTTP_PORT__']:
+        user_dict['__IFDEF_PUBLIC_HTTP_PORT__'] = 'Define'
     user_dict['__IFDEF_PUBLIC_HTTPS_PORT__'] = 'UnDefine'
     if user_dict['__PUBLIC_HTTPS_PORT__']:
         user_dict['__IFDEF_PUBLIC_HTTPS_PORT__'] = 'Define'
@@ -572,9 +580,6 @@ cert, oid and sid based https!
     user_dict['__IFDEF_PUBLIC_ALIAS_FQDN__'] = 'UnDefine'
     if user_dict['__PUBLIC_ALIAS_FQDN__']:
         user_dict['__IFDEF_PUBLIC_ALIAS_FQDN__'] = 'Define'
-    user_dict['__IFDEF_PUBLIC_ALIAS_PORT__'] = 'UnDefine'
-    if user_dict['__PUBLIC_ALIAS_PORT__']:
-        user_dict['__IFDEF_PUBLIC_ALIAS_PORT__'] = 'Define'
 
     user_dict['__IFDEF_MIG_CERT_FQDN__'] = 'UnDefine'
     if user_dict['__MIG_CERT_FQDN__']:
@@ -752,6 +757,10 @@ cert, oid and sid based https!
             user_dict['__SEAFILE_LOCAL_COMMENTED__'] = ''
             # Remote Seafile additionally requires reverse *https* proxy
             user_dict['__PROXY_HTTPS_COMMENTED__'] = ''
+
+    user_dict['__PREFER_HTTPS_COMMENTED__'] = '#'
+    if public_use_https:
+        user_dict['__PREFER_HTTPS_COMMENTED__'] = ''
 
     if user_dict['__ENABLE_JUPYTER__'].lower() == 'true':
         try:
@@ -1196,29 +1205,42 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
 
     # Implicit ports if they are standard: cleaner and removes double hg login
     if public_fqdn:
-        user_dict['__PUBLIC_URL__'] = 'http://%(__PUBLIC_FQDN__)s' % user_dict
-        if str(public_port) != str(default_http_port):
-            print("adding explicit public port (%s)" % [public_port,
+        user_dict['__PUBLIC_HTTP_URL__'] = 'http://%(__PUBLIC_FQDN__)s' % user_dict
+        if str(public_http_port) != str(default_http_port):
+            print("adding explicit public port (%s)" % [public_http_port,
                                                         default_http_port])
-            user_dict['__PUBLIC_URL__'] += ':%(__PUBLIC_PORT__)s' % user_dict
-        user_dict['__PUBLIC_HTTPS_URL__'] = 'https://%(__PUBLIC_FQDN__)s' % user_dict
-        if str(public_https_port) != str(default_https_port):
-            print("adding explicit public https port (%s)" %
-                  [public_https_port, default_https_port])
-            user_dict['__PUBLIC_HTTPS_URL__'] += ':%(__PUBLIC_HTTPS_PORT__)s' % user_dict
+            user_dict['__PUBLIC_HTTP_URL__'] += ':%(__PUBLIC_HTTP_PORT__)s' % user_dict
+        if public_use_https:
+            user_dict['__PUBLIC_HTTPS_URL__'] = 'https://%(__PUBLIC_FQDN__)s' \
+                                                % user_dict
+            user_dict['__PUBLIC_URL__'] = user_dict['__PUBLIC_HTTPS_URL__']
+            if str(public_https_port) != str(default_https_port):
+                print("adding explicit public https port (%s)" %
+                      [public_https_port, default_https_port])
+                user_dict['__PUBLIC_HTTPS_URL__'] += ':%(__PUBLIC_HTTPS_PORT__)s' \
+                                                     % user_dict
+        else:
+            user_dict['__PUBLIC_URL__'] = user_dict['__PUBLIC_HTTP_URL__']
+            user_dict['__PUBLIC_HTTPS_URL__'] = ''
+            user_dict['__PUBLIC_HTTPS_LISTEN__'] = "# %s" % listen_clause
     if public_alias_fqdn:
-        user_dict['__PUBLIC_ALIAS_URL__'] = 'https://%(__PUBLIC_ALIAS_FQDN__)s' \
-                                            % user_dict
-        if str(public_alias_port) != str(default_https_port):
-            print("adding explicit public alias port (%s)" % [public_alias_port,
-                                                              default_https_port])
-            user_dict['__PUBLIC_ALIAS_URL__'] += ':%(__PUBLIC_ALIAS_PORT__)s' \
-                                                 % user_dict
+        user_dict['__PUBLIC_ALIAS_HTTP_URL__'] = 'http://%(__PUBLIC_ALIAS_FQDN__)s' \
+            % user_dict
+        user_dict['__PUBLIC_ALIAS_HTTPS_URL__'] = 'https://%(__PUBLIC_ALIAS_FQDN__)s' \
+            % user_dict
+        if str(public_http_port) != str(default_http_port):
+            print("adding explicit public alias port (%s)" % [public_http_port,
+                                                              default_http_port])
+            user_dict['__PUBLIC_ALIAS_HTTP_URL__'] += ':%(__PUBLIC_HTTP_PORT__)s' \
+                % user_dict
+        if str(public_https_port) != str(default_https_port):
+            print("adding explicit public alias https port (%s)" %
+                  [public_https_port, default_https_port])
+            user_dict['__PUBLIC_ALIAS_HTTPS_URL__'] += ':%(__PUBLIC_HTTPS_PORT__)s' \
+                % user_dict
         # Apache fails on duplicate listen clauses
-        if public_alias_fqdn == public_fqdn and \
-                (public_alias_port == public_port or
-                 public_alias_port == public_https_port):
-            user_dict['__PUBLIC_ALIAS_LISTEN__'] = "# %s" % listen_clause
+        if public_use_https and public_alias_fqdn == public_fqdn:
+            user_dict['__PUBLIC_ALIAS_HTTPS_LISTEN__'] = "# %s" % listen_clause
 
     if mig_cert_fqdn:
         user_dict['__MIG_CERT_URL__'] = 'https://%(__MIG_CERT_FQDN__)s' % \
@@ -1648,7 +1670,7 @@ def create_user(
 
     svc_ports = 6
     reserved_ports = range(svc_ports * uid, svc_ports * uid + svc_ports)
-    public_port, mig_cert_port, ext_cert_port, mig_oid_port, ext_oid_port, sid_port = \
+    public_http_port, mig_cert_port, ext_cert_port, mig_oid_port, ext_oid_port, sid_port = \
         reserved_ports[:svc_ports]
 
     mig_dir = os.path.join(home, 'mig')
@@ -1827,7 +1849,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         hgweb_scripts,
         trac_admin_path,
         trac_ini_path,
-        public_port,
+        public_http_port,
         '',
         '',
         mig_cert_port,
@@ -1909,7 +1931,7 @@ sudo cp -f -p %(server_conf)s %(trac_ini)s %(server_dir)s/
 %(sudo_cmd)s '%(server_dir)s/checkconf.py'
 """ % settings)
 
-    used_ports = [public_port, mig_cert_port, ext_cert_port, mig_oid_port,
+    used_ports = [public_http_port, mig_cert_port, ext_cert_port, mig_oid_port,
                   ext_oid_port, sid_port]
     extra_ports = [port for port in reserved_ports if not port in used_ports]
     print("""
@@ -1933,7 +1955,7 @@ sudo %s/%s start
               user,
               group,
               pw,
-              public_port,
+              public_http_port,
               mig_cert_port,
               ext_cert_port,
               mig_oid_port,
