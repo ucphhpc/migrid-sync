@@ -47,8 +47,13 @@ def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
     ssl_ctx = ssl.SSLContext(ssl_protocol)
     ssl_ctx.load_cert_chain(certfile, keyfile)
     ssl_options = 0
+    # NOTE: Override a number of weak and insecure legacy configurations
+    #       Please keep updated based on e.g. Mozilla server recommendations:
+    #       https://wiki.mozilla.org/Security/Server_Side_TLS
     ssl_options |= getattr(ssl, 'OP_NO_SSLv2', 0x1000000)
     ssl_options |= getattr(ssl, 'OP_NO_SSLv3', 0x2000000)
+    ssl_options |= getattr(ssl, 'OP_NO_TLSv1', 0x4000000)
+    ssl_options |= getattr(ssl, 'OP_NO_TLSv1_1', 0x10000000)
     ssl_options |= getattr(ssl, 'OP_NO_COMPRESSION', 0x20000)
     ssl_options |= getattr(ssl, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000)
     ssl_options |= getattr(ssl, 'OP_SINGLE_ECDH_USE', 0x80000)
@@ -122,12 +127,17 @@ def hardened_openssl_context(configuration, OpenSSL, keyfile, certfile,
         ssl_ctx.load_verify_locations(cacertfile)
 
     ssl_options = 0
+    # NOTE: Override a number of weak and insecure legacy configurations
+    #       Please keep updated based on e.g. Mozilla server recommendations:
+    #       https://wiki.mozilla.org/Security/Server_Side_TLS
     ssl_options |= getattr(SSL, 'OP_NO_SSLv2', 0x1000000)
     ssl_options |= getattr(SSL, 'OP_NO_SSLv3', 0x2000000)
+    ssl_options |= getattr(SSL, 'OP_NO_TLSv1', 0x4000000)
+    ssl_options |= getattr(SSL, 'OP_NO_TLSv1_1', 0x10000000)
     ssl_options |= getattr(SSL, 'OP_NO_COMPRESSION', 0x20000)
     ssl_options |= getattr(SSL, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000)
-    ssl_options |= getattr(ssl, 'OP_SINGLE_ECDH_USE', 0x80000)
-    ssl_options |= getattr(ssl, 'OP_SINGLE_DH_USE', 0x100000)
+    ssl_options |= getattr(SSL, 'OP_SINGLE_ECDH_USE', 0x80000)
+    ssl_options |= getattr(SSL, 'OP_SINGLE_DH_USE', 0x100000)
     if sys.version_info[:2] >= (2, 7) and ssl_ctx:
         _logger.info("enforcing strong SSL/TLS options")
         _logger.debug("SSL/TLS options: %s" % ssl_options)
