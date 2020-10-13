@@ -1,5 +1,26 @@
 [
   {
+    "status": "AUTO",
+    "work_start": "2020-10-13T07:00:00+02:00", 
+    "systems": [
+        "ERDA", "IDMC"
+    ], 
+    "announce_start": "2020-10-13T07:00:00+02:00", 
+    "title": {
+      "EN": "Short-notice DAG Maintenance", 
+      "DK": "Kortfristet vedligehold på DAG"
+    }, 
+    "services": [
+      "DAG"
+    ], 
+    "work_end": "2020-10-13T22:00:00+02:00", 
+    "description": {
+      "EN": "DAG has some access issues for a few specific users we need to address and it will likely require one or more DAG service restarts. This will most likely interrupt all running sessions. We did a bit of work before 8 this morning and will continue after standard office hours (17ish).", 
+      "DK": "DAG udviser problemer med adgang for enkelte brugere og vi er sandsynligvis nødt til at genstarte servicen for at adressere det. Vi forventer at det vil føre til et eller flere udfald på igangværende sessioner. Vi lavede lidt arbejde på det i morges inden kl 8 og fortsætter med de potentielt forstyrrende handlinger efter almindelig arbejdstid (kl 17+)."
+    }, 
+    "announce_end": "2020-10-14T10:00:00+02:00"
+  },
+  {
     "status": "AUTO", 
     "work_start": "2020-10-04T10:00:00+02:00", 
     "systems": [
