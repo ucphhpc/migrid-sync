@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # freezefunctions - freeze archive helper functions
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -43,7 +43,7 @@ from mig.shared.defaults import freeze_meta_filename, freeze_lock_filename, \
     wwwpublic_alias, public_archive_dir, public_archive_index, \
     public_archive_files, public_archive_doi, freeze_flavors, keyword_final, \
     keyword_pending, keyword_updating, keyword_auto, max_freeze_files, \
-    csrf_field
+    freeze_on_tape_filename, csrf_field
 from mig.shared.fileio import md5sum_file, sha1sum_file, sha256sum_file, \
     sha512sum_file, supported_hash_algos, write_file, copy_file, copy_rec, \
     move_file, move_rec, remove_rec, delete_file, delete_symlink, \
@@ -241,6 +241,22 @@ def parse_time_delta(str_value):
         multiplier = 7*24*60
     minutes = multiplier * count
     return datetime.timedelta(minutes=minutes)
+
+
+def parse_isoformat(str_value):
+    """Translate a ISO8601 string like 2020-09-30T15:51:17+0200 into a datetime
+    object. This is a convenience wrapper using datetime.strptime until we get
+    native datetime.fromisoformat() in python 3.7+
+    Please note that it completely ignores timezone offset assuming it matches
+    local timezone.
+    """
+    format_str = "%Y-%m-%dT%H:%M:%S"
+    # Simply ignore timezone offset expecting it to match local timezone
+    if len(str_value) > 19:
+        stripped = str_value[:19]
+    else:
+        stripped = str_value
+    return datetime.datetime.strptime(stripped, format_str)
 
 
 def list_frozen_archives(configuration, client_id, strict_owner=False):
@@ -499,6 +515,25 @@ def get_frozen_archive(client_id, freeze_id, configuration,
     freeze_dict = {'ID': freeze_id}
     freeze_dict.update(meta_out)
     freeze_dict['FILES'] = files_out
+    # NOTE: optional marker from actual tape writing
+    if configuration.site_freeze_to_tape and configuration.freeze_tape:
+        on_tape_date = 'PENDING'
+        arch_dir = get_frozen_root(client_id, freeze_id, configuration)
+        tape_marker_path = os.path.join(arch_dir, freeze_on_tape_filename)
+        tape_marker_path = tape_marker_path.replace(
+            configuration.freeze_home, configuration.freeze_tape)
+        if os.path.isfile(tape_marker_path):
+            try:
+                with open(tape_marker_path) as marker_fd:
+                    on_tape_value = marker_fd.readline().strip()
+                # NOTE: the required date format is ISO8601
+                #       like 2020-09-30T15:51:17+0200)
+                on_tape_date = parse_isoformat(on_tape_value)
+            except Exception, err:
+                _logger.error("failed to extract on tape date from %s: %s" %
+                              (tape_marker_path, err))
+                on_tape_date = 'UNKNOWN'
+        freeze_dict['LOCATION'].append(('tape', on_tape_date))
     return (True, freeze_dict)
 
 
@@ -984,8 +1019,9 @@ def commit_frozen_archive(freeze_dict, arch_dir, configuration):
     if freeze_dict.get('STATE', keyword_final) == keyword_final and \
             configuration.site_freeze_to_tape:
         delay = parse_time_delta(configuration.site_freeze_to_tape)
-        on_tape_date = on_disk_date + delay
-        archive_locations.append(('tape', on_tape_date))
+        on_tape_deadline = on_disk_date + delay
+        archive_locations.append(('tape (expected)', on_tape_deadline))
+
         # TODO: maintain or calculate total file count and size here
         total_files = freeze_dict.get('TOTALFILES', '?')
         total_size = freeze_dict.get('TOTALSIZE', '?')
@@ -993,7 +1029,7 @@ def commit_frozen_archive(freeze_dict, arch_dir, configuration):
                      (freeze_dict['FLAVOR'], freeze_id, freeze_dict['CREATOR'],
                       freeze_dict['STATE'], total_files, total_size))
         _logger.info("%s archive %s finalized with on-tape deadline %s" %
-                     (freeze_dict['FLAVOR'], freeze_id, on_tape_date))
+                     (freeze_dict['FLAVOR'], freeze_id, on_tape_deadline))
     freeze_dict['LOCATION'] = archive_locations
     (save_status, save_res) = save_frozen_meta(freeze_dict, arch_dir,
                                                configuration)

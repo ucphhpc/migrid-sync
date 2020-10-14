@@ -104,6 +104,7 @@ def fix_missing(config_file, verbose=True):
         'sss_home': '~/state/sss_home/',
         'sandbox_home': '~/state/sandbox_home',
         'freeze_home': '~/state/freeze_home',
+        'freeze_tape': '~/state/freeze_tape',
         'sharelink_home': '~/state/sharelink_home',
         'seafile_mount': '~/state/seafile_mount',
         'openid_store': '~/state/openid_store/',
@@ -323,6 +324,7 @@ class Configuration:
     sss_home = ''
     sandbox_home = ''
     freeze_home = ''
+    freeze_tape = ''
     sharelink_home = ''
     javabin_home = ''
     events_home = ''
@@ -786,6 +788,8 @@ location.""" % self.config_file)
             self.vm_home = config.get('GLOBAL', 'vm_home')
         if config.has_option('GLOBAL', 'freeze_home'):
             self.freeze_home = config.get('GLOBAL', 'freeze_home')
+        if config.has_option('GLOBAL', 'freeze_tape'):
+            self.freeze_tape = config.get('GLOBAL', 'freeze_tape')
         if config.has_option('GLOBAL', 'sharelink_home'):
             self.sharelink_home = config.get('GLOBAL', 'sharelink_home')
         if config.has_option('GLOBAL', 'seafile_mount'):

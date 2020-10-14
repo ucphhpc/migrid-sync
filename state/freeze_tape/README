@@ -1,0 +1,10 @@
+This folder can be used by a tape writing procedure to mark backup and freeze
+archives as actually written to tape.
+
+The marker format is a file USERID/ARCHIVE/onTape
+where onTape only holds the actual date when tape writing completed.
+
+As an example a user XYZ could have the marker XYZ/archive-JYiIVm/onTape
+containing the time stamp
+2020-09-30T15:51:17+0200
+where the timezone offset is expected to match the local time zone.
