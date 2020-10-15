@@ -62,6 +62,7 @@ the following additional software:
 -Python nbconvert (https://pypi.org/project/nbconvert/)
 -Python papermill (https://pypi.org/project/papermill/)
 -Python notebook_parameterizer (https://pypi.org/project/notebook_parameterizer)
+-Python psutil (https://pypi.org/project/psutil/)
 -Python future (https://pypi.org/project/future/)
 -LFTP (http://lftp.yar.ru/)
 -RSync (https://rsync.samba.org/)
@@ -82,8 +83,9 @@ sudo apt install apache2 openssh-client python python-pip python-setuptools \
 and most of the optional dependencies similarly with:
 sudo apt install libapache2-mod-wsgi libapache2-mod-auth-openid  \
      python-irclib python-paramiko python-enchant python-jsonrpclib \
-     python-requests python-future python-cracklib openssh-server \
-     libpam0g-dev mercurial trac trac-mercurial lftp rsync fail2ban ipset
+     python-requests python-psutil python-future python-cracklib \
+     openssh-server libpam0g-dev mercurial trac trac-mercurial lftp rsync \
+     fail2ban ipset
 
 On RedHat/CentOS servers the basic packages can be installed with:
 sudo yum install epel-release
@@ -92,8 +94,9 @@ sudo yum install httpd mod_ssl openssh-clients python python-pip \
 
 and most of the optional dependencies similarly with:
 sudo yum install mod_wsgi mod_auth_openid python-paramiko python-enchant \
-     python-jsonrpclib python-requests python-future cracklib-python \
-     openssh-server pam-devel mercurial lftp rsync fail2ban ipset
+     python-jsonrpclib python-requests python2-psutil python-future \
+     cracklib-python openssh-server pam-devel mercurial lftp rsync fail2ban \
+      ipset
 
 while the remaining ones need to be installed from EPEL
 sudo yum install trac trac-mercurial-plugin
