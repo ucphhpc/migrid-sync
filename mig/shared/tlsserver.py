@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # tlsserver - Shared functions for all SSL/TLS-secured servers
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -38,7 +38,8 @@ from mig.shared.defaults import STRONG_TLS_CIPHERS, STRONG_TLS_CURVES
 
 def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
                          ciphers=STRONG_TLS_CIPHERS,
-                         curve_priority=STRONG_TLS_CURVES):
+                         curve_priority=STRONG_TLS_CURVES,
+                         allow_pre_tlsv12=False):
     """Build and return a hardened native SSL context to apply to a socket"""
     _logger = configuration.logger
     _logger.info("enforcing strong SSL/TLS connections")
@@ -52,8 +53,10 @@ def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
     #       https://wiki.mozilla.org/Security/Server_Side_TLS
     ssl_options |= getattr(ssl, 'OP_NO_SSLv2', 0x1000000)
     ssl_options |= getattr(ssl, 'OP_NO_SSLv3', 0x2000000)
-    ssl_options |= getattr(ssl, 'OP_NO_TLSv1', 0x4000000)
-    ssl_options |= getattr(ssl, 'OP_NO_TLSv1_1', 0x10000000)
+    # NOTE: refuse weak TLS protocols unless allow_pre_tlsv12
+    if not allow_pre_tlsv12:
+        ssl_options |= getattr(ssl, 'OP_NO_TLSv1', 0x4000000)
+        ssl_options |= getattr(ssl, 'OP_NO_TLSv1_1', 0x10000000)
     ssl_options |= getattr(ssl, 'OP_NO_COMPRESSION', 0x20000)
     ssl_options |= getattr(ssl, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000)
     ssl_options |= getattr(ssl, 'OP_SINGLE_ECDH_USE', 0x80000)
@@ -113,7 +116,8 @@ dhparams nor elliptic curves available.""")
 def hardened_openssl_context(configuration, OpenSSL, keyfile, certfile,
                              cacertfile=None, dhparamsfile=None,
                              ciphers=STRONG_TLS_CIPHERS,
-                             curve_priority=STRONG_TLS_CURVES):
+                             curve_priority=STRONG_TLS_CURVES,
+                             allow_pre_tlsv12=False):
     """Build and return a hardened OpenSSL context to apply to a socket"""
     _logger = configuration.logger
     SSL, crypto = OpenSSL.SSL, OpenSSL.crypto
@@ -132,8 +136,10 @@ def hardened_openssl_context(configuration, OpenSSL, keyfile, certfile,
     #       https://wiki.mozilla.org/Security/Server_Side_TLS
     ssl_options |= getattr(SSL, 'OP_NO_SSLv2', 0x1000000)
     ssl_options |= getattr(SSL, 'OP_NO_SSLv3', 0x2000000)
-    ssl_options |= getattr(SSL, 'OP_NO_TLSv1', 0x4000000)
-    ssl_options |= getattr(SSL, 'OP_NO_TLSv1_1', 0x10000000)
+    # NOTE: refuse weak TLS protocols unless allow_pre_tlsv12
+    if not allow_pre_tlsv12:
+        ssl_options |= getattr(SSL, 'OP_NO_TLSv1', 0x4000000)
+        ssl_options |= getattr(SSL, 'OP_NO_TLSv1_1', 0x10000000)
     ssl_options |= getattr(SSL, 'OP_NO_COMPRESSION', 0x20000)
     ssl_options |= getattr(SSL, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000)
     ssl_options |= getattr(SSL, 'OP_SINGLE_ECDH_USE', 0x80000)

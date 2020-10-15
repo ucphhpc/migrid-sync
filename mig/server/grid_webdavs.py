@@ -70,7 +70,8 @@ except ImportError as ierr:
 from mig.shared.accountstate import check_account_accessible
 from mig.shared.base import invisible_path, force_unicode
 from mig.shared.conf import get_configuration_object
-from mig.shared.defaults import dav_domain, litmus_id, io_session_timeout
+from mig.shared.defaults import dav_domain, litmus_id, io_session_timeout, \
+    STRONG_TLS_CIPHERS, STRONG_TLS_LEGACY_CIPHERS
 from mig.shared.fileio import check_write_access, user_chroot_exceptions
 from mig.shared.gdp.all import project_open, project_close, project_log
 from mig.shared.griddaemons.davs import get_fs_path, acceptable_chmod, \
@@ -244,16 +245,29 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
     certificate = None
     private_key = None
 
-    def __init__(self, certificate, private_key, certificate_chain=None):
+    def __init__(self, certificate, private_key, certificate_chain=None,
+                 legacy_tls=False):
         """Initialize with parent constructor and set up a shared hardened SSL
         context to use in all future connections in the wrap method.
+
+        If the optional legacy_tls arg is set the STRONG_TLS_LEGACY_CIPHERS
+        are used instead of the STRONG_TLS_CIPHERS, and the limitation to
+        TSLv1.2+ is left out to allow legacy TLSv1.0 and TLSv1.1 connections.
+        This is required to support e.g. native Windows 7 WebDAVS access with
+        the weak ECDHE-RSA-AES128-SHA cipher.
         """
         BuiltinSSLAdapter.__init__(self, certificate, private_key,
                                    certificate_chain)
         # Set up hardened SSL context once and for all
         dhparams = configuration.user_shared_dhparams
+        if legacy_tls:
+            use_ciphers = STRONG_TLS_LEGACY_CIPHERS
+        else:
+            use_ciphers = STRONG_TLS_CIPHERS
         self.ssl_ctx = hardened_ssl_context(configuration, self.private_key,
-                                            self.certificate, dhparams)
+                                            self.certificate, dhparams,
+                                            ciphers=use_ciphers,
+                                            allow_pre_tlsv12=legacy_tls)
 
     def __force_close(self, socket_list):
         """Force close each socket in socket_list ignoring any errors"""
@@ -1579,7 +1593,7 @@ def run(configuration):
         # wsgiserver.CherryPyWSGIServer.ssl_adapter = BuiltinSSLAdapter(
         #     cert, key, chain)
         wsgiserver.CherryPyWSGIServer.ssl_adapter = HardenedSSLAdapter(
-            cert, key, chain)
+            cert, key, chain, configuration.site_enable_davs_legacy_tls)
 
     # Use bundled CherryPy WSGI Server to support SSL
     version = "%s WebDAV" % configuration.short_title

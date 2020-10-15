@@ -920,6 +920,11 @@ location.""" % self.config_file)
             self.site_enable_davs = config.getboolean('SITE', 'enable_davs')
         else:
             self.site_enable_davs = False
+        if config.has_option('SITE', 'enable_davs_legacy_tls'):
+            self.site_enable_davs_legacy_tls = config.getboolean(
+                'SITE', 'enable_davs_legacy_tls')
+        else:
+            self.site_enable_davs_legacy_tls = False
         if config.has_option('GLOBAL', 'user_davs_address'):
             self.user_davs_address = config.get('GLOBAL',
                                                 'user_davs_address')

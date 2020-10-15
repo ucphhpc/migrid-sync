@@ -517,7 +517,7 @@ vhost-specific certificates from LetsEncrypt and OpenID with optional
                    --dhparams_path=~/certs/dhparams.pem \
                    --daemon_keycert=~/certs/combined.pem \
                    --daemon_pubkey=~/certs/combined.pub \
-                   --daemon_pubkey_from_dns=False \
+                   --daemon_pubkey_from_dns=True \
                    --signup_methods="extoid migoid migcert" \
                    --login_methods="extoid migoid migcert" \
                    --skin=migrid-basic --short_title=MiG \
@@ -572,7 +572,7 @@ or the same on centos
                    --dhparams_path=~/certs/dhparams.pem \
                    --daemon_keycert=~/certs/combined.pem \
                    --daemon_pubkey=~/certs/combined.pub \
-                   --daemon_pubkey_from_dns=False \
+                   --daemon_pubkey_from_dns=True \
                    --signup_methods="extoid migoid migcert" \
                    --login_methods="extoid migoid migcert" \
                    --distro=centos --skin=migrid-basic --short_title=MiG \
