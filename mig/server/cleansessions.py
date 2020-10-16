@@ -33,19 +33,11 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import getopt
-import os
 import sys
-import time
-
-try:
-    import psutil
-except ImportError:
-    psutil = None
 
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import keyword_all
-from mig.shared.griddaemons.sessions import get_open_sessions, \
-    track_close_session
+from mig.shared.griddaemons.sessions import expire_dead_sessions
 
 
 def usage(name='cleansessions.py'):
@@ -55,26 +47,12 @@ def usage(name='cleansessions.py'):
 Usage:
 %(name)s [OPTIONS] [PROTO] [USERNAME]
 Where OPTIONS may be one or more of:
-   -c CONF_FILE        Use CONF_FILE as server configuration
    -f                  Force operations to continue past errors
    -h                  Show this help
    -v                  Verbose output
 where PROTO is %(all)s or a specific IO protocol and USERNAME is a specific
 user but can be left empty to target all users.
 """ % {'name': name, 'all': keyword_all})
-
-
-def parse_connections(configuration, connections):
-    """Takes psutil connection list and returns a list of session ID as used
-    by griddaemons session tracking.
-    """
-    sessions = []
-    inactive_states = [psutil.CONN_LISTEN, psutil.CONN_NONE]
-    for conn in connections:
-        if conn.status not in inactive_states:
-            session_id = "%s:%s" % conn.raddr
-            sessions.append(session_id)
-    return sessions
 
 
 if __name__ == '__main__':
@@ -102,16 +80,12 @@ if __name__ == '__main__':
         else:
             print('Error: %s not supported!' % opt)
 
+    if args:
+        proto = args[0]
     if args[1:]:
-        proto = args[1]
-    if args[2:]:
-        username = args[2]
+        username = args[1]
 
-    if psutil is None:
-        print('Failed to import required psutil module')
-        sys.exit(1)
-
-    configuration = get_configuration_object(skip_log=True)
+    configuration = get_configuration_object()
 
     all_protos = ['davs', 'sftp', 'ftps']
     if proto == keyword_all:
@@ -124,37 +98,10 @@ if __name__ == '__main__':
               (proto, username))
     retval = 0
     cleaned = []
-    min_stale_secs = 120
     configuration = get_configuration_object(skip_log=True)
     for cur_proto in proto_list:
-        sessions = get_open_sessions(configuration, cur_proto, username)
-        if not sessions:
-            if verbose:
-                print('No tracked %s sessions ...' % cur_proto)
-            continue
-        if verbose:
-            print('Found %s sessions:\n%s' % (cur_proto, sessions))
-        active_connections = psutil.net_connections()
-        active_sessions = parse_connections(configuration, active_connections)
-        if verbose:
-            print('All active sessions:\n%s' % active_sessions)
-        now = time.time()
-        for (session_id, info) in sessions.items():
-            session_age_secs = now - info['timestamp']
-            if session_age_secs < min_stale_secs:
-                if verbose:
-                    print('Skip session %s only %ds old' %
-                          (session_id, session_age_secs))
-                continue
-            if not session_id in active_sessions:
-                if verbose:
-                    print('Cleaning stale %s session: %s' %
-                          (cur_proto, session_id))
-
-                print('TODO: actually clean stale %s session: %s' %
-                      (cur_proto, session_id))
-
-                cleaned.append(session_id)
+        expired = expire_dead_sessions(configuration, cur_proto, username)
+        cleaned += expired.keys()
 
     if cleaned:
         print("\n### Summary ###")

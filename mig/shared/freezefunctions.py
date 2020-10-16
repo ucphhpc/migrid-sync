@@ -517,7 +517,6 @@ def get_frozen_archive(client_id, freeze_id, configuration,
     freeze_dict['FILES'] = files_out
     # NOTE: optional marker from actual tape writing
     if configuration.site_freeze_to_tape and configuration.freeze_tape:
-        on_tape_date = 'PENDING'
         arch_dir = get_frozen_root(client_id, freeze_id, configuration)
         tape_marker_path = os.path.join(arch_dir, freeze_on_tape_filename)
         tape_marker_path = tape_marker_path.replace(
@@ -529,11 +528,13 @@ def get_frozen_archive(client_id, freeze_id, configuration,
                 # NOTE: the required date format is ISO8601
                 #       like 2020-09-30T15:51:17+0200)
                 on_tape_date = parse_isoformat(on_tape_value)
+                freeze_dict['LOCATION'].append(('tape', on_tape_date))
+                _logger.debug("added on tape date for '%s': %s" %
+                              (freeze_id, on_tape_date))
             except Exception, err:
                 _logger.error("failed to extract on tape date from %s: %s" %
                               (tape_marker_path, err))
-                on_tape_date = 'UNKNOWN'
-        freeze_dict['LOCATION'].append(('tape', on_tape_date))
+
     return (True, freeze_dict)
 
 
@@ -1020,7 +1021,7 @@ def commit_frozen_archive(freeze_dict, arch_dir, configuration):
             configuration.site_freeze_to_tape:
         delay = parse_time_delta(configuration.site_freeze_to_tape)
         on_tape_deadline = on_disk_date + delay
-        archive_locations.append(('tape (expected)', on_tape_deadline))
+        archive_locations.append(('tape deadline', on_tape_deadline))
 
         # TODO: maintain or calculate total file count and size here
         total_files = freeze_dict.get('TOTALFILES', '?')

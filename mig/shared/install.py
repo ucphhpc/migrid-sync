@@ -1021,6 +1021,13 @@ cert, oid and sid based https!
         user_dict['__CRON_JOB_CLEANUP__'] = '1'
     else:
         user_dict['__CRON_JOB_CLEANUP__'] = '0'
+    if user_dict['__ENABLE_SFTP_SUBSYS__'].lower() == 'true' or \
+            user_dict['__ENABLE_SFTP__'].lower() == 'true' or \
+            user_dict['__ENABLE_DAVS__'].lower() == 'true' or \
+            user_dict['__ENABLE_FTPS__'].lower() == 'true':
+        user_dict['__CRON_SESSION_CLEANUP__'] = '1'
+    else:
+        user_dict['__CRON_SESSION_CLEANUP__'] = '0'
 
     # Enable 2FA only if explicitly requested
     if user_dict['__ENABLE_TWOFACTOR__'].lower() == 'true':

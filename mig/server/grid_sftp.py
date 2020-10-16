@@ -98,8 +98,8 @@ from mig.shared.griddaemons.sftp import default_username_validator, \
     refresh_user_creds, refresh_job_creds, refresh_share_creds, \
     refresh_jupyter_creds, update_login_map, login_map_lookup, \
     hit_rate_limit, expire_rate_limit, clear_sessions, \
-    track_open_session, track_close_session, active_sessions, \
-    check_twofactor_session, validate_auth_attempt, authlog
+    track_open_session, track_close_session, expire_dead_sessions, \
+    active_sessions, check_twofactor_session, validate_auth_attempt, authlog
 from mig.shared.logger import daemon_logger, daemon_gdp_logger, \
     register_hangup_handler
 from mig.shared.notification import send_system_notification
@@ -417,8 +417,17 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.src_port = src_port
             active_count = active_sessions(configuration, 'sftp',
                                            self.user_name)
-            if configuration.user_sftp_max_sessions > 0 and \
-                    active_count >= configuration.user_sftp_max_sessions:
+            # NOTE: we delay dead session cleanup until actually hitting limit
+            if configuration.user_sftp_max_sessions > 0:
+                connections_left = configuration.user_sftp_max_sessions - active_count
+            else:
+                # Arbitrary 'big enough' number
+                connections_left = 4096
+            logger.debug("login from %s with %d sessions left" %
+                         (username, connections_left))
+            if connections_left < 1 and connections_left + \
+                    len(expire_dead_sessions(configuration, 'sftp',
+                                             username)) < 1:
                 notify = True
                 if self.ip_addr in configuration.site_security_scanners:
                     notify = False

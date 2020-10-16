@@ -19,6 +19,7 @@ REQCLEANUP=__CRON_REQ_CLEANUP__
 JOBCLEANUP=__CRON_JOB_CLEANUP__
 TFCLEANUP=__CRON_TWOFACTOR_CLEANUP__
 EVTCLEANUP=__CRON_EVENT_CLEANUP__
+SESSCLEANUP=__CRON_SESSION_CLEANUP__
 
 logmsg() {
     if [ $VERBOSE -eq 1 ]; then
@@ -76,5 +77,12 @@ if [ $EVTCLEANUP -eq 1 ]; then
         logmsg "Packing event trace files older than $max_days days from $name"
         su - mig -c "find $name -xdev -maxdepth 1 -mtime +${max_days} -type f -regex '.*-[0-9.]+$' -exec /bin/gzip \{\} \;"
     done
+fi
+
+if [ $SESSCLEANUP -eq 1 ]; then
+    # Run session cleanup script to remove dead login sessions from griddaemon
+    # session tracking in case of unclean session shutdowns.
+    logmsg "Cleaning up dead client sessions in griddaemon session tracking"
+    su - mig -c "PYTHONPATH=__MIG_BASE__ mig/server/cleansessions.py -v"
 fi
 exit 0

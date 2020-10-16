@@ -29,6 +29,13 @@
 
 import os
 import time
+
+# NOTE: we rely on psutil for post-mortem expiring stale sessions not closed
+try:
+    import psutil
+except ImportError:
+    psutil = None
+
 from mig.shared.defaults import io_session_timeout
 from mig.shared.fileio import pickle, unpickle, acquire_file_lock, \
     release_file_lock
@@ -317,5 +324,81 @@ def active_sessions(configuration,
                                       do_lock=do_lock)
 
     result = len(open_sessions)
+
+    return result
+
+
+def lookup_live_sessions(configuration, session_id_format="%s:%s"):
+    """Ask system about active network connections using psutil and extract
+    a list of active ones with each item on the session_id_format.
+    """
+    if psutil is None:
+        return None
+    sessions = []
+    active_connections = psutil.net_connections()
+    # We consider all entries active unless they are listening or have state NONE
+    # The full list of known states is available at
+    # https://psutil.readthedocs.io/en/latest/#connections-constants
+    inactive_states = [psutil.CONN_LISTEN, psutil.CONN_NONE]
+    for connection in active_connections:
+        if connection.status not in inactive_states:
+            session_id = session_id_format % connection.raddr
+            sessions.append(session_id)
+    return sessions
+
+
+def expire_dead_sessions(
+        configuration,
+        proto,
+        client_id=None,
+        do_lock=True):
+    """Lookup live sessions and compare with registered open sessions to expire
+    dead sessions.
+    Returns dictionary of closed sessions {session_id: session}
+    """
+    logger = configuration.logger
+    result = {}
+    min_stale_secs = 120
+    #logger.debug("expire dead %s sessions for client %s" % (proto, client_id))
+    live_sessions = lookup_live_sessions(configuration)
+    if live_sessions is None:
+        logger.warning("expire dead sessions requires psutil package")
+        return result
+    # logger.debug("expire dead %s sessions for %s with live_sessions: %s" %
+    #             (proto, client_id, live_sessions))
+
+    if do_lock:
+        sessions_lock = _acquire_sessions_lock(
+            configuration, proto, exclusive=True)
+    open_sessions = get_open_sessions(
+        configuration, proto, client_id=client_id, do_lock=False)
+    # logger.debug("expire dead %s sessions for %s with open_sessions: %s" %
+    #             (proto, client_id, open_sessions))
+    current_timestamp = time.time()
+    for open_session_id in open_sessions.keys():
+        if open_session_id in live_sessions:
+            logger.debug("ignore live session in expire: %s" % open_session_id)
+            continue
+        timestamp = open_sessions[open_session_id]['timestamp']
+        if current_timestamp - timestamp > min_stale_secs:
+            logger.info("expire dead session: %s" % open_session_id)
+            cur_session = open_sessions[open_session_id]
+            cur_session_id = cur_session['session_id']
+            closed_session = \
+                track_close_session(configuration,
+                                    proto,
+                                    cur_session['client_id'],
+                                    cur_session['ip_addr'],
+                                    cur_session['tcp_port'],
+                                    session_id=cur_session_id,
+                                    do_lock=False)
+            if closed_session is not None:
+                result[cur_session_id] = closed_session
+        else:
+            logger.debug("ignore recent session in expire: %s" %
+                         open_session_id)
+
+    if do_lock:
+        _release_sessions_lock(sessions_lock)
 
     return result
