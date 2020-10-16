@@ -107,6 +107,7 @@ from mig.shared.pwhash import make_simple_hash
 from mig.shared.tlsserver import hardened_openssl_context
 from mig.shared.useradm import check_password_hash
 from mig.shared.validstring import possible_user_id, possible_sharelink_id
+from mig.shared.vgrid import in_vgrid_share
 
 
 configuration, logger = None, None
@@ -395,6 +396,37 @@ class MiGRestrictedFilesystem(AbstractedFS):
             return True
         except:
             return False
+
+    def rmdir(self, path):
+        """Handle operations of same name"""
+        ftp_path = self.fs2ftp(path)
+        # Prevent removal of special dirs
+        if in_vgrid_share(configuration, path) == ftp_path[1:]:
+            logger.error("rmdir on vgrid src %s :: %s" % (ftp_path,
+                                                          path))
+            raise FilesystemError("requested rmdir not allowed")
+        return AbstractedFS.rmdir(self, path)
+
+    def remove(self, path):
+        """Handle operations of same name"""
+        ftp_path = self.fs2ftp(path)
+        # Prevent removal of special files
+        if in_vgrid_share(configuration, path) == ftp_path[1:]:
+            logger.error("remove on vgrid src %s :: %s" % (ftp_path,
+                                                           path))
+            raise FilesystemError("requested remove not allowed")
+        return AbstractedFS.remove(self, path)
+
+    def rename(self, old_path, new_path):
+        """Handle operations of same name"""
+        ftp_old_path = self.fs2ftp(old_path)
+        ftp_new_path = self.fs2ftp(new_path)
+        # Prevent rename of special files
+        if in_vgrid_share(configuration, old_path) == ftp_old_path[1:]:
+            logger.error("rename on vgrid src %s :: %s" % (ftp_old_path,
+                                                           old_path))
+            raise FilesystemError("requested rename not allowed")
+        return AbstractedFS.rename(self, old_path, new_path)
 
 
 def update_users(configuration, login_map, username):

@@ -93,11 +93,12 @@ from mig.shared.useradm import check_password_hash, generate_password_hash, \
     generate_password_digest
 from mig.shared.validstring import possible_user_id, possible_gdp_user_id, \
     possible_sharelink_id
+from mig.shared.vgrid import in_vgrid_share
 
 configuration, logger = None, None
 
 
-def _handle_allowed(request, abs_path):
+def _handle_allowed(request, abs_path, path):
     """Helper to make sure ordinary handle of a COPY, MOVE or DELETE
     request is allowed on abs_path.
 
@@ -107,7 +108,11 @@ def _handle_allowed(request, abs_path):
     NOTE: We prevent any direct operation on symlinks used in vgrid shares.
     This is in line with other grid_X daemons and the web interface.
     """
-    if os.path.islink(abs_path):
+    if request != "copy" \
+            and in_vgrid_share(configuration, abs_path) == path[1:]:
+        logger.warning("refused %s on vgrid: %s" % (request, abs_path))
+        raise DAVError(HTTP_FORBIDDEN)
+    elif os.path.islink(abs_path):
         logger.warning("refused %s on symlink: %s" % (request, abs_path))
         raise DAVError(HTTP_FORBIDDEN)
     elif invisible_path(abs_path):
@@ -573,8 +578,8 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
                     .authDigestAuthRequest(environ, start_response)
             auth_username = environ.get('http_authenticator.username', None)
             auth_realm = environ.get('http_authenticator.realm', None)
-            #print "DEBUG: auth_username: %s" % auth_username
-            #print "DEBUG: auth_realm: %s" % auth_realm
+            # print "DEBUG: auth_username: %s" % auth_username
+            # print "DEBUG: auth_realm: %s" % auth_realm
             if auth_username and auth_username == username and auth_realm:
                 if password_auth:
                     valid_password = True
@@ -878,13 +883,13 @@ class MiGFileResource(FileResource):
         @wraps(method)
         def _impl(self, *method_args, **method_kwargs):
             if method.__name__ == 'handleCopy':
-                _handle_allowed("copy", self._filePath)
+                _handle_allowed("copy", self._filePath, self.path)
             elif method.__name__ == 'handleMove':
-                _handle_allowed("move", self._filePath)
+                _handle_allowed("move", self._filePath, self.path)
             elif method.__name__ == 'handleDelete':
-                _handle_allowed("delete", self._filePath)
+                _handle_allowed("delete", self._filePath, self.path)
             else:
-                _handle_allowed("unknown", self._filePath)
+                _handle_allowed("unknown", self._filePath, self.path)
             return method(self, *method_args, **method_kwargs)
         return _impl
 
@@ -1005,13 +1010,13 @@ class MiGFolderResource(FolderResource):
         @wraps(method)
         def _impl(self, *method_args, **method_kwargs):
             if method.__name__ == 'handleCopy':
-                _handle_allowed("copy", self._filePath)
+                _handle_allowed("copy", self._filePath, self.path)
             elif method.__name__ == 'handleMove':
-                _handle_allowed("move", self._filePath)
+                _handle_allowed("move", self._filePath, self.path)
             elif method.__name__ == 'handleDelete':
-                _handle_allowed("delete", self._filePath)
+                _handle_allowed("delete", self._filePath, self.path)
             else:
-                _handle_allowed("unknown", self._filePath)
+                _handle_allowed("unknown", self._filePath, self.path)
             return method(self, *method_args, **method_kwargs)
         return _impl
 

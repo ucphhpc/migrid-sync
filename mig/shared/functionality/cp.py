@@ -43,7 +43,6 @@ from mig.shared.parseflags import verbose, recursive, force
 from mig.shared.sharelinks import extract_mode_id
 from mig.shared.userio import GDPIOLogError, gdp_iolog
 from mig.shared.validstring import valid_user_path
-from mig.shared.vgrid import in_vgrid_share
 
 
 def signature():
@@ -280,13 +279,6 @@ confirm it. You may want to back up any important data from %s first, however.
                     {'object_type': 'warning', 'text': """You're not allowed to
 copy entire special folders like %s shared folders!"""
                      % configuration.site_vgrid_label})
-                status = returnvalues.CLIENT_ERROR
-                continue
-            # Additionally refuse operations on inherited subvgrid share roots
-            elif in_vgrid_share(configuration, abs_path) == relative_path:
-                output_objects.append(
-                    {'object_type': 'warning', 'text': """You're not allowed to
-copy entire %s shared folders!""" % configuration.site_vgrid_label})
                 status = returnvalues.CLIENT_ERROR
                 continue
             elif os.path.realpath(abs_path) == os.path.realpath(base_dir):

@@ -107,6 +107,7 @@ from mig.shared.pwhash import make_simple_hash
 from mig.shared.useradm import check_password_hash
 from mig.shared.validstring import possible_user_id, possible_gdp_user_id, \
     possible_job_id, possible_sharelink_id, possible_jupyter_mount_id
+from mig.shared.vgrid import in_vgrid_share
 
 configuration, logger = None, None
 
@@ -908,6 +909,10 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.error("remove rejected on link path %s :: %s" %
                               (path, real_path))
             return paramiko.SFTP_PERMISSION_DENIED
+        if in_vgrid_share(configuration, real_path) == path[1:]:
+            self.logger.error("remove rejected on vgrid path %s :: %s" %
+                              (path, real_path))
+            return paramiko.SFTP_PERMISSION_DENIED
         if not os.path.exists(real_path):
             self.logger.error("remove on missing path %s :: %s" % (path,
                                                                    real_path))
@@ -938,6 +943,10 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         if os.path.islink(real_oldpath):
             self.logger.error("rename on link src %s :: %s" % (oldpath,
                                                                real_oldpath))
+            return paramiko.SFTP_PERMISSION_DENIED
+        if in_vgrid_share(configuration, real_oldpath) == oldpath[1:]:
+            self.logger.error("rename on vgrid src %s :: %s" % (oldpath,
+                                                                real_oldpath))
             return paramiko.SFTP_PERMISSION_DENIED
         if not os.path.exists(real_oldpath):
             self.logger.error("rename on missing path %s :: %s" %
@@ -1010,6 +1019,10 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         # Prevent removal of special files - link to vgrid dirs, etc.
         if os.path.islink(real_path):
             self.logger.error("rmdir rejected on link path %s :: %s" %
+                              (path, real_path))
+            return paramiko.SFTP_PERMISSION_DENIED
+        if in_vgrid_share(configuration, real_path) == path[1:]:
+            self.logger.error("rmdir rejected on vgrid path %s :: %s" %
                               (path, real_path))
             return paramiko.SFTP_PERMISSION_DENIED
         if not os.path.exists(real_path):
