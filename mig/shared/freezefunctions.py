@@ -528,6 +528,10 @@ def get_frozen_archive(client_id, freeze_id, configuration,
                 # NOTE: the required date format is ISO8601
                 #       like 2020-09-30T15:51:17+0200)
                 on_tape_date = parse_isoformat(on_tape_value)
+                # NOTE: mark legacy tape deadline entry to current naming
+                last = freeze_dict['LOCATION'][-1]
+                if last[0] == 'tape':
+                    freeze_dict['LOCATION'][-1] = ('tape deadline', last[1])
                 freeze_dict['LOCATION'].append(('tape', on_tape_date))
                 _logger.debug("added on tape date for '%s': %s" %
                               (freeze_id, on_tape_date))
