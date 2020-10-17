@@ -13,10 +13,10 @@
     "services": [
       "Seafile"
     ], 
-    "work_end": "2020-10-17T22:00:00+02:00", 
+    "work_end": "2020-10-17T12:55:00+02:00", 
     "description": {
-      "EN": "We have a number of pending system and minor bugfixes on ERDA Seafile. The work will require a full Seafile system restart after the system updates. ERDA Seafile will therefore be down for shorter or longer periods during the work, but all other ERDA services should remain fully available. More info to follow here.", 
-      "DK": "Vi har en række udestående system- og mindre funktionelle opdateringer på ERDAs Seafile. Arbejdet kræver genstart af hele Seafile systemet efter systemopdateringerne. ERDA Seafile vil derfor være utilgængelig i kortere eller længere perioder under opdateringen, men det skulle ikke berøre øvrige ERDA services. Yderligere information følger her."
+      "EN": "We have a number of pending system and minor bugfixes on ERDA Seafile. The work will require a full Seafile system restart after the system updates. ERDA Seafile will therefore be down for shorter or longer periods during the work, but all other ERDA services should remain fully available. The upgrades are complete and the Seafile service is back online.", 
+      "DK": "Vi har en række udestående system- og mindre funktionelle opdateringer på ERDAs Seafile. Arbejdet kræver genstart af hele Seafile systemet efter systemopdateringerne. ERDA Seafile vil derfor være utilgængelig i kortere eller længere perioder under opdateringen, men det skulle ikke berøre øvrige ERDA services. Opgraderingerne er gennemført og Seafile er tilbage i almindelig drift."
     }, 
     "announce_end": "2020-10-19T10:00:00+02:00"
   }, 
