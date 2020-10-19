@@ -65,6 +65,7 @@ def fix_missing(config_file, verbose=True):
         'admin_email': '%s@%s' % (user, fqdn),
         'admin_list': '',
         'ca_fqdn': '',
+        'ca_smtp': '',
         'ca_user': 'mig-ca',
         'jupyter_mount_files_dir': '~/state/jupyter_mount_files',
         'mrsl_files_dir': '~/state/mrsl_files/',
@@ -298,6 +299,7 @@ class Configuration:
     admin_email = ''
     admin_list = ''
     ca_fqdn = ''
+    ca_smtp = ''
     ca_user = 'mig-ca'
     resource_home = ''
     vgrid_home = ''
@@ -740,6 +742,8 @@ location.""" % self.config_file)
 
         if config.has_option('GLOBAL', 'ca_fqdn'):
             self.ca_fqdn = config.get('GLOBAL', 'ca_fqdn')
+        if config.has_option('GLOBAL', 'ca_smtp'):
+            self.ca_smtp = config.get('GLOBAL', 'ca_smtp')
         if config.has_option('GLOBAL', 'ca_user'):
             self.ca_user = config.get('GLOBAL', 'ca_user')
         if config.has_option('GLOBAL', 'migserver_https_mig_cert_url'):

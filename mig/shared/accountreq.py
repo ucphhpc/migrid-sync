@@ -544,15 +544,15 @@ def user_manage_commands(configuration, mig_user, req_path, user_id, user_dict,
         cmd_helpers['command_cert_create'] = """on CA host (%s):
 sudo su - %s
 rsync -aP %s@%s:mig/server/MiG-users.db ~/
-./ca-scripts/createusercert.py -a '%s' -d ~/MiG-users.db -s '%s' -u '%s'""" % \
+./ca-scripts/createusercert.py -a '%s' -d ~/MiG-users.db -r '%s' -s '%s' -u '%s'""" % \
             (configuration.ca_fqdn, configuration.ca_user, mig_user,
              configuration.server_fqdn, configuration.admin_email,
-             configuration.server_fqdn, user_id)
+             configuration.ca_smtp, configuration.server_fqdn, user_id)
         cmd_helpers['command_cert_revoke'] = """on CA host (%s):
 sudo su - %s
-./ca-scripts/revokeusercert.py -a '%s' -d ~/MiG-users.db -u '%s'""" % \
+./ca-scripts/revokeusercert.py -a '%s' -d ~/MiG-users.db -r '%s' -u '%s'""" % \
             (configuration.ca_fqdn, configuration.ca_user,
-             configuration.admin_email, user_id)
+             configuration.admin_email, configuration.ca_smtp, user_id)
 
     if kind == 'cert':
         cmd_helpers['command_user_notify'] = '[Automatic for certificates]'
