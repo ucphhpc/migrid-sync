@@ -940,6 +940,13 @@ def edit_user(
     for base_dir in user_dirs:
         old_path = os.path.join(base_dir, client_dir)
         new_path = os.path.join(base_dir, new_client_dir)
+        # Skip rename if dir was already renamed either in partial run or on
+        # a shared FS sister site.
+        if os.path.exists(new_path) and not os.path.exists(old_path):
+            if verbose:
+                print('skip already complete rename of user dir %s to %s' %
+                      (old_path, new_path))
+            continue
         try:
             rename_dir(old_path, new_path)
         except Exception as exc:
@@ -987,8 +994,9 @@ def edit_user(
                               % (client_id, res_id, err))
                     continue
                 if verbose:
-                    print('Updated %s owner from %s to %s' % (res_id, client_id,
-                                                              new_id))
+                    print(
+                        'Updated %s owner from %s to %s' % (res_id, client_id,
+                                                            new_id))
 
     # Loop through vgrid map and update user owner/membership
     # By using the high level add/remove API the corresponding vgrid components
