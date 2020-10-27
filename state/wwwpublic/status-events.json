@@ -1,5 +1,26 @@
 [
   {
+    "status": "AUTO",
+    "work_start": "2020-10-26T22:00:00+01:00", 
+    "systems": [
+        "ERDA", "IDMC"
+    ], 
+    "announce_start": "2020-10-22T15:00:00+01:00", 
+    "title": {
+      "EN": "Short-notice DAG Maintenance and outages", 
+      "DK": "Kortfristet vedligehold og udfald på DAG"
+    }, 
+    "services": [
+      "DAG"
+    ], 
+    "work_end": "2020-10-28T07:59:00+01:00", 
+    "description": {
+      "EN": "DAG has some continuing access issues for a few specific users, which we need to address and it will likely require one or more DAG service restarts. This will most likely interrupt all running sessions. We did a major clean up late last night and see some fallout today with home dirs not being mounted in some of the Jupyter sessions. We will continue investigating and trying to fix it. We apologize for the inconvenience of the resulting outages and hope to have DAG back to normal no later than tomorrow morning.", 
+      "DK": "DAG udviser stadig problemer med adgang for enkelte brugere og vi er sandsynligvis nødt til at genstarte servicen for at adressere det. Vi forventer at det vil føre til et eller flere udfald på igangværende sessioner. Vi lavede en omfattende oprydning sent i aftes og undersøger idag resulterende problemer med manglende adgang til data fra hjemmemappen i enkelte Jupyter sessions. Vi beklager de gener arbejdet medfører og håber at have DAG tilbage i normal drift senest i morgen tidlig."
+    }, 
+    "announce_end": "2020-10-28T10:00:00+01:00"
+  },
+  {
     "status": "AUTO", 
     "work_start": "2020-10-17T10:00:00+02:00", 
     "systems": [
