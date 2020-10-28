@@ -799,7 +799,7 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --ext_oid_port=443 --sid_port=443 \
                    --mig_oid_provider=https://sif-ext.erda.dk/openid/ \
                    --ext_oid_provider=https://openid.ku.dk/ \
-                   --enable_openid=False --enable_wsgi=True \
+                   --enable_openid=True --enable_wsgi=True \
                    --enable_sftp=True --enable_sftp_subsys=False \
                    --enable_davs=True --enable_ftps=False \
                    --enable_sharelinks=False --enable_transfers=False \
@@ -825,7 +825,8 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --login_methods="extoid migoid" \
                    --password_policy=HIGH --distro=centos \
                    --skin=erda-ucph-science --short_title=SIF \
-                   --wsgi_procs=25
+                   --wsgi_procs=25 \
+                   --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
 
 Most of the arguments should be relatively straight forward, but you
 need to provide the MIG_CERTS path where your apache server key and
