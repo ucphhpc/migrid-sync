@@ -46,6 +46,9 @@ from mig.shared.html import man_base_js, man_base_html, console_log_javascript, 
     twofactor_wizard_html, twofactor_wizard_js, twofactor_token_html, \
     save_settings_js, save_settings_html
 from mig.shared.init import initialize_main_variables, find_entry, extract_menu
+from mig.shared.pwhash import parse_password_policy
+from mig.shared.safeinput import html_escape, password_min_len, password_max_len, \
+    valid_password_chars
 from mig.shared.settings import load_settings, load_ssh, load_davs, load_ftps, \
     load_seafile, load_duplicati, load_cloud, load_twofactor
 from mig.shared.twofactorkeywords import get_twofactor_specs
@@ -152,8 +155,9 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'html_form',
                            'text': man_base_html(configuration)})
 
-    valid_topics = []
     active_menu = extract_menu(configuration, title_entry)
+
+    valid_topics = []
     if configuration.site_enable_sftp or configuration.site_enable_sftp_subsys:
         valid_topics.append('sftp')
     if configuration.site_enable_davs:
@@ -175,7 +179,7 @@ def main(client_id, user_arguments_dict):
         topic_list.remove('ssh')
         topic_list.append('sftp')
     topic_list = [topic for topic in topic_list if topic in valid_topics]
-    # Default to general if no valid topics given
+    # Default to first valid topic if no valid topics requested
     if not topic_list:
         topic_list.append(valid_topics[0])
     topic_titles = dict([(i, i.title()) for i in valid_topics])
@@ -206,20 +210,13 @@ def main(client_id, user_arguments_dict):
                            'sep': '  '})
     output_objects.append({'object_type': 'text', 'text': ''})
 
-    # load current settings
-
-    current_settings_dict = load_settings(client_id, configuration)
-    if not current_settings_dict:
-
-        # no current settings found
-
-        current_settings_dict = {}
-
     if not topic_list:
         output_objects.append({'object_type': 'error_text', 'text':
                                'No valid topics!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    # Site policy dictates pw min length greater or equal than password_min_len
+    policy_min_len, policy_min_classes = parse_password_policy(configuration)
     save_html = save_settings_html(configuration)
     (expire_warn, expire_time, renew_days, extend_days) = account_expire_info(
         configuration, client_id)
@@ -243,10 +240,14 @@ NOTE: your %s account access including efficient file service access expires on
 
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
-    fill_helpers = {'site': configuration.short_title,
-                    'form_method': form_method, 'csrf_field': csrf_field,
-                    'csrf_limit': csrf_limit, 'save_html': save_html,
-                    'expire_html': expire_html}
+    fill_helpers = {
+        'site': configuration.short_title, 'form_method': form_method,
+        'csrf_field': csrf_field, 'csrf_limit': csrf_limit,
+        'valid_password_chars': html_escape(valid_password_chars),
+        'password_min_len': max(policy_min_len, password_min_len),
+        'password_max_len': password_max_len,
+        'password_min_classes': max(policy_min_classes, 1),
+        'save_html': save_html, 'expire_html': expire_html}
 
     if 'sftp' in topic_list:
 
@@ -309,12 +310,7 @@ distributions even natively integrate SFTP access in the file manager.
 <li>Username <em>%(username)s</em></li>
 <li>%(auth_methods)s <em>as you choose below</em></li>
 </ul>
-
-<p>
-<br />
-%(fingerprint_info)s
-</p>
-
+<p>%(fingerprint_info)s</p>
 <input type="hidden" name="topic" value="sftp" />
 <div class="div-sftp-client-notes hidden">
 <a href="javascript:toggleHidden('.div-sftp-client-notes');"
@@ -357,8 +353,7 @@ From then on you can use sftp, lftp and sshfs to access your %(site)s home:</p>
 <ul>
 <li>sftp -B 258048 %(sftp_server)s</li>
 <li>lftp -e "set net:connection-limit %(max_sessions)d" -p %(sftp_port)s sftp://%(sftp_server)s</li>
-<li>mkdir -p remote-home</li>
-<li>sshfs %(sftp_server)s: remote-home -o idmap=user -o big_writes -o reconnect</li>
+<li>mkdir -p remote-home && sshfs %(sftp_server)s: remote-home -o idmap=user -o big_writes -o reconnect</li>
 </ul>
 
 <p>
@@ -413,7 +408,11 @@ Please enter and save your desired password in the text field below, to be able
 to connect with username and password as described in the Login Details.
 </p>
 <p>
+<!-- NOTE: we currently allow empty here to disable password login -->
 <input class="fullwidth" type=password id="%(keyword_password)s" size=40 name="password"
+maxlength=%(password_max_len)d pattern=".{0,%(password_max_len)d}"
+title="Password of your choice with at least %(password_min_len)d characters
+from %(password_min_classes)d classes (lowercase, uppercase, digits and other)"
 value="%(default_authpassword)s" />
 (leave empty to disable sftp access with password)
 </p>
@@ -534,7 +533,7 @@ to avoid typing the full login details every time:</p>
 <p>From then on you can use e.g. cadaver or fusedav to access your %(site)s home:</p>
 <ul>
     <li>cadaver https://%(davs_server)s:%(davs_port)s</li>
-    <li>fusedav https://%(davs_server)s:%(davs_port)s remote-home -o uid=$(id -u) -o gid=$(id -g)</li>
+    <li>mkdir -p remote-home && fusedav https://%(davs_server)s:%(davs_port)s remote-home -o uid=$(id -u) -o gid=$(id -g)</li>
 </ul>
 </div>
 <div class="div-webdavs-client-notes">
@@ -577,7 +576,11 @@ Please enter and save your desired password in the text field below, to be able
 to connect with username and password as described in the Login Details.
 </p>
 <p>
+<!-- NOTE: we currently allow empty here to disable password login -->
 <input class="fullwidth" type=password id="%(keyword_password)s" size=40 name="password"
+maxlength=%(password_max_len)d pattern="(.{0,%(password_max_len)d})?"
+title="Password of your choice with at least %(password_min_len)d characters
+from %(password_min_classes)d classes (lowercase, uppercase, digits and other)"
 value="%(default_authpassword)s" />
 (leave empty to disable davs access with password)
 </p>
@@ -698,12 +701,12 @@ to avoid typing the full login details every time:</p>
 <li>login %(username)s</li>
 <li>password YOUR_PASSWORD_HERE</li>
 </ul>
-<p><br/>From then on you can use e.g. lftp or CurlFtpFS to access your %(site)s home:</p>
+<p>From then on you can use e.g. lftp or CurlFtpFS to access your %(site)s home:</p>
 <ul>
-<li>lftp -e "set ssl:verify-certificate no; set ftp:ssl-protect-data on; set net:connection-limit %(max_sessions)d" -p %(ftps_ctrl_port)s %(ftps_server)s</li>
+<li>lftp -e "set ftp:ssl-protect-data on; set net:connection-limit %(max_sessions)d" -p %(ftps_ctrl_port)s %(ftps_server)s</li>
 </ul>
 <ul>
-<li>curlftpfs -o ssl %(ftps_server)s:%(ftps_ctrl_port)s remote-home -o user=%(username)s -ouid=$(id -u) -o gid=$(id -g) -o no_verify_peer</li>
+<li>mkdir -p remote-home && curlftpfs -o ssl %(ftps_server)s:%(ftps_ctrl_port)s remote-home -o user=%(username)s -ouid=$(id -u) -o gid=$(id -g) -o no_verify_peer</li>
 </ul>
 </div>
 <div class="div-ftps-client-notes">
@@ -748,7 +751,11 @@ Please enter and save your desired password in the text field below, to be able
 to connect with username and password as described in the Login Details.
 </p>
 <p>
+<!-- NOTE: we currently allow empty here to disable password login -->
 <input class="fullwidth" type=password id="%(keyword_password)s" size=40 name="password"
+maxlength=%(password_max_len)d pattern=".{0,%(password_max_len)d}"
+title="Password of your choice with at least %(password_min_len)d characters
+from %(password_min_classes)d classes (lowercase, uppercase, digits and other)"
 value="%(default_authpassword)s" />
 (leave empty to disable ftps access with password)
 </p>
@@ -860,7 +867,7 @@ function open_login_window(url, username) {
 <p>You can register a Seafile account on %(site)s to get synchronization and
 sharing features like those known from e.g. Dropbox.<br/>
 This enables you to keep one or more folders synchronized between
-all your computers and to share those files and folders with other people.<br/></p>
+all your computers and to share those files and folders with other people.</p>
 
 <fieldset>
 <legend><p>Register %(site)s Seafile Account</p></legend>
@@ -872,12 +879,20 @@ all your computers and to share those files and folders with other people.<br/><
 <input class="input" id="dummy_email" type="text" value="%(username)s"
     readonly />
 <br/>
+<!-- NOTE: we require password policy in this case because pw MUST be set -->
 <label for="id_password1">Choose Password</label>
 <input class="input" id="id_password1" name="password1"
-    type="password" />
+minlength=%(password_min_len)d maxlength=%(password_max_len)d required
+pattern=".{%(password_min_len)d,%(password_max_len)d}"
+title="Password of your choice with at least %(password_min_len)d characters
+from %(password_min_classes)d classes (lowercase, uppercase, digits and other)"
+type="password" />
 <br/>
 <label for="id_password2">Confirm Password</label>
-<input class="input" id="id_password2" name="password2" type="password" />
+<input class="input" id="id_password2" name="password2"
+minlength=%(password_min_len)d maxlength=%(password_max_len)d required
+pattern=".{%(password_min_len)d,%(password_max_len)d}"
+title="Repeat your chosen password" type="password" />
 <br/>
 <input id="seafileregbutton" type="submit" value="Register" class="submit" />
 and wait for email confirmation before continuing below.</p>
@@ -958,7 +973,11 @@ Please enter and save your chosen Seafile password again in the text field
 below, to enable the read-only Seafile integration in your user home.
 </p>
 <p>
-<input type=password id="%(keyword_password)s" size=40 name="password"
+<!-- NOTE: we currently allow empty here to disable password login -->
+<input class="fullwidth" type=password id="%(keyword_password)s" size=40 name="password"
+maxlength=%(password_max_len)d pattern=".{0,%(password_max_len)d}"
+title="Password of your choice with at least %(password_min_len)d characters
+from %(password_min_classes)d classes (lowercase, uppercase, digits and other)"
 value="%(default_authpassword)s" />
 (leave empty to disable seafile integration)
 </p>
@@ -1115,7 +1134,7 @@ for %(site)s backup use.</p>
                     valid_choices = eval('configuration.%s' % keyword.lower())
 
                     if valid_choices:
-                        html += '<select class="styled-select semi-square html-select"name="%s">' % keyword
+                        html += '<select class="styled-select semi-square html-select" name="%s">' % keyword
                         for choice in valid_choices:
                             selected = ''
                             if choice == current_choice:
@@ -1140,14 +1159,6 @@ for %(site)s backup use.</p>
                 current_choice = ''
                 if keyword in current_duplicati_dict:
                     current_choice = current_duplicati_dict[keyword]
-                #html += '<select class="styled-select semi-square html-select" name="%s">' % keyword
-                # for choice in valid_choices:
-                #    selected = ''
-                #    if choice == current_choice:
-                #        selected = 'selected'
-                #    html += '<option %s value="%s">%s</option>'\
-                #        % (selected, choice, choice)
-                #html += '</select><br />'
                 checked = ''
                 if current_choice == True:
                     checked = 'checked'
@@ -1336,7 +1347,11 @@ Please enter and save your desired password in the text field below, to be able
 to connect with username and password as described in the Login Details.
 </p>
 <p>
+<!-- NOTE: we currently allow empty here to disable password login -->
 <input class="fullwidth" type=password id="%(keyword_password)s" size=40 name="password"
+maxlength=%(password_max_len)d pattern=".{0,%(password_max_len)d}"
+title="Password of your choice with at least %(password_min_len)d characters
+from %(password_min_classes)d classes (lowercase, uppercase, digits and other)"
 value="%(default_authpassword)s" />
 (leave empty to disable cloud access with password)
 </p>
@@ -1501,7 +1516,7 @@ value="%(default_authpassword)s" />
                     current_choice = current_twofactor_dict[keyword]
 
                 if valid_choices:
-                    entry += '<select class="styled-select semi-square html-select"name="%s">' % keyword
+                    entry += '<select class="styled-select semi-square html-select" name="%s">' % keyword
                     for choice in valid_choices:
                         selected = ''
                         if choice == current_choice:
