@@ -667,6 +667,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         ignore_patterns=None,
         ignore_directories=False,
         case_sensitive=False,
+        sub_vgrids=None
     ):
         """Constructor"""
 
@@ -674,6 +675,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                                              ignore_patterns,
                                              ignore_directories,
                                              case_sensitive)
+        self.sub_vgrids = sub_vgrids
 
     def __workflow_log(
         self,
@@ -1088,12 +1090,13 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
         pid = multiprocessing.current_process().pid
         state = event.event_type
-        src_path = event.src_path
         is_directory = event.is_directory
 
         # If dir_modified is due to a file event we ignore it
 
         if is_directory and state == 'created':
+            src_path = self.__get_masked_event_path(event)
+
             rel_path = strip_base_dirs(src_path)
 
             # TODO: Optimize this such that only '.'
@@ -1211,26 +1214,45 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
             # logger.debug('(%s) no recent miss for %s' % (pid, event_id))
             return False
 
+    def __get_masked_event_path(self, event):
+        """Mask event paths in writable files homes to appear in base vgrid
+        files directory."""
+        # Masking events to deal with symlinked directories. Enables matching
+        # of events within writable directory to triggers in base files
+        # directory. Once migration to new structure is complete this can
+        # probably be removed in favour of only monitoring writable directory.
+        src_path = event.src_path
+
+        if ':' in src_path:
+            for sub_vgrid in self.sub_vgrids:
+                if sub_vgrid in src_path:
+                    mask = sub_vgrid.replace(':', os.path.sep)
+                    masked = src_path.replace(sub_vgrid, mask)
+                    if os.path.exists(masked):
+                        src_path = masked
+
+        masked = src_path.replace(
+            configuration.vgrid_files_writable,
+            configuration.vgrid_files_home)
+        if os.path.exists(masked):
+            src_path = masked
+
+        # logger.debug('(%s) event at %s was really at %s' %
+        #              (pid, src_path, event.src_path))
+
+        return src_path
+
     def run_handler(self, event):
         """Trigger any rule actions bound to file state change"""
 
         pid = multiprocessing.current_process().pid
         state = event.event_type
-        src_path = event.src_path
-
-        # match events within writable directory to trigger in files directory.
-        # Once migration to new structure is complete this can probably be
-        # removed.
-        src_path = src_path.replace(
-            configuration.vgrid_files_writable,
-            configuration.vgrid_files_home)
-
+        src_path = self.__get_masked_event_path(event)
         is_directory = event.is_directory
 
         # logger.debug('(%s) got %s event for src_path: %s, directory: %s' % \
         #             (pid, state, src_path, is_directory))
-        # logger.debug('(%s) event at %s was really at %s' %
-        #              (pid, src_path, event.src_path))
+
         # logger.debug('(%s) filter %s against %s' % (pid,
         #             all_rules.keys(), src_path))
 
@@ -1684,6 +1706,7 @@ def monitor(configuration, vgrid_name):
 
     # Monitor rule configurations
 
+    writeable_sub_vgrids = []
     if vgrid_name == '.':
         vgrid_home = configuration.vgrid_home
         file_monitor_home = shared_state['base_dir']
@@ -1694,6 +1717,24 @@ def monitor(configuration, vgrid_name):
         file_monitor_home = os.path.join(shared_state['base_dir'], vgrid_name)
         writable_dir = os.path.join(shared_state['writable_dir'], vgrid_name)
         recursive_rule_monitor = True
+
+        # Check for sub vgrids by checking for sub directories in vgrid_home
+        for (root, dirs, _) in walk(vgrid_home):
+            for dir_name in dirs:
+                # Need to join then replace here to catch sub-sub vgrids
+                sub_vgrid = os.path.join(root, dir_name).replace(
+                    configuration.vgrid_home, '').replace(os.path.sep, ':')
+
+                sub_vgrid_path = os.path.join(
+                    configuration.vgrid_files_writable, sub_vgrid)
+                if not sub_vgrid.startswith('.') \
+                        and os.path.exists(sub_vgrid_path):
+                    writeable_sub_vgrids.append(sub_vgrid)
+    if writeable_sub_vgrids:
+        msg = 'Within vgrid %s, Found sub vgrids: %s' \
+              % (vgrid_name, writeable_sub_vgrids)
+        print(msg)
+        logger.info(msg)
 
     rule_monitor = Observer()
     rule_patterns = [os.path.join(vgrid_home, '*')]
@@ -1723,24 +1764,44 @@ def monitor(configuration, vgrid_name):
         os.path.join(file_monitor_home, '*'),
         os.path.join(writable_dir, '*')
     ]
+    for sub_vgrid in writeable_sub_vgrids:
+        sub_vgrid_home = os.path.join(configuration.vgrid_files_home,
+                                      sub_vgrid.replace(':', os.path.sep), )
+        if os.path.exists(sub_vgrid_home):
+            file_patterns.append(os.path.join(sub_vgrid_home, '*'))
+
+        sub_vgrid_writeable = os.path.join(configuration.vgrid_files_writable,
+                                           sub_vgrid)
+        if os.path.exists(sub_vgrid_writeable):
+            file_patterns.append(os.path.join(sub_vgrid_writeable, '*'))
 
     logger.info('(%s) initializing listener with patterns: %s'
                 % (pid, file_patterns))
 
     shared_state['file_handler'] = MiGFileEventHandler(
-        patterns=file_patterns, ignore_directories=False, case_sensitive=True)
-    file_monitor.schedule(shared_state['file_handler'], file_monitor_home,
-                          recursive=False)
-    file_monitor.start()
+        patterns=file_patterns, ignore_directories=False, case_sensitive=True,
+        sub_vgrids=writeable_sub_vgrids)
 
-    if len(file_monitor._emitters) != 1:
-        logger.error('(%s) Number of file_monitor._emitters != 1' % pid)
-        return 1
-    file_monitor_emitter = min(file_monitor._emitters)
-    if not hasattr(file_monitor_emitter, '_inotify'):
-        logger.error('(%s) file_monitor require inotify' % pid)
-        return 1
-    shared_state['file_inotify'] = file_monitor_emitter._inotify._inotify
+    vgrid_homes = [os.path.join(configuration.vgrid_files_writable, sub_vgrid)
+                   for sub_vgrid in writeable_sub_vgrids]
+    vgrid_homes.append(file_monitor_home)
+
+    for monitor_home in vgrid_homes:
+        logger.info('(%s) starting observer for: %s' % (pid, monitor_home))
+
+        file_monitor = Observer()
+        file_monitor.schedule(shared_state['file_handler'], monitor_home,
+                              recursive=False)
+        file_monitor.start()
+
+        if len(file_monitor._emitters) != 1:
+            logger.error('(%s) Number of file_monitor._emitters != 1' % pid)
+            return 1
+        file_monitor_emitter = min(file_monitor._emitters)
+        if not hasattr(file_monitor_emitter, '_inotify'):
+            logger.error('(%s) file_monitor require inotify' % pid)
+            return 1
+        shared_state['file_inotify'] = file_monitor_emitter._inotify._inotify
 
     logger.info('(%s) trigger rule refresh for: %s' % (pid, vgrid_name))
 
