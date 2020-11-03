@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showfreeze - back end to request freeze files in write-once fashion
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,7 +34,8 @@ from mig.shared import returnvalues
 from mig.shared.defaults import default_pager_entries, freeze_flavors, \
     csrf_field, keyword_updating, keyword_final
 from mig.shared.freezefunctions import is_frozen_archive, get_frozen_archive, \
-    build_freezeitem_object, brief_freeze, supported_hash_algos, TARGET_PATH
+    build_freezeitem_object, brief_freeze, supported_hash_algos, \
+    pending_archives_update, TARGET_PATH
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from mig.shared.html import man_base_js, man_base_html, html_post_helper
@@ -52,7 +53,8 @@ def signature():
         'freeze_id': REJECT_UNSET,
         'flavor': ['freeze'],
         'checksum': [''],
-        'operation': ['show']}
+        'operation': ['show'],
+        'caching': ['false']}
     return ['html_form', defaults]
 
 
@@ -79,6 +81,7 @@ def main(client_id, user_arguments_dict):
     flavor = accepted['flavor'][-1]
     checksum_list = [i for i in accepted['checksum'] if i]
     operation = accepted['operation'][-1]
+    caching = (accepted['caching'][-1].lower() in ('true', 'yes'))
 
     if not flavor in freeze_flavors.keys():
         output_objects.append({'object_type': 'error_text', 'text':
@@ -120,16 +123,18 @@ Please contact the site admins %s if you think it should be enabled.
         # jquery support for tablesorter and confirmation dialog
         # table initially sorted by col. 0 (filename)
 
-        refresh_call = 'ajax_showfreeze("%s", "%s", %s, "%s", "%s", "%s", "%s")' % \
-                       (freeze_id, flavor, checksum_list, keyword_updating,
-                        keyword_final, configuration.site_freeze_doi_url,
-                        configuration.site_freeze_doi_url_field)
+        # NOTE: We distinguish between caching on page load and forced refresh
+        refresh_helper = 'ajax_showfreeze("%s", "%s", %s, "%s", "%s", "%s", "%s", %%s)'
+        refresh_call = refresh_helper % (freeze_id, flavor, checksum_list,
+                                         keyword_updating, keyword_final,
+                                         configuration.site_freeze_doi_url,
+                                         configuration.site_freeze_doi_url_field)
         table_spec = {'table_id': 'frozenfilestable', 'sort_order': '[[0,0]]',
-                      'refresh_call': refresh_call}
+                      'refresh_call': refresh_call % 'false'}
         (add_import, add_init, add_ready) = man_base_js(configuration,
                                                         [table_spec])
         if operation == "show":
-            add_ready += '%s;' % refresh_call
+            add_ready += '%s;' % (refresh_call % 'true')
 
         # Only show requested checksums
         for algo in sorted_algos:
@@ -177,9 +182,10 @@ Please contact the site admins %s if you think it should be enabled.
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if operation in list_operations:
+        logger.info("show frozen archive with caching %s" % caching)
         (load_status, freeze_dict) = get_frozen_archive(client_id, freeze_id,
                                                         configuration,
-                                                        checksum_list)
+                                                        checksum_list, caching)
         if not load_status:
             logger.error("%s: load failed for '%s': %s" %
                          (op_name, freeze_id, freeze_dict))
@@ -196,6 +202,17 @@ Please contact the site admins %s if you think it should be enabled.
                  'text': 'No such %s archive "%s"' % (flavor, freeze_id)})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
+        # NOTE: use simple pending check if caching to avoid lock during update
+        if caching:
+            pending_updates = pending_archives_update(configuration, client_id,
+                                                      freeze_id)
+        else:
+            pending_updates = False
+        if pending_updates:
+            logger.debug("found pending cache updates: %s" % pending_updates)
+        else:
+            logger.debug("no pending cache updates")
+
         # Allow edit if not in updating/final state and allow request DOI if
         # finalized and not a backup archive.
         freeze_state = freeze_dict.get('STATE', keyword_final)
@@ -210,7 +227,8 @@ Please contact the site admins %s if you think it should be enabled.
         logger.debug("%s: build obj for '%s': %s" %
                      (op_name, freeze_id, brief_freeze(freeze_dict)))
         output_objects.append(
-            build_freezeitem_object(configuration, freeze_dict))
+            build_freezeitem_object(configuration, freeze_dict,
+                                    pending_updates=pending_updates))
 
     if operation == "show":
         # insert dummy placeholder to build table

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # freezedb - manage frozen archives
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,7 +31,8 @@ from __future__ import absolute_import
 from mig.shared import returnvalues
 from mig.shared.defaults import default_pager_entries, csrf_field, keyword_final
 from mig.shared.freezefunctions import build_freezeitem_object, \
-    list_frozen_archives, get_frozen_meta, get_frozen_archive, TARGET_ARCHIVE
+    list_frozen_archives, get_frozen_meta, get_frozen_archive, \
+    pending_archives_update, TARGET_ARCHIVE
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.html import man_base_js, man_base_html, html_post_helper
@@ -45,7 +46,8 @@ allowed_operations = list(set(list_operations + show_operations))
 def signature():
     """Signature of the main function"""
 
-    defaults = {'operation': ['show']}
+    defaults = {'operation': ['show'],
+                'caching': ['false']}
     return ['frozenarchives', defaults]
 
 
@@ -69,6 +71,7 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     operation = accepted['operation'][-1]
+    caching = (accepted['caching'][-1].lower() in ('true', 'yes'))
 
     if not configuration.site_enable_freeze:
         output_objects.append({'object_type': 'text', 'text':
@@ -93,15 +96,18 @@ Please contact the site admins %s if you think it should be enabled.
             permanent_flavors = []
         else:
             permanent_flavors = configuration.site_permanent_freeze
+
+        # NOTE: We distinguish between caching on page load and forced refresh
+        refresh_helper = 'ajax_freezedb(%s, "%s", %%s)'
         # NOTE: must insert permanent_flavors list as string here
-        refresh_call = 'ajax_freezedb(%s, "%s")' % (str(permanent_flavors),
-                                                    keyword_final)
+        refresh_call = refresh_helper % (str(permanent_flavors), keyword_final)
         table_spec = {'table_id': 'frozenarchivetable', 'sort_order':
-                      '[[5,1],[3,1],[2,0]]', 'refresh_call': refresh_call}
+                      '[[5,1],[3,1],[2,0]]',
+                      'refresh_call': refresh_call % 'false'}
         (add_import, add_init, add_ready) = man_base_js(configuration,
                                                         [table_spec])
         if operation == "show":
-            add_ready += '%s;' % refresh_call
+            add_ready += '%s;' % (refresh_call % 'true')
         title_entry['script']['advanced'] += add_import
         title_entry['script']['init'] += add_init
         title_entry['script']['ready'] += add_ready
@@ -140,17 +146,30 @@ from the management.
                                'frozen archives',
                                'default_entries': default_pager_entries})
 
-    frozenarchives = []
+    frozenarchives, pending_updates = [], False
     if operation in list_operations:
+
+        logger.info("list frozen archives with caching %s" % caching)
         # NOTE: we do NOT enforce creator match here as edituser can't update
         #       without breaking any published archives
         (list_status, ret) = list_frozen_archives(configuration, client_id,
-                                                  strict_owner=False)
+                                                  strict_owner=False,
+                                                  caching=caching)
         if not list_status:
             logger.error("%s: failed for '%s': %s" % (op_name,
                                                       client_id, ret))
             output_objects.append({'object_type': 'error_text', 'text': ret})
             return (output_objects, returnvalues.SYSTEM_ERROR)
+
+        # NOTE: use simple pending check if caching to avoid lock during update
+        if caching:
+            pending_updates = pending_archives_update(configuration, client_id)
+        else:
+            pending_updates = False
+        if pending_updates:
+            logger.debug("found pending cache updates: %s" % pending_updates)
+        else:
+            logger.debug("no pending cache updates")
 
         logger.debug("%s %s: building list of archives" % (op_name, operation))
         for freeze_id in ret:
@@ -160,7 +179,8 @@ from the management.
             (load_status, freeze_dict) = get_frozen_archive(client_id,
                                                             freeze_id,
                                                             configuration,
-                                                            checksum_list=[])
+                                                            checksum_list=[],
+                                                            caching=caching)
             if not load_status:
                 logger.error("%s: load failed for '%s': %s" %
                              (op_name, freeze_id, freeze_dict))
@@ -206,7 +226,8 @@ from the management.
                      (op_name, operation, len(frozenarchives)))
 
     output_objects.append({'object_type': 'frozenarchives',
-                           'frozenarchives': frozenarchives})
+                           'frozenarchives': frozenarchives,
+                           'pending_updates': pending_updates})
 
     if operation in show_operations:
         output_objects.append({'object_type': 'sectionheader', 'text':

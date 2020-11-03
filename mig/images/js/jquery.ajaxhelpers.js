@@ -191,17 +191,22 @@ function ajax_redb() {
   });
 }
 
-function ajax_freezedb(permanent_freeze, keyword_final) {
-    console.debug("load archives");
+function ajax_freezedb(permanent_freeze, keyword_final, caching) {
+    console.debug("load archives - with caching "+caching);
     var tbody_elem = $("#frozenarchivetable tbody");
-    //console.debug("empty table");
-    $(tbody_elem).empty();
+    var pending_updates = false;
+    var loading_msg = "Loading archives ...";
+    /* Force caching to boolean if e.g. left out */
+    if (!caching) {
+        caching = false;
+        loading_msg = "Updating archives - may take a while";
+    }
     $("#ajax_status").addClass("spinner iconleftpad");
-    $("#ajax_status").html("Loading archives ...");
+    $("#ajax_status").html(loading_msg);
     /* Request archive list in the background and handle as soon as
     results come in */
     $.ajax({
-      url: "?output_format=json;operation=list",
+      url: "?output_format=json;operation=list;caching="+caching,
       type: "GET",
       dataType: "json",
       cache: false,
@@ -211,6 +216,8 @@ function ajax_freezedb(permanent_freeze, keyword_final) {
           var table_entries = "", error = "";
           var i, j;
           var arch, entry;
+          //console.debug("empty table");
+          $(tbody_elem).empty();
           /* Grab results from json response and insert items in table */
           for (i=0; i<jsonRes.length; i++) {
               //console.debug("looking for content: "+ jsonRes[i].object_type);
@@ -218,6 +225,9 @@ function ajax_freezedb(permanent_freeze, keyword_final) {
                   console.error("list: "+jsonRes[i].text);
                   error += jsonRes[i].text;
               } else if (jsonRes[i].object_type === "frozenarchives") {
+                  if (caching) {
+                      pending_updates = jsonRes[i].pending_updates;
+                  }
                   var archives = jsonRes[i].frozenarchives;
                   for (j=0; j<archives.length; j++) {
                       arch = archives[j];
@@ -263,6 +273,13 @@ function ajax_freezedb(permanent_freeze, keyword_final) {
           if (error) {
               $("#ajax_status").append("<span class=\'errortext\'>"+
                                        "Error: "+error+"</span>");
+          } else if (pending_updates) {
+              /* NOTE: pending archive update detected - background update */
+              $("#ajax_status").append("<span class=\'infotext\'>"+
+                                       "Loaded cached archives - update pending</span>");
+              setTimeout(function() {
+                  ajax_freezedb(permanent_freeze, keyword_final, false);
+              }, 3000);
           }
           $("#frozenarchivetable").trigger("update");
 
@@ -275,21 +292,25 @@ function ajax_freezedb(permanent_freeze, keyword_final) {
 }
 
 function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_updating,
-                         keyword_final, freeze_doi_url, freeze_doi_url_field) {
+                         keyword_final, freeze_doi_url, freeze_doi_url_field, caching) {
     console.debug("load archive "+freeze_id+" of flavor "+flavor+" with "+
-                  checksum_list.toString()+" checksums");
+                  checksum_list.toString()+" checksums with caching "+caching);
     var tbody_elem = $("#frozenfilestable tbody");
     var arch_tbody = $(".frozenarchivedetails tbody");
-    //console.debug("empty table");
-    $(tbody_elem).empty();
-    $(arch_tbody).empty();
+    var pending_updates = false;
+    var loading_msg = "Loading archives ...";
+    /* Force caching to boolean if e.g. left out */
+    if (!caching) {
+        caching = false;
+        loading_msg = "Updating archives - may take a while";
+    }
     $("#ajax_status").addClass("spinner iconleftpad");
     $("#ajax_status").html("Loading archive "+freeze_id+" ...");
     /* Request archive list in the background and handle as soon as
     results come in */
     $.ajax({
         url: "?freeze_id="+freeze_id+";flavor="+flavor+";checksum="+
-            checksum_list.join(";checksum=")+";output_format=json;operation=list",
+            checksum_list.join(";checksum=")+";output_format=json;operation=list;caching="+caching,
       type: "GET",
       dataType: "json",
       cache: false,
@@ -299,6 +320,9 @@ function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_updating,
           var table_entries = "", error = "";
           var i, j;
           var arch, file, entry, publish_url = "";
+          //console.debug("empty table");
+          $(tbody_elem).empty();
+          $(arch_tbody).empty();
           /* Grab results from json response and insert items in table */
           for (i=0; i<jsonRes.length; i++) {
               //console.debug("looking for content: "+ jsonRes[i].object_type);
@@ -306,6 +330,9 @@ function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_updating,
                   console.error("list: "+jsonRes[i].text);
                   error += " "+jsonRes[i].text;
               } else if (jsonRes[i].object_type === "frozenarchive") {
+                  if (caching) {
+                      pending_updates = jsonRes[i].pending_updates;
+                  }
                   //console.debug("found frozenarchive");
                   arch = jsonRes[i];
                   //console.debug("append details");
@@ -383,6 +410,15 @@ function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_updating,
           if (error) {
               $("#ajax_status").append("<span class=\'errortext\'>"+
                                        "Error: "+error+"</span>");
+          } else if (pending_updates) {
+              /* NOTE: pending archive update detected - background update */
+              $("#ajax_status").append("<span class=\'infotext\'>"+
+                                       "Loaded cached archive - update pending</span>");
+              setTimeout(function() {
+                  ajax_showfreeze(freeze_id, flavor, checksum_list, 
+                                  keyword_updating, keyword_final, 
+                                  freeze_doi_url, freeze_doi_url_field, false);
+              }, 3000);
           }
           /* Make sure requested checksum columns are visible */
           console.debug("show checksums");

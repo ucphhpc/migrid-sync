@@ -43,21 +43,22 @@ import zipfile
 # NOTE: We expose optimized walk function directly for ease and efficiency.
 #       Requires stand-alone scandir module on python 2 whereas the native os
 #       functions are built-in and optimized similarly on python 3+
-slow_walk = False
+slow_walk, slow_listdir = False, False
 if sys.version_info[0] < 3:
-    from os import walk
+    from os import walk, listdir
 else:
     try:
         from distutils.version import StrictVersion
-        from scandir import walk, __version__ as scandir_version
+        from scandir import walk, listdir, __version__ as scandir_version
         if StrictVersion(scandir_version) < StrictVersion("1.3"):
             # Important os.walk compatibility utf8 fixes were not added until 1.3
             raise ImportError(
                 "scandir version is too old: fall back to os.walk")
     except ImportError as err:
         #print("DEBUG: not using scandir: %s" % err)
-        slow_walk = True
+        slow_walk = slow_listdir = True
         walk = os.walk
+        listdir = os.listdir
 
 from mig.shared.base import force_utf8_rec
 from mig.shared.defaults import default_chunk_size, default_max_chunks
