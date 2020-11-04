@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # managers - style overrides for multiple pages
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,7 +30,6 @@
 .fm_path_breadcrumbs a:hover {
   color: #369;
 }
-
 
 #fm_preview_histogram_min_max_slider .noUi-connect {
   background: #3399FF;

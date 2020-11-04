@@ -367,6 +367,11 @@ a {
 
 
 /* PAGE - FILE MANAGER */
+/* Avoid white and grey interference */
+#fm_filemanager, #fm_filechooser {
+  background: #fff;
+}
+
 /*HEADER BAR*/
 #fm_filemanager > .container-fluid {
     padding-left: 0;
