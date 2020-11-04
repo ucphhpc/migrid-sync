@@ -138,7 +138,8 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
 
         <div id="fm_statusbar" class="col-lg-12">
             <div id="fm_statusprogress" class=" col-lg-3">
-            <div class="progress-label">Loading...</div></div>
+                <div class="progress-label">Loading...</div>
+            </div>
             <div id="fm_options" class="col-lg-2">
                 <label id="fm_toggle_touchscreen" class="switch" for="fm_touchscreen" >
                 <input id="fm_touchscreen" type="checkbox" />

@@ -415,6 +415,16 @@ so please be careful when filling in the details.
         <div id='fm_statusprogress' class=' col-lg-3'>
             <div class='progress-label'>Loading...</div>
         </div>
+        <div id='fm_options' class='col-lg-2'>
+            <label id='fm_toggle_touchscreen' class='switch' for='fm_touchscreen' >
+            <input id='fm_touchscreen' type='checkbox' />
+            <span class='slider round' title='all clicks trigger menu'></span>
+            </label><span id='fm_touchscreen_label'>Touch mode</span>
+            <label id='fm_toggle_dotfiles' class='switch'>
+            <input id='fm_dotfiles' type='checkbox' />
+            <span class='slider round' title='Show hidden files and folders'></span>
+            </label><span id='fm_dotfiles_label'>Hidden files</span>
+        </div>
         <div id='fm_statusinfo' class='col-lg-9'>&nbsp;</div>
     </div>
 </div>
