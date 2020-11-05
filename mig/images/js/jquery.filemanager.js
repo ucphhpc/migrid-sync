@@ -4,7 +4,7 @@
   # --- BEGIN_HEADER ---
   #
   # jquery.filemanager - jquery based file manager
-  # Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+  # Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
   #
   # This file is part of MiG.
   #
@@ -503,17 +503,27 @@ if (jQuery) (function($){
             var optionsOuterHeight = $.fn.fmSelect("#fm_options").outerHeight(true);
             var fileManagerInnerHeader = pathBreadcrumbsOuterHeight + 
                                         addressbarOuterHeight;
-            var fileManagerInnerFooter = statusbarOuterHeight + 
-                                        optionsOuterHeight;                                        
+            var fileManagerInnerFooter = statusbarOuterHeight;
+            /* NOTE: this is an estimate of required space below fileman */
+            var fileManagerBottomSpace = 4;
             if (is_dialog) {
-                /* TODO: force to auto height for now since chrome insists on
-                   making filechooser be as high as dialog otherwise which 
-                   causes consistent overflow. */
-                /*
-                fileManagerHeight = $(".ui-dialog-content").height() - (
-                    filemanHeightSpacing); 
-                */
-                fileManagerHeight = 'auto';
+                /* Compensate for extra space between fileman and button pane */
+                fileManagerBottomSpace = 8;
+                /* Fill available content area */
+                fileManagerHeight = $(".ui-dialog-content").height() - (filemanHeightSpacing +
+                                                                        fileManagerBottomSpace);
+                console.debug("setting fileman height to " + fileManagerHeight +
+                              " with window height " + innerWindowHeight);
+                /* NOTE: prevent popup overflowing page and UI V3 button pane */
+                var dialogHeaderHeight = $(".ui-dialog-title").outerHeight();
+                var dialogFooterHeight = $(".ui-dialog-buttonpane").outerHeight();
+                var dialogOverhead = 2 * (dialogHeaderHeight + dialogFooterHeight);
+                if (fileManagerHeight + dialogOverhead >= innerWindowHeight) {
+                    fileManagerHeight = innerWindowHeight - (dialogOverhead + 
+                                                             filemanHeightSpacing +
+                                                             fileManagerBottomSpace);
+                    console.debug("reducing fileman height to " + fileManagerHeight);
+                }
             } else {
                 var minHeight = fileManagerInnerHeader +
                                 fileManagerInnerFooter;
@@ -521,16 +531,21 @@ if (jQuery) (function($){
                 fileManagerHeight = innerWindowHeight - (offsetTop + 
                                                          footerOuterHeight + 
                                                          contentHeightSpacing +
-                                                         filemanHeightSpacing);
-                console.debug('fileManagerHeight: ' + fileManagerHeight+" innerWindowHeight "+innerWindowHeight+" offsetTop "+offsetTop+" footerOuterHeight "+footerOuterHeight+" contentHeightSpacing "+contentHeightSpacing);
+                                                         filemanHeightSpacing +
+                                                         fileManagerBottomSpace);
+                console.debug('fileManagerHeight: ' + fileManagerHeight +
+                              " innerWindowHeight " + innerWindowHeight +
+                              " offsetTop " + offsetTop +
+                              " footerOuterHeight " + footerOuterHeight +
+                              " contentHeightSpacing "+contentHeightSpacing);
 
                 if (fileManagerHeight < minHeight) {
                     fileManagerHeight = minHeight;
                 }                
             }            
-            var fileManagerInnerHeight = fileManagerHeight -
-                                            fileManagerInnerHeader - 
-                                            fileManagerInnerFooter;
+            var fileManagerInnerHeight = fileManagerHeight - (fileManagerInnerHeader +
+                                                              fileManagerInnerFooter +
+                                                              fileManagerBottomSpace);
             var fileFolderInnerHeight = fileManagerInnerHeight;
             
             var layout = {
