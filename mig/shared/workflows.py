@@ -738,7 +738,7 @@ def __load_map(configuration, workflow_type=WORKFLOW_PATTERN, do_lock=True):
 
 
 def __refresh_map(configuration, workflow_type=WORKFLOW_PATTERN,
-                  client_id=None):
+                  client_id=None, modified=None):
     """
     Refresh map of workflow objects. Uses a pickled dictionary for efficiency.
     Only update map for workflow objects that appeared, disappeared, or have
@@ -747,6 +747,9 @@ def __refresh_map(configuration, workflow_type=WORKFLOW_PATTERN,
     :param configuration: The MiG configuration object.
     :param workflow_type: A MiG workflow type.
     :param client_id: [optional] A MiG user client. Default is None
+    :param modified: [optional] A list of modified objects to be reload. Is
+    required if several patterns and recipes are defined together, updates are
+    not always loaded otherwise.
     :return: (dictionary) The system dictionary of the given workflow_type.
     """
     _logger = configuration.logger
@@ -778,8 +781,13 @@ def __refresh_map(configuration, workflow_type=WORKFLOW_PATTERN,
             workflow_map[workflow_file] = workflow_map.get(workflow_file, {})
             wp_mtime = os.path.getmtime(os.path.join(workflow_dir,
                                                      workflow_file))
-            if CONF not in workflow_map[
-                    workflow_file] or wp_mtime >= map_stamp:
+
+            # Cannot rely on mtime here, appears to be slight inconsistency in
+            # rounding mod times meaning >= does not match all the expected
+            # files if patterns and recipes are defined together.
+            if CONF not in workflow_map[workflow_file] \
+                    or wp_mtime >= map_stamp \
+                    or workflow_file in modified:
                 workflow_object = ''
                 if workflow_type == WORKFLOW_PATTERN:
                     workflow_object = __load_wp(configuration,
@@ -1224,7 +1232,8 @@ def get_wp_map(configuration, client_id=None):
 
     if modified_patterns:
         map_stamp = time.time()
-        workflow_p_map = __refresh_map(configuration, client_id=client_id)
+        workflow_p_map = __refresh_map(configuration, client_id=client_id,
+                                       modified=modified_patterns)
         reset_workflow_p_modified(configuration)
     else:
         workflow_p_map, map_stamp = __load_map(configuration)
@@ -1254,7 +1263,8 @@ def get_wr_map(configuration, client_id=None):
         map_stamp = time.time()
         workflow_r_map = __refresh_map(configuration,
                                        workflow_type=WORKFLOW_RECIPE,
-                                       client_id=client_id)
+                                       client_id=client_id,
+                                       modified=modified_recipes)
         reset_workflow_r_modified(configuration)
     else:
         workflow_r_map, map_stamp = __load_map(configuration,
