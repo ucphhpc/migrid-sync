@@ -468,9 +468,11 @@ def start_service(conf):
         # Harden TLS/SSL if possible, requires recent pyftpdlib
         if hasattr(handler, 'ssl_context'):
             dhparamsfile = configuration.user_shared_dhparams
+            legacy_tls = configuration.site_enable_ftps_legacy_tls
             ssl_ctx = hardened_openssl_context(conf, OpenSSL, keyfile,
                                                certfile,
-                                               dhparamsfile=dhparamsfile)
+                                               dhparamsfile=dhparamsfile,
+                                               allow_pre_tlsv12=legacy_tls)
             handler.ssl_context = ssl_ctx
         else:
             logger.warning("Unable to enforce explicit strong TLS connections")

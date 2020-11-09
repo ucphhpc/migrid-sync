@@ -212,8 +212,14 @@ necessarily recent in distributions but then readily available with pip:
 sudo pip install pyotp
 
 The optional cloud integration relies on the Python openstackclient package for
-communicating with the associated OpenStack provider and it is installed with:
+communicating with the associated OpenStack provider. On CentOS 7 it can
+be installed from upstream repos with:
+yum install https://rdoproject.org/repos/rdo-release.rpm
+yum install python-openstackclient
+in line with https://docs.openstack.org/install-guide/environment-packages-rdo.html
+If your platform is not listed there you might also have luck with pip:
 sudo pip install openstackclient
+but we experienced a bunch of package conflicts in that setup.
 
 The optional country code validation in certificate and OpenID account 
 request backends requires the iso3166 module which may be installed with:
