@@ -2808,8 +2808,13 @@ def create_workflow_trigger(configuration, client_id, vgrid, path, pattern,
             for env_var in job_env_vars:
                 full_env_var = "{%s}" % env_var
                 if isinstance(var_value, str) and full_env_var in var_value:
-                    environment_variables[var_name] = \
-                        var_value.replace(
+                    if var_name in environment_variables:
+                        environment_variables[var_name] = \
+                            environment_variables[var_name].replace(
+                                full_env_var,
+                                vgrid_env_vars_map[job_env_vars_map[env_var]])
+                    else:
+                        environment_variables[var_name] = var_value.replace(
                             full_env_var,
                             vgrid_env_vars_map[job_env_vars_map[env_var]])
 
@@ -2821,8 +2826,14 @@ def create_workflow_trigger(configuration, client_id, vgrid, path, pattern,
                 for env_var in job_env_vars:
                     full_env_var = "{%s}" % env_var
                     if isinstance(var_value, str) and full_env_var in var_value:
-                        environment_variables[var_name] = \
-                            var_value.replace(
+                        if var_name in environment_variables:
+                            environment_variables[var_name] = \
+                                environment_variables[var_name].replace(
+                                    full_env_var,
+                                    vgrid_env_vars_map[job_env_vars_map[env_var]])
+                        else:
+                            environment_variables[
+                                var_name] = var_value.replace(
                                 full_env_var,
                                 vgrid_env_vars_map[job_env_vars_map[env_var]])
 
