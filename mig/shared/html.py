@@ -265,7 +265,7 @@ def render_menu(configuration, menu_class='navmenu',
             menu_entry[name] = spec.get(name, '')
         menu_entry['target'] = 'target="%s"' % spec.get('target', '')
         if os.path.splitext(spec['url'])[0] == current_element:
-            menu_entry['selected'] = 'id="selected"'
+            menu_entry['selected'] = 'selected="selected"'
             menu_entry['class'] += " selected"
         # Optional display of icons or text only
         if display == ICONS_ONLY:

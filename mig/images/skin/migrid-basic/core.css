@@ -149,7 +149,7 @@ table {
   background-color: #369;
 }
 
-.navmenu ul li a.selected {
+.navmenu ul li.selected a {
   background-color: #147;
 }
 

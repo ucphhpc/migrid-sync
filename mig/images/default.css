@@ -489,7 +489,7 @@ table.peers {
   color: white;
 }
 
-.navmenu ul li a.selected {
+.navmenu ul li.selected a {
   background-color: #111;
   color: white;
 }
