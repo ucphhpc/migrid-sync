@@ -66,11 +66,13 @@ Where OPTIONS may be one or more of:
 """ % {'name': name})
 
 
-def compact_stats(configuration, stats):
+def compact_stats(configuration, stats, sep):
     """Helper to flatten stats for use in txt and csv output"""
     fill = {}
-    fill['disk_use'] = '\n'.join(stats['disk']['use'])
-    fill['disk_mounts'] = '\n'.join(stats['disk']['mounts'])
+    fill['sep'] = sep
+    fill['disk_use'] = '\n'.join([sep.join(i) for i in stats['disk']['use']])
+    fill['disk_mounts'] = '\n'.join([sep.join(i)
+                                     for i in stats['disk']['mounts']])
     fill['totals_all_users'] = stats['totals']['all_users']
     fill['totals_active_users'] = stats['totals']['active_users']
     fill['totals_vgrids'] = stats['totals']['vgrids']
@@ -84,19 +86,19 @@ def compact_stats(configuration, stats):
     org_list = stats['org_counts'].items()
     org_list.sort()
     for (org, cnt) in org_list:
-        fill['users_by_org'] += '%d\t%s\n' % (cnt, org)
+        fill['users_by_org'] += '%d%s%s\n' % (cnt, sep, org)
 
     fill['users_by_domain'] = ''
     domain_list = stats['domain_counts'].items()
     domain_list.sort()
     for (domain, cnt) in domain_list:
-        fill['users_by_domain'] += '%d\t%s\n' % (cnt, domain)
+        fill['users_by_domain'] += '%d%s%s\n' % (cnt, sep, domain)
     return fill
 
 
-def format_txt(configuration, stats):
+def format_txt(configuration, stats, sep='\t'):
     """Format stats for plain text output"""
-    fill = compact_stats(configuration, stats)
+    fill = compact_stats(configuration, stats, sep)
     txt = """=== Disk Use ===
 %(disk_use)s
 
@@ -136,19 +138,19 @@ Where
 %(weekly_archives)d
 
 == User Distribution ==
-=== By Organisation ===
+=== By Organization ===
 %(users_by_org)s
 
 === By Email Domain ===
 %(users_by_domain)s
 """
-    return txt
+    return txt % fill
 
 
-def format_csv(configuration, stats):
+def format_csv(configuration, stats, sep=';'):
     """Format stats for plain text output"""
-    fill = compact_stats(configuration, stats)
-    # TODO: properly csv format
+    fill = compact_stats(configuration, stats, sep)
+    # TODO: improve csv format
     csv = """Disk Use
 %(disk_use)s
 
@@ -156,25 +158,27 @@ Disk Mounts
 %(disk_mounts)s
 
 Totals
-Registered Local Users;%(totals_all_users)d
-Active Local Users;%(totals_active_users)d
-Registered VGrids;%(totals_vgrids)d
-Frozen Archives;%(totals_archives)d
+Registered Local Users%(sep)s%(totals_all_users)d
+Active Local Users%(sep)s%(totals_active_users)d
+Registered VGrids%(sep)s%(totals_vgrids)d
+Frozen Archives%(sep)s%(totals_archives)d
 
 This Week
-Registered and Renewed Local Users;%(weekly_register_users)d
-Recently expired Local Users;%(weekly_expire_users)d
-Registered and Updated VGrids;%(weekly_vgrids)d
-Frozen Archives;%(weekly_archives)d
+Registered and Renewed Local Users%(sep)s%(weekly_register_users)d
+Recently expired Local Users%(sep)s%(weekly_expire_users)d
+Registered and Updated VGrids%(sep)s%(weekly_vgrids)d
+Frozen Archives%(sep)s%(weekly_archives)d
 
 User Distribution
-By Organisation
+By Organization
+Number%(sep)sOrganization
 %(users_by_org)s
 
 By Email Domain
+Number%(sep)sEmail Domain
 %(users_by_domain)s
 """
-    return csv
+    return csv % fill
 
 
 def write_sitestats(configuration, stats, path_prefix, output_format):
@@ -201,7 +205,7 @@ def write_sitestats(configuration, stats, path_prefix, output_format):
 if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()
     conf_path = None
-    fs_opts = []
+    only_fs_types = []
     expire = None
     force = False
     verbose = False
@@ -240,8 +244,7 @@ if '__main__' == __name__:
         elif opt == '-s':
             sitestats_home = val
         elif opt == '-t':
-            for fs_type in val.split():
-                fs_opts += ['-t', fs_type]
+            only_fs_types += val.split()
         elif opt == '-v':
             verbose = True
         else:
@@ -272,27 +275,35 @@ if '__main__' == __name__:
         sitestats_path = os.path.join(sitestats_home, 'usagestats-%d' % now)
         if not output_formats:
             output_formats = ['json']
-        print("Writing collected site stats in %s" % sitestats_path)
+        print("Writing collected site stats in %s.{%s}" % (
+            sitestats_path, ','.join(output_formats)))
 
     if not verbose and sitestats_path is None:
         print("Neither verbose nor writing site stats - boring!")
 
-    proc = subprocess_popen(['/bin/df', '-h'] + fs_opts, stdout=subprocess_pipe,
+    df_opts = []
+    # NOTE: df expects multiple file system types as individual options
+    for fs_type in only_fs_types:
+        df_opts += ['-t', fs_type]
+    proc = subprocess_popen(['/bin/df'] + df_opts, stdout=subprocess_pipe,
                             env=cmd_env)
     proc.wait()
     for line in proc.stdout.readlines():
-        site_stats['disk']['use'].append(line.strip())
+        site_stats['disk']['use'].append(line.strip().split())
     if verbose:
         print("=== Disk Use ===")
-        print('\n'.join(site_stats['disk']['use']))
+        print('\n'.join(['\t'.join(i) for i in site_stats['disk']['use']]))
 
-    proc = subprocess_popen(['mount'] + fs_opts, stdout=subprocess_pipe)
+    # NOTE: mount expects multiple file system types as single comma-sep arg
+    mount_opts = []
+    mount_opts += ['-t', ','.join(only_fs_types)]
+    proc = subprocess_popen(['mount'] + mount_opts, stdout=subprocess_pipe)
     proc.wait()
     for line in proc.stdout.readlines():
-        site_stats['disk']['mounts'].append(line.strip())
+        site_stats['disk']['mounts'].append(line.strip().split())
     if verbose:
         print("=== Disk Mounts ===")
-        print('\n'.join(site_stats['disk']['mounts']))
+        print('\n'.join(['\t'.join(i) for i in site_stats['disk']['mounts']]))
         print("""Where
  * vgrid_files_home is all vgrid shared folders
  * vgrid_private_base/vgrid_public_base are all vgrid web portals
@@ -302,7 +313,7 @@ if '__main__' == __name__:
 
     all_uids = [uid for (uid, user_dict) in all_hits]
     # all_uids.sort()
-    #print("DEBUG: %s" % all_uids)
+    # print("DEBUG: %s" % all_uids)
     site_stats['totals']['all_users'] = len(all_uids)
     if verbose:
         print("== Totals ==")
@@ -311,7 +322,7 @@ if '__main__' == __name__:
 
     search_filter['expire_after'] = now
     (_, active_hits) = search_users(search_filter, conf_path, db_path)
-    #only_fields = ['distinguished_name']
+    # only_fields = ['distinguished_name']
     # for (uid, user_dict) in active_hits:
     #    if only_fields:
     #        field_list = [str(user_dict.get(i, '')) for i in only_fields]
@@ -320,7 +331,7 @@ if '__main__' == __name__:
     active_uids = [uid for (uid, user_dict) in active_hits]
     # active_uids.sort()
     site_stats['totals']['active_users'] = len(active_uids)
-    #print("DEBUG: %s" % active_uids)
+    # print("DEBUG: %s" % active_uids)
     if verbose:
         print("=== Active Local Users ===")
         print(site_stats['totals']['active_users'])
@@ -332,7 +343,7 @@ if '__main__' == __name__:
             dirs.remove(i)
         if not dirs:
             continue
-        #print("DEBUG: %s %s" % (root, dirs))
+        # print("DEBUG: %s %s" % (root, dirs))
         site_stats['totals']['vgrids'] += len(dirs)
     if verbose:
         print("=== Registered VGrids ===")
@@ -348,13 +359,13 @@ if '__main__' == __name__:
         sub_parts = sub_dir.split(os.sep)
         if len(sub_parts) > 2:
             # Stop recursion
-            #print("DEBUG: stop recursion at %s" % root)
+            # print("DEBUG: stop recursion at %s" % root)
             for i in dirs:
                 dirs.remove(i)
             continue
         if sub_parts[-1].find('archive-') != -1 and \
                 freeze_meta_filename in files:
-            #print("DEBUG: %s" % root)
+            # print("DEBUG: %s" % root)
             site_stats['totals']['archives'] += 1
             # Stop recursion
             for i in dirs:
@@ -404,7 +415,7 @@ if '__main__' == __name__:
         root_mtime = os.path.getmtime(root)
         if root_mtime < a_week_ago:
             continue
-        #print("DEBUG: %s" % root)
+        # print("DEBUG: %s" % root)
         site_stats['weekly']['vgrids'] += 1
 
     if verbose:
@@ -431,13 +442,13 @@ if '__main__' == __name__:
         meta_mtime = os.path.getmtime(meta_path)
         if meta_mtime > a_week_ago and meta_mtime < now:
             site_stats['weekly']['archives'] += 1
-            #print("DEBUG: %s" % root)
+            # print("DEBUG: %s" % root)
 
     if verbose:
         print("=== Frozen Archives ===")
         print(site_stats['weekly']['archives'])
 
-    # Organisation and email domain stats
+    # Organization and email domain stats
     search_filter = default_search()
     (_, all_hits) = search_users(search_filter, conf_path, db_path)
 
@@ -458,7 +469,7 @@ if '__main__' == __name__:
 
     if verbose:
         print("== User Distribution ==")
-        print("=== By Organisation ===")
+        print("=== By Organization ===")
         org_list = site_stats['org_counts'].items()
         org_list.sort()
         for (org, cnt) in org_list:
