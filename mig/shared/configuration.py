@@ -110,6 +110,7 @@ def fix_missing(config_file, verbose=True):
         'seafile_mount': '~/state/seafile_mount',
         'openid_store': '~/state/openid_store/',
         'paraview_home': '~/state/paraview_home/',
+        'sitestats_home': '~/state/sitestats_home/',
         'public_key_file': '',
         'javabin_home': '~/mig/java-bin',
         'events_home': '~/state/events_home/',
@@ -338,6 +339,7 @@ class Configuration:
     seafile_mount = ''
     openid_store = ''
     paraview_home = ''
+    sitestats_home = ''
     workflows_vgrid_tasks_home = ''
     workflows_vgrid_patterns_home = ''
     workflows_vgrid_recipes_home = ''
@@ -802,6 +804,8 @@ location.""" % self.config_file)
             self.openid_store = config.get('GLOBAL', 'openid_store')
         if config.has_option('GLOBAL', 'paraview_home'):
             self.paraview_home = config.get('GLOBAL', 'paraview_home')
+        if config.has_option('GLOBAL', 'sitestats_home'):
+            self.sitestats_home = config.get('GLOBAL', 'sitestats_home')
         if config.has_option('GLOBAL', 'jupyter_mount_files_dir'):
             self.jupyter_mount_files_dir = config.get(
                 'GLOBAL', 'jupyter_mount_files_dir')
