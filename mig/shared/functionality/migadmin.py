@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migadmin - admin control panel with daemon status monitor
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,8 +33,9 @@ import os
 from mig.shared import returnvalues
 from mig.shared.accountreq import build_accountreqitem_object, list_account_reqs, \
     get_account_req, delete_account_req, accept_account_req
+from mig.shared.base import force_utf8_rec
 from mig.shared.defaults import default_pager_entries, csrf_field
-from mig.shared.fileio import send_message_to_grid_script, read_tail
+from mig.shared.fileio import send_message_to_grid_script, read_tail, listdir
 from mig.shared.findtype import is_admin
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
@@ -42,6 +43,7 @@ from mig.shared.html import man_base_js, man_base_html, html_post_helper
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.safeeval import subprocess_popen, subprocess_pipe, \
     subprocess_stdout
+from mig.shared.serial import load
 
 grid_actions = {'reloadconfig': 'RELOADCONFIG',
                 'showqueued': 'JOBQUEUEINFO',
@@ -59,6 +61,39 @@ def signature():
 
     defaults = {'action': [''], 'req_id': [], 'job_id': [], 'lines': [20]}
     return ['html_form', defaults]
+
+
+def format_stats(filename, stats):
+    """Helper to format stats dict for human display"""
+    # TODO: handle all dict contents and polish display
+    html = ''
+    html += '''<h3>Saved %s</h3>
+<h4>Disk Use</h4>
+''' % filename
+    for parts in stats['disk']['use']:
+        html += '''<p>
+'''
+        html += ' '.join(parts)
+        html += '''
+</p>
+'''
+    html += '''
+<h4>Total</h4>
+'''
+    for (key, val) in stats['totals'].items():
+        html += '''<p>
+%s: %s
+</p>
+''' % (key, val)
+    html += '''
+<h4>Weekly</h4>
+'''
+    for (key, val) in stats['weekly'].items():
+        html += '''<p>
+%s: %s
+</p>
+''' % (key, val)
+    return html
 
 
 def main(client_id, user_arguments_dict):
@@ -94,6 +129,9 @@ def main(client_id, user_arguments_dict):
     table_spec = {'table_id': 'accountreqtable', 'sort_order': '[[9,0]]'}
     (add_import, add_init, add_ready) = man_base_js(configuration,
                                                     [table_spec])
+    add_ready += '''
+            $(".migadmin-tabs").tabs();
+'''
     title_entry['script']['advanced'] += add_import
     title_entry['script']['init'] += add_init
     title_entry['script']['ready'] += add_ready
@@ -198,6 +236,7 @@ provide access to e.g. managing the grid job queues.
 </form>
 <br />
 """
+
     html += general
     html += show
     html += drop
@@ -252,8 +291,45 @@ provide access to e.g. managing the grid job queues.
 """
     html += daemons
 
+    log_path_list = []
+    if os.path.isabs(configuration.logfile):
+        log_path_list.append(configuration.logfile)
+    else:
+        log_path_list.append(os.path.join(configuration.log_dir,
+                                          configuration.logfile))
+    for log_path in log_path_list:
+        html += '''
+<h2>%s</h2>
+<textarea class="fillwidth padspace" rows=%s readonly="readonly">
+''' % (log_path, lines)
+        log_lines = read_tail(log_path, lines, logger)
+        html += ''.join(log_lines[-lines:])
+        html += '''</textarea>
+'''
+
+    output_objects.append({'object_type': 'html_form', 'text': """
+<div id='wrap-tabs' class='migadmin-tabs'>
+<ul>
+<li><a href='#serverstatus-tab'>Server Status</a></li>
+<li><a href='#accountreqs-tab'>Account Requests</a></li>
+<li><a href='#sitestats-tab'>Site Stats</a></li>
+</ul>
+"""})
+
+    output_objects.append({'object_type': 'html_form', 'text':  '''
+<div id="serverstatus-tab">
+'''})
+    output_objects.append({'object_type': 'html_form', 'text': html})
+    output_objects.append({'object_type': 'html_form', 'text':  '''
+    </div>
+'''})
+
+    html = ''
+    output_objects.append({'object_type': 'html_form', 'text':  '''
+<div id="accountreqs-tab">
+'''})
     output_objects.append(
-        {'object_type': 'header', 'text': 'Pending Certificate Requests'})
+        {'object_type': 'header', 'text': 'Pending Account Requests'})
 
     (list_status, ret) = list_account_reqs(configuration)
     if not list_status:
@@ -306,21 +382,53 @@ provide access to e.g. managing the grid job queues.
     output_objects.append({'object_type': 'accountreqs',
                            'accountreqs': accountreqs})
 
-    log_path_list = []
-    if os.path.isabs(configuration.logfile):
-        log_path_list.append(configuration.logfile)
-    else:
-        log_path_list.append(os.path.join(configuration.log_dir,
-                                          configuration.logfile))
-    for log_path in log_path_list:
+    output_objects.append({'object_type': 'html_form', 'text': html})
+    output_objects.append({'object_type': 'html_form', 'text':  '''
+    </div>
+'''})
+    output_objects.append({'object_type': 'html_form', 'text':  '''
+    <div id="sitestats-tab">
+'''})
+    html = ''
+    html += """
+<h2>Site Statistics</h2>
+"""
+    sitestats_home = configuration.sitestats_home
+    if sitestats_home and os.path.isdir(sitestats_home):
         html += '''
-<h2>%s</h2>
-<textarea class="fillwidth padspace" rows=%s readonly="readonly">
-''' % (log_path, lines)
-        log_lines = read_tail(log_path, lines, logger)
-        html += ''.join(log_lines[-lines:])
-        html += '''</textarea>
+        <div id=""all-stats">
+'''
+        all_stats = {}
+        # Grab first available format for each stats file
+        for filename in listdir(sitestats_home):
+            prefix, ext = os.path.splitext(filename)
+            file_format = ext.lstrip('.')
+            if not file_format in ['pickle', 'json', 'yaml']:
+                continue
+            path = os.path.join(sitestats_home, filename)
+            stats = all_stats[prefix] = all_stats.get(prefix, {})
+            if not stats:
+                stats = load(path, serializer=file_format)
+                all_stats[prefix].update(force_utf8_rec(stats))
+
+        sorted_stats = all_stats.items()
+        sorted_stats.sort()
+        for (name, stats) in sorted_stats:
+            html += format_stats(name, stats)
+        html += '''
+        </div>
 '''
 
+    else:
+        html += '<span class="warningtext">Site stats not available</span>'
+
     output_objects.append({'object_type': 'html_form', 'text': html})
+    output_objects.append({'object_type': 'html_form', 'text':  '''
+    </div>
+'''})
+
+    # Finish tabs wrap
+    output_objects.append({'object_type': 'html_form', 'text':  '''
+</div>
+'''})
     return (output_objects, returnvalues.OK)
