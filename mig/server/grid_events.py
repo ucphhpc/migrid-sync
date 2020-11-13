@@ -34,6 +34,7 @@ Requires watchdog module (https://pypi.python.org/pypi/watchdog).
 from __future__ import print_function
 from __future__ import absolute_import
 
+import datetime
 import fnmatch
 import glob
 import itertools
@@ -942,6 +943,27 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
                     pattern = pattern_map[CONF]
 
+                    # logger.debug('DM setting up logging for job with '
+                    #              'pattern: %s' % pattern)
+
+                    rule_id = rule['rule_id']
+
+                    recipe_list = \
+                        [(recipe['name'], recipe['persistence_id'])
+                         for recipe
+                         in pattern['trigger_recipes'][rule_id].values()]
+
+                    workflow_dict = {
+                        'trigger_id': rule_id,
+                        'trigger_path': src_path,
+                        'trigger_time':
+                            datetime.datetime.fromtimestamp(time_stamp),
+                        'patter_id': pattern['persistence_id'],
+                        'pattern_name': pattern['name'],
+                        'recipes': recipe_list
+                    }
+                    # logger.debug('DM workflow_dict: %s' % workflow_dict)
+
                     # In cases where parameterize over is defined in a workflow
                     # Pattern, many different  but related jobs will need to be
                     # created.
@@ -967,11 +989,12 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                             self.__schedule_job(
                                 job_template, rel_src, state, rule, expand_map,
                                 pid, event, target_path, temp_dir,
-                                param=job_param)
+                                workflow_job=workflow_dict, param=job_param)
                     else:
                         self.__schedule_job(
                             job_template, rel_src, state, rule, expand_map,
-                            pid, event, target_path, temp_dir)
+                            pid, event, target_path, temp_dir,
+                            workflow_job=workflow_dict)
 
             except Exception as exc:
                 logger.error('(%s) failed to submit job(s) for %s: %s'
@@ -1017,7 +1040,8 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                                                           rule['action']))
 
     def __schedule_job(self, job_template, rel_src, state, rule, expand_map,
-                       pid, event, target_path, temp_dir, param=None):
+                       pid, event, target_path, temp_dir, workflow_job=None,
+                       param=None):
         """Creates a new job from a triggered event by calling the mRSL file
         creation, enqueueing the job, and updating the VGrid history.
         Takes optional parameter 'param', used in workflow Patterns with the
@@ -1043,7 +1067,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
 
         (success, msg, jobid) = new_job(
             mrsl_path, rule['run_as'], configuration, False,
-            returnjobid=True)
+            returnjobid=True, workflow_job=workflow_job)
 
         if success:
             self.__add_trigger_job_ent(configuration,

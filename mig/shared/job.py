@@ -187,6 +187,7 @@ def new_job(
     configuration,
     forceddestination,
     returnjobid=False,
+    workflow_job=None
     ):
     """This function submits a file to the MiG system by assigning
     a unique name to the new job and sends it to the parser.
@@ -209,7 +210,7 @@ def new_job(
     filename_spaces = filename.replace('\\ ', '\\\\\\ ')
 
     (parseresult, parsemsg) = parse(filename_spaces, job_id, client_id,
-                                    forceddestination)
+                                    forceddestination, workflow_job=workflow_job)
 
     if parseresult:
         if returnjobid:

@@ -108,6 +108,7 @@ from mig.shared.useradm import check_password_hash
 from mig.shared.validstring import possible_user_id, possible_gdp_user_id, \
     possible_job_id, possible_sharelink_id, possible_jupyter_mount_id
 from mig.shared.vgrid import in_vgrid_share
+from mig.shared.workflows import add_workflow_job_history_entry
 
 configuration, logger = None, None
 
@@ -138,6 +139,41 @@ class SFTPHandle(paramiko.SFTPHandle):
                      'count': 0,
                      'logstatus': False}
         # self.logger.debug("SFTPHandle init: %s" % repr(flags))
+
+    def __workflow_history_log(method):
+        @wraps(method)
+        def _impl(self, *method_args, **method_kwargs):
+            operation = method.__name__
+
+            if operation != 'write':
+                return method(self, *method_args, **method_kwargs)
+
+            path = getattr(self, "path", None)
+            user_name = getattr(self, "user_name", None)
+
+            # Get rid of leading '/'. This should only be
+            # necesary when testing manually
+            if path.startswith(os.path.sep):
+                path = path[1:]
+            if os.path.sep in path:
+                vgrid = path[:path.find(os.path.sep)]
+            else:
+                vgrid = path
+
+            # logger.debug('path is now %s' % path)
+
+            status, msg = add_workflow_job_history_entry(
+                configuration,
+                vgrid,
+                user_name,
+                operation,
+                path)
+
+            # logger.debug('logging status: %s, %s' % (status, msg))
+
+            return method(self, *method_args, **method_kwargs)
+
+        return _impl
 
     def __gdp_log(method):
         """Decorator used for GDP logging
@@ -319,6 +355,7 @@ class SFTPHandle(paramiko.SFTPHandle):
         return super(SFTPHandle, self).read(offset, length)
 
     @__gdp_log
+    @__workflow_history_log
     def write(self, offset, data):
         """Handle operations of same name"""
         return super(SFTPHandle, self).write(offset, data)

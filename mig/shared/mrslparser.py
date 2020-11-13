@@ -108,6 +108,7 @@ def parse(
     client_id,
     forceddestination,
     outfile='AUTOMATIC',
+    workflow_job=None
 ):
     """Parse job description and optionally write results to parsed mRSL file.
     If outfile is non-empty it is used as destination file, and the keyword
@@ -217,6 +218,15 @@ environment '%s', therefore the job can not be run on any resources.""" %
 
     global_dict['JOB_ID'] = job_id
     global_dict['USER_CERT'] = client_id
+
+    # if workflow job mark
+    if workflow_job:
+        global_dict['WORKFLOW_TRIGGER_ID'] = workflow_job['trigger_id']
+        global_dict['WORKFLOW_TRIGGER_PATH'] = workflow_job['trigger_path']
+        global_dict['WORKFLOW_TRIGGER_TIME'] = workflow_job['trigger_time']
+        global_dict['WORKFLOW_PATTERN_ID'] = workflow_job['patter_id']
+        global_dict['WORKFLOW_PATTERN_NAME'] = workflow_job['pattern_name']
+        global_dict['WORKFLOW_RECIPES'] = workflow_job['recipes']
 
     # mark job as received
 
