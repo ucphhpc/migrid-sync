@@ -154,9 +154,21 @@ With the inclusion of Trac we no longer rely on the MoinMoin software
 for stand-alone wikis.
 
 The optional grid_ftps daemon requires the pyftpdlib module in a recent
-version and the pyopenssl module for SSL/TLS support, so it is easiest
-to install it with pip:
-sudo pip install pyOpenSSL pyftpdlib
+version, so it is easiest to install it with pip:
+sudo pip install pyftpdlib
+Please note that a recent pyopenssl module is required for TLS elliptic curve
+cipher support, which may be needed by some clients like FileZilla. At least if
+MiGserver.conf does not explicitly configure grid_ftps to allow strong legacy
+ciphers with the enable_ftps_legacy_tls option.
+The ancient pyOpenSSL package in CentOS 7 is too old and pyopenssl from pip pulls
+in a recent cryptography dependency, which breaks the native python-paramiko
+package there. So in short on CentOS 7 we recommend either sticking with the old
+pyOpenSSL package and limited ftps cipher support or installing the
+centos-openstack-RELEASE package (where RELEASE is 'stein' or later) to enable
+the official extra openstack repo with newer cryptography, pyopenssl and
+paramiko packages without these conflicts. Please carefully read 
+https://docs.openstack.org/install-guide/environment-packages-rdo.html
+for the implications like potential EPEL conflicts if going with the latter.
 
 The optional grid_webdavs daemon requires the wsgidav module in a recent
 version (1.3.0+), so it is easiest to install it with pip as mentioned above.
