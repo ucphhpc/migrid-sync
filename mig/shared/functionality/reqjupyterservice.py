@@ -139,14 +139,12 @@ def mig_to_user_adapt(mig):
 def mig_to_workflows_adapt(mig):
     """
     :param mig: expects a dictionary containing mig state keys including,
-    WORKFLOWS_URL, JOBS_URL, WORKFLOWS_SESSIONID.
+    WORKFLOWS_URL, WORKFLOWS_SESSIONID.
     :return: returns a dictionary
     """
     workflows = {}
     if 'WORKFLOWS_URL' in mig:
         workflows.update({'WORKFLOWS_URL': mig['WORKFLOWS_URL']})
-    if 'JOBS_URL' in mig:
-        workflows.update({'JOBS_URL': mig['JOBS_URL']})
     if 'WORKFLOWS_SESSION_ID' in mig:
         workflows.update({'WORKFLOWS_SESSION_ID': mig['WORKFLOWS_SESSION_ID']})
     return workflows
@@ -481,12 +479,9 @@ def main(client_id, user_arguments_dict):
                                                                      client_id)
                 # TODO get these dynamically
                 workflows_url = configuration.migserver_https_sid_url + \
-                    '/cgi-sid/workflowsjsoninterface.py?output_format=json'
-                jobs_url = configuration.migserver_https_sid_url + \
-                    '/cgi-sid/jobsjsoninterface.py?output_format=json'
+                    '/cgi-sid/jsoninterface.py?output_format=json'
                 workflows_dict = {
                     'WORKFLOWS_URL': workflows_url,
-                    'JOBS_URL': jobs_url,
                     'WORKFLOWS_SESSION_ID': workflow_session_id}
 
             logger.debug("Existing header values, Workflows: %s"
@@ -565,13 +560,10 @@ def main(client_id, user_arguments_dict):
                                                              client_id)
         # TODO get these dynamically
         workflows_url = configuration.migserver_https_sid_url + \
-            '/cgi-sid/workflowsjsoninterface.py?output_format=json'
-        jobs_url = configuration.migserver_https_sid_url + \
-            '/cgi-sid/jobsjsoninterface.py?output_format=json'
+            '/cgi-sid/jsoninterface.py?output_format=json'
 
         jupyter_dict.update({
             'WORKFLOWS_URL': workflows_url,
-            'JOBS_URL': jobs_url,
             'WORKFLOWS_SESSION_ID': workflow_session_id
         })
 

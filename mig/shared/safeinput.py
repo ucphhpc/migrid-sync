@@ -42,6 +42,11 @@ from email.utils import parseaddr, formataddr
 from string import ascii_letters, digits, printable
 from unicodedata import category, normalize, name as unicode_name
 
+try:
+    import nbformat
+except ImportError:
+    nbformat = None
+
 from mig.shared.base import force_unicode, force_utf8
 from mig.shared.defaults import src_dst_sep, user_id_charset, user_id_max_length, \
     session_id_charset, session_id_length, workflow_id_length, MAX_SWEEP
@@ -1014,6 +1019,25 @@ def valid_workflow_param_over(params):
         )
 
 
+def valid_workflow_source(source):
+    """Verify that supplied source dictionary expressed a valid jupyter
+    notebook.
+    """
+    if not nbformat:
+        return False
+    try:
+        nbformat.validate(source, version=4)
+    except nbformat.ValidationError:
+        return False
+    return True
+
+
+def valid_workflow_recipe(recipe):
+    """Verify that supplied recipe name only contains valid characters.
+    """
+    valid_alphanumeric(recipe, extra_chars='+-=:_-')
+
+
 def valid_workflow_attributes(attributes):
     """Verify that supplied attributes dictionary only contains entries that
       we consider valid workflow attribute keys.
@@ -1037,6 +1061,32 @@ def valid_workflow_operation(operation):
 def valid_workflow_type(type):
     """Verify that the supplied workflow type only contains letters"""
     valid_ascii(type, extra_chars='_')
+
+
+def valid_request_operation(operation):
+    """Verify that the supplied request operation only contains letters and
+    underscores.
+    """
+    valid_ascii(operation, extra_chars='_')
+
+
+def valid_request_type(type):
+    """Verify that the supplied request type only contains letters"""
+    valid_ascii(type, extra_chars='_')
+
+
+def valid_request_vgrid(vgrid):
+    """Verify that supplied vgrid only contains characters that
+    we consider valid in a vgrid name."""
+    valid_vgrid_name(vgrid)
+
+
+def valid_request_attributes(attributes):
+    """Verify that supplied attributes is a dictionary. Note, does not check
+    contents of said dictionary.
+    """
+    if not isinstance(attributes, dict):
+        raise InputException("Expects requests attributes to be a dictionary")
 
 
 def valid_job_vgrid(vgrid):

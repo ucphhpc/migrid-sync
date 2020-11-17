@@ -29,11 +29,10 @@
 """JSON interface for workflows related requests"""
 from __future__ import absolute_import
 
-import cgi
 import cgitb
 cgitb.enable()
 
-from mig.shared.functionality.workflowsjsoninterface import main
+from mig.shared.functionality.jsoninterface import main
 from mig.shared.cgiscriptstub import run_cgi_script_possibly_with_cert
 
 # Expect requests with a JSON formatted body and no field values
