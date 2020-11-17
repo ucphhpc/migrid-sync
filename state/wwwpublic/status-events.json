@@ -31,6 +31,28 @@
     "announce_end": "2020-12-08T17:00:00+01:00"
   },
   {
+    "status": "AUTO", 
+    "work_start": "2020-11-25T16:15:00+01:00", 
+    "systems": [
+        "ERDA",
+        "SIF"
+    ],
+    "announce_start": "2020-11-17T11:00:00+01:00",
+    "title": {
+      "EN": "Planned ERDA and SIF Maintenance",
+      "DK": "Planlagt vedligehold af ERDA og SIF"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2020-11-26T07:59:00+01:00",
+    "description": {
+      "EN": "Update and general maintenance of ERDA and SIF to apply pending system errata and replace a failing memory module in a backend storage host. The work will involve down-time for hardware replacement and low-level updates to complete. Thus all services will be temporarily unavailable one or more times during the maintenance window. Further status will follow here.",
+      "DK": "Opdatering og generel vedligeholdelse af ERDA og SIF for at lægge systemrettelser ind og skifte et ustabilt hukommelsesmodul i en af datalagermaskinerne. Arbejdet kræver nedetid til hardwareskift og grundlæggende systemopdateringer, og der vil derfor forekomme udfald i alle services undervejs. Yderligere status følger her."
+    },
+    "announce_end": "2020-11-27T10:00:00+01:00"
+  },
+  {
     "status": "AUTO",
     "work_start": "2020-10-26T22:00:00+01:00", 
     "systems": [
