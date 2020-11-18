@@ -369,7 +369,7 @@ def graph_read(configuration, user_id, attributes):
         configuration, user_id, workflow_type=PATTERN_GRAPH, **attributes)
     if not status:
         return (False, {'object_type': 'error_text', 'text': response})
-    return (True, {'object_type': 'workflow_report', 'workflows': response})
+    return (True, {'object_type': 'workflow_report', 'report': response})
 
 
 VALID_REQUEST_OPERATIONS = {
