@@ -394,7 +394,7 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
     else:
         if configuration.site_enable_sitestatus:
             fill_helper['sitestatus_button'] = '''
-                <li id="sitestatus-button" class="nav__item nav_item--expanded fas fa-question-circle custom-show" onclick="show_message()"></li>
+                <li id="sitestatus-button" class="nav__item nav_item--expanded fas fa-question-circle custom-show" onclick="show_message()" title="Site status - click for details"></li>
             '''
 
         html = '''

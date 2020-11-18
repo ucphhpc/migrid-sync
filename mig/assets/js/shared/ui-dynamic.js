@@ -324,6 +324,7 @@ function fill_server_status_accordion(status_events, brief_targets, status_targe
             var now = new Date();
             var work_dates = "";
             var work_datetimes = "";
+            var active_announcements = 0;
             var title_class, workdatetimes_class, systems_class, services_class;
             var description_class, references_class;
             $.each(response, function (index, item) {
@@ -350,6 +351,7 @@ function fill_server_status_accordion(status_events, brief_targets, status_targe
                 outage_start = outage_end = new Date();
                 work_start = work_end = new Date();
                 announce_start = announce_end = new Date();
+
                 /* Show all except system-filtered entries here */ 
                 show_entry = true; 
                 $.each(item, function(key, val) {
@@ -420,8 +422,7 @@ function fill_server_status_accordion(status_events, brief_targets, status_targe
                     title_class += "announce info iconleftpad";
                     //console.debug("announce ahead: " + announce_start +" < " +now+ " < "+announce_end);
                     if (status_res["status_icon"] == 'icon_online') {
-                        status_res["EN"] += ", but with active announcements";
-                        status_res["DK"] += ", men med aktuelle varsler";
+                        active_announcements += 1;
                     }
                 } else if (now < announce_start) {
                     //console.debug("skip future marker: " + announce_start + " vs "+now);
@@ -452,6 +453,10 @@ function fill_server_status_accordion(status_events, brief_targets, status_targe
                 }
                 
             });
+            if (active_announcements > 0) {
+                status_res["EN"] += ", with " + active_announcements + " active announcements";
+                status_res["DK"] += ", med " + active_announcements + " aktuelle varsler";
+            }
             $(brief_targets["EN"]).removeClass("spinner");
             $(brief_targets["DK"]).removeClass("spinner");
             $(brief_targets["EN"]).html(status_res["EN"]).addClass(status_res["status_icon"]);
@@ -574,7 +579,7 @@ function fill_server_status_popup(status_events, system_match, locale) {
                 status_line = "Currently one or more active site service warnings.";
             } else if (announce_count > 0) {
                 status_icon = "fa-info-circle";
-                status_color = "green";
+                status_color = "orange";
                 status_caption = "ANNOUNCED";
                 status_line = "All site services online but pending notices.";
             } else {
