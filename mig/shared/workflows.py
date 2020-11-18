@@ -75,7 +75,8 @@ CANCEL_JOB = 'cancel_job'
 RESUBMIT_JOB = 'resubmit_job'
 WORKFLOW_ACTION_TYPES = [MANUAL_TRIGGER, CANCEL_JOB, RESUBMIT_JOB]
 PATTERN_GRAPH = 'pattern_graph'
-WORKFLOW_SEARCH_TYPES = [PATTERN_GRAPH]
+WORKFLOW_REPORT = 'workflow_report'
+WORKFLOW_SEARCH_TYPES = [PATTERN_GRAPH, WORKFLOW_REPORT]
 
 WORKFLOW_PATTERNS, WORKFLOW_RECIPES, MODTIME, CONF = \
     ['__workflowpatterns__', '__workflow_recipes__', '__modtime__', '__conf__']

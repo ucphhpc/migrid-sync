@@ -55,7 +55,7 @@ from mig.shared.workflows import WORKFLOW_TYPES, PATTERN_GRAPH, WORKFLOW_ANY, \
     WORKFLOW_PATTERN, WORKFLOW_RECIPE, valid_session_id, get_workflow_with, \
     load_workflow_sessions_db, create_workflow, delete_workflow, \
     update_workflow, touch_workflow_sessions_db, search_workflow, \
-    WORKFLOW_SEARCH_TYPES
+    WORKFLOW_SEARCH_TYPES, WORKFLOW_REPORT, get_workflow_job_report
 from mig.shared.vgrid import get_vgrid_workflow_jobs, init_vgrid_script_list
 
 CREATE = 'create'
@@ -125,13 +125,18 @@ VALID_PATTERN_GRAPH_SIGNATURE = {
     'vgrid': REJECT_UNSET
 }
 
+VALID_WORKFLOW_REPORT_SIGNATURE = {
+    'vgrid': REJECT_UNSET
+}
+
 VALID_REQUEST_ATTRIBUTES_SIGNATURE = {
     JOB: VALID_JOB_SIGNATURE,
     QUEUE: VALID_QUEUE_SIGNATURE,
     WORKFLOW_PATTERN: VALID_WORKFLOW_PATTERN_SIGNATURE,
     WORKFLOW_RECIPE: VALID_WORKFLOW_RECIPE_SIGNATURE,
     WORKFLOW_ANY: VALID_WORKFLOW_ANY_SIGNATURE,
-    PATTERN_GRAPH: VALID_PATTERN_GRAPH_SIGNATURE
+    PATTERN_GRAPH: VALID_PATTERN_GRAPH_SIGNATURE,
+    WORKFLOW_REPORT: VALID_WORKFLOW_REPORT_SIGNATURE
 }
 
 VALID_JOB_TYPE = {
@@ -173,13 +178,16 @@ VALID_WORKFLOW_ANY_TYPE = {
 
 VALID_PATTERN_GRAPH_TYPE = {}
 
+VALID_WORKFLOW_REPORT_TYPE = {}
+
 VALID_REQUEST_ATTRIBUTES_TYPE = {
     JOB: VALID_JOB_TYPE,
     QUEUE: VALID_QUEUE_TYPE,
     WORKFLOW_PATTERN: VALID_WORKFLOW_PATTERN_TYPE,
     WORKFLOW_RECIPE: VALID_WORKFLOW_RECIPE_TYPE,
     WORKFLOW_ANY: VALID_WORKFLOW_ANY_TYPE,
-    PATTERN_GRAPH: VALID_PATTERN_GRAPH_TYPE
+    PATTERN_GRAPH: VALID_PATTERN_GRAPH_TYPE,
+    WORKFLOW_REPORT: VALID_WORKFLOW_REPORT_TYPE
 }
 
 VALID_JOB_VALUE = {
@@ -221,13 +229,16 @@ VALID_WORKFLOW_ANY_VALUE = {
 
 VALID_PATTERN_GRAPH_VALUE = {}
 
+VALID_WORKFLOW_REPORT_VALUE = {}
+
 VALID_REQUEST_ATTRIBUTES_VALUE = {
     JOB: VALID_JOB_VALUE,
     QUEUE: VALID_QUEUE_VALUE,
     WORKFLOW_PATTERN: VALID_WORKFLOW_PATTERN_VALUE,
     WORKFLOW_RECIPE: VALID_WORKFLOW_RECIPE_VALUE,
     WORKFLOW_ANY: VALID_WORKFLOW_ANY_VALUE,
-    PATTERN_GRAPH: VALID_PATTERN_GRAPH_VALUE
+    PATTERN_GRAPH: VALID_PATTERN_GRAPH_VALUE,
+    WORKFLOW_REPORT: VALID_WORKFLOW_REPORT_VALUE
 }
 
 
@@ -369,6 +380,14 @@ def graph_read(configuration, user_id, attributes):
         configuration, user_id, workflow_type=PATTERN_GRAPH, **attributes)
     if not status:
         return (False, {'object_type': 'error_text', 'text': response})
+    return (True, {'object_type': 'workflows', 'workflows': response})
+
+
+def report_read(configuration, user_id, attributes):
+    status, response = get_workflow_job_report(
+        configuration, attributes['vgrid'])
+    if not status:
+        return (False, {'object_type': 'error_text', 'text': response})
     return (True, {'object_type': 'workflow_report', 'report': response})
 
 
@@ -390,7 +409,9 @@ VALID_REQUEST_OPERATIONS = {
     WORKFLOW_ANY: {
         READ: any_read},
     PATTERN_GRAPH: {
-        READ: graph_read}
+        READ: graph_read},
+    WORKFLOW_REPORT: {
+        READ: report_read}
 }
 
 
