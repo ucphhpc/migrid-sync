@@ -83,16 +83,22 @@ def compact_stats(configuration, stats, sep):
     fill['weekly_archives'] = stats['weekly']['archives']
 
     fill['users_by_org'] = ''
-    org_list = stats['org_counts'].items()
+    org_list = stats['org_counts']['all_users'].keys()
     org_list.sort()
-    for (org, cnt) in org_list:
-        fill['users_by_org'] += '%d%s%s\n' % (cnt, sep, org)
+    for org in org_list:
+        total_cnt = stats['org_counts']['all_users'][org]
+        active_cnt = stats['org_counts']['active_users'].get(org, 0)
+        fill['users_by_org'] += '%d%s%d%s%s\n' % (
+            total_cnt, sep, active_cnt, sep, org)
 
     fill['users_by_domain'] = ''
-    domain_list = stats['domain_counts'].items()
+    domain_list = stats['domain_counts']['all_users'].keys()
     domain_list.sort()
-    for (domain, cnt) in domain_list:
-        fill['users_by_domain'] += '%d%s%s\n' % (cnt, sep, domain)
+    for domain in domain_list:
+        total_cnt = stats['domain_counts']['all_users'][domain]
+        active_cnt = stats['domain_counts']['active_users'].get(domain, 0)
+        fill['users_by_domain'] += '%d%s%d%s%s\n' % (
+            total_cnt, sep, active_cnt, sep, domain)
     return fill
 
 
@@ -171,11 +177,11 @@ Frozen Archives%(sep)s%(weekly_archives)d
 
 User Distribution
 By Organization
-Number%(sep)sOrganization
+Total%(sep)sActive%(sep)sOrganization
 %(users_by_org)s
 
 By Email Domain
-Number%(sep)sEmail Domain
+Total%(sep)sActive%(sep)sEmail Domain
 %(users_by_domain)s
 """
     return csv % fill
@@ -265,7 +271,9 @@ if '__main__' == __name__:
                              'archives': 0},
                   'weekly': {'all_users': 0, 'active_users': 0, 'vgrids': 0,
                              'archives': 0},
-                  'org_counts': {}, 'domain_counts': {}}
+                  'org_counts': {'all_users': {}, 'active_users': {}},
+                  'domain_counts': {'all_users': {}, 'active_users': {}}
+                  }
 
     if sitestats_home == keyword_auto:
         sitestats_home = configuration.sitestats_home
@@ -449,9 +457,7 @@ if '__main__' == __name__:
         print(site_stats['weekly']['archives'])
 
     # Organization and email domain stats
-    search_filter = default_search()
-    (_, all_hits) = search_users(search_filter, conf_path, db_path)
-
+    # All users
     org_map = {}
     domain_map = {}
     for (uid, user_dict) in all_hits:
@@ -464,22 +470,43 @@ if '__main__' == __name__:
         if domain not in domain_map:
             domain_map[domain] = 0
         domain_map[domain] += 1
-    site_stats['org_counts'].update(org_map)
-    site_stats['domain_counts'].update(domain_map)
+    site_stats['org_counts']['all_users'].update(org_map)
+    site_stats['domain_counts']['all_users'].update(domain_map)
+
+    # Active users
+    org_map = {}
+    domain_map = {}
+    for (uid, user_dict) in active_hits:
+        org = user_dict.get('organization', 'UNKNOWN')
+        if org not in org_map:
+            org_map[org] = 0
+        org_map[org] += 1
+        email = user_dict.get('email', 'UNKNOWN')
+        domain = email.split('@', 1)[1].strip()
+        if domain not in domain_map:
+            domain_map[domain] = 0
+        domain_map[domain] += 1
+    site_stats['org_counts']['active_users'].update(org_map)
+    site_stats['domain_counts']['active_users'].update(domain_map)
 
     if verbose:
         print("== User Distribution ==")
         print("=== By Organization ===")
-        org_list = site_stats['org_counts'].items()
+        org_list = site_stats['org_counts']['all_users'].keys()
         org_list.sort()
-        for (org, cnt) in org_list:
-            print('%d\t%s' % (cnt, org))
+        for org in org_list:
+            total_cnt = site_stats['org_counts']['all_users'][org]
+            active_cnt = site_stats['org_counts']['active_users'].get(org, 0)
+            print('%d\t%d\t%s' % (total_cnt, active_cnt, org))
 
         print("=== By Email Domain ===")
-        domain_list = site_stats['domain_counts'].items()
+        domain_list = site_stats['domain_counts']['all_users'].keys()
         domain_list.sort()
-        for (domain, cnt) in domain_list:
-            print('%d\t%s' % (cnt, domain))
+        for domain in domain_list:
+            total_cnt = site_stats['domain_counts']['all_users'][domain]
+            active_cnt = site_stats['domain_counts']['active_users'].get(
+                domain, 0)
+            print('%d\t%d\t%s' % (total_cnt, active_cnt, domain))
 
     if sitestats_path and not write_sitestats(configuration, site_stats,
                                               sitestats_path, output_formats):
