@@ -245,6 +245,7 @@ runtimeenvironments = {'object_type': 'runtimeenvironments',
                                           'runtimeenvironment')]}
 peers = {'object_type': 'peers', 'required_list': [('peers', 'peer')]}
 workflows = {'object_type': 'workflows'}
+workflow_report = {'object_type': 'workflow_report'}
 frozenarchives = {'object_type': 'frozenarchives',
                   'required_list': [('frozenarchives', 'frozenarchive'
                                      )]}
@@ -427,6 +428,7 @@ valid_types_list = [
     peers,
     workflow,
     workflows,
+    workflow_report,
     frozenfile,
     frozenarchive,
     frozenarchives,
