@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
 <title>
-ERDA Status
+Site Status
 </title>
 <!-- site default style -->
 <link rel="stylesheet" type="text/css" href="/images/default.css" media="screen"/>
@@ -65,6 +65,22 @@ ERDA Status
   /* Dynamically load and display parsed events here */
   var content_url = lookup_site_conf("content_url", "status-events.json");
   var system_match = lookup_site_conf("system_match", ["ANY"]);
+  var page_title = {"EN": "Status and News for ", "DK": "Status og nyheder for "};
+  /* The keyword ANY overrides specific system match */
+  if (system_match.indexOf("ANY") >= 0) {    
+    page_title["EN"] += " All Sites";
+    page_title["DK"] += " alle systemer";
+  } else {
+    /* Exclude keyword ALL from system list */
+    var show_systems = system_match.filter(
+        function(currentValue, index, arr) {
+          return (currentValue !== "ALL");
+        });
+    page_title["EN"] += show_systems.join(", ");
+    page_title["DK"] += show_systems.join(", ");
+  }
+  $(".english .pagetitle").html(page_title["EN"]);
+  $(".danish .pagetitle").html(page_title["DK"]);
   console.debug("get content from "+content_url);
   brief_targets = {"EN": ".english .brief-status", "DK": ".danish .brief-status"};
   status_targets = {"EN": ".english .news-accordion", "DK": ".danish .news-accordion"};
@@ -120,7 +136,8 @@ University of Copenhagen - Electronic Research Data Archive
 </select>
 </div>
 <div class="english i18n" lang="en">
-<h1 class="staticpage">UCPH ERDA Status and News</h1>
+<!-- NOTE: pagetitle gets updated by JS -->
+<h1 class="pagetitle staticpage">Status and News</h1>
 
 <h2 class="staticpage">Status</h2>
 <!-- Use one of these templates for brief status messages -->
@@ -156,7 +173,8 @@ Contents are loaded from status-events.json
 </p>
 </div>
 <div class="danish i18n" lang="da">
-<h1 class="staticpage">UCPH ERDA status og nyheder</h1>
+<!-- NOTE: pagetitle gets updated by JS -->
+<h1 class="pagetitle staticpage">Status og nyheder</h1>
 
 <h2 class="staticpage">Status</h2>
 <!-- Use one of these templates for brief status messages -->
@@ -194,6 +212,7 @@ du har spørgsmål eller oplever problemer.
 <img src="/images/icons/help.png" id="supportimage" alt=""/>
 <div class="supporttext staticpage i18n" lang="en">
 <p class="supporttitle i18n" lang="en">Support</p>
+<!-- TODO: avoid hard-coding ERDA here -->
 <p class="i18n" lang="en">
 <a href="https://erda.dk/public/ucph-erda-user-guide.pdf">ERDA
 User Guide</a><br />Questions about ERDA? <br />Please contact
