@@ -75,7 +75,7 @@ def ajax_wait(driver, name, class_name="spinner"):
 def management_actions(driver, url, login, passwd, callbacks):
     """Run user actions for section of same name"""
     # Go through all manager tabs in turn
-    manage_tabs = ["Access Project",
+    manage_tabs = ["Open Project",
                    "Project Info",
                    "Create Project",
                    "Invite Participant",
@@ -180,10 +180,10 @@ def management_actions(driver, url, login, passwd, callbacks):
             print("Warning: could not test %r tab: %s" % (nav_name, exc))
 
 
-def access_project_actions(driver, url, login, passwd, callbacks):
+def open_project_actions(driver, url, login, passwd, callbacks):
     """Run user actions for section of same name"""
-    # Go to access project tab and open first project
-    nav_name = "Access Project"
+    # Go to open project tab and open first project
+    nav_name = "Open Project"
     navmenu = driver.find_element_by_id('project-tabs')
     link = navmenu.find_element_by_link_text(nav_name)
     # print "DEBUG: found %s link: %s" % (nav_name, link)
@@ -193,7 +193,7 @@ def access_project_actions(driver, url, login, passwd, callbacks):
     proj_dropdown = navmenu.find_element_by_name(
         'access_project_base_vgrid_name')
     select_item_by_index(driver, proj_dropdown, 2)
-    link = driver.find_element_by_link_text('Login')
+    link = driver.find_element_by_link_text('Open')
     link.click()
     ajax_wait(driver, nav_name, "ui-progressbar")
 
@@ -622,7 +622,8 @@ def main():
     """Main"""
     argc = len(sys.argv) - 1
     if argc < 4:
-        print("USAGE: %s browser url openid login [password] [2FAkey]" % sys.argv[0])
+        print(
+            "USAGE: %s browser url openid login [password] [2FAkey]" % sys.argv[0])
         return 1
 
     reopen_stdin = False
@@ -674,7 +675,7 @@ def main():
         active_setup_sections = [] + setup_sections
         all_sections = [
             ('Management', management_actions),
-            ('Access Project', access_project_actions),
+            ('Open Project', open_project_actions),
             ('Files', files_actions),
             ('Setup', setup_actions)
         ]
@@ -716,7 +717,7 @@ def main():
     callback_targets += ['jupyter-ready', 'cloud-ready', 'people-ready',
                          'crontab-ready', 'datatransfer-ready',
                          'sharelink-ready']
-    callback_targets += ['access-project-ready', 'project-info-ready',
+    callback_targets += ['open-project-ready', 'project-info-ready',
                          'create-project-ready', 'create-project-filled',
                          'invite-participant-ready',
                          'invite-participant-int-filled',
