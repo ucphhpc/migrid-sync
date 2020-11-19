@@ -507,7 +507,7 @@
       ]
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC", "SIF", "MiGrid"
     ], 
     "announce_start": "2020-02-11T00:00:00+01:00", 
     "title": {
@@ -519,8 +519,8 @@
     ], 
     "work_end": "2020-02-23T23:59:59+01:00", 
     "description": {
-      "EN": "UCPH have announced   plans for a major service window from Friday February 21st in the afternoon to Sunday February 23rd late in the evening. ERDA/IDMC/SIF is not directly affected and should remain fully online. Yet, the UCPH OpenID login service may be unstable in that  period, despite their redundancies. Thus, UCPH users  may experience problems especially in relation to ERDA/IDMC/SIF web login during that time frame.", 
-      "DK": "KU har udmeldt   planer om et stort servicevindue fra fredag den 21. februar om eftermiddagen til søndag den 23. februar sent om aftenen. ERDA/IDMC/SIF er ikke direkte berørt og skulle forblive online. Ikke desto mindre vil arbejdet berøre KU OpenID login-servicen, som vi benytter. Så det kan ikke udelukkes at den del vil være ustabil i perioden. D.v.s. KU-brugere vil muligvis opleve problemer især omkring login på ERDA/IDMC/SIF web i det givne tidsrum."
+      "EN": "UCPH have announced   plans for a major service window from Friday February 21st in the afternoon to Sunday February 23rd late in the evening. ERDA/IDMC/SIF/MiGrid is not directly affected and should remain fully online. Yet, the UCPH OpenID login service may be unstable in that  period, despite their redundancies. Thus, UCPH users  may experience problems especially in relation to web login during that time frame.", 
+      "DK": "KU har udmeldt   planer om et stort servicevindue fra fredag den 21. februar om eftermiddagen til søndag den 23. februar sent om aftenen. ERDA/IDMC/SIF/MiGrid er ikke direkte berørt og skulle forblive online. Ikke desto mindre vil arbejdet berøre KU OpenID login-servicen, som vi benytter. Så det kan ikke udelukkes at den del vil være ustabil i perioden. D.v.s. KU-brugere vil muligvis opleve problemer især omkring login på web i det givne tidsrum."
     }, 
     "announce_end": "2020-02-23T23:59:59+01:00"
   }, 
@@ -761,7 +761,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+      "ERDA"
     ], 
     "announce_start": "2019-08-10T00:00:00+02:00", 
     "title": {
@@ -786,7 +786,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC"
     ], 
     "announce_start": "2019-07-30T00:00:00+02:00", 
     "title": {
@@ -812,7 +812,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC", "SIF"
     ], 
     "announce_start": "2019-07-22T00:00:00+02:00", 
     "title": {
@@ -838,7 +838,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC", "SIF"
     ], 
     "announce_start": "2019-07-05T00:00:00+02:00", 
     "title": {
@@ -863,7 +863,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC", "SIF"
     ], 
     "announce_start": "2019-07-04T00:00:00+02:00", 
     "title": {
@@ -913,7 +913,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC", "SIF"
     ], 
     "announce_start": "2019-07-01T00:00:00+02:00", 
     "title": {
@@ -938,7 +938,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+      "ERDA"
     ], 
     "announce_start": "2019-06-26T00:00:00+02:00", 
     "title": {
@@ -979,8 +979,8 @@
     ], 
     "work_end": "2019-05-29T23:59:59+02:00", 
     "description": {
-      "EN": "UCPH and KUMail was the target of multiple big phishing attacks recently. Please take proper precautions if you got caught and disclosed you login credentials. E.g. apart from of course changing your UCPH password also remember to change any possibly affected passwords you have set for your ERDA SFTP/FTPS/WebDAVS and Seafile services. While at it we also strongly recommend enabling 2-factor authentication for your ERDA logins by following the 2-Factor Auth wizard on your ERDA Settings page. You can either use one of the common authentictor apps or the NetIQ app, which UCPH recently started promoting for various services.", 
-      "DK": "KU og KUMail var mål for et større phishing-angreb på det seneste. Tag venligst dine forholdsregler såfremt du var blandt de fuppede og dermed videregav dine login-oplysninger. D.v.s. husk udover naturligvis at skifte dit KU-kodeord også at skifte evt berørte koder du måtte have valgt for dine ERDA SFTP/FTPS/WebDAVS og Seafile services. Ved samme lejlighed vil vi kraftigt anbefale at tilvælge 2-faktor godkendelse på dine ERDA-logins ved at følge 2-Factor Auth guiden på din ERDA Settings side. Du kan vælge  mellem at benytte en af de populære authentictor apps eller benytte den NetIQ app, som KU for nyligt er begyndt at promovere til forskellige services."
+      "EN": "UCPH and KUMail was the target of multiple big phishing attacks recently. Please take proper precautions if you got caught and disclosed you login credentials. E.g. apart from of course changing your UCPH password also remember to change any possibly affected passwords you have set for your ERDA/IDMC/SIF/MiGrid SFTP, FTPS, WebDAVS and Seafile services. While at it we also strongly recommend enabling 2-factor authentication for your ERDA/IDMC/MiGrid logins by following the 2-Factor Auth wizard on your site Settings page. You can either use one of the common authentictor apps or the NetIQ app, which UCPH recently started promoting for various services.", 
+      "DK": "KU og KUMail var mål for et større phishing-angreb på det seneste. Tag venligst dine forholdsregler såfremt du var blandt de fuppede og dermed videregav dine login-oplysninger. D.v.s. husk udover naturligvis at skifte dit KU-kodeord også at skifte evt berørte koder du måtte have valgt for dine ERDA/IDMC/SIF/MiGrid SFTP, FTPS, WebDAVS og Seafile services. Ved samme lejlighed vil vi kraftigt anbefale at tilvælge 2-faktor godkendelse på dine ERDA/IDMC/MiGrid-logins ved at følge 2-Factor Auth guiden på din site Settings side. Du kan vælge  mellem at benytte en af de populære authentictor apps eller benytte den NetIQ app, som KU for nyligt er begyndt at promovere til forskellige services."
     }, 
     "announce_end": "2019-05-29T23:59:59+02:00"
   }, 
@@ -992,7 +992,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC"
     ], 
     "announce_start": "2019-05-14T00:00:00+02:00", 
     "title": {
@@ -1017,7 +1017,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC"
     ], 
     "announce_start": "2019-05-10T00:00:00+02:00", 
     "title": {
@@ -1042,7 +1042,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC", "SIF", "MiGrid"
     ], 
     "announce_start": "2019-04-23T00:00:00+02:00", 
     "title": {
@@ -1067,7 +1067,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC", "SIF", "MiGrid"
     ], 
     "announce_start": "2019-03-27T00:00:00+01:00", 
     "title": {
@@ -1079,8 +1079,8 @@
     ], 
     "work_end": "2019-03-27T23:59:59+01:00", 
     "description": {
-      "EN": "This morning from about 10.30 UCPH users experienced various issues with ERDA web use. Every operation involving actual login or just login session checks took a long time and some times so long that it resulted in a page load timeout and various other page navigation errors. We tracked it down to be a problem with the UCPH OpenID service, which we rely on for UCPH login to ERDA. University IT had a look and got it back to normal. So everything should be fully functional again.", 
-      "DK": "Til formiddag fra omkring kl 10.30 oplevede KU-brugere forskellige problemer med ERDA webadgang. Alle operationer som involverede enten login eller kontrol af aktiv login session tog enormt lang tid, og førte nogle gange ligefrem til timeout og forskellige andre sideindlæsningsfejl. Vi fandt frem til at det var et problem med svartiderne fra KUs OpenID service, som vi benytter til at levere KU-login på ERDA. KUIT kiggede nærmere på det og fik servicen tilbage i normal drift. Alt skulle derfor være fuldt ud funktionelt igen."
+      "EN": "This morning from about 10.30 UCPH users experienced various issues especially with ERDA web use. Every operation involving actual login or just login session checks took a long time and some times so long that it resulted in a page load timeout and various other page navigation errors. We tracked it down to be a problem with the UCPH OpenID service, which we rely on for UCPH login to ERDA/IDMC/SIF/MiGrid. University IT had a look and got it back to normal. So everything should be fully functional again.", 
+      "DK": "Til formiddag fra omkring kl 10.30 oplevede KU-brugere forskellige problemer med især ERDA webadgang. Alle operationer som involverede enten login eller kontrol af aktiv login session tog enormt lang tid, og førte nogle gange ligefrem til timeout og forskellige andre sideindlæsningsfejl. Vi fandt frem til at det var et problem med svartiderne fra KUs OpenID service, som vi benytter til at levere KU-login på ERDA/IDMC/SIF/MiGrid. KUIT kiggede nærmere på det og fik servicen tilbage i normal drift. Alt skulle derfor være fuldt ud funktionelt igen."
     }, 
     "announce_end": "2019-03-27T23:59:59+01:00"
   }, 
@@ -1121,7 +1121,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC"
     ], 
     "announce_start": "2019-01-21T00:00:00+01:00", 
     "title": {
@@ -1146,7 +1146,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC", "SIF", "MiGrid"
     ], 
     "announce_start": "2019-01-17T00:00:00+01:00", 
     "title": {
@@ -1171,7 +1171,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC", "MiGrid"
     ], 
     "announce_start": "2018-09-09T00:00:00+02:00", 
     "title": {
@@ -1183,8 +1183,8 @@
     ], 
     "work_end": "2018-09-09T23:59:59+02:00", 
     "description": {
-      "EN": "By request from users we added a feature to allow easy import of data from Share Links into your own ERDA/IDMC folders. From your Files page you can right click a folder and choose Share Link > Import. Then enter/paste the ID or URL of the Share Link and click Ok to proceed with complete import of all shared data directly into the folder. In case you only want to import a particular file or folder from the Share Link you can replace the '*' in the Source Path field with your desired target before you click Ok. In any case the effect is that you get your own copy of the data directly in your chosen folder.", 
-      "DK": "Efter ønske fra flere brugere har vi tilføjet funktionalitet til nemt at hente data delt på et Share Link ind i dine egne mapper på ERDA/IDMC. Fra Files kan du højreklikke på en folder og vælge Share Links > Import. Indtast/indsæt ID eller URL på det pågældende Share Link og klik Ok for at starte import af al data derfra direkte ind i den valgte folder. I tilfælde af at du kun ønsker at hente en enkel fil eller folder fra Share Linket kan du erstatte '*' i Source Path med navnet på denne før du klikker Ok. Uanset er resultatet at du får din egen kopi af data i den valgte folder."
+      "EN": "By request from users we added a feature to allow easy import of data from Share Links into your own ERDA/IDMC/MiGrid folders. From your Files page you can right click a folder and choose Share Link > Import. Then enter/paste the ID or URL of the Share Link and click Ok to proceed with complete import of all shared data directly into the folder. In case you only want to import a particular file or folder from the Share Link you can replace the '*' in the Source Path field with your desired target before you click Ok. In any case the effect is that you get your own copy of the data directly in your chosen folder.", 
+      "DK": "Efter ønske fra flere brugere har vi tilføjet funktionalitet til nemt at hente data delt på et Share Link ind i dine egne mapper på ERDA/IDMC/MiGrid. Fra Files kan du højreklikke på en folder og vælge Share Links > Import. Indtast/indsæt ID eller URL på det pågældende Share Link og klik Ok for at starte import af al data derfra direkte ind i den valgte folder. I tilfælde af at du kun ønsker at hente en enkel fil eller folder fra Share Linket kan du erstatte '*' i Source Path med navnet på denne før du klikker Ok. Uanset er resultatet at du får din egen kopi af data i den valgte folder."
     }, 
     "announce_end": "2018-09-09T23:59:59+02:00"
   }, 
@@ -1196,7 +1196,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC"
     ], 
     "announce_start": "2018-09-08T00:00:00+02:00", 
     "title": {
@@ -1221,7 +1221,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC", "SIF"
     ], 
     "announce_start": "2018-09-03T00:00:00+02:00", 
     "title": {
@@ -1246,7 +1246,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC"
     ], 
     "announce_start": "2018-07-18T00:00:00+02:00", 
     "title": {
@@ -1271,7 +1271,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC"
     ], 
     "announce_start": "2018-07-12T00:00:00+02:00", 
     "title": {
@@ -1327,7 +1327,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC", "MiGrid"
     ], 
     "announce_start": "2018-06-25T00:00:00+02:00", 
     "title": {
@@ -1342,8 +1342,8 @@
     ], 
     "work_end": "2018-06-25T23:59:59+02:00", 
     "description": {
-      "EN": "Due to a rise in the number of automated password guessing attempts we've chosen to strengthen the password requirements for our services with password-login. This means that since yesterday we enforce not only the standard UCPH password requirements of eight characters from at least three character classes but also a number of additional checks for dictionary words and simple patterns. The rules were immediately enforced when setting or changing password and will also be enforced for existing passwords next time we restart the services. In case you can no longer access ERDA through WebDAVS/SFTP/FTPS, please go to your ERDA Settings page and try to set the password again for the particular service. If it is refused you need to come up with a new stronger password.", 
-      "DK": "I lyset af det stigende antal angreb som forsøger at knække passwords til vores WebDAVS/SFTP/FTPS-services, har vi yderligere strammet kravene til styrken af passwords. Udover de almindelige KU-krav om otte tegn fra mindst tre tegn-klasser har vi således indført hindring af passwords med almindelige ord eller simple fortløbende tegnsekvenser og møsntre. Stramningerne trådte i kraft med det samme for password-opsætning og -skift. De vil desuden blive håndhævet for eksisterende passwords når vi næste gang genstarter services. Såfremt du ikke længere kan logge på de pågældende services kan du gå ind på din ERDA Settings side og prøve at sætte kodeordet igen. Hvis det afvises er du nødt til at finde på et nyt og stærkere kodeord."
+      "EN": "Due to a rise in the number of automated password guessing attempts we've chosen to strengthen the password requirements for our services with password-login. This means that since yesterday we enforce not only the standard UCPH password requirements of eight characters from at least three character classes but also a number of additional checks for dictionary words and simple patterns. The rules were immediately enforced when setting or changing password and will also be enforced for existing passwords next time we restart the services. In case you can no longer access ERDA/IDMC/MiGrid through WebDAVS/SFTP/FTPS, please go to your Settings page and try to set the password again for the particular service. If it is refused you need to come up with a new stronger password.", 
+      "DK": "I lyset af det stigende antal angreb som forsøger at knække passwords til vores WebDAVS/SFTP/FTPS-services, har vi yderligere strammet kravene til styrken af passwords. Udover de almindelige KU-krav om otte tegn fra mindst tre tegn-klasser har vi således indført hindring af passwords med almindelige ord eller simple fortløbende tegnsekvenser og møsntre. Stramningerne trådte i kraft med det samme for password-opsætning og -skift. De vil desuden blive håndhævet for eksisterende passwords når vi næste gang genstarter services. Såfremt du ikke længere kan logge på de pågældende services på ERDA/IDMC/MiGrid, kan du gå ind på din Settings side og prøve at sætte kodeordet igen. Hvis det afvises er du nødt til at finde på et nyt og stærkere kodeord."
     }, 
     "announce_end": "2018-06-25T23:59:59+02:00"
   }, 
@@ -1380,7 +1380,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC", "SIF"
     ], 
     "announce_start": "2018-06-20T00:00:00+02:00", 
     "title": {
@@ -1405,7 +1405,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+      "ERDA"
     ], 
     "announce_start": "2018-06-18T00:00:00+02:00", 
     "title": {
@@ -1430,7 +1430,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+      "ERDA"
     ], 
     "announce_start": "2018-06-13T00:00:00+02:00", 
     "title": {
@@ -1455,7 +1455,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+      "ERDA"
     ], 
     "announce_start": "2018-04-19T00:00:00+02:00", 
     "title": {
@@ -1480,7 +1480,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC"
     ], 
     "announce_start": "2018-04-17T00:00:00+02:00", 
     "title": {
@@ -1505,7 +1505,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC"
     ], 
     "announce_start": "2018-04-06T00:00:00+02:00", 
     "title": {
@@ -1530,7 +1530,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC", "SIF"
     ], 
     "announce_start": "2018-03-16T00:00:00+01:00", 
     "title": {
@@ -1555,7 +1555,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC"
     ], 
     "announce_start": "2018-03-15T00:00:00+01:00", 
     "title": {
@@ -1580,7 +1580,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC"
     ], 
     "announce_start": "2018-03-12T00:00:00+01:00", 
     "title": {
@@ -1605,7 +1605,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC"
     ], 
     "announce_start": "2018-03-11T00:00:00+01:00", 
     "title": {
@@ -1630,7 +1630,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC", "MiGrid"
     ], 
     "announce_start": "2018-03-05T00:00:00+01:00", 
     "title": {
@@ -1642,8 +1642,8 @@
     ], 
     "work_end": "2018-03-05T23:59:59+01:00", 
     "description": {
-      "EN": "We have enabled a new feature to schedule tasks in beta test at ERDA. It can be used to automate tasks at given times, running on behalf of you. One such task would be the creation of backup archives e.g. every night. Further details about use and possibilities are available in the user guide.", 
-      "DK": "Vi har sat den nye funktionalitet til planlagte opgaver i beta-test på ERDA. Med den kan man automatisere opgaver til at køre på givne tidspunkter og på ens vegne. Det kan f.eks. være sådan noget som automatisk oprettelse af backup arkiver hver nat. De nærmere detaljer om brugen findes i brugervejledningen."
+      "EN": "We have enabled a new feature to schedule tasks in beta test at ERDA/IDMC/MiGrid. It can be used to automate tasks at given times, running on behalf of you. One such task would be the creation of backup archives e.g. every night. Further details about use and possibilities are available in the user guide.", 
+      "DK": "Vi har sat den nye funktionalitet til planlagte opgaver i beta-test på ERDA/IDMC/MiGrid. Med den kan man automatisere opgaver til at køre på givne tidspunkter og på ens vegne. Det kan f.eks. være sådan noget som automatisk oprettelse af backup arkiver hver nat. De nærmere detaljer om brugen findes i brugervejledningen."
     }, 
     "announce_end": "2018-03-05T23:59:59+01:00"
   }, 
@@ -1655,7 +1655,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC"
     ], 
     "announce_start": "2018-03-04T00:00:00+01:00", 
     "title": {
@@ -1680,7 +1680,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+      "ERDA"
     ], 
     "announce_start": "2018-02-21T00:00:00+01:00", 
     "title": {
@@ -1705,7 +1705,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+      "ERDA"
     ], 
     "announce_start": "2018-02-13T00:00:00+01:00", 
     "title": {
@@ -1730,7 +1730,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+      "ERDA"
     ], 
     "announce_start": "2018-02-12T00:00:00+01:00", 
     "title": {
@@ -1755,7 +1755,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+      "ERDA"
     ], 
     "announce_start": "2018-01-25T00:00:00+01:00", 
     "title": {
@@ -1809,7 +1809,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+      "ERDA"
     ], 
     "announce_start": "2018-01-10T00:00:00+01:00", 
     "title": {
@@ -1834,7 +1834,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+      "ERDA"
     ], 
     "announce_start": "2017-11-02T00:00:00+01:00", 
     "title": {
@@ -1859,7 +1859,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+      "ERDA"
     ], 
     "announce_start": "2017-09-21T00:00:00+02:00", 
     "title": {
@@ -1888,7 +1888,7 @@
       ]
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC", "MiGrid"
     ], 
     "announce_start": "2017-07-25T00:00:00+02:00", 
     "title": {
@@ -1900,8 +1900,8 @@
     ], 
     "work_end": "2017-07-25T23:59:59+02:00", 
     "description": {
-      "EN": "We've added another access method to allow people without a general KU/UCPH account to use ERDA with simple username and password login. This new service makes it a lot simpler for e.g. external collaboration partners to sign up and use ERDA. Please refer to our FAQ entry on the subject for the details.", 
-      "DK": "Vi har tilføjet endnu en adgangsløsning for at kunne give folk uden en almindelig KU-konto tilsvarende login til ERDA med brugernavn og kodeord. På den måde er det blevet markant nemmere at koble eksterne samarbejdspartnere på ERDA, sådan som det er beskrevet af det tilhørende punkt i vores FAQ på forsiden."
+      "EN": "We've added another access method to allow people without a general KU/UCPH account to use ERDA/IDMC/MiGrid with simple username and password login. This new service makes it a lot simpler for e.g. external collaboration partners to sign up and use. Please refer to our FAQ entry on the subject for the details.", 
+      "DK": "Vi har tilføjet endnu en adgangsløsning for at kunne give folk uden en almindelig KU-konto tilsvarende login til ERDA/IDMC/MiGrid med brugernavn og kodeord. På den måde er det blevet markant nemmere at koble eksterne samarbejdspartnere på, sådan som det er beskrevet af det tilhørende punkt i vores FAQ på forsiden."
     }, 
     "announce_end": "2017-07-25T23:59:59+02:00"
   }, 
@@ -1913,7 +1913,7 @@
       "DK": []
     }, 
     "systems": [
-      "ALL"
+        "ERDA", "IDMC", "MiGrid"
     ], 
     "announce_start": "2017-04-21T00:00:00+02:00", 
     "title": {
