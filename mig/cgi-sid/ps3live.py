@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# ps3live - [insert a few words of module description on this line]
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# ps3live - PS3 live resource handler
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,21 +28,33 @@
 # Martin Rehr 27/03/2007
 
 import cgi
-import cgitb
-cgitb.enable()
 import os
 import tempfile
+# Only enable for debug
+#import cgitb
+# cgitb.enable()
 
+from mig.shared import confparser
 from mig.shared.cgishared import init_cgiscript_possibly_with_cert, \
     cgiscript_header
 from mig.shared.defaults import default_vgrid
 from mig.shared.fileio import make_symlink
+from mig.shared.functional import validate_input, REJECT_UNSET
+from mig.shared.resadm import fill_frontend_script, fill_master_node_script, \
+    get_resource_exe, get_frontend_script, get_master_node_script
 from mig.shared.resource import create_resource_home
 from mig.shared.sandbox import get_resource_name
-from mig.shared.resadm import get_frontend_script, get_master_node_script
-from mig.shared.resadm import fill_frontend_script, \
-    fill_master_node_script, get_resource_exe
-from mig.shared import confparser
+from mig.shared.scriptinput import fieldstorage_to_dict
+
+
+def signature():
+    """Signature of the main function"""
+
+    defaults = {
+        'action': REJECT_UNSET,
+        'debug': [''],
+    }
+    return ['', defaults]
 
 
 def create_ps3_resource(configuration, sandboxkey):
@@ -103,7 +115,7 @@ def create_ps3_resource(configuration, sandboxkey):
 
     resource_identifier = result[1]
     unique_resource_name = resource_name + '.'\
-         + str(resource_identifier)
+        + str(resource_identifier)
 
     # create a resource configuration string that we can write to a file
 
@@ -211,7 +223,7 @@ vgrid=%s"""\
         str(exe_continuous),
         str(exe_shared_fs),
         exe_vgrid,
-        )
+    )
 
     # write the conf string to a conf file
 
@@ -227,7 +239,7 @@ vgrid=%s"""\
 
     # parse and pickle the conf file
 
-    (status, msg) = confparser.run(configuration, conf_file_src, resource_name \
+    (status, msg) = confparser.run(configuration, conf_file_src, resource_name
                                    + '.' + str(resource_identifier))
     if not status:
         o.out(msg, conf_file_src)
@@ -260,7 +272,7 @@ def get_ps3_resource(configuration):
         # No sandboxkey provided,
 
         log_msg = log_msg + ', Remote IP: %s, provided no sandboxkey.'\
-             % os.getenv('REMOTE_ADDR')
+            % os.getenv('REMOTE_ADDR')
 
         return (False, log_msg)
 
@@ -270,7 +282,7 @@ def get_ps3_resource(configuration):
 
         unique_resource_name = create_ps3_resource(configuration, sandboxkey)
         log_msg = log_msg + ' Created resource: %s'\
-             % unique_resource_name
+            % unique_resource_name
 
         # Make symbolic link from
     # sandbox_home/sandboxkey to resource_home/resource_name
@@ -282,7 +294,7 @@ def get_ps3_resource(configuration):
         make_symlink(resource_path, sandbox_link, logger)
     else:
         (status, unique_resource_name) = get_resource_name(sandboxkey,
-                logger)
+                                                           logger)
         if not status:
             return (False, unique_resource_name)
 
@@ -296,7 +308,7 @@ def get_ps3_resource(configuration):
         os.remove(job_pending_file)
 
     log_msg = log_msg + ', Remote IP: %s, Key: %s'\
-         % (os.getenv('REMOTE_ADDR'), sandboxkey)
+        % (os.getenv('REMOTE_ADDR'), sandboxkey)
 
     o.internal('''
 %s
@@ -304,13 +316,18 @@ def get_ps3_resource(configuration):
 
     return (True, unique_resource_name)
 
+# TODO: port to new functionality backend structure with standard validation
 
 # ## Main ###
-# Get Quirystring object
 
-fieldstorage = cgi.FieldStorage()
+
 (logger, configuration, client_id, o) = \
     init_cgiscript_possibly_with_cert()
+
+if configuration.site_enable_gdp or not configuration.site_enable_sandboxes \
+        or not configuration.site_enable_jobs:
+    o.out('Not available on this site!')
+    o.reply_and_exit(o.CLIENT_ERROR)
 
 # Check we are using GET method
 
@@ -330,8 +347,27 @@ if str(os.getenv('HTTPS')) != 'on':
     cgiscript_header()
     o.reply_and_exit(o.ERROR)
 
-action = fieldstorage.getfirst('action', None)
-debug = fieldstorage.getfirst('debug', None)
+fieldstorage = cgi.FieldStorage()
+user_arguments_dict = fieldstorage_to_dict(fieldstorage)
+defaults = signature()[1]
+output_objects = []
+# IMPORTANT: validate all input args before doing ANYTHING with them!
+(validate_status, accepted) = validate_input(
+    user_arguments_dict,
+    defaults,
+    output_objects,
+    allow_rejects=False,
+    # NOTE: path cannot use wildcards here
+    typecheck_overrides={},
+)
+if not validate_status:
+    logger.error("input validation for %s failed: %s" %
+                 (client_id, accepted))
+    o.out('Invalid input arguments received!')
+    o.reply_and_exit(o.ERROR)
+
+action = accepted['action'][-1]
+debug = accepted['debug'][-1]
 if action == 'get_frontend_script':
     (status, msg) = get_ps3_resource(configuration)
     if status:

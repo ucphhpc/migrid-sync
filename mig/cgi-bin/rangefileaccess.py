@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# rangefileaccess - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# rangefileaccess - read or write byte range inside file
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,21 +33,33 @@ DELETE http requests.
 NOTE: ranges (filepositions) are handled according to the w3c HTTP
 standard rfc2616.
 """
+
 from __future__ import absolute_import
 
 import cgi
-import cgitb
-cgitb.enable()
 import os
 import sys
+# only enable for debugging
+# import cgitb
+# cgitb.enable()
 
-# import urllib
-
-# MiG imports
-
-from mig.shared.base import client_id_dir, invisible_path
-from mig.shared.scriptinput import fieldstorage_to_dict
 from mig.shared.cgishared import init_cgiscript_possibly_with_cert
+from mig.shared.base import client_id_dir, invisible_path
+from mig.shared.functional import validate_input, REJECT_UNSET
+from mig.shared.validstring import valid_user_path
+
+
+def signature():
+    """Signature of the main function"""
+
+    defaults = {
+        'path': REJECT_UNSET,
+        'filename': [''],
+        'iosessionid': [''],
+        'file_startpos': [-1],
+        'file_endpos': [-1],
+    }
+    return ['', defaults]
 
 
 def get(o, fileinfo_dict):
@@ -91,7 +103,7 @@ def get(o, fileinfo_dict):
 
     if file_startpos >= filelen:
         o.out('file_startpos: %s after end of file: %s '
-               % (file_startpos, filelen))
+              % (file_startpos, filelen))
         return False
     elif file_startpos > file_endpos:
 
@@ -116,7 +128,7 @@ def get(o, fileinfo_dict):
         filehandle.seek(file_startpos, 0)
     except Exception as err:
         o.out("Seeking File: '%s' failed: %s\n" % (err,
-              fileinfo_dict['path']))
+                                                   fileinfo_dict['path']))
         return False
 
     # If write fails, do nothing, it's up to the client,
@@ -156,7 +168,7 @@ Reading File: '%s' failed: %s
         filehandle.close()
     except Exception as err:
         o.out("Closing File: '%s' failed: %s\n" % (err,
-              fileinfo_dict['path']))
+                                                   fileinfo_dict['path']))
         read_status = False
 
     # if read_status:
@@ -222,7 +234,7 @@ def put(o, fileinfo_dict):
 
             file_startpos = (file_endpos - content_length) - 1
         elif file_startpos != -1 and file_endpos == -1 or file_startpos\
-             != -1 and file_endpos - file_startpos > content_length - 1:
+                != -1 and file_endpos - file_startpos > content_length - 1:
 
             # If file_endpos not given or file_endpos exceeds the amount
             # of data retrieved, use filestart_pos and content_length
@@ -256,14 +268,21 @@ def put(o, fileinfo_dict):
             return False
 
     o.logger.info("\nFile: '%s' <- %s bytes written successfully. %s"
-                   % (fileinfo_dict['path'], datalen, fileinfo_dict))
+                  % (fileinfo_dict['path'], datalen, fileinfo_dict))
     return True
 
+# TODO: port to new functionality backend structure with standard validation
 
 # ## Main ###
 
+
 (logger, configuration, client_id, o) = \
     init_cgiscript_possibly_with_cert()
+
+if configuration.site_enable_gdp:
+    o.out('Not available on this site!')
+    o.reply_and_exit(o.CLIENT_ERROR)
+
 client_dir = client_id_dir(client_id)
 
 # Debug info
@@ -279,24 +298,44 @@ valid_methods = ['GET', 'PUT', 'DELETE']
 action = os.getenv('REQUEST_METHOD')
 if not action in valid_methods:
     o.out('Invalid HTTP method (use one of %s)!'
-           % ', '.join(valid_methods))
+          % ', '.join(valid_methods))
     o.reply_and_exit(o.ERROR)
 
 # General fieldstorage parsing doesn't work for upload!
 # Generate fileinfo_dict from query string - this is dictionary on the form
 # {"variablename1":[value1, value2, .. ], }
 
-fileinfo_dict = cgi.parse(sys.stdin)
+raw_fileinfo_dict = cgi.parse(sys.stdin)
+
+#logger.debug("parsing input: %s" % raw_fileinfo_dict)
+
+defaults = signature()[1]
+output_objects = []
+# IMPORTANT: validate all input args before doing ANYTHING with them!
+(validate_status, accepted) = validate_input(
+    raw_fileinfo_dict,
+    defaults,
+    output_objects,
+    allow_rejects=False,
+    # NOTE: path cannot use wildcards here
+    typecheck_overrides={},
+)
+if not validate_status:
+    logger.error("input validation for %s failed: %s" %
+                 (client_id, accepted))
+    o.out('Invalid input arguments received!')
+    o.reply_and_exit(o.ERROR)
 
 # Simply use the first of the provided values
-
-for (key, value_list) in fileinfo_dict.items():
+fileinfo_dict = {}
+for (key, value_list) in accepted.items():
     fileinfo_dict[key] = value_list[0]
 
 # Backwards compatibility
 
-if 'filename' in fileinfo_dict:
+if fileinfo_dict.get('filename', ''):
     fileinfo_dict['path'] = fileinfo_dict['filename']
+
 
 if 'path' not in fileinfo_dict:
 
@@ -305,14 +344,8 @@ if 'path' not in fileinfo_dict:
     o.out('No path provided, unable to process file!')
     o.reply_and_exit(o.ERROR)
 
-# Reject modification of invisible files, even if apache generally allows it
-
-if invisible_path(fileinfo_dict['path']):
-    o.out('Access to %s is prohibited!' % fileinfo_dict['path'])
-    o.reply_and_exit(o.CLIENT_ERROR)
-
 logger.info('rangefileaccess on %s (%s)' % (fileinfo_dict['path'],
-            fileinfo_dict))
+                                            fileinfo_dict))
 
 if client_id:
 
@@ -320,16 +353,38 @@ if client_id:
 
     fileinfo_dict['base_path'] = \
         os.path.normpath(os.path.join(configuration.user_home,
-                         client_dir)) + os.sep
+                                      client_dir))
 elif 'iosessionid' in fileinfo_dict:
 
-    fileinfo_dict['base_path'] = configuration.webserver_home\
-         + fileinfo_dict['iosessionid'] + '/'
+    fileinfo_dict['base_path'] = configuration.webserver_home + \
+        fileinfo_dict['iosessionid']
 else:
 
     o.out('No certificate found and no iosessionid provided, unable to process file!'
           )
     o.reply_and_exit(o.ERROR)
+
+
+# Please note that base_dir must end in slash to avoid access to other
+# user dirs when own name is a prefix of another user name
+
+base_dir = fileinfo_dict['base_path'] = fileinfo_dict['base_path'] + os.sep
+
+# Check directory traversal attempts before actual handling to avoid
+# leaking information about file system layout while allowing
+# consistent error messages
+path = fileinfo_dict['path']
+unfiltered_match = [base_dir + os.sep + fileinfo_dict['path']]
+match = []
+for server_path in unfiltered_match:
+    # IMPORTANT: path must be expanded to abs for proper chrooting
+    abs_path = os.path.abspath(server_path)
+    if not valid_user_path(configuration, abs_path, base_dir, True):
+        logger.warning('%s tried to access restricted path %s ! (%s)'
+                       % (client_id, abs_path, path))
+        o.out('Access to %s is prohibited!' % fileinfo_dict['path'])
+        o.reply_and_exit(o.CLIENT_ERROR)
+
 
 if action == 'GET':
     status = get(o, fileinfo_dict)
@@ -361,7 +416,5 @@ elif action == 'DELETE':
 
         o.reply_and_exit(o.ERROR)
 else:
-    o.internal("REQUEST_METHOD: '" + str(action) + "' <- NOT supportet."
-               )
+    o.internal("REQUEST_METHOD: '" + str(action) + "' <- NOT supported.")
     o.reply_and_exit(o.ERROR)
-

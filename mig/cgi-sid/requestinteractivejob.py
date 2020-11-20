@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # requestinteractivejob - handle interactive job requests from resources
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,9 +28,9 @@
 """Handle request for an interactive job from a resource"""
 
 import cgi
+import fcntl
 import os
 import sys
-import fcntl
 import time
 
 from mig.shared.base import valid_dir_input
@@ -38,14 +38,42 @@ from mig.shared.cgishared import init_cgiscript_possibly_with_cert
 from mig.shared.conf import get_resource_configuration, get_resource_exe
 from mig.shared.fileio import unpickle
 from mig.shared.findtype import is_resource
+from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.httpsclient import check_source_ip
 from mig.shared.livedisplaysfunctions import get_users_display_number
+from mig.shared.scriptinput import fieldstorage_to_dict
 from mig.shared.ssh import execute_on_resource, copy_file_to_exe
+
+
+def signature():
+    """Signature of the main function"""
+
+    defaults = {
+        'exe': REJECT_UNSET,
+        'unique_resource_name': REJECT_UNSET,
+        'cputime': ['10000'],
+        'nodecount': ['1'],
+        'localjobname': [''],
+        'sandboxkey': [''],
+        'execution_delay': ['0'],
+        'exe_pgid': ['0'],
+        'sessionid': [''],
+        'jobid': [''],
+    }
+    return ['', defaults]
+
+
+# TODO: port to new functionality backend structure with standard validation
 
 # ## Main ###
 
 (logger, configuration, client_id, o) = \
     init_cgiscript_possibly_with_cert()
+
+if configuration.site_enable_gdp or not configuration.site_enable_jobs:
+    o.out('Not available on this site!')
+    o.reply_and_exit(o.CLIENT_ERROR)
+
 if str(os.getenv('REQUEST_METHOD')) != 'GET':
     o.out('Please use HTTP GET')
     o.reply_and_exit(o.ERROR)
@@ -63,16 +91,34 @@ if str(os.getenv('HTTPS')) != 'on':
 remote_ip = str(os.getenv('REMOTE_ADDR'))
 
 fieldstorage = cgi.FieldStorage()
-exe = fieldstorage.getfirst('exe', '')
-unique_resource_name = fieldstorage.getfirst('unique_resource_name', '')
-cputime = fieldstorage.getfirst('cputime', '10000')
-nodecount = fieldstorage.getfirst('nodecount', '1')
-localjobname = fieldstorage.getfirst('localjobname', '')
-#sandboxkey = fieldstorage.getfirst('sandboxkey', '')
-execution_delay = fieldstorage.getfirst('execution_delay', '0')
-#exe_pgid = fieldstorage.getfirst('exe_pgid', '0')
-sessionid = fieldstorage.getfirst('sessionid', '')
-jobid = fieldstorage.getfirst('jobid', '')
+user_arguments_dict = fieldstorage_to_dict(fieldstorage)
+defaults = signature()[1]
+output_objects = []
+# IMPORTANT: validate all input args before doing ANYTHING with them!
+(validate_status, accepted) = validate_input(
+    user_arguments_dict,
+    defaults,
+    output_objects,
+    allow_rejects=False,
+    # NOTE: path cannot use wildcards here
+    typecheck_overrides={},
+)
+if not validate_status:
+    logger.error("input validation for %s failed: %s" %
+                 (client_id, accepted))
+    o.out('Invalid input arguments received!')
+    o.reply_and_exit(o.ERROR)
+
+exe = accepted['exe'][-1]
+unique_resource_name = accepted['unique_resource_name'][-1]
+cputime = accepted['cputime'][-1]
+nodecount = accepted['nodecount'][-1]
+localjobname = accepted['localjobname'][-1]
+#sandboxkey = accepted['sandboxkey'][-1]
+execution_delay = accepted['execution_delay'][-1]
+#exe_pgid = accepted['exe_pgid'][-1]
+sessionid = accepted['sessionid'][-1]
+jobid = accepted['jobid'][-1]
 o.out("interactive job request from '%s;%s;%s;%s;%s;%s;%s;%s;%s" % (
     remote_ip,
     exe,
@@ -83,7 +129,7 @@ o.out("interactive job request from '%s;%s;%s;%s;%s;%s;%s;%s;%s" % (
     execution_delay,
     jobid,
     sessionid,
-    ))
+))
 
 # Please note that base_dir must end in slash to avoid access to other
 # resource dirs when own name is a prefix of another resource name
@@ -101,7 +147,7 @@ if not valid_dir_input(configuration.resource_home,
 
     o.out('invalid unique_resource_name! %s' % unique_resource_name)
     o.internal('requestinteractivejob called with illegal parameter(s) in what appears to be an illegal directory traversal attempt!: unique_resource_name %s, exe %s, client_id %s'
-                % (unique_resource_name, exe, client_id))
+               % (unique_resource_name, exe, client_id))
     o.reply_and_exit(o.CLIENT_ERROR)
 
 # Check that resource address matches request source to make DoS harder
@@ -162,7 +208,7 @@ if mrsldict['STATUS'] == 'FINISHED':
     o.reply_and_exit(o.ERROR)
 
 if not is_resource(unique_resource_name, configuration.resource_home):
-    o.out('requestinteractivejob error! Your unique_resource_name ' + 
+    o.out('requestinteractivejob error! Your unique_resource_name ' +
           ' is not recognized as a %s resource!' % configuration.short_title
           )
     o.reply_and_exit(o.ERROR)
@@ -178,7 +224,7 @@ logger.info('getting exe')
 (status, exe_conf) = get_resource_exe(resource_conf, exe, logger)
 if not status:
     o.out("No EXE config for: '" + unique_resource_name + "' EXE: '"
-           + exe + "'")
+          + exe + "'")
     o.reply_and_exit(o.ERROR)
 
 # ################################################
@@ -188,20 +234,20 @@ if not status:
 # set the correct DISPLAY before calling SSH
 
 display_number = get_users_display_number(job_submitter_client_id,
-        configuration, logger)
+                                          configuration, logger)
 
 if not display_number:
     o.out('could not find display number for %s in dict'
-           % job_submitter_client_id)
+          % job_submitter_client_id)
     o.reply_and_exit(o.ERROR)
 
 if display_number < 0:
     o.out('could not find valid display number for %s in dict'
-           % job_submitter_client_id)
+          % job_submitter_client_id)
     o.reply_and_exit(o.ERROR)
 
 o.internal('%s has display %s' % (job_submitter_client_id,
-           display_number))
+                                  display_number))
 
 # os.putenv("DISPLAY", ":%s" % display_number)
 
@@ -211,46 +257,46 @@ logger.info('ENV TEST: %s' % str(os.getenv('DISPLAY')))
 # copy .interactivejob to exe:
 
 local_filename = configuration.mig_system_files + jobid\
-     + '.interactivejob'
+    + '.interactivejob'
 dest_filename = jobid + '.interactivejob'
 (copy_status, copy_msg) = copy_file_to_exe(local_filename,
-        dest_filename, resource_conf, exe, logger)
+                                           dest_filename, resource_conf, exe, logger)
 if not copy_status:
     o.out(copy_msg)
     o.reply_and_exit(o.ERROR)
 logger.info('%s copied to resource %s  exe %s' % (local_filename,
-            unique_resource_name, exe))
+                                                  unique_resource_name, exe))
 
 # TODO: does this work with execute_on_exe() instead of manual ssh?
 # execute .interactive on exe
 
 ssh_command = \
     'ssh -X %s@%s \\"cd %s; mv -f %s job-dir_%s; cd job-dir_%s; chmod +x %s; bash -c \'./%s\'\\"'\
-     % (
-    exe_conf['execution_user'],
-    exe_conf['execution_node'],
-    exe_conf['execution_dir'],
-    dest_filename,
-    localjobname,
-    localjobname,
-    dest_filename,
-    dest_filename,
+    % (
+        exe_conf['execution_user'],
+        exe_conf['execution_node'],
+        exe_conf['execution_dir'],
+        dest_filename,
+        localjobname,
+        localjobname,
+        dest_filename,
+        dest_filename,
     )
 logger.info('execute_on_resource: %s' % ssh_command)
 exit_code = -1
 try:
     (exit_code, executed_command) = execute_on_resource(ssh_command,
-            False, resource_conf, logger)
+                                                        False, resource_conf, logger)
 except Exception as e:
     logger.error('Exception executing remote SSH from requestinteractivejob.py: %s '
-                  % e)
+                 % e)
     o.reply_and_exit(o.ERROR)
 
 if exit_code != 0:
     logger.error('Error executing interactive job script on resource: %s command: %s exit code: %s'
-                  % (unique_resource_name, executed_command, exit_code))
+                 % (unique_resource_name, executed_command, exit_code))
     o.reply_and_exit(o.ERROR)
 
 o.out('requestinteractivejob OK. The job was started on the resource: %s exe: %s remote addr: %s'
-       % (unique_resource_name, exe_conf, os.getenv('REMOTE_ADDR')))
+      % (unique_resource_name, exe_conf, os.getenv('REMOTE_ADDR')))
 o.reply_and_exit(o.OK)

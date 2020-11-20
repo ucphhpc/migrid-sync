@@ -26,6 +26,7 @@
 #
 
 """HTTP PUT handler"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -66,6 +67,10 @@ block_size = 1024 * 1024
 (logger, configuration, client_id, o) = \
     init_cgiscript_possibly_with_cert()
 client_dir = client_id_dir(client_id)
+
+if configuration.site_enable_gdp:
+    o.out('Not available on this site!')
+    o.reply_and_exit(o.CLIENT_ERROR)
 
 # logger.info("put called with cert %s" % client_id)
 
