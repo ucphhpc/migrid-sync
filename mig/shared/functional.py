@@ -87,8 +87,15 @@ def validate_input(
     output_objects,
     allow_rejects,
     prefilter_map=None,
+    typecheck_overrides={}
 ):
-    """A wrapper used by most back end functionality"""
+    """A wrapper used by most back end functionality.
+    The optional typecheck_overrides argument can be passed a dictionary of
+    input variable names and their validator function if needed. This is
+    particularly useful in relation to overriding the default simple path value
+    checks in cases where a path pattern with wildcards is allowed.
+    We want all such exceptions to be explicit to avoid opening up by mistake.
+    """
 
     # always allow output_format, csrf_field, stray modauthopenid nonces and
     # underscore cache-prevention dummy - we don't want redundant lines in all
@@ -104,7 +111,8 @@ def validate_input(
     if prefilter_map:
         prefilter_input(user_arguments_dict, prefilter_map)
     (accepted, rejected) = validated_input(user_arguments_dict,
-                                           defaults)
+                                           defaults,
+                                           type_override=typecheck_overrides)
     warn_on_rejects(rejected, output_objects)
     if rejected.keys() and not allow_rejects:
         output_objects.append(
@@ -129,9 +137,13 @@ def validate_input_and_cert(
     require_user=True,
     filter_values=None,
     environ=None,
+    typecheck_overrides={},
 ):
     """A wrapper used by most back end functionality - redirects to sign up
     if client_id is missing.
+    The optional typecheck_overrides dictionary is passed directly to the base
+    validate_input and can be used to loosen input validation. Please refer to
+    the validate_input doc. 
     """
 
     logger = configuration.logger
@@ -253,6 +265,8 @@ and just need to sign up for a local %s account on the''' %
         return (False, output_objects)
 
     (status, retval) = validate_input(user_arguments_dict, defaults,
-                                      output_objects, allow_rejects, filter_values)
+                                      output_objects, allow_rejects,
+                                      filter_values,
+                                      typecheck_overrides=typecheck_overrides)
 
     return (status, retval)
