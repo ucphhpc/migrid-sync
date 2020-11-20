@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addvgridtrigger - add vgrid trigger
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -38,6 +38,7 @@ from mig.shared.defaults import any_state, keyword_auto, valid_trigger_actions, 
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.safeinput import valid_path_pattern
 from mig.shared.validstring import valid_user_path
 from mig.shared.vgrid import init_vgrid_script_add_rem, vgrid_is_trigger, \
     vgrid_is_trigger_owner, vgrid_list_subvgrids, vgrid_add_triggers, \
@@ -83,6 +84,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
+        typecheck_overrides={'path': valid_path_pattern},
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)

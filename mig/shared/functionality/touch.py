@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # touch - touch backend
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,8 +26,10 @@
 #
 
 """Emulate the un*x function with the same name"""
+
 from __future__ import absolute_import
 
+import glob
 import os
 
 from mig.shared import returnvalues
@@ -37,6 +39,7 @@ from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables
 from mig.shared.parseflags import verbose
+from mig.shared.safeinput import valid_path_pattern, valid_path, InputException
 from mig.shared.validstring import valid_user_path
 
 
@@ -62,7 +65,9 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+        # NOTE: path can use wildcards with certain limitations (see below)
+        typecheck_overrides={'path': valid_path_pattern},
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -81,22 +86,31 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     if verbose(flags):
         for flag in flags:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : '%s using flag: %s' % (op_name,
-                                  flag)})
+            output_objects.append({'object_type': 'text', 'text': '%s using flag: %s' % (op_name,
+                                                                                         flag)})
 
     for pattern in patterns:
 
         # Check directory traversal attempts before actual handling to avoid
         # leaking information about file system layout while allowing
         # consistent error messages
-        # NB: Globbing disabled on purpose here
 
-        unfiltered_match = [base_dir + pattern]
+        # IMPORTANT: pattern must be plain file or expand to existing file(s)
+
+        unfiltered_match = glob.glob(base_dir + pattern)
+        if not unfiltered_match:
+            try:
+                valid_path(pattern)
+                unfiltered_match = [base_dir + pattern]
+            except InputException, exc:
+                logger.warning('%s called %s with invalid wildcard path %r' %
+                               (client_id, op_name, pattern))
+                continue
+
         match = []
         for server_path in unfiltered_match:
             # IMPORTANT: path must be expanded to abs for proper chrooting
@@ -116,22 +130,22 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # (allowed) match
 
         if not match:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : "%s: '%s': Permission denied"
-                                   % (op_name, pattern)})
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   "%s: '%s': Permission denied" % (op_name,
+                                                                    pattern)})
             status = returnvalues.CLIENT_ERROR
 
         for abs_path in match:
             relative_path = abs_path.replace(base_dir, '')
             if verbose(flags):
-                output_objects.append({'object_type': 'file', 'name'
-                        : relative_path})
+                output_objects.append(
+                    {'object_type': 'file', 'name': relative_path})
             if not check_write_access(abs_path, parent_dir=True):
-                logger.warning('%s called without write access: %s' % \
+                logger.warning('%s called without write access: %s' %
                                (op_name, abs_path))
                 output_objects.append(
                     {'object_type': 'error_text', 'text':
-                     'cannot touch "%s": inside a read-only location!' % \
+                     'cannot touch "%s": inside a read-only location!' %
                      pattern})
                 status = returnvalues.CLIENT_ERROR
                 continue
@@ -139,19 +153,17 @@ CSRF-filtered POST requests to prevent unintended updates'''
             try:
                 # Create file if missing
                 if not os.path.exists(abs_path):
-                    os.close(os.open(abs_path, os.O_WRONLY|os.O_CREAT, 0o666))
+                    os.close(os.open(abs_path, os.O_WRONLY | os.O_CREAT, 0o666))
                 os.utime(abs_path, None)
                 logger.info('%s %s done' % (op_name, abs_path))
             except Exception as exc:
-                output_objects.append({'object_type': 'error_text',
-                        'text': "%s: '%s': %s" % (op_name,
-                        relative_path, exc)})
+                output_objects.append({'object_type': 'error_text', 'text':
+                                       "%s: '%s': %s" % (op_name,
+                                                         relative_path, exc)})
                 logger.error("%s: failed on '%s': %s" % (op_name,
-                             relative_path, exc))
+                                                         relative_path, exc))
 
                 status = returnvalues.SYSTEM_ERROR
                 continue
 
     return (output_objects, status)
-
-

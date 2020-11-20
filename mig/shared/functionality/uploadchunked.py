@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# uploadchunked - Chunked and efficient file upload back end
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# uploadchunked - chunked and efficient file upload back end
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,6 +33,7 @@ finished.
 Multiple files can upload chunks in parallel but the chunks of individual
 files must be non-overlapping to guarantee race-free writing.
 """
+
 from __future__ import absolute_import
 
 import os

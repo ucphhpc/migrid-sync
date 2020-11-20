@@ -5,7 +5,7 @@
 #
 
 # deletefreeze - delete an entire frozen archive or files in one
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,6 +29,7 @@
 """Delete archive or only individual files inside one. Requires freeze to be
 non-final.
 """
+
 from __future__ import absolute_import
 
 import os
@@ -73,6 +74,8 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
+        # NOTE: path cannot use wildcards here
+        typecheck_overrides={},
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)

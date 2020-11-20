@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# pack - Pack one or more files/dirs into a zip/tar archive
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# pack - pack one or more files/dirs into a zip/tar archive
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,6 +28,7 @@
 """Archiver used to pack a one or more files and directories in
 the home directory of a user into a zip/tar file.
 """
+
 from __future__ import absolute_import
 
 import glob
@@ -41,6 +42,7 @@ from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.parseflags import verbose
+from mig.shared.safeinput import valid_path_pattern
 from mig.shared.validstring import valid_user_path
 from mig.shared.vgrid import in_vgrid_share
 
@@ -95,6 +97,8 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
+        # NOTE: src can use wildcards, dst and current_dir cannot
+        typecheck_overrides={'src': valid_path_pattern},
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)

@@ -28,6 +28,7 @@
 """Script to provide users with a means of listing files and directories in
 their home directories.
 """
+
 from __future__ import absolute_import
 
 from mig.shared import returnvalues
@@ -768,6 +769,8 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
+        # NOTE: path cannot use wildcards here
+        typecheck_overrides={},
     )
 
     if not validate_status:

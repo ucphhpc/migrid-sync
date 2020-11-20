@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # editfile - inline editor back end
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,6 +28,7 @@
 # Minimum Intrusion Grid
 
 """Editor back end"""
+
 from __future__ import absolute_import
 
 import os
@@ -52,7 +53,7 @@ def signature():
         'newline': ['unix'],
         'submitjob': [False],
         'editarea': REJECT_UNSET,
-        }
+    }
     return ['submitstatuslist', defaults]
 
 
@@ -70,7 +71,9 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+        # NOTE: path cannot use wildcards here
+        typecheck_overrides={},
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -88,27 +91,26 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not configuration.site_enable_jobs and submitjob:
         output_objects.append({'object_type': 'error_text', 'text':
-            '''Job execution is not enabled on this system'''})
+                               '''Job execution is not enabled on this system'''})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     # HTML spec dictates newlines in forms to be MS style (\r\n)
     # rather than un*x style (\n): change if requested.
 
     form_newline = '\r\n'
     allowed_newline = {'unix': '\n', 'mac': '\r', 'windows': '\r\n'}
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Saving changes to edited file'})
+    output_objects.append(
+        {'object_type': 'header', 'text': 'Saving changes to edited file'})
 
     if not chosen_newline in allowed_newline.keys():
         output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Unsupported newline style supplied: %s (must be one of %s)'
+            {'object_type': 'error_text', 'text': 'Unsupported newline style supplied: %s (must be one of %s)'
              % (chosen_newline, ', '.join(allowed_newline.keys()))})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -127,8 +129,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             logger.warning('%s tried to %s restricted path %s ! (%s)'
                            % (client_id, op_name, abs_path, path))
             output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : "Invalid path! (%s expands to an illegal path)" % path})
+                {'object_type': 'error_text', 'text': "Invalid path! (%s expands to an illegal path)" % path})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     if abs_path == '':
@@ -138,51 +139,48 @@ CSRF-filtered POST requests to prevent unintended updates'''
             logger.warning('%s tried to %s restricted path %s ! (%s)'
                            % (client_id, op_name, abs_path, path))
             output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : "Invalid path! (%s expands to an illegal path)" % path})
+                {'object_type': 'error_text', 'text': "Invalid path! (%s expands to an illegal path)" % path})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not check_write_access(abs_path, parent_dir=True):
-        logger.warning('%s called without write access: %s' % \
+        logger.warning('%s called without write access: %s' %
                        (op_name, abs_path))
         output_objects.append(
             {'object_type': 'error_text', 'text':
-             'cannot edit "%s": inside a read-only location!' % \
+             'cannot edit "%s": inside a read-only location!' %
              path})
         status = returnvalues.CLIENT_ERROR
-        return (output_objects, returnvalues.CLIENT_ERROR)        
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     (owner, time_left) = acquire_edit_lock(abs_path, client_id)
     if owner != client_id:
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : "You don't have the lock for %s!"
+        output_objects.append({'object_type': 'error_text', 'text': "You don't have the lock for %s!"
                                % path})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     try:
         fh = open(abs_path, 'w+')
         fh.write(user_arguments_dict['editarea'
-                 ][0].replace(form_newline, saved_newline))
+                                     ][0].replace(form_newline, saved_newline))
         fh.close()
 
         # everything ok
 
-        output_objects.append({'object_type': 'text', 'text'
-                              : 'Saved changes to %s.' % path})
+        output_objects.append(
+            {'object_type': 'text', 'text': 'Saved changes to %s.' % path})
         logger.info('saved changes to %s' % path)
         release_edit_lock(abs_path, client_id)
     except Exception as exc:
 
         # Don't give away information about actual fs layout
 
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s could not be written! (%s)'
+        output_objects.append({'object_type': 'error_text', 'text': '%s could not be written! (%s)'
                                % (path, str(exc).replace(base_dir, ''
-                              ))})
+                                                         ))})
         return (output_objects, returnvalues.SYSTEM_ERROR)
     if submitjob:
-        output_objects.append({'object_type': 'text', 'text'
-                              : 'Submitting saved file to parser'})
+        output_objects.append(
+            {'object_type': 'text', 'text': 'Submitting saved file to parser'})
         submitstatus = {'object_type': 'submitstatus', 'name': path}
         (new_job_status, msg, job_id) = new_job(abs_path, client_id,
                                                 configuration, False, True)
@@ -194,7 +192,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             submitstatus['job_id'] = job_id
 
         output_objects.append({'object_type': 'submitstatuslist',
-                              'submitstatuslist': [submitstatus]})
+                               'submitstatuslist': [submitstatus]})
 
     output_objects.append({'object_type': 'link',
                            'destination': 'javascript:history.back()',
@@ -203,5 +201,3 @@ CSRF-filtered POST requests to prevent unintended updates'''
                            'text': 'Back to previous page'})
 
     return (output_objects, returnvalues.OK)
-
-

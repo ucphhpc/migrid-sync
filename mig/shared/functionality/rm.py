@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rm - backend to remove files/directories in user home
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,6 +29,7 @@
 in his home directory.
 It is possible to supply a recursive flag to enable recursive deletes.
 """
+
 from __future__ import absolute_import
 
 import os
@@ -42,6 +43,7 @@ from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.parseflags import verbose, recursive, force
+from mig.shared.safeinput import valid_path_pattern
 from mig.shared.sharelinks import extract_mode_id
 from mig.shared.userio import remove_path, delete_path, get_trash_location, \
     GDPIOLogError, gdp_iolog
@@ -75,9 +77,13 @@ def main(client_id, user_arguments_dict, environ=None):
     client_dir = client_id_dir(client_id)
     status = returnvalues.OK
     defaults = signature()[1]
-    (validate_status, accepted) = validate_input(user_arguments_dict,
-                                                 defaults, output_objects,
-                                                 allow_rejects=False)
+    (validate_status, accepted) = validate_input(
+        user_arguments_dict,
+        defaults, output_objects,
+        allow_rejects=False,
+        # NOTE: path can use wildcards
+        typecheck_overrides={'path': valid_path_pattern},
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 

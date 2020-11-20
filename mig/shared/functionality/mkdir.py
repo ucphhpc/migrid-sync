@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mkdir - create directory in user home
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Emulate the un*x function with the same name"""
+
 from __future__ import absolute_import
 
 import os
@@ -72,6 +73,8 @@ def main(client_id, user_arguments_dict, environ=None):
         defaults,
         output_objects,
         allow_rejects=False,
+        # NOTE: path cannot use wildcards here
+        typecheck_overrides={},
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)

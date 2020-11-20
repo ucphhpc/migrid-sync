@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # upload - Plain and efficient file upload back end
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Plain file upload back end"""
+
 from __future__ import absolute_import
 
 import os
@@ -119,6 +120,8 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
+        # NOTE: path cannot use wildcards here
+        typecheck_overrides={},
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
@@ -152,8 +155,8 @@ Please contact the site admins %s if you think they should be enabled.
 
     if verbose(flags):
         for flag in flags:
-            output_objects.append({'object_type': 'text', 'text': '%s using flag: %s' % (op_name,
-                                                                                         flag)})
+            output_objects.append({'object_type': 'text', 'text':
+                                   '%s using flag: %s' % (op_name, flag)})
 
     output_objects.append({'object_type': 'header', 'text': 'Uploading file'})
 
@@ -172,11 +175,13 @@ Please contact the site admins %s if you think they should be enabled.
         logger.warning('%s tried to %s restricted path %s ! (%s)'
                        % (client_id, op_name, real_path, path))
         output_objects.append(
-            {'object_type': 'error_text', 'text': "Invalid destination (%s expands to an illegal path)" % path})
+            {'object_type': 'error_text', 'text':
+             "Invalid destination (%s expands to an illegal path)" % path})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not os.path.isdir(os.path.dirname(real_path)):
-        output_objects.append({'object_type': 'error_text', 'text': "cannot write: no such file or directory: %s)"
+        output_objects.append({'object_type': 'error_text', 'text':
+                               "cannot write: no such file or directory: %s)"
                                % path})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -207,7 +212,8 @@ Please contact the site admins %s if you think they should be enabled.
             else:
                 os._exit(0)
     except OSError as ose:
-        output_objects.append({'object_type': 'error_text', 'text': '%s upload could not background! (%s)'
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '%s upload could not background! (%s)'
                                % (path, str(ose).replace(base_dir, ''
                                                          ))})
         return (output_objects, returnvalues.SYSTEM_ERROR)

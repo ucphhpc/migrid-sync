@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# statpath - [insert a few words of module description on this line]
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# statpath - file or directory stats
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Emulate the un*x function with the same name"""
+
 from __future__ import absolute_import
 
 import os
@@ -36,6 +37,7 @@ from mig.shared.base import client_id_dir
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.init import initialize_main_variables
 from mig.shared.parseflags import verbose
+from mig.shared.safeinput import valid_path_pattern
 from mig.shared.validstring import valid_user_path
 
 
@@ -89,7 +91,9 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+        # NOTE: path can use wildcards
+        typecheck_overrides={'path': valid_path_pattern},
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -100,15 +104,14 @@ def main(client_id, user_arguments_dict):
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     status = returnvalues.OK
 
     if verbose(flags):
         for flag in flags:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : '%s using flag: %s' % (op_name,
-                                  flag)})
+            output_objects.append({'object_type': 'text', 'text': '%s using flag: %s' % (op_name,
+                                                                                         flag)})
 
     for pattern in patterns:
 
@@ -133,7 +136,7 @@ def main(client_id, user_arguments_dict):
 
         if not match:
             output_objects.append({'object_type': 'file_not_found',
-                                  'name': pattern})
+                                   'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
         stats = []
         for abs_path in match:
@@ -148,16 +151,15 @@ def main(client_id, user_arguments_dict):
                     stats.append(stat)
                 else:
                     output_objects.append({'object_type': 'error_text',
-                            'text': stat})
+                                           'text': stat})
                     status = returnvalues.SYSTEM_ERROR
             except Exception as exc:
                 output_objects.append({'object_type': 'error_text',
-                        'text': "%s: '%s': %s" % (op_name,
-                        relative_path, exc)})
+                                       'text': "%s: '%s': %s" % (op_name,
+                                                                 relative_path, exc)})
                 logger.error("%s: failed on '%s': %s" % (op_name,
-                             relative_path, exc))
+                                                         relative_path, exc))
                 status = returnvalues.SYSTEM_ERROR
                 continue
-            output_objects.append({'object_type': 'stats', 'stats'
-                                  : stats})
+            output_objects.append({'object_type': 'stats', 'stats': stats})
     return (output_objects, status)

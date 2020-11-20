@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showvgridprivatefile - View VGrid private files for owners and members
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,6 +30,7 @@ client is an owner or a member of the vgrid. Members are allowed to read private
 files but not write them, therefore they don't have a private_base link where
 they can access them like owners do.
 """
+
 from __future__ import absolute_import
 
 import os
@@ -63,13 +64,15 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+        # NOTE: path cannot use wildcards here
+        typecheck_overrides={},
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
     vgrid_name = accepted['vgrid_name'][-1]
     path = accepted['path'][-1]
-        
+
     if not vgrid_is_owner_or_member(vgrid_name, client_id,
                                     configuration):
         output_objects.append({'object_type': 'error_text', 'text':
@@ -83,7 +86,7 @@ access the private files.''' % (vgrid_name, label)})
     base_dir = os.path.abspath(os.path.join(configuration.vgrid_private_base,
                                             vgrid_name)) + os.sep
 
-    # Strip leading slashes to avoid join() throwing away prefix 
+    # Strip leading slashes to avoid join() throwing away prefix
 
     rel_path = path.lstrip(os.sep)
     # IMPORTANT: path must be expanded to abs for proper chrooting
@@ -93,7 +96,7 @@ access the private files.''' % (vgrid_name, label)})
                                '''You are not allowed to use paths outside %s
 private files dir.''' % label})
         return (output_objects, returnvalues.CLIENT_ERROR)
-    
+
     try:
         private_fd = open(abs_path, 'rb')
         entry = {'object_type': 'binary',
@@ -103,15 +106,14 @@ private files dir.''' % label})
         if abs_path.endswith('.html'):
             headers = []
         else:
-            headers = [('Content-Disposition', 'attachment; filename="%s";' % \
+            headers = [('Content-Disposition', 'attachment; filename="%s";' %
                         os.path.basename(abs_path))]
         output_objects = [{'object_type': 'start', 'headers': headers}, entry,
                           {'object_type': 'script_status'},
                           {'object_type': 'end'}]
         private_fd.close()
     except Exception as exc:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error reading %s private file (%s)'
+        output_objects.append({'object_type': 'error_text', 'text': 'Error reading %s private file (%s)'
                                % (label, exc)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 

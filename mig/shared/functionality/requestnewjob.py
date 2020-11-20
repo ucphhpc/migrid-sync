@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # requestnewjob - Request a new job to execute on resource
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Handle request for a job from a resource"""
+
 from __future__ import absolute_import
 
 import os
@@ -53,6 +54,7 @@ def signature():
                 'execution_delay': ['0'], 'exe_pgid': ['0']}
     return ['text', defaults]
 
+
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
@@ -61,8 +63,12 @@ def main(client_id, user_arguments_dict):
                                   op_menu=client_id)
 
     defaults = signature()[1]
-    (validate_status, accepted) = validate_input(user_arguments_dict,
-            defaults, output_objects, allow_rejects=False)
+    (validate_status, accepted) = validate_input(
+        user_arguments_dict,
+        defaults,
+        output_objects,
+        allow_rejects=False
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -79,21 +85,26 @@ def main(client_id, user_arguments_dict):
 
     status = returnvalues.OK
 
+    if not configuration.site_enable_resources:
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             "Resources are not enabled on this site"})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     # No header and footer here
     output_objects.append({'object_type': 'start'})
     output_objects.append({'object_type': 'script_status', 'text': ''})
-        
+
     # Please note that base_dir must end in slash to avoid access to other
     # resource dirs when own name is a prefix of another resource name
-    
+
     base_dir = os.path.abspath(os.path.join(configuration.resource_home,
                                             unique_resource_name)) + os.sep
 
     if not is_resource(unique_resource_name, configuration.resource_home):
         output_objects.append(
-            {'object_type': 'error_text', 'text': 
-             "Failure: You must be an owner of '%s' to get the PGID!" % \
+            {'object_type': 'error_text', 'text':
+             "Failure: You must be an owner of '%s' to get the PGID!" %
              unique_resource_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -101,10 +112,10 @@ def main(client_id, user_arguments_dict):
     # specifically check for illegal directory traversal on that variable.
 
     (load_status, resource_conf) = \
-                  get_resource_configuration(configuration.resource_home,
-                                             unique_resource_name, logger)
+        get_resource_configuration(configuration.resource_home,
+                                   unique_resource_name, logger)
     if not load_status:
-        logger.error("Invalid requestnewjob - no resouce_conf for: %s : %s" % \
+        logger.error("Invalid requestnewjob - no resouce_conf for: %s : %s" %
                      (unique_resource_name, resource_conf))
         output_objects.append({'object_type': 'error_text', 'text':
                                'invalid request: no such resource!'})
@@ -122,14 +133,14 @@ def main(client_id, user_arguments_dict):
 
     if resource_conf.get('SANDBOX', False):
         if sandboxkey == '':
-            logger.error("Missing sandboxkey for sandbox resource: %s" % \
+            logger.error("Missing sandboxkey for sandbox resource: %s" %
                          unique_resource_name)
             output_objects.append({'object_type': 'error_text', 'text':
-                               'sandbox must set sandboxkey in job requests!'})
+                                   'sandbox must set sandboxkey in job requests!'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         # resource is a sandbox and a sandboxkey was received
         if resource_conf['SANDBOXKEY'] != sandboxkey:
-            logger.error("Incorrect sandboxkey for sandbox resource: %s : %s" \
+            logger.error("Incorrect sandboxkey for sandbox resource: %s : %s"
                          % (unique_resource_name, sandboxkey))
             output_objects.append({'object_type': 'error_text', 'text':
                                    'sandbox provided an invalid sandboxkey!'})
@@ -147,13 +158,15 @@ def main(client_id, user_arguments_dict):
     # NFS file system. The lock file contains a timestamp used to autoexpire
     # old locks if a job wasn't handed out within the requested cputime.
 
-    lock_file = os.path.abspath(os.path.join(base_dir, 'jobrequest_pending.%s' % exe))
+    lock_file = os.path.abspath(os.path.join(
+        base_dir, 'jobrequest_pending.%s' % exe))
     filehandle = None
     now = time.time()
     try:
         lock_until = now + min(300.0, float(cputime))
     except Exception as exc:
-        logger.error('invalid cputime in requestnewjob: %s (%s)' % (cputime, exc))
+        logger.error('invalid cputime in requestnewjob: %s (%s)' %
+                     (cputime, exc))
         output_objects.append(
             {'object_type': 'error_text', 'text':
              'invalid cputime: %s - must be a number!' % cputime})
@@ -182,7 +195,8 @@ def main(client_id, user_arguments_dict):
                     expire_time = 0.0
 
                 if now < expire_time:
-                    logger.error('invalid cputime in requestnewjob: %s' % cputime)
+                    logger.error(
+                        'invalid cputime in requestnewjob: %s' % cputime)
                     output_objects.append(
                         {'object_type': 'error_text', 'text':
                          'requestnewjob is locked until last requestnewjob for'
@@ -190,7 +204,7 @@ def main(client_id, user_arguments_dict):
                     return (output_objects, returnvalues.CLIENT_ERROR)
                 else:
                     logger.info('requestnewjob found expired lock '
-                                '(%.2f < %.2f) - allowing new request.' % \
+                                '(%.2f < %.2f) - allowing new request.' %
                                 (now, expire_time))
             filehandle.seek(0, 0)
             filehandle.write('%.2f' % lock_until)
@@ -201,7 +215,7 @@ def main(client_id, user_arguments_dict):
                 {'object_type': 'error_text', 'text':
                  '''Could not get exclusive lock. Your last job request for %s
 has been received on the %s server. The job should be available shortly. If you
-receive this message often, please increase the timeout for job requests.''' \
+receive this message often, please increase the timeout for job requests.'''
                  % (exe, configuration.short_title)})
             return (output_objects, returnvalues.CLIENT_ERROR)
     else:
@@ -231,7 +245,7 @@ receive this message often, please increase the timeout for job requests.''' \
         localjobname,
         execution_delay,
         exe_pgid,
-        )
+    )
     if not send_message_to_grid_script(message, logger, configuration):
         logger.error('could not send resource request for %s to grid_script!'
                      % unique_resource_name)
@@ -241,13 +255,8 @@ receive this message often, please increase the timeout for job requests.''' \
         return (output_objects, returnvalues.ERROR)
 
     output_objects.append(
-            {'object_type': 'text', 'text': 'REQUESTNEWJOB OK. The job will '
-             'be sent to the resource: %s.%s %s %s (sandboxkey: %s)'
-             % (unique_resource_name, exe, str(exe_pgid),
-                os.getenv('REMOTE_ADDR'), sandboxkey)})
+        {'object_type': 'text', 'text': 'REQUESTNEWJOB OK. The job will '
+         'be sent to the resource: %s.%s %s %s (sandboxkey: %s)'
+         % (unique_resource_name, exe, str(exe_pgid),
+            os.getenv('REMOTE_ADDR'), sandboxkey)})
     return (output_objects, status)
-
-
-
-
-

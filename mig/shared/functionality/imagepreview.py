@@ -1,11 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 #
 # --- BEGIN_HEADER ---
 #
 # imagepreview - Managing MiG imagepreview meta
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,6 +28,7 @@
 """Script to provide users with a means of listing file meta data from
 their home directories.
 """
+
 from __future__ import absolute_import
 
 import os
@@ -102,6 +102,8 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
+        # NOTE: path cannot use wildcards here
+        typecheck_overrides={},
     )
 
     if not validate_status:
@@ -110,7 +112,7 @@ def main(client_id, user_arguments_dict):
                                'text': WARNING_MSG})
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    # Convert accpeted values to string and filter out NON-set values
+    # Convert accepted values to string and filter out NON-set values
 
     accepted_joined_values = {key: ''.join(value)
                               for (key, value) in accepted.iteritems() if len(value) > 0}

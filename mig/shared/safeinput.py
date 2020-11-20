@@ -1445,23 +1445,30 @@ def guess_type(name):
 
         # TODO: extend to include all used variables here
 
+        # NOTE: we keep the defaults tight here and force 'path' to be a plain
+        #       path and not a path pattern, although it sometimes may be.
+        #       One should *explicitly* override the validator for 'path' vars
+        #       using the typecheck_overrides arg in validate_input calls in
+        #       the backends where wildcard paths are accepted (i.e. in ls,
+        #       cat, head, ...) but leave it to default for all the others.
         for key in (
             'path',
             'src',
             'dst',
             'current_dir',
+            'fileupload',
+            'public_image',
+            'script_dir',
+        ):
+            # IMPORTANT: please do NOT change this to valid_path_pattern!
+            __type_map[key] = valid_path
+        for key in (
             'pattern',
             'arguments',
             'hostkey',
             'exclude',
         ):
             __type_map[key] = valid_path_pattern
-        for key in (
-            'fileupload',
-            'public_image',
-            'script_dir',
-        ):
-            __type_map[key] = valid_path
         for key in (
             'executables',
             'inputfiles',

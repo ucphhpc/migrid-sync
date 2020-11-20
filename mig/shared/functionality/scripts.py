@@ -28,6 +28,7 @@
 """On demand headless script archive generator used as the base for
 delivering the user and vgrid/resource scripts.
 """
+
 from __future__ import absolute_import
 
 import os

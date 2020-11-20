@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mv - backend to move files/directories in user home
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -39,6 +39,7 @@ from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables
 from mig.shared.parseflags import verbose
+from mig.shared.safeinput import valid_path_pattern
 from mig.shared.userio import GDPIOLogError, gdp_iolog
 from mig.shared.validstring import valid_user_path
 from mig.shared.vgrid import in_vgrid_share
@@ -69,6 +70,9 @@ def main(client_id, user_arguments_dict, environ=None):
         client_id,
         configuration,
         allow_rejects=False,
+        # NOTE: src and dst can use wildcards here
+        typecheck_overrides={'src': valid_path_pattern,
+                             'dst': valid_path_pattern},
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)

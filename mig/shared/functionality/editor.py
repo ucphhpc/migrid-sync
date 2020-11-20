@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # editor - Online editor back end
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,11 +25,12 @@
 # -- END_HEADER ---
 #
 
-""" Simple web based file editor to edit files in MiG home
+""" Simple web based file editor to edit files in user home
 
 Enable users to make (limited) changes to their files without the
 need to download, edit and upload the files.
 """
+
 from __future__ import absolute_import
 
 import os
@@ -494,6 +495,8 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
+        # NOTE: path cannot use wildcards here
+        typecheck_overrides={},
     )
 
     # TODO: if validator is too tight we should accept rejects here

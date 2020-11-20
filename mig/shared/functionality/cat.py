@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# cat - [insert a few words of module description on this line]
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# cat - show lines of one or more files
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Emulate the un*x function with the same name"""
+
 from __future__ import absolute_import
 
 import os
@@ -38,6 +39,7 @@ from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables
 from mig.shared.parseflags import verbose, binary
 from mig.shared.userio import GDPIOLogError, gdp_iolog
+from mig.shared.safeinput import valid_path_pattern
 from mig.shared.validstring import valid_user_path
 
 
@@ -66,6 +68,8 @@ def main(client_id, user_arguments_dict, environ=None):
         client_id,
         configuration,
         allow_rejects=False,
+        # NOTE: path can use wildcards, dst cannot
+        typecheck_overrides={'path': valid_path_pattern},
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)

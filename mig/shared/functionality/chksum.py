@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # chksum - Calculate a checksum for one or more files
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Emulate the un*x functions like md5sum and sha1sum"""
+
 from __future__ import absolute_import
 
 import os
@@ -40,6 +41,7 @@ from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables
 from mig.shared.parseflags import verbose
+from mig.shared.safeinput import valid_path_pattern
 from mig.shared.validstring import valid_user_path
 
 _algo_map = {'md5': md5sum_file, 'sha1': sha1sum_file,
@@ -69,6 +71,8 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
+        # NOTE: path can use wildcards, dst and current_dir cannot
+        typecheck_overrides={'path': valid_path_pattern},
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
@@ -90,7 +94,7 @@ def main(client_id, user_arguments_dict):
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     status = returnvalues.OK
 
@@ -177,7 +181,7 @@ def main(client_id, user_arguments_dict):
 
         if not match:
             output_objects.append({'object_type': 'file_not_found',
-                                  'name': pattern})
+                                   'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
 
         for abs_path in match:

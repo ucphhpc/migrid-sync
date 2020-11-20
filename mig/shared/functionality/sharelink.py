@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sharelink - backend to create and manage share links
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Create and manage external sharing links"""
+
 from __future__ import absolute_import
 
 from binascii import hexlify
@@ -79,6 +80,8 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
+        # NOTE: path cannot use wildcards here
+        typecheck_overrides={},
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)

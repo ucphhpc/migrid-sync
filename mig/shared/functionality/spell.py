@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# spell - [insert a few words of module description on this line]
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# spell - spell check files
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Spell check a file using an native spell checker."""
+
 from __future__ import absolute_import
 
 import os
@@ -36,6 +37,7 @@ from mig.shared.base import client_id_dir
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.init import initialize_main_variables
 from mig.shared.parseflags import verbose
+from mig.shared.safeinput import valid_path_pattern
 from mig.shared.validstring import valid_user_path
 
 
@@ -47,7 +49,7 @@ def signature():
         'path': REJECT_UNSET,
         'lang': ['en'],
         'mode': ['none'],
-        }
+    }
     return ['file_output', defaults]
 
 
@@ -56,7 +58,7 @@ def spellcheck(
     mode,
     lang,
     user_dict_path=None,
-    ):
+):
     """Use pyenchant module to spell check the provided file path"""
 
     (res, msg) = ([], '')
@@ -75,7 +77,7 @@ def spellcheck(
                     # TODO: local chars are not encoded correctly here
 
                     res.append('%s: %s' % (word,
-                               ', '.join(check_dict.suggest(word))))
+                                           ', '.join(check_dict.suggest(word))))
     except Exception as err:
         msg = 'Failed to run spell check: %s' % err
     return (res, msg)
@@ -86,7 +88,7 @@ def adv_spellcheck(
     mode,
     lang,
     user_dict_path=None,
-    ):
+):
     """Use pyenchant module to spell check the provided file path"""
 
     # TODO: This fails with internal pyenchant index out of bounds error
@@ -119,7 +121,9 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+        # NOTE: path can use wildcards
+        typecheck_overrides={'path': valid_path_pattern},
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     flags = ''.join(accepted['flags'])
@@ -127,14 +131,14 @@ def main(client_id, user_arguments_dict):
     lang = accepted['lang'][-1].lower()
     mode = accepted['mode'][-1]
 
-    output_objects.append({'object_type': 'header', 'text'
-                          : '%s spell check' % configuration.short_title })
+    output_objects.append({'object_type': 'header', 'text':
+                           '%s spell check' % configuration.short_title})
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     status = returnvalues.OK
     allowed_modes = ['none', 'url', 'email', 'sgml', 'tex']
@@ -155,7 +159,7 @@ def main(client_id, user_arguments_dict):
         'nl',
         'no',
         'se',
-        ]
+    ]
 
     # TODO: use path from settings file
 
@@ -163,18 +167,19 @@ def main(client_id, user_arguments_dict):
 
     if verbose(flags):
         for flag in flags:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : '%s using flag: %s' % (op_name,
-                                  flag)})
+            output_objects.append({'object_type': 'text', 'text':
+                                   '%s using flag: %s' % (op_name, flag)})
 
     if not mode in allowed_modes:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Unsupported mode: %s' % mode})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Unsupported mode: %s' % mode})
         status = returnvalues.CLIENT_ERROR
 
     if not lang in allowed_langs:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Unsupported lang: %s' % mode})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Unsupported lang: %s' % mode})
         status = returnvalues.CLIENT_ERROR
 
     # Show all if no flags given
@@ -209,7 +214,7 @@ def main(client_id, user_arguments_dict):
 
         if not match:
             output_objects.append({'object_type': 'file_not_found',
-                                  'name': pattern})
+                                   'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
 
         for abs_path in match:
@@ -217,26 +222,27 @@ def main(client_id, user_arguments_dict):
             output_lines = []
             try:
                 (out, err) = spellcheck(abs_path, mode, lang,
-                        dict_path)
+                                        dict_path)
                 if err:
                     output_objects.append({'object_type': 'error_text',
-                            'text': err})
+                                           'text': err})
 
                 for line in out:
                     output_lines.append(line + '\n')
             except Exception as err:
-                output_objects.append({'object_type': 'error_text',
-                        'text': "%s: '%s': %s" % (op_name,
-                        relative_path, err)})
+                output_objects.append({'object_type': 'error_text', 'text':
+                                       "%s: '%s': %s" % (op_name,
+                                                         relative_path, err)})
                 status = returnvalues.SYSTEM_ERROR
                 continue
 
             if verbose(flags):
                 output_objects.append({'object_type': 'file_output',
-                        'path': relative_path, 'lines': output_lines})
+                                       'path': relative_path, 'lines':
+                                       output_lines})
             else:
                 output_objects.append({'object_type': 'file_output',
-                        'lines': output_lines})
+                                       'lines': output_lines})
             htmlform = \
                 '''
 <form method="get" action="editor.py">
@@ -244,9 +250,7 @@ def main(client_id, user_arguments_dict):
 <input type="submit" value="Edit file" />
 </form>
 ''' % relative_path
-            output_objects.append({'object_type': 'html_form', 'text'
-                                  : htmlform})
+            output_objects.append(
+                {'object_type': 'html_form', 'text': htmlform})
 
     return (output_objects, status)
-
-

@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# wc - [insert a few words of module description on this line]
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# wc - word count
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Word count back end functionality"""
+
 from __future__ import absolute_import
 
 import os
@@ -37,6 +38,7 @@ from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.init import initialize_main_variables
 from mig.shared.parseflags import byte_count, line_count, word_count, \
     verbose
+from mig.shared.safeinput import valid_path_pattern
 from mig.shared.validstring import valid_user_path
 
 
@@ -62,7 +64,9 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+        # NOTE: path can use wildcards
+        typecheck_overrides={'path': valid_path_pattern},
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -73,18 +77,17 @@ def main(client_id, user_arguments_dict):
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     if verbose(flags):
         for flag in flags:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : '%s using flag: %s' % (op_name,
-                                  flag)})
+            output_objects.append({'object_type': 'text', 'text':
+                                   '%s using flag: %s' % (op_name, flag)})
 
     # Show all if no type flags given
 
     if not byte_count(flags) and not line_count(flags)\
-         and not word_count(flags):
+            and not word_count(flags):
         flags += 'blw'
 
     for pattern in patterns:
@@ -114,7 +117,7 @@ def main(client_id, user_arguments_dict):
 
         if not match:
             output_objects.append({'object_type': 'file_not_found',
-                                  'name': pattern})
+                                   'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
 
         filewcs = []
@@ -129,11 +132,11 @@ def main(client_id, user_arguments_dict):
                     obj = {
                         'object_type': 'filewc',
                         'name': '%s: %s: Is a directory' % (op_name,
-                                relative_path),
+                                                            relative_path),
                         'lines': 0,
                         'words': 0,
                         'bytes': 0,
-                        }
+                    }
                     filewcs.append(obj)
                     continue
 
@@ -155,16 +158,13 @@ def main(client_id, user_arguments_dict):
 
                 filewcs.append(obj)
             except Exception as exc:
-                output_objects.append({'object_type': 'error_text',
-                        'text': "%s: '%s': %s" % (op_name,
-                        relative_path, exc)})
+                output_objects.append({'object_type': 'error_text', 'text':
+                                       "%s: '%s': %s" % (op_name,
+                                                         relative_path, exc)})
                 logger.error("%s: failed on '%s': %s" % (op_name,
-                             relative_path, exc))
+                                                         relative_path, exc))
                 status = returnvalues.SYSTEM_ERROR
                 continue
-        output_objects.append({'object_type': 'filewcs', 'filewcs'
-                              : filewcs})
+        output_objects.append({'object_type': 'filewcs', 'filewcs': filewcs})
 
     return (output_objects, status)
-
-

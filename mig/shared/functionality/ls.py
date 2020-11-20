@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ls - emulate ls command
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,6 +28,7 @@
 """Script to provide users with a means of listing files and directories in
 their home directories. This script tries to mimic GNU ls behaviour.
 """
+
 from __future__ import absolute_import
 
 import os
@@ -45,6 +46,7 @@ from mig.shared.html import fancy_upload_js, fancy_upload_html, confirm_js, \
     confirm_html, themed_styles
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.parseflags import all, long_list, recursive, file_info
+from mig.shared.safeinput import valid_path_pattern
 from mig.shared.sharelinks import extract_mode_id
 from mig.shared.userio import GDPIOLogError, gdp_iolog
 from mig.shared.validstring import valid_user_path
@@ -405,6 +407,8 @@ def main(client_id, user_arguments_dict, environ=None):
         defaults,
         output_objects,
         allow_rejects=False,
+        # NOTE: path can use wildcards, current_dir cannot
+        typecheck_overrides={'path': valid_path_pattern},
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showfreezefile - View own frozen archive files
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,6 +28,7 @@
 """Show the requested file located in a given frozen archive belonging to the
 client.
 """
+
 from __future__ import absolute_import
 
 import mimetypes
@@ -61,16 +62,18 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+        # NOTE: path cannot use wildcards here
+        typecheck_overrides={},
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
     freeze_id = accepted['freeze_id'][-1]
     path = accepted['path'][-1]
-        
+
     if not is_frozen_archive(client_id, freeze_id, configuration):
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''No such archive %s owned by you''' % \
+                               '''No such archive %s owned by you''' %
                                freeze_id})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -79,7 +82,6 @@ def main(client_id, user_arguments_dict):
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
-    
     base_dir = os.path.abspath(os.path.join(configuration.freeze_home,
                                             client_dir, freeze_id)) + os.sep
 
@@ -88,7 +90,7 @@ def main(client_id, user_arguments_dict):
         base_dir = os.path.abspath(os.path.join(configuration.freeze_home,
                                                 freeze_id)) + os.sep
 
-    # Strip leading slashes to avoid join() throwing away prefix 
+    # Strip leading slashes to avoid join() throwing away prefix
 
     rel_path = path.lstrip(os.sep)
     # IMPORTANT: path must be expanded to abs for proper chrooting
@@ -98,13 +100,13 @@ def main(client_id, user_arguments_dict):
                                '''You are not allowed to use paths outside the
 archive dir.'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
-    
+
     logger.debug('reading archive private file %s' % abs_path)
     try:
         private_fd = open(abs_path, 'rb')
         entry = {'object_type': 'binary',
                  'data': private_fd.read()}
-        logger.info('return %db from archive private file %s of size %db' % \
+        logger.info('return %db from archive private file %s of size %db' %
                     (len(entry['data']), abs_path, os.path.getsize(abs_path)))
         # Cut away all the usual web page formatting to show only contents
         # Insert explicit content type to make sure clients don't break download
@@ -117,9 +119,9 @@ archive dir.'''})
                            'headers': [
                                ('Content-Type', content_type),
                                ('Content-Disposition',
-                                'attachment; filename="%s";' % \
+                                'attachment; filename="%s";' %
                                 os.path.basename(abs_path))
-                               ]
+                           ]
                            },
                           entry,
                           {'object_type': 'script_status'},
@@ -127,8 +129,7 @@ archive dir.'''})
         private_fd.close()
     except Exception as exc:
         logger.error('Error reading archive private file %s' % exc)
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Error reading archive private file %s'
+        output_objects.append({'object_type': 'error_text', 'text': 'Error reading archive private file %s'
                                % rel_path})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 

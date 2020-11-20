@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # liveio - communication with running jobs
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Request job live input or output from resource"""
+
 from __future__ import absolute_import
 
 import glob
@@ -41,6 +42,7 @@ from mig.shared.fileio import unpickle, pickle
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.safeinput import valid_path_pattern
 from mig.shared.ssh import copy_file_to_resource
 from mig.shared.validstring import valid_user_path
 
@@ -74,6 +76,8 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
+        # NOTE: src can use wildcards, dst cannot
+        typecheck_overrides={'src': valid_path_pattern},
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
@@ -104,7 +108,8 @@ def main(client_id, user_arguments_dict):
     title_entry['script']['ready'] += add_ready
 
     output_objects.append(
-        {'object_type': 'header', 'text': 'Request live communication with jobs'})
+        {'object_type': 'header', 'text':
+         'Request live communication with jobs'})
 
     if not configuration.site_enable_jobs:
         output_objects.append({'object_type': 'error_text', 'text':
@@ -212,10 +217,12 @@ jobs before and during execution.
         action_desc = 'will be uploaded from the job on the resource'
     else:
         output_objects.append(
-            {'object_type': 'error_text', 'text': 'Invalid live io action: %s' % action})
+            {'object_type': 'error_text', 'text':
+             'Invalid live io action: %s' % action})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    output_objects.append({'object_type': 'text', 'text': 'Requesting live I/O for %s'
+    output_objects.append({'object_type': 'text', 'text':
+                           'Requesting live I/O for %s'
                            % ', '.join(job_ids)})
 
     if action == 'get' and (not src or not dst):
@@ -283,7 +290,8 @@ jobs before and during execution.
 
         if not match:
             output_objects.append(
-                {'object_type': 'error_text', 'text': '%s: You do not have any matching job IDs!' % job_id})
+                {'object_type': 'error_text', 'text':
+                 '%s: You do not have any matching job IDs!' % job_id})
         else:
             filelist += match
 
@@ -297,21 +305,24 @@ jobs before and during execution.
         if not job_dict:
             status = returnvalues.CLIENT_ERROR
             output_objects.append(
-                {'object_type': 'error_text', 'text': ('You can only list status of your own jobs. '
-                                                       'Please verify that you submitted the mRSL file '
-                                                       'with job id "%s" (Could not unpickle mRSL file %s)'
-                                                       ) % (job_id, filepath)})
+                {'object_type': 'error_text', 'text':
+                 ('You can only list status of your own jobs. '
+                  'Please verify that you submitted the mRSL file '
+                  'with job id "%s" (Could not unpickle mRSL file %s)'
+                  ) % (job_id, filepath)})
             continue
 
         if job_dict['STATUS'] != 'EXECUTING':
             output_objects.append(
-                {'object_type': 'text', 'text': 'Job %s is not currently being executed! Job status: %s'
+                {'object_type': 'text', 'text':
+                 'Job %s is not currently being executed! Job status: %s'
                  % (job_id, job_dict['STATUS'])})
             continue
 
         if job_dict['UNIQUE_RESOURCE_NAME'] == 'ARC':
             output_objects.append(
-                {'object_type': 'text', 'text': 'Job %s is submitted to ARC, details are not available!'
+                {'object_type': 'text', 'text':
+                 'Job %s is submitted to ARC, details are not available!'
                  % job_id})
             continue
 
@@ -361,7 +372,8 @@ jobs before and during execution.
                             last_live_update_file, logger)
         if not pickle_ret:
             output_objects.append(
-                {'object_type': 'error_text', 'text': 'Error saving live io request timestamp to last_live_update '
+                {'object_type': 'error_text', 'text':
+                 'Error saving live io request timestamp to last_live_update '
                  'file, request not sent!'})
             continue
 
@@ -378,7 +390,8 @@ jobs before and during execution.
                                              logger)
         if not res_status:
             output_objects.append(
-                {'object_type': 'error_text', 'text': 'Could not get exe configuration for job %s' % job_id})
+                {'object_type': 'error_text', 'text':
+                 'Could not get exe configuration for job %s' % job_id})
             continue
 
         local_file = '%s.%supdate' % (job_dict['LOCALJOBNAME'], action)
@@ -427,22 +440,27 @@ jobs before and during execution.
 
         if not os.path.exists(local_file):
             output_objects.append(
-                {'object_type': 'error_text', 'text': '.%supdate file not available on %s server' %
+                {'object_type': 'error_text', 'text':
+                 '.%supdate file not available on %s server' %
                  (action, configuration.short_title)})
             continue
 
-        scp_status = copy_file_to_resource(local_file, '%s.%supdate'
-                                           % (job_dict['LOCALJOBNAME'], action), resource_config, logger)
+        scp_status = copy_file_to_resource(
+            local_file, '%s.%supdate' % (job_dict['LOCALJOBNAME'], action),
+            resource_config, logger)
         if not scp_status:
             output_objects.append(
-                {'object_type': 'error_text', 'text': 'Error sending request for live io to resource!'})
+                {'object_type': 'error_text', 'text':
+                 'Error sending request for live io to resource!'})
             continue
         else:
             output_objects.append(
-                {'object_type': 'text', 'text': 'Request for live io was successfully sent to the resource!'
+                {'object_type': 'text', 'text':
+                 'Request for live io was successfully sent to the resource!'
                  })
             output_objects.append(
-                {'object_type': 'text', 'text': '%s %s and should become available in %s in a minute.' %
+                {'object_type': 'text', 'text':
+                 '%s %s and should become available in %s in a minute.' %
                  (src_text, action_desc, dst_text)
                  })
             if action == 'send':

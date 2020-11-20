@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # submit - submit a job file
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Explicit job file submit"""
+
 from __future__ import absolute_import
 
 import os
@@ -38,6 +39,7 @@ from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables
 from mig.shared.job import new_job
 from mig.shared.parseflags import verbose
+from mig.shared.safeinput import valid_path_pattern
 from mig.shared.validstring import valid_user_path
 
 
@@ -75,7 +77,9 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+        # NOTE: path can use wildcards
+        typecheck_overrides={'path': valid_path_pattern},
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -92,20 +96,19 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not configuration.site_enable_jobs:
         output_objects.append({'object_type': 'error_text', 'text':
-            '''Job execution is not enabled on this system'''})
+                               '''Job execution is not enabled on this system'''})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     if verbose(flags):
         for flag in flags:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : '%s using flag: %s' % (op_name,
-                                  flag)})
+            output_objects.append({'object_type': 'text', 'text': '%s using flag: %s' % (op_name,
+                                                                                         flag)})
 
     for pattern in patterns:
 
@@ -134,7 +137,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         if not match:
             output_objects.append({'object_type': 'file_not_found',
-                                  'name': pattern})
+                                   'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
 
         submitstatuslist = []
@@ -146,13 +149,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
             try:
                 (job_status, newmsg, job_id) = new_job(abs_path,
-                        client_id, configuration, False, True)
+                                                       client_id, configuration, False, True)
             except Exception as exc:
                 logger.error("%s: failed on '%s': %s" % (op_name,
-                             relative_path, exc))
+                                                         relative_path, exc))
                 job_status = False
                 newmsg = "%s failed on '%s' (is it a valid mRSL file?)"\
-                     % (op_name, relative_path)
+                    % (op_name, relative_path)
                 job_id = None
 
             if not job_status:
@@ -167,7 +170,5 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
             submitstatuslist.append(submitstatus)
         output_objects.append({'object_type': 'submitstatuslist',
-                              'submitstatuslist': submitstatuslist})
+                               'submitstatuslist': submitstatuslist})
     return (output_objects, status)
-
-

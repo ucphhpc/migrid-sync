@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # uploadprogress - Plain file upload progress monitor back end
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Plain file upload progress monitor back end (obsoleted by fancyupload)"""
+
 from __future__ import absolute_import
 
 import os
@@ -45,7 +46,7 @@ def signature():
     defaults = {
         'path': REJECT_UNSET,
         'size': REJECT_UNSET,
-        }
+    }
     return ['html_form', defaults]
 
 
@@ -64,7 +65,9 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+        # NOTE: path cannot use wildcards here
+        typecheck_overrides={},
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -83,17 +86,16 @@ Please contact the site admins %s if you think they should be enabled.
 
     refresh_secs = 5
     meta = '<meta http-equiv="refresh" content="%s" />' % refresh_secs
-    
+
     title_entry['meta'] = meta
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Upload progress'})
+    output_objects.append({'object_type': 'header', 'text': 'Upload progress'})
 
     done_list = [False for _ in path_list]
     progress_items = []
@@ -115,12 +117,12 @@ Please contact the site admins %s if you think they should be enabled.
             logger.warning('%s tried to %s restricted path %s ! (%s)'
                            % (client_id, op_name, abs_path, path))
             output_objects.append({'object_type': 'file_not_found',
-                                  'name': path})
+                                   'name': path})
             status = returnvalues.FILE_NOT_FOUND
             continue
         if not os.path.isfile(abs_path):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : "no such upload: %s" % path})
+            output_objects.append(
+                {'object_type': 'error_text', 'text': "no such upload: %s" % path})
             status = returnvalues.CLIENT_ERROR
             continue
 
@@ -141,18 +143,17 @@ Please contact the site admins %s if you think they should be enabled.
 
             # Don't give away information about actual fs layout
 
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : '%s upload could not be checked! (%s)'
+            output_objects.append({'object_type': 'error_text', 'text': '%s upload could not be checked! (%s)'
                                    % (path, str(exc).replace(base_dir, ''
                                                              ))})
             status = returnvalues.SYSTEM_ERROR
             continue
 
     # Stop reload when all done
-    
+
     if not False in done_list:
         title_entry['meta'] = ''
-        
+
     output_objects.append({'object_type': 'progress_list',
                            'progress_list': progress_items})
 
