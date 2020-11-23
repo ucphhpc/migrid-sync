@@ -158,7 +158,7 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False,
                 'object_type': 'link',
                 'destination': 'showfreezefile.py?freeze_id=%s;path=%s' %
                 (freeze_dict['ID'], quoted_name),
-                'class': '%s iconspace' % type_icon,
+                'class': '%s iconleftpad iconspace' % type_icon,
                 'title': 'Show archive file %(name)s' % file_item,
                 'text': ''
             }
@@ -186,7 +186,7 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False,
                      (quoted_name, freeze_id), 'undefined',
                      "{freeze_id: '%s', flavor: '%s', 'path': '%s'}" %
                      (freeze_id, flavor, quoted_name)),
-                    'class': 'removelink iconspace', 'title':
+                    'class': 'removelink iconleftpad iconspace', 'title':
                     'Remove %s from %s' % (quoted_name, freeze_id),
                     'text': ''
                 }
