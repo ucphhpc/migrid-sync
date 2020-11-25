@@ -427,6 +427,7 @@ valid_gdp_anon_scripts = [
     'reqcertaction.py',
     'oiddiscover.py',
     'oidping.py',
+    'oidresponse.py',
     'login.py',
     'signup.py',
 ]
