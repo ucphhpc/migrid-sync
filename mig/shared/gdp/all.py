@@ -35,8 +35,7 @@ from mig.shared.gdp.base import skip_client_id_rewrite, valid_log_actions, \
     project_remove_user, project_invite_user, reset_account_roles, \
     set_account_state, edit_gdp_user, create_project_user, \
     project_accept_user, project_login, project_logout, project_open, \
-    project_close, project_create, project_demote_owner, project_promote_user, \
-    project_reassign_owner, fill_category
+    project_close, project_create
 from mig.shared.gdp.userid import client_id_project_postfix, \
     get_project_client_id, get_base_client_id, \
     get_client_id_from_project_client_id, \

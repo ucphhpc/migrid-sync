@@ -39,8 +39,7 @@ from mig.shared.functional import validate_input_and_cert
 from mig.shared.gdp.all import ensure_user, get_projects, get_users, \
     get_active_project_client_id, project_accept_user, project_create, \
     project_invite_user, project_login, project_logout, project_remove_user, \
-    validate_user, get_project_info, get_project_from_client_id, fill_category, \
-    project_reassign_owner
+    validate_user, get_project_info, get_project_from_client_id
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from mig.shared.html import twofactor_wizard_html, twofactor_wizard_js, \
     twofactor_token_html
@@ -66,6 +65,37 @@ def signature():
         'status_msg': [''],
     }
     return ['text', defaults]
+
+
+def fill_category(configuration, category_id, action, ref_dict):
+    """Fill a data category dict for *category_id* based on configuration
+    categories for *action* and actual reference values in *ref_dict*.
+    Raises ValueError if one or more required category reference fields are
+    missing from ref_dict or if category doesn't exist in data categories.
+    """
+    _logger = configuration.logger
+    _logger.debug('fill %s dict from %s %s values' % (category_id, action,
+                                                      ref_dict))
+    category_dict = {'category_id': category_id}
+    # _logger.debug('build map to fill %s %s dict from: %s' %
+    #              (category_id, action, configuration.gdp_data_categories))
+    category_map = dict([(i['category_id'], i) for i in
+                         configuration.gdp_data_categories])
+    if category_id not in category_map:
+        raise ValueError('no such data category: %s' % category_id)
+    category_dict.update(category_map[category_id])
+    # _logger.debug('fill %s dict %s with %s values' % (category_id,
+    #                                                  category_dict,
+    #                                                  ref_dict))
+    for ref_fill in category_dict.get('references', {}).get(action, []):
+        key = ref_fill['ref_id']
+        if key not in ref_dict:
+            _logger.error('no %s %s value in ref dict: %s' %
+                          (category_id, key, ref_dict))
+            raise ValueError('no %s value' % key)
+        ref_fill['value'] = ref_dict[key]
+    _logger.debug('filled %s dict: %s' % (category_id, category_dict))
+    return category_dict
 
 
 def html_category_fields(configuration, action):
@@ -153,7 +183,6 @@ def html_tmpl(
     invite_projects = False
     remove_projects = False
     await_projects = False
-    reassign_owner_projects = False
 
     if configuration.site_enable_twofactor:
         current_twofactor_dict = load_twofactor(client_id, configuration)
@@ -173,8 +202,7 @@ def html_tmpl(
             create_projects = True
         if user_dict and vgrid_manage_allowed(configuration,
                                               user_dict):
-            info_projects = invite_projects = \
-                remove_projects = reassign_owner_projects = \
+            info_projects = invite_projects = remove_projects = \
                 get_projects(configuration, client_id,
                              'accepted', owner_only=True)
         accepted_projects = get_projects(configuration, client_id,
@@ -262,11 +290,6 @@ def html_tmpl(
     if await_projects:
         html += """<li><a href='#await_project_tab'>Await Invitation</a></li>"""
         if action == 'await_project':
-            preselected_tab = tab_count
-        tab_count += 1
-    if reassign_owner_projects:
-        html += """<li><a href='#reassign_owner_projects_tab'>Reassign owner</a></li>"""
-        if action == 'switch_project_owner':
             preselected_tab = tab_count
         tab_count += 1
     if configuration.site_enable_twofactor:
@@ -756,72 +779,6 @@ def html_tmpl(
         </div>
         """
 
-    # Show project remove selectbox
-
-    if reassign_owner_projects:
-        html += \
-            """
-        <div id='reassign_owner_projects_tab'>"""
-        html += status_html
-        html +=  \
-            """
-        <table class='gm_projects_table' style='border-spacing=0;'>
-        <thead>
-            <tr>
-                <th>Select project:</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr><td>
-                <div class='styled-select gm_select semi-square'>
-                <select name='switch_project_owner_base_vgrid_name' onChange='selectSwitchOwnerProject();'>
-                <option value=''>Choose project</option>
-                <option value=''>───────</option>"""
-        for project in sorted(remove_projects.keys()):
-            html += \
-                """
-                <option value='%s'>%s</option>""" \
-                % (project, project)
-        html += \
-            """
-                <option value=''>───────</option>
-                </select>
-                </div>
-                </td></tr>
-            <tr id='user_desc' style='display: none;'>
-                <td>
-                New owner:
-                </td>
-            </tr><tr id='user' style='display: none;'>
-                <td>
-                <div class='styled-select gm_select semi-square'>
-                <select name='switch_project_owner_short_id'>
-                </select>
-                </div>
-            </td></tr>
-            """
-
-        # Insert all category refs but show only the ones for chosen project
-        html += html_category_fields(configuration, 'switch_project_owner')
-        html += """
-        </tbody>
-        </table>
-        <table class='gm_projects_table' style='border-spacing=0;'>
-        <thead>
-            <tr>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr><td>
-                <!-- NOTE: must have href for correct cursor on mouse-over -->
-                <a class='ui-button' id='switch_project_owner_button' href='#' onclick='submitform(\"switch_project_owner\"); return false;'>Reassign</a>
-            </td></tr>
-        </tbody>
-        </table>
-        </div>
-        """
-
     # 2-FA
 
     form_method = 'post'
@@ -1020,58 +977,6 @@ def js_tmpl_parts(configuration, csrf_token):
                                     project_name);
         }
     }
-    function renderSelectSwitchOwnerProject(project_name, project_info) {
-        /* Helper to render user select in switch_project_owner_short_id tab */
-        var select;
-        var option;
-        var option_desc;
-        var option_value;
-        var users = []
-        if (project_info.OK.length == 1) {
-            for (var i=0; i<project_info.OK[0].users.length; i++ ) {
-                if (project_info.OK[0].users[i].state == 'accepted' \
-                    || project_info.OK[0].users[i].state == 'invited') {
-                    users.push(project_info.OK[0].users[i]);
-                }
-            }
-        }
-        select = $('#reassign_owner_projects_tab select[name=switch_project_owner_short_id]');
-        select.children().remove().end();
-        if (users.length == 0) {
-            option = new Option('No participants found', '', true, true);
-            select.append(option);
-        }
-        else if (users.length > 0) {
-            option = new Option('Choose participant', '', true, true);
-            select.append(option);
-            option = new Option('───────', '', false, false);
-            select.append(option);
-            for (var i=0; i<users.length; i++ ) {
-                option_desc = users[i].name
-                            + ' (' + users[i].email + ')';
-                option_value = users[i].short_id;
-                option = new Option(option_desc, option_value, false, false);
-                select.append(option);
-            }
-            option = new Option('───────', '', false, false);
-            select.append(option);
-        }
-        $('#reassign_owner_projects_tab tr[id=user_desc]').show();
-        $('#reassign_owner_projects_tab tr[id=user]').show();
-    }
-    function selectSwitchOwnerProject() {
-        var project_name = $('#reassign_owner_projects_tab select[name=switch_project_owner_base_vgrid_name]').val();
-        /* Helper to switch category fields on project select in reassign_owner_projects_tab */
-        var category_id = category_map[project_name];
-        selectRef('switch_project_owner', category_id);
-        /* Helper to generate user select in reassign_owner_projects_tab */
-        $('#reassign_owner_projects_tab tr[id=user_desc]').hide();
-        $('#reassign_owner_projects_tab tr[id=user]').hide();
-        if (project_name !== '') {
-            ajax_gdp_project_info(renderSelectSwitchOwnerProject,
-                                    project_name);
-        }
-    }
     function extractProject(project_action) {
         var project_name = '';
         var err_help = 'selected'
@@ -1091,7 +996,7 @@ def js_tmpl_parts(configuration, csrf_token):
         var user_name = '';
         var err_help = 'selected';
 
-        if (project_action === 'remove_user' || project_action === 'switch_project_owner') {
+        if (project_action === 'remove_user') {
             user_name = $('#gm_project_form select[name='+project_action+'_short_id]').val();
         }
         else if (! $('#gm_project_form input[name='+project_action+'_short_id]')[0].checkValidity()) {
@@ -1215,14 +1120,6 @@ def js_tmpl_parts(configuration, csrf_token):
             $('#gm_project_submit_form').submit();
         }
         else if (project_action == 'remove_user') {
-            var project_name = extractProject(project_action);
-            var user_name = extractUser(project_action);
-            var category_name = extractCategory(project_action, project_name);
-            if (!handleStaticFields(project_action, project_name, user_name, category_name)) return false;
-            if (!handleDynamicFields(project_action, category_name)) return false;
-            $('#gm_project_submit_form').submit();
-        }
-        else if (project_action == 'switch_project_owner') {
             var project_name = extractProject(project_action);
             var user_name = extractUser(project_action);
             var category_name = extractCategory(project_action, project_name);
@@ -1776,57 +1673,6 @@ Please contact the site admins %s if you think it should be enabled.
                                                     remove_client_id,
                                                     base_vgrid_name,
                                                     category_entry)
-            if status:
-                action_msg = 'OK: %s' % msg
-            else:
-                action_msg = 'ERROR: %s' % msg
-
-        elif action == 'switch_project_owner':
-
-            # New project owner
-
-            gdp_users = get_users(configuration)
-
-            if not username in gdp_users.keys():
-                status = False
-                msg = "'%s' is NOT a valid user id" % username
-                _logger.error("gdpman: Switch project owner: %s" % msg)
-
-            # extract owned projects and saved data category
-            reassign_owner_projects = get_projects(
-                configuration, client_id, 'accepted', owner_only=True)
-            if not base_vgrid_name in reassign_owner_projects.keys():
-                status = False
-                msg = "'%s' is NOT a valid project id" % base_vgrid_name
-                _logger.error("gdpman: Switch project owner: %s" % msg)
-            else:
-                project = reassign_owner_projects[base_vgrid_name]
-                gdp_category_id = project['category_meta']['category_id']
-                if not gdp_category_id:
-                    status = False
-                    msg = "%s does NOT have a data category" % base_vgrid_name
-                    _logger.warning("gdpman: Switch project owner: %s" % msg)
-                    gdp_category_id = 'UNKNOWN'
-
-            if status:
-                # Check and fill references
-
-                try:
-                    category_entry = fill_category(configuration,
-                                                   gdp_category_id, action,
-                                                   dict(gdp_ref_pairs))
-                except ValueError as err:
-                    status = False
-                    msg = "missing reference: %s" % err
-
-            if status:
-                new_owner_client_id = gdp_users[username]
-                (status, msg) = project_reassign_owner(configuration,
-                                                       client_addr,
-                                                       client_id,
-                                                       new_owner_client_id,
-                                                       base_vgrid_name,
-                                                       category_entry)
             if status:
                 action_msg = 'OK: %s' % msg
             else:
