@@ -46,12 +46,12 @@
     "services": [
       "ALL"
     ],
-    "work_end": "2020-11-26T07:59:00+01:00",
+    "work_end": "2020-11-25T21:50:00+01:00",
     "description": {
-      "EN": "Update and general maintenance of ERDA, IDMC and SIF to apply pending system errata and replace a failing memory module in a backend storage host. We will use the opportunity to apply pending updates on the Jupyter DAG machines, except the specialized GPU ones. The work will involve down-time for hardware replacement and low-level updates to complete. Thus all services will be temporarily unavailable one or more times during the maintenance window. Further status will follow here.",
-      "DK": "Opdatering og generel vedligeholdelse af ERDA, IDMC og SIF for at lægge systemrettelser ind og skifte et ustabilt hukommelsesmodul i en af datalagermaskinerne. Ved samme lejlighed vil vi opgradere Jupyter DAG maskinerne, bortset fra de specialiserede med GPU. Arbejdet kræver nedetid til hardwareskift og grundlæggende systemopdateringer, og der vil derfor forekomme udfald i alle services undervejs. Yderligere status følger her."
+      "EN": "Update and general maintenance of ERDA, IDMC and SIF to apply pending system errata and replace a failing memory module in a backend storage host. We will use the opportunity to apply pending updates on the Jupyter DAG machines, except the specialized GPU ones. The work will involve down-time for hiardware replacement and low-level updates to complete. Thus all services will be temporarily unavailable one or more times during the maintenance window. We ran into some boot issues with the backend storagehardware to delay the return but ERDA Seafile returned before 18 and everything else was back online a bit before 22 o'clock.",
+      "DK": "Opdatering og generel vedligeholdelse af ERDA, IDMC og SIF for at lægge systemrettelser ind og skifte et ustabilt hukommelsesmodul i en af datalagermaskinerne. Ved samme lejlighed vil vi opgradere Jupyter DAG maskinerne, bortset fra de specialiserede med GPU. Arbejdet kræver nedetid til hardwareskift og grundlæggende systemopdateringer, og der vil derfor forekomme udfald i alle services undervejs. Virendte ind i opstartsproblemer på backend-lageret men ERDA Seafile var opppe igen inden 18 og alt inden kort inden kl 22."
     },
-    "announce_end": "2020-11-27T10:00:00+01:00"
+    "announce_end": "2020-11-26T12:00:00+01:00"
   },
   {
     "status": "AUTO",
