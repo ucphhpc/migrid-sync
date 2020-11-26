@@ -31,6 +31,27 @@
     "announce_end": "2020-12-08T17:00:00+01:00"
   },
   {
+    "status": "AUTO",
+    "work_start": "2020-11-26T20:00:00+01:00", 
+    "systems": [
+        "ERDA", "IDMC"
+    ], 
+    "announce_start": "2020-11-26T16:00:00+01:00", 
+    "title": {
+      "EN": "Brief DAG Maintenance", 
+      "DK": "Kortvarigt vedligehold på DAG"
+    }, 
+    "services": [
+      "DAG"
+    ], 
+    "work_end": "2020-11-26T22:00:00+01:00", 
+    "description": {
+      "EN": "DAG orchestration needs to be quickly restarted to address an issue with too frequent docker image updates. We will restart the JupyterHub which may result in lost connections. We apologize for the possible inconveniences and try to minimize the outage.", 
+      "DK": "DAG orkestreringen er nødt til at genstartes for at løse et problem med for hyppige docker image opdateringer. Vi genstarter JupyterHub, hvilket kan give udfald på igangværende sessioner. Vi beklager de gener arbejdet måtte medføre og forsøger at minimere nedetiden."
+    }, 
+    "announce_end": "2020-11-27T10:00:00+01:00"
+  },
+  {
     "status": "AUTO", 
     "work_start": "2020-11-25T16:15:00+01:00", 
     "systems": [
