@@ -127,14 +127,19 @@
           Alternatively you can install Python software dependencies like e.g. the
           scikit-image package directly in the Jupyter Notebook itself by evaluating
           <tt>!pip3 install scikit-image</tt> in a cell.<br/>
-          At the moment installing software that requires compilation or come with other
-          external dependencies is typically not supported.
+          At the moment installing software that requires compilation or come
+          with other external dependencies is not generally supported.<br/>
           To ensure that packages you install will stick around between
-          different sessions, specify the <tt>--user</tt> flag as part
-          of the pip or pip3 install command. This will ensure that the package
-          is installed into your own home <tt>__{service}_config__</tt>
-          directory which is persistent beyond the lifetime of a single
-          Jupyter instance.
+          different sessions, pass the <tt>--user</tt> flag to the pip or pip3
+          install command. This will ensure that the package is installed into
+          your own home <tt>__{service}_config__</tt> directory, which is
+          persistent beyond the lifetime of a single Jupyter instance.<br/>
+          It is also possible to use the <em>conda</em> package manager to
+          install additional software in running sessions. You can use
+          <tt>conda install -y -n ENV PACKAGE</tt> from the Jupyter Terminal
+          where ENV is typycally python2, python3 or r depending on the notebook
+          and your working environment. Similarly use <tt>conda search NAME</tt>
+          to search for available packages.<br/>
           You can contact us at our support email if
           you have additional software wishes. Then we will see if they can be
           fulfilled - but we can't give any promises.
@@ -288,17 +293,31 @@
           installeres midlertidigt med pip eller pip3 via en <em>Terminal</em> fra
           Jupyter hovedsiden, eller ved at skrive en standard Python
           <em>requirements.txt</em> fil i ens ERDA/IDMC mappe og køre den ved Jupyter
-          opstart med noget i stil med 
-          <tt>pip3 install -r requirements.txt</tt> fra Jupyter-terminalen.<br/>
+          opstart med noget i stil med <tt>pip3 install -r requirements.txt</tt>
+          fra Jupyter-terminalen.<br/>
+          Bemærk at man specifikt skal angive python2 eller python3 for at bruge
+          sådanne pip- eller pip3-installerede pakker direkte fra Terminalen.<br/>
           Man kan alternativt installere Python software-afhængigheder som f.eks.
           scikit-image pakken direkte i Jupyter Notebooks ved at evaluere
           <tt>!pip3 install scikit-image</tt> i en celle.<br/>
           I øjeblikket er installation af software som kræver kompilering eller
-          har eksterne afhængigheder typisk ikke understøttet. Vi arbejder på at
-          udvikle en gør-det-selv tilpasning af Jupyter-instanserne, så det i noget
-          omfang bliver muligt. Indtil da er fremgangsmåden at skrive til vores
-          support-email med evt ønsker om yderligere software. Så undersøger vi om
-          det er muligt at tilføje - men vi kan ikke love noget.
+          har eksterne afhængigheder ikke generelt understøttet.<br/>
+          Det er muligt at gemme de installerede pakker imellem forskellige
+          sessioner ved at angive <tt>--user</tt> flaget når man bruger pip
+          eller pip3 install kommandoerne. Derved installeres pakkerne i dit
+          eget hjemmekatalog <tt>__{service}_config__</tt> hvorfra det er
+          persistent udover levetiden for den enkelte jupyter-instans.<br/>
+          Det er også muligt at bruge <em>conda</em>-pakkesystemet til at
+          installere software i kørende sessioner. Således kan du benytte
+          <tt>conda install -y -n ENV PACKAGE</tt> fra Jupyter Terminalen hvor
+          ENV typisk er python2, python3 eller r afhængigt af notebook og valgt
+          miljø. Tilsvarende benyttes <tt>conda search NAME</tt> til at lede
+          efter tilgængelige pakker.<br/> 
+          Vi arbejder på at udvikle en gør-det-selv tilpasning af
+          Jupyter-instanserne, så det i noget omfang bliver muligt. Indtil da er
+          fremgangsmåden at skrive til vores support-email med evt ønsker om
+          yderligere software. Så undersøger vi om det er muligt at tilføje -
+          men vi kan ikke love noget.
         </p>
         <h4 class="staticpage">Hvorfor melder web login pludselig
           "No such user (xyz123@ku.dk)?"</h4>
