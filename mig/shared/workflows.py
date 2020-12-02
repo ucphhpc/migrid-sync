@@ -344,14 +344,20 @@ def add_workflow_job_history_entry(
 
     if not history_home:
         feedback = 'Not adding to job history as history home does not exist.'
-        configuration.logger.debug(feedback)
+        # Enabling this debug will create a log entry for ALL MiG job writes
+        # through sshfs that are not from MEOW workflows. This will very
+        # quickly snowball if left enabled. Ye have been warned.
+        # configuration.logger.debug(feedback)
         return (False, feedback)
 
     job_history_path = os.path.join(history_home, job_session_id)
     if not os.path.exists(job_history_path):
         feedback = 'Not adding to job history as job history file does not ' \
                    'exist for %s.' % job_session_id
-        configuration.logger.debug(feedback)
+        # Enabling this debug will create a log entry for ALL MiG job writes
+        # through sshfs that are not from MEOW workflows. This will very
+        # quickly snowball if left enabled. Ye have been warned.
+        # configuration.logger.debug(feedback)
         return (False, feedback)
 
     try:

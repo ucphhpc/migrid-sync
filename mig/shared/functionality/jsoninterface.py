@@ -35,14 +35,15 @@
 """JSON interface for handling all workflow, job and report interactions."""
 from __future__ import absolute_import
 
-import sys
 import json
+import sys
 
 from mig.shared import returnvalues
 
 from mig.shared.base import force_utf8_rec
-from mig.shared.init import initialize_main_variables
 from mig.shared.handlers import correct_handler
+from mig.shared.init import initialize_main_variables
+from mig.shared.job import JOB_TYPES, JOB, QUEUE, get_job_with_id
 from mig.shared.safeinput import REJECT_UNSET, valid_sid, validated_input, \
     html_escape, valid_request_operation, valid_request_type, \
     valid_request_vgrid, valid_request_attributes, valid_job_id, \
@@ -50,13 +51,12 @@ from mig.shared.safeinput import REJECT_UNSET, valid_sid, validated_input, \
     valid_workflow_input_paths, valid_workflow_output, \
     valid_workflow_param_over, valid_workflow_variables, \
     valid_workflow_source, valid_workflow_recipe
-from mig.shared.job import JOB_TYPES, JOB, QUEUE, get_job_with_id
+from mig.shared.vgrid import get_vgrid_workflow_jobs, init_vgrid_script_list
 from mig.shared.workflows import WORKFLOW_TYPES, PATTERN_GRAPH, WORKFLOW_ANY, \
     WORKFLOW_PATTERN, WORKFLOW_RECIPE, valid_session_id, get_workflow_with, \
     load_workflow_sessions_db, create_workflow, delete_workflow, \
     update_workflow, touch_workflow_sessions_db, search_workflow, \
     WORKFLOW_SEARCH_TYPES, WORKFLOW_REPORT, get_workflow_job_report
-from mig.shared.vgrid import get_vgrid_workflow_jobs, init_vgrid_script_list
 
 CREATE = 'create'
 READ = 'read'
@@ -417,7 +417,7 @@ VALID_REQUEST_OPERATIONS = {
 
 def valid_operation_for_type(configuration, operation, request_type):
     if request_type not in VALID_REQUEST_OPERATIONS:
-        msg = 'Request type %s is has no supported operations.'
+        msg = 'Request type %s has no supported operations.' % request_type
         configuration.logger.warning(msg)
         return (False, msg)
 
@@ -432,24 +432,19 @@ def valid_operation_for_type(configuration, operation, request_type):
 
 def valid_attributes_for_type(configuration, attributes, request_type):
     if request_type not in VALID_REQUEST_ATTRIBUTES_SIGNATURE:
-        msg = 'Request type %s is has no supported attributes.'
+        msg = 'Request type %s has no supported attributes.' % request_type
         configuration.logger.warning(msg)
         return (False, msg)
 
     if request_type not in VALID_REQUEST_ATTRIBUTES_TYPE:
-        msg = 'Request type %s is has no supported attributes.'
+        msg = 'Request type %s has no supported attributes.' % request_type
         configuration.logger.warning(msg)
         return (False, msg)
-
-    configuration.logger.debug('DMR attribute attributes: %s' % attributes)
 
     signature = VALID_REQUEST_ATTRIBUTES_SIGNATURE[request_type]
     type_map = VALID_REQUEST_ATTRIBUTES_TYPE[request_type]
     accepted, rejected = validated_input(
         attributes, signature, type_override=type_map, list_wrap=True)
-
-    configuration.logger.debug('DMR attribute accepted: %s' % accepted)
-    configuration.logger.debug('DMR attribute rejected: %s' % rejected)
 
     if not accepted or rejected:
         msg = "Invalid input was supplied to the requests API: %s" % rejected
@@ -494,7 +489,7 @@ def main(client_id, user_arguments_dict):
         logger.error(msg)
         output_objects.append({
             'object_type': 'error_text',
-            'text': msg})
+            'text': html_escape(msg)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if not configuration.site_enable_workflows:
@@ -512,10 +507,8 @@ def main(client_id, user_arguments_dict):
               "compatible format" % op_name
         logger.error(msg)
         output_objects.append({'object_type': 'error_text',
-                               'text': msg})
+                               'text': html_escape(msg)})
         return (output_objects, returnvalues.CLIENT_ERROR)
-
-    logger.debug('DMR json_data: %s' % json_data)
 
     # IMPORTANT!! Do not access the json_data input before it has been
     # validated by validated_input. Note attributes entry has not yet been
@@ -526,14 +519,12 @@ def main(client_id, user_arguments_dict):
         value_override=REQUEST_VALUE_MAP,
         list_wrap=True)
 
-    logger.debug('DMR accepted: %s' % accepted)
-    logger.debug('DMR rejected: %s' % rejected)
-
     if not accepted or rejected:
         logger.error("A validation error occurred: '%s'" % rejected)
         msg = "Invalid input was supplied to the request API: %s" % rejected
         # TODO, Transform error messages to something more readable
-        output_objects.append({'object_type': 'error_text', 'text': msg})
+        output_objects.append({'object_type': 'error_text',
+                               'text': html_escape(msg)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     request_type = accepted.pop('type', [None])[0]
@@ -548,8 +539,6 @@ def main(client_id, user_arguments_dict):
         if key in json_data['attributes']:
             attributes[key] = value
     attributes['vgrid'] = vgrid
-
-    logger.debug('DMR attributes: %s' % attributes)
 
     if not valid_session_id(configuration, workflow_session_id):
         output_objects.append({'object_type': 'error_text',
@@ -594,7 +583,7 @@ def main(client_id, user_arguments_dict):
         logger.error("Illegal access attempt by user '%s' to vgrid '%s'. %s"
                      % (owner, vgrid, msg))
         output_objects.append({'object_type': 'error_text',
-                               'text': msg})
+                               'text': html_escape(msg)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     status, msg = valid_attributes_for_type(
@@ -602,7 +591,7 @@ def main(client_id, user_arguments_dict):
     if not status:
         output_objects.append(
             {'object_type': 'error_text',
-             'text': msg})
+             'text': html_escape(msg)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     status, msg = valid_operation_for_type(
@@ -610,7 +599,7 @@ def main(client_id, user_arguments_dict):
     if not status:
         output_objects.append(
             {'object_type': 'error_text',
-             'text': msg})
+             'text': html_escape(msg)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     request_func = VALID_REQUEST_OPERATIONS[request_type][operation]

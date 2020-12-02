@@ -958,7 +958,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                         'trigger_path': src_path,
                         'trigger_time':
                             datetime.datetime.fromtimestamp(time_stamp),
-                        'patter_id': pattern['persistence_id'],
+                        'pattern_id': pattern['persistence_id'],
                         'pattern_name': pattern['name'],
                         'recipes': recipe_list
                     }
