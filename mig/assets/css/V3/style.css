@@ -92,7 +92,7 @@ body {
 
 /*Global Text Elements*/
 
-h1, h2, h3, .supporttitle, .privacytitle {
+h1, h2, h3, h4, .supporttitle, .privacytitle {
     /* See skin color note at the top
        color: #46743C;
        */
@@ -151,6 +151,21 @@ h3 {
     h3 {
 	font-size: 20px;
 	line-height: 20px;
+    }
+}
+
+h4 {
+    font-size: 12px;
+    line-height: 12px;
+    font-weight: 600;
+    margin-top: 2%;
+}
+
+
+@media (min-width: 1000px) {
+    h4 {
+	font-size: 16px;
+	line-height: 16px;
     }
 }
 
@@ -730,5 +745,16 @@ z-index: 2;
 /* Docs */
 code {
     color: silver;
+}
+
+/* Setup commands etc. */
+pre.codeblock {
+    color: #666;
+    font-family: monospace, sans-serif;
+}
+
+/* Setup user vars, fingerprints etc. */
+var, sampl, code {
+    font-family: monospace, sans-serif;
 }
 

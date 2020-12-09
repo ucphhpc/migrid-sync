@@ -225,7 +225,7 @@ def main(client_id, user_arguments_dict):
         expire_warn_msg = '''<p class="warningtext">
 NOTE: your %s account access including efficient file service access expires on
 %s. You can always repeat sign up to extend general access with another %s days.
-%s  
+%s
 </p>'''
         auto_renew_msg = '''Alternatively simply either hit Save below now
 <em>or</em> log in here again after that date to quickly extend your access for
@@ -240,8 +240,12 @@ NOTE: your %s account access including efficient file service access expires on
 
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
+    compact_name = configuration.short_title.replace(' ', '-').lower()
     fill_helpers = {
-        'site': configuration.short_title, 'form_method': form_method,
+        'site': configuration.short_title,
+        'mount_name': compact_name,
+        'mount_dir': "%s-home" % compact_name,
+        'form_method': form_method,
         'csrf_field': csrf_field, 'csrf_limit': csrf_limit,
         'valid_password_chars': html_escape(valid_password_chars),
         'password_min_len': max(policy_min_len, password_min_len),
@@ -276,12 +280,12 @@ NOTE: your %s account access including efficient file service access expires on
         fingerprints = []
         hostkey_from_dns = 'ask'
         if sftp_md5:
-            fingerprints.append("%s (MD5)" % sftp_md5)
+            fingerprints.append("<sampl>%s</sampl> (MD5)" % sftp_md5)
         if sftp_sha256:
-            fingerprints.append("%s (SHA256)" % sftp_sha256)
+            fingerprints.append("<sampl>%s</sampl> (SHA256)" % sftp_sha256)
         if fingerprints:
             fingerprint_info = '''You may be asked to verify the server key
-fingerprint <tt>%s</tt> first time you connect.''' % ' or '.join(fingerprints)
+fingerprint %s first time you connect.''' % ' or '.join(fingerprints)
         if sftp_trust_dns:
             hostkey_from_dns = 'yes'
         target_op = 'settingsaction'
@@ -297,18 +301,17 @@ fingerprint <tt>%s</tt> first time you connect.''' % ' or '.join(fingerprints)
         <div class="title centertext">SFTP access to your %(site)s account</div>
 
 <p>
-You can configure SFTP login to your %(site)s account for efficient file
-access. On Windows, Mac OS X and Linux/UN*X you can install and use SSHFS for
-transparent access to your data like on a network drive, and some Linux
-distributions even natively integrate SFTP access in the file manager.
+<p>You can enable SFTP login to your %(site)s account and use it for efficient
+file and folder upload/download or even for seamless data access from your
+Windows, Mac OS X and Linux/UN*X computer.
 </p>
 <h3>Login Details</h3>
 
 <ul>
-<li>Host <em>%(sftp_server)s</em></li>
-<li>Port <em>%(sftp_port)s</em></li>
-<li>Username <em>%(username)s</em></li>
-<li>%(auth_methods)s <em>as you choose below</em></li>
+<li>Host <var>%(sftp_server)s</var></li>
+<li>Port <var>%(sftp_port)s</var></li>
+<li>Username <var>%(username)s</var></li>
+<li>%(auth_methods)s <var>as you choose below</var></li>
 </ul>
 <p>%(fingerprint_info)s</p>
 <input type="hidden" name="topic" value="sftp" />
@@ -317,53 +320,129 @@ distributions even natively integrate SFTP access in the file manager.
     class="removeitemlink iconspace" title="Toggle view">
     Show less SFTP client details...</a>
 
-<h3>Graphical SFTP access</h3>
+<h3>SSHFS/SFTP Network Drive</h3>
+<p>
+SSHFS enables secure network drive access to your remote %(site)s data using
+SFTP. It is available on all popular computer platforms and allows you to use
+your usual programs to work directly on your remote %(site)s files and folders
+over the Internet.
+</p>
+<h4>SSHFS Drive on Windows</h4>
+<p>
+Download and install
+<a href="https://github.com/billziss-gh/sshfs-win#----sshfs-win--sshfs-for-windows"
+target="_blank">WinFsp and SSHFS-Win</a> as described under Installation.
+Then in your Windows file manager open the Map network drive wizard. Enter
+<var>%(sshfs_netloc)s</var> in the Folder field and click Finish.
+Finally supply your username <var>%(username)s</var> and your chosen password
+when prompted for login.
+</p>
+
+<h4>SSHFS/SFTP Drive on Mac OSX and Linux/UN*X</h4>
+<p>
+Install <a href="https://github.com/libfuse/sshfs#sshfs">SSHFS</a> including
+the FUSE and OpenSSH dependencies using your favorite software/package manager
+or the downloads online.<br/>
+Create the %(sftp_server)s section in your local ~/.ssh/config as described
+under SFTP Command-line Clients on Mac OSX and Linux/UN*X below.
+<br/>
+Then you can mount with sshfs to access your %(site)s home:
+</p>
+<pre class="codeblock">
+mkdir -p %(mount_dir)s && sshfs %(sftp_server)s: %(mount_dir)s -o idmap=user -o big_writes -o reconnect
+</pre>
+<p>You can also integrate sshfs with ordinary mounts by adding a line like:</p>
+<pre class="codeblock">
+sshfs#%(username)s@%(sftp_server)s: /home/USER/%(mount_dir)s fuse noauto,user,idmap=user,big_writes,reconnect,port=%(sftp_port)d 0 0
+</pre>
+<p>
+to your /etc/fstab .
+</p>
+<p>
+Some Linux distributions even natively integrate SFTP access in their file
+manager, so that one can connect it like WebDAVS without installing anything.
+In the file manager <var>%(sftp_uri)s</var> in the address field and entering
+your username <var>%(username)s</var> and chosen password when prompted for login.
+</p>
+
+<h3>SFTP File Transfers</h3>
+<p>
+SFTP enables basic file transfers to and from your %(site)s storage. That
+is, you can use a client to upload and download files and folders.
+</p>
+<h4>FileZilla on Windows, Mac OSX or Linux/UN*X</h4>
 <p>The FileZilla client is known to generally work for graphical access to your
-%(site)s home over SFTP. It runs on all popular platforms and in the
+%(site)s home over SFTP. It runs on all popular computer platforms and in the
 <a href="http://portableapps.com/apps/internet/filezilla_portable">portable
 version</a> it does not even require install privileges.</p>
 <p>
 Enter the following values in the FileZilla Site Manager:</p>
 <ul>
-<li>Host %(sftp_server)s</li>
-<li>Port %(sftp_port)s</li>
-<li>Protocol SFTP</li>
-<li>User %(username)s</li>
-<li>Password YOUR_PASSWORD_HERE (leave empty for ssh key from key-agent)</li>
+<li>Host <var>%(sftp_server)s</var></li>
+<li>Port <var>%(sftp_port)s</var></li>
+<li>Protocol <var>SFTP</var></li>
+<li>User <var>%(username)s</var></li>
+<li>Password <var>*YOUR CHOSEN PASSWORD*</var> (leave empty for ssh key from key-agent)</li>
 </ul>
 
-<p>Other graphical clients like WinSCP should work as well.</p>
+<h4>Other Graphical Clients</h4>
+<p>Other graphical clients like <a href="https://winscp.net/eng/index.php">
+WinSCP</a>, <a href="https://cyberduck.io/">CyberDuck</a> and
+<a href="https://www.gftp.org/">gFTP</a> should work just as well.
+</p>
 
-<h3>Command line SFTP/SSHFS access on Linux/UN*X</h3>
+<h4>Command-line Clients on Mac OSX and Linux/UN*X</h4>
 <p>
+Install <a href="https://www.openssh.com/">OpenSSH</a> or
+<a href="https://lftp.yar.ru/">LFTP</a> using your favorite package manager.
 Save something like the following lines in your local ~/.ssh/config
 to avoid typing the full login details every time:</p>
-<ul>
-<li>Host %(sftp_server)s</li>
-<li>Hostname %(sftp_server)s</li>
-<li>VerifyHostKeyDNS %(hostkey_from_dns)s</li>
-<li>User %(username)s</li>
-<li>Port %(sftp_port)s</li>
-<li># Assuming you have your private key in ~/.mig/id_rsa</li>
-<li>IdentityFile ~/.mig/id_rsa</li>
-</ul>
+<textarea rows=8 cols=78 class="code" readonly=readonly>Host %(sftp_server)s %(mount_name)s
+Hostname %(sftp_server)s
+VerifyHostKeyDNS %(hostkey_from_dns)s
+User %(username)s
+Port %(sftp_port)s
+# Uncomment next line to use your private key in ~/.ssh/id_rsa
+#IdentityFile ~/.ssh/id_rsa</textarea>
+<p>From then on you can use sftp and lftp to access your %(site)s home:</p>
+<pre class="codeblock">
+sftp -B 258048 %(sftp_server)s
 
-<p>
-From then on you can use sftp, lftp and sshfs to access your %(site)s home:</p>
-<ul>
-<li>sftp -B 258048 %(sftp_server)s</li>
-<li>lftp -e "set net:connection-limit %(max_sessions)d" -p %(sftp_port)s sftp://%(sftp_server)s</li>
-<li>mkdir -p remote-home && sshfs %(sftp_server)s: remote-home -o idmap=user -o big_writes -o reconnect</li>
-</ul>
+lftp -e "set net:connection-limit %(max_sessions)d" -p %(sftp_port)s sftp://%(sftp_server)s
+</pre>
+<p>Other command-line SFTP clients like PuTTY (psftp) also work.</p>
 
+<h4>Rclone as SFTP client</h4>
+<p>Last but not least you can install and use
+<a href="https://rclone.org/">Rclone</a> to e.g. synchronize files
+and folders between %(site)s and your computer (like rsync) or mount your
+%(site)s home as a network drive.<br/>
+For recent versions you configure rclone with the command:</p>
+<pre class="codeblock">
+rclone config create %(mount_name)s sftp host %(sftp_server)s port %(sftp_port)s user %(username)s pass "YOUR CHOSEN PASSWORD"
+</pre>
 <p>
-You can also integrate with ordinary mounts by adding a line like:</p>
-<ul>
-<li>sshfs#%(username)s@%(sftp_server)s: /home/USER/remote-home fuse noauto,user,idmap=user,big_writes,reconnect,port=%(sftp_port)d 0 0</li>
-</ul>
+Whereas older versions require interactively entering the same options in the
+config creator launched with:
+</p>
+<pre class="codeblock">
+rclone config
+</pre>
+<p>
+Once set up you can list, download, upload and sync files and folders
+or even mount as network drive:</p>
+<pre class="codeblock">
+rclone lsl --max-depth 1 %(mount_name)s:
+rclone copy %(mount_name)s:REMOTE_PATH LOCAL_PATH
+rclone copy LOCAL_PATH %(mount_name)s:REMOTE_PATH
+rclone sync LOCAL_PATH %(mount_name)s:REMOTE_PATH
+rclone sync %(mount_name)s:REMOTE_PATH LOCAL_PATH
 
+mkdir -p %(mount_dir)s && rclone mount %(mount_name)s: %(mount_dir)s
+</pre>
 <p>
-to your /etc/fstab .
+More about another tried and trusted way of mounting %(site)s as a network
+drive with SSHFS above.
 </p>
 </div>
 <div class="div-sftp-client-notes">
@@ -429,6 +508,12 @@ value="%(default_authpassword)s" />
 </form>
 </div>
 '''
+        # Hide port if same as implicit
+        sftp_uri = 'sftp://%s' % sftp_server
+        sshfs_netloc = '\\\\sshfs\\%s' % sftp_server
+        if sftp_port != 22:
+            sftp_uri += ':%d' % sftp_port
+            sshfs_netloc += ':%d' % sftp_port
         fill_helpers.update({
             'default_authkeys': default_authkeys,
             'default_authpassword': default_authpassword,
@@ -437,6 +522,8 @@ value="%(default_authpassword)s" />
             'username': username,
             'sftp_server': sftp_server,
             'sftp_port': sftp_port,
+            'sftp_uri': sftp_uri,
+            'sshfs_netloc': sshfs_netloc,
             'hostkey_from_dns': hostkey_from_dns,
             'max_sessions': configuration.user_sftp_max_sessions,
             'fingerprint_info': fingerprint_info,
@@ -473,9 +560,9 @@ value="%(default_authpassword)s" />
         davs_sha256 = configuration.user_davs_key_sha256
         fingerprints = []
         if davs_sha1:
-            fingerprints.append("%s (SHA1)" % davs_sha1)
+            fingerprints.append("<sampl>%s</sampl> (SHA1)" % davs_sha1)
         if davs_sha256:
-            fingerprints.append("%s (SHA256)" % davs_sha256)
+            fingerprints.append("<sampl>%s</sampl> (SHA256)" % davs_sha256)
         if fingerprints:
             fingerprint_info = '''You may be asked to verify the server key
 fingerprint %s first time you connect.''' % ' or '.join(fingerprints)
@@ -492,14 +579,16 @@ fingerprint %s first time you connect.''' % ' or '.join(fingerprints)
 <div class="vertical-spacer"></div>
 <div class="title centertext">WebDAVS access to your %(site)s account</div>
 
-<p>You can configure WebDAVS login to your %(site)s account for transparent file
-access from your PC or workstation.</p>
+<p>You can enable WebDAVS login to your %(site)s account and use it for file
+and folder upload/download or even for seamless data access from your Windows,
+Mac OS X and Linux/UN*X computer.
+</p>
 <h3>Login Details</h3>
 <ul>
-<li>Host <em>%(davs_server)s</em></li>
-<li>Port <em>%(davs_port)s</em></li>
-<li>Username <em>%(username)s</em></li>
-<li>%(auth_methods)s <em>as you choose below</em></li>
+<li>Host <var>%(davs_server)s</var></li>
+<li>Port <var>%(davs_port)s</var></li>
+<li>Username <var>%(username)s</var></li>
+<li>%(auth_methods)s <var>as you choose below</var></li>
 </ul>
 <p class="wordbreak">%(fingerprint_info)s</p>
 
@@ -508,33 +597,69 @@ access from your PC or workstation.</p>
 <a href="javascript:toggleHidden('.div-webdavs-client-notes');"
     class="removeitemlink iconspace" title="Toggle view">
     Show less WebDAVS client details...</a>
-<h3>Graphical WebDAVS access</h3>
-<p>Several native file browsers and web browsers are known to generally work for
-graphical access to your %(site)s home over WebDAVS.
+<h3>WebDAVS Network Drive</h3>
+<p>
+All common computer platforms integrate secure network drive access to your
+remote %(site)s data using WebDAVS. That allows you to use your usual programs
+to work directly on your remote %(site)s files and folders over the Internet.
 </p>
-<p>Enter the address https://%(davs_server)s:%(davs_port)s and when fill in the
-login details:</p>
 
+<h4>WebDAVS Drive Integration on Windows</h4>
+<p>
+In your Windows file manager open the Map network drive wizard. Enter
+<var>%(davs_url)s</var> in the Folder field and click Finish. Finally supply
+your username <var>%(username)s</var> and your chosen password when prompted for
+login.
+</p>
+
+<h4>WebDAVS Drive Integration on Mac OSX</h4>
+<p>
+On Mac OSX open Finder and in the menu under Go you select Connect to Server.
+Then enter <var>%(davs_url)s</var> in the Server address field. Click Connect and
+supply your username <var>%(username)s</var> and your chosen password when prompted
+for login.
+</p>
+
+<h4>WebDAVS Drive Integration on Linux/UN*X</h4>
+<p>
+In your favorite file manager on Linux/UN*X find Open Location or similar in
+the menu. Then enter <var>%(davs_url)s</var> in the address field. Click Connect
+and supply your username <var>%(username)s</var> and your chosen password when
+prompted for login. Please note that a few file managers like Thunar require
+the address to use <var>davs://</var> rather than <var>https://</var> in the
+address above.
+</p>
+
+<h3>Graphical WebDAVS client access</h3>
+<p>In addition to network drive integration in native file managers, various
+file transfer programs like <a href="https://winscp.net/eng/index.php">WinSCP
+</a> and <a href="https://cyberduck.io/">CyberDuck</a> support upload/download
+to and from your %(site)s home using WebDAVS.
+</p>
+<p>Enter the address <var>%(davs_url)s</var> and fill in the login details when
+prompted:</p>
 <ul>
-<li>Username %(username)s</li>
-<li>Password YOUR_PASSWORD_HERE</li>
+<li>Username <var>%(username)s</var></li>
+<li>Password <var>YOUR CHOSEN PASSWORD</var></li>
 </ul>
-<p>other graphical clients should work as well.</p>
+Most web browsers also support WebDAVS at least for downloading files.
+Some web browsers also work with WebDAVS, if you navigate to the address
+<var>%(davs_url)s</var> and enter your username <var>%(username)s</var> and your
+chosen password when prompted for login.</p>
 
 <h3>Command line WebDAVS access on Linux/UN*X</h3>
 <p>Save something like the following lines in your local ~/.netrc
 to avoid typing the full login details every time:</p>
-<ul>
-    <li>machine %(davs_server)s</li>
-    <li>login %(username)s</li>
-    <li>password YOUR_PASSWORD_HERE</li>
-</ul>
-</br>
-<p>From then on you can use e.g. cadaver or fusedav to access your %(site)s home:</p>
-<ul>
-    <li>cadaver https://%(davs_server)s:%(davs_port)s</li>
-    <li>mkdir -p remote-home && fusedav https://%(davs_server)s:%(davs_port)s remote-home -o uid=$(id -u) -o gid=$(id -g)</li>
-</ul>
+<textarea rows=4 cols=78 class="code" readonly=readonly>machine %(davs_server)s
+login %(username)s
+password *YOUR CHOSEN PASSWORD*</textarea>
+<p>Then you can install and use e.g. cadaver or fusedav to access your %(site)s
+home:</p>
+<pre class="codeblock">
+cadaver %(davs_url)s
+
+mkdir -p %(mount_dir)s && fusedav %(davs_url)s %(mount_dir)s -o uid=$(id -u) -o gid=$(id -g)
+</pre>
 </div>
 <div class="div-webdavs-client-notes">
 <a href="javascript:toggleHidden('.div-webdavs-client-notes');"
@@ -599,6 +724,9 @@ value="%(default_authpassword)s" />
 </div>
 </div>
 '''
+        davs_url = 'https://%s' % davs_server
+        if davs_port != 443:
+            davs_url += ':%d' % davs_port
         fill_helpers.update({
             'default_authkeys': default_authkeys,
             'default_authpassword': default_authpassword,
@@ -607,6 +735,7 @@ value="%(default_authpassword)s" />
             'username': username,
             'davs_server': davs_server,
             'davs_port': davs_port,
+            'davs_url': davs_url,
             'fingerprint_info': fingerprint_info,
             'auth_methods': ' / '.join(configuration.user_davs_auth).title(),
         })
@@ -640,12 +769,12 @@ value="%(default_authpassword)s" />
         ftps_sha256 = configuration.user_ftps_key_sha256
         fingerprints = []
         if ftps_sha1:
-            fingerprints.append("%s (SHA1)" % ftps_sha1)
+            fingerprints.append("<sampl>%s</sampl> (SHA1)" % ftps_sha1)
         if ftps_sha256:
-            fingerprints.append("%s (SHA256)" % ftps_sha256)
+            fingerprints.append("<sampl>%s</sampl> (SHA256)" % ftps_sha256)
         if fingerprints:
             fingerprint_info = '''You may be asked to verify the server key
-fingerprint <tt>%s</tt> first time you connect.''' % ' or '.join(fingerprints)
+fingerprint <sampl>%s</sampl> first time you connect.''' % ' or '.join(fingerprints)
         target_op = 'settingsaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
@@ -658,14 +787,14 @@ fingerprint <tt>%s</tt> first time you connect.''' % ' or '.join(fingerprints)
 <div class="vertical-spacer"></div>
 <div class="title centertext">FTPS access to your %(site)s account</div>
 
-<p>You can configure FTPS login to your %(site)s account for efficient file
-access.</p>
+<p>You can enable FTPS login to your %(site)s account and use it for efficient
+file and folder upload/download.</p>
 <h3>Login Details</h3>
 <ul>
-<li>Host <em>%(ftps_server)s</em></li>
-<li>Port <em>%(ftps_ctrl_port)s</em></li>
-<li>Username <em>%(username)s</em></li>
-<li>%(auth_methods)s <em>as you choose below</em></li>
+<li>Host <var>%(ftps_server)s</var></li>
+<li>Port <var>%(ftps_ctrl_port)s</var></li>
+<li>Username <var>%(username)s</var></li>
+<li>%(auth_methods)s <var>as you choose below</var></li>
 </ul>
 <p>%(fingerprint_info)s</p>
 
@@ -676,38 +805,38 @@ access.</p>
     Show less FTPS client details...</a>
 <h3>Graphical FTPS access</h3>
 <p>The FileZilla client is known to generally work for graphical access to your
-%(site)s home over FTPS.</p>
+%(site)s home over FTPS. It runs on all popular computer platforms and in the
+<a href="http://portableapps.com/apps/internet/filezilla_portable">portable
+version</a> it does not even require install privileges.</p>
 <p>Enter the following values in the FileZilla Site Manager:</p>
 <ul>
-<li>Host %(ftps_server)s</li>
-<li>Port %(ftps_ctrl_port)s</li>
-<li>Protocol FTP</li>
-<li>Encryption Explicit FTP over TLS</li>
-<li>User %(username)s</li>
-<li>Password YOUR_PASSWORD_HERE</li>
+<li>Host <var>%(ftps_server)s</var></li>
+<li>Port <var>%(ftps_ctrl_port)s</var></li>
+<li>Protocol <var>FTP</var></li>
+<li>Encryption <var>Explicit FTP over TLS</var></li>
+<li>User <var>%(username)s</var></li>
+<li>Password <var>YOUR CHOSEN PASSWORD</var></li>
 </ul>
-<p><br/>Other graphical clients like WinSCP should work as well. Some web browsers may
-also work, if you enter the address ftps://%(ftps_server)s:%(ftps_ctrl_port)s
-and fill in the login details when prompted:</p>
-<ul>
-<li>Username %(username)s</li>
-<li>Password YOUR_PASSWORD_HERE</li>
-</ul>
+<p><br/>Other graphical clients like <a href="https://winscp.net/eng/index.php">
+WinSCP</a> and <a href="https://cyberduck.io/">CyberDuck</a> should work as well.
+Some web browsers also work, if you enter the address
+<var>%(ftps_uri)s</var>
+and enter your username <var>%(username)s</var> and your chosen password when
+prompted for login.</p>
+
 <h3>Command line FTPS access on Linux/UN*X</h3>
 <p>Save something like the following lines in your local ~/.netrc
 to avoid typing the full login details every time:</p>
-<ul>
-<li>machine %(ftps_server)s</li>
-<li>login %(username)s</li>
-<li>password YOUR_PASSWORD_HERE</li>
-</ul>
-<p>From then on you can use e.g. lftp or CurlFtpFS to access your %(site)s home:</p>
-<ul>
-<li>lftp -e "set ftp:ssl-protect-data on; set net:connection-limit %(max_sessions)d" -p %(ftps_ctrl_port)s %(ftps_server)s</li>
-</ul>
-<ul>
-<li>mkdir -p remote-home && curlftpfs -o ssl %(ftps_server)s:%(ftps_ctrl_port)s remote-home -o user=%(username)s -ouid=$(id -u) -o gid=$(id -g) -o no_verify_peer</li>
-</ul>
+<textarea rows=4 cols=78 class="code" readonly=readonly>machine %(ftps_server)s
+login %(username)s
+password *YOUR CHOSEN PASSWORD*</textarea>
+<p>Then install and use e.g. <a href="https://lftp.yar.ru/">LFTP</a> or
+CurlFtpFS to access your %(site)s home:</p>
+<pre class="codeblock">
+lftp -e "set ftp:ssl-protect-data on; set net:connection-limit %(max_sessions)d" -p %(ftps_ctrl_port)s %(ftps_server)s
+
+mkdir -p %(mount_dir)s && curlftpfs -o ssl %(ftps_server)s:%(ftps_ctrl_port)s %(mount_dir)s -o user=%(username)s -ouid=$(id -u) -o gid=$(id -g) -o no_verify_peer
+</pre>
 </div>
 <div class="div-ftps-client-notes">
 <a href="javascript:toggleHidden('.div-ftps-client-notes');"
@@ -721,12 +850,12 @@ to avoid typing the full login details every time:</p>
             html += '''
 
 <h3>Authorized Public Keys</h3>
-You can use any existing RSA key, or create a new one. If you signed up with a
+<p>You can use any existing RSA key, or create a new one. If you signed up with a
 x509 user certificate, you should also have received such an id_rsa key along with
 your user certificate. In any case you need to save the contents of the
 corresponding public key (id_rsa.pub) in the text area below, to be able to connect
 with username and key as described in the Login Details.
-<br/>
+</p>
 '''
             area = '''
 <textarea id="%(keyword_keys)s" cols=82 rows=5 name="publickeys">
@@ -773,6 +902,10 @@ value="%(default_authpassword)s" />
 </form>
 </div>
 '''
+        # Hide port if same as implicit
+        ftps_uri = 'ftps://%s' % ftps_server
+        if ftps_ctrl_port != 21:
+            ftps_uri += ':%d' % ftps_ctrl_port
         fill_helpers.update({
             'default_authkeys': default_authkeys,
             'default_authpassword': default_authpassword,
@@ -781,6 +914,7 @@ value="%(default_authpassword)s" />
             'username': username,
             'ftps_server': ftps_server,
             'ftps_ctrl_port': ftps_ctrl_port,
+            'ftps_uri': ftps_uri,
             'max_sessions': configuration.user_sftp_max_sessions,
             'fingerprint_info': fingerprint_info,
             'auth_methods': ' / '.join(configuration.user_ftps_auth).title(),
@@ -961,7 +1095,7 @@ and sharing solution.</p>
 <p>If you wish you can additionally save your credentials here for Seafile
 integration in your %(site)s user home.<br/>
 Then your Seafile libraries will show up in a read-only mode under a new
-<em>%(seafile_ro_dirname)s</em> folder e.g. on the Files page.</p>
+<var>%(seafile_ro_dirname)s</var> folder e.g. on the Files page.</p>
 '''
 
             if 'password' in configuration.user_seafile_auth:
@@ -1169,7 +1303,7 @@ for %(site)s backup use.</p>
                 html += '<br /><br />'
 
             html += '''
-            
+
         '''
         html += '''
         <br/>
@@ -1254,12 +1388,12 @@ You can configure SSH login to your %(site)s cloud instance(s) for interactive
 use.
 </p>
 <h3>Login Details</h3>
-Please refer to your Cloud management page for specific instance login details.
-However, in general login requires the following: 
+<p>Please refer to your Cloud management page for specific instance login details.
+However, in general login requires the following:</p>
 <ul>
-<li>Host <em>%(cloud_host_pattern)s</em></li>
-<li>Username <em>%(username)s</em></li>
-<li>%(auth_methods)s <em>as you choose below</em></li>
+<li>Host <var>%(cloud_host_pattern)s</var></li>
+<li>Username <var>%(username)s</var></li>
+<li>%(auth_methods)s <var>as you choose below</var></li>
 </ul>
 
 <input type="hidden" name="topic" value="cloud" />
@@ -1269,19 +1403,20 @@ However, in general login requires the following:
     Show less cloud client details...</a>
 
 <h3>Graphical Cloud access</h3>
-<p>The PuTTY client is known to generally work for graphical SSH access to
-your %(site)s cloud instances. It runs on all popular platforms and in the
+<p>The <a href="https://www.putty.org">PuTTY</a> client is known to generally
+work for graphical SSH access to your %(site)s cloud instances. It runs on all
+popular platforms and in the
 <a href="https://portableapps.com/apps/internet/putty_portable">portable
 version</a> it does not even require install privileges.</p>
 <p>
 <!-- TODO: is this the right naming for PuTTY? -->
 Enter the following values in the PuTTY Site Manager:</p>
 <ul>
-<li>Host %(cloud_host_pattern)s</li>
-<li>Port 22</li>
-<li>Protocol SSH</li>
-<li>User %(username)s</li>
-<li>Password YOUR_PASSWORD_HERE (leave empty for ssh key from key-agent)</li>
+<li>Host <var>%(cloud_host_pattern)s</var></li>
+<li>Port <var>22</var></li>
+<li>Protocol <var>SSH</var></li>
+<li>User <var>%(username)s</var></li>
+<li>Password <var>YOUR CHOSEN PASSWORD</var> (leave empty for ssh key from key-agent)</li>
 </ul>
 
 <p>Other graphical clients like MindTerm, etc. should work as well.</p>
@@ -1290,20 +1425,16 @@ Enter the following values in the PuTTY Site Manager:</p>
 <p>
 Save something like the following lines in your local ~/.ssh/config
 to avoid typing the full login details every time:</p>
-<ul>
-<li>Host %(cloud_host_pattern)s</li>
-<li>Hostname %(cloud_host_pattern)s</li>
-<li>User %(username)s</li>
-<li># Assuming you have your private key in ~/.mig/id_rsa</li>
-<li>IdentityFile ~/.mig/id_rsa</li>
-</ul>
+<textarea rows=8 cols=78 class="code" readonly=readonly>Host %(cloud_host_pattern)s
+Hostname %(cloud_host_pattern)s
+User %(username)s
+# Uncomment next line to use your private key in ~/.ssh/id_rsa
+#IdentityFile ~/.ssh/id_rsa</textarea>
 
-<p>
-From then on you can use ssh to access your %(site)s instance:</p>
-<ul>
-<li>ssh %(cloud_host_pattern)s</li>
-</ul>
-
+From then on you can use ssh to access your %(site)s instance:
+<pre class="codeblock">
+ssh %(cloud_host_pattern)s
+</pre>
 </div>
 <div class="div-cloud-client-notes">
 <a href="javascript:toggleHidden('.div-cloud-client-notes');"
@@ -1448,8 +1579,7 @@ value="%(default_authpassword)s" />
                 twofactor_entries[1][0] == 'EXT_OID_TWOFACTOR' or \
                 is_mig and twofactor_entries[1][0] == 'MIG_OID_TWOFACTOR' and \
                 twofactor_entries[0][0] == 'EXT_OID_TWOFACTOR':
-            twofactor_entries[0], twofactor_entries[1] = \
-                twofactor_entries[1], twofactor_entries[0]
+            twofactor_entries[0], twofactor_entries[1] = twofactor_entries[1], twofactor_entries[0]
         for (keyword, val) in twofactor_entries:
             if val.get('Editor', None) == 'hidden':
                 continue
