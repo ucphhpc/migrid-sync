@@ -712,6 +712,7 @@ fingerprint %s first time you connect.''' % ' or '.join(fingerprints)
 <div class="col-12">
     <form class="save_settings save_sftp" method="%(form_method)s" action="%(target_op)s.py">
         <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
+        <input type="hidden" name="topic" value="sftp" />
 
         <div class="vertical-spacer"></div>
         <div class="title centertext">SFTP access to your %(site)s account</div>
@@ -730,7 +731,6 @@ Windows, Mac OS X and Linux/UN*X computer.
 <li>%(auth_methods)s <var>as you choose below</var></li>
 </ul>
 <p>%(fingerprint_info)s</p>
-<input type="hidden" name="topic" value="sftp" />
 '''
 
         keyword_keys = "authkeys"
@@ -864,6 +864,7 @@ fingerprint %s first time you connect.''' % ' or '.join(fingerprints)
 <div class="col-12">
 <form class="save_settings save_davs" method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
+<input type="hidden" name="topic" value="webdavs" />
 
 <div class="vertical-spacer"></div>
 <div class="title centertext">WebDAVS access to your %(site)s account</div>
@@ -880,8 +881,6 @@ Mac OS X and Linux/UN*X computer.
 <li>%(auth_methods)s <var>as you choose below</var></li>
 </ul>
 <p class="wordbreak">%(fingerprint_info)s</p>
-
-<input type="hidden" name="topic" value="webdavs" />
 '''
 
         keyword_keys = "authkeys"
@@ -1007,6 +1006,7 @@ fingerprint <sampl>%s</sampl> first time you connect.''' % ' or '.join(fingerpri
 <div class="col-12">
 <form class="save_settings save_ftps" method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
+<input type="hidden" name="topic" value="ftps" />
 
 <div class="vertical-spacer"></div>
 <div class="title centertext">FTPS access to your %(site)s account</div>
@@ -1021,8 +1021,6 @@ file and folder upload/download.</p>
 <li>%(auth_methods)s <var>as you choose below</var></li>
 </ul>
 <p>%(fingerprint_info)s</p>
-
-<input type="hidden" name="topic" value="ftps" />
 '''
 
         keyword_keys = "authkeys"
@@ -1566,6 +1564,7 @@ client versions from the link above.</p>
 <div class="col-12">
     <form class="save_settings save_cloud" method="%(form_method)s" action="%(target_op)s.py">
         <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
+        <input type="hidden" name="topic" value="cloud" />
 
 <div class="vertical-spacer"></div>
 <div class="title centertext">SSH access to your %(site)s cloud instance(s)</div>
@@ -1689,6 +1688,7 @@ value="%(default_authpassword)s" />
 <div id="twofactor">
 <form class="save_settings save_twofactor" method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
+<input type="hidden" name="topic" value="twofactor" />
 <table class="twofactor fixedlayout">
 <tr><td>
 <div class="vertical-spacer"></div>
@@ -1716,7 +1716,6 @@ value="%(default_authpassword)s" />
         twofactor_entries = get_twofactor_specs(configuration)
         html += '''
         <tr class="otp_wizard otp_ready hidden"><td>
-        <input type="hidden" name="topic" value="twofactor" />
         </td></tr>
         <tr class="otp_wizard otp_ready hidden"><td>
         </td></tr>
