@@ -47,7 +47,7 @@ from mig.shared.fileio import delete_file
 # Expose some helper variables for functionality backends
 from mig.shared.safeinput import name_extras, password_extras, password_min_len, \
     password_max_len, valid_password_chars, valid_name_chars, dn_max_len, \
-    html_escape
+    html_escape, validated_input, REJECT_UNSET
 from mig.shared.serial import load, dump
 
 
@@ -608,7 +608,21 @@ def parse_peers_form(configuration, raw_lines, csv_sep):
                        html_escape(line + ' vs ' + csv_sep.join(header)))
             continue
         raw_user = dict(zip(header, parts))
-        peers.append(canonical_user(configuration, raw_user, peers_fields))
+        # IMPORTANT: extract ONLY peers fields and validate to avoid abuse
+        peer_user = dict([(i, raw_user.get(i, '')) for i in peers_fields])
+        defaults = dict([(i, REJECT_UNSET) for i in peer_user])
+        (accepted, rejected) = validated_input(peer_user, defaults,
+                                               list_wrap=True)
+        if rejected:
+            _logger.warning('skip peer with invalid value(s): %s (%s)'
+                            % (line, rejected))
+            unsafe_err = ' , '.join(
+                ['%s=%r' % pair for pair in peer_user.items()])
+            unsafe_err += '. Rejected values: ' + ', '.join(rejected)
+            err.append("Skip peer user with invalid value(s): %s" %
+                       html_escape(unsafe_err))
+            continue
+        peers.append(canonical_user(configuration, peer_user, peers_fields))
     _logger.debug('parsed form into peers: %s' % peers)
     return (peers, err)
 
@@ -625,7 +639,21 @@ def parse_peers_userid(configuration, raw_entries):
             err.append("Parsed peers did NOT contain required field(s): %s"
                        % ', '.join(missing))
             continue
-        peers.append(canonical_user(configuration, raw_user, peers_fields))
+        # IMPORTANT: extract ONLY peers fields and validate to avoid abuse
+        peer_user = dict([(i, raw_user.get(i, '')) for i in peers_fields])
+        defaults = dict([(i, REJECT_UNSET) for i in peer_user])
+        (accepted, rejected) = validated_input(peer_user, defaults,
+                                               list_wrap=True)
+        if rejected:
+            _logger.warning('skip peer with invalid value(s): %s : %s'
+                            % (entry, rejected))
+            unsafe_err = ' , '.join(
+                ['%s=%r' % pair for pair in peer_user.items()])
+            unsafe_err += '. Rejected values: ' + ', '.join(rejected)
+            err.append("Skip peer user with invalid value(s): %s" %
+                       html_escape(unsafe_err))
+            continue
+        peers.append(canonical_user(configuration, peer_user, peers_fields))
     _logger.debug('parsed user id into peers: %s' % peers)
     return (peers, err)
 
@@ -636,10 +664,11 @@ def parse_peers(configuration, peers_content, peers_format, csv_sep=';'):
     """
     _logger = configuration.logger
     if "userid" == peers_format:
+        # NOTE: Enter Peers packs fields into full DNs handled here
         raw_peers = peers_content
         return parse_peers_userid(configuration, raw_peers)
     elif "csvform" == peers_format:
-        # NOTE: first merge the individual textarea(s)
+        # NOTE: first merge the individual textarea(s) from Import Peers
         raw_peers = '\n'.join(peers_content)
         return parse_peers_form(configuration, raw_peers, csv_sep)
     elif "csvupload" == peers_format:
