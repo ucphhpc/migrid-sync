@@ -102,7 +102,7 @@ _ACCENT_CATS = frozenset(('Lu', 'Ll', 'Lt', ))
 # found glyphs: áÁàÀâÂäÄãÃåÅæÆçÇéÉèÈêÊëËíÍìÌîÎïÏñÑóÓòÒôÔöÖõÕøØœŒßúÚùÙûÛüÜ
 
 VALID_ACCENTED = \
-    'áÁàÀâÂäÄãÃåÅæÆçÇéÉèÈêÊëËíÍìÌîÎïÏñÑóÓòÒôÔöÖõÕøØœŒßúÚùÙûÛüÜ'
+    'áÁàÀâÂäÄãÃåÅæÆçÇéÉèÈêÊëËíÍìÌîÎïÏñÑóÓòÒôÔöÖõÕøØœŒßúÚùÙûÛüÜ' + 'ıİ'
 
 # NOTE: we carefully avoid shell interpretation of dollar everywhere
 

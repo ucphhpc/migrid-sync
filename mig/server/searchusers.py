@@ -26,6 +26,7 @@
 #
 
 """Find all users with given data base field(s)"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -48,9 +49,9 @@ Where SEARCH_OPTIONS may be one or more of:
    -C COUNTRY          Search for country
    -c CONF_FILE        Use CONF_FILE as server configuration
    -d DB_PATH          Use DB_PATH as user data base file path
-   -f FIELD            Show only FIELD value for matching users
    -E EMAIL            Search for email
    -F FULLNAME         Search for full name
+   -f FIELD            Show only FIELD value for matching users
    -h                  Show this help
    -I CERT_DN          Search for user ID (distinguished name)
    -n                  Show only name (equals -f full_name)
