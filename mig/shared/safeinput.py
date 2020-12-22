@@ -147,7 +147,10 @@ ALLOW_UNSAFE = \
 # * IMPORTANT: never allow '+' or '_' in name: reserved for path translation! *
 # *****************************************************************************
 
-name_extras = ' -@.'
+# NOTE: only real name extra chars here
+name_extras = ' -.'
+# NOTE: organization may also contain comma as in UNIVERSITY, DEPARTMENT
+org_extras = name_extras + ','
 
 # *****************************************************************************
 # * IMPORTANT: never allow '+' in DN: reserved for path translation!          *
@@ -157,7 +160,8 @@ name_extras = ' -@.'
 # Similarly we must allow '_' in DN since it is valid in emailAddress. We only
 # need to make sure it doesn't appear in name parts above.
 
-dn_extras = name_extras + '/=:_'
+# NOTE: org_extras includes name_extras, and we add @ for email part.
+dn_extras = org_extras + '/=:_@'
 
 # Allow explicit sign and exponential notation in integers and floats
 integer_extras = '+-eE'
@@ -172,12 +176,14 @@ valid_integer_chars = digits + integer_extras
 valid_float_chars = digits + float_extras
 valid_password_chars = ascii_letters + digits + password_extras
 valid_name_chars = ascii_letters + digits + name_extras
+valid_org_chars = ascii_letters + digits + org_extras
 valid_dn_chars = ascii_letters + digits + dn_extras
 valid_username_chars = user_id_charset
 VALID_INTEGER_CHARACTERS = valid_integer_chars
 VALID_FLOAT_CHARACTERS = valid_float_chars
 VALID_PASSWORD_CHARACTERS = valid_password_chars
 VALID_NAME_CHARACTERS = valid_name_chars
+VALID_ORG_CHARACTERS = valid_org_chars
 VALID_DN_CHARACTERS = valid_dn_chars
 VALID_USERNAME_CHARACTERS = valid_username_chars
 
@@ -243,7 +249,7 @@ def __valid_contents(
            include_accented == COMMON_ACCENTED and char in accented_chars or \
            include_accented == ANY_ACCENTED and category(char) in _ACCENT_CATS:
             continue
-        raise InputException("found invalid character: '%s' (allowed: %s)"
+        raise InputException("found invalid character: %r (allowed: %s)"
                              % (char, valid_chars))
 
 
@@ -452,6 +458,21 @@ def valid_commonname(
 
     valid_chars = VALID_NAME_CHARACTERS + extra_chars
     __valid_contents(commonname, valid_chars, min_length, max_length,
+                     COMMON_ACCENTED)
+
+
+def valid_organization(
+    organization,
+    min_length=1,
+    max_length=255,
+    extra_chars='',
+):
+    """Verify that supplied organization name only contains
+    characters that we consider valid.
+    """
+
+    valid_chars = VALID_ORG_CHARACTERS + extra_chars
+    __valid_contents(organization, valid_chars, min_length, max_length,
                      COMMON_ACCENTED)
 
 
@@ -1157,6 +1178,12 @@ def filter_commonname(contents):
     return __filter_contents(contents, VALID_NAME_CHARACTERS, COMMON_ACCENTED)
 
 
+def filter_organization(contents):
+    """Filter supplied contents to only contain valid organization characters"""
+
+    return __filter_contents(contents, VALID_ORG_CHARACTERS, COMMON_ACCENTED)
+
+
 def filter_password(contents):
     """Filter supplied contents to only contain valid password characters"""
 
@@ -1351,6 +1378,30 @@ def validated_commonname(user_arguments_dict, name, default):
 
     try:
         valid_commonname(first)
+    except InputException as iex:
+        err += '%s' % iex
+    return (filter_commonname(first), err)
+
+
+def validated_organization(user_arguments_dict, name, default):
+    """Fetch first value of name argument and validate it"""
+
+    err = ''
+
+    # Force default value into a string
+
+    default_value = str(default)
+    if default != default_value:
+        err += 'Invalid string default value (%s)' % default
+    try:
+        first = user_arguments_dict[name][0]
+    except:
+        first = str(default)
+
+    # Validate input
+
+    try:
+        valid_organization(first)
     except InputException as iex:
         err += '%s' % iex
     return (filter_commonname(first), err)
@@ -1593,13 +1644,11 @@ def guess_type(name):
             __type_map[key] = lambda x: valid_fqdn(x, min_length=0)
         for key in ('execution_user', 'storage_user'):
             __type_map[key] = lambda x: valid_job_id(x, min_length=0)
+        # dept org and author may be empty or a comma-separated list
         for key in ('freeze_department', 'freeze_organization',
+                    'freeze_author',
                     ):
-            __type_map[key] = lambda x: valid_commonname(x, min_length=0)
-        # author may be empty or a comma-separated list
-        for key in ('freeze_author', ):
-            __type_map[key] = lambda x: valid_commonname(x, min_length=0,
-                                                         extra_chars=',')
+            __type_map[key] = lambda x: valid_organization(x, min_length=0)
         # EXECONFIG vgrid field which may be empty or a comma-separated list
         for key in ('vgrid', ):
             __type_map[key] = lambda x: valid_vgrid_name(x, min_length=0,
@@ -1607,22 +1656,25 @@ def guess_type(name):
         for key in (
             'full_name',
             'cert_name',
-            'org',
             'machine_software',
             'openid.sreg.cn',
             'openid.sreg.fullname',
             'openid.sreg.full_name',
-            'openid.sreg.nickname',
-            'openid.sreg.o',
-            'openid.sreg.ou',
             'openid.sreg.role',
             'openid.sreg.association',
             'changes',
             'version',
-            'peers_id',
-            'organization',
         ):
             __type_map[key] = valid_commonname
+        # openid.sreg.required may have commas - reuse organization
+        for key in (
+            'org',
+            'openid.sreg.o',
+            'openid.sreg.ou',
+            'organization',
+            'openid.sreg.required',
+        ):
+            __type_map[key] = valid_organization
         for key in ('cert_id',
                     'run_as',):
             __type_map[key] = valid_distinguished_name
@@ -1671,6 +1723,7 @@ def guess_type(name):
             'icq',
             'jabber',
             'email',
+            'openid.sreg.nickname',
             'openid.sreg.email',
             'openid.sreg.mail',
             'adminemail',
@@ -1696,12 +1749,7 @@ def guess_type(name):
             __type_map[key] = valid_free_text
         for key in ('show', 'modauthopenid.error', ):
             __type_map[key] = valid_label_text
-
-        # sreg required may have commas - reuse password
-
-        for key in ('password', 'verifypassword', 'openid.sreg.required',
-                    'transfer_pw',
-                    ):
+        for key in ('password', 'verifypassword', 'transfer_pw', ):
             __type_map[key] = valid_password
         for key in ('hostidentifier'):
             __type_map[key] = valid_alphanumeric
@@ -1961,8 +2009,9 @@ class InputException(Exception):
 
 if __name__ == '__main__':
     for test_cn in ('Firstname Lastname', 'Test Æøå', 'Test Überh4x0r',
-                    u'Unicode æøå', 'Test Maybe Invalid Źacãŕ',
-                    'Test Invalid ?', 'Test HTML Invalid <code/>'):
+                    'Harry S. Truman',  u'Unicode æøå', "Invalid D'Angelo",
+                    'Test Maybe Invalid Źacãŕ', 'Test Invalid ?',
+                    'Test HTML Invalid <code/>'):
         try:
             print('Testing valid_commonname: %s' % test_cn)
             print('Filtered commonname: %s' % filter_commonname(test_cn))
@@ -1971,7 +2020,18 @@ if __name__ == '__main__':
             valid_commonname(test_cn)
             print('Accepted raw commonname!')
         except Exception as exc:
-            print('Rejected raw commonname %s : %s' % (test_cn, exc))
+            print('Rejected raw commonname %r: %s' % (test_cn, exc))
+
+    for test_org in ('UCPH', 'Some University, Some Dept.', 'Green Shoes Ltd.',
+                     u'Unicode Org', "Invalid R+D", "Invalid R/D",
+                     "Invalid R@D", 'Test HTML Invalid <code/>'):
+        try:
+            print('Testing valid_organization: %r' % test_org)
+            print('Filtered organization: %s' % filter_organization(test_org))
+            valid_organization(test_org)
+            print('Accepted raw organization!')
+        except Exception as exc:
+            print('Rejected raw organization %r: %s' % (test_org, exc))
 
     for test_path in ('test.txt', 'Test Æøå', 'Test Überh4x0r',
                       'Test valid Jean-Luc Géraud', 'Test valid Źacãŕ',
@@ -1988,7 +2048,7 @@ if __name__ == '__main__':
             valid_path(test_path)
             print('Accepted raw path!')
         except Exception as exc:
-            print('Rejected raw path %s : %s' % (test_path, exc))
+            print('Rejected raw path %r: %s' % (test_path, exc))
 
     for test_addr in ('', 'invalid', 'abc@dk', 'abc@def.org', 'abc@def.gh.org',
                       'aBc@Def.org', '<invalid@def.org>',
@@ -2010,7 +2070,7 @@ if __name__ == '__main__':
             valid_email_address(test_addr)
             print('Accepted raw address! %s' % [parseaddr(test_addr)])
         except Exception as exc:
-            print('Rejected raw address %s : %s' % (test_addr, exc))
+            print('Rejected raw address %r: %s' % (test_addr, exc))
 
     autocreate_defaults = {
         'openid.ns.sreg': [''],
