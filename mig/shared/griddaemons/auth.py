@@ -319,13 +319,23 @@ def validate_auth_attempt(configuration,
     elif not account_accessible:
         disconnect = True
         auth_msg = "Account disabled or expired"
+        expire_hint = """
+For security reasons %s account access is time-limited and must be
+regularly short-term refreshed with web log in or long-term renewed with repeat
+sign up. """ % configuration.short_title
         log_msg = auth_msg + " %s from %s" % (username, ip_addr)
         if tcp_port > 0:
             log_msg += ":%s" % tcp_port
         logger.error(log_msg)
+        if protocol in ["openid"]:
+            expire_hint += """
+%s OpenID users need to renew their account every %d days with sign up again at
+%s/cgi-sid/reqoid.py""" % \
+                (configuration.user_mig_oid_title, configuration.oid_valid_days,
+                 configuration.migserver_https_sid_url)
         authlog(configuration, 'ERROR', protocol, authtype,
                 username, ip_addr,
-                auth_msg, notify=notify)
+                auth_msg + expire_hint, notify=notify)
     elif not authtype_enabled:
         disconnect = True
         auth_msg = "%s auth disabled or %s not set" % (authtype, authtype)
