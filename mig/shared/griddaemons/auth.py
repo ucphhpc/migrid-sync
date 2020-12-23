@@ -320,7 +320,7 @@ def validate_auth_attempt(configuration,
         disconnect = True
         auth_msg = "Account disabled or expired"
         expire_hint = """
-For security reasons %s account access is time-limited and must be
+HINT: For security reasons %s account access is time-limited and must be
 regularly short-term refreshed with web log in or long-term renewed with repeat
 sign up. """ % configuration.short_title
         log_msg = auth_msg + " %s from %s" % (username, ip_addr)
@@ -329,7 +329,8 @@ sign up. """ % configuration.short_title
         logger.error(log_msg)
         if protocol in ["openid"]:
             expire_hint += """
-%s OpenID users need to renew their account every %d days with sign up again at
+%s OpenID users need to renew their account every %d days for continued
+access by repeat sign up with the same ID values at
 %s/cgi-sid/reqoid.py""" % \
                 (configuration.user_mig_oid_title, configuration.oid_valid_days,
                  configuration.migserver_https_sid_url)
