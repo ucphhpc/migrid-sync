@@ -226,7 +226,8 @@ def create_user(
         peer_email_list = []
         # extract email of vouchee from comment if possible
         comment = user.get('comment', '')
-        all_matches = re.findall(r'[\w\.-]+@[\w\.-]+', comment)
+        # NOTE: address must end in letter(s) to avoid trailing period, etc.
+        all_matches = re.findall(r'[\w\.-]+@[\w\.-]+[\w]+', comment)
         for i in all_matches:
             peer_email = "%s" % i
             if not possible_user_id(configuration, peer_email):
