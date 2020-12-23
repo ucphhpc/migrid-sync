@@ -1,5 +1,26 @@
 [
   {
+    "status": "AUTO", 
+    "outage_start": "2020-12-23T20:00:00+01:00", 
+    "systems": [
+        "ALL"
+    ], 
+    "announce_start": "2020-12-23T20:48:00+01:00", 
+    "title": {
+      "EN": "Massive Power Outage at the HPC Center: storage backend unstable", 
+      "DK": "Massivt strømudfald i HPC Centeret - backendlageret ustabilt"
+    }, 
+    "services": [
+      "ALL"
+    ], 
+    "outage_end": "2020-12-24T16:00:00+01:00", 
+    "description": {
+      "EN": "There was a big power outage at HCØ also affecting the HPC Center and in particular all equipment not on UPS (emergency power). The backend storage is only partially up resulting in partial file access and login problems for some users. We're working on it.",
+      "DK": "Vi oplevede et større strømudfald på HCØ og det berørte også HPC Centeret og specielt udstyr uden UPS (nødstrøm). Backendlageret er kun delvist tilgængeligt med partiel filadgang og loginproblemer for nogen til følge. Vi arbejder på sagen."
+    }, 
+    "announce_end": "2020-12-24T16:00:00+01:00"
+  },
+  {
     "status": "AUTO",
     "work_start": "2020-12-01T16:00:00+01:00", 
     "systems": [
