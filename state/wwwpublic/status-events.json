@@ -1,24 +1,26 @@
 [
   {
     "status": "AUTO", 
-    "outage_start": "2020-12-23T20:00:00+01:00", 
+    "outage_start": "2020-12-23T18:10:00+01:00", 
+    "work_start": "2020-12-23T20:40:00+01:00", 
     "systems": [
         "ALL"
     ], 
     "announce_start": "2020-12-23T20:48:00+01:00", 
     "title": {
-      "EN": "Massive Power Outage at the HPC Center: storage backend unstable", 
-      "DK": "Massivt strømudfald i HPC Centeret - backendlageret ustabilt"
+      "EN": "Massive Power Outage at the HPC Center, storage backend access unstable", 
+      "DK": "Massivt strømudfald i HPC Centeret, adgang til backendlageret ustabilt"
     }, 
     "services": [
       "ALL"
     ], 
-    "outage_end": "2020-12-24T16:00:00+01:00", 
+    "outage_end": "2020-12-23T23:33:00+01:00", 
+    "work_end": "2020-12-23T23:40:00+01:00", 
     "description": {
-      "EN": "There was a big power outage at HCØ also affecting the HPC Center and in particular all equipment not on UPS (emergency power). The backend storage is only partially up resulting in partial file access and login problems for some users. We're working on it.",
-      "DK": "Vi oplevede et større strømudfald på HCØ og det berørte også HPC Centeret og specielt udstyr uden UPS (nødstrøm). Backendlageret er kun delvist tilgængeligt med partiel filadgang og loginproblemer for nogen til følge. Vi arbejder på sagen."
+      "EN": "There was a big power outage in the HPC Center and in particular it affected all equipment not on UPS (emergency power). The backend storage lost connection to a couple of storage bricks and was only partially accessible resulting in partial file visibility and login problems for some users. Especially ERDA and MiGrid were affected while SIF and IDMC looked better. We've had technicians and system admins working late to get everything back online now.",
+      "DK": "Vi oplevede et større strømudfald på HPC Centeret og det gik naturligvis specielt ud over udstyr uden UPS (nødstrøm). Backendlageret mistede forbindelsen til et par bricks og var kun delvist tilgængeligt med partiel filadgang og loginproblemer for nogen til følge. Især ERDA og MiGrid var hårdt ramt, mens SIF og IDMC så bedre ud. Vi har haft teknikere og systemadministratorer på overarbejde for at få alting tilbage i drift nu."
     }, 
-    "announce_end": "2020-12-24T16:00:00+01:00"
+    "announce_end": "2020-12-25T10:00:00+01:00"
   },
   {
     "status": "AUTO",
