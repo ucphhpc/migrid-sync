@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # chkenabled - Helper to easily lookup site enable values in configuration
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,12 +28,20 @@
 """Helper to lookup a specific site_enable_X value in MiGserver.conf used for
 detecting which daemons to handle and ignore in init scripts.
 """
+
 from __future__ import print_function
 from __future__ import absolute_import
 
 import getopt
 import os
 import sys
+
+# IMPORTANT: systemd services etc. may call this script directly without user
+#            env so we do not want to rely on PYTHONPATH and instead explictly
+#            set load path to include user home to allow from mig.X import Y
+# NOTE: __file__ is /MIG_BASE/mig/server/chkenabled.py and we need MIG_BASE
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from mig.shared.conf import get_configuration_object
 
