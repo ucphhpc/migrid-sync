@@ -836,6 +836,11 @@ location.""" % self.config_file)
                 'SITE', 'enable_workflows')
         else:
             self.site_enable_workflows = False
+        if config.has_option('SITE', 'enable_workflow_history'):
+            self.site_enable_workflow_history = config.getboolean(
+                'SITE', 'enable_workflow_history')
+        else:
+            self.site_enable_workflow_history = False
         if config.has_option('SITE', 'enable_events'):
             self.site_enable_events = config.getboolean(
                 'SITE', 'enable_events')

@@ -143,6 +143,8 @@ class SFTPHandle(paramiko.SFTPHandle):
     def __workflow_history_log(method):
         @wraps(method)
         def _impl(self, *method_args, **method_kwargs):
+            if not configuration.site_enable_workflow_history:
+                return method(self, *method_args, **method_kwargs)
             operation = method.__name__
 
             if operation != 'write':
@@ -355,8 +357,7 @@ class SFTPHandle(paramiko.SFTPHandle):
         return super(SFTPHandle, self).read(offset, length)
 
     @__gdp_log
-    # IMPORTANT: do NOT enable this untested wf history log code in production!
-    #@__workflow_history_log
+    @__workflow_history_log
     def write(self, offset, data):
         """Handle operations of same name"""
         return super(SFTPHandle, self).write(offset, data)
