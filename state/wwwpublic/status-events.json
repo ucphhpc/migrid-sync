@@ -1,6 +1,27 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2020-12-29T10:00:00+01:00", 
+    "systems": [
+        "ERDA", "IDMC"
+    ], 
+    "announce_start": "2020-12-28T12:00:00+01:00", 
+    "title": {
+      "EN": "Power Outage - DAG/MODI/HEL Unstable", 
+      "DK": "Strømudfald - DAG/MODI/HEL ustabile"
+    }, 
+    "services": [
+        "DAG", "MODI", "HEL"
+    ], 
+    "work_end": "2021-01-04T16:00:00+01:00", 
+    "description": {
+      "EN": "We are experiencing serious power instabilities since the recent power outage in the HPC Center. Compute nodes are coming and going and causing instability to DAG/MODI/HEL Jupyter sessions. We probably need electrician staff to investigate and we have no clear schedule yet. More info to follow.",
+      "DK": "Vi oplever kraftige udsving på strømforsyningen siden strømudfaldet forleden. Jupyter beregningsknuderne kommer og går temmelig tilfældigt og det fører til ustabile DAG/MODI/HEL-sessioner. Vi må have nok have en elektriker til at se på det og har endnu ingen tidsramme. Mere info følger."
+    }, 
+    "announce_end": "2021-01-04T16:00:00+01:00"
+  },
+  {
+    "status": "AUTO", 
     "outage_start": "2020-12-23T18:10:00+01:00", 
     "work_start": "2020-12-23T20:40:00+01:00", 
     "systems": [
