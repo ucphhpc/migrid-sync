@@ -26,6 +26,7 @@
 #
 
 """Example UCPH OpenID login using selenium and a webdriver of choice"""
+
 from __future__ import print_function
 
 import getpass
@@ -77,6 +78,7 @@ def main():
     except Exception as exc:
         print("Unexpected exception:")
         print(traceback.format_exc())
+
 
 if __name__ == "__main__":
     main()
