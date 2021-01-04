@@ -34,20 +34,30 @@ import socket
 from urllib import urlencode
 from urlparse import parse_qsl
 
-from mig.shared.defaults import auth_openid_mig_db, auth_openid_ext_db
+from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_V2, \
+    AUTH_OPENID_CONNECT, AUTH_GENERIC, AUTH_NONE, AUTH_MIG_OID, AUTH_EXT_OID, \
+    AUTH_MIG_OIDC, AUTH_EXT_OIDC, AUTH_MIG_CERT, AUTH_EXT_CERT, AUTH_UNKNOWN, \
+    auth_openid_mig_db, auth_openid_ext_db
 from mig.shared.gdp.all import get_project_user_dn
-from mig.shared.useradm import get_openid_user_dn
+from mig.shared.useradm import get_oidc_user_dn, get_openid_user_dn
+
+# Generic login clients will have their REMOTE_USER env set to some ID provided
+# by the web server authenticator module. In that case look up mapping
+# to native user.
+
+generic_id_field = 'REMOTE_USER'
 
 # All HTTPS clients coming through apache will have their unique
 # certificate distinguished name available in this field
 
-client_id_field = 'SSL_CLIENT_S_DN'
+cert_id_field = 'SSL_CLIENT_S_DN'
 
-# Login based clients like OpenID ones will instead have their REMOTE_USER env
-# set to some ID provided by the authenticator. In that case look up mapping
-# to native user
+# All OpenID Connect authenticated clients will have their unique ID set in
+# this ID field. We do support apache mangling of env value to oidc.claim.X
+# with the alternate value.
 
-client_login_field = 'REMOTE_USER'
+oidc_id_field = 'OIDC_CLAIM_upn'
+oidc_id_field_alternate = oidc_id_field.replace('OIDC_CLAIM_', 'oidc.claim.')
 
 
 def pop_openid_query_fields(environ):
@@ -100,10 +110,56 @@ def extract_client_cert(configuration, environ):
     of load, which is not the right one for wsgi scripts.
     """
 
-    # We accept utf8 chars (e.g. '\xc3') in client_id_field but they get
+    # We accept utf8 chars (e.g. '\xc3') in cert_id_field but they get
     # auto backslash-escaped in environ so we need to unescape first
 
-    return unescape(environ.get(client_id_field, '')).strip()
+    return unescape(environ.get(cert_id_field, '')).strip()
+
+
+def extract_client_oidc(configuration, environ, lookup_dn=True):
+    """Extract unique user credentials from OIDC_CLAIM_X values in provided
+    environment.
+    NOTE: We must provide the environment as os.environ may be from the time
+    of load, which is not the right one for wsgi scripts.
+    If lookup_dn is set the resulting OpenID is translated to the corresponding
+    local account if any.
+    """
+    _logger = configuration.logger
+    oidc_db = ""
+
+    # We accept utf8 chars (e.g. '\xc3') in login field but they get
+    # auto backslash-escaped in environ so we need to unescape first
+    _logger.debug('oidc id field: %s' % oidc_id_field)
+    login = unescape(environ.get(oidc_id_field, '')).strip()
+    if not login:
+        login = unescape(environ.get(oidc_id_field_alternate, '')).strip()
+    _logger.debug('raw login: %s' % login)
+    # _logger.debug('configuration.user_mig_oidc_provider: %s'
+    #              % len(configuration.user_mig_oidc_provider))
+    if not login:
+        return (oidc_db, "")
+    # TODO: do we need session DB here?
+    # if configuration.user_mig_oidc_provider and \
+    #        login.startswith(configuration.user_mig_oidc_provider):
+    #    oidc_db = auth_oidc_mig_db
+    # elif configuration.user_ext_oidc_provider and \
+    #        login.startswith(configuration.user_ext_oidc_provider):
+    #    oidc_db = auth_oidc_ext_db
+    # else:
+    #    _logger.warning("could not detect openid provider db for %s: %s"
+    #                    % (login, environ))
+    #_logger.debug('oidc_db: %s' % oidc_db)
+    if lookup_dn:
+        # Let backend do user_check
+        login = get_oidc_user_dn(configuration, login, user_check=False)
+
+        if configuration.site_enable_gdp:
+            # NOTE: some gdp backends require user to be logged in but not that
+            #       a project is open. It's handled with skip_client_id_rewrite
+            login = get_project_user_dn(
+                configuration, environ["REQUEST_URI"], login, 'https')
+
+    return (oidc_db, login)
 
 
 def extract_client_openid(configuration, environ, lookup_dn=True):
@@ -117,10 +173,10 @@ def extract_client_openid(configuration, environ, lookup_dn=True):
     _logger = configuration.logger
     oid_db = ""
 
-    # We accept utf8 chars (e.g. '\xc3') in client_login_field but they get
+    # We accept utf8 chars (e.g. '\xc3') in login field but they get
     # auto backslash-escaped in environ so we need to unescape first
-    _logger.debug('client_login_field: %s' % client_login_field)
-    login = unescape(environ.get(client_login_field, '')).strip()
+    _logger.debug('openid login field: %s' % generic_id_field)
+    login = unescape(environ.get(generic_id_field, '')).strip()
     _logger.debug('login: %s' % login)
     _logger.debug('configuration.user_mig_oid_provider: %s'
                   % len(configuration.user_mig_oid_provider))
@@ -149,19 +205,75 @@ def extract_client_openid(configuration, environ, lookup_dn=True):
     return (oid_db, login)
 
 
-def extract_client_id(configuration, environ):
-    """Extract unique user cert ID from HTTPS or fall back to try REMOTE_USER
-    login environment set by OpenID.
+def detect_client_auth(configuration, environ):
+    """Detect the active client authentication method based on environ"""
+    _logger = configuration.logger
+    url = extract_base_url(configuration, environ)
+    flavor_map = {AUTH_MIG_CERT: configuration.migserver_https_mig_cert_url,
+                  AUTH_EXT_CERT: configuration.migserver_https_ext_cert_url,
+                  AUTH_MIG_OID: configuration.migserver_https_mig_oid_url,
+                  AUTH_EXT_OID: configuration.migserver_https_ext_oid_url,
+                  AUTH_MIG_OIDC: configuration.migserver_https_mig_oidc_url,
+                  AUTH_EXT_OIDC: configuration.migserver_https_ext_oidc_url}
+    flavor = AUTH_UNKNOWN
+    for (auth_flavor, vhost_base) in flavor_map.items():
+        if vhost_base and url.startswith(vhost_base):
+            flavor = auth_flavor
+            break
+    if flavor == AUTH_UNKNOWN:
+        _logger.warning("auth flavor is unknown for %s" % url)
+    # IMPORTANT: order does matter here because oid is generic REMOTE_USER
+    if environ.get(cert_id_field, None):
+        return (AUTH_CERTIFICATE, flavor)
+    elif environ.get(oidc_id_field, None) or \
+            environ.get(oidc_id_field_alternate, None):
+        return (AUTH_OPENID_CONNECT, flavor)
+    elif environ.get(generic_id_field, None):
+        # OpenID 2.0 lacks specific environment fields but use generic_id_field
+        # and the actual ID starts with the authenicating server URL
+        user_id = environ[generic_id_field]
+        if user_id.startswith('https://') or user_id.startswith('http://'):
+            return (AUTH_OPENID_V2, flavor)
+        elif user_id is not None:
+            return (AUTH_GENERIC, flavor)
+        else:
+            _logger.warning("Generic auth user ID is empty")
+    else:
+        _logger.warning("Unknown or missing client auth method")
+    return (AUTH_NONE, flavor)
+
+
+def extract_client_id(configuration, environ, lookup_dn=True):
+    """Extract unique user ID from environment. Supports certificate,
+    OpenID Connect or fall back REMOTE_USER login environment set e.g. by
+    OpenID 2.0.
+    If lookup_dn is set any resulting OpenID is translated to the corresponding
+    local account if any.
     NOTE: We must provide the environment as os.environ may be from the time
     of load, which is not the right one for wsgi scripts.
     """
-    distinguished_name = extract_client_cert(configuration, environ)
-    if configuration.user_openid_providers and not distinguished_name:
+    (auth_type, auth_flavor) = detect_client_auth(configuration, environ)
+    if auth_type == AUTH_CERTIFICATE:
+        distinguished_name = extract_client_cert(configuration, environ)
+    elif auth_type == AUTH_OPENID_CONNECT:
+        # if environ["REQUEST_URI"].find('oidcaccountaction.py') == -1 and \
+        #        environ["REQUEST_URI"].find('autocreate.py') == -1:
+        #    # Throw away any extra ID fields from environment
+        #    pop_oidc_query_fields(environ)
+        (_, distinguished_name) = extract_client_oidc(configuration, environ,
+                                                      lookup_dn)
+    elif auth_type == AUTH_OPENID_V2:
         if environ["REQUEST_URI"].find('oidaccountaction.py') == -1 and \
                 environ["REQUEST_URI"].find('autocreate.py') == -1:
             # Throw away any extra ID fields from environment
             pop_openid_query_fields(environ)
-        (_, distinguished_name) = extract_client_openid(configuration, environ)
+        (_, distinguished_name) = extract_client_openid(configuration, environ,
+                                                        lookup_dn)
+    elif auth_type == AUTH_GENERIC:
+        distinguished_name = environ.get(generic_id_field, None)
+    else:
+        # Fall back to use certificate value in any case
+        distinguished_name = extract_client_cert(configuration, environ)
     return distinguished_name
 
 

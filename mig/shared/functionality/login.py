@@ -25,7 +25,10 @@
 # -- END_HEADER ---
 #
 
-"""Back end to let users choose between login with certificate or OpenID"""
+"""Back end to let users choose between login with certificate, OpenID 2.0 or
+OpenID Connect.
+"""
+
 from __future__ import absolute_import
 
 import os
@@ -41,8 +44,10 @@ def get_valid_topics(configuration):
     valid_topics = {
         'migcert': {'url': configuration.migserver_https_mig_cert_url},
         'migoid': {'url': configuration.migserver_https_mig_oid_url},
+        'migoidc': {'url': configuration.migserver_https_mig_oidc_url},
         'extcert': {'url': configuration.migserver_https_ext_cert_url},
         'extoid': {'url': configuration.migserver_https_ext_oid_url},
+        'extoidc': {'url': configuration.migserver_https_ext_oidc_url}
     }
     return valid_topics
 
@@ -93,12 +98,20 @@ def main(client_id, user_arguments_dict):
         oid_url = "%s";
         tag_prefix = "extoid_";
         check_oid_available(action, oid_title, oid_url, tag_prefix);
+        oidc_url = "%s";
+        tag_prefix = "extoidc_";
+        check_oid_available(action, oid_title, oidc_url, tag_prefix);
         oid_title = "%s";
         var oid_url = "%s";
         tag_prefix = "migoid_";
         check_oid_available(action, oid_title, oid_url, tag_prefix);
+        var oidc_url = "%s";
+        tag_prefix = "migoidc_";
+        check_oid_available(action, oid_title, oidc_url, tag_prefix);
 ''' % (configuration.user_ext_oid_title, configuration.user_ext_oid_provider,
-       configuration.user_mig_oid_title, configuration.user_mig_oid_provider)
+       configuration.user_ext_oidc_provider, configuration.user_mig_oid_title,
+       configuration.user_mig_oid_provider,
+       configuration.user_mig_oidc_provider)
     title_entry['script']['advanced'] += add_import
     title_entry['script']['init'] += add_init
     title_entry['script']['ready'] += add_ready
@@ -148,10 +161,12 @@ OpenID login service""" + report_fail
 There are multiple login methods as described below.
 </p>
 """ % configuration.short_title
-    if configuration.user_openid_providers and 'extoid' in show or 'migoid' in show:
+    if configuration.user_openid_providers and 'extoid' in show or 'migoid' in show or \
+            configuration.user_openidconnect_providers and 'extoidc' in show or 'migoidc' in show:
         html += """<h2>OpenID</h2>
 <p>
-The simplest login method is to use an existing OpenID login if you have one.
+The simplest login method is to use an existing OpenID 2.0 or OpenID Connect
+login if you have one.
 </p>
 """
 
@@ -160,17 +175,35 @@ The simplest login method is to use an existing OpenID login if you have one.
                 html += """
 <p>
 %(migoid_title)s users can login to %(short_title)s using the associated
-OpenID server.
+OpenID 2.0 server.
 </p>
 <div id='migoid_status'>
-<!-- OpenID status updated by AJAX call -->
+<!-- OpenID 2.0 status updated by AJAX call -->
 </div>
 <div id='migoid_debug'>
-<!-- OpenID debug updated by AJAX call -->
+<!-- OpenID 2.0 debug updated by AJAX call -->
 </div>
 <div class='form_container'>
 <form method='post' action='%(migoid_url)s'>
-<input id='migoid_button' type='submit' value='%(migoid_title)s User OpenID Login' />
+<input id='migoid_button' type='submit' value='%(migoid_title)s User OpenID 2.0 Login' />
+</form>
+</div>
+"""
+            if method == 'migoidc':
+                html += """
+<p>
+%(migoid_title)s users can login to %(short_title)s using the associated
+OpenID Connect server.
+</p>
+<div id='migoidc_status'>
+<!-- OpenID Connect status updated by AJAX call -->
+</div>
+<div id='migoidc_debug'>
+<!-- OpenID Connect debug updated by AJAX call -->
+</div>
+<div class='form_container'>
+<form method='post' action='%(migoidc_url)s'>
+<input id='migoidc_button' type='submit' value='%(migoid_title)s User OpenID Connect Login' />
 </form>
 </div>
 """
@@ -178,17 +211,35 @@ OpenID server.
                 html += """
 <p>
 %(extoid_title)s users can login to %(short_title)s using the associated
-OpenID server.
+OpenID 2.0 server.
 </p>
 <div id='extoid_status'>
-<!-- OpenID status updated by AJAX call -->
+<!-- OpenID 2.0 status updated by AJAX call -->
 </div>
 <div id='extoid_debug'>
-<!-- OpenID debug updated by AJAX call -->
+<!-- OpenID 2.0 debug updated by AJAX call -->
 </div>
 <div class='form_container'>
 <form method='post' action='%(extoid_url)s'>
-<input id='extoid_button' type='submit' value='%(extoid_title)s User OpenID Login' />
+<input id='extoid_button' type='submit' value='%(extoid_title)s User OpenID 2.0 Login' />
+</form>
+</div>
+"""
+            if method == 'extoidc':
+                html += """
+<p>
+%(extoid_title)s users can login to %(short_title)s using the associated
+OpenID Connect server.
+</p>
+<div id='extoidc_status'>
+<!-- OpenID Connect status updated by AJAX call -->
+</div>
+<div id='extoidc_debug'>
+<!-- OpenID Connect debug updated by AJAX call -->
+</div>
+<div class='form_container'>
+<form method='post' action='%(extoidc_url)s'>
+<input id='extoidc_button' type='submit' value='%(extoid_title)s User OpenID Connect Login' />
 </form>
 </div>
 """
@@ -239,8 +290,10 @@ to use the certificate.
 </p>
 """
     var_map = {'migoid_url': valid_show['migoid']['url'],
+               'migoidc_url': valid_show['migoidc']['url'],
                'migoid_title': configuration.user_mig_oid_title,
                'extoid_url': valid_show['extoid']['url'],
+               'extoidc_url': valid_show['extoidc']['url'],
                'extoid_title': configuration.user_ext_oid_title,
                'migcert_url': valid_show['migcert']['url'],
                'migcert_title': configuration.user_mig_cert_title,

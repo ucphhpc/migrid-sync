@@ -1662,6 +1662,10 @@ def guess_type(name):
             'openid.sreg.full_name',
             'openid.sreg.role',
             'openid.sreg.association',
+            'oidc.claim.fullname',
+            'oidc.claim.role',
+            'oidc.claim.association',
+            'oidc.claim.sub',
             'changes',
             'version',
         ):
@@ -1672,6 +1676,11 @@ def guess_type(name):
             'openid.sreg.o',
             'openid.sreg.ou',
             'organization',
+            'oidc.claim.o',
+            'oidc.claim.organization',
+            'oidc.claim.ou',
+            'oidc.claim.organizational_unit',
+            'oidc.claim.locality',
             'openid.sreg.required',
         ):
             __type_map[key] = valid_organization
@@ -1726,6 +1735,8 @@ def guess_type(name):
             'openid.sreg.nickname',
             'openid.sreg.email',
             'openid.sreg.mail',
+            'oidc.claim.email',
+            'oidc.claim.upn',
             'adminemail',
         ):
             __type_map[key] = valid_email_address
@@ -2072,6 +2083,7 @@ if __name__ == '__main__':
         except Exception as exc:
             print('Rejected raw address %r: %s' % (test_addr, exc))
 
+    # OpenID 2.0 version
     autocreate_defaults = {
         'openid.ns.sreg': [''],
         'openid.sreg.nickname': [''],
@@ -2120,6 +2132,46 @@ if __name__ == '__main__':
         force_unicode('Jonas Æøå Bardino')]
     (accepted, rejected) = validated_input(
         user_arguments_dict, autocreate_defaults)
+    print("Accepted:")
+    for (key, val) in accepted.items():
+        print("\t%s: %s" % (key, val))
+    print("Rejected:")
+    for (key, val) in rejected.items():
+        print("\t%s: %s" % (key, val))
+
+    # OpenID Connect version
+    autocreate_defaults = {
+        'oidc.claim.upn': [''],
+        'oidc.claim.sub': [''],
+        'oidc.claim.nickname': [''],
+        'oidc.claim.email': [''],
+        'oidc.claim.fullname': [''],
+        'oidc.claim.o': [''],
+        'oidc.claim.ou': [''],
+        'oidc.claim.organization': [''],
+        'oidc.claim.organizational_unit': [''],
+        'oidc.claim.country': ['DK'],
+        'oidc.claim.state': [''],
+        'oidc.claim.locality': [''],
+        'oidc.claim.role': [''],
+        'oidc.claim.association': [''],
+        'oidc.claim.timezone': [''],
+        'password': [''],
+        'comment': ['(Created through autocreate)'],
+        'proxy_upload': [''],
+        'proxy_uploadfilename': [''],
+    }
+    user_arguments_dict = {'oidc.claim.sub': ['xyz-123-nsd-e2e-e3e-dd3'],
+                           'oidc.claim.ou': ['nbi'],
+                           'oidc.claim.upn': ['brs278@ku.dk'],
+                           'oidc.claim.nickname': ['brs278'],
+                           'oidc.claim.fullname': ['Jonas Bardino'],
+                           'oidc.claim.role': ['tap'],
+                           'oidc.claim.association': ['sci-nbi-tap'],
+                           'oidc.claim.o': ['science'],
+                           'oidc.claim.email': ['bardino@nbi.ku.dk']}
+    (accepted, rejected) = validated_input(user_arguments_dict,
+                                           autocreate_defaults)
     print("Accepted:")
     for (key, val) in accepted.items():
         print("\t%s: %s" % (key, val))

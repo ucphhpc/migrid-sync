@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# oidping - OpenID server availability checker backend
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# oidping - OpenID 2.0 and Connect server availability checker backend
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,8 @@
 # -- END_HEADER ---
 #
 
-"""Check availability of OpenID server back end"""
+"""Check availability of OpenID 2.0 and Connect server back end"""
+
 from __future__ import absolute_import
 
 import urllib
@@ -34,11 +35,13 @@ from mig.shared import returnvalues
 from mig.shared.functional import validate_input
 from mig.shared.init import initialize_main_variables
 
+
 def signature():
     """Signature of the main function"""
 
     defaults = {'url': ['']}
     return ['openid_status', defaults]
+
 
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
@@ -47,7 +50,8 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False, op_menu=False)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
-            defaults, output_objects, allow_rejects=False)
+                                                 defaults, output_objects,
+                                                 allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -61,6 +65,7 @@ def main(client_id, user_arguments_dict):
         # TODO: build url from conf
         ping_url = oid_url.replace("/id/", "/ping")
         openid_status['server'] = ping_url
+        logger.debug("%s openid server on %s" % (op_name, ping_url))
         try:
             # Never use proxies
             ping_status = urllib.urlopen(ping_url, proxies={})
@@ -84,10 +89,42 @@ def main(client_id, user_arguments_dict):
         if openid_status['status'] == "online":
             logger.info("%s on %s succeeded" % (op_name, oid_url))
         else:
-            logger.error("%s against %s returned error: " % (op_name, oid_url) \
+            logger.error("%s against %s returned error: " % (op_name, oid_url)
+                         + " %(error)s (%(status)s)" % openid_status)
+    elif oid_url in configuration.user_openidconnect_providers:
+        # TODO: build url from conf
+        # ping_url = oid_url.replace(
+        #    "/oauth/nam/.well-known/openid-configuration", "")
+        ping_url = oid_url
+        openid_status['server'] = ping_url
+        logger.debug("%s openid connect server on %s" % (op_name, ping_url))
+        try:
+            # Never use proxies
+            ping_status = urllib.urlopen(ping_url, proxies={})
+            http_status = ping_status.getcode()
+            data = ping_status.read()
+            ping_status.close()
+            if http_status == 200:
+                # TODO: better parsing
+                if "authorization_endpoint" in data:
+                    openid_status['status'] = "online"
+                else:
+                    openid_status['status'] = "down"
+                    openid_status['error'] = data
+            else:
+                openid_status['status'] = "down"
+                openid_status['error'] = "server returned error code %s" % \
+                                         http_status
+        except Exception as exc:
+            openid_status['status'] = "down"
+            openid_status['error'] = "unexpected server response (%s)" % exc
+        if openid_status['status'] == "online":
+            logger.info("%s on %s succeeded" % (op_name, oid_url))
+        else:
+            logger.error("%s against %s returned error: " % (op_name, oid_url)
                          + " %(error)s (%(status)s)" % openid_status)
     else:
-        logger.error("%s against %s is not a valid openid provider" % \
+        logger.error("%s against %s is not a valid openid provider" %
                      (op_name, oid_url))
         openid_status['server'] = "no such server configured"
         openid_status['status'] = "unavailable"

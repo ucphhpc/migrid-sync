@@ -569,10 +569,13 @@ require user "%(distinguished_name)s"
             access += '''require user "%(distinguished_name_enc)s"
 '''
 
+        # For OpenID 2.0 and OpenID Connect user IDs
         for name in user.get('openid_names', []):
             for oid_provider in configuration.user_openid_providers:
                 oid_url = os.path.join(oid_provider, name)
                 access += 'require user "%s"\n' % oid_url
+                access += 'require user "%s"\n' % name
+
         access += '''
 # IMPORTANT: do NOT set "all granted" for 2.3+ as it completely removes all
 # login requirements!
@@ -1256,6 +1259,47 @@ def get_openid_user_dn(configuration, login_url,
         _logger.error("openid login from invalid provider: %s" % login_url)
         return ''
     raw_login = login_url.replace(found_openid_prefix, '')
+    return get_any_oid_user_dn(configuration, raw_login, user_check, do_lock)
+
+
+def get_oidc_user_dn(configuration, login, user_check=True, do_lock=True):
+    """Translate OpenID Connect user identified by login into a
+    distinguished_name on the cert format.
+    We first lookup the login suffix in the user_home to find a matching
+    symlink from the simple ID to the cert-style user home and translate that
+    into the corresponding distinguished name.
+    If we don't succeed we try looking up the user from an optional oidc
+    login alias from the configuration and return the corresponding
+    distinguished name.
+    As a last resort we check if login is already on the cert distinguished
+    name or cert dir format and return the distinguished name format if so.
+    If the optional user_check flag is set to False the user dir check is
+    skipped resulting in the openid name being returned even for users not
+    yet signed up.
+    """
+    _logger = configuration.logger
+    _logger.debug('extracting openid dn from %s' % login)
+    return get_any_oid_user_dn(configuration, login, user_check, do_lock)
+
+
+def get_any_oid_user_dn(configuration, raw_login,
+                        user_check=True, do_lock=True):
+    """Translate OpenID or OpenID Connect user identified by raw_login into a
+    distinguished_name on the cert format.
+    We first lookup the raw_login in the user_home to find a matching symlink
+    from the simple ID to the cert-style user home and translate that into the
+    corresponding distinguished name.
+    If we don't succeed we try looking up the user from an optional openid
+    login alias from the configuration and return the corresponding
+    distinguished name.
+    As a last resort we check if login_url (suffix) is already on the cert
+    distinguished name or cert dir format and return the distinguished name
+    format if so.
+    If the optional user_check flag is set to False the user dir check is
+    skipped resulting in the openid name being returned even for users not
+    yet signed up.
+    """
+    _logger = configuration.logger
     _logger.debug("trying openid raw login: %s" % raw_login)
     # Lookup native user_home from openid user symlink
     link_path = os.path.join(configuration.user_home, raw_login)
@@ -1264,7 +1308,7 @@ def get_openid_user_dn(configuration, login_url,
         native_dir = os.path.basename(native_path)
         distinguished_name = client_dir_id(native_dir)
         _logger.info('found full ID %s from %s link'
-                     % (distinguished_name, login_url))
+                     % (distinguished_name, raw_login))
         return distinguished_name
     elif configuration.user_openid_alias:
         db_path = os.path.join(configuration.mig_server_home, user_db_filename)
@@ -1274,27 +1318,27 @@ def get_openid_user_dn(configuration, login_url,
         for (distinguished_name, user) in user_map.items():
             if user[user_alias] in (raw_login, client_alias(raw_login)):
                 _logger.info('found full ID %s from %s alias'
-                             % (distinguished_name, login_url))
+                             % (distinguished_name, raw_login))
                 return distinguished_name
 
     # Fall back to try direct DN (possibly on cert dir form)
     _logger.info('fall back to direct ID %s from %s'
-                 % (raw_login, login_url))
+                 % (raw_login, raw_login))
     # Force to dir format and check if user home exists
     cert_dir = client_id_dir(raw_login)
     base_path = os.path.join(configuration.user_home, cert_dir)
     if os.path.isdir(base_path):
         distinguished_name = client_dir_id(cert_dir)
         _logger.info('accepting direct user %s from %s'
-                     % (distinguished_name, login_url))
+                     % (distinguished_name, raw_login))
         return distinguished_name
     elif not user_check:
         _logger.info('accepting raw user %s from %s'
-                     % (raw_login, login_url))
+                     % (raw_login, raw_login))
         return raw_login
     else:
         _logger.error('no such openid user %s: %s'
-                      % (cert_dir, login_url))
+                      % (cert_dir, raw_login))
         return ''
 
 

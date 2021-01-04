@@ -54,8 +54,11 @@ def get_twofactor_specs(configuration):
     """
 
     specs = []
+    # NOTE: we currently share OpenID 2.0 and Connect settings
     if configuration.migserver_https_mig_oid_url and \
-            configuration.user_mig_oid_provider:
+            configuration.user_mig_oid_provider or \
+            configuration.migserver_https_mig_oidc_url and \
+            configuration.user_mig_oidc_provider:
         specs.append(('MIG_OID_TWOFACTOR', {
             'Title': 'Enable 2-FA for %s OpenID web login' %
             configuration.user_mig_oid_title,
@@ -70,7 +73,9 @@ web logins through a personal auth token generator on your phone or tablet.
             'Required': False,
         }))
     if configuration.migserver_https_ext_oid_url and \
-            configuration.user_ext_oid_provider:
+            configuration.user_ext_oid_provider or \
+            configuration.migserver_https_ext_oidc_url and \
+            configuration.user_ext_oidc_provider:
         specs.append(('EXT_OID_TWOFACTOR', {
             'Title': 'Enable 2-FA for %s OpenID web login' %
             configuration.user_ext_oid_title,

@@ -28,15 +28,16 @@
 
 # TODO: this backend is horribly KU/UCPH-specific, should move that to conf
 
-"""Automatic sign up back end for external certificates and OpenID logins
+"""Automatic sign up back end for external certificates, OpenID 2.0 and
+OpenID Connect logins.
 
    Also see req-/extcertaction.py
    Differences:
-     - no e-mail sent: only auto-create functionality or nothing
      - automatic upload of a proxy certificate when provided
      - no special check for KU organisation
      - allows empty fields for things like country, email, and state
 """
+
 from __future__ import absolute_import
 
 import os
@@ -46,11 +47,13 @@ from mig.shared import returnvalues
 from mig.shared.accountstate import default_account_expire
 from mig.shared.base import client_id_dir, force_utf8, force_unicode, \
     fill_user, distinguished_name_to_user, fill_distinguished_name
-from mig.shared.defaults import user_db_filename
+from mig.shared.defaults import user_db_filename, AUTH_CERTIFICATE, \
+    AUTH_OPENID_V2, AUTH_OPENID_CONNECT, AUTH_MIG_CERT, AUTH_EXT_CERT, \
+    AUTH_MIG_OID, AUTH_EXT_OID, AUTH_MIG_OIDC, AUTH_EXT_OIDC
 from mig.shared.fileio import write_file
 from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
-from mig.shared.httpsclient import extract_client_openid
+from mig.shared.httpsclient import extract_client_id, detect_client_auth
 from mig.shared.init import initialize_main_variables
 from mig.shared.notification import send_email
 from mig.shared.safeinput import filter_commonname
@@ -66,10 +69,10 @@ except Exception as exc:
     pass
 
 
-def signature(login_type):
+def signature(auth_type):
     """Signature of the main function"""
 
-    if login_type == 'oid':
+    if auth_type == AUTH_OPENID_V2:
         defaults = {  # Please note that we only get sreg.required here if user is
                       # already logged in at OpenID provider when signing up so
                       # that we do not get the required attributes
@@ -92,13 +95,13 @@ def signature(login_type):
             'openid.sreg.required': [''],
             'openid.ns': [''],
             'password': [''],
-            'comment': ['(Signed up with OpenID and autocreate)'],
+            'comment': [''],
             'accept_terms': [''],
             'proxy_upload': [''],
             'proxy_uploadfilename': [''],
             'authsig': ['']
         }
-    elif login_type == 'cert':
+    elif auth_type == AUTH_CERTIFICATE:
         defaults = {
             'cert_id': REJECT_UNSET,
             'cert_name': REJECT_UNSET,
@@ -108,13 +111,34 @@ def signature(login_type):
             'state': [''],
             'role': [''],
             'association': [''],
-            'comment': ['(Signed up with certificate and autocreate)'],
+            'comment': [''],
+            'accept_terms': [''],
+            'proxy_upload': [''],
+            'proxy_uploadfilename': [''],
+        }
+    elif auth_type == AUTH_OPENID_CONNECT:
+        # IMPORTANT: consistently lowercase to avoid case sensitive validation
+        defaults = {
+            'oidc.claim.sub': REJECT_UNSET,
+            'oidc.claim.upn': REJECT_UNSET,
+            'oidc.claim.nickname': [''],
+            'oidc.claim.fullname': REJECT_UNSET,
+            'oidc.claim.o': REJECT_UNSET,
+            'oidc.claim.ou': [''],
+            'oidc.claim.timezone': [''],
+            'oidc.claim.email': [''],
+            'oidc.claim.country': [''],
+            'oidc.claim.state': [''],
+            'oidc.claim.locality': [''],
+            'oidc.claim.role': [''],
+            'oidc.claim.association': [''],
+            'comment': [''],
             'accept_terms': [''],
             'proxy_upload': [''],
             'proxy_uploadfilename': [''],
         }
     else:
-        raise ValueError('no such login_type: %s' % login_type)
+        raise ValueError('no such auth_type: %s' % auth_type)
     return ['text', defaults]
 
 
@@ -187,49 +211,56 @@ def main(client_id, user_arguments_dict, environ=None):
     output_objects.append({'object_type': 'header',
                            'text': 'Automatic %s sign up'
                            % configuration.short_title})
-    (_, identity) = extract_client_openid(configuration, environ,
-                                          lookup_dn=False)
-    req_url = environ['SCRIPT_URI']
-    if client_id and client_id == identity:
-        login_type = 'cert'
-        if req_url.startswith(configuration.migserver_https_mig_cert_url):
+    (auth_type, auth_flavor) = detect_client_auth(configuration, environ)
+    identity = extract_client_id(configuration, environ, lookup_dn=False)
+    if client_id and auth_type == AUTH_CERTIFICATE:
+        if auth_flavor == AUTH_MIG_CERT:
             base_url = configuration.migserver_https_mig_cert_url
-            login_flavor = 'migcert'
-        elif req_url.startswith(configuration.migserver_https_ext_cert_url):
+        elif auth_flavor == AUTH_EXT_CERT:
             base_url = configuration.migserver_https_ext_cert_url
-            login_flavor = 'extcert'
         else:
-            logger.warning('no match for cert request URL: %s'
-                           % req_url)
-            output_objects.append({'object_type': 'error_text',
-                                   'text': 'No matching request URL: %s'
-                                   % req_url})
+            logger.warning('no matching sign up auth flavor %s' % auth_flavor)
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   '%s sign up not supported' % auth_flavor})
             return (output_objects, returnvalues.SYSTEM_ERROR)
-    elif identity:
-        login_type = 'oid'
-        if req_url.startswith(configuration.migserver_https_mig_oid_url):
+    elif identity and auth_type == AUTH_OPENID_V2:
+        if auth_flavor == AUTH_MIG_OID:
             base_url = configuration.migserver_https_mig_oid_url
-            login_flavor = 'migoid'
-        elif req_url.startswith(configuration.migserver_https_ext_oid_url):
+        elif auth_flavor == AUTH_EXT_OID:
             base_url = configuration.migserver_https_ext_oid_url
-            login_flavor = 'extoid'
         else:
-            logger.warning('no match for oid request URL: %s' % req_url)
-            output_objects.append({'object_type': 'error_text',
-                                   'text': 'No matching request URL: %s'
-                                   % req_url})
+            logger.warning('no matching sign up auth flavor %s' % auth_flavor)
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   '%s sign up not supported' % auth_flavor})
             return (output_objects, returnvalues.SYSTEM_ERROR)
         for name in ('openid.sreg.cn', 'openid.sreg.fullname',
                      'openid.sreg.full_name'):
             prefilter_map[name] = filter_commonname
+    elif identity and auth_type == AUTH_OPENID_CONNECT:
+        if auth_flavor == AUTH_MIG_OIDC:
+            base_url = configuration.migserver_https_mig_oidc_url
+        elif auth_flavor == AUTH_EXT_OIDC:
+            base_url = configuration.migserver_https_ext_oidc_url
+        else:
+            logger.warning('no matching sign up auth flavor %s' % auth_flavor)
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   '%s sign up not supported' % auth_flavor})
+            return (output_objects, returnvalues.SYSTEM_ERROR)
+        oidc_keys = signature(AUTH_OPENID_CONNECT)[1].keys()
+        # NOTE: again we lowercase to avoid case sensitivity in validation
+        for key in environ:
+            low_key = key.replace('OIDC_CLAIM_', 'oidc.claim.').lower()
+            if low_key in oidc_keys:
+                user_arguments_dict[low_key] = [environ[key]]
     else:
         logger.error('autocreate without ID rejected for %s' % client_id)
         output_objects.append({'object_type': 'error_text',
                                'text': 'Missing user credentials'})
         return (output_objects, returnvalues.CLIENT_ERROR)
-    defaults = signature(login_type)[1]
+    defaults = signature(auth_type)[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
-                                                 defaults, output_objects, allow_rejects=False,
+                                                 defaults, output_objects,
+                                                 allow_rejects=False,
                                                  prefilter_map=prefilter_map)
     if not validate_status:
         logger.warning('%s from %s got invalid input: %s' %
@@ -248,7 +279,7 @@ def main(client_id, user_arguments_dict, environ=None):
 
     # Extract raw values
 
-    if login_type == 'cert':
+    if auth_type == AUTH_CERTIFICATE:
         uniq_id = accepted['cert_id'][-1].strip()
         raw_name = accepted['cert_name'][-1].strip()
         country = accepted['country'][-1].strip()
@@ -261,8 +292,7 @@ def main(client_id, user_arguments_dict, environ=None):
         locality = ''
         timezone = ''
         email = accepted['email'][-1].strip()
-        raw_login = None
-    elif login_type == 'oid':
+    elif auth_type == AUTH_OPENID_V2:
         uniq_id = accepted['openid.sreg.nickname'][-1].strip() \
             or accepted['openid.sreg.short_id'][-1].strip()
         raw_name = accepted['openid.sreg.fullname'][-1].strip() \
@@ -286,6 +316,29 @@ def main(client_id, user_arguments_dict, environ=None):
         # We may encounter results without an email, fall back to uniq_id then
 
         email = accepted['openid.sreg.email'][-1].strip() or uniq_id
+    elif auth_type == AUTH_OPENID_CONNECT:
+        uniq_id = accepted['oidc.claim.upn'][-1].strip() \
+            or accepted['oidc.claim.sub'][-1].strip()
+        raw_name = accepted['oidc.claim.fullname'][-1].strip()
+        country = accepted['oidc.claim.country'][-1].strip()
+        state = accepted['oidc.claim.state'][-1].strip()
+        org = accepted['oidc.claim.o'][-1].strip() \
+            or accepted['oidc.claim.organization'][-1].strip()
+        org_unit = accepted['oidc.claim.ou'][-1].strip() \
+            or accepted['oidc.claim.organizational_unit'][-1].strip()
+
+        # We may receive multiple roles and associations
+
+        role = ','.join([i for i in accepted['oidc.claim.role'] if i])
+        association = ','.join([i for i in
+                                accepted['oidc.claim.association']
+                                if i])
+        locality = accepted['oidc.claim.locality'][-1].strip()
+        timezone = accepted['oidc.claim.timezone'][-1].strip()
+
+        # We may encounter results without an email, fall back to uniq_id then
+
+        email = accepted['oidc.claim.email'][-1].strip() or uniq_id
 
     # TODO: switch to canonical_user fra mig.shared.base instead?
     # Fix case of values:
@@ -305,7 +358,7 @@ def main(client_id, user_arguments_dict, environ=None):
     accept_terms = (accepted['accept_terms'][-1].strip().lower() in
                     ('1', 'o', 'y', 't', 'on', 'yes', 'true'))
 
-    if login_type == 'oid':
+    if auth_type in (AUTH_OPENID_V2, AUTH_OPENID_CONNECT):
 
         # KU OpenID sign up does not deliver accept_terms so we implicitly
         # let it imply acceptance for now
@@ -342,16 +395,11 @@ def main(client_id, user_arguments_dict, environ=None):
             backend = os.path.basename(configuration.site_landing_page)
         base_url = base_url.replace('autocreate.py', backend)
 
-        raw_login = None
-        for oid_provider in configuration.user_openid_providers:
-            openid_prefix = oid_provider.rstrip('/') + '/'
-            if identity.startswith(openid_prefix):
-                raw_login = identity.replace(openid_prefix, '')
-                break
-
-    if raw_login:
-        openid_names.append(raw_login)
-        # TODO: Add additional ext oid provider ID aliases here?
+        if identity and not identity in openid_names:
+            openid_names.append(identity)
+        if email and not email in openid_names:
+            openid_names.append(email)
+        # TODO: Add additional ext oid/oidc provider ID aliases here?
 
     # we should have the proxy file read...
 
@@ -365,7 +413,7 @@ def main(client_id, user_arguments_dict, environ=None):
 
     comment = comment.replace("'", ' ')
 
-    # TODO: improve and enforce full authsig from extoid provider
+    # TODO: improve and enforce full authsig from extoid/extoidc provider
     authsig_list = accepted.get('authsig', [])
     # if len(authsig_list) != 1:
     #    logger.warning('%s from %s got invalid authsig: %s' %
@@ -384,7 +432,7 @@ def main(client_id, user_arguments_dict, environ=None):
         'association': association,
         'timezone': timezone,
         'password': '',
-        'comment': '%s: %s' % ('Existing certificate', comment),
+        'comment': 'Signed up through autocreate with %s' % auth_type,
         'openid_names': openid_names,
     }
     user_dict.update(oid_extras)
@@ -393,12 +441,14 @@ def main(client_id, user_arguments_dict, environ=None):
     # already logged in situation and must autologout first
 
     if not uniq_id and not email:
-        if accepted.get('openid.sreg.required', '') and identity:
+        if auth_type == AUTH_OPENID_V2 and identity and \
+                accepted.get('openid.sreg.required', ''):
             logger.warning('autocreate forcing autologut for %s' % client_id)
             output_objects.append({'object_type': 'html_form',
                                    'text': '''<p class="spinner iconleftpad">
 Auto log out first to avoid sign up problems ...
 </p>'''})
+            req_url = environ['SCRIPT_URI']
             html = \
                 """
             <a id='autologout' href='%s'></a>
@@ -410,11 +460,12 @@ Auto log out first to avoid sign up problems ...
             output_objects.append({'object_type': 'html_form',
                                    'text': html})
         else:
-            logger.warning('autocreate without ID refused for %s' % client_id)
+            logger.warning('%s autocreate without ID refused for %s' %
+                           (auth_type, client_id))
 
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # NOTE: Unfortunately external OpenID redirect does not enforce POST
+    # NOTE: Unfortunately external OpenID 2.0 redirect does not enforce POST
     # Extract helper environments from Apache to verify request authenticity
 
     redirector = environ.get('HTTP_REFERER', '')
@@ -423,52 +474,69 @@ Auto log out first to avoid sign up problems ...
     #       may not work with recent browser policy changes to limit referrer
     #       details on cross site requests.
     # NOTE: redirector check breaks for FF default policy so disabled again!
-    if login_flavor == 'extoid' and redirector and \
+    if auth_flavor == AUTH_EXT_OID and redirector and \
             not redirector.startswith(extoid_prefix) and \
             not redirector.startswith(configuration.migserver_https_sid_url) \
             and not redirector.startswith(configuration.migserver_http_url):
-        logger.error('stray extoid autocreate rejected for %r (ref: %r)' %
-                     (client_id, redirector))
+        logger.error('stray %s autocreate rejected for %r (ref: %r)' %
+                     (auth_flavor, client_id, redirector))
         output_objects.append({'object_type': 'error_text', 'text': '''Only
-accepting authentic requests through %s OpenID''' %
+accepting authentic requests through %s OpenID 2.0''' %
                                configuration.user_ext_oid_title})
         return (output_objects, returnvalues.CLIENT_ERROR)
-    elif login_flavor != 'extoid' and not safe_handler(
+    elif auth_flavor != AUTH_EXT_OID and not safe_handler(
             configuration, 'post', op_name, client_id,
             get_csrf_limit(configuration), accepted):
-        logger.error('unsafe autocreate rejected for %s' % client_id)
+        logger.error('unsafe %s autocreate rejected for %s' % (auth_flavor,
+                                                               client_id))
         output_objects.append({'object_type': 'error_text', 'text': '''Only
 accepting CSRF-filtered POST requests to prevent unintended updates'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    auth = 'unknown'
-    if login_type == 'cert':
-        auth = 'extcert'
+    if auth_flavor == AUTH_EXT_CERT:
         ext_login_title = "%s certificate" % configuration.user_ext_cert_title
         personal_page_url = configuration.migserver_https_ext_cert_url
         # TODO: consider limiting expire to real cert expire if before default?
-        user_dict['expire'] = default_account_expire(configuration, 'cert')
+        user_dict['expire'] = default_account_expire(configuration,
+                                                     AUTH_CERTIFICATE)
         try:
             distinguished_name_to_user(uniq_id)
             user_dict['distinguished_name'] = uniq_id
         except:
-            logger.error('autocreate with bad DN refused for %s' % client_id)
+            logger.error('%s autocreate with bad DN refused for %s' %
+                         (auth_flavor, client_id))
             output_objects.append({'object_type': 'error_text',
                                    'text': '''Illegal Distinguished name:
 Please note that the distinguished name must be a valid certificate DN with
 multiple "key=val" fields separated by "/".
 '''})
             return (output_objects, returnvalues.CLIENT_ERROR)
-    elif login_type == 'oid':
-        auth = 'extoid'
+    elif auth_flavor == AUTH_EXT_OID:
         ext_login_title = "%s login" % configuration.user_ext_oid_title
         personal_page_url = configuration.migserver_https_ext_oid_url
-        user_dict['expire'] = default_account_expire(configuration, 'oid')
+        user_dict['expire'] = default_account_expire(configuration,
+                                                     AUTH_OPENID_V2)
         fill_distinguished_name(user_dict)
         uniq_id = user_dict['distinguished_name']
+    elif auth_flavor == AUTH_EXT_OIDC:
+        ext_login_title = "%s login" % configuration.user_ext_oid_title
+        personal_page_url = configuration.migserver_https_ext_oidc_url
+        user_dict['expire'] = default_account_expire(configuration,
+                                                     AUTH_OPENID_CONNECT)
+        fill_distinguished_name(user_dict)
+        uniq_id = user_dict['distinguished_name']
+    else:
+        # Reject the migX sign up methods through this handler
+        logger.error('%s autocreate not supported for %s - only ext auth' %
+                     (auth_flavor, client_id))
+        output_objects.append({'object_type': 'error_text', 'text': '''
+Unsuported %s sign up method - you should sign up through the official
+sign up wrappers or go through the dedicated web form for %s.''' %
+                               (auth_type, auth_flavor)})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     # IMPORTANT: do NOT let a user create with ID different from client_id
-    if login_type == 'cert' and client_id != uniq_id:
+    if auth_type == AUTH_CERTIFICATE and client_id != uniq_id:
         logger.error('refusing autocreate invalid user for %s: %s' %
                      (client_id, user_dict))
         output_objects.append({'object_type': 'error_text', 'text': '''Only
@@ -485,7 +553,12 @@ accepting create matching supplied ID!'''})
 
     # Save auth access method
 
-    user_dict['auth'] = [auth]
+    user_dict['auth'] = user_dict.get('auth', None)
+    if not user_dict['auth']:
+        user_dict['auth'] = []
+    elif isinstance(user_dict['auth'], basestring):
+        user_dict['auth'] = [user_dict['auth']]
+    user_dict['auth'].append(auth_flavor)
 
     fill_helper = {'short_title': configuration.short_title,
                    'base_url': base_url, 'admin_email': admin_email,
@@ -497,8 +570,11 @@ accepting create matching supplied ID!'''})
     # If server allows automatic addition of users with a CA validated cert
     # we create the user immediately and skip mail
 
-    if login_type == 'cert' and configuration.auto_add_cert_user \
-            or login_type == 'oid' and configuration.auto_add_oid_user:
+    if auth_type == AUTH_CERTIFICATE and configuration.auto_add_cert_user \
+            or auth_type == AUTH_OPENID_V2 and \
+            configuration.auto_add_oid_user \
+            or auth_type == AUTH_OPENID_CONNECT and \
+            configuration.auto_add_oid_user:
         fill_user(user_dict)
 
         logger.info('create user: %s' % user_dict)
@@ -520,8 +596,8 @@ accepting create matching supplied ID!'''})
                 output_objects.extend(proxy_out)
         except Exception as err:
             logger.error('create failed for %s: %s' % (uniq_id, err))
-            output_objects.append({'object_type': 'error_text',
-                                   'text': '''Could not create the user account for you:
+            output_objects.append({'object_type': 'error_text', 'text': '''
+Could not create the user account for you:
 Please report this problem to the site administrators (%(admin_email)s).'''
                                    % fill_helper})
             return (output_objects, returnvalues.SYSTEM_ERROR)

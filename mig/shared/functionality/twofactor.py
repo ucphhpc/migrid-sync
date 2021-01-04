@@ -44,10 +44,12 @@ from mig.shared import returnvalues
 from mig.shared.auth import twofactor_available, load_twofactor_key, \
     get_twofactor_token, verify_twofactor_token, generate_session_key, \
     save_twofactor_session, expire_twofactor_session
-from mig.shared.defaults import twofactor_cookie_ttl
+from mig.shared.defaults import twofactor_cookie_ttl, AUTH_MIG_OID, \
+    AUTH_EXT_OID, AUTH_MIG_OIDC, AUTH_EXT_OIDC
 from mig.shared.functional import validate_input
 from mig.shared.init import initialize_main_variables
 from mig.shared.html import twofactor_token_html, themed_styles, themed_scripts
+from mig.shared.httpsclient import detect_client_auth
 from mig.shared.settings import load_twofactor
 from mig.shared.twofactorkeywords import get_keywords_dict as twofactor_defaults
 
@@ -88,7 +90,7 @@ def main(client_id, user_arguments_dict, environ=None):
     request_url = environ.get('REQUEST_URI', '/')
     user_agent = environ.get('HTTP_USER_AGENT', '')
     user_addr = environ.get('REMOTE_ADDR', '')
-    user_id = environ.get('REMOTE_USER', '')
+    auth_type, auth_flavor = detect_client_auth(configuration, environ)
 
     # IMPORTANT: use all actual args as base and override with real signature
     all_args = query_args(environ)
@@ -168,11 +170,18 @@ def main(client_id, user_arguments_dict, environ=None):
         require_twofactor = True
     elif action == 'renew':
         require_twofactor = True
-    elif user_id.startswith(configuration.user_mig_oid_provider) and \
+    elif auth_flavor == AUTH_MIG_OID and \
             twofactor_dict.get('MIG_OID_TWOFACTOR', False):
         require_twofactor = True
-    elif user_id.startswith(configuration.user_ext_oid_provider) \
-            and twofactor_dict.get('EXT_OID_TWOFACTOR', False):
+    elif auth_flavor == AUTH_EXT_OID and \
+            twofactor_dict.get('EXT_OID_TWOFACTOR', False):
+        require_twofactor = True
+    # NOTE: we share OID and OIDC 2FA setting for now
+    elif auth_flavor == AUTH_MIG_OIDC and \
+            twofactor_dict.get('MIG_OID_TWOFACTOR', False):
+        require_twofactor = True
+    elif auth_flavor == AUTH_EXT_OIDC and \
+            twofactor_dict.get('EXT_OID_TWOFACTOR', False):
         require_twofactor = True
     else:
         require_twofactor = False

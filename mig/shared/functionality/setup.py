@@ -37,7 +37,8 @@ from mig.shared.auth import get_twofactor_secrets
 from mig.shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin, \
     get_short_id, requested_url_base
 from mig.shared.defaults import seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
-    duplicati_protocol_choices, duplicati_schedule_choices, keyword_all
+    duplicati_protocol_choices, duplicati_schedule_choices, keyword_all, \
+    AUTH_MIG_OID, AUTH_EXT_OID, AUTH_MIG_OIDC, AUTH_EXT_OIDC
 from mig.shared.duplicatikeywords import get_duplicati_specs
 from mig.shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
 from mig.shared.functional import validate_input_and_cert
@@ -45,6 +46,7 @@ from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.html import man_base_js, man_base_html, console_log_javascript, \
     twofactor_wizard_html, twofactor_wizard_js, twofactor_token_html, \
     save_settings_js, save_settings_html
+from mig.shared.httpsclient import detect_client_auth
 from mig.shared.init import initialize_main_variables, find_entry, extract_menu
 from mig.shared.pwhash import parse_password_policy
 from mig.shared.safeinput import html_escape, password_min_len, password_max_len, \
@@ -1721,14 +1723,16 @@ value="%(default_authpassword)s" />
         </td></tr>
         '''
         cur_url = requested_url_base()
-        is_mig = cur_url.startswith(configuration.migserver_https_mig_oid_url)
-        is_ext = cur_url.startswith(configuration.migserver_https_ext_oid_url)
-        # NOTE: re-order to show active access method openid first
+        auth_type, auth_flavor = detect_client_auth(configuration, os.environ)
+        is_mig = auth_flavor in [AUTH_MIG_OID, AUTH_MIG_OIDC]
+        is_ext = auth_flavor in [AUTH_EXT_OID, AUTH_EXT_OIDC]
+        # NOTE: re-order to show active access method OpenID 2.0/Connect first
         if is_ext and twofactor_entries[0][0] == 'MIG_OID_TWOFACTOR' and \
                 twofactor_entries[1][0] == 'EXT_OID_TWOFACTOR' or \
                 is_mig and twofactor_entries[1][0] == 'MIG_OID_TWOFACTOR' and \
                 twofactor_entries[0][0] == 'EXT_OID_TWOFACTOR':
-            twofactor_entries[0], twofactor_entries[1] = twofactor_entries[1], twofactor_entries[0]
+            twofactor_entries[0], twofactor_entries[1] = \
+                twofactor_entries[1], twofactor_entries[0]
         for (keyword, val) in twofactor_entries:
             if val.get('Editor', None) == 'hidden':
                 continue

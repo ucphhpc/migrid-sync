@@ -42,7 +42,7 @@ from mig.shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
     CSRF_FULL, POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, \
     POLICY_CUSTOM, freeze_flavors, duplicati_protocol_choices, \
     default_css_filename, keyword_any, cert_valid_days, oid_valid_days, \
-    custom_valid_days
+    generic_valid_days
 from mig.shared.logger import Logger, SYSLOG_GDP
 from mig.shared.html import menu_items, vgrid_items
 from mig.shared.fileio import read_file, load_json
@@ -199,6 +199,9 @@ def fix_missing(config_file, verbose=True):
         'user_mig_oid_provider_alias': '',
         'user_ext_oid_provider': '',
         'user_openid_providers': [],
+        'user_mig_oidc_provider': '',
+        'user_ext_oidc_provider': '',
+        'user_openidconnect_providers': [],
         'user_mig_cert_title': '',
         'user_ext_cert_title': '',
         'user_monitor_log': 'monitor.log',
@@ -437,6 +440,9 @@ class Configuration:
     user_mig_oid_provider_alias = ''
     user_ext_oid_provider = ''
     user_openid_providers = []
+    user_mig_oidc_provider = ''
+    user_ext_oidc_provider = ''
+    user_openidconnect_providers = []
     user_mig_cert_title = ''
     user_ext_cert_title = ''
     user_monitor_log = 'monitor.log'
@@ -470,6 +476,8 @@ class Configuration:
     migserver_https_ext_cert_url = ''
     migserver_https_mig_oid_url = ''
     migserver_https_ext_oid_url = ''
+    migserver_https_mig_oidc_url = ''
+    migserver_https_ext_oidc_url = ''
     migserver_https_sid_url = ''
     sleep_period_for_empty_jobs = ''
     min_seconds_between_live_update_requests = 0
@@ -544,6 +552,7 @@ class Configuration:
 
     auto_add_cert_user = False
     auto_add_oid_user = False
+    auto_add_oidc_user = False
     auto_add_resource = False
 
     # ARC resource configuration (list)
@@ -760,6 +769,12 @@ location.""" % self.config_file)
         if config.has_option('GLOBAL', 'migserver_https_ext_oid_url'):
             self.migserver_https_ext_oid_url = config.get(
                 'GLOBAL', 'migserver_https_ext_oid_url')
+        if config.has_option('GLOBAL', 'migserver_https_mig_oidc_url'):
+            self.migserver_https_mig_oidc_url = config.get(
+                'GLOBAL', 'migserver_https_mig_oidc_url')
+        if config.has_option('GLOBAL', 'migserver_https_ext_oidc_url'):
+            self.migserver_https_ext_oidc_url = config.get(
+                'GLOBAL', 'migserver_https_ext_oidc_url')
         if config.has_option('GLOBAL', 'migserver_https_sid_url'):
             self.migserver_https_sid_url = config.get(
                 'GLOBAL', 'migserver_https_sid_url')
@@ -1195,6 +1210,20 @@ location.""" % self.config_file)
                                      self.user_mig_oid_provider_alias,
                                      self.user_ext_oid_provider] if i]
             self.user_openid_providers = providers
+        if config.has_option('GLOBAL', 'user_mig_oidc_provider'):
+            self.user_mig_oidc_provider = config.get('GLOBAL',
+                                                     'user_mig_oidc_provider')
+        if config.has_option('GLOBAL', 'user_ext_oidc_provider'):
+            self.user_ext_oidc_provider = config.get('GLOBAL',
+                                                     'user_ext_oidc_provider')
+        if config.has_option('GLOBAL', 'user_openidconnect_providers'):
+            self.user_openidconnect_providers = config.get(
+                'GLOBAL', 'user_openidconnect_providers').split()
+        else:
+            providers = [i for i in [
+                self.user_mig_oidc_provider,
+                self.user_ext_oidc_provider] if i]
+            self.user_openidconnect_providers = providers
         if config.has_option('GLOBAL', 'user_mig_cert_title'):
             self.user_mig_cert_title = config.get('GLOBAL',
                                                   'user_mig_cert_title')
@@ -1927,6 +1956,8 @@ location.""" % self.config_file)
             ext_cert_url = self.migserver_https_ext_cert_url
             mig_oid_url = self.migserver_https_mig_oid_url
             ext_oid_url = self.migserver_https_ext_oid_url
+            mig_oidc_url = self.migserver_https_mig_oidc_url
+            ext_oidc_url = self.migserver_https_ext_oidc_url
             if mig_cert_url:
                 mig_cert_url = os.path.join(mig_cert_url, rel_url)
             if ext_cert_url:
@@ -1935,6 +1966,10 @@ location.""" % self.config_file)
                 mig_oid_url = os.path.join(mig_oid_url, rel_url)
             if ext_oid_url:
                 ext_oid_url = os.path.join(ext_oid_url, rel_url)
+            if mig_oidc_url:
+                mig_oidc_url = os.path.join(mig_oidc_url, rel_url)
+            if ext_oidc_url:
+                ext_oidc_url = os.path.join(ext_oidc_url, rel_url)
             locations = []
             for i in self.site_login_methods:
                 if i == 'migcert' and mig_cert_url and \
@@ -1949,6 +1984,12 @@ location.""" % self.config_file)
                 elif i == 'extoid' and ext_oid_url and \
                         not ext_oid_url in locations:
                     locations.append(ext_oid_url)
+                elif i == 'migoidc' and mig_oidc_url and \
+                        not mig_oidc_url in locations:
+                    locations.append(mig_oidc_url)
+                elif i == 'extoidc' and ext_oidc_url and \
+                        not ext_oidc_url in locations:
+                    locations.append(ext_oidc_url)
             self.myfiles_py_location = ' '.join(locations)
 
         # Force-disable all incompatible or unsafe features in GDP mode
@@ -2098,6 +2139,12 @@ location.""" % self.config_file)
         if config.has_option('GLOBAL', 'auto_add_oid_user'):
             self.auto_add_oid_user = config.getboolean('GLOBAL',
                                                        'auto_add_oid_user')
+        if config.has_option('GLOBAL', 'auto_add_oidc_user'):
+            self.auto_add_oidc_user = config.getboolean('GLOBAL',
+                                                        'auto_add_oidc_user')
+        else:
+            # Fall back to oid setup
+            self.auto_add_oidc_user = self.auto_add_oid_user
         if config.has_option('GLOBAL', 'auto_add_resource'):
             self.auto_add_resource = config.getboolean('GLOBAL',
                                                        'auto_add_resource')
@@ -2108,14 +2155,20 @@ location.""" % self.config_file)
         else:
             self.cert_valid_days = cert_valid_days
         if config.has_option('GLOBAL', 'oid_valid_days'):
-            self.oid_valid_days = config.getint('GLOBAL', 'oid_valid_days')
+            # NOTE: openid 2.0 and connect share value for now
+            self.oid_valid_days = self.oidc_valid_days = \
+                config.getint('GLOBAL', 'oid_valid_days')
         else:
-            self.oid_valid_days = oid_valid_days
-        if config.has_option('GLOBAL', 'custom_valid_days'):
-            self.custom_valid_days = config.getint('GLOBAL',
-                                                   'custom_valid_days')
+            self.oid_valid_days = self.oidc_valid_days = oid_valid_days
+        # NOTE: custom_valid_days is legacy name
+        if config.has_option('GLOBAL', 'generic_valid_days'):
+            self.generic_valid_days = config.getint('GLOBAL',
+                                                    'generic_valid_days')
+        elif config.has_option('GLOBAL', 'custom_valid_days'):
+            self.generic_valid_days = config.getint('GLOBAL',
+                                                    'custom_valid_days')
         else:
-            self.custom_valid_days = custom_valid_days
+            self.generic_valid_days = generic_valid_days
 
         # if arc cluster URLs configured, read them in:
 

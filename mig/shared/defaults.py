@@ -56,6 +56,18 @@ all_jobs = keyword_all
 any_protocol = keyword_any
 any_state = keyword_any
 
+AUTH_NONE, AUTH_GENERIC, AUTH_CERTIFICATE = "None", "Generic", "X.509 Certificate"
+AUTH_OPENID_CONNECT, AUTH_OPENID_V2 = "OpenID Connect", "OpenID 2.0"
+
+AUTH_MIG_OID = "Site %s" % AUTH_OPENID_V2
+AUTH_EXT_OID = "Ext %s" % AUTH_OPENID_V2
+AUTH_MIG_OIDC = "Site %s" % AUTH_OPENID_CONNECT
+AUTH_EXT_OIDC = "Ext %s" % AUTH_OPENID_CONNECT
+AUTH_MIG_CERT = "Site %s" % AUTH_CERTIFICATE
+AUTH_EXT_CERT = "Ext %s" % AUTH_CERTIFICATE
+
+AUTH_UNKNOWN = "Unknown"
+
 cert_field_order = [
     ('country', 'C'),
     ('state', 'ST'),
@@ -121,10 +133,10 @@ default_https_port = 443
 valid_auth_types = ('cert', 'oid', 'custom')
 cert_valid_days = 365
 oid_valid_days = 365
-custom_valid_days = 365
+generic_valid_days = custom_valid_days = 365
 cert_auto_extend_days = 30
 oid_auto_extend_days = 30
-custom_auto_extend_days = 30
+generic_auto_extend_days = custom_auto_extend_days = 30
 
 # Strictly ordered list of account status values to enable use of filemarks
 # for caching account status using integer timestamps outside user DB.

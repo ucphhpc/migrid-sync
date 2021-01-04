@@ -36,7 +36,8 @@ import time
 
 from mig.shared.base import client_id_dir, client_dir_id, requested_url_base
 from mig.shared.defaults import expire_marks_dir, status_marks_dir, \
-    valid_account_status, oid_auto_extend_days, cert_auto_extend_days
+    valid_account_status, oid_auto_extend_days, cert_auto_extend_days, \
+    AUTH_CERTIFICATE, AUTH_OPENID_V2, AUTH_OPENID_CONNECT, AUTH_GENERIC
 from mig.shared.filemarks import get_filemark, update_filemark, reset_filemark
 from mig.shared.gdp.userid import get_base_client_id
 from mig.shared.userdb import load_user_dict, default_db_path, update_user_dict
@@ -47,11 +48,11 @@ from mig.shared.validstring import possible_sharelink_id, possible_job_id, \
 def default_account_valid_days(configuration, auth_type):
     """Lookup default account valid days from configuration"""
 
-    _valid_map = {'cert_valid_days': configuration.cert_valid_days,
-                  'oid_valid_days': configuration.oid_valid_days,
-                  'custom_valid_days': configuration.custom_valid_days}
-    valid_days = _valid_map.get('%s_valid_days' % auth_type,
-                                configuration.custom_valid_days)
+    _valid_map = {AUTH_CERTIFICATE: configuration.cert_valid_days,
+                  AUTH_OPENID_V2: configuration.oid_valid_days,
+                  AUTH_OPENID_CONNECT: configuration.oidc_valid_days,
+                  AUTH_GENERIC: configuration.generic_valid_days}
+    valid_days = _valid_map.get(auth_type, configuration.generic_valid_days)
     return valid_days
 
 
@@ -314,17 +315,29 @@ def account_expire_info(configuration, username, environ=None,
     if account_expire and account_expire < time.time() + min_days_left * 86400:
         expire_warn = True
         if vhost_url == configuration.migserver_https_ext_oid_url:
-            renew_days = default_account_valid_days(configuration, 'oid')
+            renew_days = default_account_valid_days(configuration,
+                                                    AUTH_OPENID_V2)
+            if account_status == 'active' and configuration.auto_add_oid_user:
+                extend_days = oid_auto_extend_days
+        elif vhost_url == configuration.migserver_https_ext_oidc_url:
+            renew_days = default_account_valid_days(configuration,
+                                                    AUTH_OPENID_CONNECT)
             if account_status == 'active' and configuration.auto_add_oid_user:
                 extend_days = oid_auto_extend_days
         elif vhost_url == configuration.migserver_https_mig_oid_url:
-            renew_days = default_account_valid_days(configuration, 'oid')
+            renew_days = default_account_valid_days(configuration,
+                                                    AUTH_OPENID_V2)
+        elif vhost_url == configuration.migserver_https_mig_oidc_url:
+            renew_days = default_account_valid_days(configuration,
+                                                    AUTH_OPENID_V2)
         elif vhost_url == configuration.migserver_https_ext_cert_url:
-            renew_days = default_account_valid_days(configuration, 'cert')
+            renew_days = default_account_valid_days(configuration,
+                                                    AUTH_CERTIFICATE)
             if account_status == 'active' and configuration.auto_add_cert_user:
                 extend_days = cert_auto_extend_days
         elif vhost_url == configuration.migserver_https_mig_cert_url:
-            renew_days = default_account_valid_days(configuration, 'cert')
+            renew_days = default_account_valid_days(configuration,
+                                                    AUTH_CERTIFICATE)
         else:
             _logger.warning("unexpected vhost in expire detection: %s" %
                             vhost_url)
