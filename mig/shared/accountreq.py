@@ -88,6 +88,13 @@ def account_js_helpers(configuration, fields):
       }
       return true;
   }
+  /* Aliases for extcert */
+  function check_cert_id() {
+      return check_account_id();
+  }
+  function check_cert_name() {
+      return check_account_name();
+  }
   function check_full_name() {
       //alert('#full_name_help');
       if ($('#full_name_field').val().indexOf(' ') == -1) {
@@ -116,6 +123,9 @@ def account_js_helpers(configuration, fields):
   }
   function check_country() {
       //alert('#country_help');
+      if ($('#country_field').val().length !== 2) {
+          return rtfm_warn('Valid ISO 3166 country code must be provided');
+      }
       return true;
   }
   function check_state() {
@@ -149,6 +159,15 @@ def account_js_helpers(configuration, fields):
   }
   function check_comment() {
       //alert('#comment_help');
+      var comment = $('#comment_field').val();
+      var hint = $('#comment_field').attr('placeholder');
+      if (!comment) {
+          /* Comment is mandatory */
+          return false;
+      } else if (comment.indexOf('@') == -1) {
+          /* Prompt about continuing if comment on invalid format */
+          return rtfm_warn('Comment must justify your account needs. '+hint);
+      }
       return true;
   }
 
@@ -335,8 +354,18 @@ def account_request_template(configuration, password=True, default_values={}):
     html += """
   <div class='form-row single-entry'>
     <div class='col-md-12 mb-3 form-cell'>
-      <label for='validationCustom03'>Optional comment or reason why you should be granted a %(site)s account:</label>
-      <textarea rows=4 name=comment placeholder='Typically a note about which collaboration, project or course you need the account for and the name and email of your affiliated contact' title='A free-form comment to justify your account needs'>%(comment)s</textarea>
+      <!-- IMPORTANT: textarea does not generally support the pattern attribute
+                      so for HTML5 validation we have to mimic it with explicit
+                      javascript checking.
+      -->
+      <label for='validationCustom03'>Comment with reason why you should be granted a %(site)s account:</label>
+      <textarea class='form-control' id='comment_field' rows=4 name=comment placeholder='Typically which collaboration, project or course you need the account for AND the name and email of your affiliated contact' required pattern='.+@.+' title='A free-form comment to justify your account needs'>%(comment)s</textarea>
+      <div class='valid-feedback'>
+        Looks good!
+      </div>
+      <div class='invalid-feedback'>
+        Please mention collaboration, project or course you need the account for AND the name and email of your affiliated contact.
+      </div>
     </div>
   </div>
   <div class='form-group'>
