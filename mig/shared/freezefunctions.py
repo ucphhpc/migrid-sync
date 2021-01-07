@@ -282,7 +282,7 @@ def load_cached_meta(configuration, client_id, freeze_id=keyword_all):
     try:
         lock_handle = acquire_file_lock(lock_path, exclusive=False)
         frozen_cache = load(archives_cache)
-    except Exception, err:
+    except Exception as err:
         frozen_cache = {}
         _logger.warning('could not load freeze cache %s: %s' %
                         (archives_cache, err))
@@ -314,7 +314,7 @@ def update_cached_meta(configuration, client_id, freeze_id, freeze_meta):
         frozen_cache[freeze_id] = freeze_meta
         dump(frozen_cache, archives_cache)
         update_status = True
-    except Exception, err:
+    except Exception as err:
         update_status = False
         _logger.warning('could not update %s in freeze cache %s: %s' %
                         (freeze_id, archives_cache, err))
@@ -676,7 +676,7 @@ def get_frozen_archive(client_id, freeze_id, configuration,
                 freeze_dict['LOCATION'].append(('tape', on_tape_date))
                 _logger.debug("added on tape date for '%s': %s" %
                               (freeze_id, on_tape_date))
-            except Exception, err:
+            except Exception as err:
                 _logger.error("failed to extract on tape date from %s: %s" %
                               (tape_marker_path, err))
 

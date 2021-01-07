@@ -106,7 +106,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             try:
                 valid_path(pattern)
                 unfiltered_match = [base_dir + pattern]
-            except InputException, exc:
+            except InputException as exc:
                 logger.warning('%s called %s with invalid wildcard path %r' %
                                (client_id, op_name, pattern))
                 continue

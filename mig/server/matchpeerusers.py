@@ -138,7 +138,7 @@ if '__main__' == __name__:
     try:
         with open(peers_path) as peers_fd:
             peers_content = peers_fd.readlines()
-    except Exception, exc:
+    except Exception as exc:
         print("Failed to load peers from %s: %s" % (peers_path, exc))
         peers_content = None
 

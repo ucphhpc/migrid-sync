@@ -526,7 +526,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                                                self.user_name)
                 logger.info("remaining %d active sessions for %s"
                             % (active_count, self.user_name))
-            except Exception, exc:
+            except Exception as exc:
                 logger.error("failed in clean up: %s" % exc)
         else:
             logger.debug("no session to clean up for %s from %s:%s" %
