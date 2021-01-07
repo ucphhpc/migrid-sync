@@ -160,11 +160,21 @@ def account_js_helpers(configuration, fields):
   function check_comment() {
       //alert('#comment_help');
       var comment = $('#comment_field').val();
-      var hint = $('#comment_field').attr('placeholder');
       if (!comment) {
           /* Comment is mandatory */
           return false;
-      } else if (comment.indexOf('@') == -1) {
+      }
+      /* Comment must contain purpose and contact email.
+         Fuzzy match using pattern definition from textarea.
+         */
+      var pattern = $('#comment_field').attr('pattern');
+      var hint = $('#comment_field').attr('placeholder');
+      var patternRegex;
+      if(typeof pattern !== typeof undefined && pattern !== false) {
+          /* Anchored multiline match */
+          var patternRegex = new RegExp('^' + pattern.replace(/^\^|\$$/g, '') + '$', 'gm');
+      }
+      if (patternRegex && !comment.match(patternRegex)) {
           /* Prompt about continuing if comment on invalid format */
           return rtfm_warn('Comment must justify your account needs. '+hint);
       }
@@ -359,7 +369,7 @@ def account_request_template(configuration, password=True, default_values={}):
                       javascript checking.
       -->
       <label for='validationCustom03'>Comment with reason why you should be granted a %(site)s account:</label>
-      <textarea class='form-control' id='comment_field' rows=4 name=comment placeholder='Typically which collaboration, project or course you need the account for AND the name and email of your affiliated contact' required pattern='.+@.+' title='A free-form comment to justify your account needs'>%(comment)s</textarea>
+      <textarea class='form-control' id='comment_field' rows=4 name=comment placeholder='Typically which collaboration, project or course you need the account for AND the name and email of your affiliated contact' required pattern='.*[^ ]+@[a-zA-Z0-9.-]+\.[a-zA-Z]+.*' title='A free-form comment to justify your account needs'>%(comment)s</textarea>
       <div class='valid-feedback'>
         Looks good!
       </div>
