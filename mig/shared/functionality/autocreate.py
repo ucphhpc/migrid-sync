@@ -398,8 +398,19 @@ def main(client_id, user_arguments_dict, environ=None):
             backend = os.path.basename(configuration.site_landing_page)
         base_url = base_url.replace('autocreate.py', backend)
 
-        if identity and not identity in openid_names:
-            openid_names.append(identity)
+        raw_login = ''
+        if auth_type == AUTH_OPENID_V2:
+            # OpenID 2.0 provides user ID on URL format - only add plain ID
+            for oid_provider in configuration.user_openid_providers:
+                openid_prefix = oid_provider.rstrip('/') + '/'
+                if identity.startswith(openid_prefix):
+                    raw_login = identity.replace(openid_prefix, '')
+                    break
+        elif auth_type == AUTH_OPENID_CONNECT:
+            raw_login = identity
+        
+        if raw_login and not raw_login in openid_names:
+            openid_names.append(raw_login)
         if email and not email in openid_names:
             openid_names.append(email)
         # TODO: Add additional ext oid/oidc provider ID aliases here?

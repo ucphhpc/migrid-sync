@@ -36,8 +36,8 @@ from urlparse import parse_qsl
 
 from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_V2, \
     AUTH_OPENID_CONNECT, AUTH_GENERIC, AUTH_NONE, AUTH_MIG_OID, AUTH_EXT_OID, \
-    AUTH_MIG_OIDC, AUTH_EXT_OIDC, AUTH_MIG_CERT, AUTH_EXT_CERT, AUTH_UNKNOWN, \
-    auth_openid_mig_db, auth_openid_ext_db
+    AUTH_MIG_OIDC, AUTH_EXT_OIDC, AUTH_MIG_CERT, AUTH_EXT_CERT, \
+    AUTH_SID_GENERIC, AUTH_UNKNOWN, auth_openid_mig_db, auth_openid_ext_db
 from mig.shared.gdp.all import get_project_user_dn
 from mig.shared.useradm import get_oidc_user_dn, get_openid_user_dn
 
@@ -58,6 +58,12 @@ cert_id_field = 'SSL_CLIENT_S_DN'
 
 oidc_id_field = 'OIDC_CLAIM_upn'
 oidc_id_field_alternate = oidc_id_field.replace('OIDC_CLAIM_', 'oidc.claim.')
+
+# Requests using Session ID as auth should include this field
+# NOTE: it is not really used at the moment except to discriminate between SID
+#       and unexpected auth methods.
+
+session_id_field = 'SESSION_ID'
 
 
 def pop_openid_query_fields(environ):
@@ -214,7 +220,8 @@ def detect_client_auth(configuration, environ):
                   AUTH_MIG_OID: configuration.migserver_https_mig_oid_url,
                   AUTH_EXT_OID: configuration.migserver_https_ext_oid_url,
                   AUTH_MIG_OIDC: configuration.migserver_https_mig_oidc_url,
-                  AUTH_EXT_OIDC: configuration.migserver_https_ext_oidc_url}
+                  AUTH_EXT_OIDC: configuration.migserver_https_ext_oidc_url,
+                  AUTH_SID_GENERIC: configuration.migserver_https_sid_url}
     flavor = AUTH_UNKNOWN
     for (auth_flavor, vhost_base) in flavor_map.items():
         if vhost_base and url.startswith(vhost_base):
@@ -238,6 +245,15 @@ def detect_client_auth(configuration, environ):
             return (AUTH_GENERIC, flavor)
         else:
             _logger.warning("Generic auth user ID is empty")
+    elif flavor == AUTH_SID_GENERIC:
+        session_id = environ.get(session_id_field, None)
+        if session_id is not None:
+            # TODO: verify active session_id here if ever used
+            return (AUTH_GENERIC, flavor)
+        else:
+            # NOTE: SID is never actually used in this particular case
+            _logger.debug("No actual Session ID auth found")
+            return (AUTH_NONE, flavor)
     else:
         _logger.warning("Unknown or missing client auth method")
     return (AUTH_NONE, flavor)
