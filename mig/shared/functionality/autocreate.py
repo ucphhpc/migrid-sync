@@ -73,9 +73,10 @@ def signature(auth_type):
     """Signature of the main function"""
 
     if auth_type == AUTH_OPENID_V2:
-        defaults = {  # Please note that we only get sreg.required here if user is
-                      # already logged in at OpenID provider when signing up so
-                      # that we do not get the required attributes
+        # Please note that we only get sreg.required here if user is
+        # already logged in at OpenID provider when signing up so
+        # that we do not get the required attributes
+        defaults = {
             'openid.ns.sreg': [''],
             'openid.sreg.nickname': [''],
             'openid.sreg.fullname': [''],
@@ -102,6 +103,7 @@ def signature(auth_type):
             'authsig': ['']
         }
     elif auth_type == AUTH_CERTIFICATE:
+        # TODO: switch to add fields from cert_field_order in shared.defaults
         defaults = {
             'cert_id': REJECT_UNSET,
             'cert_name': REJECT_UNSET,
@@ -109,8 +111,9 @@ def signature(auth_type):
             'email': [''],
             'country': [''],
             'state': [''],
-            'role': [''],
-            'association': [''],
+            # NOTE: do NOT enable unvalidated role or association here
+            # 'role': [''],
+            # 'association': [''],
             'comment': [''],
             'accept_terms': [''],
             'proxy_upload': [''],
@@ -286,9 +289,9 @@ def main(client_id, user_arguments_dict, environ=None):
         state = accepted['state'][-1].strip()
         org = accepted['org'][-1].strip()
         org_unit = ''
-        role = ','.join([i for i in accepted['role'] if i])
-        association = ','.join([i for i in accepted['association']
-                                if i])
+        # NOTE: leave role and association alone here
+        role = ''
+        association = ''
         locality = ''
         timezone = ''
         email = accepted['email'][-1].strip()
