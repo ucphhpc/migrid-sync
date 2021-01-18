@@ -324,17 +324,17 @@ def account_expire_info(configuration, username, environ=None,
                                                     AUTH_OPENID_CONNECT)
             if account_status == 'active' and configuration.auto_add_oid_user:
                 extend_days = oid_auto_extend_days
-        elif vhost_url == configuration.migserver_https_mig_oid_url:
-            renew_days = default_account_valid_days(configuration,
-                                                    AUTH_OPENID_V2)
-        elif vhost_url == configuration.migserver_https_mig_oidc_url:
-            renew_days = default_account_valid_days(configuration,
-                                                    AUTH_OPENID_V2)
         elif vhost_url == configuration.migserver_https_ext_cert_url:
             renew_days = default_account_valid_days(configuration,
                                                     AUTH_CERTIFICATE)
             if account_status == 'active' and configuration.auto_add_cert_user:
                 extend_days = cert_auto_extend_days
+        elif vhost_url == configuration.migserver_https_mig_oid_url:
+            renew_days = default_account_valid_days(configuration,
+                                                    AUTH_OPENID_V2)
+        elif vhost_url == configuration.migserver_https_mig_oidc_url:
+            renew_days = default_account_valid_days(configuration,
+                                                    AUTH_OPENID_CONNECT)
         elif vhost_url == configuration.migserver_https_mig_cert_url:
             renew_days = default_account_valid_days(configuration,
                                                     AUTH_CERTIFICATE)
