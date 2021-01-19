@@ -948,7 +948,7 @@ function ajax_gdp_project_info(callback, project_name) {
 function check_oid_available(action, oid_title, oid_url, tag_prefix) {
     $("#"+tag_prefix+"status").removeClass();
     $("#"+tag_prefix+"status").addClass("status_box");
-    $("#"+tag_prefix+"status").addClass("spinner").css("padding-left", "20px");
+    $("#"+tag_prefix+"status").addClass("spinner iconleftpad");
     $("#"+tag_prefix+"status").append("<span>"+oid_title+" OpenID server status: </span>");
     $("#"+tag_prefix+"status").append("<span id="+tag_prefix+"msg></span> <span id="+tag_prefix+"err></span>");
     $("#"+tag_prefix+"msg").append("checking availability ...");
@@ -970,17 +970,17 @@ function check_oid_available(action, oid_title, oid_url, tag_prefix) {
                 if (jsonRes[i].object_type === "openid_status") {
                     online = jsonRes[i].status;
                     err = jsonRes[i].error;
-                    $("#"+tag_prefix+"status").removeClass("spinner").css("padding-left", "0px");
+                    $("#"+tag_prefix+"status").removeClass("spinner iconleftpad");
                     $("#"+tag_prefix+"msg").empty();
                     $("#"+tag_prefix+"msg").append(online);
                     if (online === "online") {
-                        $("#"+tag_prefix+"status").addClass("ok").css("padding-left", "20px");
+                        $("#"+tag_prefix+"status").addClass("ok iconleftpad");
                         $("#"+tag_prefix+"msg").addClass("status_online");
                         $("#"+tag_prefix+"button").attr("disabled", false);
                     } else {
                         $("#"+tag_prefix+"err").append("("+err+")<br/>");
                         $("#"+tag_prefix+"status").append("<span>Unable to "+action+" with this method until OpenID server comes back online. Please report the problem to the "+oid_title+" OpenID administrators.</span>");
-                        $("#"+tag_prefix+"status").addClass("error").css("padding-left", "20px");
+                        $("#"+tag_prefix+"status").addClass("error iconleftpad");
                         $("#"+tag_prefix+"msg").addClass("status_offline");
                         $("#"+tag_prefix+"button").attr("disabled", true);
                     }
@@ -1018,7 +1018,7 @@ function prepare_seafile_settings(reg_url, username, integration,
     $("#"+save_prefix+"button").attr("disabled", false);
     $("#"+status_prefix+"status").removeClass();
     $("#"+status_prefix+"status").addClass("status_box");
-    $("#"+status_prefix+"status").addClass("spinner").css("padding-left", "20px");
+    $("#"+status_prefix+"status").addClass("spinner iconleftpad");
     $("#"+status_prefix+"status").append("<span>Seafile server status: </span>");
     $("#"+status_prefix+"status").append("<span id="+status_prefix+"msg></span>");
     $("#"+status_prefix+"msg").append("checking availability ...");
@@ -1041,7 +1041,7 @@ function prepare_seafile_settings(reg_url, username, integration,
             //console.log("DEBUG: got csrf output: "+output);
             //alert("DEBUG: got csrf status: "+status);
             $("#"+status_prefix+"msg").empty();
-            $("#"+status_prefix+"status").removeClass("spinner");
+            $("#"+status_prefix+"status").removeClass("spinner iconleftpad");
             var csrf_token = $("input[name=csrfmiddlewaretoken]", output).val();
             /* NOTE: until Seafile 7.x the sign-up page contained the username
                of any logged in user, but from 7.x we can only rely on a more
@@ -1056,7 +1056,7 @@ function prepare_seafile_settings(reg_url, username, integration,
                 //alert("DEBUG: "+logged_in+" ("+id_user+")");
                 // Try to avoid confusion if user is already registered
                 $("#"+reg_prefix+"button").attr("disabled", true);
-                $("#"+status_prefix+"status").addClass("ok").css("padding-left", "20px");
+                $("#"+status_prefix+"status").addClass("ok iconleftpad");
                 $("#"+status_prefix+"msg").addClass("status_online");
                 select_seafile_section(save_prefix);
             } else if (csrf_token !== undefined) {
@@ -1071,14 +1071,14 @@ function prepare_seafile_settings(reg_url, username, integration,
                     select_seafile_section(reg_prefix);
                 }
                 //alert("DEBUG: "+logged_in+" ("+id_user+")");
-                $("#"+status_prefix+"status").addClass("ok").css("padding-left", "20px");
+                $("#"+status_prefix+"status").addClass("ok iconleftpad");
                 $("#"+status_prefix+"msg").addClass("status_online");
                 $("input[name=csrfmiddlewaretoken]").val(csrf_token);
                 //console.log("cookies: "+document.cookie);
             } else {
                 //alert("Warning: unknown state");
                 logged_in = "unexpected response from server";
-                $("#"+status_prefix+"status").addClass("warn").css("padding-left", "20px");
+                $("#"+status_prefix+"status").addClass("warn iconleftpad");
                 $("#"+status_prefix+"msg").addClass("status_slack");
             }
             $("#"+status_prefix+"status").append(" <span>("+logged_in+")</span>");
@@ -1089,7 +1089,7 @@ function prepare_seafile_settings(reg_url, username, integration,
             $("#"+status_prefix+"msg").empty();
             $("#"+status_prefix+"msg").append('offline');
             $("#"+status_prefix+"status").append(" <span>(Error: "+error+")</span>");
-            $("#"+status_prefix+"status").addClass("error").css("padding-left", "20px");
+            $("#"+status_prefix+"status").addClass("error iconleftpad");
             $("#"+status_prefix+"msg").addClass("status_offline");
             select_seafile_section(save_prefix);
         }

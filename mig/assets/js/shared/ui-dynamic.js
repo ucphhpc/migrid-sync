@@ -297,8 +297,8 @@ function fill_server_status_accordion(status_events, brief_targets, status_targe
     /* Load content: roughly equivalent to $.get(url, data, success) */
     console.debug("AJAX fill server status accordion");
     
-    $(brief_targets["EN"]).html("Loading status ...").addClass("leftpad").addClass("spinner");
-    $(brief_targets["DK"]).html("Henter status ...").addClass("leftpad").addClass("spinner");
+    $(brief_targets["EN"]).html("Loading status ...").addClass("spinner iconleftpad");
+    $(brief_targets["DK"]).html("Henter status ...").addClass("spinner iconleftpad");
     $(status_targets["EN"]).html("<p class='leftpad spinner'>Loading status and news entries ...</p>");
     $(status_targets["DK"]).html("<p class='leftpad spinner'>Henter status og nyheder ...</p>");
     
@@ -457,8 +457,8 @@ function fill_server_status_accordion(status_events, brief_targets, status_targe
                 status_res["EN"] += ", with " + active_announcements + " active announcements";
                 status_res["DK"] += ", med " + active_announcements + " aktuelle varsler";
             }
-            $(brief_targets["EN"]).removeClass("spinner");
-            $(brief_targets["DK"]).removeClass("spinner");
+            $(brief_targets["EN"]).removeClass("spinner iconleftpad");
+            $(brief_targets["DK"]).removeClass("spinner iconleftpad");
             $(brief_targets["EN"]).html(status_res["EN"]).addClass(status_res["status_icon"]);
             $(brief_targets["DK"]).html(status_res["DK"]).addClass(status_res["status_icon"]);
             $(status_targets["EN"]).html(en_items.join(""));
@@ -496,7 +496,7 @@ function fill_server_status_popup(status_events, system_match, locale) {
     var time = now.toLocaleTimeString(locale);
     var outage_count = 0, warn_count = 0, announce_count = 0;
 
-    $("#sitestatus-line").addClass("spinner").addClass("iconleftpad");
+    $("#sitestatus-line").addClass("spinner iconleftpad");
     $("#sitestatus-line").html("Loading status information ... please wait");
     try {
         $.getJSON(status_events).done(function(response) {
@@ -599,15 +599,15 @@ function fill_server_status_popup(status_events, system_match, locale) {
             $("#sitestatus-icon").css("color", status_color);
             $("#sitestatus-caption").html(status_caption);
             $("#sitestatus-timestamp").html("at "+time);
-            $("#sitestatus-line").removeClass("spinner").removeClass("iconleftpad");
+            $("#sitestatus-line").removeClass("spinner iconleftpad");
             $("#sitestatus-line").html(status_line);
-            $("#sitestatus-announce").removeClass("spinner");
+            $("#sitestatus-announce").removeClass("spinner iconleftpad");
             $("#sitestatus-announce").html(announce_text);
 
             console.debug("update server status complete");
         }).fail(function(response) {
             console.error("get status failed: "+ response);
-            $("#sitestatus-line").removeClass("spinner");
+            $("#sitestatus-line").removeClass("spinner iconleftpad");
             $("#sitestatus-line").html("Failed to dynamically load status information.");
         });
     } catch(err) {

@@ -82,8 +82,8 @@ def main(client_id, user_arguments_dict, environ=None):
     add_init = '''
         function delayed_redirect(redir_url, redirmsg_select) {
             setTimeout(function() {
-                           $(redirmsg_select).fadeIn(5000);
-                       }, 5000);
+                           $(redirmsg_select).fadeIn(4000);
+                       }, 1000);
             setTimeout(function() {
                            location.href=redir_url;
                        }, 15000);
@@ -114,7 +114,7 @@ def main(client_id, user_arguments_dict, environ=None):
                                                           openid_error))
     html = ""
     add_action = '''
-<p class="fadein_msg spinner iconspace hidden">
+<p class="fadein_msg spinner iconleftpad iconspace hidden">
 Redirecting to main page in a moment ...
 </p>
 
@@ -167,7 +167,7 @@ already logged in to the OpenID service.
                                                          identity,
                                                          main_url)
                 add_action = '''
-            <p class="fadein_msg spinner iconspace hidden">
+            <p class="fadein_msg spinner iconleftpad iconspace hidden">
             Redirecting through auto-logout to clean up for your next %s sign
             up attempt ...
             </p>
