@@ -73,54 +73,25 @@ function lookup_site_conf(key, default_value) {
 
 /* Load information snippets on-demand */
 
-function init_quickstart_shared(intro_target, transfer_target, backup_target,
-                                security_target) {
-    console.debug("init quickstart");
-    if (intro_target) {
-        $("#getting-started-en-button").click(function() {
-            console.debug("clicked getting started");
-            window.open(intro_target);
-        });
-    }
-    if (transfer_target) {
-        $("#file-transfer-en-button").click(function() {
-            window.open(transfer_target);
-        });
-    }
-    if (backup_target) {
-        $("#backup-en-button").click(function() {
-            window.open(backup_target);
-        });
-    }
-    if (security_target) {
-        $("#security-en-button").click(function() {
-            window.open(security_target);
-        });
-    }
-}
-
 function init_quickstart_static() {
-    init_quickstart_shared("/public/user-guide.pdf", "", "", "");
-    /* Make dynamic buttons inactive until logged in */
-    $("div.quick-support.requires-login").prop('disabled', true).css('opacity', 0.5).css('cursor', 'default').prop('title', 'Please log in first to view specific feature help and setup');
-    /*
-      $("div.quick-support.requires-login").click(function() {
-      //window.location.href="setup.py";
-      show_login_msg('Please log in first to view specific feature help and setup');
-      });
+    /* NOTE: simply keep all site specific actions and targets in quickstart
+       html snippet. We just use requires-login class markers to mark and
+       distinguish static and dynamic content.
     */
+    /* Make dynamic buttons inactive until logged in */
+    $("div.quick-support.requires-login").prop('disabled', true).css('opacity', 0.5).css('cursor', 'default').prop('title', 'Please log in first to view specific feature help and setup').prop("onclick", null);
 }
 
 function init_quickstart_dynamic() {
-    init_quickstart_shared("http://www.erda.dk/public/ucph-erda-user-guide.pdf", 
-                           "setup.py?topic=sftp", "setup.py?topic=duplicati",
-                           "setup.py?topic=twofactor");
+    /* NOTE: default logged in user - nothing special to do here */
 }
 
 function init_faq() {
     console.debug("init faq");
     /* Init FAQ as foldable but closed and with individual heights */
     accordion_init(".faq-entries.accordion", false);
+    /* Prevent overlap with support/about/status buttons */
+    $("#faq-content").css('padding-bottom', '5%');        
 }
 function init_about() {
     console.debug("init About");
@@ -170,7 +141,7 @@ function load_quickstart_static(base_url) {
     try {
         $("#quickstart-content").load(content_url, init_quickstart_static);
     } catch(err) {
-        console.error("load quickstart failed: "+err);
+        console.error("load quickstart static failed: "+err);
     }
 }
 function load_quickstart_dynamic(base_url) {
@@ -181,7 +152,7 @@ function load_quickstart_dynamic(base_url) {
     try {
         $("#quickstart-content").load(content_url, init_quickstart_dynamic);
     } catch(err) {
-        console.error("load quickstart failed: "+err);
+        console.error("load quickstart dynamic failed: "+err);
     }
 }
 function load_faq(base_url) {

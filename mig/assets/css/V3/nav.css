@@ -424,6 +424,17 @@
     background: url(/images/icons/seafile_icon_white.svg) center center no-repeat;
 }
 
+.quick-support .fa-seafile {
+    display: block;
+    height: 94px;
+}
+@media (max-width: 1000px) {
+    .quick-support .fa-seafile {
+        height: 54px;
+    }
+}
+
+
 
 .hidden {
     display: none;
@@ -660,7 +671,7 @@ button.avatar-link:active {
 }
 
 #aboutInfo .container, #supportInfo .container {
-    padding: 15% 10% 1% 10%;
+    padding: 10% 10% 1% 10%;
     overflow-x: hidden;
     overflow-y: auto;
     height: 100%;
