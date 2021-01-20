@@ -1058,6 +1058,11 @@ div.archive pre {
     background-repeat: no-repeat;
     background-position: left center;
 }
+.help, .question {
+    background-image: url('/images/icons/help.png');
+    background-repeat: no-repeat;
+    background-position: left center;
+}
 .personal {
     background-image: url('/images/icons/personal.png');
     background-repeat: no-repeat;

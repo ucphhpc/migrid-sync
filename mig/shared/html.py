@@ -371,9 +371,11 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
     """
     fill_helper = {'short_title': configuration.short_title,
                    'status_url': configuration.site_status_url,
-                   'sitestatus_button': '',
-                   'support_image': configuration.site_support_image,
+                   'sitestatus_button': '', 'support_icon': '',
                    'support_text': configuration.site_support_text}
+    if configuration.site_support_image:
+        fill_helper['support_icon'] = '<img src="%s" id="supportimage" />' % \
+                                      configuration.site_support_image
     if legacy_user_interface(configuration, user_settings):
         html = '''
 <div id="topspace">
@@ -467,7 +469,7 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
             <div id="support-content" class="col-lg-12">
             <h2 class="big">Further Support</h2>
             <p class="i18n" lang="en">
-            <img src="%(support_image)s" id="supportimage" alt=""/>
+            %(support_icon)s
             %(support_text)s
             </p>
             </div>

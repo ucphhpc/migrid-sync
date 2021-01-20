@@ -991,6 +991,12 @@ background: url(/images/icons/compress.png) left center no-repeat;
     background-color: #FFF;
     border-radius: 4px;
 }
+.help, .question { 
+    background-image: url('/images/icons/question.svg');
+    background-repeat: no-repeat;
+    background-size: 16px 16px;
+    padding-left: 20px;
+}
 .tip {
     background-image: url('/images/icons/lightbulb_idea.svg');
     background-repeat: no-repeat;
