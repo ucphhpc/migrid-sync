@@ -671,7 +671,7 @@ button.avatar-link:active {
 }
 
 #aboutInfo .container, #supportInfo .container {
-    padding: 10% 10% 1% 10%;
+    padding: 5% 10% 5% 10%;
     overflow-x: hidden;
     overflow-y: auto;
     height: 100%;

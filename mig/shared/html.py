@@ -371,7 +371,9 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
     """
     fill_helper = {'short_title': configuration.short_title,
                    'status_url': configuration.site_status_url,
-                   'sitestatus_button': ''}
+                   'sitestatus_button': '',
+                   'support_image': configuration.site_support_image,
+                   'support_text': configuration.site_support_text}
     if legacy_user_interface(configuration, user_settings):
         html = '''
 <div id="topspace">
@@ -460,6 +462,14 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
 
             <div id="faq-content" class="col-lg-12 invert-theme">
             <!-- Filled by AJAX -->
+            </div>
+
+            <div id="support-content" class="col-lg-12">
+            <h2 class="big">Further Support</h2>
+            <p class="i18n" lang="en">
+            <img src="%(support_image)s" id="supportimage" alt=""/>
+            %(support_text)s
+            </p>
             </div>
 
             <div class="vertical-spacer"></div>
@@ -620,20 +630,15 @@ def themed_scripts(configuration, base=[], advanced=[], skin=[], init=[],
 <script src="/assets/js/V3/ui-extra.js"></script>
 <script src="/assets/js/V3/ui-dynamic.js"></script>
         ''')
-        if logged_in:
-            quickstart_init = 'load_quickstart_dynamic'
-        else:
-            quickstart_init = 'load_quickstart_static'
         quickstart_url = configuration.site_quickstart_snippet_url
         faq_url = configuration.site_faq_snippet_url
         about_url = configuration.site_about_snippet_url
         dyn_scripts = '''
             var locale = extract_default_locale()
             console.log("loading dynamic snippet content");
-            %s("%s");
-            load_faq("%s");
+            load_support("%s", "%s", %s);
             load_about("%s");
-        ''' % (quickstart_init, quickstart_url, faq_url, about_url)
+        ''' % (quickstart_url, faq_url, str(logged_in).lower(), about_url)
         if configuration.site_enable_sitestatus:
             # TODO: remote status page may require CORS headers
             sitestatus_url = configuration.site_status_url

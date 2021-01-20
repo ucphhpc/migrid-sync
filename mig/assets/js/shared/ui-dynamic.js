@@ -90,8 +90,6 @@ function init_faq() {
     console.debug("init faq");
     /* Init FAQ as foldable but closed and with individual heights */
     accordion_init(".faq-entries.accordion", false);
-    /* Prevent overlap with support/about/status buttons */
-    $("#faq-content").css('padding-bottom', '5%');        
 }
 function init_about() {
     console.debug("init About");
@@ -180,6 +178,15 @@ function load_faq_content(base_url, country) {
     } catch(err) {
         console.error("load "+country+" faq failed: "+err);
     }
+}
+function load_support(quickstart_base_url, faq_base_url, logged_in) {
+    /* Fetch Support contents from snippet specified in configuration */
+    if (logged_in) {
+        load_quickstart_dynamic(quickstart_base_url);
+    } else {
+        load_quickstart_static(quickstart_base_url);
+    }
+    load_faq(faq_base_url);
 }
 function load_about(base_url) {
     /* Fetch About contents from snippet specified in configuration */

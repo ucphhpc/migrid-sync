@@ -129,12 +129,10 @@
       base_url = base_url.substring(0, base_url.lastIndexOf("/")+1);
 
         var quickstart_url = base_url + "quickstart-snippet.html"; 
-        console.log("get quickstart content from "+quickstart_url);
-        load_quickstart_static(quickstart_url)
-
         var faq_url = base_url + "faq-snippet.html"; 
+        console.log("get quickstart content from "+quickstart_url);
         console.log("get faq content from "+faq_url);
-        load_faq(faq_url);
+        load_support(quickstart_url, faq_url, false);
 
         var about_url = base_url + "about-snippet.html"; 
         console.log("get about content from "+about_url);
@@ -231,8 +229,19 @@
           <!-- Filled by AJAX -->
         </div>
 
-        <div class="vertical-spacer"></div>
+        <div id="support" class="col-lg-12">
+          <h2 class="big">Further Support</h2>
+          <img src="/images/icons/help.png" id="supportimage" alt=""/>
+            <p class="i18n" lang="en">
+              <a href="/public/ucph-erda-user-guide.pdf">ERDA User Guide</a><br />
+              Questions about ERDA?<br />
+              Please contact
+              us at <a href="mailto:support@erda.dk">support@erda.dk</a>
+            </p>
+          </div>
+        </div>
 
+        <div class="vertical-spacer"></div>
       </div>
     </div>
 
