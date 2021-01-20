@@ -1,11 +1,73 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg enable-background="new 0 0 24 24" version="1.1" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg">
-<style type="text/css">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   enable-background="new 0 0 24 24"
+   version="1.1"
+   viewBox="0 0 24 24"
+   xml:space="preserve"
+   id="svg10"
+   sodipodi:docname="question-full.svg"
+   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"><metadata
+   id="metadata16"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
+   id="defs14" /><sodipodi:namedview
+   pagecolor="#ffffff"
+   bordercolor="#666666"
+   borderopacity="1"
+   objecttolerance="10"
+   gridtolerance="10"
+   guidetolerance="10"
+   inkscape:pageopacity="0"
+   inkscape:pageshadow="2"
+   inkscape:window-width="640"
+   inkscape:window-height="480"
+   id="namedview12"
+   showgrid="false"
+   inkscape:zoom="4"
+   inkscape:cx="12"
+   inkscape:cy="12"
+   inkscape:window-x="0"
+   inkscape:window-y="32"
+   inkscape:window-maximized="0"
+   inkscape:current-layer="svg10" />
+<style
+   type="text/css"
+   id="style2">
 	.st0{fill:#666;}
 </style>
 
-	<path class="st0" d="m12 0c-6.6 0-12 5.4-12 12s5.4 12 12 12 12-5.4 12-12-5.4-12-12-12z" fill="#147"/>
-<text transform="scale(1.1708 .85412)" x="2.2136345" y="25.330446" fill="#ffffff" font-family="Gentium" font-size="33.224px" font-style="italic" letter-spacing="0px" stroke-width="1.2459" word-spacing="0px" style="font-feature-settings:normal;font-variant-caps:normal;font-variant-ligatures:normal;font-variant-numeric:normal;line-height:1.25" xml:space="preserve"><tspan x="2.2136345" y="25.330446" fill="#ffffff" font-family="Gentium" font-size="33.224px" font-style="italic" stroke-width="1.2459" style="font-feature-settings:normal;font-variant-caps:normal;font-variant-ligatures:normal;font-variant-numeric:normal">?</tspan></text>
+	<path
+   class="st0"
+   d="m12 0c-6.6 0-12 5.4-12 12s5.4 12 12 12 12-5.4 12-12-5.4-12-12-12z"
+   fill="#147"
+   id="path4" />
+<text
+   transform="scale(1.2398353,0.80655874)"
+   x="3.262352"
+   y="24.133184"
+   font-size="33.224px"
+   font-style="italic"
+   letter-spacing="0px"
+   word-spacing="0px"
+   style="font-style:italic;font-size:26.58164787px;line-height:1.25;font-family:Gentium;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;letter-spacing:0px;word-spacing:0px;fill:#ffffff;stroke-width:0.99681175"
+   xml:space="preserve"
+   id="text8"><tspan
+     x="3.262352"
+     y="24.133184"
+     font-size="33.224px"
+     font-style="italic"
+     style="font-style:italic;font-size:26.58164787px;font-family:Gentium;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;fill:#ffffff;stroke-width:0.99681175"
+     id="tspan6">?</tspan></text>
+
+
+
 
 
 </svg>
