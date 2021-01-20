@@ -10,26 +10,78 @@
     <div id="quickstart-english" class="english i18n row" lang="en">
       <div class="col-lg-12">
         <h2 class="big">Quick Start</h2>
+        <p class='systemnote'>
+	  Please note that these guides are from ERDA, but the procedures
+	  should be generally applicable just replacing references to ERDA with
+	  MiGrid, erda.ku.dk with www.migrid.org and Workgroup with VGrid.
+        </p>
       </div>
       <!-- NOTE: snippet recipient should override button onClick -->
-      <div id="getting-started-en-button" class="quick-support col-lg-6">
+      <div id="sign-up-intro-en-button" class="quick-support col-lg-6"
+           onClick="window.open('https://erda.ku.dk/ucph-erda-guide_user-sign-up.pdf');">
         <h1 class="fa-button fas fa-laptop"></h1>
         <h3>Getting started</h3>
-        <p>New at MiGrid? Look here to get started with your data.</p>
+        <p>New to MiGrid? Get started with your account.</p>
       </div>
-      <div id="file-transfer-en-button" class="quick-support requires-login col-lg-6">
+      <div id="workgroups-intro-en-button" class="quick-support col-lg-6"
+           onClick="window.open('https://erda.ku.dk/ucph-erda-guide_workgroup-sharing.pdf');">
+        <h1 class="fa-button fas fa-network-wired"></h1>
+        <h3>VGrids</h3>
+        <p>Introduction to collaboration and data sharing on MiGrid.</p>
+      </div>
+      <!-- TODO: detect and switch netdrive button based on client platform -->
+      <div id="network-drive-win-intro-en-button" class="quick-support col-lg-6"
+           onClick="window.open('https://erda.ku.dk/ucph-erda-guide_network-drive_win.pdf');">
+        <h1 class="fa-button fas fa-cloud"></h1>
+        <h3>Network Drive</h3>
+        <p>Access your MiGrid data as a network drive on your PC.</p>
+      </div>
+      <div id="network-drive-osx-intro-en-button" class="quick-support col-lg-6 hidden"
+           onClick="window.open('https://erda.ku.dk/ucph-erda-guide_network-drive_osx.pdf');">
+        <h1 class="fa-button fas fa-cloud"></h1>
+        <h3>Network Drive</h3>
+        <p>Access your MiGrid data as a network drive on your Mac.</p>
+      </div>
+      <div id="network-drive-lnx-intro-en-button" class="quick-support col-lg-6 hidden"
+           onClick="window.open('https://erda.ku.dk/ucph-erda-guide_network-drive_lnx.pdf');">
+        <h1 class="fa-button fas fa-cloud"></h1>
+        <h3>Network Drive</h3>
+        <p>Access your MiGrid data as a network drive on Linux/UNIX.</p>
+      </div>
+      <div id="user-guide-en-button" class="quick-support col-lg-6"
+           onClick="window.open('https://erda.ku.dk/ucph-erda-user-guide.pdf');">
+        <h1 class="fa-button fas fa-book"></h1>
+        <h3>User Guide</h3>
+        <p>Read on in the user guide for full MiGrid documentation.</p>
+      </div>
+
+      <div class="col-lg-12">
+        <h2 class="big">Setup</h2>
+      </div>
+      <div id="file-transfer-en-button" class="quick-support requires-login col-lg-6"
+           onClick="window.open('setup.py?topic=sftp');">
         <h1 class="fa-button fas fa-file-import"></h1>
-        <h3>File transfer</h3>
-        <p>SFTP, FTPS, WebDAVS, Seafile</p>
+        <h3>File Transfer</h3>
+        <p>SFTP/SSHFS</p>
       </div>
-      <!--
-      <div id="backup-en-button" class="quick-support requires-login col-lg-6">
+      <!-- Seafile is disabled here
+      <div id="file-sync-en-button" class="quick-support requires-login col-lg-3"
+           onClick="window.open('setup.py?topic=seafile');">
+        <h1 class="fa-button fas seafile fa-seafile"></h1>
+        <h3>File Sync</h3>
+        <p>Seafile</p>
+      </div>
+      -->
+      <!-- Duplicati is disabled here
+      <div id="backup-en-button" class="quick-support requires-login col-lg-3"
+           onClick="window.open('setup.py?topic=duplicati');">
         <h1 class="fa-button fas fa-database"></h1>
         <h3>Backup</h3>
         <p>Duplicati</p>
       </div>
       -->
-      <div id="security-en-button" class="quick-support requires-login col-lg-6">
+      <div id="security-en-button" class="quick-support requires-login col-lg-6"
+           onClick="window.open('setup.py?topic=twofactor');">
         <h1 class="fa-button fas fa-lock"></h1>
         <h3>Security</h3>
         <p>2-Factor Authentication</p>
@@ -39,30 +91,85 @@
     <div id="quickstart-danish" class="danish i18n row" lang="da">
       <div class="col-lg-12">
         <h2>Hurtigt igang</h2>
+        <p class='systemnote'>
+	  NB: disse guides er fra ERDA, men fremgangsmåderne er gennemgående de
+	  samme her, når bare forekomster af ERDA erstattes med MiGrid,
+          erda.ku.dk med www.migrid.org og Workgroup med VGrid.
+        </p>
       </div>
+<!--
       <div id="getting-started-da-button" class="quick-support col-lg-6">
         <h1 class="fa-button fas fa-laptop"></h1>
-        <h3>Kom igang med MiGrid started</h3>
-        <p>Ny på MiGrid? Se her hvordan du kommer igang med dine data.</p>
+        <h3>Kom igang med MiGrid</h3>
+        <p>Ny på MiGrid? Se her hvordan du kommer igang med din konto.</p>
       </div>
-      <div id="file-transfer-da-button" class="quick-support requires-login col-lg-6">
+-->
+
+      <div id="sign-up-intro-da-button" class="quick-support col-lg-6"
+           onClick="window.open('https://erda.ku.dk/ucph-erda-guide_brugertilmelding.pdf');">
+        <h1 class="fa-button fas fa-laptop"></h1>
+        <h3>Kom igang med MiGrid</h3>
+        <p>Ny på MiGrid? Sådan kommer du igang med din konto.</p>
+      </div>
+      <div id="workgroups-intro-da-button" class="quick-support col-lg-6"
+           onClick="window.open('https://erda.ku.dk/ucph-erda-guide_workgroup-deling.pdf');">
+        <h1 class="fa-button fas fa-network-wired"></h1>
+        <h3>VGrids</h3>
+        <p>Kom igang med samarbejde of datadeling på MiGrid.</p>
+      </div>
+      <div id="network-drive-win-intro-da-button" class="quick-support col-lg-6"
+           onClick="window.open('https://erda.ku.dk/ucph-erda-guide_netvaerksdrev_win.pdf');">
+        <h1 class="fa-button fas fa-cloud"></h1>
+        <h3>Netværksdrev</h3>
+        <p>Benyt dine MiGrid data som netværksdrev på din PC.</p>
+      </div>
+      <div id="network-drive-osx-intro-da-button" class="quick-support col-lg-6 hidden"
+           onClick="window.open('https://erda.ku.dk/ucph-erda-guide_netvaerksdrev_osx.pdf');">
+        <h1 class="fa-button fas fa-cloud"></h1>
+        <h3>Netværksdrev</h3>
+        <p>Benyt dine MiGrid data som netværksdrev på din Mac.</p>
+      </div>
+      <div id="network-drive-lnx-intro-da-button" class="quick-support col-lg-6 hidden"
+           onClick="window.open('https://erda.ku.dk/ucph-erda-guide_netvaerksdrev_win.pdf');">
+        <h1 class="fa-button fas fa-cloud"></h1>
+        <h3>Netværksdrev</h3>
+        <p>Benyt dine MiGrid data som netværksdrev på Linux/UNIX.</p>
+      </div>
+      <div id="user-guide-da-button" class="quick-support col-lg-6"
+           onClick="window.open('https://erda.ku.dk/ucph-erda-brugervejledning.pdf');">
+        <h1 class="fa-button fas fa-book"></h1>
+        <h3>Brugervejledning</h3>
+        <p>Læs i brugervejledningen for den fulde dokumentation.</p>
+      </div>
+
+      <div id="file-transfer-da-button" class="quick-support requires-login col-lg-6"
+           onClick="window.open('setup.py?topic=sftp');">
         <h1 class="fa-button fas fa-file-import"></h1>
         <h3>Filoverførsel</h3>
-        <p>SFTP, FTPS, WebDAVS, Seafile</p>
+        <p>SFTP/SSHFS</p>
       </div>
-      <!--
-      <div id="backup-da-button" class="quick-support requires-login col-lg-6">
+      <!-- Seafile is disabled here
+      <div id="file-sync-da-button" class="quick-support requires-login col-lg-3"
+           onClick="window.open('setup.py?topic=seafile');">
+        <h1 class="fa-button fas fa-seafile"></h1>
+        <h3>Filsynkronisering</h3>
+        <p>Seafile</p>
+      </div>
+      -->
+      <!-- Duplicati is disabled here
+      <div id="backup-da-button" class="quick-support requires-login col-lg-3"
+           onClick="window.open('setup.py?topic=ducplicati');">
         <h1 class="fa-button fas fa-database"></h1>
         <h3>Backup</h3>
         <p>Duplicati</p>
       </div>
       -->
-      <div id="security-da-button" class="quick-support requires-login col-lg-6">
+      <div id="security-da-button" class="quick-support requires-login col-lg-6"
+           onClick="window.open('setup.py?topic=twofactor');">
         <h1 class="fa-button fas fa-lock"></h1>
         <h3>Sikkerhed</h3>
         <p>2-Faktor Autentificering</p>
       </div>
     </div>
-
   </body>
 </html>
