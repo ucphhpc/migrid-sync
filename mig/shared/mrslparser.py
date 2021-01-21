@@ -224,7 +224,7 @@ environment '%s', therefore the job can not be run on any resources.""" %
         global_dict['WORKFLOW_TRIGGER_ID'] = workflow_job['trigger_id']
         global_dict['WORKFLOW_TRIGGER_PATH'] = workflow_job['trigger_path']
         global_dict['WORKFLOW_TRIGGER_TIME'] = workflow_job['trigger_time']
-        global_dict['WORKFLOW_PATTERN_ID'] = workflow_job['patter_id']
+        global_dict['WORKFLOW_PATTERN_ID'] = workflow_job['pattern_id']
         global_dict['WORKFLOW_PATTERN_NAME'] = workflow_job['pattern_name']
         global_dict['WORKFLOW_RECIPES'] = workflow_job['recipes']
 
