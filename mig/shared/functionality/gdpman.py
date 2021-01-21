@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # gdpman - entry point with project access and management for GDP-enabled sites
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,13 +26,14 @@
 #
 
 """Entry page with project access and management for GDP-enabled sites"""
+
 from __future__ import absolute_import
 
 import os
 import tempfile
 
-from mig.shared.auth import get_twofactor_secrets
 from mig.shared import returnvalues
+from mig.shared.auth import get_twofactor_secrets
 from mig.shared.base import get_xgi_bin
 from mig.shared.defaults import csrf_field
 from mig.shared.functional import validate_input_and_cert
@@ -46,10 +47,10 @@ from mig.shared.html import twofactor_wizard_html, twofactor_wizard_js, \
 from mig.shared.httpsclient import extract_client_openid
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.settings import load_twofactor, parse_and_save_twofactor
-from mig.shared.useradm import get_full_user_map
-from mig.shared.url import openid_autologout_url
-from mig.shared.vgrid import vgrid_create_allowed, vgrid_manage_allowed
 from mig.shared.twofactorkeywords import get_keywords_dict as twofactor_keywords
+from mig.shared.url import openid_autologout_url
+from mig.shared.useradm import get_full_user_map
+from mig.shared.vgrid import vgrid_create_allowed, vgrid_manage_allowed
 
 
 def signature():
@@ -1306,7 +1307,8 @@ def main(client_id, user_arguments_dict, environ=None):
     gdp_ref_id_list = [i.strip() for i in accepted['gdp_ref_id']]
     gdp_ref_value_list = [i.strip() for i in accepted['gdp_ref_value']]
     gdp_ref_pairs = zip(gdp_ref_id_list, gdp_ref_value_list)
-    username = accepted['username'][-1].strip()
+    # Force username (email) to lowercase to reduce user confusion
+    username = accepted['username'][-1].strip().lower()
     if action:
         log_msg = "GDP Manager: ip: '%s', action: '%s', base_vgrid_name: '%s'"
         log_msg += ", category_id %s, references: %s, username: '%s'"
