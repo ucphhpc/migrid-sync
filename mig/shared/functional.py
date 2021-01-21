@@ -168,8 +168,13 @@ def validate_input_and_cert(
             if not pending_expire:
                 creds_error = "User account expired!"
 
+    # NOTE: users with a certificate but without an account can use extcert.
+    #       Expired users can still log out or use their login to access the
+    #       (unprivileged) account request pages to renew their account with
+    #       auto-fill of fields.
     if creds_error and not os.path.basename(requested_page()) in \
-            ['logout.py', 'autologout.py']:
+            ['logout.py', 'autologout.py', 'reqoid.py', 'reqcert.py',
+             'extcert.py']:
         # Simple init to get page preamble even where initialize_main_variables
         # was called with most things disabled because no or limited direct
         # output was expected.
