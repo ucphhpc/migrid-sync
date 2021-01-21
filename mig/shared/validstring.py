@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # validstring - string validators
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,9 +26,11 @@
 #
 
 """String validation"""
+
 from __future__ import absolute_import
 
 import os.path
+import re
 
 from mig.shared.base import invisible_path
 from mig.shared.conf import get_configuration_object
@@ -100,8 +102,26 @@ def is_valid_email_address(addr, logger):
         if addr[c] in rfc822_specials:
             return False
         c += 1
-    logger.debug('%s is a valid email address' % addr)
+    logger.debug('%s is a valid email address: %s' % (addr, count >= 1))
     return count >= 1
+
+
+def valid_email_addresses(configuration, text, lowercase=True):
+    """Extract list of all valid email addresses found in free-form text"""
+    _logger = configuration.logger
+    # NOTE: address must end in letter(s) to avoid trailing period, etc.
+    email_list = []
+    all_matches = re.findall(r'[\w\._-]+@[\w\.-]+[\w]+', text)
+    for i in all_matches:
+        email = "%s" % i
+        if lowercase:
+            email = email.lower()
+        if not is_valid_email_address(email, _logger):
+            _logger.warning('skip invalid email: %s' % email)
+            continue
+        _logger.debug('found valid email: %s' % email)
+        email_list.append(email)
+    return email_list
 
 
 def possible_user_id(configuration, user_id):
@@ -114,6 +134,7 @@ def possible_user_id(configuration, user_id):
         if i not in user_id_charset:
             return False
     return True
+
 
 def possible_gdp_user_id(configuration, gdp_user_id):
     """Check if gdp_user_id is a possible user ID based on knowledge about
@@ -128,6 +149,7 @@ def possible_gdp_user_id(configuration, gdp_user_id):
     if not possible_user_id(configuration, plain_id):
         return False
     return True
+
 
 def possible_job_id(configuration, job_id):
     """Check if job_id is a possible job ID based on knowledge about contents
@@ -299,3 +321,13 @@ def valid_user_path(configuration, path, home_dir, allow_equal=False,
 
             same = False
         return inside or same
+
+
+if __name__ == "__main__":
+    from mig.shared.conf import get_configuration_object
+    conf = get_configuration_object()
+    comment = """Testing email extract with bardino@nbi.ku.dk and
+nosuchemail@abc.%!?.com and Some.user-name@example.org
+with whatever text trailing."""
+    print("Extract email addresses from:\n%r" % comment)
+    print(', '.join(valid_email_addresses(conf, comment)))

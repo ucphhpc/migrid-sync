@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # useradm - user administration functions
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """User administration functions"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -65,7 +66,7 @@ from mig.shared.serial import load, dump
 from mig.shared.settings import update_settings, update_profile, update_widgets
 from mig.shared.sharelinks import load_share_links, update_share_link, \
     get_share_link, mode_chars_map
-from mig.shared.validstring import possible_user_id
+from mig.shared.validstring import possible_user_id, valid_email_addresses
 from mig.shared.vgrid import vgrid_add_owners, vgrid_remove_owners, \
     vgrid_add_members, vgrid_remove_members, in_vgrid_share, \
     vgrid_sharelinks, vgrid_add_sharelinks
@@ -226,8 +227,7 @@ def create_user(
         peer_email_list = []
         # extract email of vouchee from comment if possible
         comment = user.get('comment', '')
-        # NOTE: address must end in letter(s) to avoid trailing period, etc.
-        all_matches = re.findall(r'[\w\.-]+@[\w\.-]+[\w]+', comment)
+        all_matches = valid_email_addresses(configuration, comment)
         for i in all_matches:
             peer_email = "%s" % i
             if not possible_user_id(configuration, peer_email):
@@ -257,26 +257,45 @@ def create_user(
         peer_notes = []
         if not hits:
             peer_notes.append("no match for peers")
-        for (user_id, _) in hits:
-            _logger.debug("check %s in peers for %s" % (client_id, user_id))
-            accepted_peers = get_accepted_peers(configuration, user_id)
-            peer_entry = accepted_peers.get(client_id, None)
-            if not peer_entry:
-                _logger.warning("could not validate %s as peer for %s" %
-                                (user_id, client_id))
+        for (sponsor_id, sponsor_dict) in hits:
+            _logger.debug("check %s in peers for %s" % (client_id, sponsor_id))
+            if client_id == sponsor_id:
+                warn_msg = "users cannot vouch for themselves: %s for %s" % \
+                           (client_id, sponsor_id)
+                _logger.warning(warn_msg)
                 continue
-            peer_expire = datetime.datetime.strptime(
-                peer_entry.get('expire', 0), '%Y-%m-%d')
-            user_expire = datetime.datetime.fromtimestamp(user['expire'])
-            if peer_expire < user_expire:
-                warn_msg = "expire %s vs %s prevents %s as peer for %s" % \
-                           (peer_expire, user_expire, user_id, client_id)
+            sponsor_expire = sponsor_dict.get('expire', -1)
+            if sponsor_expire >= 0 and time.time() > sponsor_expire:
+                warn_msg = "expire %s prevents %s as peer for %s" % \
+                           (sponsor_expire, sponsor_id, client_id)
                 _logger.warning(warn_msg)
                 peer_notes.append(warn_msg)
                 continue
-            _logger.debug("validated %s accepts %s as peer" % (user_id,
+            sponsor_status = sponsor_dict.get('status', 'active')
+            if sponsor_status not in ['active', 'temporal']:
+                warn_msg = "status %s prevents %s as peer for %s" % \
+                           (sponsor_status, sponsor_id, client_id)
+                _logger.warning(warn_msg)
+                peer_notes.append(warn_msg)
+                continue
+            accepted_peers = get_accepted_peers(configuration, sponsor_id)
+            peer_entry = accepted_peers.get(client_id, None)
+            if not peer_entry:
+                _logger.warning("could not validate %s as peer for %s" %
+                                (sponsor_id, client_id))
+                continue
+            peer_expire = datetime.datetime.strptime(
+                peer_entry.get('expire', 0), '%Y-%m-%d')
+            client_expire = datetime.datetime.fromtimestamp(user['expire'])
+            if peer_expire < client_expire:
+                warn_msg = "expire %s vs %s prevents %s as peer for %s" % \
+                           (peer_expire, client_expire, sponsor_id, client_id)
+                _logger.warning(warn_msg)
+                peer_notes.append(warn_msg)
+                continue
+            _logger.debug("validated %s accepts %s as peer" % (sponsor_id,
                                                                client_id))
-            accepted_peer_list.append(user_id)
+            accepted_peer_list.append(sponsor_id)
         if not accepted_peer_list:
             _logger.error("requested peer validation with %r for %s failed" %
                           (verify_pattern, client_id))
