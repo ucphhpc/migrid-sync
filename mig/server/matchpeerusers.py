@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # matchpeerusers - Match list of Peers in MiG user database
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #

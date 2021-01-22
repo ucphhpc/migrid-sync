@@ -4,7 +4,7 @@
   # --- BEGIN_HEADER ---
   #
   # ui-dynamic - dynamic helpers to fill support, about and status content
-  # Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+  # Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
   #
   # This file is part of MiG.
   #

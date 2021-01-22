@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # accountstate - various user account state helpers
-# Copyright (C) 2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2020-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #

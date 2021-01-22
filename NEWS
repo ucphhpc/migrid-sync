@@ -6,6 +6,18 @@ individual releases of the MiG project code.
 == News ==
 A short description of changes 
 
+=== January 22nd, 2021 ===
+After almost two years of further development it's about time to make a new
+release. Again we've implemented a load of new features with bug fixes and
+security improvements as well. Some feature highlights include a brand new
+stream-lined user interface with in-line help, personal Cloud instances,
+additions and improvements to the sensitive data mode, a Peers system for
+inviting external collaboration partners, Jupyter recipe-based workflows with
+provenance support, authlog email notifications about login errors, several 2FA
+improvements, account expiry+status control and experimental OpenID Connect
+support.
+
+
 === February 27th, 2019 ===
 Long due new release with plenty of added features especially in four
 areas, namely an OpenSSH-based SFTP service, Jupyter integration, DOI 
@@ -13,7 +25,7 @@ integration for archives and a new site mode to host EU GDPR data with
 the associated strict access and logging requirements.
 In relation to that work we've a.o. added 2FA support, import from sharelinks
 and archives, added helpers to ease use of Jupyter as an interactive
-course infrastructure. Additionally ithe release includes a number of
+course infrastructure. Additionally the release includes a number of
 security improvements across the board.
 
 
@@ -193,6 +205,57 @@ for other users.
 More detailed changelogs for the public releases.
 The full changelog is available from the repository:
 https://sourceforge.net/p/migrid/code/commit_browser
+
+== 1.9.0 ==
+- Experimental OpenID Connect support
+- Improved sign up input validation with user guidance
+- Transfer sensitive data project ownership
+- Full provenance in Jupyter workflows
+- A Peers system for inviting e.g. external collaboration partners
+- Events service tuning to fit new-style VGrids
+- SECURITY: Forced HTTPS for various anonymous pages like front page
+- Configurable max concurrent SFTP sessions
+- SECURITY: Harden Apache and SFTP/WebDAVS/FTPS security settings
+- SECURITY: Harden against inadvertent ssh command access through sftpsubsys
+- Python 3 preparations
+- System notification daemon to inform users about login errors and reason
+- Unified auth logging system for IO services
+- VGrid/Workgroup, Archives, Resources and People lazy-load AJAX optimizations
+- Flexible system storage support
+- JQuery dependency updates and security fixes
+- SECURITY: account expiry and account status with account suspend etc.
+- SECURITY: Sign up authenticity verification fixes
+- Project information interface for sensitive data projects
+- Optimize various concurrent components by replacing locks with file markers
+- WSGI robustness fixes for security scanner corner cases
+- 2FA setup polish and (re)set shared key helper scripts
+- User-selected start page
+- User script support for OpenID access and 2FA session init
+- Quick Tips integration
+- Memory leak fixes in PAM/NSS modules
+- Jupyter recipe-based workflows e.g. for parameter sweeps
+- Python griddaemon hooks in PAM module for shared rate limit, notify, etc.
+- Gravatar and more user profile support
+- GDB breakpoint support in PAM/NSS
+- Rework integrated status messages for improved sharing
+- Personal Cloud instances through OpenStack
+- Brand new web user interface with inline docs and help
+- AJAXification on several web pages where actions may be slow
+- 2FA tweaks to better handle tokens and clients with limited clock skew
+- Expose more functionality through RPC
+- SECURITY: support for strict 2FA source IP enforcement
+- SECURITY: reworked rate-limit handler for persistence and fail2ban use
+- Remote Seafile integration with proxy support
+- OpenID socket tweaks to avoid client queue filling up due to stale clients
+- Apache variable to quickly switch between minimal and production mode
+- Multiple conf generator additions for more flexibility
+- Integrate privacy and policy notices on web to allow e.g. GDPR compliance
+- Archives extended to provide file checksums and improved concurrent access
+- Flexible sensitive data categories with custom fields and actions
+- Update Jupyter authentication and data post to new HeaderAuthenticator
+- Mandatory token verification in wizard before actual 2FA activation
+- DOI import to dynamically show upstream registered DOI metadata in Archives
+
 
 == 1.8.0 ==
 - Configurable password strength policy

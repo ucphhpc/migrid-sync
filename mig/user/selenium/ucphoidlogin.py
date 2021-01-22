@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ucphoidlogin - sample selenium-based web client for basic ucph openid login
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # oidping - OpenID 2.0 and Connect server availability checker backend
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #

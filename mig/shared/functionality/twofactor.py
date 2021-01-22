@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # twofactor - handle two-factor authentication with per-user shared key
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
