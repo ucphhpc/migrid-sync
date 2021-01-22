@@ -234,7 +234,7 @@ def get_workflow_job_report(configuration, vgrid):
         return (False, feedback)
 
     workflow_history = {}
-    inputs = {}
+    outputs = {}
     for (_, _, files) in os.walk(history_home):
         for filename in files:
             job_history_path = os.path.join(history_home, filename)
@@ -258,7 +258,6 @@ def get_workflow_job_report(configuration, vgrid):
             job_history['children'] = []
 
             job_id = job_history['job_id']
-            start = job_history['start']
             trigger_path = job_history['trigger_path']
 
             if trigger_path.startswith(configuration.vgrid_files_home):
@@ -267,30 +266,35 @@ def get_workflow_job_report(configuration, vgrid):
             if trigger_path.startswith(configuration.vgrid_files_writable):
                 trigger_path = trigger_path[
                                len(configuration.vgrid_files_writable):]
+            # Hide internal structure of the mig from the report
+            job_history['trigger_path'] = trigger_path
 
             workflow_history[job_id] = job_history
-            if trigger_path in inputs:
-                inputs[trigger_path].append((job_id, start))
-                inputs[trigger_path].sort(key=lambda x: x[1])
-            else:
-                inputs[trigger_path] = [(job_id, start)]
+
+            for write_path, write_time in job_history['write']:
+                if write_path in outputs:
+                    outputs[write_path].append((job_id, write_time))
+                    outputs[write_path].sort(key=lambda x: x[1], reverse=True)
+                else:
+                    outputs[write_path] = [(job_id, write_time)]
 
     for job_id, entry in workflow_history.items():
-        for write_path, write_time in entry['write']:
-            if write_path not in inputs:
-                continue
-            possible_links = inputs[write_path]
-            try:
-                # Find job input that occurred first after our write.
-                i = next(x[0] for x in enumerate(possible_links) if
-                         x[1][1] > write_time)
-                child_job_id = possible_links[i][0]
-            except StopIteration:
-                continue
-            if child_job_id not in entry['children']:
-                entry['children'].append(child_job_id)
-            child_job = workflow_history[child_job_id]
-            child_job['parents'].append(job_id)
+        trigger_path = entry['trigger_path']
+        start_time = entry['start']
+        if trigger_path not in outputs:
+            continue
+        possible_links = outputs[trigger_path]
+        try:
+            # Find job output that occurred last before our start.
+            i = next(x[0] for x in enumerate(possible_links) if
+                     x[1][1] < start_time)
+            parent_job_id = possible_links[i][0]
+        except StopIteration:
+            continue
+        if parent_job_id not in entry['parents']:
+            entry['parents'].append(parent_job_id)
+        parent_job = workflow_history[parent_job_id]
+        parent_job['children'].append(job_id)
 
     return (True, workflow_history)
 
@@ -3381,6 +3385,13 @@ if __name__ == '__main__':
             reset_workflows(conf, default_vgrid)
         if args[0] == 'job_report':
             if len(args) > 1 and args[1]:
-                get_workflow_job_report(conf, args[1])
+                status, report = get_workflow_job_report(conf, args[1])
+                print(status)
+                for job_id, job in report.items():
+                    print(job_id)
+                    print('  parents:')
+                    print('    %s' % job['parents'])
+                    print('  children:')
+                    print('    %s' % job['children'])
             else:
                 print('job report requires vgrid')
