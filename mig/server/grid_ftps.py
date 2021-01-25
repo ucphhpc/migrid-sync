@@ -219,9 +219,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
         user_abuse_hits = daemon_conf['auth_limits']['user_abuse_hits']
         proto_abuse_hits = daemon_conf['auth_limits']['proto_abuse_hits']
         max_secret_hits = daemon_conf['auth_limits']['max_secret_hits']
-        logger.debug("Run authentication of %s from %s" % (username,
-                                                           client_ip))
-        logger.info("refresh user %s" % username)
+        logger.debug("Authentication for %s from %s" % (username, client_ip))
         logger.debug("daemon_conf['allow_password']: %s" %
                      daemon_conf['allow_password'])
 
@@ -252,7 +250,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
             if configuration.site_enable_sharelinks and \
                     possible_sharelink_id(configuration, username):
                 strict_password_policy = False
-            logger.debug("refresh user %s" % username)
+            logger.info("refresh login for %s" % username)
             self._update_logins(configuration, username)
             if not self.has_user(username):
                 if not os.path.islink(
@@ -262,6 +260,9 @@ class MiGUserAuthorizer(DummyAuthorizer):
             else:
                 # list of User login objects for username
                 entries = [self.user_table[username]]
+            # NOTE: always check accessible unless invalid_user to make sure
+            #       we don't report expired for active users with auth disabled
+            if not invalid_user:
                 account_accessible = check_account_accessible(configuration,
                                                               username, 'ftps')
             for entry in entries:
