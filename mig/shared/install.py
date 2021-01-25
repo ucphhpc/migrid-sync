@@ -391,7 +391,9 @@ def generate_confs(
     user_dict['__OPENSSH_VERSION__'] = openssh_version
     user_dict['__ENABLE_SFTP__'] = str(enable_sftp)
     user_dict['__ENABLE_SFTP_SUBSYS__'] = str(enable_sftp_subsys)
-    user_dict['__SFTP_SUBSYS_AUTH_PROCS__'] = str(sftp_subsys_auth_procs)
+    user_dict['__SFTP_SUBSYS_START_AUTH_PROCS__'] = str(sftp_subsys_auth_procs)
+    user_dict['__SFTP_SUBSYS_MAX_AUTH_PROCS__'] = str(
+        max(4*sftp_subsys_auth_procs, 100))
     user_dict['__ENABLE_DAVS__'] = str(enable_davs)
     user_dict['__ENABLE_FTPS__'] = str(enable_ftps)
     user_dict['__ENABLE_WSGI__'] = str(enable_wsgi)

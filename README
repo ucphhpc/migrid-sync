@@ -716,7 +716,7 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --skin=erda-ucph-science --short_title=ERDA \
                    --vgrid_label=Workgroup --apache_worker_procs=2048 \
                    --davs_port=8020 --openid_port=8001 \
-                   --wsgi_procs=100 --sftp_subsys_auth_procs=25 \
+                   --wsgi_procs=100 --sftp_subsys_auth_procs=50 \
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
 
 and a similar setup with CentOS 7.x, apache 2.4, WSGI (default web), 
