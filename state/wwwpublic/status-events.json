@@ -1,6 +1,49 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2021-02-03T16:00:00+01:00", 
+    "systems": [
+        "SIF"
+    ],
+    "announce_start": "2021-01-29T10:00:00+01:00",
+    "title": {
+      "EN": "Planned SIF Maintenance",
+      "DK": "Planlagt SIF"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2021-02-04T08:00:00+01:00",
+    "description": {
+      "EN": "Update and general maintenance of SIF to apply pending system errata and introduce a new feature to allow reassigning project ownership to another employee. The work will involve down-time for low-level updates to complete. Thus all services will be temporarily unavailable one or more times during the maintenance window. Status updates will follow here.",
+      "DK": "Opdatering og generel vedligeholdelse af SIF for at lægge systemrettelser ind og introducere en ny funktion til at overdrage projektejerskab til en anden ansat. Arbejdet kræver nedetid til grundlæggende systemopdateringer, og der vil derfor forekomme udfald i alle services undervejs. Yderligere status følger her."
+    },
+    "announce_end": "2021-02-05T10:00:00+01:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2021-01-27T20:00:00+01:00", 
+    "systems": [
+        "ERDA", "IDMC"
+    ], 
+    "announce_start": "2021-01-27T20:00:00+01:00", 
+    "title": {
+      "EN": "Emergency DAG & HEL Maintenance and outages", 
+      "DK": "Nødvedligehold og udfald på DAG & HEL"
+    }, 
+    "services": [
+        "DAG",
+        "HEL"
+    ], 
+    "work_end": "2021-01-27T20:20:00+01:00", 
+    "description": {
+      "EN": "Due to a critical security issue in one of the operating system packages DAG and HEL need to be updated and redeployed. This will result in a brief outage and may break active sessions. We are sorry for the inconvenience, but security comes first. The update was quickly completed and the services are back online. Users with active sessions may need to logout of and stop their Jupyter servers then reload the main Jupyter page and Start DAG and so forth again.", 
+      "DK": "P.g.a. et kritisk sikkerhedsproblem i en operativsystem-komponent er det nødvendigt at opdatere og genstarte DAG og HEL. Det vil medføre udfald på igangværende sessioner. Vi beklager generne men sikkerhed kommer altid først. Opdateringen er gennemført og services er tilbage i drift. Brugere med aktive Jupyter sessioner kan være nødt til at logge ud og stoppe deres Jupyter server for derefter at genindlæse Jupyter-forsiden og klikke Start DAG o.s.v. igen."
+    }, 
+    "announce_end": "2020-01-30T10:00:00+01:00"
+  },
+  {
+    "status": "AUTO", 
     "work_start": "2020-12-29T10:00:00+01:00", 
     "systems": [
         "ERDA", "IDMC"
@@ -13,12 +56,12 @@
     "services": [
         "DAG", "MODI", "HEL"
     ], 
-    "work_end": "2021-01-04T16:00:00+01:00", 
+    "work_end": "2021-01-08T16:00:00+01:00", 
     "description": {
       "EN": "We are experiencing serious power instabilities since the recent power outage in the HPC Center. Compute nodes are coming and going and causing instability to DAG/MODI/HEL Jupyter sessions. We probably need electrician staff to investigate and we have no clear schedule yet. More info to follow.",
       "DK": "Vi oplever kraftige udsving på strømforsyningen siden strømudfaldet forleden. Jupyter beregningsknuderne kommer og går temmelig tilfældigt og det fører til ustabile DAG/MODI/HEL-sessioner. Vi må have nok have en elektriker til at se på det og har endnu ingen tidsramme. Mere info følger."
     }, 
-    "announce_end": "2021-01-04T16:00:00+01:00"
+    "announce_end": "2021-01-08T16:00:00+01:00"
   },
   {
     "status": "AUTO", 
@@ -113,8 +156,8 @@
     ],
     "work_end": "2020-11-25T21:50:00+01:00",
     "description": {
-      "EN": "Update and general maintenance of ERDA, IDMC and SIF to apply pending system errata and replace a failing memory module in a backend storage host. We will use the opportunity to apply pending updates on the Jupyter DAG machines, except the specialized GPU ones. The work will involve down-time for hiardware replacement and low-level updates to complete. Thus all services will be temporarily unavailable one or more times during the maintenance window. We ran into some boot issues with the backend storagehardware to delay the return but ERDA Seafile returned before 18 and everything else was back online a bit before 22 o'clock.",
-      "DK": "Opdatering og generel vedligeholdelse af ERDA, IDMC og SIF for at lægge systemrettelser ind og skifte et ustabilt hukommelsesmodul i en af datalagermaskinerne. Ved samme lejlighed vil vi opgradere Jupyter DAG maskinerne, bortset fra de specialiserede med GPU. Arbejdet kræver nedetid til hardwareskift og grundlæggende systemopdateringer, og der vil derfor forekomme udfald i alle services undervejs. Virendte ind i opstartsproblemer på backend-lageret men ERDA Seafile var opppe igen inden 18 og alt inden kort inden kl 22."
+      "EN": "Update and general maintenance of ERDA, IDMC and SIF to apply pending system errata and replace a failing memory module in a backend storage host. We will use the opportunity to apply pending updates on the Jupyter DAG machines, except the specialized GPU ones. The work will involve down-time for hardware replacement and low-level updates to complete. Thus all services will be temporarily unavailable one or more times during the maintenance window. We ran into some boot issues with the backend storagehardware to delay the return but ERDA Seafile returned before 18 and everything else was back online a bit before 22 o'clock.",
+      "DK": "Opdatering og generel vedligeholdelse af ERDA, IDMC og SIF for at lægge systemrettelser ind og skifte et ustabilt hukommelsesmodul i en af datalagermaskinerne. Ved samme lejlighed vil vi opgradere Jupyter DAG maskinerne, bortset fra de specialiserede med GPU. Arbejdet kræver nedetid til hardwareskift og grundlæggende systemopdateringer, og der vil derfor forekomme udfald i alle services undervejs. Vi rendte ind i opstartsproblemer på backend-lageret men ERDA Seafile var opppe igen inden 18 og alt inden kort inden kl 22."
     },
     "announce_end": "2020-11-26T12:00:00+01:00"
   },
