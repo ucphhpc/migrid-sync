@@ -284,8 +284,10 @@ def create_user(
                 _logger.warning("could not validate %s as peer for %s" %
                                 (sponsor_id, client_id))
                 continue
+            # NOTE: adjust expire date to mean end of that day
             peer_expire = datetime.datetime.strptime(
-                peer_entry.get('expire', 0), '%Y-%m-%d')
+                peer_entry.get('expire', 0), '%Y-%m-%d') + \
+                datetime.timedelta(days=1, microseconds=-1)
             client_expire = datetime.datetime.fromtimestamp(user['expire'])
             if peer_expire < client_expire:
                 warn_msg = "expire %s vs %s prevents %s as peer for %s" % \
