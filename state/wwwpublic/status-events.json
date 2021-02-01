@@ -28,6 +28,27 @@
     ], 
     "announce_start": "2021-01-27T20:00:00+01:00", 
     "title": {
+      "EN": "Emergency MODI Maintenance and outages", 
+      "DK": "Nødvedligehold og udfald på MODI"
+    }, 
+    "services": [
+        "MODI"
+    ], 
+    "work_end": "2021-01-30T10:00:00+01:00", 
+    "description": {
+      "EN": "Due to a critical security issue in one of the operating system packages MODI with all nodes needs to be updated and redeployed. This will result in outages and may break active sessions. We are sorry for the inconvenience, but security comes first. The update itself was rather quick but caused some fallout so the work stretched over multiple days with partial outages along the way. It was completed on Saturday morning and the service is back online. Users with active sessions may need to logout of and stop their Jupyter servers then reload the main Jupyter page and Start MODI and so forth again.", 
+      "DK": "P.g.a. et kritisk sikkerhedsproblem i en operativsystem-komponent er det nødvendigt at opdatere og genstarte MODI og dens regneknuder. Det vil medføre udfald og forstyrre igangværende sessioner. Vi beklager generne men sikkerhed kommer altid først. Opdateringen tog i første omgang kun kort men medførte andre komplikationer. Så det endte med at trække ud i flere dage med delvise udfald inden vi blev færdige lørdag morgen, og servicen er nu tilbage i drift. Brugere med aktive Jupyter sessioner kan være nødt til at logge ud og stoppe deres Jupyter server for derefter at genindlæse Jupyter-forsiden og klikke Start MODI o.s.v. igen."
+    }, 
+    "announce_end": "2020-02-02T10:00:00+01:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2021-01-27T20:00:00+01:00", 
+    "systems": [
+        "ERDA", "IDMC"
+    ], 
+    "announce_start": "2021-01-27T20:00:00+01:00", 
+    "title": {
       "EN": "Emergency DAG & HEL Maintenance and outages", 
       "DK": "Nødvedligehold og udfald på DAG & HEL"
     }, 
