@@ -7,29 +7,50 @@
               "ref_name": "Workzone Number",
               "ref_pattern": "[0-9]{3}-[0-9]{4}/[0-9]{2}-[0-9]{4}",
               "ref_help": "The workzone number is the journal number that you received from the Faculty Secretariat in the email together with your letter of acceptance in regard to processing personal data. If you do not have a workzone number please contact the <a href=https://kunet.ku.dk/work-areas/research/data/personal-data/Pages/default.aspx target=_blank>Faculty Secretariat</a> for guidance."
-             }],
+             }
+         ],
          "invite_user": [
-             {
-                 "ref_id": "workzone_id",
-                 "ref_name": "Workzone Number",
-                 "ref_pattern": "[0-9]{3}-[0-9]{4}/[0-9]{2}-[0-9]{4}",
-                 "ref_help": "The workzone number is the journal number that you received from the Faculty Secretariat in the email together with your letter of acceptance in regard to sharing personal data. If you do not have a workzone number please contact the <a href=https://kunet.ku.dk/work-areas/research/data/personal-data/Pages/default.aspx target=_blank>Faculty Secretariat</a> for guidance."
+             {"ref_id": "workzone_id",
+              "ref_name": "Workzone Number",
+              "ref_pattern": "[0-9]{3}-[0-9]{4}/[0-9]{2}-[0-9]{4}",
+              "ref_help": "The workzone number is the journal number that you received from the Faculty Secretariat in the email together with your letter of acceptance in regard to sharing personal data. If you do not have a workzone number please contact the <a href=https://kunet.ku.dk/work-areas/research/data/personal-data/Pages/default.aspx target=_blank>Faculty Secretariat</a> for guidance."
              }, 
-             {
-                 "ref_id": "user_terms",
-                 "ref_type": "checkbox",
-                 "ref_text": "I confirm that I am familiar and comply with the EU GDPR as well as UCPH internal procedures in regard to <a href='https://kunet.ku.dk/work-areas/research/data/personal-data/dataprocessors/Pages/default.aspx' target=_blank>data processing</a> and <a href='https://kunet.ku.dk/work-areas/research/data/personal-data/disclosure/Pages/default.aspx' target=_blank>transfer and disclosure</a> of personal data.",
-                 "ref_name": "Sharing Rules and Regulations",
-                 "ref_help": "To share personal data with anyone you need to be aware of and in compliance with both internal and external rules and regulations. Please refer to the details in the UCPH rules for <a href=https://kunet.ku.dk/work-areas/research/data/personal-data/disclosure/Pages/default.aspx target=_blank>sharing personal data</a> before you share this project with anyone. Please note that if the invited participant is an external data processor, kindly see the UCPH rules for <a href=https://kunet.ku.dk/work-areas/research/data/personal-data/dataprocessors/Pages/default.aspx target=_blank>data processors</a>."
+             {"ref_id": "user_terms",
+              "ref_type": "checkbox",
+              "ref_text": "I confirm that I am familiar and comply with the EU GDPR as well as UCPH internal procedures in regard to <a href='https://kunet.ku.dk/work-areas/research/data/personal-data/dataprocessors/Pages/default.aspx' target=_blank>data processing</a> and <a href='https://kunet.ku.dk/work-areas/research/data/personal-data/disclosure/Pages/default.aspx' target=_blank>transfer and disclosure</a> of personal data.",
+              "ref_name": "Sharing Rules and Regulations",
+              "ref_help": "To share personal data with anyone you need to confirm that you are aware of and in compliance with both internal and external rules and regulations. Please refer to the details in the UCPH rules for <a href=https://kunet.ku.dk/work-areas/research/data/personal-data/disclosure/Pages/default.aspx target=_blank>sharing personal data</a> before you share this project with anyone. Please note that if the invited participant is an external data processor, kindly see the UCPH rules for <a href=https://kunet.ku.dk/work-areas/research/data/personal-data/dataprocessors/Pages/default.aspx target=_blank>data processors</a>."
              }
          ],
          "accept_user": [],
-         "remove_user": []
+         "remove_user": [],
+         "promote_to_owner": [
+             {"ref_id": "workzone_id",
+              "ref_name": "Workzone Number",
+              "ref_pattern": "[0-9]{3}-[0-9]{4}/[0-9]{2}-[0-9]{4}",
+              "ref_help": "The workzone number is the journal number that you received from the Faculty Secretariat in the email together with your letter of acceptance in regard to processing personal data. If you do not have a workzone number please contact the <a href=https://kunet.ku.dk/work-areas/research/data/personal-data/Pages/default.aspx target=_blank>Faculty Secretariat</a> for guidance."
+             },
+             {"ref_id": "user_terms",
+              "ref_type": "checkbox",
+              "ref_text": "I confirm that I am familiar and comply with the EU GDPR as well as UCPH internal procedures in regard to <a href='https://kunet.ku.dk/work-areas/research/data/personal-data/dataprocessors/Pages/default.aspx' target=_blank>data processing</a> and <a href='https://kunet.ku.dk/work-areas/research/data/personal-data/disclosure/Pages/default.aspx' target=_blank>transfer and disclosure</a> of personal data.",
+              "ref_name": "Rules and Regulations",
+              "ref_help": "To reassign ownership (change the data responsible) to the project you need to confirm that you are aware of and in compliance with both internal and external rules and regulations. Please refer to the details in the UCPH rules for <a href=https://kunet.ku.dk/work-areas/research/data/personal-data/disclosure/Pages/default.aspx target=_blank>sharing personal data</a> before you assign this project to anyone as project owner. Please note that you can only reassign ownership to another UCPH employee. Changes to the project need to be registered if the assigned project contains personal data. Changes are registered <a href=https://kunet.ku.dk/work-areas/research/data/personal-data/personal-data-in-research-projects-and-biobanks/Pages/default.aspx target=_blank>here</a>. If you have questions regarding the reassignment please contact the <a href=https://kunet.ku.dk/work-areas/research/data/personal-data/disclosure/Pages/default.aspx target=_blank>Faculty secretariat</a>."
+             }
+         ],
+         "demote_owner": [
+             {"ref_id": "workzone_id",
+              "ref_name": "Workzone Number",
+              "ref_pattern": "[0-9]{3}-[0-9]{4}/[0-9]{2}-[0-9]{4}",
+              "ref_help": "The workzone number is the journal number that you received from the Faculty Secretariat in the email together with your letter of acceptance in regard to processing personal data. If you do not have a workzone number please contact the <a href=https://kunet.ku.dk/work-areas/research/data/personal-data/Pages/default.aspx target=_blank>Faculty Secretariat</a> for guidance."
+             }
+         ]
      },
      "create_project_notify_template": "notify-create-personal_data.txt",
      "invite_user_notify_template": "notify-invite_user-personal_data.txt",
      "accept_user_notify_template": "",
-     "remove_user_notify_template": ""
+     "remove_user_notify_template": "",
+     "promote_to_owner_notify_template": "notify-promote_to_owner-personal_data.txt",
+     "demote_owner_notify_template": "notify-demote_owner-personal_data.txt"
     },
     {"category_id": "agreement_data",
      "category_title": "Data Subject to an Agreement",
@@ -42,23 +63,55 @@
              }
          ],
          "invite_user": [
-             {
-                 "ref_id": "user_terms",
-                 "ref_type": "checkbox",
-                 "ref_text": "I confirm that I comply with the signed agreement and am familiar with the UCPH internal procedures in regard to <a href='https://kunet.ku.dk/work-areas/research/data/data-management-at-UCPH/Pages/default.aspx' target=_blank>disclosure of sensitive data</a>.",
-                 "ref_name": "Sharing Rules and Regulations",
-                 "ref_help": "To share sensitive data with anyone you need to be aware of and in compliance with both internal and external rules and regulations. Please refer to the details in the UCPH rules for <a href=https://kunet.ku.dk/work-areas/research/data/data-management-at-UCPH/Pages/default.aspx target=_blank>sharing data subject to an agreement</a> before you share this project with anyone."
+             {"ref_id": "user_terms",
+              "ref_type": "checkbox",
+              "ref_text": "I confirm that I comply with the signed agreement and am familiar with the UCPH internal procedures in regard to <a href='https://kunet.ku.dk/work-areas/research/data/data-management-at-UCPH/Pages/default.aspx' target=_blank>disclosure of sensitive data</a>.",
+              "ref_name": "Sharing Rules and Regulations",
+              "ref_help": "To share sensitive data with anyone you need to confirm that you are aware of and in compliance with both internal and external rules and regulations. Please refer to the details in the UCPH rules for <a href=https://kunet.ku.dk/work-areas/research/data/data-management-at-UCPH/Pages/default.aspx target=_blank>sharing data subject to an agreement</a> before you share this project with anyone."
              }
          ], 
-         "accept_user": [], "remove_user": []},
-     "create_project_notify_template": "notify-create-general_data.txt"
+         "accept_user": [],
+         "remove_user": [],
+         "promote_to_owner": [
+            {"ref_id": "workzone_id",
+             "ref_name": "Workzone Number",
+             "ref_pattern": "[0-9]{3}-[0-9]{4}/[0-9]{2}-[0-9]{4}",
+             "ref_help": "The workzone number is the journal number given by the Tech Trans Office in connection with entering the agreement. If you do not have a workzone number please contact the <a href=https://kunet.ku.dk/work-areas/research/innovation_and_business/Pages/default.aspx target=_blank>Tech Transfer Office</a> for guidance."
+            },
+            {"ref_id": "user_terms",
+              "ref_type": "checkbox",
+              "ref_text": "I confirm that I comply with the signed agreement and am familiar with the UCPH internal procedures in regard to <a href='https://kunet.ku.dk/work-areas/research/data/data-management-at-UCPH/Pages/default.aspx' target=_blank>disclosure of sensitive data</a>.",
+              "ref_name": "Rules and Regulations",
+              "ref_help": "To reassign ownership (change the data responsible) to the project you need to confirm that you are aware of and in compliance with both internal and external rules and regulations. Please refer to the details in the UCPH rules for <a href=https://kunet.ku.dk/work-areas/research/data/personal-data/disclosure/Pages/default.aspx target=_blank>sharing personal data</a> before you assign this project to anyone as project owner. Please note that you can only reassign ownership to another UCPH employee. Changes to the project need to be registered if the assigned project contains personal data. Changes are registered <a href=https://kunet.ku.dk/work-areas/research/data/personal-data/personal-data-in-research-projects-and-biobanks/Pages/default.aspx target=_blank>here</a>. If you have questions regarding the reassignment please contact the <a href=https://kunet.ku.dk/work-areas/research/data/personal-data/disclosure/Pages/default.aspx target=_blank>Faculty secretariat</a>."
+            }
+        ],
+         "demote_owner": [
+            {"ref_id": "workzone_id",
+             "ref_name": "Workzone Number",
+             "ref_pattern": "[0-9]{3}-[0-9]{4}/[0-9]{2}-[0-9]{4}",
+             "ref_help": "The workzone number is the journal number given by the Tech Trans Office in connection with entering the agreement. If you do not have a workzone number please contact the <a href=https://kunet.ku.dk/work-areas/research/innovation_and_business/Pages/default.aspx target=_blank>Tech Transfer Office</a> for guidance."
+            }
+        ]
+     },
+     "create_project_notify_template": "notify-create-agreement_data.txt",
+     "promote_to_owner_notify_template": "notify-promote_to_owner-agreement_data.txt",
+     "demote_owner_notify_template": "notify-demote_owner-agreement_data.txt"
     },
     {"category_id": "general_data",
      "category_title": "General Sensitive Data",
-     "references": {"create_project": [], "invite_user": [], "accept_user": [], "remove_user": []},
+     "references": {
+         "create_project": [],
+         "invite_user": [],
+         "accept_user": [],
+         "remove_user": [],
+         "promote_to_owner": [],
+         "demote_owner": []
+     },
      "create_project_notify_template": "notify-create-general_data.txt",
      "invite_user_notify_template": "notify-invite_user-general_data.txt",
      "accept_user_notify_template": "notify-accept_user-general_data.txt",
-     "remove_user_notify_template": "notify-remove_user-general_data.txt"     
+     "remove_user_notify_template": "notify-remove_user-general_data.txt",
+     "promote_to_owner_notify_template": "notify-promote_to_owner-general_data.txt",
+     "demote_owner_notify_template": "notify-demote_owner-general_data.txt"
     }
 ]
