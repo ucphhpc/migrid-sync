@@ -685,7 +685,7 @@ def __send_project_demote_owner_confirmation(configuration,
                                              user,
                                              project_name,
                                              category_dict):
-    """Send project remove *user* confirmation to *login* and GDP admins"""
+    """Send project demote *user* confirmation to *login* and GDP admins"""
     return __send_project_action_confirmation(configuration,
                                               "demote_owner",
                                               login, user, project_name,
@@ -697,7 +697,7 @@ def __send_project_promote_to_owner_confirmation(configuration,
                                                  user,
                                                  project_name,
                                                  category_dict):
-    """Send project remove *user* confirmation to *login* and GDP admins"""
+    """Send project promote *user* confirmation to *login* and GDP admins"""
     return __send_project_action_confirmation(configuration,
                                               "promote_to_owner",
                                               login, user, project_name,
@@ -2376,7 +2376,7 @@ def project_promote_to_owner(
                                                      recursive=False)
     if not owner_status:
         status = False
-        template = ": Could not retreive owners list"
+        template = ": Could not retrieve owners list"
         err_msg += template
         _logger.error(log_err_msg + template
                       + ": %s" % vgrid_owners_list)
@@ -2437,7 +2437,7 @@ def project_promote_to_owner(
 
     if status:
 
-        # Retreieve promoter project entry
+        # Retrieve promoter project entry
 
         (_, db_lock_filepath) = __user_db_filepath(configuration)
         flock = acquire_file_lock(db_lock_filepath)
@@ -2454,7 +2454,7 @@ def project_promote_to_owner(
 
     if status:
 
-        # Retreieve promotee project entry
+        # Retrieve promotee project entry
 
         promotee_project = user_db.get(promotee_client_id, {}).get(
             'projects', {}).get(project_name, {})
@@ -2474,7 +2474,7 @@ def project_promote_to_owner(
                                                          recursive=False)
         if not owner_status:
             status = False
-            template = ": Could not retreive owners list"
+            template = ": Could not retrieve owners list"
             err_msg += template
             _logger.error(log_err_msg + template
                           + ": %s" % vgrid_owners_list)
@@ -2499,7 +2499,7 @@ def project_promote_to_owner(
 
     if status:
 
-        # Retreive project actions
+        # retrieve project actions
 
         category_meta = project.get('category_meta', {})
         project_actions = category_meta.get('actions', [])
@@ -2583,7 +2583,7 @@ def project_promote_to_owner(
 
         # Send notification
 
-        _logger.info("handle remove notify")
+        _logger.info("handle promote notify")
         login = __short_id_from_client_id(configuration, client_id)
         promotee_login = __short_id_from_client_id(
             configuration, promotee_client_id)
@@ -2603,7 +2603,7 @@ def project_promote_to_owner(
     if flock is not None:
         release_file_lock(flock)
 
-    # If errors occured then roll back to original vgrid owners
+    # If errors occurred then roll back to original vgrid owners
 
     if not status:
 
@@ -2631,7 +2631,7 @@ def project_demote_owner(
         demotee_client_id,
         project_name,
         category_dict):
-    """Demote a project owner to memeber"""
+    """Demote a project owner to member"""
     flock = None
     status = True
 
@@ -2660,7 +2660,7 @@ def project_demote_owner(
                                                      recursive=False)
     if not owner_status:
         status = False
-        template = ": Could not retreive owners list"
+        template = ": Could not retrieve owners list"
         err_msg += template
         _logger.error(log_err_msg + template
                       + ": %s" % vgrid_owners_list)
@@ -2700,7 +2700,7 @@ def project_demote_owner(
 
     if status:
 
-        # Retreieve demoter project entry
+        # Retrieve demoter project entry
 
         (_, db_lock_filepath) = __user_db_filepath(configuration)
         flock = acquire_file_lock(db_lock_filepath)
@@ -2710,14 +2710,14 @@ def project_demote_owner(
             'projects', {}).get(project_name, {})
         if not project:
             status = False
-            template = ": missing project for promoter"
+            template = ": missing project for demoter"
             err_msg += template
             _logger.error(log_err_msg + template
                           + ": for %r" % client_id)
 
     if status:
 
-        # Retreieve demotee project entry
+        # Retrieve demotee project entry
 
         demotee_project = user_db.get(demotee_client_id, {}).get(
             'projects', {}).get(project_name, {})
@@ -2748,7 +2748,7 @@ def project_demote_owner(
 
     if status:
 
-        # Retreive project actions
+        # retrieve project actions
 
         category_meta = project.get('category_meta', {})
         project_actions = category_meta.get('actions', [])
@@ -2823,13 +2823,13 @@ def project_demote_owner(
         if not log_status:
             status = False
             _logger.error(log_err_msg
-                          + ": Promote user project log failed ")
+                          + ": Demote user project log failed ")
 
     if status:
 
         # Send notification
 
-        _logger.info("handle remove notify")
+        _logger.info("handle demote notify")
         login = __short_id_from_client_id(configuration, client_id)
 
         demotee_login = login
@@ -2844,14 +2844,14 @@ def project_demote_owner(
                                                                ref_dict)
         if not send_status:
             status = False
-            template = ": Failed to send promote user confirmation email"
+            template = ": Failed to send demote user confirmation email"
             err_msg += template
             _logger.error(log_err_msg + template)
 
     if flock is not None:
         release_file_lock(flock)
 
-    # If errors occured then roll back to original vgrid owners
+    # If errors occurred then roll back to original vgrid owners
 
     if not status:
 
