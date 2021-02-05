@@ -1,6 +1,27 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2021-02-04T22:03:00+01:00", 
+    "systems": [
+        "ERDA", "IDMC"
+    ], 
+    "announce_start": "2021-02-05T08:00:00+01:00", 
+    "title": {
+      "EN": "Power Outage - MODI Offline", 
+      "DK": "Strømudfald - MODI nede"
+    }, 
+    "services": [
+      "MODI"
+    ], 
+    "work_end": "2021-02-05T16:00:00+01:00", 
+    "description": {
+      "EN": "There was a power glitch in the greater Copenhagen area also affecting the HPC Center and in particular the physical hosts not on UPS (emergency power). We experienced MODI front end and compute nodes failing. The hosts are back online and we are working on getting them back in production.",
+      "DK": "Der var et udfald i strømmen i Storkøbenhavn, som også berørte HPC Centeret og specielt maskiner uden UPS (nødstrøm). Vi oplevede at MODI front end og regneknuder gik ned. Maskinerne er startet igen og vi arbejder på at få dem tilbage i almindelig drift."
+    }, 
+    "announce_end": "2021-02-06T10:00:00+01:00"
+  },
+  {
+    "status": "AUTO", 
     "work_start": "2021-02-03T16:00:00+01:00", 
     "systems": [
         "SIF"
@@ -13,10 +34,10 @@
     "services": [
       "ALL"
     ],
-    "work_end": "2021-02-04T08:00:00+01:00",
+    "work_end": "2021-02-03T20:00:00+01:00",
     "description": {
-      "EN": "Update and general maintenance of SIF to apply pending system errata and introduce a new feature to allow reassigning project ownership to another employee. The work will involve down-time for low-level updates to complete. Thus all services will be temporarily unavailable one or more times during the maintenance window. Status updates will follow here.",
-      "DK": "Opdatering og generel vedligeholdelse af SIF for at lægge systemrettelser ind og introducere en ny funktion til at overdrage projektejerskab til en anden ansat. Arbejdet kræver nedetid til grundlæggende systemopdateringer, og der vil derfor forekomme udfald i alle services undervejs. Yderligere status følger her."
+      "EN": "Update and general maintenance of SIF to apply pending system errata and introduce a new feature to allow reassigning project ownership to another employee. The work will involve down-time for low-level updates to complete. Thus all services will be temporarily unavailable one or more times during the maintenance window. The upgrade commenced according to plan and all services are back online.",
+      "DK": "Opdatering og generel vedligeholdelse af SIF for at lægge systemrettelser ind og introducere en ny funktion til at overdrage projektejerskab til en anden ansat. Arbejdet kræver nedetid til grundlæggende systemopdateringer, og der vil derfor forekomme udfald i alle services undervejs. Opdateringen forløb planmæssigt og alle services er tilbage i almindelig drift."
     },
     "announce_end": "2021-02-05T10:00:00+01:00"
   },
