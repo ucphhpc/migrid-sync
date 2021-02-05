@@ -1160,6 +1160,13 @@ def delete_user(
     if verbose:
         print('User ID: %s\n' % client_id)
 
+    if not force:
+        delete_answer = raw_input(
+            "Really PERMANENTLY delete %r including user home data? [y/N] " %
+            client_id)
+        if not delete_answer.lower().startswith('y'):
+            raise Exception("Aborted removal of %s from user DB" % client_id)
+
     if do_lock:
         flock = lock_user_db(db_path)
 
