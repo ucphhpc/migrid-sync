@@ -665,7 +665,8 @@ def curl_chain_login_steps(
     relative_url="''",
     post_data="''",
     migoid_base='',
-    extoid_base=''
+    extoid_base='',
+    twofactor_url='',
 ):
     """Run a series of curl commands to initialize a openid login session using
     relative_url as the target URL to trigger OpenID and any 2-Factor Auth
@@ -680,11 +681,12 @@ def curl_chain_login_steps(
         s += """
     extoid_base='%s'
     migoid_base='%s'
-    home_url=%s
+    home_url='%s'
     base_val=''
-    url_val=%s
+    url_val='%s'
     post_val=''
-""" % (extoid_base, migoid_base, relative_url, relative_url)
+    twofactor_url='%s'
+""" % (extoid_base, migoid_base, relative_url, relative_url, twofactor_url)
         base_val = '${base_val}'
         url_val = '${url_val}'
         post_val = '${post_val}'
@@ -692,11 +694,12 @@ def curl_chain_login_steps(
         s += """
     extoid_base = '%s'
     migoid_base = '%s'
-    home_url = %s
+    home_url = '%s'
     base_val = ''
-    url_val = %s
+    url_val = '%s'
     post_val = ''
-""" % (extoid_base, migoid_base, relative_url, relative_url)
+    twofactor_url='%s'
+""" % (extoid_base, migoid_base, relative_url, relative_url, twofactor_url)
         base_val = 'base_val'
         url_val = 'url_val'
         post_val = 'post_val'
@@ -706,11 +709,24 @@ def curl_chain_login_steps(
 
     if lang == 'sh':
         s += """
-    # NOTE: curl_post_flex sets return val in $exit_code and curl output to stdout
-    out=$(curl_post_flex \"$user_conf\" \"$base_val\" \"$url_val\" \"$post_val\" '' '')
-    if echo $out | grep -q \"$extoid_base\" ; then
-        # Extract CSRF token
-        ct_value=$(echo $out | sed 's@.* name=\"ct\" value=\"\([0-9a-f]*\)\".*@\\1@g')
+    # NOTE: curl_post_flex sets return val in $exit_code 
+    #       and curl output to stdout
+    out=$(curl_post_flex \"$user_conf\" \\
+                        \"$base_val\" \\
+                        \"$url_val\" \\
+                        \"$post_val\" \\
+                        '' '')
+    
+    # Use CSRF token to check if logged in
+    csrf_value=$(echo $out \\
+        | sed "s@.* name='_csrf' value='\\([0-9a-f]*\\)'.*@\\1@g")
+    if [ ${#csrf_value} -eq 64 ]; then
+        echo "Already logged in!"
+        exit 0
+    elif echo $out | grep -q \"$extoid_base\" ; then
+        # Extract OpenID CSRF token
+        ct_value=$(echo $out \\
+            | sed 's@.* name=\"ct\" value=\"\([0-9a-f]*\)\".*@\\1@g')
         if [ ${#ct_value} -ne 40 ]; then
             echo 'Could not extract extoid CSRF token value'
             exit 1
@@ -731,7 +747,12 @@ def curl_chain_login_steps(
         base_val=\"${extoid_base}/\" 
         url_val=\"processTrustResult\" 
         post_val=\"user=${username}&pwd=${password}&ct=${ct_value};allow=Yes\"
-        out=$(curl_post_flex \"$user_conf\" \"$base_val\" \"$url_val\" \"$post_val\" '' '')
+        out=$(curl_post_flex \"$user_conf\" \\
+                            \"$base_val\" \\
+                            \"$url_val\" \\
+                            \"$post_val\" \\
+                            '' \\
+                            '')
     elif echo $out | grep -q \"$(dirname ${migoid_base})\" ; then
         # No CSRF token here
         while [ -z \"$username\" ]; do
@@ -749,49 +770,69 @@ def curl_chain_login_steps(
         base_val=\"${migoid_base}/\"
         url_val=\"allow\"
         post_val=\"identifier=${username}&password=${password}&remember=yes&yes=yes\"
-        out=$(curl_post_flex \"$user_conf\" \"$base_val\" \"$url_val\" \"$post_val\" '' '')
+        out=$(curl_post_flex \"$user_conf\" \\
+                            \"$base_val\" \\
+                            \"$url_val\" \\
+                            \"$post_val\" \\
+                            '' \\
+                            '' \\
+                            2>/dev/null)
         # TODO: curl fails hard with retval 22 and 404 Not found on login error
         if [ -z \"$out\" ]; then
             out='Authentication failed'
         fi
-    elif echo $out | grep -q 'Home' ; then
-        echo 'Already completely logged in!'
-        exit 0
-    elif echo $out | grep -q '2-Factor Authentication' ; then
-        echo 'Already logged in to OpenID'
-    else
-        echo 'Unexpected OpenID redirect result - trying to proceed'
-        #echo 'DEBUG: ' $out
     fi
 
-    if echo $out |grep -q 'Authentication failed' ; then
+    if echo $out | grep -q 'Authentication failed' ; then
         echo 'OpenID login failed!'
         exit 1
     fi
+    if echo $out | grep -q 'Invalid username' ; then    
+        echo 'Invalid OpenID username!'
+        exit 1
+    fi    
+    if echo $out | grep -q 'Invalid password' ; then    
+        echo 'Invalid OpenID password!'
+        exit 1
+    fi
 
-    # Optional 2FA at this point
+    # Update CSRF value
+    csrf_value=$(echo $out \\
+        | sed "s@.* name='_csrf' value='\\([0-9a-f]*\\)'.*@\\1@g")
+
+    # Optional 2FA at this point if enabled and not already logged in
     twofactor_enabled=0
-    for attempt in 1 2 3; do
-        if echo $out | grep -q '2-Factor Authentication' ; then
-            twofactor_enabled=1
-            token=''
-            while [ -z \"$token\" ]; do
-                echo -n '2-Factor Auth token: '
-                read token
-            done
-            base_val=\"${mig_server}/\"
-            # TODO: extract url from out instead?
-            url_val=\"wsgi-bin/twofactor.py\"
-            post_val=\"output_format=txt&action=auth&token=${token}&redirect_url=/${home_url}\"
-            out=$(curl_post_flex \"$user_conf\" \"$base_val\" \"$url_val\" \"$post_val\" '' '')
-        else
-            #echo 'DEBUG: past 2FA auth'
-            #echo \"DEBUG: $out\"
-            break
-        fi
-    done
+    if [ -n \"${twofactor_url}\" ]; then
+        twofactor_enabled=1
+        for attempt in 1 2 3; do
+            [ ${#csrf_value} -ne 64 ] \\
+                    && if echo $out \\
+                        | grep -q 'div id=\"twofactorstatus\"' ; then
+                token=''
+                while [ -z \"$token\" ]; do
+                    echo -n '2-Factor Auth token: '
+                    read token
+                done
+                base_val=\"${mig_server}/\"
+                url_val=\"${twofactor_url}\"
+                post_val=\"action=auth&token=${token}&redirect_url=/${home_url}\"
+                out=$(curl_post_flex \"$user_conf\" \\
+                                    \"$base_val\" \\
+                                    \"$url_val\" \\
+                                    \"$post_val\" \\
+                                    '' '')
+                # Update CSRF value
+                csrf_value=$(echo $out \\
+                    | sed "s@.* name='_csrf' value='\\([0-9a-f]*\\)'.*@\\1@g")
+            else
+                #echo 'DEBUG: past 2FA auth'
+                #echo \"DEBUG: $out\"
+                break
+            fi
+        done
+    fi
 
-    if echo $out | grep -q 'Home' ; then
+    if [ ${#csrf_value} -eq 64 ]; then
         echo 'Login succeeded!'
         exit 0
     elif [ $twofactor_enabled -eq 1 ]; then
@@ -807,9 +848,26 @@ def curl_chain_login_steps(
     elif lang == 'python':
         s += """
     retval, msg = 0, []
-    (status, out) = curl_post_flex(user_conf, base_val, url_val, post_val, '', '')
-    if [line for line in out if extoid_base in line]:
-        # Extract CSRF token
+    (status, out) = curl_post_flex(user_conf,
+                                base_val,
+                                url_val,
+                                post_val,
+                                '',
+                                '')
+    
+    # Use CSRF token to check if logged in
+
+    csrf_val = ''
+    csrf_prefix = \" name='_csrf' value='\"
+    csrf_suffix = \"' />\"
+    for line in out:
+        if csrf_prefix in line:
+            csrf_val = line.split(csrf_prefix, 1)[1].split(csrf_suffix, 1)[0]
+    if len(csrf_val) == 64:
+        msg.append('Already logged in!')
+        return (0, msg)
+    elif [line for line in out if extoid_base in line]:
+        # Extract OpenID CSRF token
         ct_value = ''
         ct_prefix = ' name=\"ct\" value=\"'
         ct_suffix = '\">'
@@ -826,8 +884,14 @@ def curl_chain_login_steps(
         # Post login and password credentials, redirects to actual site URL
         base_val = extoid_base + '/' 
         url_val = \"processTrustResult\" 
-        post_val = 'user=%s&pwd=%s&ct=%s&allow=Yes' % (username, password, ct_value)
-        (status, out) = curl_post_flex(user_conf, base_val, url_val, post_val, '', '')
+        post_val = 'user=%s&pwd=%s&ct=%s&allow=Yes' \\
+            % (username, password, ct_value)
+        (status, out) = curl_post_flex(user_conf,
+                                    base_val,
+                                    url_val,
+                                    post_val,
+                                    '',
+                                    '')
     # NOTE: page only has URL without openid suffix
     elif [line for line in out if os.path.dirname(migoid_base) in line]:
         # No CSRF token here
@@ -837,44 +901,65 @@ def curl_chain_login_steps(
             password = getpass.getpass()
         base_val = migoid_base + '/'
         url_val = \"allow\"
-        post_val = 'identifier=%s&password=%s&remember=yes&yes=yes' % (username, password)
-        (status, out) = curl_post_flex(user_conf, base_val, url_val, post_val, '', '')
+        post_val = 'identifier=%s&password=%s&remember=yes&yes=yes' \\
+            % (username, password)
+        (status, out) = curl_post_flex(user_conf,
+                                    base_val,
+                                    url_val,
+                                    post_val,
+                                    '',
+                                    '')
         # NOTE: curl fails hard with retval 22 and 404 Not found on login error
         if status == 22:
             out.append('Authentication failed')
-    elif [line for line in out if 'Home' in line]:
-        msg.append('Already completely logged in!')
-        return (0, msg)
-    elif [line for line in out if '2-Factor Authentication' in line]:
-        msg.append('Already logged in to OpenID')
-    else:
-        msg.append('Unexpected OpenID redirect result - trying to proceed')
-        #msg.append('DEBUG: %s' % out)
 
     if [line for line in out if 'Authentication failed' in line]:
         msg.append('OpenID login failed!')
         return (1, msg)
+    if [line for line in out if 'Invalid username' in line]:
+        msg.append('Invalid OpenID username!')
+        return (1, msg)
+    if [line for line in out if 'Invalid password' in line]:
+        msg.append('Invalid OpenID password!')
+        return (1, msg)
+        
+    # Update CSRF value
+    for line in out:
+        if csrf_prefix in line:
+            csrf_val = line.split(csrf_prefix, 1)[1].split(csrf_suffix, 1)[0]
 
-    # Optional 2FA at this point
-    twofactor_enabled = False
-    for attempt in range(3):
-        if [line for line in out if '2-Factor Authentication' in line]:
-            twofactor_enabled = True
-            token = ''
-            while not token:
-                token = raw_input('2-Factor Auth token: ')
-            base_val = mig_server + '/'
-            # TODO: extract url from out instead?
-            url_val = \"wsgi-bin/twofactor.py\"
-            post_val = \"output_format=txt&action=auth&token=\"+token+\"&redirect_url=/\"+home_url
-            (status, out) = curl_post_flex(user_conf, base_val, url_val, post_val, '', '')
-        else:
-            #msg.append('DEBUG: past 2FA auth')
-            #msg.append('DEBUG: '+out)
-            break
-
+    # Optional 2FA at this point if enabled and not already logged in
+    twofactor_enabled=False
+    if twofactor_url:
+        twofactor_enabled = True
+        for attempt in range(3):
+            if len(csrf_val) != 64 \\
+                and [line for line in out \\
+                    if 'div id=\"twofactorstatus\"' in line]:
+                token = ''
+                while not token:
+                    token = raw_input('2-Factor Auth token: ')
+                base_val = mig_server + '/'
+                url_val = twofactor_url
+                post_val = \\
+                    \"action=auth&token=\"+token+\"&redirect_url=/\"+home_url
+                (status, out) = curl_post_flex(user_conf,
+                                            base_val,
+                                            url_val,
+                                            post_val,
+                                            '',
+                                            '')
+                # Update CSRF value
+                for line in out:
+                    if csrf_prefix in line:
+                        csrf_val = line.split(csrf_prefix, 1)[1] \
+                            .split(csrf_suffix, 1)[0]
+            else:
+                #msg.append('DEBUG: past 2FA auth')
+                #msg.append('DEBUG: '+out)
+                break
     #msg.append('DEBUG: '+out)
-    if [line for line in out if 'Home' in line]:
+    if (len(csrf_val) == 64):
         msg.append('Login succeeded!')
         return (0, msg)
     elif twofactor_enabled:
@@ -900,29 +985,25 @@ def curl_chain_logout_steps(
     """
     s = ''
     s += """
-    # Run curl and extract location of openid redirector from output
-    # NOTE: no form or query args for initial call
 """
     if lang == 'sh':
         s += """
-    logout_url=%s
     extoid_base='%s'
     migoid_base='%s'
     url_base=''
-    url_val=%s
+    url_val='%s'
     post_val=''
-""" % (relative_url, extoid_base, migoid_base, relative_url)
+""" % (extoid_base, migoid_base, relative_url)
         url_val = '${url_val}'
         post_val = '${post_val}'
     elif lang == 'python':
         s += """
-    logout_url = %s
     extoid_base = '%s'
     migoid_base = '%s'
     url_base = ''
-    url_val = %s
+    url_val = '%s'
     post_val = ''
-""" % (relative_url, extoid_base, migoid_base, relative_url)
+""" % (extoid_base, migoid_base, relative_url)
         url_val = 'url_val'
         post_val = 'post_val'
     else:
@@ -931,35 +1012,36 @@ def curl_chain_logout_steps(
 
     if lang == 'sh':
         s += """
-    # NOTE: curl_post_flex sets return val in $exit_code and curl output on stdout
-    out=$(curl_post_flex \"$user_conf\" \"$url_base\" \"$url_val\" \"$post_val\" '' '')
-    if echo $out | grep -q \"$extoid_base\" ; then
-        url_base=\"${extoid_base}/\"
-        url_val=\"logout\"
-        if echo $out | grep -q $url_val ; then
-            # NOTE: we must use GET rather than POST here
-            post_val=\"return_to=${mig_server}/${logout_url}?logout=true\"
-            out=$(curl_get_flex \"$user_conf\" \"$url_base\" \"$url_val\" \"$post_val\" '' '')
-        else
-            echo 'No active login session found.'
-        fi
-    # NOTE: page only prints URL without openid suffix
-    elif echo $out | grep -q \"$(dirname ${migoid_base})\" ; then
-        url_base=\"${migoid_base}/\"
-        url_val=\"logout\"
-        if echo $out | grep -q \"$url_val\" ; then
-            post_val=\"return_to=${mig_server}/${logout_url}?logout=true\"
-            out=$(curl_post_flex \"$user_conf\" \"$url_base\" \"$url_val\" \"$post_val\" '' '')
-        else
-            echo 'No active login session found.'
-        fi
-    elif echo $out | grep -q 'with a user certificate'; then
-            echo 'Certificate logins do not use login sessions.'    
+
+    # Resolve openid base url
+
+    if [ "${mig_server}" == "${migoid_base:0:${#mig_server}}" ]; then
+        openid_url_base="${migoid_base}/"
     else
-        echo 'Unexpected logout page content - trying to proceed'
+        openid_url_base="${extoid_base}/"
     fi
 
-    if echo $out |grep -q 'You are now logged out' ; then
+    # Check if logged in
+
+    # NOTE: curl_post_flex sets return val in $exit_code and curl output on stdout
+    out=$(curl_get_flex "$user_conf" "$url_base" "$url_val" "$post_val" '' '')
+
+    # Extract CSRF token
+    csrf_val=$(echo $out | sed "s@.* name='_csrf' value='\\([0-9a-f]*\\)'.*@\\1@g")
+    
+    if [ ${#csrf_val} -ne 64 ]; then
+        echo 'No active login session found.'
+        exit 1
+    fi
+    
+    # Call openid logout with redirect to autologut.py for session cleanup
+
+    autologout_url="${mig_server}/wsgi-bin/autologout.py?output_format=txt"
+    url_val='logout'
+    post_val="return_to=${autologout_url}"
+    out=$(curl_get_flex "$user_conf" "$openid_url_base" "$url_val" "$post_val" '' '')
+
+    if echo $out | grep "___AUTO LOGOUT___" | grep -q "Exit code: 0" ; then
         echo 'Logout succeeded!'
     else
         echo 'Logout failed!'
@@ -971,31 +1053,39 @@ def curl_chain_logout_steps(
     elif lang == 'python':
         s += """
     retval, msg = 0, []
-    (status, out) = curl_post_flex(user_conf, url_base, url_val, post_val, '', '')
-    if [line for line in out if extoid_base in line]:
-        url_base = extoid_base + '/'
-        url_val = \"logout\"
-        if [line for line in out if url_val in line]:
-            # NOTE: we must use GET rather than POST here
-            post_val = 'return_to='+mig_server+'/'+logout_url+'?logout=true'
-            (status, out) = curl_get_flex(user_conf, url_base, url_val, post_val, '', '')
-        else:
-            msg.append('No active login session found.')
-    # NOTE: page only prints URL without openid suffix
-    elif [line for line in out if os.path.dirname(migoid_base) in line]:
-        url_base = migoid_base + '/'
-        url_val = \"logout\"
-        if [line for line in out if url_val in line]:
-            post_val = 'return_to='+mig_server+'/'+logout_url+'?logout=true'
-            (status, out) = curl_post_flex(user_conf, url_base, url_val, post_val, '', '')
-        else:
-            msg.append('No active login session found.')
-    elif [line for line in out if 'with a user certificate' in line]:
-        msg.append('Certificate logins do not use login sessions.')
-    else:
-        msg.append('Unexpected logout page content - trying to proceed')
 
-    if [line for line in out if 'You are now logged out' in line]:
+    # Resolve openid base url
+
+    if (mig_server.startswith(migoid_base)):
+        openid_url_base = migoid_base + "/"
+    else:
+        openid_url_base = extoid_base + "/"
+
+    # Check if logged in
+
+    (status, out) = curl_post_flex(user_conf, url_base, url_val, post_val, '', '')
+
+    # Extract CSRF token
+
+    csrf_val = ''
+    csrf_prefix = \" name='_csrf' value='\"
+    csrf_suffix = \"' />\"
+    for line in out:
+        if csrf_prefix in line:
+            csrf_val = line.split(csrf_prefix, 1)[1].split(csrf_suffix, 1)[0]
+    if len(csrf_val) != 64:
+        msg.append('No active login session found.')
+        return (1, msg)
+
+    # Call openid logout with redirect to autologut.py for session cleanup
+
+    autologout_url = mig_server + "/wsgi-bin/autologout.py?output_format=txt"
+    url_val = 'logout'
+    post_val = "return_to=" + autologout_url
+    (status, out) = curl_get_flex(user_conf, openid_url_base, url_val, post_val, '', '')
+
+    if len([line for line in out \\
+            if '___AUTO LOGOUT___' in line or 'Exit code: 0' in line]) == 2:
         msg.append('Logout succeeded!')
         retval = 0
     else:
