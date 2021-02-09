@@ -1,5 +1,27 @@
 [
   {
+    "status": "AUTO",
+    "work_start": "2021-02-09T20:00:00+01:00", 
+    "systems": [
+        "ERDA", "IDMC"
+    ], 
+    "announce_start": "2021-02-09T13:25:00+01:00", 
+    "title": {
+      "EN": "Short notice DAG & HEL Maintenance and outages", 
+      "DK": "Udfald på DAG & HEL med kort varsel"
+    }, 
+    "services": [
+        "DAG",
+        "HEL"
+    ], 
+    "work_end": "2021-02-09T23:59:00+01:00", 
+    "description": {
+      "EN": "Our recent emergency security updates introduced problems with e.g. the HPC Notebook and we urgently need to redeploy the DAG and HEL Jupyter stack to address that for the current HPPC course. This will result in a brief outage and may break active sessions. Users with active sessions may need to logout of and stop their Jupyter servers then reload the main Jupyter page and Start DAG and so forth again.", 
+      "DK": "Vores seneste sikkerhedsopdatering har ført til problemer med bl.a. HPC Notebook, og vi bliver nødt til med kort varsel at genudrulle DAG og HEL Jupypter-stakken til det igangværende HPPC-kursus. Det vil medføre udfald på igangværende sessioner. Brugere med aktive Jupyter sessioner kan være nødt til at logge ud og stoppe deres Jupyter server for derefter at genindlæse Jupyter-forsiden og klikke Start DAG o.s.v. igen."
+    }, 
+    "announce_end": "2021-02-10T10:00:00+01:00"
+  },
+  {
     "status": "AUTO", 
     "work_start": "2021-02-04T22:03:00+01:00", 
     "systems": [
@@ -13,12 +35,12 @@
     "services": [
       "MODI"
     ], 
-    "work_end": "2021-02-05T16:00:00+01:00", 
+    "work_end": "2021-02-15T08:00:00+01:00", 
     "description": {
       "EN": "There was a power glitch in the greater Copenhagen area also affecting the HPC Center and in particular the physical hosts not on UPS (emergency power). We experienced MODI front end and compute nodes failing. The hosts are back online and we are working on getting them back in production.",
       "DK": "Der var et udfald i strømmen i Storkøbenhavn, som også berørte HPC Centeret og specielt maskiner uden UPS (nødstrøm). Vi oplevede at MODI front end og regneknuder gik ned. Maskinerne er startet igen og vi arbejder på at få dem tilbage i almindelig drift."
     }, 
-    "announce_end": "2021-02-06T10:00:00+01:00"
+    "announce_end": "2021-02-16T10:00:00+01:00"
   },
   {
     "status": "AUTO", 
@@ -60,7 +82,7 @@
       "EN": "Due to a critical security issue in one of the operating system packages MODI with all nodes needs to be updated and redeployed. This will result in outages and may break active sessions. We are sorry for the inconvenience, but security comes first. The update itself was rather quick but caused some fallout so the work stretched over multiple days with partial outages along the way. It was completed on Saturday morning and the service is back online. Users with active sessions may need to logout of and stop their Jupyter servers then reload the main Jupyter page and Start MODI and so forth again.", 
       "DK": "P.g.a. et kritisk sikkerhedsproblem i en operativsystem-komponent er det nødvendigt at opdatere og genstarte MODI og dens regneknuder. Det vil medføre udfald og forstyrre igangværende sessioner. Vi beklager generne men sikkerhed kommer altid først. Opdateringen tog i første omgang kun kort men medførte andre komplikationer. Så det endte med at trække ud i flere dage med delvise udfald inden vi blev færdige lørdag morgen, og servicen er nu tilbage i drift. Brugere med aktive Jupyter sessioner kan være nødt til at logge ud og stoppe deres Jupyter server for derefter at genindlæse Jupyter-forsiden og klikke Start MODI o.s.v. igen."
     }, 
-    "announce_end": "2020-02-02T10:00:00+01:00"
+    "announce_end": "2021-02-02T10:00:00+01:00"
   },
   {
     "status": "AUTO",
@@ -82,7 +104,7 @@
       "EN": "Due to a critical security issue in one of the operating system packages DAG and HEL need to be updated and redeployed. This will result in a brief outage and may break active sessions. We are sorry for the inconvenience, but security comes first. The update was quickly completed and the services are back online. Users with active sessions may need to logout of and stop their Jupyter servers then reload the main Jupyter page and Start DAG and so forth again.", 
       "DK": "P.g.a. et kritisk sikkerhedsproblem i en operativsystem-komponent er det nødvendigt at opdatere og genstarte DAG og HEL. Det vil medføre udfald på igangværende sessioner. Vi beklager generne men sikkerhed kommer altid først. Opdateringen er gennemført og services er tilbage i drift. Brugere med aktive Jupyter sessioner kan være nødt til at logge ud og stoppe deres Jupyter server for derefter at genindlæse Jupyter-forsiden og klikke Start DAG o.s.v. igen."
     }, 
-    "announce_end": "2020-01-30T10:00:00+01:00"
+    "announce_end": "2021-01-30T10:00:00+01:00"
   },
   {
     "status": "AUTO", 
