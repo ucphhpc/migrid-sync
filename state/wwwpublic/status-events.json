@@ -14,10 +14,10 @@
         "DAG",
         "HEL"
     ], 
-    "work_end": "2021-02-09T23:59:00+01:00", 
+    "work_end": "2021-02-09T23:20:00+01:00", 
     "description": {
-      "EN": "Our recent emergency security updates introduced problems with e.g. the HPC Notebook and we urgently need to redeploy the DAG and HEL Jupyter stack to address that for the current HPPC course. This will result in a brief outage and may break active sessions. Users with active sessions may need to logout of and stop their Jupyter servers then reload the main Jupyter page and Start DAG and so forth again.", 
-      "DK": "Vores seneste sikkerhedsopdatering har ført til problemer med bl.a. HPC Notebook, og vi bliver nødt til med kort varsel at genudrulle DAG og HEL Jupypter-stakken til det igangværende HPPC-kursus. Det vil medføre udfald på igangværende sessioner. Brugere med aktive Jupyter sessioner kan være nødt til at logge ud og stoppe deres Jupyter server for derefter at genindlæse Jupyter-forsiden og klikke Start DAG o.s.v. igen."
+      "EN": "Our recent emergency security updates introduced problems with e.g. the HPC Notebook and we urgently need to redeploy the DAG and HEL Jupyter stack to address that for the current HPPC course. This will result in a brief outage and may break active sessions. Users with active sessions may need to logout of and stop their Jupyter servers then reload the main Jupyter page and Start DAG and so forth again. We finished the redeployment and the Jupyter services are back online - now including the HPC notebook.", 
+      "DK": "Vores seneste sikkerhedsopdatering har ført til problemer med bl.a. HPC Notebook, og vi bliver nødt til med kort varsel at genudrulle DAG og HEL Jupypter-stakken til det igangværende HPPC-kursus. Det vil medføre udfald på igangværende sessioner. Brugere med aktive Jupyter sessioner kan være nødt til at logge ud og stoppe deres Jupyter server for derefter at genindlæse Jupyter-forsiden og klikke Start DAG o.s.v. igen. Vi blev færdige med at genudrulle Jupyter og de berørte services er tilbage i drift - nu også med HPC notebook."
     }, 
     "announce_end": "2021-02-10T10:00:00+01:00"
   },
