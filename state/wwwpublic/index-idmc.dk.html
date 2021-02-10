@@ -47,22 +47,18 @@ IDMC
             window.open('https://idmc.dk', '_blank');
         } else if (user == "migoid") {
             window.open('https://ext.idmc.dk', '_blank');
-        } else if (user == "migcert") {
-            window.open('https://idmc.dk', '_blank');
         } else {
             window.open('https://sid.idmc.dk/cgi-sid/login.py', '_blank');
         }
     }
     function signup(user) {
         if (user == "extoid") {
-            window.open('https://sid.idmc.dk/cgi-sid/signup.py?show=kitoid', 
-                        '_blank');
+            window.open('https://oid.idmc.dk/wsgi-bin/autocreate.py',
+                    '_blank');
         } else if (user == "extcert") {
             window.open('https://idmc.dk/wsgi-bin/extcert.py', '_blank');
         } else if (user == "migoid") {
             window.open('https://sid.idmc.dk/cgi-sid/reqoid.py', '_blank');
-        } else if (user == "migcert") {
-            window.open('https://sid.idmc.dk/cgi-sid/reqcert.py', '_blank');
         } else {
             window.open('https://sid.idmc.dk/cgi-sid/signup.py', '_blank');
         }
@@ -180,7 +176,11 @@ Can just be disabled by putting it into an html comment when not in use.
   Please take <a href="https://status.erda.dk">your precautions</a> if
   you got caught in the recent <a href="https://it.ku.dk/driftinfo/">
   phishing attacks</a> at KU/KUMail!</span>
-<br/><br/>
+<span class='systemnote'>NOTE: system maintenance on Wednesday, July 1st completed.
+</span>
+<span class='systemwarn'>IMPORTANT: planned system maintenance on
+  November 25th from 16.15 (<a href='https://status.erda.dk'>Status</a>).
+</span><br/><br/>
 -->
 
 </div>
@@ -296,15 +296,26 @@ intended and approved for exactly that purpose.
 
 <h2 class="staticpage">Questions and Support</h2>
 <p>
-The <a href="https://sid.erda.dk/public/ucph-erda-user-guide.pdf">User Guide</a> 
-provides basic information about using IDMC, but feel free to contact us using
-the email link at the bottom of the page in case you have any further questions
-or comments (in English or Danish). Unfortunately we do <em>not</em> have resources
-to offer video or phone support, but we typically reply on email the
-next working-day at the latest.
+We've gathered information about ERDA/IDMC in a few short intro-guides and a more
+thorough user guide
+<ul>
+<li>The <a href="https://erda.ku.dk/ucph-erda-guide_user-sign-up.pdf">Sign Up Intro</a> for
+  UCPH and external users</li> 
+<li>The <a href="https://erda.ku.dk/ucph-erda-guide_workgroup-sharing.pdf">Workgroup
+    Intro</a> about creating, managing and accessing Workgroups</li> 
+<li>The <a href="https://erda.ku.dk/ucph-erda-guide_network-drive_win.pdf">Network
+    Drive Intro</a> about using ERDA as a network drive on your computer (only
+    covers Windows for now)</li>
+<li>The <a href="https://erda.ku.dk/ucph-erda-user-guide.pdf">User Guide</a> with thorough
+  usage instructions</ul>
+Feel free to contact us using the email link at the bottom of the page in case
+you have any further questions or comments (in English or Danish).
+Unfortunately we do <em>not</em> have resources to offer video or phone
+support, but we typically reply on email the next working-day at the latest.
 <p class="warningtext">
-Please beware that the user guide is made for ERDA, the sister system of IDMC, but 
-almost all examples are valid with the replacement of erda.dk with idmc.dk.
+Please beware that the guides are made for ERDA, the sister system of IDMC, but 
+almost all examples are valid with the replacement of erda.ku.dk with
+www.idmc.dk and erda.dk with idmc.dk.
 </p>
 
 <h2 class="staticpage">Status and News</h2>
@@ -361,9 +372,12 @@ Can just be disabled by putting it into an html comment when not in use.
   tids  <a href="https://it.ku.dk/driftinfo/">phishing-angreb</a> på
   KU/KUMail!
 </span>
-</span>
-<br/><br/>
+<span class='systemnote'>NOTE: planlagt systemvedligehold onsdag den
+1. juli er veloverstået.</span>
+<span class='systemwarn'>VIGTIGT: planlagt systemvedligehold den 25. November 
+fra 16.15 (<a href='https://status.erda.dk'>Status</a>).</span><br/><br/>
 -->
+
 </div>
 
 <div class="staticpage quickstartfields">
@@ -476,11 +490,22 @@ netop <em>er</em> beregnet og godkendt til det formål.
 
 <h2 class="staticpage">Spørgsmål og hjælp</h2>
 <p>
-<a href="https://sid.erda.dk/public/ucph-store-brugervejledning.pdf">Brugervejledningen</a> 
-indeholder basal information om brugen af IDMC, men kontakt os gerne (på dansk
-eller engelsk) med øvrige spørgsmål og kommentarer v.h.a. email-linket nederst
-på siden. Vi har desværre <em>ikke</em> resurser til at yde video- eller
-telefon-support, men svarer typisk på email senest næste arbejdsdag.
+Vi har samlet information om ERDA/IDMC i nogle korte intro-guides og en større
+brugervejledning
+<ul>
+<li><a href="https://erda.ku.dk/ucph-erda-guide_brugertilmelding.pdf">Tilmeldings-intro</a>
+  for KU- og eksterne brugere</li> 
+<li><a href="https://erda.ku.dk/ucph-erda-guide_workgroup-deling.pdf">Workgroup-intro</a> om
+  Workgroup-oprettelse, -deling og -adgang</li>
+<li><a href="https://erda.ku.dk/ucph-erda-guide_netvaerksdrev_win.pdf">Netværksdrev-intro</a> om
+  at benytte ERDA som netværksdrev på din computer (dækker kun Windows for nu)</li>
+<li><a href="https://erda.ku.dk/ucph-erda-brugervejledning.pdf">Brugervejledningen</a>
+med omfattende gennemgang af brugen</li>
+</ul>
+Kontakt os gerne (på dansk eller engelsk) med øvrige spørgsmål og kommentarer
+v.h.a. email-linket nederst på siden. Vi har desværre <em>ikke</em> resurser
+til at yde video- eller telefon-support, men svarer typisk på email senest
+næste arbejdsdag.
 </p>
 <p class="warningtext">
 <!--
@@ -488,8 +513,9 @@ Bemærk at IDMC siderne p.t. kun findes på engelsk. Den danske
 brugervejledning kan forhåbentlig afhjælpe eventuelle
 forståelsesvanskeligheder, og en egentlig dansk oversættelse overvejes stadig.
 -->
-Bemærk at brugervejledningen stammer fra ERDA, IDMCs søster-system, men
-næsten alle eksempler kan benyttes ved at erstatte erda.dk med idmc.dk.
+Bemærk at guiderne stammer fra ERDA, IDMCs søster-system, men næsten alle
+eksempler kan benyttes ved at erstatte erda.ku.dk mwe www.idmc.dk og erda.dk
+med idmc.dk.
 </p>
 
 <h2 class="staticpage">Status og nyheder</h2>
