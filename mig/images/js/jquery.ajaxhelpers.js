@@ -1049,9 +1049,11 @@ function prepare_seafile_settings(reg_url, username, integration,
             */
             var id_user = $("#account", output).find("div.txt:contains("+username+")").text();
             var account_name = $("#account", output).find("div.txt").text();
+            var signed_in_msg = $("#main .login-panel", output).find("p").text();
+            var signed_in = signed_in_msg.includes("already signed in");
             var logged_in = "";
             $("#"+status_prefix+"msg").append('online');
-            if (id_user || account_name) {
+            if (id_user || account_name || signed_in) {
                 logged_in = "you are already registered and logged in as "+username;
                 //alert("DEBUG: "+logged_in+" ("+id_user+")");
                 // Try to avoid confusion if user is already registered
@@ -1076,6 +1078,8 @@ function prepare_seafile_settings(reg_url, username, integration,
                 $("input[name=csrfmiddlewaretoken]").val(csrf_token);
                 //console.log("cookies: "+document.cookie);
             } else {
+                console.error("unknown seafile state: id "+id_user+" account "+
+                              account_name+" signed_in "+signed_in);
                 //alert("Warning: unknown state");
                 logged_in = "unexpected response from server";
                 $("#"+status_prefix+"status").addClass("warn iconleftpad");
