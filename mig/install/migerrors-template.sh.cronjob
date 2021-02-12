@@ -44,7 +44,7 @@ grep -H ERROR $LOGDIR/chkchroot.log | grep -E -v " from ${SECSCANIP} "| \
 
 # NOTE: we ignore script crashed errors here and treat specifically next
 grep -H ERROR $LOGDIR/mig.log | \
-	grep -E -v "problems importing arclib|disabled in configuration|(settings|userprofile) could not be opened/unpickled|load (ssh|ftps|davs|seafile) publickeys failed|is not a valid openid provider|script crashed:|INFO Content-Length missing or zero|${SECSCANIP} (refused to|could not) import .*shared\.functionality\." | tail -n $MAXLINES
+	grep -E -v "problems importing arclib|disabled in configuration|(settings|userprofile) could not be opened/unpickled|load (ssh|ftps|davs|seafile) publickeys failed|is not a valid openid provider|script crashed:|INFO Content-Length missing or zero|${SECSCANIP} (refused to|could not) import .*shared\.functionality\.|INFO Not available on this site.*Replied .ERROR." | tail -n $MAXLINES
 # Extract variable length script crash tracebacks terminated with a blank line
 sed -n "/ERROR.* script crashed:/""{ :a; $p; N; /\n$/!ba; p; }" $LOGDIR/mig.log | tail -n $MAXLINES
 
