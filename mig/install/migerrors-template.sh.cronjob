@@ -39,7 +39,7 @@ grep -H ERROR $LOGDIR/davs.log | grep -E -v "The handshake operation timed out|d
 
 grep -H ERROR $LOGDIR/chkchroot.log | grep -E -v " from ${SECSCANIP} "| \
         grep -E -v "__CRACK_WEB_REGEX__" | \
-        grep -E -v "/index\.html$" | \
+        grep -E -v "/index\.html$|/state/webserver_home/share_redirect$" | \
         tail -n $MAXLINES
 
 # NOTE: we ignore script crashed errors here and treat specifically next
