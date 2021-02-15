@@ -104,8 +104,9 @@ if __name__ == '__main__':
         cleaned += expired.keys()
 
     if cleaned:
-        print("\n### Summary ###")
-        print('Cleaned %s stale sessions:\n%s' %
-              (len(cleaned), '\n'.join(cleaned)))
+        if verbose:
+            print("\n### Session Clean Summary ###")
+        print('Cleaned %s stale %s sessions:\n%s' %
+              (len(cleaned), proto, '\n'.join(cleaned)))
         retval = len(cleaned)
     sys.exit(retval)
