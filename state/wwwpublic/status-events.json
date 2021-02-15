@@ -35,12 +35,12 @@
     "services": [
       "MODI"
     ], 
-    "work_end": "2021-02-15T08:00:00+01:00", 
+    "work_end": "2021-02-15T17:00:00+01:00", 
     "description": {
-      "EN": "There was a power glitch in the greater Copenhagen area also affecting the HPC Center and in particular the physical hosts not on UPS (emergency power). We experienced MODI front end and compute nodes failing. The hosts are back online and we are working on getting them back in production.",
-      "DK": "Der var et udfald i strømmen i Storkøbenhavn, som også berørte HPC Centeret og specielt maskiner uden UPS (nødstrøm). Vi oplevede at MODI front end og regneknuder gik ned. Maskinerne er startet igen og vi arbejder på at få dem tilbage i almindelig drift."
+      "EN": "There was a power glitch in the greater Copenhagen area also affecting the HPC Center and in particular the physical hosts not on UPS (emergency power). We experienced MODI front end and compute nodes failing. The hosts are back online and in normal production after some maintenance and consolidation.",
+      "DK": "Der var et udfald i strømmen i Storkøbenhavn, som også berørte HPC Centeret og specielt maskiner uden UPS (nødstrøm). Vi oplevede at MODI front end og regneknuder gik ned. Maskinerne er startet igen og sat tilbage i almindelig drift efter vedligehold og konsolidering."
     }, 
-    "announce_end": "2021-02-16T10:00:00+01:00"
+    "announce_end": "2021-02-17T10:00:00+01:00"
   },
   {
     "status": "AUTO", 
