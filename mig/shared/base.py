@@ -113,6 +113,14 @@ def get_short_id(configuration, user_id, user_alias):
     return short_id
 
 
+def is_gdp_user(configuration, client_id):
+    """Helper to distinguish GDP project users from top-level users"""
+    if client_id.split(_id_sep)[-1].startswith(gdp_distinguished_field):
+        return True
+    else:
+        return False
+
+
 def fill_user(target):
     """Fill target user dictionary with all expected fields"""
 
