@@ -1,6 +1,28 @@
 [
   {
     "status": "AUTO",
+    "work_start": "2021-02-17T16:30:00+01:00",
+    "systems": [
+      "ERDA",
+      "IDMC"
+    ],
+    "announce_start": "2021-02-17T15:15:00+01:00",
+    "title": {
+      "EN": "MODI Memory Upgrade",
+      "DK": "MODI hukommelsesopgradering"
+    },
+    "services": [
+      "MODI"
+    ],
+    "work_end": "2021-02-17T17:00:00+01:00",
+    "description": {
+      "EN": "We'll increase the available memory on the MODI login node for better concurrent use scalability. The upgrade is virtual and should only take a few minutes for a restart, but it will break active Jupyter sessions.",
+      "DK": "Vi skruer op for den tilgængelige hukommelse på MODI login-knuden for bedre at skalere til mange samtidige brugere. Opgraderingen er virtuel og skulle kun tage nogle få minutter til en genstart, men den vil afbryde igangværende Jupyter-sessioner."
+    },
+    "announce_end": "2021-02-18T10:00:00+01:00"
+  },
+  {
+    "status": "AUTO",
     "work_start": "2021-02-09T20:00:00+01:00", 
     "systems": [
         "ERDA", "IDMC"
