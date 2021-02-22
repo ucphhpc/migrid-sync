@@ -514,10 +514,13 @@ def html_tmpl(
         </thead>
         <tbody>
             <tr><td>
+                You can invite <em>existing</em> %s users into your project.
+            </td></tr>
+            <tr><td>
                 <div class='styled-select gm_select semi-square'>
                 <select name='invite_user_base_vgrid_name' onChange='selectInviteUserProject();'>
                 <option value=''>Choose project</option>
-                <option value=''>───────</option>"""
+                <option value=''>───────</option>""" % configuration.short_title
         for project in sorted(invite_projects.keys()):
             html += \
                 """
@@ -534,8 +537,8 @@ def html_tmpl(
                 </td>
             </tr><tr>
                 <td>
-                <input name='invite_user_short_id' required placeholder='Registered Email of User'
-                    title='Email of user to invite' type='email' size='30'/>
+                <input name='invite_user_short_id' required placeholder='Registered Email of Existing User'
+                    title='Email of existing user to invite' type='email' size='30'/>
             </td></tr>
             """
 
@@ -1896,10 +1899,10 @@ Please contact the site admins %s if you think it should be enabled.
                                                   new_owner_client_id))
             else:
                 action_msg = 'ERROR: "Failed reassign project %r' \
-                        % base_vgrid_name \
-                        + 'to new owner %r' \
-                        % get_short_id_from_user_id(configuration, \
-                                                  new_owner_client_id)
+                    % base_vgrid_name \
+                    + 'to new owner %r' \
+                    % get_short_id_from_user_id(configuration,
+                                                new_owner_client_id)
 
         elif action == 'create_project':
 
