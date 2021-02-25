@@ -108,6 +108,10 @@
     background: url(/images/loading.gif) center no-repeat;
     display: none;
 }
+.fileupload-processing .fileupload-process,
+.files .processing .preview {
+    background: url('/images/loading.gif') center no-repeat;
+}
 
 @media (max-width: 767px) {
     .uploadfileslist .preview * {
