@@ -1,6 +1,28 @@
 [
   {
     "status": "AUTO",
+    "work_start": "2021-02-25T09:00:00+01:00",
+    "systems": [
+      "ERDA",
+      "IDMC"
+    ],
+    "announce_start": "2021-02-25T09:00:00+01:00",
+    "title": {
+      "EN": "Outage in the storage backend: partial data visibility",
+      "DK": "Udfald i backend-lageret: begrænset dataadgang"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2021-02-25T16:00:00+01:00",
+    "description": {
+      "EN": "Outage in the storage backend: partial data visibility. We're investigating!", 
+      "DK": "Udfald i backend-lageret: delvis datasynlighed. Vi undersøger sagen!"
+    },
+    "announce_end": "2021-02-26T10:00:00+01:00"
+  },
+  {
+    "status": "AUTO",
     "work_start": "2021-02-17T16:30:00+01:00",
     "systems": [
       "ERDA",
