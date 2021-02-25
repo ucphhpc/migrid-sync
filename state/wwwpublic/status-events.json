@@ -1,12 +1,12 @@
 [
   {
     "status": "AUTO",
-    "work_start": "2021-02-25T09:00:00+01:00",
+    "work_start": "2021-02-25T06:13:00+01:00",
     "systems": [
       "ERDA",
       "IDMC"
     ],
-    "announce_start": "2021-02-25T09:00:00+01:00",
+    "announce_start": "2021-02-25T06:13:00+01:00",
     "title": {
       "EN": "Outage in the storage backend: partial data visibility",
       "DK": "Udfald i backend-lageret: begrænset dataadgang"
@@ -14,10 +14,10 @@
     "services": [
       "ALL"
     ],
-    "work_end": "2021-02-25T16:00:00+01:00",
+    "work_end": "2021-02-25T09:15:00+01:00",
     "description": {
-      "EN": "Outage in the storage backend: partial data visibility. We're investigating!", 
-      "DK": "Udfald i backend-lageret: delvis datasynlighed. Vi undersøger sagen!"
+      "EN": "One of the backend storage bricks dropped out of the backend storage cluster this morning. All files stored there therefore turned invisible on ERDA/IDMC and resulted in partial data visibility and even login problems for people unlucky enough to have central user login data there. We have investigated and recovered the connection, so that everything should be back to normal again. Please report any further issues on support as usual.", 
+      "DK": "En af maskinerne i backend-lageret hoppede ud af lagerklyngen til morgen. Alle filer lagret derpå blev derfor usynlige på ERDA/IDMC, og det førte til loginproblemer for enkelte brugere med centrale logindata lagret netop der. Vi undersøgte sagen og fik genskabt forbindelsen, så alt skulle være tilbage i normal drift. Yderligere fejl bedes som altid meldt til support."
     },
     "announce_end": "2021-02-26T10:00:00+01:00"
   },
