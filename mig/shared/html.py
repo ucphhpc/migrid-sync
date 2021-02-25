@@ -876,7 +876,7 @@ def fancy_upload_js(configuration, callback=None, share_id='', csrf_token='',
     # TODO: migrate to assets
     add_import = '''
 <!--  Filemanager is only needed for fancy upload init wrapper -->
-<script type="text/javascript" src="/images/js/jquery.form.js"></script>
+<script type="text/javascript" src="/assets/vendor/jquery.form/js/jquery.form.js"></script>
 <script type="text/javascript" src="/images/js/jquery.filemanager.js"></script>
 
 <!-- Fancy file uploader and dependencies -->
@@ -1089,10 +1089,9 @@ def save_settings_js(configuration):
         save_url = "/wsgi-bin/settingsaction.py"
     else:
         save_url = "/cgi-bin/settingsaction.py"
-    # TODO: migrate to assets
     add_import = '''
 <!-- for AJAX submit form -->
-<script type="text/javascript" src="/images/js/jquery.form.js"></script>
+<script type="text/javascript" src="/assets/vendor/jquery.form/js/jquery.form.js"></script>
     '''
     add_init = '''
     function renderWorking(msg) {
@@ -1117,7 +1116,6 @@ def save_settings_js(configuration):
                         minWidth: 600, width: "auto", autoOpen: false, closeOnEscape: true,
                         modal: true};
 
-    //console.debug("submit form serialized: "+$(".save_settings").serialize());
     var options = {
                     url: "%(save_url)s?output_format=json",
                     dataType: "json",
@@ -1204,15 +1202,15 @@ def save_settings_js(configuration):
                         $(".savestatus span").fadeIn(100);
                     }
                 };
+    ''' % {'save_url': save_url}
+    add_ready = '''
+    //console.debug("submit form serialized: "+$(".save_settings").serialize());
     /* Prevent enter in fields submitting directly to backend */
     $(".save_settings").on("keypress", function(e) {
             return e.which !== 13;
             });
     $(".save_settings").ajaxForm(options);
-    $(".save_settings").submit();
-    console.debug("fired ajaxform");
-    ''' % {'save_url': save_url}
-    add_ready = ''
+    '''
     return (add_import, add_init, add_ready)
 
 
@@ -1231,7 +1229,7 @@ def twofactor_wizard_js(configuration):
     # TODO: migrate to assets
     add_import = '''
 <!-- for AJAX submit token verification -->
-<script type="text/javascript" src="/images/js/jquery.form.js"></script>
+<script type="text/javascript" src="/assets/vendor/jquery.form/js/jquery.form.js"></script>
 <!-- for 2FA QR codes -->
 <script type="text/javascript" src="/images/js/qrious.js"></script>
 '''
