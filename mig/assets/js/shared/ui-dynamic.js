@@ -110,7 +110,7 @@ function init_tips() {
         /* Prefix: tip title with Tip marker */
         //console.debug("found title: "+index);
         /* NOTE: leave a little room between fold icon and info icon */
-        var title_text = "<span class='leftpad'/>";
+        var title_text = "<span class='leftpad'></span>";
         title_text += "<span class='tip iconleftpad'>Quick Tip:</span> ";
         title_text += $(title).html() + " ... ";
         $(title).html(title_text);

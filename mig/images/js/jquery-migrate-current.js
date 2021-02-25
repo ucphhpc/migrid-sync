@@ -1,1 +1,1 @@
-jquery-migrate-1.4.1.js
+jquery-migrate.min.js

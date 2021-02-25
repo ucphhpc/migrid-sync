@@ -965,6 +965,7 @@ background: url(/images/icons/code.png) left center no-repeat;
 /*     Selectbox CSS from : https://codepen.io/ericrasch/pen/zjDBx */
 
 .styled-select {
+    /* TODO: this icon doesn't exist! */
     background: url(/images/icons/select_arrow.png) no-repeat 96% 0;
     background-size: 25px 25px;
     height: 25px;
