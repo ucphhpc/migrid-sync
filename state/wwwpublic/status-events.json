@@ -1,6 +1,27 @@
 [
   {
     "status": "AUTO",
+    "work_start": "2021-03-03T20:00:00+01:00", 
+    "systems": [
+        "ERDA", "IDMC"
+    ], 
+    "announce_start": "2021-26-02T09:00:00+01:00", 
+    "title": {
+      "EN": "Planned DAG and HEL Maintenance", 
+      "DK": "Planlagt vedligehold på DAG og HEL"
+    }, 
+    "services": [
+        "DAG", "HEL"
+    ], 
+    "work_end": "2021-03-04T07:59:00+01:00",
+    "description": {
+      "EN": "Update and general maintenance of DAG to apply pending host system updates. The work will involve down-time for low-level updates to complete. Thus all DAG and HEL Jupyter services will be temporarily unavailable one or more times during the maintenance window.", 
+      "DK": "Opdatering og generelt vedligehold af DAG inklusive udestående grundlæggende systemopdateringer. Arbejdet vil medføre perioder med nedetid ved aktivering af dybereliggende opdateringer. Således vil alle DAG og HEL Jupyter-services midlertidigt være utilgængelige i løbet af vedligeholdelsesvinduet."
+    }, 
+    "announce_end": "2021-03-04T10:00:00+01:00"
+  },
+  {
+    "status": "AUTO",
     "work_start": "2021-02-25T15:30:00+01:00",
     "systems": [
       "ERDA",
