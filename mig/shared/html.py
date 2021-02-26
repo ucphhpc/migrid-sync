@@ -1999,13 +1999,13 @@ def get_xgi_html_header(
         </div>
     </div>
     <div class="popup-middle col-12">
-        <a class="user-menu__item" href="home.py">Home</a>
-        <a class="user-menu__item" href="settings.py">Settings</a>
-        <a class="user-menu__item" href="setup.py">Setup</a>
-        <a class="user-menu__item" href="%(help_url)s">Help</a>
+        <a class="user-menu__item link-home" href="home.py">Home</a>
+        <a class="user-menu__item link-settings" href="settings.py">Settings</a>
+        <a class="user-menu__item link-setup" href="setup.py">Setup</a>
+        <a class="user-menu__item link-help" href="%(help_url)s">Help</a>
     </div>
     <div class="popup-footer col-12">
-        <a href="logout.py">Sign Out</a>
+        <a class="user-menu__item link-logout" href="logout.py">Sign Out</a>
     </div>
 </div>
                 ''' % profile_helper
