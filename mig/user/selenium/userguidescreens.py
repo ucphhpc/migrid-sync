@@ -41,7 +41,7 @@ from urlparse import urlparse
 
 from migcore import init_driver, ucph_login, mig_login, shared_twofactor, \
     shared_logout, save_screen, scroll_to_elem, doubleclick_elem, \
-    select_item_by_index
+    select_item_by_index, get_nav_link
 
 # Which Setup sections to include on SIF (where 2FA is moved to gdpman)
 setup_sections = [('sftp', 'SFTP'), ('webdavs', 'WebDAVS')]
@@ -201,8 +201,12 @@ def open_project_actions(driver, url, login, passwd, callbacks):
 def home_actions(driver, url, login, passwd, callbacks):
     """Run user actions for section of same name"""
     nav_name = "Home"
-    navmenu = driver.find_element_by_class_name('navmenu')
-    link = navmenu.find_element_by_link_text(nav_name)
+    nav_class = "link-home"
+    try:
+        link = get_nav_link(driver, url, nav_class)
+    except:
+        print("INFO: no %r link found, probably not enabled" % nav_name)
+        return
     # print "DEBUG: found %s link: %s" % (nav_name, link)
     link.click()
     ajax_wait(driver, nav_name, "tips-loading")
@@ -215,8 +219,8 @@ def home_actions(driver, url, login, passwd, callbacks):
 def files_actions(driver, url, login, passwd, callbacks):
     """Run user actions for section of same name"""
     nav_name = "Files"
-    navmenu = driver.find_element_by_class_name('navmenu')
-    link = navmenu.find_element_by_link_text(nav_name)
+    nav_class = "link-files"
+    link = get_nav_link(driver, url, nav_class)
     # print "DEBUG: found %s link: %s" % (nav_name, link)
     link.click()
     ajax_wait(driver, nav_name, "ui-progressbar")
@@ -229,8 +233,8 @@ def files_actions(driver, url, login, passwd, callbacks):
 def workgroups_actions(driver, url, login, passwd, callbacks):
     """Run user actions for section of same name"""
     nav_name = "Workgroups"
-    navmenu = driver.find_element_by_class_name('navmenu')
-    link = navmenu.find_element_by_link_text(nav_name)
+    nav_class = "link-vgrids"
+    link = get_nav_link(driver, url, nav_class)
     # print "DEBUG: found %s link: %s" % (nav_name, link)
     link.click()
     ajax_wait(driver, nav_name)
@@ -243,8 +247,12 @@ def workgroups_actions(driver, url, login, passwd, callbacks):
 def archives_actions(driver, url, login, passwd, callbacks):
     """Run user actions for section of same name"""
     nav_name = "Archives"
-    navmenu = driver.find_element_by_class_name('navmenu')
-    link = navmenu.find_element_by_link_text(nav_name)
+    nav_class = "link-archives"
+    try:
+        link = get_nav_link(driver, url, nav_class)
+    except:
+        print("INFO: no %r link found, probably not enabled" % nav_name)
+        return
     # print "DEBUG: found %s link: %s" % (nav_name, link)
     link.click()
     ajax_wait(driver, nav_name)
@@ -472,8 +480,8 @@ and owner automatically assigned.
 def settings_actions(driver, url, login, passwd, callbacks):
     """Run user actions for section of same name"""
     nav_name = "Settings"
-    navmenu = driver.find_element_by_class_name('navmenu')
-    link = navmenu.find_element_by_link_text(nav_name)
+    nav_class = "link-settings"
+    link = get_nav_link(driver, url, nav_class)
     # print "DEBUG: found %s link: %s" % (nav_name, link)
     link.click()
     # ajax_wait(driver, nav_name)
@@ -486,8 +494,8 @@ def settings_actions(driver, url, login, passwd, callbacks):
 def setup_actions(driver, url, login, passwd, callbacks):
     """Run user actions for section of same name"""
     nav_name = "Setup"
-    navmenu = driver.find_element_by_class_name('navmenu')
-    link = navmenu.find_element_by_link_text(nav_name)
+    nav_class = "link-setup"
+    link = get_nav_link(driver, url, nav_class)
     # print "DEBUG: found %s link: %s" % (nav_name, link)
     link.click()
     # ajax_wait(driver, nav_name)
@@ -517,8 +525,12 @@ def setup_actions(driver, url, login, passwd, callbacks):
 def jupyter_actions(driver, url, login, passwd, callbacks):
     """Run user actions for section of same name"""
     nav_name = "Jupyter"
-    navmenu = driver.find_element_by_class_name('navmenu')
-    link = navmenu.find_element_by_link_text(nav_name)
+    nav_class = "link-jupyter"
+    try:
+        link = get_nav_link(driver, url, nav_class)
+    except:
+        print("INFO: no %r link found, probably not enabled" % nav_name)
+        return
     # print "DEBUG: found %s link: %s" % (nav_name, link)
     link.click()
     # ajax_wait(driver, nav_name)
@@ -531,8 +543,12 @@ def jupyter_actions(driver, url, login, passwd, callbacks):
 def cloud_actions(driver, url, login, passwd, callbacks):
     """Run user actions for section of same name"""
     nav_name = "Cloud"
-    navmenu = driver.find_element_by_class_name('navmenu')
-    link = navmenu.find_element_by_link_text(nav_name)
+    nav_class = "link-cloud"
+    try:
+        link = get_nav_link(driver, url, nav_class)
+    except:
+        print("INFO: no %r link found, probably not enabled" % nav_name)
+        return
     # print "DEBUG: found %s link: %s" % (nav_name, link)
     link.click()
     # ajax_wait(driver, nav_name)
@@ -545,8 +561,12 @@ def cloud_actions(driver, url, login, passwd, callbacks):
 def people_actions(driver, url, login, passwd, callbacks):
     """Run user actions for section of same name"""
     nav_name = "People"
-    navmenu = driver.find_element_by_class_name('navmenu')
-    link = navmenu.find_element_by_link_text(nav_name)
+    nav_class = "link-people"
+    try:
+        link = get_nav_link(driver, url, nav_class)
+    except:
+        print("INFO: no %r link found, probably not enabled" % nav_name)
+        return
     # print "DEBUG: found %s link: %s" % (nav_name, link)
     link.click()
     ajax_wait(driver, nav_name)
@@ -556,11 +576,33 @@ def people_actions(driver, url, login, passwd, callbacks):
         callbacks[state](driver, state)
 
 
+def peers_actions(driver, url, login, passwd, callbacks):
+    """Run user actions for section of same name"""
+    nav_name = "Peers"
+    nav_class = "link-peers"
+    try:
+        link = get_nav_link(driver, url, nav_class)
+    except:
+        print("INFO: no %r link found, probably not enabled" % nav_name)
+        return
+    # print "DEBUG: found %s link: %s" % (nav_name, link)
+    link.click()
+    #ajax_wait(driver, nav_name)
+    state = 'peers-ready'
+    if callbacks.get(state, None):
+        print("INFO: callback for: %s" % state)
+        callbacks[state](driver, state)
+
+
 def crontab_actions(driver, url, login, passwd, callbacks):
     """Run user actions for section of same name"""
     nav_name = "Schedule Tasks"
-    navmenu = driver.find_element_by_class_name('navmenu')
-    link = navmenu.find_element_by_link_text(nav_name)
+    nav_class = "link-crontab"
+    try:
+        link = get_nav_link(driver, url, nav_class)
+    except:
+        print("INFO: no %r link found, probably not enabled" % nav_name)
+        return
     # print "DEBUG: found %s link: %s" % (nav_name, link)
     link.click()
     # ajax_wait(driver, nav_name)
@@ -573,8 +615,12 @@ def crontab_actions(driver, url, login, passwd, callbacks):
 def datatransfer_actions(driver, url, login, passwd, callbacks):
     """Run user actions for section of same name"""
     nav_name = "Data Transfers"
-    navmenu = driver.find_element_by_class_name('navmenu')
-    link = navmenu.find_element_by_link_text(nav_name)
+    nav_class = "link-transfers"
+    try:
+        link = get_nav_link(driver, url, nav_class)
+    except:
+        print("INFO: no %r link found, probably not enabled" % nav_name)
+        return
     # print "DEBUG: found %s link: %s" % (nav_name, link)
     link.click()
     # ajax_wait(driver, nav_name)
@@ -587,8 +633,12 @@ def datatransfer_actions(driver, url, login, passwd, callbacks):
 def sharelink_actions(driver, url, login, passwd, callbacks):
     """Run user actions for section of same name"""
     nav_name = "Share Links"
-    navmenu = driver.find_element_by_class_name('navmenu')
-    link = navmenu.find_element_by_link_text(nav_name)
+    nav_class = "link-sharelinks"
+    try:
+        link = get_nav_link(driver, url, nav_class)
+    except:
+        print("INFO: no %r link found, probably not enabled" % nav_name)
+        return
     # print "DEBUG: found %s link: %s" % (nav_name, link)
     link.click()
     # ajax_wait(driver, nav_name)
@@ -696,6 +746,7 @@ def main():
             ('Jupyter', jupyter_actions),
             ('Cloud', cloud_actions),
             ('People', people_actions),
+            ('Peers', peers_actions),
             ('Schedule Tasks', crontab_actions),
             ('Share Links', sharelink_actions),
             ('Data Transfers', datatransfer_actions),
@@ -715,7 +766,7 @@ def main():
     callback_targets += ['setup-%s-ready' %
                          sub for (sub, _) in active_setup_sections]
     callback_targets += ['jupyter-ready', 'cloud-ready', 'people-ready',
-                         'crontab-ready', 'datatransfer-ready',
+                         'peers-ready', 'crontab-ready', 'datatransfer-ready',
                          'sharelink-ready']
     callback_targets += ['open-project-ready', 'project-info-ready',
                          'create-project-ready', 'create-project-filled',

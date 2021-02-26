@@ -50,6 +50,10 @@ AUTH_UNKNOWN = "Unknown"
 AUTH_OPENID_V2 = "OpenID 2.0"
 AUTH_OPENID_CONNECT = "OpenID Connect"
 
+NAVMENU_ID = "sideBar"
+USERMENU_ID = "userMenu"
+USERMENUBUTTON_ID = "userMenuButton"
+
 
 def init_driver(browser):
     """Init the requested browser driver"""
@@ -261,6 +265,31 @@ def shared_twofactor(driver, url, twofactor_key, callbacks={}):
     return status
 
 
+def get_nav_link(driver, url, nav_class):
+    """Find nav link in UI V3 or V2 structure"""
+    link, menu = None, None
+    try:
+        menu = driver.find_element_by_id(NAVMENU_ID)
+        link = menu.find_element_by_class_name(nav_class)
+    except:
+        link = None
+
+    if link:
+        return link
+
+    try:
+        menu = driver.find_element_by_id(USERMENU_ID)
+        link = menu.find_element_by_class_name(nav_class)
+        menubutton = driver.find_element_by_id(USERMENUBUTTON_ID)
+        # Make sure menu link item is visible for callee
+        if menu and link and menubutton:
+            menubutton.click()
+    except:
+        link = None
+
+    return link
+
+
 def shared_logout(driver, url, login, passwd, callbacks={}):
     """Logout through the shared logout navmenu entry and confirm. Optionally
     execute any provided callbacks for confirm states. The callbacks dictionary
@@ -269,9 +298,10 @@ def shared_logout(driver, url, login, passwd, callbacks={}):
     """
     status = True
     do_logout = False
+    nav_class = "link-logout"
     print("Do logout")
     try:
-        link = driver.find_element_by_link_text('Logout')
+        link = get_nav_link(driver, url, nav_class)
         # print "DEBUG: found link: %s" % link
         if link:
             # print "DEBUG: use link: %s" % link
