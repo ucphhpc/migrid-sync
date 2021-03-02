@@ -219,8 +219,9 @@ def main(client_id, user_arguments_dict):
 
     for visible_user_name in user_list:
         if not visible_user_name in visible_user.keys():
-            logger.error("invalid user %s (%s)" % (visible_user_name,
-                                                   visible_user))
+            logger.error("viewuser: invalid user %s" % visible_user_name)
+            logger.debug("viewuser: %s not found in %s" %
+                         (visible_user_name, visible_user.keys()))
             output_objects.append({'object_type': 'error_text',
                                    'text': 'invalid user %s' %
                                    visible_user_name})
