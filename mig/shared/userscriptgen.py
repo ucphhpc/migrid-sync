@@ -1713,7 +1713,7 @@ def login_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     session included if enabled for the chosen OpenID login.
     """
 
-    # Strip /id prefix from landing page get the required url form
+    # Strip / prefix from landing page get the required url form
     relative_url = configuration.site_landing_page.strip('/')
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags"'
@@ -1723,7 +1723,7 @@ def login_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         print('Error: %s not supported!' % lang)
         return ''
 
-    # Strip /id suffix from openid provider URL to get the required base form
+    # Strip / suffix from openid provider URL to get the required base form
     extoid_base = os.path.dirname(
         configuration.user_ext_oid_provider.rstrip('/'))
     migoid_base = os.path.dirname(
@@ -1752,8 +1752,10 @@ def logout_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     """Call a helper to retire an active OpenID login session possibly with
     2FA auth session included if enabled for the chosen OpenID login.
     """
-    # Strip /id prefix from landing page get the required url form
+    # Strip / prefix from landing page get the required url form
     relative_url = configuration.site_landing_page.strip('/')
+    relative_return_url = '"%s/autologout.py?output_format=txt"' \
+        % get_xgi_bin(configuration) 
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags"'
     elif lang == 'python':
@@ -1762,7 +1764,7 @@ def logout_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         print('Error: %s not supported!' % lang)
         return ''
 
-    # Strip /id suffix from openid provider URL to get the required base form
+    # Strip / suffix from openid provider URL to get the required base form
     extoid_base = os.path.dirname(
         configuration.user_ext_oid_provider.rstrip('/'))
     migoid_base = os.path.dirname(
@@ -1774,6 +1776,7 @@ def logout_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     s += curl_chain_logout_steps(
         lang,
         relative_url,
+        relative_return_url,
         post_data,
         migoid_base,
         extoid_base

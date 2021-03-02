@@ -89,7 +89,7 @@ def main(client_id, user_arguments_dict, environ=None):
 
     # Validate trust on unpacked url and query
 
-    if unpacked_url and unpacked_query \
+    if (unpacked_url or unpacked_query) \
             and not trust_handler(configuration, 'get', unpacked_url, unpacked_query,
                          client_id, get_csrf_limit(configuration), environ):
         logger.error('validation of unpacked url %s and query %s failed!' % \
@@ -98,7 +98,7 @@ def main(client_id, user_arguments_dict, environ=None):
 accepting fully signed GET requests to prevent unintended redirects'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    # NOTE: from this point its' safe to use unpacked_url and unpacked_query
+    # NOTE: from this point it's safe to use unpacked_url and unpacked_query
     redirect_url, redirect_query_dict = unpacked_url, unpacked_query
 
     output_objects.append({'object_type': 'header',

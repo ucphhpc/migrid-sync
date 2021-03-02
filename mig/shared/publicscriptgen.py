@@ -976,6 +976,7 @@ def curl_chain_login_steps(
 def curl_chain_logout_steps(
     lang,
     relative_url="''",
+    relative_return_url="''",
     post_data="''",
     migoid_base='',
     extoid_base=''
@@ -992,8 +993,9 @@ def curl_chain_logout_steps(
     migoid_base='%s'
     url_base=''
     url_val='%s'
+    return_url_val='%s'
     post_val=''
-""" % (extoid_base, migoid_base, relative_url)
+""" % (extoid_base, migoid_base, relative_url, relative_return_url)
         url_val = '${url_val}'
         post_val = '${post_val}'
     elif lang == 'python':
@@ -1002,8 +1004,9 @@ def curl_chain_logout_steps(
     migoid_base = '%s'
     url_base = ''
     url_val = '%s'
+    return_url_val='%s'
     post_val = ''
-""" % (extoid_base, migoid_base, relative_url)
+""" % (extoid_base, migoid_base, relative_url, relative_return_url)
         url_val = 'url_val'
         post_val = 'post_val'
     else:
@@ -1036,7 +1039,7 @@ def curl_chain_logout_steps(
     
     # Call openid logout with redirect to autologut.py for session cleanup
 
-    autologout_url="${mig_server}/wsgi-bin/autologout.py?output_format=txt"
+    autologout_url="${mig_server}/${return_url_val:1:-1}"
     url_val='logout'
     post_val="return_to=${autologout_url}"
     out=$(curl_get_flex "$user_conf" "$openid_url_base" "$url_val" "$post_val" '' '')
@@ -1079,7 +1082,7 @@ def curl_chain_logout_steps(
 
     # Call openid logout with redirect to autologut.py for session cleanup
 
-    autologout_url = mig_server + "/wsgi-bin/autologout.py?output_format=txt"
+    autologout_url = mig_server + "/" + return_url_val[1:-1]
     url_val = 'logout'
     post_val = "return_to=" + autologout_url
     (status, out) = curl_get_flex(user_conf, openid_url_base, url_val, post_val, '', '')
