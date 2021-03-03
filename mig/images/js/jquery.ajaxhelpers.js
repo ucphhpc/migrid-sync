@@ -667,7 +667,7 @@ function ajax_resman(caching) {
                       if (resource.SANDBOX) {
                           res_type = 'sandbox';
                       }
-                      res_hint = 'class="'+res_type+'res" title="'+res_type+
+                      res_hint = 'class="'+res_type+'res iconspace iconleftpad" title="'+res_type+
                           ' resource"';
                       rte_hint = center_class+' title="'+
                           resource.RUNTIMEENVIRONMENT.toString()+'"';

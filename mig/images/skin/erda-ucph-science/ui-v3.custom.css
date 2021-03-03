@@ -712,6 +712,12 @@ a {
 .editlink {
     background-image: url('/images/icons/page_edit_46743c.svg'); 
 }
+.invitelink {
+    background-image: url('/images/icons/page_white_add_46743c.svg');
+}
+.userlink {
+    background-image: url('/images/icons/anonymous_46743c.svg');
+}
 .sharedfolderlink {
     background-image: url('/images/icons/folder_link_46743c.svg');
 }

@@ -1046,6 +1046,18 @@ background: url(/images/icons/compress.png) left center no-repeat;
     background-size: 18px 18px;
     background-position: left center;
 }
+.invitelink {
+    background: url('/images/icons/page_white_add.svg') no-repeat; 
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.userlink {
+    background: url('/images/icons/anonymous.svg') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
 .sharedfolderlink {
     background: url('/images/icons/folder_link.svg') no-repeat;
     padding-left: 18px;
@@ -1387,6 +1399,9 @@ body.openid #migheader {
 .adminlink {
     background: url('/images/icons/wrench.svg') no-repeat;
     padding-left: 18px;
+}
+.realres {
+    background-position: left center;
 }
 
 /* View user page */

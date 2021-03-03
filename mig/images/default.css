@@ -1096,6 +1096,10 @@ div.archive pre {
   background: url('/images/icons/page_edit.png') no-repeat;
   padding-left: 18px;
 }
+.userlink {
+  background: url('/images/icons/user.png') no-repeat;
+  padding-left: 18px;
+}
 .sharedfolderlink {
   background: url('/images/icons/folder_link.png') no-repeat;
   padding-left: 18px;
