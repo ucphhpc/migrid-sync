@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridaccess - user access in VGrids
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """User access to VGrids"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -37,7 +38,8 @@ import time
 from mig.shared.base import sandbox_resource, client_id_dir
 from mig.shared.conf import get_all_exe_vgrids, get_all_store_vgrids, \
     get_resource_fields, get_resource_configuration
-from mig.shared.defaults import settings_filename, profile_filename, default_vgrid
+from mig.shared.defaults import settings_filename, profile_filename, \
+    default_vgrid, keyword_all
 from mig.shared.fileio import acquire_file_lock, release_file_lock
 from mig.shared.modified import mark_resource_modified, mark_vgrid_modified, \
     check_users_modified, check_resources_modified, check_vgrids_modified, \
@@ -166,7 +168,7 @@ def _load_entity_map_before_update(configuration, kind, flush):
         entity_map, map_stamp = load_map(configuration, do_lock=False,
                                          caching=False)
     else:
-        _logger.info("Creating empty user map")
+        _logger.info("Creating empty %s map" % kind)
         entity_map = {}
         map_stamp = 0
     return (entity_map, map_stamp, lock_handle)
@@ -736,7 +738,7 @@ def _get_entity_map(configuration, key, caching=False):
             configuration)
         if not modified_list:
             _logger.debug("no changes - not refreshing %s map" % name)
-        elif modified_stamp > start_time:
+        elif not keyword_all in modified_list and modified_stamp > start_time:
             # Recently modified but already got the original pending update
             _logger.debug("already recent - not refreshing %s map" % name)
         else:

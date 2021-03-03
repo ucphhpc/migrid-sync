@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resman - manage resources
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -186,6 +186,12 @@ to open resource management.
             if not show_sandboxes and sandbox_resource(unique_resource_name):
                 continue
             res_obj = {'object_type': 'resource', 'name': visible_res_name}
+
+            # NOTE: res may not yet have been added to res_map here
+            if not res_map.get(unique_resource_name, None):
+                logger.info("skip %s not yet in resource map" %
+                            unique_resource_name)
+                continue
 
             if client_id in res_map[unique_resource_name][OWNERS]:
 
