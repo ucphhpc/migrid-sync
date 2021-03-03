@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # peers - manage external collaboration partners, etc.
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,6 +29,7 @@
 partners, course/workshop participants and similar users that one user needs
 to offer site access for a time limited period.
 """
+
 from __future__ import absolute_import
 
 import datetime
@@ -45,6 +46,7 @@ from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.html import man_base_js, man_base_html, html_post_helper
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.serial import load
+from mig.shared.user import anon_user_id
 from mig.shared.useradm import get_full_user_map
 
 
@@ -141,7 +143,8 @@ function transfer_id_fields() {
             state = "NA"
         }
         if (full_name && organization && email && country && state) {
-            peer_id = "/C="+country+"/ST="+state+"/L=NA/O="+organization+"/OU=NA/CN="+full_name+"/emailAddress="+email;
+            peer_id = "/C="+country+"/ST="+state+"/L=NA/O="+ \
+                organization+"/OU=NA/CN="+full_name+"/emailAddress="+email;
             //console.debug("built peer_id: "+peer_id);
             peer_count += 1;
         }
@@ -306,6 +309,7 @@ extensions from your peers until the given time of expiry.
                              ('label', 'kind', 'expire')])
         fill_distinguished_name(entry)
         filled_entry.update(entry)
+        filled_entry['anon_peer_id'] = anon_user_id(peer_id)
         filled_entry['object_type'] = 'peer'
         # NOTE: very simple edit dialog to change only expire through confirm.
         # We could add similar buttons for kind and label fields but they can
@@ -329,6 +333,12 @@ extensions from your peers until the given time of expiry.
              "{action: 'update', peers_label: '%(label)s', peers_kind: '%(kind)s', peers_expire:'%(expire)s', peers_content: '%(distinguished_name)s', peers_invite: true}" % filled_entry),
             'class': 'invitelink iconspace',
             'title': 'Invite %(distinguished_name)s as peer' % filled_entry,
+            'text': ''}
+        filled_entry['viewpeerlink'] = {
+            'object_type': 'link',
+            'destination': 'viewuser.py?cert_id=%(anon_peer_id)s' % filled_entry,
+            'class': 'userlink iconspace',
+            'title': 'Lookup %(distinguished_name)s user details' % filled_entry,
             'text': ''}
         filled_entry['delpeerlink'] = {
             'object_type': 'link',

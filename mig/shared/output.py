@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # output - general formatting of backend output objects
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,6 +27,7 @@
 
 """Module with functions to generate output in format
 specified by the client."""
+
 from __future__ import absolute_import
 
 import os
@@ -1433,15 +1434,19 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             for single_peer in peers:
                 editlink = single_peer.get('editpeerlink', '')
                 invitelink = single_peer.get('invitepeerlink', '')
+                viewlink = single_peer.get('viewpeerlink', '')
                 dellink = single_peer.get('delpeerlink', '')
                 if editlink:
                     editlink = html_link(editlink)
                 if invitelink:
                     invitelink = html_link(invitelink)
+                if viewlink:
+                    viewlink = html_link(viewlink)
                 if dellink:
                     dellink = html_link(dellink)
-                single_peer['action_links'] = "%s %s %s" % \
-                                              (editlink, invitelink, dellink)
+                single_peer['action_links'] = "%s %s %s %s" % \
+                                              (editlink, invitelink, viewlink,
+                                               dellink)
                 single_peer['state'] = single_peer.get('state', '')
                 if not single_peer['state']:
                     single_peer['state'] = 'NA'
@@ -1900,7 +1905,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                     if obj.get('SANDBOX', False):
                         res_type = 'sandbox'
                     lines.append(
-                        '<td class="%sres" title="%s resource">%s</td>' %
+                        '<td class="%sres iconspace iconleftpad" title="%s resource">%s</td>' %
                         (res_type, res_type, obj['name']))
                     lines.append('<td class="centertext">')
                     # view or admin link depending on ownership

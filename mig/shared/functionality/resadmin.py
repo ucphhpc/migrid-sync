@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resadmin - Administrate a MiG Resource
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,6 +31,7 @@ resources, tweaking the configuration of existing resources,
 starting, stopping and getting status of resources, and
 administrating owners.
 """
+
 from __future__ import absolute_import
 
 import os
@@ -45,7 +46,9 @@ from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.html import man_base_js, man_base_html, html_post_helper
 from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.output import html_link
 from mig.shared.refunctions import get_re_dict, list_runtime_environments
+from mig.shared.user import anon_user_id
 from mig.shared.vgridaccess import res_vgrid_access, get_vgrid_map_vgrids, \
     get_resource_map, CONF, OWNERS, RESID
 
@@ -322,7 +325,13 @@ Current owners of %(res_id)s.<br />
 </form>
 </td>
 ''' % fill_helpers
-        html += '<td>' + owner_id + '</td></tr>'
+        anon_id = anon_user_id(owner_id)
+        html += '<td>%s</td></tr>' % \
+                html_link({
+                    'destination': 'viewuser.py?cert_id=%s' % anon_id,
+                    'class': 'userlink iconspace',
+                    'title': 'View user details for %s' % owner_id,
+                    'text': owner_id})
     html += '</table>'
 
     openid_add = ""

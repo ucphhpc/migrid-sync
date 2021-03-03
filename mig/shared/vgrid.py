@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgrid - helper functions related to VGrid actions
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """VGrid specific helper functions"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -48,6 +49,7 @@ from mig.shared.modified import mark_vgrid_modified
 from mig.shared.output import html_link
 from mig.shared.serial import load, dump
 from mig.shared.sharelinkkeywords import get_sharelink_keywords_dict
+from mig.shared.user import anon_user_id
 from mig.shared.vgridkeywords import get_trigger_keywords_dict, \
     get_settings_keywords_dict
 
@@ -391,8 +393,21 @@ doubt, just let the user request access and accept it with the
                 'text': ''})
             vgrid_table += """
                 </td>
-                <td>%s</td>%s
-            </tr>""" % (elem_id, extra_fields_html)
+                <td>"""
+
+            if item_string in ["owner", "member"]:
+                dyn_dict['anon_user_id'] = anon_user_id(elem_id)
+                vgrid_table += html_link({
+                    'destination': 'viewuser.py?cert_id=%(anon_user_id)s' % dyn_dict,
+                    'class': 'userlink iconspace',
+                    'title': 'View user details for %s' % elem_id,
+                    'text': elem_id})
+                del dyn_dict['anon_user_id']
+            else:
+                vgrid_table += "%s" % elem_id
+
+            vgrid_table += """</td>%s
+            </tr>""" % extra_fields_html
             index += 1
         vgrid_table += '''
           </tbody>

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # viewuser - Display public details about a user
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Get info about a user"""
+
 from __future__ import absolute_import
 
 import hashlib
@@ -43,7 +44,8 @@ from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.output import html_link
 from mig.shared.profilekeywords import get_profile_specs
 from mig.shared.settingskeywords import get_settings_specs
-from mig.shared.user import user_gravatar_url, inline_image
+from mig.shared.user import user_gravatar_url, inline_image, anon_user_id, \
+    anon_to_real_user_map
 from mig.shared.vgrid import vgrid_request_and_job_match
 from mig.shared.vgridaccess import user_visible_user_confs, user_vgrid_access, \
     CONF
@@ -216,17 +218,31 @@ def main(client_id, user_arguments_dict):
 
     visible_user = user_visible_user_confs(configuration, client_id)
     vgrid_access = user_vgrid_access(configuration, client_id)
+    anon_map = anon_to_real_user_map(configuration)
 
     for visible_user_name in user_list:
-        if not visible_user_name in visible_user.keys():
+        # NOTE: we allow anon user alias for visible IDs, but not vice versa
+        if visible_user_name.isalnum():
+            real_user_name = anon_map.get(visible_user_name, visible_user_name)
+        else:
+            real_user_name = visible_user_name
+        logger.debug("viewuser: lookup %s or %s in visible users" %
+                     (visible_user_name, real_user_name))
+
+        if visible_user_name in visible_user.keys():
+            user_dict = visible_user[visible_user_name]
+        elif real_user_name in visible_user.keys():
+            visible_user_name = real_user_name
+            user_dict = visible_user[real_user_name]
+        else:
             logger.error("viewuser: invalid user %s" % visible_user_name)
             logger.debug("viewuser: %s not found in %s" %
                          (visible_user_name, visible_user.keys()))
             output_objects.append({'object_type': 'error_text',
-                                   'text': 'invalid user %s' %
-                                   visible_user_name})
+                                   'text': 'No such %s user: %s' %
+                                   (configuration.short_title,
+                                    visible_user_name)})
             continue
-        user_dict = visible_user[visible_user_name]
         user_item = build_useritem_object_from_user_dict(configuration,
                                                          client_id,
                                                          visible_user_name,
