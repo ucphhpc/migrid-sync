@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # viewvgrid - Display public details about a vgrid
-# Copyright (C) 2003-2020 The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021 The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Get info about a VGrid"""
+
 from __future__ import absolute_import
 
 from mig.shared import returnvalues
@@ -33,6 +34,8 @@ from mig.shared.defaults import keyword_owners, keyword_members, keyword_none, \
     keyword_all
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.output import html_link
+from mig.shared.user import anon_user_id
 from mig.shared.vgrid import vgrid_owners, vgrid_members, vgrid_resources, \
     vgrid_settings, vgrid_is_owner, vgrid_is_owner_or_member
 from mig.shared.vgridaccess import user_vgrid_access
@@ -172,12 +175,29 @@ def main(client_id, user_arguments_dict):
                             'visible_owners'):
             (owners_status, owners) = vgrid_owners(vgrid_name, configuration)
             if owners_status:
-                vgrid_dict['owners'] = owners
+                vgrid_dict['owners'] = []
+                for user_id in owners:
+                    anon_id = anon_user_id(user_id)
+                    user_link = html_link({
+                        'destination': 'viewuser.py?cert_id=%s' % anon_id,
+                        'class': 'userlink iconspace',
+                        'title': 'View user details for %s' % user_id,
+                        'text': user_id})
+                    vgrid_dict['owners'].append(user_link)
+
         if user_view_access(configuration, vgrid_name, client_id, settings_dict,
                             'visible_members'):
             (members_status, members) = vgrid_members(vgrid_name, configuration)
             if members_status:
-                vgrid_dict['members'] = members
+                vgrid_dict['members'] = []
+                for user_id in members:
+                    anon_id = anon_user_id(user_id)
+                    user_link = html_link({
+                        'destination': 'viewuser.py?cert_id=%s' % anon_id,
+                        'class': 'userlink iconspace',
+                        'title': 'View user details for %s' % user_id,
+                        'text': user_id})
+                    vgrid_dict['members'].append(user_link)
         if user_view_access(configuration, vgrid_name, client_id, settings_dict,
                             'visible_resources'):
             (res_status, resources) = vgrid_resources(vgrid_name, configuration)
