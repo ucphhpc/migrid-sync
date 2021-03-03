@@ -44,6 +44,14 @@ _remap_fields = ['CN', 'O', 'OU']
 cert_field_map = dict(cert_field_order)
 
 
+def get_site_base_url(configuration):
+    """Lookup main site URL with preference for HTTPS if available"""
+    main_url = configuration.migserver_http_url
+    if configuration.migserver_https_url:
+        main_url = configuration.migserver_https_url
+    return main_url
+
+
 def client_id_dir(client_id):
     """Map client ID to a valid directory name:
     client_id is a distinguished name on the form /X=ab/Y=cdef ghi/Z=klmn...

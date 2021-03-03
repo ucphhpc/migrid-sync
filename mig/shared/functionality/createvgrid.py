@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createvgrid - create a vgrid with all the collaboration components
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Create a new VGrid"""
+
 from __future__ import absolute_import
 
 import os
@@ -36,7 +37,7 @@ from tempfile import NamedTemporaryFile
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir, generate_https_urls, valid_dir_input, \
-    distinguished_name_to_user
+    distinguished_name_to_user, get_site_base_url
 from mig.shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
     keyword_owners, keyword_members, default_vgrid_settings_limit
 from mig.shared.fileio import write_file, make_symlink, delete_file, walk
@@ -84,7 +85,7 @@ def create_scm(
     elif scm_dir.find('public') > -1:
         kind = 'public'
         scm_alias = 'vgridpublicscm'
-        server_url = configuration.migserver_http_url
+        server_url = get_site_base_url(configuration)
     server_url_optional_port = ':'.join(server_url.split(':')[:2])
     cgi_template_script = os.path.join(configuration.hgweb_scripts,
                                        'hgweb.cgi')
@@ -257,7 +258,7 @@ def create_tracker(
     elif tracker_dir.find('public') > -1:
         kind = 'public'
         tracker_alias = 'vgridpublictracker'
-        server_url = configuration.migserver_http_url
+        server_url = get_site_base_url(configuration)
     tracker_url = os.path.join(server_url, tracker_alias, vgrid_name)
 
     # Trac init is documented at http://trac.edgewall.org/wiki/TracAdmin

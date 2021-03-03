@@ -531,7 +531,7 @@ vhost-specific certificates from LetsEncrypt and OpenID with optional
                    --enable_events=True --enable_imnotify=True \
                    --enable_twofactor=True --enable_cracklib=True \
                    --enable_hsts=True --enable_vhost_certs=True \
-                   --enable_verify_certs=True --public_use_https=True \
+                   --enable_verify_certs=True \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='ServerAlias' --alias_field=email \
@@ -586,7 +586,7 @@ or the same on centos
                    --enable_events=True --enable_imnotify=True \
                    --enable_twofactor=True --enable_cracklib=True \
                    --enable_hsts=True --enable_vhost_certs=True \
-                   --enable_verify_certs=True --public_use_https=True \
+                   --enable_verify_certs=True \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='ServerAlias' --alias_field=email \
@@ -607,6 +607,7 @@ optimized SFTP, Seafile integration and OpenID login:
                    --base_fqdn=erda.dk \
                    --public_fqdn=www.erda.dk \
                    --public_alias_fqdn=erda.ku.dk \
+                   --public_sec_fqdn=erda.ku.dk \
                    --mig_cert_fqdn= \
                    --ext_cert_fqdn=cert.erda.dk \
                    --mig_oid_fqdn=ext.erda.dk \
@@ -641,7 +642,6 @@ optimized SFTP, Seafile integration and OpenID login:
                    --enable_resources=False --enable_events=True \
                    --enable_freeze=True --enable_hsts=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
-                   --public_use_https=True \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='#ServerAlias' --alias_field=email \
@@ -662,6 +662,7 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --base_fqdn=erda.dk \
                    --public_fqdn=www.erda.dk \
                    --public_alias_fqdn=erda.ku.dk \
+                   --public_sec_fqdn=erda.ku.dk \
                    --mig_cert_fqdn= \
                    --ext_cert_fqdn=cert.erda.dk \
                    --mig_oid_fqdn=ext.erda.dk \
@@ -702,7 +703,6 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --jupyter_services='DAG.http://dag002.science DAG.http://dag003.science DAG.http://dag004.science DAG.http://dag005.science DAG.http://dag006.science DAG.http://dag007.science DAG.http://dag200.science MODI.http://130.225.104.218' \
                    --jupyter_services_desc="{'DAG': '/home/mig/state/wwwpublic/dag_desc.html', 'MODI': '/home/mig/state/wwwpublic/modi_desc.html'}" \
                    --enable_cloud=True \
-                   --public_use_https=True \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='#ServerAlias' --alias_field=email \
@@ -766,7 +766,6 @@ with optional 2-FA support and legacy sftp clients:
                    --enable_jupyter=True \
                    --jupyter_services='DAG.http://dag002.science DAG.http://dag003.science DAG.http://dag004.science DAG.http://dag005.science DAG.http://dag006.science DAG.http://dag007.science DAG.http://dag200.science MODI.http://130.225.104.218' \
                    --jupyter_services_desc="{'DAG': '/home/mig/state/wwwpublic/dag_desc.html', 'MODI': '/home/mig/state/wwwpublic/modi_desc.html'}" \
-                   --public_use_https=True \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='#ServerAlias' --alias_field=email \
@@ -793,6 +792,7 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --base_fqdn=sif.erda.dk \
                    --public_fqdn=sif-www.erda.dk \
                    --public_alias_fqdn=sif.ku.dk \
+                   --public_sec_fqdn=sif.ku.dk \
                    --mig_cert_fqdn= \
                    --ext_cert_fqdn= \
                    --mig_oid_fqdn=sif-ext.erda.dk \
@@ -831,7 +831,6 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --enable_twofactor_strict_address=True \
                    --enable_cracklib=True --enable_hsts=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
-                   --public_use_https=True \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='#ServerAlias' --alias_field=email \

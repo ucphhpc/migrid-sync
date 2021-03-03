@@ -26,6 +26,7 @@
 #
 
 """Freeze archive functions"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -38,7 +39,7 @@ import time
 from urllib import quote
 
 from mig.shared.base import client_id_dir, distinguished_name_to_user, \
-    brief_list, pretty_format_user
+    brief_list, pretty_format_user, get_site_base_url
 from mig.shared.defaults import freeze_meta_filename, freeze_lock_filename, \
     wwwpublic_alias, public_archive_dir, public_archive_index, \
     public_archive_files, public_archive_doi, freeze_flavors, keyword_final, \
@@ -127,10 +128,8 @@ def published_url(freeze_dict, configuration, target=public_archive_index):
     target argument is used to request a specific archive helper instead of
     the landing page.
     """
-    base_url = configuration.migserver_http_url
-    if configuration.migserver_https_sid_url:
-        base_url = configuration.migserver_https_sid_url
-    return os.path.join(base_url, 'public', public_archive_dir,
+    base_url = get_site_base_url(configuration)
+    return os.path.join(base_url, public_archive_dir,
                         public_freeze_id(freeze_dict, configuration),
                         target)
 

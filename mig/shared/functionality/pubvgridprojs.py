@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # pubvgridprojs - list vgrids with public project page
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,11 +28,13 @@
 """List of public vgrid pages without cert requirement so that we can advertise
 them to the public (unused so far).
 """
+
 from __future__ import absolute_import
 
 import os
 
 from mig.shared import returnvalues
+from mig.shared.base import get_site_base_url
 from mig.shared.functional import validate_input
 from mig.shared.init import initialize_main_variables
 
@@ -49,11 +51,12 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Public project links'})
+    output_objects.append(
+        {'object_type': 'header', 'text': 'Public project links'})
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
-            defaults, output_objects, allow_rejects=False)
+                                                 defaults, output_objects,
+                                                 allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -61,17 +64,16 @@ def main(client_id, user_arguments_dict):
     linklist = []
     for public_vgrid_dir in os.listdir(vgrid_public_base):
         if os.path.exists(os.path.join(vgrid_public_base,
-                          public_vgrid_dir, 'index.html')):
+                                       public_vgrid_dir, 'index.html')):
 
-            # public project listing is enabled, link to the vgrid's public page
+            # public project listing is enabled, link to the vgrid public page
 
             new_link = {'object_type': 'link',
                         'text': public_vgrid_dir,
-                        'destination': '%s/vgrid/%s/path/index.html'\
-                         % (configuration.migserver_http_url,
-                        public_vgrid_dir)}
+                        'destination': '%s/vgrid/%s/path/index.html'
+                        % (get_site_base_url(configuration),
+                            public_vgrid_dir)}
             linklist.append(new_link)
-    output_objects.append({'object_type': 'linklist', 'links'
-                          : linklist})
+    output_objects.append({'object_type': 'linklist', 'links': linklist})
 
     return (output_objects, returnvalues.OK)

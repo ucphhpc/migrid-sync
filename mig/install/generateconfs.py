@@ -70,6 +70,7 @@ if '__main__' == __name__:
         'base_fqdn',
         'public_fqdn',
         'public_alias_fqdn',
+        'public_sec_fqdn',
         'mig_cert_fqdn',
         'ext_cert_fqdn',
         'mig_oid_fqdn',

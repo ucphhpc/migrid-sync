@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridman - backend to manage vgrids
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,9 +26,11 @@
 #
 
 """VGrid management back end functionality"""
+
 from __future__ import absolute_import
 
 from mig.shared import returnvalues
+from mig.shared.base import get_site_base_url
 from mig.shared.defaults import default_vgrid, all_vgrids, default_pager_entries, \
     csrf_field
 from mig.shared.functional import validate_input_and_cert
@@ -285,7 +287,7 @@ resources.''' % label})
 
             vgrid_obj['publicscmlink'] = {'object_type': 'link',
                                           'destination': '%s/vgridpublicscm/%s'
-                                          % (configuration.migserver_http_url,
+                                          % (get_site_base_url(configuration),
                                               vgrid_name),
                                           'class': 'scmlink public iconspace',
                                           'title': 'Open %s public SCM' %
@@ -293,7 +295,7 @@ resources.''' % label})
                                           'text': 'Open'}
             vgrid_obj['publictrackerlink'] = {'object_type': 'link',
                                               'destination': '%s/vgridpublictracker/%s'
-                                              % (configuration.migserver_http_url,
+                                              % (get_site_base_url(configuration),
                                                  vgrid_name),
                                               'class': 'trackerlink public iconspace',
                                               'title': 'Open %s public tracker' %
@@ -302,7 +304,7 @@ resources.''' % label})
             vgrid_obj['enterpubliclink'] = {'object_type': 'link',
                                             'destination':
                                             '%s/vgrid/%s/path/index.html' %
-                                            (configuration.migserver_http_url,
+                                            (get_site_base_url(configuration),
                                              vgrid_name),
                                             'class': 'urllink member iconspace',
                                             'title': 'View public %s web page' %

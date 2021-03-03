@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # notification - instant message and email notification helpers
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Notification functions"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -50,7 +51,7 @@ except ImportError as ierr:
     gnupg = None
 
 from mig.shared.base import force_utf8, generate_https_urls, canonical_user, \
-    cert_field_map, extract_field
+    cert_field_map, extract_field, get_site_base_url
 from mig.shared.defaults import email_keyword_list, job_output_dir, \
     transfer_output_dir, keyword_auto
 from mig.shared.fileio import send_message_to_grid_notify
@@ -337,7 +338,7 @@ documentation.
         short_title = configuration.short_title
         migoid_title = configuration.user_mig_oid_title
         migoid_url = configuration.migserver_https_mig_oid_url
-        entry_url = configuration.migserver_http_url
+        entry_url = get_site_base_url(configuration)
         header = 'Re: %s OpenID request for %s' % (short_title, user_name)
         txt += """This is an auto-generated intro message from %s to inform
 about the creation or renewal of your user account with OpenID login.

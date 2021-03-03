@@ -28,6 +28,7 @@
 """This module contains general functions used by the modules in
 the functionality dir.
 """
+
 from __future__ import absolute_import
 
 import os
@@ -37,7 +38,7 @@ import time
 
 from mig.shared.accountstate import check_account_status, \
     check_update_account_expire
-from mig.shared.base import requested_page, force_utf8
+from mig.shared.base import requested_page, force_utf8, get_site_base_url
 from mig.shared.defaults import csrf_field, auth_openid_ext_db
 from mig.shared.findtype import is_user
 from mig.shared.httpsclient import extract_client_cert, extract_client_openid, \
@@ -191,7 +192,7 @@ def validate_input_and_cert(
                                })
 
         if configuration.site_enable_gdp:
-            main_url = configuration.migserver_http_url
+            main_url = get_site_base_url(configuration)
             output_objects.append(
                 {'object_type': 'text', 'text': '''Apparently you do not
                         have access to this page, please return to:'''})

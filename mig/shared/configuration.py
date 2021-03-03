@@ -26,6 +26,7 @@
 #
 
 """Configuration class"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -135,6 +136,7 @@ def fix_missing(config_file, verbose=True):
         'trac_ini_path': '~/mig/server/trac.ini',
         'trac_id_field': 'email',
         'migserver_http_url': 'http://%%(server_fqdn)s',
+        'migserver_https_url': '',
         'myfiles_py_location': '',
         'mig_server_id': '%s.0' % fqdn,
         'empty_job_name': 'no_suitable_job-',
@@ -472,6 +474,7 @@ class Configuration:
     mig_system_run = ''
     empty_job_name = ''
     migserver_http_url = ''
+    migserver_https_url = ''
     migserver_https_mig_cert_url = ''
     migserver_https_ext_cert_url = ''
     migserver_https_mig_oid_url = ''
@@ -757,6 +760,7 @@ location.""" % self.config_file)
             self.ca_smtp = config.get('GLOBAL', 'ca_smtp')
         if config.has_option('GLOBAL', 'ca_user'):
             self.ca_user = config.get('GLOBAL', 'ca_user')
+
         if config.has_option('GLOBAL', 'migserver_https_mig_cert_url'):
             self.migserver_https_mig_cert_url = config.get(
                 'GLOBAL', 'migserver_https_mig_cert_url')
@@ -778,6 +782,14 @@ location.""" % self.config_file)
         if config.has_option('GLOBAL', 'migserver_https_sid_url'):
             self.migserver_https_sid_url = config.get(
                 'GLOBAL', 'migserver_https_sid_url')
+        if config.has_option('GLOBAL', 'migserver_https_url'):
+            self.migserver_https_url = config.get(
+                'GLOBAL', 'migserver_https_url')
+        else:
+            # NOTE: fall back to SIDURL/public/ for anon https access
+            if self.migserver_https_sid_url:
+                self.migserver_https_url = os.path.join(
+                    self.migserver_https_sid_url, 'public')
 
         # More paths mainly for optional components
 

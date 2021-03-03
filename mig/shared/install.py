@@ -32,6 +32,7 @@ Creates MiG server and Apache configurations to fit the provided settings.
 
 Create MiG developer account with dedicated web server and daemons.
 """
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -208,6 +209,7 @@ def generate_confs(
     base_fqdn='',
     public_fqdn='',
     public_alias_fqdn='',
+    public_sec_fqdn='',
     mig_cert_fqdn='',
     ext_cert_fqdn='',
     mig_oid_fqdn='',
@@ -318,7 +320,7 @@ def generate_confs(
     seafile_client_port=13419,
     seafile_quota=2,
     seafile_ro_access=True,
-    public_use_https=False,
+    public_use_https=True,
     user_clause='User',
     group_clause='Group',
     listen_clause='#Listen',
@@ -346,6 +348,11 @@ def generate_confs(
     user_dict['__BASE_FQDN__'] = base_fqdn
     user_dict['__PUBLIC_FQDN__'] = public_fqdn
     user_dict['__PUBLIC_ALIAS_FQDN__'] = public_alias_fqdn
+    if public_use_https:
+        if public_sec_fqdn:
+            user_dict['__PUBLIC_SEC_FQDN__'] = public_sec_fqdn
+        else:
+            user_dict['__PUBLIC_SEC_FQDN__'] = public_fqdn
     user_dict['__MIG_CERT_FQDN__'] = mig_cert_fqdn
     user_dict['__EXT_CERT_FQDN__'] = ext_cert_fqdn
     user_dict['__MIG_OID_FQDN__'] = mig_oid_fqdn
@@ -1280,14 +1287,14 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
                                                         default_http_port])
             user_dict['__PUBLIC_HTTP_URL__'] += ':%(__PUBLIC_HTTP_PORT__)s' % user_dict
         if public_use_https:
-            user_dict['__PUBLIC_HTTPS_URL__'] = 'https://%(__PUBLIC_FQDN__)s' \
+            user_dict['__PUBLIC_HTTPS_URL__'] = 'https://%(__PUBLIC_SEC_FQDN__)s' \
                                                 % user_dict
-            user_dict['__PUBLIC_URL__'] = user_dict['__PUBLIC_HTTPS_URL__']
             if str(public_https_port) != str(default_https_port):
                 print("adding explicit public https port (%s)" %
                       [public_https_port, default_https_port])
                 user_dict['__PUBLIC_HTTPS_URL__'] += ':%(__PUBLIC_HTTPS_PORT__)s' \
                                                      % user_dict
+            user_dict['__PUBLIC_URL__'] = user_dict['__PUBLIC_HTTPS_URL__']
         else:
             user_dict['__PUBLIC_URL__'] = user_dict['__PUBLIC_HTTP_URL__']
             user_dict['__PUBLIC_HTTPS_URL__'] = ''

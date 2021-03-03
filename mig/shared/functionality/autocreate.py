@@ -46,7 +46,8 @@ import time
 from mig.shared import returnvalues
 from mig.shared.accountstate import default_account_expire
 from mig.shared.base import client_id_dir, force_utf8, force_unicode, \
-    fill_user, distinguished_name_to_user, fill_distinguished_name
+    fill_user, distinguished_name_to_user, fill_distinguished_name, \
+    get_site_base_url
 from mig.shared.defaults import user_db_filename, AUTH_CERTIFICATE, \
     AUTH_OPENID_V2, AUTH_OPENID_CONNECT, AUTH_MIG_CERT, AUTH_EXT_CERT, \
     AUTH_MIG_OID, AUTH_EXT_OID, AUTH_MIG_OIDC, AUTH_EXT_OIDC
@@ -408,7 +409,7 @@ def main(client_id, user_arguments_dict, environ=None):
                     break
         elif auth_type == AUTH_OPENID_CONNECT:
             raw_login = identity
-        
+
         if raw_login and not raw_login in openid_names:
             openid_names.append(raw_login)
         if email and not email in openid_names:
@@ -491,7 +492,8 @@ Auto log out first to avoid sign up problems ...
     if auth_flavor == AUTH_EXT_OID and redirector and \
             not redirector.startswith(extoid_prefix) and \
             not redirector.startswith(configuration.migserver_https_sid_url) \
-            and not redirector.startswith(configuration.migserver_http_url):
+            and not redirector.startswith(configuration.migserver_http_url) \
+            and not redirector.startswith(get_site_base_url(configuration)):
         logger.error('stray %s autocreate rejected for %r (ref: %r)' %
                      (auth_flavor, client_id, redirector))
         output_objects.append({'object_type': 'error_text', 'text': '''Only
@@ -577,7 +579,7 @@ accepting create matching supplied ID!'''})
     fill_helper = {'short_title': configuration.short_title,
                    'base_url': base_url, 'admin_email': admin_email,
                    'ext_login_title': ext_login_title,
-                   'front_page_url': configuration.migserver_http_url,
+                   'front_page_url': get_site_base_url(configuration),
                    'personal_page_url': personal_page_url}
     fill_helper.update(user_dict)
 

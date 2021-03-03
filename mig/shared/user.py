@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # user - helper functions for user related tasks
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """User related functions - especially for People interface"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -47,7 +48,7 @@ try:
 except ImportError:
     scandir = None
 
-from mig.shared.base import client_dir_id, client_id_dir
+from mig.shared.base import client_dir_id, client_id_dir, get_site_base_url
 from mig.shared.defaults import litmus_id
 from mig.shared.settings import load_settings, load_profile
 
@@ -125,7 +126,8 @@ def get_user_conf(user_id, configuration, include_meta=False):
 def user_gravatar_url(configuration, email, size, anon_img="/images/anonymous.png"):
     """Helper to provide URL to user porfile picture"""
     configuration.logger.info("build gravatar for %s" % email)
-    anon_png_url = '%s/%s' % (configuration.migserver_http_url, anon_img)
+    prefer_url_base = get_site_base_url(configuration)
+    anon_png_url = '%s/%s' % (prefer_url_base, anon_img)
     gravatar_query = {'s': size, 'd': anon_png_url}
     gravatar_url = 'https://www.gravatar.com/avatar/'
     gravatar_url += hashlib.md5(email.strip().lower()).hexdigest()
