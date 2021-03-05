@@ -31,7 +31,7 @@ import cgi
 import time
 
 from mig.shared import returnvalues
-from mig.shared.bailout import bailout_helper, crash_helper, filter_output_objects
+from mig.shared.bailout import bailout_helper, crash_helper
 from mig.shared.base import requested_page, allow_script
 from mig.shared.defaults import download_block_size
 from mig.shared.conf import get_configuration_object
@@ -228,15 +228,14 @@ def application(environ, start_response):
         start_entry['headers'] = default_headers
     response_headers = start_entry['headers']
 
-    output = format_output(configuration, ret_code,
-                           ret_msg, output_objs, output_format)
+    output = format_output(configuration, backend, ret_code, ret_msg,
+                           output_objs, output_format)
 
-    # Explicit None means error during output formatting - empty string is okay
+    # Explicit None means fatal error in output formatting.
+    # An empty string on the other hand is quite okay.
 
     if output is None:
-        output_filtered = filter_output_objects(configuration, output_objs)
-        _logger.error("WSGI %s output formatting failed: %s" %
-                      (output_format, output_filtered))
+        _logger.error("WSGI %s output formatting failed: %s" % output_format)
         output = 'Error: output could not be correctly delivered!'
 
     content_length = len(output)

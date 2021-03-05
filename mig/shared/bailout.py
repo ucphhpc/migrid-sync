@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # bailout - emergency backend output helpers
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -57,27 +57,49 @@ def bailout_title(configuration=None, title_text=""):
     return title
 
 
-def filter_output_objects(configuration, out_obj, truncate_out_len=128):
+def compact_lines(raw_lines, truncate_max_lines, truncate_max_chars):
+    """Returns a compacted copy of raw_lines without touching the original"""
+    limit_lines = []
+    keep_lines = max(1, truncate_max_lines / 2)
+    keep_chars = truncate_max_chars / 2
+    raw_line_count = len(raw_lines)
+    for i in range(raw_line_count):
+        if i >= keep_lines and i < len(raw_lines) - keep_lines:
+            if i == keep_lines:
+                limit_lines.append(' .... %d line(s) ...' %
+                                   (raw_line_count - 2 * keep_lines))
+            continue
+        line = raw_lines[i]
+        if len(line) > truncate_max_chars:
+            limit_lines.append(line[0:keep_chars] + ' ... ' +
+                               line[-keep_chars:])
+        else:
+            limit_lines.append(line)
+    return limit_lines
+
+
+def filter_output_objects(configuration, out_obj, truncate_out_len=78,
+                          truncate_max_lines=4):
     """Helper to remove noise from out_obj before logging. Strip style and
     script noise from title entry in log and shorten any file_output to max
-    truncate_out_len chars showing only prefix and suffix.
+    truncate_out_len chars showing only prefix and suffix. Entries with many
+    lines are pruned from the middle to truncate_max_lines of total output.
     """
     out_filtered = []
     for entry in out_obj:
         if entry.get('object_type', 'UNKNOWN') == 'title':
             # NOTE: shallow copy so we must be careful not to edit original
             stripped_title = entry.copy()
-            stripped_title['style'] = stripped_title['script'] = '{ ... }'
+            for name in ('style', 'script', 'user_profile', 'user_settings'):
+                stripped_title[name] = '{ ... }'
             out_filtered.append(stripped_title)
         elif entry.get('object_type', 'UNKNOWN') == 'file_output':
             # NOTE: shallow copy so we must be careful not to edit original
             stripped_output = entry.copy()
-            limit_lines = []
-            half = truncate_out_len / 2
-            for line in stripped_output.get('lines', []):
-                if len(line) > truncate_out_len:
-                    limit_lines.append(line[0:half] + ' ... ' + line[-half:])
-            stripped_output['lines'] = limit_lines
+            stripped_lines = stripped_output.get('lines', [])
+            stripped_output['lines'] = compact_lines(stripped_lines,
+                                                     truncate_max_lines,
+                                                     truncate_out_len)
             out_filtered.append(stripped_output)
         else:
             out_filtered.append(entry)
@@ -100,9 +122,9 @@ def bailout_helper(configuration, backend, out_obj, title_text="Runtime Error",
 def crash_helper(configuration, backend, out_obj, error_id=None):
     """Fall back output helper to display emergency output"""
     _logger = configuration.logger
-    _logger.info("in crash helper for %s" % backend)
     if error_id is None:
         error_id = time.time()
+    _logger.info("detected crash in %r: %s" % (backend, error_id))
     out_obj = bailout_helper(configuration, backend, out_obj)
     out_obj.append(
         {'object_type': 'error_text', 'text':

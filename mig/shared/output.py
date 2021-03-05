@@ -36,7 +36,8 @@ import traceback
 from binascii import hexlify
 
 from mig.shared import returnvalues
-from mig.shared.bailout import bailout_title
+from mig.shared.bailout import bailout_title, crash_helper, \
+    filter_output_objects
 from mig.shared.defaults import file_dest_sep, keyword_any
 from mig.shared.html import get_xgi_html_header, get_xgi_html_footer, \
     vgrid_items, html_post_helper, tablesorter_pager
@@ -2497,6 +2498,7 @@ def get_valid_outputformats():
 
 def format_output(
     configuration,
+    backend,
     ret_val,
     ret_msg,
     out_obj,
@@ -2504,6 +2506,7 @@ def format_output(
 ):
     """This is the public method that should be called from other scripts"""
 
+    logger = configuration.logger
     valid_formats = get_valid_outputformats()
     (val_ret, val_msg) = validate(out_obj)
     if not val_ret:
@@ -2551,8 +2554,20 @@ def format_output(
         return eval('%s_format(configuration, ret_val, ret_msg, out_obj)' %
                     outputformat)
     except Exception as err:
-        configuration.logger.error("%s formatting failed: %s\n%s" %
-                                   (outputformat, err, traceback.format_exc()))
+        logger.error("%s formatting failed: %s\n%s" %
+                     (outputformat, err, traceback.format_exc()))
+        out_filtered = filter_output_objects(configuration, out_obj)
+        logger.error("original %r response was: %s" % (backend, out_filtered))
+
+    # Try simple crash message on requested format
+    try:
+        crash_out = crash_helper(configuration, backend, [])
+        return eval('%s_format(configuration, ret_val, ret_msg, crash_out)' %
+                    outputformat)
+    except Exception as err:
+        logger.error("%s formatting even simple crash info failed: %s\n%s" %
+                     (outputformat, err, traceback.format_exc()))
+        # Return None and leave bailout to caller
         return None
 
 

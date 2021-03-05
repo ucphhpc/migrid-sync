@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cgiscriptstub - cgi wrapper functions for functionality backends
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,17 +26,23 @@
 #
 
 """Interface between CGI and functionality"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
 import cgi
 import cgitb
-cgitb.enable()
 import os
 import time
 
-from mig.shared.bailout import crash_helper
+# DUMMY try/except to avoid autopep8 from mangling import order
+try:
+    cgitb.enable()
+except:
+    pass
+
 from mig.shared.base import requested_page, allow_script
+from mig.shared.bailout import crash_helper
 from mig.shared.conf import get_configuration_object
 from mig.shared.httpsclient import extract_client_id
 from mig.shared.output import format_output, reject_main
@@ -61,10 +67,11 @@ def init_cgi_script(environ, delayed_input=None):
     return (configuration, logger, client_id, user_arguments_dict)
 
 
-def finish_cgi_script(configuration, output_format, ret_code, ret_msg,
+def finish_cgi_script(configuration, backend, output_format, ret_code, ret_msg,
                       output_objs):
     """Shared finalization"""
 
+    logger = configuration.logger
     default_content = 'text/html'
     if 'json' == output_format:
         default_content = 'application/json'
@@ -82,12 +89,14 @@ def finish_cgi_script(configuration, output_format, ret_code, ret_msg,
         start_entry['headers'] = default_headers
     headers = start_entry['headers']
 
-    output = format_output(configuration, ret_code, ret_msg, output_objs,
-                           output_format)
+    output = format_output(configuration, backend, ret_code, ret_msg,
+                           output_objs, output_format)
 
-    # Explicit None means error during output formatting - empty string is okay
+    # Explicit None means fatal error in output formatting.
+    # An empty string on the other hand is quite okay.
 
     if output is None:
+        logger.error("CGI %s output formatting failed!" % output_format)
         output = 'Error: output could not be correctly delivered!'
 
     header_out = '\n'.join(["%s: %s" % (key, val) for (key, val) in headers])
@@ -151,7 +160,8 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None,
     if delay_format:
         output_format = user_arguments_dict.get('output_format', ['html'])[-1]
 
-    finish_cgi_script(configuration, output_format, ret_code, ret_msg, out_obj)
+    finish_cgi_script(configuration, backend, output_format,
+                      ret_code, ret_msg, out_obj)
 
 
 def run_cgi_script(main, delayed_input=None, delay_format=False):

@@ -49,6 +49,6 @@ grep -H ERROR $LOGDIR/mig.log | \
 sed -n "/ERROR.* script crashed:/""{ :a; $p; N; /\n$/!ba; p; }" $LOGDIR/mig.log | tail -n $MAXLINES
 
 grep -H "CSRF check failed" $LOGDIR/mig.log | tail -n $MAXLINES
-} | grep -E "${YESTERDAY}|${TODAY}|^[^0-9]"'
+} | grep -E "${YESTERDAY}|${TODAY}|^[^0-9/]"'
 
 exit 0
