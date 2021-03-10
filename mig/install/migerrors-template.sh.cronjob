@@ -16,7 +16,7 @@
 # This is a limitation on the run-parts wrapper used by cron 
 # (see man run-parts for the rationale behind this).
 
-su - mig -c '{
+su - mig -c '
 # Optional security scanner host address to exclude from log errors.
 # Useful to leave out errors from automated Nessus/OpenVAS scans
 SECSCANIP="__SECSCAN_ADDR_PATTERN__"
@@ -25,7 +25,7 @@ TODAY=$(date +'%Y-%m-%d')
 YESTERDAY=$(date --date=yesterday +%'Y-%m-%d')
 # Number of lines to allow from each log 
 MAXLINES=1000
-
+{
 grep -H "Internal Server Error" $LOGDIR/webdavs.out | tail -n $MAXLINES
 grep -H -A 12 "Traceback" $LOGDIR/webdavs.out | tail -n $MAXLINES
 
