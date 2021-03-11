@@ -1259,6 +1259,26 @@ div.archive pre {
   background: url('/images/icons/hourglass_go.png') no-repeat;;
   padding-left: 18px;
 }
+.introguidelink {
+  background: url('/images/icons/lightbulb.png') no-repeat;
+  padding-left: 18px;
+}
+.userguidelink {
+  background: url('/images/icons/book.png') no-repeat;
+  padding-left: 18px;
+}
+.statusnewslink {
+  background: url('/images/icons/server_chart.png') no-repeat;
+  padding-left: 18px;
+}
+.userfaqlink {
+  background: url('/images/icons/table_go.png') no-repeat;
+  padding-left: 18px;
+}
+.usertermslink {
+  background: url('/images/icons/txt.png') no-repeat;
+  padding-left: 18px;
+}
 
 /* UI V2 Settingsi/Setup nav */
 .settingsbutton {

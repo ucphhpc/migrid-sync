@@ -1017,7 +1017,7 @@ background: url(/images/icons/compress.png) left center no-repeat;
     background-position: left center;
 }
 .sendemaillink {
-    background: url(/images/icons/email_protocol.svg) no-repeat;
+    background: url('/images/icons/email_protocol.svg') no-repeat;
     padding-left: 18px;
     background-size: 18px 18px;
     background-position: left center;
@@ -1294,6 +1294,37 @@ background: url(/images/icons/compress.png) left center no-repeat;
 }
 .crontablink {
     background: url('/images/icons/hourglass_go.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.introguidelink {
+    background-image: url('/images/icons/lightbulb_idea.svg');
+    background-repeat: no-repeat;
+    background-size: 16px 16px; 
+    background-color: #FFF;
+    border-radius: 4px;
+}
+.userguidelink {
+    background: url('/images/icons/book.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.statusnewslink {
+    background: url('/images/icons/server_chart.png') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.userfaqlink {
+    background: url('/images/icons/table_go.svg') no-repeat;
+    padding-left: 18px;
+    background-size: 18px 18px;
+    background-position: left center;
+}
+.usertermslink {
+    background: url('/images/icons/txt.png') no-repeat;
     padding-left: 18px;
     background-size: 18px 18px;
     background-position: left center;
