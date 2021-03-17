@@ -203,22 +203,19 @@ Can just be disabled by putting it into an html comment when not in use.
 </span><br/><br/>
 <span class='systemnote'>The work will mainly be on the UCPH login
   service, so please beware that any such logins may fail in the given
-  time frame.
-</span><br/><br/>
+  time frame.</span>
 <span class='systemwarn'>IMPORTANT: upcoming system maintenance on May 31st at 10</span><br/><br/><span class='systemnote'>Short service outages may occur due to network reconfiguration, and it is expected complete before noon.
 </span><br/><br/>
 <span class='systemwarn'>IMPORTANT: we currently see limited data visibility/access</span><br/><br/><span class='systemnote'>We
   have encountered a few such problems after the maintenance work
-  yesterday and are working on it.
-</span><br/><br/>
+  yesterday and are working on it.</span>
 <span class='systemwarn'>IMPORTANT: SIF backend storage is partially offline due to a power outage</span><br/><br/><span class='systemnote'>There's some power and cooling work taking place in the HPC center so technicians are already investigating.
 </span><br/><br/>
 <span class='systemwarn'>NOTE: SIF received official UCPH approval and will be enabled soon</span><br/><br/>
 <span class='systemwarn'>IMPORTANT: 
   Please take <a href="https://status.erda.dk">your precautions</a> if
   you got caught in the recent <a href="https://it.ku.dk/driftinfo/">
-  phishing attacks</a> at KU/KUMail!
-</span><br/><br/>
+  phishing attacks</a> at KU/KUMail!</span>
 <span class='systemwarn'>WARNING: SIF will be offline for maintenance on
   July 4th from 10 to
   11 <a href="https://status.erda.dk">status.erda.dk</a>
@@ -240,8 +237,8 @@ Can just be disabled by putting it into an html comment when not in use.
 <div class="staticpage centertext signupfield">
 <p>Sign up to SIF using your KU / UCPH account?</p>
 <form method='post' action='https://sif.erda.dk/wsgi-bin/autocreate.py' target='_blank'>
-<input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
-<input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
+<input type='hidden' name='openid.ns' value='https://specs.openid.net/auth/2.0' />
+<input type='hidden' name='openid.ns.sreg' value='https://openid.net/extensions/sreg/1.1' />
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
 <input class="signupbutton" type="submit" value="sign up" />
 </form>
@@ -284,16 +281,17 @@ Can just be disabled by putting it into an html comment when not in use.
 
 <h2 class="staticpage">About UCPH SIF</h2>
 <p>
-SIF is the Sensitive Information Facility at University of Copenhagen
-(UCPH) meant for storing sensitive data. In particular personal data
-requiring special care under the EU General Data Protection Regulation
-(GDPR). SIF delivers secure centralized storage space for various
-projects involving sensitive data and integrates safe sharing with other
-internal or external project participants.<br/>
-
-For now SIF use is officially limited to the faculty of Science, but we
-may allow exceptions. We hope it will be extended to all of UCPH in the
-future, to support the general UCPH
+SIF or Sensitive Information Facility at University of Copenhagen (KU/UCPH) is
+meant for storing and sharing sensitive data. In particular personal data
+requiring special care under the EU General Data Protection Regulation (GDPR).
+The intended audience is employees, their collaboration partners and students.
+SIF delivers secure centralized storage space for various projects involving
+sensitive data and integrates safe sharing with other internal or external
+project participants as well as network drive use from anywhere.
+<br/>
+SIF is delivered by SCIENCE HPC Center and is formally for the faculty of
+Science, but we do allow exceptions.
+A roll-out to all of UCPH is underway to support the general UCPH
 <a class="infolink" href="https://kunet.ku.dk/work-areas/research/data/data-management-at-UCPH/Pages/default.aspx"
 target="_blank">Data Management Guidelines</a>. 
 </p>
@@ -301,8 +299,8 @@ target="_blank">Data Management Guidelines</a>.
 <h2 class="staticpage">General Research Data</h2>
 <p>
 For non-sensitive research data we recommend instead using the sister facility
-<a class="urllink" href="https://erda.ku.dk">ERDA</a>,
-which provides more flexibility and features.
+<a class="urllink" href="https://erda.ku.dk">ERDA</a>, which provides more
+flexibility and features.
 </p>
 
 <h2 class="staticpage">Getting Started with UCPH SIF</h2>
@@ -311,9 +309,17 @@ We've gathered information about SIF in a few short intro guides and a more thor
 <ul>
 <li><a class="introguidelink" href="/public/ucph-sif-intro-sign-up-as-a-sif-user.pdf">Sign up Intro</a> for UCPH and external users</li>
 <li><a class="introguidelink" href="/public/ucph-sif-intro-create-share-access-projects.pdf">Project Intro</a> about creating, sharing and accessing projects</li>
-<li><a class="userguidelink" href="/public/ucph-sif-user-guide.pdf">User Guide</a> for general usage</li>
+<!-- TODO: enable next line when SIF version is available
+<li><a class="introguidelink" href="/public/ucph-sif-guide_network-drive_win.pdf">Network Drive Intro</a> about using SIF as a network drive on your computer (only covers Windows for now)</li>
+-->
+<li><a class="userguidelink" href="/public/ucph-sif-user-guide.pdf">User Guide</a> with general usage</li>
 </ul>
-Please read and follow at least the intro guides if you want to use SIF. 
+We strongly recommend reading and following at least the two intro guides if
+you want to use SIF. 
+<br/>
+For any legal questions or permits please contact your <a class="infolink"
+href="https://kunet.ku.dk/work-areas/research/data/personal-data/Pages/default.aspx"
+target="_blank">Faculty Secretariat</a>.
 </p>
 
 <h2 class="staticpage">Status and News</h2>
@@ -338,11 +344,10 @@ features.
 
 <h2 class="staticpage">Questions and Support</h2>
 <p>
-Feel free to contact us using the email link
-at the bottom of the page in case you have any further questions or comments
-(in English or Danish). Unfortunately we do <em>not</em> have resources
-to offer video or phone support, but we typically reply on email the
-next working-day at the latest.
+Feel free to contact us using the email link at the bottom of the page in case
+you have any further questions or comments (in English or Danish).
+Unfortunately we do <em>not</em> have resources to offer video or phone
+support, but we typically reply on email the next working-day at the latest.
 </p>
 
 <h2 class="staticpage">Terms of Use</h2>
@@ -434,8 +439,7 @@ fra 16.00 (<a href='https://status.erda.dk'>Status</a>).
   Tag venligst <a href="https://status.erda.dk">dine forholdsregler</a>
   hvis du blev fanget i den seneste
   tids  <a href="https://it.ku.dk/driftinfo/">phishing-angreb</a> på
-  KU/KUMail!
-</span><br/><br/>
+  KU/KUMail!</span>
 <span class='systemwarn'>
   WARNING: SIF vil være nede til systemvedligehold den 4. juli fra 10 til 11 <a href="https://status.erda.dk">status.erda.dk</a>
 </span>
@@ -445,16 +449,18 @@ fra 16.00 (<a href='https://status.erda.dk'>Status</a>).
 
 <div class="staticpage quickstartfields">
 <div id="quick-start-tabs-da">
+
 <ul>
 <li><a href="#ucph-user-tab-da">KU / UCPH brugere</a></li>
 <li><a href="#external-user-tab-da">Eksterne brugere</a></li>
 </ul>
+
 <div id="ucph-user-tab-da">
 <div class="staticpage centertext signupfield">
 <p>Tilmeld dig SIF med din KU-konto?</p>
 <form method='post' action='https://sif.erda.dk/wsgi-bin/autocreate.py' target='_blank'>
-<input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
-<input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
+<input type='hidden' name='openid.ns' value='https://specs.openid.net/auth/2.0' />
+<input type='hidden' name='openid.ns.sreg' value='https://openid.net/extensions/sreg/1.1' />
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
 <input class="signupbutton" type="submit" value="tilmelding" />
 </form>
@@ -497,17 +503,16 @@ fra 16.00 (<a href='https://status.erda.dk'>Status</a>).
 
 <h2 class="staticpage">Om UCPH SIF</h2>
 <p>
-SIF eller Sensitive Information Facility på Københavns
-Universitet (KU) er rettet mod lagring af sensitive data. Ikke mindst
-personhenførbare data klassificeret som følsomme i
-EU persondataforordningen (også kendt som EU GDPR). SIF leverer sikker
-centraliseret lagerplads til diverse projekter med følsomme data og
-integrerer mulighed for sikker deling med andre interne og eksterne
-projektdeltagere.<br/>
-
-SIF er for nu officielt begrænset til Det Natur- og Biovidenskabelige
-Fakultet (Science), men vi kan gøre undtagelser. Vi håber det på sigt
-bliver udbredt til hele KU, for at understøtte KUs generelle
+SIF eller Sensitive Information Facility på Københavns Universitet (KU/UCPH) er
+rettet mod lagring og deling af sensitive data. Ikke mindst personhenførbare
+data klassificeret som følsomme i EU persondataforordningen (GDPR). 
+Målgruppen er ansatte, deres samarbejdspartnere og studerende. SIF leverer sikker
+centraliseret lagerplads til diverse projekter med følsomme data og integrerer
+mulighed for sikker deling med andre interne og eksterne projektdeltagere samt
+brug som sikkert netværksdrev uanset hvor man er.<br/>
+SIF leveres af SCIENCE HPC Center og er formelt til Det Natur- og
+Biovidenskabelige Fakultet (SCIENCE), men vi gør undtagelser.
+Der arbejdes på en udrulning til hele KU, for at understøtte KUs generelle
 <a class="infolink" href="https://kunet.ku.dk/arbejdsomraader/forskning/data/forskningsdata/Sider/default.aspx"
 target="_blank">data management forskrifter</a>. 
 </p>
@@ -520,23 +525,32 @@ som tilbyder mere fleksibilitet og funktionalitet.
 </p>
 
 <h2 class="staticpage">Kom godt igang med SIF</h2>
-Vi har samlet information om SIF i nogle korte intro-guides og en større brugervejledning
+<p>
+Vi har samlet information om SIF i nogle korte intro-guides og en længere brugervejledning
+</p>
 <ul>
-<li><a class="introguidelink" href="/public/ucph-sif-intro-tilmeld-dig-som-bruger.pdf">Tilmeldingsintro</a>  for KU- og eksterne brugere </li>
-<li><a class="introguidelink" href="/public/ucph-sif-intro-opret-del-adgang-til-projekter.pdf">Projektintro</a> om projekttoprettelse, -deling og -adgang</li>
-<li><a class="userguidelink" href="/public/ucph-sif-brugervejledning.pdf">Brugervejledningen</a></li>
-med generel gennemgang</li>
+<li><a class="introguidelink" href="/public/ucph-sif-intro-tilmeld-dig-som-bruger.pdf">Tilmeldings-intro</a>  for KU- og eksterne brugere </li>
+<li><a class="introguidelink" href="/public/ucph-sif-intro-opret-del-adgang-til-projekter.pdf">Projekt-intro</a> om projekttoprettelse, -deling og -adgang</li>
+<!-- TODO: enable next line when SIF version is available
+<li><a class="introguidelink" href="/public/ucph-erda-guide_netvaerksdrev_win.pdf">Netværksdrev-intro</a> om at benytte SIF som netværksdrev på din computer (dækker kun Windows for nu)</li>
+-->
+<li><a class="userguidelink" href="/public/ucph-sif-brugervejledning.pdf">Brugervejledningen</a> med generel gennemgang af brugen</li>
 </ul>
 <p>
-Læs og følg venligst mindst vores intro-guides, hvis du vil benytte SIF. 
+Vi anbefaler kraftigt at læse og følge mindst de to intro-guides, hvis du vil
+benytte SIF.
+<br/>
+For evt juridiske spørgsmål og godkendelser bedes du kontakte dit 
+<a class="infolink" href="https://kunet.ku.dk/arbejdsomraader/forskning/data/behandling-af-personoplysninger/Sider/default.aspx"
+  target="_blank">fakultetssekretariat</a>.
 </p>
 
 <h2 class="staticpage">Status og nyheder</h2>
 <p>
 På siden med
 <a class="statusnewslink" href="https://status.erda.dk/status.html">status- og nyheds-overblik</a>
-finder man altid aktuel driftstatus for bl.a. SIF samt nærmere
-information omkring ny eller ændret funktionalitet.
+finder man altid aktuel driftstatus for bl.a. SIF samt nærmere information
+omkring ny eller ændret funktionalitet.
 </p>
 
 <div id="faq-content-danish" class="col-lg-12">
@@ -546,16 +560,17 @@ information omkring ny eller ændret funktionalitet.
     <p>
       Du skal bruge en browser med JavaScript for at få den tiltænkte
       dynamiske opførsel på denne side, men du kan stadig manuelt
-      <a href="faq-snippet.html">åbne vores FAQ</a> uden.
+      <a class="userfaqlink" href="faq-snippet.html">åbne vores FAQ</a> uden.
     </p>
   </noscript>
 </div>
 
 <h2 class="staticpage">Spørgsmål og hjælp</h2>
 <p>
-Kontakt os gerne (på dansk eller engelsk) med øvrige spørgsmål og kommentarer v.h.a. email-linket nederst
-på siden. Vi har desværre <em>ikke</em> resurser til at yde video- eller
-telefon-support, men svarer typisk på email senest næste arbejdsdag.
+Kontakt os gerne (på dansk eller engelsk) med øvrige spørgsmål og kommentarer
+v.h.a. email-linket nederst på siden. Vi har desværre <em>ikke</em> resurser
+til at yde video- eller telefon-support, men svarer typisk på email senest
+næste arbejdsdag.
 </p>
 <!--
 <p class="warningtext">
@@ -656,7 +671,7 @@ Skriv til os på
 <div id="copyright">
 <img src="/images/copyright.png" id="creditsimage" alt=""/>
 <span id="credits">
-2003-2021, <a href="http://www.migrid.org">The MiG Project</a>
+2003-2021, <a href="https://www.migrid.org">The MiG Project</a>
 </span>
 </div>
 </div>
