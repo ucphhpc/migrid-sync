@@ -29,6 +29,7 @@ Test IDMC
 <link rel="stylesheet" type="text/css" href="/images/skin/idmc-basic/ui-theme.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="/images/skin/idmc-basic/ui-theme.custom.css" media="screen"/>
 
+
 <link rel="icon" type="image/vnd.microsoft.icon"
       href="/images/skin/idmc-basic/favicon.ico"/>
 
@@ -64,25 +65,31 @@ Test IDMC
         }
     }
     $(document).ready(function() {
-        /* Init links centrally */
-        $("a.reqcert-en-link").attr("target", "_blank").attr("href", 
-            "https://sites.google.com/site/minimumintrusiongrid/" +
-            "getting-started/how-to-get-started");
-        $("a.reqcert-da-link").attr("target", "_blank").attr("href", 
-            "https://sites.google.com/site/minimumintrusiongrid/" +
-            "mig-in-danish/saadan-kommer-du-igang");
-        $("a.migoidsignup-link").attr("target", "_blank").attr("href", 
-            "https://test-sid.idmc.dk/cgi-sid/signup.py?show=migoid");
-        $("a.migoidlogin-link").attr("target", "_blank").attr("href", 
-            "https://test-ext.idmc.dk");
-        $("a.extcertsignup-link").attr("target", "_blank").attr("href", 
-            "https://test-sid.idmc.dk/cgi-sid/signup.py?show=extcert");
-        $("a.extcertlogin-link").attr("target", "_blank").attr("href", 
-            "https://test-cert.idmc.dk");
+        var locale = extract_default_locale();
+        /* Init supported languages to just english and extend based on lang select */
+        var supported_languages = ['en'];
+        var default_lang = supported_languages[0];
+        var user_lang;
+        /* Extend supported_languages with all entries from select elem */
+        $("#langselect option").each(function() {
+            var option_val = $(this).val();
+            if (supported_languages.indexOf(option_val) < 0) {
+              supported_languages.push($(this).val());
+            }
+        });
+        //console.debug("found supported langs: "+supported_languages);
+        if (locale && supported_languages.indexOf(locale) >= 0)  {
+          user_lang = locale;
+        } else {
+          console.warn(locale+" not supported - fall back to: "+default_lang);
+          user_lang = default_lang;
+        }
+
         load_faq_content("faq-snippet.html", "english");
         load_faq_content("faq-snippet.html", "danish");
         /* Init FAQ as foldable but closed and with individual heights */
         accordion_init(".faq-accordion");
+
         $("#langselect").on('change', function() { 
                                           var lang = $(this).val();
                                           //alert("switch_language: "+lang);
@@ -91,9 +98,8 @@ Test IDMC
                                           $("#quick-start-tabs-"+lang).tabs("refresh");
                                       }
                             );
-        var default_lang = 'en';
-        $("#langselect").val(default_lang);
-        switch_language(default_lang);
+        $("#langselect").val(user_lang);
+        switch_language(user_lang);
 	$("#langselect").msDropdown();
         /* Init Quick Start as tabs to avoid information overload and do
            last for proper init. */
@@ -171,33 +177,30 @@ Can just be disabled by putting it into an html comment when not in use.
   Please take <a href="https://status.erda.dk">your precautions</a> if
   you got caught in the recent <a href="https://it.ku.dk/driftinfo/">
   phishing attacks</a> at KU/KUMail!</span>
-<br/><br/>
+<span class='systemnote'>NOTE: system maintenance on Wednesday, July 1st completed.
+</span>
+<span class='systemwarn'>IMPORTANT: planned system maintenance on
+  November 25th from 16.15 (<a href='https://status.erda.dk'>Status</a>).
+</span><br/><br/>
 -->
+
 </div>
 
-<!--
-  I'm an employee or student at KU / UCPH with a general account there
--->
-<!--
-I'm an external partner in a collaboration with 
--->
-<!-- 
-<h2 class="staticpage">Quick Start</h2>
--->
 <div class="staticpage quickstartfields">
 
 <div id="quick-start-tabs-en">
 <ul class="fillwidth padspace">
 <li><a href="#ucph-user-tab-en">KU / UCPH Users</a></li>
 <li><a href="#external-user-tab-en">External Users</a></li>
+<li><a href="#cert-user-tab-en">Advanced Access</a></li>
 </ul>
 
 <div id="ucph-user-tab-en">
 <div class="staticpage centertext signupfield">
 <p>Sign up to IDMC using your KU / UCPH account?</p>
 <form method='post' action='https://test-oid.idmc.dk/wsgi-bin/autocreate.py' target='_blank'>
-<input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
-<input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
+<input type='hidden' name='openid.ns' value='https://specs.openid.net/auth/2.0' />
+<input type='hidden' name='openid.ns.sreg' value='https://openid.net/extensions/sreg/1.1' />
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
 <input class="signupbutton" type="submit" value="sign up" />
 </form>
@@ -205,8 +208,11 @@ I'm an external partner in a collaboration with
 </div>
 <div class="staticpage centertext loginfield">
 <p>I'm already signed up to IDMC with my KU / UCPH account!</p>
-<input class="loginbutton" type="button" value="log in"
-       onClick="login('extoid');" />
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://test-oid.idmc.dk' target='_blank'>
+<input class="loginbutton" type="submit" value="log in"
+       onClick="login('extoid'); return false;" />
+</form>
 <p></p>
 </div>
 </div>
@@ -214,14 +220,41 @@ I'm an external partner in a collaboration with
 <div id="external-user-tab-en">
 <div class="staticpage centertext signupfield">
 <p>Sign up to IDMC <em>without</em> a KU / UCPH account?</p>
-<input class="loginbutton" type="button" value="sign up"
-       onClick="signup('migoid');" />
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://test-sid.idmc.dk/cgi-sid/reqoid.py' target='_blank'>
+<input class="signupbutton" type="submit" value="sign up" /
+       onClick="signup('migoid'); return false;"/>
+</form>
 <p></p>
 </div>
 <div class="staticpage centertext loginfield">
 <p>I'm already signed up to IDMC <em>without</em> a KU / UCPH account!</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://test-ext.idmc.dk' target='_blank'>
 <input class="loginbutton" type="button" value="log in"
-       onClick="login('migoid');" />
+       onClick="login('migoid'); return false;" />
+</form>
+<p></p>
+</div>
+</div>
+
+<div id="cert-user-tab-en">
+<div class="staticpage centertext signupfield">
+<p>Sign up to Test IDMC with your user certificate?</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://test-idmc.dk/wsgi-bin/extcert.py' target='_blank'>
+<input class="signupbutton" type="submit" value="sign up" /
+       onClick="signup('extcert'); return false;"/>
+</form>
+<p></p>
+</div>
+<div class="staticpage centertext loginfield">
+<p>I'm already signed up to Test IDMC with my user certificate!</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://test.idmc.dk' target='_blank'>
+<input class="loginbutton" type="button" value="log in"
+       onClick="login('extcert'); return false;" />
+</form>
 <p></p>
 </div>
 </div>
@@ -231,59 +264,90 @@ I'm an external partner in a collaboration with
 
 <h2 class="staticpage">About IDMC</h2>
 <p>
-Imaging Data Management Center (IDMC) is an image 
-storage, sharing, previewing and processing facility provided by 
-University of Copenhagen to employees, students and partners. 
-IDMC delivers centralized storage space for personal and shared image files in
-addition to previewing and processing image data.
+IDMC or Imaging Data Management Center at University of Copenhagen (KU/UCPH) is
+meant for storing, sharing, previewing and processing especially imaging
+research data.
+The intended audience is employees, their collaboration partners and students.
+IDMC delivers safe central storage space for own and shared (image) files in
+addition to previewing and processing image data.  You can use IDMC as a secure
+network drive from anywhere and it also comes with interactive analysis tools.
+<br/>
+IDMC is delivered by SCIENCE HPC Center and is formally for the faculty of
+Science, but others have access for collaboration purposes.
+A roll-out to all of UCPH might be underway to support the general UCPH
+<a class="infolink" href="https://kunet.ku.dk/work-areas/research/data/data-management-at-UCPH/Pages/default.aspx"
+target="_blank">Data Management Guidelines</a>. 
 </p>
 
 <h2 class="staticpage">Sensitive and Personal Data (GDPR)</h2>
 <p>
-Please note that while ERDA/IDMC comes with a strong security focus, it is
-<em>only</em> a solution approved for general scientific data
-and <em>not</em> for highly sensitive data. In particular it is not for
-personal data classified as sensitive in the EU Regulation 2016/679
-(General Data Protection Regulation). In case you need to work on such
-sensitive data we recommend the ERDA/IDMC sister
-facility <a href="http://sif.ku.dk">SIF</a>, which <em>is</em>
+Please note that while IDMC comes with a strong security focus, it is
+<em>only</em> a solution approved for general scientific data and <em>not</em>
+for highly sensitive data. In particular it is not for personal data classified
+as sensitive in the EU General Data Protection Regulation (GDPR). In case you
+need to work on such sensitive data we recommend the IDMC sister facility
+<a class="urllink"  href="https://sif.ku.dk">SIF</a>, which <em>is</em>
 intended and approved for exactly that purpose.
 </p>
 
-<div id="faq-content-english" class="col-lg-12">
-  <!-- Filled by AJAX -->
-</div>
-
-<h2 class="staticpage">Questions and Support</h2>
+<h2 class="staticpage">Getting Started with IDMC</h2>
 <p>
-The <a href="https://sid.erda.dk/public/ucph-erda-user-guide.pdf">user guide</a> 
- provides basic information about using IDMC, but feel
-free to contact us using the email link at the bottom of the page in
-case you have any questions or comments (in English or Danish).
+We've gathered information about ERDA/IDMC in a few short intro guides and a more thorough user guide
+<ul>
+<li><a class="introguidelink" href="https://erda.ku.dk/ucph-erda-guide_user-sign-up.pdf">Sign Up Intro</a> for UCPH and external users</li> 
+<li><a class="introguidelink" href="https://erda.ku.dk/ucph-erda-guide_workgroup-sharing.pdf">Workgroup Intro</a> about creating, managing and accessing Workgroups</li> 
+<li><a class="introguidelink" href="https://erda.ku.dk/ucph-erda-guide_network-drive_win.pdf">Network Drive Intro</a> about using IDMC as a network drive on your computer (only covers Windows for now)</li>
+<li><a class="userguidelink" href="https://erda.ku.dk/ucph-erda-user-guide.pdf">User Guide</a> with general usage instructions</li>
+</ul>
 <p class="warningtext">
-Be aware that the user guide is made for ERDA, the sister system of IDMC, but 
-almost all examples are valid with the replacement of erda.dk with idmc.dk.
+Please beware that the guides are made for ERDA, the twin system of IDMC, but 
+almost all examples are valid with the replacement of erda.ku.dk with
+www.idmc.dk and erda.dk with idmc.dk.
+</p>
+We strongly recommend reading and following at least the first intro guide if
+you want to use IDMC. 
 </p>
 
 <h2 class="staticpage">Status and News</h2>
 <p>
 You can always refer to our
-separate <a href="https://status.erda.dk/status.html">status and news overview</a>
-for the latest ERDA/IDMC/SIF system status as well as information about new or changed
+separate <a class="statusnewslink" href="https://status.erda.dk/status.html">status and news overview</a>
+for a.o. the latest IDMC system status as well as information about new or changed
 features.
 </p>
+
+<div id="faq-content-english" class="col-lg-12">
+  <!-- Filled by AJAX -->
+  <noscript>
+    <h2 class="staticpage">FAQ</h2>
+    <p>
+      You need a browser with JavaScript for the intended
+      dynamic behaviour on this page, but you can still manually 
+      <a class="userfaqlink" href="faq-snippet.html">view the FAQ</a> without.
+    </p>
+  </noscript>
+</div>
+
+<h2 class="staticpage">Questions and Support</h2>
+<p>
+Feel free to contact us using the email link at the bottom of the page in case
+you have any further questions or comments (in English or Danish).
+Unfortunately we do <em>not</em> have resources to offer video or phone
+support, but we typically reply on email the next working-day at the latest.
+</p>
+
 <h2 class="staticpage">Terms of Use</h2>
 <p>
 IDMC comes with only few restrictions and they should be in line with
 basic common sense.<br/>
 For the complete details please refer to the
-official <a href="/public/terms.html">terms of use</a> always
+official <a class="usertermslink" href="/public/terms.html">terms of use</a> always
 available from here, in addition to our site privacy and cookie policies
 linked at the bottom.
 </p>
 </div>
-<div class="danish i18n" lang="da">
-<h1 class="staticpage">Velkommen til IDMC!</h1>
+<div class="danish i18n hidden" lang="da">
+<h1 class="staticpage">Velkommen til IDMC</h1>
 
 <!-- Next div is used for site wide system maintenance warnings and such:
 First line is for highlighted notice in red and orange and second is for
@@ -317,48 +381,85 @@ Can just be disabled by putting it into an html comment when not in use.
   Tag venligst <a href="https://status.erda.dk">dine forholdsregler</a>
   hvis du blev fanget i den seneste
   tids  <a href="https://it.ku.dk/driftinfo/">phishing-angreb</a> på
-  KU/KUMail!</span>  
+  KU/KUMail!
 </span>
-<br/><br/>
+<span class='systemnote'>NOTE: planlagt systemvedligehold onsdag den
+1. juli er veloverstået.</span>
+<span class='systemwarn'>VIGTIGT: planlagt systemvedligehold den 25. November 
+fra 16.15 (<a href='https://status.erda.dk'>Status</a>).</span><br/><br/>
 -->
+
 </div>
 
 <div class="staticpage quickstartfields">
 <div id="quick-start-tabs-da">
+
 <ul>
 <li><a href="#ucph-user-tab-da">KU / UCPH brugere</a></li>
 <li><a href="#external-user-tab-da">Eksterne brugere</a></li>
+<li><a href="#cert-user-tab-da">Avanceret adgang</a></li>
 </ul>
+
 <div id="ucph-user-tab-da">
 <div class="staticpage centertext signupfield">
-<p>Tilmeld dig IDMC med din KU-konto?</p>
+<p>Tilmeld dig Test IDMC med din KU-konto?</p>
 <form method='post' action='https://test-oid.idmc.dk/wsgi-bin/autocreate.py' target='_blank'>
-<input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
-<input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
+<input type='hidden' name='openid.ns' value='https://specs.openid.net/auth/2.0' />
+<input type='hidden' name='openid.ns.sreg' value='https://openid.net/extensions/sreg/1.1' />
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
 <input class="signupbutton" type="submit" value="tilmelding" />
 </form>
 <p></p>
 </div>
 <div class="staticpage centertext loginfield">
-<p>Jeg er allerede tilmeldt IDMC med min KU-konto!</p>
-<input class="loginbutton" type="button" value="log ind"
-       onClick="login('extoid');" />
+<p>Jeg er allerede tilmeldt Test IDMC med min KU-konto!</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://test-oid.idmc.dk' target='_blank'>
+<input class="loginbutton" type="submit" value="log ind"
+       onClick="login('extoid'); return false;" />
+</form>
 <p></p>
 </div>
 </div>
 
 <div id="external-user-tab-da">
 <div class="staticpage centertext signupfield">
-<p>Tilmeld dig IDMC <em>uden</em> en KU-konto?</p>
-<input class="loginbutton" type="button" value="tilmelding"
-       onClick="signup('migoid');" />
+<p>Tilmeld dig Test IDMC <em>uden</em> en KU-konto?</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://test-sid.idmc.dk/cgi-sid/reqoid.py' target='_blank'>
+<input class="loginbutton" type="submit" value="tilmelding"
+       onClick="signup('migoid'); return false;" />
+</form>
 <p></p>
 </div>
 <div class="staticpage centertext loginfield">
-<p>Jeg er allerede tilmeldt IDMC <em>uden</em> en KU-konto!</p>
-<input class="loginbutton" type="button" value="log ind"
-       onClick="login('migoid');" />
+<p>Jeg er allerede tilmeldt Test IDMC <em>uden</em> en KU-konto!</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://test-ext.idmc.dk' target='_blank'>
+<input class="loginbutton" type="submit" value="log ind"
+       onClick="login('migoid'); return false;" />
+</form>
+<p></p>
+</div>
+</div>
+
+<div id="cert-user-tab-da">
+<div class="staticpage centertext signupfield">
+<p>Tilmeld dig Test IDMC med dit brugercertifikat?</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://test.idmc.dk/wsgi-bin/extcert.py' target='_blank'>
+<input class="signupbutton" type="submit" value="tilmelding"
+       onClick="signup('extcert'); return false;" />
+</form>
+<p></p>
+</div>
+<div class="staticpage centertext loginfield">
+<p>Jeg er allerede tilmeldt Test IDMC med mit brugercertifikat!</p>
+<!-- Use form with JS override to enable fallback functionality -->
+<form method='get' action='https://test.idmc.dk' target='_blank'>
+<input class="loginbutton" type="submit" value="log ind"
+       onClick="login('extcert'); return false;" />
+</form>
 <p></p>
 </div>
 </div>
@@ -368,61 +469,92 @@ Can just be disabled by putting it into an html comment when not in use.
 
 <h2 class="staticpage">Om IDMC</h2>
 <p>
-Imaging Data Management Center (IDMC) er et billed lager-, delings-, preview-
-og processerings-system leveret af Københavns Universitet til ansatte, studerende og partnere. 
-IDMC leverer centraliseret lagerplads for personlige - og delte billedfiler samt faciliteter til 
+IDMC eller Imaging Data Management Center på Københavns Universitet (KU/UCPH)
+er rettet mod lagring, deling, analyse, preview og processering af (især
+billedbaserede) forskningsdata.
+Målgruppen er ansatte, deres samarbejdspartnere og studerende. IDMC leverer
+sikker centraliseret lagerplads for egne - og delte filer samt faciliteter til
 preview og processering af billeddata.
+Man kan benytte IDMC som sikkert netværksdrev uanset hvor man er og desuden
+er der adgang til interaktive analyseværktøjer.<br/>
+IDMC leveres af SCIENCE HPC Center og er formelt til Det Natur- og
+Biovidenskabelige Fakultet (SCIENCE), men andre har adgang især til
+samarbejdsformål.
+Der overvejes en udrulning til hele KU, for at understøtte KUs generelle
+<a class="infolink" href="https://kunet.ku.dk/arbejdsomraader/forskning/data/forskningsdata/Sider/default.aspx"
+target="_blank">data management forskrifter</a>. 
 </p>
 
 <h2 class="staticpage">Følsomme - og personhenførbare data (GDPR)</h2>
 <p>
-Bemærk venligst at selvom ERDA/IDMC har fokus på stærk sikkerhed, så er det
-<em>kun</em> en løsning til generelle forskningsdata og <em>ikke</em>
-til følsomme data. Herunder specielt ikke personhenførbare data
-klassificeret som følsomme i EUs persondataforordning (forordning
-2016/679, også kendt som GDPR). Såfremt du har behov for at arbejde på
-sådanne sensitive data anbefaler vi i stedet at benytte ERDA/IDMCs
-søster-facilitet <a href="http://sif.ku.dk">SIF</a>, som
-netop <em>er</em> beregnet og godkendt til det formål.
+Bemærk venligst at selvom IDMC har fokus på stærk sikkerhed, så er det
+<em>kun</em> en løsning til generelle forskningsdata og <em>ikke</em> til
+følsomme data. Herunder specielt personhenførbare data klassificeret som
+følsomme i EUs persondataforordning (GDPR). Såfremt du har behov for at arbejde
+på sådanne sensitive data, anbefaler vi i stedet at benytte IDMCs
+søster-facilitet <a class="urllink" href="https://sif.ku.dk">SIF</a>, som netop
+<em>er</em> beregnet og godkendt til det formål.
 </p>
 
-<div id="faq-content-danish" class="col-lg-12">
-  <!-- Filled by AJAX -->
-</div>
-
-<h2 class="staticpage">Spørgsmål og hjælp</h2>
+<h2 class="staticpage">Kom godt igang med IDMC</h2>
 <p>
-<a href="https://sid.erda.dk/public/ucph-store-brugervejledning.pdf">Brugervejledningen</a> 
-indeholder basal information om brugen af IDMC, men
-kontakt os gerne (på dansk eller engelsk) med spørgsmål og kommentarer
-v.h.a. email-linket nederst på siden.
+Vi har samlet information om ERDA/IDMC i nogle korte intro-guides og en længere brugervejledning
 </p>
+<ul>
+<li><a class="introguidelink" href="/public/ucph-erda-guide_brugertilmelding.pdf">Tilmeldings-intro</a> for KU- og eksterne brugere</li> 
+<li><a class="introguidelink" href="/public/ucph-erda-guide_workgroup-deling.pdf">Workgroup-intro</a> om Workgroup-oprettelse, -deling og -adgang</li>
+<li><a class="introguidelink" href="/public/ucph-erda-guide_netvaerksdrev_win.pdf">Netværksdrev-intro</a> om at benytte IDMC som netværksdrev på din computer (dækker kun Windows for nu)</li>
+<li><a class="userguidelink" href="/public/ucph-erda-brugervejledning.pdf">Brugervejledningen</a> med generel gennemgang af brugen</li>
+</ul>
 <p class="warningtext">
 <!--
 Bemærk at IDMC siderne p.t. kun findes på engelsk. Den danske
 brugervejledning kan forhåbentlig afhjælpe eventuelle
 forståelsesvanskeligheder, og en egentlig dansk oversættelse overvejes stadig.
-<br>
-<br>
-Bemærk desuden at brugervejledningen stammer fra ERDA, IDMCs søster-system, men
 -->
-Bemærk at brugervejledningen stammer fra ERDA, IDMCs søster-system, men
-næsten alle eksempler kan benyttes ved at erstatte erda.dk med idmc.dk.
+Bemærk at guiderne stammer fra ERDA, IDMCs tvillinge-system, men næsten alle
+eksempler kan benyttes ved at erstatte erda.ku.dk med www.idmc.dk og erda.dk
+med idmc.dk.
+</p>
+<p>
+Vi anbefaler kraftigt at læse og følge mindst den første intro-guide, hvis du
+vil benytte IDMC.
 </p>
 
 <h2 class="staticpage">Status og nyheder</h2>
 <p>
-Man kan altid benytte den særskilte side med 
-<a href="https://status.erda.dk/status.html">status- og nyheds-overblik</a> til at
-se den aktuelle driftstatus for ERDA/IDMC/SIF samt finde nærmere information omkring ny
-eller ændret funktionalitet.
+På siden med
+<a class="statusnewslink" href="https://status.erda.dk/status.html">status- og nyheds-overblik</a>
+finder man altid aktuel driftstatus for bl.a. IDMC samt nærmere information
+omkring ny eller ændret funktionalitet.
 </p>
+
+<div id="faq-content-danish" class="col-lg-12">
+  <!-- Filled by AJAX -->
+  <noscript>
+    <h2 class="staticpage">FAQ</h2>
+    <p>
+      Du skal bruge en browser med JavaScript for at få den tiltænkte
+      dynamiske opførsel på denne side, men du kan stadig manuelt
+      <a class="userfaqlink" href="faq-snippet.html">åbne vores FAQ</a> uden.
+    </p>
+  </noscript>
+</div>
+
+<h2 class="staticpage">Spørgsmål og hjælp</h2>
+<p>
+Kontakt os gerne (på dansk eller engelsk) med øvrige spørgsmål og kommentarer
+v.h.a. email-linket nederst på siden. Vi har desværre <em>ikke</em> resurser
+til at yde video- eller telefon-support, men svarer typisk på email senest
+næste arbejdsdag.
+</p>
+
 <h2 class="staticpage">Brugerregler</h2>
 <p>
 IDMC er kun begrænset af få regler, og de skulle gerne være i tråd med
 almindelig sund fornuft.<br/>
 De fuldstændige detaljer vil altid være at finde i de
-officielle <a href="/public/terms.html">terms of use</a> her fra siden,
+officielle <a class="usertermslink" href="/public/terms.html">terms of use</a> her fra siden,
 i tillæg til vores site privacy og cookie policy via links nederst.
 </p>
 </div>
@@ -432,12 +564,12 @@ i tillæg til vores site privacy og cookie policy via links nederst.
 <div id="bottomlogo">
 <div id="bottomlogoleft">
 <div id="support">
-<img src="/images/icons/help.png" id="supportimage" alt=""/>
+<!--<img src="/images/icons/help.png" id="supportimage" alt=""/>-->
 <div class="supporttext staticpage i18n" lang="en">
-<a href="mailto:support@idmc.dk">Contact & Help</a>
+<a class="help iconleftpad" href="mailto:support@idmc.dk">Contact & Help</a>
 </div>
-<div class="supporttext staticpage i18n" lang="da">
-<a href="mailto:support@idmc.dk">Kontakt & Hjælp</a>
+<div class="supporttext staticpage i18n hidden" lang="da">
+<a class="help iconleftpad" href="mailto:support@idmc.dk">Kontakt & Hjælp</a>
 </div>
 </div>
 </div>
@@ -449,7 +581,7 @@ i tillæg til vores site privacy og cookie policy via links nederst.
 &amp; <a href="/public/cookie-policy.pdf">Cookie Policy</a>
 </p>
 </div>
-<div class="privacytext staticpage i18n" lang="da">
+<div class="privacytext staticpage i18n hidden" lang="da">
 <p class="i18n" lang="da">
 <a href="/public/site-privacy-policy.pdf">Privacy Policy</a>
 &amp; <a href="/public/cookie-policy.pdf">Cookie Policy</a>
@@ -459,7 +591,7 @@ i tillæg til vores site privacy og cookie policy via links nederst.
 <div id="copyright">
 <img src="/images/copyright.png" id="creditsimage" alt=""/>
 <span id="credits">
-2003-2020, <a href="http://www.migrid.org">The MiG Project</a>
+2003-2021, <a href="https://www.migrid.org">The MiG Project</a>
 </span>
 </div>
 </div>

@@ -170,8 +170,8 @@ Can just be disabled by putting it into an html comment when not in use.
 </div>
 
 <div class="staticpage quickstartfields">
-<div id="quick-start-tabs-en">
 
+<div id="quick-start-tabs-en">
 <ul class="fillwidth padspace">
 <li><a href="#ucph-user-tab-en">KU / UCPH Users</a></li>
 <li><a href="#external-user-tab-en">External Users</a></li>
@@ -182,8 +182,8 @@ Can just be disabled by putting it into an html comment when not in use.
 <div class="staticpage centertext signupfield">
 <p>Sign up to MiGrid using your KU / UCPH account?</p>
 <form method='post' action='https://dk-oid.migrid.org/wsgi-bin/autocreate.py' target='_blank'>
-<input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
-<input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
+<input type='hidden' name='openid.ns' value='https://specs.openid.net/auth/2.0' />
+<input type='hidden' name='openid.ns.sreg' value='https://openid.net/extensions/sreg/1.1' />
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
 <input class="signupbutton" type="submit" value="sign up" />
 </form>
@@ -247,23 +247,56 @@ Can just be disabled by putting it into an html comment when not in use.
 
 <h2 class="staticpage">About MiGrid</h2>
 <p>
-Minimum intrusion Grid (MiGrid) is a data 
-storage, sharing and processing facility provided by 
-University of Copenhagen to employees, students and partners. 
-MiGrid delivers centralized storage space for personal and shared files in
-addition to processing data.
+MiGrid or Minimum intrusion Grid at University of Copenhagen (KU/UCPH) is meant for 
+storing, sharing and processing research data.
+The intended audience is employees, their collaboration partners and students.
+MiGrid delivers safe central storage space for own and shared files in addition
+to processing data. You can use MiGrid as a secure network drive from anywhere
+and it also comes with various development and analysis tools.
+<br/>
+MiGrid is delivered by SCIENCE HPC Center and is formally for the faculty of
+Science, but others have access for collaboration purposes.
+A roll-out to all of UCPH might be underway to support the general UCPH
+<a class="infolink" href="https://kunet.ku.dk/work-areas/research/data/data-management-at-UCPH/Pages/default.aspx"
+target="_blank">Data Management Guidelines</a>. 
 </p>
 
 <h2 class="staticpage">Sensitive and Personal Data (GDPR)</h2>
 <p>
-Please note that while ERDA/IDMC/MiGrid comes with a strong security focus, it is
-<em>only</em> a solution approved for general scientific data
-and <em>not</em> for highly sensitive data. In particular it is not for
-personal data classified as sensitive in the EU Regulation 2016/679
-(General Data Protection Regulation). In case you need to work on such
-sensitive data we recommend the ERDA/IDMC/MiGrid sister
-facility <a href="http://sif.ku.dk">SIF</a>, which <em>is</em>
+Please note that while MiGrid comes with a strong security focus, it is
+<em>only</em> a solution approved for general scientific data and <em>not</em>
+for highly sensitive data. In particular it is not for personal data classified
+as sensitive in the EU General Data Protection Regulation (GDPR). In case you
+need to work on such sensitive data we recommend the MiGrid sister facility
+<a class="urllink"  href="https://sif.ku.dk">SIF</a>, which <em>is</em>
 intended and approved for exactly that purpose.
+</p>
+
+<h2 class="staticpage">Getting Started with MiGrid</h2>
+<p>
+We've gathered information about ERDA/MiGrid in a few short intro guides and a more thorough user guide
+<ul>
+<li><a class="introguidelink" href="https://erda.ku.dk/ucph-erda-guide_user-sign-up.pdf">Sign Up Intro</a> for UCPH and external users</li> 
+<li><a class="introguidelink" href="https://erda.ku.dk/ucph-erda-guide_workgroup-sharing.pdf">Workgroup Intro</a> about creating, managing and accessing Workgroups</li> 
+<li><a class="introguidelink" href="https://erda.ku.dk/ucph-erda-guide_network-drive_win.pdf">Network Drive Intro</a> about using MiGrid as a network drive on your computer (only covers Windows for now)</li>
+<li><a class="userguidelink" href="https://erda.ku.dk/ucph-erda-user-guide.pdf">User Guide</a> with general usage instructions</li>
+</ul>
+<p class="warningtext">
+Please beware that the guides are made for ERDA, the brother system of MiGrid, but 
+almost all examples are valid with the replacement of erda.ku.dk with
+www.migrid.org and erda.dk with migrid.org. Likewise Workgroups on ERDA
+correspond to VGrids on MiGrid.
+</p>
+We strongly recommend reading and following at least the first intro guide if
+you want to use MiGrid. 
+</p>
+
+<h2 class="staticpage">Status and News</h2>
+<p>
+You can always refer to our
+separate <a class="statusnewslink" href="https://status.erda.dk/status.html">status and news overview</a>
+for a.o. the latest MiGrid system status as well as information about new or changed
+features.
 </p>
 
 <div id="faq-content-english" class="col-lg-12">
@@ -273,37 +306,25 @@ intended and approved for exactly that purpose.
     <p>
       You need a browser with JavaScript for the intended
       dynamic behaviour on this page, but you can still manually 
-      <a href="faq-snippet.html">view the FAQ</a> without.
+      <a class="userfaqlink" href="faq-snippet.html">view the FAQ</a> without.
     </p>
   </noscript>
 </div>
 
 <h2 class="staticpage">Questions and Support</h2>
 <p>
-The <a href="https://sid.erda.dk/public/ucph-erda-user-guide.pdf">User Guide</a> 
-provides basic information about using MiGrid, but feel free to contact us using
-the email link at the bottom of the page in case you have any further questions
-or comments (in English or Danish). Unfortunately we do <em>not</em> have resources
-to offer video or phone support, but we typically reply on email the
-next working-day at the latest.
-<p class="warningtext">
-Please beware that the user guide is made for ERDA, the sister system of MiGrid, but 
-almost all examples are valid with the replacement of erda.dk with migrid.org.
+Feel free to contact us using the email link at the bottom of the page in case
+you have any further questions or comments (in English or Danish).
+Unfortunately we do <em>not</em> have resources to offer video or phone
+support, but we typically reply on email the next working-day at the latest.
 </p>
 
-<h2 class="staticpage">Status and News</h2>
-<p>
-You can always refer to our
-separate <a href="https://status.erda.dk/status.html">status and news overview</a>
-for the latest ERDA/IDMC/MiGrid/SIF system status as well as information about new or changed
-features.
-</p>
 <h2 class="staticpage">Terms of Use</h2>
 <p>
 MiGrid comes with only few restrictions and they should be in line with
 basic common sense.<br/>
 For the complete details please refer to the
-official <a href="/public/terms.html">terms of use</a> always
+official <a class="usertermslink" href="/public/terms.html">terms of use</a> always
 available from here, in addition to our site privacy and cookie policies
 linked at the bottom.
 </p>
@@ -325,6 +346,7 @@ Can just be disabled by putting it into an html comment when not in use.
   dataadgang vil forsvinde i kortere eller længere tidsrum.</span>
 <br/><br/>
 -->
+
 </div>
 
 <div class="staticpage quickstartfields">
@@ -340,8 +362,8 @@ Can just be disabled by putting it into an html comment when not in use.
 <div class="staticpage centertext signupfield">
 <p>Tilmeld dig MiGrid med din KU-konto?</p>
 <form method='post' action='https://dk-oid.migrid.org/wsgi-bin/autocreate.py' target='_blank'>
-<input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
-<input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
+<input type='hidden' name='openid.ns' value='https://specs.openid.net/auth/2.0' />
+<input type='hidden' name='openid.ns.sreg' value='https://openid.net/extensions/sreg/1.1' />
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
 <input class="signupbutton" type="submit" value="tilmelding" />
 </form>
@@ -405,22 +427,63 @@ Can just be disabled by putting it into an html comment when not in use.
 
 <h2 class="staticpage">Om MiGrid</h2>
 <p>
-Minimum intrusion Grid (MiGrid) er et lager-, delings-
-og processerings-system leveret af Københavns Universitet til ansatte, studerende og partnere. 
-MiGrid leverer centraliseret lagerplads for personlige - og delte filer
-samt faciliteter til processering af data.
+MiGrid eller Minimum intrusion Grid på Københavns Universitet (KU/UCPH) er
+rettet mod lagring, deling og processering af forskningsdata.
+Målgruppen er ansatte, deres samarbejdspartnere og studerende. MiGrid leverer
+sikker centraliseret lagerplads for egne - og delte filer samt faciliteter til
+processering af data.
+Man kan benytte MiGrid som sikkert netværksdrev uanset hvor man er og desuden
+er der adgang til udviklings- og analyseværktøjer.<br/>
+MiGrid leveres af SCIENCE HPC Center og er formelt til Det Natur- og
+Biovidenskabelige Fakultet (SCIENCE), men andre har adgang især til
+samarbejdsformål.
+Der overvejes en udrulning til hele KU, for at understøtte KUs generelle
+<a class="infolink" href="https://kunet.ku.dk/arbejdsomraader/forskning/data/forskningsdata/Sider/default.aspx"
+target="_blank">data management forskrifter</a>. 
 </p>
 
 <h2 class="staticpage">Følsomme - og personhenførbare data (GDPR)</h2>
 <p>
-Bemærk venligst at selvom ERDA/IDMC/MiGrid har fokus på stærk sikkerhed, så er det
-<em>kun</em> en løsning til generelle forskningsdata og <em>ikke</em>
-til følsomme data. Herunder specielt ikke personhenførbare data
-klassificeret som følsomme i EUs persondataforordning (forordning
-2016/679, også kendt som GDPR). Såfremt du har behov for at arbejde på
-sådanne sensitive data anbefaler vi i stedet at benytte ERDA/IDMC/MiGrids
-søster-facilitet <a href="http://sif.ku.dk">SIF</a>, som
-netop <em>er</em> beregnet og godkendt til det formål.
+Bemærk venligst at selvom MiGrid har fokus på stærk sikkerhed, så er det
+<em>kun</em> en løsning til generelle forskningsdata og <em>ikke</em> til
+følsomme data. Herunder specielt personhenførbare data klassificeret som
+følsomme i EUs persondataforordning (GDPR). Såfremt du har behov for at arbejde
+på sådanne sensitive data, anbefaler vi i stedet at benytte MiGrids
+søster-facilitet <a class="urllink" href="https://sif.ku.dk">SIF</a>, som netop
+<em>er</em> beregnet og godkendt til det formål.
+</p>
+
+<h2 class="staticpage">Kom godt igang med MiGrid</h2>
+<p>
+Vi har samlet information om ERDA/MiGrid i nogle korte intro-guides og en længere brugervejledning
+</p>
+<ul>
+<li><a class="introguidelink" href="/public/ucph-erda-guide_brugertilmelding.pdf">Tilmeldings-intro</a> for KU- og eksterne brugere</li> 
+<li><a class="introguidelink" href="/public/ucph-erda-guide_workgroup-deling.pdf">Workgroup-intro</a> om Workgroup-oprettelse, -deling og -adgang</li>
+<li><a class="introguidelink" href="/public/ucph-erda-guide_netvaerksdrev_win.pdf">Netværksdrev-intro</a> om at benytte MiGrid som netværksdrev på din computer (dækker kun Windows for nu)</li>
+<li><a class="userguidelink" href="/public/ucph-erda-brugervejledning.pdf">Brugervejledningen</a> med generel gennemgang af brugen</li>
+</ul>
+<p class="warningtext">
+<!--
+Bemærk at MiGrid siderne p.t. kun findes på engelsk. Den danske
+brugervejledning kan forhåbentlig afhjælpe eventuelle
+forståelsesvanskeligheder, og en egentlig dansk oversættelse overvejes stadig.
+-->
+Bemærk at guiderne stammer fra ERDA, MiGrids broder-system, men næsten alle
+eksempler kan benyttes ved at erstatte erda.ku.dk med www.migrid.org og erda.dk
+med migrid.org. Ligeledes svarer Workgroups på ERDA til VGrids på MiGrid.
+</p>
+<p>
+Vi anbefaler kraftigt at læse og følge mindst den første intro-guide, hvis du
+vil benytte MiGrid.
+</p>
+
+<h2 class="staticpage">Status og nyheder</h2>
+<p>
+På siden med
+<a class="statusnewslink" href="https://status.erda.dk/status.html">status- og nyheds-overblik</a>
+finder man altid aktuel driftstatus for bl.a. MiGrid samt nærmere information
+omkring ny eller ændret funktionalitet.
 </p>
 
 <div id="faq-content-danish" class="col-lg-12">
@@ -430,42 +493,25 @@ netop <em>er</em> beregnet og godkendt til det formål.
     <p>
       Du skal bruge en browser med JavaScript for at få den tiltænkte
       dynamiske opførsel på denne side, men du kan stadig manuelt
-      <a href="faq-snippet.html">åbne vores FAQ</a> uden.
+      <a class="userfaqlink" href="faq-snippet.html">åbne vores FAQ</a> uden.
     </p>
   </noscript>
 </div>
 
 <h2 class="staticpage">Spørgsmål og hjælp</h2>
 <p>
-<a href="https://sid.erda.dk/public/ucph-store-brugervejledning.pdf">Brugervejledningen</a> 
-indeholder basal information om brugen af MiGrid, men kontakt os gerne (på dansk
-eller engelsk) med øvrige spørgsmål og kommentarer v.h.a. email-linket nederst
-på siden. Vi har desværre <em>ikke</em> resurser til at yde video- eller
-telefon-support, men svarer typisk på email senest næste arbejdsdag.
-</p>
-<p class="warningtext">
-<!--
-Bemærk at MiGrid siderne p.t. kun findes på engelsk. Den danske
-brugervejledning kan forhåbentlig afhjælpe eventuelle
-forståelsesvanskeligheder, og en egentlig dansk oversættelse overvejes stadig.
--->
-Bemærk at brugervejledningen stammer fra ERDA, MiGrids søster-system, men
-næsten alle eksempler kan benyttes ved at erstatte erda.dk med migrid.org.
+Kontakt os gerne (på dansk eller engelsk) med øvrige spørgsmål og kommentarer
+v.h.a. email-linket nederst på siden. Vi har desværre <em>ikke</em> resurser
+til at yde video- eller telefon-support, men svarer typisk på email senest
+næste arbejdsdag.
 </p>
 
-<h2 class="staticpage">Status og nyheder</h2>
-<p>
-Man kan altid benytte den særskilte side med 
-<a href="https://status.erda.dk/status.html">status- og nyheds-overblik</a> til at
-se den aktuelle driftstatus for ERDA/IDMC/MiGrid/SIF samt finde nærmere information omkring ny
-eller ændret funktionalitet.
-</p>
 <h2 class="staticpage">Brugerregler</h2>
 <p>
 MiGrid er kun begrænset af få regler, og de skulle gerne være i tråd med
 almindelig sund fornuft.<br/>
 De fuldstændige detaljer vil altid være at finde i de
-officielle <a href="/public/terms.html">terms of use</a> her fra siden,
+officielle <a class="usertermslink" href="/public/terms.html">terms of use</a> her fra siden,
 i tillæg til vores site privacy og cookie policy via links nederst.
 </p>
 </div>
@@ -504,7 +550,7 @@ i tillæg til vores site privacy og cookie policy via links nederst.
 <div id="copyright">
 <img src="/images/copyright.png" id="creditsimage" alt=""/>
 <span id="credits">
-2003-2021, <a href="http://www.migrid.org">The MiG Project</a>
+2003-2021, <a href="https://www.migrid.org">The MiG Project</a>
 </span>
 </div>
 </div>
