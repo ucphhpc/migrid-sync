@@ -23,6 +23,34 @@
     "announce_end": "2021-03-23T10:00:00+01:00"
   },
   {
+    "status": "AUTO", 
+    "work_start": "2021-03-19T17:00:00+01:00", 
+    "systems": [
+        "ERDA",
+        "IDMC",
+        "SIF",
+        "MiGrid"
+    ],
+    "announce_start": "2021-03-18T09:40:00+01:00",
+    "title": {
+      "EN": "Access Issues this Weekend - UCPH Firewall Upgrades",
+      "DK": "Adgangsudfald denne weekend - KU firewallopgraderinger"
+    },
+    "services": [
+        "Web",
+        "DAG",
+        "MODI",
+        "HEL",
+        "DOI"
+    ],
+    "work_end": "2021-03-21T18:00:00+01:00",
+    "description": {
+      "EN": "UCPH IT have announced major firewall upgrades the entire weekend. The SCIENCE HPC Center is NOT behind the general UCPH firewalls but site web login, Jupyter access and UCPH DOI minting on Archives rely on central UCPH services and therefore will likely be affected to some extent. Thus all mentioned services may be temporarily unavailable for shorter or longer periods during the announced maintenance window. Please note that OpenID login sessions have a default lifetime of 24 hours so active login sessions should remain usable despite OpenID service outages until session expiry and renewal. You might want to re-login Friday afternoon if your plan to use our systems on Friday evening or Saturday. Sharelinks, Seafile and access on WebDAVS, SFTP/SSHFS and FTPS should remain unaffected. We have contacted UCPH IT about prioritizing especially the OpenID service needed for log in and Jupyter",
+      "DK": "KU-IT har varslet større firewallopgraderinger hele weekenden. SCIENCE HPC Centeret er IKKE bag KUs generelle firewall, men site web login, Jupyter-adgang og DOI-tildeling på Archives er bundet op på centrale KU-services og vil derfor sandsynligvis være berørt i noget omfang. Således må der forventes kortere eller længere udfald i adgangen til de nævnte services under det udmeldte service vindue. Bemærk venligst at OpenID login-sessioner som standard gælder i 24 timer så aktive login-sessioner skulle forblive brugbare til trods for udfald i OpenID servicen indtil sessionen udløb og fornyelse. Du kan evt lave re-login fredag eftermiddag hvis du planlægger at bruge vores systemer fredag aften og lørdag. Sharelinks, Seafile og adgang via WebDAVS, SFTP/SSHFS og FTPS skulle forblive fuldt tilgængelige. Vi har kontaktet KU-IT omkring at prioritere adgangen til især OpenID-servicen til log ind og Jupyter."
+    },
+    "announce_end": "2021-03-22T10:00:00+01:00"
+  },
+  {
     "status": "AUTO",
     "work_start": "2021-03-03T20:00:00+01:00", 
     "systems": [
