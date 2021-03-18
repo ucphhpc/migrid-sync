@@ -149,6 +149,7 @@ Can just be disabled by putting it into an html comment when not in use.
 <h2 class="staticpage">New to ERDA?</h2>
 <p>If you haven't used ERDA before you need to first</p>
 <form method='post' action='https://erda.dk/wsgi-bin/autocreate.py' target='_blank'>
+<!-- IMPORTANT: openid.ku.dk fails if we change these to https -->
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
@@ -466,6 +467,7 @@ Can just be disabled by putting it into an html comment when not in use.
 <h2 class="staticpage">Ny på ERDA?</h2>
 <p>Hvis ikke du har brugt ERDA før, skal du først igennem</p>
 <form method='post' action='https://erda.dk/wsgi-bin/autocreate.py' target='_blank'>
+<!-- IMPORTANT: openid.ku.dk fails if we change these to https -->
 <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
 <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />

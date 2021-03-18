@@ -215,8 +215,9 @@ Can just be disabled by putting it into an html comment when not in use.
 <div class="staticpage centertext signupfield">
 <p>Sign up to ERDA using your KU / UCPH account?</p>
 <form method='post' action='https://erda.dk/wsgi-bin/autocreate.py' target='_blank'>
-<input type='hidden' name='openid.ns' value='https://specs.openid.net/auth/2.0' />
-<input type='hidden' name='openid.ns.sreg' value='https://openid.net/extensions/sreg/1.1' />
+<!-- IMPORTANT: openid.ku.dk fails if we change these to https -->
+<input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
+<input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
 <input class="signupbutton" type="submit" value="sign up" />
 </form>
@@ -431,8 +432,9 @@ Can just be disabled by putting it into an html comment when not in use.
 <div class="staticpage centertext signupfield">
 <p>Tilmeld dig ERDA med din KU-konto?</p>
 <form method='post' action='https://erda.dk/wsgi-bin/autocreate.py' target='_blank'>
-<input type='hidden' name='openid.ns' value='https://specs.openid.net/auth/2.0' />
-<input type='hidden' name='openid.ns.sreg' value='https://openid.net/extensions/sreg/1.1' />
+<!-- IMPORTANT: openid.ku.dk fails if we change these to https -->
+<input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
+<input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
 <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
 <input class="signupbutton" type="submit" value="tilmelding" />
 </form>

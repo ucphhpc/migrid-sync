@@ -268,6 +268,7 @@
 	    <button style="color: #fff; background-color: #46743C; border-radius: 30px; width: 120px; height: 40px;" value="log in" onClick="login('extoid');">Log in</button>
             <div id="signupform" class="hidden">
             <form method='post' action='https://ui.erda.dk/wsgi-bin/autocreate.py'>
+              <!-- IMPORTANT: openid.ku.dk fails if we change these to https -->
               <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
               <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
               <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
