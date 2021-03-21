@@ -23,6 +23,28 @@
     "announce_end": "2021-03-23T10:00:00+01:00"
   },
   {
+    "status": "AUTO",
+    "work_start": "2021-03-21T09:33:00+01:00",
+    "systems": [
+      "ERDA",
+      "IDMC"
+    ],
+    "announce_start": "2021-03-20T20:13:00+01:00",
+    "title": {
+      "EN": "Another outage in the storage backend: partial data visibility",
+      "DK": "Endnu et udfald i backend-lageret: begrænset dataadgang"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2021-03-21T10:28:00+01:00",
+    "description": {
+      "EN": "We had another drop out of the backend storage brick, which acted up last month. Some files stored there therefore again turned invisible/inaccessible on ERDA/IDMC. Again there was disk partitions running full on that brick. After freeing up some more space there everything should be back online. However, with one partition still pretty full it may happen again. We'll monitor and work on a long-term solution as soon as backend storage experts check in. Please report any further issues on support as usual.", 
+      "DK": "Vi havde endnu et udfald på samme maskine i backend-lageret, som der var bøvl med i sidste måned. Nogle filer lagret derpå blev derfor igen usynlige/utilgængelige på ERDA/IDMC. Vi fandt igen at diskpartitioner var løbet fuld på maskinen. Efter oprydning for at finde fri plads derpå skulle alt gerne være tilbage i normal drift. En enkelt partition er dog stadig ganske fyldt så vi holder øje og arbejder videre med en langsigtet løsning så snart vores lagereksperter møder ind. Yderligere fejl bedes som altid meldt til support."
+    },
+    "announce_end": "2021-03-22T12:00:00+01:00"
+  },
+  {
     "status": "AUTO", 
     "work_start": "2021-03-19T17:00:00+01:00", 
     "systems": [
@@ -45,10 +67,24 @@
     ],
     "work_end": "2021-03-21T18:00:00+01:00",
     "description": {
-      "EN": "UCPH IT have announced major firewall upgrades the entire weekend. The SCIENCE HPC Center is NOT behind the general UCPH firewalls but site web login, Jupyter access and UCPH DOI minting on Archives rely on central UCPH services and therefore will likely be affected to some extent. Thus all mentioned services may be temporarily unavailable for shorter or longer periods during the announced maintenance window. Please note that OpenID login sessions have a default lifetime of 24 hours so active login sessions should remain usable despite OpenID service outages until session expiry and renewal. You might want to re-login Friday afternoon if your plan to use our systems on Friday evening or Saturday. Sharelinks, Seafile and access on WebDAVS, SFTP/SSHFS and FTPS should remain unaffected. We have contacted UCPH IT about prioritizing especially the OpenID service needed for log in and Jupyter",
-      "DK": "KU-IT har varslet større firewallopgraderinger hele weekenden. SCIENCE HPC Centeret er IKKE bag KUs generelle firewall, men site web login, Jupyter-adgang og DOI-tildeling på Archives er bundet op på centrale KU-services og vil derfor sandsynligvis være berørt i noget omfang. Således må der forventes kortere eller længere udfald i adgangen til de nævnte services under det udmeldte service vindue. Bemærk venligst at OpenID login-sessioner som standard gælder i 24 timer så aktive login-sessioner skulle forblive brugbare til trods for udfald i OpenID servicen indtil sessionen udløb og fornyelse. Du kan evt lave re-login fredag eftermiddag hvis du planlægger at bruge vores systemer fredag aften og lørdag. Sharelinks, Seafile og adgang via WebDAVS, SFTP/SSHFS og FTPS skulle forblive fuldt tilgængelige. Vi har kontaktet KU-IT omkring at prioritere adgangen til især OpenID-servicen til log ind og Jupyter."
+      "EN": "UCPH IT have announced major firewall upgrades the entire weekend. The SCIENCE HPC Center is NOT behind the general UCPH firewalls but site web login, Jupyter access and UCPH DOI minting on Archives rely on central UCPH services and therefore will likely be affected to some extent. Thus all mentioned services may be temporarily unavailable for shorter or longer periods during the announced maintenance window. Please note that OpenID login sessions have a default lifetime of 24 hours so active login sessions should remain usable despite OpenID service outages until session expiry and renewal. You might want to re-login Friday afternoon if your plan to use our systems on Friday evening or Saturday. Sharelinks, Seafile and access on WebDAVS, SFTP/SSHFS and FTPS should remain unaffected. We have contacted UCPH IT about prioritizing especially the OpenID service needed for log in and Jupyter. We noticed a 15 minute access outage to the main ERDA entry page[0] on Friday evening but access is back. In case it disappears again you can still use the alternative entry page URL[1] or the direct ERDA UCPH user login URL[2]. UCPH-IT haven't responded to our inquiry about prioritizing OpenID and their general service information[3] is pretty sparse, so we don't know if the related work is completed yet.",
+      "DK": "KU-IT har varslet større firewallopgraderinger hele weekenden. SCIENCE HPC Centeret er IKKE bag KUs generelle firewall, men site web login, Jupyter-adgang og DOI-tildeling på Archives er bundet op på centrale KU-services og vil derfor sandsynligvis være berørt i noget omfang. Således må der forventes kortere eller længere udfald i adgangen til de nævnte services under det udmeldte service vindue. Bemærk venligst at OpenID login-sessioner som standard gælder i 24 timer så aktive login-sessioner skulle forblive brugbare til trods for udfald i OpenID servicen indtil sessionen udløb og fornyelse. Du kan evt lave re-login fredag eftermiddag hvis du planlægger at bruge vores systemer fredag aften og lørdag. Sharelinks, Seafile og adgang via WebDAVS, SFTP/SSHFS og FTPS skulle forblive fuldt tilgængelige. Vi har kontaktet KU-IT omkring at prioritere adgangen til især OpenID-servicen til log ind og Jupyter. Vi bemærkede et 15 minutters udfald på adgangen til den normale ERDA forside[0] fredag aften, men adgangen er tilbage. I tilfælde af at den forsvinder igen kan man altid benytte den alternative forsideadresse[1] eller direkte ERDA KU-bruger login på [2]. KU-IT har ikke svaret på vores henvendelse om prioritering af OpenID og deres driftsinfo[3] er meget kortfattet om detaljer, så vi ved endnu ikke om arbejdet dermed er overstået."
     },
-    "announce_end": "2021-03-22T10:00:00+01:00"
+    "announce_end": "2021-03-22T10:00:00+01:00",
+    "references": {
+      "EN": [
+          "https://erda.ku.dk",
+          "https://www.erda.dk",
+          "https://erda.dk",
+          "https://it.ku.dk/driftinfo/"
+      ], 
+      "DK": [
+          "https://erda.ku.dk",
+          "https://www.erda.dk",
+          "https://erda.dk",
+          "https://it.ku.dk/driftinfo/"
+      ]
+      }
   },
   {
     "status": "AUTO",
@@ -89,7 +125,7 @@
     "work_end": "2021-02-25T16:52:00+01:00",
     "description": {
       "EN": "We had another drop out of the same backend storage brick, which acted up earlier today. All files stored there therefore again turned invisible/inaccessible on ERDA/IDMC. We have investigated some more and figured there was a disk partition running full on that brick. After freeing up some more space there everything should be back online - and hopefully then with no more outages. Please report any further issues on support as usual.", 
-      "DK": "Vi havde endnu et udfald på samme maskine i backend-lageret, som der var bøvl med i morges. Alle filer lagret derpå blev derfor igen usynlige/utilgængelige på ERDA/IDMC. Vi har undersøgt yderligere og fundet frem til at en diskpartition var løbet fuld på maskinen. After oprydning for at finde fri plads derpå skulle alt gerne være tilbage i normal drift - og forhåbentlig så uden flere udfald. Yderligere fejl bedes som altid meldt til support."
+      "DK": "Vi havde endnu et udfald på samme maskine i backend-lageret, som der var bøvl med i morges. Alle filer lagret derpå blev derfor igen usynlige/utilgængelige på ERDA/IDMC. Vi har undersøgt yderligere og fundet frem til at en diskpartition var løbet fuld på maskinen. Efter oprydning for at finde fri plads derpå skulle alt gerne være tilbage i normal drift - og forhåbentlig så uden flere udfald. Yderligere fejl bedes som altid meldt til support."
     },
     "announce_end": "2021-02-26T10:00:00+01:00"
   },
