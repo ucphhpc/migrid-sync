@@ -322,6 +322,36 @@ def update_cached_meta(configuration, client_id, freeze_id, freeze_meta):
     return update_status
 
 
+def prune_cached_meta(configuration, client_id, freeze_id):
+    """Helper to prune freeze_id archive from cached metadata dictionary of
+    client_id. Acts on a private dictionary mapping freeze_id to meta data
+    dicts in the user_cache subdir for the user.
+    """
+    _logger = configuration.logger
+    client_dir = client_id_dir(client_id)
+    user_cache = os.path.join(configuration.user_cache, client_dir)
+    archives_cache = os.path.join(user_cache, archives_cache_filename)
+    prune_status = False
+    lock_path = "%s.lock" % archives_cache
+    _logger.debug('load archives cache %s' % archives_cache)
+    lock_handle = None
+    try:
+        lock_handle = acquire_file_lock(lock_path, exclusive=True)
+        if os.path.exists(archives_cache):
+            frozen_cache = load(archives_cache)
+        else:
+            frozen_cache = {}
+        del frozen_cache[freeze_id]
+        dump(frozen_cache, archives_cache)
+        prune_status = True
+    except Exception as err:
+        _logger.warning('could not prune %s in freeze cache %s: %s' %
+                        (freeze_id, archives_cache, err))
+    if lock_handle:
+        release_file_lock(lock_handle)
+    return prune_status
+
+
 def list_frozen_archives(configuration, client_id, strict_owner=False,
                          caching=False):
     """Find all frozen_archives owned by user. We used to store all archives
@@ -383,6 +413,11 @@ def list_frozen_archives(configuration, client_id, strict_owner=False,
         else:
             _logger.warning('%s in %s is not a directory, move it?' %
                             (entry, configuration.freeze_home))
+            # Remove any bogus or no longer available archives from cache
+            if entry in frozen_cache:
+                _logger.info('pruning stale %s from %s archive cache' %
+                             (entry, client_id))
+                prune_cached_meta(configuration, client_id, entry)
     return (True, frozen_list)
 
 
@@ -1520,24 +1555,37 @@ def import_freeze_form(configuration, client_id, output_format,
 
 
 if __name__ == "__main__":
-    if not sys.argv[2:]:
-        print("USAGE: freezefunctions.py CLIENT_ID ARCHIVE_ID")
-        print("       Runs basic unit tests for the ARCHIVE_ID of CLIENT_ID")
+    if not sys.argv[1:]:
+        print("USAGE: freezefunctions.py CLIENT_ID [ARCHIVE_ID ...]")
+        print("       Runs basic unit tests for the given ARCHIVE_IDs or all")
+        print("       archives of CLIENT_ID")
         sys.exit(1)
     from mig.shared.conf import get_configuration_object
     configuration = get_configuration_object()
+    caching = True
     client_id = sys.argv[1]
-    freeze_id = sys.argv[2]
-    print("Loading %s of %s" % (freeze_id, client_id))
-    (load_status, freeze_dict) = get_frozen_archive(client_id, freeze_id,
-                                                    configuration)
-    if not load_status:
-        print("Failed to load %s for %s: %s" % (freeze_id, client_id,
-                                                freeze_dict))
-        sys.exit(1)
-    print("Metadata for %s is:" % freeze_id)
-    for (meta_key, meta_label) in __public_meta:
-        meta_value = freeze_dict.get(meta_key, '')
-        if meta_value:
-            # Preserve any text formatting in e.g. description
-            print("%s: %s" % (meta_label, format_meta(meta_key, meta_value)))
+    if sys.argv[2:]:
+        freeze_id_list = sys.argv[2:]
+    else:
+        (loaded, freeze_id_list) = list_frozen_archives(configuration,
+                                                        client_id,
+                                                        strict_owner=False,
+                                                        caching=caching)
+        if not loaded:
+            print("Error: failed to load list of archives for %s" % client_id)
+            sys.exit(1)
+
+    for freeze_id in freeze_id_list:
+        print("Loading %s of %s" % (freeze_id, client_id))
+        (load_status, freeze_dict) = get_frozen_archive(client_id, freeze_id,
+                                                        configuration)
+        if not load_status:
+            print("Failed to load %s for %s: %s" % (freeze_id, client_id,
+                                                    freeze_dict))
+            continue
+        print("Metadata for %s is:" % freeze_id)
+        for (meta_key, meta_label) in __public_meta:
+            meta_value = freeze_dict.get(meta_key, '')
+            if meta_value:
+                # Preserve any text formatting in e.g. description
+                print("%s: %s" % (meta_label, format_meta(meta_key, meta_value)))
