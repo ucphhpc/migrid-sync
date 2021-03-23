@@ -1,6 +1,29 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2021-04-13T07:30:00+02:00", 
+    "systems": [
+        "ERDA",
+        "IDMC",
+        "SIF"
+    ],
+    "announce_start": "2021-03-23T12:00:00+02:00",
+    "title": {
+      "EN": "Planned ERDA/IDMC and SIF Maintenance",
+      "DK": "Planlagt ERDA/IDMC og SIF vedligehold"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2021-04-13T09:00:00+02:00",
+    "description": {
+      "EN": "We need to move around some more backend storage hosts to keep scaling the available storage, and avoid running out of disk space on ERDA/IDMC and SIF. This is mainly the SIF tasks postponed from March 22nd. The work will involve backend storage down-time for the shuffling. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window.",
+      "DK": "Vi er nødt til at rokere rundt på nogle maskiner i backend-lageret for at skalere den tilgængelige lagerplads og undgå at løbe tør for diskplads på ERDA/IDMC og SIF. Det er hovedsageligt de udsatte SIF-opgaver fra den 22. marts. Arbejdet kræver nedetid på backend-lageret under flytningen, og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs."
+    },
+    "announce_end": "2021-04-14T10:00:00+02:00"
+  },
+  {
+    "status": "AUTO", 
     "work_start": "2021-03-22T07:30:00+01:00", 
     "systems": [
         "ERDA",
