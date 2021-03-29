@@ -24,6 +24,27 @@
   },
   {
     "status": "AUTO", 
+    "work_start": "2021-03-29T13:00:00+02:00", 
+    "systems": [
+        "ERDA", "IDMC"
+    ], 
+    "announce_start": "2021-02-05T08:00:00+02:00", 
+    "title": {
+      "EN": "Power Drop - MODI Offline", 
+      "DK": "Strømudfald - MODI nede"
+    }, 
+    "services": [
+      "MODI"
+    ], 
+    "work_end": "2021-03-30T08:00:00+02:00", 
+    "description": {
+      "EN": "There was a power drop in Copenhagen including at HCØ, affecting the SCIENCE HPC Center and in particular the physical hosts not on emergency power. Most prominently MODI was hit with the front end and compute nodes going down. We are working on getting everything back online.",
+      "DK": "Der var et udfald i strømmen i København inklusiv på HCØ, hvilket berørte SCIENCE HPC Centeret og specielt maskiner uden nødstrøm. Det gik især ud over MODI hvor front end og regneknuder gik ned. Vi arbejder på at dem tilbage online."
+    }, 
+    "announce_end": "2021-03-30T10:00:00+02:00"
+  },
+  {
+    "status": "AUTO", 
     "work_start": "2021-03-22T07:30:00+01:00", 
     "systems": [
         "ERDA",
