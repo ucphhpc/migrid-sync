@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # base - gdp base helper functions related to GDP actions
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -2081,6 +2081,16 @@ def edit_gdp_user(
             if not force:
                 rollback = True
                 break
+
+        # Pending project invitations require no further action
+        # NOTE: if accept invite checks client_id it must be changed here, too
+        if project_dict.get("state", None) == "invited":
+            template = "transfer project invitation: %r" % project_name
+            if verbose:
+                print(template)
+            _logger.info(log_prefix + template)
+            continue
+
         new_changes = copy.deepcopy(changes)
 
         # Update changes dict with project name
