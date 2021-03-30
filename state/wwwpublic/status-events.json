@@ -28,7 +28,7 @@
     "systems": [
         "ERDA", "IDMC"
     ], 
-    "announce_start": "2021-02-05T08:00:00+02:00", 
+    "announce_start": "2021-03-29T13:00:00+02:00", 
     "title": {
       "EN": "Power Drop - MODI Offline", 
       "DK": "Strømudfald - MODI nede"
@@ -38,10 +38,10 @@
     ], 
     "work_end": "2021-03-30T08:00:00+02:00", 
     "description": {
-      "EN": "There was a power drop in Copenhagen including at HCØ, affecting the SCIENCE HPC Center and in particular the physical hosts not on emergency power. Most prominently MODI was hit with the front end and compute nodes going down. We are working on getting everything back online.",
-      "DK": "Der var et udfald i strømmen i København inklusiv på HCØ, hvilket berørte SCIENCE HPC Centeret og specielt maskiner uden nødstrøm. Det gik især ud over MODI hvor front end og regneknuder gik ned. Vi arbejder på at dem tilbage online."
+      "EN": "There was a power drop in Copenhagen including at HCØ, affecting the SCIENCE HPC Center and in particular the physical hosts not on emergency power. Most prominently MODI was hit with the front end and compute nodes going down. We had to do quite a bit of low-level work to get the network file system back in shape, but we finished just in time for Tuesday standard working hours. Still, let it be a reminder to all users that the storage on MODI is considered volatile and ALL important data must explicitly be transferred to permanent UCPH storage. You can use e.g. the ERDA mount to send it there conveniently.",
+      "DK": "Der var et udfald i strømmen i København inklusiv på HCØ, hvilket berørte SCIENCE HPC Centeret og specielt maskiner uden nødstrøm. Det gik især ud over MODI hvor front end og regneknuder gik ned. Vi måtte igennem en del arbejde med at få netværksfilsystemet vakt til live, men det lykkedes lige til standard arbejdstid tirsdag morgen. Lad det samtidig være en påmindelse til alle brugere om at lageret på MODI er at betragte som flygtigt og at ALLE væsentlige data skal overføres til en permanent KU-placering. Man kan f.eks. benytte ERDA mount til nemt at sende det dertil."
     }, 
-    "announce_end": "2021-03-30T10:00:00+02:00"
+    "announce_end": "2021-03-30T12:00:00+02:00"
   },
   {
     "status": "AUTO", 
