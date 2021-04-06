@@ -27,6 +27,7 @@
 
 """This module contains various helper contents for the certificate and OpenID
 account request handlers"""
+
 from __future__ import absolute_import
 
 import re
@@ -631,7 +632,7 @@ def parse_peers_form(configuration, raw_lines, csv_sep):
         line = line.split('#', 1)[0].strip()
         if not line:
             continue
-        parts = line.split(csv_sep)
+        parts = [i.strip() for i in line.split(csv_sep)]
         if not header:
             missing = [i for i in peers_fields if i not in parts]
             if missing:
@@ -678,7 +679,8 @@ def parse_peers_userid(configuration, raw_entries):
                        % ', '.join(missing))
             continue
         # IMPORTANT: extract ONLY peers fields and validate to avoid abuse
-        peer_user = dict([(i, raw_user.get(i, '')) for i in peers_fields])
+        peer_user = dict([(i, raw_user.get(i, '').strip())
+                          for i in peers_fields])
         defaults = dict([(i, REJECT_UNSET) for i in peer_user])
         (accepted, rejected) = validated_input(peer_user, defaults,
                                                list_wrap=True)
