@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cmdapi - shared backend command line access helper functions
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Helpers to expose functionality backends on command-line form"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -39,8 +40,9 @@ def get_flag_map(configuration):
     commands with flags are included.
     """
 
-    flags_map = {'cp': ['r', 'f'], 'rm': ['r', 'f'], 'mkdir': ['p'],
-                 'importsharelink': ['r', 'f'], 'importfreeze': ['r', 'f']}
+    flags_map = {'cp': ['r', 'f'], 'rm': ['r', 'f'], 'du': ['s'],
+                 'mkdir': ['p'], 'rmdir': ['p'], 'importsharelink': ['r', 'f'],
+                 'importfreeze': ['r', 'f']}
     return flags_map
 
 
@@ -60,6 +62,7 @@ def get_command_map(configuration):
         'cp': ['src', 'dst'],
         'mv': ['src', 'dst'],
         'rm': ['path'],
+        'du': ['path', 'dst'],
         'rmdir': ['path'],
         'truncate': ['path'],
         'touch': ['path'],

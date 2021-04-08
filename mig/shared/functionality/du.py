@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # du - Show disk use for one or more files
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -231,7 +231,8 @@ def main(client_id, user_arguments_dict):
                 status = returnvalues.SYSTEM_ERROR
                 continue
         if dst:
-            all_lines += ['%(bytes)d\t\t%(name)s' for entry in filedus]
+            all_lines += ['%(bytes)d\t\t%(name)s\n' %
+                          entry for entry in filedus]
         else:
             output_objects.append(
                 {'object_type': 'filedus', 'filedus': filedus})
