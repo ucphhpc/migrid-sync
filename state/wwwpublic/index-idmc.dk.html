@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html>
+<!-- NOTE: we mark lang undecided here and set individually below -->
+<html lang="">
 <head>
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -222,7 +223,7 @@ Can just be disabled by putting it into an html comment when not in use.
 <p>Sign up to IDMC <em>without</em> a KU / UCPH account?</p>
 <!-- Use form with JS override to enable fallback functionality -->
 <form method='get' action='https://sid.idmc.dk/cgi-sid/reqoid.py' target='_blank'>
-<input class="signupbutton" type="submit" value="sign up" /
+<input class="signupbutton" type="submit" value="sign up"
        onClick="signup('migoid'); return false;"/>
 </form>
 <p></p>
@@ -243,7 +244,7 @@ Can just be disabled by putting it into an html comment when not in use.
 <p>Sign up to IDMC with your user certificate?</p>
 <!-- Use form with JS override to enable fallback functionality -->
 <form method='get' action='https://idmc.dk/wsgi-bin/extcert.py' target='_blank'>
-<input class="signupbutton" type="submit" value="sign up" /
+<input class="signupbutton" type="submit" value="sign up"
        onClick="signup('extcert'); return false;"/>
 </form>
 <p></p>
@@ -293,6 +294,8 @@ intended and approved for exactly that purpose.
 <h2 class="staticpage">Getting Started with IDMC</h2>
 <p>
 We've gathered information about ERDA/IDMC in a few short intro guides and a more thorough user guide
+</p>
+<!-- NOTE: ul elements are NOT allowed inside p ones in html spec -->
 <ul>
 <li><a class="introguidelink" href="https://erda.ku.dk/ucph-erda-guide_user-sign-up.pdf">Sign Up Intro</a> for UCPH and external users</li> 
 <li><a class="introguidelink" href="https://erda.ku.dk/ucph-erda-guide_workgroup-sharing.pdf">Workgroup Intro</a> about creating, managing and accessing Workgroups</li> 
@@ -304,6 +307,7 @@ Please beware that the guides are made for ERDA, the twin system of IDMC, but
 almost all examples are valid with the replacement of erda.ku.dk with
 www.idmc.dk and erda.dk with idmc.dk.
 </p>
+<p>
 We strongly recommend reading and following at least the first intro guide if
 you want to use IDMC. 
 </p>
@@ -501,6 +505,7 @@ søster-facilitet <a class="urllink" href="https://sif.ku.dk">SIF</a>, som netop
 <p>
 Vi har samlet information om ERDA/IDMC i nogle korte intro-guides og en længere brugervejledning
 </p>
+<!-- NOTE: ul elements are NOT allowed inside p ones in html spec -->
 <ul>
 <li><a class="introguidelink" href="/public/ucph-erda-guide_brugertilmelding.pdf">Tilmeldings-intro</a> for KU- og eksterne brugere</li> 
 <li><a class="introguidelink" href="/public/ucph-erda-guide_workgroup-deling.pdf">Workgroup-intro</a> om Workgroup-oprettelse, -deling og -adgang</li>

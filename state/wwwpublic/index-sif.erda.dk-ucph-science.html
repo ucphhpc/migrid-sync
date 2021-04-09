@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html>
+<!-- NOTE: we mark lang undecided here and set individually below -->
+<html lang="">
 <head>
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -261,7 +262,7 @@ Can just be disabled by putting it into an html comment when not in use.
 <p>Sign up to SIF <em>without</em> a KU / UCPH account?</p>
 <!-- Use form with JS override to enable fallback functionality -->
 <form method='get' action='https://sif-sid.erda.dk/cgi-sid/reqoid.py' target='_blank'>
-<input class="signupbutton" type="submit" value="sign up" /
+<input class="signupbutton" type="submit" value="sign up"
        onClick="signup('migoid'); return false;"/>
 </form>
 <p></p>
@@ -306,7 +307,10 @@ flexibility and features.
 
 <h2 class="staticpage">Getting Started with SIF</h2>
 <p>
-We've gathered information about SIF in a few short intro guides and a more thorough user guide
+We've gathered information about SIF in a few short intro guides and a
+more thorough user guide
+</p>
+<!-- NOTE: ul elements are NOT allowed inside p ones in html spec -->
 <ul>
 <li><a class="introguidelink" href="/public/ucph-sif-intro-sign-up-as-a-sif-user.pdf">Sign up Intro</a> for UCPH and external users</li>
 <li><a class="introguidelink" href="/public/ucph-sif-intro-create-share-access-projects.pdf">Project Intro</a> about creating, sharing and accessing projects</li>
@@ -315,6 +319,7 @@ We've gathered information about SIF in a few short intro guides and a more thor
 -->
 <li><a class="userguidelink" href="/public/ucph-sif-user-guide.pdf">User Guide</a> with general usage</li>
 </ul>
+<p>
 We strongly recommend reading and following at least the two intro guides if
 you want to use SIF. 
 <br/>
@@ -530,6 +535,7 @@ som tilbyder mere fleksibilitet og funktionalitet.
 <p>
 Vi har samlet information om SIF i nogle korte intro-guides og en længere brugervejledning
 </p>
+<!-- NOTE: ul elements are NOT allowed inside p ones in html spec -->
 <ul>
 <li><a class="introguidelink" href="/public/ucph-sif-intro-tilmeld-dig-som-bruger.pdf">Tilmeldings-intro</a>  for KU- og eksterne brugere </li>
 <li><a class="introguidelink" href="/public/ucph-sif-intro-opret-del-adgang-til-projekter.pdf">Projekt-intro</a> om projekttoprettelse, -deling og -adgang</li>
@@ -586,8 +592,8 @@ forståelsesvanskeligheder, og en egentlig dansk oversættelse overvejes stadig.
 <p>
 SIF er underlagt nogle restriktioner, men de skulle gerne være i tråd
 med almindelig sund fornuft - den følsomme natur af de lagrede data
-taget i betragtning.</p>
-
+taget i betragtning.
+</p>
 <p>
 Specifikt bør brugere på SIF være opmærksomme på følgende:
 </p>

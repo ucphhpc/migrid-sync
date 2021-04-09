@@ -242,7 +242,7 @@ Can just be disabled by putting it into an html comment when not in use.
 <p>Sign up to ERDA <em>without</em> a KU / UCPH account?</p>
 <!-- Use form with JS override to enable fallback functionality -->
 <form method='get' action='https://test-sid.erda.dk/cgi-sid/reqoid.py' target='_blank'>
-<input class="signupbutton" type="submit" value="sign up" /
+<input class="signupbutton" type="submit" value="sign up"
        onClick="signup('migoid'); return false;"/>
 </form>
 <p></p>
@@ -263,7 +263,7 @@ Can just be disabled by putting it into an html comment when not in use.
 <p>Sign up to ERDA with your user certificate?</p>
 <!-- Use form with JS override to enable fallback functionality -->
 <form method='get' action='https://test-cert.erda.dk/wsgi-bin/extcert.py' target='_blank'>
-<input class="signupbutton" type="submit" value="sign up" /
+<input class="signupbutton" type="submit" value="sign up"
        onClick="signup('extcert'); return false;"/>
 </form>
 <p></p>
@@ -315,6 +315,8 @@ intended and approved for exactly that purpose.
 <h2 class="staticpage">Getting Started with ERDA</h2>
 <p>
 We've gathered information about ERDA in a few short intro guides and a more thorough user guide
+</p>
+<!-- NOTE: ul elements are NOT allowed inside p ones in html spec -->
 <ul>
 <li><a class="introguidelink" href="/public/ucph-erda-guide_user-sign-up.pdf">Sign Up Intro</a> for UCPH and external users</li> 
 <li><a class="introguidelink" href="/public/ucph-erda-guide_workgroup-sharing.pdf">Workgroup Intro</a> about creating, managing and accessing Workgroups</li> 
@@ -324,6 +326,7 @@ We've gathered information about ERDA in a few short intro guides and a more tho
  if you're not sure whether to use ERDA's main storage or Seafile</li> 
 <li><a class="userguidelink" href="/public/ucph-erda-user-guide.pdf">User Guide</a> with general usage instructions</li>
 </ul>
+<p>
 We strongly recommend reading and following at least the first intro guide if
 you want to use ERDA. 
 </p>
@@ -535,6 +538,7 @@ søster-facilitet <a class="urllink" href="https://sif.ku.dk">SIF</a>, som netop
 <p>
 Vi har samlet information om ERDA i nogle korte intro-guides og en længere brugervejledning
 </p>
+<!-- NOTE: ul elements are NOT allowed inside p ones in html spec -->
 <ul>
 <li><a class="introguidelink" href="/public/ucph-erda-guide_brugertilmelding.pdf">Tilmeldings-intro</a> for KU- og eksterne brugere</li> 
 <li><a class="introguidelink" href="/public/ucph-erda-guide_workgroup-deling.pdf">Workgroup-intro</a> om Workgroup-oprettelse, -deling og -adgang</li>
