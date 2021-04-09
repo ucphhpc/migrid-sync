@@ -194,11 +194,37 @@
           status changes. ERDA just relies on the UCPH OpenID service
           for sign up and log in, so the change means that your existing
           account with e.g. xyz123@alumni.ku.dk is no longer
-          recognized to belong to the ID which UCPH OpenID tells us you
+          recognized to belong to the ID, which UCPH OpenID tells us you
           now have. Rest assured that your ERDA account remains intact, and
           usually we can fix the problem by assigning the new primary
           email alias to it. We just need you to contact us as
           described below to do so.
+        </p>
+        <h4 class="staticpage">Why do I get "Account disabled or expired" emails?</h4>
+        <p>
+          Since December 2020 we have enforced automatic WebDAVS/SFTP/FTPS
+          access expiry for all users in order to reduce the risk of no longer
+          active accounts being abused/hacked that way.
+          We have enforced automatic ERDA account expiry for longer for web
+          access. However, UCPH users automatically get their account renewed
+          when successfully logging into the web pages through the UCPH OpenID
+          service, while external users must explicitly renew their account
+          access annually using the sign up form on the front page. With account
+          expiry extended to cover the efficient I/O services any configured
+          access to our WebDAVS, SFTP or FTPS services will also automatically
+          expire when accounts do. Attempts to log in on those services after
+          general account expiry will fail and trigger an email warning that the
+          account is expired. In practice it has limited consequences for
+          external users, who already go through the annual renewal
+          process. UCPH users solely or mainly using ERDA as network drive
+          or through a WebDAVS/SFTP/FTPS client, will have to get used to
+          regularly renew account access to keep using said I/O services. This
+          can either be done for a whole year at a time by repeating 'sign up'
+          on the front page or for 30 days by a simple web log in. Thus, users
+          solely or regularly using the web access don't need to worry or do
+          anything new. Those who enabled 2-Factor authentication for all
+          ERDA account access can also just continue with their usual web
+          login before their I/O service logins.
         </p>
         <h4 class="staticpage">Can I get an ERDA account without a UCPH account?</h4>
         <p>
@@ -448,6 +474,33 @@
           intakt, og vi kan typisk løse problemet ved at tildele din
           nye ID dertil. Vi har bare brug for at du kontakter os derom
           som beskrevet nedenfor.
+        </p>
+        <h4 class="staticpage">Hvorfor modtager jeg "Account disabled or expired" emails?</h4>
+        <p>
+          Siden 1. december 2020 har vi håndhævet automatisk udløb på
+          WebDAVS/SFTP/FTPS-adgang for alle brugere, for at reducere risikoen
+          for at ikke længere aktive konti misbruges/hackes den vej.
+          Vi har i længere tid håndhævet automatisk kontoudløb på ERDA
+          web-adgang. KU-brugere får automatisk deres ERDA-konto forlænget
+          ved vellykket web-login gennem KUs OpenID service, mens eksterne
+          brugere eksplicit skal igennem årlig fornyelse af deres kontoadgang
+          vha tilmeldingsformularen fra forsiden. Udvidelsen af kontoudløb til
+          også at dække de effektive I/O-services betyder i praksis at al adgang
+          til WebDAVS, SFTP og FTPS også automatisk udløber sammen med
+          kontoen. Forsøg på at logge ind via disse I/O-services efter
+          kontoudløb vil fejle og medføre en advarsel på email om at kontoen er
+          udløbet. Konsekvenserne er små for eksterne brugere, som allerede skal
+          igennem den årlige fornyelse. KU-brugere som hovedsageligt eller kun
+          bruger ERDA som netværksdrev eller med SFTP/WebDAVS/FTPS-klient
+          skal derimod vænne sig til engang imellem aktivt at forlænge kontoen
+          for fortsat at benytte vores I/O services. Det kan enten ske for et
+          helt år af gangen ved at gentage 'tilmelding' på forsiden eller for 30
+          dage af gangen blot ved log ind på ERDA web. KU-brugere som
+          udelukkende eller jævnligt benytter sig af web-adgang behøver således
+          ikke bekymre sig eller gøre noget nyt. Dem der har tilvalgt 2-faktor
+          godkendelse for al ERDA konto-adgang, kan ligeledes blot
+          ufortrødent fortsætte med at logge ind på web inden deres I/O-service
+          logins.
         </p>
         <h4 class="staticpage">Kan jeg få en ERDA-konto uden en KU-konto?</h4>
         <p>

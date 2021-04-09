@@ -110,15 +110,15 @@
         </p>
         <h4 class="staticpage">How do I install and run software XYZ in Jupyter?</h4>
         <p>
-          We've added Jupyter integration in ERDA/IDMC, so that you can run interactive
+          We've added Jupyter integration in IDMC, so that you can run interactive
           data analysis sessions e.g. in a Python or R environment with direct
-          access to all your ERDA/IDMC data.<br/>
-          A number of software packages are already available in the different ERDA/IDMC
+          access to all your IDMC data.<br/>
+          A number of software packages are already available in the different IDMC
           Jupyter instances, but sometimes you may still want to run additional
           software there. For Python and Jupyter extension packages it may work to simply
           install temporarily with pip or pip3 inside the session via
           the <em>Terminal</em> in the main Jupyter <em>Launcher</em> window, or
-          by writing a standard Python <em>requirements.txt</em> file in your ERDA/IDMC
+          by writing a standard Python <em>requirements.txt</em> file in your IDMC
           home and run it interactively with something like
           <tt>pip3 install -r requirements.txt</tt> from the Jupyter
           Terminal.<br/>
@@ -161,6 +161,32 @@
           usually we can fix the problem by assigning the new primary
           email alias to it. We just need you to contact us as
           described below to do so.
+        </p>
+        <h4 class="staticpage">Why do I get "Account disabled or expired" emails?</h4>
+        <p>
+          Since December 2020 we have enforced automatic WebDAVS/SFTP/FTPS
+          access expiry for all users in order to reduce the risk of no longer
+          active accounts being abused/hacked that way.
+          We have enforced automatic IDMC account expiry for longer for web
+          access. However, UCPH users automatically get their account renewed
+          when successfully logging into the web pages through the UCPH OpenID
+          service, while external users must explicitly renew their account
+          access annually using the sign up form on the front page. With account
+          expiry extended to cover the efficient I/O services any configured
+          access to our WebDAVS, SFTP or FTPS services will also automatically
+          expire when accounts do. Attempts to log in on those services after
+          general account expiry will fail and trigger an email warning that the
+          account is expired. In practice it has limited consequences for
+          external users, who already go through the annual renewal
+          process. UCPH users solely or mainly using IDMC as network drive
+          or through a WebDAVS/SFTP/FTPS client, will have to get used to
+          regularly renew account access to keep using said I/O services. This
+          can either be done for a whole year at a time by repeating 'sign up'
+          on the front page or for 30 days by a simple web log in. Thus, users
+          solely or regularly using the web access don't need to worry or do
+          anything new. Those who enabled 2-Factor authentication for all
+          IDMC account access can also just continue with their usual web
+          login before their I/O service logins.
         </p>
         <h4 class="staticpage">Can I get an IDMC account without a UCPH account?</h4>
         <p>
@@ -329,15 +355,15 @@
         </p>
         <h4 class="staticpage">Hvordan installerer og kører jeg software XYZ i Jupyter?</h4>
         <p>
-          Vi har integreret Jupyter i ERDA/IDMC, så man som bruger kan lave interaktiv
+          Vi har integreret Jupyter i IDMC, så man som bruger kan lave interaktiv
           dataanalyse i f.eks. Python eller R og med direkte adgang til alt sit
-          ERDA/IDMC-data.<br/>
+          IDMC-data.<br/>
           Jupyter-miljøet har forskellige images med en stribe software-pakker
           installeret, men nogle gange kan det stadig være bekvemt at køre
           yderligere special-software. Nogle udvidelser til Python og Jupyter kan
           installeres midlertidigt med pip eller pip3 via en <em>Terminal</em> fra
           Jupyter hovedsiden, eller ved at skrive en standard Python
-          <em>requirements.txt</em> fil i ens ERDA/IDMC mappe og køre den ved Jupyter
+          <em>requirements.txt</em> fil i ens IDMC mappe og køre den ved Jupyter
           opstart med noget i stil med <tt>pip3 install -r requirements.txt</tt>
           fra Jupyter-terminalen.<br/>
           Bemærk at man specifikt skal angive python2 eller python3 for at bruge
@@ -382,6 +408,33 @@
           nye ID dertil. Vi har bare brug for at du kontakter os derom
           som beskrevet nedenfor.
         </p>
+        <h4 class="staticpage">Hvorfor modtager jeg "Account disabled or expired" emails?</h4>
+        <p>
+          Siden 1. december 2020 har vi håndhævet automatisk udløb på
+          WebDAVS/SFTP/FTPS-adgang for alle brugere, for at reducere risikoen
+          for at ikke længere aktive konti misbruges/hackes den vej.
+          Vi har i længere tid håndhævet automatisk kontoudløb på IDMC
+          web-adgang. KU-brugere får automatisk deres IDMC-konto forlænget
+          ved vellykket web-login gennem KUs OpenID service, mens eksterne
+          brugere eksplicit skal igennem årlig fornyelse af deres kontoadgang
+          vha tilmeldingsformularen fra forsiden. Udvidelsen af kontoudløb til
+          også at dække de effektive I/O-services betyder i praksis at al adgang
+          til WebDAVS, SFTP og FTPS også automatisk udløber sammen med
+          kontoen. Forsøg på at logge ind via disse I/O-services efter
+          kontoudløb vil fejle og medføre en advarsel på email om at kontoen er
+          udløbet. Konsekvenserne er små for eksterne brugere, som allerede skal
+          igennem den årlige fornyelse. KU-brugere som hovedsageligt eller kun
+          bruger IDMC som netværksdrev eller med SFTP/WebDAVS/FTPS-klient
+          skal derimod vænne sig til engang imellem aktivt at forlænge kontoen
+          for fortsat at benytte vores I/O services. Det kan enten ske for et
+          helt år af gangen ved at gentage 'tilmelding' på forsiden eller for 30
+          dage af gangen blot ved log ind på IDMC web. KU-brugere som
+          udelukkende eller jævnligt benytter sig af web-adgang behøver således
+          ikke bekymre sig eller gøre noget nyt. Dem der har tilvalgt 2-faktor
+          godkendelse for al IDMC konto-adgang, kan ligeledes blot
+          ufortrødent fortsætte med at logge ind på web inden deres I/O-service
+          logins.
+        </p>
         <h4 class="staticpage">Kan jeg få en IDMC-konto uden en KU-konto?</h4>
         <p>
           Ja, sålænge du har brug for en IDMC-konto til et kursus, en workshop
@@ -419,7 +472,7 @@
           <a href="https://dk-sid.migrid.org/cgi-sid/reqcert.py"
              target="_blank">brugercertifikater</a> for ekstra høj sikkerhed. 
           <br/>
-          Du kan tilmelde log in uden KU-konto til din eksisterende ERDA konto
+          Du kan tilmelde log in uden KU-konto til din eksisterende IDMC konto
           ved at åbne en af de to andre faner øverst, klikke på
           <em>tilmelding</em>-knappen og udfylde web-formularen. Blot skal du
           være opmærksom på at udfylde formularens felter, så de stemmer
