@@ -15,10 +15,10 @@
     "services": [
       "ALL"
     ],
-    "work_end": "2021-04-13T09:00:00+02:00",
+    "work_end": "2021-04-13T08:55:00+02:00",
     "description": {
-      "EN": "We need to move around some more backend storage hosts to keep scaling the available storage, and avoid running out of disk space on ERDA/IDMC and SIF. This is mainly the SIF tasks postponed from March 22nd. The work will involve backend storage down-time for the shuffling. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window.",
-      "DK": "Vi er nødt til at rokere rundt på nogle maskiner i backend-lageret for at skalere den tilgængelige lagerplads og undgå at løbe tør for diskplads på ERDA/IDMC og SIF. Det er hovedsageligt de udsatte SIF-opgaver fra den 22. marts. Arbejdet kræver nedetid på backend-lageret under flytningen, og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs."
+      "EN": "We need to move around some more backend storage hosts to keep scaling the available storage, and avoid running out of disk space on ERDA/IDMC and SIF. This is mainly the SIF tasks postponed from March 22nd. The work will involve backend storage down-time for the shuffling. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We completed the work and all systems are back online.",
+      "DK": "Vi er nødt til at rokere rundt på nogle maskiner i backend-lageret for at skalere den tilgængelige lagerplads og undgå at løbe tør for diskplads på ERDA/IDMC og SIF. Det er hovedsageligt de udsatte SIF-opgaver fra den 22. marts. Arbejdet kræver nedetid på backend-lageret under flytningen, og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Arbejdet er overstået og alle systemer er tilbage i almindelig drift."
     },
     "announce_end": "2021-04-14T10:00:00+02:00"
   },
@@ -269,7 +269,7 @@
     "announce_start": "2021-01-29T10:00:00+01:00",
     "title": {
       "EN": "Planned SIF Maintenance",
-      "DK": "Planlagt SIF"
+      "DK": "Planlagt SIF vedligehold"
     },
     "services": [
       "ALL"
