@@ -137,12 +137,15 @@
         (autoload 'espresso-mode "espresso" "JavaScript editing mode" t)
         )
 
+(require 'web-mode)
+
 (setq auto-mode-alist
 	(append '(("\\.c$"  . c-mode)
 	("\\.cu$"  . c-mode)
 	("\\.cl$"  . c-mode)
 	("\\.h$"  . c-mode)
-	("\\.html$" . html-mode)
+	("\\.html$" . web-mode)
+	("\\.htm$" . web-mode)
 	) auto-mode-alist))
 
 ;;; add these lines if you like color-based syntax highlighting

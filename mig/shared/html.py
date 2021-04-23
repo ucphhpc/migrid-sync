@@ -461,22 +461,10 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
     <span class="far fa-times-circle close_btn" onclick="toggle_info(\'supportInfo\')"></span>
     <div class="popup container">
         <div class="row">
-            <div id="quickstart-content" class="col-lg-12">
-            <!-- Filled by AJAX -->
+            <!-- NOTE: we invert color coding scheme for FAQ accordion -->
+            <div id="support-content" class="col-lg-12 invert-theme">
+                <!-- Filled by AJAX -->
             </div>
-
-            <div id="faq-content" class="col-lg-12 invert-theme">
-            <!-- Filled by AJAX -->
-            </div>
-
-            <div id="support-content" class="col-lg-12">
-            <h2 class="big">Further Support</h2>
-            <p class="i18n" lang="en">
-            %(support_icon)s
-            %(support_text)s
-            </p>
-            </div>
-
             <div class="vertical-spacer"></div>
         </div>
     </div>
@@ -488,9 +476,8 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
         <div class="row">
             <div id="about-content" class="col-lg-12">
                 <!-- Filled by AJAX -->
-                </div>
-
-                <div class="vertical-spacer"></div>
+            </div>
+            <div class="vertical-spacer"></div>
         </div>
     </div>
 </div>
@@ -635,15 +622,14 @@ def themed_scripts(configuration, base=[], advanced=[], skin=[], init=[],
 <script src="/assets/js/V3/ui-extra.js"></script>
 <script src="/assets/js/V3/ui-dynamic.js"></script>
         ''')
-        quickstart_url = configuration.site_quickstart_snippet_url
-        faq_url = configuration.site_faq_snippet_url
+        support_url = configuration.site_support_snippet_url
         about_url = configuration.site_about_snippet_url
         dyn_scripts = '''
             var locale = extract_default_locale()
             console.log("loading dynamic snippet content");
-            load_support("%s", "%s", %s);
+            load_support("%s", %s);
             load_about("%s");
-        ''' % (quickstart_url, faq_url, str(logged_in).lower(), about_url)
+        ''' % (support_url, str(logged_in).lower(), about_url)
         if configuration.site_enable_sitestatus:
             # TODO: remote status page may require CORS headers
             sitestatus_url = configuration.site_status_url

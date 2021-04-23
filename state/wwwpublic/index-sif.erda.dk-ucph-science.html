@@ -1,696 +1,612 @@
 <!DOCTYPE html>
 <!-- NOTE: we mark lang undecided here and set individually below -->
 <html lang="">
-<head>
-<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>
-SIF
-</title>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            SIF
+        </title>
 
-<!-- site default style -->
-<link rel="stylesheet" type="text/css" href="/images/default.css" media="screen"/>
+        <!-- site default style -->
+        <link rel="stylesheet" type="text/css" href="/images/default.css" media="screen"/>
 
-<!-- site basic skin style -->
-<!--<link rel="stylesheet" type="text/css" href="/images/static-skin.css" media="screen"/>-->
-<link rel="stylesheet" type="text/css" href="/images/skin/sif-ucph-science/core.css" media="screen"/>
+        <!-- site basic skin style -->
+        <!--<link rel="stylesheet" type="text/css" href="/images/static-skin.css" media="screen"/>-->
+        <link rel="stylesheet" type="text/css" href="/images/skin/sif-ucph-science/core.css" media="screen"/>
 
-<!-- base page styles -->
-<link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
+        <!-- base page styles -->
+        <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
 
-<!-- country-dropdown -->
-<link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/dd.css" />
-<link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/flags.css" />
+        <!-- country-dropdown -->
+        <link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/dd.css" />
+        <link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/flags.css" />
 
-<!-- override with any site-specific styles -->
-<link rel="stylesheet" type="text/css" href="/images/site-custom.css"
-      media="screen"/>
+        <!-- override with any site-specific styles -->
+        <link rel="stylesheet" type="text/css" href="/images/site-custom.css"
+              media="screen"/>
 
-<!-- site skin style -->
-<link rel="stylesheet" type="text/css" href="/images/skin/sif-ucph-science/ui-theme.css" media="screen"/>
-<link rel="stylesheet" type="text/css" href="/images/skin/sif-ucph-science/ui-theme.custom.css" media="screen"/>
+        <!-- site skin style -->
+        <link rel="stylesheet" type="text/css" href="/images/skin/sif-ucph-science/ui-theme.css" media="screen"/>
+        <link rel="stylesheet" type="text/css" href="/images/skin/sif-ucph-science/ui-theme.custom.css" media="screen"/>
 
 
-<link rel="icon" type="image/vnd.microsoft.icon"
-      href="/images/skin/sif-ucph-science/favicon.ico"/>
+        <link rel="icon" type="image/vnd.microsoft.icon"
+              href="/images/skin/sif-ucph-science/favicon.ico"/>
 
-<script type="text/javascript" src="/images/js/jquery.js"></script>
-<script type="text/javascript" src="/images/js/jquery-ui.js"></script>
-<script type="text/javascript" src="/assets/js/V2/ui-dynamic.js"></script>
-<script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
+        <script type="text/javascript" src="/images/js/jquery.js"></script>
+        <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+        <script type="text/javascript" src="/assets/js/V2/ui-dynamic.js"></script>
+        <script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
 
-<script type="text/javascript">
-    /* We assume UCPH users here and leave external users to FAQ entry */
-    function login(user) {
-        if (user == "extoid") {
-            window.open('https://sif.erda.dk', '_blank');
-        } else if (user == "cert") {
-            window.open('', '_blank');
-        } else if (user == "migoid") {
-            window.open('https://sif-ext.erda.dk', '_blank');
-        } else {
-            window.open('https://sif-sid.erda.dk/cgi-sid/login.py', '_blank');
-        }
-    }
-    function signup(user) {
-        if (user == "extoid") {
-            window.open('https://sif-sid.erda.dk/cgi-sid/signup.py?show=kitoid', 
-                        '_blank');
-        } else if (user == "cert") {
-            window.open('',
-                        '_blank');
-        } else if (user == "migoid") {
-            window.open('https://sif-sid.erda.dk/cgi-sid/reqoid.py', '_blank');
-        } else {
-            window.open('https://sif-sid.erda.dk/cgi-sid/signup.py', '_blank');
-        }
-    }
-    $(document).ready(function() {
-        /* Init links centrally */
-        /* No cert support here */
-        /*
-        $("a.reqcert-en-link").attr("target", "_blank").attr("href", 
-            "https://sites.google.com/site/minimumintrusiongrid/" +
-            "getting-started/how-to-get-started");
-        $("a.reqcert-da-link").attr("target", "_blank").attr("href", 
-            "https://sites.google.com/site/minimumintrusiongrid/" +
-            "mig-in-danish/saadan-kommer-du-igang");
-        */
-        $("a.migoidsignup-link").attr("target", "_blank").attr("href", 
-            "https://sif-sid.erda.dk/cgi-sid/signup.py?show=migoid");
-        $("a.migoidlogin-link").attr("target", "_blank").attr("href", 
-            "https://sif-ext.erda.dk");
-        /* No cert support here */
-        /*
-        $("a.extcertsignup-link").attr("target", "_blank").attr("href", 
-            "https://sid.erda.dk/cgi-sid/signup.py?show=extcert");
-        $("a.extcertlogin-link").attr("target", "_blank").attr("href", 
-            "https://cert.erda.dk");
-        */
+        <script type="text/javascript">
+         /* We assume UCPH users here and leave external users to FAQ entry */
+         function login(user) {
+             if (user == "extoid") {
+                 window.open('https://sif.erda.dk', '_blank');
+             } else if (user == "cert") {
+                 window.open('', '_blank');
+             } else if (user == "migoid") {
+                 window.open('https://sif-ext.erda.dk', '_blank');
+             } else {
+                 window.open('https://sif-sid.erda.dk/cgi-sid/login.py', '_blank');
+             }
+         }
+         function signup(user) {
+             if (user == "extoid") {
+                 window.open('https://sif-sid.erda.dk/cgi-sid/signup.py?show=kitoid', 
+                             '_blank');
+             } else if (user == "cert") {
+                 window.open('',
+                             '_blank');
+             } else if (user == "migoid") {
+                 window.open('https://sif-sid.erda.dk/cgi-sid/reqoid.py', '_blank');
+             } else {
+                 window.open('https://sif-sid.erda.dk/cgi-sid/signup.py', '_blank');
+             }
+         }
+         $(document).ready(function() {
+             var locale = extract_default_locale();
+             /* Init supported languages to just english and extend based on lang select */
+             var supported_languages = ['en'];
+             var default_lang = supported_languages[0];
+             var user_lang;
+             /* Extend supported_languages with all entries from select elem */
+             $("#langselect option").each(function() {
+                 var option_val = $(this).val();
+                 if (supported_languages.indexOf(option_val) < 0) {
+                     supported_languages.push($(this).val());
+                 }
+             });
+             //console.debug("found supported langs: "+supported_languages);
+             if (locale && supported_languages.indexOf(locale) >= 0)  {
+                 user_lang = locale;
+             } else {
+                 console.warn(locale+" not supported - fall back to: "+default_lang);
+                 user_lang = default_lang;
+             }
 
-        var locale = extract_default_locale();
-        /* Init supported languages to just english and extend based on lang select */
-        var supported_languages = ['en'];
-        var default_lang = supported_languages[0];
-        var user_lang;
-        /* Extend supported_languages with all entries from select elem */
-        $("#langselect option").each(function() {
-            var option_val = $(this).val();
-            if (supported_languages.indexOf(option_val) < 0) {
-              supported_languages.push($(this).val());
-            }
-        });
-        //console.debug("found supported langs: "+supported_languages);
-        if (locale && supported_languages.indexOf(locale) >= 0)  {
-          user_lang = locale;
-        } else {
-          console.warn(locale+" not supported - fall back to: "+default_lang);
-          user_lang = default_lang;
-        }
+             load_about_lang_content("about-snippet.html", supported_languages);
+             load_support_lang_content("support-snippet.html", supported_languages);
 
-        load_faq_content("faq-snippet.html", "english");
-        load_faq_content("faq-snippet.html", "danish");
-        /* Init FAQ as foldable but closed and with individual heights */
-        accordion_init(".faq-accordion");
+             $("#langselect").on('change', function() { 
+                 var lang = $(this).val();
+                 //alert("switch_language: "+lang);
+                 switch_language(lang);
+                 /* init is broken until visible */
+                 $("#quick-start-tabs-"+lang).tabs("refresh");
+             }
+             );
+             $("#langselect").val(user_lang);
+             switch_language(user_lang);
+	     $("#langselect").msDropdown().fadeIn(500);
+             /* Init Quick Start as tabs to avoid information overload and do
+                last for proper init. */
+             $("#quick-start-tabs-en").tabs({
+                 collapsible: false,
+                 active: false
+             });
+             $("#quick-start-tabs-da").tabs({
+                 collapsible: false,
+                 active: false
+             });
 
-        $("#langselect").on('change', function() { 
-                                          var lang = $(this).val();
-                                          //alert("switch_language: "+lang);
-                                          switch_language(lang);
-                                          /* init is broken until visible */
-                                          $("#quick-start-tabs-"+lang).tabs("refresh");
-                                      }
-                            );
-        $("#langselect").val(user_lang);
-        switch_language(user_lang);
-	$("#langselect").msDropdown();
-        /* Init Quick Start as tabs to avoid information overload and do
-           last for proper init. */
-        $("#quick-start-tabs-en").tabs({
-            collapsible: false,
-            active: false
-        });
-        $("#quick-start-tabs-da").tabs({
-            collapsible: false,
-            active: false
-        });
-    });
-</script>
+         });
+        </script>
 
-</head>
-<body class="staticpage">
-<div id="topspace">
-</div>
-<div id="toplogo" class="staticpage">
-<div id="toplogoleft" class="staticpage">
-</div>
-<div id="toplogocenter" class="staticpage">
-<img src="/images/skin/sif-ucph-science/banner-logo.jpg" id="logoimagecenter"
-     class="staticpage" alt="site logo center"/>
-<span id="logotitle" class="staticpage">
-Sensitive Information Facility
-</span>
-</div>
-<div id="toplogoright" class="staticpage">
-</div>
-</div>
+    </head>
+    <body class="staticpage">
+        <div id="topspace">
+        </div>
+        <div id="toplogo" class="staticpage">
+            <div id="toplogoleft" class="staticpage">
+            </div>
+            <div id="toplogocenter" class="staticpage">
+                <img src="/images/skin/sif-ucph-science/banner-logo.jpg" id="logoimagecenter"
+                     class="staticpage" alt="site logo center"/>
+                <span id="logotitle" class="staticpage">
+                    Sensitive Information Facility
+                </span>
+            </div>
+            <div id="toplogoright" class="staticpage">
+            </div>
+        </div>
 
-<div class="contentblock staticpage" id="nomenu">
-<div class="precontentwidgets">
-<!-- begin user supplied pre content widgets -->
-<!-- empty -->
-<!-- end user supplied pre content widgets -->
-</div>
-<div id="migheader">
-</div>
-<div class="staticpage" id="content">
-<div class="righttext langselect">
-<!-- Please refer to /images/lib/country-dropdown/index.html for more choices -->
-<select name="languages" id="langselect">
-  <option value='da' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag dk" data-title="Denmark">Dansk</option>
-  <option value='en' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag us" data-title="United States" selected="selected">English</option>
-</select>
-</div>
-<div class="english i18n" lang="en">
-<h1 class="staticpage">Welcome to SIF</h1>
+        <div class="contentblock staticpage" id="nomenu">
+            <div class="precontentwidgets">
+                <!-- begin user supplied pre content widgets -->
+                <!-- empty -->
+                <!-- end user supplied pre content widgets -->
+            </div>
+            <div id="migheader">
+            </div>
+            <div class="staticpage" id="content">
+                <div class="righttext langselect">
+                    <!-- Please refer to /images/lib/country-dropdown/index.html for more choices -->
+                    <select name="languages" id="langselect" class="hidden">
+                        <option value='da' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag dk" data-title="Denmark">Dansk</option>
+                        <option value='en' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag us" data-title="United States" selected="selected">English</option>
+                    </select>
+                </div>
+                <div class="english i18n hidden" lang="en">
+                    <h1 class="staticpage">Welcome to SIF</h1>
 
-<!-- Next div is used for site wide system maintenance warnings and such:
-First line is for highlighted notice in red and orange and second is for
-optional further explanation.
-Can just be disabled by putting it into an html comment when not in use.
- -->
- 
-<div class="staticpage systemmessages centertext">
-<!--
-<span class='systemwarn'>IMPORTANT: planned system maintenance on April 13th from 7.30 (<a href='https://status.erda.dk'>Status</a>).
-</span><br/><br/>
-<span class='systemwarn'>IMPORTANT: planned system maintenance on March 22nd from 7.30 (<a href='https://status.erda.dk'>Status</a>).
-</span><br/><br/>
-<span class='systemwarn'>IMPORTANT: planned system maintenance on February 3rd from 16.00 (<a href='https://status.erda.dk'>Status</a>).
-</span><br/><br/>
-<span class='systemwarn'>IMPORTANT: planned system maintenance on November 25th from 16.15 (<a href='https://status.erda.dk'>Status</a>).</span><br/><br/>
-<span class='systemwarn'>IMPORTANT: upcoming system maintenance window on Wednesday, July
-  1st from 16:00.
-</span><br/><br/>
-<span class='systemwarn'>IMPORTANT: upcoming system maintenance window on Wednesday, April
-  22th from 16:30.
-</span><br/><br/>
-<span class='systemwarn'>IMPORTANT: upcoming system maintenance window on Wednesday, January
-  22th from 16:00.
-</span><br/><br/>
-<span class='systemwarn'>IMPORTANT: upcoming system maintenance window on Thursday, November
-    7th from 16 to 18.
-</span><br/><br/>
-<span class='systemwarn'>IMPORTANT: upcoming system maintenance window on Thursday, January
-  12th from 17:00 to 18:00.
-</span><br/><br/>
-<span class='systemnote'>The work will mainly be on the UCPH login
-  service, so please beware that any such logins may fail in the given
-  time frame.</span>
-<span class='systemwarn'>IMPORTANT: upcoming system maintenance on May 31st at 10</span><br/><br/><span class='systemnote'>Short service outages may occur due to network reconfiguration, and it is expected complete before noon.
-</span><br/><br/>
-<span class='systemwarn'>IMPORTANT: we currently see limited data visibility/access</span><br/><br/><span class='systemnote'>We
-  have encountered a few such problems after the maintenance work
-  yesterday and are working on it.</span>
-<span class='systemwarn'>IMPORTANT: SIF backend storage is partially offline due to a power outage</span><br/><br/><span class='systemnote'>There's some power and cooling work taking place in the HPC center so technicians are already investigating.
-</span><br/><br/>
-<span class='systemwarn'>NOTE: SIF received official UCPH approval and will be enabled soon</span><br/><br/>
-<span class='systemwarn'>IMPORTANT: 
-  Please take <a href="https://status.erda.dk">your precautions</a> if
-  you got caught in the recent <a href="https://it.ku.dk/driftinfo/">
-  phishing attacks</a> at KU/KUMail!</span>
-<span class='systemwarn'>WARNING: SIF will be offline for maintenance on
-  July 4th from 10 to
-  11 <a href="https://status.erda.dk">status.erda.dk</a>
-</span>
-<br/><br/>
--->
+                    <!-- Next div is used for site wide system maintenance warnings and such:
+                         First line is for highlighted notice in red and orange and second is for
+                         optional further explanation.
+                         Can just be disabled by putting it into an html comment when not in use.
+                    -->
+                    
+                    <div class="staticpage systemmessages centertext">
+                        <!--
+                             <span class='systemwarn'>IMPORTANT: planned system maintenance on April 13th from 7.30 (<a href='https://status.erda.dk'>Status</a>).
+                             </span><br/><br/>
+                             <span class='systemwarn'>IMPORTANT: planned system maintenance on March 22nd from 7.30 (<a href='https://status.erda.dk'>Status</a>).
+                             </span><br/><br/>
+                             <span class='systemwarn'>IMPORTANT: planned system maintenance on February 3rd from 16.00 (<a href='https://status.erda.dk'>Status</a>).
+                             </span><br/><br/>
+                             <span class='systemwarn'>IMPORTANT: planned system maintenance on November 25th from 16.15 (<a href='https://status.erda.dk'>Status</a>).</span><br/><br/>
+                             <span class='systemwarn'>IMPORTANT: upcoming system maintenance window on Wednesday, July
+                             1st from 16:00.
+                             </span><br/><br/>
+                             <span class='systemwarn'>IMPORTANT: upcoming system maintenance window on Wednesday, April
+                             22th from 16:30.
+                             </span><br/><br/>
+                             <span class='systemwarn'>IMPORTANT: upcoming system maintenance window on Wednesday, January
+                             22th from 16:00.
+                             </span><br/><br/>
+                             <span class='systemwarn'>IMPORTANT: upcoming system maintenance window on Thursday, November
+                             7th from 16 to 18.
+                             </span><br/><br/>
+                             <span class='systemwarn'>IMPORTANT: upcoming system maintenance window on Thursday, January
+                             12th from 17:00 to 18:00.
+                             </span><br/><br/>
+                             <span class='systemnote'>The work will mainly be on the UCPH login
+                             service, so please beware that any such logins may fail in the given
+                             time frame.</span>
+                             <span class='systemwarn'>IMPORTANT: upcoming system maintenance on May 31st at 10</span><br/><br/><span class='systemnote'>Short service outages may occur due to network reconfiguration, and it is expected complete before noon.
+                             </span><br/><br/>
+                             <span class='systemwarn'>IMPORTANT: we currently see limited data visibility/access</span><br/><br/><span class='systemnote'>We
+                             have encountered a few such problems after the maintenance work
+                             yesterday and are working on it.</span>
+                             <span class='systemwarn'>IMPORTANT: SIF backend storage is partially offline due to a power outage</span><br/><br/><span class='systemnote'>There's some power and cooling work taking place in the HPC center so technicians are already investigating.
+                             </span><br/><br/>
+                             <span class='systemwarn'>NOTE: SIF received official UCPH approval and will be enabled soon</span><br/><br/>
+                             <span class='systemwarn'>IMPORTANT: 
+                             Please take <a href="https://status.erda.dk">your precautions</a> if
+                             you got caught in the recent <a href="https://it.ku.dk/driftinfo/">
+                             phishing attacks</a> at KU/KUMail!</span>
+                             <span class='systemwarn'>WARNING: SIF will be offline for maintenance on
+                             July 4th from 10 to
+                             11 <a href="https://status.erda.dk">status.erda.dk</a>
+                             </span>
+                             <br/><br/>
+                        -->
 
-</div>
+                    </div>
 
-<div class="staticpage quickstartfields">
+                    <div class="staticpage quickstartfields hidden">
 
-<div id="quick-start-tabs-en">
-<ul class="fillwidth padspace">
-<li><a href="#ucph-user-tab-en">KU / UCPH Users</a></li>
-<li><a href="#external-user-tab-en">External Users</a></li>
-</ul>
+                        <div id="quick-start-tabs-en">
+                            <ul class="fillwidth padspace">
+                                <li><a href="#ucph-user-tab-en">KU / UCPH Users</a></li>
+                                <li><a href="#external-user-tab-en">External Users</a></li>
+                            </ul>
 
-<div id="ucph-user-tab-en">
-<div class="staticpage centertext signupfield">
-<p>Sign up to SIF using your KU / UCPH account?</p>
-<form method='post' action='https://sif.erda.dk/wsgi-bin/autocreate.py' target='_blank'>
-<!-- IMPORTANT: openid.ku.dk fails if we change these to https -->
-<input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
-<input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
-<input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
-<input class="signupbutton" type="submit" value="sign up" />
-</form>
-<p></p> 
-</div>
-<div class="staticpage centertext loginfield">
-<p>I'm already signed up to SIF with my KU / UCPH account!</p>
-<!-- Use form with JS override to enable fallback functionality -->
-<form method='get' action='https://sif.erda.dk' target='_blank'>
-<input class="loginbutton" type="submit" value="log in"
-       onClick="login('extoid'); return false;" />
-</form>
-<p></p>
-</div>
-</div>
+                            <div id="ucph-user-tab-en">
+                                <div class="staticpage centertext signupfield">
+                                    <p>Sign up to SIF using your KU / UCPH account?</p>
+                                    <form method='post' action='https://sif.erda.dk/wsgi-bin/autocreate.py' target='_blank'>
+                                        <!-- IMPORTANT: openid.ku.dk fails if we change these to https -->
+                                        <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
+                                        <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
+                                        <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
+                                        <input class="signupbutton" type="submit" value="sign up" />
+                                    </form>
+                                    <p></p> 
+                                </div>
+                                <div class="staticpage centertext loginfield">
+                                    <p>I'm already signed up to SIF with my KU / UCPH account!</p>
+                                    <!-- Use form with JS override to enable fallback functionality -->
+                                    <form method='get' action='https://sif.erda.dk' target='_blank'>
+                                        <input class="loginbutton" type="submit" value="log in"
+                                               onClick="login('extoid'); return false;" />
+                                    </form>
+                                    <p></p>
+                                </div>
+                            </div>
 
-<div id="external-user-tab-en">
-<div class="staticpage centertext signupfield">
-<p>Sign up to SIF <em>without</em> a KU / UCPH account?</p>
-<!-- Use form with JS override to enable fallback functionality -->
-<form method='get' action='https://sif-sid.erda.dk/cgi-sid/reqoid.py' target='_blank'>
-<input class="signupbutton" type="submit" value="sign up"
-       onClick="signup('migoid'); return false;"/>
-</form>
-<p></p>
-</div>
-<div class="staticpage centertext loginfield">
-<p>I'm already signed up to SIF <em>without</em> a KU / UCPH account!</p>
-<!-- Use form with JS override to enable fallback functionality -->
-<form method='get' action='https://sif-ext.erda.dk' target='_blank'>
-<input class="loginbutton" type="button" value="log in"
-       onClick="login('migoid'); return false;" />
-</form>
-<p></p>
-</div>
-</div>
+                            <div id="external-user-tab-en">
+                                <div class="staticpage centertext signupfield">
+                                    <p>Sign up to SIF <em>without</em> a KU / UCPH account?</p>
+                                    <!-- Use form with JS override to enable fallback functionality -->
+                                    <form method='get' action='https://sif-sid.erda.dk/cgi-sid/reqoid.py' target='_blank'>
+                                        <input class="signupbutton" type="submit" value="sign up"
+                                               onClick="signup('migoid'); return false;"/>
+                                    </form>
+                                    <p></p>
+                                </div>
+                                <div class="staticpage centertext loginfield">
+                                    <p>I'm already signed up to SIF <em>without</em> a KU / UCPH account!</p>
+                                    <!-- Use form with JS override to enable fallback functionality -->
+                                    <form method='get' action='https://sif-ext.erda.dk' target='_blank'>
+                                        <input class="loginbutton" type="button" value="log in"
+                                               onClick="login('migoid'); return false;" />
+                                    </form>
+                                    <p></p>
+                                </div>
+                            </div>
 
-</div>
-</div>
+                        </div>
+                    </div>
 
-<h2 class="staticpage">About SIF</h2>
-<p>
-SIF or Sensitive Information Facility at University of Copenhagen (KU/UCPH) is
-meant for storing and sharing sensitive data. In particular personal data
-requiring special care under the EU General Data Protection Regulation (GDPR).
-The intended audience is employees, their collaboration partners and students.
-SIF delivers secure centralized storage space for various projects involving
-sensitive data and integrates safe sharing with other internal or external
-project participants as well as network drive use from anywhere.
-<br/>
-SIF is delivered by SCIENCE HPC Center and is formally for the faculty of
-Science, but we do allow exceptions.
-A roll-out to all of UCPH is underway to support the general UCPH
-<a class="infolink" href="https://kunet.ku.dk/work-areas/research/data/data-management-at-UCPH/Pages/default.aspx"
-target="_blank">Data Management Guidelines</a>. 
-</p>
+                    <div id="about-content-helper-english">
+                        <!-- Loaded by AJAX and never shown -->
+                    </div>
+                    <div id="support-content-helper-english">
+                        <!-- Loaded by AJAX and never shown -->
+                    </div>
+                    <div id="noscript-helper-english" class="col-lg-12">
+                        <noscript>
+                            <h2 class="staticpage">SIF Information</h2>
+                            <p>
+                                You need a browser with JavaScript for the intended dynamic behaviour
+                                on this page, but you can still manually view snippets without:
+                            </p>
+                            <ul>
+                                <li>
+                                    <a class="urllink" href="about-snippet.html">About SIF</a>
+                                </li>
+                                <li>
+                                    <a class="userfaqlink" href="support-snippet.html">SIF Support</a>
+                                </li>
+                            </ul>
+                        </noscript>
+                    </div>
 
-<h2 class="staticpage">General Research Data</h2>
-<p>
-For non-sensitive research data we recommend instead using the sister facility
-<a class="urllink" href="https://erda.ku.dk">ERDA</a>, which provides more
-flexibility and features.
-</p>
+                    <div id="about-content-english_intro" class="col-lg-12">
+                        <!-- Filled by AJAX -->
+                        <span class="spinner leftpad">Loading ...</span>
+                    </div>
 
-<h2 class="staticpage">Getting Started with SIF</h2>
-<p>
-We've gathered information about SIF in a few short intro guides and a
-more thorough user guide
-</p>
-<!-- NOTE: ul elements are NOT allowed inside p ones in html spec -->
-<ul>
-<li><a class="introguidelink" href="/public/ucph-sif-intro-sign-up-as-a-sif-user.pdf">Sign up Intro</a> for UCPH and external users</li>
-<li><a class="introguidelink" href="/public/ucph-sif-intro-create-share-access-projects.pdf">Project Intro</a> about creating, sharing and accessing projects</li>
-<!-- TODO: enable next line when SIF version is available
-<li><a class="introguidelink" href="/public/ucph-sif-guide_network-drive_win.pdf">Network Drive Intro</a> about using SIF as a network drive on your computer (only covers Windows for now)</li>
--->
-<li><a class="userguidelink" href="/public/ucph-sif-user-guide.pdf">User Guide</a> with general usage</li>
-</ul>
-<p>
-We strongly recommend reading and following at least the two intro guides if
-you want to use SIF. 
-<br/>
-For any legal questions or permits please contact your <a class="infolink"
-href="https://kunet.ku.dk/work-areas/research/data/personal-data/safe-storage/Pages/default.aspx"
-target="_blank">Faculty Secretariat</a>.
-</p>
+                    <div id="about-content-english_targetdata" class="col-lg-12">
+                        <!-- Filled by AJAX -->
+                        <span class="spinner leftpad">Loading ...</span>
+                    </div>
 
-<h2 class="staticpage">Status and News</h2>
-<p>
-You can always refer to our
-separate <a class="statusnewslink" href="https://status.erda.dk/status.html">status and news overview</a>
-for a.o. the latest SIF system status as well as information about new or changed
-features.
-</p>
+                    <div id="intros-english" class="col-lg-12 hidden">
+                        <h2 class="staticpage">Getting Started with SIF</h2>
+                        <p>
+                            We've gathered information about SIF in a few short intro guides and a
+                            more thorough user guide
+                        </p>
+                        <!-- NOTE: ul elements are NOT allowed inside p ones in html spec -->
+                        <ul>
+                            <li><a class="introguidelink" href="/public/ucph-sif-intro-sign-up-as-a-sif-user.pdf">Sign up Intro</a> for UCPH and external users</li>
+                            <li><a class="introguidelink" href="/public/ucph-sif-intro-create-share-access-projects.pdf">Project Intro</a> about creating, sharing and accessing projects</li>
+                            <!-- TODO: enable next line when SIF version is available
+                                 <li><a class="introguidelink" href="/public/ucph-sif-guide_network-drive_win.pdf">Network Drive Intro</a> about using SIF as a network drive on your computer (only covers Windows for now)</li>
+                            -->
+                            <li><a class="userguidelink" href="/public/ucph-sif-user-guide.pdf">User Guide</a> with general usage</li>
+                        </ul>
+                        <p>
+                            We strongly recommend reading and following at least the two intro guides if
+                            you want to use SIF. 
+                            <br/>
+                            For any legal questions or permits please contact your <a class="infolink"
+                                                                                      href="https://kunet.ku.dk/work-areas/research/data/personal-data/safe-storage/Pages/default.aspx"
+                                                                                      target="_blank">Faculty Secretariat</a>.
+                        </p>
+                    </div>
 
-<div id="faq-content-english" class="col-lg-12">
-  <!-- Filled by AJAX -->
-  <noscript>
-    <h2 class="staticpage">FAQ</h2>
-    <p>
-      You need a browser with JavaScript for the intended
-      dynamic behaviour on this page, but you can still manually 
-      <a class="userfaqlink" href="faq-snippet.html">view the FAQ</a> without.
-    </p>
-  </noscript>
-</div>
+                    <div id="about-content-english_statusnews" class="col-lg-12">
+                        <!-- Filled by AJAX -->
+                        <span class="spinner leftpad">Loading ...</span>
+                    </div>
 
-<h2 class="staticpage">Questions and Support</h2>
-<p>
-Feel free to contact us using the email link at the bottom of the page in case
-you have any further questions or comments (in English or Danish).
-Unfortunately we do <em>not</em> have resources to offer video or phone
-support, but we typically reply on email the next working-day at the latest.
-</p>
+                    <div id="support-content-english_faq" class="col-lg-12">
+                        <!-- Filled by AJAX -->
+                        <span class="spinner leftpad">Loading ...</span>
+                    </div>
 
-<h2 class="staticpage">Terms of Use</h2>
-<p>
-SIF comes with some restrictions but they should be in line with basic
-common sense - considering the sensitive nature of the stored data.
-</p>
-<p>
-Specifically users of SIF should beware of the following:
-</p>
-<!-- NOTE: ul elements are NOT allowed inside p ones in html spec -->
-<ul>
-<li>When you create a new project for storing personal data or similar
-  the <a class="infolink" href="https://kunet.ku.dk/work-areas/research/data/personal-data/safe-storage/Pages/default.aspx"
-  target="_blank">Faculty Secretariat</a> is automatically notified</li>
-<li>Any login attempt is logged</li>
-<li>Any access to data is logged along with your ID, time of day and other relevant information</li>
-<li>Any access pattern that is considered "suspicious" might result in a suspension of your account</li>
-</ul>
-<p>
-You are not under <em>any</em> circumstances allowed to share your
-account with anybody else. If other persons need access to your data
-they <em>must</em> have and use their own account to do so.<br/>
-Examples of suspicious behavior may include:
-</p>
-<!-- NOTE: ul elements are NOT allowed inside p ones in html spec -->
-<ul>
-<li>Attempts to login from different internet addresses within a short time frame</li>
-<li>Structured download of data</li>
-<li>Attempts to circumvent security controls or access data to which you have no privilege</li>
-</ul>
-<p>
-Please note that these rules are in place to protect you as a researcher
-and University of Copenhagen in general. We try hard to make the system
-as easy to use as possible, while always ensuring the required high level
-of security.
-</p>
-<p>
-For the complete details please refer to the
-official <a class="usertermslink" href="/public/terms.html">terms of use</a> always
-available from here, in addition to our site privacy and cookie policies
-linked at the bottom.
-</p>
-</div>
-<div class="danish i18n hidden" lang="da">
-<h1 class="staticpage">Velkommen til SIF</h1>
+                    <div id="contact-english" class="english i18n row hidden" lang="en">
+                        <h2 class="staticpage">Questions and Support</h2>
+                        <p>
+                            Feel free to contact us using the email link at the bottom of the page in case
+                            you have any further questions or comments (in English or Danish).
+                            Unfortunately we do <em>not</em> have resources to offer video or phone
+                            support, but we typically reply on email the next working-day at the latest.
+                        </p>
+                    </div>
 
-<!-- Next div is used for site wide system maintenance warnings and such:
-First line is for highlighted notice in red and orange and second is for
-optional further explanation.
-Can just be disabled by putting it into an html comment when not in use.
- -->
+                    <div id="about-content-english_terms" class="col-lg-12">
+                        <!-- Filled by AJAX -->
+                        <span class="spinner leftpad">Loading ...</span>
+                    </div>
+                </div>
 
-<div class="staticpage systemmessages centertext">
-<!--
-<span class='systemwarn'>VIGTIGT: planlagt systemvedligehold den 13. April
-fra 7.30 (<a href='https://status.erda.dk'>Status</a>).
-</span><br/><br/>
-<span class='systemwarn'>VIGTIGT: planlagt systemvedligehold den 22. Marts
-fra 7.30 (<a href='https://status.erda.dk'>Status</a>).
-</span><br/><br/>
-<span class='systemwarn'>VIGTIGT: planlagt systemvedligehold den 3. Februar
-fra 16.00 (<a href='https://status.erda.dk'>Status</a>).
-</span><br/><br/> 
-<span class='systemwarn'>VIGTIGT: planlagt systemvedligehold den 25. November
-  fra 16.15 (<a href='https://status.erda.dk'>Status</a>).</span><br/><br/> 
-<span class='systemwarn'>VIGTIGT: der vil blive lavet planlagt systemvedligehold onsdag den
- 1. juli fra 16:00.</span><br/><br/>
-<span class='systemwarn'>VIGTIGT: der vil blive lavet planlagt systemvedligehold onsdag den
- 22. april fra 16:30.</span><br/><br/>
-<span class='systemwarn'>VIGTIGT: der vil blive lavet planlagt systemvedligehold onsdag den
- 22. januar fra 16:00.</span><br/><br/>
-<span class='systemwarn'>VIGTIGT: der vil blive lavet planlagt systemvedligehold torsdag den
- 12. januar fra 17:00 til 18:00.</span><br/><br/>
-<span class='systemnote'>Arbejdet vil hovedsageligt omhandle KU-login
-  servicen, hvorfor disse logins til SIF må forventes at kunne fejle i det givne tidsrum.
-</span><br/><br/>
-<span class='systemwarn'>VIGTIGT: planlagt systemvedligehold den 31. maj
-  kl 10
-</span><br/><br/>
-<span class='systemnote'>Kortere udfald vil forekomme da arbejdet
-  omfatter netværksændringer, og det forventes afsluttet inden middag.
-</span><br/><br/>
-<span class='systemwarn'>VIGTIGT: vi oplever i øjeblikket delvis
-  synlighed/adgang til data
-</span><br/><br/>
-<span class='systemnote'>Vi har oplevet enkelte sådanne problemer siden
-  vedligeholdelsesarbejdet igår og arbejder på sagen.</span>
-<span class='systemwarn'>VIGTIGT: SIFs backend-lager er delvist nede pga et strømudfald</span><br/><br/>
-<span class='systemnote'>Der foregår strøm- og kølearbejde i HPC centret, så teknikerne er allerede på sagen.</span><br/><br/>
-<span class='systemwarn'>
-  Tag venligst <a href="https://status.erda.dk">dine forholdsregler</a>
-  hvis du blev fanget i den seneste
-  tids  <a href="https://it.ku.dk/driftinfo/">phishing-angreb</a> på
-  KU/KUMail!</span>
-<span class='systemwarn'>
-  WARNING: SIF vil være nede til systemvedligehold den 4. juli fra 10 til 11 <a href="https://status.erda.dk">status.erda.dk</a>
-</span>
-<br/><br/>
--->
-</div>
+                <div class="danish i18n hidden" lang="da">
+                    <h1 class="staticpage">Velkommen til SIF</h1>
 
-<div class="staticpage quickstartfields">
-<div id="quick-start-tabs-da">
+                    <!-- Next div is used for site wide system maintenance warnings and such:
+                         First line is for highlighted notice in red and orange and second is for
+                         optional further explanation.
+                         Can just be disabled by putting it into an html comment when not in use.
+                    -->
 
-<ul>
-<li><a href="#ucph-user-tab-da">KU / UCPH brugere</a></li>
-<li><a href="#external-user-tab-da">Eksterne brugere</a></li>
-</ul>
+                    <div class="staticpage systemmessages centertext">
+                        <!--
+                             <span class='systemwarn'>VIGTIGT: planlagt systemvedligehold den 22. Marts
+                             <span class='systemwarn'>VIGTIGT: planlagt systemvedligehold den 13. April
+                             fra 7.30 (<a href='https://status.erda.dk'>Status</a>).
+                             </span><br/><br/>
+                             fra 7.30 (<a href='https://status.erda.dk'>Status</a>).
+                             </span><br/><br/>
+                             <span class='systemwarn'>VIGTIGT: planlagt systemvedligehold den 3. Februar
+                             fra 16.00 (<a href='https://status.erda.dk'>Status</a>).
+                             </span><br/><br/> 
+                             <span class='systemwarn'>VIGTIGT: planlagt systemvedligehold den 25. November
+                             fra 16.15 (<a href='https://status.erda.dk'>Status</a>).</span><br/><br/> 
+                             <span class='systemwarn'>VIGTIGT: der vil blive lavet planlagt systemvedligehold onsdag den
+                             1. juli fra 16:00.</span><br/><br/>
+                             <span class='systemwarn'>VIGTIGT: der vil blive lavet planlagt systemvedligehold onsdag den
+                             22. april fra 16:30.</span><br/><br/>
+                             <span class='systemwarn'>VIGTIGT: der vil blive lavet planlagt systemvedligehold onsdag den
+                             22. januar fra 16:00.</span><br/><br/>
+                             <span class='systemwarn'>VIGTIGT: der vil blive lavet planlagt systemvedligehold torsdag den
+                             12. januar fra 17:00 til 18:00.</span><br/><br/>
+                             <span class='systemnote'>Arbejdet vil hovedsageligt omhandle KU-login
+                             servicen, hvorfor disse logins til SIF må forventes at kunne fejle i det givne tidsrum.
+                             </span><br/><br/>
+                             <span class='systemwarn'>VIGTIGT: planlagt systemvedligehold den 31. maj
+                             kl 10
+                             </span><br/><br/>
+                             <span class='systemnote'>Kortere udfald vil forekomme da arbejdet
+                             omfatter netværksændringer, og det forventes afsluttet inden middag.
+                             </span><br/><br/>
+                             <span class='systemwarn'>VIGTIGT: vi oplever i øjeblikket delvis
+                             synlighed/adgang til data
+                             </span><br/><br/>
+                             <span class='systemnote'>Vi har oplevet enkelte sådanne problemer siden
+                             vedligeholdelsesarbejdet igår og arbejder på sagen.</span>
+                             <span class='systemwarn'>VIGTIGT: SIFs backend-lager er delvist nede pga et strømudfald</span><br/><br/>
+                             <span class='systemnote'>Der foregår strøm- og kølearbejde i HPC centret, så teknikerne er allerede på sagen.</span><br/><br/>
+                             <span class='systemwarn'>
+                             Tag venligst <a href="https://status.erda.dk">dine forholdsregler</a>
+                             hvis du blev fanget i den seneste
+                             tids  <a href="https://it.ku.dk/driftinfo/">phishing-angreb</a> på
+                             KU/KUMail!</span>
+                             <span class='systemwarn'>
+                             WARNING: SIF vil være nede til systemvedligehold den 4. juli fra 10 til 11 <a href="https://status.erda.dk">status.erda.dk</a>
+                             </span>
+                             <br/><br/>
+                        -->
 
-<div id="ucph-user-tab-da">
-<div class="staticpage centertext signupfield">
-<p>Tilmeld dig SIF med din KU-konto?</p>
-<form method='post' action='https://sif.erda.dk/wsgi-bin/autocreate.py' target='_blank'>
-<!-- IMPORTANT: openid.ku.dk fails if we change these to https -->
-<input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
-<input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
-<input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
-<input class="signupbutton" type="submit" value="tilmelding" />
-</form>
-<p></p>
-</div>
-<div class="staticpage centertext loginfield">
-<p>Jeg er allerede tilmeldt SIF med min KU-konto!</p>
-<!-- Use form with JS override to enable fallback functionality -->
-<form method='get' action='https://sif.erda.dk' target='_blank'>
-<input class="loginbutton" type="submit" value="log ind"
-       onClick="login('extoid'); return false;" />
-</form>
-<p></p>
-</div>
-</div>
+                    </div>
 
-<div id="external-user-tab-da">
-<div class="staticpage centertext signupfield">
-<p>Tilmeld dig SIF <em>uden</em> en KU-konto?</p>
-<!-- Use form with JS override to enable fallback functionality -->
-<form method='get' action='https://sif-sid.erda.dk/cgi-sid/reqoid.py' target='_blank'>
-<input class="loginbutton" type="submit" value="tilmelding"
-       onClick="signup('migoid'); return false;" />
-</form>
-<p></p>
-</div>
-<div class="staticpage centertext loginfield">
-<p>Jeg er allerede tilmeldt SIF <em>uden</em> en KU-konto!</p>
-<!-- Use form with JS override to enable fallback functionality -->
-<form method='get' action='https://sif-ext.erda.dk' target='_blank'>
-<input class="loginbutton" type="submit" value="log ind"
-       onClick="login('migoid'); return false;" />
-</form>
-<p></p>
-</div>
-</div>
+                    <div class="staticpage quickstartfields">
+                        <div id="quick-start-tabs-da">
 
-</div>
-</div>
+                            <ul>
+                                <li><a href="#ucph-user-tab-da">KU / UCPH brugere</a></li>
+                                <li><a href="#external-user-tab-da">Eksterne brugere</a></li>
+                            </ul>
 
-<h2 class="staticpage">Om SIF</h2>
-<p>
-SIF eller Sensitive Information Facility på Københavns Universitet (KU/UCPH) er
-rettet mod lagring og deling af sensitive data. Ikke mindst personhenførbare
-data klassificeret som følsomme i EU persondataforordningen (GDPR). 
-Målgruppen er ansatte, deres samarbejdspartnere og studerende. SIF leverer sikker
-centraliseret lagerplads til diverse projekter med følsomme data og integrerer
-mulighed for sikker deling med andre interne og eksterne projektdeltagere samt
-brug som sikkert netværksdrev uanset hvor man er.<br/>
-SIF leveres af SCIENCE HPC Center og er formelt til Det Natur- og
-Biovidenskabelige Fakultet (SCIENCE), men vi gør undtagelser.
-Der arbejdes på en udrulning til hele KU, for at understøtte KUs generelle
-<a class="infolink" href="https://kunet.ku.dk/arbejdsomraader/forskning/data/forskningsdata/Sider/default.aspx"
-target="_blank">data management forskrifter</a>. 
-</p>
+                            <div id="ucph-user-tab-da">
+                                <div class="staticpage centertext signupfield">
+                                    <p>Tilmeld dig SIF med din KU-konto?</p>
+                                    <form method='post' action='https://sif.erda.dk/wsgi-bin/autocreate.py' target='_blank'>
+                                        <!-- IMPORTANT: openid.ku.dk fails if we change these to https -->
+                                        <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
+                                        <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
+                                        <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
+                                        <input class="signupbutton" type="submit" value="tilmelding" />
+                                    </form>
+                                    <p></p>
+                                </div>
+                                <div class="staticpage centertext loginfield">
+                                    <p>Jeg er allerede tilmeldt SIF med min KU-konto!</p>
+                                    <!-- Use form with JS override to enable fallback functionality -->
+                                    <form method='get' action='https://sif.erda.dk' target='_blank'>
+                                        <input class="loginbutton" type="submit" value="log ind"
+                                               onClick="login('extoid'); return false;" />
+                                    </form>
+                                    <p></p>
+                                </div>
+                            </div>
 
-<h2 class="staticpage">Generelle forskningsdata</h2>
-<p>
-Til generelle / ikke-følsomme forskningsdata anbefaler vi søster-faciliteten
-<a class="urllink" href="https://erda.ku.dk">ERDA</a>,
-som tilbyder mere fleksibilitet og funktionalitet.
-</p>
+                            <div id="external-user-tab-da" class="hidden">
+                                <div class="staticpage centertext signupfield">
+                                    <p>Tilmeld dig SIF <em>uden</em> en KU-konto?</p>
+                                    <!-- Use form with JS override to enable fallback functionality -->
+                                    <form method='get' action='https://sif-sid.erda.dk/cgi-sid/reqoid.py' target='_blank'>
+                                        <input class="signupbutton" type="submit" value="tilmelding"
+                                               onClick="signup('migoid'); return false;" />
+                                    </form>
+                                    <p></p>
+                                </div>
+                                <div class="staticpage centertext loginfield">
+                                    <p>Jeg er allerede tilmeldt SIF <em>uden</em> en KU-konto!</p>
+                                    <!-- Use form with JS override to enable fallback functionality -->
+                                    <form method='get' action='https://sif-ext.erda.dk' target='_blank'>
+                                        <input class="loginbutton" type="submit" value="log ind"
+                                               onClick="login('migoid'); return false;" />
+                                    </form>
+                                    <p></p>
+                                </div>
+                            </div>
 
-<h2 class="staticpage">Kom godt igang med SIF</h2>
-<p>
-Vi har samlet information om SIF i nogle korte intro-guides og en længere brugervejledning
-</p>
-<!-- NOTE: ul elements are NOT allowed inside p ones in html spec -->
-<ul>
-<li><a class="introguidelink" href="/public/ucph-sif-intro-tilmeld-dig-som-bruger.pdf">Tilmeldings-intro</a>  for KU- og eksterne brugere </li>
-<li><a class="introguidelink" href="/public/ucph-sif-intro-opret-del-adgang-til-projekter.pdf">Projekt-intro</a> om projekttoprettelse, -deling og -adgang</li>
-<!-- TODO: enable next line when SIF version is available
-<li><a class="introguidelink" href="/public/ucph-erda-guide_netvaerksdrev_win.pdf">Netværksdrev-intro</a> om at benytte SIF som netværksdrev på din computer (dækker kun Windows for nu)</li>
--->
-<li><a class="userguidelink" href="/public/ucph-sif-brugervejledning.pdf">Brugervejledningen</a> med generel gennemgang af brugen</li>
-</ul>
-<p>
-Vi anbefaler kraftigt at læse og følge mindst de to intro-guides, hvis du vil
-benytte SIF.
-<br/>
-For evt juridiske spørgsmål og godkendelser bedes du kontakte dit 
-<a class="infolink" href="https://kunet.ku.dk/arbejdsomraader/forskning/data/behandling-af-personoplysninger/sikker-opbevaring-af-persondata/Sider/default.aspx"
-  target="_blank">fakultetssekretariat</a>.
-</p>
+                        </div>
+                    </div>
 
-<h2 class="staticpage">Status og nyheder</h2>
-<p>
-På siden med
-<a class="statusnewslink" href="https://status.erda.dk/status.html">status- og nyheds-overblik</a>
-finder man altid aktuel driftstatus for bl.a. SIF samt nærmere information
-omkring ny eller ændret funktionalitet.
-</p>
+                    <div id="about-content-helper-danish" class="hidden">
+                        <!-- Loaded by AJAX and never shown -->
+                        <span class="spinner leftpad">Henter ...</span>
+                    </div>
+                    <div id="support-content-helper-danish" class="hidden">
+                        <!-- Loaded by AJAX and never shown -->
+                        <span class="spinner leftpad">Henter ...</span>
+                    </div>
+                    <div id="noscript-helper-danish" class="col-lg-12">
+                        <noscript>
+                            <h2 class="staticpage">SIF Information</h2>
+                            <p>
+                                Din web-browser skal understøtte JavaScript for at vise det fulde
+                                dynamiske indhold på denne side, men du kan stadig manuelt åbne de
+                                badvedliggende udsnit uden:
+                            </p>
+                            <ul>
+                                <li>
+                                    <a class="urllink" href="about-snippet.html">Om SIF</a>
+                                </li>
+                                <li>
+                                    <a class="userfaqlink" href="support-snippet.html">SIF Support</a>
+                                </li>
+                            </ul>
+                        </noscript>
+                    </div>
 
-<div id="faq-content-danish" class="col-lg-12">
-  <!-- Filled by AJAX -->
-  <noscript>
-    <h2 class="staticpage">FAQ</h2>
-    <p>
-      Du skal bruge en browser med JavaScript for at få den tiltænkte
-      dynamiske opførsel på denne side, men du kan stadig manuelt
-      <a class="userfaqlink" href="faq-snippet.html">åbne vores FAQ</a> uden.
-    </p>
-  </noscript>
-</div>
+                    <div id="about-content-danish_intro" class="col-lg-12">
+                        <!-- Filled by AJAX -->
+                        <span class="spinner leftpad">Henter ...</span>
+                    </div>
 
-<h2 class="staticpage">Spørgsmål og hjælp</h2>
-<p>
-Kontakt os gerne (på dansk eller engelsk) med øvrige spørgsmål og kommentarer
-v.h.a. email-linket nederst på siden. Vi har desværre <em>ikke</em> resurser
-til at yde video- eller telefon-support, men svarer typisk på email senest
-næste arbejdsdag.
-</p>
-<!--
-<p class="warningtext">
-Bemærk at SIF siderne p.t. kun findes på engelsk. Den danske
-brugervejledning kan forhåbentlig afhjælpe eventuelle
-forståelsesvanskeligheder, og en egentlig dansk oversættelse overvejes stadig.
-</p>
--->
+                    <div id="about-content-danish_targetdata" class="col-lg-12">
+                        <!-- Filled by AJAX -->
+                        <span class="spinner leftpad">Henter ...</span>
+                    </div>
 
-<h2 class="staticpage">Brugerregler</h2>
-<p>
-SIF er underlagt nogle restriktioner, men de skulle gerne være i tråd
-med almindelig sund fornuft - den følsomme natur af de lagrede data
-taget i betragtning.
-</p>
-<p>
-Specifikt bør brugere på SIF være opmærksomme på følgende:
-</p>
-<!-- NOTE: ul elements are NOT allowed inside p ones in html spec -->
-<ul>
-<li>Når du opretter et nyt projekt til opbevaring af persondata
-  el. lign. får <a class="infolink" href="https://kunet.ku.dk/arbejdsomraader/forskning/data/behandling-af-personoplysninger/sikker-opbevaring-af-persondata/Sider/default.aspx"
-  target="_blank">fakultetssekretariatet</a> automatisk besked</li>
-<li>Ethvert loginforsøg bliver registreret</li>
-<li>Al dataadgang registreres sammen med dit ID, tidspunkt og øvrige
-  relevante data</li>
-<li>Adgangsmønstre som forekommer "mistænkelige" kan føre til
-  suspendering af din konto</li>
-</ul>
-<p>
-Du må under <em>ingen</em> omstændigheder dele din konto med andre. Hvis
-andre har behov for adgang til dine data <em>skal</em> de have og
-benytte deres egen konto til formålet.<br/>
-Eksempler på mistænkelig adfærd kan være:
-</p>
-<!-- NOTE: ul elements are NOT allowed inside p ones in html spec -->
-<ul>
-<li>Forsøg på login fra forskellige internet-adresser indenfor et kort tidsrum</li>
-<li>Struktureret download af data</li>
-<li>Forsøg på at omgå sikkerhedsmekanismerne eller tilgå data du ikke har ret til</li>
-</ul>
-<p>
-Bemærk at disse regler håndhæves for at beskytte både dig som forsker og
-Københavns Universitet i det hele taget. Vi gør vores bedste for at gøre
-systemet nemmest muligt at bruge, dog altid under skarpt hensyn til at
-opretholde det nødvendige høje sikkerhedsniveau.
-</p>
-<p>
-De fuldstændige detaljer vil altid være at finde i de
-officielle <a class="usertermslink" href="/public/terms.html">terms of use</a> her fra siden,
-i tillæg til vores site privacy og cookie policy via links nederst.
-</p>
-</div>
-</div>
-</div>
+                    <div id="intros-danish" class="col-lg-12 hidden">
+                        <h2 class="staticpage">Kom godt igang med SIF</h2>
+                        <p>
+                            Vi har samlet information om SIF i nogle korte intro-guides og en længere brugervejledning
+                        </p>
+                        <!-- NOTE: ul elements are NOT allowed inside p ones in html spec -->
+                        <ul>
+                            <li><a class="introguidelink" href="/public/ucph-sif-intro-tilmeld-dig-som-bruger.pdf">Tilmeldings-intro</a>  for KU- og eksterne brugere </li>
+                            <li><a class="introguidelink" href="/public/ucph-sif-intro-opret-del-adgang-til-projekter.pdf">Projekt-intro</a> om projekttoprettelse, -deling og -adgang</li>
+                            <!-- TODO: enable next line when SIF version is available
+                                 <li><a class="introguidelink" href="/public/ucph-erda-guide_netvaerksdrev_win.pdf">Netværksdrev-intro</a> om at benytte SIF som netværksdrev på din computer (dækker kun Windows for nu)</li>
+                            -->
+                            <li><a class="userguidelink" href="/public/ucph-sif-brugervejledning.pdf">Brugervejledningen</a> med generel gennemgang af brugen</li>
+                        </ul>
+                        <p>
+                            Vi anbefaler kraftigt at læse og følge mindst de to intro-guides, hvis du vil
+                            benytte SIF.
+                            <br/>
+                            For evt juridiske spørgsmål og godkendelser bedes du kontakte dit 
+                            <a class="infolink" href="https://kunet.ku.dk/arbejdsomraader/forskning/data/behandling-af-personoplysninger/sikker-opbevaring-af-persondata/Sider/default.aspx"
+                               target="_blank">fakultetssekretariat</a>.
+                        </p>
+                    </div>
 
-<div id="bottomlogo">
-<div id="bottomlogoleft">
-<div id="support">
-<img src="/images/icons/help.png" id="supportimage" alt=""/>
-<div class="supporttext staticpage i18n" lang="en">
-<p class="supporttitle i18n" lang="en">Support</p>
-<p class="i18n" lang="en">
-<a href="/public/ucph-sif-user-guide.pdf">SIF User Guide</a><br />
-Questions about SIF?<br />
-Please contact
-us at <a href="mailto:support@sif.erda.dk">support@sif.erda.dk</a>
-</p>
-</div>
-<div class="supporttext staticpage i18n hidden" lang="da">
-<p class="supporttitle i18n" lang="da">Vejledning</p>
-<p class="i18n" lang="da">
-<a href="/public/ucph-sif-brugervejledning.pdf">SIF Brugervejledning</a><br />
-Spørgsmål om SIF?<br />
-Skriv til os på 
-<a href="mailto:support@sif.erda.dk">support@sif.erda.dk</a>
-</p>
-</div>
-</div>
-</div>
-<div id="bottomlogoright">
-<div id="privacy">
-<div class="privacytext staticpage i18n" lang="en">
-<p class="privacytitle i18n" lang="en">Privacy and Rights</p>
-<p class="i18n" lang="en">
-<a href="/public/site-privacy-policy.pdf">Privacy Policy</a>
-&amp; <a href="/public/cookie-policy.pdf">Cookie Policy</a>
-</p>
-</div>
-<div class="privacytext staticpage i18n hidden" lang="da">
-<p class="privacytitle i18n" lang="da">Privatliv og rettigheder</p>
-<p class="i18n" lang="da">
-<a href="/public/site-privacy-policy.pdf">Privacy Policy</a>
-&amp; <a href="/public/cookie-policy.pdf">Cookie Policy</a>
-</p>
-</div>
-</div>
-<div id="copyright">
-<img src="/images/copyright.png" id="creditsimage" alt=""/>
-<span id="credits">
-2003-2021, <a href="https://www.migrid.org">The MiG Project</a>
-</span>
-</div>
-</div>
-</div>
-<div id="bottomspace">
-</div>
+                    <div id="about-content-danish_statusnews" class="col-lg-12">
+                        <!-- Filled by AJAX -->
+                        <span class="spinner leftpad">Henter ...</span>
+                    </div>
 
-</body>
+                    <div id="support-content-danish_faq" class="col-lg-12">
+                        <!-- Filled by AJAX -->
+                        <span class="spinner leftpad">Henter ...</span>
+                    </div>
+
+                    <div id="contact-danish" class="danish i18n row hidden" lang="da">
+                        <h2 class="staticpage">Spørgsmål og hjælp</h2>
+                        <p>
+                            Kontakt os gerne (på dansk eller engelsk) med øvrige spørgsmål og kommentarer
+                            v.h.a. email-linket nederst på siden. Vi har desværre <em>ikke</em> resurser
+                            til at yde video- eller telefon-support, men svarer typisk på email senest
+                            næste arbejdsdag.
+                        </p>
+                        <!--
+                             <p class="warningtext">
+                             Bemærk at SIF siderne p.t. kun findes på engelsk. Den danske
+                             brugervejledning kan forhåbentlig afhjælpe eventuelle
+                             forståelsesvanskeligheder, og en egentlig dansk oversættelse overvejes stadig.
+                             </p>
+                        -->
+                    </div>
+
+                    <div id="about-content-danish_terms" class="col-lg-12">
+                        <!-- Filled by AJAX -->
+                        <span class="spinner leftpad">Henter ...</span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div id="bottomlogo">
+            <div id="bottomlogoleft">
+                <div id="support">
+                    <img src="/images/icons/help.png" id="supportimage" alt=""/>
+                    <div class="supporttext staticpage i18n hidden" lang="en">
+                        <p class="supporttitle i18n" lang="en">Support</p>
+                        <p class="i18n" lang="en">
+                            <a href="/public/ucph-sif-user-guide.pdf">SIF User Guide</a><br />
+                            Questions about SIF?<br />
+                            Please contact
+                            us at <a href="mailto:support@sif.erda.dk">support@sif.erda.dk</a>
+                        </p>
+                    </div>
+                    <div class="supporttext staticpage i18n hidden" lang="da">
+                        <p class="supporttitle i18n" lang="da">Vejledning</p>
+                        <p class="i18n" lang="da">
+                            <a href="/public/ucph-sif-brugervejledning.pdf">SIF Brugervejledning</a><br />
+                            Spørgsmål om SIF?<br />
+                            Skriv til os på 
+                            <a href="mailto:support@sif.erda.dk">support@sif.erda.dk</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div id="bottomlogoright">
+                <div id="privacy">
+                    <div class="privacytext staticpage i18n hidden" lang="en">
+                        <p class="privacytitle i18n" lang="en">Privacy and Rights</p>
+                        <p class="i18n" lang="en">
+                            <a href="/public/site-privacy-policy.pdf">Privacy Policy</a>
+                            &amp; <a href="/public/cookie-policy.pdf">Cookie Policy</a>
+                        </p>
+                    </div>
+                    <div class="privacytext staticpage i18n hidden" lang="da">
+                        <p class="privacytitle i18n" lang="da">Privatliv og rettigheder</p>
+                        <p class="i18n" lang="da">
+                            <a href="/public/site-privacy-policy.pdf">Privacy Policy</a>
+                            &amp; <a href="/public/cookie-policy.pdf">Cookie Policy</a>
+                        </p>
+                    </div>
+                </div>
+                <div id="copyright">
+                    <img src="/images/copyright.png" id="creditsimage" alt=""/>
+                    <span id="credits">
+                        2003-2021, <a href="https://www.migrid.org">The MiG Project</a>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div id="bottomspace">
+        </div>
+
+    </body>
 </html>

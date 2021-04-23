@@ -1,288 +1,270 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>ERDA UI Dev</title>
+<!-- NOTE: we mark lang undecided here and set individually below -->
+<html lang="">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            ERDA UI Dev
+        </title>
+
+        <!-- site default style -->
+        <link rel="stylesheet" type="text/css" href="/images/default.css" media="screen"/>
+
+        <!-- base page styles -->
+        <link rel="stylesheet" type="text/css" href="/assets/vendor/jquery-ui/css/jquery-ui.css" media="screen"/>
+
+        <!-- country-dropdown -->
+        <link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/dd.css" />
+        <link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/flags.css" />
+
+        <!-- User interface version-specific setup -->
+        <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css">
+        <link href="/assets/vendor/fontawesome/css/all.css" rel="stylesheet"> <!--load all styles -->
+
+        <!-- UI V3 CSS -->
+        <link rel="stylesheet" href="/assets/css/V3/ui.css">
+        <link rel="stylesheet" href="/assets/css/V3/style.css">
+        <link rel="stylesheet" href="/assets/css/V3/nav.css">
+
+        <!-- site skin style -->
+        <link rel="stylesheet" type="text/css" href="/images/skin/erda-user-friendly/core.css" media="screen"/>
+        <link rel="stylesheet" type="text/css" href="/images/skin/erda-user-friendly/ui-theme.css" media="screen"/>
+        <link rel="stylesheet" type="text/css" href="/images/skin/erda-user-friendly/ui-theme.custom.css" media="screen"/>
+
+        <!-- UI V3-only skin overrides -->
+        <link rel="stylesheet" type="text/css" href="/images/skin/erda-user-friendly/ui-v3.custom.css" media="screen"/>
+
+        <!-- override with any site-specific styles -->
+        <link rel="stylesheet" type="text/css" href="/images/site-custom.css"
+              media="screen"/>
 
 
-    <!-- site default style -->
-    <link rel="stylesheet" type="text/css" href="/images/default.css" media="screen"/>
+        <!-- Default fav icon and JQuery init with language selector dropdown -->
+        <link rel="icon" type="image/vnd.microsoft.icon"
+              href="/images/skin/erda-user-friendly/favicon.ico"/>
 
-    <!-- base page styles -->
-    <link rel="stylesheet" type="text/css" href="/assets/vendor/jquery-ui/css/jquery-ui.css" media="screen"/>
+        <script type="text/javascript" src="/assets/vendor/jquery/js/jquery.js"></script>
+        <script type="text/javascript" src="/assets/vendor/jquery-ui/js/jquery-ui.js"></script>
+        <script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
 
-    <!-- country-dropdown -->
-    <link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/dd.css" />
-    <link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/flags.css" />
+        <script src="/assets/vendor/jquery/js/popper.js"></script>
+        <script src="/assets/vendor/jquery/js/jquery.validate.min.js"></script>
 
-    <!-- User interface version-specific setup -->
-    <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css">
-    <link href="/assets/vendor/fontawesome/css/all.css" rel="stylesheet"> <!--load all styles -->
+        <!-- UI V3 JS -->
+        <script src="/assets/vendor/bootstrap/js/bootstrap.min.js"></script>
+        <script src="/assets/js/V3/ui-global.js"></script>
+        <script src="/assets/js/V3/ui-extra.js"></script>
+        <script src="/assets/js/V3/ui-dynamic.js"></script>
 
-    <!-- UI V3 CSS -->
-    <link rel="stylesheet" href="/assets/css/V3/ui.css">
-    <link rel="stylesheet" href="/assets/css/V3/style.css">
-    <link rel="stylesheet" href="/assets/css/V3/nav.css">
+        <script type="text/javascript">
+         var locale = extract_default_locale();
+         /* Init supported languages to just english and extend based on lang select */
+         var supported_languages = ['en'];
+         var default_lang = supported_languages[0];
+         var user_lang;
 
-    <!-- site skin style -->
-    <link rel="stylesheet" type="text/css" href="/images/skin/erda-user-friendly/core.css" media="screen"/>
-    <link rel="stylesheet" type="text/css" href="/images/skin/erda-user-friendly/ui-theme.css" media="screen"/>
-    <link rel="stylesheet" type="text/css" href="/images/skin/erda-user-friendly/ui-theme.custom.css" media="screen"/>
+         /* We assume UCPH users here and leave external users to FAQ entry */
+         function login(user) {
+             if (user == "extoid") {
+                 window.open('https://ui.erda.dk', '_blank');
+             } else if (user == "cert") {
+                 window.open('https://ui-cert.erda.dk', '_blank');
+             } else if (user == "migoid") {
+                 window.open('https://ui-ext.erda.dk', '_blank');
+             } else {
+                 window.open('https://ui-sid.erda.dk/cgi-sid/login.py', '_blank');
+             }
+         }
+         function signup(user) {
+             if (user == "extoid") {
+                 window.open('https://ui-sid.erda.dk/cgi-sid/signup.py?show=kitoid', 
+                             '_blank');
+             } else if (user == "cert") {
+                 window.open('https://ui-sid.erda.dk/cgi-sid/signup.py?show=extcert',
+                             '_blank');
+             } else if (user == "migoid") {
+                 window.open('https://ui-sid.erda.dk/cgi-sid/reqoid.py', '_blank');
+             } else {
+                 window.open('https://ui-sid.erda.dk/cgi-sid/signup.py', '_blank');
+             }
+         }
 
-    <!-- UI V3-only skin overrides -->
-    <link rel="stylesheet" type="text/css" href="/images/skin/erda-user-friendly/ui-v3.custom.css" media="screen"/>
+         function show_login_msg(msg) {
+             alert(msg);
+         }
 
-    <!-- override with any site-specific styles -->
-    <link rel="stylesheet" type="text/css" href="/images/site-custom.css"
-          media="screen"/>
+         $(document).ready(function() {
+             /* Extend supported_languages with all entries from select elem */
+             $("#langselect option").each(function() {
+                 var option_val = $(this).val();
+                 if (supported_languages.indexOf(option_val) < 0) {
+                     supported_languages.push($(this).val());
+                 }
+             });
+             console.log("found supported langs: "+supported_languages);
+             if (locale && supported_languages.indexOf(locale) >= 0)  {
+                 user_lang = locale;
+             } else {
+                 console.log(locale+" not supported - fall back to: "+default_lang);
+                 user_lang = default_lang;
+             }
 
+             /* Init links centrally */
+             $("a.reqcert-en-link").attr("target", "_blank").attr(
+                 "href", "https://sites.google.com/site/minimumintrusiongrid/" +
+                         "getting-started/how-to-get-started");
+             $("a.reqcert-da-link").attr("target", "_blank").attr(
+                 "href", "https://sites.google.com/site/minimumintrusiongrid/" +
+                         "mig-in-danish/saadan-kommer-du-igang");
+             $("a.migoidsignup-link").attr("target", "_blank").attr(
+                 "href", "https://ui-sid.erda.dk/cgi-sid/signup.py?show=migoid");
+             $("a.migoidlogin-link").attr("target", "_blank").attr(
+                 "href", "https://ui-ext.erda.dk");
+             $("a.extcertsignup-link").attr("target", "_blank").attr(
+                 "href", "https://ui-sid.erda.dk/cgi-sid/signup.py?show=extcert");
+             $("a.extcertlogin-link").attr("target", "_blank").attr(
+                 "href", "https://ui-cert.erda.dk");
 
-    <!-- Default fav icon and JQuery init with language selector dropdown -->
-    <link rel="icon" type="image/vnd.microsoft.icon"
-          href="/images/skin/erda-user-friendly/favicon.ico"/>
+             /* Fetch FAQ and About contents from snippets */
+             var base_url = window.location.href;
+             base_url = base_url.substring(0, base_url.lastIndexOf("/")+1);
 
-    <script type="text/javascript" src="/assets/vendor/jquery/js/jquery.js"></script>
-    <script type="text/javascript" src="/assets/vendor/jquery-ui/js/jquery-ui.js"></script>
-    <script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
+             var support_url = base_url + "support-snippet.html"; 
+             console.log("get support content from "+support_url);
+             load_support(support_url, false);
 
-    <script src="/assets/vendor/jquery/js/popper.js"></script>
-    <script src="/assets/vendor/jquery/js/jquery.validate.min.js"></script>
+             var about_url = base_url + "about-snippet.html"; 
+             console.log("get about content from "+about_url);
+             load_about(about_url)
+             // TODO: switch to status.erda.dk? (requires CORS here)
+             //var sitestatus_url = base_url + "status.html"; 
+             var sitestatus_events = base_url + "status-events.json"; 
+             console.log("get sitestatus content from "+sitestatus_events);
+             load_sitestatus(sitestatus_events, ["UI.ERDA", "ERDA"], locale);
 
-    <!-- UI V3 JS -->
-    <script src="/assets/vendor/bootstrap/js/bootstrap.min.js"></script>
-    <script src="/assets/js/V3/ui-global.js"></script>
-    <script src="/assets/js/V3/ui-extra.js"></script>
-    <script src="/assets/js/V3/ui-dynamic.js"></script>
+             $("#langselect").on('change', function() { 
+                 var lang = $(this).val();
+                 //alert("switch_language: "+lang);
+                 switch_language(lang);
+             });
+             console.log("switch to user lang: "+user_lang);
+             $("#langselect").val(user_lang);
+             switch_language(user_lang);
+             $("#langselect").msDropdown().fadeIn(500);
+         });
+        </script>
 
-    <script type="text/javascript">
-      var locale = extract_default_locale();
-      /* Init supported languages to just english and extend based on lang select */
-      var supported_languages = ['en'];
-      var default_lang = supported_languages[0];
-      var user_lang;
+    </head>
 
-      /* We assume UCPH users here and leave external users to FAQ entry */
-      function login(user) {
-        if (user == "extoid") {
-          window.open('https://ui.erda.dk', '_blank');
-        } else if (user == "cert") {
-          window.open('https://ui-cert.erda.dk', '_blank');
-        } else if (user == "migoid") {
-          window.open('https://ui-ext.erda.dk', '_blank');
-        } else {
-          window.open('https://ui-sid.erda.dk/cgi-sid/login.py', '_blank');
-        }
-      }
-      function signup(user) {
-        if (user == "extoid") {
-          window.open('https://ui-sid.erda.dk/cgi-sid/signup.py?show=kitoid', 
-            '_blank');
-        } else if (user == "cert") {
-          window.open('https://ui-sid.erda.dk/cgi-sid/signup.py?show=extcert',
-            '_blank');
-        } else if (user == "migoid") {
-          window.open('https://ui-sid.erda.dk/cgi-sid/reqoid.py', '_blank');
-        } else {
-          window.open('https://ui-sid.erda.dk/cgi-sid/signup.py', '_blank');
-        }
-      }
-
-      function show_login_msg(msg) {
-          alert(msg);
-      }
-
-      $(document).ready(function() {
-        /* Extend supported_languages with all entries from select elem */
-        $("#langselect option").each(function() {
-          var option_val = $(this).val();
-          if (supported_languages.indexOf(option_val) < 0) {
-            supported_languages.push($(this).val());
-          }
-        });
-        console.log("found supported langs: "+supported_languages);
-        if (locale && supported_languages.indexOf(locale) >= 0)  {
-          user_lang = locale;
-        } else {
-          console.log(locale+" not supported - fall back to: "+default_lang);
-          user_lang = default_lang;
-      }
-
-      /* Init links centrally */
-      $("a.reqcert-en-link").attr("target", "_blank").attr("href", 
-        "https://sites.google.com/site/minimumintrusiongrid/" +
-        "getting-started/how-to-get-started");
-      $("a.reqcert-da-link").attr("target", "_blank").attr("href", 
-        "https://sites.google.com/site/minimumintrusiongrid/" +
-        "mig-in-danish/saadan-kommer-du-igang");
-      $("a.migoidsignup-link").attr("target", "_blank").attr("href", 
-        "https://ui-sid.erda.dk/cgi-sid/signup.py?show=migoid");
-      $("a.migoidlogin-link").attr("target", "_blank").attr("href", 
-        "https://ui-ext.erda.dk");
-      $("a.extcertsignup-link").attr("target", "_blank").attr("href", 
-        "https://ui-sid.erda.dk/cgi-sid/signup.py?show=extcert");
-      $("a.extcertlogin-link").attr("target", "_blank").attr("href", 
-        "https://ui-cert.erda.dk");
-
-      /* Fetch FAQ and About contents from snippets */
-      var base_url = window.location.href;
-      base_url = base_url.substring(0, base_url.lastIndexOf("/")+1);
-
-        var quickstart_url = base_url + "quickstart-snippet.html"; 
-        var faq_url = base_url + "faq-snippet.html"; 
-        console.log("get quickstart content from "+quickstart_url);
-        console.log("get faq content from "+faq_url);
-        load_support(quickstart_url, faq_url, false);
-
-        var about_url = base_url + "about-snippet.html"; 
-        console.log("get about content from "+about_url);
-        load_about(about_url)
-        // TODO: switch to status.erda.dk? (requires CORS here)
-        //var sitestatus_url = base_url + "status.html"; 
-        var sitestatus_events = base_url + "status-events.json"; 
-        
-        console.log("get sitestatus content from "+sitestatus_events);
-        load_sitestatus(sitestatus_events, ["UI.ERDA", "ERDA"], locale);
-
-      $("#langselect").on('change', function() { 
-        var lang = $(this).val();
-        //alert("switch_language: "+lang);
-        switch_language(lang);
-      });
-      console.log("switch to user lang: "+user_lang);
-      $("#langselect").val(user_lang);
-      switch_language(user_lang);
-      $("#langselect").msDropdown();
-      });
-    </script>
-
-  </head>
-
-  <body id="modern-ui-body">
-    <nav id="sideBar">
-      <!--SIDEBAR-->
-      <div class="sidebar-container row">
-        <div class="col-12 align-self-start">
-	  <a id="logoMenu" href="/">
-	    <div class="home-nav-logo"></div>
-	  </a>
-        </div>
-      </div>
-    </nav>
-    
-    <!--Push notifications-->
-    <div class="toast sitestatus" data-autohide="false" style="position: absolute; right: 20px; z-index: 999;">
-      <div id="sitestatus-top" class="toast-header">
-        <div id="sitestatus-title" class="" style="width: 90%;">
-          <!-- TODO: move inline style to css files -->
-          <!-- NOTE: reuse 1.5rem size with ml-2 and mb-1 classes to mimic close -->
-          <span id="sitestatus-icon" class="fas fa-question-circle ml-2 mb-1" style="color: grey; font-size: 1.5rem; float: left;"></span>
-          <strong class="mr-auto text-primary" style="float: left;">
-            <h3 id="sitestatus-caption" style="margin-left: 5px;">SITE STATUS</h3>
-          </strong>
-          <small id="sitestatus-timestamp" class="text-muted" style="float: right;"></small>
-        </div>
-        <div id="sitestatus-close" class="">
-          <button type="button" class="ml-2 mb-1 close" data-dismiss="toast">&times;</button>
-        </div>
-      </div>
-      <div id="sitestatus-content" class="toast-body">
-      <h3>Site Status</h3>
-      <p id="sitestatus-line" class="status-text">
-        <!-- Filled by AJAX -->
-      </p>
-      <div id="sitestatus-recent" class="hidden"><h3>Active Announcements</h3>
-        <p id="sitestatus-announce" class="announce-text"></p>
-      </div>
-      </div>
-      <div id="sitestatus-more" class="toast-body">
-        <a target=_blank href="/public/status.html">More details ...</a>
-      </div>
-    </div>
-
-    <!--HEADER INFO AREA-->
-    <nav id="headerNav">
-      <ul class="nav__items">
-        <li class="nav__item">
-	  <a id="supportInfoButton" href="#" class="nav__label" onclick="toggle_info('supportInfo')">Support</a>
-        </li>
-        <li class="nav__item nav_item--expanded">
-	  <a id="aboutInfoButton" href="#" class="nav__label" onclick="toggle_info('aboutInfo')">About</a>
-        </li>
-        <li class="nav__item nav_item--expanded fas fa-thumbs-up custom-hidden" style="color:#46743C;"></li>
-        <li id="sitestatus-button" class="nav__item nav_item--expanded fas fa-question-circle custom-show" style="color: grey;" onclick="show_message('sitestatus')"></li>
-      </ul>
-    </nav>
-
-    <div id="infoArea" class="infoArea-container">
-    </div>
-
-    <div id="supportInfo" class="infoArea-container">
-      <span class="far fa-times-circle close_btn" onclick="toggle_info('supportInfo')"></span>
-      <div class="container">
-        
-        <div id="quickstart-content" class="col-lg-12">
-          <!-- Filled by AJAX -->
-        </div>
-        
-        <div id="faq-content" class="col-lg-12">
-          <!-- Filled by AJAX -->
-        </div>
-
-        <div id="support" class="col-lg-12">
-          <h2 class="big">Further Support</h2>
-          <img src="/images/icons/help.png" id="supportimage" alt=""/>
-            <p class="i18n" lang="en">
-              <a href="/public/ucph-erda-user-guide.pdf">ERDA User Guide</a><br />
-              Questions about ERDA?<br />
-              Please contact
-              us at <a href="mailto:support@erda.dk">support@erda.dk</a>
-            </p>
-          </div>
-        </div>
-
-        <div class="vertical-spacer"></div>
-      </div>
-    </div>
-
-    <div id="aboutInfo" class="infoArea-container">
-      <span class="far fa-times-circle close_btn" onclick="toggle_info('aboutInfo')"></span>
-      <div class="container">
-
-        <div id="about-content" class="row">
-          <!-- Filled by AJAX -->
-        </div>
-        
-
-        <div class="vertical-spacer"></div>
-
-      </div>
-    </div>
-
-    <div class="global-container">
-      <div class="container">
-        <div class="global-full-height row">
-          <div class="col-12 align-self-center">
-	    <h1>Keep everything organized with ERDA</h1>
-	    <p class="sub-title">ERDA - Electronic Research Data Archive is a storage, sharing and archiving facility provided by University of Copenhagen to employees and students.</p>
-	    <button style="color: #fff; background-color: #46743C; border-radius: 30px; width: 120px; height: 40px;" value="log in" onClick="login('extoid');">Log in</button>
-            <div id="signupform" class="hidden">
-            <form method='post' action='https://ui.erda.dk/wsgi-bin/autocreate.py'>
-              <!-- IMPORTANT: openid.ku.dk fails if we change these to https -->
-              <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
-              <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
-              <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
-              <input class="signupbutton" type="submit" value="sign up" />
-
-            </form>
+    <body id="modern-ui-body">
+        <nav id="sideBar">
+            <!--SIDEBAR-->
+            <div class="sidebar-container row">
+                <div class="col-12 align-self-start">
+                    <a id="logoMenu" href="/">
+                        <div class="home-nav-logo"></div>
+                    </a>
+                </div>
             </div>
-	    <button style="color: #46743C; background-color: #FFF;
-	    margin-left: 5px; border-radius: 30px; width: 120px; height:
-	    40px; border: 1px solid #46743C" onClick="$('#signupform .signupbutton').click();">Sign up</button>
-          </div>
+        </nav>
+        
+        <!--Push notifications-->
+        <div class="toast sitestatus" data-autohide="false" style="position: absolute; right: 20px; z-index: 999;">
+            <div id="sitestatus-top" class="toast-header">
+                <div id="sitestatus-title" class="" style="width: 90%;">
+                    <!-- TODO: move inline style to css files -->
+                    <!-- NOTE: reuse 1.5rem size with ml-2 and mb-1 classes to mimic close -->
+                    <span id="sitestatus-icon" class="fas fa-question-circle ml-2 mb-1" style="color: grey; font-size: 1.5rem; float: left;"></span>
+                    <strong class="mr-auto text-primary" style="float: left;">
+                        <h3 id="sitestatus-caption" style="margin-left: 5px;">SITE STATUS</h3>
+                    </strong>
+                    <small id="sitestatus-timestamp" class="text-muted" style="float: right;"></small>
+                </div>
+                <div id="sitestatus-close" class="">
+                    <button type="button" class="ml-2 mb-1 close" data-dismiss="toast">&times;</button>
+                </div>
+            </div>
+            <div id="sitestatus-content" class="toast-body">
+                <h3>Site Status</h3>
+                <p id="sitestatus-line" class="status-text">
+                    <!-- Filled by AJAX -->
+                </p>
+                <div id="sitestatus-recent" class="hidden"><h3>Active Announcements</h3>
+                    <p id="sitestatus-announce" class="announce-text"></p>
+                </div>
+            </div>
+            <div id="sitestatus-more" class="toast-body">
+                <a target=_blank href="/public/status.html">More details ...</a>
+            </div>
         </div>
-      </div>
-    </div>
-    <div class="wallpaper"></div>
-  </body>
+
+        <!--HEADER INFO AREA-->
+        <nav id="headerNav">
+            <ul class="nav__items">
+                <li class="nav__item">
+                    <a id="supportInfoButton" href="#" class="nav__label" onclick="toggle_info('supportInfo')">Support</a>
+                </li>
+                <li class="nav__item nav_item--expanded">
+                    <a id="aboutInfoButton" href="#" class="nav__label" onclick="toggle_info('aboutInfo')">About</a>
+                </li>
+                <li class="nav__item nav_item--expanded fas fa-thumbs-up custom-hidden" style="color:#46743C;"></li>
+                <li id="sitestatus-button" class="nav__item nav_item--expanded fas fa-question-circle custom-show" style="color: grey;" onclick="show_message('sitestatus')"></li>
+            </ul>
+        </nav>
+
+        <div id="infoArea" class="infoArea-container">
+        </div>
+
+        <div id="supportInfo" class="infoArea-container">
+            <span class="far fa-times-circle close_btn" onclick="toggle_info('supportInfo')"></span>
+            <div class="container">
+                
+                <div id="support-content" class="col-lg-12">
+                    <!-- Filled by AJAX -->
+                </div>        
+                <div class="vertical-spacer"></div>
+            </div>
+        </div>
+
+        <div id="aboutInfo" class="infoArea-container">
+            <span class="far fa-times-circle close_btn" onclick="toggle_info('aboutInfo')"></span>
+            <div class="container">
+
+                <div id="about-content" class="row">
+                    <!-- Filled by AJAX -->
+                </div>
+                
+
+                <div class="vertical-spacer"></div>
+
+            </div>
+        </div>
+
+        <div class="global-container">
+            <div class="container">
+                <div class="global-full-height row">
+                    <div class="col-12 align-self-center">
+                        <h1>Keep everything organized with ERDA</h1>
+                        <p class="sub-title">ERDA - Electronic Research Data Archive is a storage, sharing and archiving facility provided by University of Copenhagen to employees and students.</p>
+                        <button style="color: #fff; background-color: #46743C; border-radius: 30px; width: 120px; height: 40px;" value="log in" onClick="login('extoid');">Log in</button>
+                        <div id="signupform" class="hidden">
+                            <form method='post' action='https://ui.erda.dk/wsgi-bin/autocreate.py'>
+                                <!-- IMPORTANT: openid.ku.dk fails if we change these to https -->
+                                <input type='hidden' name='openid.ns' value='http://specs.openid.net/auth/2.0' />
+                                <input type='hidden' name='openid.ns.sreg' value='http://openid.net/extensions/sreg/1.1' />
+                                <input type='hidden' name='openid.sreg.required' value='nickname,fullname,email,o,ou,country,state,role' />
+                                <input class="signupbutton" type="submit" value="sign up" />
+
+                            </form>
+                        </div>
+                        <button style="color: #46743C; background-color: #FFF;
+                                       margin-left: 5px; border-radius: 30px; width: 120px; height:
+                                       40px; border: 1px solid #46743C" onClick="$('#signupform .signupbutton').click();">Sign up</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="wallpaper"></div>
+    </body>
 </html>

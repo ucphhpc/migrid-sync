@@ -1813,20 +1813,19 @@ location.""" % self.config_file)
         # Fall back to server_fqdn if not set or no valid entries
         if not self.site_transfers_from:
             self.site_transfers_from = [self.server_fqdn]
-        if config.has_option('SITE', 'quickstart_snippet_url'):
-            self.site_quickstart_snippet_url = config.get(
-                'SITE', 'quickstart_snippet_url')
+        # NOTE: single Support snippet provides the V3 Support popup content
+        if config.has_option('SITE', 'support_snippet_url'):
+            self.site_support_snippet_url = config.get(
+                'SITE', 'support_snippet_url')
         else:
-            self.site_quickstart_snippet_url = '/public/quickstart-snippet.html'
-        if config.has_option('SITE', 'faq_snippet_url'):
-            self.site_faq_snippet_url = config.get('SITE', 'faq_snippet_url')
-        else:
-            self.site_faq_snippet_url = '/public/faq-snippet.html'
+            self.site_support_snippet_url = '/public/support-snippet.html'
+        # NOTE: single About snippet provides the V3 About popup content
         if config.has_option('SITE', 'about_snippet_url'):
             self.site_about_snippet_url = config.get(
                 'SITE', 'about_snippet_url')
         else:
             self.site_about_snippet_url = '/public/about-snippet.html'
+        # NOTE: Tips page provides all the tip of the day content to pick from
         if config.has_option('SITE', 'tips_snippet_url'):
             self.site_tips_snippet_url = config.get(
                 'SITE', 'tips_snippet_url')

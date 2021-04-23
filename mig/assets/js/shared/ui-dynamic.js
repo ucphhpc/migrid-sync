@@ -42,8 +42,10 @@ function switch_language(lang) {
     $(".i18n:lang(en)").hide();
     $(".i18n:lang(da)").hide();
 
-    $("div:lang("+lang+")").show();
-    $(".i18n:lang("+lang+")").show();
+    /* Use fade in to reduce flickering and improve rendering */
+    var fade_time = 500;
+    $("div:lang("+lang+")").fadeIn(fade_time);
+    $(".i18n:lang("+lang+")").fadeIn(fade_time);
 }
 
 /* NOTE: extract browser/user language dynamically if possible */
@@ -53,6 +55,15 @@ function extract_default_lang() {
 function extract_default_locale() {
     var req_lang = extract_default_lang();
     return req_lang.split(/[_-]/)[0].toLowerCase();
+}
+function locale_to_country(locale) {
+    if (locale === "da") {
+        return "danish";
+    } else if (locale === "en") {
+        return "english";
+    } else {
+        return "english";
+    }
 }
 
 /* Helper to lookup optional site-specific JS conf values with get_site_conf
@@ -78,24 +89,47 @@ function init_quickstart_static() {
        html snippet. We just use requires-login class markers to mark and
        distinguish static and dynamic content.
     */
+    /* Show English content by default */
+    $("#quickstart-english").show();
     /* Make dynamic buttons inactive until logged in */
     $("div.quick-support.requires-login").prop('disabled', true).css('opacity', 0.5).css('cursor', 'default').prop('title', 'Please log in first to view specific feature help and setup').prop("onclick", null);
 }
 
 function init_quickstart_dynamic() {
     /* NOTE: default logged in user - nothing special to do here */
+    /* Show English content by default */
+    $("#quickstart-english").show();
 }
-
+function init_quickstart(logged_in) {
+    console.debug("init QuickStart");
+    if (logged_in) {
+        init_quickstart_dynamic();
+    } else {
+        init_quickstart_static();
+    }
+}
 function init_faq() {
-    console.debug("init faq");
+    console.debug("init FAQ");
     /* Init FAQ as foldable but closed and with individual heights */
     accordion_init(".faq-entries.accordion", false);
 }
+function init_support(logged_in) {
+    console.debug("init Support");
+    $(".snippet-disclaimer").remove();
+    $("#support-content .privacytext").remove();
+    init_quickstart(logged_in);
+    init_faq();
+    $("#support-english").show();
+}
 function init_about() {
     console.debug("init About");
+    $(".snippet-disclaimer").remove();
+    $("#about-english").show();
+    $("#about-content .privacytext").show();
 }
 function init_tips() {
     console.debug("init Tips");
+    $(".snippet-disclaimer").remove();
     /* Init Tips as single entry selected based on current date */
     $("#tips-content .tips-entries").hide();
     //console.debug("hiding all tips");
@@ -129,67 +163,24 @@ function init_tips() {
     accordion_init("#tips-content .tips-entries.accordion", false, "h4");
     $("#tips-content").removeClass("tips-placeholder");
     $("#tips-content .tips-entries").show();
+    $("#tips-english").show();
 }
 
-function load_quickstart_static(base_url) {
-    /* Fetch quickstart contents from snippet specified in configuration */
-    var content_url = base_url+" #quickstart-english";
+function load_support(base_url, logged_in) {
+    /* Fetch Support contents from snippet on base_url */
+    var content_url = base_url+" .english";
     console.debug("get content from "+content_url);
     /* Load content: roughly equivalent to $.get(url, data, success) */
     try {
-        $("#quickstart-content").load(content_url, init_quickstart_static);
+        $("#support-content").load(content_url, function() {
+            init_support(logged_in);
+        });
     } catch(err) {
-        console.error("load quickstart static failed: "+err);
+        console.error("load support failed: "+err);
     }
-}
-function load_quickstart_dynamic(base_url) {
-    /* Fetch quickstart contents from snippet specified in configuration */
-    var content_url = base_url+" #quickstart-english";
-    console.debug("get content from "+content_url);
-    /* Load content: roughly equivalent to $.get(url, data, success) */
-    try {
-        $("#quickstart-content").load(content_url, init_quickstart_dynamic);
-    } catch(err) {
-        console.error("load quickstart dynamic failed: "+err);
-    }
-}
-function load_faq(base_url) {
-    /* Fetch FAQ contents from snippet specified in configuration */
-    var content_url = base_url+" #faq-english";
-    console.debug("get content from "+content_url);
-    /* Load content: roughly equivalent to $.get(url, data, success) */
-    try {
-        $("#faq-content").load(content_url, init_faq);
-    } catch(err) {
-        console.error("load faq failed: "+err);
-    }
-}
-function init_faq_content() {
-    console.log("init faq");
-    accordion_init(".faq-entries.accordion", false);
-}
-function load_faq_content(base_url, country) {
-    /* Fetch FAQ contents from snippet specified in configuration */
-    var content_url = base_url+" #faq-"+country;
-    console.log("get content from "+content_url);
-    /* Load content: roughly equivalent to $.get(url, data, success) */
-    try {
-        $("#faq-content-"+country).load(content_url, init_faq_content);
-    } catch(err) {
-        console.error("load "+country+" faq failed: "+err);
-    }
-}
-function load_support(quickstart_base_url, faq_base_url, logged_in) {
-    /* Fetch Support contents from snippet specified in configuration */
-    if (logged_in) {
-        load_quickstart_dynamic(quickstart_base_url);
-    } else {
-        load_quickstart_static(quickstart_base_url);
-    }
-    load_faq(faq_base_url);
 }
 function load_about(base_url) {
-    /* Fetch About contents from snippet specified in configuration */
+    /* Fetch About contents from snippet on base_url */
     var content_url = base_url+" .english";
     console.debug("get content from "+content_url);
     /* Load content: roughly equivalent to $.get(url, data, success) */
@@ -199,22 +190,8 @@ function load_about(base_url) {
         console.error("load about failed: "+err);
     }
 }
-function init_about_content() {
-    console.log("init About");
-}
-function load_about_content(base_url, country) {
-    /* Fetch About contents from snippet specified in configuration */
-    var content_url = base_url+" ."+country;
-    console.log("get content from "+content_url);
-    /* Load content: roughly equivalent to $.get(url, data, success) */
-    try {
-        $("#about-content-"+country).load(content_url, init_about_content);
-    } catch(err) {
-        console.error("load "+country+" about failed: "+err);
-    }
-}
 function load_tips(base_url) {
-    /* Fetch Tips contents from snippet specified in configuration */
+    /* Fetch Tips contents from snippet on base_url */
     var content_url = base_url+" #tips-english";
     console.debug("get content from "+content_url);
     /* Load content: roughly equivalent to $.get(url, data, success) */
@@ -228,9 +205,10 @@ function load_tips(base_url) {
 function init_tips_content() {
     /* TODO: update to match init_tips if ever used */
     console.log("init tips");
+    $(".snippet-disclaimer").remove();
 }
 function load_tips_content(base_url, country) {
-    /* Fetch Tips contents from snippet specified in configuration */
+    /* Fetch Tips contents from snippet on base_url */
     var content_url = base_url+" #tips-"+country;
     console.log("get content from "+content_url);
     /* Load content: roughly equivalent to $.get(url, data, success) */
@@ -240,11 +218,100 @@ function load_tips_content(base_url, country) {
         console.error("load "+country+" tips failed: "+err);
     }
 }
+function load_tips_lang_content(base_url, language_list) {
+    /* Fetch Tips contents from base_url for for each lang in language_list */
+    /* TODO: fetch base_url content only once and fill in turn? */
+    console.log("get Tips lang content from "+base_url);
+    for (let i = 0; i < language_list.length; i++) {
+        load_tips_content(base_url, locale_to_country(language_list[i]));
+    }
+}
 function load_sitestatus(base_url, system_match, locale) {
     /* Fetch and render Sitestatus contents from JSON events */
     var content_url = base_url;
     //console.debug("get content from "+content_url);
     fill_server_status_popup(content_url, system_match, locale);
+}
+
+/* NOTE: these about/support helpers are for legacy use on site front page */
+function init_support_content(country) {
+    console.log("init Suppport content");
+    $(".snippet-disclaimer").remove();
+    console.debug("distribute support section content: "+country);
+    /* TODO: switch to dynamic detection of all content based on ID pattern */
+    var sections = ["faq"];
+    var content = '', anchor;
+    for (let i = 0; i < sections.length; i++) {
+        anchor = "#support-content-helper-"+country+" #"+sections[i]+"-"+country;
+        console.debug("distribute support section content: "+anchor);
+        content = $(anchor);
+        console.debug("xfer section content: "+content);
+        $("#support-content-"+country+"_"+sections[i]).html(content);
+    }
+    console.debug("clean up support helper");
+    $("#support-content-helper-"+country).remove();
+    /* Init FAQ accordion after inserting content */
+    accordion_init(".faq-entries.accordion", false);
+}
+function load_support_content(base_url, country) {
+    /* Fetch Support contents from snippet on base_url */
+    var content_url = base_url+" #support-"+country;
+    console.log("get content from "+content_url);
+    /* Load content: roughly equivalent to $.get(url, data, success) */
+    try {
+        $("#support-content-helper-"+country).load(content_url, function() {
+            init_support_content(country);
+        });
+    } catch(err) {
+        console.error("load "+country+" support failed: "+err);
+    }
+}
+function load_support_lang_content(base_url, language_list) {
+    /* Fetch Support contents from base_url for for each lang in language_list */
+    /* TODO: fetch base_url content only once and fill in turn? */
+    console.log("get Support lang content from "+base_url);
+    for (let i = 0; i < language_list.length; i++) {
+        load_support_content(base_url, locale_to_country(language_list[i]));
+    }
+}
+function init_about_content(country) {
+    /* Distribute loaded content into sections */
+    console.log("init About content");
+    $(".snippet-disclaimer").remove();
+    console.debug("distribute about section content: "+country);
+    /* TODO: switch to dynamic detection of all content based on ID pattern */
+    var sections = ["intro", "targetdata", "statusnews", "terms"];
+    var content = '', anchor;
+    for (let i = 0; i < sections.length; i++) {
+        anchor = "#about-content-helper-"+country+" #"+sections[i]+"-"+country;
+        console.debug("distribute about section content: "+anchor);
+        content = $(anchor);
+        console.debug("xfer section content: "+content);
+        $("#about-content-"+country+"_"+sections[i]).html(content);
+    }
+    console.debug("clean up about helper");
+    $("#about-content-helper-"+country).remove();
+}
+function load_about_content(base_url, country) {
+    /* Fetch About contents from snippet on base_url */
+    var content_url = base_url+" ."+country;
+    console.log("get content from "+content_url);
+    /* Load content: roughly equivalent to $.get(url, data, success) */
+    try {
+        $("#about-content-helper-"+country).load(content_url, function() {
+            init_about_content(country);
+        });
+    } catch(err) {
+        console.error("load "+country+" about failed: "+err);
+    }
+}
+function load_about_lang_content(base_url, language_list) {
+    /* Fetch About contents from base_url for for each lang in language_list */
+    /* TODO: fetch base_url content only once and fill in turn? */
+    console.log("get About lang content from "+base_url);
+    for (let i = 0; i < language_list.length; i++) {
+        load_about_content(base_url, locale_to_country(language_list[i]));
+    }
 }
 
 

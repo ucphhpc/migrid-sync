@@ -1,217 +1,346 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>ERDA Tips</title>
-    <style>
-      .hidden {
-          display: none;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="tips-english" class="english i18n row" lang="en">
-      <!--
-      <div class="tips-header col-lg-12">
-        <h2 class="">Tip of the Day</h2>
-      </div>
-      -->
-      <div class="tips-entries accordion col-lg-12">
-        <div class="tips-entry">
-        <h4 class="staticpage">New User Interface</h4>
-        <p>
-          Did you know that you can test-drive the new modernized ERDA user
-          interface?
-          You can easily switch between the traditional and the new web
-          interface by changing User Interface from V2 to V3 or vice versa
-          on your <a href="settings.py" target="_blank">Settings</a>.
-        </p>
-        </div>
-        <div class="tips-entry">
-        <h4 class="staticpage">2-Factor Authentication (2FA)</h4>
-        <p>
-          Do you worry about your ERDA account security? ERDA provides optional
-          2FA on all services to significantly reduce the risk of account abuse
-          even if someone gets hold of your password. Due to general security
-          considerations and in particular the recent increase in phishing
-          attacks we recommend enabling it if you haven't already done so. It's
-          done by going through the little
-          <a href="setup.py?topic=twofactor" target="_blank">2-Factor Auth Setup</a> 
-          wizard.
-        </p>
-        </div>
-        <div class="tips-entry">
-        <h4 class="staticpage">Digital Object Identifiers (DOIs) for your Data</h4>
-        <p>
-          Are you aware of the
-          <a href="https://www.go-fair.org/fair-principles/" target="_blank">
-            FAIR principles</a> and did you know that ERDA helps you publish
-          your research in line with those principles? When you create freeze
-          <a href="freezedb.py" target="_blank">Archives</a> on ERDA you
-          have the option of connecting a DOI through the UCPH DOI minting
-          service so that you get a convenient and standardized data reference
-          for your article and help make the data findable, accessible,
-          interoperable and reusable, which is increasingly becoming a common
-          requirement when applying for funding.
-          Please refer to our FAQ and the user guide for more details.
-        </p>
-        </div>
-        <div class="tips-entry">
-        <h4 class="staticpage">Custom Start Page</h4>
-        <p>
-          Do you mainly use e.g. Files when on ERDA web?
-          In your <a href="settings.py" target="_blank">Settings</a> you can
-          select another ERDA Default Page to always go directly there
-          when you log in. Thus, saving a bit of time and effort choosing it
-          from the default Home every time.
-        </p>
-        </div>
-        <div class="tips-entry">
-        <h4 class="staticpage">Basic Web Hosting and Publishing</h4>
-        <p>
-          Are you aware that ERDA integrates basic web hosting for Workgroups
-          e.g. to present your research and projects?
-          When you create a <a href="vgridman.py" target="_blank">Workgroup</a>
-          on ERDA it automatically comes with a fully public and a
-          participant-only web space where you can make your own web
-          pages. Please refer to the user guide for further details.
-        </p>
-        </div>
-        <div class="tips-entry">
-        <h4 class="staticpage">Easy Data Exchange</h4>
-        <p>
-          Do you sometimes need to exchange files with people not on ERDA?
-          You can easily do so by right clicking a folder in your ERDA Files and
-          selecting Share Link and Create. Then choose Read Access and/or Write
-          Access depending on whether you want the link recipient to download or
-          upload files in the selected folder. Anyone you send or hand the link
-          to can access the data without the need to have an ERDA account.
-          Please refer to the user guide for further details.
-        </p>
-        </div>
-        <div class="tips-entry">
-        <h4 class="staticpage">ERDA as a Network Drive</h4>
-        <p>
-          Have you ever wanted to use your ERDA files seamlessly from your
-          local programs?
-          If you set up SFTP or WebDAVS access on your ERDA 
-          <a href="setup.py?topic=sftp" target="_blank">SFTP Setup</a> or
-          <a href="setup.py?topic=webdavs" target="_blank">WebDAVS Setup</a> you
-          can in fact do just that. Depending on platform and personal
-          preferences you can pick either of the two access methods and
-          map/mount your ERDA home on your computer to interact with the files
-          and folders there like any local data.
-          Please refer to the user guide for further details.
-        </p>
-        </div>
-        <div class="tips-entry">
-        <h4 class="staticpage">Easy data Analysis and Presentation</h4>
-        <p>
-          Why worry about having the right tools for your data analysis and
-          presentation on you own computer?
-          In a lot of cases you can just use ERDA and the integrated 
-          <a href="jupyter.py" target="_blank">Jupyter DAG/MODI services</a>
-          to do a many such tasks directly on your ERDA data, without the need
-          to maintain special-purpose programs locally. In teaching or workshop
-          situations this also comes in handy, because it removes the hassle for
-          students/participants to install and setup needed applications in the
-          required versions. With Jupyter they just need a computer and an ERDA
-          account.
-          Please refer to the user guide for further details.
-        </p>
-        </div>
-        <div class="tips-entry">
-        <h4 class="staticpage">Cloud File Sync like Dropdox, OneDrive, etc.</h4>
-        <p>
-          Do you miss the synchronization features from Dropbox and similar to
-          keep your documents and small to medium data sets synchronized across
-          multiple computers?
-          ERDA offers an instance of the Seafile service, which you can use to
-          achieve that. Even better this means that the data remains safe on
-          UCPH premises like your ordinary ERDA data. Seafile additionally comes
-          with a number of sharing, collaboration and encryption features
-          built-in. To get going you need to first follow the interactive
-          <a href="setup.py?topic=seafile" target="_blank">Seafile Setup</a>
-          guide.
-          Please refer to the user guide for further details.
-        </p>
-        </div>
-        <div class="tips-entry">
-        <h4 class="staticpage">Data Distribution with Import Sharelink</h4>
-        <p>
-          Ever needed to hand out a copy of some data to other ERDA users?
-          A common way of distributing files e.g. for courses or workshops is by
-          means of making one or more folders with material and creating
-          read-only sharelinks on them. The participants can then select a
-          folder on ther Files page and use Share Link -> Import from the
-          right-click menu to easily fetch their own copy directly - without
-          downloading to their own computer first. This is particularly
-          convenient for Jupyter notebooks to be used in exercises.
-        </p>
-        </div>
-        <div class="tips-entry">
-        <h4 class="staticpage">External User Accounts with Peers</h4>
-        <p>
-          What if you want to invite externals onto ERDA for collaboration or
-          courses?
-          If you are employed at UCPH you can use the built-in Peers
-          functionality to accept or invite people outside UCPH onto ERDA.That
-          is, with their own personal account using a non-UCPH login. Click Add
-          from your Home page and check the Peers app then Save to activate
-          <a href="peers.py" target="_blank">Peers</a> in your app navigation 
-          menu. From there you can inspect and accept any existing external user
-          account requests that specifically referenced you as contact on the
-          Requested Peers tab. Additionally you can use Enter Peers or Import
-          Peers to define and invite externals to sign up easily. For all such
-          peers you define an Expire value, which is used by the administrators
-          to time-limit peer account access and accept the mandatory annual
-          account renewals in the given period. You can always extend it later
-          if needed, however. Peers can similarly be used to preserve access for
-          your former colleagues if you need it for continued collaboration.
-        </p>
-        </div>
-        <!-- TODO: add more tips like
-        - SSHFS performance
-        - MIST cloud
-        - User profile pic?
-        - Duplicati?
-        - datatransfers?
-        -->
-      </div>
-    </div>
-    <div id="tips-danish" class="danish i18n row hidden" lang="da">
-      <!--
-      <div class="tips-header col-lg-12">
-        <h2 class="staticpage">Dagens tip</h2>
-      </div>
-      -->
-      <div class="tips-entries accordion col-lg-12">
-        <div class="tips-entry">
-        <h4 class="staticpage">Ny brugergrænseflade</h4>
-        <p>
-          Vidste du at du kan prøvekøre ERDAs nye moderniserede
-          brugergrænseflade?
-          Du kan nemt skifte mellem den traditionelle - og den nye
-          brugergrænseflade ved at skifte User Interface fra V2 til V3 eller
-          omvendt på din <a href="settings.py" target="_blank">Settings</a>.
-        </p>
-        </div>
-        <!-- TODO: translate the other English tips -->
+<!-- NOTE: we mark lang undecided here and set individually below -->
+<html lang="">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            ERDA Tips
+        </title>
 
-        <!-- TODO: add more tips like
-        - Seafile
-        - Jupyter
-        - Map drive
-        - SSHFS performance
-        - External user collab
-        - Cloud
-        - User profile pic?
-        - Duplicati?
-        - datatransfers?
-        -->
-      </div>
-    </div>
+        <!-- site default style -->
+        <link rel="stylesheet" type="text/css" href="/images/default.css" media="screen"/>
 
-  </body>
+        <!-- site basic skin style -->
+        <!--<link rel="stylesheet" type="text/css" href="/images/static-skin.css" media="screen"/>-->
+        <link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/core.css" media="screen"/>
+
+        <!-- base page styles -->
+        <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
+
+        <!-- country-dropdown -->
+        <link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/dd.css" />
+        <link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/flags.css" />
+
+        <!-- override with any site-specific styles -->
+        <link rel="stylesheet" type="text/css" href="/images/site-custom.css"
+              media="screen"/>
+
+        <!-- site skin style -->
+        <link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/ui-theme.css" media="screen"/>
+        <link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/ui-theme.custom.css" media="screen"/>
+
+
+        <link rel="icon" type="image/vnd.microsoft.icon"
+              href="/images/skin/erda-ucph-science/favicon.ico"/>
+
+        <script type="text/javascript" src="/images/js/jquery.js"></script>
+        <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+        <script type="text/javascript" src="/assets/js/V2/ui-dynamic.js"></script>
+        <script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
+
+        <script type="text/javascript">
+         $(document).ready(function() {
+             var locale = extract_default_locale();
+             /* Init supported languages to just english and extend based on lang select */
+             var supported_languages = ['en'];
+             var default_lang = supported_languages[0];
+             var user_lang;
+             /* Extend supported_languages with all entries from select elem */
+             $("#langselect option").each(function() {
+                 var option_val = $(this).val();
+                 if (supported_languages.indexOf(option_val) < 0) {
+                     supported_languages.push($(this).val());
+                 }
+             });
+             //console.debug("found supported langs: "+supported_languages);
+             if (locale && supported_languages.indexOf(locale) >= 0)  {
+                 user_lang = locale;
+             } else {
+                 console.warn(locale+" not supported - fall back to: "+default_lang);
+                 user_lang = default_lang;
+             }
+
+             /* Init tips accordion */
+             accordion_init(".tips-entries.accordion", false);
+
+             $("#langselect").on('change', function() { 
+                 var lang = $(this).val();
+                 //alert("switch_language: "+lang);
+                 switch_language(lang);
+             }
+             );
+             $("#langselect").val(user_lang);
+             switch_language(user_lang);
+             $("#langselect").msDropdown().fadeIn(500);
+         });
+        </script>
+
+    </head>
+
+    <body class="staticpage">
+        <div id="topspace">
+        </div>
+        <div id="toplogo" class="staticpage">
+            <div id="toplogoleft" class="staticpage">
+            </div>
+            <div id="toplogocenter" class="staticpage">
+                <img src="/images/skin/erda-ucph-science/banner-logo.jpg" id="logoimagecenter"
+                     class="staticpage" alt="site logo center"/>
+                <span id="logotitle" class="staticpage">
+                    ERDA Tips
+                </span>
+            </div>
+            <div id="toplogoright" class="staticpage">
+            </div>
+        </div>
+
+        <div class="contentblock staticpage" id="nomenu">
+            <div class="precontentwidgets">
+                <!-- begin user supplied pre content widgets -->
+                <!-- empty -->
+                <!-- end user supplied pre content widgets -->
+            </div>
+            <div id="migheader">
+            </div>
+            <div class="staticpage" id="content">
+                <div class="righttext langselect">
+                    <!-- Please refer to /images/lib/country-dropdown/index.html for more choices -->
+                    <select name="languages" id="langselect" class="hidden">
+                        <option value='da' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag dk" data-title="Denmark">Dansk</option>
+                        <option value='en' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag us" data-title="United States" selected="selected">English</option>
+                    </select>
+                </div>
+
+                <div id="tips-english" class="english i18n row hidden" lang="en">
+                    <div id="tips-disclaimer-english" class="col-lg-12 snippet-disclaimer">
+                        <p class="systemnote">
+                            This is only a helper page which is used by the
+                            <a class="urllink" href="/">actual front page</a>
+                        </p>
+                        <div class="vertical-spacer"></div>
+                    </div>
+
+                    <div class="tips-entries accordion col-lg-12">
+                        <div class="tips-entry">
+                            <h4 class="staticpage">New User Interface</h4>
+                            <p>
+                                Did you know that you can test-drive the new modernized ERDA user
+                                interface?
+                                You can easily switch between the traditional and the new web
+                                interface by changing User Interface from V2 to V3 or vice versa
+                                on your <a href="settings.py" target="_blank">Settings</a>.
+                            </p>
+                        </div>
+                        <div class="tips-entry">
+                            <h4 class="staticpage">2-Factor Authentication (2FA)</h4>
+                            <p>
+                                Do you worry about your ERDA account security? ERDA provides optional
+                                2FA on all services to significantly reduce the risk of account abuse
+                                even if someone gets hold of your password. Due to general security
+                                considerations and in particular the recent increase in phishing
+                                attacks we recommend enabling it if you haven't already done so. It's
+                                done by going through the little
+                                <a href="setup.py?topic=twofactor" target="_blank">2-Factor Auth Setup</a> 
+                                wizard.
+                            </p>
+                        </div>
+                        <div class="tips-entry">
+                            <h4 class="staticpage">Digital Object Identifiers (DOIs) for your Data</h4>
+                            <p>
+                                Are you aware of the
+                                <a href="https://www.go-fair.org/fair-principles/" target="_blank">
+                                    FAIR principles</a> and did you know that ERDA helps you publish
+                                your research in line with those principles? When you create freeze
+                                <a href="freezedb.py" target="_blank">Archives</a> on ERDA you
+                                have the option of connecting a DOI through the UCPH DOI minting
+                                service so that you get a convenient and standardized data reference
+                                for your article and help make the data findable, accessible,
+                                interoperable and reusable, which is increasingly becoming a common
+                                requirement when applying for funding.
+                                Please refer to our FAQ and the user guide for more details.
+                            </p>
+                        </div>
+                        <div class="tips-entry">
+                            <h4 class="staticpage">Custom Start Page</h4>
+                            <p>
+                                Do you mainly use e.g. Files when on ERDA web?
+                                In your <a href="settings.py" target="_blank">Settings</a> you can
+                                select another ERDA Default Page to always go directly there
+                                when you log in. Thus, saving a bit of time and effort choosing it
+                                from the default Home every time.
+                            </p>
+                        </div>
+                        <div class="tips-entry">
+                            <h4 class="staticpage">Basic Web Hosting and Publishing</h4>
+                            <p>
+                                Are you aware that ERDA integrates basic web hosting for Workgroups
+                                e.g. to present your research and projects?
+                                When you create a <a href="vgridman.py" target="_blank">Workgroup</a>
+                                on ERDA it automatically comes with a fully public and a
+                                participant-only web space where you can make your own web
+                                pages. Please refer to the user guide for further details.
+                            </p>
+                        </div>
+                        <div class="tips-entry">
+                            <h4 class="staticpage">Easy Data Exchange</h4>
+                            <p>
+                                Do you sometimes need to exchange files with people not on ERDA?
+                                You can easily do so by right clicking a folder in your ERDA Files and
+                                selecting Share Link and Create. Then choose Read Access and/or Write
+                                Access depending on whether you want the link recipient to download or
+                                upload files in the selected folder. Anyone you send or hand the link
+                                to can access the data without the need to have an ERDA account.
+                                Please refer to the user guide for further details.
+                            </p>
+                        </div>
+                        <div class="tips-entry">
+                            <h4 class="staticpage">ERDA as a Network Drive</h4>
+                            <p>
+                                Have you ever wanted to use your ERDA files seamlessly from your
+                                local programs?
+                                If you set up SFTP or WebDAVS access on your ERDA 
+                                <a href="setup.py?topic=sftp" target="_blank">SFTP Setup</a> or
+                                <a href="setup.py?topic=webdavs" target="_blank">WebDAVS Setup</a> you
+                                can in fact do just that. Depending on platform and personal
+                                preferences you can pick either of the two access methods and
+                                map/mount your ERDA home on your computer to interact with the files
+                                and folders there like any local data.
+                                Please refer to the user guide for further details.
+                            </p>
+                        </div>
+                        <div class="tips-entry">
+                            <h4 class="staticpage">Easy data Analysis and Presentation</h4>
+                            <p>
+                                Why worry about having the right tools for your data analysis and
+                                presentation on you own computer?
+                                In a lot of cases you can just use ERDA and the integrated 
+                                <a href="jupyter.py" target="_blank">Jupyter DAG/MODI services</a>
+                                to do a many such tasks directly on your ERDA data, without the need
+                                to maintain special-purpose programs locally. In teaching or workshop
+                                situations this also comes in handy, because it removes the hassle for
+                                students/participants to install and setup needed applications in the
+                                required versions. With Jupyter they just need a computer and an ERDA
+                                account.
+                                Please refer to the user guide for further details.
+                            </p>
+                        </div>
+                        <div class="tips-entry">
+                            <h4 class="staticpage">Cloud File Sync like Dropdox, OneDrive, etc.</h4>
+                            <p>
+                                Do you miss the synchronization features from Dropbox and similar to
+                                keep your documents and small to medium data sets synchronized across
+                                multiple computers?
+                                ERDA offers an instance of the Seafile service, which you can use to
+                                achieve that. Even better this means that the data remains safe on
+                                UCPH premises like your ordinary ERDA data. Seafile additionally comes
+                                with a number of sharing, collaboration and encryption features
+                                built-in. To get going you need to first follow the interactive
+                                <a href="setup.py?topic=seafile" target="_blank">Seafile Setup</a>
+                                guide.
+                                Please refer to the user guide for further details.
+                            </p>
+                        </div>
+                        <div class="tips-entry">
+                            <h4 class="staticpage">Data Distribution with Import Sharelink</h4>
+                            <p>
+                                Ever needed to hand out a copy of some data to other ERDA users?
+                                A common way of distributing files e.g. for courses or workshops is by
+                                means of making one or more folders with material and creating
+                                read-only sharelinks on them. The participants can then select a
+                                folder on ther Files page and use Share Link -> Import from the
+                                right-click menu to easily fetch their own copy directly - without
+                                downloading to their own computer first. This is particularly
+                                convenient for Jupyter notebooks to be used in exercises.
+                            </p>
+                        </div>
+                        <div class="tips-entry">
+                            <h4 class="staticpage">External User Accounts with Peers</h4>
+                            <p>
+                                What if you want to invite externals onto ERDA for collaboration or
+                                courses?
+                                If you are employed at UCPH you can use the built-in Peers
+                                functionality to accept or invite people outside UCPH onto ERDA. That
+                                is, with their own personal account using a non-UCPH login. Click Add
+                                from your Home page and check the Peers app then Save to activate
+                                <a href="peers.py" target="_blank">Peers</a> in your app navigation 
+                                menu. From there you can inspect and accept any existing external user
+                                account requests that specifically referenced you as contact on the
+                                Requested Peers tab. Additionally you can use Enter Peers or Import
+                                Peers to define and invite externals to sign up easily. For all such
+                                peers you define an Expire value, which is used by the administrators
+                                to time-limit peer account access and accept the mandatory annual
+                                account renewals in the given period. You can always extend it later
+                                if needed, however. Peers can similarly be used to preserve access for
+                                your former colleagues if you need it for continued collaboration.
+                            </p>
+                        </div>
+                        <!-- TODO: add more tips like
+                           - SSHFS performance
+                           - MIST cloud
+                           - User profile pic?
+                           - Duplicati?
+                           - datatransfers?
+                        -->
+                    </div>
+                </div>
+
+                <div id="tips-danish" class="danish i18n row hidden" lang="da">
+                    <div id="tips-disclaimer-danish" class="col-lg-12 snippet-disclaimer">
+                        <p class="systemnote">
+                            Dette er kun en hjælpeside med indhold som benyttes af den
+                            <a class="urllink" href="/">rigtige forside</a>
+                        </p>
+                        <div class="vertical-spacer"></div>
+                    </div>
+
+                    <div class="tips-entries accordion col-lg-12">
+                        <div class="tips-entry">
+                            <h4 class="staticpage">Ny brugergrænseflade</h4>
+                            <p>
+                                Vidste du at du kan prøvekøre ERDAs nye moderniserede
+                                brugergrænseflade?
+                                Du kan nemt skifte mellem den traditionelle - og den nye
+                                brugergrænseflade ved at skifte User Interface fra V2 til V3 eller
+                                omvendt på din <a href="settings.py" target="_blank">Settings</a>.
+                            </p>
+                        </div>
+                        <!-- TODO: translate the other English tips -->
+
+                        <!-- TODO: add more tips like
+                           - Seafile
+                           - Jupyter
+                           - Map drive
+                           - SSHFS performance
+                           - External user collab
+                           - Cloud
+                           - User profile pic?
+                           - Duplicati?
+                           - datatransfers?
+                        -->
+
+                    </div>
+                </div>
+
+                <div id="privacy-english" class="privacytext staticpage i18n english row hidden" lang="en">
+                    <div class="col-lg-12">
+                        <p class="privacytitle i18n" lang="en">Privacy and Rights</p>
+                        <p class="i18n" lang="en">
+                            <a href="/public/site-privacy-policy.pdf">Privacy Policy</a>
+                            &amp; <a href="/public/cookie-policy.pdf">Cookie Policy</a>
+                        </p>
+                    </div>
+                </div>
+                <div id="privacy-danish" class="privacytext staticpage i18n danish row hidden" lang="da">
+                    <div class="col-lg-12">
+                        <p class="privacytitle i18n" lang="da">Privatliv og rettigheder</p>
+                        <p class="i18n" lang="da">
+                            <a href="/public/site-privacy-policy.pdf">Privacy Policy</a>
+                            &amp; <a href="/public/cookie-policy.pdf">Cookie Policy</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
 </html>
