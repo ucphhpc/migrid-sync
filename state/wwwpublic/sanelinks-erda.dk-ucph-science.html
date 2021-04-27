@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<!-- NOTE: we mark lang undecided here and set individually below -->
+<html lang="">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            ERDA SaneLinks
+        </title>
+
+        <!-- site default style -->
+        <link rel="stylesheet" type="text/css" href="/images/default.css" media="screen"/>
+
+        <!-- site basic skin style -->
+        <!--<link rel="stylesheet" type="text/css" href="/images/static-skin.css" media="screen"/>-->
+        <link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/core.css" media="screen"/>
+
+        <!-- base page styles -->
+        <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
+
+        <!-- country-dropdown -->
+        <link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/dd.css" />
+        <link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/flags.css" />
+
+        <!-- override with any site-specific styles -->
+        <link rel="stylesheet" type="text/css" href="/images/site-custom.css"
+              media="screen"/>
+
+        <!-- site skin style -->
+        <link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/ui-theme.css" media="screen"/>
+        <link rel="stylesheet" type="text/css" href="/images/skin/erda-ucph-science/ui-theme.custom.css" media="screen"/>
+
+
+        <link rel="icon" type="image/vnd.microsoft.icon"
+              href="/images/skin/erda-ucph-science/favicon.ico"/>
+
+        <script type="text/javascript" src="/images/js/jquery.js"></script>
+        <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+        <script type="text/javascript" src="/assets/js/V2/ui-dynamic.js"></script>
+        <script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
+
+        <script type="text/javascript">
+         function translate_safelink(lang) {
+             // Translate links in safelinkurl to human-readable form
+             /* 
+                https://eur02.safelinks.protection.outlook.com/?url=http%3A%2F%2Fdoi.org%2F10.17894%2Fucph.dad89ec6-bbe5-474a-a9ce-383d5e21c81e&data=04%7C01%7Csomeone%40nbi.ku.dk%7C22329b722b8b4798e2ca08d9096d40e8%7Ca3927f91cda14696af898c9f1ceffa91%7C0%7C0%7C637551187113503702%7CUnknown%7CTWFpbGZsb3d8eyJWIjoiMC4wLjAwMDAiLCJQIjoiV2luMzIiLCJBTiI6Ik1haWwiLCJXVCI6Mn0%3D%7C1000&sdata=pGhmSFDJFs6oJPbXS0Atcd8x0Vh75vg70OJGLHZnRgw%3D&reserved=0
+                
+                ->
+                
+                http://doi.org/10.17894/ucph.dad89ec6-bbe5-474a-a9ce-383d5e21c81e
+              */
+             console.log("clicked translate: "+lang);
+             var safelinkurl = $("#safelinkurl-"+lang).val();
+             if (!safelinkurl) {
+                 console.log("no "+lang+" safelink provided");
+                 return false;
+             }
+             console.log("found safelink: "+safelinkurl);
+             var queryString = safelinkurl.split('?')[1];
+             const urlParams = new URLSearchParams(queryString);
+             var sanelinkurl = "";
+             try {
+                 var sanelinkurl = urlParams.get('url');
+                 console.log("url part is: "+sanelinkurl);
+             } catch(err) {
+                 console.log("error: "+err);
+             }
+             var out = ""
+             if (!sanelinkurl) {
+                 if (lang == "danish") {
+                     out = "Fejl: kunne ikke udtrække url fra angivet SafeLink: "+safelinkurl;
+                 } else {
+                     out = "Error: could not extract url from provided SafeLink: "+safelinkurl;
+                 }
+             } else {
+                 if (lang == "danish") {
+                     out = "<h4>SaneLink</h4><p>";
+                     out += "<a class='urllink' href='"+sanelinkurl+"'>"+sanelinkurl+"</a></p>";
+                     out += "<p><span class='warningtext'>";
+                     out += "Benyt venligst KUN det rå link ovenfor, hvis du er SIKKER på det er uskadeligt</span>. ";
+                     out += "Ellers brug hellere <a href='"+safelinkurl+"'>originalen</a>.</p>";
+                 } else {
+                     out = "<h4>SaneLink</h4><p>";
+                     out += "<a class='urllink' href='"+sanelinkurl+"'>"+sanelinkurl+"</a></p>";
+                     out += "<p><span class='warningtext'>";
+                     out += "Please ONLY follow the raw link above if you are SURE it's safe</span>. ";
+                     out += "Otherwise better use <a href='"+safelinkurl+"'>the original</a>.</p>";
+                 }
+             }
+             $("#sanelinkurl-"+lang).html(out);
+         }
+
+
+         $(document).ready(function() {
+             var locale = extract_default_locale();
+             /* Init supported languages to just english and extend based on lang select */
+             var supported_languages = ['en'];
+             var default_lang = supported_languages[0];
+             var user_lang;
+             /* Extend supported_languages with all entries from select elem */
+             $("#langselect option").each(function() {
+                 var option_val = $(this).val();
+                 if (supported_languages.indexOf(option_val) < 0) {
+                     supported_languages.push($(this).val());
+                 }
+             });
+             //console.debug("found supported langs: "+supported_languages);
+             if (locale && supported_languages.indexOf(locale) >= 0)  {
+                 user_lang = locale;
+             } else {
+                 console.warn(locale+" not supported - fall back to: "+default_lang);
+                 user_lang = default_lang;
+             }
+
+             $("#langselect").on('change', function() { 
+                 var lang = $(this).val();
+                 //alert("switch_language: "+lang);
+                 switch_language(lang);
+             }
+             );
+             $("#langselect").val(user_lang);
+             switch_language(user_lang);
+             $("#langselect").msDropdown().fadeIn(500);
+         });
+        </script>
+
+    </head>
+
+    <body class="staticpage">
+        <div id="topspace">
+        </div>
+        <div id="toplogo" class="staticpage">
+            <div id="toplogoleft" class="staticpage">
+            </div>
+            <div id="toplogocenter" class="staticpage">
+                <img src="/images/skin/erda-ucph-science/banner-logo.jpg" id="logoimagecenter"
+                     class="staticpage" alt="site logo center"/>
+                <span id="logotitle" class="staticpage">
+                    ERDA SaneLinks
+                </span>
+            </div>
+            <div id="toplogoright" class="staticpage">
+            </div>
+        </div>
+
+        <div class="contentblock staticpage" id="nomenu">
+            <div class="precontentwidgets">
+                <!-- begin user supplied pre content widgets -->
+                <!-- empty -->
+                <!-- end user supplied pre content widgets -->
+            </div>
+            <div id="migheader">
+            </div>
+            <div class="staticpage" id="content">
+                <div class="righttext langselect">
+                    <!-- Please refer to /images/lib/country-dropdown/index.html for more choices -->
+                    <select name="languages" id="langselect" class="hidden">
+                        <option value='da' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag dk" data-title="Denmark">Dansk</option>
+                        <option value='en' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag us" data-title="United States" selected="selected">English</option>
+                    </select>
+                </div>
+
+                <div id="sanelinks-english" class="english i18n row hidden" lang="en">
+
+                    <div id="translate-english" class="col-lg-12">
+                        <h2 class="staticpage">ERDA SaneLinks</h2>
+                        <p>
+                            UCPH employs the so-called SafeLinks service from
+                            Microsoft, which mutilates links in email beyond
+                            recognition.<br/>
+                            Like in this horrendous example:
+                        </p>
+                        <textarea readonly="readonly" class=fillwidth>https://eur02.safelinks.protection.outlook.com/?url=http%3A%2F%2Fdoi.org%2F10.17894%2Fucph.dad89ec6-bbe5-474a-a9ce-383d5e21c81e&data=04%7C01%7Csomeone%40nbi.ku.dk%7C22329b722b8b9a98e2ca08d9096d40e8%7Ca3927f93cda14695af898c9f1ceffa91%7C0%7C0%7C637551187113503702%7CUnknown%7CTWFpbGZsc3d8eyJWIjoiMC4wLjAwMDAiLCJQIjoiV2luMzIiLCJBTiI6Ik1haWwiLCJXVCI6Mn0%3D%7C1000&sdata=pGhmSFDJFs6oJPbXS0Atcd8x0Vh65vg70OJGLHZnRgw%3D&reserved=0</textarea>
+                        <p>
+                            You can copy/paste such obfuscated links below and
+                            get them translated to a sane form.
+                        </p>
+                        <h4>"SafeLink"</h4>
+                        <form id="safelinktranslate-english" action="" name="translate">
+                            <input type="url" name="safelinkurl-english" id="safelinkurl-english"
+                                   placeholder="Paste mangled URL here ..." size=60/>
+                            <button type="submit" onClick="translate_safelink('english');
+                                                     return false">Translate</button>
+                        </form>
+                        <div id="sanelinkurl-english">
+                            <!-- Automatically filled by AJAX -->
+                        </div>
+                        <div class="vertical-spacer"></div>
+                    </div>
+                </div>
+
+                <div id="sanelinks-danish" class="danish i18n row hidden" lang="da">
+                    <div id="translate-danish" class="col-lg-12">
+                        <h2 class="staticpage">SaneLinks</h2>
+                        <p>
+                            KU benytter den såkaldte SafeLinks service fra 
+                            Microsoft, hvilket betyder at links i email
+                            forvanskes til ukendelighed.<br/>
+                            Som i rædselseksemplet her:
+                        </p>
+                        <textarea readonly="readonly" class=fillwidth>https://eur02.safelinks.protection.outlook.com/?url=http%3A%2F%2Fdoi.org%2F10.17894%2Fucph.dad89ec6-bbe5-474a-a9ce-383d5e21c81e&data=04%7C01%7Csomeone%40nbi.ku.dk%7C22329b722b8b9a98e2ca08d9096d40e8%7Ca3927f93cda14695af898c9f1ceffa91%7C0%7C0%7C637551187113503702%7CUnknown%7CTWFpbGZsc3d8eyJWIjoiMC4wLjAwMDAiLCJQIjoiV2luMzIiLCJBTiI6Ik1haWwiLCJXVCI6Mn0%3D%7C1000&sdata=pGhmSFDJFs6oJPbXS0Atcd8x0Vh65vg70OJGLHZnRgw%3D&reserved=0</textarea>
+                        <p>
+                            Du kan klippe/klistre sådanne forvanskede links ind
+                            nedenfor og få  dem oversat til en læsbar form.
+                        </p>
+                        <h4>"SafeLink"</h4>
+                        <form id="safelinktranslate-danish" action="" name="translate">
+                            <input type="url" name="safelinkurl-danish" id="safelinkurl-danish"
+                                   placeholder="Indsæt forvansket URL her ..." size=60/>
+                            <button type="submit" onClick="translate_safelink('danish');
+                                                     return false">Oversæt</button>
+                        </form>
+                        <div id="sanelinkurl-danish">
+                            <!-- Automatically filled by AJAX -->
+                        </div>
+                        <div class="vertical-spacer"></div>
+                    </div>
+                </div>
+                
+                <div class="vertical-spacer"></div>
+
+                <div id="privacy-english" class="privacytext staticpage i18n english row hidden" lang="en">
+                    <div class="col-lg-12">
+                        <h2 class="privacytitle i18n" lang="en">Privacy and Rights</h2>
+                        <p class="i18n" lang="en">
+                            <a href="/public/site-privacy-policy.pdf">Privacy Policy</a>
+                            &amp; <a href="/public/cookie-policy.pdf">Cookie Policy</a>
+                        </p>
+                    </div>
+                </div>
+                <div id="privacy-danish" class="privacytext staticpage i18n danish row hidden" lang="da">
+                    <div class="col-lg-12">
+                        <h2 class="privacytitle i18n" lang="da">Privatliv og rettigheder</h2>
+                        <p class="i18n" lang="da">
+                            <a href="/public/site-privacy-policy.pdf">Privacy Policy</a>
+                            &amp; <a href="/public/cookie-policy.pdf">Cookie Policy</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
