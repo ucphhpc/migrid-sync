@@ -1,5 +1,26 @@
 [
   {
+    "status": "AUTO",
+    "work_start": "2021-05-02T09:00:00+02:00", 
+    "systems": [
+        "ERDA", "IDMC"
+    ], 
+    "announce_start": "2021-27-04T14:00:00+01:00", 
+    "title": {
+      "EN": "Planned DAG and HEL Maintenance", 
+      "DK": "Planlagt vedligehold på DAG og HEL"
+    }, 
+    "services": [
+        "DAG", "HEL"
+    ], 
+    "work_end": "2021-05-02T16:00:00+02:00",
+    "description": {
+      "EN": "Update and general maintenance of DAG and HEL to apply pending host system updates and roll out significantly updated Jupyter notebook images. The work will involve down-time for low-level updates to complete. Thus all DAG and HEL Jupyter services will be temporarily unavailable one or more times during the maintenance window. The notebook updates include removal of Python 2, which reached official End-of-Life January 1st 2020, as well as several general package updates. Please report any issues you may encounter after the update.", 
+      "DK": "Opdatering og generelt vedligehold af DAG og HEL inklusive udestående grundlæggende systemopdateringer samt udrulning af markant opdaterede Jupyter notebooks. Arbejdet vil medføre perioder med nedetid ved aktivering af dybereliggende opdateringer. Således vil alle DAG og HEL Jupyter-services midlertidigt være utilgængelige i løbet af vedligeholdelsesvinduet. Notebook-opdateringerne inkluderer fjernelse af Python 2, som officielt løb ud af support 1. januar 2020. såvel som adskillige generelle pakkeopdateringer. Meld gerne tilbage om eventuelle problemer opstået efterfølgende."
+    }, 
+    "announce_end": "2021-05-03T12:00:00+02:00"
+  },
+  {
     "status": "AUTO", 
     "work_start": "2021-04-13T07:30:00+02:00", 
     "systems": [
