@@ -10,16 +10,22 @@ function show_faq() {
 
 </script>
 <p>
-MPI Oriented Development and Investigation or MODI provides a cluster of 8 compute nodes that can be utilized for long running batch jobs. <br/>
-The system is configured as a SLURM cluster in which regular slurm commands can be utilized.<br/>
-This includes functionality such as 'sbatch', 'squeue', 'sinfo' and friends. <br/><br/>
+MPI Oriented Development and Investigation or MODI provides a cluster of 8
+compute nodes that can be utilized for long running batch jobs.<br/>
+Each node offers dual AMD EPYC 32-core CPUs and 256GB of memory. Nodes are
+connected with a 25Gbit network providing RoCE for efficient communication.<br/>
+The system is configured as a SLURM cluster so that regular SLURM commands like
+<code>sbatch</code>, <code>squeue</code>, <code>sinfo</code> and friends should
+be used to schedule and monitor your programs running as batch jobs.
+<br/><br/>
 
 The current setup does not at the moment support interactive functionalities
-such as 'srun' and similar.<br/><br/>
+such as <code>srun</code> and similar.<br/><br/>
 
 Please refer to the separate 
 <a href="/public/MODI-user-guide.pdf" target=_blank>MODI user guide</a> for
-details about using MODI. In particular the part about running 'sbatch' commands
-using the shared modi mount directory is important for jobs to succeed. 
-
+details about using MODI.<br/><br/>
+<span class="warningtext">NOTE</span>: it's particularly important to pay
+ attention to the part about running <code>sbatch</code> commands using the
+shared <code>modi_mount</code> directory for jobs to succeed.
 </p>
