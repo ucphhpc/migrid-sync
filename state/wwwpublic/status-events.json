@@ -1,5 +1,26 @@
 [
   {
+    "status": "AUTO", 
+    "work_start": "2021-05-10T17:00:00+02:00", 
+    "systems": [
+        "IDMC"
+    ],
+    "announce_start": "2021-05-04T09:30:00+02:00",
+    "title": {
+      "EN": "Planned IDMC Migration and Maintenance",
+      "DK": "Planlagt migrering og vedligehold af IDMC"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2021-05-11T08:00:00+02:00",
+    "description": {
+      "EN": "We will migrate the IDMC frontend to a new and fundamentally upgraded host and plan to apply other pending updates in the process. The work will require some downtime during the migration. Thus, all services will be unavailable for a while.",
+      "DK": "Vi migrerer IDMCs frontend til en ny og grundlæggende opdateret maskine og lægger udestående opdateringer på ved samme lejlighed. Arbejdet vil kræve noget nedetid i forbindelse med migreringen. Alle services vil derfor være utilgængelige i et stykke tid."
+    },
+    "announce_end": "2021-05-11T12:00:00+02:00"
+  },
+  {
     "status": "AUTO",
     "work_start": "2021-05-02T09:00:00+02:00", 
     "systems": [
