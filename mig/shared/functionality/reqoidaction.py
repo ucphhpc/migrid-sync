@@ -295,6 +295,9 @@ to any relevant %(vgrid_label)ss using one of the management links:
 
 --- If user must be denied access or deleted at some point ---
 
+Command to reject user account request on %(site)s server:
+%(command_user_reject)s
+
 Remove the user
 %(distinguished_name)s
 from any relevant %(vgrid_label)ss using one of the management links:

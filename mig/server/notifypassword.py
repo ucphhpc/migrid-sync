@@ -100,7 +100,7 @@ if '__main__' == __name__:
         else:
             print('Error: %s not supported!' % opt)
             usage()
-            sys.exit(0)
+            sys.exit(1)
 
     if args:
         print('Error: Non-option arguments are not supported - missing quotes?')

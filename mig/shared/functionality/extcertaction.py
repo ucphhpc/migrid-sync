@@ -269,6 +269,9 @@ to any relevant %(vgrid_label)ss using one of the management links:
 
 ---
 
+Command to reject user account request on %(site)s server:
+%(command_user_reject)s
+
 Command to suspend user on %(site)s server:
 %(command_user_suspend)s
 

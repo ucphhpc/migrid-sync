@@ -1861,7 +1861,8 @@ def _user_general_notify(user_id, targets, conf_path, db_path,
         user_dict = user_db[user_id]
     else:
         user_dict = {}
-        errors.append('No such user: %s' % user_id)
+        if get_fields:
+            errors.append('No such user: %s' % user_id)
     # Extract username and password intelligently
     if 'username' in get_fields:
         username = user_dict.get(configuration.user_openid_alias, '')
@@ -1930,6 +1931,26 @@ def user_migoid_notify(user_id, targets, conf_path, db_path, verbose=False,
     """Alias for user_account_notify"""
     return user_account_notify(user_id, targets, conf_path, db_path, verbose,
                                admin_copy)
+
+
+def user_request_reject(user_id, targets, conf_path, db_path, verbose=False,
+                        admin_copy=False):
+    """Find notification addresses for user_id and targets"""
+
+    (configuration, _, addresses, errors) = _user_general_notify(
+        user_id, targets, conf_path, db_path, verbose)
+    # Optionally send a copy to site admins
+    if admin_copy and configuration.admin_email and \
+            isinstance(configuration.admin_email, basestring):
+        admin_addresses = []
+        # NOTE: Explicitly separated by ', ' to distinguish Name <abc> form
+        parts = configuration.admin_email.split(', ')
+        for addr in parts:
+            (real_name, plain_addr) = parseaddr(addr.strip())
+            if plain_addr:
+                admin_addresses.append(plain_addr)
+        addresses['email'] += admin_addresses
+    return (configuration, addresses, errors)
 
 
 def user_password_check(user_id, conf_path, db_path, verbose=False,

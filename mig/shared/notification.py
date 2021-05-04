@@ -321,6 +321,38 @@ The full status and output files are available at:
  e.g. in case you think this is a spam message.
 ****************************************************************************
         ''' % var_dict
+    elif status == 'ACCOUNTREQUESTREJECT':
+        from_id = args_list[0]
+        user_dict = args_list[1]
+        auth_type = args_list[2]
+        reason = args_list[3]
+        short_title = configuration.short_title
+        anon_migoid_url = configuration.migserver_https_sid_url
+        # Only include actual values in query
+        req_fields = [i for i in cert_field_map if user_dict.get(i, '')]
+        user_req = canonical_user(configuration, user_dict, req_fields)
+        # Mark ID fields as readonly in the form to limit errors
+        user_req['ro_fields'] = keyword_auto
+        id_query = '%s' % urlencode(user_req)
+        user_dict.update(user_req)
+        header = '%s account request rejected' % configuration.short_title
+        txt += """This is an auto-generated account request rejection from %s.
+
+Reject message: %s
+
+Please refer to the inline form help and the online account sign up intros for
+detailed instructions.
+""" % (short_title, reason)
+        txt += """
+To try again with most fields pre-filled please head to:
+%s/cgi-sid/req%s.py?%s
+
+Feel free to contact the site admins (%s) if you are still in doubt.
+
+Regards,
+The %s Admins.
+""" % (anon_migoid_url, auth_type, id_query, configuration.admin_email,
+            short_title)
     elif status == 'PASSWORDREMINDER':
         from_id = args_list[0]
         password = args_list[1]

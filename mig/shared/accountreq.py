@@ -609,6 +609,9 @@ sudo su - %s
     cmd_helpers['command_user_delete'] = """As '%s' on %s:
 ./mig/server/deleteuser.py -i '%s'""" % \
         (mig_user, configuration.server_fqdn, user_id)
+    cmd_helpers['command_user_reject'] = """As '%s' on %s:
+./mig/server/rejectuser.py -a %s -C -u '%s' -r 'missing required info'""" % \
+        (mig_user, configuration.server_fqdn, kind, req_path)
     return cmd_helpers
 
 
