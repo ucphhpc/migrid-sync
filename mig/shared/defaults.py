@@ -138,6 +138,9 @@ generic_valid_days = custom_valid_days = 365
 cert_auto_extend_days = 30
 oid_auto_extend_days = 30
 generic_auto_extend_days = custom_auto_extend_days = 30
+# Number of days before expire that auto extend attempts kick in
+# NOTE: must be lower than all X_auto_extend_days values to avoid hammering
+attempt_auto_extend_days = 10
 
 # Strictly ordered list of account status values to enable use of filemarks
 # for caching account status using integer timestamps outside user DB.

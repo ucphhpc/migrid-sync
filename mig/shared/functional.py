@@ -164,6 +164,7 @@ def validate_input_and_cert(
         if not account_accessible:
             creds_error = "User account is %s!" % account_status
         else:
+            # Attempt auto renew if past or close to the time account expires
             (pending_expire, account_expire, _) = check_update_account_expire(
                 configuration, client_id, environ)
             if not pending_expire:

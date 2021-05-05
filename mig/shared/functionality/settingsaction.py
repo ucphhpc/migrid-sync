@@ -249,7 +249,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # Try to refresh expire if possible to make sure it works for a while
         if topic in ['sftp', 'webdavs', 'ftps']:
             (_, account_expire, _) = check_update_account_expire(
-                configuration, client_id, min_days_left=14)
+                configuration, client_id)
             logger.debug("check and update account expire returned %s" %
                          account_expire)
 

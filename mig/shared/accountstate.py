@@ -28,6 +28,7 @@
 """This module contains various helpers used to check and update internal user
 account state in relation to web and IO daemon access control.
 """
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -37,7 +38,8 @@ import time
 from mig.shared.base import client_id_dir, client_dir_id, requested_url_base
 from mig.shared.defaults import expire_marks_dir, status_marks_dir, \
     valid_account_status, oid_auto_extend_days, cert_auto_extend_days, \
-    AUTH_CERTIFICATE, AUTH_OPENID_V2, AUTH_OPENID_CONNECT, AUTH_GENERIC
+    attempt_auto_extend_days, AUTH_GENERIC, AUTH_CERTIFICATE, AUTH_OPENID_V2, \
+    AUTH_OPENID_CONNECT
 from mig.shared.filemarks import get_filemark, update_filemark, reset_filemark
 from mig.shared.gdp.userid import get_base_client_id
 from mig.shared.userdb import load_user_dict, default_db_path, update_user_dict
@@ -228,12 +230,13 @@ def check_account_expire(configuration, client_id, environ=None):
 
 
 def check_update_account_expire(configuration, client_id, environ=None,
-                                min_days_left=0):
+                                min_days_left=attempt_auto_extend_days):
     """Check and possibly update client_id expire field in cache and user DB
     if configured. The optional environ can be used to provide current environ
     dict instead of the default os.environ. The optional min_days_left
     argument is used to attempt renew if the account is set to expire before N
-    days from now. Default is zero days to only renew if expired.
+    days from now. If not provided the default is to attempt renewal some days
+    before expiry and then extend for longer than that to delay next try.
     """
     _logger = configuration.logger
     if not environ:
@@ -243,7 +246,13 @@ def check_update_account_expire(configuration, client_id, environ=None,
         configuration, client_id, environ)
     # Now check actual expire
     if account_expire and account_expire < time.time() + min_days_left * 86400:
-        _logger.info("user is marked expired at %s" % account_expire)
+        try_renew = True
+    else:
+        try_renew = False
+
+    if try_renew:
+        _logger.debug("attempt user %s expiry %d extension" %
+                      (client_id, account_expire))
         # NOTE: users who got this far obviously has a working auth method
         vhost_url = requested_url_base(environ)
         update_expire = False
@@ -265,7 +274,8 @@ def check_update_account_expire(configuration, client_id, environ=None,
                           (client_id, vhost_url))
 
         if update_expire and extend_days > 0:
-            _logger.info("trying to update expire for: %s" % client_id)
+            _logger.info("trying to update %s expire with %d days" %
+                         (client_id, extend_days))
             if not user_dict:
                 user_dict = load_user_dict(_logger, client_id,
                                            default_db_path(configuration))
@@ -282,19 +292,21 @@ def check_update_account_expire(configuration, client_id, environ=None,
                 # NOTE: write through to user db
                 update_user_dict(_logger, client_id, renew,
                                  default_db_path(configuration))
-                _logger.info("user expire updated to %(expire)s" % user_dict)
+                _logger.info("account expire updated to %(expire)d" %
+                             user_dict)
                 pending_expire = True
             else:
-                _logger.warning("extend expire refused for %s with status %r" %
-                                (client_id, account_status))
-                pending_expire = False
+                _logger.info("extend expire skipped for %s with status %r" %
+                             (client_id, account_status))
+        elif pending_expire:
+            _logger.debug("user %s about to expire %d but no auto update" %
+                          (client_id, account_expire))
         else:
-            _logger.warning("user account expired at %s" % account_expire)
-            pending_expire = False
+            _logger.warning("user %s expired at %d" % (client_id,
+                                                       account_expire))
     else:
-        _logger.debug("user %s is still active - expire is %s" %
+        _logger.debug("user %s is still active - expire is %d" %
                       (client_id, account_expire))
-        pending_expire = True
     return (pending_expire, account_expire, user_dict)
 
 
