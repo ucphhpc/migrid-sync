@@ -360,37 +360,14 @@
                                 We've added Jupyter integration in ERDA, so that you can run interactive
                                 data analysis sessions e.g. in a Python or R environment with direct
                                 access to all your ERDA data.<br/>
-                                A number of software packages are already available in the different ERDA
-                                Jupyter instances, but sometimes you may still want to run additional
-                                software there. For Python and Jupyter extension packages it may work to simply
-                                install temporarily with pip or pip3 inside the session via
-                                the <em>Terminal</em> in the main Jupyter <em>Launcher</em> window, or
-                                by writing a standard Python <em>requirements.txt</em> file in your ERDA
-                                home and run it interactively with something like
-                                <code>pip3 install -r requirements.txt</code> from the Jupyter
-                                Terminal.<br/>
-                                Please note that you need to use <code>python2</code> or <code>python3</code>
-                                specifically if you want to use such pip or pip3 installed packages
-                                respectively directly from the Terminal.<br/>
-                                Alternatively you can install Python software dependencies like e.g. the
-                                scikit-image package directly in the Jupyter Notebook itself by evaluating
-                                <code>!pip3 install scikit-image</code> in a cell.<br/>
-                                At the moment installing software that requires compilation or come
-                                with other external dependencies is not generally supported.<br/>
-                                To ensure that packages you install will stick around between
-                                different sessions, pass the <code>--user</code> flag to the pip or pip3
-                                install command. This will ensure that the package is installed into
-                                your own home <code>__{service}_config__</code> directory, which is
-                                persistent beyond the lifetime of a single Jupyter instance.<br/>
-                                It is also possible to use the <em>conda</em> package manager to
-                                install additional software in running sessions. You can use
-                                <code>conda install -y -n ENV PACKAGE</code> from the Jupyter Terminal
-                                where ENV is typycally python2, python3 or r depending on the notebook
-                                and your working environment. Similarly use <code>conda search NAME</code>
-                                to search for available packages.<br/>
-                                You can contact us at our support email if
-                                you have additional software wishes. Then we will see if they can be
-                                fulfilled - but we can't give any promises.
+                                A number of software packages are already available in the different
+                                Jupyter instances, but sometimes you may still want to run
+                                additional software there. Please refer to the section about
+                                Jupyter Notebook Customization in the user guide for details.<br/>
+                                We are working on a solution whith greater DIY customization of the
+                                notebook images, but for now please contact us at our support email
+                                if you have additional permanent software wishes. Then we will see
+                                if they can be fulfilled - but we can't give any promises.
                             </p>
                             <h4 class="staticpage">What's wrong, web login suddenly says
                                 "No such user (xyz123@ku.dk)?"</h4>
@@ -743,39 +720,18 @@
                             <h4 class="staticpage">Hvordan installerer og kører jeg software XYZ i Jupyter?</h4>
                             <p>
                                 Vi har integreret Jupyter i ERDA, så man som bruger kan lave interaktiv
-                                dataanalyse i f.eks. Python eller R og med direkte adgang til alt sit
+                                dataanalyse i f.eks. Python eller R og med direkte adgang til alle sine
                                 ERDA-data.<br/>
                                 Jupyter-miljøet har forskellige images med en stribe software-pakker
                                 installeret, men nogle gange kan det stadig være bekvemt at køre
-                                yderligere special-software. Nogle udvidelser til Python og Jupyter kan
-                                installeres midlertidigt med pip eller pip3 via en <em>Terminal</em> fra
-                                Jupyter hovedsiden, eller ved at skrive en standard Python
-                                <em>requirements.txt</em> fil i ens ERDA mappe og køre den ved Jupyter
-                                opstart med noget i stil med <code>pip3 install -r requirements.txt</code>
-                                fra Jupyter-terminalen.<br/>
-                                Bemærk at man specifikt skal angive python2 eller python3 for at bruge
-                                sådanne pip- eller pip3-installerede pakker direkte fra Terminalen.<br/>
-                                Man kan alternativt installere Python software-afhængigheder som f.eks.
-                                scikit-image pakken direkte i Jupyter Notebooks ved at evaluere
-                                <code>!pip3 install scikit-image</code> i en celle.<br/>
-                                I øjeblikket er installation af software som kræver kompilering eller
-                                har eksterne afhængigheder ikke generelt understøttet.<br/>
-                                Det er muligt at gemme de installerede pakker imellem forskellige
-                                sessioner ved at angive <code>--user</code> flaget når man bruger pip
-                                eller pip3 install kommandoerne. Derved installeres pakkerne i dit
-                                eget hjemmekatalog <code>__{service}_config__</code> hvorfra det er
-                                persistent udover levetiden for den enkelte jupyter-instans.<br/>
-                                Det er også muligt at bruge <em>conda</em>-pakkesystemet til at
-                                installere software i kørende sessioner. Således kan du benytte
-                                <code>conda install -y -n ENV PACKAGE</code> fra Jupyter Terminalen hvor
-                                ENV typisk er python2, python3 eller r afhængigt af notebook og valgt
-                                miljø. Tilsvarende benyttes <code>conda search NAME</code> til at lede
-                                efter tilgængelige pakker.<br/> 
-                                Vi arbejder på at udvikle en gør-det-selv tilpasning af
-                                Jupyter-instanserne, så det i noget omfang bliver muligt. Indtil da er
-                                fremgangsmåden at skrive til vores support-email med evt ønsker om
-                                yderligere software. Så undersøger vi om det er muligt at tilføje -
-                                men vi kan ikke love noget.
+                                yderligere special-software. Vi henviser til brugervejledningen og 
+                                specielt afsnittet om Jupyter notebook tilpasning for de nærmere
+                                detaljer.<br/>
+                                Vi arbejder desuden på at udvikle en gør-det-selv tilpasning af
+                                Jupyter-instanserne, så det i større omfang bliver muligt. Indtil da
+                                er fremgangsmåden at skrive til vores support-email med evt ønsker
+                                om permanent at få tilføjet yderligere software. Så undersøger vi om
+                                det er muligt at tilføje - men vi kan ikke love noget.
                             </p>
                             <h4 class="staticpage">Hvorfor melder web login pludselig
                                 "No such user (xyz123@ku.dk)?"</h4>
