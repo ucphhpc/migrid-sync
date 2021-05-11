@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # datatransfer - import and export data in the backgroud
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -193,8 +193,8 @@ def main(client_id, user_arguments_dict):
         var file_id = id_prefix+"file_"+field_no;
         var dir_id = id_prefix+"dir_"+field_no;
         var value = $(input_id).val();
-        $(file_id).removeAttr("checked");
-        $(dir_id).removeAttr("checked");
+        $(file_id).prop("checked", "");
+        $(dir_id).prop("checked", "");
         if (is_dir) {
             $(dir_id).prop("checked", "checked");
             if(value.substr(-1) != "/") {
@@ -249,9 +249,9 @@ def main(client_id, user_arguments_dict):
         $("#submit-request-transfer").click();
     }
     function enableLogin(method) {
-        $("#anonymous_choice").removeAttr("checked");
-        $("#userpassword_choice").removeAttr("checked");
-        $("#userkey_choice").removeAttr("checked");
+        $("#anonymous_choice").prop("checked", "");
+        $("#userpassword_choice").prop("checked", "");
+        $("#userkey_choice").prop("checked", "");
         $("#username").prop("disabled", false);
         $("#password").prop("disabled", true);
         $("#key").prop("disabled", true);
