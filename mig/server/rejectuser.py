@@ -70,10 +70,7 @@ if '__main__' == __name__:
     reason = "invalid or missing mandatory info"
     verbose = False
     admin_copy = False
-    raw_targets = {}
-    # Default to mail in request
-    raw_targets['email'] = raw_targets.get('email', [])
-    raw_targets['email'].append(keyword_auto)
+    raw_targets = {'email': []}
     user_file = None
     user_id = None
     user_dict = {}
@@ -96,7 +93,6 @@ if '__main__' == __name__:
         elif opt == '-d':
             db_path = val
         elif opt == '-e':
-            raw_targets['email'] = raw_targets.get('email', [])
             raw_targets['email'].append(val)
         elif opt == '-f':
             force = True
@@ -145,6 +141,9 @@ if '__main__' == __name__:
 
     fill_user(user_dict)
     user_id = user_dict['distinguished_name']
+
+    # Default to inform mail used in request
+    raw_targets['email'].append(user_dict.get('email', keyword_auto))
 
     # Now all user fields are set and we can reject and warn the user
 
