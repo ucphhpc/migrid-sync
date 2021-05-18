@@ -1,6 +1,27 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2021-06-01T07:30:00+02:00", 
+    "systems": [
+        "ERDA", "IDMC", "MiGrid"
+    ],
+    "announce_start": "2021-05-18T15:15:00+02:00",
+    "title": {
+      "EN": "Planned Network and Backend Storage Maintenance",
+      "DK": "Planlagt netværks- og backendlager-vedligehold"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2021-06-01T10:00:00+02:00",
+    "description": {
+      "EN": "We will make a few internal network changes and restructure parts of the backend storage layout. This should only barely affect ERDA and IDMC and hopefully will not even be observed there. However, the MiGrid system will have to be taken offline during most of the maintenance window.",
+      "DK": "Vi foretager et par interne netværksjusteringer og omstrukturerer dele af backend-lageret. Det skulle gerne kun marginalt berøre ERDA og IDMC, og forhåbentlig slet ikke bemærkes der. MiGrid er derimod nødt til at blive lukket ned under det meste af service-vinduet."
+    },
+    "announce_end": "2021-06-02T10:00:00+02:00"
+  },
+  {
+    "status": "AUTO", 
     "work_start": "2021-05-10T17:00:00+02:00", 
     "systems": [
         "IDMC"
