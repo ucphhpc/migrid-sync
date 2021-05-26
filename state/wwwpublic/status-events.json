@@ -1,6 +1,27 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2021-05-26T10:30:00+02:00", 
+    "systems": [
+        "ERDA", "IDMC"
+    ], 
+    "announce_start": "2021-05-26T10:20:00+02:00", 
+    "title": {
+      "EN": "Power Outage - DAG/MODI/HEL Unstable", 
+      "DK": "Strømudfald - DAG/MODI/HEL ustabile"
+    }, 
+    "services": [
+        "DAG", "MODI", "HEL"
+    ], 
+    "work_end": "2021-05-27T10:00:00+02:00", 
+    "description": {
+      "EN": "There was a big power glitch in Copenhagen a bit past 10 today which also hit the HPC Center. Hosts not on emergency power went down and DAG/MODI/HEL Jupyter sessions are still to some extent affected. We're working on it and more info will follow.",
+      "DK": "Der var et større udfald i strømmen i København lidt over 10 til formiddag som også ramte HPC Centeret. Maskiner som ikke er nødstrøm gik ned og DAG/MODI/HEL Jupyter-sessioner er til dels stadig berørt. Vi arbejder på sagen og mere info følger."
+    }, 
+    "announce_end": "2021-05-27T12:00:00+02:00"
+  },
+  {
+    "status": "AUTO", 
     "work_start": "2021-06-01T07:30:00+02:00", 
     "systems": [
         "ERDA", "IDMC", "MiGrid"
