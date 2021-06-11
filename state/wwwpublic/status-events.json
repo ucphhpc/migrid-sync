@@ -1,5 +1,49 @@
 [
   {
+    "status": "AUTO",
+    "work_start": "2021-06-11T08:10:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC",
+        "SIF"
+    ],
+    "announce_start": "2021-06-11T08:15:00+02:00",
+    "title": {
+      "EN": "Major outage in the storage backend: very limited or no access",
+      "DK": "Stort udfald i backend-lageret: meget begrænset eller ingen adgang"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2021-06-14T08:00:00+02:00",
+    "description": {
+      "EN": "There is a major problem with the backend storage infrastructure in the HPC Centre and it affects all services. Unfortunately it looks quite serious. We are working on it and will announce more details when we have a better overview.", 
+      "DK": "Der er et større udfald i backend lagerets infrastruktur på HPC Centeret og det berører alle services. Det ser desværre ud til at være et omfattende problem. Vi arbejder på sagen og melder mere her når vi har overblik."
+    },
+    "announce_end": "2021-06-15T10:00:00+02:00"
+  },
+{
+    "status": "AUTO", 
+    "work_start": "2021-06-01T07:30:00+02:00", 
+    "systems": [
+        "ERDA", "IDMC", "MiGrid"
+    ],
+    "announce_start": "2021-05-18T15:15:00+02:00",
+    "title": {
+      "EN": "Planned Network and Backend Storage Maintenance",
+      "DK": "Planlagt netværks- og backendlager-vedligehold"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2021-06-01T12:00:00+02:00",
+    "description": {
+      "EN": "We will make a few internal network changes and restructure parts of the backend storage layout. This should only barely affect ERDA and IDMC and hopefully will not even be observed there. However, the MiGrid system will have to be taken offline during most of the maintenance window. ERDA is back in normal production after slightly longer downtime than expected due to some pending low level system updates. IDMC is back as well after some network issues after the updates. MiGrid returned as well after the remaining network changes.",
+      "DK": "Vi foretager et par interne netværksjusteringer og omstrukturerer dele af backend-lageret. Det skulle gerne kun marginalt berøre ERDA og IDMC, og forhåbentlig slet ikke bemærkes der. MiGrid er derimod nødt til at blive lukket ned under det meste af service-vinduet. ERDA er tilbage i almindelig drift efter en lidt forlænget nedetid pga nogle udestående basale systemopdateringer. IDMC er også tilbage i drift nu hvor lidt yderligere netværksproblemer efter opdateringerne er løst. MiGrid er ligeledes tilbage eftre yderligere netarbejde."
+    },
+    "announce_end": "2021-06-02T10:00:00+02:00"
+  },
+  {
     "status": "AUTO", 
     "work_start": "2021-05-26T10:30:00+02:00", 
     "systems": [
@@ -19,27 +63,6 @@
       "DK": "Der var et større udfald i strømmen i København lidt over 10 til formiddag som også ramte HPC Centeret. Maskiner som ikke er nødstrøm gik ned og DAG/MODI/HEL Jupyter-sessioner er til dels stadig berørt. Vi arbejder på sagen og mere info følger."
     }, 
     "announce_end": "2021-05-27T12:00:00+02:00"
-  },
-  {
-    "status": "AUTO", 
-    "work_start": "2021-06-01T07:30:00+02:00", 
-    "systems": [
-        "ERDA", "IDMC", "MiGrid"
-    ],
-    "announce_start": "2021-05-18T15:15:00+02:00",
-    "title": {
-      "EN": "Planned Network and Backend Storage Maintenance",
-      "DK": "Planlagt netværks- og backendlager-vedligehold"
-    },
-    "services": [
-      "ALL"
-    ],
-    "work_end": "2021-06-01T10:00:00+02:00",
-    "description": {
-      "EN": "We will make a few internal network changes and restructure parts of the backend storage layout. This should only barely affect ERDA and IDMC and hopefully will not even be observed there. However, the MiGrid system will have to be taken offline during most of the maintenance window.",
-      "DK": "Vi foretager et par interne netværksjusteringer og omstrukturerer dele af backend-lageret. Det skulle gerne kun marginalt berøre ERDA og IDMC, og forhåbentlig slet ikke bemærkes der. MiGrid er derimod nødt til at blive lukket ned under det meste af service-vinduet."
-    },
-    "announce_end": "2021-06-02T10:00:00+02:00"
   },
   {
     "status": "AUTO", 
