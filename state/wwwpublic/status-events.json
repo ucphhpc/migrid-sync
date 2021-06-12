@@ -15,12 +15,12 @@
     "services": [
       "ALL"
     ],
-    "work_end": "2021-06-14T08:00:00+02:00",
+    "work_end": "2021-06-14T12:00:00+02:00",
     "description": {
-      "EN": "There is a major problem with the backend storage infrastructure in the HPC Centre and it affects all services. Unfortunately it looks quite serious. We are working on it and will announce more details when we have a better overview.", 
-      "DK": "Der er et større udfald i backend lagerets infrastruktur på HPC Centeret og det berører alle services. Det ser desværre ud til at være et omfattende problem. Vi arbejder på sagen og melder mere her når vi har overblik."
+      "EN": "There is a major problem with the backend storage infrastructure in the HPC Centre and it affects all services. Unfortunately it looks quite serious. We are working on it and will announce more details along the way as we get a better overview. We got SIF back in normal production on Friday about noon. ERDA/IDMC is back online since Friday afternoon, but only with partial data visibility and limited to read-only mode while we tinker with the backend storage. We expect this situation to last at least the rest of the weekend and apologize for the inconvenience.", 
+      "DK": "Der er et større udfald i backend lagerets infrastruktur på HPC Centeret og det berører alle services. Det ser desværre ud til at være alvorligt. Vi arbejder på sagen og melder mere ud her efterhånden som vi får bedre overblik. Vi fik SIF tilbage i normal drift fredag omkring middag. ERDA/IDMC er delvist oppe siden fredag eftermiddag, men kun med delvis datasynlighed og begrænsning til læseadgang mens vi piller i backend lageret. Vi forventer at den situation mindst vil vare resten af weekenden og beklager generne derfra."
     },
-    "announce_end": "2021-06-15T10:00:00+02:00"
+    "announce_end": "2021-06-15T12:00:00+02:00"
   },
 {
     "status": "AUTO", 
