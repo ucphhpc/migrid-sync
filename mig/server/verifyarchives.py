@@ -117,6 +117,7 @@ Where VERIFY_OPTIONS may be one or more of:
    -c CONF_FILE        Use CONF_FILE as server configuration
    -h                  Show this help
    -I CERT_DN          Filter to Archives of user ID (distinguished name pattern)
+   -n ARCHIVE_NAME     Filter to specific Archive name(s) (pattern)
    -v                  Verbose output
 """ % {'name': name})
 
@@ -124,10 +125,11 @@ Where VERIFY_OPTIONS may be one or more of:
 if '__main__' == __name__:
     conf_path = None
     verbose = False
-    opt_args = 'A:B:c:hI:v'
+    opt_args = 'A:B:c:hI:n:v'
     now = int(time.time())
     created_after, created_before = 0, now
     distinguished_name = '*'
+    archive_name = '*'
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], opt_args)
     except getopt.GetoptError as err:
@@ -161,6 +163,8 @@ if '__main__' == __name__:
             sys.exit(0)
         elif opt == '-I':
             distinguished_name = val
+        elif opt == '-n':
+            archive_name = val
         elif opt == '-v':
             verbose = True
         else:
@@ -189,6 +193,11 @@ if '__main__' == __name__:
         for freeze_name in os.listdir(base_path):
             if not fnmatch.fnmatch(freeze_name, "archive-??????"):
                 continue
+            if not fnmatch.fnmatch(freeze_name, archive_name):
+                if verbose:
+                    print("filter Archive %s not matching name pattern %s" %
+                          (freeze_name, archive_name))
+                continue
             freeze_path = os.path.join(base_path, freeze_name)
             created_time = int(os.path.getctime(freeze_path))
             if created_time < created_after or created_time > created_before:
@@ -206,7 +215,7 @@ if '__main__' == __name__:
     for (user_id, archive_list) in archive_hits.items():
         for freeze_path in archive_list:
             verified = check_archive_integrity(
-                configuration, user_id, freeze_path)
+                configuration, user_id, freeze_path, verbose)
             if verified:
                 print("%s [PASS]" % freeze_path)
             else:
