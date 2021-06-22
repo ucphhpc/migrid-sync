@@ -89,7 +89,7 @@ def check_archive_integrity(configuration, user_id, freeze_path, verbose=False):
                 elif verbose:
                     print("ignore size mismatch on non-final %s" %
                           archive_path)
-            elif int(entry['timestamp'] not in [int(archived_created), int(archived_modified)]):
+            elif int(entry['timestamp']) not in [int(archived_created), int(archived_modified)]:
                 if meta_state == keyword_final:
                     print("Archive entry %s has wrong timestamp %d / %d (expected %d, %s)" %
                           (archive_path, archived_created, archived_modified,
