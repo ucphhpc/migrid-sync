@@ -829,6 +829,14 @@ def valid_simple_email_address(addr):
     valid_email_address(addr, False)
 
 
+def valid_email_addresses(addresses, allow_real_name=False):
+    """Parse one or more whitespace-separated email addresses contained in a
+    single string. Useful e.g. for checking textarea emails.
+    """
+    for addr in addresses.split():
+        valid_email_address(addr, allow_real_name)
+
+
 def is_valid_simple_email(addr):
     """Helper for quick testing of plain email address validity"""
     try:

@@ -26,6 +26,7 @@
 #
 
 """Provide all the settings subpages"""
+
 from __future__ import absolute_import
 
 import base64
@@ -224,7 +225,7 @@ def main(client_id, user_arguments_dict):
         topic_list.remove('ssh')
         topic_list.append('sftp')
     topic_list = [topic for topic in topic_list if topic in valid_topics]
-    # Default to general or general+profile if no valid topics requested 
+    # Default to general or general+profile if no valid topics requested
     if not topic_list:
         if not legacy_user_interface(configuration, user_settings):
             topic_list = ['general', 'profile']
