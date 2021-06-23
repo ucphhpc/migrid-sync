@@ -33,7 +33,8 @@ import os
 import tempfile
 
 from mig.shared import returnvalues
-from mig.shared.accountstate import check_update_account_expire
+from mig.shared.accountstate import check_update_account_expire, \
+    account_expire_info
 from mig.shared.duplicatikeywords import get_keywords_dict as duplicati_keywords
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.gdp.all import get_client_id_from_project_client_id
@@ -252,8 +253,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         # Try to refresh expire if possible to make sure it works for a while
         if topic in ['sftp', 'webdavs', 'ftps']:
+            (_, _, _, extend_days) = account_expire_info(configuration, client_id)
             (_, account_expire, _) = check_update_account_expire(
-                configuration, client_id)
+                configuration, client_id, min_days_left=extend_days)
             logger.debug("check and update account expire returned %s" %
                          account_expire)
 
