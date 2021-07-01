@@ -1,6 +1,28 @@
 [
   {
     "status": "AUTO",
+    "work_start": "2021-07-01T16:00:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2021-07-01T16:00:00+02:00",
+    "title": {
+      "EN": "Updating MODI to support OpenMPI 4.x, will cause downtime for the service",
+      "DK": "Opdatering af MODI til understøttelse af OpenMPI 4.x, vil medføre nedetid for tjenesten"
+    },
+    "services": [
+      "MODI"
+    ],
+    "work_end": "2021-07-02T09:00:00+02:00",
+    "description": {
+      "EN": "There is a discrepancy between the OpenMPI version inside our Jupyter images (4.0.5) and the MODI Slurm nodes (2.1.1), the nodes and the MODI service will be updated to support version 4.x",
+      "DK": "Der er en uoverensstemmelse mellem OpenMPI versionen inde i vores Jupyter-billeder (4.0.5) og MODI Slurm-noder (2.1.1), noder og MODI-tjenesten opdateres til at understøtte version 4.x"
+    },
+    "announce_end": "2021-07-02T09:00:00+02:00"
+    },
+  {
+    "status": "AUTO",
     "work_start": "2021-06-18T10:00:00+02:00",
     "systems": [
         "ERDA",
