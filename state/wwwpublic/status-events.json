@@ -16,8 +16,8 @@
     ],
     "work_end": "2021-07-02T09:00:00+02:00",
     "description": {
-      "EN": "There is a discrepancy between the OpenMPI version inside our Jupyter images (4.0.5) and the MODI Slurm nodes (2.1.1), the nodes and the MODI service will be updated to support version 4.x",
-      "DK": "Der er en uoverensstemmelse mellem OpenMPI versionen inde i vores Jupyter-billeder (4.0.5) og MODI Slurm-noder (2.1.1), noder og MODI-tjenesten opdateres til at understøtte version 4.x"
+      "EN": "There is a discrepancy between the OpenMPI version inside our Jupyter images (4.0.5) and the MODI Slurm nodes (2.1.1), the nodes and the MODI service will be updated to support version 4.x. This work was completed succesfully and the service is again back online.",
+      "DK": "Der er en uoverensstemmelse mellem OpenMPI versionen inde i vores Jupyter-billeder (4.0.5) og MODI Slurm-noder (2.1.1), noder og MODI-tjenesten opdateres til at understøtte version 4.x. Dette arbejde blev udført med success, og MODI er igen oppe at køre."
     },
     "announce_end": "2021-07-02T09:00:00+02:00"
     },
