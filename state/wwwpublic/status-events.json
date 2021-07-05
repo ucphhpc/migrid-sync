@@ -1,6 +1,28 @@
 [
   {
     "status": "AUTO",
+    "work_start": "2021-07-05T17:00:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2021-07-05T11:00:00+02:00",
+    "title": {
+      "EN": "Updating DAG to introduce the AI Notebook",
+      "DK": "Opdatering af DAG til at introducere AI Notebooken"
+    },
+    "services": [
+      "DAG"
+    ],
+    "work_end": "2021-07-06T:09:00+02:00",
+    "description": {
+      "EN": "The DAG service will temporarily experience interruptions to introduce the AI Notebook. This new Notebook provides most machine learning libraries that one would expect in a Python environment when using techniquies such as Deep Learning.",
+      "DK": "DAG-tjenesten vil midlertidigt opleve afbrydelser for at introducere AI Notebook. Denne nye Notebook tilbyder de fleste maskinlæringsbiblioteker, som man kunne forvente i et Python-miljø når man skal bruge tekniker såsom Deep Learning."
+    },
+    "announce_end": "2021-07-06T11:00:00+02:00"
+    },
+  {
+    "status": "AUTO",
     "work_start": "2021-07-01T16:00:00+02:00",
     "systems": [
         "ERDA",
