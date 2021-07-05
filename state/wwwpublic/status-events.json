@@ -14,7 +14,7 @@
     "services": [
       "DAG"
     ],
-    "work_end": "2021-07-06T:09:00+02:00",
+    "work_end": "2021-07-06T09:00:00+02:00",
     "description": {
       "EN": "The DAG service will temporarily experience interruptions to introduce the AI Notebook. This new Notebook provides most machine learning libraries that one would expect in a Python environment when using techniquies such as Deep Learning.",
       "DK": "DAG-tjenesten vil midlertidigt opleve afbrydelser for at introducere AI Notebook. Denne nye Notebook tilbyder de fleste maskinlæringsbiblioteker, som man kunne forvente i et Python-miljø når man skal bruge tekniker såsom Deep Learning."
