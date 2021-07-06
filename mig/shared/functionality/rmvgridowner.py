@@ -658,8 +658,9 @@ To leave (and delete) %s, first remove all members.'''
                  'failed to load saved %s settings' % vgrid_name})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
-        if saved_settings.get('write_shared_files', keyword_members) != \
-                keyword_members:
+        # NOTE: legacy vgrids may have setting False to mean full write
+        if saved_settings.get('write_shared_files', keyword_members) not in \
+                [False, keyword_members]:
             logger.warning("%s can't delete vgrid %s - write limited!"
                            % (client_id, vgrid_name))
             output_objects.append(
