@@ -1,7 +1,7 @@
 [
   {
     "status": "AUTO",
-    "work_start": "2021-07-05T17:00:00+02:00",
+    "work_start": "2021-07-06T17:00:00+02:00",
     "systems": [
         "ERDA",
         "IDMC"
@@ -14,12 +14,12 @@
     "services": [
       "DAG"
     ],
-    "work_end": "2021-07-06T09:00:00+02:00",
+    "work_end": "2021-07-07T09:00:00+02:00",
     "description": {
-      "EN": "The DAG service will temporarily experience interruptions to introduce the AI Notebook. This new Notebook provides most machine learning libraries that one would expect in a Python environment when using techniquies such as Deep Learning.",
-      "DK": "DAG-tjenesten vil midlertidigt opleve afbrydelser for at introducere AI Notebook. Denne nye Notebook tilbyder de fleste maskinlæringsbiblioteker, som man kunne forvente i et Python-miljø når man skal bruge tekniker såsom Deep Learning."
+      "EN": "The DAG service will temporarily experience interruptions to introduce the AI Notebook. This new Notebook provides most machine learning libraries that one would expect in a Python environment when using techniques such as Deep Learning.",
+      "DK": "DAG-tjenesten vil midlertidigt opleve afbrydelser for at introducere AI Notebook. Denne nye Notebook tilbyder de fleste maskinlæringsbiblioteker, som man kunne forvente i et Python-miljø når man skal bruge teknikker såsom Deep Learning."
     },
-    "announce_end": "2021-07-06T11:00:00+02:00"
+    "announce_end": "2021-07-07T11:00:00+02:00"
     },
   {
     "status": "AUTO",
@@ -38,8 +38,8 @@
     ],
     "work_end": "2021-07-02T09:00:00+02:00",
     "description": {
-      "EN": "There is a discrepancy between the OpenMPI version inside our Jupyter images (4.0.5) and the MODI Slurm nodes (2.1.1), the nodes and the MODI service will be updated to support version 4.x. This work was completed succesfully and the service is again back online.",
-      "DK": "Der er en uoverensstemmelse mellem OpenMPI versionen inde i vores Jupyter-billeder (4.0.5) og MODI Slurm-noder (2.1.1), noder og MODI-tjenesten opdateres til at understøtte version 4.x. Dette arbejde blev udført med success, og MODI er igen oppe at køre."
+      "EN": "There is a discrepancy between the OpenMPI version inside our Jupyter images (4.0.5) and the MODI Slurm nodes (2.1.1). The nodes and the MODI service will be updated to support version 4.x. This work was completed succesfully and the service is again back online.",
+      "DK": "Der er en uoverensstemmelse mellem OpenMPI versionen inde i vores Jupyter-billeder (4.0.5) og MODI Slurm-knuder (2.1.1). Knuder og MODI-tjenesten opdateres til at understøtte version 4.x. Arbejdet er veloverstået, og MODI er igen oppe at køre."
     },
     "announce_end": "2021-07-02T09:00:00+02:00"
     },
@@ -60,8 +60,8 @@
     ],
     "work_end": "2021-07-09T16:00:00+02:00",
     "description": {
-      "EN": "After recently loosing a brick in the backend storage and restoring from the April 10th snapshot the backend storage file system has some metadata inconsistencies and a subset of the data added since April are missing. The former results in certain existing and unharmed files going invisible on the frontend. We're working on fixing the metadata to get those data visible again and are making good progress. Furthermore the broken brick held about 230TB when we lost it and the April 10th snapshot we restored from had about 210TB of them. So about 20TB of recent data is really missing now. We'll continue trying to recover as much of this recently added data as possible from the broken brick. We have copied it to another system for further investigation and analysis with various disk forensics tools. A couple of those tools which yielded promising results in small scale tests are scanning now. How long it takes to scan and hopefully restore is unknown, but we expect to see some initial outcome at the end of week 26. We apologize for the resulting inconvenience and urge you to inform us on support@erda.dk with details if you notice any of your data missing.",
-      "DK": "Efter vi for nyligt mistede en brick i backendlageret og vi var nødt til at genskabe data fra vores 10. april snapshot har backend storage filsystemet nogle inkonsistenser i sine metadata og et udsnit af de data som er lagt ind siden april mangler. Førstnævnte betyder at nogle eksisterende og uskadte filer er blevet usynlige på frontend. Vi arbejder på at reparere metadata for at de igen bliver synlige og har fået en del rettet. Yderligere havde den ødelagte brick omkring 230TB data og det april-snapshot vi genskabte fra havde kun 210TB. Så omkring 20TB nylige data mangler reelt nu. Vi vil fortsat arbejde på at redde mest muligt af disse nyligt tilføjede data fra den ødelagte brick. Vi har kopieret al data derfra til et andet system for yderligere undersøgelser og analyse med forskellige datarednings-værktøjer. Et par af disse værktøjer som viste gode resultater i små tests skanner i øjeblikket. Hvor længe det varer med skan og efterfølgende genskabelse er svært at sige, men vi forventer at kunne se de indledende resultater sidst i uge 26. Vi beklager de gener det medfører og opfordrer jer til at give os besked på support@erda.dk med nærmere oplysninger såfremt noget af jeres data er forsvundet."
+      "EN": "After recently loosing a brick in the backend storage and restoring from the April 10th snapshot the backend storage file system has some metadata inconsistencies and a subset of the data added since April are missing. The former results in certain existing and unharmed files going invisible on the frontend. We're working on fixing the metadata to get those data visible again and are making good progress. Furthermore the broken brick held about 230TB when we lost it and the April 10th snapshot we restored from had about 210TB of them. So about 20TB of recent data is really missing now. We'll continue trying to recover as much of this recently added data as possible from the broken brick. We have copied it to another system for further investigation and analysis with various disk forensics tools. A couple of those tools which yielded promising results in small scale tests are scanning now. How long it takes to scan and hopefully restore is unknown, but the initial scans finished at the end of week 26. They appear to be useful for further recovery attemps, which commenced but also run slowly. We apologize for the resulting inconvenience and urge you to inform us on support@erda.dk with details if you notice any of your data missing.",
+      "DK": "Efter vi for nyligt mistede en brick i backendlageret og vi var nødt til at genskabe data fra vores 10. april snapshot har backend storage filsystemet nogle inkonsistenser i sine metadata og et udsnit af de data som er lagt ind siden april mangler. Førstnævnte betyder at nogle eksisterende og uskadte filer er blevet usynlige på frontend. Vi arbejder på at reparere metadata for at de igen bliver synlige og har fået en del rettet. Yderligere havde den ødelagte brick omkring 230TB data og det april-snapshot vi genskabte fra havde kun 210TB. Så omkring 20TB nylige data mangler reelt nu. Vi vil fortsat arbejde på at redde mest muligt af disse nyligt tilføjede data fra den ødelagte brick. Vi har kopieret al data derfra til et andet system for yderligere undersøgelser og analyse med forskellige datarednings-værktøjer. Et par af disse værktøjer som viste gode resultater i små tests skanner i øjeblikket. Hvor længe det varer med skan og efterfølgende genskabelse er svært at sige, men de indledende skanninger blev færdige sidst i uge 26. De ser umiddelbart ud til at kunne benyttes til yderligere forsøg på at genskabe de tabte data, hvilket kører langsomt videre. Vi beklager de gener det medfører og opfordrer jer til at give os besked på support@erda.dk med nærmere oplysninger såfremt noget af jeres data er forsvundet."
     },
     "announce_end": "2021-07-11T12:00:00+02:00"
     },
