@@ -1,5 +1,28 @@
 [
   {
+    "status": "AUTO", 
+    "work_start": "2021-08-02T07:00:00+02:00", 
+    "systems": [
+        "ERDA",
+        "IDMC",
+        "MiGrid"
+    ], 
+    "announce_start": "2021-07-08T12:30:00+02:00", 
+    "title": {
+      "EN": "Phasing out the legacy user interface - V3 as default", 
+      "DK": "Udfasning af den gamle brugergrænseflade - V3 som standard"
+    }, 
+    "services": [
+        "Web"
+    ], 
+    "work_end": "2021-08-02T12:00:00+02:00", 
+    "description": {
+      "EN": "We have offered the new modernized 'V3' user interface on ERDA, IDMC and MiGrid user web pages for almost a year now, and defaulted to it for all new users since the Autumn of 2020. Existing users by default remained on the legacy 'V2' interface, but had the opportunity to likewise manually switch to the modern V3 interface from their Settings page. After several months without any significant complaints about the new interface we have decided to gradually phase out the old one by switching to V3 for all users who did not activelly select V2. This consolidation is mainly done to avoid double maintainance and e.g. to get a single consistent way to warn and announce important information to all users. It will still be possible to revert to the V2 interface for a while until we retire it completely at the end of 2021. Please contact us on support about any issues you may discover due to the change in order for us to iron out any problems before the final phasing out.", 
+      "DK": "Vi har i næsten et år tilbudt den moderniserede 'V3' brugergrænseflade på ERDA, IDMC og MiGrid brugersiderne og de har været standard for alle nye brugere siden efteråret 2020. Eksisterende brugere forblev som udgangspunkt på den ældre 'V2' brugergrænseflade, men kunne tilsvarende manuelt skifte over på V3 brugerfladen fra deres Settings side. Efter adskillige måneder uden væsentlige indvendinger omkring den nye brugerflade har vi besluttet langsomt at udfase den gamle ved i første omgang at skifte over til V3 for alle som ikke aktivt har valgt V2. Denne konsolidering er hovedsageligt for at undgå dobbeltarbejde med vedligehold og bl.a. at opnå en enkelt konsistent måde at varsle og annoncere vigtig information til alle brugere. Det vil i en overgangsperiode forblive muligt at skifte tilbage til V2 brugerfladen indtil vi udfaser den helt ved udgangen af 2021. Skriv gerne til os på support omkring eventuelle problemer ifm skiftet så vi kan nå at få dem løst inden den endelige udfasning."
+    }, 
+    "announce_end": "2021-08-16T23:59:59+01:00"
+  }, 
+  {
     "status": "AUTO",
     "work_start": "2021-07-06T17:00:00+02:00",
     "systems": [
