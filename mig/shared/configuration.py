@@ -1955,6 +1955,15 @@ location.""" % self.config_file)
         else:
             self.site_credits_image = '%s/copyright.png' % self.site_images
 
+        if config.has_option('SITE', 'datasafety_link'):
+            self.site_datasafety_link = config.get('SITE', 'datasafety_link')
+        else:
+            self.site_datasafety_link = ''
+        if config.has_option('SITE', 'datasafety_text'):
+            self.site_datasafety_text = config.get('SITE', 'datasafety_text')
+        else:
+            self.site_datasafety_text = ''
+
         if config.has_option('SITE', 'myfiles_py_location'):
             self.myfiles_py_location = config.get('GLOBAL',
                                                   'myfiles_py_location')

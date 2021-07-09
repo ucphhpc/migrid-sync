@@ -1618,6 +1618,7 @@ if (jQuery) (function($){
             uploadspace: true,
             sharelinksbutton: true,
             datatransfersbutton: true,
+            datasafetypopup: false,
             refreshLayoutOnInit: false,
             enableSubmit: true,
             selectOnly: false,
@@ -2403,6 +2404,14 @@ if (jQuery) (function($){
                         window.open('datatransfer.py');
                     });
                 }
+                if (options.datasafetypopup) {
+                    $("#fm_datasafety").show();
+                    console.debug("bind datasafety popup to corresponding dialog");
+                    $("#fm_datasafety").click(function() {
+                        $("#datasafety_dialog").dialog(okDialog);
+                        $("#datasafety_dialog").dialog('open');
+                    });
+                }
 
                 // bind reload to buttonbar refresh button
                 console.debug("bind reload to corresponding button");
@@ -2788,6 +2797,7 @@ function mig_filechooser_init(name, callback, files_only, start_path) {
          uploadspace: false,
          sharelinksbutton: false,
          datatransfersbutton: false,
+         datasafetypopup: false,
          refreshLayoutOnInit: true,
          imagesettings: false,
          selectOnly: true

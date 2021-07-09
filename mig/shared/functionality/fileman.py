@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # fileman - File manager UI for browsing and manipulating files and folders
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -81,7 +81,12 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     <div id="fm_filemanager">
         <div class="tree-container container-fluid">
             <div class="tree-row row">
-                <div class="tree-header col-3"></div>
+                <div class="tree-header col-3">
+                    <div id="fm_datasafety" class="hidden">
+                    <!-- dynamically modified by js to show optional link -->
+                    %s    
+                    </div>
+                </div>
                 <div class="fm_path_breadcrumbs col-6">
                     <ul id="fm_xbreadcrumbs" class="xbreadcrumbs"><!-- dynamic --></ul>
                 </div>
@@ -157,9 +162,11 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
 
     <div id="cmd_dialog" title="Command output" style="display: none;"></div>
 
+    <div id="datasafety_dialog" title="Data Safety" style="display: none;">%s</div>
+
     <div id="upload_dialog" title="Upload File" style="display: none;">
       <div id="upload_tabs">
-        <ul>'''
+        <ul>''' % (configuration.site_datasafety_link, configuration.site_datasafety_text)
     if configuration.site_enable_gdp:
         html += '''
             <li><a href="#fancyuploadtab">Upload</a></li>'''
@@ -537,6 +544,8 @@ def js_tmpl_parts(configuration,
         'enable_submit': enable_submit.lower(),
         'entry_path': entry_path,
         'preview': preview.lower(),
+        'datasafety_popup':
+            ('%s' % (configuration.site_datasafety_link.strip() != '')).lower(),
         'enable_sharelinks':
             ('%s' % (configuration.site_enable_sharelinks and legacy_buttons)).lower(),
         'enable_datatransfers':
@@ -703,7 +712,8 @@ csrf_map["%s"] = "%s";
                                              imagesettings: %(preview)s, 
                                              sharelinksbutton: %(enable_sharelinks)s,
                                              datatransfersbutton: %(enable_datatransfers)s,
-                                             enableGDP: %(enable_gdp)s,
+                                             datasafetypopup: %(datasafety_popup)s,
+                                             enableGDP: %(enable_gdp)s
                                              }
             );
 
