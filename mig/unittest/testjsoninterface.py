@@ -1,9 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# testworkflowsjsoninterface.py - Set of unittests for
-# workflowsjsoninterface.py
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# testjsoninterface.py - Set of unittests for jsoninterface.py
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,8 +29,9 @@ import nbformat
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import default_vgrid
 from mig.shared.fileio import makedirs_rec, remove_rec
-from mig.shared.functionality.workflowsjsoninterface import workflow_api_create, \
-    workflow_api_delete, workflow_api_read, workflow_api_update
+from mig.shared.functionality.jsoninterface import pattern_create, \
+    pattern_read, pattern_update, pattern_delete, recipe_create, recipe_read, \
+    recipe_update, recipe_delete, any_read
 from mig.shared.pwhash import generate_random_ascii
 from mig.shared.validstring import possible_workflow_session_id
 from mig.shared.workflows import touch_workflow_sessions_db, \
@@ -158,6 +158,7 @@ class WorkflowJSONInterfaceAPIFunctionsTest(unittest.TestCase):
         self.assertIsNotNone(self.workflow_session)
 
     def tearDown(self):
+        self.logger.info("========================= TEARING IT ALL DOWN ==========================")
         if not os.environ.get('MIG_CONF', False):
             os.environ['MIG_CONF'] = '/home/mig/mig/server/MiGserver.conf'
         configuration = get_configuration_object()
@@ -187,12 +188,11 @@ class WorkflowJSONInterfaceAPIFunctionsTest(unittest.TestCase):
                   'vgrid': self.test_vgrid,
                   'recipe': notebook}
 
-        created, recipe_id = workflow_api_create(self.configuration,
-                                                 self.workflow_session,
-                                                 WORKFLOW_RECIPE,
-                                                 **recipe)
-        self.logger.info(recipe_id)
+        created, response = \
+            recipe_create(self.configuration, self.username, recipe)
+        self.logger.info(response)
         self.assertTrue(created)
+
         pattern = {'name': pattern_name,
                    'vgrid': self.test_vgrid,
                    'input_paths': ['input_dir/*hdf5'],
@@ -202,11 +202,9 @@ class WorkflowJSONInterfaceAPIFunctionsTest(unittest.TestCase):
                    'recipes': [recipe_name],
                    'variables': {}}
 
-        created, pattern_id = workflow_api_create(self.configuration,
-                                                  self.workflow_session,
-                                                  WORKFLOW_PATTERN,
-                                                  **pattern)
-
+        created, response = \
+            pattern_create(self.configuration, self.username, pattern)
+        self.logger.info(response)
         self.assertTrue(created)
 
     def test_create_workflow_pattern(self):
@@ -219,12 +217,15 @@ class WorkflowJSONInterfaceAPIFunctionsTest(unittest.TestCase):
                                       'output': {},
                                       'recipes': [recipe_name]}
 
-        created, pattern_id = workflow_api_create(self.configuration,
-                                                  self.workflow_session,
-                                                  WORKFLOW_PATTERN,
-                                                  **minimum_pattern_attributes)
-        self.logger.info(pattern_id)
+        created, response = pattern_create(self.configuration,
+                                           self.username,
+                                           minimum_pattern_attributes)
+        self.logger.info(response)
         self.assertTrue(created)
+
+        self.assertIn('text', response)
+        pattern_id = response['text']
+
         workflow = get_workflow_with(self.configuration,
                                      client_id=self.username,
                                      user_query=True,
@@ -255,10 +256,15 @@ class WorkflowJSONInterfaceAPIFunctionsTest(unittest.TestCase):
             'recipes': [recipe_name],
             'variables': {'iterations': 20}}
 
-        created, pattern_id_1 = workflow_api_create(self.configuration,
-                                                    self.workflow_session,
-                                                    WORKFLOW_PATTERN,
-                                                    **full_pattern_attributes)
+        created, response_1 = pattern_create(self.configuration,
+                                             self.username,
+                                             full_pattern_attributes)
+        self.logger.info(response_1)
+        self.assertTrue(created)
+
+        self.assertIn('text', response_1)
+        pattern_id_1 = response_1['text']
+
         self.logger.info(pattern_id_1)
         self.assertTrue(created)
         workflow = get_workflow_with(self.configuration,
@@ -283,10 +289,14 @@ class WorkflowJSONInterfaceAPIFunctionsTest(unittest.TestCase):
                              'recipe': notebook,
                              'source': ''}
 
-        created, recipe_id = workflow_api_create(self.configuration,
-                                                 self.workflow_session,
-                                                 WORKFLOW_RECIPE,
-                                                 **recipe_attributes)
+        created, response = \
+            recipe_create(self.configuration, self.username, recipe_attributes)
+        self.logger.info(response)
+        self.assertTrue(created)
+
+        self.assertIn('text', response)
+        recipe_id = response['text']
+
         self.logger.info(recipe_id)
         self.assertTrue(created)
         workflow = get_workflow_with(self.configuration,
@@ -314,24 +324,28 @@ class WorkflowJSONInterfaceAPIFunctionsTest(unittest.TestCase):
             'recipes': [recipe_name],
             'variables': {'iterations': 20}}
 
-        created, pattern_id = workflow_api_create(self.configuration,
-                                                  self.workflow_session,
-                                                  WORKFLOW_PATTERN,
-                                                  **pattern_attributes)
-        self.logger.info(pattern_id)
+        created, response = pattern_create(self.configuration,
+                                           self.username,
+                                           pattern_attributes)
+        self.logger.info(response)
         self.assertTrue(created)
 
-        workflow, msg = workflow_api_read(self.configuration,
-                                          self.workflow_session,
-                                          WORKFLOW_PATTERN,
-                                          **{'persistence_id': pattern_id})
-        self.assertIsNot(workflow, False)
-        self.assertEqual(len(workflow), 1)
+        self.assertIn('text', response)
+        pattern_id = response['text']
+
+        read, response = pattern_read(self.configuration,
+                                      self.username,
+                                      {'persistence_id': pattern_id})
+        self.assertTrue(read)
+        self.assertIn('workflows', response)
+        patterns = response['workflows']
+        self.assertEqual(len(patterns), 1)
+
         # Check internal attributes
-        self.assertEqual(workflow[0]['persistence_id'], pattern_id)
-        self.assertEqual(workflow[0]['name'],
+        self.assertEqual(patterns[0]['persistence_id'], pattern_id)
+        self.assertEqual(patterns[0]['name'],
                          pattern_attributes['name'])
-        self.assertEqual(workflow[0]['vgrid'],
+        self.assertEqual(patterns[0]['vgrid'],
                          pattern_attributes['vgrid'])
         # TODO, update input_paths and recipe testing
 
@@ -339,18 +353,21 @@ class WorkflowJSONInterfaceAPIFunctionsTest(unittest.TestCase):
         delete_attributes = {'vgrid': self.test_vgrid,
                              'persistence_id': pattern_id}
 
-        deleted, deleted_id = workflow_api_delete(self.configuration,
-                                                  self.workflow_session,
-                                                  WORKFLOW_PATTERN,
-                                                  **delete_attributes)
-        self.logger.info(deleted_id)
+        deleted, response = pattern_delete(self.configuration,
+                                           self.username,
+                                           delete_attributes)
+        self.logger.info(response)
         self.assertTrue(deleted)
+        self.assertIn('text', response)
+        deleted_id = response['text']
 
-        workflow, msg = workflow_api_read(self.configuration,
-                                          self.workflow_session,
-                                          WORKFLOW_PATTERN,
-                                          **{'persistence_id': deleted_id})
-        self.assertFalse(workflow)
+        read, response = pattern_read(self.configuration,
+                                      self.username,
+                                      {'persistence_id': deleted_id})
+        self.assertTrue(read)
+        self.assertIn('workflows', response)
+        patterns = response['workflows']
+        self.assertEqual(len(patterns), 0)
 
     def test_create_read_delete_recipe(self):
         notebook = nbformat.v4.new_notebook()
@@ -360,38 +377,42 @@ class WorkflowJSONInterfaceAPIFunctionsTest(unittest.TestCase):
                              'recipe': notebook,
                              'source': ''}
 
-        created, recipe_id = workflow_api_create(self.configuration,
-                                                 self.workflow_session,
-                                                 WORKFLOW_RECIPE,
-                                                 **recipe_attributes)
-        self.logger.info(recipe_id)
+        created, response = \
+            recipe_create(self.configuration, self.username, recipe_attributes)
+        self.logger.info(response)
         self.assertTrue(created)
-        workflow, msg = workflow_api_read(self.configuration,
-                                          self.workflow_session,
-                                          WORKFLOW_RECIPE,
-                                          **{'persistence_id': recipe_id})
-        self.assertIsNot(workflow, False)
-        self.assertEqual(len(workflow), 1)
+
+        self.assertIn('text', response)
+        recipe_id = response['text']
+
+        read, response = recipe_read(self.configuration,
+                                     self.username,
+                                     {'persistence_id': recipe_id})
+        self.assertTrue(read)
+        self.assertIn('workflows', response)
+        recipes = response['workflows']
+        self.assertEqual(len(recipes), 1)
         # Check internal attributes
         for k, v in recipe_attributes.items():
-            self.assertEqual(workflow[0][k], v)
+            self.assertEqual(recipes[0][k], v)
 
         # TODO, validate it has the expected attributes
         delete_attributes = {'vgrid': self.test_vgrid,
                              'persistence_id': recipe_id}
 
-        deleted, msg = workflow_api_delete(self.configuration,
-                                           self.workflow_session,
-                                           WORKFLOW_RECIPE,
-                                           **delete_attributes)
-        self.logger.info(msg)
+        deleted, response = recipe_delete(self.configuration,
+                                          self.username,
+                                          delete_attributes)
+        self.logger.info(response)
         self.assertTrue(deleted)
 
-        workflow, msg = workflow_api_read(self.configuration,
-                                          self.workflow_session,
-                                          WORKFLOW_RECIPE,
-                                          **{'persistence_id': msg})
-        self.assertFalse(workflow)
+        read, response = recipe_read(self.configuration,
+                                     self.username,
+                                     {'persistence_id': recipe_id})
+        self.assertTrue(read)
+        self.assertIn('workflows', response)
+        recipes = response['workflows']
+        self.assertEqual(len(recipes), 0)
 
     def test_update_pattern(self):
         pattern_name = 'test_pattern'
@@ -406,32 +427,37 @@ class WorkflowJSONInterfaceAPIFunctionsTest(unittest.TestCase):
             'recipes': [recipe_name],
             'variables': {'iterations': 20}}
 
-        created, pattern_id = workflow_api_create(self.configuration,
-                                                  self.workflow_session,
-                                                  WORKFLOW_PATTERN,
-                                                  **pattern_attributes)
-        self.logger.info(pattern_id)
+        created, response = pattern_create(self.configuration,
+                                           self.username,
+                                           pattern_attributes)
+        self.logger.info(response)
         self.assertTrue(created)
+        self.assertIn('text', response)
+        pattern_id = response['text']
+
         pattern_new_name = 'test_updated_pattern'
         new_attributes = {'name': pattern_new_name,
                           'vgrid': self.test_vgrid,
                           'persistence_id': pattern_id}
 
         # TODO Try update without persistence_id
-        updated, pattern_id = workflow_api_update(self.configuration,
-                                                  self.workflow_session,
-                                                  WORKFLOW_PATTERN,
-                                                  **new_attributes)
-        self.logger.info(pattern_id)
+        updated, response = pattern_update(self.configuration,
+                                           self.username,
+                                           new_attributes)
+        self.logger.info(response)
         self.assertTrue(updated)
-        workflow, msg = workflow_api_read(self.configuration,
-                                          self.workflow_session,
-                                          WORKFLOW_PATTERN,
-                                          **{'persistence_id': pattern_id})
-        self.assertEqual(len(workflow), 1)
-        self.assertEqual(workflow[0]['persistence_id'], pattern_id)
-        self.assertEqual(workflow[0]['name'], new_attributes['name'])
-        self.assertEqual(workflow[0]['vgrid'], new_attributes['vgrid'])
+
+        read, response = pattern_read(self.configuration,
+                                      self.username,
+                                      {'persistence_id': pattern_id})
+        self.logger.info(response)
+        self.assertTrue(read)
+        self.assertIn('workflows', response)
+        patterns = response['workflows']
+        self.assertEqual(len(patterns), 1)
+        self.assertEqual(patterns[0]['persistence_id'], pattern_id)
+        self.assertEqual(patterns[0]['name'], new_attributes['name'])
+        self.assertEqual(patterns[0]['vgrid'], new_attributes['vgrid'])
 
     def test_update_recipe(self):
         notebook = nbformat.v4.new_notebook()
@@ -441,31 +467,37 @@ class WorkflowJSONInterfaceAPIFunctionsTest(unittest.TestCase):
                              'recipe': notebook,
                              'source': ''}
 
-        created, recipe_id = workflow_api_create(self.configuration,
-                                                 self.workflow_session,
-                                                 WORKFLOW_RECIPE,
-                                                 **recipe_attributes)
+        created, response = recipe_create(self.configuration,
+                                          self.username,
+                                          recipe_attributes)
+        self.logger.info(response)
         self.assertTrue(created)
+        self.assertIn('text', response)
+        recipe_id = response['text']
+
         recipe_new_name = 'test_updated_recipe'
         new_attributes = {'name': recipe_new_name,
                           'vgrid': self.test_vgrid,
                           'persistence_id': recipe_id}
         # TODO Try update without persistence_id
-        updated, recipe_id = workflow_api_update(self.configuration,
-                                                 self.workflow_session,
-                                                 WORKFLOW_RECIPE,
-                                                 **new_attributes)
+        updated, response = recipe_update(self.configuration,
+                                          self.username,
+                                          new_attributes)
         self.logger.info(recipe_id)
         self.assertTrue(updated)
 
-        workflow, msg = workflow_api_read(self.configuration,
-                                          self.workflow_session,
-                                          WORKFLOW_RECIPE,
-                                          **{'persistence_id': recipe_id})
-        self.assertEqual(len(workflow), 1)
-        self.assertEqual(workflow[0]['persistence_id'], recipe_id)
-        self.assertEqual(workflow[0]['name'], new_attributes['name'])
-        self.assertEqual(workflow[0]['vgrid'], new_attributes['vgrid'])
+        read, response = recipe_read(self.configuration,
+                                     self.username,
+                                     {'persistence_id': recipe_id})
+        self.logger.info(response)
+        self.assertTrue(read)
+        self.assertIn('workflows', response)
+        recipes = response['workflows']
+
+        self.assertEqual(len(recipes), 1)
+        self.assertEqual(recipes[0]['persistence_id'], recipe_id)
+        self.assertEqual(recipes[0]['name'], new_attributes['name'])
+        self.assertEqual(recipes[0]['vgrid'], new_attributes['vgrid'])
 
     def test_clear_user_workflows(self):
         pattern_name = 'test_pattern'
@@ -479,12 +511,13 @@ class WorkflowJSONInterfaceAPIFunctionsTest(unittest.TestCase):
                 'output_dir': 'pattern_0_output_variable_name'},
             'recipes': [recipe_name],
             'variables': {'iterations': 20}}
-        created, pattern_id = workflow_api_create(self.configuration,
-                                                  self.workflow_session,
-                                                  WORKFLOW_PATTERN,
-                                                  **pattern_attributes)
-        self.logger.info(pattern_id)
+        created, response = pattern_create(self.configuration,
+                                           self.username,
+                                           pattern_attributes)
+        self.logger.info(response)
         self.assertTrue(created)
+        self.assertIn('text', response)
+        pattern_id = response['text']
 
         notebook = nbformat.v4.new_notebook()
         recipe_name = 'test_update_recipe'
@@ -492,19 +525,23 @@ class WorkflowJSONInterfaceAPIFunctionsTest(unittest.TestCase):
                              'vgrid': self.test_vgrid,
                              'recipe': notebook,
                              'source': ''}
-        created, recipe_id = workflow_api_create(self.configuration,
-                                                 self.workflow_session,
-                                                 WORKFLOW_RECIPE,
-                                                 **recipe_attributes)
-        self.logger.info(recipe_id)
+        created, response = recipe_create(self.configuration,
+                                          self.username,
+                                          recipe_attributes)
+        self.logger.info(response)
         self.assertTrue(created)
+        self.assertIn('text', response)
+        recipe_id = response['text']
 
         # Get every workflow in vgrid
-        workflows, msg = workflow_api_read(self.configuration,
-                                           self.workflow_session,
-                                           WORKFLOW_ANY,
-                                           **{'vgrid': self.test_vgrid})
-        self.logger.info(workflows)
+        read, response = any_read(self.configuration,
+                                  self.username,
+                                  {'vgrid': self.test_vgrid})
+        self.logger.info(response)
+        self.assertTrue(read)
+        self.assertIn('workflows', response)
+        workflows = response['workflows']
+
         self.assertIsNotNone(workflows)
         # Verify that the created objects exist
         self.assertEqual(len(workflows), 2)
@@ -525,11 +562,14 @@ class WorkflowJSONInterfaceAPIFunctionsTest(unittest.TestCase):
         self.assertTrue(reset_workflows(self.configuration,
                                         client_id=self.username))
 
-        no_workflows, msg = workflow_api_read(self.configuration,
-                                              self.workflow_session,
-                                              WORKFLOW_ANY,
-                                              **{'vgrid': self.test_vgrid})
-        self.assertFalse(no_workflows)
+        read, response = any_read(self.configuration,
+                                  self.username,
+                                  {'vgrid': self.test_vgrid})
+        self.logger.info(response)
+        self.assertTrue(read)
+        self.assertIn('workflows', response)
+        workflows = response['workflows']
+        self.assertEqual(len(workflows), 0)
 
     def test_delete_pattern(self):
         pattern_name = 'test_pattern'
@@ -544,25 +584,30 @@ class WorkflowJSONInterfaceAPIFunctionsTest(unittest.TestCase):
             'recipes': [recipe_name],
             'variables': {'iterations': 20}}
 
-        created, pattern_id = workflow_api_create(self.configuration,
-                                                  self.workflow_session,
-                                                  WORKFLOW_PATTERN,
-                                                  **pattern_attributes)
-        self.logger.info(pattern_id)
+        created, response = pattern_create(self.configuration,
+                                           self.username,
+                                           pattern_attributes)
+        self.logger.info(response)
         self.assertTrue(created)
+        self.assertIn('text', response)
+        pattern_id = response['text']
 
         deletion_attributes = {
             'persistence_id': pattern_id,
             'vgrid': self.test_vgrid
         }
 
-        deleted, msg = workflow_api_delete(self.configuration,
-                                           self.workflow_session,
-                                           workflow_type=WORKFLOW_PATTERN,
-                                           **deletion_attributes)
+        deleted, response = pattern_delete(self.configuration,
+                                           self.username,
+                                           deletion_attributes)
 
-        self.logger.info(msg)
+        self.logger.info(response)
         self.assertTrue(deleted)
+        self.assertIn('text', response)
+        deleted_id = response['text']
+
+        self.assertTrue(deleted_id, pattern_id)
+
         workflow = get_workflow_with(self.configuration,
                                      client_id=self.username,
                                      user_query=True,
@@ -578,25 +623,28 @@ class WorkflowJSONInterfaceAPIFunctionsTest(unittest.TestCase):
                              'recipe': notebook,
                              'source': ''}
 
-        created, recipe_id = workflow_api_create(self.configuration,
-                                                 self.workflow_session,
-                                                 WORKFLOW_RECIPE,
-                                                 **recipe_attributes)
-        self.logger.info(recipe_id)
+        created, response = recipe_create(self.configuration,
+                                          self.username,
+                                          recipe_attributes)
+        self.logger.info(response)
         self.assertTrue(created)
+        self.assertIn('text', response)
+        recipe_id = response['text']
 
         deletion_attributes = {
             'persistence_id': recipe_id,
             'vgrid': self.test_vgrid
         }
 
-        deleted, msg = workflow_api_delete(self.configuration,
-                                           self.workflow_session,
-                                           workflow_type=WORKFLOW_RECIPE,
-                                           **deletion_attributes)
-
-        self.logger.info(msg)
+        deleted, response = recipe_delete(self.configuration,
+                                          self.username,
+                                          deletion_attributes)
+        self.logger.info(response)
         self.assertTrue(deleted)
+        self.assertIn('text', response)
+        deleted_id = response['text']
+
+        self.assertEqual(deleted_id, recipe_id)
 
         workflow = get_workflow_with(self.configuration,
                                      client_id=self.username,

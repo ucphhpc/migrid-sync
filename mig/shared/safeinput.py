@@ -48,8 +48,9 @@ except ImportError:
     nbformat = None
 
 from mig.shared.base import force_unicode, force_utf8
-from mig.shared.defaults import src_dst_sep, user_id_charset, user_id_max_length, \
-    session_id_charset, session_id_length, workflow_id_length, MAX_SWEEP
+from mig.shared.defaults import src_dst_sep, user_id_charset, \
+    user_id_max_length, session_id_charset, session_id_length, \
+    workflow_id_length, MAX_SWEEP, maxfill_fields
 from mig.shared.listhandling import frange
 from mig.shared.validstring import valid_user_path
 from mig.shared.valuecheck import lines_value_checker, \
@@ -65,6 +66,20 @@ VALID_WORKFLOW_ATTRIBUTES = [
     'recipes',
     'variables',
     'parameterize_over'
+]
+
+VALID_WORKFLOW_ENVIRONMENT = [
+    'nodes',
+    'cpu cores',
+    'wall time',
+    'memory',
+    'disks',
+    'retries',
+    'cpu-architecture',
+    'fill',
+    'environment variables',
+    'notification',
+    'runtime environments'
 ]
 
 PARAM_START = 'start'
@@ -1066,6 +1081,99 @@ def valid_workflow_recipe(recipe):
     """
     valid_alphanumeric(recipe, extra_chars='+-=:_-')
 
+
+def valid_workflow_environments(environments):
+    """Verify that supplied environments dictionary only contains keys and
+    values that we consider valid. Note that here we are not checking the
+    content of any of these values
+    """
+    if not isinstance(environments, dict):
+        raise InputException("Workflow attribute '%s' must "
+                             "be of type: '%s'" % (environments, dict))
+
+    if 'mig' not in environments:
+        return True
+
+    for env_key, env_val in environments['mig'].items():
+        # General type checking
+        if env_key not in VALID_WORKFLOW_ENVIRONMENT:
+            raise InputException(
+                "Unknown environment key '%s' was provided. Valid keys are "
+                "%s" % (key, ', '.join(VALID_WORKFLOW_ENVIRONMENT)))
+
+        # Specific checking of each definition
+        if env_key == 'cpu-architecture':
+            valid_alphanumeric(env_val, extra_chars='+-=:_- ')
+
+        elif env_key == 'fill':
+            for entry in env_val:
+                if not isinstance(entry, str):
+                    raise InputException(
+                        "Unexpected format for '%s' in '%s'. Expected to be "
+                        "a 'str' but got '%s'"
+                        % (env_val, env_key, type(env_val)))
+                if entry not in maxfill_fields:
+                    raise InputException(
+                        "Invalid fill keyword '%s'. Valid are %s."
+                        % (entry, ', '.join(maxfill_fields)))
+
+        elif env_key == 'environment variables':
+            for entry in env_val:
+                if not isinstance(entry, str):
+                    raise InputException(
+                        "Unexpected format for '%s' in '%s'. Expected to be "
+                        "a 'str' but got '%s'"
+                        % (env_val, env_key, type(env_val)))
+                variable = entry.split('=')
+                if len(variable) != 2 \
+                        or not variable[0] \
+                        or not variable[1]:
+                    raise InputException(
+                        "Incorrect formatting of variable '%s'. Must be of "
+                        "form 'key: value'. Multiple variables should be "
+                        "placed as separate entries" % entry)
+
+        elif env_key == 'notification':
+            for entry in env_val:
+                if not isinstance(entry, str):
+                    raise InputException(
+                        "Unexpected format for '%s' in '%s'. Expected to be "
+                        "a 'str' but got '%s'"
+                        % (env_val, env_key, type(env_val)))
+                notification = entry.split(':')
+                if len(notification) != 2 \
+                        or not notification[0] \
+                        or not notification[1]:
+                    raise InputException(
+                        "Incorrect formatting of notification '%s'. Must be "
+                        "of form 'key: value'. Multiple notifications should "
+                        "be placed as separate entries" % entry)
+                valid_ascii(notification[0])
+                notification[1] = notification[1].strip()
+                if notification[1] != 'SETTINGS':
+                    valid_email_address(notification[1])
+
+        elif env_key == 'runtime environments':
+            for entry in env_val:
+                if not isinstance(entry, str):
+                    raise InputException(
+                        "Unexpected format for '%s' in '%s'. "
+                        "Expected to be a 'str' but got '%s'"
+                        % (env_val, env_key, type(env_val)))
+                valid_alphanumeric(entry, extra_chars='+-=:_- ')
+
+        elif env_key == 'nodes' \
+                or env_key == 'cpu cores' \
+                or env_key == 'wall time' \
+                or env_key == 'memory' \
+                or env_key == 'disks' \
+                or env_key == 'retries':
+            valid_numeric(env_val)
+
+        else:
+            raise InputException(
+                "No environment check implemented for key '%s'. " % env_key)
+        return True
 
 def valid_workflow_attributes(attributes):
     """Verify that supplied attributes dictionary only contains entries that

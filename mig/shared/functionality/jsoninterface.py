@@ -50,7 +50,7 @@ from mig.shared.safeinput import REJECT_UNSET, valid_sid, validated_input, \
     valid_workflow_pers_id, valid_workflow_name, valid_workflow_input_file, \
     valid_workflow_input_paths, valid_workflow_output, \
     valid_workflow_param_over, valid_workflow_variables, \
-    valid_workflow_source, valid_workflow_recipe
+    valid_workflow_source, valid_workflow_recipe, valid_workflow_environments
 from mig.shared.vgrid import get_vgrid_workflow_jobs, init_vgrid_script_list
 from mig.shared.workflows import WORKFLOW_TYPES, PATTERN_GRAPH, WORKFLOW_ANY, \
     WORKFLOW_PATTERN, WORKFLOW_RECIPE, valid_session_id, get_workflow_with, \
@@ -104,7 +104,8 @@ VALID_WORKFLOW_RECIPE_SIGNATURE = {
     'persistence_id': '',
     'name': '',
     'source': '',
-    'recipe': {}
+    'recipe': {},
+    'environments': {}
 }
 
 VALID_WORKFLOW_ANY_SIGNATURE = {
@@ -119,6 +120,7 @@ VALID_WORKFLOW_ANY_SIGNATURE = {
     'parameterize_over': {},
     'source': '',
     'recipe': {},
+    'environments': {}
 }
 
 VALID_PATTERN_GRAPH_SIGNATURE = {
@@ -160,7 +162,8 @@ VALID_WORKFLOW_RECIPE_TYPE = {
     'persistence_id': valid_workflow_pers_id,
     'name': valid_workflow_name,
     'source': valid_workflow_source,
-    'recipe': valid_workflow_recipe
+    'recipe': valid_workflow_recipe,
+    'environments': valid_workflow_environments
 }
 
 VALID_WORKFLOW_ANY_TYPE = {
@@ -173,7 +176,8 @@ VALID_WORKFLOW_ANY_TYPE = {
     'variables': valid_workflow_variables,
     'parameterize_over': valid_workflow_param_over,
     'source': valid_workflow_source,
-    'recipe': valid_workflow_recipe
+    'recipe': valid_workflow_recipe,
+    'environments': valid_workflow_environments
 }
 
 VALID_PATTERN_GRAPH_TYPE = {}
