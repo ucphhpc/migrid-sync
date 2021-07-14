@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userguidescreens - selenium-based web client to grab user guide screenshots
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,6 +30,7 @@
 Goes through a number of steps described in the user guide and grabs the
 corresponding screenshots.
 """
+
 from __future__ import print_function
 
 import getpass
@@ -205,6 +206,8 @@ def home_actions(driver, url, login, passwd, callbacks):
     try:
         link = get_nav_link(driver, url, nav_class)
     except:
+        link = None
+    if not link:
         print("INFO: no %r link found, probably not enabled" % nav_name)
         return
     # print "DEBUG: found %s link: %s" % (nav_name, link)
@@ -251,6 +254,8 @@ def archives_actions(driver, url, login, passwd, callbacks):
     try:
         link = get_nav_link(driver, url, nav_class)
     except:
+        link = None
+    if not link:
         print("INFO: no %r link found, probably not enabled" % nav_name)
         return
     # print "DEBUG: found %s link: %s" % (nav_name, link)
@@ -529,6 +534,8 @@ def jupyter_actions(driver, url, login, passwd, callbacks):
     try:
         link = get_nav_link(driver, url, nav_class)
     except:
+        link = None
+    if not link:
         print("INFO: no %r link found, probably not enabled" % nav_name)
         return
     # print "DEBUG: found %s link: %s" % (nav_name, link)
@@ -547,6 +554,8 @@ def cloud_actions(driver, url, login, passwd, callbacks):
     try:
         link = get_nav_link(driver, url, nav_class)
     except:
+        link = None
+    if not link:
         print("INFO: no %r link found, probably not enabled" % nav_name)
         return
     # print "DEBUG: found %s link: %s" % (nav_name, link)
@@ -565,6 +574,8 @@ def people_actions(driver, url, login, passwd, callbacks):
     try:
         link = get_nav_link(driver, url, nav_class)
     except:
+        link = None
+    if not link:
         print("INFO: no %r link found, probably not enabled" % nav_name)
         return
     # print "DEBUG: found %s link: %s" % (nav_name, link)
@@ -583,6 +594,8 @@ def peers_actions(driver, url, login, passwd, callbacks):
     try:
         link = get_nav_link(driver, url, nav_class)
     except:
+        link = None
+    if not link:
         print("INFO: no %r link found, probably not enabled" % nav_name)
         return
     # print "DEBUG: found %s link: %s" % (nav_name, link)
@@ -601,6 +614,8 @@ def crontab_actions(driver, url, login, passwd, callbacks):
     try:
         link = get_nav_link(driver, url, nav_class)
     except:
+        link = None
+    if not link:
         print("INFO: no %r link found, probably not enabled" % nav_name)
         return
     # print "DEBUG: found %s link: %s" % (nav_name, link)
@@ -619,6 +634,8 @@ def datatransfer_actions(driver, url, login, passwd, callbacks):
     try:
         link = get_nav_link(driver, url, nav_class)
     except:
+        link = None
+    if not link:
         print("INFO: no %r link found, probably not enabled" % nav_name)
         return
     # print "DEBUG: found %s link: %s" % (nav_name, link)
@@ -637,6 +654,8 @@ def sharelink_actions(driver, url, login, passwd, callbacks):
     try:
         link = get_nav_link(driver, url, nav_class)
     except:
+        link = None
+    if not link:
         print("INFO: no %r link found, probably not enabled" % nav_name)
         return
     # print "DEBUG: found %s link: %s" % (nav_name, link)
