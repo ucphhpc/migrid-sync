@@ -35,6 +35,7 @@ getssl_tmp="/tmp/getssl"
 getssl_script="getssl"
 getssl_path=`which ${getssl_script} 2>/dev/null`
 apache_services="httpd apache2"
+postfix_services="postfix"
 migrid_subservices="ftps webdavs openid"
 
 if [[ $(id -u) -ne 0 ]]; then
@@ -198,7 +199,7 @@ if [[ ${org_mtime} -ne ${new_mtime} && ${org_chksum} != ${new_chksum} ]]; then
             service migrid restartdaemon ${subsvc}
         fi
     done
-    for svc in ${apache_services}; do
+    for svc in ${apache_services} ${postfix_services}; do
         service ${svc} status > /dev/null 2>&1
         if [[ $? -eq 0 ]]; then
             if [[ ${verbose} -eq 1 ]]; then
