@@ -234,16 +234,22 @@
                             <h4 class="staticpage">Is My ERDA Data Replicated and Backed Up?</h4>
                             <p>
                                 All data on ERDA is automatically replicated over multiple disks with
-                                RAID technology. We do <em>not</em> currently guarantee automatic and
-                                complete backup of ordinary data in your ERDA home folder or in the
-                                Workgroup shares. That would simply not make sense for the biggest data
-                                sets there. So only files explicitly duplicated with the Archive feature
-                                get backed up to tape. This includes eventual remote tape backup for
-                                extra safety.
+                                RAID technology. Additionally we frequently make local file system
+                                snapshots and transfer the latest one to a remote location on about a
+                                monthly basis for disaster recovery situations. Thus, while we do have
+                                a number of extra data safety measures, we do <em>not</em> currently
+                                guarantee automatic and complete backup of data in your ERDA home
+                                folder or in the Workgroup shares. That would simply not be feasible
+                                for the biggest data sets there. Only files explicitly duplicated with
+                                the Archive feature are guaranteed to be backed up - first to local
+                                disk and later also a copy to remote tape for extra data safety. We
+                                are working on ways to increase the remote transfer frequency, and 
+                                perhaps implement instant mirroring or high-availability distribution
+                                of a select subset of the storage space.<br/>
                                 We recommend our Seafile file synchronization service for any small to
-                                medium sized data sets, for which you want automatic file
-                                versioning. With that solution you generally have the ability to recover
-                                deleted files or 'roll back' files to earlier versions.
+                                medium sized data sets, for which you want automatic file versioning.
+                                With that solution you generally have the ability to recover deleted
+                                files or 'roll back' files to earlier versions.
                             </p>
                             <h4 class="staticpage">How do I Transfer Entire Folders to/from ERDA?</h4>
                             <p>
@@ -615,16 +621,21 @@
                             <h4 class="staticpage">Er mine ERDA data replikerede og med backup?</h4>
                             <p>
                                 Al data på ERDA er automatisk replikeret over flere diske v.h.a.
-                                RAID-teknologi. Vi garanterer <em>ikke</em> i øjeblikket automatisk og
-                                fuldstændig backup af almindelige data i din ERDA brugerfolder eller i
-                                Workgroup shares. For de største datasæt dér giver det simpelthen
-                                sjældent mening med sådan automatisk backup. Så kun filer som eksplicit
-                                er gemt som Archive bliver der gemt backup af. Det inkluderer også
-                                efterfølgende automatisk kopi til bånd på en fjernlokation for ekstra
-                                sikkerhed.
+                                RAID-teknologi. Desuden laver vi jævnligt lokale filsystems-snapshots
+                                og overfører ca. månedligt det seneste sådanne til en fjernlokation
+                                som katastrofesikring. Selv om vi således har flere lag af ekstra 
+                                datasikringsmekanismer, garanterer vi <em>ikke</em> i øjeblikket
+                                automatisk og fuldstændig backup af data i din ERDA brugerfolder eller
+                                i Workgroup shares. For de største datasæt dér er det simpelthen ikke
+                                praktisk gennemførligt. Kun filer eksplicit duplikeret med den særlige
+                                Archive-funktion garanteres der backup af - umiddelbart til lokal disk
+                                og efterfølgende desuden kopi til bånd på en fjernlokation for ekstra
+                                datasikring. Vi arbejder på at øge frekvensen for overførsel til
+                                fjernlokationen, samt måske at implementere en live spejling eller 
+                                high-availability løsning på et udvalgt udsnit af lagerpladsen.<br/>
                                 Vi anbefaler vores Seafile filsynkroniserings-service til små og
-                                mellemstore datasæt, for hvilke man ønsker automatisk filversionering. I
-                                den løsning har man generelt mulighed for at kunne genskabe slettede
+                                mellemstore datasæt, for hvilke man ønsker automatisk filversionering.
+                                I den løsning har man generelt mulighed for at kunne genskabe slettede
                                 filer eller 'spole tilbage' til tidligere versioner.
                             </p>
                             <h4 class="staticpage">Hvordan overfører jeg hele foldere til/fra ERDA?</h4>
