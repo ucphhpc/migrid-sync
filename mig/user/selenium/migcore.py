@@ -34,6 +34,7 @@ driver.get(url)
 mig_login(driver, url, login, passwd)
 ...
 """
+
 from __future__ import print_function
 
 # Robust import - only fail if used without being available
@@ -70,7 +71,7 @@ def init_driver(browser):
     elif browser.lower() == 'phantomjs':
         driver = webdriver.PhantomJS()
     else:
-        print("ERROR: Browser _NOT_ supported: %s" % browser)
+        print("ERROR: Browser NOT supported: %s" % browser)
         driver = None
     # Add a little slack for pages to load when finding elems
     if driver:
@@ -155,8 +156,10 @@ def ucph_login(driver, url, login, passwd, callbacks={}):
             # Just mimic Enter key on password field to submit
             pass_elem.submit()
         # Check for login error msg to return proper status
+        # NOTE: the standard request source footer is also of class alert
+        #       so be specific here to avoid slow page load confusion
         try:
-            error_elem = driver.find_element_by_class_name("alert")
+            error_elem = driver.find_element_by_class_name("alert-warning")
             if error_elem:
                 print("UCPH %s login error: %s" %
                       (auth_flavor, error_elem.text))
@@ -165,7 +168,7 @@ def ucph_login(driver, url, login, passwd, callbacks={}):
             pass
     else:
         status = False
-        print("UCPH %s login _NOT_ found" % auth_flavor)
+        print("UCPH %s login NOT found" % auth_flavor)
 
     print("UCPH %s login result: %s" % (auth_flavor, status))
     return status
@@ -222,44 +225,61 @@ def mig_login(driver, url, login, passwd, callbacks={}):
             pass
     else:
         status = False
-        print("MiG %s login _NOT_ found" % auth_flavor)
+        print("MiG %s login NOT found" % auth_flavor)
 
     print("MiG %s login result: %s" % (auth_flavor, status))
     return status
 
 
-def shared_twofactor(driver, url, twofactor_key, callbacks={}):
+def shared_twofactor(driver, url, twofactor_key, callbacks={},
+                     past_twofactor_class='link-logout'):
     """Login through the post-OpenID 2FA web form and optionally execute any
     provided callbacks for ready and filled states. The callbacks dictionary
     should contain state names bound to functions accepting driver and state
     name like do_stuff(driver, state) .
     Requires the pyotp module to generate the current TOTP token based on
     the provided base32-encoded twofactor_key.
+    The optional past_twofactor_class string can be given to skip twofactor
+    token entry attempts if an element with that class is found. This is useful
+    e.g. when current twofactor requirement is unknown and key is provided.
     """
     status = True
     twofactor_token = None
-    try:
-        token_elem = driver.find_element_by_class_name('tokeninput')
-        if token_elem:
-            state = 'twofactor-ready'
+    past_twofactor = False
+    if past_twofactor_class:
+        try:
+            driver.find_element_by_class_name(past_twofactor_class)
+            # print("DEBUG: found %s element - past twofactor login" %
+            #      past_twofactor_class)
+            past_twofactor = True
+        except Exception as exc:
+            #print("DEBUG: not past twofactor login: %s" % exc)
+            pass
+
+    if not past_twofactor:
+        try:
+            token_elem = driver.find_element_by_class_name('tokeninput')
+            if token_elem:
+                state = 'twofactor-ready'
+                if callbacks.get(state, None):
+                    callbacks[state](driver, state)
+                if pyotp is None:
+                    raise Exception(
+                        "2FA form found but no pyotp helper installed")
+                twofactor_token = pyotp.TOTP(twofactor_key).now()
+        except Exception as exc:
+            print("ERROR: failed in UCPH 2FA: %s" % exc)
+
+        if twofactor_token:
+            # print "DEBUG: send token %s" % twofactor_token
+            token_elem.send_keys(twofactor_token)
+            state = 'twofactor-filled'
             if callbacks.get(state, None):
                 callbacks[state](driver, state)
-            if pyotp is None:
-                raise Exception("2FA form found but no pyotp helper installed")
-            twofactor_token = pyotp.TOTP(twofactor_key).now()
-    except Exception as exc:
-        print("ERROR: failed in UCPH 2FA: %s" % exc)
-
-    if twofactor_token:
-        # print "DEBUG: send token %s" % twofactor_token
-        token_elem.send_keys(twofactor_token)
-        state = 'twofactor-filled'
-        if callbacks.get(state, None):
-            callbacks[state](driver, state)
-        driver.find_element_by_class_name("submit").click()
-    else:
-        status = False
-        print("Post-OpenID 2FA _NOT_ found")
+            driver.find_element_by_class_name("submit").click()
+        else:
+            status = False
+            print("Post-OpenID 2FA NOT found")
 
     print("2-Factor Auth result: %s" % status)
     return status
@@ -268,11 +288,13 @@ def shared_twofactor(driver, url, twofactor_key, callbacks={}):
 def get_nav_link(driver, url, nav_class):
     """Find nav link in UI V3 or V2 structure"""
     link, menu = None, None
-    try:
-        menu = driver.find_element_by_id(NAVMENU_ID)
-        link = menu.find_element_by_class_name(nav_class)
-    except:
-        link = None
+    for i in range(3):
+        try:
+            menu = driver.find_element_by_id(NAVMENU_ID)
+            link = menu.find_element_by_class_name(nav_class)
+            break
+        except:
+            link = None
 
     if link:
         return link
@@ -326,7 +348,7 @@ def shared_logout(driver, url, login, passwd, callbacks={}):
         confirm_elem.click()
     else:
         status = False
-        print("Confirm login _NOT_ found")
+        print("Confirm login NOT found")
 
     print("Finished logout: %s" % status)
     return status
