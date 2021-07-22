@@ -24,6 +24,28 @@
   }, 
   {
     "status": "AUTO",
+    "work_start": "2021-07-12T08:00:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2021-07-12T08:00:00+02:00",
+    "title": {
+      "EN": "Broken brick fallout: recovering missing data",
+      "DK": "Ødelagt brick og følger: genskabelse af manglende data"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2021-08-23T16:00:00+02:00",
+    "description": {
+      "EN": "We're finally able to recover data from the lost brick in the backend storage to slowly bring back the approximate 20TB of data currently missing after we had to restore from the April 10th snapshot as mentioned in older news. We do not want to cause further trouble by restoring into potential live data, so instead we generally recover with the original directory structure inside newly created 'storage-brick-recovery' folders in the root of the relevant user homes and workgroups shares. We'll have to ask owners to please copy or move data found there into place themselves. We apologize for the resulting inconvenience and urge you to inform us on support@erda.dk with details if you notice any of your data urgently missing. Then we may be able to fast-track that particular data recovery. Similarly you are welcome to contact us for help regarding moving any huge data sets back into place.",
+      "DK": "Vi er endelig nået til at kunne udlæse data fra den ødelagte brick i backendlageret, så vi nu langsomt genskaber de ca. 20TB data, som i øjeblikket mangler efter vi var nødt til at genskabe fra et snapshot fra 10. april jvf tidligere nyheder. For ikke at skabe yderligere problemer ved at genskabe ind oveni potentielt aktive data, har vi valgt at genskabe samme struktur i de nylavede 'storage-brick-recovery'-mapper i roden af de relevante brugermapper og workgroup shares. Ejerne bedes så venligst selv flytte eller kopiere data derfra og ind på plads. Vi beklager de gener det medfører og opfordrer jer til at give os besked på support@erda.dk med nærmere oplysninger såfremt særligt vigtige data savnes, da vi så kan forsøge at prioritere genskabelsen deraf. Kontakt os også gerne for hjælp til at flytte evt store datasæt på plads."
+    },
+    "announce_end": "2021-08-30T16:00:00+02:00"
+    },
+  {
+    "status": "AUTO",
     "work_start": "2021-07-06T17:00:00+02:00",
     "systems": [
         "ERDA",
