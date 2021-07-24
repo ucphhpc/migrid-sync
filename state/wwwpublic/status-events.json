@@ -1,6 +1,29 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2021-07-25T10:00:00+02:00", 
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ], 
+    "announce_start": "2021-07-24T12:00:00+02:00", 
+    "title": {
+      "EN": "General update maintenance of the DAG and MODI services", 
+      "DK": "Generel opdatering og vedligeholdelse af DAG og MODI tjenesterne"
+    }, 
+    "services": [
+        "DAG",
+        "MODI"
+    ], 
+    "work_end": "2021-07-25T17:00:00+02:00", 
+    "description": {
+      "EN": "We will make a general update of the underlying DAG and MODI nodes, in addition to updating the JupyterHub service", 
+      "DK": "Vi foretager en generel opdatering af de underliggende DAG og MODI noder ud over opdatering af JupyterHub tjenesten"
+    }, 
+    "announce_end": "2021-07-26T12:00:00+02:00"
+  },
+  {
+    "status": "AUTO", 
     "work_start": "2021-08-02T07:00:00+02:00", 
     "systems": [
         "ERDA",
