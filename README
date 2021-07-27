@@ -83,7 +83,7 @@ sudo apt install apache2 openssh-client python python-pip python-setuptools \
 and most of the optional dependencies similarly with:
 sudo apt install libapache2-mod-wsgi libapache2-mod-auth-openid  \
      python-irclib python-paramiko python-enchant python-jsonrpclib \
-     python-requests python-psutil python-future python-cracklib \
+     python-requests python-psutil python-future python-cracklib python-yaml \
      openssh-server libpam0g-dev mercurial trac trac-mercurial lftp rsync \
      fail2ban ipset
 
@@ -94,9 +94,9 @@ sudo yum install httpd mod_ssl openssh-clients python python-pip \
 
 and most of the optional dependencies similarly with:
 sudo yum install mod_wsgi mod_auth_openid python-paramiko python-enchant \
-     python-jsonrpclib python-requests python2-psutil python-future \
+     python-jsonrpclib python-requests python2-psutil python-future PyYAML \
      cracklib-python openssh-server pam-devel mercurial lftp rsync fail2ban \
-      ipset
+     ipset
 
 while the remaining ones need to be installed from EPEL
 sudo yum install trac trac-mercurial-plugin
