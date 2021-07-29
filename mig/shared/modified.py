@@ -177,7 +177,7 @@ def pending_entities_update(configuration, kind):
     modified_path = os.path.join(configuration.mig_system_files,
                                  "%s.modified" % kind)
     # NOTE: check if modified file exists with size above pickled empty list
-    if not os.path.exist(modified_path):
+    if not os.path.exists(modified_path):
         _logger.debug("no %s file - require update" % modified_path)
         return True
     try:
