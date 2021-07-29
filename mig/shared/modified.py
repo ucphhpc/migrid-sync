@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # modified - entity modification mark manipulation
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Functions for marking and checking modification status of entities"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -36,6 +37,8 @@ import time
 from mig.shared.defaults import keyword_all
 from mig.shared.fileio import acquire_file_lock, release_file_lock
 from mig.shared.serial import load, dump, dumps
+
+EMPTY_PICKLE_SIZE = len(dumps([]))
 
 
 def mark_entity_modified(configuration, kind, name):
@@ -166,13 +169,19 @@ def check_workflow_r_modified(configuration):
 
 
 def pending_entities_update(configuration, kind):
-    """Check if entities modified file indicates a pending update"""
+    """Check if entities modified file - including total absence - indicates a
+    pending update. The latter is the case on first run where helper maps are
+    not yet generated.
+    """
     _logger = configuration.logger
     modified_path = os.path.join(configuration.mig_system_files,
                                  "%s.modified" % kind)
     # NOTE: check if modified file exists with size above pickled empty list
+    if not os.path.exist(modified_path):
+        _logger.debug("no %s file - require update" % modified_path)
+        return True
     try:
-        return os.path.getsize(modified_path) > len(dumps([]))
+        return os.path.getsize(modified_path) > EMPTY_PICKLE_SIZE
     except Exception as exc:
         # Probably because modified file doesn't exist so just ignore
         _logger.debug("could not get size of %s: %s" % (modified_path, exc))
