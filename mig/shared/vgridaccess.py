@@ -656,7 +656,8 @@ def vgrid_inherit_map(configuration, vgrid_map):
     inherit_map = copy.deepcopy(vgrid_map)
     # Sort vgrids and extend participation from the end to keep it simple
     # and efficient
-    all_vgrids = inherit_map[VGRIDS].keys()
+    # NOTE: vgrid_map may be empty dict initially
+    all_vgrids = inherit_map.get(VGRIDS, {}).keys()
     all_vgrids.sort()
     for vgrid_name in all_vgrids[::-1]:
         vgrid = inherit_map[VGRIDS][vgrid_name]
@@ -827,7 +828,7 @@ def user_vgrid_access(configuration, client_id, inherited=False,
     """
     vgrid_access = [default_vgrid]
     vgrid_map = get_vgrid_map(configuration, recursive, caching)
-    for vgrid in vgrid_map[VGRIDS].keys():
+    for vgrid in vgrid_map.get(VGRIDS, {}).keys():
         if vgrid_allowed(client_id, vgrid_map[VGRIDS][vgrid][OWNERS]) or \
                 vgrid_allowed(client_id, vgrid_map[VGRIDS][vgrid][MEMBERS]):
             if inherited:
@@ -848,7 +849,8 @@ def check_vgrid_access(configuration, client_id, vgrid_name, recursive=True,
     """
     vgrid_access = [default_vgrid]
     vgrid_map = get_vgrid_map(configuration, recursive, caching)
-    vgrid_entry = vgrid_map[VGRIDS].get(vgrid_name, {OWNERS: [], MEMBERS: []})
+    vgrid_entry = vgrid_map.get(VGRIDS, {}).get(
+        vgrid_name, {OWNERS: [], MEMBERS: []})
     return vgrid_allowed(client_id, vgrid_entry[OWNERS]) or \
         vgrid_allowed(client_id, vgrid_entry[MEMBERS])
 
@@ -863,7 +865,7 @@ def res_vgrid_access(configuration, client_id, recursive=True, caching=False):
     """
     vgrid_access = [default_vgrid]
     vgrid_map = get_vgrid_map(configuration, recursive, caching)
-    for vgrid in vgrid_map[VGRIDS].keys():
+    for vgrid in vgrid_map.get(VGRIDS, {}).keys():
         if vgrid_allowed(client_id, vgrid_map[VGRIDS][vgrid][RESOURCES]):
             vgrid_access.append(vgrid)
     return vgrid_access
