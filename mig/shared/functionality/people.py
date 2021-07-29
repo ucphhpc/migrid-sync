@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # people - view and communicate with other users
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """View and communicate with other users that allow it"""
+
 from __future__ import absolute_import
 
 from urllib import quote
@@ -145,10 +146,9 @@ def main(client_id, user_arguments_dict):
         vgrid_access = user_vgrid_access(configuration, client_id,
                                          caching=caching)
         anon_map = anon_to_real_user_map(configuration)
-        if not visible_user:
-            output_objects.append(
-                {'object_type': 'error_text', 'text': 'no users found!'})
-            return (output_objects, returnvalues.SYSTEM_ERROR)
+        if not visible_user and not caching:
+            # NOTE: only okay for new installations without users created
+            logger.warning('no users found in %s without caching' % op_name)
 
         # NOTE: use simple pending check if caching to avoid lock during update
         if caching:
