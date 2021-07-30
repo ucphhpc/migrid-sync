@@ -1,6 +1,29 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2021-08-02T17:00:00+02:00", 
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ], 
+    "announce_start": "2021-07-30T12:00:00+02:00", 
+    "title": {
+      "EN": "Updating the MODI and DAG service to seperate the Proxy and the JupyterHub service", 
+      "DK": "Opdatering af MODI og DAG for at seperere deres Proxy og JupyterHub service"
+    }, 
+    "services": [
+        "DAG",
+        "MODI"
+    ], 
+    "work_end": "2021-08-02T:22:00:00+02:00", 
+    "description": {
+      "EN": "We will apply an update to the DAG and MODI services that split the underlying JupyterHub Proxy and the service itself. This will ensure that we can apply updates to both services going forward without the users experiencing any downtime.", 
+      "DK": "Vi fortager en opdatering af DAG og MODI tjenesterne, denne opdatering vil dele den underliggende JupyterHub Proxyen og selve JupyterHub tjenesten. Dette vil sikre, at vi i fremtiden kan udrulle opdateringer til begge tjenester den at brugerne oplever nedetid."
+    }, 
+    "announce_end": "2021-08-03T10:00:00+02:00"
+  },
+  {
+    "status": "AUTO", 
     "work_start": "2021-07-25T10:00:00+02:00", 
     "systems": [
         "ERDA",
