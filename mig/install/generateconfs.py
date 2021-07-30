@@ -28,6 +28,7 @@
 """Generate the configurations for a custom MiG server installation.
 Creates MiG server and Apache configurations to fit the provided settings.
 """
+
 from __future__ import print_function
 
 import datetime
@@ -83,6 +84,11 @@ if '__main__' == __name__:
         'seafile_base',
         'seafmedia_base',
         'seafhttp_base',
+        'openid_address',
+        'sftp_address',
+        'sftp_subsys_address',
+        'ftps_address',
+        'davs_address',
         'jupyter_services',
         'jupyter_services_desc',
         'cloud_fqdn',

@@ -223,6 +223,11 @@ def generate_confs(
     seafile_base='/seafile',
     seafmedia_base='/seafmedia',
     seafhttp_base='/seafhttp',
+    openid_address='',
+    sftp_address='',
+    sftp_subsys_address='',
+    ftps_address='',
+    davs_address='',
     jupyter_services='',
     jupyter_services_desc='{}',
     cloud_services='',
@@ -366,6 +371,11 @@ def generate_confs(
     user_dict['__SEAFILE_BASE__'] = seafile_base
     user_dict['__SEAFMEDIA_BASE__'] = seafmedia_base
     user_dict['__SEAFHTTP_BASE__'] = seafhttp_base
+    user_dict['__OPENID_ADDRESS__'] = openid_address
+    user_dict['__SFTP_ADDRESS__'] = sftp_address
+    user_dict['__SFTP_SUBSYS_ADDRESS__'] = sftp_subsys_address
+    user_dict['__FTPS_ADDRESS__'] = ftps_address
+    user_dict['__DAVS_ADDRESS__'] = davs_address
     user_dict['__JUPYTER_SERVICES__'] = jupyter_services
     user_dict['__JUPYTER_DEFS__'] = ''
     user_dict['__JUPYTER_OPENIDS__'] = ''
@@ -660,10 +670,17 @@ cert, oid and sid based https!
     if user_dict['__SID_PORT__']:
         user_dict['__IFDEF_SID_PORT__'] = 'Define'
 
+    # TODO: Eliminate use of IO_FQDN in apache after switch to OPENID_ADDRESS
     user_dict['__IFDEF_IO_FQDN__'] = 'UnDefine'
     if user_dict['__IO_FQDN__']:
         user_dict['__IFDEF_IO_FQDN__'] = 'Define'
     # No port for __IO_FQDN__
+
+    user_dict['__IFDEF_OPENID_ADDRESS__'] = 'UnDefine'
+    if user_dict['__OPENID_ADDRESS__']:
+        user_dict['__IFDEF_OPENID_ADDRESS__'] = 'Define'
+    elif user_dict['__IO_FQDN__']:
+        user_dict['__IFDEF_OPENID_ADDRESS__'] = 'Define'
 
     # Enable mercurial module in trackers if Trac is available
     user_dict['__HG_COMMENTED__'] = '#'
@@ -798,6 +815,20 @@ cert, oid and sid based https!
             user_dict['__SEAFILE_LOCAL_COMMENTED__'] = ''
             # Remote Seafile additionally requires reverse *https* proxy
             user_dict['__PROXY_HTTPS_COMMENTED__'] = ''
+
+    # Default IO daemons to listen on io_fqdn unless explicitly overriden
+    all_io_fqdns = []
+    if io_fqdn:
+        all_io_fqdns.append(io_fqdn)
+    for daemon_prefix in ('OPENID', 'SFTP', 'SFTP_SUBSYS', 'FTPS', 'DAVS'):
+        address_field = '__%s_ADDRESS__' % daemon_prefix
+        daemon_address = user_dict[address_field]
+        if daemon_address:
+            if not daemon_address in all_io_fqdns:
+                all_io_fqdns.append(daemon_address)
+        elif io_fqdn:
+            user_dict[address_field] = io_fqdn
+    user_dict['__ALL_IO_FQDNS__'] = ' '.join(all_io_fqdns)
 
     user_dict['__PREFER_HTTPS_COMMENTED__'] = '#'
     if public_use_https:
