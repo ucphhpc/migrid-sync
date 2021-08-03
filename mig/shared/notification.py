@@ -30,19 +30,34 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+try:
+    from future import standard_library
+    standard_library.install_aliases()
+    from builtins import str
+except Exception as exc:
+    print("Failed to initialize Python 3 porting helpers: %s" % exc)
+    exit(1)
+
+# Real imports
+
 import datetime
 import os
 import pickle
 import smtplib
 import threading
 import time
+# TODO: email.Encoders are deprecated in python3
 from email import Encoders
 from email.message import Message
 from email.MIMEBase import MIMEBase
 from email.MIMEMultipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.Utils import formatdate
-from urllib import quote, urlencode
+# NOTE: moved to urllib.parse in python3 and are re-exposed with future
+try:
+    from urllib.parse import quote, urlencode
+except ImportError:
+    from urllib import quote, urlencode
 
 # Optional gnupg support - delay any error until use
 try:
@@ -185,7 +200,7 @@ Please contact the %(site)s team for details about expire policies.
             txt += """This is a message sent on behalf of %s:
 """ % from_id
             txt += frame_template % request_text
-        elif request_type in accept_mapper.keys():
+        elif request_type in list(accept_mapper.keys()):
             kind = accept_mapper[request_type]
             if 'vgrid' == kind:
                 show_kind = configuration.site_vgrid_label
@@ -196,7 +211,7 @@ Please contact the %(site)s team for details about expire policies.
             txt += """This is a %s admission note sent on behalf of %s:
 """ % (show_kind, from_id)
             txt += frame_template % request_text
-        elif request_type in reject_mapper.keys():
+        elif request_type in list(reject_mapper.keys()):
             kind = reject_mapper[request_type]
             if 'vgrid' == kind:
                 show_kind = configuration.site_vgrid_label
@@ -207,7 +222,7 @@ Please contact the %(site)s team for details about expire policies.
             txt += """This is a %s access rejection note sent on behalf of %s:
 """ % (show_kind, from_id)
             txt += frame_template % request_text
-        elif request_type in entity_mapper.keys():
+        elif request_type in list(entity_mapper.keys()):
             entity = entity_mapper[request_type]
             header = '%s %s request' \
                 % (configuration.short_title, request_type)

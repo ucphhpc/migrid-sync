@@ -28,6 +28,7 @@
 """This module contains various helper functions for distributed
 server IO. It is imported and used by the public interface modules.
 """
+
 from __future__ import print_function
 
 __version__ = '$Revision: 2084 $'
@@ -35,14 +36,14 @@ __revision__ = __version__
 
 # $Id: distbase.py 2084 2007-09-11 08:39:37Z jones $
 
-import sys
-import StringIO
 import httplib
-import urlparse
+import sys
 import time
-from urllib import urlencode
-from os.path import normpath
+import urlparse
+from io import BytesIO as LegacyStringIO
 from os import getenv, environ
+from os.path import normpath
+from urllib import urlencode
 
 # ###################
 # Network settings #
@@ -132,7 +133,7 @@ def get_leader():
     """Lookup group leader address if not cached"""
 
     if leader_cache['current'] and time.time()\
-         < leader_cache['timestamp'] + leader_cache['interval']:
+            < leader_cache['timestamp'] + leader_cache['interval']:
         return leader_cache['current']
 
     # TODO: lookup list of possible leaders from www.migrid.org or
@@ -157,7 +158,7 @@ def verify_certificate(ssl_socket):
         server_id = ssl_socket.server()
     except Exception as err:
         raise Exception('Server certificate extraction failed! %s'
-                         % err)
+                        % err)
     try:
         ca_id = ssl_socket.issuer()
     except Exception as err:
@@ -171,10 +172,10 @@ def verify_certificate(ssl_socket):
 
     if -1 == server_id.find(SERVER_ID_FIELD):
         raise Exception('Server certificate verification failed!'
-                         + '(%s vs. %s)' % (server_id, SERVER_ID_FIELD))
+                        + '(%s vs. %s)' % (server_id, SERVER_ID_FIELD))
     elif CA_ID != ca_id:
         raise Exception('CA certificate verification failed!'
-                         + '(%s vs. %s)' % (server_id, SERVER_ID_FIELD))
+                        + '(%s vs. %s)' % (server_id, SERVER_ID_FIELD))
 
 
 def http_no_payload(
@@ -183,7 +184,7 @@ def http_no_payload(
     method,
     path,
     query=[],
-    ):
+):
     """General HTTP operation shared by all functions that operate
     without any data payload.
     HTTPS operation uses key/certificate if port is HTTPS_CERT_PORT.
@@ -197,7 +198,7 @@ def http_no_payload(
     for _ in range(max_redirects):
         if HTTPS_CERT_PORT == port:
             connection = httplib.HTTPSConnection(host, port, KEY_PATH,
-                    CERT_PATH)
+                                                 CERT_PATH)
         else:
             connection = httplib.HTTPSConnection(host, port)
 
@@ -207,7 +208,7 @@ def http_no_payload(
             verify_certificate(ssl_socket)
         except Exception as err:
             http_status = -1
-            response = StringIO.StringIO('')
+            response = LegacyStringIO('')
             connection.close()
             break
 
@@ -243,11 +244,11 @@ def http_no_payload(
 
     if not http_status in HTTP_OK:
         raise IOError("Error: HTTP %s %s failed! (%d, '%s')" % (method,
-                      path, http_status, response.read()))
+                                                                path, http_status, response.read()))
 
     # Response contains status code in first line followed by output
 
-    output = StringIO.StringIO(response.read())
+    output = LegacyStringIO(response.read())
 
     # The above read requires connection to remain open this far
 
@@ -269,7 +270,7 @@ def http_chmod(
     port,
     path,
     mode,
-    ):
+):
     """Simply use general function"""
 
     arguments = [('mode', mode)]
@@ -287,7 +288,7 @@ def http_mkdir(
     port,
     path,
     mode,
-    ):
+):
     """Simply use general function"""
 
     arguments = [('mode', mode)]
@@ -305,7 +306,7 @@ def http_rename(
     port,
     src,
     dst,
-    ):
+):
     """Simply use general function"""
 
     arguments = [('dst', dst)]
@@ -323,7 +324,7 @@ def http_stat(
     port,
     path,
     flags,
-    ):
+):
 
     arguments = [('flags', flags)]
     return http_no_payload(host, port, 'STAT', path, arguments)
@@ -334,7 +335,7 @@ def http_symlink(
     port,
     src,
     dst,
-    ):
+):
 
     arguments = [('dst', dst)]
     return http_no_payload(host, port, 'SYMLINK', src, arguments)
@@ -345,7 +346,7 @@ def http_walk(
     port,
     path,
     topdown,
-    ):
+):
     """Simply use general function"""
 
     arguments = [('topdown', topdown)]
@@ -365,7 +366,7 @@ def http_get(host, port, path):
     path = normpath(path)
     if HTTPS_CERT_PORT == port:
         connection = httplib.HTTPSConnection(host, port, KEY_PATH,
-                CERT_PATH)
+                                             CERT_PATH)
     else:
         connection = httplib.HTTPSConnection(host, port)
 
@@ -376,7 +377,7 @@ def http_get(host, port, path):
     except Exception as err:
         connection.close()
         raise IOError('Error: HTTPS %s session with %s failed!'
-                       % (method, host))
+                      % (method, host))
 
     # write header
 
@@ -398,7 +399,7 @@ def http_get(host, port, path):
 
     if not status in HTTP_OK:
         raise IOError('Error: HTTP %s %s failed! (%d, %s)' % (method,
-                      path, status, reply))
+                                                              path, status, reply))
 
     return (status, reply)
 
@@ -408,7 +409,7 @@ def http_put(
     port,
     path,
     data,
-    ):
+):
     """HTTP PUT operation quite different from other functions
     that operate without any data payload.
     HTTPS operation uses key/certificate if port is HTTPS_CERT_PORT.
@@ -422,7 +423,7 @@ def http_put(
     path = normpath(path)
     if HTTPS_CERT_PORT == port:
         connection = httplib.HTTPSConnection(host, port, KEY_PATH,
-                CERT_PATH)
+                                             CERT_PATH)
     else:
         connection = httplib.HTTPSConnection(host, port)
 
@@ -433,7 +434,7 @@ def http_put(
     except Exception as err:
         connection.close()
         raise IOError('Error: HTTPS %s session with %s failed!'
-                       % (method, host))
+                      % (method, host))
 
     # write header
 
@@ -472,7 +473,7 @@ def get_range(
     path,
     offset,
     bytes,
-    ):
+):
     """Wrapper around http_get to simulate real HTTP GET RANGE"""
 
     # TODO: get only range
@@ -490,7 +491,7 @@ def put_range(
     offset,
     bytes,
     data,
-    ):
+):
     """Fetch existing file contents and update specified region.
     Insert zero bytes if offset exceeds old data length like local
     write() does.
@@ -519,9 +520,9 @@ def create_session_link(session_id, user):
     port = HTTPS_SID_PORT
     location = '/storage/interface.py'
     arguments = [('function', 'create_session_link'), ('session_id',
-                 session_id), ('user', user)]
+                                                       session_id), ('user', user)]
     (status, output) = http_no_payload(host, port, 'GET', location,
-            arguments)
+                                       arguments)
     output = output.strip()
     return (status, output)
 
@@ -538,9 +539,9 @@ def remove_session_link(session_id, user):
     port = HTTPS_SID_PORT
     location = '/storage/interface.py'
     arguments = [('function', 'remove_session_link'), ('session_id',
-                 session_id), ('user', user)]
+                                                       session_id), ('user', user)]
     (status, output) = http_no_payload(host, port, 'GET', location,
-            arguments)
+                                       arguments)
     output = output.strip()
     return (status, output)
 
@@ -550,7 +551,7 @@ def open_session(
     session_type,
     retries=2,
     retry_delay=1,
-    ):
+):
     """Request the current leader to open the active session for
     file with supplied path.
     Automatic retry is possible with the help of retries and
@@ -570,10 +571,10 @@ def open_session(
         port = HTTPS_SID_PORT
         location = '/storage/interface.py'
         arguments = [('function', 'open_session'), ('session_id',
-                     BASE_ID), ('file_name', path), ('type',
-                     session_type)]
+                                                    BASE_ID), ('file_name', path), ('type',
+                                                                                    session_type)]
         (status, output) = http_no_payload(host, port, 'GET', location,
-                arguments)
+                                           arguments)
         output = output.strip()
         if 0 == status:
 
@@ -592,7 +593,7 @@ def close_session(
     session_type,
     retries=2,
     retry_delay=1,
-    ):
+):
     """Tell the current leader to close the active session for
     file with supplied path.
     """
@@ -605,16 +606,16 @@ def close_session(
         leader = get_leader()
         if not leader:
             response += 'Error in attempt %d: No leader found!\n'\
-                 % attempt
+                % attempt
             continue
         host = leader
         port = HTTPS_SID_PORT
         location = '/storage/interface.py'
         arguments = [('function', 'close_session'), ('session_id',
-                     BASE_ID), ('file_name', path), ('type',
-                     session_type)]
+                                                     BASE_ID), ('file_name', path), ('type',
+                                                                                     session_type)]
         (status, output) = http_no_payload(host, port, 'GET', location,
-                arguments)
+                                           arguments)
         output = output.strip()
         if 0 == status:
 
@@ -626,5 +627,3 @@ def close_session(
             response += 'Error in attempt %d: %s\n' % (attempt, output)
             time.sleep(retry_delay)
     return (status, response)
-
-

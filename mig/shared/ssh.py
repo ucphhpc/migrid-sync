@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ssh - remote command wrappers using ssh/scp
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,14 +26,15 @@
 #
 
 """SSH based remote operations"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
+from io import BytesIO as LegacyStringIO
 import base64
 import os
 import sys
 import tempfile
-import StringIO
 
 try:
     import paramiko
@@ -489,7 +490,7 @@ def generate_ssh_rsa_key_pair(size=2048, public_key_prefix='',
         raise Exception("You need paramiko to provide the ssh/sftp service")
     rsa_key = paramiko.RSAKey.generate(size)
 
-    string_io_obj = StringIO.StringIO()
+    string_io_obj = LegacyStringIO()
     rsa_key.write_private_key(string_io_obj)
 
     private_key = string_io_obj.getvalue()
@@ -554,11 +555,11 @@ if __name__ == "__main__":
     (exe_status, exe_config) = get_resource_exe(
         resource_config, exe_name, logger)
     if not res_status:
-        print("Failed to extract resource config for %s: %s" % \
+        print("Failed to extract resource config for %s: %s" %
               (unique_resource_name, resource_config))
         sys.exit(1)
     if not exe_status:
-        print("Failed to extract exe config for %s: %s" % \
+        print("Failed to extract exe config for %s: %s" %
               (exe_name, exe_config))
         sys.exit(1)
     copy_res = copy_file_to_resource(filename, res_path, resource_config,

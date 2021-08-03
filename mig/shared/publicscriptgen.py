@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # publicscriptgen - Basic script generator functions
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -589,10 +589,10 @@ def curl_perform(
     proc = subprocess.Popen(command_list, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT, stdin=input_source)
     if input_fd:
-        out_buffer = StringIO.StringIO(proc.communicate(input_fd.read(chunk_bytes))[0])
+        out_buffer = LegacyStringIO(proc.communicate(input_fd.read(chunk_bytes))[0])
         input_fd.close()
     else:
-        out_buffer = StringIO.StringIO(proc.communicate()[0])
+        out_buffer = LegacyStringIO(proc.communicate()[0])
     proc.stdout.close()
     out = out_buffer.readlines()
     #print \"DEBUG: out: %%s\" %% out
@@ -1463,12 +1463,12 @@ Any changes should be made in the generator and not here !!!
         pass
     elif lang == 'python':
         s += \
-            """import sys
-import os
+            """from io import BytesIO as LegacyStringIO
 import getopt
 import getpass
+import os
+import sys
 import subprocess
-import StringIO
 
 """
     else:

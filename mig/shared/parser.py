@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # parser - General parser functions for jobs and resource confs
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,11 +26,12 @@
 #
 
 """Parser helper functions"""
+
 from __future__ import absolute_import
 
-import os
+from io import BytesIO as LegacyStringIO
 import base64
-import StringIO
+import os
 import tempfile
 
 from mig.shared.defaults import keyword_all, maxfill_fields
@@ -208,7 +209,7 @@ def parse(mrsl_file, strip_space=True, strip_comments=True):
 
 def parse_lines(mrsl_text):
     """Wrap lines in IO object to allow parsing from list"""
-    mrsl_buffer = StringIO.StringIO(mrsl_text)
+    mrsl_buffer = LegacyStringIO(mrsl_text)
     return parse(mrsl_buffer)
 
 

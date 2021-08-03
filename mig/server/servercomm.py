@@ -31,7 +31,8 @@
 
 from __future__ import print_function
 from __future__ import absolute_import
-import StringIO
+
+from io import BytesIO as LegacyStringIO
 import os
 import sys
 import pwd
@@ -86,13 +87,13 @@ def write_status(config, status):
             filehandle.write('[%s]\n' % section)
             for name in status.options(section):
                 filehandle.write('%s = %s\n' % (name,
-                                 status.get(section, name)))
+                                                status.get(section, name)))
             filehandle.write('\n')
 
         filehandle.close()
     except Exception as e:
-        config.logger.error('Error: failed to write server status to %s (%s)'
-                            , status_path, str(e))
+        config.logger.error(
+            'Error: failed to write server status to %s (%s)', status_path, str(e))
         return False
 
     return True
@@ -105,7 +106,7 @@ def put_data(
     host,
     port,
     rel_path,
-    ):
+):
 
     try:
         inputfile = open(filename, 'rb')
@@ -134,7 +135,7 @@ def put_data(
 
     # Store output in memory
 
-    output = StringIO.StringIO()
+    output = LegacyStringIO()
 
     # Init cURL (not strictly necessary, but for symmetry with cleanup)
 
@@ -218,8 +219,8 @@ def put_data(
 
         # print msg
 
-        config.logger.warning('Server returned HTTP code %d, expected %d'
-                              , http_status, http_success)
+        config.logger.warning(
+            'Server returned HTTP code %d, expected %d', http_status, http_success)
 
     inputfile.close()
     output.close()
@@ -233,7 +234,7 @@ def get_data(
     host,
     port,
     rel_path,
-    ):
+):
 
     if port:
         url = '%s://%s:%s/%s' % (protocol, host, port, rel_path)
@@ -252,7 +253,7 @@ def get_data(
 
     # Store output in memory
 
-    output = StringIO.StringIO()
+    output = LegacyStringIO()
 
     # Init cURL (not strictly necessary, but for symmetry with cleanup)
 
@@ -335,8 +336,8 @@ def get_data(
             config.logger.error('Failed to parse server status')
             return None
     else:
-        config.logger.error('Server returned HTTP code %d, expected %d'
-                            , http_status, http_success)
+        config.logger.error(
+            'Server returned HTTP code %d, expected %d', http_status, http_success)
         return None
 
     output.close()
@@ -349,7 +350,7 @@ def section_to_dict(
     section,
     section_key,
     opt_conv=None,
-    ):
+):
 
     # Dump the section contents of a configparser object into a dictionary
     # Bind the section name to section_key int the dictionary
@@ -545,7 +546,7 @@ def migrate_job(config, job, peer):
 
         client_dir = client_id_dir(job['USER_CERT'])
         mrsl_filename = config.mrsl_files_dir + client_dir + '/'\
-             + job['JOB_ID'] + '.mRSL'
+            + job['JOB_ID'] + '.mRSL'
         result = pickle(job, mrsl_filename, config.logger)
         if not result:
             config.logger.error('Aborting migration of job %s (%s)',
@@ -608,8 +609,8 @@ def balance_prices(config, scheduler):
                 migrate_count += 1
                 break
             else:
-                config.logger.error('Migration to %s failed! leaving job %s at index %d'
-                                    , server, job['JOB_ID'], next_i)
+                config.logger.error(
+                    'Migration to %s failed! leaving job %s at index %d', server, job['JOB_ID'], next_i)
         else:
             config.logger.info('%s not marked for migration', job_id)
 
@@ -622,8 +623,8 @@ def balance_prices(config, scheduler):
 
 
 def return_done(config, scheduler):
-    config.logger.info('return_done: should return %d jobs from done_queue'
-                       , scheduler.done_queue.queue_length())
+    config.logger.info('return_done: should return %d jobs from done_queue',
+                       scheduler.done_queue.queue_length())
     return True
 
 
@@ -632,7 +633,7 @@ def refresh_peer_status(
     scheduler,
     peer,
     peer_conf,
-    ):
+):
 
     # Extract peer status from ConfigParser object, peer_conf.
     # Use contents to update local version of peer status information
@@ -647,21 +648,19 @@ def refresh_peer_status(
         section_type = peer_conf.get(title, 'type')
         if section_type == 'server':
             entity = section_to_dict(peer_conf, title, 'server_id',
-                    'upper')
+                                     'upper')
             peer_servers[title] = entity
         elif section_type == 'resource':
             entity = section_to_dict(peer_conf, title, 'resource_id',
-                    'upper')
+                                     'upper')
             peer_resources[title] = entity
         elif section_type == 'user':
             entity = section_to_dict(peer_conf, title, 'user_id',
-                    'upper')
+                                     'upper')
             peer_users[title] = entity
         else:
             print('UpdatePeerStatus: %s: unknown type: %s' % (title,
-                    section_type))
+                                                              section_type))
 
     scheduler.UpdatePeerStatus(peer, peer_servers, peer_resources,
                                peer_users)
-
-

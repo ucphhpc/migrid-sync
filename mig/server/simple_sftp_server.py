@@ -42,9 +42,9 @@ import tempfile
 import threading
 import time
 from optparse import OptionParser
-from StringIO import StringIO
+from io import BytesIO as LegacyStringIO
 
-#paramiko.util.log_to_file("paramiko.log")
+# paramiko.util.log_to_file("paramiko.log")
 logging.getLogger("paramiko").setLevel(logging.DEBUG)
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("sftpserver")
@@ -102,8 +102,9 @@ Myw1d5t46XP97y6Szrhcsrt15pmSKD+zLYXD26qoxKJOP9a6+A==
 
 """
 
+
 class User(object):
-    def __init__(self, username, password, 
+    def __init__(self, username, password,
                  chroot=True, home=None, public_key=None):
         self.username = username
         self.password = password
@@ -119,6 +120,7 @@ class User(object):
         if self.home is None:
             self.home = self.username
 
+
 class SFTPHandle(paramiko.SFTPHandle):
     def __init__(self, flags=0, path=None):
         paramiko.SFTPHandle.__init__(self, flags)
@@ -127,6 +129,7 @@ class SFTPHandle(paramiko.SFTPHandle):
             self.readfile = open(path, "r")
         else:
             self.writefile = open(path, "w")
+
 
 # We don't need subversion support
 '''
@@ -149,6 +152,7 @@ class SvnSFTPHandle(SFTPHandle):
             os.system("svn commit -m 'auto add' %s" % (self.path))
 '''
 
+
 class SimpleSftpServer(paramiko.SFTPServerInterface):
     def __init__(self, server, transport, fs_root, users, *largs, **kwargs):
         self.transport = transport
@@ -162,7 +166,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
     def get_fs_path(self, sftp_path):
         real_path = "%s/%s" % (self.root, sftp_path)
         real_path = real_path.replace('//', '/')
-        
+
         if not os.path.realpath(real_path).startswith(self.root):
             raise Exception("Invalid path")
 
@@ -181,7 +185,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         rc = []
         for filename in os.listdir(real_path):
             full_name = ("%s/%s" % (real_path, filename)).replace("//", "/")
-            rc.append(paramiko.SFTPAttributes.from_stat(os.stat(full_name), filename.replace(self.root, '')))
+            rc.append(paramiko.SFTPAttributes.from_stat(
+                os.stat(full_name), filename.replace(self.root, '')))
         return rc
 
     def stat(self, path):
@@ -211,7 +216,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
     def mkdir(self, path, mode):
         logger.debug("mkdir %s" % path)
         real_path = self.get_fs_path(path)
-	# Force MiG default mode
+        # Force MiG default mode
         os.mkdir(real_path, 0o755)
         return paramiko.SFTP_OK
 
@@ -223,23 +228,24 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def chattr(self, path, attr):
         logger.debug("chattr %s" % path)
-	# Prevent users from messing with access modes
+        # Prevent users from messing with access modes
         return paramiko.SFTP_OP_UNSUPPORTED
-         
-    #def canonicalize(self, path):
+
+    # def canonicalize(self, path):
     #    print "canonicalize %s" % path
     #    return paramiko.SFTPServerInterface.canoncialize(self, path)
 
     def readlink(self, path):
         logger.debug("readlink %s" % path)
         real_path = self.get_fs_path(path)
-	relative_path = os.readlink(path).replace(self.root, '')
-	return relative_path
+        relative_path = os.readlink(path).replace(self.root, '')
+        return relative_path
 
     def symlink(self, target_path, path):
         logger.debug("symlink %s" % target_path)
-	# Prevent users from creating symlinks for security reasons
+        # Prevent users from creating symlinks for security reasons
         return paramiko.SFTP_OP_UNSUPPORTED
+
 
 # We don't need subversion support
 '''
@@ -326,7 +332,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
         self.event.set()
         return True
 
-    #def check_channel_subsystem_request(self, channel, name):
+    # def check_channel_subsystem_request(self, channel, name):
     #    print channel
     #    print name
     #    self.event.set()
@@ -342,7 +348,7 @@ def accept_client(client, addr, root_dir, users, host_rsa_key, conf={}):
     for u in users:
         usermap[u.username] = u
 
-    host_key_file = StringIO(host_rsa_key)
+    host_key_file = LegacyStringIO(host_rsa_key)
     host_key = paramiko.RSAKey(file_obj=host_key_file)
     transport = paramiko.Transport(client)
     transport.load_server_moduli()
@@ -361,7 +367,8 @@ def accept_client(client, addr, root_dir, users, host_rsa_key, conf={}):
         logger.info("Custom implementation: %s" % conf['sftp_implementation'])
     else:
         impl = SimpleSftpServer
-    transport.set_subsystem_handler("sftp", paramiko.SFTPServer, sftp_si=impl, transport=transport, fs_root=root_dir, users=usermap)
+    transport.set_subsystem_handler(
+        "sftp", paramiko.SFTPServer, sftp_si=impl, transport=transport, fs_root=root_dir, users=usermap)
 
     server = SimpleSSHServer(users=usermap)
     transport.start_server(server=server)
@@ -372,7 +379,9 @@ def accept_client(client, addr, root_dir, users, host_rsa_key, conf={}):
     username = server.get_authenticated_user()
     if username is not None:
         user = usermap[username]
-        os.system("svn commit -m 'committing user session for %s' %s" % (username, root_dir + "/" + user.home))
+        os.system("svn commit -m 'committing user session for %s' %s" %
+                  (username, root_dir + "/" + user.home))
+
 
 def refresh_users(conf):
     '''Reload users from conf if it changed on disk'''
@@ -388,25 +397,27 @@ def refresh_users(conf):
         logger.error("Configuration reload failed: %s" % exc)
     return conf
 
-def start_service(configuration):
-     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-     # Allow reuse of socket to avoid TCP time outs
-     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
-     server_socket.bind((configuration['address'], configuration['port']))
-     server_socket.listen(10)
 
-     logger.info("Accepting connections")
-     while True:
-         client, addr = server_socket.accept()
-         # automatic reload of users
-         configuration = refresh_users(configuration)
-         t = threading.Thread(target=accept_client, args=[client, 
-                                                          addr, 
-                                                          configuration['root_dir'],
-                                                          configuration['users'],
-                                                          configuration['host_rsa_key'],
-                                                          configuration,])
-         t.start()
+def start_service(configuration):
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # Allow reuse of socket to avoid TCP time outs
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server_socket.bind((configuration['address'], configuration['port']))
+    server_socket.listen(10)
+
+    logger.info("Accepting connections")
+    while True:
+        client, addr = server_socket.accept()
+        # automatic reload of users
+        configuration = refresh_users(configuration)
+        t = threading.Thread(target=accept_client, args=[client,
+                                                         addr,
+                                                         configuration['root_dir'],
+                                                         configuration['users'],
+                                                         configuration['host_rsa_key'],
+                                                         configuration, ])
+        t.start()
+
 
 def create_configuration_file(path):
     cf = open(path, "w")

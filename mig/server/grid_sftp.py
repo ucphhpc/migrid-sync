@@ -73,7 +73,7 @@ import sys
 import threading
 import time
 from functools import wraps
-from StringIO import StringIO
+from io import BytesIO as LegacyStringIO
 
 try:
     import paramiko
@@ -1402,7 +1402,7 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
 
     window_size = conf.get('window_size', DEFAULT_WINDOW_SIZE)
     max_packet_size = conf.get('max_packet_size', DEFAULT_MAX_PACKET_SIZE)
-    host_key_file = StringIO(host_rsa_key)
+    host_key_file = LegacyStringIO(host_rsa_key)
     host_key = paramiko.RSAKey(file_obj=host_key_file)
     transport = paramiko.Transport(client, default_window_size=window_size,
                                    default_max_packet_size=max_packet_size)

@@ -26,7 +26,8 @@
 #
 
 from __future__ import print_function
-import StringIO
+
+from io import BytesIO as LegacyStringIO
 import os
 import sys
 import pwd
@@ -47,7 +48,7 @@ def get_data(
     ca_dir,
     ca_file,
     passphrase_file='',
-    ):
+):
 
     if port:
         url = '%s://%s:%s/%s' % (protocol, host, port, rel_path)
@@ -66,7 +67,7 @@ def get_data(
 
     # Store output in memory
 
-    output = StringIO.StringIO()
+    output = LegacyStringIO()
 
     # Init cURL (not strictly necessary, but for symmetry with cleanup)
 
@@ -149,8 +150,8 @@ def get_data(
             print('Failed to parse server status')
             return None
     else:
-        print('Server returned HTTP code %d, expected %d', http_status, \
-            http_success)
+        print('Server returned HTTP code %d, expected %d', http_status,
+              http_success)
         return None
 
     output.close()
@@ -173,7 +174,7 @@ response = get_data(
     '',
     home + '/.MiG/cacert.pem',
     home + '/.MiG/pp.txt',
-    )
+)
 
 print(response)
 
