@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # genjobscriptsh - helpers for sh jobs
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,12 +26,13 @@
 #
 
 """Bourne shell job script generator and functions"""
+
 from __future__ import absolute_import
 
-from urllib import quote as urlquote
 import os
 
 from mig.shared.defaults import job_output_dir, src_dst_sep
+from mig.shared.url import quote
 
 
 class GenJobScriptSh:
@@ -46,7 +47,7 @@ class GenJobScriptSh:
         https_sid_url,
         localjobname,
         filename_without_ext,
-        ):
+    ):
 
         self.job_dict = job_dictionary
         self.resource_conf = resource_config
@@ -63,9 +64,9 @@ class GenJobScriptSh:
                 break
 
         self.localjobdir = "%s/job-dir_%s" % (localexedir, self.localjobname)
-        self.status_log = '%s/%s.status' % (self.localjobdir, self.job_dict['JOB_ID']) 
+        self.status_log = '%s/%s.status' % (self.localjobdir,
+                                            self.job_dict['JOB_ID'])
         self.io_log = '%s.io-status' % (self.job_dict['JOB_ID'])
- 
 
     def __curl_cmd_send(self, resource_filename, mig_server_filename, expand):
         """Upload files with optional shell expansion of file names. Live
@@ -75,9 +76,9 @@ class GenJobScriptSh:
 
         upload_bw_limit = ''
         if 'MAXUPLOADBANDWIDTH' in self.resource_conf\
-             and self.resource_conf['MAXUPLOADBANDWIDTH'] > 0:
+                and self.resource_conf['MAXUPLOADBANDWIDTH'] > 0:
             upload_bw_limit = '--limit-rate %ik'\
-                 % self.resource_conf['MAXUPLOADBANDWIDTH']
+                % self.resource_conf['MAXUPLOADBANDWIDTH']
 
         if mig_server_filename.find('://') != -1:
 
@@ -90,12 +91,12 @@ class GenJobScriptSh:
             # Relative paths are uploaded to the corresponding session on the server
 
             dst_url = self.https_sid_url_arg + '/sid_redirect/' + \
-                      self.job_dict['SESSIONID'] + '/'
+                self.job_dict['SESSIONID'] + '/'
             # Don't encode variables to be expanded
             if expand:
                 dst_url += mig_server_filename
             else:
-                dst_url += urlquote(mig_server_filename)
+                dst_url += quote(mig_server_filename)
 
             # MiG server needs to know that this PUT uses a session ID
 
@@ -113,15 +114,14 @@ class GenJobScriptSh:
             cmd += "'" + resource_filename + "' '" + dst_url + "'"
         return cmd
 
-
     def __curl_cmd_send_mqueue(self, resource_filename, queue):
         """Send message to mqueue"""
 
         upload_bw_limit = ''
         if 'MAXUPLOADBANDWIDTH' in self.resource_conf\
-             and self.resource_conf['MAXUPLOADBANDWIDTH'] > 0:
+                and self.resource_conf['MAXUPLOADBANDWIDTH'] > 0:
             upload_bw_limit = '--limit-rate %ik'\
-              % self.resource_conf['MAXUPLOADBANDWIDTH']
+                % self.resource_conf['MAXUPLOADBANDWIDTH']
 
         return 'curl --location --connect-timeout 30 --max-time 3600 '\
             + upload_bw_limit + ' --fail --silent --insecure '\
@@ -130,18 +130,17 @@ class GenJobScriptSh:
             + '" -F "output_format=txt" ' + self.https_sid_url_arg\
             + '/cgi-sid/mqueue.py'
 
-
     def __curl_cmd_get(self, mig_server_filename, resource_filename, expand):
         """Download files with optional shell expansion of file names. Live
         input requires variables in path to be expanded, ordinary job input
         must escape to support exotic characters.
         """
-        
+
         download_bw_limit = ''
         if 'MAXDOWNLOADBANDWIDTH' in self.resource_conf\
-             and self.resource_conf['MAXDOWNLOADBANDWIDTH'] > 0:
+                and self.resource_conf['MAXDOWNLOADBANDWIDTH'] > 0:
             download_bw_limit = '--limit-rate %ik'\
-                 % self.resource_conf['MAXDOWNLOADBANDWIDTH']
+                % self.resource_conf['MAXDOWNLOADBANDWIDTH']
 
         cmd = ''
         if mig_server_filename.find('://') != -1:
@@ -154,12 +153,12 @@ class GenJobScriptSh:
             # Relative paths are downloaded from the corresponding session on the server
 
             src_url = self.https_sid_url_arg + '/sid_redirect/' + \
-                      self.job_dict['SESSIONID'] + '/'
+                self.job_dict['SESSIONID'] + '/'
             # Don't encode variables to be expanded
             if expand:
                 src_url += mig_server_filename
             else:
-                src_url += urlquote(mig_server_filename)
+                src_url += quote(mig_server_filename)
 
         cmd = 'curl --location --connect-timeout 30 --max-time 3600 ' + \
               download_bw_limit + ' --fail --silent --insecure --create-dirs '
@@ -172,32 +171,31 @@ class GenJobScriptSh:
             cmd += "-o '" + resource_filename + "' '" + src_url + "'"
         return cmd
 
-
     def __curl_cmd_get_special(self, file_extension, resource_filename):
         """Download internal job files"""
 
         download_bw_limit = ''
         if 'MAXDOWNLOADBANDWIDTH' in self.resource_conf\
-            and self.resource_conf['MAXDOWNLOADBANDWIDTH'] > 0:
+                and self.resource_conf['MAXDOWNLOADBANDWIDTH'] > 0:
             download_bw_limit = '--limit-rate %ik'\
-                 % self.resource_conf['MAXDOWNLOADBANDWIDTH']
+                % self.resource_conf['MAXDOWNLOADBANDWIDTH']
 
         cmd = ''
         cmd += 'curl --location --connect-timeout 30 --max-time 3600 '\
             + download_bw_limit + ' --fail --silent --insecure --create-dirs '\
             + "-o '" + resource_filename + "' '" + self.https_sid_url_arg\
-            + '/sid_redirect/' + self.job_dict['SESSIONID'] + file_extension + "'"
+            + '/sid_redirect/' + \
+            self.job_dict['SESSIONID'] + file_extension + "'"
         return cmd
-
 
     def __curl_cmd_get_mqueue(self, queue, resource_filename):
         """Receive message from mqueue"""
 
         download_bw_limit = ''
         if 'MAXDOWNLOADBANDWIDTH' in self.resource_conf\
-            and self.resource_conf['MAXDOWNLOADBANDWIDTH'] > 0:
+                and self.resource_conf['MAXDOWNLOADBANDWIDTH'] > 0:
             download_bw_limit = '--limit-rate %ik'\
-                 % self.resource_conf['MAXDOWNLOADBANDWIDTH']
+                % self.resource_conf['MAXDOWNLOADBANDWIDTH']
 
         cmd = ''
         cmd += 'curl --location --connect-timeout 30 --max-time 3600 '\
@@ -208,19 +206,18 @@ class GenJobScriptSh:
             + '/cgi-sid/mqueue.py'
         return cmd
 
-
     def __curl_cmd_request_interactive(self):
         """CGI request for interactive job"""
 
         unique_resource_name = "%(HOSTURL)s.%(HOSTIDENTIFIER)s" % self.resource_conf
         int_command = \
             "curl --location --connect-timeout 30 --max-time 3600 --fail --silent --insecure '"\
-                + self.https_sid_url_arg\
-                + '/cgi-sid/requestinteractivejob.py?sessionid='\
-                + self.job_dict['SESSIONID'] + '&jobid=' + self.job_dict['JOB_ID']\
-                + '&exe=' + self.exe + '&unique_resource_name='\
-                + unique_resource_name + '&localjobname=' + self.localjobname\
-                + "'\n"
+            + self.https_sid_url_arg\
+            + '/cgi-sid/requestinteractivejob.py?sessionid='\
+            + self.job_dict['SESSIONID'] + '&jobid=' + self.job_dict['JOB_ID']\
+            + '&exe=' + self.exe + '&unique_resource_name='\
+            + unique_resource_name + '&localjobname=' + self.localjobname\
+            + "'\n"
         int_command += '# wait until interactive command is done\n'
         int_command += 'while [ 1 ]; do\n'
         int_command += '   if [ -f .interactivejobfinished ]; then\n'
@@ -230,7 +227,7 @@ class GenJobScriptSh:
         int_command += '   fi\n'
         int_command += 'done\n'
         return int_command
-   
+
     def comment(self, string):
         """Insert comment"""
 
@@ -251,7 +248,7 @@ class GenJobScriptSh:
             # Format to mail flag is normally user[@host][,user[@host],...]
 
             requested['ADMINEMAIL'] = self.resource_conf['ADMINEMAIL'
-                    ].replace(' ', ',')
+                                                         ].replace(' ', ',')
 
         # Use bash explicitly here because /bin/sh may not support echo -n , which
         # breaks e.g. $localjobname.inputfiles generation
@@ -300,7 +297,7 @@ class GenJobScriptSh:
         """print 'starting new name script ...'"""
 
         return "echo 'Starting new %s script with JOB_ID: %s'\n"\
-             % (name, self.job_dict['JOB_ID'])
+            % (name, self.job_dict['JOB_ID'])
 
     def create_files(self, files):
         """Create supplied files"""
@@ -334,15 +331,15 @@ class GenJobScriptSh:
         """if directory with name JOB_ID doesnt exists, then create."""
 
         return "[ ! -d '" + self.resource_conf['RESOURCEHOME']\
-             + self.job_dict['JOB_ID'] + "' ] && mkdir '"\
-             + self.resource_conf['RESOURCEHOME'] + self.job_dict['JOB_ID']\
-             + "'\n"
+            + self.job_dict['JOB_ID'] + "' ] && mkdir '"\
+            + self.resource_conf['RESOURCEHOME'] + self.job_dict['JOB_ID']\
+            + "'\n"
 
     def cd_to_job_directory(self):
         """Enter execution directory"""
 
         return 'cd ' + self.resource_conf['RESOURCEHOME'] + self.job_dict['JOB_ID'
-                ] + '\n'
+                                                                          ] + '\n'
 
     def get_input_files(self, result='get_input_status'):
         """Get the input files from the grid server
@@ -373,7 +370,7 @@ class GenJobScriptSh:
             resource_filename = resource_filename.lstrip('/')
 
             cmd += '%s\n' % self.__curl_cmd_get(mig_server_filename,
-                    resource_filename, False)
+                                                resource_filename, False)
             cmd += 'last_get_status=$?\n'
             cmd += 'if [ $last_get_status -ne 0 ]; then\n'
             cmd += '    %s=$last_get_status\n' % result
@@ -389,19 +386,19 @@ class GenJobScriptSh:
 
         cmd = ''
         cmd += '%s && \\' % self.__curl_cmd_get_special('.job', self.localjobname
-                 + '.job')
+                                                        + '.job')
         cmd += '''
 %s
 ''' % self.__curl_cmd_get_special('.getupdatefiles',
-                self.localjobname + '.getupdatefiles')
+                                  self.localjobname + '.getupdatefiles')
         cmd += '''
 %s
 ''' % self.__curl_cmd_get_special('.sendupdatefiles',
-                self.localjobname + '.sendupdatefiles')
+                                  self.localjobname + '.sendupdatefiles')
         cmd += '''
 %s
 ''' % self.__curl_cmd_get_special('.sendoutputfiles',
-                self.localjobname + '.sendoutputfiles')
+                                  self.localjobname + '.sendoutputfiles')
         cmd += '%s=$?\n' % result
         cmd += """# Now 'return' status is available in %s
 
@@ -437,7 +434,7 @@ class GenJobScriptSh:
             resource_filename = resource_filename.lstrip('/')
 
             cmd += '%s\n' % self.__curl_cmd_get(mig_server_filename,
-                    resource_filename, False)
+                                                resource_filename, False)
             cmd += 'last_get_status=$?\n'
             cmd += 'if [ $last_get_status -ne 0 ]; then\n'
             cmd += '    %s=$last_get_status\n' % result
@@ -485,7 +482,6 @@ class GenJobScriptSh:
 
 """ % result
         return cmd
-
 
     def generate_input_filelist(self, result='generate_input_filelist'):
         """Generate filelist (user/system) of which files 
@@ -557,22 +553,22 @@ class GenJobScriptSh:
                 fe_move_dict[fe_move] = True
 
         # Quote file names to protect against exotic characters
-        
+
         cmd += 'echo -n "" > %s.inputfiles\\\n' % self.localjobname
         for file in fe_move_dict.keys():
             cmd += \
                 "&& if [ -e '%s' ]; then echo -n '%s ' >> %s.inputfiles; fi\\\n"\
-                 % (file, file, self.localjobname)
+                % (file, file, self.localjobname)
 
         # Systemfiles
 
         cmd += '&& echo -n "%s.user.outputfiles " >> %s.inputfiles\\\n'\
-             % (self.localjobname, self.localjobname)
+            % (self.localjobname, self.localjobname)
         cmd += \
             '&& echo -n "%s.system.outputfiles " >> %s.inputfiles\\\n'\
-             % (self.localjobname, self.localjobname)
+            % (self.localjobname, self.localjobname)
         cmd += '&& echo -n "%s.job" >> %s.inputfiles\n'\
-             % (self.localjobname, self.localjobname)
+            % (self.localjobname, self.localjobname)
         cmd += '%s=$?\n' % result
         return cmd
 
@@ -607,43 +603,43 @@ class GenJobScriptSh:
                 exe_move_dict[exe_move] = True
 
         # Quote file names to protect against exotic characters
-        
+
         cmd += 'echo -n "" > %s.user.outputfiles\\\n' % self.localjobname
         for file in exe_move_dict.keys():
             cmd += "&& echo -n '%s ' >> %s.user.outputfiles\\\n"\
-                 % (file, self.localjobname)
+                % (file, self.localjobname)
 
         cmd += '&& echo -n "" > %s.system.outputfiles\\\n'\
-             % self.localjobname
+            % self.localjobname
 
         # Sleep jobs only generate .status
 
         if real_job:
             cmd += \
                 '&& echo -n "%s.stderr " >> %s.system.outputfiles\\\n'\
-                 % (self.job_dict['JOB_ID'], self.localjobname)
+                % (self.job_dict['JOB_ID'], self.localjobname)
             cmd += \
                 '&& echo -n "%s.stdout " >> %s.system.outputfiles\\\n'\
-                 % (self.job_dict['JOB_ID'], self.localjobname)
+                % (self.job_dict['JOB_ID'], self.localjobname)
 
         cmd += '&& echo -n "%s.status" >> %s.system.outputfiles\n'\
-             % (self.job_dict['JOB_ID'], self.localjobname)
+            % (self.job_dict['JOB_ID'], self.localjobname)
         cmd += '%s=$?\n' % result
         return cmd
 
     def generate_iosessionid_file(self,
-                                result='generate_iosessionid_file'):
+                                  result='generate_iosessionid_file'):
         """Generate file containing io-sessionid."""
 
         cmd = '# Create file used containing io-sessionid.\n'
         cmd += '%s=0\n' % result
         cmd += 'echo -n "%s" > %s.iosessionid\n'\
-             % (self.job_dict['IOSESSIONID'], self.localjobname)
+            % (self.job_dict['IOSESSIONID'], self.localjobname)
         cmd += '%s=$?\n' % result
         return cmd
 
-    def generate_mountsshprivatekey_file(self, 
-                                    result='generate_mountsshprivatekey_file'):
+    def generate_mountsshprivatekey_file(self,
+                                         result='generate_mountsshprivatekey_file'):
         """Generate file containing mount ssh private key in private subdir."""
         cmd = '# Create private key file used when mounting job home\n'
         cmd += '%s=0\n' % result
@@ -651,21 +647,21 @@ class GenJobScriptSh:
         cmd += 'mkdir -p .mount\n'
         cmd += 'chmod 700 .mount\n'
         cmd += 'echo -n "%s" > .mount/%s.key\n'\
-             % (self.job_dict['MOUNTSSHPRIVATEKEY'], self.localjobname)
+            % (self.job_dict['MOUNTSSHPRIVATEKEY'], self.localjobname)
         cmd += 'chmod 600 .mount/%s.key\n' % self.localjobname
         cmd += '%s=$?\n' % result
-        return cmd         
+        return cmd
 
     def generate_mountsshknownhosts_file(self,
-                                    result='generate_mountsshknownhosts_file'):
+                                         result='generate_mountsshknownhosts_file'):
         """Generate file containing ssh mount known_hosts in private subdir."""
-       
+
         cmd = '# Create known_hosts file used when mounting job home\n'
         cmd += '%s=0\n' % result
         cmd += 'mkdir -p .mount\n'
         cmd += 'chmod 700 .mount\n'
         cmd += 'echo -n "%s" > .mount/%s.known_hosts\n'\
-             % (self.job_dict['MOUNTSSHKNOWNHOSTS'], self.localjobname)
+            % (self.job_dict['MOUNTSSHKNOWNHOSTS'], self.localjobname)
         cmd += 'chmod 600 .mount/%s.known_hosts\n' % self.localjobname
         cmd += '%s=$?\n' % result
         return cmd
@@ -707,7 +703,7 @@ class GenJobScriptSh:
         requested['LOCALJOBNAME'] = self.localjobname
         requested['EXE'] = self.exe
         requested['EXECUTION_DIR'] = ''
-        requested['JOBDIR'] =  self.localjobdir
+        requested['JOBDIR'] = self.localjobdir
         cmd = '''
 [ -z "$MIG_JOBNODES" ] && export MIG_JOBNODES="%(NODECOUNT)s"
 [ -z "$MIG_JOBNODECOUNT" ] && export MIG_JOBNODECOUNT="%(NODECOUNT)s"
@@ -784,8 +780,6 @@ class GenJobScriptSh:
 ''' % requested
         return cmd
 
-        
-        
     def set_runtime_environments(self, resource_runtimeenvironment,
                                  result='re_result'):
         """Set Runtimeenvironments"""
@@ -830,20 +824,20 @@ class GenJobScriptSh:
          Continue on errors but return total status."""
 
         cmd = '%s=0\n' % result
-        
+
         for mount in self.job_dict.get('MOUNT', []):
- 
+
             # "mount_point" or "mig_server_path%(src_dst_sep)sresource_mount_point"
 
             parts = mount.split(src_dst_sep)
-        
+
             if len(parts) == 1:
                 mig_home_path = ''
                 resource_mount_point = str(parts[0])
             else:
                 mig_home_path = str(parts[0])
                 resource_mount_point = str(parts[1])
-            
+
             # Always strip leading slashes to avoid absolute paths
 
             mig_home_path = mig_home_path.lstrip('/')
@@ -852,14 +846,14 @@ class GenJobScriptSh:
             cmd += 'mkdir -p %s\n' % (resource_mount_point)
             # Auto-reconnect and use big_writes for far better write performance
             cmd += '${SSHFS_MOUNT} -oPort=%s' % (port) + \
-                        ' -oIdentityFile=${PWD}/.mount/%s.key' % \
-                            (self.localjobname) + \
-                        ' -oUserKnownHostsFile=${PWD}/.mount/%s.known_hosts' \
-                        % (self.localjobname) + \
-                        ' %s@%s:%s %s ' % \
-                        (login, host, mig_home_path, resource_mount_point) + \
-                        ' -o uid=$(id -u) -o gid=$(id -g) -o reconnect' + \
-                        ' -o big_writes\n'
+                ' -oIdentityFile=${PWD}/.mount/%s.key' % \
+                (self.localjobname) + \
+                ' -oUserKnownHostsFile=${PWD}/.mount/%s.known_hosts' \
+                % (self.localjobname) + \
+                ' %s@%s:%s %s ' % \
+                (login, host, mig_home_path, resource_mount_point) + \
+                ' -o uid=$(id -u) -o gid=$(id -g) -o reconnect' + \
+                ' -o big_writes\n'
             cmd += 'last_mount_status=$?\n'
             cmd += 'if [ $last_mount_status -ne 0 ]; then\n'
             cmd += '    %s=$last_mount_status\n' % result
@@ -886,10 +880,10 @@ class GenJobScriptSh:
 
         # TODO: job_log is different from exe job log in parent dir
 
-        exe_dict = {'job_id': self.job_dict['JOB_ID'], 
+        exe_dict = {'job_id': self.job_dict['JOB_ID'],
                     'job_log': '${MIG_JOBDIR}/%s.log' % self.job_dict['JOB_ID'],
                     'job_status': '${MIG_JOBDIR}/%s.status' % self.job_dict['JOB_ID']
-                   }
+                    }
         cmd = ''
 
         cmd += '''__MiG_LAST_RET=0
@@ -938,22 +932,22 @@ class GenJobScriptSh:
 
     def umount(self, result='umount_status'):
         """Unmounts job home
-	    Continue on errors but return total status."""
+            Continue on errors but return total status."""
 
         cmd = '%s=0\n' % result
-        cmd += 'cd ${MIG_JOBDIR}\n' 
- 
+        cmd += 'cd ${MIG_JOBDIR}\n'
+
         for mount in self.job_dict.get('MOUNT', []):
- 
+
             # "resource_mount_point" or "mig_home_path%(src_dst_sep)sresource_mount_point"
 
             parts = mount.split(src_dst_sep)
-        
+
             if len(parts) == 1:
                 resource_mount_point = str(parts[0])
             else:
                 resource_mount_point = str(parts[1])
-            
+
             # Always strip leading slashes to avoid absolute paths
 
             resource_mount_point = resource_mount_point.lstrip('/')
@@ -987,9 +981,9 @@ class GenJobScriptSh:
                 mig_server_filename = resource_filename
 
             # Quote file names to protect against exotic characters
-        
+
             cmd += "[ -e '%s' ] || %s=$((%s+1))\n"\
-                 % (resource_filename, result, result)
+                % (resource_filename, result, result)
 
         cmd += """# Now 'return' status is available in %s
 
@@ -1025,10 +1019,10 @@ class GenJobScriptSh:
             mig_server_filename = mig_server_filename.lstrip('/')
 
             # Quote file names to protect against exotic characters
-        
+
             cmd += "[ ! -e '%s' ] || " % resource_filename
             cmd += '%s\n' % self.__curl_cmd_send(resource_filename,
-                    mig_server_filename, False)
+                                                 mig_server_filename, False)
             cmd += 'last_send_status=$?\n'
             cmd += 'if [ $last_send_status -ne 0 ]; then\n'
             cmd += '    %s=$last_send_status\n' % result
@@ -1138,7 +1132,7 @@ class GenJobScriptSh:
         result='ret',
         successcode='0',
         msg='ERROR: unexpected exit code!',
-        ):
+    ):
         """Print msg unless result contains success code"""
 
         cmd = 'if [ $' + result + ' -ne ' + successcode + ' ]; then\n'
@@ -1151,7 +1145,7 @@ class GenJobScriptSh:
         result='ret',
         successcode='0',
         msg='ERROR: unexpected exit code!',
-        ):
+    ):
         """Log msg unless result contains success code"""
 
         cmd = 'if [ $' + result + ' -ne ' + successcode + ' ]; then\n'
@@ -1164,7 +1158,7 @@ class GenJobScriptSh:
         result='ret',
         successcode='0',
         exitcode='ret',
-        ):
+    ):
         """exit with $exitcode unless result contains success code"""
 
         cmd = 'if [ $' + result + ' -ne ' + successcode + ' ]; then\n'
@@ -1180,8 +1174,8 @@ class GenJobScriptSh:
         """
 
         return 'echo "' + name + ' script end reached '\
-             + self.job_dict['JOB_ID'] + '" \nexit ' + exitcode + '\n'\
-             + '### END OF SCRIPT ###\n'
+            + self.job_dict['JOB_ID'] + '" \nexit ' + exitcode + '\n'\
+            + '### END OF SCRIPT ###\n'
 
     def clean_up(self):
         """Clean up"""
@@ -1193,5 +1187,3 @@ class GenJobScriptSh:
         cmd += 'cd ..\n'
         cmd += 'rm -rf --one-file-system ' + self.job_dict['JOB_ID'] + '\n'
         return cmd
-
-

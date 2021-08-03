@@ -46,18 +46,16 @@ import pickle
 import smtplib
 import threading
 import time
-# TODO: email.Encoders are deprecated in python3
-from email import Encoders
-from email.message import Message
-from email.MIMEBase import MIMEBase
-from email.MIMEMultipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.Utils import formatdate
-# NOTE: moved to urllib.parse in python3 and are re-exposed with future
+# TODO: email.Encoders are deprecated/gone in python3
 try:
-    from urllib.parse import quote, urlencode
+    from email.encoders import Encoders
 except ImportError:
-    from urllib import quote, urlencode
+    Encoders = None
+from email.message import Message
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.utils import formatdate
 
 # Optional gnupg support - delay any error until use
 try:
@@ -72,6 +70,7 @@ from mig.shared.defaults import email_keyword_list, job_output_dir, \
 from mig.shared.fileio import send_message_to_grid_notify
 from mig.shared.safeinput import is_valid_simple_email
 from mig.shared.settings import load_settings
+from mig.shared.url import quote, urlencode
 
 # might be python 2.4, without xml.etree
 # ...in which case: better not configure usage_record_dir
@@ -599,7 +598,8 @@ def send_email(
         for name in files:
             part = MIMEBase('application', "octet-stream")
             part.set_payload(open(name, "rb").read())
-            Encoders.encode_base64(part)
+            if Encoders is not None:
+                Encoders.encode_base64(part)
             part.add_header('Content-Disposition',
                             'attachment; filename="%s"'
                             % os.path.basename(name))

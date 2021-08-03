@@ -26,19 +26,19 @@
 #
 
 """Common HTTPS client functions for e.g. access control"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
 import os
 import socket
-from urllib import urlencode
-from urlparse import parse_qsl
 
 from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_V2, \
     AUTH_OPENID_CONNECT, AUTH_GENERIC, AUTH_NONE, AUTH_MIG_OID, AUTH_EXT_OID, \
     AUTH_MIG_OIDC, AUTH_EXT_OIDC, AUTH_MIG_CERT, AUTH_EXT_CERT, \
     AUTH_SID_GENERIC, AUTH_UNKNOWN, auth_openid_mig_db, auth_openid_ext_db
 from mig.shared.gdp.all import get_project_user_dn
+from mig.shared.url import urlencode, parse_qsl
 from mig.shared.useradm import get_oidc_user_dn, get_openid_user_dn
 
 # Generic login clients will have their REMOTE_USER env set to some ID provided

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # expand - emulate shell wild card expansion
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,9 +32,8 @@ wild card expansion.
 
 from __future__ import absolute_import
 
-import os
 import glob
-from urllib import quote
+import os
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir, invisible_path
@@ -44,6 +43,7 @@ from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.parseflags import all, long_list, recursive
 from mig.shared.safeinput import valid_path_pattern
 from mig.shared.sharelinks import extract_mode_id
+from mig.shared.url import quote
 from mig.shared.validstring import valid_user_path
 
 

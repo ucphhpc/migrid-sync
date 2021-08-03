@@ -26,15 +26,15 @@
 #
 
 """Manage data imports and exports"""
+
 from __future__ import absolute_import
 
 from binascii import hexlify
 import glob
-import os
 import datetime
+import os
 import socket
 import time
-from urllib import quote, urlencode
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir
@@ -52,6 +52,7 @@ from mig.shared.transferfunctions import build_transferitem_object, \
     build_keyitem_object, load_data_transfers, create_data_transfer, \
     update_data_transfer, delete_data_transfer, load_user_keys, \
     generate_user_key, delete_user_key
+from mig.shared.url import quote, urlencode
 
 
 # Fields to fill on edit - note password is skipped on purpose for security!

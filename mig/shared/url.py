@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # url - url helper functions
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,13 +27,20 @@
 #
 
 """Url functions"""
+
 from __future__ import absolute_import
 
-import os
 import ast
 import base64
-import urllib
-import urlparse
+import os
+# NOTE: moved to urllib.parse in python3 and are re-exposed with future.
+#       Other modules should import helpers from here for consistency.
+try:
+    from urllib.parse import quote, unquote, urlencode, parse_qs, parse_qsl, \
+        urlsplit
+except ImportError:
+    from urllib import quote, unquote, urlencode, urldecode
+    from urlparse import parse_qs, parse_qsl, urlsplit
 
 from mig.shared.defaults import csrf_field
 from mig.shared.handlers import get_csrf_limit
@@ -57,7 +64,7 @@ def base32urlencode(
 
     src_url = url
     if query_dict is not None:
-        src_url = '%s?%s' % (src_url, urllib.urlencode(query_dict))
+        src_url = '%s?%s' % (src_url, urlencode(query_dict))
 
     # base32 encode and remove padding '='
     # Receiver is expected to pad before decode
@@ -93,7 +100,7 @@ def base32urldecode(configuration, encoded_url,
     else:
         result_url = decoded_url
     query_dict = \
-        dict(urlparse.parse_qsl(urlparse.urlsplit(decoded_url).query))
+        dict(parse_qsl(urlsplit(decoded_url).query))
 
     # Regenerate query_dict value lists from their string representatives
 

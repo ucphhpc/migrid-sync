@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # duplicatikeywords - keywords used in the duplicati settings file
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,12 +26,13 @@
 #
 
 """Keywords in the duplicati files"""
+
 from __future__ import absolute_import
 
-from urllib import urlencode
-
 from mig.shared.defaults import duplicati_protocol_choices, \
-     duplicati_schedule_choices
+    duplicati_schedule_choices
+from mig.shared.url import urlencode
+
 
 duplicati_conf_templates = {'version': '''    "CreatedBy": "%(short_title)s v1.0"''',
                             'schedule': '''    "Schedule": {
@@ -57,6 +58,8 @@ protocol_map = dict(duplicati_protocol_choices)
 schedule_map = dict(duplicati_schedule_choices)
 
 # TODO: this function should probably move to shared.settings or something
+
+
 def extract_duplicati_helper(configuration, client_id, duplicati_dict):
     """Fill helper dictionary with values used in duplicati_conf_templates"""
     # lookup fqdn, username, etc for specified protocol
@@ -95,7 +98,7 @@ def extract_duplicati_helper(configuration, client_id, duplicati_dict):
                           configuration.user_sftp_show_port)
     elif protocol == 'ftps':
         # NOTE: we used to need this workaround due to port fwd routing issues
-        ## Duplicati client requires aftp://BLA with connection tweaks
+        # Duplicati client requires aftp://BLA with connection tweaks
         #protocol = 'aftp'
         #credentials.append(('aftp-encryption-mode', 'Explicit'))
         #credentials.append(('aftp-data-connection-type', 'PASV'))
@@ -109,10 +112,11 @@ def extract_duplicati_helper(configuration, client_id, duplicati_dict):
                                           '%%20%s%%20' % bits_part)
     fill_helper = {'short_title': configuration.short_title,
                    'protocol': protocol,
-                   'fqdn': fqdn, 
+                   'fqdn': fqdn,
                    'credentials': encoded_creds,
                    'schedule_freq': schedule_freq}
     return fill_helper
+
 
 def get_duplicati_specs():
     """Return an ordered list of (keywords, spec) tuples. The order is
@@ -130,7 +134,7 @@ def get_duplicati_specs():
         'Context': 'duplicati',
         # We need to allow empty to let users disable again
         'Required': False,
-        }))
+    }))
     specs.append(('PROTOCOL', {
         'Title': 'Transfer protocol',
         'Description': 'Which protocol to use for communicating with the server.',
@@ -140,7 +144,7 @@ def get_duplicati_specs():
         'Editor': 'select',
         'Context': 'duplicati',
         'Required': True,
-        }))
+    }))
     specs.append(('USERNAME', {
         'Title': 'Username',
         'Description': 'Username for given protocol when communicating with the server.',
@@ -150,7 +154,7 @@ def get_duplicati_specs():
         'Editor': 'select',
         'Context': 'duplicati',
         'Required': True,
-        }))
+    }))
     specs.append(('PASSWORD', {
         'Title': 'Password',
         'Description': '''Optionally enter the password for given protocol when
@@ -164,7 +168,7 @@ page here.''',
         'Editor': 'hidden',
         'Context': 'duplicati',
         'Required': False,
-        }))
+    }))
     specs.append(('SCHEDULE', {
         'Title': 'Schedule',
         'Description': 'Optional scheduling of automatic runs this often.',
@@ -174,8 +178,9 @@ page here.''',
         'Editor': 'select',
         'Context': 'duplicati',
         'Required': False,
-        }))
+    }))
     return specs
+
 
 def get_keywords_dict():
     """Return mapping between duplicati keywords and their specs"""

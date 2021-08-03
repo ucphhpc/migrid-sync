@@ -34,7 +34,6 @@ import datetime
 import os
 import re
 import tempfile
-import urllib
 
 from mig.shared import returnvalues
 from mig.shared.accountreq import parse_peers, peers_permit_allowed, \
@@ -49,6 +48,7 @@ from mig.shared.html import html_post_helper
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.notification import send_email
 from mig.shared.serial import load, dump
+from mig.shared.url import urlencode
 from mig.shared.useradm import get_full_user_map
 
 default_expire_days = 7
@@ -277,7 +277,7 @@ site administrators (%s).
                                           % (client_name, client_email, kind)
                     # Mark ID fields as readonly in the form to limit errors
                     peer_req['ro_fields'] = keyword_auto
-                    peer_url += '?%s' % urllib.urlencode(peer_req)
+                    peer_url += '?%s' % urlencode(peer_req)
                     email_msg = email_msg_template % (peer_name, peer_url)
                     logger.info('Sending invitation: to: %s, header: %s, msg: %s, smtp_server: %s'
                                 % (peer_email, email_header, email_msg,

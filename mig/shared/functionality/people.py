@@ -29,7 +29,6 @@
 
 from __future__ import absolute_import
 
-from urllib import quote
 
 from mig.shared import returnvalues
 from mig.shared.base import pretty_format_user, extract_field
@@ -39,6 +38,7 @@ from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.html import man_base_js, man_base_html, html_post_helper
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.modified import pending_users_update, pending_vgrids_update
+from mig.shared.url import quote
 from mig.shared.user import anon_to_real_user_map, user_gravatar_url
 from mig.shared.vgridaccess import user_visible_user_confs, user_vgrid_access, \
     CONF

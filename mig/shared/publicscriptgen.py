@@ -566,7 +566,11 @@ def curl_perform(
         url_prefix = mig_server + '/'
 
     # Make sure e.g. spaces are encoded since they are not allowed in URL
-    from urllib import quote as urlquote
+    # NOTE: moved to urllib.parse in python 3
+    try:
+        from urllib.parse import quote as urlquote
+    except ImportError:
+        from urllib import quote as urlquote
     url = ['--url', url_prefix + urlquote(location) + query]
     input_fd = None
     if curl_stdin:

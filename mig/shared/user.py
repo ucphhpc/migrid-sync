@@ -33,7 +33,6 @@ from __future__ import absolute_import
 import base64
 import hashlib
 import os
-from urllib import urlencode
 
 # TODO: move to os.scandir with py3
 # NOTE: Use faster scandir if available
@@ -51,6 +50,7 @@ except ImportError:
 from mig.shared.base import client_dir_id, client_id_dir, get_site_base_url
 from mig.shared.defaults import litmus_id
 from mig.shared.settings import load_settings, load_profile
+from mig.shared.url import urlencode
 
 
 def anon_user_id(user_id):

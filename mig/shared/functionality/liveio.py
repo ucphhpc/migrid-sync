@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # liveio - communication with running jobs
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,10 +29,9 @@
 
 from __future__ import absolute_import
 
+import datetime
 import glob
 import os
-import datetime
-from urllib import quote
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir
@@ -44,6 +43,7 @@ from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.safeinput import valid_path_pattern
 from mig.shared.ssh import copy_file_to_resource
+from mig.shared.url import quote
 from mig.shared.validstring import valid_user_path
 
 

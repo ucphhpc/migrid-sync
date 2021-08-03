@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ls - emulate ls command
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,11 +31,10 @@ their home directories. This script tries to mimic GNU ls behaviour.
 
 from __future__ import absolute_import
 
-import os
-import time
 import glob
+import os
 import stat
-from urllib import quote
+import time
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir, invisible_path
@@ -48,6 +47,7 @@ from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.parseflags import all, long_list, recursive, file_info
 from mig.shared.safeinput import valid_path_pattern
 from mig.shared.sharelinks import extract_mode_id
+from mig.shared.url import quote
 from mig.shared.userio import GDPIOLogError, gdp_iolog
 from mig.shared.validstring import valid_user_path
 from mig.shared.vgrid import in_vgrid_share, in_vgrid_priv_web, in_vgrid_pub_web, \

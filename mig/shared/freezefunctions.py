@@ -36,7 +36,6 @@ import json
 import os
 import sys
 import time
-from urllib import quote
 
 from mig.shared.base import client_id_dir, distinguished_name_to_user, \
     brief_list, pretty_format_user, get_site_base_url
@@ -56,6 +55,7 @@ from mig.shared.html import get_xgi_html_preamble, get_xgi_html_footer, \
     man_base_js, themed_styles, themed_scripts, tablesorter_pager
 from mig.shared.pwhash import make_path_hash
 from mig.shared.serial import load, dump
+from mig.shared.url import quote
 
 TARGET_ARCHIVE = 'ARCHIVE'
 TARGET_PATH = 'PATH'

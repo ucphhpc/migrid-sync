@@ -35,7 +35,6 @@ import hashlib
 import os
 import re
 import time
-import urllib
 
 # Only needed for 2FA so ignore import error and only fail on use
 try:
@@ -50,6 +49,7 @@ from mig.shared.fileio import read_file, delete_file, delete_symlink, \
     pickle, unpickle, make_symlink
 from mig.shared.gdp.all import get_base_client_id
 from mig.shared.pwhash import scramble_password, unscramble_password
+from mig.shared.url import quote
 
 # Set OTP windows range (+/-) to compensate for offset
 # and drifting offline clocks
@@ -225,7 +225,7 @@ def get_twofactor_secrets(configuration, client_id):
             logo_url = os.path.join(configuration.migserver_https_sid_url,
                                     logo_url.lstrip('/'))
         # Clear 'safe' argument to also encode slashes in url
-        otp_uri += '&image=%s' % urllib.quote(logo_url, '')
+        otp_uri += '&image=%s' % quote(logo_url, '')
 
     # IMPORTANT: pyotp unicode breaks wsgi when inserted - force utf8!
     otp_uri = force_utf8(otp_uri)

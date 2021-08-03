@@ -32,13 +32,12 @@ Inspired by the apache google authenticator example at:
 https://github.com/itemir/apache_2fa
 but completely rewritten to fit our infrastructure and on-disk layout.
 """
+
 from __future__ import absolute_import
 
 import Cookie
 import os
 import time
-import urllib
-import urlparse
 
 from mig.shared import returnvalues
 from mig.shared.auth import twofactor_available, load_twofactor_key, \
@@ -52,6 +51,7 @@ from mig.shared.html import twofactor_token_html, themed_styles, themed_scripts
 from mig.shared.httpsclient import detect_client_auth
 from mig.shared.settings import load_twofactor
 from mig.shared.twofactorkeywords import get_keywords_dict as twofactor_defaults
+from mig.shared.url import urlencode, unquote, parse_qs
 
 
 def signature():
@@ -66,7 +66,7 @@ def query_args(environ):
     query string from environ. Used to allow and pass any additional args to
     the requested redirect URL without ever using them here.
     """
-    env_args = urlparse.parse_qs(environ.get('QUERY_STRING', ''))
+    env_args = parse_qs(environ.get('QUERY_STRING', ''))
     return env_args
 
 
@@ -143,9 +143,9 @@ def main(client_id, user_arguments_dict, environ=None):
                 forward_args[key] = val
         redirect_location = redirect_url
         if forward_args:
-            redirect_location += '?%s' % urllib.urlencode(forward_args, True)
+            redirect_location += '?%s' % urlencode(forward_args, True)
         # Manual url decoding required for e.g. slashes
-        redirect_location = urllib.unquote(redirect_location)
+        redirect_location = unquote(redirect_location)
         headers = [('Status', '302 Moved'),
                    ('Location', redirect_location)]
         logger.debug("redirect_url %s and args %s gave %s" %

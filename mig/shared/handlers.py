@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # handlers - back end handler helpers
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,16 +28,17 @@
 """This module contains general functions used by the HTTP
 handlers.
 """
+
 from __future__ import absolute_import
 
 import os
-import urllib
 
 from mig.shared.base import client_id_dir
 from mig.shared.defaults import csrf_field, CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
     CSRF_FULL
 from mig.shared.findtype import is_user, is_server
 from mig.shared.pwhash import make_csrf_token, make_csrf_trust_token
+from mig.shared.url import unquote
 
 
 def correct_handler(name, environ=None):
@@ -171,7 +172,7 @@ def trust_handler(configuration, method, operation, unpacked_args, client_id,
 
 def get_path():
     """Extract supplied path from environment:
-    urllib.unquote(string): Replaces url encoded chars '%xx' by their
+    unquote(string): Replaces url encoded chars '%xx' by their
     single-character equivalents.
     """
 
@@ -182,7 +183,7 @@ def get_path():
 
     # Remove only leftmost root occurence of root
 
-    path = urllib.unquote(path_translated.replace(root, '', 1))
+    path = unquote(path_translated.replace(root, '', 1))
     return path
 
 

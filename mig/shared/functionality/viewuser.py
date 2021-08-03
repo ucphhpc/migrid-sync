@@ -32,7 +32,6 @@ from __future__ import absolute_import
 import hashlib
 import os
 from binascii import hexlify
-from urllib import urlencode
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir, pretty_format_user, extract_field

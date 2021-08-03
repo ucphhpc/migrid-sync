@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # put - HTTP PUT handler
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,7 +36,6 @@ import cgitb
 import os
 import sys
 import time
-import urllib
 
 from mig.shared import confparser
 from mig.shared.archives import handle_package_upload
@@ -55,6 +54,7 @@ from mig.shared.refunctions import create_runtimeenv
 from mig.shared.settings import parse_and_save_settings
 from mig.shared.safeinput import valid_path, valid_sid, valid_alphanumeric
 from mig.shared.sharelinks import extract_mode_id
+from mig.shared.url import unquote
 
 cgitb.enable()
 
@@ -110,7 +110,7 @@ else:
 # We normalize path to remove double slashes that would otherwise cause
 # problems and to avoid illegal directory traversal attempts.
 
-filename = os.path.normpath(urllib.unquote(str(os.getenv('REQUEST_URI'))))
+filename = os.path.normpath(unquote(str(os.getenv('REQUEST_URI'))))
 rel_name = filename.lstrip(os.sep)
 base_filename = os.path.basename(filename)
 

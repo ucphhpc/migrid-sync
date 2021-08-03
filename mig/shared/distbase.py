@@ -39,11 +39,11 @@ __revision__ = __version__
 import httplib
 import sys
 import time
-import urlparse
 from io import BytesIO as LegacyStringIO
 from os import getenv, environ
 from os.path import normpath
-from urllib import urlencode
+
+from mig.shared.url import urlencode, urlsplit
 
 # ###################
 # Network settings #
@@ -235,7 +235,7 @@ def http_no_payload(
 
         url = response.getheader('location', '')
         connection.close()
-        (_, host_port, location, _, _) = urlparse.urlsplit(url)
+        (_, host_port, location, _, _) = urlsplit(url)
         if ':' in host_port:
             (host, port) = host_port.split(':', 2)
             port = int(port)

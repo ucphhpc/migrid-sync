@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # accessrequests - access request helper functions
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Access request link functions"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -34,11 +35,11 @@ import datetime
 import glob
 import os
 import time
-from urllib import urlencode
 
 from mig.shared.defaults import request_prefix, request_ext
 from mig.shared.fileio import make_temp_file, delete_file
 from mig.shared.serial import dumps, load
+
 
 def build_accessrequestitem_object(configuration, request_dict):
     """Build a access request object based on input request_dict"""
@@ -50,12 +51,13 @@ def build_accessrequestitem_object(configuration, request_dict):
         'object_type': 'accessrequest',
         'created': "<div class='sortkey'>%d</div>%s" % (created_epoch,
                                                         created_asctime),
-        }
+    }
     request_item.update(request_dict)
     # NOTE: datetime is not json-serializable so we force to string
     for field in ['created_timestamp']:
         request_item[field] = str(request_item[field])
     return request_item
+
 
 def list_access_requests(configuration, request_dir):
     """List all access requests with predefined file extension for given
@@ -67,6 +69,7 @@ def list_access_requests(configuration, request_dir):
         requests.append(req_path.replace(request_dir, '').strip(os.sep))
     return requests
 
+
 def load_access_request(configuration, request_dir, req_name):
     """Load request req_name with predefined file extension for given
     request_dir.
@@ -75,13 +78,14 @@ def load_access_request(configuration, request_dir, req_name):
     req_path = os.path.join(request_dir, req_name)
     try:
         if not req_name.startswith(request_prefix) or \
-               not req_name.endswith(request_ext):
+                not req_name.endswith(request_ext):
             raise ValueError("invalid request name: %s" % req_name)
         request = load(req_path)
     except Exception as err:
-        configuration.logger.error("could not load request in %s: %s" % \
+        configuration.logger.error("could not load request in %s: %s" %
                                    (req_path, err))
     return request
+
 
 def save_access_request(configuration, request_dir, request):
     """Save the request dictionary as a pickle in request_dir with random
@@ -98,10 +102,11 @@ def save_access_request(configuration, request_dir, request):
         os.write(filehandle, dumps(request))
         os.close(filehandle)
     except Exception as err:
-        configuration.logger.error("could not save request %s in %s: %s" % \
+        configuration.logger.error("could not save request %s in %s: %s" %
                                    (request, request_dir, err))
         return False
     return os.path.basename(tmpfile)
+
 
 def delete_access_request(configuration, request_dir, req_name):
     """Delete the request file matching req_name with predefined request file
@@ -109,9 +114,10 @@ def delete_access_request(configuration, request_dir, req_name):
     """
     req_path = os.path.join(request_dir, req_name)
     if not req_name.startswith(request_prefix) or \
-           not req_name.endswith(request_ext):
+            not req_name.endswith(request_ext):
         raise ValueError("invalid request name: %s" % req_name)
     return delete_file(req_path, configuration.logger)
+
 
 if __name__ == "__main__":
     print("Unit testing fileio")
@@ -140,4 +146,3 @@ if __name__ == "__main__":
     delete_access_request(conf, res_home, dummy_name)
     all_reqs = list_access_requests(conf, res_home)
     print("found reqs: %s" % ' , '.join(all_reqs))
-        
