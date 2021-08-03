@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # futurizeall - a simple helper to run futurize on all project code.
-# Copyright (C) 2020  Jonas Bardino
+# Copyright (C) 2020-2021  Jonas Bardino
 #
 # This file is part of MiG.
 #
@@ -21,11 +21,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """Reformat all python source code to python 3 friendly format using the
-futurize tool from
+futurize tool available from
 http://python-future.org/index.html
 
 A few manual tweaks are needed afterwards to avoid breakage.
 """
+
+from __future__ import absolute_import
 from __future__ import print_function
 
 import mimetypes
@@ -72,7 +74,13 @@ if __name__ == '__main__':
     # TODO: use sed tool to fix any lines broken by futurize / 2to3
     sed_rules = ['']
     postprocess_base = ['sed', '-i'] + [';'.join(sed_rules)]
-    for (root, dirs, files) in os.walk(target):
+    # Mimic walk for single file target
+    if os.path.isfile(target):
+        root, filename = os.path.split(target)
+        walk_helper = [(root, [], [filename])]
+    else:
+        walk_helper = os.walk(target)
+    for (root, dirs, files) in walk_helper:
         timestamp = time.time()
         # Skip all dot-dirs and explicit removes
         for exclude in exclude_dirs + [i for i in dirs if i.startswith('.')]:
