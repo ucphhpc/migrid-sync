@@ -72,14 +72,11 @@
 
 from __future__ import print_function
 
+# NOTE: this is in effect izip and xrange-like implementations
+from builtins import map, zip, range
 import hashlib
 import hmac
-# NOTE: In python 3 the built-in zip is already really izip so not in itertools
 from itertools import starmap
-try:
-    from itertools import izip
-except ImportError:
-    izip = zip
 from operator import xor
 from struct import Struct
 
@@ -103,13 +100,13 @@ def pbkdf2_bin(data, salt, iterations=1000, keylen=24, hashfunc=None):
     def _pseudorandom(x, mac=mac):
         h = mac.copy()
         h.update(x)
-        return map(ord, h.digest())
+        return list(map(ord, h.digest()))
     buf = []
-    for block in xrange(1, -(-keylen // mac.digest_size) + 1):
+    for block in range(1, -(-keylen // mac.digest_size) + 1):
         rv = u = _pseudorandom(salt + _pack_int(block))
-        for i in xrange(iterations - 1):
+        for i in range(iterations - 1):
             u = _pseudorandom(''.join(map(chr, u)))
-            rv = starmap(xor, izip(rv, u))
+            rv = starmap(xor, zip(rv, u))
         buf.extend(rv)
     return ''.join(map(chr, buf))[:keylen]
 

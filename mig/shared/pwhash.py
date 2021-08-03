@@ -48,6 +48,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import zip, range
 import hashlib
 from base64 import b64encode, b64decode, b16encode, b16decode
 from os import urandom
@@ -56,7 +57,7 @@ from string import ascii_lowercase, ascii_uppercase, digits
 
 # From https://github.com/mitsuhiko/python-pbkdf2
 from mig.shared.base import force_utf8
-from mig.shared.pbkdf2 import pbkdf2_bin, izip
+from mig.shared.pbkdf2 import pbkdf2_bin
 
 try:
     import cracklib
@@ -128,7 +129,7 @@ def check_hash(configuration, service, username, password, hashed,
     # Same as "return hash_a == hash_b" but takes a constant time.
     # See http://carlos.bueno.org/2011/10/timing.html
     diff = 0
-    for char_a, char_b in izip(hash_a, hash_b):
+    for char_a, char_b in zip(hash_a, hash_b):
         diff |= ord(char_a) ^ ord(char_b)
     match = (diff == 0)
     if isinstance(hash_cache, dict) and match:
@@ -358,13 +359,13 @@ def assure_password_strength(configuration, password):
         raise ValueError(err_msg)
     char_class_map = {'lower': ascii_lowercase, 'upper': ascii_uppercase,
                       'digits': digits}
-    base_chars = ''.join(char_class_map.values())
+    base_chars = ''.join(list(char_class_map.values()))
     pw_classes = []
     for i in password:
         if i not in base_chars and 'other' not in pw_classes:
             pw_classes.append('other')
             continue
-        for (char_class, values) in char_class_map.items():
+        for (char_class, values) in list(char_class_map.items()):
             if i in values and not char_class in pw_classes:
                 pw_classes.append(char_class)
                 break
@@ -430,7 +431,7 @@ def generate_random_password(configuration, tries=42):
         charset += digits
     if classes > 3:
         charset += ',.;:+=&%#@£$/?*'
-    for i in xrange(tries):
+    for i in range(tries):
         _logger.debug("make password with %d chars from %s" % (count, charset))
         password = generate_random_ascii(count, charset)
         try:
