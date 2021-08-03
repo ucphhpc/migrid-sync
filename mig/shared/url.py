@@ -39,7 +39,7 @@ try:
     from urllib.parse import quote, unquote, urlencode, parse_qs, parse_qsl, \
         urlsplit
 except ImportError:
-    from urllib import quote, unquote, urlencode, urldecode
+    from urllib import quote, unquote, urlencode
     from urlparse import parse_qs, parse_qsl, urlsplit
 
 from mig.shared.defaults import csrf_field
