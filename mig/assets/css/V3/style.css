@@ -578,7 +578,7 @@ input[type=checkbox]:checked + label {
     background: 0%;
 }
 
-/* Tips in Home page below apps */
+/* Tips in Home page above apps */
 #tips-container {
     padding-top: 1%;
     width: auto;
@@ -594,6 +594,24 @@ input[type=checkbox]:checked + label {
 #tips-content .tips-entry p {
     font-size: 14px;
 }
+
+/* User messages in Home page below tips */
+#user-msg-container {
+    padding-top: 1%;
+    width: auto;
+}
+#user-msg-content .user-msg-entry h4 {
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 700;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    margin: 0;
+}
+#user-msg-content .user-msg-entry p {
+    font-size: 14px;
+}
+
 
 
 /* When the checkbox is not checked, use a grey background */

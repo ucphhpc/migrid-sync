@@ -165,6 +165,12 @@ function init_tips() {
     $("#tips-content .tips-entries").show();
     $("#tips-english").show();
 }
+function init_user_msg() {
+    console.debug("init user messages");
+    /* NOTE: we need to specify header to look inside the div.user-msg-entry */
+    accordion_init("#user-msg-content .user-msg-entries.accordion", false, "h4");
+    $("#user-msg-content .user-msg-entries").show();
+ }
 
 function load_support(base_url, logged_in) {
     /* Fetch Support contents from snippet on base_url */

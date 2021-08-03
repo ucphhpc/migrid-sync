@@ -36,7 +36,7 @@ from mig.shared.functional import validate_input_and_cert
 from mig.shared.init import initialize_main_variables, find_entry, extract_menu
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.html import save_settings_js, save_settings_html, render_apps, \
-    menu_items, legacy_user_interface
+    menu_items, legacy_user_interface, html_user_messages
 from mig.shared.settings import load_settings
 from mig.shared.settingskeywords import get_keywords_dict
 
@@ -47,7 +47,12 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     active_menu = extract_menu(configuration, title_entry)
     user_settings = title_entry.get('user_settings', {})
     legacy_ui = legacy_user_interface(configuration, user_settings)
-    fill_helpers = {'short_title': configuration.short_title}
+    user_msg, show_user_msg = '', 'hidden'
+    if configuration.site_enable_user_messages:
+        user_msg = html_user_messages(configuration, client_id)
+        show_user_msg = ''
+    fill_helpers = {'short_title': configuration.short_title,
+                    'user_msg': user_msg, 'show_user_msg': show_user_msg}
     html = '''
     <!-- CONTENT -->
 
@@ -61,6 +66,11 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
                                         <div id="tips-container" class="col-12 invert-theme">
                                             <div id="tips-content" class="tips-placeholder">
                                                 <!-- NOTE: filled by AJAX .. init for space -->
+                                            </div>
+                                        </div>
+                                        <div id="user-msg-container" class="col-12 invert-theme %(show_user_msg)s">
+                                            <div id="user-msg-content" class="user-msg-placeholder">
+                                                %(user_msg)s
                                             </div>
                                         </div>
             ''' % fill_helpers
@@ -237,6 +247,7 @@ def main(client_id, user_arguments_dict):
     '''
     add_ready += '''
                 load_tips("%s");
+                init_user_msg();
     ''' % configuration.site_tips_snippet_url
     title_entry['script']['advanced'] += add_import
     title_entry['script']['init'] += add_init

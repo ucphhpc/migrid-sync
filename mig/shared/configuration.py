@@ -91,6 +91,7 @@ def fix_missing(config_file, verbose=True):
         'user_home': '~/state/user_home/',
         'user_settings': '~/state/user_settings/',
         'user_cache': '~/state/user_cache/',
+        'user_messages': '~/state/user_messages/',
         'server_home': '~/state/server_home/',
         'webserver_home': '~/state/webserver_home/',
         'sessid_to_mrsl_link_home': '~/state/sessid_to_mrsl_link_home/',
@@ -329,6 +330,7 @@ class Configuration:
     user_home = ''
     user_settings = ''
     user_cache = ''
+    user_messages = ''
     sss_home = ''
     sandbox_home = ''
     freeze_home = ''
@@ -823,6 +825,8 @@ location.""" % self.config_file)
             self.freeze_home = config.get('GLOBAL', 'freeze_home')
         if config.has_option('GLOBAL', 'freeze_tape'):
             self.freeze_tape = config.get('GLOBAL', 'freeze_tape')
+        if config.has_option('GLOBAL', 'user_messages'):
+            self.user_messages = config.get('GLOBAL', 'user_messages')
         if config.has_option('GLOBAL', 'sharelink_home'):
             self.sharelink_home = config.get('GLOBAL', 'sharelink_home')
         if config.has_option('GLOBAL', 'seafile_mount'):
@@ -1151,6 +1155,11 @@ location.""" % self.config_file)
                                                      'user_imnotify_password')
         if config.has_option('GLOBAL', 'user_imnotify_log'):
             self.user_imnotify_log = config.get('GLOBAL', 'user_imnotify_log')
+        if config.has_option('SITE', 'enable_user_messages'):
+            self.site_enable_user_messages = config.getboolean(
+                'SITE', 'enable_user_messages')
+        else:
+            self.site_enable_user_messages = False
         if config.has_option('GLOBAL', 'user_chkuserroot_log'):
             self.user_chkuserroot_log = config.get('GLOBAL',
                                                    'user_chkuserroot_log')

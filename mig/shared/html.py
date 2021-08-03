@@ -33,7 +33,7 @@ from __future__ import absolute_import
 import os
 import sys
 
-from mig.shared.base import requested_page
+from mig.shared.base import requested_page, client_id_dir
 from mig.shared.defaults import default_pager_entries, trash_linkname, \
     csrf_field, keyword_all
 
@@ -2213,3 +2213,52 @@ var init_log = function() {
     if script_wrap:
         log_init.append('</script>')
     return '\n'.join(log_init)
+
+
+def load_user_messages(configuration, client_id):
+    """Load any notification messages for client_id"""
+    _logger = configuration.logger
+    client_dir = client_id_dir(client_id)
+    user_msg_base = os.path.join(configuration.user_messages, client_dir)
+    messages = []
+    try:
+        for name in os.listdir(user_msg_base):
+            if name.startswith('.'):
+                continue
+            path = os.path.join(user_msg_base, name)
+            ext = os.path.splitext(name)[1]
+            with open(path) as msg_fd:
+                messages.append((ext, ''.join(msg_fd.readlines())))
+    except Exception as exc:
+        _logger.error("failed to load user messages: %s" % exc)
+    return messages
+
+
+def html_user_messages(configuration, client_id):
+    """Load and format any notification messages for client_id"""
+    user_msg = '''
+    <div class="vertical-spacer"></div>
+    <div class="user-msg-entries accordion col-lg-12">
+    '''
+    for (ext, msg) in load_user_messages(configuration, client_id):
+        user_msg += '''
+        <div class="user-msg-entry">
+        '''
+        if ext.startswith('.htm'):
+            user_msg += "%s" % msg
+        else:
+            header, content = msg.split('\n', 1)
+            user_msg += """
+            <h4>%s</h4>
+            <p class='verbatim'>
+%s
+</p>
+""" % (header, content)
+
+        user_msg += '''
+        </div>
+        '''
+    user_msg += '''
+    </div>
+    '''
+    return user_msg
