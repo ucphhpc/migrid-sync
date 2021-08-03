@@ -15,7 +15,7 @@
         "DAG",
         "MODI"
     ], 
-    "work_end": "2021-08-03T:22:00:00+02:00", 
+    "work_end": "2021-08-03T22:00:00+02:00", 
     "description": {
       "EN": "We will apply an update to the DAG and MODI services that split the underlying JupyterHub Proxy and the service itself. This will ensure that we can apply updates to both services going forward without the users experiencing any downtime.", 
       "DK": "Vi fortager en opdatering af DAG og MODI tjenesterne, denne opdatering vil dele den underliggende JupyterHub Proxyen og selve JupyterHub tjenesten. Dette vil sikre, at vi i fremtiden kan udrulle opdateringer til begge tjenester den at brugerne oplever nedetid."
