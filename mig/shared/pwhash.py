@@ -6,7 +6,7 @@
 #
 #
 # pwhash - helpers for passwords and hashing
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -49,14 +49,14 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import hashlib
-from os import urandom
 from base64 import b64encode, b64decode, b16encode, b16decode
-from itertools import izip
+from os import urandom
 from random import SystemRandom
 from string import ascii_lowercase, ascii_uppercase, digits
 
 # From https://github.com/mitsuhiko/python-pbkdf2
-from mig.shared.pbkdf2 import pbkdf2_bin
+from mig.shared.base import force_utf8
+from mig.shared.pbkdf2 import pbkdf2_bin, izip
 
 try:
     import cracklib
@@ -79,8 +79,7 @@ COST_FACTOR = 10000
 
 def make_hash(password):
     """Generate a random salt and return a new hash for the password."""
-    if isinstance(password, unicode):
-        password = password.encode('utf-8')
+    password = force_utf8(password)
     salt = b64encode(urandom(SALT_LENGTH))
     # Python 2.6 fails to parse implicit positional args (-Jonas)
     # return 'PBKDF2${}${}${}${}'.format(
@@ -103,8 +102,7 @@ def check_hash(configuration, service, username, password, hashed,
     sharelinks where the policy is not guaranteed to apply.
     """
     _logger = configuration.logger
-    if isinstance(password, unicode):
-        password = password.encode('utf-8')
+    password = force_utf8(password)
     pw_hash = hashlib.md5(password).hexdigest()
     if isinstance(hash_cache, dict) and \
             hash_cache.get(pw_hash, None) == hashed:
@@ -175,12 +173,9 @@ def check_digest(configuration, service, realm, username, password, digest,
     policy incompliance to unconditional rejects.
     """
     _logger = configuration.logger
-    if isinstance(realm, unicode):
-        realm = realm.encode('utf-8')
-    if isinstance(username, unicode):
-        username = username.encode('utf-8')
-    if isinstance(password, unicode):
-        password = password.encode('utf-8')
+    realm = force_utf8(realm)
+    username = force_utf8(username)
+    password = force_utf8(password)
     merged_creds = ':'.join([realm, username, password])
     creds_hash = hashlib.md5(merged_creds).hexdigest()
     if isinstance(digest_cache, dict) and \
@@ -241,8 +236,7 @@ def check_scramble(configuration, service, username, password, scrambled,
     passwords in the user DB and they would easily give full account access.
     """
     _logger = configuration.logger
-    if isinstance(password, unicode):
-        password = password.encode('utf-8')
+    password = force_utf8(password)
     if isinstance(scramble_cache, dict) and \
             scramble_cache.get(password, None) == scrambled:
         # print "found cached scramble: %s" % scramble_cache.get(password,

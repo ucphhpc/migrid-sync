@@ -6,7 +6,7 @@
 #
 #
 # pbkdf2 - [optionally add short module description on this line]
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -69,12 +69,19 @@
     :copyright: (c) Copyright 2011 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
+
 from __future__ import print_function
-import hmac
+
 import hashlib
-from struct import Struct
+import hmac
+# NOTE: In python 3 the built-in zip is already really izip so not in itertools
+from itertools import starmap
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 from operator import xor
-from itertools import izip, starmap
+from struct import Struct
 
 
 _pack_int = Struct('>I').pack
