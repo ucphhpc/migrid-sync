@@ -38,7 +38,6 @@ from mig.shared.defaults import csrf_field, CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM
     CSRF_FULL
 from mig.shared.findtype import is_user, is_server
 from mig.shared.pwhash import make_csrf_token, make_csrf_trust_token
-from mig.shared.url import unquote
 
 
 def correct_handler(name, environ=None):
@@ -168,23 +167,6 @@ def trust_handler(configuration, method, operation, unpacked_args, client_id,
     _logger.debug("CSRF trust check succeeded: %s vs %s" % (csrf_required,
                                                             csrf_token))
     return True
-
-
-def get_path():
-    """Extract supplied path from environment:
-    unquote(string): Replaces url encoded chars '%xx' by their
-    single-character equivalents.
-    """
-
-    path_translated = os.getenv('PATH_TRANSLATED')
-    if not path_translated:
-        raise Exception('No path provided!')
-    root = str(os.getenv('DOCUMENT_ROOT'))
-
-    # Remove only leftmost root occurence of root
-
-    path = unquote(path_translated.replace(root, '', 1))
-    return path
 
 
 def get_allowed_path(configuration, client_id, path):
