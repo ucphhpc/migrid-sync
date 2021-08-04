@@ -37,10 +37,10 @@ import os
 #       Other modules should import helpers from here for consistency.
 try:
     from urllib.parse import quote, unquote, urlencode, parse_qs, parse_qsl, \
-        urlsplit
+        urlsplit, urlparse
 except ImportError:
     from urllib import quote, unquote, urlencode
-    from urlparse import parse_qs, parse_qsl, urlsplit
+    from urlparse import parse_qs, parse_qsl, urlsplit, urlparse
 
 from mig.shared.defaults import csrf_field
 from mig.shared.handlers import get_csrf_limit
