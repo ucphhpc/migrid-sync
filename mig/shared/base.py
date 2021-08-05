@@ -34,9 +34,10 @@ import base64
 import os
 
 # IMPORTANT: do not import any other MiG modules here - to avoid import loops
-from mig.shared.defaults import sandbox_names, _user_invisible_files, \
-    _user_invisible_dirs, _vgrid_xgi_scripts, cert_field_order, \
-    gdp_distinguished_field, valid_gdp_auth_scripts, valid_gdp_anon_scripts
+from mig.shared.defaults import default_str_coding, default_fs_coding, \
+    sandbox_names, _user_invisible_files, _user_invisible_dirs, \
+    _vgrid_xgi_scripts, cert_field_order, gdp_distinguished_field, \
+    valid_gdp_auth_scripts, valid_gdp_anon_scripts, STR_KIND, FS_KIND
 
 _id_sep, _dir_sep, _id_space, _dir_space = '/', '+', ' ', '_'
 _key_val_sep = '='
@@ -315,39 +316,149 @@ def requested_url_base(environ=None):
     return url_base
 
 
-def force_utf8(val):
-    """Internal helper to encode unicode strings to utf8 version"""
+def force_utf8(val, highlight=''):
+    """Internal helper to encode unicode strings to utf8 version. Actual
+    changes are marked out with the highlight string if given.
+    """
     # We run into all kind of nasty encoding problems if we mix
     if not isinstance(val, basestring):
         val = "%s" % val
     if not isinstance(val, unicode):
         return val
-    return val.encode("utf8")
+    return "%s%s%s" % (highlight, val.encode("utf8"), highlight)
 
 
-def force_unicode(val):
-    """Internal helper to decode unicode strings from utf8 version"""
+def force_utf8_rec(input_obj, highlight=''):
+    """Recursive object conversion from unicode to utf8: useful to convert e.g.
+    dictionaries with nested unicode strings to a pure utf8 version. Actual
+    changes are marked out with the highlight string if given.
+    """
+    if isinstance(input_obj, dict):
+        return {force_utf8_rec(i, highlight): force_utf8_rec(j, highlight) for (i, j) in
+                input_obj.items()}
+    elif isinstance(input_obj, list):
+        return [force_utf8_rec(i, highlight) for i in input_obj]
+    elif isinstance(input_obj, unicode):
+        return force_utf8(input_obj, highlight)
+    else:
+        return input_obj
+
+
+def force_unicode(val, highlight=''):
+    """Internal helper to decode unicode strings from utf8 version. Actual
+    changes are marked out with the highlight string if given.
+    """
     # We run into all kind of nasty encoding problems if we mix
     if not isinstance(val, basestring):
         val = "%s" % val
     if not isinstance(val, unicode):
-        return val.decode("utf8")
+        return "%s%s%s" % (highlight, val.decode("utf8"), highlight)
     return val
 
 
-def force_utf8_rec(input_obj):
-    """Recursive object conversion from unicode to utf8: useful to convert e.g.
-    dictionaries with nested unicode strings to a pure utf8 version.
+def force_unicode_rec(input_obj, highlight=''):
+    """Recursive object conversion from utf8 to unicode: useful to convert e.g.
+    dictionaries with nested utf8 strings to a pure unicode version. Actual
+    changes are marked out with the highlight string if given.
     """
     if isinstance(input_obj, dict):
-        return {force_utf8_rec(i): force_utf8_rec(j) for (i, j) in
+        return {force_unicode_rec(i, highlight): force_unicode_rec(j, highlight) for (i, j) in
                 input_obj.items()}
     elif isinstance(input_obj, list):
-        return [force_utf8_rec(i) for i in input_obj]
-    elif isinstance(input_obj, unicode):
-        return force_utf8(input_obj)
+        return [force_unicode_rec(i, highlight) for i in input_obj]
+    elif not isinstance(input_obj, unicode):
+        return force_unicode(input_obj, highlight)
     else:
         return input_obj
+
+
+def _force_default_coding(input_obj, kind, highlight=''):
+    """A helper to force input_obj to the default coding for given kind.
+    Use the active interpreter and the shared.defaults helpers to force the
+    current default.
+    """
+    if kind == STR_KIND and default_str_coding == "unicode" or \
+            kind == FS_KIND and default_fs_coding == "unicode":
+        return force_unicode(input_obj, highlight)
+    elif kind == STR_KIND and default_str_coding == "utf8" or \
+            kind == FS_KIND and default_fs_coding == "utf8":
+        return force_utf8(input_obj, highlight)
+    else:
+        raise ValueError('Unsupported default coding kind: %s' % kind)
+
+
+def force_default_str_coding(input_obj, highlight=''):
+    """A helper to force input_obj to the default string coding.
+    Use the active interpreter and the shared.defaults helpers to force the
+    current default.
+    """
+    return _force_default_coding(input_obj, STR_KIND, highlight)
+
+
+def force_default_fs_coding(input_obj, highlight=''):
+    """A helper to force input_obj to the default filesystem coding.
+    Use the active interpreter and the shared.defaults helpers to force the
+    current default.
+    """
+    return _force_default_coding(input_obj, FS_KIND, highlight)
+
+
+def _force_default_coding_rec(input_obj, kind, highlight=''):
+    """A helper to force all strings in input_obj into the python-specific
+    default string coding recursively.
+    Use the active interpreter and the shared.defaults helpers to force the
+    current default.
+    """
+    if kind == STR_KIND and default_str_coding == "unicode" or \
+            kind == FS_KIND and default_fs_coding == "unicode":
+        return force_unicode_rec(input_obj, highlight)
+    elif kind == STR_KIND and default_str_coding == "utf8" or \
+            kind == FS_KIND and default_fs_coding == "utf8":
+        return force_utf8_rec(input_obj, highlight)
+    else:
+        raise ValueError('Unsupported default coding kind: %s' % kind)
+
+
+def force_default_str_coding_rec(input_obj, highlight=''):
+    """A helper to force input_obj to the default string coding recursively.
+    Use the active interpreter and the shared.defaults helpers to force the
+    current default.
+    """
+    return _force_default_coding_rec(input_obj, STR_KIND, highlight)
+
+
+def force_default_fs_coding_rec(input_obj, highlight=''):
+    """A helper to force input_obj to the default filesystem coding recursively. 
+    Use the active interpreter and the shared.defaults helpers to force the
+    current default.
+    """
+    return _force_default_coding_rec(input_obj, FS_KIND, highlight)
+
+
+def _is_default_coding(input_str, kind):
+    """Checks if input_str is on the default coding form for given kind"""
+    if isinstance(input_str, unicode):
+        if kind == STR_KIND and default_str_coding == "unicode" or \
+                kind == FS_KIND and default_fs_coding == "unicode":
+            return True
+        else:
+            return False
+    else:
+        if kind == STR_KIND and default_str_coding == "utf8" or \
+                kind == FS_KIND and default_fs_coding == "utf8":
+            return True
+        else:
+            return False
+
+
+def is_default_str_coding(input_str):
+    """Checks if input_str is on the default_str_coding form"""
+    return _is_default_coding(input_str, STR_KIND)
+
+
+def is_default_fs_coding(input_str):
+    """Checks if input_str is on the default_fs_coding form"""
+    return _is_default_coding(input_str, FS_KIND)
 
 
 def get_xgi_bin(configuration, force_legacy=False):

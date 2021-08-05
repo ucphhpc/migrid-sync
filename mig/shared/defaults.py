@@ -29,6 +29,21 @@
 """Default values for use in other modules"""
 
 from string import ascii_lowercase, ascii_uppercase, digits
+import sys
+
+# NOTE: python3 switched strings to use unicode by default in contrast to bytes
+#       in python2. File systems remain with utf8 however so we need to
+#       carefully handle a lot of cases of either encoding to utf8 or decoding
+#       to unicode depending on the python used.
+#       Please refer to the helpers in shared.base for actual handling of it.
+if sys.version_info[0] >= 3:
+    default_str_coding = 'unicode'
+    default_fs_coding = 'utf8'
+else:
+    default_str_coding = 'utf8'
+    default_fs_coding = 'utf8'
+
+CODING_KINDS = (STR_KIND, FS_KIND) = ('__STR__', '__FS__')
 
 # IMPORTANT: do NOT import anything except native python modules/functions here
 #            to avoid import loops

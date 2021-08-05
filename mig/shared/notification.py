@@ -30,16 +30,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
-try:
-    from future import standard_library
-    standard_library.install_aliases()
-    from builtins import str
-except Exception as exc:
-    print("Failed to initialize Python 3 porting helpers: %s" % exc)
-    exit(1)
-
-# Real imports
-
 import datetime
 import os
 import pickle

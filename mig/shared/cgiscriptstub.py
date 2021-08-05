@@ -41,7 +41,8 @@ try:
 except:
     pass
 
-from mig.shared.base import requested_page, allow_script
+from mig.shared.base import requested_page, allow_script, \
+    is_default_str_coding, force_default_str_coding_rec
 from mig.shared.bailout import crash_helper
 from mig.shared.conf import get_configuration_object
 from mig.shared.httpsclient import extract_client_id
@@ -98,6 +99,17 @@ def finish_cgi_script(configuration, backend, output_format, ret_code, ret_msg,
     if output is None:
         logger.error("CGI %s output formatting failed!" % output_format)
         output = 'Error: output could not be correctly delivered!'
+
+    if not is_default_str_coding(output):
+        logger.error(
+            "Formatted output is NOT on default str coding: %s" % [output[:100]])
+        err_mark = '__****__'
+        output = format_output(configuration, backend, ret_code, ret_msg,
+                               force_default_str_coding_rec(
+                                   output_objs, highlight=err_mark),
+                               output_format)
+        logger.warning(
+            "forced output to default coding with highlight: %s" % err_mark)
 
     header_out = '\n'.join(["%s: %s" % (key, val) for (key, val) in headers])
 

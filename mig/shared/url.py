@@ -33,12 +33,15 @@ from __future__ import absolute_import
 import ast
 import base64
 import os
+import sys
+
 # NOTE: moved to urllib.parse in python3 and are re-exposed with future.
 #       Other modules should import helpers from here for consistency.
-try:
+# TODO: handle the unicode returned by python3 and future versions!
+if sys.version_info[0] >= 3:
     from urllib.parse import quote, unquote, urlencode, parse_qs, parse_qsl, \
         urlsplit, urlparse
-except ImportError:
+else:
     from urllib import quote, unquote, urlencode
     from urlparse import parse_qs, parse_qsl, urlsplit, urlparse
 

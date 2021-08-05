@@ -32,7 +32,8 @@ import time
 
 from mig.shared import returnvalues
 from mig.shared.bailout import bailout_helper, crash_helper
-from mig.shared.base import requested_page, allow_script
+from mig.shared.base import requested_page, allow_script, \
+    is_default_str_coding, force_default_str_coding_rec
 from mig.shared.defaults import download_block_size
 from mig.shared.conf import get_configuration_object
 from mig.shared.objecttypes import get_object_type_info
@@ -231,6 +232,17 @@ def application(environ, start_response):
     output = format_output(configuration, backend, ret_code, ret_msg,
                            output_objs, output_format)
 
+    if not is_default_str_coding(output):
+        _logger.error(
+            "Formatted output is NOT on default str coding: %s" % [output[:100]])
+        err_mark = '__****__'
+        output = format_output(configuration, backend, ret_code, ret_msg,
+                               force_default_str_coding_rec(
+                                   output_objs, highlight=err_mark),
+                               output_format)
+        _logger.warning(
+            "forced output to default coding with highlight: %s" % err_mark)
+
     # Explicit None means fatal error in output formatting.
     # An empty string on the other hand is quite okay.
 
@@ -260,8 +272,8 @@ def application(environ, start_response):
             _logger.info("WSGI %s yielding %d output parts (%db)" %
                          (backend, chunk_parts, content_length))
         for i in xrange(chunk_parts):
-            # _logger.debug("WSGI %s yielding part %d / %d output parts" % \
-            #             (backend, i+1, chunk_parts))
+            # _logger.debug("WSGI %s yielding part %d / %d output parts" %
+            #              (backend, i+1, chunk_parts))
             # end index may be after end of content - but no problem
             part = output[i*download_block_size:(i+1)*download_block_size]
             yield part

@@ -25,23 +25,6 @@
 # -- END_HEADER ---
 #
 
-from mig.shared.workflows import get_wp_map, CONF
-from mig.shared.vgridaccess import check_vgrid_access
-from mig.shared.vgrid import vgrid_valid_entities, vgrid_add_workflow_jobs, \
-    JOB_ID, JOB_CLIENT
-from mig.shared.serial import load
-from mig.shared.safeinput import PARAM_START, PARAM_STOP, PARAM_JUMP
-from mig.shared.logger import daemon_logger, register_hangup_handler
-from mig.shared.listhandling import frange
-from mig.shared.job import fill_mrsl_template, new_job
-from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.fileio import makedirs_rec, pickle, unpickle, walk
-from mig.shared.events import get_path_expand_map
-from mig.shared.defaults import valid_trigger_changes, workflows_log_name, \
-    workflows_log_size, workflows_log_cnt, csrf_field, default_vgrid
-from mig.shared.conf import get_configuration_object
-from mig.shared.cmdapi import parse_command_args
-from mig.shared.base import force_utf8
 """Event handler to monitor vgrid files for creation, modification and removal
 and trigger any associated actions based on rule database.
 
@@ -92,6 +75,25 @@ else:
     except ImportError as exc:
         print('ERROR: this daemon requires the scandir module on python 2')
         sys.exit(1)
+
+
+from mig.shared.base import force_utf8
+from mig.shared.cmdapi import parse_command_args
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import valid_trigger_changes, workflows_log_name, \
+    workflows_log_size, workflows_log_cnt, csrf_field, default_vgrid
+from mig.shared.events import get_path_expand_map
+from mig.shared.fileio import makedirs_rec, pickle, unpickle, walk
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.job import fill_mrsl_template, new_job
+from mig.shared.listhandling import frange
+from mig.shared.logger import daemon_logger, register_hangup_handler
+from mig.shared.safeinput import PARAM_START, PARAM_STOP, PARAM_JUMP
+from mig.shared.serial import load
+from mig.shared.vgrid import vgrid_valid_entities, vgrid_add_workflow_jobs, \
+    JOB_ID, JOB_CLIENT
+from mig.shared.vgridaccess import check_vgrid_access
+from mig.shared.workflows import get_wp_map, CONF
 
 
 # Global trigger rule dictionaries with rules for all VGrids
