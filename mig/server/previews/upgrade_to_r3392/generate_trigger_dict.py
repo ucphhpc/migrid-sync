@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import logging
 import os
 import sys
-import logging
 
 MIG_HOME = '%s/mig' % os.environ['HOME']
 MIG_CONF = '%s/server/MiGserver.conf' % MIG_HOME
@@ -14,9 +14,13 @@ METAPATH = '.meta'
 os.environ['MIG_CONF'] = MIG_CONF
 sys.path.append(MIG_HOME)
 
-from mig.shared.conf import get_configuration_object
-from mig.shared.logger import _debug_format, _default_format
-from mig.shared.fileio import pickle, unpickle
+try:
+    from mig.shared.conf import get_configuration_object
+    from mig.shared.fileio import pickle, unpickle
+    from mig.shared.logger import _debug_format, _default_format
+except:
+    print("cannot load migrid code")
+    sys.exit(1)
 
 
 def get_logger(loglevel=logging.INFO):
@@ -60,7 +64,7 @@ def fill_vgrids(configuration, settings_filepath, vgrids_dict):
     logger.info('----------------------------------------------')
     settings_filepath_array = \
         settings_filepath[len(configuration.vgrid_files_home):].split('/'
-            )
+                                                                      )
     settings_path_array = settings_filepath_array[:-2]
     vgridpath = '/'.join(settings_path_array)
 
@@ -70,7 +74,7 @@ def fill_vgrids(configuration, settings_filepath, vgrids_dict):
         tmp_vgridpath = '%s/%s' % (tmp_vgridpath, ent)
         tmp_vgridpath = tmp_vgridpath.strip('/')
         abs_vgrid_home_path = '%s/%s' % (configuration.vgrid_home,
-                tmp_vgridpath)
+                                         tmp_vgridpath)
         if os.path.exists(abs_vgrid_home_path):
             vgrid = tmp_vgridpath
 
@@ -83,7 +87,7 @@ def fill_vgrids(configuration, settings_filepath, vgrids_dict):
         vgrids_dict[settings_filepath]['vgridpath'] = vgridpath
         vgrids_dict[settings_filepath]['triggers'] = []
         logger.info('vgrid: %s' % vgrids_dict[settings_filepath]['vgrid'
-                    ])
+                                                                 ])
         logger.info('vgridpath: %s'
                     % vgrids_dict[settings_filepath]['vgridpath'])
 
@@ -98,7 +102,7 @@ def fill_triggers(configuration, vgrids_dict):
 
     status = True
     logger = configuration.logger
-    logger.info(str(vgrids_dict.keys()))
+    logger.info("%s" % vgrids_dict.keys())
     for key in vgrids_dict:
         logger.info('----------------------------------------------')
         logger.info('%s' % key)
@@ -119,24 +123,24 @@ def fill_triggers(configuration, vgrids_dict):
             if not isinstance(triggers, list):
                 status = False
                 logger.error("Couldn't load trigger configuration: '%s'"
-                              % trigger_file)
+                             % trigger_file)
                 break
 
             for trigger in triggers:
                 if trigger['rule_id'].startswith('system_imagesettings_'
-                        ):
+                                                 ):
                     vgridtriggerpath = get_vgridtriggerpath(vgrid,
-                            trigger['path'])
+                                                            trigger['path'])
                     if trigger['rule_id'] \
                         == 'system_imagesettings_meta_created' \
                         or trigger['rule_id'] \
                         == 'system_imagesettings_dir_deleted' \
-                        or vgridtriggerpath == vgridpath:
+                            or vgridtriggerpath == vgridpath:
 
                         logger.info("vgrid: '%s'" % vgrid)
                         logger.info("path: '%s'" % vgridpath)
                         logger.info("rule_id: '%s'" % trigger['rule_id'
-                                    ])
+                                                              ])
                         logger.info("run_as '%s'" % trigger['run_as'])
                         logger.info('----------------------------------------------'
                                     )

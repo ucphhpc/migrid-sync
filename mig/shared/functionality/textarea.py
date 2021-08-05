@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # textarea - combined text/mrsl writer and file upload
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,11 +25,11 @@
 # -- END_HEADER ---
 #
 
-"""
-This is the form handler called by html pages
-@todo detect and notify user if a filenumber is used twice
-@todo better user input validation
-"""
+"""This is the form handler called by html pages"""
+
+# TODO: detect and notify user if a filenumber is used twice
+# TODO: better user input validation
+
 from __future__ import absolute_import
 
 import base64
@@ -208,7 +208,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         submitmrsl_key = 'submitmrsl_%s' % filenumber
         if configuration.site_enable_jobs and \
                 submitmrsl_key in user_arguments_dict:
-            val = str(user_arguments_dict[submitmrsl_key][0]).upper()
+            val = ("%s" % user_arguments_dict[submitmrsl_key][0]).upper()
             if val == 'ON' or val == 'TRUE':
                 submit_mrslfiles = True
         fileuploadobj = {'object_type': 'fileuploadobj',
@@ -307,7 +307,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             extract_packages = False
             extract_key = 'extract_%s' % filenumber
             if extract_key in user_arguments_dict:
-                val = str(user_arguments_dict[extract_key][0]).upper()
+                val = ("%s" % user_arguments_dict[extract_key][0]).upper()
                 if val == 'ON' or val == 'TRUE':
                     extract_packages = True
 
@@ -364,7 +364,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             binary = encoded_key in user_arguments_dict
             if binary:
                 data = user_arguments_dict[fileupload_key][-1]
-                data = str(base64.decodestring(data))
+                data = "%s" % base64.decodestring(data)
             else:
                 data = user_arguments_dict[fileupload_key][-1]
 
@@ -551,8 +551,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                'submitstatuslist': submitstatuslist})
 
     # output_objects.append({"object_type":"text", "text":
-    #                        str(submitstatuslist) + " *** " + \
-    #                        str(mrslfiles_to_parse)})
+    #                        "%s *** %s" % (submitstatuslist, mrslfiles_to_parse)})
 
     # save to default job template file if requested
 

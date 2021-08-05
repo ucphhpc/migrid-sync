@@ -5,19 +5,19 @@
 #
 # aux - [insert a few words of module description on this line]
 # Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
-# 
+#
 # This file is part of MiG.
-# 
+#
 # MiG is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # MiG is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -25,6 +25,7 @@
 # -- END_HEADER ---
 #
 
+import sys as _sys
 """
 Contains stuff that didn't fit anywhere else
 
@@ -35,6 +36,7 @@ Copyright (c) 2010 __MyCompanyName__. All rights reserved.
 import itertools
 import os
 import syslog
+
 
 def flag2mode(flags):
     """
@@ -48,8 +50,8 @@ def flag2mode(flags):
         mode = mode.replace('w', 'a', 1)
 
     return mode
-    
-    
+
+
 # some notes for later:
 
 # def synchronized_iterator(f):
@@ -68,25 +70,24 @@ def flag2mode(flags):
 #                     self.lock.release()
 #         return iterator(f,args,kwargs)
 #     return wrapper
-# 
+#
 # @synchronized_iterator
 # def create_counter():
 #     t = itertools.count()
 #     while True:
 #         yield t.next()
-# 
+#
 # or
-# 
+#
 # counter = synchronized_iterator(itertools.count)
 
-## {{{ http://code.activestate.com/recipes/576529/ (r5)
+# {{{ http://code.activestate.com/recipes/576529/ (r5)
 # By Christian Muirhead, Menno Smits and Michael Foord 2008
 # WTF license
 # http://voidspace.org.uk/blog
 
 
 # this next part is a dynamic trick for filling in rich comparators (c) http://code.activestate.com/recipes/576529/
-import sys as _sys
 
 if _sys.version_info[0] == 3:
     def _has_method(cls, name):
@@ -106,13 +107,12 @@ else:
         return False
 
 
-
 def _ordering(cls, overwrite):
     def setter(name, value):
         if overwrite or not _has_method(cls, name):
             value.__name__ = name
             setattr(cls, name, value)
-            
+
     comparison = None
     if not _has_method(cls, '__lt__'):
         for name in 'gt le ge'.split():
@@ -120,10 +120,12 @@ def _ordering(cls, overwrite):
                 continue
             comparison = getattr(cls, '__' + name + '__')
             if name.endswith('e'):
-                eq = lambda s, o: comparison(s, o) and comparison(o, s)
+                def eq(s, o): return comparison(s, o) and comparison(o, s)
             else:
-                eq = lambda s, o: not comparison(s, o) and not comparison(o, s)
-            ne = lambda s, o: not eq(s, o)
+                def eq(s, o): return not comparison(
+                    s, o) and not comparison(o, s)
+
+            def ne(s, o): return not eq(s, o)
             if name.startswith('l'):
                 setter('__lt__', lambda s, o: comparison(s, o) and ne(s, o))
             else:
@@ -142,8 +144,10 @@ def _ordering(cls, overwrite):
 def total_ordering(cls):
     return _ordering(cls, False)
 
+
 def force_total_ordering(cls):
     return _ordering(cls, True)
+
 
 def decorator_with_args(decorator):
     def new(*args, **kwargs):
@@ -151,6 +155,7 @@ def decorator_with_args(decorator):
             return decorator(fn, *args, **kwargs)
         return new2
     return new
+
 
 @decorator_with_args
 def typecheck(fn, *decorator_args):
@@ -161,14 +166,14 @@ def typecheck(fn, *decorator_args):
         for x in range(0, len(args)):
             if type(args[x]) != decorator_args[x]:
                 raise TypeError('Argument %i is of wrong type.\
-                                 %s expected, %s received.'%\
-                               (x+1, str(decorator_args[x]),
-                                str(type(args[x]))))
+                                 %s expected, %s received.' %
+                                (x+1, decorator_args[x],
+                                 type(args[x])))
         return fn(*args)
     return new
-    
-    
-## {{{ http://code.activestate.com/recipes/465057/ (r1)
+
+
+# {{{ http://code.activestate.com/recipes/465057/ (r1)
 def synchronized(lock):
     """ Synchronization decorator. """
 
@@ -181,4 +186,3 @@ def synchronized(lock):
                 lock.release()
         return newFunction
     return wrap
-

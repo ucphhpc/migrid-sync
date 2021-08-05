@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # genjobscriptpython - helpers for python jobs
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Python job script generator and functions"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -35,7 +36,6 @@ from mig.shared.defaults import job_output_dir
 
 
 class GenJobScriptPython:
-
     """Python job script generator"""
 
     def __init__(
@@ -230,9 +230,9 @@ io_log.flush()''' % (io_type, result)
             # "filename" or "mig_server_filename resource_filename"
 
             parts = infile.split()
-            mig_server_filename = str(parts[0])
+            mig_server_filename = "%s" % parts[0]
             try:
-                resource_filename = str(parts[1])
+                resource_filename = "%s" % parts[1]
             except:
                 resource_filename = mig_server_filename
 
@@ -284,9 +284,9 @@ io_log.flush()''' % (io_type, result)
             # "filename" or "mig_server_filename resource_filename"
 
             parts = executables.split()
-            mig_server_filename = str(parts[0])
+            mig_server_filename = "%s" % parts[0]
             try:
-                resource_filename = str(parts[1])
+                resource_filename = "%s" % parts[1]
             except:
                 resource_filename = mig_server_filename
 
@@ -334,9 +334,9 @@ io_log.flush()''' % (io_type, result)
             # "filename" or "mig_server_filename resource_filename"
 
             parts = infile.split()
-            mig_server_filename = str(parts[0])
+            mig_server_filename = "%s" % parts[0]
             try:
-                resource_filename = str(parts[1])
+                resource_filename = "%s" % parts[1]
             except:
                 resource_filename = mig_server_filename
 
@@ -365,9 +365,9 @@ io_log.flush()''' % (io_type, result)
             # "filename" or "mig_server_filename resource_filename"
 
             parts = executables.split()
-            mig_server_filename = str(parts[0])
+            mig_server_filename = "%s" % parts[0]
             try:
-                resource_filename = str(parts[1])
+                resource_filename = "%s" % parts[1]
             except:
                 resource_filename = mig_server_filename
 
@@ -425,7 +425,7 @@ if os.path.isfile("%s"):
             # "filename" or "resource_filename mig_server_filename"
 
             parts = outputfile.split()
-            resource_filename = str(parts[0])
+            resource_filename = "%s" % parts[0]
 
             # We don't need mig_server_filename here so just skip mangling
 
@@ -616,10 +616,9 @@ if not os.environ.get("MIG_JOBDIR", ""):
             cmd += 'if status == None:\n'
             cmd += '  status = "0"\n'
             cmd += 'else:\n'
-            cmd += '  status = str(status)\n'
-            cmd += 'status_handle.write("' + exe + \
-                   ' " + str(status) + "\\n")\n'
-            cmd += 'print "' + posttext + '" + str(status)\n'
+            cmd += '  status = "%s" % status\n'
+            cmd += 'status_handle.write("' + exe + ' %s\\n" % status)\n'
+            cmd += 'print "' + posttext + '%s" % status\n'
 
         cmd += 'status_handle.close()\n'
 
@@ -651,9 +650,9 @@ if not os.environ.get("MIG_JOBDIR", ""):
             # "filename" or "resource_filename mig_server_filename"
 
             parts = outputfile.split()
-            resource_filename = str(parts[0])
+            resource_filename = "%s" % parts[0]
             try:
-                mig_server_filename = str(parts[1])
+                mig_server_filename = "%s" % parts[1]
             except:
                 mig_server_filename = resource_filename
 

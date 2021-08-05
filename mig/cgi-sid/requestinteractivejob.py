@@ -74,13 +74,13 @@ if configuration.site_enable_gdp or not configuration.site_enable_jobs:
     o.out('Not available on this site!')
     o.reply_and_exit(o.CLIENT_ERROR)
 
-if str(os.getenv('REQUEST_METHOD')) != 'GET':
+if "%s" % os.getenv('REQUEST_METHOD') != 'GET':
     o.out('Please use HTTP GET')
     o.reply_and_exit(o.ERROR)
 
 # Make sure that we're actually called by an authenticated resource!
 
-if str(os.getenv('HTTPS')) != 'on':
+if "%s" % os.getenv('HTTPS') != 'on':
     o.out('Please use HTTPS with session id for authenticating job requests!'
           )
     o.reply_and_exit(o.ERROR)
@@ -88,7 +88,7 @@ if str(os.getenv('HTTPS')) != 'on':
 
 # TODO: add session ID check here
 
-remote_ip = str(os.getenv('REMOTE_ADDR'))
+remote_ip = "%s" % os.getenv('REMOTE_ADDR')
 
 fieldstorage = cgi.FieldStorage()
 user_arguments_dict = fieldstorage_to_dict(fieldstorage)
@@ -252,7 +252,7 @@ o.internal('%s has display %s' % (job_submitter_client_id,
 # os.putenv("DISPLAY", ":%s" % display_number)
 
 os.environ['DISPLAY'] = ':%s' % display_number
-logger.info('ENV TEST: %s' % str(os.getenv('DISPLAY')))
+logger.info('ENV TEST: %s' % os.getenv('DISPLAY'))
 
 # copy .interactivejob to exe:
 

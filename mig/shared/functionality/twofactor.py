@@ -279,7 +279,7 @@ def main(client_id, user_arguments_dict, environ=None):
 
     if (action == 'auth' and redirect_url) \
             or action == 'renew':
-        headers.append(tuple(str(cookie).split(': ', 1)))
+        headers.append(tuple(("%s" % cookie).split(': ', 1)))
         output_objects.append({'object_type': 'start', 'headers': headers})
         output_objects.append({'object_type': 'script_status'})
     if (action == 'auth' and redirect_url):

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # requestnewjob - Request a new job to execute on resource
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -72,7 +72,7 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    remote_ip = str(os.getenv('REMOTE_ADDR'))
+    remote_ip = "%s" % os.getenv('REMOTE_ADDR')
 
     unique_resource_name = accepted['unique_resource_name'][-1]
     exe = accepted['exe'][-1]
@@ -257,6 +257,6 @@ receive this message often, please increase the timeout for job requests.'''
     output_objects.append(
         {'object_type': 'text', 'text': 'REQUESTNEWJOB OK. The job will '
          'be sent to the resource: %s.%s %s %s (sandboxkey: %s)'
-         % (unique_resource_name, exe, str(exe_pgid),
+         % (unique_resource_name, exe, exe_pgid,
             os.getenv('REMOTE_ADDR'), sandboxkey)})
     return (output_objects, status)

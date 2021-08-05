@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # docs - online documentation generator
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,6 +29,7 @@
 # documentation topics.
 
 """On-demand documentation generator"""
+
 from __future__ import absolute_import
 
 import fnmatch
@@ -99,7 +100,7 @@ def mrsl_keywords(configuration, output_objects):
             {'object_type': 'sectionheader', 'text': keyword})
         entries = []
         for (field, val) in info.items():
-            entries.append(field + ': ' + str(val))
+            entries.append("%s: %s" % (field, val))
         output_objects.append({'object_type': 'list', 'list': entries})
 
 
@@ -124,7 +125,7 @@ def resconf_keywords(configuration, output_objects):
                 {'object_type': 'sectionheader', 'text': keyword})
             entries = []
             for (field, val) in info.items():
-                entries.append(field + ': ' + str(val))
+                entries.append("%s: %s" % (field, val))
             output_objects.append({'object_type': 'list', 'list': entries})
 
 

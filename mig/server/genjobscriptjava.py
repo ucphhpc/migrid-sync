@@ -43,7 +43,7 @@ class GenJobScriptJava:
         https_sid_url,
         localjobnam,
         filename_without_ext,
-        ):
+    ):
 
         global job_dict
         job_dict = job_dictionary
@@ -91,15 +91,15 @@ class GenJobScriptJava:
 
 '''
         init = init + 'mig_session_id: ' + job_dict['SESSIONID']\
-             + '\n'
+            + '\n'
         init = init + 'mig_iosession_id: ' + job_dict['IOSESSIONID']\
-             + '\n'
+            + '\n'
         init = init + 'job_id: ' + job_dict['JOB_ID'] + '\n'
         return init
 
     def print_start(self, name='job'):
         return 'info: Starting new %s with JOB_ID: %s\n' % (name,
-                job_dict['JOB_ID'])
+                                                            job_dict['JOB_ID'])
 
     def create_files(self, files):
         """Create supplied files"""
@@ -138,9 +138,9 @@ class GenJobScriptJava:
         cmd = ''
         for executables in job_dict['EXECUTABLES']:
             parts = executables.split()
-            mig_server_filename = str(parts[0])
+            mig_server_filename = "%s" % parts[0]
             cmd += 'executables: ' + '/sid_redirect/'\
-                 + mig_server_filename + '\n'
+                + mig_server_filename + '\n'
 
         return cmd
 
@@ -156,7 +156,7 @@ class GenJobScriptJava:
         return ''
 
     def generate_mountsshknownhosts_file(self,
-                                    result='generate_mountsshknownhosts_file'):
+                                         result='generate_mountsshknownhosts_file'):
         return ''
 
     def chmod_executables(self, result='chmod_status'):
@@ -217,9 +217,9 @@ class GenJobScriptJava:
         for name in files:
             if name.count('status') > 0:
                 cmd += 'status: ' + https_sid_url_arg\
-                     + '/sid_redirect/' + job_dict['SESSIONID'] + '/'\
-                     + job_output_dir + '/' + job_dict['JOB_ID'] + '/'\
-                     + name + '\n'
+                    + '/sid_redirect/' + job_dict['SESSIONID'] + '/'\
+                    + job_output_dir + '/' + job_dict['JOB_ID'] + '/'\
+                    + name + '\n'
         return cmd
 
     def save_status(self, result='ret'):
@@ -233,17 +233,17 @@ class GenJobScriptJava:
         result='ret',
         successcode='0',
         msg='ERROR: unexpected exit code!',
-        ):
+    ):
 
         return ''
 
     def log_on_error(
-        self, 
+        self,
         resilt='ret',
         successcode='0',
         msg='ERROR: unexpected exit code!',
-        ):
-        
+    ):
+
         return ''
 
     def exit_on_error(
@@ -251,7 +251,7 @@ class GenJobScriptJava:
         result='ret',
         successcode='0',
         exitcode='$ret',
-        ):
+    ):
 
         return ''
 
@@ -260,5 +260,3 @@ class GenJobScriptJava:
 
     def clean_up(self):
         return ''
-
-

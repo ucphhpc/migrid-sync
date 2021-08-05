@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # submitjob - Job submission interfaces
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Simple front end to job and file uploads"""
+
 from __future__ import absolute_import
 
 import os
@@ -317,11 +318,12 @@ help</a><br />
             if field_type.startswith('multiple'):
                 value_select += '<div class="scrollselect">'
                 for name in choices:
+                    name = "%s" % name
                     # Blank default value does not make sense here
-                    if not str(name):
+                    if not name:
                         continue
                     selected = ''
-                    if str(name) in res_value:
+                    if name in res_value:
                         selected = 'checked'
                     value_select += '''
                         <input type="checkbox" name="%s" %s value=%s>%s<br />
@@ -329,11 +331,13 @@ help</a><br />
                 value_select += '</div>\n'
             else:
                 value_select += "<select name='%s'>\n" % field
+                res_value = "%s" % res_value
                 for name in choices:
+                    name = "%s" % name
                     selected = ''
-                    if str(res_value) == str(name):
+                    if res_value == name:
                         selected = 'selected'
-                    display = "%s" % name
+                    display = name
                     if display == '':
                         display = ' '
                     value_select += """<option %s value='%s'>%s</option>\n""" \

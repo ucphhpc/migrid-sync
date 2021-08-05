@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # simulation - [insert a few words of module description on this line]
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -41,9 +41,9 @@ import os
 import sys
 import time
 
-from .user import User
-from .resource import Resource
-from .server import Server
+from mig.simulation.user import User
+from mig.simulation.resource import Resource
+from mig.simulation.server import Server
 from mig.shared.configuration import Configuration
 
 
@@ -519,7 +519,7 @@ if arg.count(':') == 2:
         expire = override_expire
 
     for i in range(server_cnt):
-        name = 'server-' + str(i)
+        name = 'server-%d' % i
 
         # Dummy conf to allow use of conf.attributes
         # Use own conf for each server to avoid sharing
@@ -534,7 +534,7 @@ if arg.count(':') == 2:
         servers[name] = Server(name, logger, config)
 
     for i in range(resource_cnt):
-        name = 'resource-' + str(i)
+        name = 'resource-%d' % i
         index = random.randint(0, server_cnt - 1)
         server = servers.values()[index]
         logger.info('setting up %s connected to %s', name, server.id)
@@ -542,13 +542,13 @@ if arg.count(':') == 2:
             name,
             logger,
             0.8,
-            str(42.0 + i / 3.0),
+            "%s" % (42.0 + i / 3.0),
             server,
             [''],
         )
 
     for i in range(user_cnt):
-        name = 'user-' + str(i)
+        name = 'user-%d' % i
         index = random.randint(0, server_cnt - 1)
         server = servers.values()[index]
         logger.info('setting up %s connected to %s', name, server.id)
@@ -556,7 +556,7 @@ if arg.count(':') == 2:
             name,
             logger,
             0.3,
-            str(56.5 + i),
+            "%s" % (56.5 + i),
             server,
             [''],
         )
@@ -576,11 +576,11 @@ else:
     scenario.add_section(general)
     defaults = {
         'topology': topology,
-        'timesteps': str(timesteps),
-        'status_frequency': str(status_freq),
-        'expire': str(timesteps),
-        'migrate_cost': str(migrate_cost),
-        'seed': str(seed),
+        'timesteps': "%d" % timesteps,
+        'status_frequency': "%s" % status_freq,
+        'expire': "%s" % timesteps,
+        'migrate_cost': "%s" % migrate_cost,
+        'seed': "%s" % seed,
     }
     for (opt, val) in defaults.items():
         scenario.set(general, opt, val)
@@ -590,11 +590,11 @@ else:
     # command line values overrides config value
 
     if override_seed:
-        scenario.set(general, 'seed', str(override_seed))
+        scenario.set(general, 'seed', "%s" % override_seed)
     if override_steps:
-        scenario.set(general, 'timesteps', str(override_steps))
+        scenario.set(general, 'timesteps', "%s" % override_steps)
     if override_freq:
-        scenario.set(general, 'status_frequency', str(override_freq))
+        scenario.set(general, 'status_frequency', "%s" % (override_freq))
     if override_top:
         scenario.set(general, 'topology', override_top)
     if override_migrate:

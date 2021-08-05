@@ -715,7 +715,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.info("changed times %s %s for path %s :: %s" %
                              (change_atime, change_mtime, path, real_path))
         if getattr(attr, 'st_size', None) is not None:
-            # self.logger.debug('_chattr st_size: %s' % str(attr.st_size))
+            # self.logger.debug('_chattr st_size: %s' % attr.st_size)
             ignored = False
             if file_obj is None:
                 # We must open file to truncate as there is no os.truncate
@@ -847,7 +847,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             setattr(handle, 'writefile', writefile)
             setattr(handle, 'active', active)
             # self.logger.debug("open done %s :: %s (%s %s)" % \
-            #                  (path, real_path, str(handle), mode))
+            #                  (path, real_path, handle, mode))
             return handle
         except Exception as err:
             self.__gdp_log("open", path, flags=flags, error=err)

@@ -36,7 +36,6 @@ from mig.shared.url import quote
 
 
 class GenJobScriptSh:
-
     """Bourne shell script generator"""
 
     def __init__(
@@ -351,9 +350,9 @@ class GenJobScriptSh:
             # "filename" or "mig_server_filename%src_dst_sep)sresource_filename"
 
             parts = infile.split(src_dst_sep)
-            mig_server_filename = str(parts[0])
+            mig_server_filename = "%s" % parts[0]
             try:
-                resource_filename = str(parts[1])
+                resource_filename = "%s" % parts[1]
             except:
                 resource_filename = mig_server_filename
 
@@ -415,9 +414,9 @@ class GenJobScriptSh:
             # "filename" or "mig_server_filename%(src_dst_sep)sresource_filename"
 
             parts = executables.split(src_dst_sep)
-            mig_server_filename = str(parts[0])
+            mig_server_filename = "%s" % parts[0]
             try:
-                resource_filename = str(parts[1])
+                resource_filename = "%s" % parts[1]
             except:
                 resource_filename = mig_server_filename
 
@@ -497,9 +496,9 @@ class GenJobScriptSh:
             # "filename" or "mig_server_filename%(src_dst_sep)sresource_filename"
 
             parts = infile.split(src_dst_sep)
-            mig_server_filename = str(parts[0])
+            mig_server_filename = "%s" % parts[0]
             try:
-                resource_filename = str(parts[1])
+                resource_filename = "%s" % parts[1]
             except:
                 resource_filename = mig_server_filename
 
@@ -527,9 +526,9 @@ class GenJobScriptSh:
             # "filename" or "mig_server_filename%(src_dst_sep)sresource_filename"
 
             parts = executables.split(src_dst_sep)
-            mig_server_filename = str(parts[0])
+            mig_server_filename = "%s" % parts[0]
             try:
-                resource_filename = str(parts[1])
+                resource_filename = "%s" % parts[1]
             except:
                 resource_filename = mig_server_filename
 
@@ -587,7 +586,7 @@ class GenJobScriptSh:
             # "filename" or "resource_filename%(src_dst_sep)smig_server_filename"
 
             parts = outputfile.split(src_dst_sep)
-            resource_filename = str(parts[0])
+            resource_filename = "%s" % parts[0]
 
             # We don't need mig_server_filename here so just skip mangling
 
@@ -676,9 +675,9 @@ class GenJobScriptSh:
             # "filename" or "mig_server_filename%(src_dst_sep)sresource_filename"
 
             parts = line.split(src_dst_sep)
-            mig_server_filename = str(parts[0])
+            mig_server_filename = "%s" % parts[0]
             try:
-                resource_filename = str(parts[1])
+                resource_filename = "%s" % parts[1]
             except:
                 resource_filename = mig_server_filename
             executables.append(resource_filename)
@@ -833,10 +832,10 @@ class GenJobScriptSh:
 
             if len(parts) == 1:
                 mig_home_path = ''
-                resource_mount_point = str(parts[0])
+                resource_mount_point = "%s" % parts[0]
             else:
-                mig_home_path = str(parts[0])
-                resource_mount_point = str(parts[1])
+                mig_home_path = "%s" % parts[0]
+                resource_mount_point = "%s" % parts[1]
 
             # Always strip leading slashes to avoid absolute paths
 
@@ -944,9 +943,9 @@ class GenJobScriptSh:
             parts = mount.split(src_dst_sep)
 
             if len(parts) == 1:
-                resource_mount_point = str(parts[0])
+                resource_mount_point = "%s" % parts[0]
             else:
-                resource_mount_point = str(parts[1])
+                resource_mount_point = "%s" % parts[1]
 
             # Always strip leading slashes to avoid absolute paths
 
@@ -974,9 +973,9 @@ class GenJobScriptSh:
             # "filename" or "mig_server_filename%(src_dst_sep)sresource_filename"
 
             parts = outputfile.split(src_dst_sep)
-            resource_filename = str(parts[0])
+            resource_filename = "%s" % parts[0]
             try:
-                mig_server_filename = str(parts[1])
+                mig_server_filename = "%s" % parts[1]
             except:
                 mig_server_filename = resource_filename
 
@@ -1005,9 +1004,9 @@ class GenJobScriptSh:
             # "filename" or "resource_filename%(src_dst_sep)smig_server_filename"
 
             parts = outputfile.split(src_dst_sep)
-            resource_filename = str(parts[0])
+            resource_filename = "%s" % parts[0]
             try:
-                mig_server_filename = str(parts[1])
+                mig_server_filename = "%s" % parts[1]
             except:
                 mig_server_filename = resource_filename
 

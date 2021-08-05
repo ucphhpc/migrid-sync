@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # getrespgid - Get PGID of process on resource for kill in clean up
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -63,7 +63,7 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    remote_ip = str(os.getenv('REMOTE_ADDR'))
+    remote_ip = "%s" % os.getenv('REMOTE_ADDR')
 
     res_type = accepted['type'][-1]
     unique_resource_name = accepted['unique_resource_name'][-1]

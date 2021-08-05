@@ -29,7 +29,7 @@
 #
 
 ###
-### MIG PROXY - daemon.py
+# MIG PROXY - daemon.py
 ###
 ###
 
@@ -88,7 +88,6 @@ import time
 
 
 class Daemon(object):
-
     """Daemon base class"""
 
     default_conf = ''  # override this
@@ -139,7 +138,7 @@ class Daemon(object):
             const='start',
             default='start',
             help='Start the daemon (the default action)',
-            )
+        )
         p.add_option(
             '-s',
             '--stop',
@@ -148,7 +147,7 @@ class Daemon(object):
             const='stop',
             default='start',
             help='Stop the daemon',
-            )
+        )
         p.add_option('-c', dest='config_filename', action='store',
                      default=self.default_conf,
                      help='Specify alternate configuration file name')
@@ -159,7 +158,7 @@ class Daemon(object):
             action='store_false',
             default=True,
             help='Run in the foreground',
-            )
+        )
         (self.options, self.args) = p.parse_args()
         if not os.path.exists(self.options.config_filename):
             p.error('configuration file not found: %s'
@@ -176,7 +175,7 @@ class Daemon(object):
         try:
             (self.uid, self.gid) = get_uid_gid(cp, self.section)
         except ValueError as e:
-            sys.exit(str(e))
+            sys.exit("%s" % e)
 
         self.pidfile = cp.get(self.section, 'pidfile')
         self.logfile = cp.get(self.section, 'logfile')
@@ -307,17 +306,17 @@ class Daemon(object):
         if self.gid:
             try:
                 os.setgid(self.gid)
-            except OSError as xxx_todo_changeme:
-                (code, message) = xxx_todo_changeme.args
+            except OSError as ose:
+                (code, message) = ose.errno, ose.strerror
                 sys.exit("can't setgid(%d): %s, %s" % (self.gid, code,
-                         message))
+                                                       message))
         if self.uid:
             try:
                 os.setuid(self.uid)
-            except OSError as xxx_todo_changeme1:
-                (code, message) = xxx_todo_changeme1.args
+            except OSError as ose:
+                (code, message) = ose.errno, ose.strerror
                 sys.exit("can't setuid(%d): %s, %s" % (self.uid, code,
-                         message))
+                                                       message))
 
     def chown(self, fn):
         """Change the ownership of a file to match the daemon uid/gid"""
@@ -331,10 +330,10 @@ class Daemon(object):
                 gid = os.stat(fn).st_gid
             try:
                 os.chown(fn, uid, gid)
-            except OSError as xxx_todo_changeme2:
-                (code, message) = xxx_todo_changeme2.args
+            except OSError as ose:
+                (code, message) = ose.errno, ose.strerror
                 sys.exit("can't chown(%s, %d, %d): %s, %s" % (repr(fn),
-                         uid, gid, code, message))
+                                                              uid, gid, code, message))
 
     def start_logging(self):
         """Configure the logging module"""
@@ -358,7 +357,7 @@ class Daemon(object):
         log.setLevel(level)
         for h in handlers:
             h.setFormatter(logging.Formatter('%(asctime)s %(process)d %(levelname)s %(message)s'
-                           ))
+                                             ))
             log.addHandler(h)
 
     def check_pid(self):
@@ -383,8 +382,8 @@ class Daemon(object):
                 sys.exit(msg)
             try:
                 os.kill(pid, 0)
-            except OSError as xxx_todo_changeme3:
-                (code, text) = xxx_todo_changeme3.args
+            except OSError as ose:
+                (code, message) = ose.errno, ose.strerror
                 if code == errno.ESRCH:
 
                     # The pid doesn't exist, so remove the stale pidfile.
@@ -393,7 +392,7 @@ class Daemon(object):
                 else:
                     msg = \
                         'failed to check status of process %s from pidfile %s: %s' \
-                        % (pid, self.pidfile, text)
+                        % (pid, self.pidfile, message)
                     sys.exit(msg)
             else:
                 msg = \
@@ -422,7 +421,7 @@ class Daemon(object):
         """Write to the pid file"""
 
         if self.pidfile:
-            open(self.pidfile, 'wb').write(str(os.getpid()))
+            open(self.pidfile, 'wb').write("%s" % os.getpid())
 
     def remove_pid(self):
         """Delete the pid file"""
@@ -490,5 +489,3 @@ def daemonize():
             if e.errno != errno.EBADF:
                 raise
     os.close(null)
-
-

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_events - event handler to monitor files and trigger actions
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,6 +25,23 @@
 # -- END_HEADER ---
 #
 
+from mig.shared.workflows import get_wp_map, CONF
+from mig.shared.vgridaccess import check_vgrid_access
+from mig.shared.vgrid import vgrid_valid_entities, vgrid_add_workflow_jobs, \
+    JOB_ID, JOB_CLIENT
+from mig.shared.serial import load
+from mig.shared.safeinput import PARAM_START, PARAM_STOP, PARAM_JUMP
+from mig.shared.logger import daemon_logger, register_hangup_handler
+from mig.shared.listhandling import frange
+from mig.shared.job import fill_mrsl_template, new_job
+from mig.shared.handlers import get_csrf_limit, make_csrf_token
+from mig.shared.fileio import makedirs_rec, pickle, unpickle, walk
+from mig.shared.events import get_path_expand_map
+from mig.shared.defaults import valid_trigger_changes, workflows_log_name, \
+    workflows_log_size, workflows_log_cnt, csrf_field, default_vgrid
+from mig.shared.conf import get_configuration_object
+from mig.shared.cmdapi import parse_command_args
+from mig.shared.base import force_utf8
 """Event handler to monitor vgrid files for creation, modification and removal
 and trigger any associated actions based on rule database.
 
@@ -76,23 +93,6 @@ else:
         print('ERROR: this daemon requires the scandir module on python 2')
         sys.exit(1)
 
-from mig.shared.base import force_utf8
-from mig.shared.cmdapi import parse_command_args
-from mig.shared.conf import get_configuration_object
-from mig.shared.defaults import valid_trigger_changes, workflows_log_name, \
-    workflows_log_size, workflows_log_cnt, csrf_field, default_vgrid
-from mig.shared.events import get_path_expand_map
-from mig.shared.fileio import makedirs_rec, pickle, unpickle, walk
-from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.job import fill_mrsl_template, new_job
-from mig.shared.listhandling import frange
-from mig.shared.logger import daemon_logger, register_hangup_handler
-from mig.shared.safeinput import PARAM_START, PARAM_STOP, PARAM_JUMP
-from mig.shared.serial import load
-from mig.shared.vgrid import vgrid_valid_entities, vgrid_add_workflow_jobs, \
-    JOB_ID, JOB_CLIENT
-from mig.shared.vgridaccess import check_vgrid_access
-from mig.shared.workflows import get_wp_map, CONF
 
 # Global trigger rule dictionaries with rules for all VGrids
 
@@ -187,7 +187,7 @@ def extract_time_in_secs(rule, field):
 
     limit_str = rule.get(field, '')
     if not limit_str:
-        limit_str = str(_default_time)
+        limit_str = "%s" % _default_time
 
     # NOTE: format is 3(s) or 52m
     # extract unit suffix letter and fall back to a raw value with default unit
@@ -405,7 +405,7 @@ def recently_modified(path, time_stamp, slack=2.0):
 
         result = True
 
-        # logger.debug('(%s) OSError: %s' % (pid, str(exc)))
+        # logger.debug('(%s) OSError: %s' % (pid, exc))
 
     return result
 
@@ -1173,7 +1173,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                     # If we get an OSError, src_path was most likely deleted
                     # after os.path.exists check
 
-                    # logger.debug('(%s) OSError: %s' % (pid, str(exc)))
+                    # logger.debug('(%s) OSError: %s' % (pid, exc))
 
                     pass
 
@@ -1377,7 +1377,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                         except threading.ThreadError as exc:
 
                             # logger.debug('(%s) Waiting for thread resources to handle trigger: %s'
-                            #              % (pid, str(event)))
+                            #              % (pid, event))
 
                             time.sleep(1)
 
@@ -1618,7 +1618,7 @@ def load_dir_cache(configuration, vgrid_name):
 
         # cache_t2 = time.time()
         # logger.debug('(%s) Loaded vgrid_dir_cache for: %s in %s secs'
-        #             % (pid, vgrid_name, str(cache_t2 - cache_t1)))
+        #             % (pid, vgrid_name, (cache_t2 - cache_t1))
 
         if loaded_dir_cache is False:
             generate_cache = True
@@ -1651,7 +1651,7 @@ def load_dir_cache(configuration, vgrid_name):
 
         # cache_t2 = time.time()
         # logger.debug('(%s) Generated new dir_cache for: %s in %s secs'
-        #             % (pid, vgrid_name, str(cache_t2 - cache_t1)))
+        #             % (pid, vgrid_name, (cache_t2 - cache_t1))
 
         result = save_dir_cache(vgrid_name)
 
@@ -1876,8 +1876,8 @@ def monitor(configuration, vgrid_name):
 
         # load_dir_cache_t2 = time.time()
         # logger.debug('(%s) load_dir_cache for: %s in %s secs' % (pid,
-        #             vgrid_name, str(load_dir_cache_t2
-        #             - load_dir_cache_t1)))
+        #             vgrid_name, (load_dir_cache_t2
+        #             - load_dir_cache_t1))
 
         if not load_status:
             logger.error('(%s) Failed to load / generate dir cache for: %s'

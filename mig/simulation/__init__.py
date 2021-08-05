@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# pickle_file_sizes - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# __init__ - package marker
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,26 +25,15 @@
 # -- END_HEADER ---
 #
 
-import os
-import pickle
+"""This file is needed to tell python that this dir is a package
+so that other modules can call, say, import mig.simulation.X
+Please refer to http://www.network-theory.co.uk/docs/pytut/tut_51.html
+and
+https://www.python.org/dev/peps/pep-0008/#imports
+for details
+"""
 
-from os.path import join, getsize
+__dummy = True
 
-list = []
-base = '/home/mig/mig/wwwuser'
-for (root, dirs, files) in os.walk(base):
-    for name in files:
-        path = join(root, name)
-        path_no_base = path.replace(base, '')
-        list.append((path_no_base, getsize(path)))
-
-        # print "%s %s" % (path, getsize(path))
-
-output = open('filesizes.pkl', 'wb')
-
-# Pickle dictionary using protocol 0.
-
-pickle.dump(list, output)
-output.close()
-
-# print list
+# above line is only to make python tidy behave and not
+# move module doc string inside header

@@ -87,7 +87,7 @@ class Server:
 
         # handle job
 
-        job_id = user_id + '-' + str(self.nextid)
+        job_id = "%s-%s" % (user_id, self.nextid)
         job = {}
         job['JOB_ID'] = job_id
         self.nextid += 1
@@ -102,7 +102,7 @@ class Server:
         job['RUNTIMEENVIRONMENT'] = []
         job['RECEIVED_TIMESTAMP'] = time.gmtime()
         job['QUEUED_TIMESTAMP'] = time.gmtime()
-        job['MIGRATE_COUNT'] = str(0)
+        job['MIGRATE_COUNT'] = "0"
         job['VGRID'] = vgrid
 
         # Enqueue job
@@ -266,7 +266,7 @@ class Server:
     # Add or increment migration counter
 
         migrate_count = int(job['MIGRATE_COUNT']) + 1
-        job['MIGRATE_COUNT'] = str(migrate_count)
+        job['MIGRATE_COUNT'] = "%s" % migrate_count
 
         qlen = server.job_queue.queue_length()
         server.job_queue.enqueue_job(job, qlen)

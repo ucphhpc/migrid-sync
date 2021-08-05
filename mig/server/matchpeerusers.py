@@ -190,7 +190,7 @@ if '__main__' == __name__:
     print(field_header)
     for (uid, user_dict) in matches:
         if only_fields:
-            field_list = [str(user_dict.get(i, '')) for i in only_fields]
+            field_list = ["%s" % user_dict.get(i, '') for i in only_fields]
             print('%s' % ';'.join(field_list))
         else:
             print('%s : %s' % (uid, user_dict))
@@ -199,7 +199,7 @@ if '__main__' == __name__:
     print(field_header)
     for (uid, user_dict) in overlaps:
         if only_fields:
-            field_list = [str(user_dict.get(i, '')) for i in only_fields]
+            field_list = ["%s" % user_dict.get(i, '') for i in only_fields]
             print('%s' % ';'.join(field_list))
         else:
             print('%s : %s' % (uid, user_dict))
@@ -208,7 +208,7 @@ if '__main__' == __name__:
     print(field_header)
     for (uid, user_dict) in conflicts:
         if only_fields:
-            field_list = [str(user_dict.get(i, '')) for i in only_fields]
+            field_list = ["%s" % user_dict.get(i, '') for i in only_fields]
             print('%s' % ';'.join(field_list))
         else:
             print('%s : %s' % (uid, user_dict))
@@ -217,7 +217,7 @@ if '__main__' == __name__:
     print(field_header)
     for (uid, user_dict) in misses:
         if only_fields:
-            field_list = [str(user_dict.get(i, '')) for i in only_fields]
+            field_list = ["%s" % user_dict.get(i, '') for i in only_fields]
             print('%s' % ';'.join(field_list))
         else:
             print('%s : %s' % (uid, user_dict))
@@ -226,7 +226,7 @@ if '__main__' == __name__:
     print(field_header)
     for (uid, user_dict) in excludes:
         if only_fields:
-            field_list = [str(user_dict.get(i, '')) for i in only_fields]
+            field_list = ["%s" % user_dict.get(i, '') for i in only_fields]
             print('%s' % ';'.join(field_list))
         else:
             print('%s : %s' % (uid, user_dict))

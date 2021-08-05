@@ -1,11 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import logging
 import os
 import sys
-import logging
-import traceback
 import time
+import traceback
 
 MIG_HOME = '%s/mig' % os.environ['HOME']
 MIG_CGI_BIN = '%s/cgi-bin' % MIG_HOME
@@ -15,12 +15,16 @@ TRIGGER_DICT_FILE = 'trigger_dict.pck'
 os.environ['MIG_CONF'] = MIG_CONF
 sys.path.append(MIG_HOME)
 
-from mig.shared.conf import get_configuration_object
-from mig.shared.logger import _debug_format, _default_format
-from mig.shared.fileio import pickle, unpickle, copy, move, delete_file
-from mig.shared.safeeval import subprocess_call
-from mig.shared.vgrid import vgrid_owners
-from mig.shared.findtype import is_user
+try:
+    from mig.shared.conf import get_configuration_object
+    from mig.shared.fileio import pickle, unpickle, copy, move, delete_file
+    from mig.shared.findtype import is_user
+    from mig.shared.logger import _debug_format, _default_format
+    from mig.shared.safeeval import subprocess_call
+    from mig.shared.vgrid import vgrid_owners
+except:
+    print("cannot load migrid code")
+    sys.exit(1)
 
 
 def get_logger(loglevel=logging.INFO):
@@ -49,7 +53,7 @@ def get_valid_vgrid_owner_id(configuration, vgrid_name):
     # Look for owner in current (sub)vgrid
 
     (owners_status, owners_id) = vgrid_owners(vgrid_name,
-            configuration, recursive=False)
+                                              configuration, recursive=False)
 
     if owners_status:
 
@@ -64,7 +68,7 @@ def get_valid_vgrid_owner_id(configuration, vgrid_name):
         # If no valid vgrid owners found look recursively towards top-vgrid
 
         (owners_status, owners_id) = vgrid_owners(vgrid_name,
-                configuration, recursive=True)
+                                                  configuration, recursive=True)
 
         if owners_status:
             for owner_id in owners_id:
@@ -111,11 +115,11 @@ def backup_trigger_files(configuration, vgrid_list):
         logger.info('vgrid: %s' % vgrid)
         logger.info('----------------------------------------------')
         trigger_src_filepath = os.path.join(configuration.vgrid_home,
-                os.path.join(vgrid, configuration.vgrid_triggers))
+                                            os.path.join(vgrid, configuration.vgrid_triggers))
         if os.path.exists(trigger_src_filepath):
             trigger_dest_filepath = '%s.preview.%s.bck' \
                 % (trigger_src_filepath, time.strftime('%d%m%y-%H%M%S',
-                   time.gmtime()))
+                                                       time.gmtime()))
             logger.info('Backing up trigger file:')
             logger.info("srcfile: '%s'" % trigger_src_filepath)
             logger.info("destfile: '%s'" % trigger_dest_filepath)
@@ -146,7 +150,7 @@ def backup_imagesettings_files(configuration, vgrid_list):
         logger.info('----------------------------------------------')
         imagesettings_src_filepath = \
             os.path.join(configuration.vgrid_home, os.path.join(vgrid,
-                         configuration.vgrid_imagesettings))
+                                                                configuration.vgrid_imagesettings))
         if os.path.exists(imagesettings_src_filepath):
             imagesettings_dest_filepath = '%s.preview.%s.bck' \
                 % (imagesettings_src_filepath,
@@ -179,7 +183,7 @@ def backup_paraview_links(configuration, vgrid_list):
         paraview_link_src_filepath = \
             os.path.join(configuration.vgrid_home,
                          os.path.join(configuration.paraview_home,
-                         os.path.join('worker', vgrid)))
+                                      os.path.join('worker', vgrid)))
         if os.path.exists(paraview_link_src_filepath):
             paraview_link_dest_filepath = '%s.preview.%s.bck' \
                 % (paraview_link_src_filepath,
@@ -196,7 +200,7 @@ def backup_paraview_links(configuration, vgrid_list):
 
 
 def get_update_trigger_dict_and_check_for_unique_clientid(configuration,
-        vgrids_dict):
+                                                          vgrids_dict):
     """Return trigger dict with entries needed for trigger update
     We can't currently handle updates for imagesettings 
     with different client_id's per directory. 
@@ -222,7 +226,7 @@ def get_update_trigger_dict_and_check_for_unique_clientid(configuration,
             rule_id = trigger['rule_id']
             logger.info('rule_id: %s' % rule_id)
             if rule_id != 'system_imagesettings_meta_created' \
-                and rule_id != 'system_imagesettings_dir_deleted':
+                    and rule_id != 'system_imagesettings_dir_deleted':
                 client_id = trigger['run_as']
                 if client_id in run_as:
                     run_as[client_id] += 1
@@ -240,11 +244,11 @@ def get_update_trigger_dict_and_check_for_unique_clientid(configuration,
 
         if len(run_as.keys()) == 0:
             owner_id = get_valid_vgrid_owner_id(configuration,
-                    vgrids_dict[key]['vgrid'])
+                                                vgrids_dict[key]['vgrid'])
             if owner_id is not None:
                 run_as[owner_id] = 1
                 logger.warning("Missing trigger, setting 'run_as' to vgrid owner: '%s'"
-                                % owner_id)
+                               % owner_id)
 
         if len(run_as.keys()) == 0:
             result = None
@@ -282,7 +286,7 @@ def remove_triggers(configuration, vgrids_dict):
         vgrid = vgrids_dict[key]['vgrid']
         vgridpath = vgrids_dict[key]['vgridpath']
         logger.info('----------------------------------------------')
-        logger.info('Imagesettings: %s' % str(key))
+        logger.info('Imagesettings: %s' % key)
         logger.info('vgrid: %s' % vgrid)
         logger.info('vgridpath: %s' % vgridpath)
         logger.info('----------------------------------------------')
@@ -305,7 +309,7 @@ def remove_triggers(configuration, vgrids_dict):
 
             if rule_id in triggers_removed[vgrid]:
                 logger.info("Skipping trigger '%s' previously removed from vgrid: '%s'"
-                             % (rule_id, vgrid))
+                            % (rule_id, vgrid))
             else:
                 command = [
                     'python',
@@ -313,10 +317,10 @@ def remove_triggers(configuration, vgrids_dict):
                     '%s/rmvgridtrigger.py' % MIG_CGI_BIN,
                     'POST',
                     'rule_id=%s;vgrid_name=%s;output_format=text'
-                        % (rule_id, vgrid),
+                    % (rule_id, vgrid),
                     '%s' % run_as,
                     'true',
-                    ]
+                ]
                 logger.info(command)
                 logger.info('*****************************************************'
                             )
@@ -352,7 +356,7 @@ def update_backend(configuration, update_dict):
             run_as = update_dict[key]['run_as']
             logger.info('----------------------------------------------'
                         )
-            logger.info('Imagesettings: %s' % str(key))
+            logger.info('Imagesettings: %s' % key)
             logger.info('vgrid: %s' % vgrid)
             logger.info('vgridpath: %s' % vgridpath)
             logger.info('run_as: %s' % run_as)
@@ -364,10 +368,10 @@ def update_backend(configuration, update_dict):
                     '%s/imagepreview.py' % MIG_CGI_BIN,
                     'POST',
                     'action=refresh;path=%s;output_format=text'
-                        % vgridpath,
+                    % vgridpath,
                     '%s' % run_as.keys()[0],
                     'true',
-                    ]
+                ]
                 logger.info(command)
                 logger.info('*****************************************************'
                             )
@@ -397,7 +401,7 @@ def main():
 
     if vgrids_dict:
         (vgrids_dict, vgrid_list) = filter_vgrids_dict(configuration,
-                vgrids_dict, user_vgrid_list)
+                                                       vgrids_dict, user_vgrid_list)
     else:
         status = False
         logger.error("Missing vgrid dict file: '%s'"
@@ -415,7 +419,7 @@ def main():
     if status:
         update_trigger_dict = \
             get_update_trigger_dict_and_check_for_unique_clientid(configuration,
-                vgrids_dict)
+                                                                  vgrids_dict)
         if update_trigger_dict is None:
             status = False
 
@@ -433,4 +437,3 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
-

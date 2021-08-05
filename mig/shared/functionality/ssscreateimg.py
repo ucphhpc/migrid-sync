@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ssscreateimg - Back end to SSS zip generator
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """This script generates a sandbox image"""
+
 from __future__ import absolute_import
 
 import os
@@ -74,12 +75,11 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False,
                                   op_menu=client_id)
-    output_objects.append({'object_type': 'header', 'text'
-                          : '%s Screen Saver Sandbox Download' % \
-                            configuration.short_title })
+    output_objects.append({'object_type': 'header', 'text': '%s Screen Saver Sandbox Download' %
+                           configuration.short_title})
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
-            defaults, output_objects, allow_rejects=False)
+                                                 defaults, output_objects, allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -113,12 +113,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
              })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-
     # check that requested image format is valid
 
     if not image_format in ['raw', 'qcow', 'cow', 'qcow2', 'vmdk']:
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Unsupported image format: %s'
+        output_objects.append({'object_type': 'error_text', 'text': 'Unsupported image format: %s'
                                % image_format})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -129,10 +127,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
     all_vgrids = get_vgrid_map_vgrids(configuration)
     for vgrid in vgrid_list:
         if not vgrid in all_vgrids:
-            output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Failed to validate %s %s: %s'
-                               % (configuration.site_vgrid_label, vgrid,
-                                  all_vgrids)})
+            output_objects.append({'object_type': 'error_text', 'text': 'Failed to validate %s %s: %s'
+                                   % (configuration.site_vgrid_label, vgrid,
+                                      all_vgrids)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Load the user file
@@ -140,22 +137,18 @@ CSRF-filtered POST requests to prevent unintended updates'''
     try:
         userdb = load_sandbox_db(configuration)
     except Exception as exc:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Failed to read login info: %s'
+        output_objects.append({'object_type': 'error_text', 'text': 'Failed to read login info: %s'
                                % exc})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if username not in userdb or userdb[username][PW] != password:
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Wrong username or password - please go back and try again...'
+        output_objects.append({'object_type': 'error_text', 'text': 'Wrong username or password - please go back and try again...'
                                })
-        output_objects.append({'object_type': 'link', 'destination'
-                               : 'ssslogin.py', 'text': 'Retry login'
+        output_objects.append({'object_type': 'link', 'destination': 'ssslogin.py', 'text': 'Retry login'
                                })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # provide a resource name
-
 
     resource_name = 'sandbox'
 
@@ -175,7 +168,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     host_url, resource_identifier = unique_host_name.rsplit('.', 1)
-    
+
     # add the resource to the list of the users resources
 
     userdb[username][1].append(unique_host_name)
@@ -199,7 +192,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     make_symlink(resource_path, sandbox_link, logger)
 
     # change dir to sss_home
-    
+
     old_path = os.getcwd()
 
     # log_dir = "log/"
@@ -209,8 +202,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     msg = ''
     (status, resource_config) = \
-             get_resource_configuration(configuration.resource_home,
-                                        unique_host_name, logger)
+        get_resource_configuration(configuration.resource_home,
+                                   unique_host_name, logger)
     logger.debug('got resource conf %s' % resource_config)
     if not resource_config:
         output_objects.append({'object_type': 'error_text', 'text':
@@ -222,7 +215,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     (status, exe) = get_resource_exe(resource_config, 'localhost', logger)
     if not exe:
         output_objects.append({'object_type': 'error_text', 'text':
-                               "No 'localhost' EXE config for: '%s'" % \
+                               "No 'localhost' EXE config for: '%s'" %
                                unique_host_name})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
@@ -235,8 +228,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # Securely open a temporary file in resource_dir
 
         (master_node_script_file, mns_fname) = \
-                                  tempfile.mkstemp(dir=resource_dir,
-                                                   text=True)
+            tempfile.mkstemp(dir=resource_dir,
+                             text=True)
         (master_status, msg) = resadm.fill_master_node_script(
             master_node_script_file, resource_config, exe, 1000)
         if not master_status:
@@ -247,7 +240,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         logger.debug('wrote master node script %s' % mns_fname)
     except Exception as err:
         output_objects.append({'object_type': 'error_text', 'text':
-                                   'Creating script failed: %s' % msg})
+                               'Creating script failed: %s' % msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # create front_end_script
@@ -267,7 +260,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         logger.debug('wrote frontend script %s' % fes_fname)
     except Exception as err:
         output_objects.append({'object_type': 'error_text', 'text':
-                                   'Creating script failed: %s' % msg})
+                               'Creating script failed: %s' % msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # change directory to sss_home and mount hd image in order to copy
@@ -276,7 +269,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     logger.debug('modifying hda image for this sandbox')
 
     mnt_path = os.path.join(configuration.sss_home, 'mnt')
-    
+
     lock_path = os.path.join(configuration.sss_home, 'lockfile.txt')
     if not os.path.isfile(lock_path):
         try:
@@ -315,9 +308,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
         fd.close()
     except Exception as err:
         output_objects.append({'object_type': 'error_text', 'text':
-                                   'Creating script failed: %s' % msg})
+                               'Creating script failed: %s' % msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
-
 
     # use a disk of the requested size
 
@@ -354,7 +346,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # save frontend_script to hd image
 
         fe_dst = os.path.join(mnt_path, 'mig', 'MiG', 'mig_frontend',
-                                  'frontend_script.sh')
+                              'frontend_script.sh')
         shutil.copyfile(fes_fname, fe_dst)
 
         # copy the sandboxkey to the keyfile:
@@ -367,7 +359,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                         server_dst)
     except Exception as err:
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Failed to customize image: %s' \
+                               'Failed to customize image: %s'
                                % err})
         failed = True
 
@@ -376,7 +368,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # NOTE: we don't need explicit shell here
     subprocess_call('sync')
     subprocess_call(['umount', mnt_path])
-    subprocess_call('sync')    
+    subprocess_call('sync')
 
     for i in range(60):
         if os.path.ismount(mnt_path):
@@ -385,7 +377,6 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if failed:
         return (output_objects, returnvalues.SYSTEM_ERROR)
-
 
     logger.debug('finished modifying hda image')
 
@@ -405,7 +396,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         logger.debug('converted hda image to %s format' % image_format)
 
     zip_path = os.path.join(configuration.sss_home,
-                             'MiG-SSS_' + str(resource_identifier) + '.zip')
+                            'MiG-SSS_%d' % resource_identifier + '.zip')
     iso_path = os.path.join(configuration.sss_home, 'MiG-SSS', 'MiG.iso')
     img_path = os.path.join(configuration.sss_home, 'MiG-SSS', 'hda.img')
     xsss_path = os.path.join(configuration.sss_home, 'MiG-SSS', 'mig_xsss.py')
@@ -424,21 +415,21 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                               'MiG-SSS')
         if not zip_status:
             logger.error('Failed to create zip file: %s' % zip_msg)
-            
+
     else:
 
         if win_solution == 'screensaver':
-            
+
             # Put all win-related files in the archive (do not store dir
             # name: -j)
-            
+
             (zip_status, zip_msg) = write_zipfile(zip_path, [setup_path,
                                                              iso_path,
                                                              img_path], '')
         else:
 
             # windows service
-            
+
             (zip_status, zip_msg) = write_zipfile(zip_path, [service_path,
                                                              iso_path,
                                                              img_path], '')
@@ -449,15 +440,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     logger.info('Created image and packed files in zip for download')
 
-
-    ### Everything went as planned - switch to raw output for download
+    # Everything went as planned - switch to raw output for download
 
     file_size = os.stat(zip_path).st_size
     headers = [('Content-Type', 'application/zip'),
                ('Content-Type', 'application/force-download'),
                ('Content-Type', 'application/octet-stream'),
                ('Content-Type', 'application/download'),
-               ('Content-Disposition', 'attachment; filename=%s' % \
+               ('Content-Disposition', 'attachment; filename=%s' %
                 os.path.basename(zip_path)),
                ('Content-Length', '%s' % file_size)]
     output_objects = [{'object_type': 'start', 'headers': headers}]

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # uploadprogress - Plain file upload progress monitor back end
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -143,9 +143,9 @@ Please contact the site admins %s if you think they should be enabled.
 
             # Don't give away information about actual fs layout
 
-            output_objects.append({'object_type': 'error_text', 'text': '%s upload could not be checked! (%s)'
-                                   % (path, str(exc).replace(base_dir, ''
-                                                             ))})
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   '%s upload could not be checked! (%s)' %
+                                   (path, ("%s" % exc).replace(base_dir, ''))})
             status = returnvalues.SYSTEM_ERROR
             continue
 

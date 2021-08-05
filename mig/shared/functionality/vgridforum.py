@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridforum - Access VGrid private forum for owners and members
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,6 +30,7 @@ client is an owner or a member of the vgrid. Members are allowed to read
 private files but not write them, therefore they don't have a private_base
 link where they can access them like owners do.
 """
+
 from __future__ import absolute_import
 
 import os
@@ -241,7 +242,7 @@ function toggle_new(form_elem_id, link_elem_id) {
                                    client_id, url)
                 thread = thread_hash
             except ValueError as error:
-                post_error = str(error)
+                post_error = "%s" % error
         elif action == 'reply':
             try:
                 (thread_hash, msg) = reply(forum_base, client_id, msg_body,
@@ -254,12 +255,12 @@ function toggle_new(form_elem_id, link_elem_id) {
                 notify_subscribers(configuration, forum_base, vgrid_name,
                                    thread_hash, client_id, url)
             except ValueError as error:
-                post_error = str(error)
+                post_error = "%s" % error
         elif action == 'toggle_subscribe':
             try:
                 msg = toggle_subscribe(forum_base, client_id, thread)
             except ValueError as error:
-                post_error = str(error)
+                post_error = "%s" % error
         else:
             msg = 'unexpected action: %s' % action
 
@@ -272,7 +273,7 @@ function toggle_new(form_elem_id, link_elem_id) {
         try:
             message_list = list_single_thread(forum_base, thread, client_id)
         except ValueError as error:
-            post_error = str(error)
+            post_error = "%s" % error
     else:
         thread_list = list_threads(forum_base, client_id)
 

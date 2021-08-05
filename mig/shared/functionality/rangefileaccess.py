@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rangefileaccess - read or write byte range inside file
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -89,10 +89,10 @@ def do_get(configuration, output_objects, abs_path, start_pos, end_pos):
 
     datalen = end_pos - start_pos + 1
 
-    # _logger.debug("file_start: " + str(start_pos))
-    # _logger.debug("file_end: " + str(end_pos))
-    # _logger.debug("filelen: " + str(filelen))
-    # _logger.debug("datalen: " + str(datalen))
+    # _logger.debug("file_start: %s" % start_pos)
+    # _logger.debug("file_end: %s" % end_pos)
+    # _logger.debug("filelen: %s" % filelen)
+    # _logger.debug("datalen: %s" % datalen)
 
     # Note that we do not use CGIOutput for data, due to performance issues,
     # We do however use the cgi protocol: status + \n + data
@@ -207,10 +207,10 @@ def do_put(configuration, output_objects, abs_path, start_pos, end_pos):
 
         datalen = end_pos - start_pos + 1
 
-        # _logger.debug("file_start: " + str(start_pos))
-        # _logger.debug("file_end: " + str(end_pos))
-        # _logger.debug("content: " + str(content_length))
-        # _logger.debug("datalen: " + str(datalen))
+        # _logger.debug("file_start: %s" % start_pos)
+        # _logger.debug("file_end: %s" % end_pos)
+        # _logger.debug("content: %s" % content_length)
+        # _logger.debug("datalen: %s" % datalen)
 
         try:
             filehandle.seek(start_pos, 0)

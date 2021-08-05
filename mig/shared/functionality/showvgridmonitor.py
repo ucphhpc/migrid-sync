@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showvgridmonitor - show private vgrid monitor to vgrid participants
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,6 +27,7 @@
 
 """Show the monitor page for requested vgrids - all_vgrids keyword for all
 allowed vgrids"""
+
 from __future__ import absolute_import
 
 import os
@@ -130,7 +131,7 @@ to access the monitor.''' % (vgrid_name, label)})
                     continue
                 if -1 != line.find('begin raw footer:'):
                     break
-                html += str(line)
+                html += "%s" % line
             monitor_fd.close()
         except Exception as exc:
             output_objects.append({'object_type': 'error_text', 'text':

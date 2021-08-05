@@ -41,7 +41,7 @@ def get_output(fd):
             readline = fd.readline()
     except:
 
-    # Couldnt read fd
+        # Couldnt read fd
 
         output = 'N/A'
 
@@ -50,33 +50,22 @@ def get_output(fd):
 
 def getLogTimeStr():
     log_time = datetime.now()
-    log_time_str = str(log_time.year) + '-'
-
-    if 1 == len(str(log_time.month)):
-        log_time_str = log_time_str + '0'
-
-    log_time_str = log_time_str + str(log_time.month) + '-'
-
-    if 1 == len(str(log_time.day)):
-        log_time_str = log_time_str + '0'
-
-    log_time_str = log_time_str + str(log_time.day) + ' '
-
-    if 1 == len(str(log_time.hour)):
-        log_time_str = log_time_str + '0'
-
-    log_time_str = log_time_str + str(log_time.hour) + ':'
-
-    if 1 == len(str(log_time.minute)):
-        log_time_str = log_time_str + '0'
-
-    log_time_str = log_time_str + str(log_time.minute) + ':'
-
-    if 1 == len(str(log_time.second)):
-        log_time_str = log_time_str + '0'
-
-    log_time_str = log_time_str + str(log_time.second)
-
+    log_time_str = "%s-" % log_time.year
+    if log_time.month < 10:
+        log_time_str += '0'
+    log_time_str += "%d-" % log_time.month
+    if log_time.day < 10:
+        log_time_str += '0'
+    log_time_str += "%s " % log_time.day
+    if log_time.hour < 10:
+        log_time_str += '0'
+    log_time_str += "%d:" % log_time.hour
+    if log_time.minute < 10:
+        log_time_str += '0'
+    log_time_str += "%d:" % log_time.minute
+    if log_time.second < 10:
+        log_time_str += '0'
+    log_time_str += "%d" % log_time.second
     return log_time_str
 
 

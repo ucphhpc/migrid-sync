@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # freezedb - manage frozen archives
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -100,7 +100,8 @@ Please contact the site admins %s if you think it should be enabled.
         # NOTE: We distinguish between caching on page load and forced refresh
         refresh_helper = 'ajax_freezedb(%s, "%s", %%s)'
         # NOTE: must insert permanent_flavors list as string here
-        refresh_call = refresh_helper % (str(permanent_flavors), keyword_final)
+        refresh_call = refresh_helper % (
+            "%s" % permanent_flavors, keyword_final)
         table_spec = {'table_id': 'frozenarchivetable', 'sort_order':
                       '[[5,1],[3,1],[2,0]]',
                       'refresh_call': refresh_call % 'false'}

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_cron - daemon to monitor user crontabs and trigger actions
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -69,7 +69,7 @@ try:
 
         raise ImportError('scandir version is too old >= 1.3 required')
 except ImportError as exc:
-    print('ERROR: %s' % str(exc))
+    print('ERROR: %s' % exc)
     sys.exit(1)
 
 from mig.shared.base import force_utf8, client_dir_id, client_id_dir

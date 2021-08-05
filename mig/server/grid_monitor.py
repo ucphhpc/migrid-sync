@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_monitor - Monitor page generator
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -298,8 +298,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
 <div class=monitorruntimeenvdetails>
 <table class=monitorruntimeenvdone>
 <tr class=title><td>Runtime Envs Done</td><td></td></tr>
-"""\
-         % html_vars
+""" % html_vars
 
     if len(runtimeenv_dict.keys()) < 1:
 
@@ -309,8 +308,8 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
     else:
         for entry in runtimeenv_dict.keys():
             if not entry == '':
-                html += '<tr><td>' + entry + '</td><td>'\
-                    + str(runtimeenv_dict[entry]) + '</td></tr>\n'
+                html += '<tr><td>%s</td><td>%s</td></tr>\n' % \
+                    (entry, runtimeenv_dict[entry])
 
     total_number_of_exe_resources, total_number_of_store_resources = 0, 0
     total_number_of_exe_cpus, total_number_of_store_gigs = 0, 0
@@ -349,10 +348,10 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
 
                 difference = datetime.datetime.now()\
                     - last_request_dict['CREATED_TIME']
-                days = str(difference.days)
-                hours = str(difference.seconds / 3600)
-                minutes = str((difference.seconds % 3600) / 60)
-                seconds = str((difference.seconds % 60) % 60)
+                days = "%s" % (difference.days)
+                hours = "%s" % (difference.seconds / 3600)
+                minutes = "%s" % ((difference.seconds % 3600) / 60)
+                seconds = "%s" % ((difference.seconds % 60) % 60)
 
                 last_timetuple = last_request_dict['CREATED_TIME'].timetuple()
 
@@ -388,10 +387,10 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                                   + datetime.timedelta(seconds=cpusec)
                                   + datetime.timedelta(seconds=delay))\
                     - datetime.datetime.now()
-                days_rem = str(time_remaining.days)
-                hours_rem = str(time_remaining.seconds / 3600)
-                minutes_rem = str((time_remaining.seconds % 3600) / 60)
-                seconds_rem = str((time_remaining.seconds % 60) % 60)
+                days_rem = "%s" % (time_remaining.days)
+                hours_rem = "%s" % (time_remaining.seconds / 3600)
+                minutes_rem = "%s" % ((time_remaining.seconds % 3600) / 60)
+                seconds_rem = "%s" % ((time_remaining.seconds % 60) % 60)
 
                 if time_remaining.days < -7:
                     try:
@@ -400,7 +399,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                         os.remove(mon_file_name)
                     except Exception as err:
                         print("could not remove: '%s' Error: %s"
-                              % (mon_file_name, str(err)))
+                              % (mon_file_name, err))
                     pass
                 else:
                     unique_res_name_and_exe_list = \
@@ -454,24 +453,12 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                                                      ]['RUNTIMEENVIRONMENT']
                     runtime_envs.sort()
                     re_list_text = ', '.join([i[0] for i in runtime_envs])
-                    exes += '<td title="%s">' % re_list_text \
-                        + str(len(runtime_envs)) + '</td>'
-                    exes += '<td>'\
-                        + str(last_request_dict['RESOURCE_CONFIG'
-                                                ]['CPUTIME']) + '</td><td>'\
-                        + str(last_request_dict['RESOURCE_CONFIG'
-                                                ]['NODECOUNT']) + '</td><td>'\
-                        + str(last_request_dict['RESOURCE_CONFIG'
-                                                ]['CPUCOUNT']) + '</td><td>'\
-                        + str(last_request_dict['RESOURCE_CONFIG'
-                                                ]['DISK']) + '</td><td>'\
-                        + str(last_request_dict['RESOURCE_CONFIG'
-                                                ]['MEMORY']) + '</td><td>'\
-                        + str(last_request_dict['RESOURCE_CONFIG'
-                                                ]['ARCHITECTURE']) + '</td>'
-                    exes += '<td>' + last_request_dict['STATUS']\
-                        + '</td><td>' + str(last_request_dict['CPUTIME'
-                                                              ]) + '</td>'
+                    exes += '<td title="%s">%d</td>' % (
+                        re_list_text, len(runtime_envs))
+                    for req_name in ['CPUTIME', 'NODECOUNT', 'CPUCOUNT',
+                                     'DISK', 'MEMORY', 'ARCHITECTURE']:
+                        exes += '<td>%s</td>' % last_request_dict['RESOURCE_CONFIG'][req_name]
+                    exes += '<td>%(STATUS)s</td><td>%(CPUTIME)s</td>' % last_request_dict
 
                     exes += '<td class=status_%s>' % resource_status
                     if 'unavailable' == resource_status:
@@ -489,12 +476,9 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
 
                     exes += '</tr>\n'
                     if last_request_dict['STATUS'] == 'Job assigned':
-                        job_assigned = job_assigned + 1
-                        job_assigned_cpus = job_assigned_cpus\
-                            + int(last_request_dict['RESOURCE_CONFIG'
-                                                    ]['NODECOUNT'])\
-                            * int(last_request_dict['RESOURCE_CONFIG'
-                                                    ]['CPUCOUNT'])
+                        job_assigned += 1
+                        job_assigned_cpus += int(last_request_dict['RESOURCE_CONFIG']['NODECOUNT']) * int(
+                            last_request_dict['RESOURCE_CONFIG']['CPUCOUNT'])
 
                     total_number_of_exe_resources += 1
                     total_number_of_exe_cpus += int(
@@ -524,10 +508,10 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
 
                 difference = datetime.datetime.now()\
                     - last_status_dict['CREATED_TIME']
-                days = str(difference.days)
-                hours = str(difference.seconds / 3600)
-                minutes = str((difference.seconds % 3600) / 60)
-                seconds = str((difference.seconds % 60) % 60)
+                days = "%s" % (difference.days)
+                hours = "%s" % (difference.seconds / 3600)
+                minutes = "%s" % ((difference.seconds % 3600) / 60)
+                seconds = "%s" % ((difference.seconds % 60) % 60)
 
                 if last_status_dict['STATUS'] == 'stopped':
                     time_stopped = datetime.datetime.now() - \
@@ -539,7 +523,7 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                             os.remove(mon_file_name)
                         except Exception as err:
                             print("could not remove: '%s' Error: %s"
-                                  % (mon_file_name, str(err)))
+                                  % (mon_file_name, err))
                         continue
 
                 unique_res_name_and_store_list = filename.split(
@@ -688,19 +672,19 @@ Listing the last check for each resource<br />
     html += stores
     html += '</tbody>\n</table>\n'
 
-    html += '''
+    fill_helpers = {'total_number_of_exe_resources': total_number_of_exe_resources,
+                    'total_number_of_exe_cpus': total_number_of_exe_cpus,
+                    'total_number_of_store_resources': total_number_of_store_resources,
+                    'total_number_of_store_gigs': int(total_number_of_store_gigs),
+                    'up_count': up_count, 'down_count': down_count,
+                    'slack_count': slack_count, 'job_assigned': job_assigned,
+                    'job_assigned_cpus': job_assigned_cpus}
+    html += """
 <h2>VGrid Totals</h2>
-A total of <b>'''\
-         + str(total_number_of_exe_resources) + '</b> exe resources ('\
-        + str(total_number_of_exe_cpus) + " cpu's) and <b>"\
-        + str(total_number_of_store_resources) + '</b> store resources ('\
-        + str(int(total_number_of_store_gigs)) + " GB) joined this VGrid ("\
-        + str(up_count) + ' up, ' + str(down_count) + ' down?, '\
-        + str(slack_count) + ' slack)<br />'
-    html += str(job_assigned) + ' exe resources (' + str(job_assigned_cpus)\
-        + """ cpu's) appear to be executing a job<br />
+A total of <b>%(total_number_of_exe_resources)s</b> exe resources (%(total_number_of_exe_cpus)s cpu's) and <b>%(total_number_of_store_resources)s</b> store resources (%(total_number_of_store_gigs)s GB) joined this VGrid (%(up_count)s up, %(down_count)s down?, %(slack_count)s slack)<br />
+%(job_assigned)s exe resources (%(job_assigned_cpus)s cpu's) appear to be executing a job<br />
 <br />
-"""
+""" % fill_helpers
     html += \
         '<!-- begin raw footer: this line is used by showvgridmonitor -->'
     html += get_xgi_html_footer(configuration, '')

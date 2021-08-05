@@ -367,7 +367,7 @@ def create_tracker(
                 if not conf.has_section(section):
                     conf.add_section(section)
                 for (key, val) in options.items():
-                    conf.set(section, key, str(val))
+                    conf.set(section, key, "%s" % val)
 
             project_conf = open(target_tracker_conf_file, "w")
             project_conf.write("# -*- coding: utf-8 -*-\n")

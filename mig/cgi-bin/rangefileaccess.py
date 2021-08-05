@@ -115,11 +115,6 @@ def get(o, fileinfo_dict):
 
     datalen = file_endpos - file_startpos + 1
 
-    # o.logger.debug("file_start: " + str(file_startpos))
-    # o.logger.debug("file_end: " + str(file_endpos))
-    # o.logger.debug("filelen: " + str(filelen))
-    # o.logger.debug("datalen: " + str(datalen))
-
     # Note that we do not use CGIOutput for data, due to performance issues,
     # We do however use the cgi protocol: status + \n + data
     # If seek fails, abort.
@@ -170,9 +165,6 @@ Reading File: '%s' failed: %s
         o.out("Closing File: '%s' failed: %s\n" % (err,
                                                    fileinfo_dict['path']))
         read_status = False
-
-    # if read_status:
-    #    o.logger.debug("\nFile: '%s' <- %s bytes read successfully." % (fileinfo_dict["path"],str(datalen)))
 
     return read_status
 
@@ -249,11 +241,6 @@ def put(o, fileinfo_dict):
 
         datalen = file_endpos - file_startpos + 1
 
-        # o.logger.debug("file_start: " + str(file_startpos))
-        # o.logger.debug("file_end: " + str(file_endpos))
-        # o.logger.debug("content: " + str(content_length))
-        # o.logger.debug("datalen: " + str(datalen))
-
         try:
             filehandle.seek(file_startpos, 0)
             filehandle.write(sys.stdin.read(datalen))
@@ -284,13 +271,6 @@ if configuration.site_enable_gdp:
     o.reply_and_exit(o.CLIENT_ERROR)
 
 client_dir = client_id_dir(client_id)
-
-# Debug info
-# logger.debug("REQUEST_METHOD: " + str(os.getenv("REQUEST_METHOD")))
-# logger.debug("CONTENT_LENGTH: " + str(os.getenv("CONTENT_LENGTH")))
-# logger.debug("CONTENT TYPE: " + str(os.getenv("CONTENT_TYPE")))
-# logger.debug("QUERY_STRING: " + str(os.getenv("QUERY_STRING")))
-# logger.debug("REQUEST_URI: " + urllib.unquote(str(os.getenv("REQUEST_URI"))))
 
 # Check we are using GET, PUT or DELETE method
 
@@ -416,5 +396,5 @@ elif action == 'DELETE':
 
         o.reply_and_exit(o.ERROR)
 else:
-    o.internal("REQUEST_METHOD: '" + str(action) + "' <- NOT supported.")
+    o.internal("REQUEST_METHOD: %r <- NOT supported." % action)
     o.reply_and_exit(o.ERROR)

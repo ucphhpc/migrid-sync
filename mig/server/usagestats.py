@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # usagestats - Collect and report various central usage stats for the site
-# Copyright (C) 2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2020-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -333,7 +333,7 @@ if '__main__' == __name__:
     # only_fields = ['distinguished_name']
     # for (uid, user_dict) in active_hits:
     #    if only_fields:
-    #        field_list = [str(user_dict.get(i, '')) for i in only_fields]
+    #        field_list = ["%s" % user_dict.get(i, '') for i in only_fields]
     #        print('%s' % ' : '.join(field_list))
     #    print(uid)
     active_uids = [uid for (uid, user_dict) in active_hits]

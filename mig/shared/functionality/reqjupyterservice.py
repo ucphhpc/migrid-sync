@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqjupyterservice - Redirect the user to a backend jupyter service host
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -115,7 +115,7 @@ def mig_to_mount_adapt(mig):
         'USERNAME': mig['SESSIONID'],
         'PRIVATEKEY': mig['MOUNTSSHPRIVATEKEY'],
         'PATH': mig['TARGET_MOUNT_ADDR'],
-        'PORT': str(mig.get('PORT', 22))
+        'PORT': "%s" % mig.get('PORT', 22)
     }
     return mount
 
@@ -386,7 +386,7 @@ def main(client_id, user_arguments_dict):
              'Failed to establish connection to the Jupyter service'})
         return (output_objects, returnvalues.CLIENT_ERROR)
     # Ensure the remote_user dict can be http posted
-    remote_user = str(remote_user)
+    remote_user = "%s" % remote_user
 
     # TODO, activate admin info
     # remote_user = {'USER': username, 'IS_ADMIN': is_admin(client_id,

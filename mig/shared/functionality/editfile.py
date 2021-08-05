@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # editfile - inline editor back end
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -174,9 +174,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         # Don't give away information about actual fs layout
 
-        output_objects.append({'object_type': 'error_text', 'text': '%s could not be written! (%s)'
-                               % (path, str(exc).replace(base_dir, ''
-                                                         ))})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '%s could not be written! (%s)' %
+                               (path, ("%s" % exc).replace(base_dir, ''))})
         return (output_objects, returnvalues.SYSTEM_ERROR)
     if submitjob:
         output_objects.append(

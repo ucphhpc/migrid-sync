@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # upload - Plain and efficient file upload back end
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -214,8 +214,7 @@ Please contact the site admins %s if you think they should be enabled.
     except OSError as ose:
         output_objects.append({'object_type': 'error_text', 'text':
                                '%s upload could not background! (%s)'
-                               % (path, str(ose).replace(base_dir, ''
-                                                         ))})
+                               % (path, ("%s" % ose).replace(base_dir, ''))})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # The detached grand child takes care of writing and the original process

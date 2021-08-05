@@ -520,10 +520,10 @@ class Ui:
             name = Job name
             status = ARC job states, ACCPTED, SUBMIT, INLRMS etc
             error = Error status
-            sub_time = str(submission_time)
-            completion = str(completion_time)
-            cpu_time = str(used_cpu_time)
-            wall_time = str(used_wall_time)
+            sub_time = "%s" % submission_time
+            completion = "%s" % completion_time
+            cpu_time = "%s" % used_cpu_time
+            wall_time = "%s" % used_wall_time
 
         If there was an error, an empty dictionary is returned.
 

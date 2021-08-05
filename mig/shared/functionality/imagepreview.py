@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # imagepreview - Managing MiG imagepreview meta
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -107,7 +107,7 @@ def main(client_id, user_arguments_dict):
     )
 
     if not validate_status:
-        WARNING_MSG = str(accepted)
+        WARNING_MSG = "%s" % accepted
         output_objects.append({'object_type': 'warning',
                                'text': WARNING_MSG})
         return (accepted, returnvalues.CLIENT_ERROR)
@@ -173,7 +173,7 @@ def main(client_id, user_arguments_dict):
         if action == 'list_settings':
             status = list_settings(configuration, abs_path, path,
                                    output_objects)
-            logger.debug('list exit status: %s' % str(status))
+            logger.debug('list exit status: %s' % status)
         elif action == 'remove_setting':
             if vgrid_owner == False:
                 status = returnvalues.ERROR
@@ -185,11 +185,11 @@ def main(client_id, user_arguments_dict):
             else:
                 status = remove_setting(configuration, abs_path, path,
                                         extension, output_objects)
-            logger.debug('remove_setting exit status: %s' % str(status))
+            logger.debug('remove_setting exit status: %s' % status)
         elif action == 'get_setting':
             status = get_setting(configuration, abs_path, path,
                                  extension, output_objects)
-            logger.debug('get_setting exit status: %s' % str(status))
+            logger.debug('get_setting exit status: %s' % status)
         elif action == 'update_setting':
             if vgrid_owner == False:
                 status = returnvalues.ERROR
@@ -208,8 +208,7 @@ def main(client_id, user_arguments_dict):
                     accepted_joined_values,
                     output_objects,
                 )
-                logger.debug('update_setting exit status: %s'
-                             % str(status))
+                logger.debug('update_setting exit status: %s' % status)
         elif action == 'create_setting':
 
             if vgrid_owner == False:
@@ -231,7 +230,7 @@ def main(client_id, user_arguments_dict):
                     output_objects,
                 )
                 status = returnvalues.OK
-            logger.debug('create_setting exit status: %s' % str(status))
+            logger.debug('create_setting exit status: %s' % status)
         elif action == 'reset_setting':
             if vgrid_owner == False:
                 status = returnvalues.ERROR
@@ -243,11 +242,11 @@ def main(client_id, user_arguments_dict):
             else:
                 status = reset_settings(configuration, abs_path, path,
                                         output_objects, extension)
-            logger.debug('reset exit status: %s' % str(status))
+            logger.debug('reset exit status: %s' % status)
         elif action == 'get':
 
             status = get(configuration, base_dir, path, output_objects)
-            logger.debug('get exit status: %s' % str(status))
+            logger.debug('get exit status: %s' % status)
         elif action == 'remove':
             if vgrid_owner == False:
                 status = returnvalues.ERROR
@@ -259,7 +258,7 @@ def main(client_id, user_arguments_dict):
             else:
                 status = remove(configuration, base_dir, abs_path,
                                 path, output_objects)
-                logger.debug('remove exit status: %s' % str(status))
+                logger.debug('remove exit status: %s' % status)
         elif action == 'clean':
             if vgrid_owner == False:
                 status = returnvalues.ERROR
@@ -271,7 +270,7 @@ def main(client_id, user_arguments_dict):
             else:
                 status = clean(configuration, base_dir, abs_path, path,
                                output_objects)
-                logger.debug('clean exit status: %s' % str(status))
+                logger.debug('clean exit status: %s' % status)
         elif action == 'cleanrecursive':
 
             if vgrid_owner == False:
@@ -290,8 +289,7 @@ def main(client_id, user_arguments_dict):
                     output_objects,
                     recursive=True,
                 )
-                logger.debug('cleanrecursive exit status: %s'
-                             % str(status))
+                logger.debug('cleanrecursive exit status: %s' % status)
         elif action == 'refresh':
 
             if vgrid_owner == False:
@@ -310,13 +308,12 @@ def main(client_id, user_arguments_dict):
                     path,
                     output_objects,
                 )
-                logger.debug('refresh exit status: %s' % str(status))
+                logger.debug('refresh exit status: %s' % status)
         else:
-            ERROR_MSG = "action: '%s' _NOT_ implemented yet" \
-                % str(action)
+            ERROR_MSG = "action: '%s' _NOT_ implemented yet" % action
             output_objects.append({'object_type': 'error_text',
                                    'text': ERROR_MSG})
 
-    logger.debug('output_objects: %s' % str(output_objects))
-    logger.debug('status: %s' % str(status))
+    logger.debug('output_objects: %s' % output_objects)
+    logger.debug('status: %s' % status)
     return (output_objects, status)

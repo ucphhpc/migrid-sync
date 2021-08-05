@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobscriptgenerator - dynamically generate job script right before job handout
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -91,17 +91,17 @@ def create_empty_job(
 
     # sessionid = configuration.empty_job_name
 
-    sleep_cmd = 'sleep ' + str(sleep_time)
+    sleep_cmd = 'sleep %d' % sleep_time
     job_dict['EXECUTE'] = [sleep_cmd]
     job_dict['INPUTFILES'] = []
     job_dict['OUTPUTFILES'] = ''
     job_dict['ARGUMENTS'] = ''
     job_dict['EXECUTABLES'] = ''
     job_dict['MOUNT'] = []
-    job_dict['CPUTIME'] = str(cputime)
+    job_dict['CPUTIME'] = "%d" % cputime
     job_dict['MEMORY'] = 16
     job_dict['DISK'] = 1
-    job_dict['EXECUTION_DELAY'] = str(execution_delay)
+    job_dict['EXECUTION_DELAY'] = "%s" % execution_delay
     job_dict['ENVIRONMENT'] = ''
     job_dict['RUNTIMEENVIRONMENT'] = []
     job_dict['MAXPRICE'] = '0'
@@ -250,7 +250,7 @@ def create_job_script(
     # Finally expand reserved job variables like +JOBID+ and +JOBNAME+
     job_dict = expand_variables(job_dict)
     # ... no more changes to job_dict from here on
-    client_id = str(job_dict['USER_CERT'])
+    client_id = "%(USER_CERT)s" % job_dict
     client_dir = client_id_dir(client_id)
 
     # if not job:
@@ -268,7 +268,7 @@ def create_job_script(
         # link sessionid to mrsl file
 
         linkdest1 = configuration.mrsl_files_dir + client_dir + '/' + \
-            str(job_dict['JOB_ID']) + '.mRSL'
+            "%(JOB_ID)s" % job_dict + '.mRSL'
         linkloc1 = configuration.sessid_to_mrsl_link_home + sessionid + '.mRSL'
         make_symlink(linkdest1, linkloc1, logger)
 
@@ -286,14 +286,14 @@ def create_job_script(
 
     # link sessionid to .job file
 
-    linkdest4 = configuration.mig_system_files + str(job_dict['JOB_ID']) + \
+    linkdest4 = configuration.mig_system_files + "%(JOB_ID)s" % job_dict + \
         '.job'
     linkloc4 = configuration.webserver_home + sessionid + '.job'
     make_symlink(linkdest4, linkloc4, logger)
 
     # link sessionid to .getupdatefiles file
 
-    linkdest5 = configuration.mig_system_files + str(job_dict['JOB_ID']) + \
+    linkdest5 = configuration.mig_system_files + "%(JOB_ID)s" % job_dict + \
         '.getupdatefiles'
     linkloc5 = configuration.webserver_home + sessionid + \
         '.getupdatefiles'
@@ -301,7 +301,7 @@ def create_job_script(
 
     # link sessionid to .sendoutputfiles file
 
-    linkdest4 = configuration.mig_system_files + str(job_dict['JOB_ID']) + \
+    linkdest4 = configuration.mig_system_files + "%(JOB_ID)s" % job_dict + \
         '.sendoutputfiles'
     linkloc4 = configuration.webserver_home + sessionid + \
         '.sendoutputfiles'
@@ -309,7 +309,7 @@ def create_job_script(
 
     # link sessionid to .sendupdatefiles file
 
-    linkdest5 = configuration.mig_system_files + str(job_dict['JOB_ID']) + \
+    linkdest5 = configuration.mig_system_files + "%(JOB_ID)s" % job_dict + \
         '.sendupdatefiles'
     linkloc5 = configuration.webserver_home + sessionid + \
         '.sendupdatefiles'
@@ -417,7 +417,7 @@ def create_job_script(
 
             msg = "File '%s' was not copied to the webserver home." % \
                   inputfiles_path
-            print('\nERROR: ' + str(err))
+            print('\nERROR: ' + "%s" % (err))
             logger.error(msg)
             return (None, msg)
 
@@ -469,7 +469,7 @@ def create_arc_job(
     # Finally expand reserved job variables like +JOBID+ and +JOBNAME+
     job_dict = expand_variables(job_dict)
     # ... no more changes to job_dict from here on
-    client_id = str(job_dict['USER_CERT'])
+    client_id = "%(USER_CERT)s" % job_dict
 
     # we do not want to see empty jobs here. Test as done in create_job_script.
     if client_id == configuration.empty_job_name:
@@ -488,7 +488,7 @@ def create_arc_job(
     linklist = [(configuration.user_home + client_dir,
                  configuration.webserver_home + sessionid),
                 (configuration.mrsl_files_dir + client_dir + '/' +
-                 str(job_dict['JOB_ID']) + '.mRSL',
+                 "%(JOB_ID)s" % job_dict + '.mRSL',
                  configuration.sessid_to_mrsl_link_home + sessionid + '.mRSL')
                 ]
 

@@ -180,7 +180,7 @@ def main(client_id, user_arguments_dict):
             # NOTE: datetime is not json-serializable so we force to string
             created = user_obj.get(CONF, {}).get('CREATED_TIMESTAMP', '')
             if created:
-                user_obj[CONF]['CREATED_TIMESTAMP'] = str(created)
+                user_obj[CONF]['CREATED_TIMESTAMP'] = "%s" % created
             # TODO: consider ALWAYS using anon_id format in link here
             user_obj['userdetailslink'] = \
                 {'object_type': 'link',

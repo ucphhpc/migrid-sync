@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # searchusers - Search in MiG user database
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -127,7 +127,7 @@ if '__main__' == __name__:
     print("Matching users:")
     for (uid, user_dict) in hits:
         if only_fields:
-            field_list = [str(user_dict.get(i, '')) for i in only_fields]
+            field_list = ["%s" % user_dict.get(i, '') for i in only_fields]
             print('%s' % ' : '.join(field_list))
         else:
             print('%s : %s' % (uid, user_dict))

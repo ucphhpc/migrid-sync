@@ -817,7 +817,7 @@ def main(client_id, user_arguments_dict):
                                               target_op, client_id, limit)
     (add_import, add_init, add_ready) = js_tmpl_parts(
         configuration, entry_path, enable_submit,
-        str(configuration.site_enable_preview), legacy_buttons,
+        "%s" % configuration.site_enable_preview, legacy_buttons,
         csrf_map, chroot)
     title_entry['script']['advanced'] += add_import
     title_entry['script']['init'] += add_init

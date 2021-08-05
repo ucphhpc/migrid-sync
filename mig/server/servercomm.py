@@ -93,7 +93,7 @@ def write_status(config, status):
         filehandle.close()
     except Exception as e:
         config.logger.error(
-            'Error: failed to write server status to %s (%s)', status_path, str(e))
+            'Error: failed to write server status to %s (%s)' % (status_path, e))
         return False
 
     return True
@@ -404,7 +404,7 @@ def dict_to_section(conf, dict, section_key):
 
     for key in dict.keys():
         if key != section_key:
-            conf.set(section, key, str(dict[key]))
+            conf.set(section, key, "%s" % dict[key])
 
     return True
 
@@ -527,12 +527,12 @@ def migrate_job(config, job, peer):
     # Make sure legacy jobs don't fail
 
     if 'MIGRATE_COUNT' not in job:
-        job['MIGRATE_COUNT'] = str(0)
+        job['MIGRATE_COUNT'] = "0"
 
     # Add or increment migration counter
 
     migrate_count = int(job['MIGRATE_COUNT']) + 1
-    job['MIGRATE_COUNT'] = str(migrate_count)
+    job['MIGRATE_COUNT'] = "%s" % migrate_count
 
     # TODO: only upload if job is not already replicated at
     # remote server

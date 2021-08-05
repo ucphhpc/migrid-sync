@@ -114,8 +114,7 @@ def create_ps3_resource(configuration, sandboxkey):
         o.reply_and_exit(o.ERROR)
 
     resource_identifier = result[1]
-    unique_resource_name = resource_name + '.'\
-        + str(resource_identifier)
+    unique_resource_name = "%s.%d" % (resource_name, resource_identifier)
 
     # create a resource configuration string that we can write to a file
 
@@ -195,20 +194,20 @@ vgrid=%s"""\
         resource_identifier,
         resource_home,
         script_language,
-        str(ssh_port),
-        str(memory),
-        str(disk),
-        str(cpucount),
-        str(sandbox),
+        ssh_port,
+        memory,
+        disk,
+        cpucount,
+        sandbox,
         sandboxkey,
         arch,
-        str(nodecount),
+        nodecount,
         hostkey,
         frontend_node,
         frontend_log,
         exe_name,
-        str(exe_nodecount),
-        str(exe_cputime),
+        exe_nodecount,
+        exe_cputime,
         exe_execution_precondition,
         exe_prepend_execute,
         exe_exehostlog,
@@ -220,8 +219,8 @@ vgrid=%s"""\
         exe_status_command,
         exe_stop_command,
         exe_clean_command,
-        str(exe_continuous),
-        str(exe_shared_fs),
+        exe_continuous,
+        exe_shared_fs,
         exe_vgrid,
     )
 
@@ -239,8 +238,9 @@ vgrid=%s"""\
 
     # parse and pickle the conf file
 
-    (status, msg) = confparser.run(configuration, conf_file_src, resource_name
-                                   + '.' + str(resource_identifier))
+    (status, msg) = confparser.run(configuration, conf_file_src, "%s.%d" %
+                                   (resource_name, resource_identifier))
+
     if not status:
         o.out(msg, conf_file_src)
         o.reply_and_exit(o.ERROR)
@@ -258,7 +258,7 @@ vgrid=%s"""\
         o.out(e)
         o.reply_and_exit(o.ERROR)
 
-    return resource_name + '.' + str(resource_identifier)
+    return "%s.%d" % (resource_name, resource_identifier)
 
 
 def get_ps3_resource(configuration):
@@ -341,7 +341,7 @@ if os.getenv('REQUEST_METHOD') != 'GET':
 
 # Make sure that we're called with HTTPS.
 
-if str(os.getenv('HTTPS')) != 'on':
+if "%s" % os.getenv('HTTPS') != 'on':
     o.out('Please use HTTPS with session id for authenticating job requests!'
           )
     cgiscript_header()

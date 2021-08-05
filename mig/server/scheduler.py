@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # scheduler - base scheduler class used by all schedulers
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """General Scheduler framework"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -350,15 +351,15 @@ class Scheduler:
         server['SERVER_ID'] = self.conf.mig_server_id
         server['FQDN'] = self.conf.server_fqdn
         if self.job_queue:
-            server['QUEUED'] = str(self.job_queue.queue_length())
+            server['QUEUED'] = "%s" % self.job_queue.queue_length()
         else:
-            server['QUEUED'] = str(0)
-        server['LO_LOAD'] = str(self.lo_load)
-        server['HI_LOAD'] = str(self.hi_load)
-        server['TARGET_LOAD'] = str(self.target_load)
-        server['EXPIRE_AFTER'] = str(self.conf.expire_after)
-        server['DISTANCE'] = str(0)
-        server['MIGRATE_COST'] = str(0.0)
+            server['QUEUED'] = "0"
+        server['LO_LOAD'] = "%s" % self.lo_load
+        server['HI_LOAD'] = "%s" % self.hi_load
+        server['TARGET_LOAD'] = "%s" % self.target_load
+        server['EXPIRE_AFTER'] = "%s" % self.conf.expire_after
+        server['DISTANCE'] = "0"
+        server['MIGRATE_COST'] = "0.0"
         server['LAST_SEEN'] = repr(time.time())
         server['TYPE'] = 'server'
         return self.update_servers(server)
@@ -610,10 +611,10 @@ class Scheduler:
             # Include first hop in costs
 
             dist = int(server['DISTANCE']) + 1
-            server['DISTANCE'] = str(dist)
+            server['DISTANCE'] = "%s" % dist
             cost = float(server['MIGRATE_COST'])\
                 + float(self.peers[peer_id]['migrate_cost'])
-            server['MIGRATE_COST'] = str(cost)
+            server['MIGRATE_COST'] = "%s" % cost
             server['MIGRATE_DIRECTION'] = peer_id
 
             # Update information if new server or if timestamp is
@@ -1380,7 +1381,7 @@ class Scheduler:
         # Make sure legacy jobs don't fail
 
         if 'MIGRATE_COUNT' not in job:
-            job['MIGRATE_COUNT'] = str(0)
+            job['MIGRATE_COUNT'] = "0"
 
         migrate_count = int(job['MIGRATE_COUNT'])
         dist = self.resource_distance(res)

@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# resubmit - [insert a few words of module description on this line]
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# resubmit - resubmit a job
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -71,7 +71,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -87,12 +87,12 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not configuration.site_enable_jobs:
         output_objects.append({'object_type': 'error_text', 'text':
-            '''Job execution is not enabled on this system'''})
+                               '''Job execution is not enabled on this system'''})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if not patterns:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'No job_id specified!'})
+        output_objects.append(
+            {'object_type': 'error_text', 'text': 'No job_id specified!'})
         return (output_objects, returnvalues.NO_SUCH_JOB_ID)
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -100,7 +100,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     base_dir = \
         os.path.abspath(os.path.join(configuration.mrsl_files_dir,
-                        client_dir)) + os.sep
+                                     client_dir)) + os.sep
 
     filelist = []
     keywords_dict = mrslkeywords.get_keywords_dict(configuration)
@@ -140,8 +140,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         if not match:
             output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : '%s: You do not have any matching job IDs!' % pattern})
+                {'object_type': 'error_text', 'text': '%s: You do not have any matching job IDs!' % pattern})
             status = returnvalues.CLIENT_ERROR
         else:
             filelist += match
@@ -149,8 +148,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # resubmit is hard on the server
 
     if len(filelist) > 100:
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Too many matching jobs (%s)!'
+        output_objects.append({'object_type': 'error_text', 'text': 'Too many matching jobs (%s)!'
                                % len(filelist)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -187,15 +185,15 @@ CSRF-filtered POST requests to prevent unintended updates'''
             if keywords_dict[dict_elem]['Type'].startswith('multiplekeyvalues'):
                 for (elem_key, elem_val) in job_value:
                     if elem_key:
-                        value += '%s=%s\n' % (str(elem_key).strip(),
-                                              str(elem_val).strip())
+                        value += '%s=%s\n' % (("%s" % elem_key).strip(),
+                                              ("%s" % elem_val).strip())
             elif keywords_dict[dict_elem]['Type'].startswith('multiple'):
                 for elem in job_value:
                     if elem:
-                        value += '%s\n' % str(elem).rstrip()
+                        value += '%s\n' % ("%s" % elem).rstrip()
             else:
-                if str(job_value):
-                    value += '%s\n' % str(job_value).rstrip()
+                if "%s" % job_value:
+                    value += '%s\n' % ("%s" % job_value).rstrip()
 
             # Only insert keywords with an associated value
 
@@ -217,7 +215,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # submit job the usual way
 
         (new_job_status, msg, new_job_id) = new_job(tempfilename,
-                client_id, configuration, False, True)
+                                                    client_id, configuration, False, True)
         if not new_job_status:
             resubmitobj['status'] = False
             resubmitobj['message'] = msg
@@ -235,9 +233,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # o.out("Resubmit successful: %s" % msg)
         # o.out("%s" % msg)
 
-    output_objects.append({'object_type': 'resubmitobjs', 'resubmitobjs'
-                          : resubmitobjs})
+    output_objects.append(
+        {'object_type': 'resubmitobjs', 'resubmitobjs': resubmitobjs})
 
     return (output_objects, status)
-
-

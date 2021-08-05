@@ -417,7 +417,7 @@ The query you have requested did not return any data.
         # body, with first col.  key part
         for r in datarows:
             html += '<tr><th>' + r[0] + '<td>'
-            html += '<td>'.join([str(x[key]) for x in r[1:]])
+            html += '<td>'.join(["%s" % x[key] for x in r[1:]])
 
         html += '</tbody>'
         html += '</table></p><p>&nbsp;</p>'
@@ -450,7 +450,7 @@ The query you have requested did not return any data.
     colours = [('#%1X0%1X0%1X0' % (x, y, z))
                for (x, y, z) in zip(seq[2:15]+seq, seq[1:15]+seq[1:15], seq+seq[2:15])]
 
-    cols = ",colors:%s" % str(colours)
+    cols = ",colors:%s" % colours
     viz_options = {'machine': [bar_default + cols], 'user': [bar_default + cols, pie_default + cols], 'summary': [bar_default + cols], 'vgrid': [bar_default + cols]
                    }
     include_viz_css = '''

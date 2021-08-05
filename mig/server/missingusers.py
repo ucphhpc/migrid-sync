@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # missingusers - Search for missing users in MiG user database
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -121,7 +121,7 @@ if '__main__' == __name__:
         fs_users[user_id] = user_dict
         match = True
         for (key, val) in search_filter.items():
-            if not fnmatch.fnmatch(str(user_dict.get(key, '')), val):
+            if not fnmatch.fnmatch("%s" % user_dict.get(key, ''), val):
                 match = False
                 break
         if not match:

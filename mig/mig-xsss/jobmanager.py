@@ -53,7 +53,7 @@ def getTimeTuppel():
         weekday,
         hour,
         minutes,
-        )
+    )
 
 
 # Get the dictionary with estimated times
@@ -84,10 +84,10 @@ def writeWeekDict(param_WeekDict):
 def writeActiveLog(param_tStartTime, param_iNumOfMinutes,
                    param_iExpectedTime):
     logline = '' + param_tStartTime[0] + '\t' + param_tStartTime[1]\
-         + '\t' + param_tStartTime[2] + '\t' + param_tStartTime[3]\
-         + '\t' + param_tStartTime[4] + '\t' + param_tStartTime[5]\
-         + '\t' + param_tStartTime[6] + '\t' + str(param_iNumOfMinutes)\
-         + '\t' + str(param_iExpectedTime) + '\n'
+        + '\t' + param_tStartTime[2] + '\t' + param_tStartTime[3]\
+        + '\t' + param_tStartTime[4] + '\t' + param_tStartTime[5]\
+        + '\t' + param_tStartTime[6] + '\t' + "%s" % param_iNumOfMinutes \
+        + '\t' + "%s" % param_iExpectedTime + '\n'
 
     output = open(G_ACTIVELOGFILE, 'a')
     output.write(logline)
@@ -134,7 +134,7 @@ def getTimeDiff(param_tStartTime, param_tEndTime):
         iNumOfMinutes = 60 + iNumOfMinutes
 
     iNumOfMinutes = ((iNumOfWeeks * 7 + iNumOfDays) * 24 + iNumOfHours)\
-         * 60 + iNumOfMinutes
+        * 60 + iNumOfMinutes
 
     return iNumOfMinutes
 
@@ -155,11 +155,9 @@ def logTimeActive(param_tActivated, param_tDeActivated,
     writeActiveLog(param_tActivated, iNumOfMinutes, iLastExpectedTime)
 
     iThisExpectedTime = param_fExpectedTimeFactor * iNumOfMinutes + (1
-             - param_fExpectedTimeFactor) * iLastExpectedTime
+                                                                     - param_fExpectedTimeFactor) * iLastExpectedTime
 
     weekDict[int(param_tActivated[4])][int(param_tActivated[5])] = \
         iThisExpectedTime
 
     writeWeekDict(weekDict)
-
-

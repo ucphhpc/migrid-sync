@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rm - backend to remove files/directories in user home
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -318,7 +318,7 @@ remove entire %s shared folders!""" % configuration.site_vgrid_label})
                 gdp_iolog_status = True
             except GDPIOLogError as exc:
                 gdp_iolog_status = False
-                rm_err = [str(exc)]
+                rm_err = ["%s" % exc]
             rm_status = False
             if gdp_iolog_status:
                 (rm_status, rm_err) = rm_helper(configuration, abs_path)

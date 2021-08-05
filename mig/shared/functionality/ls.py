@@ -161,7 +161,7 @@ def long_format(path):
                 perms = perms + '-'
 
     format_line += perms + ' '
-    size = str(stat_info.st_size)
+    size = "%s" % stat_info.st_size
     format_line += size + ' '
     atime = time.asctime(time.gmtime(stat_info.st_mtime))
     format_line += atime + ' '

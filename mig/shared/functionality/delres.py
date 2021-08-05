@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # delres - Deletes a resource
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,8 @@
 # -- END_HEADER ---
 #
 
-"""Deletion of a resource"""
+"""Dele a resource"""
+
 from __future__ import absolute_import
 
 import os
@@ -60,7 +61,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -78,19 +79,17 @@ CSRF-filtered POST requests to prevent unintended updates'''
     res_dir = os.path.join(configuration.resource_home, resource_id)
 
     # Prevent unauthorized access
-    
+
     (owner_status, owner_list) = resource_owners(configuration, resource_id)
     if not owner_status:
         output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : "Could not look up '%s' owners - no such resource?" % resource_id
+            {'object_type': 'error_text', 'text': "Could not look up '%s' owners - no such resource?" % resource_id
              })
         return (output_objects, returnvalues.CLIENT_ERROR)
     elif client_id not in owner_list:
-        logger.warning('user %s tried to delete resource "%s" not owned' % \
+        logger.warning('user %s tried to delete resource "%s" not owned' %
                        (client_id, resource_id))
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : "You can't delete '%s' - you don't own it!"
+        output_objects.append({'object_type': 'error_text', 'text': "You can't delete '%s' - you don't own it!"
                                % resource_id})
         output_objects.append({'object_type': 'link', 'destination':
                                'resman.py', 'class': 'infolink iconspace', 'title':
@@ -129,8 +128,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         fe_running = False
 
     if fe_running:
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : "Can't delete the running resource %s!"
+        output_objects.append({'object_type': 'error_text', 'text': "Can't delete the running resource %s!"
                                % resource_id})
         output_objects.append({'object_type': 'link', 'destination':
                                'resman.py', 'class': 'infolink iconspace',
@@ -149,8 +147,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
             if os.path.isfile(file_path):
                 os.unlink(file_path)
     except Exception as err:
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Deletion exception: ' + str(err)})
+        output_objects.append(
+            {'object_type': 'error_text', 'text': 'Deletion exception: %s' % err})
         output_objects.append({'object_type': 'link', 'destination':
                                'resman.py', 'class': 'infolink iconspace',
                                'title': 'Show resources', 'text':
@@ -162,14 +160,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # The resource has been deleted, and OK is returned.
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Resource Deletion'
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Deleting resource'})
-    output_objects.append({'object_type': 'text', 'text'
-                           : 'Sucessfully deleted resource: ' + resource_id})
+    output_objects.append(
+        {'object_type': 'header', 'text': 'Deleting resource'})
+    output_objects.append(
+        {'object_type': 'text', 'text': 'Sucessfully deleted resource: ' + resource_id})
     output_objects.append({'object_type': 'link', 'destination': 'resman.py',
                            'class': 'infolink iconspace', 'title':
                            'Show resources', 'text': 'Show resources'})
-    
+
     # Releasing locks
     lock_handle_vgrid.close()
     lock_handle_res.close()

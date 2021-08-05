@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_script - the core job handling daemon on a MiG server
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -391,9 +391,9 @@ logger.info(msg)
 loop_counter = 0
 last_read_from_grid_stdin_empty = False
 
-# print str(executing_queue.queue_length())
-# print str(job_queue.queue_length())
-# print str(done_queue.queue_length())
+# print "%d" % executing_queue.queue_length()
+# print "%d" % job_queue.queue_length()
+# print "%d" % done_queue.queue_length()
 
 # TODO: perhaps we should run the pipe reader as main thread
 #   and then spawn threads for actual handling. It should of
@@ -442,7 +442,7 @@ while True:
         (user_id, filename) = user_str.split(os.sep)
 
         dict_userjob['OWNER'] = user_id
-        dict_userjob['MIGRATE_COUNT'] = str(0)
+        dict_userjob['MIGRATE_COUNT'] = "0"
 
         # ARC jobs: directly submit, and put in executing_queue
         if dict_userjob['JOBTYPE'] == 'arc':

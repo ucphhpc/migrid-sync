@@ -172,7 +172,7 @@ def handle_proxy(proxy_string, client_id, config):
     except Exception as exc:
         output.append({'object_type': 'error_text',
                        'text': 'Proxy file could not be written (%s)!'
-                       % str(exc).replace(proxy_dir, '')})
+                       % ("%s" % exc).replace(proxy_dir, '')})
         return output
 
     # provide information about the uploaded proxy
