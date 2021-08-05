@@ -55,7 +55,7 @@ def build_accessrequestitem_object(configuration, request_dict):
     request_item.update(request_dict)
     # NOTE: datetime is not json-serializable so we force to string
     for field in ['created_timestamp']:
-        request_item[field] = str(request_item[field])
+        request_item[field] = "%s" % request_item[field]
     return request_item
 
 

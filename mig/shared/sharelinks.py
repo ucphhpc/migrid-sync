@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sharelinks - share link helper functions
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Share link functions"""
+
 from __future__ import absolute_import
 
 import datetime
@@ -141,7 +142,7 @@ def build_sharelinkitem_object(configuration, share_dict):
         'text': ''}
     # NOTE: datetime is not json-serializable so we force to string
     for field in ['created_timestamp']:
-        share_item[field] = str(share_item[field])
+        share_item[field] = "%s" % share_item[field]
     return share_item
 
 

@@ -91,7 +91,7 @@ def format_xrsl(xrsl):
     """
 
     # raw string, without old indentation and newlines
-    raw = ''.join([i.strip() for i in str(xrsl).split('\n')])
+    raw = ''.join([i.strip() for i in ("%s" % xrsl).split('\n')])
 
     def indent(acc, n, s):
         if not s:
@@ -237,7 +237,7 @@ def translate(mrsl_dict, session_id=None):
 
         # both execfiles and infiles are inputfiles for ARC
         addRel(xrsl, 'inputfiles', [flip_for_input(i)
-               for i in execfiles + infiles])
+                                    for i in execfiles + infiles])
 
         # execfiles are made executable
         # (specified as the remote name, relative to the session dir)
@@ -250,7 +250,7 @@ def translate(mrsl_dict, session_id=None):
         # requested runtime, given in minutes in (user) xrsl ...
         time = mrsl_dict.get('CPUTIME')
         if time:
-            addRel(xrsl, 'cputime', str(int(math.ceil(float(time) / 60))))
+            addRel(xrsl, 'cputime', "%d" % int(math.ceil(float(time) / 60)))
 
         # simply copy the values for these:
         copy_items = ['MEMORY', 'DISK', 'NODECOUNT']
@@ -276,7 +276,7 @@ def translate(mrsl_dict, session_id=None):
             #            addRel(xrsl,'environment',var_val)
 
             addRel(xrsl, 'environment', [list(i)
-                   for i in mrsl_dict['ENVIRONMENT']])
+                                         for i in mrsl_dict['ENVIRONMENT']])
 
         if 'RUNTIMEENVIRONMENT' in mrsl_dict:
             for line in mrsl_dict['RUNTIMEENVIRONMENT']:

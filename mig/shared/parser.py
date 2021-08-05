@@ -350,9 +350,9 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     # Unset checkbox results in empty data (html "feature")
                     keyword_dict['Value'] = False
                 else:
-                    if str(keyword_data[0]).lower() in ['true', '1', 'on']:
+                    if ("%s" % keyword_data[0]).lower() in ['true', '1', 'on']:
                         keyword_dict['Value'] = True
-                    elif str(keyword_data[0]).lower() in ['false', '0', 'off']:
+                    elif ("%s" % keyword_data[0]).lower() in ['false', '0', 'off']:
                         keyword_dict['Value'] = False
                     else:
 
@@ -379,7 +379,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
 
                         # assign
 
-                        keyword_dict['Value'] = str(keyword_data[0])
+                        keyword_dict['Value'] = "%s" % keyword_data[0]
                     except:
 
                         # could not convert value to string
@@ -392,9 +392,9 @@ def check_types(parse_output, external_keyword_dict, configuration):
 
                     # assign in upper case
 
-                    keyword_dict['Value'] = str(keyword_data[0]).upper()
+                    keyword_dict['Value'] = ("%s" % keyword_data[0]).upper()
                 if job_keyword == 'ARCHITECTURE':
-                    if not str(keyword_data[0])\
+                    if not "%s" % keyword_data[0] \
                             in configuration.architectures:
                         status = False
                         msg += format_type_error(job_keyword,
@@ -402,7 +402,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                                                  % configuration.architectures,
                                                  keyword_dict, keyword_data)
                 if job_keyword == 'SCRIPTLANGUAGE':
-                    if not str(keyword_data[0])\
+                    if not "%s" % keyword_data[0] \
                             in configuration.scriptlanguages:
                         status = False
                         msg += format_type_error(job_keyword,
@@ -410,7 +410,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                                                  % configuration.scriptlanguages,
                                                  keyword_dict, keyword_data)
                 if job_keyword == 'JOBTYPE':
-                    if not str(keyword_data[0])\
+                    if not "%s" % keyword_data[0] \
                             in configuration.jobtypes:
                         status = False
                         msg += format_type_error(job_keyword,
@@ -419,7 +419,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                                                  keyword_dict, keyword_data)
                 if job_keyword == 'JOBNAME':
                     try:
-                        valid_job_name(str(keyword_data[0]), min_length=0)
+                        valid_job_name("%s" % keyword_data[0], min_length=0)
                     except Exception as err:
                         status = False
                         msg += format_type_error(job_keyword,
@@ -429,7 +429,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                 maxfill_values = [keyword_all] + maxfill_fields
                 for single_line in keyword_data:
                     try:
-                        value.append(str(single_line))
+                        value.append("%s" % single_line)
                     except:
                         status = False
                         msg += format_type_error(job_keyword,
@@ -505,9 +505,9 @@ def check_types(parse_output, external_keyword_dict, configuration):
 
                 try:
 
-                    # value.append(str(keyword_data[0]))
+                    # value.append("%s" % keyword_data[0])
 
-                    value.append(str(keyword_data))
+                    value.append("%s" % keyword_data)
                 except:
                     status = False
                     msg += format_type_error(job_keyword,
@@ -523,7 +523,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                                                      "requires one or more key=value rows. '=' not found on line.", keyword_dict, keyword_data)
                         else:
                             keyval = single_line.split('=', 1)
-                            env = (str(keyval[0]), str(keyval[1]))
+                            env = ("%s" % keyval[0], "%s" % keyval[1])
                             value.append(env)
                     except:
                         status = False
@@ -556,7 +556,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                                              % exe_dict, keyword_dict, keyword_data)
 
                 try:
-                    continuous = str(exe_dict['continuous'])
+                    continuous = "%(continuous)s" % exe_dict
 
                     # Keep old typo for backwards compatibility
 
@@ -572,7 +572,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                                                  'continuous must be True or False',
                                                  keyword_dict, keyword_data)
 
-                    shared_fs = str(exe_dict['shared_fs'])
+                    shared_fs = "%(shared_fs)s" % exe_dict
                     if shared_fs == 'False':
                         exe_dict['shared_fs'] = False
                     elif shared_fs == 'True':
@@ -629,7 +629,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                                                  'storage_protocol must be in %s' % supported_protocols,
                                                  keyword_dict, keyword_data)
 
-                    shared_fs = str(store_dict['shared_fs'])
+                    shared_fs = "%(shared_fs)s" % store_dict
                     if shared_fs == 'False':
                         store_dict['shared_fs'] = False
                     elif shared_fs == 'True':
@@ -793,7 +793,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
                     'Internal error: Keyword %s with unknown type %s was accepted!'\
                     % (html_escape(job_keyword), keyword_type)
 
-            # print str(value)
+            # print "%s" % value
             # Keyword was found. Change required to False meaning that the keyword is no longer required
 
             if keyword_data:

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sandbox - shared sandbox helpers
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,19 +26,21 @@
 #
 
 """Sandbox functions"""
+
 from __future__ import absolute_import
 
 import os
 import tempfile
 from binascii import hexlify
 
-from .conf import get_configuration_object
+from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import default_vgrid, keyword_auto
 from mig.shared.fileio import make_symlink
 from mig.shared.resource import create_resource
 from mig.shared.serial import load, dump
 
 sandbox_db_name = 'sandbox_users.pkl'
+
 
 def load_sandbox_db(configuration=None):
     """Read in the sandbox DB dictionary:
@@ -78,7 +80,7 @@ def get_resource_name(sandboxkey, logger):
         return (True, unique_resource_name)
     else:
         msg = 'Remote IP: %s, No sandbox with sandboxkey: %s'\
-             % (os.getenv('REMOTE_ADDR'), sandboxkey)
+            % (os.getenv('REMOTE_ADDR'), sandboxkey)
         logger.error(msg)
         return (False, msg)
 
@@ -88,7 +90,7 @@ def create_oneclick_resource(
     cputime,
     configuration,
     logger,
-    ):
+):
 
     resource_name = 'oneclick'
 
@@ -166,7 +168,7 @@ clean_command=NA
 continuous=False
 shared_fs=False
 vgrid=%s
-    """% (keyword_auto, sandboxkey, exe_name, cputime, default_vgrid)
+    """ % (keyword_auto, sandboxkey, exe_name, cputime, default_vgrid)
 
     # write the conf string to a temporary conf file
     # create_resource removes the tempfile automatically
@@ -184,18 +186,19 @@ vgrid=%s
     # Create PGID file in resource_home
 
     resource_identifier = id_msg
-    unique_resource_name = resource_name + '.' + str(resource_identifier)
-                
+    unique_resource_name = "%s.%d" % (resource_name, resource_identifier)
+
     exe_pgid_file = configuration.resource_home + unique_resource_name\
-         + os.sep + 'EXE_%s.PGID' % exe_name
+        + os.sep + 'EXE_%s.PGID' % exe_name
     try:
         fd = open(exe_pgid_file, 'w')
         fd.write('stopped')
         fd.close()
     except Exception as exc:
-        return (False, str(exc))
+        return (False, "%s" % exc)
 
-    return (True, resource_name + '.' + str(resource_identifier))
+    return (True, "%s.%d" % (resource_name, resource_identifier))
+
 
 def create_sss_resource(
     sandboxkey,
@@ -206,7 +209,7 @@ def create_sss_resource(
     vgrid_list,
     configuration,
     logger,
-    ):
+):
 
     resource_name = 'sandbox'
     unique_host_name = "%s.%s" % (resource_name, keyword_auto)
@@ -215,7 +218,7 @@ def create_sss_resource(
 
     exe_name = 'localhost'
     res_conf_string = \
-                        """\
+        """\
 ::MIGUSER::
 mig
 
@@ -297,17 +300,16 @@ vgrid=%s
         resource_name,
         keyword_auto,
         memory,
-        int(hd_size) / 1000,
+        int(hd_size / 1000),
         net_bw,
-        str(int(net_bw) / 2),
+        int(net_bw / 2),
         sandboxkey,
         exe_name,
         cputime,
         unique_host_name,
         unique_host_name,
         ', '.join(vgrid_list),
-        )
-
+    )
 
     # write the conf string to a temporary conf file
     # create_resource removes the tempfile automatically
@@ -325,18 +327,18 @@ vgrid=%s
     # Create PGID file in resource_home
 
     resource_identifier = id_msg
-    unique_resource_name = resource_name + '.' + str(resource_identifier)
-                
+    unique_resource_name = "%s.%d" % (resource_name, resource_identifier)
+
     exe_pgid_file = configuration.resource_home + unique_resource_name\
-         + os.sep + 'EXE_%s.PGID' % exe_name
+        + os.sep + 'EXE_%s.PGID' % exe_name
     try:
         fd = open(exe_pgid_file, 'w')
         fd.write('stopped')
         fd.close()
     except Exception as exc:
-        return (False, str(exc))
+        return (False, "%s" % exc)
 
-    return (True, resource_name + '.' + str(resource_identifier))
+    return (True, "%s.%d" % (resource_name, resource_identifier))
 
 
 def get_resource(client_id, configuration, logger):
@@ -350,7 +352,7 @@ def get_resource(client_id, configuration, logger):
     # If user with identifing cookie use cookie infomation
 
     if os.getenv('HTTP_COOKIE') and os.getenv('HTTP_COOKIE'
-            ).count(__MIG_ONECLICK_COOKIE__) > 0:
+                                              ).count(__MIG_ONECLICK_COOKIE__) > 0:
         cookie_arr = os.getenv('HTTP_COOKIE').split(';')
         for elm in cookie_arr:
             if elm.count(__MIG_ONECLICK_COOKIE__) > 0:
@@ -362,20 +364,20 @@ def get_resource(client_id, configuration, logger):
     # The key is send to him as a cookie
 
     if not sandboxkey or not os.path.exists(configuration.sandbox_home
-             + sandboxkey):
+                                            + sandboxkey):
 
         # Generate key, and set cookie
 
         sandboxkey = hexlify(open('/dev/urandom').read(32))
         cookie = 'Set-Cookie: ' + __MIG_ONECLICK_COOKIE__ + '='\
-             + sandboxkey + '; '\
-             + 'expires=Thu 31-Jan-2099 12:00:00 GMT; path=/; '\
-             + 'domain=' + configuration.server_fqdn + '; secure'
+            + sandboxkey + '; '\
+            + 'expires=Thu 31-Jan-2099 12:00:00 GMT; path=/; '\
+            + 'domain=' + configuration.server_fqdn + '; secure'
 
         # Create resource
 
         (status, msg) = create_oneclick_resource(sandboxkey, cputime,
-                configuration, logger)
+                                                 configuration, logger)
         if not status:
             return (status, msg)
         resource_name = msg
@@ -386,7 +388,7 @@ def get_resource(client_id, configuration, logger):
 
         sandbox_link = configuration.sandbox_home + sandboxkey
         resource_path = os.path.abspath(configuration.resource_home
-                 + resource_name)
+                                        + resource_name)
 
         make_symlink(resource_path, sandbox_link, logger)
     else:
@@ -399,17 +401,17 @@ def get_resource(client_id, configuration, logger):
     # If resource has a jobrequest pending, remove it.
 
     job_pending_file = configuration.resource_home + resource_name\
-         + os.sep + 'jobrequest_pending.jvm'
+        + os.sep + 'jobrequest_pending.jvm'
     if os.path.exists(job_pending_file):
         os.remove(job_pending_file)
 
     log_msg += ', Remote IP: %s, Key: %s' % (os.getenv('REMOTE_ADDR'),
-            sandboxkey)
+                                             sandboxkey)
 
     # Make symbolic link from webserver_home to javabin_home
 
     codebase_link = configuration.webserver_home + sandboxkey\
-         + '.oneclick'
+        + '.oneclick'
     codebase_path = os.path.abspath(configuration.javabin_home)
 
     # Remove symbolic link if it allready exists.
@@ -427,5 +429,3 @@ def get_resource(client_id, configuration, logger):
     logger.info(log_msg)
 
     return (True, (sandboxkey, resource_name, cookie, cputime))
-
-

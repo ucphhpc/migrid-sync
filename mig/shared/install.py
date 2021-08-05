@@ -386,15 +386,15 @@ def generate_confs(
     user_dict['__CLOUD_SECTIONS__'] = ''
     user_dict['__USER__'] = user
     user_dict['__GROUP__'] = group
-    user_dict['__PUBLIC_HTTP_PORT__'] = str(public_http_port)
-    user_dict['__PUBLIC_HTTPS_PORT__'] = str(public_https_port)
-    user_dict['__MIG_CERT_PORT__'] = str(mig_cert_port)
-    user_dict['__EXT_CERT_PORT__'] = str(ext_cert_port)
-    user_dict['__MIG_OID_PORT__'] = str(mig_oid_port)
-    user_dict['__EXT_OID_PORT__'] = str(ext_oid_port)
-    user_dict['__MIG_OIDC_PORT__'] = str(mig_oidc_port)
-    user_dict['__EXT_OIDC_PORT__'] = str(ext_oidc_port)
-    user_dict['__SID_PORT__'] = str(sid_port)
+    user_dict['__PUBLIC_HTTP_PORT__'] = "%s" % public_http_port
+    user_dict['__PUBLIC_HTTPS_PORT__'] = "%s" % public_https_port
+    user_dict['__MIG_CERT_PORT__'] = "%s" % mig_cert_port
+    user_dict['__EXT_CERT_PORT__'] = "%s" % ext_cert_port
+    user_dict['__MIG_OID_PORT__'] = "%s" % mig_oid_port
+    user_dict['__EXT_OID_PORT__'] = "%s" % ext_oid_port
+    user_dict['__MIG_OIDC_PORT__'] = "%s" % mig_oidc_port
+    user_dict['__EXT_OIDC_PORT__'] = "%s" % ext_oidc_port
+    user_dict['__SID_PORT__'] = "%s" % sid_port
     user_dict['__MIG_BASE__'] = os.path.dirname(mig_code.rstrip(os.sep))
     user_dict['__MIG_CODE__'] = mig_code
     user_dict['__MIG_STATE__'] = mig_state
@@ -404,46 +404,45 @@ def generate_confs(
     user_dict['__APACHE_RUN__'] = apache_run
     user_dict['__APACHE_LOCK__'] = apache_lock
     user_dict['__APACHE_LOG__'] = apache_log
-    user_dict['__APACHE_WORKER_PROCS__'] = str(apache_worker_procs)
+    user_dict['__APACHE_WORKER_PROCS__'] = "%s" % apache_worker_procs
     user_dict['__OPENSSH_VERSION__'] = openssh_version
-    user_dict['__ENABLE_SFTP__'] = str(enable_sftp)
-    user_dict['__ENABLE_SFTP_SUBSYS__'] = str(enable_sftp_subsys)
-    user_dict['__SFTP_SUBSYS_START_AUTH_PROCS__'] = str(sftp_subsys_auth_procs)
-    user_dict['__SFTP_SUBSYS_MAX_AUTH_PROCS__'] = str(
-        max(4*sftp_subsys_auth_procs, 100))
-    user_dict['__ENABLE_DAVS__'] = str(enable_davs)
-    user_dict['__ENABLE_FTPS__'] = str(enable_ftps)
-    user_dict['__ENABLE_WSGI__'] = str(enable_wsgi)
-    user_dict['__WSGI_PROCS__'] = str(wsgi_procs)
-    user_dict['__ENABLE_GDP__'] = str(enable_gdp)
-    user_dict['__ENABLE_JOBS__'] = str(enable_jobs)
-    user_dict['__ENABLE_RESOURCES__'] = str(enable_resources)
-    user_dict['__ENABLE_WORKFLOWS__'] = str(enable_workflows)
-    user_dict['__ENABLE_EVENTS__'] = str(enable_events)
-    user_dict['__ENABLE_SHARELINKS__'] = str(enable_sharelinks)
-    user_dict['__ENABLE_TRANSFERS__'] = str(enable_transfers)
-    user_dict['__ENABLE_FREEZE__'] = str(enable_freeze)
-    user_dict['__ENABLE_SANDBOXES__'] = str(enable_sandboxes)
-    user_dict['__ENABLE_VMACHINES__'] = str(enable_vmachines)
-    user_dict['__ENABLE_PREVIEW__'] = str(enable_preview)
-    user_dict['__ENABLE_JUPYTER__'] = str(enable_jupyter)
-    user_dict['__ENABLE_CLOUD__'] = str(enable_cloud)
-    user_dict['__ENABLE_HSTS__'] = str(enable_hsts)
-    user_dict['__ENABLE_VHOST_CERTS__'] = str(enable_vhost_certs)
-    user_dict['__ENABLE_VERIFY_CERTS__'] = str(enable_verify_certs)
-    user_dict['__ENABLE_SEAFILE__'] = str(enable_seafile)
-    user_dict['__ENABLE_DUPLICATI__'] = str(enable_duplicati)
-    user_dict['__ENABLE_CRONTAB__'] = str(enable_crontab)
-    user_dict['__ENABLE_NOTIFY__'] = str(enable_notify)
-    user_dict['__ENABLE_IMNOTIFY__'] = str(enable_imnotify)
-    user_dict['__ENABLE_DEV_ACCOUNTS__'] = str(enable_dev_accounts)
-    user_dict['__ENABLE_TWOFACTOR__'] = str(enable_twofactor)
-    user_dict['__ENABLE_TWOFACTOR_STRICT_ADDRESS__'] = \
-        str(enable_twofactor_strict_address)
-    user_dict['__ENABLE_CRACKLIB__'] = str(enable_cracklib)
-    user_dict['__ENABLE_OPENID__'] = str(enable_openid)
-    user_dict['__ENABLE_GRAVATARS__'] = str(enable_gravatars)
-    user_dict['__ENABLE_SITESTATUS__'] = str(enable_sitestatus)
+    user_dict['__ENABLE_SFTP__'] = "%s" % enable_sftp
+    user_dict['__ENABLE_SFTP_SUBSYS__'] = "%s" % enable_sftp_subsys
+    user_dict['__SFTP_SUBSYS_START_AUTH_PROCS__'] = "%s" % sftp_subsys_auth_procs
+    user_dict['__SFTP_SUBSYS_MAX_AUTH_PROCS__'] = "%s" % max(
+        4 * sftp_subsys_auth_procs, 100)
+    user_dict['__ENABLE_DAVS__'] = "%s" % enable_davs
+    user_dict['__ENABLE_FTPS__'] = "%s" % enable_ftps
+    user_dict['__ENABLE_WSGI__'] = "%s" % enable_wsgi
+    user_dict['__WSGI_PROCS__'] = "%s" % wsgi_procs
+    user_dict['__ENABLE_GDP__'] = "%s" % enable_gdp
+    user_dict['__ENABLE_JOBS__'] = "%s" % enable_jobs
+    user_dict['__ENABLE_RESOURCES__'] = "%s" % enable_resources
+    user_dict['__ENABLE_WORKFLOWS__'] = "%s" % enable_workflows
+    user_dict['__ENABLE_EVENTS__'] = "%s" % enable_events
+    user_dict['__ENABLE_SHARELINKS__'] = "%s" % enable_sharelinks
+    user_dict['__ENABLE_TRANSFERS__'] = "%s" % enable_transfers
+    user_dict['__ENABLE_FREEZE__'] = "%s" % enable_freeze
+    user_dict['__ENABLE_SANDBOXES__'] = "%s" % enable_sandboxes
+    user_dict['__ENABLE_VMACHINES__'] = "%s" % enable_vmachines
+    user_dict['__ENABLE_PREVIEW__'] = "%s" % enable_preview
+    user_dict['__ENABLE_JUPYTER__'] = "%s" % enable_jupyter
+    user_dict['__ENABLE_CLOUD__'] = "%s" % enable_cloud
+    user_dict['__ENABLE_HSTS__'] = "%s" % enable_hsts
+    user_dict['__ENABLE_VHOST_CERTS__'] = "%s" % enable_vhost_certs
+    user_dict['__ENABLE_VERIFY_CERTS__'] = "%s" % enable_verify_certs
+    user_dict['__ENABLE_SEAFILE__'] = "%s" % enable_seafile
+    user_dict['__ENABLE_DUPLICATI__'] = "%s" % enable_duplicati
+    user_dict['__ENABLE_CRONTAB__'] = "%s" % enable_crontab
+    user_dict['__ENABLE_NOTIFY__'] = "%s" % enable_notify
+    user_dict['__ENABLE_IMNOTIFY__'] = "%s" % enable_imnotify
+    user_dict['__ENABLE_DEV_ACCOUNTS__'] = "%s" % enable_dev_accounts
+    user_dict['__ENABLE_TWOFACTOR__'] = "%s" % enable_twofactor
+    user_dict['__ENABLE_TWOFACTOR_STRICT_ADDRESS__'] = "%s" % enable_twofactor_strict_address
+    user_dict['__ENABLE_CRACKLIB__'] = "%s" % enable_cracklib
+    user_dict['__ENABLE_OPENID__'] = "%s" % enable_openid
+    user_dict['__ENABLE_GRAVATARS__'] = "%s" % enable_gravatars
+    user_dict['__ENABLE_SITESTATUS__'] = "%s" % enable_sitestatus
     user_dict['__USER_INTERFACE__'] = user_interface
     user_dict['__MIG_OID_PROVIDER_BASE__'] = mig_oid_provider
     user_dict['__MIG_OID_PROVIDER_ID__'] = mig_oid_provider
@@ -472,23 +471,23 @@ def generate_confs(
     user_dict['__DAEMON_KEYCERT_SHA256__'] = ''
     user_dict['__DAEMON_PUBKEY_MD5__'] = ''
     user_dict['__DAEMON_PUBKEY_SHA256__'] = ''
-    user_dict['__DAEMON_PUBKEY_FROM_DNS__'] = str(daemon_pubkey_from_dns)
+    user_dict['__DAEMON_PUBKEY_FROM_DNS__'] = "%s" % daemon_pubkey_from_dns
     user_dict['__DAEMON_SHOW_ADDRESS__'] = daemon_show_address
-    user_dict['__SFTP_PORT__'] = str(sftp_port)
-    user_dict['__SFTP_SUBSYS_PORT__'] = str(sftp_subsys_port)
-    user_dict['__SFTP_SHOW_PORT__'] = str(sftp_show_port)
-    user_dict['__DAVS_PORT__'] = str(davs_port)
-    user_dict['__DAVS_SHOW_PORT__'] = str(davs_show_port)
-    user_dict['__FTPS_CTRL_PORT__'] = str(ftps_ctrl_port)
-    user_dict['__FTPS_CTRL_SHOW_PORT__'] = str(ftps_ctrl_show_port)
-    user_dict['__OPENID_PORT__'] = str(openid_port)
-    user_dict['__OPENID_SHOW_PORT__'] = str(openid_show_port)
-    user_dict['__SEAFILE_SEAHUB_PORT__'] = str(seafile_seahub_port)
-    user_dict['__SEAFILE_SEAFHTTP_PORT__'] = str(seafile_seafhttp_port)
-    user_dict['__SEAFILE_CLIENT_PORT__'] = str(seafile_client_port)
-    user_dict['__SEAFILE_QUOTA__'] = str(seafile_quota)
-    user_dict['__SEAFILE_RO_ACCESS__'] = str(seafile_ro_access)
-    user_dict['__PUBLIC_USE_HTTPS__'] = str(public_use_https)
+    user_dict['__SFTP_PORT__'] = "%s" % sftp_port
+    user_dict['__SFTP_SUBSYS_PORT__'] = "%s" % sftp_subsys_port
+    user_dict['__SFTP_SHOW_PORT__'] = "%s" % sftp_show_port
+    user_dict['__DAVS_PORT__'] = "%s" % davs_port
+    user_dict['__DAVS_SHOW_PORT__'] = "%s" % davs_show_port
+    user_dict['__FTPS_CTRL_PORT__'] = "%s" % ftps_ctrl_port
+    user_dict['__FTPS_CTRL_SHOW_PORT__'] = "%s" % ftps_ctrl_show_port
+    user_dict['__OPENID_PORT__'] = "%s" % openid_port
+    user_dict['__OPENID_SHOW_PORT__'] = "%s" % openid_show_port
+    user_dict['__SEAFILE_SEAHUB_PORT__'] = "%s" % seafile_seahub_port
+    user_dict['__SEAFILE_SEAFHTTP_PORT__'] = "%s" % seafile_seafhttp_port
+    user_dict['__SEAFILE_CLIENT_PORT__'] = "%s" % seafile_client_port
+    user_dict['__SEAFILE_QUOTA__'] = "%s" % seafile_quota
+    user_dict['__SEAFILE_RO_ACCESS__'] = "%s" % seafile_ro_access
+    user_dict['__PUBLIC_USE_HTTPS__'] = "%s" % public_use_https
     user_dict['__ALIAS_FIELD__'] = alias_field
     user_dict['__SIGNUP_METHODS__'] = signup_methods
     user_dict['__LOGIN_METHODS__'] = login_methods
@@ -512,8 +511,8 @@ def generate_confs(
 
     # Needed for PAM/NSS
     pw_info = pwd.getpwnam(user)
-    user_dict['__MIG_UID__'] = str(pw_info.pw_uid)
-    user_dict['__MIG_GID__'] = str(pw_info.pw_gid)
+    user_dict['__MIG_UID__'] = "%s" % (pw_info.pw_uid)
+    user_dict['__MIG_GID__'] = "%s" % (pw_info.pw_gid)
 
     fail2ban_daemon_ports = []
     # Apache fails on duplicate Listen directives so comment in that case
@@ -777,7 +776,7 @@ cert, oid and sid based https!
         user_dict['__SEAFHTTP_URL__'] = 'https://%s%s' % (seafile_fqdn,
                                                           seafhttp_base)
 
-    user_dict['__SEAFILE_LOCAL_INSTANCE__'] = str(seafile_local_instance)
+    user_dict['__SEAFILE_LOCAL_INSTANCE__'] = "%s" % (seafile_local_instance)
 
     # These two are used for internal proxying of the backends in apache
     seahub_proxy_host_port = seafhttp_proxy_host_port = seafile_proxy_host
@@ -1183,8 +1182,8 @@ cert, oid and sid based https!
         user_dict['__OPENIDCONNECT_COMMENTED__'] = ''
         # TODO: enable next lines if openid connect requires proxy for
         #       cert_redirect support
-        #user_dict['__PROXY_HTTP_COMMENTED__'] = ''
-        #user_dict['__PROXY_HTTPS_COMMENTED__'] = ''
+        # user_dict['__PROXY_HTTP_COMMENTED__'] = ''
+        # user_dict['__PROXY_HTTPS_COMMENTED__'] = ''
         # TODO: enable next lines if implementing native openid connect service
         # fail2ban_daemon_ports.append(openidconnect_port)
         # fail2ban_daemon_ports.append(openidconnect_show_port)
@@ -1313,14 +1312,14 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
     # Implicit ports if they are standard: cleaner and removes double hg login
     if public_fqdn:
         user_dict['__PUBLIC_HTTP_URL__'] = 'http://%(__PUBLIC_FQDN__)s' % user_dict
-        if str(public_http_port) != str(default_http_port):
+        if "%s" % public_http_port != "%s" % default_http_port:
             print("adding explicit public port (%s)" % [public_http_port,
                                                         default_http_port])
             user_dict['__PUBLIC_HTTP_URL__'] += ':%(__PUBLIC_HTTP_PORT__)s' % user_dict
         if public_use_https:
             user_dict['__PUBLIC_HTTPS_URL__'] = 'https://%(__PUBLIC_SEC_FQDN__)s' \
-                                                % user_dict
-            if str(public_https_port) != str(default_https_port):
+                % user_dict
+            if "%s" % public_https_port != "%s" % default_https_port:
                 print("adding explicit public https port (%s)" %
                       [public_https_port, default_https_port])
                 user_dict['__PUBLIC_HTTPS_URL__'] += ':%(__PUBLIC_HTTPS_PORT__)s' \
@@ -1335,12 +1334,12 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
             % user_dict
         user_dict['__PUBLIC_ALIAS_HTTPS_URL__'] = 'https://%(__PUBLIC_ALIAS_FQDN__)s' \
             % user_dict
-        if str(public_http_port) != str(default_http_port):
+        if "%s" % public_http_port != "%s" % default_http_port:
             print("adding explicit public alias port (%s)" % [public_http_port,
                                                               default_http_port])
             user_dict['__PUBLIC_ALIAS_HTTP_URL__'] += ':%(__PUBLIC_HTTP_PORT__)s' \
                 % user_dict
-        if str(public_https_port) != str(default_https_port):
+        if "%s" % public_https_port != "%s" % default_https_port:
             print("adding explicit public alias https port (%s)" %
                   [public_https_port, default_https_port])
             user_dict['__PUBLIC_ALIAS_HTTPS_URL__'] += ':%(__PUBLIC_HTTPS_PORT__)s' \
@@ -1351,51 +1350,51 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
 
     if mig_cert_fqdn:
         user_dict['__MIG_CERT_URL__'] = 'https://%(__MIG_CERT_FQDN__)s' % \
-                                        user_dict
-        if str(mig_cert_port) != str(default_https_port):
+            user_dict
+        if "%s" % mig_cert_port != "%s" % default_https_port:
             print("adding explicit mig cert port (%s)" % [mig_cert_port,
                                                           default_https_port])
             user_dict['__MIG_CERT_URL__'] += ':%(__MIG_CERT_PORT__)s' % \
                                              user_dict
     if ext_cert_fqdn:
         user_dict['__EXT_CERT_URL__'] = 'https://%(__EXT_CERT_FQDN__)s' % \
-                                        user_dict
-        if str(ext_cert_port) != str(default_https_port):
+            user_dict
+        if "%s" % ext_cert_port != "%s" % default_https_port:
             print("adding explicit ext cert port (%s)" % [ext_cert_port,
                                                           default_https_port])
             user_dict['__EXT_CERT_URL__'] += ':%(__EXT_CERT_PORT__)s' % \
                                              user_dict
     if mig_oid_fqdn:
         user_dict['__MIG_OID_URL__'] = 'https://%(__MIG_OID_FQDN__)s' % \
-                                       user_dict
-        if str(mig_oid_port) != str(default_https_port):
+            user_dict
+        if "%s" % mig_oid_port != "%s" % default_https_port:
             print("adding explicit ext oid port (%s)" % [mig_oid_port,
                                                          default_https_port])
             user_dict['__MIG_OID_URL__'] += ':%(__MIG_OID_PORT__)s' % user_dict
     if ext_oid_fqdn:
         user_dict['__EXT_OID_URL__'] = 'https://%(__EXT_OID_FQDN__)s' % \
-                                       user_dict
-        if str(ext_oid_port) != str(default_https_port):
+            user_dict
+        if "%s" % ext_oid_port != "%s" % default_https_port:
             print("adding explicit org oid port (%s)" % [ext_oid_port,
                                                          default_https_port])
             user_dict['__EXT_OID_URL__'] += ':%(__EXT_OID_PORT__)s' % user_dict
     if mig_oidc_fqdn:
         user_dict['__MIG_OIDC_URL__'] = 'https://%(__MIG_OIDC_FQDN__)s' % \
             user_dict
-        if str(ext_oidc_port) != str(default_https_port):
+        if "%s" % ext_oidc_port != "%s" % default_https_port:
             print("adding explicit org oidc port (%s)" % [ext_oidc_port,
                                                           default_https_port])
             user_dict['__MIG_OIDC_URL__'] += ':%(__MIG_OIDC_PORT__)s' % user_dict
     if ext_oidc_fqdn:
         user_dict['__EXT_OIDC_URL__'] = 'https://%(__EXT_OIDC_FQDN__)s' % \
             user_dict
-        if str(ext_oidc_port) != str(default_https_port):
+        if "%s" % ext_oidc_port != "%s" % default_https_port:
             print("adding explicit org oidc port (%s)" % [ext_oidc_port,
                                                           default_https_port])
             user_dict['__EXT_OIDC_URL__'] += ':%(__EXT_OIDC_PORT__)s' % user_dict
     if sid_fqdn:
         user_dict['__SID_URL__'] = 'https://%(__SID_FQDN__)s' % user_dict
-        if str(sid_port) != str(default_https_port):
+        if "%s" % sid_port != "%s" % default_https_port:
             print("adding explicit sid port (%s)" % [sid_port,
                                                      default_https_port])
             user_dict['__SID_URL__'] += ':%(__SID_PORT__)s' % user_dict
@@ -1459,7 +1458,7 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
     # print "fail2ban_daemon_ports %s sorted into %s" % (
     #    fail2ban_daemon_ports, sorted_ports)
     user_dict['__FAIL2BAN_DAEMON_PORTS__'] = ','.join(
-        [str(i) for i in sorted_ports])
+        ["%s" % i for i in sorted_ports])
 
     # Alias vgrid_label variations as aliases for vgrid pub page URL
     vgrid_aliases = [vgrid_label, vgrid_label.lower(), vgrid_label.upper()]
@@ -1635,7 +1634,7 @@ You can install it with:
 sudo cp %(destination)s/logrotate-migrid /etc/logrotate.d/migrid
 
 If running a local Seafile instance you may also want to copy confs to the
-Seafile installation 
+Seafile installation
 cp %(destination)s/seafile.conf ~/seafile/conf/
 cp %(destination)s/ccnet.conf ~/seafile/conf/
 cp %(destination)s/seahub_settings.py ~/seafile/conf/
@@ -1793,8 +1792,8 @@ def create_user(
 
     svc_ports = 6
     reserved_ports = range(svc_ports * uid, svc_ports * uid + svc_ports)
-    public_http_port, mig_cert_port, ext_cert_port, mig_oid_port, ext_oid_port, sid_port = \
-        reserved_ports[:svc_ports]
+    public_http_port, mig_cert_port, ext_cert_port, mig_oid_port, ext_oid_port, sid_port = reserved_ports[
+        :svc_ports]
     # Only one port for openid or openid connect
     mig_oidc_port = mig_oid_port
     ext_oidc_port = ext_oid_port
@@ -1906,8 +1905,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         if fqdn not in uniq_resolved:
             uniq_resolved.append(fqdn)
     if len(uniq_resolved) == len(https_fqdns):
-        mig_cert_port = ext_cert_port = mig_oid_port = ext_oid_port = \
-            mig_oidc_port = ext_oidc_port = sid_port
+        mig_cert_port = ext_cert_port = mig_oid_port = ext_oid_port = mig_oidc_port = ext_oidc_port = sid_port
         server_alias = 'ServerAlias'
     generate_confs(
         ' '.join(sys.argv),

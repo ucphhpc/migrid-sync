@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rpcfunctions - Backend for XMLRPC and JSONRPC interfaces over CGI
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,6 +28,7 @@
 """Backend functions for use in XMLRPC and JSONRPC interfaces, exposing all XGI
 methods through platform-independent Remote Procedure Calls.
 """
+
 from __future__ import absolute_import
 
 import os
@@ -48,7 +49,7 @@ def system_method_signature(method_name):
     try:
         exec(compile('from mig.shared.functionality.%s import signature'
                      % method_name, '', 'single'))
-        signature_string = str(signature())
+        signature_string = "%s" % signature()
     except:
         signature_string = 'none, array'
     return signature_string
@@ -61,13 +62,13 @@ def system_method_help(method_name):
     try:
         exec(compile('from mig.shared.functionality.%s import usage'
                      % method_name, '', 'single'))
-        help_string = str(usage())
+        help_string = "%s" % usage()
     except:
         try:
             exec(compile(
                 'from mig.shared.functionality.%s import __doc__ as method_help' %
                 method_name, '', 'single'))
-            help_string = str(method_help)
+            help_string = "%s" % method_help
         except:
             help_string = ''
     return help_string

@@ -572,7 +572,7 @@ ctime\t%(ctime)s
                 i['object_type'] == 'image_meta' or \
                 i['object_type'] == 'volume_meta':
             for elm in i:
-                lines.append('%s: %s\n' % (str(elm), str(i[elm])))
+                lines.append('%s: %s\n' % (elm, i[elm]))
         elif i['object_type'] == 'script_status':
             status_line = i.get('text')
         elif i['object_type'] == 'timing_info':
@@ -2579,24 +2579,24 @@ def format_timedelta(timedelta):
     minutes = (timedelta.seconds-(hours*3600))/60
     seconds = timedelta.seconds - (hours*3600) - (minutes*60)
 
-    hours_str = "%s" % (str(hours))
-    if (hours < 10):
-        hours_str = "0%s" % (hours_str)
+    hours_str = "%s" % hours
+    if hours < 10:
+        hours_str = "0%s" % hours_str
 
-    minutes_str = "%s" % (str(minutes))
-    if (minutes < 10):
-        minutes_str = "0%s" % (minutes_str)
+    minutes_str = "%s" % minutes
+    if minutes < 10:
+        minutes_str = "0%s" % minutes_str
 
-    seconds_str = "%s" % (str(seconds))
-    if (seconds < 10):
-        seconds_str = "0%s" % (seconds_str)
+    seconds_str = "%s" % seconds
+    if seconds < 10:
+        seconds_str = "0%s" % seconds_str
 
-    if (years > 0):
-        result = "%s years, %s days, %s:%s:%s" % (str(years), str(days),
+    if years > 0:
+        result = "%s years, %s days, %s:%s:%s" % (years, days,
                                                   hours_str, minutes_str,
                                                   seconds_str)
-    elif (days > 0):
-        result = "%s days, %s:%s:%s" % (str(days), hours_str, minutes_str,
+    elif days > 0:
+        result = "%s days, %s:%s:%s" % (days, hours_str, minutes_str,
                                         seconds_str)
     else:
         result = "%s:%s:%s" % (hours_str, minutes_str, seconds_str)

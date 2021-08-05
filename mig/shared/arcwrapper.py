@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # arcwrapper: main ARC middleware wrapper module
-# Copyright (C) 2009-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2009-2021  The MiG Project lead by Brian Vinter
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -154,8 +154,9 @@ def splitJobId(jobId):
         jobId = jobId + '/'
     jobURL = arclib.URL(jobId)
     path = os.path.split(jobURL.Path())[0]
-    return (jobURL.Protocol() + '://' + jobURL.Host() + ':'
-            + str(jobURL.Port()) + os.path.dirname(path) + '/', os.path.basename(path))
+    return ('%s://%s:%d%s/%s' % (jobURL.Protocol(), jobURL.Host(),
+                                 jobURL.Port(), os.path.dirname(path),
+                                 os.path.basename(path)))
 
 # hack: issue a command line, return output and exit code
 
@@ -185,8 +186,8 @@ def getstatusoutput(cmd, env=None, startDir=""):
         if len(resultLines) < 200:
             i = 0
             for line in resultLines:
-                logger.debug("\t" + str(i) + ": " + line.strip())
-                i = i + 1
+                logger.debug("\t%s: %s" % (i, line.strip()))
+                i += 1
 
     return resultVal, resultLines
 
@@ -194,11 +195,11 @@ def getstatusoutput(cmd, env=None, startDir=""):
 # asking the user for a proxy. This will be called from many places,
 # thus centralised here (though too specific ).
 def askProxy():
-        output_objects = []
-        output_objects.append({'object_type': 'sectionheader',
-                               'text': 'Proxy upload'})
-        output_objects.append({'object_type': 'html_form',
-                              'text': """
+    output_objects = []
+    output_objects.append({'object_type': 'sectionheader',
+                           'text': 'Proxy upload'})
+    output_objects.append({'object_type': 'html_form',
+                           'text': """
 <form action="upload.py"
 enctype="multipart/form-data" method="post">
 <p>
@@ -207,14 +208,14 @@ Such a proxy file can be created using the command-line tool
 voms-proxy-init, and can be found in /tmp/x509up_u&lt;your UID&gt;.<br>
 <input type="file" name="fileupload" size="40">
 <input type="hidden" name="path" value=""" +
-                               '"' + Ui.proxy_name + '"' +
-                               """>
+                           '"' + Ui.proxy_name + '"' +
+                           """>
 <input type="hidden" name="restrict" value="true">
 &nbsp;
 <input type="submit" value="Send file">
 </form>
                               """})
-        return output_objects
+    return output_objects
 
 
 def create_grid_proxy(cert_path, key_path, proxy_path):
@@ -413,17 +414,17 @@ class Ui:
 
                 # Convert XRSL file into a string
 
-                f = open(xrslFilename, 'rb')
-                xrslString = f.read()
-                f.close()
-                xrslAll = arclib.Xrsl(xrslString)
+            f = open(xrslFilename, 'rb')
+            xrslString = f.read()
+            f.close()
+            xrslAll = arclib.Xrsl(xrslString)
 
-                [jobDir, filename] = os.path.split(xrslFilename)
-                os.chdir(jobDir)
+            [jobDir, filename] = os.path.split(xrslFilename)
+            os.chdir(jobDir)
 
-                result = (self.submit(xrslAll, jobName))
-                os.chdir(currDir)
-                return result
+            result = (self.submit(xrslAll, jobName))
+            os.chdir(currDir)
+            return result
         except arclib.XrslError as err:
             logger.error('Ui: XrslError: ' + err.what())
             os.chdir(currDir)
@@ -443,43 +444,43 @@ class Ui:
         ARCWrapperError or NoProxyError."""
 
         try:
-                # Check for multiple xrsl
-                xrslSplit = xrslAll.SplitMulti()
+            # Check for multiple xrsl
+            xrslSplit = xrslAll.SplitMulti()
 
-                # retrieve clusters and their queues
-                # might throw a NoProxyError, leading us to the end
-                self.__initQueues()
+            # retrieve clusters and their queues
+            # might throw a NoProxyError, leading us to the end
+            self.__initQueues()
 
-                # Construct submission targets
+            # Construct submission targets
 
-                logger.debug('Ui: Constructing targets:')
-                allTargets = arclib.ConstructTargets(self._queues, xrslAll)
-                targets = arclib.PerformStandardBrokering(allTargets)
-                for t in targets:
-                    logger.debug('\t %s' % t)
+            logger.debug('Ui: Constructing targets:')
+            allTargets = arclib.ConstructTargets(self._queues, xrslAll)
+            targets = arclib.PerformStandardBrokering(allTargets)
+            for t in targets:
+                logger.debug('\t %s' % t)
 
-                # Submit job
+            # Submit job
 
-                jobIds = []
+            jobIds = []
 
-                logger.debug('Ui: Submitting job  .')
-                if len(targets) > 0:
-                    self.__lockArclib()
-                    for xrsl in xrslSplit:
-                        jobId = arclib.SubmitJob(xrsl, targets)
-                        jobIds.append(jobId)
-                        logger.debug('Ui:' + jobId + 'submitted.')
+            logger.debug('Ui: Submitting job  .')
+            if len(targets) > 0:
+                self.__lockArclib()
+                for xrsl in xrslSplit:
+                    jobId = arclib.SubmitJob(xrsl, targets)
+                    jobIds.append(jobId)
+                    logger.debug('Ui:' + jobId + 'submitted.')
 
-                        jobName = xrsl.GetRelation('jobName'
-                                                   ).GetSingleValue()
+                    jobName = xrsl.GetRelation('jobName'
+                                               ).GetSingleValue()
 
-                        arclib.AddJobID(jobId, jobName)
-                    self.__unlockArclib()
-                    return jobIds
-                else:
-                    # len(targets) == 0, thus:
-                    raise ARCWrapperError(
-                        "No matching resource for submission.")
+                    arclib.AddJobID(jobId, jobName)
+                self.__unlockArclib()
+                return jobIds
+            else:
+                # len(targets) == 0, thus:
+                raise ARCWrapperError(
+                    "No matching resource for submission.")
 
         except NoProxyError as err:
             logger.error('Proxy error during job submission: ' + err.what())
@@ -499,10 +500,10 @@ class Ui:
             self.__unlockArclib()
             raise ARCWrapperError('JobSubmissionError: ' + message.what())
         except arclib.TargetError as message:
-            logger.error('Ui,Target: ' + str(message))
+            logger.error('Ui,Target: %s' % message)
             if self._arclibLock.locked():  # should not be...
                 self.__unlockArclib()
-            raise ARCWrapperError('TargetError: ' + str(message))
+            raise ARCWrapperError('TargetError: %s' % message)
         except Exception as err:
             if self._arclibLock.locked():  # ...
                 self.__unlockArclib()
@@ -690,9 +691,9 @@ class Ui:
         try:
             arclib.CleanJob(jobId)
         except arclib.FTPControlError as err:
-                logger.error(
-                    'Failed to clean job %s: %s' % (jobId, err.what()))
-                arclib.RemoveJobID(jobId)
+            logger.error(
+                'Failed to clean job %s: %s' % (jobId, err.what()))
+            arclib.RemoveJobID(jobId)
         self.__unlockArclib()
 
     def getResults(self, jobId, downloadDir=''):

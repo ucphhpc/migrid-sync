@@ -93,7 +93,7 @@ class dummystat(object):
         raise TypeError('read-only attribute')
 
     def __repr__(self):
-        return str(self.__stat_info)
+        return "%s" % self.__stat_info
 
     def __str__(self):
         return self.__repr__()

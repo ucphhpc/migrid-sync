@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # imagemetaio - Managing MiG image meta data
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,6 +27,7 @@
 #
 
 """Image meta data helper functions"""
+
 from __future__ import absolute_import
 
 import os
@@ -214,7 +215,7 @@ def __ensure_filepath(logger, filepath, makedirs=False):
             os.makedirs(filepath)
         except Exception as ex:
             if not os.path.exists(filepath):
-                logger.debug('__ensure_filepath: %s' % str(ex))
+                logger.debug('__ensure_filepath: %s' % ex)
 
     if os.path.exists(filepath):
         result = filepath
@@ -709,7 +710,7 @@ def __remove_image_files(
             condition = '%s & (extension == b"%s")' % (condition,
                                                        extension)
         condition = condition.replace(' & ', '', 1)
-        logger.debug('condition: %s' % str(condition))
+        logger.debug('condition: %s' % condition)
 
         row_list = __get_row_idx_list(logger, image_file_table,
                                       condition)
@@ -747,8 +748,7 @@ def __remove_image_files(
             else:
                 status = False
 
-    logger.debug('status: %s, removed: %s' % (str(status),
-                                              str(removed)))
+    logger.debug('status: %s, removed: %s' % (status, removed))
 
     return (status, removed)
 
@@ -914,7 +914,7 @@ def __remove_image_volumes(
             condition = '%s & (extension == b"%s")' % (condition,
                                                        extension)
         condition = condition.replace(' & ', '', 1)
-        logger.debug('condition: %s' % str(condition))
+        logger.debug('condition: %s' % condition)
 
         row_list = __get_row_idx_list(logger, image_volume_table,
                                       condition)
@@ -944,8 +944,7 @@ def __remove_image_volumes(
             else:
                 status = False
 
-    logger.debug('status: %s, removed: %s' % (str(status),
-                                              str(removed)))
+    logger.debug('status: %s, removed: %s' % (status, removed))
 
     return (status, removed)
 
@@ -1110,7 +1109,7 @@ def add_image_file_setting(
         result = False
     else:
         condition = 'extension == b"%s"' % extension
-        logger.debug('condition: %s' % str(condition))
+        logger.debug('condition: %s' % condition)
 
         result = __modify_table(
             logger,
@@ -1141,7 +1140,7 @@ def update_image_file_setting(logger, abs_base_path,
     condition = ''
     if extension is not None and extension != '':
         condition = 'extension == b"%s"' % extension
-    logger.debug('condition: %s' % str(condition))
+    logger.debug('condition: %s' % condition)
 
     result = __modify_table(
         logger,
@@ -1182,7 +1181,7 @@ def remove_image_file_settings(logger, abs_base_path, extension=None):
         condition = ''
         if extension is not None:
             condition = 'extension == b"%s"' % extension
-        logger.debug('condition: %s' % str(condition))
+        logger.debug('condition: %s' % condition)
 
         row_list = __get_row_idx_list(logger, settings_table, condition)
 
@@ -1206,8 +1205,8 @@ def remove_image_file_settings(logger, abs_base_path, extension=None):
 
     __close_image_settings_file(logger, metafile)
 
-    logger.debug('status: %s, removed: %s' % (str(status),
-                                              str(removed)))
+    logger.debug('status: %s, removed: %s' % (status,
+                                              removed))
 
     return (status, removed)
 
@@ -1243,7 +1242,7 @@ def add_image_file(
     if extension is not None:
         condition = '%s & (extension == b"%s")' % (condition, extension)
     condition = condition.replace(' & ', '', 1)
-    logger.debug('condition: %s' % str(condition))
+    logger.debug('condition: %s' % condition)
 
     result = __modify_table(
         logger,
@@ -1281,7 +1280,7 @@ def update_image_file(logger, abs_base_path, image_file):
     if extension is not None:
         condition = '%s & (extension == b"%s")' % (condition, extension)
     condition = condition.replace(' & ', '', 1)
-    logger.debug('condition: %s' % str(condition))
+    logger.debug('condition: %s' % condition)
 
     result = __modify_table(
         logger,
@@ -1333,7 +1332,7 @@ def get_image_file_setting(logger, abs_base_path, extension):
     settings_result = get_image_file_settings(logger, abs_base_path,
                                               extension)
 
-    logger.debug('settings_result: %s' % str(settings_result))
+    logger.debug('settings_result: %s' % settings_result)
     if settings_result is not None:
         if len(settings_result) > 0:
             result = settings_result[0]
@@ -1362,11 +1361,11 @@ def get_image_file_settings(logger, abs_base_path, extension=None):
         condition = ''
         if extension is not None:
             condition = 'extension == b"%s" ' % extension
-        logger.debug('condition: %s' % str(condition))
+        logger.debug('condition: %s' % condition)
 
         row_list = __get_row_idx_list(logger, image_settings_table,
                                       condition)
-        logger.debug('row_list len: %s' % str(len(row_list)))
+        logger.debug('row_list len: %s' % len(row_list))
 
         for row_idx in row_list:
             entry = {}
@@ -1420,7 +1419,7 @@ def get_image_file_settings_count(logger, abs_base_path,
             condition = '%s & (extension == b"%s")' % (condition,
                                                        extension)
         condition = condition.replace(' & ', '', 1)
-        logger.debug('condition: %s' % str(condition))
+        logger.debug('condition: %s' % condition)
 
         if len(condition) > 0:
             row_list = __get_row_idx_list(logger, image_settings_table,
@@ -1490,7 +1489,7 @@ def get_image_files(
             condition = '%s & (extension == b"%s")' % (condition,
                                                        extension)
         condition = condition.replace(' & ', '', 1)
-        logger.debug('condition: %s' % str(condition))
+        logger.debug('condition: %s' % condition)
 
         row_list = __get_row_idx_list(logger, image_file_table,
                                       condition)
@@ -1578,7 +1577,7 @@ def get_image_file_count(
             condition = '%s & (extension == b"%s")' % (condition,
                                                        extension)
         condition = condition.replace(' & ', '', 1)
-        logger.debug('condition: %s' % str(condition))
+        logger.debug('condition: %s' % condition)
 
         if len(condition) > 0:
             row_list = __get_row_idx_list(logger, image_file_table,
@@ -1669,7 +1668,7 @@ def add_image_file_preview_data(
 
         logger.debug('name: %s' % name)
         logger.debug('title: %s' % title)
-        logger.debug('data: %s, %s' % (data.dtype, str(data.shape)))
+        logger.debug('data: %s, %s' % (data.dtype, data.shape))
         try:
             data_ent = data_group.__getattr__(name)
             data_ent[:] = data
@@ -1730,7 +1729,7 @@ def add_image_file_preview_image(
         logger.debug('imagefileio.py: add_image_file_preview_image -> title: %s'
                      % title)
         logger.debug('imagefileio.py: add_image_file_preview_image -> data: %s, %s'
-                     % (data.dtype, str(data.shape)))
+                     % (data.dtype, data.shape))
         try:
             data_ent = image_group.__getattr__(name)
             data_ent[:] = data
@@ -1786,7 +1785,7 @@ def add_image_file_preview_histogram(
         logger.debug('name: %s' % name)
         logger.debug('title: %s' % title)
         logger.debug('histogram: %s, %s' % (histogram.dtype,
-                                            str(histogram.shape)))
+                                            histogram.shape))
         try:
             histogram_ent = histogram_group.__getattr__(name)
             histogram_ent[:] = histogram
@@ -1838,7 +1837,7 @@ def add_image_volume_setting(
         result = False
     else:
         condition = 'extension == b"%s"' % extension
-        logger.debug('condition: %s' % str(condition))
+        logger.debug('condition: %s' % condition)
 
         result = __modify_table(
             logger,
@@ -1875,7 +1874,7 @@ def add_image_volume_preview_data(
         name = __get_data_node_name(logger, path, filename)
         logger.debug('name: %s' % name)
         logger.debug('title: %s' % title)
-        logger.debug('data: %s, %s' % (data.dtype, str(data.shape)))
+        logger.debug('data: %s, %s' % (data.dtype, data.shape))
         try:
             data_ent = data_group.__getattr__(name)
             data_ent[:] = data
@@ -1921,7 +1920,7 @@ def add_image_volume(
     if extension is not None:
         condition = '%s & (extension == b"%s")' % (condition, extension)
     condition = condition.replace(' & ', '', 1)
-    logger.debug('condition: %s' % str(condition))
+    logger.debug('condition: %s' % condition)
 
     result = __modify_table(
         logger,
@@ -1960,7 +1959,7 @@ def update_image_volume(logger, abs_base_path, image_volume):
     if extension is not None:
         condition = '%s & (extension == b"%s")' % (condition, extension)
     condition = condition.replace(' & ', '', 1)
-    logger.debug('condition: %s' % str(condition))
+    logger.debug('condition: %s' % condition)
 
     result = __modify_table(
         logger,
@@ -1992,7 +1991,7 @@ def update_image_volume_setting(logger, abs_base_path,
     condition = ''
     if extension is not None and extension != '':
         condition = 'extension == b"%s"' % extension
-    logger.debug('condition: %s' % str(condition))
+    logger.debug('condition: %s' % condition)
 
     result = __modify_table(
         logger,
@@ -2042,11 +2041,11 @@ def get_image_volume_settings(logger, abs_base_path, extension=None):
         condition = ''
         if extension is not None:
             condition = 'extension == b"%s" ' % extension
-        logger.debug('condition: %s' % str(condition))
+        logger.debug('condition: %s' % condition)
 
         row_list = __get_row_idx_list(logger, image_settings_table,
                                       condition)
-        logger.debug('row_list len: %s' % str(len(row_list)))
+        logger.debug('row_list len: %s' % len(row_list))
         for row_idx in row_list:
             entry = {}
             entry['extension'] = \
@@ -2105,7 +2104,7 @@ def get_image_volume_settings_count(logger, abs_base_path,
             condition = '%s & (extension == b"%s")' % (condition,
                                                        extension)
         condition = condition.replace(' & ', '', 1)
-        logger.debug('condition: %s' % str(condition))
+        logger.debug('condition: %s' % condition)
 
         if len(condition) > 0:
             row_list = __get_row_idx_list(logger, image_settings_table,
@@ -2175,7 +2174,7 @@ def get_image_volumes(
             condition = '%s & (extension == b"%s")' % (condition,
                                                        extension)
         condition = condition.replace(' & ', '', 1)
-        logger.debug('condition: %s' % str(condition))
+        logger.debug('condition: %s' % condition)
 
         row_list = __get_row_idx_list(logger, image_volume_table,
                                       condition)
@@ -2268,7 +2267,7 @@ def get_image_volume_count(
             condition = '%s & (extension == b"%s")' % (condition,
                                                        extension)
         condition = condition.replace(' & ', '', 1)
-        logger.debug('condition: %s' % str(condition))
+        logger.debug('condition: %s' % condition)
 
         if len(condition) > 0:
             row_list = __get_row_idx_list(logger, image_volume_table,
@@ -2309,7 +2308,7 @@ def remove_image_volume_settings(logger, abs_base_path, extension=None):
         condition = ''
         if extension is not None:
             condition = 'extension == b"%s"' % extension
-        logger.debug('condition: %s' % str(condition))
+        logger.debug('condition: %s' % condition)
 
         row_list = __get_row_idx_list(logger, settings_table, condition)
 
@@ -2333,7 +2332,7 @@ def remove_image_volume_settings(logger, abs_base_path, extension=None):
 
     __close_image_settings_file(logger, metafile)
 
-    logger.debug('status: %s, removed: %s' % (str(status),
-                                              str(removed)))
+    logger.debug('status: %s, removed: %s' % (status,
+                                              removed))
 
     return (status, removed)

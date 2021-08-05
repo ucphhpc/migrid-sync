@@ -333,7 +333,7 @@ def update_thread(data_dir, author, subject=None, key=None):
             # (_ ignore last reply - we're setting it to now)
             _, date, num_replies, _, author, subject = \
                 thread.strip().split('\t')
-            num_replies = str(int(num_replies) + 1)
+            num_replies = "%d" % (int(num_replies) + 1)
             new_threads.insert(0, '\t'.join(
                 (row_hash, date, num_replies, now, author, subject)))
         else:

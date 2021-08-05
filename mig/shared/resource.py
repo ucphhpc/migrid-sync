@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resource - resource configuration functions
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Resource configuration functions"""
+
 from __future__ import absolute_import
 
 import os
@@ -135,7 +136,7 @@ def retrieve_execution_nodes(exe_nodes, prepend_leader=False):
 
             for i in range(start_node, end_node):
                 if not node_name in execution_nodes:
-                    execution_nodes.append(node_name + str(i))
+                    execution_nodes.append("%s%d" % (node_name, i))
     return execution_nodes
 
 
@@ -185,12 +186,11 @@ def generate_execution_node_string(exe_nodes, hide_leader=True):
                         execution_nodes += '; '
 
                     if -1 == add_node_index[1]:
-                        execution_nodes += node_name\
-                            + str(add_node_index[0])
+                        execution_nodes += "%s%d" % (node_name,
+                                                     add_node_index[0])
                     else:
-                        execution_nodes += node_name + ' '\
-                            + str(add_node_index[0]) + '->'\
-                            + str(add_node_index[1])
+                        execution_nodes += "%s %d->%d" % (
+                            node_name, add_node_index[0], add_node_index[1])
 
                 add_node_index[0] = new_node_index
                 add_node_index[1] = -1
@@ -203,10 +203,10 @@ def generate_execution_node_string(exe_nodes, hide_leader=True):
             execution_nodes += '; '
 
         if -1 != add_node_index[1]:
-            execution_nodes += node_name + ' ' + str(add_node_index[0])\
-                + '->' + str(add_node_index[1])
+            execution_nodes += "%s %d->%d" % (node_name,
+                                              add_node_index[0], add_node_index[1])
         else:
-            execution_nodes += node_name + str(add_node_index[0])
+            execution_nodes += "%s%d" % (node_name, add_node_index[0])
 
     return execution_nodes
 
@@ -415,19 +415,19 @@ def init_conf(configuration, hosturl='', hostidentifier=''):
                 conf['EXECONFIG'])
             first = conf['EXECONFIG'][0]
 
-            home = str(first['execution_dir'])
+            home = "%(execution_dir)s" % first
             base_index = home.find('/MiG/mig_exe/')
             if base_index != -1:
                 home = home[:base_index]
             all['executionhome'] = home
-            all['execution_user'] = str(first['execution_user'])
+            all['execution_user'] = "%(execution_user)s" % first
             all['nodecount'] = first['nodecount']
             all['cputime'] = first['cputime']
-            all['execution_precondition'] = str(
-                first['execution_precondition']).strip("'")
-            all['prepend_execute'] = str(first['prepend_execute']).strip('"')
+            all['execution_precondition'] = "%s" % first['execution_precondition'].strip(
+                "'")
+            all['prepend_execute'] = "%s" % first['prepend_execute'].strip('"')
 
-            all['start_command'] = str(first['start_command'])
+            all['start_command'] = "%(start_command)s" % first
             default_start_command = default_exe_start_command(first)
             if all['start_command'].strip().replace('\\', '') == \
                     default_start_command.strip().replace('\\', ''):
@@ -446,7 +446,7 @@ def init_conf(configuration, hosturl='', hostidentifier=''):
                     local_dummy_start_command.strip().replace('\\', ''):
                 all['start_command'] = 'local'
 
-            all['status_command'] = str(first['status_command'])
+            all['status_command'] = "%(status_command)s" % first
             default_status_command = default_exe_status_command(first)
             if all['status_command'].strip().replace('\\', '') == \
                     default_status_command.strip().replace('\\', ''):
@@ -466,7 +466,7 @@ def init_conf(configuration, hosturl='', hostidentifier=''):
                     local_dummy_status_command.strip().replace('\\', ''):
                 all['status_command'] = 'local'
 
-            all['stop_command'] = str(first['stop_command'])
+            all['stop_command'] = "%(stop_command)s" % first
             default_stop_command = default_exe_stop_command(first)
             if all['stop_command'].strip().replace('\\', '') == \
                     default_stop_command.strip().replace('\\', ''):
@@ -484,7 +484,7 @@ def init_conf(configuration, hosturl='', hostidentifier=''):
                     local_dummy_stop_command.strip().replace('\\', ''):
                 conf['stop_command'] = 'local'
 
-            all['clean_command'] = str(first['clean_command'])
+            all['clean_command'] = "%(clean_command)s" % first
             default_clean_command = default_exe_clean_command(first)
             if all['clean_command'].strip().replace('\\', '') == \
                     default_clean_command.strip().replace('\\', ''):
@@ -538,18 +538,18 @@ def init_conf(configuration, hosturl='', hostidentifier=''):
             all['storagenodes'] = generate_storage_node_string(
                 conf['STORECONFIG'])
             first = conf['STORECONFIG'][0]
-            home = str(first['storage_dir'])
+            home = "%(storage_dir)s" % first
             base_index = home.find('/MiG/mig_store/')
             if base_index != -1:
                 home = home[:base_index]
             all['storagehome'] = home
             all['storage_disk'] = first['storage_disk']
-            all['storage_protocol'] = str(first['storage_protocol'])
+            all['storage_protocol'] = "%(storage_protocol)s" % first
             all['storage_port'] = first['storage_port']
-            all['storage_user'] = str(first['storage_user'])
-            all['storage_dir'] = str(first['storage_dir'])
+            all['storage_user'] = "%(storage_user)s" % first
+            all['storage_dir'] = "%(storage_dir)s" % first
 
-            all['start_command'] = str(first['start_command'])
+            all['start_command'] = "%(start_command)s" % first
             default_start_command = default_store_start_command(first)
             if all['start_command'].strip().replace('\\', '') == \
                     default_start_command.strip().replace('\\', ''):
@@ -559,7 +559,7 @@ def init_conf(configuration, hosturl='', hostidentifier=''):
                     local_start_command.strip().replace('\\', ''):
                 all['start_command'] = 'local'
 
-            all['status_command'] = str(first['status_command'])
+            all['status_command'] = "%(status_command)s" % first
             default_status_command = default_store_status_command(first)
             if all['status_command'].strip().replace('\\', '') == \
                     default_status_command.strip().replace('\\', ''):
@@ -569,8 +569,7 @@ def init_conf(configuration, hosturl='', hostidentifier=''):
                     local_status_command.strip().replace('\\', ''):
                 all['status_command'] = 'local'
 
-            all['stop_command'] = str(first['stop_command'
-                                            ])
+            all['stop_command'] = "%(stop_command)s" % first
             default_stop_command = default_store_stop_command(first)
             if all['stop_command'].strip().replace('\\', '') == \
                     default_stop_command.strip().replace('\\', ''):
@@ -580,8 +579,7 @@ def init_conf(configuration, hosturl='', hostidentifier=''):
                     local_stop_command.strip().replace('\\', ''):
                 all['stop_command'] = 'local'
 
-            all['clean_command'] = str(conf['STORECONFIG'
-                                            ][0]['clean_command'])
+            all['clean_command'] = "%(clean_command)s" % conf['STORECONFIG'][0]
             default_clean_command = default_store_clean_command(first)
             if all['clean_command'].strip().replace('\\', '') == \
                     default_clean_command.strip().replace('\\', ''):
@@ -627,8 +625,8 @@ def prepare_conf(configuration, input_args, resource_id):
         field_count = int(field_count_arg)
         del user_args['runtime_env_fields']
     for i in range(field_count):
-        runtime_env = 'runtimeenvironment' + str(i)
-        env_values = 're_values' + str(i)
+        runtime_env = 'runtimeenvironment%d' % i
+        env_values = 're_values%d' % i
         if runtime_env in user_args:
             if env_values in user_args:
                 # re_valuesX is a single line, A=vx yz\nB=def, with all
@@ -942,8 +940,7 @@ def create_resource_home(configuration, client_id, resource_name):
                 maxcounter = counter
 
     resource_identifier = maxcounter + 1
-    unique_resource_name = resource_name + '.'\
-        + str(resource_identifier)
+    unique_resource_name = "%s.%d" % (resource_name, resource_identifier)
     newdir = os.path.join(configuration.resource_home, unique_resource_name)
     try:
         os.mkdir(newdir)
@@ -1009,7 +1006,7 @@ def remove_resource(configuration, client_id, resource_name, resource_identifier
     msg = "\nRemoving host: '%s.%s'" % (resource_name,
                                         resource_identifier)
 
-    unique_resource_name = resource_name + '.' + str(resource_identifier)
+    unique_resource_name = "%s.%d" % (resource_name, resource_identifier)
     resource_path = os.path.join(
         configuration.resource_home, unique_resource_name)
 
@@ -1046,13 +1043,12 @@ def create_resource_conf(
     """
     if new_resource:
         msg = """
-Trying to create configuration for new resource: '%s.%s' from file '%s':
-""" % (resource_name, str(resource_identifier),
-            resource_configfile)
+Trying to create configuration for new resource: '%s.%d' from file '%s':
+""" % (resource_name, resource_identifier, resource_configfile)
     else:
         msg = """
-Trying to update configuration for existing resource '%s.%s':
-""" % (resource_name, str(resource_identifier))
+Trying to update configuration for existing resource '%s.%d':
+""" % (resource_name, resource_identifier)
 
     client_dir = client_id_dir(client_id)
 
@@ -1106,8 +1102,8 @@ Failure:
         fw = open(tmpfile, 'w')
         readline = fr.readline()
         while len(readline) > 0:
-            fw.write(readline.replace(keyword_auto,
-                                      str(resource_identifier)))
+            fw.write(readline.replace(keyword_auto, "%d" %
+                                      resource_identifier))
             readline = fr.readline()
         fw.close()
         fr.close()
@@ -1118,7 +1114,7 @@ Failure:
             % err
         return (False, msg)
 
-    unique_resource_name = resource_name + '.' + str(resource_identifier)
+    unique_resource_name = "%s.%d" % (resource_name, resource_identifier)
     (status, run_msg) = run(configuration, tmpfile, unique_resource_name)
     msg += '\n' + run_msg
     if not status:

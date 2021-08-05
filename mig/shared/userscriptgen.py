@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userscriptgen - Generator backend for user scripts
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,11 +35,17 @@ languages. Called without arguments the generator creates scripts
 for all supported languages. If one or more languages are supplied
 as arguments, only those languages will be generated.
 """
+
 from __future__ import print_function
 from __future__ import absolute_import
 
 import sys
 import getopt
+
+from mig.shared.base import get_xgi_bin
+from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import file_dest_sep, upload_block_size, keyword_auto
+from mig.shared.publicscriptgen import *
 
 # Generator version (automagically updated by svn)
 
@@ -49,10 +55,6 @@ __version__ = '$Revision$'
 
 _userscript_version = __version__
 
-from mig.shared.base import get_xgi_bin
-from mig.shared.conf import get_configuration_object
-from mig.shared.defaults import file_dest_sep, upload_block_size, keyword_auto
-from mig.shared.publicscriptgen import *
 _publicscript_version = __version__
 __version__ = '%s,%s' % (_userscript_version, _publicscript_version)
 
@@ -1755,7 +1757,7 @@ def logout_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     # Strip / prefix from landing page get the required url form
     relative_url = configuration.site_landing_page.strip('/')
     relative_return_url = '"%s/autologout.py?output_format=txt"' \
-        % get_xgi_bin(configuration) 
+        % get_xgi_bin(configuration)
     if lang == 'sh':
         post_data = '"$default_args;flags=$server_flags"'
     elif lang == 'python':
@@ -3336,7 +3338,7 @@ for pattern in ${src_list[@]}; do
     exit_code=\"${expanded_path/Exit code: /}\"
     exit_code=\"${exit_code/ Description */}\"
     if [ \"$exit_code\" -ne \"0\" ]; then
-""" % (expanded_list, input_list, str(destinations).lower(), file_dest_sep)
+""" % (expanded_list, input_list, ("%s" % destinations).lower(), file_dest_sep)
         if warnings:
             s += \
                 """
@@ -3371,7 +3373,7 @@ for pattern in %s:
     src_list = result[3:]
     if status != '0':
 """\
-             % (expanded_list, input_list, str(destinations).lower())
+             % (expanded_list, input_list, ("%s" % destinations).lower())
         if warnings:
             s += \
                 """

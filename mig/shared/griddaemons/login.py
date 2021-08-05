@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # login - grid daemon login helper functions
-# Copyright (C) 2010-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -1058,14 +1058,14 @@ def refresh_jupyter_creds(configuration, protocol, username):
     logger.info("Getting active jupuyter mount creds")
     link_path = os.path.join(configuration.sessid_to_jupyter_mount_link_home,
                              "%s" % username + ".jupyter_mount")
-    # logger.debug("jupyter linkpath: " + str(os.path.islink(link_path))
-    #              + " jupyter path exists: " + str(os.path.exists(link_path)))
+    # logger.debug("jupyter linkpath: %s jupyter path exists: %s" % \
+    #                 (os.path.islink(link_path), os.path.exists(link_path)))
 
     jupyter_dict = None
     if os.path.islink(link_path) and os.path.exists(link_path):
         sessionid = username
         jupyter_dict = unpickle(link_path, logger)
-        # logger.debug("loaded jupyter dict: " + str(jupyter_dict))
+        # logger.debug("loaded jupyter dict: %s" % jupyter_dict)
 
     # We only allow connections from active jupyter credentials
     if jupyter_dict is not None and isinstance(jupyter_dict, dict) and \
@@ -1102,9 +1102,8 @@ def refresh_jupyter_creds(configuration, protocol, username):
 
     if creds_lock:
         creds_lock.acquire()
-    logger.info("Active jupyter_mounts: " +
-                str([(i.username, i.home) for i in
-                     conf['jupyter_mounts']]))
+    logger.info("Active jupyter_mounts: %s" % [(i.username, i.home) for i in
+                                               conf['jupyter_mounts']])
     if creds_lock:
         creds_lock.release()
     logger.info("Refreshed active jupyter creds")
@@ -1130,7 +1129,7 @@ def update_login_map(daemon_conf, changed_users, changed_jobs=[],
         login_map[username] = [i for i in daemon_conf['users'] if username ==
                                i.username]
     # logger.debug("update_login_map for %s: %s" %
-    #              (username, '\n'.join([str(i) for i in login_map[username]])))
+    #                (username, '\n'.join(["%s" % i for i in login_map[username]])))
     for username in changed_jobs:
         login_map[username] = [i for i in daemon_conf['jobs'] if username ==
                                i.username]

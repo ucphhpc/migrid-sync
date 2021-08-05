@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # debug - Python debug helpers
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """MiG Python Python debug helpers"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -35,7 +36,7 @@ try:
     import pygdb.breakpoint
 except Exception as exc:
     pygdb = None
-    print("ERROR: the python pygdb module is missing: %s" % str(exc))
+    print("ERROR: the python pygdb module is missing: %s" % exc)
 
 from mig.shared.conf import get_configuration_object
 from mig.shared.logger import daemon_logger

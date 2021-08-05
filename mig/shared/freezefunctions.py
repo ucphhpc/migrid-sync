@@ -219,7 +219,7 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False,
     # NOTE: datetime is not json-serializable so we force to string
     for field in ('location', ):
         if not freeze_dict.get(field.upper(), None) is None:
-            freeze_obj[field] = [(i, str(j))
+            freeze_obj[field] = [(i, "%s" % j)
                                  for (i, j) in freeze_dict[field.upper()]]
     return freeze_obj
 

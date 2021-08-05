@@ -46,12 +46,12 @@ import datetime
 # from xml.etree import ElementTree as ET
 
 # in order to construct our own XML DOMs
-from xml.dom import getDOMImplementation,XMLNS_NAMESPACE
+from xml.dom import getDOMImplementation, XMLNS_NAMESPACE
 
 # MiG-specific imports
 
 from mig.shared.configuration import Configuration
-from mig.shared.fileio import unpickle,write_file
+from mig.shared.fileio import unpickle, write_file
 
 # Description of the Usage Record XML format:
 
@@ -122,7 +122,7 @@ def xsl_duration(start, end=None):
     secs = delta.seconds % 60
 
     deltastr = sign + 'P%dD' % delta.days + 'T%02dH%02dM%02d.%06dS'\
-         % (hours, mins, secs, delta.microseconds)
+        % (hours, mins, secs, delta.microseconds)
 
     return deltastr
 
@@ -150,8 +150,8 @@ def xsl_duration(start, end=None):
 #   'Charge'    # float
 #      attribute: 'formula' # optional, string
 #   'Status'    # mandatory, Token extending a minimal set:
-                # aborted,completed,failed,held,queued,started,suspended
-                # for mapping MiG<->UsageRecord see __state_map__ below
+    # aborted,completed,failed,held,queued,started,suspended
+    # for mapping MiG<->UsageRecord see __state_map__ below
     # each of the following elements can appear multiple times,
     # but must differ in their "metric" attribute.
 #   'Disk'  # positive integer
@@ -195,7 +195,7 @@ __state_map__ = {
     'QUEUED': 'queued',
     'EXECUTING': 'started',
     'RETRY': 'suspended',
-    }
+}
 
 # grep -r STATUS mig/shared/ yields (mostly) this:
 # shared/gridscript.py:            if job_dict['STATUS'] == 'PARSE':
@@ -217,10 +217,11 @@ __state_map__ = {
 
 ET = getDOMImplementation()
 namespace_ogf = 'http://schema.ogf.org/urf/2003/09/urf'
-namespace_prefix= 'ur:'
+namespace_prefix = 'ur:'
 
-SGAS_VO_NAMESPACE   = "http://www.sgas.se/namespaces/2009/05/ur/vo"
+SGAS_VO_NAMESPACE = "http://www.sgas.se/namespaces/2009/05/ur/vo"
 SGAS_VO_PREFIX = "vo:"
+
 
 class UsageRecord:
 
@@ -239,14 +240,15 @@ class UsageRecord:
                                        namespace_prefix + 'JobUsageRecord',
                                        None)
         # we keep the document around from the beginning...
-        self.__doc.documentElement.setAttributeNS(XMLNS_NAMESPACE, 
-                          'xmlns:' + namespace_prefix[:-1],
-                          namespace_ogf)
+        self.__doc.documentElement.setAttributeNS(XMLNS_NAMESPACE,
+                                                  'xmlns:' +
+                                                  namespace_prefix[:-1],
+                                                  namespace_ogf)
 
-        self.__doc.documentElement.setAttributeNS(XMLNS_NAMESPACE, 
-                          'xmlns:' + SGAS_VO_PREFIX[:-1],
-                          SGAS_VO_NAMESPACE)
-        
+        self.__doc.documentElement.setAttributeNS(XMLNS_NAMESPACE,
+                                                  'xmlns:' +
+                                                  SGAS_VO_PREFIX[:-1],
+                                                  SGAS_VO_NAMESPACE)
 
         # XML data which we intend to use:
 
@@ -287,7 +289,7 @@ class UsageRecord:
 
             element = self.__doc.createElementNS(namespace,
                                                  prefix + name)
-            element.appendChild(self.__doc.createTextNode(str(text)))
+            element.appendChild(self.__doc.createTextNode("%s" % text))
             parent.appendChild(element)
             return element  # in case we want to add attributes...
 
@@ -298,33 +300,33 @@ class UsageRecord:
         # begin method
 
         self.__logger.debug('Writing out usage record, ID %s'
-                             % self.record_id)
+                            % self.record_id)
 
         record = self.__doc.documentElement
 
         if self.record_id == None:
             self.__logger.error('No recordId specified, '
-                                 + 'cannot generate usage record')
+                                + 'cannot generate usage record')
             return None
         record_id = self.__doc.createElementNS(namespace_ogf,
-                                               namespace_prefix + 
+                                               namespace_prefix +
                                                'RecordIdentity')
         record_id.setAttributeNS(namespace_ogf,
-                                 namespace_prefix + 'recordId', 
+                                 namespace_prefix + 'recordId',
                                  self.record_id)
         if self.create_time:
             record_id.setAttributeNS(namespace_ogf,
-                                     namespace_prefix + 'createTime', 
+                                     namespace_prefix + 'createTime',
                                      self.create_time)
         else:
             record_id.setAttributeNS(namespace_ogf,
-                                     namespace_prefix + 'createTime', 
+                                     namespace_prefix + 'createTime',
                                      xsl_datetime())
         record.appendChild(record_id)
 
         if self.global_job_id or self.local_job_id:
             job_identity = self.__doc.createElementNS(namespace_ogf,
-                                                      namespace_prefix + 
+                                                      namespace_prefix +
                                                       'JobIdentity')
             if self.global_job_id:
                 set_element(job_identity, 'GlobalJobId',
@@ -345,33 +347,32 @@ class UsageRecord:
                 set_element(user_identity, 'LocalUserId',
                             self.local_user_id)
 
-                #If the VGRID property is set, the VO
-                #element in the tree is set according to the SGAS
-                #definition.
+                # If the VGRID property is set, the VO
+                # element in the tree is set according to the SGAS
+                # definition.
                 if self.vgrid:
-                    vo = self.__doc.createElementNS(SGAS_VO_NAMESPACE, \
-                                            SGAS_VO_PREFIX + 'VO')
+                    vo = self.__doc.createElementNS(SGAS_VO_NAMESPACE,
+                                                    SGAS_VO_PREFIX + 'VO')
 
-                    vo.setAttributeNS(SGAS_VO_NAMESPACE,\
+                    vo.setAttributeNS(SGAS_VO_NAMESPACE,
                                       SGAS_VO_PREFIX + 'type', "vgrid")
-            
-                    set_element(vo, 'Name', self.vgrid, \
-                                SGAS_VO_NAMESPACE,SGAS_VO_PREFIX )
+
+                    set_element(vo, 'Name', self.vgrid,
+                                SGAS_VO_NAMESPACE, SGAS_VO_PREFIX)
 
             user_identity.appendChild(vo)
             record.appendChild(user_identity)
-            
 
         if self.charge:
             temp = set_element(record, 'Charge', text=self.charge)
             if self.charge_formula:
                 temp.setAttributeNS(namespace_ogf,
-                                    namespace_prefix + 'formula', 
+                                    namespace_prefix + 'formula',
                                     self.charge_formula)
 
         if self.status == None:
             self.__logger.error('No status specified, '
-                                 + 'cannot generate usage record')
+                                + 'cannot generate usage record')
             return None
         set_element(record, 'Status', text=self.status)
 
@@ -399,17 +400,14 @@ class UsageRecord:
             temp = set_element(record, 'CpuDuration',
                                text=self.cpu_duration_user)
             temp.setAttributeNS(namespace_ogf,
-                                namespace_prefix + 'usageType', 
+                                namespace_prefix + 'usageType',
                                 'user')
         if self.cpu_duration_system:
             temp = set_element(record, 'CpuDuration',
                                text=self.cpu_duration_system)
             temp.setAttributeNS(namespace_ogf,
-                                namespace_prefix + 'usageType', 
+                                namespace_prefix + 'usageType',
                                 'system')
-
-        
-        
 
         return self.__doc.toxml()
 
@@ -429,23 +427,22 @@ class UsageRecord:
         # add a solid type later!
 
         self.__logger.debug('filling in job data from file %s'
-                             % job_data)
+                            % job_data)
         try:
             if os.path.exists(job_data):
                 job = unpickle(job_data, self.__logger)
                 self.fill_from_dict(job)
             else:
                 self.__logger.error('file %s does not exist.'
-                                     % job_data)
+                                    % job_data)
         except Exception as err:
             self.__logger.error('while filling in data from %s: %s'
-                                 % (job_data, err))
+                                % (job_data, err))
 
     def fill_from_dict(self, job):
         """Fill in data from mRSL, given as a dictionary"""
 
         # helpers: lookup with exception
-
 
         class NotHere(Exception):
 
@@ -457,7 +454,6 @@ class UsageRecord:
             def __str__(self):
                 return self.name
 
-
         def lookup(name):
             """search job dict for a given name"""
 
@@ -467,7 +463,7 @@ class UsageRecord:
                 raise NotHere(name + ' not found.')
 
         self.__logger.debug('filling in job data from dictionary: %s'
-                             % job )
+                            % job)
         # set all fields we can get from mRSL easily:
 
         # these are required, give up if not there:
@@ -480,7 +476,7 @@ class UsageRecord:
             self.status = __state_map__[status]
         except NotHere as err:
             self.__logger.error('Job data missing mandatory fields: %s'
-                                 % err)
+                                % err)
             return
 
         # createTime: when the record was written (filled)
@@ -489,13 +485,13 @@ class UsageRecord:
 
         # fields directly used (lookup not needed):
 
-        self.global_user_name = job.get('USER_CERT',None)
+        self.global_user_name = job.get('USER_CERT', None)
 
-        self.project_name = job.get('PROJECT',None)
+        self.project_name = job.get('PROJECT', None)
 
         self.node_count = job.get('NODECOUNT', None)
 
-        # Nota bene: use the VGrid that actually executed the job, as 
+        # Nota bene: use the VGrid that actually executed the job, as
         # opposed to job['VGRID'] which contains a list of potential ones.
         # see http://code.google.com/p/migrid/issues/detail?id=32
 
@@ -523,8 +519,8 @@ class UsageRecord:
             self.start_time = xsl_datetime(start_time)
 
             # FINISHED_TIMESTAMP is not there for failed jobs.
-            # Question is how to account them, when 
-            # they have spent resources (e.g. failed due 
+            # Question is how to account them, when
+            # they have spent resources (e.g. failed due
             # to timeout, several retries,...)
 
             end_ = lookup('FINISHED_TIMESTAMP')
@@ -539,35 +535,35 @@ class UsageRecord:
 
                 charge_delta = self.node_count * (end_time - start_time)
                 self.charge = charge_delta.days * 86400\
-                     + charge_delta.seconds + charge_delta.microseconds\
-                     / 1000000.0
+                    + charge_delta.seconds + charge_delta.microseconds\
+                    / 1000000.0
 
-                              # We currently do not get microseconds because
-                              # startT and endT only have second precision
-                              # However, the ".0" forces float type.
+                # We currently do not get microseconds because
+                # startT and endT only have second precision
+                # However, the ".0" forces float type.
 
                 self.charge_formula = 'nodes * wall_duration(sec)'
         except NotHere:
-            pass  
-                # nevermind... if something is not found, we jump out, 
-                # but we have set all available fields before.
+            pass
+            # nevermind... if something is not found, we jump out,
+            # but we have set all available fields before.
 
         # executing host, should always be there:
-        self.host = job.get('EXE',None)
-        
+        self.host = job.get('EXE', None)
+
         # machine name = executing resource ID
-        try: 
+        try:
             self.machine_name = lookup('UNIQUE_RESOURCE_NAME')
-        except NotHere: 
+        except NotHere:
             # might be a failed job, try execution history
             if 'EXECUTION_HISTORY' in job:
                 hist = job['EXECUTION_HISTORY']
-                self.machine_name = hist[-1].get('UNIQUE_RESOURCE_NAME',None)
+                self.machine_name = hist[-1].get('UNIQUE_RESOURCE_NAME', None)
 
         # local user on the resource, if available
         if 'RESOURCE_CONFIG' in job:
             resCfg = job['RESOURCE_CONFIG']
-            self.local_user_id = resCfg.get('MIGUSER',None)
+            self.local_user_id = resCfg.get('MIGUSER', None)
             # self.host  = resCfg.get('RESOURCE_ID',None)
 
         # could be used, but unreliable:
@@ -577,7 +573,6 @@ class UsageRecord:
         # CPUCOUNT - ? (requested)
         # MEMORY - ? (requested)
 
-        
         return
 
 
@@ -588,8 +583,8 @@ class UsageRecord:
 
 def write_usage_record_from_dict(jobdict, config):
 
-#    if not configuration:
-#        configuration = get_configuration_object
+    #    if not configuration:
+    #        configuration = get_configuration_object
 
     ur_destination = config.usage_record_dir
     if ur_destination and jobdict:
@@ -601,9 +596,10 @@ def write_usage_record_from_dict(jobdict, config):
         # we use the job_id as a file name (should be unique)
 
         usage_record.write_xml(ur_destination + os.sep
-                                + jobdict['JOB_ID'] + '.xml')
+                               + jobdict['JOB_ID'] + '.xml')
 
 # testing
+
 
 if __name__ == '__main__':
     print(len(sys.argv))
@@ -614,17 +610,15 @@ if __name__ == '__main__':
 
         usage_record = UsageRecord(conf, conf.logger)
 
-        #make sure we can write out something...
+        # make sure we can write out something...
 
         usage_record.record_id = 'uninitialised'
         usage_record.status = 'unknown'
         usage_record.fill_from_mrsl(fname)
 
-
         if len(sys.argv) > 2:
             target = sys.argv[2]
         else:
-            target = '.'.join([fname,'xml'])
+            target = '.'.join([fname, 'xml'])
 
-            
         usage_record.write_xml(target)

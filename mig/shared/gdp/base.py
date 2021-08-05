@@ -377,11 +377,11 @@ def __load_user_db(configuration,
         try:
             result = load(db_filepath)
         except Exception as exc:
-            err = str(exc)
+            err = "%s" % exc
             result = {}
             msg = "Failed to load GDP user DB"
             if err:
-                msg += ": %s" % str(err)
+                msg += ": %s" % err
             _logger.error(msg)
             raise Exception(msg)
     elif not allow_missing:
@@ -1013,7 +1013,7 @@ def project_log(
             # Make sure that no user details are revealed in GDP log
 
             try:
-                details = str(details)
+                details = "%s" % details
                 # _logger.debug("user_id: %s" % user_id)
                 details = details.replace(user_id, user_hash)
 
@@ -2149,7 +2149,7 @@ def edit_gdp_user(
             _logger.info(log_prefix + template)
         except Exception as exc:
             msg = "failed to edit user: %r: %s" \
-                % (project_user_id, str(exc))
+                % (project_user_id, exc)
             if verbose:
                 print("ERROR: %s" % msg)
             _logger.error(log_prefix + msg)
@@ -2242,7 +2242,7 @@ def edit_gdp_user(
             _logger.info(log_prefix + template)
 
         except Exception as exc:
-            msg = "failed to edit user: %r: %s" % (user_id, str(exc))
+            msg = "failed to edit user: %r: %s" % (user_id, exc)
             if verbose:
                 print("ERROR: %s" % msg)
             _logger.error(log_prefix + msg)
@@ -2297,7 +2297,7 @@ def edit_gdp_user(
                                  conf_path, mig_db_path,
                                  True, verbose)
         except Exception as exc:
-            msg = "failed to rollback: %s" % str(exc)
+            msg = "failed to rollback: %s" % exc
             if verbose:
                 print("ERROR: %s" % msg)
             _logger.error(log_prefix + msg)
@@ -2646,9 +2646,9 @@ def project_demote_owner(
     status = True
 
     _logger = configuration.logger
-    _logger.debug("client_addr: %r, client_id: %r" \
-                  % (client_addr, client_id) \
-                  + ", demotee_client_id: %r, project_name: %s" \
+    _logger.debug("client_addr: %r, client_id: %r"
+                  % (client_addr, client_id)
+                  + ", demotee_client_id: %r, project_name: %s"
                   % (demotee_client_id, project_name))
     _logger.debug("category_dict: %s" % category_dict)
 

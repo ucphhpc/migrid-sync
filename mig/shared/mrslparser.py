@@ -89,8 +89,7 @@ def expand_variables(job_dict):
                     env = (name, val)
                     newlist.append(env)
                 elif type(elem) is bytes:
-                    newlist.append(replace_variables(str(elem),
-                                                     var_map))
+                    newlist.append(replace_variables("%s" % elem, var_map))
                 else:
 
                     # elem was not a tuple/string, dont try to replace
@@ -98,7 +97,7 @@ def expand_variables(job_dict):
                     newlist.append(elem)
             job_dict[key] = newlist
         elif isinstance(value, str):
-            job_dict[key] = replace_variables(str(value), var_map)
+            job_dict[key] = replace_variables("%s" % value, var_map)
     return job_dict
 
 

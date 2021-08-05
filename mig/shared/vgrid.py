@@ -232,7 +232,7 @@ doubt, just let the user request access and accept it with the
                 for (field, _) in extra_fields:
                     val = elem.get(field, '')
                     if isinstance(val, bool):
-                        val = str(val)
+                        val = "%s" % val
                     elif not isinstance(val, basestring):
                         val = ' '.join(val)
                     extra_fields_html += '<td>%s</td>' % val
@@ -296,7 +296,7 @@ doubt, just let the user request access and accept it with the
                 for (field, _) in extra_fields:
                     val = elem.get(field, '')
                     if isinstance(val, bool):
-                        val = str(val)
+                        val = "%s" % val
                     elif not isinstance(val, basestring):
                         val = ' '.join(val)
                     extra_fields_html += '<td>%s</td>' % val

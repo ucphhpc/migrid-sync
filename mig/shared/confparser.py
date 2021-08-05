@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # confparser - parse resource configurations
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -235,6 +235,6 @@ owner and ask if you can be included in the %s.""" %
         fsock.write(st)
         fsock.close()
     except Exception as err:
-        return (False, "Fatal error: could not open '" + filename
-                + "' for writing!" + '\n Msg: ' + str(err))
+        return (False, "Fatal error: could not open %r for writing!\n Msg: %s"
+                % (filename, err))
     return (True, 'Everything ok, config updated')

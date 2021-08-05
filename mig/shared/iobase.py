@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # iobase - wrapper to wrap local and dist io in one
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """A common entry point to all IO"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 

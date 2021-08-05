@@ -1815,11 +1815,11 @@ def search_users(search_filter, conf_path, db_path,
                     match = False
                     break
             elif key in regex_match and \
-                    not re.match(val, str(user_dict.get(key, ''))):
+                    not re.match(val, "%s" % user_dict.get(key, '')):
                 match = False
                 break
             elif key not in regex_match and \
-                    not fnmatch.fnmatch(str(user_dict.get(key, '')), val):
+                    not fnmatch.fnmatch("%s" % user_dict.get(key, ''), val):
                 match = False
                 break
 

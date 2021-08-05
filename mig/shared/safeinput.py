@@ -34,6 +34,7 @@ unicode decoded strings since a single character may take up multiple bytes in
 the byte string version and we want to validate on a character by character
 basis.
 """
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -1175,6 +1176,7 @@ def valid_workflow_environments(environments):
                 "No environment check implemented for key '%s'. " % env_key)
         return True
 
+
 def valid_workflow_attributes(attributes):
     """Verify that supplied attributes dictionary only contains entries that
       we consider valid workflow attribute keys.
@@ -1360,7 +1362,7 @@ def validated_boolean(user_arguments_dict, name, default):
 
         # Slightly cryptic way of assuring a correct boolean
 
-        if str(default_value).lower() != first.lower():
+        if ("%s" % default_value).lower() != first.lower():
             result = not default_value
     except:
         pass
@@ -1374,13 +1376,13 @@ def validated_string(user_arguments_dict, name, default):
 
     # Force default value into a string
 
-    default_value = str(default)
+    default_value = "%s" % default
     if default != default_value:
         err += 'Invalid string default value (%s)' % default
     try:
         first = user_arguments_dict[name][0]
     except:
-        first = str(default)
+        first = "%s" % default
 
     # Validate input
 
@@ -1398,13 +1400,13 @@ def validated_plain_text(user_arguments_dict, name, default):
 
     # Force default value into a string
 
-    default_value = str(default)
+    default_value = "%s" % default
     if default != default_value:
         err += 'Invalid string default value (%s)' % default
     try:
         first = user_arguments_dict[name][0]
     except:
-        first = str(default)
+        first = "%s" % default
 
     # Validate input
 
@@ -1428,13 +1430,13 @@ def validated_path(user_arguments_dict, name, default):
 
     # Force default value into a string
 
-    default_value = str(default)
+    default_value = "%s" % default
     if default != default_value:
         err += 'Invalid string default value (%s)' % default
     try:
         first = user_arguments_dict[name][0]
     except:
-        first = str(default)
+        first = "%s" % default
 
     # Validate input
 
@@ -1458,13 +1460,13 @@ def validated_fqdn(user_arguments_dict, name, default):
 
     # Force default value into a string
 
-    default_value = str(default)
+    default_value = "%s" % default
     if default != default_value:
         err += 'Invalid string default value (%s)' % default
     try:
         first = user_arguments_dict[name][0]
     except:
-        first = str(default)
+        first = "%s" % default
 
     # Validate input
 
@@ -1482,13 +1484,13 @@ def validated_commonname(user_arguments_dict, name, default):
 
     # Force default value into a string
 
-    default_value = str(default)
+    default_value = "%s" % default
     if default != default_value:
         err += 'Invalid string default value (%s)' % default
     try:
         first = user_arguments_dict[name][0]
     except:
-        first = str(default)
+        first = "%s" % default
 
     # Validate input
 
@@ -1506,13 +1508,13 @@ def validated_organization(user_arguments_dict, name, default):
 
     # Force default value into a string
 
-    default_value = str(default)
+    default_value = "%s" % default
     if default != default_value:
         err += 'Invalid string default value (%s)' % default
     try:
         first = user_arguments_dict[name][0]
     except:
-        first = str(default)
+        first = "%s" % default
 
     # Validate input
 
@@ -1530,13 +1532,13 @@ def validated_password(user_arguments_dict, name, default):
 
     # Force default value into a string
 
-    default_value = str(default)
+    default_value = "%s" % default
     if default != default_value:
         err += 'Invalid string default value (%s)' % default
     try:
         first = user_arguments_dict[name][0]
     except:
-        first = str(default)
+        first = "%s" % default
 
     # Validate input
 
@@ -1588,13 +1590,13 @@ def validated_job_id(user_arguments_dict, name, default):
 
     # Force default value into a string
 
-    default_value = str(default)
+    default_value = "%s" % default
     if default != default_value:
         err += 'Invalid string default value (%s)' % default
     try:
         first = user_arguments_dict[name][0]
     except:
-        first = str(default)
+        first = "%s" % default
 
     # Validate input
 
@@ -2041,7 +2043,7 @@ def validate_dict_values(
     if key not in fields:
         err = 'unexpected field: %s' % key
         rejected_v[key] = ((html_escape(key),
-                            html_escape(str(err))))
+                            html_escape("%s" % err)))
         return accepted_v, rejected_v
 
     for _key, _value in values.items():
@@ -2051,7 +2053,7 @@ def validate_dict_values(
             except Exception as err:
                 # Probably illegal type hint
                 rejected_v[_key] = ((html_escape(",".join(values)),
-                                     html_escape(str(err))))
+                                     html_escape("%s" % err)))
                 continue
         if _key in value_checks:
             try:
@@ -2059,7 +2061,7 @@ def validate_dict_values(
             except Exception as err:
                 # Value check failed
                 rejected_v[_key] = ((html_escape(",".join(values)),
-                                     html_escape(str(err))))
+                                     html_escape("%s" % err)))
                 continue
         accepted_v[_key] = _value
     return accepted_v, rejected_v
@@ -2092,7 +2094,7 @@ def validate_values(
         if key not in fields:
             err = 'unexpected field: %s' % key
             bad_values.append((html_escape(show_val),
-                               html_escape(str(err))))
+                               html_escape("%s" % err)))
             continue
         if key not in type_checks:
             # No type check - just accept as is
@@ -2102,7 +2104,7 @@ def validate_values(
         except Exception as err:
             # Probably illegal type hint
             bad_values.append((html_escape(show_val),
-                               html_escape(str(err))))
+                               html_escape("%s" % err)))
             continue
         if key not in value_checks:
             # No value check - just accept as is
@@ -2112,7 +2114,7 @@ def validate_values(
         except Exception as err:
             # Value check failed
             bad_values.append((html_escape(show_val),
-                               html_escape(str(err))))
+                               html_escape("%s" % err)))
             continue
         ok_values.append(entry)
     return ok_values, bad_values

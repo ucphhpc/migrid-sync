@@ -629,7 +629,7 @@ def themed_scripts(configuration, base=[], advanced=[], skin=[], init=[],
             console.log("loading dynamic snippet content");
             load_support("%s", %s);
             load_about("%s");
-        ''' % (support_url, str(logged_in).lower(), about_url)
+        ''' % (support_url, ("%s" % logged_in).lower(), about_url)
         if configuration.site_enable_sitestatus:
             # TODO: remote status page may require CORS headers
             sitestatus_url = configuration.site_status_url
@@ -1503,7 +1503,7 @@ def twofactor_wizard_js(configuration):
     function autoClickButtonIfVisible(link_id, delay) {
         setTimeout(function() {$("#"+link_id).is(":visible") && $("#"+link_id).click(); }, delay);
     }
-''' % str(configuration.site_enable_gdp).lower()
+''' % ("%s" % configuration.site_enable_gdp).lower()
     add_ready = ''
     return (add_import, add_init, add_ready)
 

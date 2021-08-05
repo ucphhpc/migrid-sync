@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resadm - Resource administration functions mostly for remote command execution
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Resource administration - mostly remote command execution"""
+
 from __future__ import absolute_import
 
 import os
@@ -41,7 +42,7 @@ from mig.shared.conf import get_resource_configuration, get_resource_exe, \
 from mig.shared.fileio import unpickle, pickle
 from mig.shared.resource import anon_resource_id
 from mig.shared.safeeval import subprocess_popen, subprocess_pipe, \
-     subprocess_stdout, subprocess_check_output
+    subprocess_stdout, subprocess_check_output
 from mig.shared.ssh import execute_on_resource, execute_on_exe, execute_on_store, \
     copy_file_to_exe, copy_file_to_resource
 
@@ -63,7 +64,7 @@ def put_fe_pgid(
     pgid,
     logger,
     sandbox=False,
-    ):
+):
     """Write front end PGID in resource home"""
 
     msg = ''
@@ -72,7 +73,7 @@ def put_fe_pgid(
     # resource dirs when own name is a prefix of another resource name
 
     base_dir = os.path.abspath(os.path.join(resource_home,
-                               unique_resource_name)) + os.sep
+                                            unique_resource_name)) + os.sep
 
     # There should not be more than one running FE on each resource
     # A "FE.PGID" file in the resource's home directory means that
@@ -105,7 +106,7 @@ def put_fe_pgid(
         if old_pgid.isdigit():
             raise Exception('FE already started')
         msg = "FE pgid: '%s' wrote for %s" % (pgid,
-                unique_resource_name)
+                                              unique_resource_name)
         status = True
     except:
         msg = 'FE: %s already started.' % unique_resource_name
@@ -121,7 +122,7 @@ def put_exe_pgid(
     pgid,
     logger,
     sandbox=False,
-    ):
+):
     """Write exe PGID file in resource home and stop exe if requested"""
 
     msg = ''
@@ -141,7 +142,7 @@ def put_exe_pgid(
     # the PGID to us and not the EXE node.
 
     pgid_path = os.path.abspath(os.path.join(base_dir, 'EXE_' + exe_name
-                                 + '.PGID'))
+                                             + '.PGID'))
     status = False
     try:
 
@@ -161,12 +162,12 @@ def put_exe_pgid(
         os.fsync(pgid_file.fileno())
 
         msg = "pgid: '%s' put for %s %s" % (pgid, unique_resource_name,
-                exe_name)
+                                            exe_name)
 
         if not sandbox and 'stopped' == old_pgid:
             msg += "Resource: '" + unique_resource_name\
-                 + "' EXE node: '" + exe_name\
-                 + "' has been stopped, kill EXE script."
+                + "' EXE node: '" + exe_name\
+                + "' has been stopped, kill EXE script."
             resource_exe_action(
                 unique_resource_name,
                 exe_name,
@@ -174,7 +175,7 @@ def put_exe_pgid(
                 'stop',
                 logger,
                 False,
-                )
+            )
 
         # Don't release lock until stop is executed
 
@@ -183,7 +184,7 @@ def put_exe_pgid(
         status = True
     except Exception as err:
         msg = 'File: %s could not be read/written: %s' % (pgid_path,
-                err)
+                                                          err)
         status = False
 
     return (status, msg)
@@ -195,7 +196,7 @@ def start_resource_exe_if_continuous(
     resource_home,
     logger,
     lock_pgid_file=True,
-    ):
+):
     """If the resource is marked as continuous, then start the exe"""
 
     found = False
@@ -208,7 +209,7 @@ def start_resource_exe_if_continuous(
 
     if not resource_dict:
         return (False, 'Failed to unpack resource configuration!')
-    
+
     resource_dict['SANDBOX'] = resource_dict.get('SANDBOX', False)
 
     if resource_dict['SANDBOX']:
@@ -226,7 +227,7 @@ def start_resource_exe_if_continuous(
                 continuous = exe['continious']
             if continuous:
                 logger.info('Continuous: trying to restart the exe by SSH %s %s'
-                             % (unique_resource_name, finished_exe))
+                            % (unique_resource_name, finished_exe))
 
                 # start_resource_exe returns a tuple with status as first entry
 
@@ -237,20 +238,20 @@ def start_resource_exe_if_continuous(
                     -1,
                     logger,
                     lock_pgid_file,
-                    )
+                )
                 if not stat:
                     err_msg = 'start_resource_exe failed %s %s: %s'\
-                         % (unique_resource_name, finished_exe, err)
+                        % (unique_resource_name, finished_exe, err)
                     logger.error(err_msg)
                     return (False, err_msg)
             else:
                 logger.debug('Continuous is False in configuration for %s %s'
-                              % (unique_resource_name, finished_exe))
+                             % (unique_resource_name, finished_exe))
             break
     if not found:
         err_msg = \
             'start_resource_exe_if_continuous could not find %s %s'\
-             % (unique_resource_name, finished_exe)
+            % (unique_resource_name, finished_exe)
         logger.error(err_msg)
         return (False, err_msg)
     else:
@@ -262,7 +263,7 @@ def atomic_resource_exe_restart(
     exe_name,
     configuration,
     logger,
-    ):
+):
     """Atomic version of exe node restart needed for consistent
     clean up.
     """
@@ -289,7 +290,7 @@ def atomic_resource_exe_restart(
         # Stop the resource executing the job
 
         logger.info('atomic restart: stopping %s %s'
-                     % (unique_resource_name, exe_name))
+                    % (unique_resource_name, exe_name))
         (stop_status, stop_msg) = resource_exe_action(
             unique_resource_name,
             exe_name,
@@ -297,16 +298,16 @@ def atomic_resource_exe_restart(
             'stop',
             logger,
             False,
-            )
+        )
         if stop_status:
             logger.info('atomic restart: starting %s %s'
-                         % (unique_resource_name, exe_name))
+                        % (unique_resource_name, exe_name))
             (exit_status, exit_msg) = \
                 start_resource_exe_if_continuous(unique_resource_name,
-                    exe_name, resource_home, logger, False)
+                                                 exe_name, resource_home, logger, False)
         else:
             logger.info('atomic restart: not starting stopped %s %s: %s'
-                         % (unique_resource_name, exe_name, stop_msg))
+                        % (unique_resource_name, exe_name, stop_msg))
 
     pgid_file.flush()
     fcntl.flock(pgid_file, fcntl.LOCK_UN)
@@ -320,7 +321,7 @@ def fill_frontend_script(
     https_sid_url,
     unique_resource_name,
     resource_config,
-    ):
+):
     """Fill in frontend template"""
 
     msg = ''
@@ -331,11 +332,11 @@ def fill_frontend_script(
         os.write(filehandle, '# MiG resource front end\n\n')
         os.write(filehandle, 'migserver=' + https_sid_url + '\n')
         os.write(filehandle, 'unique_resource_name='
-                  + unique_resource_name + '\n')
+                 + unique_resource_name + '\n')
         os.write(filehandle, 'frontendlog='
-                  + resource_config['FRONTENDLOG'] + '\n')
+                 + resource_config['FRONTENDLOG'] + '\n')
         os.write(filehandle, 'curllog=' + resource_config['CURLLOG']
-                  + '\n')
+                 + '\n')
 
         sandbox = resource_config.get('SANDBOX', False)
         os.write(filehandle, 'sandbox=%d\n' % int(sandbox))
@@ -358,7 +359,7 @@ def fill_frontend_script(
     except Exception as err:
         msg = \
             'Error: could not write frontend script file for some reason %s'\
-             % err
+            % err
 
         # logger.error("could not write frontend script file (%s)" % err)
 
@@ -371,23 +372,23 @@ def fill_exe_node_script(
     exe,
     cputime,
     name,
-    ):
+):
     """Fill ANY_node_script template"""
 
     try:
         if cputime == -1:
             walltime = exe['cputime']
         else:
-            walltime = str(cputime)
+            walltime = "%d" % cputime
         configuration = get_configuration_object()
         empty_job_name = configuration.empty_job_name
 
         os.write(filehandle, '#!/bin/bash\n')
         os.write(filehandle, '#\n')
         os.write(filehandle, "empty_job_name='%s'\n" % empty_job_name)
-        os.write(filehandle, 'exe=' + exe['name'] + '\n')
-        os.write(filehandle, 'nodecount=' + exe['nodecount'] + '\n')
-        os.write(filehandle, 'cputime=' + str(walltime) + '\n')
+        os.write(filehandle, 'exe=%(name)s\n' % exe)
+        os.write(filehandle, 'nodecount=%(nodecount)d\n' % exe)
+        os.write(filehandle, 'cputime=%d\n' % walltime)
 
         # For backwards compatibility
         # Please note that execution_precondition gets eval'ed so we escape it
@@ -396,23 +397,23 @@ def fill_exe_node_script(
         if 'execution_precondition' in exe:
             execution_precondition = exe['execution_precondition']
         os.write(filehandle, "execution_precondition='"
-                  + execution_precondition + "'\n")
+                 + execution_precondition + "'\n")
         os.write(filehandle, 'prepend_execute="' + exe['prepend_execute'] + '"'
-                  + '\n')
+                 + '\n')
         os.write(filehandle, 'exehostlog=' + exe['exehostlog'] + '\n')
         os.write(filehandle, 'joblog=' + exe['joblog'] + '\n')
         os.write(filehandle, 'frontend_user='
-                  + resource_config['MIGUSER'] + '\n')
+                 + resource_config['MIGUSER'] + '\n')
         os.write(filehandle, 'frontend_node='
-                  + resource_config['FRONTENDNODE'] + '\n')
+                 + resource_config['FRONTENDNODE'] + '\n')
         os.write(filehandle, 'frontend_dir='
-                  + resource_config['RESOURCEHOME'] + '\n')
+                 + resource_config['RESOURCEHOME'] + '\n')
         os.write(filehandle, 'execution_user=' + exe['execution_user']
-                  + '\n')
+                 + '\n')
         os.write(filehandle, 'execution_node=' + exe['execution_node']
-                  + '\n')
+                 + '\n')
         os.write(filehandle, 'execution_dir=' + exe['execution_dir']
-                  + '\n')
+                 + '\n')
         admin_email = ''
         if 'ADMINEMAIL' in resource_config:
             admin_email = resource_config['ADMINEMAIL']
@@ -420,24 +421,24 @@ def fill_exe_node_script(
         execution_delay_command = ''
         if 'LRMSDELAYCOMMAND' in resource_config:
             execution_delay_command = resource_config['LRMSDELAYCOMMAND'
-                    ]
+                                                      ]
         os.write(filehandle, "execution_delay_command='%s'\n"
-                  % execution_delay_command)
+                 % execution_delay_command)
         submit_job_command = ''
         if 'LRMSSUBMITCOMMAND' in resource_config:
             submit_job_command = resource_config['LRMSSUBMITCOMMAND']
         os.write(filehandle, "submit_job_command='%s'\n"
-                  % submit_job_command)
+                 % submit_job_command)
         remove_job_command = ''
         if 'LRMSREMOVECOMMAND' in resource_config:
             remove_job_command = resource_config['LRMSREMOVECOMMAND']
         os.write(filehandle, "remove_job_command='%s'\n"
-                  % remove_job_command)
+                 % remove_job_command)
         query_done_command = ''
         if 'LRMSDONECOMMAND' in resource_config:
             query_done_command = resource_config['LRMSDONECOMMAND']
         os.write(filehandle, "query_done_command='%s'\n"
-                  % query_done_command)
+                 % query_done_command)
 
         # Backward compatible test for shared_fs - fall back to scp
 
@@ -473,7 +474,7 @@ def fill_master_node_script(
     resource_config,
     exe,
     cputime,
-    ):
+):
     """Fill in master_node_script template"""
 
     return fill_exe_node_script(filehandle, resource_config, exe,
@@ -492,7 +493,7 @@ def get_frontend_script(unique_resource_name, logger):
                                    unique_resource_name, logger)
     if not status:
         msg = 'No resouce_config for: ' + "'" + unique_resource_name\
-             + "'\n"
+            + "'\n"
         return (False, msg)
 
     # Generate newest version of frontend_script.sh
@@ -508,8 +509,8 @@ def get_frontend_script(unique_resource_name, logger):
             tempfile.mkstemp(dir=resource_dir, text=True)
 
         (status, msg) = fill_frontend_script(filehandle,
-                configuration.migserver_https_sid_url,
-                unique_resource_name, resource_config)
+                                             configuration.migserver_https_sid_url,
+                                             unique_resource_name, resource_config)
         if not status:
             return (False, msg)
 
@@ -543,7 +544,7 @@ def get_master_node_script(unique_resource_name, exe_name, logger):
     (status, exe) = get_resource_exe(resource_config, exe_name, logger)
     if not status:
         msg = "No exe found: '%s' in resource config for: '%s'"\
-             % (exe_name, unique_resource_name)
+            % (exe_name, unique_resource_name)
 
         return (False, msg)
 
@@ -556,7 +557,7 @@ def get_master_node_script(unique_resource_name, exe_name, logger):
         (filehandle, local_filename) = \
             tempfile.mkstemp(dir=resource_dir, text=True)
         (status, msg) = fill_exe_node_script(filehandle,
-                resource_config, exe, -1, 'master')
+                                             resource_config, exe, -1, 'master')
 
         if not status:
             return (False, msg)
@@ -594,12 +595,12 @@ def check_mounted(target, logger):
     """
     if os.path.ismount(target):
         return True
-    mount_line = ' on %s type fuse.sshfs '% target
+    mount_line = ' on %s type fuse.sshfs ' % target
     mount_out = subprocess_check_output(['mount'])
     logger.debug("check_mounted out: %s vs %s" % (mount_out, mount_line))
     return (mount_out.find(mount_line) != -1)
 
-    
+
 def start_resource_exe(
     unique_resource_name,
     exe_name,
@@ -607,7 +608,7 @@ def start_resource_exe(
     cputime,
     logger,
     lock_pgid_file=True,
-    ):
+):
     """Start exe node"""
 
     msg = ''
@@ -622,7 +623,7 @@ def start_resource_exe(
     (status, exe) = get_resource_exe(resource_config, exe_name, logger)
     if not status:
         msg = "No EXE config for: '" + unique_resource_name + "' EXE: '"\
-             + exe_name + "'"
+            + exe_name + "'"
         return (False, msg)
 
     # write PGID file
@@ -652,12 +653,12 @@ def start_resource_exe(
 
         if 'starting' == pgid or pgid.isdigit():
             msg = "Resource: '%s' EXE: '%s' already started."\
-                 % (unique_resource_name, exe_name)
+                % (unique_resource_name, exe_name)
             logger.error(msg)
             return (False, msg)
         elif pgid not in ['', 'stopped', 'finished']:
             msg = 'pgid has unexpected value during exe start: %s'\
-                 % pgid
+                % pgid
             logger.error(msg)
             return (False, msg)
 
@@ -674,7 +675,7 @@ def start_resource_exe(
         pgid_file.close()
     except Exception as err:
         err_msg = "File: '%s' could not be accessed: %s" % (pgid_path,
-                err)
+                                                            err)
         logger.error(err_msg)
         msg += err_msg
         return (False, msg)
@@ -682,7 +683,7 @@ def start_resource_exe(
     # remove jobrequest_pending lockfile
 
     jobrequest_lock_file = '%s/%s/jobrequest_pending.%s'\
-         % (resource_home, unique_resource_name, exe_name)
+        % (resource_home, unique_resource_name, exe_name)
     try:
         os.remove(jobrequest_lock_file)
     except OSError as ose:
@@ -691,24 +692,24 @@ def start_resource_exe(
 
         if ose.errno != 2:
             logger.error('removing %s failed: %s'
-                          % (jobrequest_lock_file, ose))
+                         % (jobrequest_lock_file, ose))
     except Exception as err:
         logger.error('removing %s failed: %s' % (jobrequest_lock_file,
-                     err))
+                                                 err))
 
     # create needed dirs on resource frontend and exe
 
     create_dirs = 'mkdir -p %s' % exe['execution_dir']
     if exe.get('shared_fs', True):
         (create_status, create_err) = execute_on_resource(create_dirs,
-                False, resource_config, logger)
+                                                          False, resource_config, logger)
     else:
         (create_status, create_err) = execute_on_exe(create_dirs, False,
-                resource_config, exe, logger)
+                                                     resource_config, exe, logger)
 
     if 0 != create_status:
         msg += '\ncreate exe node dirs returned %s (command %s): %s'\
-             % (create_status, create_dirs, create_err)
+            % (create_status, create_dirs, create_err)
         logger.error('failed to create execution dir on resource: %s'
                      % create_err)
 
@@ -726,24 +727,24 @@ def start_resource_exe(
         (filehandle, local_filename) = \
             tempfile.mkstemp(dir=resource_dir, text=True)
         (rv, msg) = fill_exe_node_script(filehandle, resource_config,
-                exe, cputime, exe_kind)
+                                         exe, cputime, exe_kind)
         if not rv:
             logger.error('fill %s node script failed: %s' % (exe_kind,
-                         err))
+                                                             err))
             return (False, msg)
         os.close(filehandle)
 
         logger.info('wrote %s script into %s' % (exe_kind,
-                    local_filename))
+                                                 local_filename))
     except Exception as err:
         msg += '\n%s' % err
         logger.error("couldn't write %s node script file: %s"
-                      % (exe_kind, err))
+                     % (exe_kind, err))
         return (False, msg)
 
     exe_node_script_name = '%s_node_script_%s.sh' % (exe_kind, exe_name)
     (copy_status, copy_msg) = copy_file_to_exe(local_filename,
-            exe_node_script_name, resource_config, exe_name, logger)
+                                               exe_node_script_name, resource_config, exe_name, logger)
     if not copy_status:
         logger.error(copy_msg)
         return (False, copy_msg)
@@ -752,10 +753,9 @@ def start_resource_exe(
 
     command = exe['start_command']
     (exit_code, executed_command) = execute_on_resource(command, True,
-            resource_config, logger)
+                                                        resource_config, logger)
 
-    msg += executed_command + '\n' + command + ' returned '\
-         + str(exit_code)
+    msg += "%s\n%s returned %d" % (executed_command, command, exit_code)
 
     if exit_code == ssh_error_code:
         msg += ssh_error_msg
@@ -771,7 +771,7 @@ def start_resource_store(
     resource_home,
     logger,
     lock_pgid_file=True,
-    ):
+):
     """Start store node"""
 
     msg = ''
@@ -787,7 +787,7 @@ def start_resource_store(
     (status, store) = get_resource_store(resource_config, store_name, logger)
     if not status:
         msg = "No STORE config for: '" + unique_resource_name + "' STORE: '"\
-             + store_name + "'"
+            + store_name + "'"
         return (False, msg)
 
     status = True
@@ -798,14 +798,14 @@ def start_resource_store(
     create_dirs = 'mkdir -p %(storage_dir)s' % store
     if store.get('shared_fs', True):
         (create_status, create_err) = execute_on_resource(create_dirs,
-                False, resource_config, logger)
+                                                          False, resource_config, logger)
     else:
         (create_status, create_err) = execute_on_store(create_dirs, False,
-                resource_config, store, logger)
+                                                       resource_config, store, logger)
 
     if 0 != create_status:
         msg += '\ncreate store node dirs returned %s (command %s): %s. '\
-             % (create_status, create_dirs, create_err)
+            % (create_status, create_dirs, create_err)
         logger.error('failed to create storage dir on resource: %s'
                      % create_err)
 
@@ -821,8 +821,7 @@ def start_resource_store(
     (exit_code, executed_command) = execute_on_resource(command, True,
                                                         resource_config, logger)
 
-    msg += executed_command + '\n' + command + ' returned '\
-             + str(exit_code)
+    msg += "%s\n%s returned %d" % (executed_command, command, exit_code)
 
     if exit_code == ssh_error_code:
         status = False
@@ -844,7 +843,7 @@ def start_resource_store(
         if store.get('shared_fs', False):
             sshfs_options += ['-o', 'Port=%(SSHPORT)s' % setup]
             src = '%(MIGUSER)s@%(HOSTURL)s:%(storage_dir)s' % setup
-            dst = '%(mount_point)s' %setup
+            dst = '%(mount_point)s' % setup
         else:
             # write and use ssh jump helper script
 
@@ -863,7 +862,8 @@ ssh -o Port=%(SSHPORT)s %(MIGUSER)s@%(HOSTURL)s ssh $*
                 os.chmod(jump_path, 0o700)
             except Exception as exc:
                 status = False
-                msg += ' failed to write jump helper script %s: %s. ' % (jump_path, exc)
+                msg += ' failed to write jump helper script %s: %s. ' % (
+                    jump_path, exc)
 
             sshfs_options += ["-o", "ssh_command=%(jump_path)s" % setup,
                               "-o", "Port=%(storage_port)s" % setup]
@@ -879,7 +879,7 @@ ssh -o Port=%(SSHPORT)s %(MIGUSER)s@%(HOSTURL)s ssh $*
         proc = subprocess_popen(command_list, stdout=subprocess_pipe,
                                 stderr=subprocess_stdout)
         exit_code = proc.wait()
-        output =  proc.stdout.read()
+        output = proc.stdout.read()
         msg += '%s returned %s ' % (command, exit_code)
         if exit_code != 0:
             status = False
@@ -905,7 +905,8 @@ ssh -o Port=%(SSHPORT)s %(MIGUSER)s@%(HOSTURL)s ssh $*
                     os.symlink(mount_point, vgrid_link)
             except Exception as exc:
                 status = False
-                msg += ' failed to link %s into %s: %s. ' % (mount_point, vgrid_link, exc)
+                msg += ' failed to link %s into %s: %s. ' % (
+                    mount_point, vgrid_link, exc)
                 logger.error('failed to link %s: %s' % (mount_point, exc))
 
     # save monitor_last_status files
@@ -915,19 +916,19 @@ ssh -o Port=%(SSHPORT)s %(MIGUSER)s@%(HOSTURL)s ssh $*
     last_status_dict['RESOURCE_CONFIG'].update(resource_config)
     last_status_dict['CREATED_TIME'] = datetime.datetime.now()
     last_status_dict['MOUNT_POINT'] = mount_point
-    if status: 
+    if status:
         last_status_dict['STATUS'] = 'started'
     else:
         last_status_dict['STATUS'] = 'stopped'
-    
+
     for vgrid in store['vgrid']:
         logger.info("save status for '%s' store '%s'" % (vgrid, store_name))
         status_path = os.path.join(configuration.vgrid_home, vgrid,
-                                   'monitor_last_status_' + \
+                                   'monitor_last_status_' +
                                    unique_resource_name + '_' + store_name)
-        
+
         pickle(last_status_dict, status_path, logger)
-        logger.info('vgrid_name: %s status: %s' % \
+        logger.info('vgrid_name: %s status: %s' %
                     (vgrid, last_status_dict['STATUS']))
 
     return (status, msg)
@@ -947,7 +948,7 @@ def start_resource(
     resource_home,
     https_sid_url,
     logger,
-    ):
+):
     """Start resource frontend"""
 
     msg = ''
@@ -973,7 +974,7 @@ def start_resource(
             if pgid.isdigit():
                 raise Exception('FE already started')
         except Exception as exc:
-            msg += str(exc)
+            msg += "%s" % exc
             return (False, msg)
 
     # make sure newest version of frontend_script.sh is on the
@@ -987,7 +988,7 @@ def start_resource(
         (filehandle, local_filename) = \
             tempfile.mkstemp(dir=resource_dir, text=True)
         (rv, msg) = fill_frontend_script(filehandle, https_sid_url,
-                unique_resource_name, resource_config)
+                                         unique_resource_name, resource_config)
         if not rv:
             return (False, msg)
         os.close(filehandle)
@@ -1006,7 +1007,7 @@ def start_resource(
         msg += ' create frontend dirs returned %s. ' % create_status
 
     copy_status = copy_file_to_resource(local_filename,
-            'frontend_script.sh', resource_config, logger)
+                                        'frontend_script.sh', resource_config, logger)
 
     # Remove temporary file no matter what copy returned
 
@@ -1025,12 +1026,11 @@ def start_resource(
         return (False, msg)
 
     command = 'cd %s; chmod +x frontend_script.sh; ./frontend_script.sh'\
-         % resource_config['RESOURCEHOME']
+        % resource_config['RESOURCEHOME']
     (exit_code, executed_command) = execute_on_resource(command, True,
-            resource_config, logger)
+                                                        resource_config, logger)
 
-    msg += executed_command + '\n' + command + ' returned '\
-         + str(exit_code)
+    msg += "%s\n%s returned %d" % (executed_command, command, exit_code)
 
     if exit_code == ssh_error_code:
         msg += ssh_error_msg
@@ -1045,7 +1045,7 @@ def resource_fe_action(
     resource_home,
     action,
     logger,
-    ):
+):
     """This function handles status and stop for resource FE's"""
 
     msg = ''
@@ -1087,10 +1087,9 @@ def resource_fe_action(
 
         command = 'rm -rf --one-file-system %(RESOURCEHOME)s' % resource_config
         (exit_code, executed_command) = execute_on_resource(command,
-                False, resource_config, logger)
+                                                            False, resource_config, logger)
 
-        msg += executed_command + '\n' + command + ' returned '\
-             + str(exit_code)
+        msg += "%s\n%s returned %d" % (executed_command, command, exit_code)
 
         if exit_code == ssh_error_code:
             msg += ssh_error_msg
@@ -1114,8 +1113,7 @@ def resource_fe_action(
             (exit_code, executed_command) = \
                 execute_on_resource(command, False, resource_config,
                                     logger)
-            msg = executed_command + '\n' + command + ' returned '\
-                 + str(exit_code)
+            msg = "%s\n%s returned %d" % (executed_command, command, exit_code)
 
             if exit_code == ssh_error_code:
                 msg += ssh_error_msg
@@ -1129,12 +1127,11 @@ def resource_fe_action(
             # always supported)
 
             command = 'kill -9 -' + pgid + ' || pkill -9 -g ' + pgid\
-                 + " \.\*"
+                + " \.\*"
             (exit_code, executed_command) = \
                 execute_on_resource(command, False, resource_config,
                                     logger)
-            msg = executed_command + '\n' + command + ' returned '\
-                 + str(exit_code)
+            msg = "%s\n%s returned %d" % (executed_command, command, exit_code)
 
             # 0 Means FE killed, 1 means process' with PGID not
             # found, which means FE already dead.
@@ -1152,7 +1149,7 @@ def resource_fe_action(
                     pgid_file.close()
                 except Exception as err:
                     logger.error("Could not update pgid file: '"
-                                  + pgid_path + "'")
+                                 + pgid_path + "'")
 
                 msg += ssh_status_msg
                 return (True, msg)
@@ -1174,7 +1171,7 @@ def resource_exe_action(
     action,
     logger,
     lock_pgid_file=True,
-    ):
+):
     """This function handles status and stop for exes.
     If then parameter lock_pgid_file is False, the calling function
     must handle locking of the 'pgid_path'.
@@ -1196,7 +1193,7 @@ def resource_exe_action(
     (status, exe) = get_resource_exe(resource_config, exe_name, logger)
     if not status:
         msg = "No EXE config for: '" + unique_resource_name + "' EXE: '"\
-             + exe_name + "'"
+            + exe_name + "'"
         return (False, msg)
 
     pgid_path = os.path.join(resource_home, unique_resource_name,
@@ -1233,19 +1230,19 @@ def resource_exe_action(
             elif 'finished' == pgid and continuous:
                 return (True,
                         "Exe is running (pgid on server is '%s' and exe continuous is '%s')"
-                         % (pgid, continuous))
+                        % (pgid, continuous))
             elif 'finished' == pgid and not continuous:
                 return (True,
                         "Exe is not running (pgid on server is '%s' and exe continuous is '%s')"
-                         % (pgid, continuous))
+                        % (pgid, continuous))
             elif 'starting' == pgid:
 
                 # use pgid file on exe and run status command based on that value
 
                 command = exe['status_command']
                 command = command.replace('$mig_exe_pgid',
-                        "$(cat %s/%s)" % (exe['execution_dir'], '%s.pgid' % \
-                                          exe['name']))
+                                          "$(cat %s/%s)" % (exe['execution_dir'], '%s.pgid' %
+                                                            exe['name']))
             elif pgid.isdigit():
 
                 # use exe_pgid and run status command based on that value
@@ -1298,7 +1295,7 @@ def resource_exe_action(
 
             if pgid in ['', 'stopped', 'finished']:
                 return (True, 'Exe is not running, pgid status is %s'
-                         % pgid)
+                        % pgid)
             elif pgid.isdigit():
                 command = exe['stop_command']
             elif 'starting' == pgid:
@@ -1307,22 +1304,21 @@ def resource_exe_action(
 
                 command = exe['stop_command']
                 command = command.replace('$mig_exe_pgid',
-                        "$(cat %s/%s)" % (exe['execution_dir'], '%s.pgid' % \
-                                          exe['name']))
+                                          "$(cat %s/%s)" % (exe['execution_dir'], '%s.pgid' %
+                                                            exe['name']))
             else:
 
                 return (False,
                         'stop exe error in resadm.py - pgid in unexpected state: %s!'
-                         % pgid)
+                        % pgid)
 
         # Now insert PGID and run ssh command
 
         command = command.replace('$mig_exe_pgid', pgid)
         (exit_code, executed_command) = execute_on_resource(command,
-                False, resource_config, logger)
+                                                            False, resource_config, logger)
 
-        msg = executed_command + '\n' + command + ' returned '\
-             + str(exit_code)
+        msg = "%s\n%s returned %d" % (executed_command, command, exit_code)
 
         if exit_code == ssh_error_code:
             msg += ssh_error_msg
@@ -1341,8 +1337,8 @@ def resource_exe_action(
 
         return (status, msg)
     except Exception as err:
-        err_msg = action + " of '" + unique_resource_name + "' EXE '"\
-             + exe_name + "' failed: " + str(err)
+        err_msg = "%s of %r EXE %r failed: %s" % (
+            action, unique_resource_name, exe_name, err)
         logger.error(err_msg)
         return (False, err_msg)
 
@@ -1352,11 +1348,11 @@ def clean_resource_exe(
     exe_name,
     resource_home,
     logger,
-    ):
+):
     """Clean exe node"""
 
     (status, msg) = resource_exe_action(unique_resource_name, exe_name,
-            resource_home, 'clean', logger)
+                                        resource_home, 'clean', logger)
     return (status, msg)
 
 
@@ -1365,11 +1361,11 @@ def status_resource_exe(
     exe_name,
     resource_home,
     logger,
-    ):
+):
     """Get exe node status"""
 
     (status, msg) = resource_exe_action(unique_resource_name, exe_name,
-            resource_home, 'status', logger)
+                                        resource_home, 'status', logger)
     return (status, msg)
 
 
@@ -1378,11 +1374,11 @@ def stop_resource_exe(
     exe_name,
     resource_home,
     logger,
-    ):
+):
     """Stop exe node"""
 
     (status, msg) = resource_exe_action(unique_resource_name, exe_name,
-            resource_home, 'stop', logger)
+                                        resource_home, 'stop', logger)
     return (status, msg)
 
 
@@ -1392,16 +1388,16 @@ def restart_resource_exe(
     resource_home,
     cputime,
     logger,
-    ):
+):
     """Restart exe node"""
 
     (stop_status, stop_msg) = stop_resource_exe(unique_resource_name,
-            exe_name, resource_home, logger)
+                                                exe_name, resource_home, logger)
     (start_status, start_msg) = \
         start_resource_exe(unique_resource_name, exe_name,
                            resource_home, cputime, logger)
     return (stop_status and start_status, '%s; %s' % (stop_msg,
-            start_msg))
+                                                      start_msg))
 
 
 def resource_store_action(
@@ -1411,7 +1407,7 @@ def resource_store_action(
     action,
     logger,
     lock_pgid_file=True,
-    ):
+):
     """This function handles status and stop for stores"""
 
     msg = ''
@@ -1431,14 +1427,14 @@ def resource_store_action(
     (status, store) = get_resource_store(resource_config, store_name, logger)
     if not status:
         msg = "No STORE config for: '" + unique_resource_name + "' STORE: '"\
-             + store_name + "'"
+            + store_name + "'"
         return (False, msg)
 
     status = True
     mount_point = os.path.join(resource_home, unique_resource_name, store_name)
 
     # Remove vgrid dir symlinks before unmounting
-    
+
     link_name = "%s_%s" % (unique_resource_name, store_name)
     if resource_config.get('ANONYMOUS', True):
         link_name = anon_resource_id(link_name)
@@ -1451,7 +1447,7 @@ def resource_store_action(
         except Exception as exc:
             msg += ' failed to unlink %s: %s. ' % (vgrid_link, exc)
             logger.error('failed to unlink %s: %s' % (vgrid_link, exc))
-                
+
     if 'sftp' == store['storage_protocol']:
         setup = {'mount_point': mount_point}
         # We unmount if mount_point is properly mounted or if sshfs died
@@ -1460,7 +1456,7 @@ def resource_store_action(
                 flags = ['-u']
                 if action == 'clean':
                     flags.append('-z')
-                command_list = ['fusermount'] + flags + ['%(mount_point)s' % \
+                command_list = ['fusermount'] + flags + ['%(mount_point)s' %
                                                          setup]
                 command = ' '.join(command_list)
                 logger.info('running unmount command on server: %s' % command)
@@ -1470,7 +1466,7 @@ def resource_store_action(
                 proc = subprocess_popen(command_list, stdout=subprocess_pipe,
                                         stderr=subprocess_stdout)
                 exit_code = proc.wait()
-                output =  proc.stdout.read()
+                output = proc.stdout.read()
 
                 msg += '%s returned %s ' % (command, exit_code)
 
@@ -1481,7 +1477,7 @@ def resource_store_action(
                     msg += '(0 means success). '
             elif 'status' == action:
                 msg += 'storage is mounted. '
-            
+
         else:
             msg += 'storage is not mounted. '
     else:
@@ -1493,16 +1489,15 @@ def resource_store_action(
         os.rmdir(mount_point)
     except:
         pass
-    
+
     # Finally execute action command to clean up remote tunnel or mount
 
     command = store['%s_command' % action]
     (exit_code, executed_command) = execute_on_resource(command, True,
                                                         resource_config, logger)
 
-    msg += executed_command + '\n' + command + ' returned '\
-             + str(exit_code)
-    
+    msg += "%s\n%s returned %d" % (executed_command, command, exit_code)
+
     if exit_code == ssh_error_code:
         status = False
         msg += ssh_error_msg
@@ -1515,21 +1510,21 @@ def resource_store_action(
     for vgrid in store['vgrid']:
         logger.info("save status for '%s' store '%s'" % (vgrid, store_name))
         status_path = os.path.join(configuration.vgrid_home, vgrid,
-                                   'monitor_last_status_' + \
+                                   'monitor_last_status_' +
                                    unique_resource_name + '_' + store_name)
-        
+
         last_status_dict = unpickle(status_path, logger)
         if not last_status_dict:
             last_status_dict = {'RESOURCE_CONFIG': {}}
             last_status_dict['STATUS'] = 'UNKNOWN'
             last_status_dict['MOUNT_POINT'] = 'UNKNOWN'
-            
+
         last_status_dict['RESOURCE_CONFIG'].update(resource_config)
         if action != 'status':
             last_status_dict['STATUS'] = 'stopped'
             last_status_dict['CREATED_TIME'] = datetime.datetime.now()
         pickle(last_status_dict, status_path, logger)
-        logger.info('vgrid_name: %s status: %s' % \
+        logger.info('vgrid_name: %s status: %s' %
                     (vgrid, last_status_dict['STATUS']))
 
     return (status, msg)
@@ -1540,11 +1535,11 @@ def clean_resource_store(
     store_name,
     resource_home,
     logger,
-    ):
+):
     """Clean store node"""
 
     (status, msg) = resource_store_action(unique_resource_name, store_name,
-            resource_home, 'clean', logger)
+                                          resource_home, 'clean', logger)
     return (status, msg)
 
 
@@ -1553,11 +1548,11 @@ def status_resource_store(
     store_name,
     resource_home,
     logger,
-    ):
+):
     """Get store node status"""
 
     (status, msg) = resource_store_action(unique_resource_name, store_name,
-            resource_home, 'status', logger)
+                                          resource_home, 'status', logger)
     return (status, msg)
 
 
@@ -1566,11 +1561,11 @@ def stop_resource_store(
     store_name,
     resource_home,
     logger,
-    ):
+):
     """Stop store node"""
 
     (status, msg) = resource_store_action(unique_resource_name, store_name,
-            resource_home, 'stop', logger)
+                                          resource_home, 'stop', logger)
     return (status, msg)
 
 
@@ -1579,16 +1574,16 @@ def restart_resource_store(
     store_name,
     resource_home,
     logger,
-    ):
+):
     """Restart store node"""
 
     (stop_status, stop_msg) = stop_resource_store(unique_resource_name,
-            store_name, resource_home, logger)
+                                                  store_name, resource_home, logger)
     (start_status, start_msg) = \
         start_resource_store(unique_resource_name, store_name,
-                           resource_home, logger)
+                             resource_home, logger)
     return (stop_status and start_status, '%s; %s' % (stop_msg,
-            start_msg))
+                                                      start_msg))
 
 
 def get_sandbox_exe_stop_command(
@@ -1596,7 +1591,7 @@ def get_sandbox_exe_stop_command(
     sandboxkey,
     exe_name,
     logger,
-    ):
+):
 
     # open the resources configuration
 
@@ -1606,13 +1601,13 @@ def get_sandbox_exe_stop_command(
     if not resource_dict:
         return (False,
                 'Could not unpickle resource configuration file: '
-                 + resource_configuration_file)
+                + resource_configuration_file)
 
     (status, exe) = get_resource_exe(resource_dict, exe_name, logger)
     if not status:
         msg = "No EXE config for: '"\
-             + resource_dict['UNIQUE_RESOURCE_NAME'] + "' EXE: '"\
-             + exe_name + "'"
+            + resource_dict['UNIQUE_RESOURCE_NAME'] + "' EXE: '"\
+            + exe_name + "'"
         return (False, msg)
 
     stop_command = exe['stop_command']
@@ -1620,7 +1615,7 @@ def get_sandbox_exe_stop_command(
     # Lock pgid file
 
     pgid_path = os.path.join(sandbox_home, sandboxkey, 'EXE_' + exe_name
-                              + '.PGID')
+                             + '.PGID')
     if os.path.exists(pgid_path):
         pgid_file = open(pgid_path, 'r')
         fcntl.flock(pgid_file, fcntl.LOCK_EX)
@@ -1647,7 +1642,7 @@ def status_resource(unique_resource_name, resource_home, logger):
     """Get status of resource front end"""
 
     (status, msg) = resource_fe_action(unique_resource_name,
-            resource_home, 'status', logger)
+                                       resource_home, 'status', logger)
     return (status, msg)
 
 
@@ -1656,7 +1651,7 @@ def clean_resource_frontend(unique_resource_name, resource_home,
     """Clean resource front end"""
 
     (status, msg) = resource_fe_action(unique_resource_name,
-            resource_home, 'clean', logger)
+                                       resource_home, 'clean', logger)
     return (status, msg)
 
 
@@ -1671,7 +1666,7 @@ def stop_resource(unique_resource_name, resource_home, logger):
     """Stop resource front end"""
 
     (status, msg) = resource_fe_action(unique_resource_name,
-            resource_home, 'stop', logger)
+                                       resource_home, 'stop', logger)
     return (status, msg)
 
 
@@ -1689,15 +1684,13 @@ def restart_resource(
     resource_home,
     https_sid_url,
     logger,
-    ):
+):
     """Restart resource front end"""
 
     (stop_status, stop_msg) = stop_resource(unique_resource_name,
-            resource_home, logger)
+                                            resource_home, logger)
     (start_status, start_msg) = start_resource(unique_resource_name,
-            resource_home, https_sid_url, logger)
+                                               resource_home, https_sid_url, logger)
 
     return (stop_status and start_status, '%s; %s' % (stop_msg,
-            start_msg))
-
-
+                                                      start_msg))

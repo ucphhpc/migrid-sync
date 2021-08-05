@@ -43,15 +43,14 @@ locale.setlocale(locale.LC_NUMERIC, '')
 def format_num(num):
     """Format a number according to given places.
     Adds commas, etc.
-    
+
     Will truncate floats into ints!"""
 
     try:
         inum = int(num)
         return locale.format('%.*f', (0, inum), True)
     except (ValueError, TypeError):
-
-        return str(num)
+        return "%s" % num
 
 
 def get_max_width(table, index):
@@ -65,7 +64,7 @@ def pprint_table(table):
     """Prints out a table of data, padded for alignment
     @param table: The table to print. A list of lists. Each row must have the same
     number of columns.
-    
+
     """
 
     lines = []
@@ -87,5 +86,3 @@ def pprint_table(table):
             lines.append(col)
         lines.append('\n')
     return lines
-
-

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # job - Core job helper functions
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Job functions"""
+
 from __future__ import absolute_import
 
 import fcntl
@@ -46,6 +47,7 @@ JOB_TYPES = [
     JOB,
     QUEUE
 ]
+
 
 class Job:
     """Job objects"""
@@ -79,7 +81,7 @@ def get_job_id(configuration):
     logger = configuration.logger
     filehandle = None
     job_id_counter_path = os.path.join(configuration.mig_system_files,
-            'job_id_counter')
+                                       'job_id_counter')
     try:
         filehandle = open(job_id_counter_path, 'r+')
     except IOError as ioe:
@@ -90,7 +92,7 @@ def get_job_id(configuration):
             fcntl.flock(filehandle.fileno(), fcntl.LOCK_EX)
             val = filehandle.readline().strip()
             filehandle.seek(0, 0)
-            filehandle.write(str(int(val) + 1))
+            filehandle.write("%d" % (int(val) + 1))
             filehandle.close()
         except IOError as ioe:
             logger.error('get_job_id: ioerror: %s' % ioe)
@@ -103,13 +105,14 @@ def get_job_id(configuration):
             filehandle = open(job_id_counter_path, 'w')
             fcntl.flock(filehandle.fileno(), fcntl.LOCK_EX)
             val = '0'
-            filehandle.write(str(int(val) + 1))
+            filehandle.write("%d" % (int(val) + 1))
             filehandle.close()
         except IOError as ioe:
-            logger.error('get_job_id: Failed to create job id counter file!%s'\
-                 % ioe)
+            logger.error('get_job_id: Failed to create job id counter file!%s'
+                         % ioe)
             return -1
     return val
+
 
 def fill_mrsl_template(
     job_template,
@@ -120,7 +123,7 @@ def fill_mrsl_template(
     expand_map,
     configuration,
     param_list=None
-    ):
+):
     """Generate a job description in mrsl_fd_or_path from the job_template,
     using the trigger details in the rule dictionary and the actual (relative)
     trigger_path of the file and what kind of change triggered the event.
@@ -133,7 +136,7 @@ def fill_mrsl_template(
     to avoid creating multiple parameter files.
     """
     logger = configuration.logger
-    logger.debug("fill template based on trigger for %s : %s and rule %s" % \
+    logger.debug("fill template based on trigger for %s : %s and rule %s" %
                  (trigger_path, state_change, rule))
     if isinstance(mrsl_fd_or_path, basestring):
         mrsl_fd = open(mrsl_fd_or_path, 'w+b')
@@ -176,10 +179,11 @@ def fill_mrsl_template(
         if do_close:
             mrsl_fd.close()
     except Exception as exc:
-        logger.error("failed to fill template %s:\n%s" % \
+        logger.error("failed to fill template %s:\n%s" %
                      (exc, job_template))
         return False
     return True
+
 
 def new_job(
     filename,
@@ -188,7 +192,7 @@ def new_job(
     forceddestination,
     returnjobid=False,
     workflow_job=None
-    ):
+):
     """This function submits a file to the MiG system by assigning
     a unique name to the new job and sends it to the parser.
     It should be called by all other functions when a job should be submitted.
@@ -200,10 +204,9 @@ def new_job(
 
     counter = get_job_id(configuration)
     gmt = time.gmtime()
-    timestamp = str(gmt[1]) + '_' + str(gmt[2]) + '_' + str(gmt[0])\
-         + '__' + str(gmt[3]) + '_' + str(gmt[4]) + '_' + str(gmt[5])
-    job_id = str(counter) + '_' + str(timestamp) + '_'\
-         + str(mig_server_id)
+    timestamp = "%s_%s_%s__%s_%s_%s" % (
+        gmt[1], gmt[2], gmt[0], gmt[3], gmt[4], gmt[5])
+    job_id = '%s_%s_%s' % (counter, timestamp, mig_server_id)
 
     # Call the mRSL parser
 
@@ -231,15 +234,15 @@ def failed_restart(
     exe,
     job_id,
     configuration,
-    ):
+):
     """Helper for notifying grid_script when a exe restart failed"""
 
     # returns a tuple (bool status, str msg)
 
     send_message = 'RESTARTEXEFAILED %s %s %s\n'\
-         % (unique_resource_name, exe, job_id)
+        % (unique_resource_name, exe, job_id)
     status = send_message_to_grid_script(send_message,
-            configuration.logger, configuration)
+                                         configuration.logger, configuration)
     if not status:
         return (False,
                 'Fatal error: Could not write message to grid_script')
@@ -252,15 +255,15 @@ def finished_job(
     exe,
     job_id,
     configuration,
-    ):
+):
     """Helper for notifying grid_script when a job finishes"""
 
     # returns a tuple (bool status, str msg)
 
     send_message = 'RESOURCEFINISHEDJOB %s %s %s %s\n'\
-         % (unique_resource_name, exe, session_id, job_id)
+        % (unique_resource_name, exe, session_id, job_id)
     status = send_message_to_grid_script(send_message,
-            configuration.logger, configuration)
+                                         configuration.logger, configuration)
     if not status:
         return (False,
                 'Fatal error: Could not write message to grid_script')
@@ -268,19 +271,19 @@ def finished_job(
 
 
 def create_job_object_from_pickled_mrsl(filepath, logger,
-        external_dict):
+                                        external_dict):
     """Helper for submit from pickled mRSL"""
     job_dict = unpickle(filepath, logger)
     if not job_dict:
         return (False, 'could not unpickle mrsl file %s' % filepath)
     jobo = Job()
     for (key, value) in job_dict.iteritems():
-        if str(type(value)) == "<type 'time.struct_time'>":
+        if "%s" % type(value) == "<type 'time.struct_time'>":
 
             # time.struct_time objects cannot be marshalled in the xmlrpc
             # version we use
 
-            value = str(value)
+            value = "%s" % value
         if key in external_dict:
 
             # ok, this info can be shown to the user (avoid leaking info that
@@ -295,7 +298,7 @@ def get_job_ids_with_specified_project_name(
     project_name,
     mrsl_files_dir,
     logger,
-    ):
+):
     """Helper for finding a job with a given project field"""
 
     client_dir = client_id_dir(client_id)
@@ -304,7 +307,7 @@ def get_job_ids_with_specified_project_name(
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(mrsl_files_dir, client_dir)) \
-         + os.sep
+        + os.sep
 
     # this is heavy :-/ we must loop all the mrsl files submitted by the user
     # to find the job ids belonging to the specified project

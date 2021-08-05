@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # safeeval - Safe evaluation of expressions and commands
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -191,7 +191,7 @@ def test_expr(expr, allowed_codes, allowed_args=[]):
         # fixed this print to actually insert expr (original contains ',' instead
         # of '%') - Jonas
 
-        raise_(ValueError, '%s is not a valid expression' % expr)
+        raise_(ValueError, '%r is not a valid expression' % expr)
 
     codes = _get_opcodes(c)
     for code in codes:
@@ -199,7 +199,7 @@ def test_expr(expr, allowed_codes, allowed_args=[]):
         # print "code:", code
 
         if code not in allowed_codes:
-            raise_(ValueError, 'opcode %s not allowed' % dis.opname[code])
+            raise_(ValueError, 'opcode %r not allowed' % dis.opname[code])
 
     if allowed_args:
         args = _get_opnames(c)
@@ -208,7 +208,7 @@ def test_expr(expr, allowed_codes, allowed_args=[]):
             # print "arg:", arg
 
             if arg not in allowed_args:
-                raise_(ValueError, 'opname not allowed: ' + str(arg))
+                raise_(ValueError, 'opname %r not allowed' % arg)
 
     return c
 

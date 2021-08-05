@@ -115,7 +115,7 @@ def copy_file_to_resource(
     local_filename = os.path.basename(local_path)
     multiplex = '0'
     if 'SSHMULTIPLEX' in resource_config:
-        multiplex = str(resource_config['SSHMULTIPLEX'])
+        multiplex = "%(SSHMULTIPLEX)s" % resource_config
     hostkey = resource_config['HOSTKEY']
     host = resource_config['HOSTURL']
     identifier = resource_config['HOSTIDENTIFIER']
@@ -313,7 +313,7 @@ def execute_on_resource(
         job_type = resource_config['JOBTYPE']
     multiplex = '0'
     if 'SSHMULTIPLEX' in resource_config:
-        multiplex = str(resource_config['SSHMULTIPLEX'])
+        multiplex = "%(SSHMULTIPLEX)s" % resource_config
 
     # Use manually added SSHMULTIPLEXMASTER variable to only run master
     # from sessions initiated by grid_sshmux.py: There's a race in the

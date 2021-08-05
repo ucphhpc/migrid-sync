@@ -133,7 +133,7 @@ The job commands and their exit codes:
 ''' % var_dict
         try:
             status_fd = open(statusfile, 'r')
-            txt += str(status_fd.read())
+            txt += status_fd.read()
             status_fd.close()
         except Exception as err:
             txt += 'Could not be read (Internal error?): %s' % err
@@ -590,7 +590,7 @@ def send_email(
                 msg_sig = Message()
                 msg_sig['Content-Type'] = 'application/pgp-signature; name="signature.asc"'
                 msg_sig['Content-Description'] = 'OpenPGP digital signature'
-                msg_sig.set_payload(str(signature))
+                msg_sig.set_payload("%s" % signature)
                 mime_msg.attach(msg_sig)
             else:
                 logger.warning("failed to create gnupg signature")
@@ -620,8 +620,7 @@ def send_email(
             return True
     except Exception as err:
         logger.error('Sending email to %s through %s failed!: %s'
-                     % (recipients, configuration.smtp_server,
-                         str(err)))
+                     % (recipients, configuration.smtp_server, err))
         return False
 
 

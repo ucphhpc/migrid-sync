@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migwsgi.py - Provides the entire WSGI interface
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -241,7 +241,7 @@ def application(environ, start_response):
     content_length = len(output)
     if not [i for i in response_headers if 'Content-Length' == i[0]]:
         # _logger.debug("WSGI adding explicit content length %s" % content_length)
-        response_headers.append(('Content-Length', str(content_length)))
+        response_headers.append(('Content-Length', "%d" % content_length))
 
     # NOTE: send response to client but don't crash e.g. on closed connection
     try:

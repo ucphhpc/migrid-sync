@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # imagemeta - Managing MiG image meta data
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -405,7 +405,7 @@ def __seek_image_meta(
                                         filename, data_entries=data_entries)
         except Exception:
             image_meta = None
-            logger.debug(str(traceback.format_exc()))
+            logger.debug("%s" % traceback.format_exc())
         if image_meta is not None:
             result = image_meta
         path = ('%s%s%s' % (path_array.pop(), os.sep,
@@ -433,7 +433,7 @@ def __seek_volume_meta(
                                            filename, data_entries=data_entries)
         except Exception:
             volume_meta = None
-            logger.debug(str(traceback.format_exc()))
+            logger.debug("%s" % traceback.format_exc())
         if volume_meta is not None:
             result = volume_meta
         path = ('%s%s%s' % (path_array.pop(), os.sep,
@@ -520,7 +520,7 @@ def __is_valid_settings_dict(
                                                     extension)
             except Exception:
                 image_meta = None
-                logger.debug(str(traceback.format_exc()))
+                logger.debug("%s" % traceback.format_exc())
             if image_meta is not None:
                 status = returnvalues.ERROR
                 current_vgrid_path = path.replace(base_dir, '', 1)
@@ -546,7 +546,7 @@ def __is_valid_settings_dict(
                                                     abs_vgrid_path, extension)
             except Exception:
                 image_meta = None
-                logger.debug(str(traceback.format_exc()))
+                logger.debug("%s" % traceback.format_exc())
             if image_meta is not None \
                     and bool(image_meta['settings_recursive']):
                 status = returnvalues.ERROR
@@ -638,7 +638,7 @@ def __add_image_dir_trigger(
                      '+TRIGGERPATH+']
     else:
         status = returnvalues.ERROR
-        ERROR_MSG = "Invalid trigger changes: '%s'" % str(changes)
+        ERROR_MSG = "Invalid trigger changes: '%s'" % changes
         output_objects.append({'object_type': 'error_text',
                                'text': ERROR_MSG})
         logger.error(ERROR_MSG)
@@ -1085,7 +1085,7 @@ def __remove_image_dir_trigger(
         rule_id = __get_image_dir_deleted_trigger_rule_id(logger)
     else:
         status = returnvalues.ERROR
-        ERROR_MSG = "Invalid trigger changes: '%s'" % str(changes)
+        ERROR_MSG = "Invalid trigger changes: '%s'" % changes
         output_objects.append({'object_type': 'error_text',
                                'text': ERROR_MSG})
         logger.error(ERROR_MSG)
@@ -1234,7 +1234,7 @@ def __remove_paraview_link(
                            allow_broken_symlink=True):
             status = returnvalues.ERROR
             ERROR_MSG = 'Unable to remove paraview link: %s ' \
-                % str(paraview_link)
+                % paraview_link
             output_objects.append({'object_type': 'error_text',
                                    'text': ERROR_MSG})
             logger.error('%s' % ERROR_MSG)
@@ -1321,7 +1321,7 @@ def __remove_vgrid_imagesetting(
     else:
         status = returnvalues.ERROR
         ERROR_MSG = 'Unable to remove imagesetting with id: %s ' \
-            % str(imagesetting_id)
+            % imagesetting_id
         output_objects.append({'object_type': 'error_text',
                                'text': ERROR_MSG})
         logger.error('%s' % ERROR_MSG)
@@ -1404,22 +1404,22 @@ def __get_image_meta(
     image_meta = __seek_image_meta(logger, base_dir, path,
                                    data_entries=data_entries)
     if image_meta is not None:
-        image_type = str(image_meta['image_type'])
+        image_type = "%(image_type)s" % image_meta
         preview_image_url = get_preview_image_url(
-            logger, '/cert_redirect/%s' % image_meta['base_path'],
+            logger, '/cert_redirect/%(base_path)s' % image_meta,
             image_meta['path'], image_meta['preview_image_filename'])
-        base_path = str(image_meta['base_path'])
-        path = str(image_meta['path'])
-        name = str(image_meta['name'])
-        extension = str(image_meta['extension'])
-        offset = str(image_meta['offset'])
-        x_dimension = str(image_meta['x_dimension'])
-        y_dimension = str(image_meta['y_dimension'])
-        preview_x_dimension = str(image_meta['preview_x_dimension'])
-        preview_y_dimension = str(image_meta['preview_y_dimension'])
-        preview_cutoff_min = str(image_meta['preview_cutoff_min'])
-        preview_cutoff_max = str(image_meta['preview_cutoff_max'])
-        preview_image_scale = str(image_meta['preview_image_scale'])
+        base_path = "%(base_path)s" % image_meta
+        path = "%(path)s" % image_meta
+        name = "%(name)s" % image_meta
+        extension = "%(extension)s" % image_meta
+        offset = "%(offset)s" % image_meta
+        x_dimension = "%(x_dimension)s" % image_meta
+        y_dimension = "%(y_dimension)s" % image_meta
+        preview_x_dimension = "%(preview_x_dimension)s" % image_meta
+        preview_y_dimension = "%(preview_y_dimension)s" % image_meta
+        preview_cutoff_min = "%(preview_cutoff_min)s" % image_meta
+        preview_cutoff_max = "%(preview_cutoff_max)s" % image_meta
+        preview_image_scale = "%(preview_image_scale)s" % image_meta
         preview_histogram = image_meta['preview_histogram']
         if preview_histogram is not None:
             preview_histogram = preview_histogram.tolist()
@@ -1429,12 +1429,12 @@ def __get_image_meta(
         preview_data = image_meta['preview_data']
         if preview_data is not None:
             preview_data = preview_data.tolist()
-        min_value = str(image_meta['min_value'])
-        max_value = str(image_meta['max_value'])
-        median_value = str(image_meta['median_value'])
-        mean_value = str(image_meta['mean_value'])
-        file_md5sum = str(image_meta['file_md5sum'])
-        data_type = str(image_meta['data_type'])
+        min_value = "%(min_value)s" % image_meta
+        max_value = "%(max_value)s" % image_meta
+        median_value = "%(median_value)s" % image_meta
+        mean_value = "%(mean_value)s" % image_meta
+        file_md5sum = "%(file_md5sum)s" % image_meta
+        data_type = "%(data_type)s" % image_meta
 
         result = {
             'object_type': 'image_meta',
@@ -1483,46 +1483,34 @@ def __get_image_meta_setting(
                                                 extension)
 
     if image_file_setting is not None:
-        extension = str(image_file_setting['extension'])
-        image_settings_status = str(image_file_setting['settings_status'
-                                                       ])
-        image_settings_update_progress = \
-            str(image_file_setting['settings_update_progress'])
-        settings_recursive = str(image_file_setting['settings_recursive'
-                                                    ])
-        image_count = str(image_count)
-        image_type = str(image_file_setting['image_type'])
-        offset = str(image_file_setting['offset'])
-        x_dimension = str(image_file_setting['x_dimension'])
-        y_dimension = str(image_file_setting['y_dimension'])
-        preview_image_extension = \
-            str(image_file_setting['preview_image_extension'])
-        preview_x_dimension = \
-            str(image_file_setting['preview_x_dimension'])
-        preview_y_dimension = \
-            str(image_file_setting['preview_y_dimension'])
-        preview_cutoff_min = str(image_file_setting['preview_cutoff_min'
-                                                    ])
-        preview_cutoff_max = str(image_file_setting['preview_cutoff_max'
-                                                    ])
-        data_type = str(image_file_setting['data_type'])
+        extension = "%(extension)s" % image_file_setting
+        image_settings_status = "%(settings_status)s" % image_file_setting
+        image_settings_update_progress = "%(settings_update_progress)s" % image_file_setting
+        settings_recursive = "%(settings_recursive)s" % image_file_setting
+        image_count = "%d" % image_count
+        image_type = "%(image_type)s" % image_file_setting
+        offset = "%(offset)s" % image_file_setting
+        x_dimension = "%(x_dimension)s" % image_file_setting
+        y_dimension = "%(y_dimension)s" % image_file_setting
+        preview_image_extension = "%(preview_image_extension)s" % image_file_setting
+        preview_x_dimension = "%(preview_x_dimension)s" % image_file_setting
+        preview_y_dimension = "%(preview_y_dimension)s" % image_file_setting
+        preview_cutoff_min = "%(preview_cutoff_min)s" % image_file_setting
+        preview_cutoff_max = "%(preview_cutoff_max)s" % image_file_setting
+        data_type = "%(data_type)s" % image_file_setting
 
         image_volume_setting = get_image_volume_setting(logger,
                                                         abs_path, extension)
 
         if image_volume_setting is not None:
-            z_dimension = str(image_volume_setting['z_dimension'])
-            preview_z_dimension = \
-                str(image_volume_setting['preview_z_dimension'])
-            volume_type = str(image_volume_setting['volume_type'])
-            volume_slice_filepattern = \
-                str(image_volume_setting['volume_slice_filepattern'])
-            volume_settings_status = \
-                str(image_volume_setting['settings_status'])
-            volume_settings_update_progress = \
-                str(image_volume_setting['settings_update_progress'])
-            volume_count = str(get_image_volume_count(logger, abs_path,
-                                                      extension=extension))
+            z_dimension = "%(z_dimension)s" % image_volume_setting
+            preview_z_dimension = "%(preview_z_dimension)s" % image_volume_setting
+            volume_type = "%(volume_type)s" % image_volume_setting
+            volume_slice_filepattern = "%(volume_slice_filepattern)s" % image_volume_setting
+            volume_settings_status = "%(settings_status)s" % image_volume_setting
+            volume_settings_update_progress = "%(settings_update_progress)s" % image_volume_setting
+            volume_count = "%d" % get_image_volume_count(logger, abs_path,
+                                                         extension=extension)
         else:
             z_dimension = 0
             preview_z_dimension = 0
@@ -1575,16 +1563,16 @@ def __get_volume_meta(
     volume_meta = __seek_volume_meta(logger, base_dir, path,
                                      data_entries=data_entries)
     if volume_meta is not None:
-        image_type = str(volume_meta['image_type'])
-        volume_type = str(volume_meta['volume_type'])
-        base_path = str(volume_meta['base_path'])
-        path = str(volume_meta['path'])
-        name = str(volume_meta['name'])
-        extension = str(volume_meta['extension'])
-        offset = str(volume_meta['offset'])
-        x_dimension = str(volume_meta['x_dimension'])
-        y_dimension = str(volume_meta['y_dimension'])
-        z_dimension = str(volume_meta['z_dimension'])
+        image_type = "%(image_type)s" % volume_meta
+        volume_type = "%(volume_type)s" % volume_meta
+        base_path = "%(base_path)s" % volume_meta
+        path = "%(path)s" % volume_meta
+        name = "%(name)s" % volume_meta
+        extension = "%(extension)s" % volume_meta
+        offset = "%(offset)s" % volume_meta
+        x_dimension = "%(x_dimension)s" % volume_meta
+        y_dimension = "%(y_dimension)s" % volume_meta
+        z_dimension = "%(z_dimension)s" % volume_meta
         preview_histogram = volume_meta['preview_histogram']
         if preview_histogram is not None:
             preview_histogram = preview_histogram.tolist()
@@ -1593,20 +1581,20 @@ def __get_volume_meta(
             preview_data = preview_data.tolist()
         preview_xdmf_filepath = get_image_xdmf_filepath(
             logger, base_path, volume_meta['preview_xdmf_filename'])
-        preview_x_dimension = str(volume_meta['preview_x_dimension'])
-        preview_y_dimension = str(volume_meta['preview_y_dimension'])
-        preview_z_dimension = str(volume_meta['preview_z_dimension'])
-        preview_cutoff_min = str(volume_meta['preview_cutoff_min'])
-        preview_cutoff_max = str(volume_meta['preview_cutoff_max'])
+        preview_x_dimension = "%(preview_x_dimension)s" % volume_meta
+        preview_y_dimension = "%(preview_y_dimension)s" % volume_meta
+        preview_z_dimension = "%(preview_z_dimension)s" % volume_meta
+        preview_cutoff_min = "%(preview_cutoff_min)s" % volume_meta
+        preview_cutoff_max = "%(preview_cutoff_max)s" % volume_meta
         preview_histogram = volume_meta['preview_histogram']
         if preview_histogram is not None:
             preview_histogram = preview_histogram.tolist()
-        min_value = str(volume_meta['min_value'])
-        max_value = str(volume_meta['max_value'])
-        median_value = str(volume_meta['median_value'])
-        mean_value = str(volume_meta['mean_value'])
-        file_md5sum = str(volume_meta['file_md5sum'])
-        data_type = str(volume_meta['data_type'])
+        min_value = "%(min_value)s" % volume_meta
+        max_value = "%(max_value)s" % volume_meta
+        median_value = "%(median_value)s" % volume_meta
+        mean_value = "%(mean_value)s" % volume_meta
+        file_md5sum = "%(file_md5sum)s" % volume_meta
+        data_type = "%(data_type)s" % volume_meta
 
         result = {
             'object_type': 'volume_meta',
@@ -1902,7 +1890,7 @@ def create_setting(
         except Exception:
 
             add_status = False
-            logger.debug(str(traceback.format_exc()))
+            logger.debug("%s" % traceback.format_exc())
 
         # Update image volume settings
 
@@ -1920,7 +1908,7 @@ def create_setting(
             except Exception:
 
                 add_status = False
-                logger.debug(str(traceback.format_exc()))
+                logger.debug("%s" % traceback.format_exc())
 
             # Create image meta links used by Paraview render
 
@@ -2107,14 +2095,14 @@ def remove_setting(
         file_status = None
         removed_ext_list = []
 
-        logger.debug(str(traceback.format_exc()))
+        logger.debug("%s" % traceback.format_exc())
 
     try:
         (volume_status, _) = remove_image_volume_settings(logger,
                                                           abs_path, remove_ext)
     except Exception:
         volume_status = None
-        logger.debug(str(traceback.format_exc()))
+        logger.debug("%s" % traceback.format_exc())
 
     if file_status is not None:
         status = returnvalues.OK

@@ -568,7 +568,7 @@ if __name__ == '__main__':
     for job_dict in matches:
         job_id = job_dict['JOB_ID']
         job_vgrid = job_dict['VGRID']
-        job_vgrid_string = str(job_vgrid)
+        job_vgrid_string = "%s" % job_vgrid
         if job_dict['STATUS'] == 'FINISHED':
             finished_count += 1
 

@@ -445,7 +445,7 @@ def http_put(
 
     # connection.putheader('Transfer-Encoding', 'chunked')
 
-    connection.putheader('Content-Length', str(len(data)))
+    connection.putheader('Content-Length', "%d" % len(data))
     connection.endheaders()
 
     # write body if non-empty

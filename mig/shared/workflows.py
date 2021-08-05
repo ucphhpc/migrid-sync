@@ -294,10 +294,10 @@ def get_workflow_job_report(configuration, vgrid):
 
             if trigger_path.startswith(configuration.vgrid_files_home):
                 trigger_path = trigger_path[
-                               len(configuration.vgrid_files_home):]
+                    len(configuration.vgrid_files_home):]
             if trigger_path.startswith(configuration.vgrid_files_writable):
                 trigger_path = trigger_path[
-                               len(configuration.vgrid_files_writable):]
+                    len(configuration.vgrid_files_writable):]
             # Hide internal structure of the mig from the report
             job_history['trigger_path'] = trigger_path
 
@@ -355,7 +355,7 @@ def create_workflow_job_history_file(
         'pattern_name': pattern_name,
         'pattern_id': pattern_id,
         'recipes': recipes,
-        'start': str(start_time),
+        'start': "%s" % start_time,
         'end': '',
         'write': []
     }
@@ -370,7 +370,7 @@ def create_workflow_job_history_file(
             'Started new job history log at %s, for job %s'
             % (job_history_path, job_id))
     except Exception as err:
-        return (False, str(err))
+        return (False, "%s" % err)
     return True, job_history_path
 
 
@@ -399,7 +399,7 @@ def add_workflow_job_history_entry(
     try:
         history = load(job_history_path)
     except Exception as err:
-        return (False, str(err))
+        return (False, "%s" % err)
 
     valid, msg = is_valid_history(configuration, history)
     if not valid:
@@ -415,12 +415,12 @@ def add_workflow_job_history_entry(
         configuration.logger.debug(msg)
         return (False, msg)
 
-    history[operation].append((path, str(datetime.datetime.now())))
+    history[operation].append((path, "%s" % datetime.datetime.now()))
 
     try:
         dump(history, job_history_path)
     except Exception as err:
-        return (False, str(err))
+        return (False, "%s" % err)
     return True, ''
 
 
@@ -442,18 +442,18 @@ def finish_job_history(configuration, vgrid, job_session_id):
     try:
         history = load(job_history_path)
     except Exception as err:
-        return (False, str(err))
+        return (False, "%s" % err)
 
     valid, msg = is_valid_history(configuration, history)
     if not valid:
         return False, msg
 
-    history['end'] = str(datetime.datetime.now())
+    history['end'] = "%s" % datetime.datetime.now()
 
     try:
         dump(history, job_history_path)
     except Exception as err:
-        return (False, str(err))
+        return (False, "%s" % err)
     return True, ''
 
 
@@ -3738,4 +3738,3 @@ if __name__ == '__main__':
                     print('    %s' % job['children'])
             else:
                 print('job report requires vgrid')
-
