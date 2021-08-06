@@ -26,6 +26,7 @@
 #
 
 """Job description parser and validator"""
+
 from __future__ import absolute_import
 
 import os
@@ -96,7 +97,7 @@ def expand_variables(job_dict):
 
                     newlist.append(elem)
             job_dict[key] = newlist
-        elif isinstance(value, str):
+        elif isinstance(value, basestring):
             job_dict[key] = replace_variables("%s" % value, var_map)
     return job_dict
 
