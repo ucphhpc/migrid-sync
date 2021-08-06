@@ -147,7 +147,7 @@ def template_insert(template_file, insert_identifiers, unique=False):
                 contents.insert(f_index, v)
         else:
             print("A non-valid insert identifer dictionary value was supplied, "
-                  "supports str and list")
+                  "supports string and list")
             return False
     try:
         output = open(template_file, 'w')

@@ -863,8 +863,8 @@ class Ui:
                                  + jobBasename + '/description')
             ftp = arclib.FTPControl()
             ftp.Download(xrslURL, 'tmp')
-            str = open('tmp', 'rb').read()
-            xrsl = arclib.Xrsl(str)
+            content = open('tmp', 'rb').read()
+            xrsl = arclib.Xrsl(content)
             os.remove('tmp')
         except arclib.ARCLibError as err:
             logger.error('Failed to get Xrsl: %s' % err.what())

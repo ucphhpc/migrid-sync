@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # localfile - implementation of serverfile with local IO
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -88,9 +88,9 @@ class LocalFile(ServerFile):
         """Truncate local or remote file handle"""
         self._file.truncate(size)
 
-    def write(self, str):
-        """Write str to local or remote file handle"""
-        self._file.write(str)
+    def write(self, data):
+        """Write data to local or remote file handle"""
+        self._file.write(data)
 
     def writelines(self, lines):
         """Write lines to local or remote file handle"""

@@ -354,8 +354,8 @@ def translate_arch(mig_arch):
         return ''
 
 
-def is_mail(str):
-    return str.lstrip().startswith('email:')
+def is_mail(text):
+    return text.lstrip().startswith('email:')
 
 
 def file_mapping(line):

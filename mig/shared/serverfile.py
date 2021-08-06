@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # serverfile - shared wrapper for interfacing local and remote files
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -104,8 +104,8 @@ class ServerFile(object):
         raise NotImplementedError(
             "This is an interface class: subclass and implement!")
 
-    def write(self, str):
-        """Write str to local or remote file handle"""
+    def write(self, data):
+        """Write data to local or remote file handle"""
         raise NotImplementedError(
             "This is an interface class: subclass and implement!")
 
