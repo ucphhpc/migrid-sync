@@ -162,32 +162,32 @@ def __validate_user_db(configuration, client_id, user_db=None):
     {CLIENT_ID: {
             'projects': {
                 PROJECT_NAME: {
-                    'state': str,
-                    'client_id': str,
+                    'state': basestring,
+                    'client_id': basestring,
                     'category_meta': {
-                        'category_id': str,
+                        'category_id': basestring,
                         'actions': [{
-                            'date: str,
-                            'user': str,
-                            'action': str,
+                            'date: basestring,
+                            'user': basestring,
+                            'action': basestring,
                             'references': [{
-                                'ref_id': str,
-                                'ref_help': str,
-                                'ref_name': str,
-                                'ref_pattern: str,
-                                'value': str,
+                                'ref_id': basestring,
+                                'ref_help': basestring,
+                                'ref_name': basestring,
+                                'ref_pattern: basestring,
+                                'value': basestring,
                             }, ...]
                         }],
                     }
                 }
             }
             'account': {
-                'state': str
+                'state': basestring
                 PROTOCOL: {
-                    'role': str
+                    'role': basestring
                     'last_login': {
                         'timestamp': int
-                        'ip': str
+                        'ip': basestring
                     }
                 }
             }
@@ -771,15 +771,12 @@ def __get_user_log_entry(configuration,
         if not os.path.exists(log_filepath):
             touch(log_filepath, configuration)
         fh = open(log_filepath, 'rb')
-        line = fh.readline()
-        while line:
-            line_arr = map(str.strip, line.split(":"))
-            line_arr = map(str.rstrip, line_arr)
+        for line in fh:
+            line_arr = [i.strip() for i in line.split(':')]
             if (match_client_id and client_id == line_arr[1]) \
                     or (match_hashed_client_id
                         and hashed_client_id == line_arr[2]):
                 result = (line_arr[1], line_arr[2])
-            line = fh.readline()
         fh.close()
     except Exception as exc:
         _logger.error("GDP: __get_user_log_entry failed: %s" % exc)
