@@ -62,7 +62,7 @@ def signature():
         'action': REJECT_UNSET,
         'peers_label': [''],
         'peers_kind': REJECT_UNSET,
-        'peers_expire': REJECT_UNSET,
+        'peers_expire': [''],
         'peers_format': REJECT_UNSET,
         'peers_content': REJECT_UNSET,
         'peers_invite': [''],
@@ -120,21 +120,6 @@ CSRF-filtered POST requests to prevent unintended updates'''
     peers_invite = accepted['peers_invite'][-1].strip()
     do_invite = (peers_invite.lower() in ['on', 'true', 'yes', '1'])
 
-    try:
-        expire = datetime.datetime.strptime(raw_expire, '%Y-%m-%d')
-        if datetime.datetime.now() > expire:
-            raise ValueError("specified expire value is in the past!")
-    except Exception as exc:
-        logger.error("expire %r could not be parsed into a (future) date" %
-                     raw_expire)
-        output_objects.append(
-            {'object_type': 'text', 'text':
-             'No valid expire provided - using default: %d days' %
-             default_expire_days})
-        expire = datetime.datetime.now()
-        expire += datetime.timedelta(days=default_expire_days)
-    expire = expire.date().isoformat()
-
     if not action in peer_actions:
         output_objects.append(
             {'object_type': 'error_text', 'text':
@@ -153,6 +138,26 @@ CSRF-filtered POST requests to prevent unintended updates'''
             {'object_type': 'error_text', 'text':
              'Only Import Peers is implemented so far!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
+
+    now = datetime.datetime.now()
+    try:
+        # NOTE: we don't require an expire date for removes and rejects
+        if action in ['remove', 'reject'] and not raw_expire:
+            expire = now
+        else:
+            expire = datetime.datetime.strptime(raw_expire, '%Y-%m-%d')
+            if now > expire:
+                raise ValueError("specified expire value is in the past!")
+    except Exception as exc:
+        logger.error("expire %r could not be parsed into a (future) date" %
+                     raw_expire)
+        output_objects.append(
+            {'object_type': 'text', 'text':
+             'No valid expire provided - using default: %d days' %
+             default_expire_days})
+        expire = now
+        expire += datetime.timedelta(days=default_expire_days)
+    expire = expire.date().isoformat()
 
     peers_path = os.path.join(configuration.user_settings, client_dir,
                               peers_filename)
@@ -173,6 +178,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
         output_objects.append({'object_type': 'link', 'destination':
                                'peers.py', 'text': 'Back to peers'})
         return (output_objects, returnvalues.CLIENT_ERROR)
+
+    client_name = extract_field(client_id, 'full_name')
+    client_email = extract_field(client_id, 'email')
 
     # NOTE: general cases of operation here:
     # * import multiple peers in one go (add new, update existing)
@@ -248,9 +256,6 @@ CSRF-filtered POST requests to prevent unintended updates'''
             output_objects.append(
                 {'object_type': 'text', 'text': "%(distinguished_name)s" % user})
         if action in ['import', 'add', 'update']:
-            client_name = extract_field(client_id, 'full_name')
-            client_email = extract_field(client_id, 'email')
-
             if do_invite:
                 succeeded, failed = [], []
                 email_header = '%s Invitation' % configuration.short_title
@@ -332,7 +337,8 @@ persists.
     for user in peers:
         user_lines.append(user['distinguished_name'])
     pretty_peers['user_lines'] = '\n'.join(user_lines)
-    email_header = '%s Peers %s' % (configuration.short_title, action)
+    email_header = '%s Peers %s from %s' % (
+        configuration.short_title, action, client_name)
     email_msg = """Received %s peers from %s
 """ % (action, client_id)
     email_msg += """
