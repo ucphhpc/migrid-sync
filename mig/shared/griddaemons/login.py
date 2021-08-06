@@ -81,7 +81,7 @@ class Login(object):
         self.ip_addr = ip_addr
         self.user_dict = user_dict
         self.last_update = time.time()
-        if type(public_key) in (str, unicode):
+        if isinstance(public_key, basestring):
             # We already checked that key is valid if we got here
             self.public_key = parse_pub_key(public_key)
         self.home = home

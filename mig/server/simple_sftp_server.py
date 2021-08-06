@@ -110,7 +110,7 @@ class User(object):
         self.password = password
         self.chroot = chroot
         self.public_key = public_key
-        if type(self.public_key) in (str, unicode):
+        if isinstance(self.public_key, basestring):
             bits = base64.decodestring(self.public_key.split(' ')[1])
             msg = paramiko.Message(bits)
             key = paramiko.RSAKey(msg)
