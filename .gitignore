@@ -115,6 +115,9 @@ grid_script_laststart
 # Do not store name pipes or state files like job queues, locks, maps or modified lists
 *.stdin
 *.pickle
+*.pck
+*.out
+*.pem
 *.lock
 *.map
 *.modified
@@ -125,5 +128,7 @@ state/mig_system_files/*.getoutputfiles
 state/mig_system_files/*.sendoutputfiles
 state/mig_system_files/*.job
 state/mig_system_files/*.interactivejob
+
+mig/install/generated-confs*
 
 .vscode/
