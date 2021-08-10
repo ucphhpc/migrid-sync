@@ -110,7 +110,7 @@ else:
 # We normalize path to remove double slashes that would otherwise cause
 # problems and to avoid illegal directory traversal attempts.
 
-filename = os.path.normpath(unquote(str(os.getenv('REQUEST_URI'))))
+filename = os.path.normpath(unquote("%s" % os.getenv('REQUEST_URI')))
 rel_name = filename.lstrip(os.sep)
 base_filename = os.path.basename(filename)
 
@@ -161,7 +161,7 @@ if not client_id and filename.startswith('/sid_redirect/'):
         # o.internal("making sure this dir exists, otherwise create:" + dest_dir)
 
         os.makedirs(dest_dir, mode=0o775)
-    except Exception as e:
+    except Exception:
 
         # An exception is thrown if the leaf exists
 
@@ -393,7 +393,7 @@ elif not client_id and filename.startswith('/share_redirect/'):
         # o.internal("making sure this dir exists, otherwise create:" + dest_dir)
 
         os.makedirs(dest_dir, mode=0o775)
-    except Exception as e:
+    except Exception:
 
         # An exception is thrown if the leaf exists
 
@@ -426,7 +426,7 @@ elif is_user(client_id, configuration.mig_server_home):
 
     if content_type == 'text/resourceconf':
         pending_file = os.path.join(configuration.resource_pending,
-                                    client_dir, rel_name + '.' + str(time.time()))
+                                    client_dir, "%s.%s" % (rel_name, time.time()))
         o.internal("'%s' sent a resource update file '%s', saving file in '%s'"
                    % (client_id, filename, pending_file))
         try:
@@ -459,7 +459,7 @@ elif is_user(client_id, configuration.mig_server_home):
                 o.out('Failure: You (%s) must be an owner of %s to submit a new configuration!'
                       % (client_id, resource_hostname))
                 o.reply_and_exit(o.CLIENT_ERROR)
-        elif keyword_auto == str(config_dict['HOSTIDENTIFIER']):
+        elif keyword_auto == "%s" % config_dict['HOSTIDENTIFIER']:
             (status, msg) = \
                 send_resource_create_request_mail(client_id,
                                                   config_dict['HOSTURL'], pending_file, logger,
@@ -494,9 +494,9 @@ Please contact the server administrator.""")
 
             try:
                 os.rename(pending_file, accepted_path)
-            except Exception as e:
+            except Exception as err:
                 o.out('Accepted config, but failed to save it! Failed: %s'
-                      % e)
+                      % err)
                 o.reply_and_exit(o.ERROR)
             o.out(msg)
             o.reply_and_exit(o.OK)
@@ -508,7 +508,7 @@ Please contact the server administrator.""")
             o.reply_and_exit(o.ERROR)
     elif content_type == 'text/runtimeenvconf':
         pending_file = os.path.join(configuration.user_home,
-                                    client_dir, rel_name + '.' + str(time.time()))
+                                    client_dir, "%s.%s" % (rel_name, time.time()))
         try:
             upload_fd = open(pending_file, 'wb')
             while True:
@@ -517,8 +517,8 @@ Please contact the server administrator.""")
                     break
                 upload_fd.write(chunk)
             upload_fd.close()
-        except Exception as e:
-            o.out('File: %s was not written!' % pending_file, str(e))
+        except Exception as err:
+            o.out('File: %s was not written!' % pending_file, "%s" % err)
             o.reply_and_exit(o.ERROR)
 
         (retval, retmsg) = create_runtimeenv(pending_file,
@@ -532,7 +532,7 @@ Please contact the server administrator.""")
         o.reply_and_exit(o.OK)
     elif content_type == 'text/settings':
         pending_file = os.path.join(configuration.user_home,
-                                    client_dir, rel_name + '.' + str(time.time()))
+                                    client_dir, "%s.%s" % (rel_name, time.time()))
         try:
             upload_fd = open(pending_file, 'wb')
             while True:
@@ -541,8 +541,8 @@ Please contact the server administrator.""")
                     break
                 upload_fd.write(chunk)
             upload_fd.close()
-        except Exception as e:
-            o.out('File: %s was not written!' % pending_file, str(e))
+        except Exception as err:
+            o.out('File: %s was not written!' % pending_file, "%s" % err)
             o.reply_and_exit(o.ERROR)
 
         (retval, retmsg) = parse_and_save_settings(pending_file,
@@ -583,7 +583,7 @@ Please contact the server administrator.""")
             upload_fd.write(chunk)
         upload_fd.close()
     except Exception as exc:
-        o.out('Could not write %s' % filename, str(exc))
+        o.out('Could not write %s' % filename, "%s" % exc)
         o.reply_and_exit(o.ERROR)
 
     submitmrsl = False
@@ -671,8 +671,8 @@ elif is_server(client_id, configuration.server_home):
             upload_fd.write(chunk)
             upload_fd.flush()
         upload_fd.close()
-    except Exception as e:
-        o.out('Could not write %s' % dest_path, str(e))
+    except Exception as err:
+        o.out('Could not write %s' % dest_path, "%s" % err)
         o.reply_and_exit(o.ERROR)
 
     # if a .mrsl file is uploaded it should be unpacked and sent to the job queue

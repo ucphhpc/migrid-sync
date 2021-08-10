@@ -144,9 +144,29 @@
 	("\\.cu$"  . c-mode)
 	("\\.cl$"  . c-mode)
 	("\\.h$"  . c-mode)
+	("\\.cpp$"  . c++-mode)
+	("\\.cxx$"  . c++-mode)
+	("\\.hpp$"  . c++-mode)
+	("\\.hxx$"  . c++-mode)
 	("\\.html$" . web-mode)
 	("\\.htm$" . web-mode)
 	) auto-mode-alist))
+
+; style I want to use in c/c++ mode
+(c-add-style "pretty-c-style" 
+	     '("stroustrup"
+     	       (indent-tabs-mode . nil)        ; use spaces rather than tabs
+       	       (c-basic-offset . 4)            ; indent by four spaces
+       	       (c-offsets-alist . ((inline-open . 0)  ; custom indentation rules
+		   (brace-list-open . 0)
+		   (statement-case-open . +)))))
+
+(defun pretty-c-mode-hook ()
+  (c-set-style "pretty-c-style")        ; use pretty-c-style defined above
+  (auto-fill-mode)
+  (c-toggle-auto-hungry-state 1))
+(add-hook 'c-mode-hook 'pretty-c-mode-hook)
+(add-hook 'c++-mode-hook 'pretty-c-mode-hook)
 
 ;;; add these lines if you like color-based syntax highlighting
 (global-font-lock-mode t)

@@ -1631,7 +1631,7 @@ def load_dir_cache(configuration, vgrid_name):
             # TODO: once all caches are migrated we can remove this loop again
             # Make sure we only have utf8 everywhere to avoid encoding issues
             for old_path in [i for i in loaded_dir_cache.keys() if
-                             isinstance(i, unicode)]:
+                             i != force_utf8(i)]:
                 print("NOTE: forcing old cache entry %s to utf8" % [old_path])
                 new_path = force_utf8(old_path)
                 entry = loaded_dir_cache[old_path]
