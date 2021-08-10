@@ -30,7 +30,7 @@
 
 
 def gen_balancer_proxy_template(url, define, name, member_hosts,
-                                ws_member_hosts):
+                                ws_member_hosts, timeout=600):
     """ Generates an apache proxy balancer configuration section template
      for a particular jupyter service. Relies on the
      https://httpd.apache.org/docs/2.4/mod/mod_proxy_balancer.html module to
@@ -49,6 +49,7 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
     assert isinstance(name, basestring)
     assert isinstance(member_hosts, list)
     assert isinstance(ws_member_hosts, list)
+    assert isinstance(timeout, int)
 
     fill_helpers = {
         'url': url,
@@ -58,7 +59,8 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
         'balancer_worker_env': '.%{BALANCER_WORKER_ROUTE}e',
         'remote_user_env': '%{PROXY_USER}e',
         'hosts': '',
-        'ws_hosts': ''
+        'ws_hosts': '',
+        'timeout': timeout
     }
 
     for host in member_hosts:
@@ -70,6 +72,7 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
     template = """
 <IfDefine %(define)s>
     Header add Set-Cookie "%(route_cookie)s=%(balancer_worker_env)s; path=%(url)s" env=BALANCER_ROUTE_CHANGED
+    ProxyTimeout %(timeout)s
     <Proxy balancer://%(name)s_hosts>
 %(hosts)s
         ProxySet stickysession=%(route_cookie)s
