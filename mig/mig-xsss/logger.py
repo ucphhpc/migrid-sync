@@ -74,7 +74,7 @@ def write(param_sLogEntry):
         fh = open(LOGFILE, 'a')
     else:
         fh = open(LOGFILE, 'w')
-    fh.write(getLogTimeStr() + ' -> ' + str(param_sLogEntry) + '\n')
+    fh.write('%s -> %s\n' % (getLogTimeStr(), param_sLogEntry))
     fh.close()
 
 
