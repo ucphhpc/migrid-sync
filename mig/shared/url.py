@@ -41,13 +41,18 @@ import sys
 if sys.version_info[0] >= 3:
     from urllib.parse import quote, unquote, urlencode, parse_qs, parse_qsl, \
         urlsplit, urlparse
+    from urllib.request import urlopen
 else:
-    from urllib import quote, unquote, urlencode
+    from urllib import quote, unquote, urlencode, urlopen
     from urlparse import parse_qs, parse_qsl, urlsplit, urlparse
 
-from mig.shared.defaults import csrf_field
-from mig.shared.handlers import get_csrf_limit
-from mig.shared.pwhash import make_csrf_token, make_csrf_trust_token
+try:
+    from mig.shared.defaults import csrf_field
+    from mig.shared.handlers import get_csrf_limit
+    from mig.shared.pwhash import make_csrf_token, make_csrf_trust_token
+except ImportError as ioe:
+    print("Could not import mig modules!")
+    exit(1)
 
 
 def base32urlencode(

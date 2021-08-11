@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showstats - read statistics from couchdb and display them
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,13 +26,14 @@
 #
 
 # showstats.py by Jost Berthold (berthold@diku.dk)
-# Extended by Jesper Rude Selknnæs, 06.2010, to include statistics per VO
+# Extended by Jesper Rude Selknæs, 06.2010, to include statistics per VO
 #
 
 """Read usage statistics from couchdb and display it in html table and
 graphics. Uses jquery visualization module and views defined in
 couchdb (for sgas-experimental).
 """
+
 from __future__ import absolute_import
 
 import json
@@ -40,14 +41,14 @@ import os
 import re
 import sys
 import time
-import urllib
+from functools import reduce
 
 from mig.shared import returnvalues
 from mig.shared import vgrid
 from mig.shared.base import requested_page
 from mig.shared.functional import validate_input
 from mig.shared.init import initialize_main_variables, find_entry
-from functools import reduce
+from mig.shared.url import urlencode, urlopen
 
 # allowed parameters, first value is default
 displays = ['machine', 'user', 'vgrid', 'summary']
@@ -246,15 +247,15 @@ Please contact the site admins %s if you think they should be enabled.
     # and contain views with names <category>-<timegrouping>
     query = '/'.join(['', db_name, '_design', group_in_time, '_view', view])
     query += '?'
-    query += urllib.urlencode({'group': 'true',
-                               'group_level': group_level,
-                               'startkey': start_key,
-                               'endkey': end_key,
-                               })
+    query += urlencode({'group': 'true',
+                        'group_level': group_level,
+                        'startkey': start_key,
+                        'endkey': end_key,
+                        })
     try:
         logger.debug("asking database at %s: %s" % (db_url, query))
         # Never use proxies
-        res = urllib.urlopen('http://' + db_url + query, proxies={})
+        res = urlopen('http://' + db_url + query, proxies={})
         jsonreply = res.read()
         res.close()
     except Exception as err:

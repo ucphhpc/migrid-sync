@@ -33,7 +33,7 @@ grep -H ERROR $LOGDIR/ftps.log | \
         grep -E -v "ERROR Invalid user(name)? .* from ${SECSCANIP}" | tail -n $MAXLINES
 
 grep -H ERROR $LOGDIR/sftp.log | \
-	grep -E -v "Password authentication failed for|Socket exception: Connection reset by peer|Error reading SSH protocol banner|check_banner|list_folder on missing path|chmod (292|365) rejected on path|symlink rejected on path|ERROR Exception: Incompatible ssh|ERROR Exception: Incompatible version |ERROR Exception: no moduli available|ERROR Invalid user(name)? .* from ${SECSCANIP}|ERROR $" | tail -n $MAXLINES
+	grep -E -v "Password authentication failed for|Socket exception: Connection reset by peer|Error reading SSH protocol banner|check_banner|list_folder on missing path|chmod (292|365) rejected on path|symlink rejected on path|ERROR Exception: Incompatible ssh|ERROR Exception: Incompatible version |ERROR Exception: no moduli available|ERROR Socket exception: Connection timed out|ERROR Exception: Key-exchange timed out|ERROR Invalid user(name)? .* from ${SECSCANIP}|ERROR $" | tail -n $MAXLINES
 
 grep -H ERROR $LOGDIR/davs.log | grep -E -v "The handshake operation timed out|decryption failed or bad record mac|length too short|no ciphers specified|unknown error \(_ssl.c:579\)|unexpected SSL/TLS wrap failure: (TLS/SSL connection has been closed|\[SSL: HTTPS_PROXY_REQUEST\])|sslv3 alert bad certificate|Failed password login for .* from ${SECSCANIP}|ERROR Invalid user(name)? .* from ${SECSCANIP}|invalid share mode (write|read)-only for " | tail -n $MAXLINES
 

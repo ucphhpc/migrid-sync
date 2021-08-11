@@ -29,11 +29,10 @@
 
 from __future__ import absolute_import
 
-import urllib
-
 from mig.shared import returnvalues
 from mig.shared.functional import validate_input
 from mig.shared.init import initialize_main_variables
+from mig.shared.url import urlopen
 
 
 def signature():
@@ -68,7 +67,7 @@ def main(client_id, user_arguments_dict):
         logger.debug("%s openid server on %s" % (op_name, ping_url))
         try:
             # Never use proxies
-            ping_status = urllib.urlopen(ping_url, proxies={})
+            ping_status = urlopen(ping_url, proxies={})
             http_status = ping_status.getcode()
             data = ping_status.read()
             ping_status.close()
@@ -100,7 +99,7 @@ def main(client_id, user_arguments_dict):
         logger.debug("%s openid connect server on %s" % (op_name, ping_url))
         try:
             # Never use proxies
-            ping_status = urllib.urlopen(ping_url, proxies={})
+            ping_status = urlopen(ping_url, proxies={})
             http_status = ping_status.getcode()
             data = ping_status.read()
             ping_status.close()
