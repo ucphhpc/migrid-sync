@@ -318,7 +318,7 @@ def requested_url_base(environ=None):
 
 def is_unicode(val):
     """Return boolean indicating if val is a unicode string. We avoid
-    isinstance(val, unicode)
+    `isinstance(val, unicode)`
     and the like since it breaks when combined with python-future and futurize.
     """
     return (type(u"") == type(val))

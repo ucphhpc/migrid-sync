@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# checkconf - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# checkconf - check MiGserver.conf file
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,6 +29,7 @@
 Currently only checks that files and dirs exist, but could be
 extended to include other variable checks.
 """
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -36,9 +37,8 @@ import os
 import re
 import sys
 import types
-from ConfigParser import ConfigParser
 
-from mig.shared.configuration import Configuration
+from mig.shared.configuration import Configuration, ConfigParser
 from mig.shared.configuration import fix_missing
 
 YES = 0
@@ -95,7 +95,7 @@ else:
 conf = None
 if not os.path.isfile(conf_file):
     if YES == ask_confirm('Configuration file %s does not exist! %s'
-                           % (conf_file, 'create it? [Y/n] ')):
+                          % (conf_file, 'create it? [Y/n] ')):
         try:
             touch_file(conf_file)
             print('created empty configuration file: %s' % conf_file)
@@ -108,7 +108,7 @@ else:
         conf = Configuration(conf_file)
     except Exception as err:
         print('configuration file %s is incomplete! %s' % (conf_file,
-                err))
+                                                           err))
 
 if not conf:
     if YES == ask_confirm('Add missing configuration options? [Y/n] '):
@@ -116,8 +116,8 @@ if not conf:
         try:
             conf = Configuration(conf_file)
         except Exception as err:
-            print('configuration file %s is still incomplete! %s'\
-                 % (conf_file, err))
+            print('configuration file %s is still incomplete! %s'
+                  % (conf_file, err))
             sys.exit(1)
     else:
         sys.exit(1)
@@ -135,7 +135,7 @@ missing_paths = []
 conf_parser = ConfigParser()
 conf_parser.read([conf_file])
 for (name, val) in conf_parser.items('GLOBAL'):
-    if not isinstance(val, bytes):
+    if not isinstance(val, basestring):
 
         # ignore non-string values
 
@@ -181,14 +181,14 @@ if warnings > 0:
             elif YES == answer:
                 path_type = \
                     ask_reply('Create %s as a (d)irectory, (f)ile or (p)ipe? [D/f/p] '
-                               % path)
+                              % path)
             if not path_type or 'D' == path_type.upper():
                 try:
                     os.makedirs(path)
                     print('created directory %s' % path)
                 except Exception as err:
                     print('could not create directory %s: %s' % (path,
-                            err))
+                                                                 err))
             elif 'F' == path_type.upper():
                 try:
                     dirname = os.path.dirname(path)
