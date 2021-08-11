@@ -981,8 +981,8 @@ def valid_workflow_output(output):
     we consider valid workflow output key value pairs.
     """
     if not isinstance(output, dict):
-        raise InputException("Workflow attribute '%s' must be"
-                             "of type '%s'" % (key, dict))
+        raise InputException("Workflow attribute 'output' must be "
+                             "of type 'dict'. Was given %s. " % type(output))
     for o_key, o_value in output.items():
         # Validate that the output key is a variable
         # name compliant string
@@ -995,20 +995,20 @@ def valid_workflow_recipes(recipes):
     we consider a valid workflow recipe for each entry.
     """
     if not isinstance(recipes, list):
-        raise InputException("Workflow attribute: '%s' must "
-                             "be of type: '%s'" % (recipes, list))
+        raise InputException("Workflow attribute: recipes must be "
+                             "of type list. Was given %s. " % type(recipes))
     for recipe in recipes:
         valid_alphanumeric(recipe, extra_chars='+-=:_-')
 
 
-def valid_workflow_variables(vars):
+def valid_workflow_variables(variables):
     """Verify that supplied vars dictionary only contains characters that
     we consider valid workflow variable key value pairs.
     """
     if not isinstance(vars, dict):
-        raise InputException("Workflow attribute '%s' must "
-                             "be of type: '%s'" % (vars, dict))
-    for _key, _value in vars.items():
+        raise InputException("Workflow attribute: variables must be of "
+                             "type dict. Was given %s. " % type(variables))
+    for _key, _value in variables.items():
         valid_alphanumeric(_key, extra_chars='_-')
         # Essentially no validation since this is a python variable
         # value, don't evaluate this.
@@ -1020,25 +1020,27 @@ def valid_workflow_param_over(params):
     that we consider valid.
     """
     if not isinstance(params, dict):
-        raise InputException("Workflow attribute '%s' must "
-                             "be of type: '%s'" % (params, dict))
+        raise InputException("Workflow attribute params must be "
+                             "of type dict. Was given %s. " % type(params))
 
     for _name, _param in params.items():
         valid_alphanumeric(_name, extra_chars='_-')
 
         if not isinstance(_param, dict):
-            raise InputException("Workflow parameterize over attribute '%s' "
-                                 "must be of type: '%s'" % (_param, dict))
+            raise InputException(
+                "Workflow parameterize over attribute '%s' must be of type: "
+                "dict" % html_escape(_name))
 
         for _key, _value in _param.items():
             if _key not in VALID_PARAM_OVER_ATTRIBUTES:
                 raise InputException(
-                    "Workflow attribute '%s' is illegal" % _key)
+                    "Workflow attribute '%s' is illegal. Valid are: %s"
+                    % (html_escape(_key), VALID_PARAM_OVER_ATTRIBUTES))
 
         for _key in VALID_PARAM_OVER_ATTRIBUTES:
             if _key not in _param:
                 raise InputException(
-                    "Workflow attribute '%s' is missing" % _key)
+                    "Required workflow attribute '%s' is missing" % _key)
 
             valid_float(_param[_key])
 
@@ -1047,12 +1049,13 @@ def valid_workflow_param_over(params):
             raise InputException(
                 "Cannot parameterise between start '%s' and  end '%s' as end "
                 "value is not bigger than the start value"
-                % (_param[PARAM_START], _param[PARAM_STOP]))
+                % (html_escape(_param[PARAM_START]),
+                   html_escape(_param[PARAM_STOP])))
 
         if not float(_param[PARAM_JUMP]) > 0:
             raise InputException(
                 "Cannot parameterise with an increment of '%s'. Must be "
-                "positive and non-zero. " % _param[PARAM_JUMP]
+                "positive and non-zero. " % html_escape(_param[PARAM_JUMP])
             )
 
         frange(
@@ -1086,81 +1089,112 @@ def valid_workflow_recipe(recipe):
 def valid_workflow_environments(environments):
     """Verify that supplied environments dictionary only contains keys and
     values that we consider valid. Note that here we are not checking the
-    content of any of these values
+    content of any of these values.
     """
     if not isinstance(environments, dict):
-        raise InputException("Workflow attribute '%s' must "
-                             "be of type: '%s'" % (environments, dict))
+        raise InputException("Workflow attribute environments must "
+                             "be of type: dict. Was given %s"
+                             % type(environments))
 
     if 'mig' not in environments:
         return True
 
     for env_key, env_val in environments['mig'].items():
-        # General type checking
+        if not isinstance(env_key, basestring):
+            raise InputException(
+                "Unexpected format for key '%s'. Expected to be a str but "
+                "got '%s'" % (html_escape(env_key), type(env_key)))
+
         if env_key not in VALID_WORKFLOW_ENVIRONMENT:
             raise InputException(
                 "Unknown environment key '%s' was provided. Valid keys are "
-                "%s" % (key, ', '.join(VALID_WORKFLOW_ENVIRONMENT)))
+                "%s" % (html_escape(env_key),
+                        ', '.join(VALID_WORKFLOW_ENVIRONMENT)))
 
-        # Specific checking of each definition
         if env_key == 'cpu-architecture':
             valid_alphanumeric(env_val, extra_chars='+-=:_- ')
 
         elif env_key == 'fill':
+            if not isinstance(env_val, list):
+                raise InputException(
+                    "Unexpected format for value '%s'. Expected to "
+                    "be a list but got '%s'"
+                    % (html_escape(env_val), type(env_val)))
             for entry in env_val:
-                if not isinstance(entry, str):
+                if not isinstance(entry, basestring):
                     raise InputException(
-                        "Unexpected format for '%s' in '%s'. Expected to be "
-                        "a 'str' but got '%s'"
-                        % (env_val, env_key, type(env_val)))
+                        "Unexpected format for entry '%s'. Expected to "
+                        "be a str but got '%s'"
+                        % (html_escape(entry), type(entry)))
                 if entry not in maxfill_fields:
                     raise InputException(
                         "Invalid fill keyword '%s'. Valid are %s."
-                        % (entry, ', '.join(maxfill_fields)))
+                        % (html_escape(entry), ', '.join(maxfill_fields)))
 
         elif env_key == 'environment variables':
+            if not isinstance(env_val, list):
+                raise InputException(
+                    "Unexpected format for value '%s'. Expected to "
+                    "be a list but got '%s'"
+                    % (html_escape(env_val), type(env_val)))
             for entry in env_val:
-                if not isinstance(entry, str):
+                if not isinstance(entry, basestring):
                     raise InputException(
-                        "Unexpected format for '%s' in '%s'. Expected to be "
-                        "a 'str' but got '%s'"
-                        % (env_val, env_key, type(env_val)))
+                        "Unexpected format for '%s'. Expected to "
+                        "be a str but got '%s'"
+                        % (html_escape(entry), type(entry)))
                 variable = entry.split('=')
                 if len(variable) != 2 \
                         or not variable[0] \
                         or not variable[1]:
                     raise InputException(
                         "Incorrect formatting of variable '%s'. Must be of "
-                        "form 'key: value'. Multiple variables should be "
-                        "placed as separate entries" % entry)
+                        "form 'key=value'. Multiple variables should be "
+                        "placed as separate entries" % html_escape(entry))
+                # This could be checked using the [a-zA-Z_][a-zA-Z0-9_]* regex
+                valid_alphanumeric(variable[0], extra_chars='_')
+                if variable[0][0] in digits:
+                    raise InputException(
+                        "Cannot start environment variable %s with a digit."
+                        % html_escape(variable[0]))
 
         elif env_key == 'notification':
+            if not isinstance(env_val, list):
+                raise InputException(
+                    "Unexpected format for value '%s'. Expected to "
+                    "be a list but got '%s'"
+                    % (html_escape(env_val), type(env_val)))
             for entry in env_val:
-                if not isinstance(entry, str):
+                if not isinstance(entry, basestring):
                     raise InputException(
-                        "Unexpected format for '%s' in '%s'. Expected to be "
-                        "a 'str' but got '%s'"
-                        % (env_val, env_key, type(env_val)))
+                        "Unexpected format for '%s'. Expected to "
+                        "be a str but got '%s'"
+                        % (html_escape(entry), type(entry)))
                 notification = entry.split(':')
                 if len(notification) != 2 \
                         or not notification[0] \
                         or not notification[1]:
                     raise InputException(
                         "Incorrect formatting of notification '%s'. Must be "
-                        "of form 'key: value'. Multiple notifications should "
-                        "be placed as separate entries" % entry)
+                        "of form 'key:value'. Multiple notifications should "
+                        "be placed as separate entries" % html_escape(entry))
                 valid_ascii(notification[0])
                 notification[1] = notification[1].strip()
                 if notification[1] != 'SETTINGS':
                     valid_email_address(notification[1])
 
         elif env_key == 'runtime environments':
+            if not isinstance(env_val, list):
+                raise InputException(
+                    "Unexpected format for '%s'. Expected to "
+                    "be a list but got '%s'"
+                    % (html_escape(env_val), type(env_val)))
             for entry in env_val:
-                if not isinstance(entry, str):
+                if not isinstance(entry, basestring):
                     raise InputException(
-                        "Unexpected format for '%s' in '%s'. "
-                        "Expected to be a 'str' but got '%s'"
-                        % (env_val, env_key, type(env_val)))
+                        "Unexpected format for '%s'. Expected to "
+                        "be a str but got '%s'"
+                        % (html_escape(entry), type(entry)))
                 valid_alphanumeric(entry, extra_chars='+-=:_- ')
 
         elif env_key == 'nodes' \
@@ -1172,8 +1206,12 @@ def valid_workflow_environments(environments):
             valid_numeric(env_val)
 
         else:
+            # Be strict on MiG definitions. Nothing other than the keys already
+            # specified should be used but we don't want unpredictable
+            # behaviour from rogue definitions.
             raise InputException(
-                "No environment check implemented for key '%s'. " % env_key)
+                "No environment check implemented for key '%s'. "
+                % html_escape(env_key))
         return True
 
 
@@ -1187,7 +1225,8 @@ def valid_workflow_attributes(attributes):
 
     for _key, _value in attributes.items():
         if _key not in VALID_WORKFLOW_ATTRIBUTES:
-            raise InputException("Workflow attribute '%s' is illegal" % _key)
+            raise InputException("Workflow attribute '%s' is illegal"
+                                 % html_escape(_key))
 
 
 def valid_workflow_operation(operation):
@@ -1243,7 +1282,8 @@ def valid_job_attributes(attributes):
 
     for _key, _value in attributes.items():
         if _key not in VALID_JOB_ATTRIBUTES:
-            raise InputException("Job attribute '%s' is illegal" % _key)
+            raise InputException("Job attribute '%s' is illegal"
+                                 % html_escape(_key))
 
 
 def valid_job_type(type):

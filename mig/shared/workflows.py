@@ -29,7 +29,6 @@ from __future__ import absolute_import
 import datetime
 import fcntl
 import os
-import re
 import sys
 import time
 try:
@@ -114,124 +113,217 @@ vgrid_env_vars_map = {
     'ENV_JOB_ID': '+JOBID+'
 }
 
-# A persistent correct pattern
-VALID_PATTERN = {
+_REQUIRED = 0
+_OPTIONAL = 1
+_FORBIDDEN = 2
+
+# # Template for keyword dicts
+# 'key': {
+#     # The type against which any input will be checked. Must be a type.
+#     'type': basestring,
+#     # The default value to be used when creating new variables. Must be on
+#     # the same type as 'type'.
+#     'default': "",
+#     # If required for a valid instance of this object. Must be boolean.
+#     'valid': True
+#     # Allowed user input for creation operations. Must be either _REQUIRED,
+#     # _OPTIONAL or _FORBIDDEN
+#     'create': _FORBIDDEN,
+#     # Allowed user input for modification operations. Must be either
+#     # _REQUIRED, _OPTIONAL or _FORBIDDEN
+#     'modify': _FORBIDDEN,
+# }
+PATTERN_KEYWORDS = {
     # The type of workflow object it is.
-    'object_type': str,
+    'object_type': {
+        'type': basestring,
+        'default': WORKFLOW_PATTERN,
+        'valid': True,
+        'create': _FORBIDDEN,
+        'modify': _FORBIDDEN,
+    },
     # The unique identifier for the pattern.
-    'persistence_id': str,
+    'persistence_id': {
+        'type': basestring,
+        'default': "",
+        'valid': True,
+        'create': _FORBIDDEN,
+        'modify': _REQUIRED,
+    },
     # The user who created the pattern.
-    'owner': str,
+    'owner': {
+        'type': basestring,
+        'default': "",
+        'valid': True,
+        'create': _FORBIDDEN,
+        'modify': _OPTIONAL,
+    },
     # The owning vgrid where the pattern is stored.
-    'vgrid': str,
+    'vgrid': {
+        'type': basestring,
+        'default': "",
+        'valid': True,
+        'create': _REQUIRED,
+        'modify': _REQUIRED,
+    },
     # The user defined name of the pattern (Must be unique within the vgrid).
-    'name': str,
-    # The variable name that the recipes will use to load
-    # the triggered data path into.
-    'input_file': str,
+    'name': {
+        'type': basestring,
+        'default': "",
+        'valid': True,
+        'create': _REQUIRED,
+        'modify': _OPTIONAL,
+    },
+    # The variable name that the recipes will use to load the triggered data
+    # path into.
+    'input_file': {
+        'type': basestring,
+        'default': "",
+        'valid': True,
+        'create': _REQUIRED,
+        'modify': _OPTIONAL,
+    },
     # The output location where the pattern should output the results.
-    'output': dict,
+    'output': {
+        'type': dict,
+        'default': {},
+        'valid': True,
+        'create': _OPTIONAL,
+        'modify': _OPTIONAL,
+    },
     # A dictionary of recipes that the pattern has created and
     # their associated triggers.
     # E.g. {'rule_id': {persistence_id: recipe, persistence_id: recipe,
     #                   persistence_id: recipe}}
     # If recipe doesn't exist at creation, it will be structured as
     # {'rule_id': {'recipe_name': {}} until the recipe is created.
-    'trigger_recipes': dict,
+    'trigger_recipes': {
+        'type': dict,
+        'default': {},
+        'valid': True,
+        'create': _FORBIDDEN,
+        'modify': _OPTIONAL,
+    },
+    # The format in which recipes are initially submitted by the user.
+    'recipes': {
+        'type': list,
+        'default': [],
+        'valid': False,
+        'create': _REQUIRED,
+        'modify': _OPTIONAL,
+    },
     # Variables whose value will overwrite the matching variables
     # inside the recipes.
-    'variables': dict,
+    'variables': {
+        'type': dict,
+        'default': {},
+        'valid': True,
+        'create': _OPTIONAL,
+        'modify': _OPTIONAL,
+    },
     # (Optional) Global parameters which the recipes will be executed over.
-    'parameterize_over': dict,
+    'parameterize_over': {
+        'type': dict,
+        'default': {},
+        'valid': True,
+        'create': _OPTIONAL,
+        'modify': _OPTIONAL,
+    },
     # List of triggering paths. Only used for easy interaction with jupyter
     # widgets and initial pattern creation. Should not be relied on as
     # interal mig paths
-    'input_paths': list
+    'input_paths': {
+        'type': list,
+        'default': [],
+        'valid': True,
+        'create': _REQUIRED,
+        'modify': _OPTIONAL,
+    }
 }
 
-# Attributes that a request must provide
-REQUIRED_PATTERN_INPUTS = {
-    'vgrid': str,
-    'name': str,
-    'input_file': str,
-    'input_paths': list,
-    'output': dict,
-    'recipes': list
-}
-
-ALL_PATTERN_INPUTS = {
-    'variables': dict,
-    'parameterize_over': dict
-}
-ALL_PATTERN_INPUTS.update(REQUIRED_PATTERN_INPUTS)
-
-# Attributes that the user can provide via an update request
-VALID_USER_UPDATE_PATTERN = {
-    'persistence_id': str
-}
-VALID_USER_UPDATE_PATTERN.update(ALL_PATTERN_INPUTS)
-
-# A persistent correct recipe
-VALID_RECIPE = {
+RECIPE_KEYWORDS = {
     # The type of workflow object it is.
-    'object_type': str,
+    'object_type': {
+        'type': basestring,
+        'default': WORKFLOW_RECIPE,
+        'valid': True,
+        'create': _FORBIDDEN,
+        'modify': _FORBIDDEN,
+    },
     # The unique identifier for the recipe.
-    'persistence_id': str,
+    'persistence_id': {
+        'type': basestring,
+        'default': "",
+        'valid': True,
+        'create': _FORBIDDEN,
+        'modify': _REQUIRED,
+    },
     # The user who created the recipe.
-    'owner': str,
+    'owner': {
+        'type': basestring,
+        'default': "",
+        'valid': True,
+        'create': _FORBIDDEN,
+        'modify': _OPTIONAL,
+    },
     # The owning vgrid where the recipe is stored.
-    'vgrid': str,
+    'vgrid': {
+        'type': basestring,
+        'default': "",
+        'valid': True,
+        'create': _REQUIRED,
+        'modify': _REQUIRED,
+    },
     # The user defined name of the recipe (Must be unique within the vgrid).
-    'name': str,
+    'name': {
+        'type': basestring,
+        'default': "",
+        'valid': True,
+        'create': _REQUIRED,
+        'modify': _OPTIONAL,
+    },
     # The code to be executed.
-    'recipe': dict,
+    'recipe': {
+        'type': dict,
+        'default': {},
+        'valid': True,
+        'create': _REQUIRED,
+        'modify': _OPTIONAL,
+    },
     # Task file associated with the recipe.
-    'task_file': str,
+    'task_file': {
+        'type': basestring,
+        'default': "",
+        'valid': True,
+        'create': _FORBIDDEN,
+        'modify': _FORBIDDEN,
+    },
     # Optional for the user to provide the source code itself.
-    'source': str,
+    'source': {
+        'type': basestring,
+        'default': "",
+        'valid': True,
+        'create': _OPTIONAL,
+        'modify': _OPTIONAL,
+    },
     # Optional additional definitions to help guide job processing.
-    'environments': dict
+    'environments': {
+        'type': dict,
+        'default': {},
+        'valid': True,
+        'create': _OPTIONAL,
+        'modify': _OPTIONAL,
+    }
 }
-
-# Attributes that a request must provide
-REQUIRED_RECIPE_CREATION_INPUTS = [
-    'vgrid',
-    'name',
-    'recipe'
-]
-
-OPTIONAL_RECIPE_CREATION_INPUTS = [
-    'source',
-    'environments'
-]
-
-FORBIDDEN_RECIPE_CREATION_INPUTS = [
-    'persistence_id'
-]
-
-# Attributes that the user can provide via an update request
-REQUIRED_RECIPE_UPDATE_INPUTS = [
-    'persistence_id',
-    'vgrid'
-]
-
-OPTIONAL_RECIPE_UPDATE_INPUTS = [
-    'recipe',
-    'source',
-    'environments',
-    'name'
-]
-
-FORBIDDEN_RECIPE_UPDATE_INPUTS = []
 
 VALID_ENVIRONMENT = {
-    'nodes': str,
-    'cpu cores': str,
-    'wall time': str,
-    'memory': str,
-    'disks': str,
-    'retries': str,
-    'cpu-architecture': str,
+    'nodes': basestring,
+    'cpu cores': basestring,
+    'wall time': basestring,
+    'memory': basestring,
+    'disks': basestring,
+    'retries': basestring,
+    'cpu-architecture': basestring,
     'fill': list,
     'environment variables': list,
     'notification': list,
@@ -240,20 +332,20 @@ VALID_ENVIRONMENT = {
 
 # Attributes required by an action request
 VALID_ACTION_REQUEST = {
-    'persistence_id': str,
-    'object_type': str
+    'persistence_id': basestring,
+    'object_type': basestring
 }
 
 VALID_JOB_HISTORY = {
-    'job_id': str,
-    'trigger_id': str,
-    'trigger_path': str,
-    'pattern_name': str,
-    'pattern_id': str,
+    'job_id': basestring,
+    'trigger_id': basestring,
+    'trigger_path': basestring,
+    'pattern_name': basestring,
+    'pattern_id': basestring,
     'recipes': list,
-    'start': str,
+    'start': basestring,
     'write': list,
-    'end': str
+    'end': basestring
 }
 
 
@@ -779,56 +871,70 @@ def __generate_task_file_name():
                                  charset=workflow_id_charset)
 
 
-def __correct_user_input(configuration, input, required_input=None,
-                         allowed_input=None):
+def __check_user_input(
+        configuration, user_input, keyword_dict, mode, user_request=True):
     """
     Validates user input against the required_input dictionary and the
     allowed_input dictionary. Checks that all mandatory input is provided by
     the user, and that any additional input is valid. All user inputs are
     checked that they are in the expected format.
     :param configuration: The MiG configuration object.
-    :param input: The user provided input to validate.
-    :param required_input: dictionary of the required input fields for the
-    users input. Format is {parameter: type}.
-    :param allowed_input: dictionary of any valid input fields for the users
-    input. Format is {parameter: type}.
+    :param user_input: The user provided input to validate.
+    :param keyword_dict: The keyword dictionary containing type and
+    authorisation information.
+    :param mode: key within keyword_dict for which value to use for determining
+    if input is allowed.
+    :param user_request: flag for if we are checking user requests or not. If
+    so be stricter on what is allowed.
     :return: (Tuple (boolean, string)) First value will be True if user input
     is valid, with an empty string. If any problems are encountered first
     value with be False with an accompanying error message explaining the
     issue.
     """
+
     _logger = configuration.logger
-    _logger.debug("WP: __correct_user_input verifying user input"
-                  " '%s' type '%s'" % (input, type(input)))
+    _logger.debug("WP: __check_user_input verifying user input:"
+                  " '%s'. mode: '%s'. user_request: %s"
+                  % (user_input, mode, user_request))
 
-    if not isinstance(required_input, dict):
-        required_input = {}
+    for key, value in user_input.items():
+        if key not in keyword_dict.keys():
+            if user_request:
+                if keyword_dict[key][mode] == _FORBIDDEN:
+                    msg = "key: '%s' is forbidden from a user request. " % key
+                    _logger.debug(msg)
+                    return (False, msg)
+            else:
+                msg = "key: '%s' is not allowed, but it probably wasn't " \
+                      "your fault. Please contact an admin at %s. " \
+                      % (key, configuration.admin_email)
+                _logger.debug(msg)
+                return (False, msg)
 
-    if not isinstance(allowed_input, dict):
-        allowed_input = {}
-
-    for key, value in input.items():
-        if key not in allowed_input.keys():
-            msg = "key: '%s' is not allowed, valid includes '%s'" \
-                  % (key, ', '.join(allowed_input.keys()))
-            _logger.debug(msg)
-            return (False, msg)
-        if not isinstance(value, allowed_input.get(key)):
+        if not isinstance(value, keyword_dict[key]['type']):
             msg = "value: '%s' has an incorrect type: '%s', requires: '%s'" \
-                  % (value, type(value), allowed_input.get(key))
+                  % (value, type(value),
+                     keyword_dict[mode]['type'])
             _logger.info(msg)
             return (False, msg)
-    for key in required_input.keys():
-        if key not in input:
-            msg = "required key: '%s' is missing, required includes: '%s'" \
-                  % (key, ', '.join(required_input.keys()))
+    for key, value in keyword_dict.items():
+        if value[mode] == _REQUIRED and key not in user_input:
+            msg = "required key: '%s' is missing. " % key
             _logger.debug(msg)
             return (False, msg)
     return (True, "")
 
 
-def __check_recipe_inputs(configuration, user_inputs, types, required=None,
-                          optional=None, forbidden=None):
+def __correct_pattern_input(configuration, user_input, mode, user_request=True):
+    _logger = configuration.logger
+    _logger.debug("WP: __correct_pattern_input, user_inputs: '%s'"
+                  % user_input)
+
+    return __check_user_input(configuration, user_input, PATTERN_KEYWORDS,
+                              mode, user_request=user_request)
+
+
+def __check_recipe_inputs(configuration, user_inputs, mode, user_request=True):
     """
     Checks that user input is valid recipe definitions. This does not check
     internal mig definitions such as persistence id's or ownership and so
@@ -839,69 +945,25 @@ def __check_recipe_inputs(configuration, user_inputs, types, required=None,
     Should contain valid recipe definitions. Note that despite the naming, it
     is possible for a user to provide inputs that are neither required,
     optional, or forbidden. These inputs will be ignored for this check.
-    :param types. (dict). Types of each given input.
-    :param required. (list). Inputs that are always required for the user
-    input.
-    :param optional. (list). Inputs that are optionally possible for the user
-    input.
-    :param forbidden. (list) Inputs that are forbidden for the user input.
+    :param mode. (str). key within keyword_dict for which value to use for
+    determining if input is allowed.
     :return: (Tuple (boolean, string)) First value will be True if user input
     is valid, with an empty string. If any problems are encountered first
     value with be False with an accompanying error message explaining the
     issue.
     """
     _logger = configuration.logger
-    _logger.debug("WR: __check_recipe_inputs, user_inputs: '%s'" % user_inputs)
+    _logger.debug("WR: __check_recipe_inputs, user_inputs: '%s'"
+                  % user_inputs)
 
-    if not isinstance(required, list):
-        required = []
+    status, msg = __check_user_input(
+        configuration, user_inputs, RECIPE_KEYWORDS, mode,
+        user_request=user_request)
 
-    if not isinstance(optional, list):
-        optional = []
+    if not status:
+        return (False, msg)
 
-    if not isinstance(forbidden, list):
-        forbidden = []
-
-    if not isinstance(user_inputs, dict):
-        _logger.error(
-            "WR: __check_recipe_inputs, incorrect 'workflow_recipe' "
-            "structure '%s'" % type(user_inputs))
-        return (False, "Internal server error due to incorrect recipe "
-                       "structure.")
-
-    for key in required:
-        if key not in user_inputs:
-            msg = "Required key: '%s' is missing, required keys are: '%s'" \
-                  % (key, ', '.join(required))
-            _logger.debug(msg)
-            return (False, msg)
     for key, value in user_inputs.items():
-        # Check key not forbidden
-        if key in forbidden:
-            msg = "Forbidden key '%s' was provided for recipe. " % key
-            _logger.debug("WR: __check_recipe_inputs, " + msg)
-            return (False, msg)
-
-        # Check key is either required or optional
-        if key not in required and key not in optional:
-            msg = "Unknown key '%s' was provided. Valid keys are %s" \
-                  % (key, ', '.join(required + optional))
-            _logger.debug("WR: __check_recipe_inputs, " + msg)
-            return (False, msg)
-
-        # Check that provided type is acceptable
-        if key not in types:
-            msg = "Expected type not provided by backend for key '%s'. " \
-                  "Please contact a MiG admin at %s." \
-                  % (key, configuration.admin_email)
-            _logger.error("WR: __check_recipe_inputs, " + msg)
-            return (False, msg)
-        if not isinstance(value, types[key]):
-            msg = "value: '%s' has an incorrect type: '%s', requires: " \
-                  "'%s'" % (value, type(value), types[key])
-            _logger.debug("WR: __check_recipe_inputs, " + msg)
-            return (False, msg)
-
         # We must be careful to validate input that can affect the running of
         # the MiG. We can ignore non-mig definitions
         if key == 'environments' and 'mig' in value:
@@ -933,7 +995,7 @@ def __check_recipe_inputs(configuration, user_inputs, types, required=None,
 
                 elif env_key == 'fill':
                     for entry in env_val:
-                        if not isinstance(entry, str):
+                        if not isinstance(entry, basestring):
                             msg = "Unexpected format for '%s' in '%s'. " \
                                   "Expected to be a 'str' but got '%s'" \
                                   % (env_val, env_key, type(env_val))
@@ -947,7 +1009,7 @@ def __check_recipe_inputs(configuration, user_inputs, types, required=None,
 
                 elif env_key == 'environment variables':
                     for entry in env_val:
-                        if not isinstance(entry, str):
+                        if not isinstance(entry, basestring):
                             msg = "Unexpected format for '%s' in '%s'. " \
                                   "Expected to be a 'str' but got '%s'" \
                                   % (env_val, env_key, type(env_val))
@@ -958,7 +1020,7 @@ def __check_recipe_inputs(configuration, user_inputs, types, required=None,
                                 or not variable[0] \
                                 or not variable[1]:
                             msg = "Incorrect formatting of variable " \
-                                  "'%s'. Must be of form 'key: value'. " \
+                                  "'%s'. Must be of form 'key=value'. " \
                                   "Multiple variables should be placed " \
                                   "as separate entries" % entry
                             _logger.debug("WR: __check_recipe_inputs, " + msg)
@@ -966,7 +1028,7 @@ def __check_recipe_inputs(configuration, user_inputs, types, required=None,
 
                 elif env_key == 'notification':
                     for entry in env_val:
-                        if not isinstance(entry, str):
+                        if not isinstance(entry, basestring):
                             msg = "Unexpected format for '%s' in '%s'. " \
                                   "Expected to be a 'str' but got '%s'" \
                                   % (env_val, env_key, type(env_val))
@@ -977,7 +1039,7 @@ def __check_recipe_inputs(configuration, user_inputs, types, required=None,
                                 or not notification[0]\
                                 or not notification[1]:
                             msg = "Incorrect formatting of notification " \
-                                  "'%s'. Must be of form 'key: value'. " \
+                                  "'%s'. Must be of form 'key:value'. " \
                                   "Multiple notifications should be placed " \
                                   "as separate entries" % entry
                             _logger.debug("WR: __check_recipe_inputs, " + msg)
@@ -1001,10 +1063,11 @@ def __check_recipe_inputs(configuration, user_inputs, types, required=None,
 
                 elif env_key == 'runtime environments':
                     for entry in env_val:
-                        if not isinstance(entry, str):
+                        if not isinstance(entry, basestring):
                             msg = "Unexpected format for '%s' in '%s'. " \
                                   "Expected to be a 'str' but got '%s'" \
-                                  % (env_val, env_key, type(env_val))
+                                  % (env_val, env_key,
+                                     type(env_val))
                             _logger.debug("WR: __check_recipe_inputs, " + msg)
                             return (False, msg)
                         if not is_runtime_environment(entry, configuration):
@@ -1038,7 +1101,7 @@ def __check_recipe_inputs(configuration, user_inputs, types, required=None,
     return (True, "")
 
 
-def __strip_input_attributes(workflow_pattern):
+def __strip_input_pattern_attributes(workflow_pattern, mode='create'):
     """
     Removes any additional parameters the provided pattern has, that are not
     necessary for a valid pattern within the MiG.
@@ -1046,8 +1109,8 @@ def __strip_input_attributes(workflow_pattern):
     :return: (dictionary) The workflow pattern dict, with any superfluous
     keys removed.
     """
-    for key in ALL_PATTERN_INPUTS.keys():
-        if key not in VALID_PATTERN.keys():
+    for key, value in PATTERN_KEYWORDS.items():
+        if not value['valid']:
             workflow_pattern.pop(key, None)
 
     return workflow_pattern
@@ -1083,16 +1146,17 @@ def __correct_persistent_wp(configuration, workflow_pattern):
 
     msg = "The workflow pattern had an incorrect structure, " + contact_msg
     for key, value in workflow_pattern.items():
-        if key not in VALID_PATTERN:
+        if key not in PATTERN_KEYWORDS:
             _logger.error(
-                "WP: __correct_wp, workflow_pattern had an incorrect "
-                "key '%s', allowed are %s" % (key, VALID_PATTERN.keys()))
+                "WP: __correct_wp, workflow_pattern had an incorrect key "
+                "'%s', allowed are %s"
+                % (key, PATTERN_KEYWORDS.keys()))
             return (False, msg)
-        if not isinstance(value, VALID_PATTERN.get(key)):
+        if not isinstance(value, PATTERN_KEYWORDS[key]['type']):
             _logger.error(
                 "WP: __correct_wp, workflow_pattern had an incorrect "
                 "value type '%s', on key '%s', valid is '%s'"
-                % (type(value), key, VALID_PATTERN[key]))
+                % (type(value), key, PATTERN_KEYWORDS[key]['type']))
             return (False, msg)
     return (True, "")
 
@@ -1128,16 +1192,16 @@ def __correct_persistent_wr(configuration, workflow_recipe):
 
     msg = "The workflow recipe had an incorrect structure, " + contact_msg
     for key, value in workflow_recipe.items():
-        if key not in VALID_RECIPE:
+        if key not in RECIPE_KEYWORDS:
             _logger.error(
                 "WR: __correct_wr, workflow_recipe had an incorrect key %s, "
-                "allowed are %s" % (key, VALID_RECIPE.keys()))
+                "allowed are %s" % (key, RECIPE_KEYWORDS.keys()))
             return (False, msg)
-        if not isinstance(value, VALID_RECIPE.get(key)):
+        if not isinstance(value, RECIPE_KEYWORDS[key]['type']):
             _logger.error(
                 "WR: __correct_wr, workflow_recipe had an incorrect "
                 "value type %s, on key %s, valid is %s"
-                % (type(value), key, VALID_RECIPE[key]))
+                % (type(value), key, RECIPE_KEYWORDS[key]['type']))
             return (False, msg)
     return (True, '')
 
@@ -1496,21 +1560,39 @@ def __build_wp_object(configuration, user_query=False, **kwargs):
         return (False, msg)
 
     wp_obj = {
-        'object_type': kwargs.get('object_type', WORKFLOW_PATTERN),
-        'persistence_id': kwargs.get('persistence_id',
-                                     VALID_PATTERN['persistence_id']()),
-        'owner': kwargs.get('owner', VALID_PATTERN['owner']()),
-        'vgrid': kwargs.get('vgrid', VALID_PATTERN['vgrid']()),
-        'name': kwargs.get('name', VALID_PATTERN['name']()),
-        'input_file': kwargs.get('input_file', VALID_PATTERN['input_file']),
-        'output': kwargs.get('output', VALID_PATTERN['output']()),
-        'trigger_recipes': kwargs.get('trigger_recipes',
-                                      VALID_PATTERN['trigger_recipes']()),
-        'variables': kwargs.get('variables', VALID_PATTERN['variables']()),
-        'parameterize_over': kwargs.get('parameterize_over',
-                                        VALID_PATTERN['parameterize_over']()),
-        'input_paths': kwargs.get('input_paths',
-                                  VALID_PATTERN['input_paths']())
+        'object_type': kwargs.get(
+            'object_type',
+            PATTERN_KEYWORDS['object_type']['default']),
+        'persistence_id': kwargs.get(
+            'persistence_id',
+            PATTERN_KEYWORDS['persistence_id']['default']),
+        'owner': kwargs.get(
+            'owner',
+            PATTERN_KEYWORDS['owner']['default']),
+        'vgrid': kwargs.get(
+            'vgrid',
+            PATTERN_KEYWORDS['vgrid']['default']),
+        'name': kwargs.get(
+            'name',
+            PATTERN_KEYWORDS['name']['default']),
+        'input_file': kwargs.get(
+            'input_file',
+            PATTERN_KEYWORDS['input_file']['default']),
+        'output': kwargs.get(
+            'output',
+            PATTERN_KEYWORDS['output']['default']),
+        'trigger_recipes': kwargs.get(
+            'trigger_recipes',
+            PATTERN_KEYWORDS['trigger_recipes']['default']),
+        'variables': kwargs.get(
+            'variables',
+            PATTERN_KEYWORDS['variables']['default']),
+        'parameterize_over': kwargs.get(
+            'parameterize_over',
+            PATTERN_KEYWORDS['parameterize_over']['default']),
+        'input_paths': kwargs.get(
+            'input_paths',
+            PATTERN_KEYWORDS['input_paths']['default'])
     }
 
     if user_query:
@@ -1539,17 +1621,33 @@ def __build_wr_object(configuration, user_query=False, **kwargs):
         return (False, msg)
 
     wr_obj = {
-        'object_type': kwargs.get('object_type', WORKFLOW_RECIPE),
-        'persistence_id':
-            kwargs.get('persistence_id', VALID_RECIPE['persistence_id']()),
-        'owner': kwargs.get('owner', VALID_RECIPE['owner']()),
-        'vgrid': kwargs.get('vgrid', VALID_RECIPE['vgrid']()),
-        'name': kwargs.get('name', VALID_RECIPE['name']()),
-        'recipe': kwargs.get('recipe', VALID_RECIPE['recipe']()),
-        'task_file': kwargs.get('task_file', VALID_RECIPE['task_file']()),
-        'source': kwargs.get('source', VALID_RECIPE['source']()),
-        'environments':
-            kwargs.get('environments', VALID_RECIPE['environments']()),
+        'object_type': kwargs.get(
+            'object_type',
+            RECIPE_KEYWORDS['object_type']['default']),
+        'persistence_id': kwargs.get(
+            'persistence_id',
+            RECIPE_KEYWORDS['persistence_id']['default']),
+        'owner': kwargs.get(
+            'owner',
+            RECIPE_KEYWORDS['owner']['default']),
+        'vgrid': kwargs.get(
+            'vgrid',
+            RECIPE_KEYWORDS['vgrid']['default']),
+        'name': kwargs.get(
+            'name',
+            RECIPE_KEYWORDS['name']['default']),
+        'recipe': kwargs.get(
+            'recipe',
+            RECIPE_KEYWORDS['recipe']['default']),
+        'task_file': kwargs.get(
+            'task_file',
+            RECIPE_KEYWORDS['task_file']['default']),
+        'source': kwargs.get(
+            'source',
+            RECIPE_KEYWORDS['source']['default']),
+        'environments': kwargs.get(
+            'environments',
+            RECIPE_KEYWORDS['environments']['default']),
     }
 
     if user_query:
@@ -1748,7 +1846,7 @@ def get_wp_map(configuration, client_id=None):
     last_load[WORKFLOW_PATTERNS] = map_stamp
     # Do not print whole map here. It is dangerously big if any recipe contains
     # significant data such as an image.
-    _logger.debug("WP: got: map with keys '%s'" % workflow_p_map.keys())
+    _logger.debug("WP: got map with keys '%s'" % workflow_p_map.keys())
     return workflow_p_map
 
 
@@ -1780,7 +1878,7 @@ def get_wr_map(configuration, client_id=None):
     last_load[WORKFLOW_RECIPES] = map_stamp
     # Do not print whole map here. It is dangerously big if any recipe contains
     # significant data such as an image.
-    _logger.debug("WP: got: map with keys '%s'" % workflow_r_map.keys())
+    _logger.debug("WP: got map with keys '%s'" % workflow_r_map.keys())
     return workflow_r_map
 
 
@@ -1917,14 +2015,13 @@ def delete_workflow(configuration, client_id, workflow_type=WORKFLOW_PATTERN,
     vgrid = kwargs.get('vgrid', None)
     if not vgrid:
         msg = "A workflow removal dependency was missing: 'vgrid'"
-        _logger.error("delete_workflow: 'vgrid' was not set %s" % vgrid)
+        _logger.error("delete_workflow: 'vgrid' was not set. ")
         return (False, msg)
 
     persistence_id = kwargs.get('persistence_id', None)
     if not persistence_id:
         msg = "A workflow removal dependency was missing: 'persistence_id'"
-        _logger.error("delete_workflow: 'persistence_id' was not set %s" %
-                      persistence_id)
+        _logger.error("delete_workflow: 'persistence_id' was not set. ")
         return (False, msg)
 
     if vgrid:
@@ -1963,7 +2060,7 @@ def update_workflow(configuration, client_id, workflow_type=WORKFLOW_PATTERN,
     vgrid = kwargs.get('vgrid', None)
     if not vgrid:
         msg = "A workflow update dependency was missing: 'vgrid'"
-        _logger.error("update_workflow: 'vgrid' was not set: '%s'" % vgrid)
+        _logger.error("update_workflow: 'vgrid' was not set. ")
         return (False, msg)
 
     persistence_id = kwargs.get('persistence_id', None)
@@ -1982,8 +2079,7 @@ def update_workflow(configuration, client_id, workflow_type=WORKFLOW_PATTERN,
         return __update_workflow_recipe(configuration, client_id, vgrid,
                                         kwargs)
 
-    return __update_workflow_pattern(configuration, client_id, vgrid,
-                                     kwargs)
+    return __update_workflow_pattern(configuration, client_id, vgrid, kwargs)
 
 
 def delete_workflow_pattern(configuration, client_id, vgrid, persistence_id):
@@ -2125,8 +2221,9 @@ def __save_workflow(configuration, vgrid, workflow,
         # get_workflow_with
         os.utime(file_path, (mod_update_time, mod_update_time))
         wrote = True
-        _logger.debug("WP: new '%s' saved: '%s'."
-                      % (workflow_type, workflow['persistence_id']))
+        _logger.debug("WP: new '%s' saved: '%s', '%s'."
+                      % (workflow_type, workflow['name'],
+                         workflow['persistence_id']))
     except Exception as err:
         _logger.error(
             "WP: failed to write: '%s' to disk: '%s'" % (file_path, err))
@@ -2220,9 +2317,8 @@ def __create_workflow_pattern_entry(configuration, client_id, vgrid,
         return (False, "Internal server error due to incorrect pattern "
                        "structure")
 
-    correct_input, msg = __correct_user_input(configuration, workflow_pattern,
-                                              REQUIRED_PATTERN_INPUTS,
-                                              ALL_PATTERN_INPUTS)
+    correct_input, msg = \
+        __correct_pattern_input(configuration, workflow_pattern, 'create')
     if not correct_input:
         return (False, msg)
 
@@ -2322,7 +2418,8 @@ def __create_workflow_pattern_entry(configuration, client_id, vgrid,
                 return (False, "Failed to associate recipe to pattern")
 
     # Associate additional optional arguments
-    workflow_pattern = __strip_input_attributes(workflow_pattern)
+    workflow_pattern = __strip_input_pattern_attributes(workflow_pattern,
+                                                        mode='create')
 
     pattern, msg = __build_wp_object(configuration, **workflow_pattern)
     if not pattern:
@@ -2363,13 +2460,8 @@ def __create_workflow_recipe_entry(configuration, client_id, vgrid,
         "WR: __create_workflow_recipe_entry, client_id: %s,"
         "workflow_recipe: %s" % (client_id, workflow_recipe))
 
-    correct_input, msg = __check_recipe_inputs(
-        configuration,
-        workflow_recipe,
-        VALID_RECIPE,
-        required=REQUIRED_RECIPE_CREATION_INPUTS,
-        optional=OPTIONAL_RECIPE_CREATION_INPUTS,
-        forbidden=FORBIDDEN_RECIPE_CREATION_INPUTS)
+    correct_input, msg = \
+        __check_recipe_inputs(configuration, workflow_recipe, 'create')
 
     if not correct_input:
         return (False, msg)
@@ -2433,9 +2525,8 @@ def __create_workflow_recipe_entry(configuration, client_id, vgrid,
     return (True, "%s" % workflow_recipe['persistence_id'])
 
 
-def __update_workflow_pattern(configuration, client_id, vgrid,
-                              workflow_pattern, required_input=None,
-                              allowed_input=None):
+def __update_workflow_pattern(
+        configuration, client_id, vgrid, workflow_pattern, user_request=True):
     """
     Updates an already registered pattern with new variables. Only the
     variables to be updated are passed to the function. Will automatically
@@ -2446,10 +2537,6 @@ def __update_workflow_pattern(configuration, client_id, vgrid,
     :param workflow_pattern: A dict on new variables to apply to an existing
     pattern. Only values to be updated should be included. Must include the
     persistence_id of the pattern to update.
-    :param required_input: [optional] any mandatory arguments required for the
-    update. By default this includes the persistence_id.
-    :param allowed_input: [optional] any arguments possible to provide on top
-    of the required_input. By default is the VALID_USER_UPDATE_PATTERN dict.
     :return: (Tuple(boolean, string)) Returns a tuple with the first value
     being a boolean, with True showing successful pattern creation, and False
     showing that a problem has been encountered. If a problem is encountered
@@ -2457,11 +2544,6 @@ def __update_workflow_pattern(configuration, client_id, vgrid,
     persistence_id of the created pattern.
     """
     _logger = configuration.logger
-    if not required_input or not isinstance(required_input, dict):
-        required_input = {'persistence_id': str}
-
-    if not allowed_input or not isinstance(allowed_input, dict):
-        allowed_input = VALID_USER_UPDATE_PATTERN
 
     if not isinstance(workflow_pattern, dict):
         _logger.error("WP: __update_workflow_pattern, incorrect "
@@ -2477,9 +2559,8 @@ def __update_workflow_pattern(configuration, client_id, vgrid,
         _logger.error(msg)
         return (False, msg)
 
-    correct_input, msg = __correct_user_input(configuration, workflow_pattern,
-                                              required_input=required_input,
-                                              allowed_input=allowed_input)
+    correct_input, msg = __correct_pattern_input(
+        configuration, workflow_pattern, 'modify', user_request=user_request)
     if not correct_input:
         return (False, msg)
 
@@ -2597,7 +2678,8 @@ def __update_workflow_pattern(configuration, client_id, vgrid,
                 return (False, "Failed to associate recipe to pattern")
 
     # Recipes have to be prepared in trigger_recipes before this point
-    workflow_pattern = __strip_input_attributes(workflow_pattern)
+    workflow_pattern = __strip_input_pattern_attributes(workflow_pattern,
+                                                        mode='modify')
 
     for k in pattern.keys():
         if k not in workflow_pattern:
@@ -2646,12 +2728,7 @@ def __update_workflow_recipe(configuration, client_id, vgrid, workflow_recipe):
                   % (client_id, workflow_recipe))
 
     correct_input, msg = __check_recipe_inputs(
-        configuration,
-        workflow_recipe,
-        VALID_RECIPE,
-        required=REQUIRED_RECIPE_UPDATE_INPUTS,
-        optional=OPTIONAL_RECIPE_UPDATE_INPUTS,
-        forbidden=FORBIDDEN_RECIPE_UPDATE_INPUTS)
+        configuration, workflow_recipe, 'modify', user_request=True)
 
     if not correct_input:
         return (False, msg)
@@ -3047,8 +3124,7 @@ def __register_recipe(configuration, client_id, vgrid, workflow_recipe):
             _ = [pattern['trigger_recipes'][rule_id].pop(recipe_name)
                  for rule_id, recipe_name in updates]
             updated, msg = __update_workflow_pattern(
-                configuration, client_id, vgrid, pattern,
-                required_input=VALID_PATTERN, allowed_input=VALID_PATTERN)
+                configuration, client_id, vgrid, pattern, user_request=False)
             if not updated:
                 _logger.warning("Failed to update workflow pattern for the "
                                 "registered recipe trigger: '%s'" % msg)
@@ -3075,11 +3151,8 @@ def __recipe_get_task_path(configuration, vgrid, recipe, relative=False):
     _logger = configuration.logger
     _logger.info("Recipe '%s' loading tasks" % recipe)
 
-    correct, msg = __correct_user_input(configuration, recipe,
-                                        {'task_file': str},
-                                        VALID_RECIPE)
-    if not correct:
-        return (False, msg)
+    if 'task_file' not in recipe:
+        return (False, "Missing task_file definition in recipe")
 
     task_home = get_workflow_task_home(configuration, vgrid)
     if not task_home:
@@ -3277,36 +3350,40 @@ def __create_task_parameter_file(configuration, vgrid, pattern,
 
     job_env_vars = [item for item in job_env_vars_map.keys()]
 
-    input_file = pattern.get('input_file', VALID_PATTERN['input_file'])
+    input_file = pattern.get('input_file',
+                             PATTERN_KEYWORDS['input_file']['default'])
     parameter_dict = {}
     if input_file:
         parameter_dict.update({input_file: "ENV_WORKFLOW_INPUT_PATH"})
 
     for var_name, param in pattern.get(
-            'parameterize_over', VALID_PATTERN['parameterize_over']).items():
+            'parameterize_over',
+            PATTERN_KEYWORDS['parameterize_over']['default']).items():
         if var_name != input_file:
             parameter_dict[var_name] = "ENV_%s" % var_name
 
-    for var_name, var_value \
-            in pattern.get('variables', VALID_PATTERN['variables']).items():
+    for var_name, var_value in pattern.get(
+            'variables', PATTERN_KEYWORDS['variables']['default']).items():
         if var_name != input_file:
             # TODO change this to recursive search through any parameter
             #  type
             for env_var in job_env_vars:
                 full_env_var = "{%s}" % env_var
-                if isinstance(var_value, str) and full_env_var in var_value:
+                if isinstance(var_value, basestring) \
+                        and full_env_var in var_value:
                     var_value = "ENV_%s" % var_name
             parameter_dict[var_name] = var_value
 
-    for var_name, var_value \
-            in pattern.get('output', VALID_PATTERN['output']).items():
+    for var_name, var_value in pattern.get(
+            'output', PATTERN_KEYWORDS['output']['default']).items():
         if var_name != input_file:
             # TODO change this to recursive search through any parameter
             #  type
             var_value = os.path.join(vgrid, var_value)
             for env_var in job_env_vars:
                 full_env_var = "{%s}" % env_var
-                if isinstance(var_value, str) and full_env_var in var_value:
+                if isinstance(var_value, basestring) \
+                        and full_env_var in var_value:
                     var_value = "ENV_%s" % var_name
             parameter_dict[var_name] = var_value
 
@@ -3411,7 +3488,8 @@ def create_workflow_trigger(configuration, client_id, vgrid, path, pattern,
             # TODO change this to recursive search through any parameter type
             for env_var in job_env_vars:
                 full_env_var = "{%s}" % env_var
-                if isinstance(var_value, str) and full_env_var in var_value:
+                if isinstance(var_value, basestring) \
+                        and full_env_var in var_value:
                     if var_name in environment_variables:
                         environment_variables[var_name] = \
                             environment_variables[var_name].replace(
@@ -3429,7 +3507,8 @@ def create_workflow_trigger(configuration, client_id, vgrid, path, pattern,
                 #  type
                 for env_var in job_env_vars:
                     full_env_var = "{%s}" % env_var
-                    if isinstance(var_value, str) and full_env_var in var_value:
+                    if isinstance(var_value, basestring) \
+                            and full_env_var in var_value:
                         if var_name in environment_variables:
                             environment_variables[var_name] = \
                                 environment_variables[var_name].replace(
