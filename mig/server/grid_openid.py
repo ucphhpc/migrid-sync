@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_openid - openid server authenticating users against user database
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -60,7 +60,6 @@ from __future__ import absolute_import
 
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from SocketServer import ThreadingMixIn
-from urlparse import urlparse
 
 import base64
 import Cookie
@@ -100,6 +99,7 @@ from mig.shared.safeinput import valid_distinguished_name, valid_password, \
     valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url, \
     valid_complex_url, InputException
 from mig.shared.tlsserver import hardened_ssl_context
+from mig.shared.url import urlparse
 from mig.shared.useradm import get_openid_user_dn, check_password_scramble, \
     check_hash
 from mig.shared.validstring import possible_user_id

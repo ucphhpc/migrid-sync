@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # importusers - Import users from text or xml file in provided uri
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Import any missing users from provided URI"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -34,7 +35,6 @@ import sys
 import getopt
 import re
 import time
-import urllib
 
 from mig.shared import returnvalues
 from mig.shared.accountstate import default_account_expire
@@ -47,6 +47,7 @@ from mig.shared.output import format_output
 from mig.shared.pwhash import generate_random_password, unscramble_password, \
     scramble_password
 from mig.shared.safeinput import valid_password_chars
+from mig.shared.url import FancyURLopener
 from mig.shared.useradm import init_user_adm, default_search, create_user, \
     search_users
 from mig.shared.vgridaccess import refresh_user_map
@@ -85,8 +86,8 @@ def dump_contents(url, key_path=None, cert_path=None):
 
     # allow file dump at least until we get certificate based access
 
-    browser = urllib.FancyURLopener(key_file=key_path,
-                                    cert_file=cert_path)
+    browser = FancyURLopener(key_file=key_path,
+                             cert_file=cert_path)
     pipe = browser.open(url)
     data = pipe.read()
     browser.close()

@@ -41,9 +41,9 @@ import sys
 if sys.version_info[0] >= 3:
     from urllib.parse import quote, unquote, urlencode, parse_qs, parse_qsl, \
         urlsplit, urlparse
-    from urllib.request import urlopen
+    from urllib.request import urlopen, FancyURLopener
 else:
-    from urllib import quote, unquote, urlencode, urlopen
+    from urllib import quote, unquote, urlencode, urlopen, FancyURLopener
     from urlparse import parse_qs, parse_qsl, urlsplit, urlparse
 
 try:
