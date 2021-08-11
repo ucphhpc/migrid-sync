@@ -316,6 +316,14 @@ def requested_url_base(environ=None):
     return url_base
 
 
+def is_unicode(val):
+    """Return boolean indicating if val is a unicode string. We avoid
+    `isinstance(val, unicode)`
+    and the like since it breaks when combined with python-future and futurize.
+    """
+    return (type(u"") == type(val))
+
+
 def force_utf8(val, highlight=''):
     """Internal helper to encode unicode strings to utf8 version. Actual
     changes are marked out with the highlight string if given.
@@ -323,7 +331,7 @@ def force_utf8(val, highlight=''):
     # We run into all kind of nasty encoding problems if we mix
     if not isinstance(val, basestring):
         val = "%s" % val
-    if not isinstance(val, unicode):
+    if not is_unicode(val):
         return val
     return "%s%s%s" % (highlight, val.encode("utf8"), highlight)
 
@@ -338,7 +346,7 @@ def force_utf8_rec(input_obj, highlight=''):
                 input_obj.items()}
     elif isinstance(input_obj, list):
         return [force_utf8_rec(i, highlight) for i in input_obj]
-    elif isinstance(input_obj, unicode):
+    elif is_unicode(input_obj):
         return force_utf8(input_obj, highlight)
     else:
         return input_obj
@@ -351,7 +359,7 @@ def force_unicode(val, highlight=''):
     # We run into all kind of nasty encoding problems if we mix
     if not isinstance(val, basestring):
         val = "%s" % val
-    if not isinstance(val, unicode):
+    if not is_unicode(val):
         return "%s%s%s" % (highlight, val.decode("utf8"), highlight)
     return val
 
@@ -366,7 +374,7 @@ def force_unicode_rec(input_obj, highlight=''):
                 input_obj.items()}
     elif isinstance(input_obj, list):
         return [force_unicode_rec(i, highlight) for i in input_obj]
-    elif not isinstance(input_obj, unicode):
+    elif not is_unicode(input_obj):
         return force_unicode(input_obj, highlight)
     else:
         return input_obj
@@ -437,7 +445,7 @@ def force_default_fs_coding_rec(input_obj, highlight=''):
 
 def _is_default_coding(input_str, kind):
     """Checks if input_str is on the default coding form for given kind"""
-    if isinstance(input_str, unicode):
+    if is_unicode(input_str):
         if kind == STR_KIND and default_str_coding == "unicode" or \
                 kind == FS_KIND and default_fs_coding == "unicode":
             return True

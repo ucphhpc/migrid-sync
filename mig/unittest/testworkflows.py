@@ -2441,7 +2441,7 @@ class WorkflowsFunctionsTest(unittest.TestCase):
         self.logger.info(recipe_id)
         self.assertFalse(created)
 
-    def test_workflow_default_job_template(self):
+    def test_workflow_default_job_template_pattern_first(self):
         pattern_attributes = {
             'name': self.test_pattern_name,
             'vgrid': self.test_vgrid,
@@ -2471,6 +2471,253 @@ class WorkflowsFunctionsTest(unittest.TestCase):
                                              workflow_type=WORKFLOW_RECIPE,
                                              **recipe_attributes)
         self.logger.info(recipe_id)
+        self.assertTrue(created)
+
+        recipes = get_workflow_with(self.configuration,
+                                    client_id=self.username,
+                                    user_query=True,
+                                    workflow_type=WORKFLOW_RECIPE,
+                                    **recipe_attributes)
+        self.assertIsNotNone(recipes)
+        self.assertEqual(len(recipes), 1)
+
+        patterns = get_workflow_with(self.configuration,
+                                     client_id=self.username,
+                                     user_query=True,
+                                     workflow_type=WORKFLOW_PATTERN,
+                                     **pattern_attributes)
+        self.assertIsNotNone(patterns)
+        self.assertEqual(len(patterns), 1)
+
+        # Validate that the trigger is empty since the recipe doesn't yet exist
+        # Test that the trigger is valid
+        trigger_id = next(iter(patterns[0]['trigger_recipes']))
+        self.assertEqual(len(patterns[0]['trigger_recipes'].keys()), 1)
+        # Test that the trigger is valid
+        trigger, msg = get_workflow_trigger(self.configuration,
+                                            self.test_vgrid,
+                                            trigger_id)
+        self.assertEqual(trigger['rule_id'], trigger_id)
+        self.assertEqual(trigger['path'], pattern_attributes['input_paths'][0])
+        self.assertEqual(trigger['vgrid_name'], pattern_attributes['vgrid'])
+
+        task_id = \
+            patterns[0]['trigger_recipes'][trigger_id][recipe_id]['task_file']
+
+        # Templates should contain the parsed recipe
+        self.assertEqual(len(trigger['templates']), 1)
+
+        trigger_lines = trigger['templates'][0].split('\n')
+        self.logger.info(trigger_lines)
+
+        trigger_dict = parse_trigger_lines(trigger_lines)
+        self.logger.info(trigger_dict)
+
+        self.assertEqual(len(trigger_dict.keys()), 14)
+
+        self.assertIn('VGRID', trigger_dict)
+        self.assertEqual(trigger_dict['VGRID'], ['+TRIGGERVGRIDNAME+'])
+
+        self.assertIn('RETRIES', trigger_dict)
+        self.assertEqual(trigger_dict['RETRIES'], ['0'])
+
+        self.assertIn('EXECUTE', trigger_dict)
+        self.assertEqual(len(trigger_dict['EXECUTE']), 2)
+        self.assertIn(
+            '${NOTEBOOK_PARAMETERIZER} Generic/.workflow_tasks_home/%s '
+            'Generic/.workflow_tasks_home/%s.yaml -o +JOBID+_%s -e'
+            % (task_id, pattern_id, task_id), trigger_dict['EXECUTE'])
+        self.assertIn(
+            '${PAPERMILL} +JOBID+_%s +JOBID+_recipe_name_output.ipynb'
+            % task_id, trigger_dict['EXECUTE'])
+
+        self.assertIn('OUTPUTFILES', trigger_dict)
+        self.assertEqual(trigger_dict['OUTPUTFILES'],
+                         ['+JOBID+_recipe_name_output.ipynb job_output/+JOBID'
+                          '+/+JOBID+_recipe_name_output.ipynb'])
+
+        self.assertIn('RUNTIMEENVIRONMENT', trigger_dict)
+        self.assertEqual(len(trigger_dict['RUNTIMEENVIRONMENT']), 2)
+        self.assertIn('NOTEBOOK_PARAMETERIZER',
+                      trigger_dict['RUNTIMEENVIRONMENT'])
+        self.assertIn('PAPERMILL', trigger_dict['RUNTIMEENVIRONMENT'])
+
+        self.assertIn('MAXFILL', trigger_dict)
+        self.assertEqual(len(trigger_dict['MAXFILL']), 5)
+        self.assertIn('CPUCOUNT', trigger_dict['MAXFILL'])
+        self.assertIn('CPUTIME', trigger_dict['MAXFILL'])
+        self.assertIn('DISK', trigger_dict['MAXFILL'])
+        self.assertIn('MEMORY', trigger_dict['MAXFILL'])
+        self.assertIn('NODECOUNT', trigger_dict['MAXFILL'])
+
+        self.assertIn('MOUNT', trigger_dict)
+        self.assertEqual(trigger_dict['MOUNT'],
+                         ['+TRIGGERVGRIDNAME+ +TRIGGERVGRIDNAME+'])
+
+        self.assertIn('CPUTIME', trigger_dict)
+        self.assertEqual(trigger_dict['CPUTIME'], ['60'])
+
+        self.assertIn('ENVIRONMENT', trigger_dict)
+        self.assertEqual(len(trigger_dict['ENVIRONMENT']), 3)
+        self.assertIn('LC_ALL=en_US.utf8', trigger_dict['ENVIRONMENT'])
+        self.assertIn('PYTHONPATH=+TRIGGERVGRIDNAME+',
+                      trigger_dict['ENVIRONMENT'])
+        self.assertIn('WORKFLOW_INPUT_PATH=+TRIGGERPATH+',
+                      trigger_dict['ENVIRONMENT'])
+
+        self.assertIn('CPUCOUNT', trigger_dict)
+        self.assertEqual(trigger_dict['CPUCOUNT'], ['1'])
+
+        self.assertIn('NOTIFY', trigger_dict)
+        self.assertEqual(trigger_dict['NOTIFY'], ['email: SETTINGS'])
+
+        self.assertIn('MEMORY', trigger_dict)
+        self.assertEqual(trigger_dict['MEMORY'], ['64'])
+
+        self.assertIn('NODECOUNT', trigger_dict)
+        self.assertEqual(trigger_dict['NODECOUNT'], ['1'])
+
+        self.assertIn('DISK', trigger_dict)
+        self.assertEqual(trigger_dict['DISK'], ['1'])
+
+        # check that the mrsl is actually valid
+        temp_dir = tempfile.mkdtemp()
+        mrsl_fd = tempfile.NamedTemporaryFile(delete=False, dir=temp_dir)
+        mrsl_path = mrsl_fd.name
+
+        job_template = trigger['templates'][0]
+        rule = {
+            'vgrid_name': self.test_vgrid,
+            'run_as': self.username
+        }
+        rel_src = 'this/is/a/path'
+        state = 'dummy event'
+        expand_map = get_path_expand_map(rel_src, rule, state)
+        test_job_id = '1234567890'
+
+        status = fill_mrsl_template(
+            job_template,
+            mrsl_fd,
+            rel_src,
+            state,
+            rule,
+            expand_map,
+            self.configuration
+        )
+
+        self.assertTrue(status)
+
+        (parseresult, parsemsg) = parse(
+            mrsl_path,
+            test_job_id,
+            self.username,
+            False,
+            outfile='AUTOMATIC',
+            workflow_job=False
+        )
+
+        self.assertTrue(parseresult)
+        self.assertEqual(parsemsg, '')
+
+        mrsl_file = os.path.join(self.mrsl_files, test_job_id + '.mRSL')
+        self.assertTrue(os.path.exists(mrsl_file))
+
+        mrsl = unpickle(mrsl_file, self.logger)
+
+        self.assertIn('VGRID', mrsl)
+        self.assertEqual(mrsl['VGRID'], [self.test_vgrid])
+
+        self.assertIn('RETRIES', mrsl)
+        self.assertEqual(mrsl['RETRIES'], 0)
+
+        self.assertIn('EXECUTE', mrsl)
+        self.assertEqual(len(mrsl['EXECUTE']), 2)
+        self.assertIn(
+            '${NOTEBOOK_PARAMETERIZER} Generic/.workflow_tasks_home/%s '
+            'Generic/.workflow_tasks_home/%s.yaml -o +JOBID+_%s -e'
+            % (task_id, pattern_id, task_id), mrsl['EXECUTE'])
+        self.assertIn(
+            '${PAPERMILL} +JOBID+_%s +JOBID+_recipe_name_output.ipynb'
+            % task_id, mrsl['EXECUTE'])
+
+        self.assertIn('OUTPUTFILES', mrsl)
+        self.assertEqual(mrsl['OUTPUTFILES'],
+                         ['+JOBID+_recipe_name_output.ipynb job_output/+JOBID'
+                          '+/+JOBID+_recipe_name_output.ipynb'])
+
+        self.assertIn('RUNTIMEENVIRONMENT', mrsl)
+        self.assertEqual(len(mrsl['RUNTIMEENVIRONMENT']), 3)
+        self.assertIn('NOTEBOOK_PARAMETERIZER',
+                      mrsl['RUNTIMEENVIRONMENT'])
+        self.assertIn('PAPERMILL', mrsl['RUNTIMEENVIRONMENT'])
+        self.assertIn('SSHFS-2.X-1', mrsl['RUNTIMEENVIRONMENT'])
+
+        self.assertIn('MAXFILL', mrsl)
+        self.assertEqual(len(mrsl['MAXFILL']), 5)
+        self.assertIn('CPUCOUNT', mrsl['MAXFILL'])
+        self.assertIn('CPUTIME', mrsl['MAXFILL'])
+        self.assertIn('DISK', mrsl['MAXFILL'])
+        self.assertIn('MEMORY', mrsl['MAXFILL'])
+        self.assertIn('NODECOUNT', mrsl['MAXFILL'])
+
+        self.assertIn('MOUNT', mrsl)
+        self.assertEqual(mrsl['MOUNT'],
+                         [self.test_vgrid + ' ' + self.test_vgrid])
+
+        self.assertIn('CPUTIME', mrsl)
+        self.assertEqual(mrsl['CPUTIME'], 60)
+
+        self.assertIn('ENVIRONMENT', mrsl)
+        self.assertEqual(len(mrsl['ENVIRONMENT']), 3)
+        self.assertIn(('LC_ALL', 'en_US.utf8'), mrsl['ENVIRONMENT'])
+        self.assertIn(('PYTHONPATH', self.test_vgrid), mrsl['ENVIRONMENT'])
+        self.assertIn(('WORKFLOW_INPUT_PATH', rel_src), mrsl['ENVIRONMENT'])
+
+        self.assertIn('CPUCOUNT', mrsl)
+        self.assertEqual(mrsl['CPUCOUNT'], 1)
+
+        self.assertIn('NOTIFY', mrsl)
+        self.assertEqual(mrsl['NOTIFY'], ['email: SETTINGS'])
+
+        self.assertIn('MEMORY', mrsl)
+        self.assertEqual(mrsl['MEMORY'], 64)
+
+        self.assertIn('NODECOUNT', mrsl)
+        self.assertEqual(mrsl['NODECOUNT'], 1)
+
+        self.assertIn('DISK', mrsl)
+        self.assertEqual(mrsl['DISK'], 1)
+
+    def test_workflow_default_job_template_recipe_first(self):
+        notebook = nbformat.v4.new_notebook()
+        recipe_attributes = {
+            'name': self.test_recipe_name,
+            'vgrid': self.test_vgrid,
+            'recipe': notebook,
+            'source': 'notebook.ipynb'
+        }
+
+        created, recipe_id = create_workflow(self.configuration,
+                                             self.username,
+                                             workflow_type=WORKFLOW_RECIPE,
+                                             **recipe_attributes)
+        self.logger.info(recipe_id)
+        self.assertTrue(created)
+
+        pattern_attributes = {
+            'name': self.test_pattern_name,
+            'vgrid': self.test_vgrid,
+            'input_paths': ['input_dir/*.hdf5'],
+            'input_file': 'hdf5_input',
+            'output': {'processed_data': 'pattern_0_output/{FILENAME}.hdf5'},
+            'recipes': [self.test_recipe_name],
+            'variables': {'iterations': 20}
+        }
+
+        created, pattern_id = create_workflow(self.configuration,
+                                              self.username,
+                                              workflow_type=WORKFLOW_PATTERN,
+                                              **pattern_attributes)
         self.assertTrue(created)
 
         recipes = get_workflow_with(self.configuration,
