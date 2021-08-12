@@ -56,6 +56,7 @@ warning = {'object_type': 'warning', 'required': ['text'],
            'optional': []}
 direntry = {'object_type': 'direntry', 'required': ['name', 'type'],
             'optional': []}
+# TODO: file is not a good naming due to collision with file() builtin
 file = {'object_type': 'file', 'required': ['name'], 'optional': []}
 progress = {'object_type': 'progress', 'required': [
     'progress_type',
@@ -88,8 +89,8 @@ filewc = {'object_type': 'filewc', 'required': ['name'],
           'optional': ['lines', 'words', 'bytes']}
 filedu = {'object_type': 'filedu', 'required': ['name', 'bytes'],
           'optional': []}
-# NOTE: list is not a good naming due to collision with list() function
-plain_list = {'object_type': 'list', 'required': ['list'], 'optional': []}
+# TODO: list is not a good naming due to collision with list() builtin
+list = {'object_type': 'list', 'required': ['list'], 'optional': []}
 project_info = {'object_type': 'project_info',
                 'required': ['info'], 'optional': []}
 file_not_found = {'object_type': 'file_not_found', 'required': ['name'
@@ -464,7 +465,7 @@ valid_types_list = [
     sandboxinfo,
     fileuploadobjs,
     fileuploadobj,
-    plain_list,
+    list,
     project_info,
     stats,
     stat,
@@ -500,6 +501,10 @@ valid_types_list = [
 
 # autogenerate dict based on list. Dictionary access is prefered to allow
 # direct access to the member instead of O(n) loops when validate runs
+
+# TODO: rework this validation setup to eliminate the deprecated `eval` call
+#       and remove the implicit binding between var name and object_type val
+#       in the above. E.g. that we MUST have list = {object_type = 'list', ...}
 
 valid_types_dict = {}
 for valid_type in valid_types_list:
