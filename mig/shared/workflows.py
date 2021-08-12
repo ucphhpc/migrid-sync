@@ -908,7 +908,7 @@ def __check_user_input(
                 msg = "key: '%s' is not allowed, but it probably wasn't " \
                       "your fault. Please contact an admin at %s. " \
                       % (key, configuration.admin_email)
-                _logger.debug(msg)
+                _logger.warning(msg)
                 return (False, msg)
 
         if not isinstance(value, keyword_dict[key]['type']):
@@ -997,7 +997,7 @@ def __check_recipe_inputs(configuration, user_inputs, mode, user_request=True):
                     for entry in env_val:
                         if not isinstance(entry, basestring):
                             msg = "Unexpected format for '%s' in '%s'. " \
-                                  "Expected to be a 'str' but got '%s'" \
+                                  "Expected to be a string but got '%s'" \
                                   % (env_val, env_key, type(env_val))
                             _logger.debug("WR: __check_recipe_inputs, " + msg)
                             return (False, msg)
@@ -1011,7 +1011,7 @@ def __check_recipe_inputs(configuration, user_inputs, mode, user_request=True):
                     for entry in env_val:
                         if not isinstance(entry, basestring):
                             msg = "Unexpected format for '%s' in '%s'. " \
-                                  "Expected to be a 'str' but got '%s'" \
+                                  "Expected to be a string but got '%s'" \
                                   % (env_val, env_key, type(env_val))
                             _logger.debug("WR: __check_recipe_inputs, " + msg)
                             return (False, msg)
@@ -1030,7 +1030,7 @@ def __check_recipe_inputs(configuration, user_inputs, mode, user_request=True):
                     for entry in env_val:
                         if not isinstance(entry, basestring):
                             msg = "Unexpected format for '%s' in '%s'. " \
-                                  "Expected to be a 'str' but got '%s'" \
+                                  "Expected to be a string but got '%s'" \
                                   % (env_val, env_key, type(env_val))
                             _logger.debug("WR: __check_recipe_inputs, " + msg)
                             return (False, msg)
@@ -1065,7 +1065,7 @@ def __check_recipe_inputs(configuration, user_inputs, mode, user_request=True):
                     for entry in env_val:
                         if not isinstance(entry, basestring):
                             msg = "Unexpected format for '%s' in '%s'. " \
-                                  "Expected to be a 'str' but got '%s'" \
+                                  "Expected to be a string but got '%s'" \
                                   % (env_val, env_key,
                                      type(env_val))
                             _logger.debug("WR: __check_recipe_inputs, " + msg)

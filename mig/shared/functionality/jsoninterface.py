@@ -293,8 +293,12 @@ def job_read(configuration, user_id, attributes):
         configuration, attributes['job_id'], attributes['vgrid'], user_id,
         only_user_jobs=False
     )
-    if status:
-        return (False, {'object_type': 'error_text', 'text': response})
+    if not status:
+        return (False, {'object_type': 'error_text',
+                        'text': html_escape(response)})
+    # IMPORTANT: valid job contents are not html_escaped, so care should be
+    # taken before they are printed within HTML as XSS vulnerabilities may be
+    # present.
     return (True, {'object_type': 'job_dict', 'jobs': response})
 
 
@@ -307,6 +311,9 @@ def queue_read(configuration, user_id, attributes):
     for job in job_list:
         job_dict[job['JOB_ID']] = job
 
+    # IMPORTANT: valid job contents are not html_escaped, so care should be
+    # taken before they are printed within HTML as XSS vulnerabilities may be
+    # present.
     return (True, {'object_type': 'job_dict', 'jobs': job_dict})
 
 
@@ -314,14 +321,20 @@ def pattern_create(configuration, user_id, attributes):
     status, response = create_workflow(
         configuration, user_id, workflow_type=WORKFLOW_PATTERN, **attributes)
     if not status:
-        return (False, {'object_type': 'error_text', 'text': response})
-    return (True, {'object_type': 'workflows', 'text': response})
+        return (False, {'object_type': 'error_text',
+                        'text': html_escape(response)})
+    # A valid pattern creation will always return its persistence_id and is
+    # safe to print in HTML.
+    return (True, {'object_type': 'workflows', 'text': html_escape(response)})
 
 
 def pattern_read(configuration, user_id, attributes):
     workflows = get_workflow_with(
         configuration, user_id, user_query=True,
         workflow_type=WORKFLOW_PATTERN, **attributes)
+    # IMPORTANT: valid pattern attribute values are not html_escaped, so care
+    # should be taken before they are printed within HTML as XSS
+    # vulnerabilities may be present.
     return (True, {'object_type': 'workflows', 'workflows': workflows})
 
 
@@ -329,23 +342,32 @@ def pattern_update(configuration, user_id, attributes):
     status, response = update_workflow(
         configuration, user_id, workflow_type=WORKFLOW_PATTERN, **attributes)
     if not status:
-        return (False, {'object_type': 'error_text', 'text': response})
-    return (True, {'object_type': 'workflows', 'text': response})
+        return (False, {'object_type': 'error_text',
+                        'text': html_escape(response)})
+    # A valid pattern update will always return its persistence_id and is
+    # safe to print in HTML.
+    return (True, {'object_type': 'workflows', 'text': html_escape(response)})
 
 
 def pattern_delete(configuration, user_id, attributes):
     status, response = delete_workflow(
         configuration, user_id, workflow_type=WORKFLOW_PATTERN, **attributes)
     if not status:
-        return (False, {'object_type': 'error_text', 'text': response})
-    return (True, {'object_type': 'workflows', 'text': response})
+        return (False, {'object_type': 'error_text',
+                        'text': html_escape(response)})
+    # A valid pattern deletion will always return its persistence_id and is
+    # safe to print in HTML.
+    return (True, {'object_type': 'workflows', 'text': html_escape(response)})
 
 
 def recipe_create(configuration, user_id, attributes):
     status, response = create_workflow(
         configuration, user_id, workflow_type=WORKFLOW_RECIPE, **attributes)
     if not status:
-        return (False, {'object_type': 'error_text', 'text': response})
+        return (False, {'object_type': 'error_text',
+                        'text': html_escape(response)})
+    # A valid recipe creation will always return its persistence_id and is
+    # safe to print in HTML.
     return (True, {'object_type': 'workflows', 'text': response})
 
 
@@ -353,6 +375,9 @@ def recipe_read(configuration, user_id, attributes):
     workflows = get_workflow_with(
         configuration, user_id, user_query=True,
         workflow_type=WORKFLOW_RECIPE, **attributes)
+    # IMPORTANT: valid recipe attribute values are not html_escaped, so care
+    # should be taken before they are printed within HTML as XSS
+    # vulnerabilities may be present.
     return (True, {'object_type': 'workflows', 'workflows': workflows})
 
 
@@ -360,7 +385,10 @@ def recipe_update(configuration, user_id, attributes):
     status, response = update_workflow(
         configuration, user_id, workflow_type=WORKFLOW_RECIPE, **attributes)
     if not status:
-        return (False, {'object_type': 'error_text', 'text': response})
+        return (False, {'object_type': 'error_text',
+                        'text': html_escape(response)})
+    # A valid recipe update will always return its persistence_id and is
+    # safe to print in HTML.
     return (True, {'object_type': 'workflows', 'text': response})
 
 
@@ -368,7 +396,10 @@ def recipe_delete(configuration, user_id, attributes):
     status, response = delete_workflow(
         configuration, user_id, workflow_type=WORKFLOW_RECIPE, **attributes)
     if not status:
-        return (False, {'object_type': 'error_text', 'text': response})
+        return (False, {'object_type': 'error_text',
+                        'text': html_escape(response)})
+    # A valid recipe deletion will always return its persistence_id and is
+    # safe to print in HTML.
     return (True, {'object_type': 'workflows', 'text': response})
 
 
@@ -376,6 +407,9 @@ def any_read(configuration, user_id, attributes):
     workflows = get_workflow_with(
         configuration, user_id, user_query=True, workflow_type=WORKFLOW_ANY,
         **attributes)
+    # IMPORTANT: valid workflow attribute values are not html_escaped, so care
+    # should be taken before they are printed within HTML as XSS
+    # vulnerabilities may be present.
     return (True, {'object_type': 'workflows', 'workflows': workflows})
 
 
@@ -383,7 +417,11 @@ def graph_read(configuration, user_id, attributes):
     status, response = search_workflow(
         configuration, user_id, workflow_type=PATTERN_GRAPH, **attributes)
     if not status:
-        return (False, {'object_type': 'error_text', 'text': response})
+        return (False, {'object_type': 'error_text',
+                        'text': html_escape(response)})
+    # IMPORTANT: valid workflow grpah values are not html_escaped, so care
+    # should be taken before they are printed within HTML as XSS
+    # vulnerabilities may be present.
     return (True, {'object_type': 'workflows', 'workflows': response})
 
 
@@ -391,7 +429,11 @@ def report_read(configuration, user_id, attributes):
     status, response = get_workflow_job_report(
         configuration, attributes['vgrid'])
     if not status:
-        return (False, {'object_type': 'error_text', 'text': response})
+        return (False, {'object_type': 'error_text',
+                        'text': html_escape(response)})
+    # IMPORTANT: valid workflow job report values are not html_escaped, so care
+    # should be taken before they are printed within HTML as XSS
+    # vulnerabilities may be present.
     return (True, {'object_type': 'workflow_report', 'report': response})
 
 
