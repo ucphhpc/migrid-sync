@@ -2510,7 +2510,12 @@ def format_output(
     valid_formats = get_valid_outputformats()
     (val_ret, val_msg) = validate(out_obj)
     if not val_ret:
+        logger.error("%s formatting failed: %s (%s)" %
+                     (outputformat, val_msg, val_ret))
         (ret_val, ret_msg) = returnvalues.OUTPUT_VALIDATION_ERROR
+
+        # TODO: we should really preserve basic init elemes or use crash helper
+        #       Currently validation errors here result in severely broken page
 
         # hide previous output
 
