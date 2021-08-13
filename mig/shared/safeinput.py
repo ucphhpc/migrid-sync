@@ -1049,8 +1049,7 @@ def valid_workflow_param_over(params):
             raise InputException(
                 "Cannot parameterise between start '%s' and  end '%s' as end "
                 "value is not bigger than the start value"
-                % (html_escape(_param[PARAM_START]),
-                   html_escape(_param[PARAM_STOP])))
+                % (_param[PARAM_START], _param[PARAM_STOP]))
 
         if not float(_param[PARAM_JUMP]) > 0:
             raise InputException(
@@ -1102,7 +1101,7 @@ def valid_workflow_environments(environments):
     for env_key, env_val in environments['mig'].items():
         if not isinstance(env_key, basestring):
             raise InputException(
-                "Unexpected format for key '%s'. Expected to be a str but "
+                "Unexpected format for key '%s'. Expected to be a string but "
                 "got '%s'" % (html_escape(env_key), type(env_key)))
 
         if env_key not in VALID_WORKFLOW_ENVIRONMENT:
@@ -1124,7 +1123,7 @@ def valid_workflow_environments(environments):
                 if not isinstance(entry, basestring):
                     raise InputException(
                         "Unexpected format for entry '%s'. Expected to "
-                        "be a str but got '%s'"
+                        "be a string but got '%s'"
                         % (html_escape(entry), type(entry)))
                 if entry not in maxfill_fields:
                     raise InputException(
@@ -1141,7 +1140,7 @@ def valid_workflow_environments(environments):
                 if not isinstance(entry, basestring):
                     raise InputException(
                         "Unexpected format for '%s'. Expected to "
-                        "be a str but got '%s'"
+                        "be a string but got '%s'"
                         % (html_escape(entry), type(entry)))
                 variable = entry.split('=')
                 if len(variable) != 2 \
@@ -1168,7 +1167,7 @@ def valid_workflow_environments(environments):
                 if not isinstance(entry, basestring):
                     raise InputException(
                         "Unexpected format for '%s'. Expected to "
-                        "be a str but got '%s'"
+                        "be a string but got '%s'"
                         % (html_escape(entry), type(entry)))
                 notification = entry.split(':')
                 if len(notification) != 2 \
@@ -1193,7 +1192,7 @@ def valid_workflow_environments(environments):
                 if not isinstance(entry, basestring):
                     raise InputException(
                         "Unexpected format for '%s'. Expected to "
-                        "be a str but got '%s'"
+                        "be a string but got '%s'"
                         % (html_escape(entry), type(entry)))
                 valid_alphanumeric(entry, extra_chars='+-=:_- ')
 
