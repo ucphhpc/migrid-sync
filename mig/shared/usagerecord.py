@@ -117,8 +117,8 @@ def xsl_duration(start, end=None):
     # so we just write out any number of days, but normalise the time.
     # hours, minutes, seconds:
 
-    hours = delta.seconds / 3600
-    mins = (delta.seconds % 3600) / 60
+    hours = delta.seconds // 3600
+    mins = (delta.seconds % 3600) // 60
     secs = delta.seconds % 60
 
     deltastr = sign + 'P%dD' % delta.days + 'T%02dH%02dM%02d.%06dS'\

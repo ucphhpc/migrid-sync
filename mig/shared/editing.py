@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # editing - helper functions for the inline editors
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,6 +28,7 @@
 """This module contains general functions used for the online
 file editor.
 """
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -116,6 +117,7 @@ myTxt2TagsSettings["nameSpace"] = "markitup-txt2tags";
 '''
 miu_options = {}
 
+
 def py_to_js(options):
     """Format python dictionary as dictionary string used in javascript"""
 
@@ -128,6 +130,7 @@ def py_to_js(options):
         out.append('%s: %s' % (key, val))
     return '{%s}' % ', '.join(out)
 
+
 def html_wrap_js(code):
     """Wrap a chunk of javascript in HTML script tags"""
     return '''
@@ -135,6 +138,7 @@ def html_wrap_js(code):
     %s
 </script>
 ''' % code
+
 
 def create_editor_area(name, area):
     """Create HTML textarea for use by user friendly code editor with syntax
@@ -146,6 +150,7 @@ def create_editor_area(name, area):
     </div>
     ''' % (name, area)
     return out
+
 
 def init_editor_js(name, edit_opts, wrap_in_tags=True):
     """Return javascript to init wrap of HTML textarea in user friendly code
@@ -168,6 +173,7 @@ def init_editor_js(name, edit_opts, wrap_in_tags=True):
         out = html_wrap_js(out)
     return out
 
+
 def run_editor_js(name, wrap_in_tags=True, mode=""):
     """Create javascript to actually wrap a previously initialized HTML
     textarea in user friendly code editor with syntax highlighting and basic
@@ -180,6 +186,7 @@ def run_editor_js(name, wrap_in_tags=True, mode=""):
     if wrap_in_tags:
         out = html_wrap_js(out)
     return out
+
 
 def change_editor_mode_js(name, wrap_in_tags=True):
     """Create javascript to change mode for a previously initialized HTML
@@ -198,6 +205,7 @@ def change_editor_mode_js(name, wrap_in_tags=True):
         out = html_wrap_js(out)
     return out
 
+
 def kill_editor_js(name, wrap_in_tags=True):
     """Create javascript to actually unwrap a previously wrapped HTML
     textarea code editor.
@@ -211,6 +219,7 @@ def kill_editor_js(name, wrap_in_tags=True):
     if wrap_in_tags:
         out = html_wrap_js(out)
     return out
+
 
 def wrap_edit_area(name, area, edit_opts=cm_options, toolbar_buttons='ALL',
                    exec_callback=None):
@@ -292,7 +301,7 @@ def acquire_edit_lock(real_path, client_id):
             info_fd.close()
         except Exception as err:
             print('Error opening or writing to %s, (%s)' % (info_path,
-                    err))
+                                                            err))
 
     return (owner, time_left)
 
@@ -335,13 +344,13 @@ def got_edit_lock(real_path, client_id):
         return False
 
     if owner != client_id:
-        print("Error: You don't have the lock for %s - %s does"\
-             % (real_path, owner))
+        print("Error: You don't have the lock for %s - %s does"
+              % (real_path, owner))
         return False
     elif time_left < 0:
 
-        print("Error: You don't have the lock for %s any longer - time out %f seconds ago"\
-             % (real_path, -time_left))
+        print("Error: You don't have the lock for %s any longer - time out %f seconds ago"
+              % (real_path, -time_left))
         return False
     else:
         return True
@@ -373,5 +382,3 @@ def release_edit_lock(real_path, client_id):
         print('Error: renaming and removing lock dir: %s' % ose)
         return False
     return True
-
-

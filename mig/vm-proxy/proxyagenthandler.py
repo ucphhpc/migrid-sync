@@ -54,7 +54,7 @@ def vnc_jobid(job_id='Unknown'):
     4: Convert to user inputable ascii table characters:
 
       Ascii table offset by 64 + [0-16]
-  
+
     This methods provides 127^8 identifiers.
     """
 
@@ -64,9 +64,9 @@ def vnc_jobid(job_id='Unknown'):
 
         char = 32 + int(job_id_digest[i:i + 2], 16)
         if char > 251:
-            password += chr(char / 3)
+            password += chr(char // 3)
         elif char > 126:
-            password += chr(char / 2)
+            password += chr(char // 2)
         else:
             password += chr(char)
 
@@ -85,7 +85,7 @@ class ProxyAgentHandler(SocketServer.BaseRequestHandler):
         logging.debug('%s Started.' % self)
         MiGTCPServer.count = MiGTCPServer.count + 1
         logging.debug('%s Do I know you? %d %s' % (self,
-                      MiGTCPServer.count, MiGTCPServer))
+                                                   MiGTCPServer.count, MiGTCPServer))
 
     def vncServerStrategy(self):
 
@@ -105,7 +105,7 @@ class ProxyAgentHandler(SocketServer.BaseRequestHandler):
             self.request.sendall(rfb.protocolVersion())
         else:
             logging.debug('%s Closed connection due to invalid version.'
-                           % self)
+                          % self)
             self.request.close()
 
         # Receive security type count, choose one and send it back
@@ -115,7 +115,7 @@ class ProxyAgentHandler(SocketServer.BaseRequestHandler):
         if srv_sec_count > 0:
             srv_sec_types = self.request.recv(srv_sec_count[0])
             logging.debug('%s received security types [%s] from vncserver '
-                           % (self, hexlify(srv_sec_types)))
+                          % (self, hexlify(srv_sec_types)))
             logging.debug('%s sending choice [%s] to vncserver '
                           % (self, hexlify(rfb.securityType(secType))))
             self.request.sendall(rfb.securityType(secType))
@@ -148,8 +148,9 @@ class ProxyAgentHandler(SocketServer.BaseRequestHandler):
                 logging.debug('%s Data-raw [%s] ' % (self, repr(data)))
                 handshake = self.request.recv(5)
                 logging.debug('%s Init-raw [%s] ' % (self,
-                              repr(handshake)))
-                initMessage = unpack('!BI', handshake)  # Grab the proxys handshake
+                                                     repr(handshake)))
+                # Grab the proxys handshake
+                initMessage = unpack('!BI', handshake)
                 logging.debug('%s Init [%s] ' % (self, initMessage))
 
                 identifier = self.request.recv(initMessage[1])
@@ -158,14 +159,14 @@ class ProxyAgentHandler(SocketServer.BaseRequestHandler):
 
                 identifier = \
                     hexlify(generate_response(vnc_jobid(identifier),
-                            rfb.vncAuthChallenge()))
+                                              rfb.vncAuthChallenge()))
 
                 logging.debug('%s Ident [%s] ' % (self, identifier))
 
                 proxyHost = mip.ServerInfo(self.request,
-                        self.client_address, initMessage[1], identifier)
+                                           self.client_address, initMessage[1], identifier)
                 logging.debug('%s Proxy Agent [%s] ' % (self,
-                              proxyHost))
+                                                        proxyHost))
             except:
 
                 # Handle premature close of request
@@ -202,7 +203,7 @@ class ProxyAgentHandler(SocketServer.BaseRequestHandler):
 
             (ticket, status) = unpack('!IB', self.request.recv(5))
             logging.debug('%s ticket %s, status %s' % (self, ticket,
-                          status))
+                                                       status))
 
             # handle vnc server
 
@@ -218,7 +219,7 @@ class ProxyAgentHandler(SocketServer.BaseRequestHandler):
         else:
 
             logging.debug('%s Incorrect messagetype %s' % (self,
-                          repr(data)))
+                                                           repr(data)))
             keep_running = False
 
         # TODO: still relevant after we added timeout above and stop on error?
@@ -227,5 +228,3 @@ class ProxyAgentHandler(SocketServer.BaseRequestHandler):
 
         while keep_running:
             time.sleep(1000)
-
-

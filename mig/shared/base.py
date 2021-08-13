@@ -591,7 +591,7 @@ def brief_list(full_list, max_entries=10):
     """
     if not full_list[max_entries:]:
         return full_list
-    half_entries = max_entries / 2
+    half_entries = max_entries // 2
     return full_list[:half_entries] + [' ... shortened ... '] + full_list[-half_entries:]
 
 

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cloud - Helper functions for the cloud service
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Cloud service helper functions"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -95,7 +96,7 @@ def __wait_available(configuration, client_id, cloud_id, cloud_flavor,
     # TODO: lookup the openstack client V3 version of the utils.wait_for_X
     _logger = configuration.logger
     try:
-        for i in xrange(__max_wait_secs / __poll_delay_secs):
+        for i in xrange(__max_wait_secs // __poll_delay_secs):
             status, msg = status_of_cloud_instance(configuration, client_id,
                                                    cloud_id, cloud_flavor,
                                                    force_utf8(instance.name))
@@ -121,7 +122,7 @@ def __wait_gone(configuration, client_id, cloud_id, cloud_flavor, instance):
     """Wait for instance to be truly gone after delete"""
     _logger = configuration.logger
     try:
-        for i in xrange(__max_wait_secs / __poll_delay_secs):
+        for i in xrange(__max_wait_secs // __poll_delay_secs):
             status, msg = status_of_cloud_instance(configuration, client_id,
                                                    cloud_id, cloud_flavor,
                                                    force_utf8(instance.name))
@@ -267,8 +268,8 @@ def openstack_stop_cloud_instance(configuration, client_id, cloud_id, instance_i
 
 @__require_openstack
 def openstack_restart_cloud_instance(
-    configuration, client_id, cloud_id, instance_id,
-                                     boot_strength):
+        configuration, client_id, cloud_id, instance_id,
+        boot_strength):
     """Reboot provided cloud instance. Use SOFT or HARD as boot_strength"""
     cloud_flavor = "openstack"
     _logger = configuration.logger
@@ -1264,8 +1265,8 @@ def status_of_cloud_instance(configuration, client_id, cloud_id, cloud_flavor,
 
 
 def status_all_cloud_instances(
-    configuration, client_id, cloud_id, cloud_flavor,
-                               instance_id_list, fields=['status']):
+        configuration, client_id, cloud_id, cloud_flavor,
+        instance_id_list, fields=['status']):
     """Status of all provided cloud instances"""
     _logger = configuration.logger
     _logger.info("status all %s cloud instances %s for %s" %
@@ -1352,7 +1353,7 @@ if __name__ == "__main__":
     # print cloud_remove_jump_host_key(conf, client_id, cloud_id, auth_keys)
 
     # TODO: load yaml from custom location or inline
-    print("calling cloud operations for %s in %s with instance %s" % \
+    print("calling cloud operations for %s in %s with instance %s" %
           (client_id, cloud_id, instance_id))
     img_list = list_cloud_images(conf, client_id, cloud_id, cloud_flavor)
     print(img_list)

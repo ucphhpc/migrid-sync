@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # unit - some simple unit tests against migfs
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Unit test migfs"""
+
 from __future__ import print_function
 
 import os
@@ -47,7 +48,7 @@ def show_diff(result, expected):
     """Shared function for displaying difference between result and expected"""
 
     max_len = 32
-    part_len = max_len / 2
+    part_len = max_len // 2
     if len(result) > max_len:
         first = result[:part_len] + ' .. ' + result[-part_len:]
     else:
@@ -57,7 +58,7 @@ def show_diff(result, expected):
     else:
         second = expected
     print("\t'%s' != '%s'\n\t(len: %d vs. %d)" % (first, second,
-            len(result), len(expected)))
+                                                  len(result), len(expected)))
 
 
 def clean_test(test_dir):
@@ -120,8 +121,8 @@ def write_test(test_path):
     """Write test using test_path"""
 
     data_len = 4
-    tests = [('create file', ''), ('short write', '123'), ('long write'
-             , '123' * default_block_size)]
+    tests = [('create file', ''), ('short write', '123'),
+             ('long write', '123' * default_block_size)]
     for (name, val) in tests:
         print('Starting %s test' % name)
         fd = open(test_path, 'w')
@@ -147,7 +148,7 @@ def append_test(test_path):
     """Append test using test_path"""
 
     tests = [('short append', '123'), ('long append', '123'
-              * default_block_size)]
+                                       * default_block_size)]
     prefix = 'abc'
     for (name, val) in tests:
         print('Starting %s test' % name)
@@ -177,13 +178,13 @@ def modify_test(test_path):
         ('short prefix modify', short_string, 0),
         ('short modify', short_string, default_block_size + 3),
         ('short suffix modify', short_string, len(original)
-          - len(short_string)),
+         - len(short_string)),
         ('long prefix modify', long_string, 0),
         ('long modify', long_string * default_block_size,
          default_block_size + 3),
         ('long suffix modify', long_string, len(original)
-          - len(long_string)),
-        ]
+         - len(long_string)),
+    ]
 
     for (name, val, modify_index) in tests:
         print('Starting %s test' % name)
@@ -199,7 +200,7 @@ def modify_test(test_path):
         result = fd.read()
         fd.close()
         expected_result = original[:modify_index] + val\
-             + original[modify_index + len(val):]
+            + original[modify_index + len(val):]
         success = result == expected_result
         print('Got expected result:\t\t%s' % success)
         if not success:
@@ -226,8 +227,8 @@ if not os.path.isdir(mount_point):
     try:
         os.mkdir(mount_point)
     except OSError as ose:
-        print('Failed to create missing mount point %s: %s'\
-             % (mount_point, ose))
+        print('Failed to create missing mount point %s: %s'
+              % (mount_point, ose))
         sys.exit(1)
 
 print('--- Starting unit tests ---')

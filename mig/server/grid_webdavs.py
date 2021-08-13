@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_webdavs - secure WebDAV server providing access to MiG user homes
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -1466,15 +1466,15 @@ class LogStats(threading.Thread):
                     + "Total HTTP Requests:\t\t %d\n" \
                     % http_requests \
                     + "Total Bytes Read (MB):\t\t %.4f\n" \
-                    % (bytes_read/1024**2) \
+                    % (bytes_read * 1.0 / 1024**2) \
                     + "Total Bytes Written (MB):\t %.4f\n" \
-                    % (bytes_written/1024**2) \
+                    % (bytes_written * 1.0 / 1024**2) \
                     + "Socket connections/sec:\t\t %.4f\n" \
                     % socket_connections_sec \
                     + "Read Throughput (MB/sec):\t %.4f\n" \
-                    % (read_throughput/1024**2) \
+                    % (read_throughput * 1.0 / 1024**2) \
                     + "Write Throughput (MB/sec):\t %.4f\n" \
-                    % (write_throughput/1024**2) \
+                    % (write_throughput * 1.0 / 1024**2) \
                     + "Total Run time (secs):\t\t %.4f\n" % runtime \
                     + "Total Work Time (secs):\t\t %.4f\n" % worktime \
                     + "------------------------------------------------\n"

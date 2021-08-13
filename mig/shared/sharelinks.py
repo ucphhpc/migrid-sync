@@ -44,7 +44,7 @@ from mig.shared.serial import load, dump
 # random from the corresponding substring when generating a share ID. In that
 # way we keep the number of combinations high while preserving short IDs and
 # a simple mapping for the apache configuration.
-__mode_len = len(share_mode_charset) / 3
+__mode_len = len(share_mode_charset) // 3
 __ro_mode_chars = share_mode_charset[:__mode_len]
 __rw_mode_chars = share_mode_charset[__mode_len:2 * __mode_len]
 __wo_mode_chars = share_mode_charset[2 * __mode_len:]

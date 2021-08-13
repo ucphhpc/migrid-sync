@@ -348,10 +348,10 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
 
                 difference = datetime.datetime.now()\
                     - last_request_dict['CREATED_TIME']
-                days = "%s" % (difference.days)
-                hours = "%s" % (difference.seconds / 3600)
-                minutes = "%s" % ((difference.seconds % 3600) / 60)
-                seconds = "%s" % ((difference.seconds % 60) % 60)
+                days = "%d" % (difference.days)
+                hours = "%d" % (difference.seconds // 3600)
+                minutes = "%d" % ((difference.seconds % 3600) // 60)
+                seconds = "%d" % ((difference.seconds % 60) % 60)
 
                 last_timetuple = last_request_dict['CREATED_TIME'].timetuple()
 
@@ -387,10 +387,10 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
                                   + datetime.timedelta(seconds=cpusec)
                                   + datetime.timedelta(seconds=delay))\
                     - datetime.datetime.now()
-                days_rem = "%s" % (time_remaining.days)
-                hours_rem = "%s" % (time_remaining.seconds / 3600)
-                minutes_rem = "%s" % ((time_remaining.seconds % 3600) / 60)
-                seconds_rem = "%s" % ((time_remaining.seconds % 60) % 60)
+                days_rem = "%d" % (time_remaining.days)
+                hours_rem = "%d" % (time_remaining.seconds // 3600)
+                minutes_rem = "%d" % ((time_remaining.seconds % 3600) // 60)
+                seconds_rem = "%d" % ((time_remaining.seconds % 60) % 60)
 
                 if time_remaining.days < -7:
                     try:
@@ -508,10 +508,10 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
 
                 difference = datetime.datetime.now()\
                     - last_status_dict['CREATED_TIME']
-                days = "%s" % (difference.days)
-                hours = "%s" % (difference.seconds / 3600)
-                minutes = "%s" % ((difference.seconds % 3600) / 60)
-                seconds = "%s" % ((difference.seconds % 60) % 60)
+                days = "%d" % (difference.days)
+                hours = "%d" % (difference.seconds // 3600)
+                minutes = "%d" % ((difference.seconds % 3600) // 60)
+                seconds = "%d" % ((difference.seconds % 60) % 60)
 
                 if last_status_dict['STATUS'] == 'stopped':
                     time_stopped = datetime.datetime.now() - \
@@ -554,14 +554,14 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
 
                 try:
                     disk_stats = os.statvfs(mount_point)
-                    total_disk = disk_stats.f_bsize * disk_stats.f_blocks / \
+                    total_disk = disk_stats.f_bsize * disk_stats.f_blocks // \
                         gig_bytes
-                    avail_disk = disk_stats.f_bsize * disk_stats.f_bavail / \
+                    avail_disk = disk_stats.f_bsize * disk_stats.f_bavail // \
                         gig_bytes
-                    free_disk = disk_stats.f_bsize * disk_stats.f_bfree / \
+                    free_disk = disk_stats.f_bsize * disk_stats.f_bfree // \
                         gig_bytes
                     used_disk = total_disk - free_disk
-                    used_percent = 100.0 * used_disk / (avail_disk + used_disk)
+                    used_percent = used_disk * 100.0 / (avail_disk + used_disk)
                     last_status = 'checked'
                     last_timetuple = datetime.datetime.now().timetuple()
                     days, hours, minutes, seconds = 0, 0, 0, 0

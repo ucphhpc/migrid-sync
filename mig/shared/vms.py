@@ -6,7 +6,7 @@
 #
 # vms - shared virtual machine functions
 #
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,6 +31,7 @@
 virtual  machines, creation of mRSL for start, grabbing status, listing
 machines etc.
 """
+
 from __future__ import absolute_import
 
 import datetime
@@ -50,22 +51,27 @@ from mig.shared.job import new_job
 sys_location = 'sys_location.txt'
 vm_base = 'vms'
 
+
 def available_os_list(configuration):
     """Returns a list of available VM OS versions"""
     return [configuration.vm_default_os] + configuration.vm_extra_os
+
 
 def available_flavor_list(configuration):
     """Returns a list of available VM flavors (package sets)"""
     return [configuration.vm_default_flavor] + configuration.vm_extra_flavors
 
+
 def available_hypervisor_re_list(configuration):
     """Returns a list of available VM hypervisor runtime envs"""
     return [configuration.vm_default_hypervisor_re] + \
-           configuration.vm_extra_hypervisor_re
+        configuration.vm_extra_hypervisor_re
+
 
 def available_sys_re_list(configuration):
     """Returns a list of available VM system pack runtime envs"""
     return [configuration.vm_default_sys_re] + configuration.vm_extra_sys_re
+
 
 def default_vm_specs(configuration):
     """Returns a dictionarydefault VM specs from configuration"""
@@ -79,7 +85,7 @@ def default_vm_specs(configuration):
     specs['screen_bpp'] = 24
     # VM image architecture
     specs['vm_arch'] = 'i386'
-    # Resource architecture 
+    # Resource architecture
     specs['architecture'] = ''
     specs['vgrid'] = [any_vgrid]
     specs['runtime_env'] = []
@@ -94,6 +100,7 @@ def default_vm_specs(configuration):
     specs['user_conf'] = configuration.vm_default_user_conf
     return specs
 
+
 def vnc_jobid(job_id='Unknown'):
     """
     1: Job identifier = 64_5_30_2009__10_10_15_localhost.0
@@ -105,7 +112,7 @@ def vnc_jobid(job_id='Unknown'):
     4: Convert to user inputable ascii table characters:
 
         Ascii table offset by 64 + [0-16]
-  
+
     This methods provides 127^8 identifiers.
     """
 
@@ -115,20 +122,21 @@ def vnc_jobid(job_id='Unknown'):
 
         char = 32 + int(job_id_digest[i:i + 2], 16)
         if char > 251:
-            password += chr(char / 3)
+            password += chr(char // 3)
         elif char > 126:
-            password += chr(char / 2)
+            password += chr(char // 2)
         else:
             password += chr(char)
 
     return password
 
+
 def vms_list(client_id, configuration):
     """Returns a list of dicts describing available user virtual machines
     described by the keys from default_vm_specs and the additional fields:
-     
+
     'name', 'status', 'uuid', 'execution_time' and 'path'
- 
+
     NOTE:
 
       The current state management does not fully exploit the powers of the
@@ -137,11 +145,11 @@ def vms_list(client_id, configuration):
       of the same virtual machine. Using this basic model is feasible
       since the job submission is controlled via the web interface. It
       will however break if the user manually submits her own job.
-      
+
       Currently two ways of deploying machines to resources exist:
       - By using VirtualBox frontend (work of Tomas)
       - By using webinterface (work of Simon)
-      
+
       The storage of virtual machines are based on xml files (deployed by
       virtualbox)
       or ini files when deployed by MiG. This library supports both and the
@@ -174,7 +182,7 @@ def vms_list(client_id, configuration):
             'execution_time': 'UNKNOWN',
             'job_id': 'UNKNOWN',
             'uuid': 'UNKNOWN',
-            }
+        }
         machine.update(machine_defaults)
         machine.update(machine_state)
 
@@ -201,7 +209,7 @@ def vms_list(client_id, configuration):
             + "' --register"
         # we cannot inspect all mrsl files - filter by year is good guesstimate
         # TODO: mark vms jobs for easy finding without brute force search
-        for mrsl_path in glob(os.path.join(mrsl_files_dir, '*_%d_*' % \
+        for mrsl_path in glob(os.path.join(mrsl_files_dir, '*_%d_*' %
                                            datetime.date.today().year)):
             for line in open(os.path.abspath(mrsl_path), 'r', 1):
                 if match_line in line:
@@ -230,16 +238,17 @@ def vms_list(client_id, configuration):
 
     return vms
 
+
 def vnc_applet(
     configuration,
     width,
     height,
     password,
     https_base,
-    ):
+):
     """Generates the html tag needed for loading the vnc applet.
     Takes care of fixing representation of the password.
- 
+
     You just specifify a jobidentifier and where all happy.
     """
 
@@ -256,14 +265,14 @@ def vnc_applet(
 
     if not os.path.exists(applet_path):
 
-        # Fall back to old 1.3 version served from proxy agent 
+        # Fall back to old 1.3 version served from proxy agent
 
         vnc_dir = 'tightvnc'
         jar_name = 'VncViewer.jar'
         code_hook = 'VncViewer'
         host_address = '%s:%d' % (configuration.vm_proxy_host,
                                   configuration.vm_applet_port)
-        
+
     applet = '<APPLET CODE="%s" ARCHIVE="%s" ' % (code_hook, jar_name)
     applet += ' CODEBASE="%s/public/%s/"' % (https_base, vnc_dir)
     applet += ' WIDTH="%d" HEIGHT="%d">' % (width, height)
@@ -272,6 +281,7 @@ def vnc_applet(
     applet += '<PARAM NAME="OpenNewWindow" VALUE="no" />'
     applet += '</APPLET>'
     return applet
+
 
 def popup_snippet():
     """Just a simple piece of js to popup a window"""
@@ -287,6 +297,7 @@ def popup_snippet():
     }
     </script>"""
 
+
 def machine_link(
     content,
     job_id,
@@ -294,7 +305,7 @@ def machine_link(
     uuid,
     state,
     machine_req,
-    ):
+):
     """A convenience functions for creating links to 'stop/stop/connect'.
     Depending on the machine state.
     """
@@ -323,6 +334,7 @@ def machine_link(
 
     return link
 
+
 def create_vm(client_id, configuration, machine_name, machine_req):
     """Create virtual machine with machine_name as ID and using optional
     machine_req overrides dictionary to tune the vm. The dictionary includes
@@ -347,14 +359,14 @@ def create_vm(client_id, configuration, machine_name, machine_req):
     * architecture
     * vgrid
     * notify
-    
+
     Set sys_re and sys_base to use common images from the runtime env
     on the resource or unset both to use a custom image from user home.
     """
     _logger = configuration.logger
     specs = default_vm_specs(configuration)
     specs.update(machine_req)
-   
+
     # Setup paths - input filter prevents directory traversal
 
     client_dir = client_id_dir(client_id)
@@ -400,7 +412,7 @@ def create_vm(client_id, configuration, machine_name, machine_req):
         else:
             img_re = ''
             img_location = ''
-            sys_disk_path = os.path.join(server_vms_builder_home, 
+            sys_disk_path = os.path.join(server_vms_builder_home,
                                          specs['sys_disk'])
             if not os.path.isfile(data_disk_path):
                 _logger.error("Missing system disk: %s" % sys_disk_path)
@@ -418,7 +430,8 @@ def create_vm(client_id, configuration, machine_name, machine_req):
         location_fd.write("%s:%s:%s" % (img_re, img_location, sys_disk))
         location_fd.close()
         return (edit_status, edit_msg)
-        
+
+
 def edit_vm(client_id, configuration, machine_name, machine_specs):
     """Updates the vm configuration for vm with given machine_name"""
 
@@ -449,6 +462,7 @@ def edit_vm(client_id, configuration, machine_name, machine_specs):
         conf_fd.close()
     return (True, '')
 
+
 def delete_vm(client_id, configuration, machine_name):
     """Deletes the vm dir with configuration and images for vm with given
     machine_name"""
@@ -464,6 +478,7 @@ def delete_vm(client_id, configuration, machine_name):
     if not success:
         msg = "Error while removing %s" % machine_name
     return (success, msg)
+
 
 def enqueue_vm(client_id, configuration, machine_name, machine_req):
     """Submit a machine job based on machine definition file and overrides
@@ -494,11 +509,11 @@ def enqueue_vm(client_id, configuration, machine_name, machine_req):
         specs['runtime_env'].append(specs['hypervisor_re'])
     if specs['sys_re']:
         specs['runtime_env'].append(specs['sys_re'])
-    
+
     # Generate the mrsl and write to a temp file which is removed on close
 
     mrsl = mig_vbox_deploy_job(client_id, configuration, machine_name,
-                                 specs)
+                               specs)
     mrsl_fd = NamedTemporaryFile()
     mrsl_fd.write(mrsl)
     mrsl_fd.flush()
@@ -509,10 +524,11 @@ def enqueue_vm(client_id, configuration, machine_name, machine_req):
     mrsl_fd.close()
     return res
 
+
 def mig_vbox_deploy_job(client_id, configuration, name, machine_req):
     """Deploy a vbox vm on a resource through ordinary job submission.
     The machine_req dictionary can be used to override default settings.
-    
+
     This method assumes that the system disk, sys_disk, is available in
     sys_base on the resource either through a runtime environment or through
     the user home. If unset it is fetched from user home through INPUTFILES.
@@ -532,7 +548,7 @@ def mig_vbox_deploy_job(client_id, configuration, name, machine_req):
                             '\n'.join(specs['runtime_env'])
     if specs['notify']:
         notify_lines = '::NOTIFY::\n%s' % '\n'.join(specs['notify'])
-    
+
     specs.update({'name': name, 'architecture_lines': architecture_lines,
                   'vgrid_lines': vgrid_lines, 'runtime_env_lines':
                   runtime_env_lines, 'notify_lines': notify_lines,

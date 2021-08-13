@@ -820,15 +820,14 @@ class Scheduler:
         sched_hist = res_dict['SCHED_HIST']
         price_hist = res_dict['PRICE_HIST']
         diff_hist = res_dict['DIFF_HIST']
-        res_dict['LOAD'] = (1.0 * sched_hist.count(1))\
-            / self.res_backlog
+        res_dict['LOAD'] = sched_hist.count(1) * 1.0 / self.res_backlog
 
         # load = res_dict["LOAD"]
 
         short_len = 10
-        short_load = (1.0 * sched_hist[self.res_backlog
-                                       - short_len:self.res_backlog].count(1))\
-            / short_len
+        short_load = (sched_hist[self.res_backlog
+                                 - short_len:self.res_backlog].count(1)) * \
+            1.0 / short_len
         mult = res_dict['LOAD_MULTIPLY']
 
         cur_sched = sched_hist[self.res_backlog - 1]
@@ -865,7 +864,7 @@ class Scheduler:
             #  (mult + delta) * base_price - mult * base_price =
             #  delta * base_price = delta * cur_price / mult
 
-            price_rise = (self.multiply_delta * cur_price) / mult
+            price_rise = (self.multiply_delta * cur_price) * 1.0 / mult
             if cur_diff >= price_rise:
 
                 # still somewhat below expected maxprice
@@ -878,7 +877,7 @@ class Scheduler:
                 # Round off delta to avoid precision issues
 
                 prec = 1e16
-                delta = floor(((prec * cur_diff) * mult) / cur_price)
+                delta = floor(((prec * cur_diff) * mult) * 1.0 / cur_price)
                 res_dict['LOAD_MULTIPLY'] += delta / prec
 
         # Updated multiplier automatically gets included from unitprice
@@ -1128,7 +1127,7 @@ class Scheduler:
         #self.logger.debug('current_prices: maxed is %s' % maxed)
 
         cpu_secs = (maxed['CPUCOUNT'] * maxed['NODECOUNT']) * maxed['CPUTIME']
-        units = cpu_secs / self.unit_length
+        units = cpu_secs // self.unit_length
         if cpu_secs % self.unit_length != 0:
             units += 1
 
