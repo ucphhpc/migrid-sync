@@ -28,6 +28,7 @@
 """Benchmark sft upload/download against paramiko and openssh sftp servers.
 SSH agent is used for the auth if no explicit keys are given.
 """
+
 from __future__ import print_function
 
 import os
@@ -43,43 +44,45 @@ if local:
         'hostname': 'localhost',
         'port': 22,
         'username': 'jonas',
-        #'key_path': os.path.expanduser('~/.ssh/id_rsa'),
-        'key_path' : None,
-        'user_key' : None,
-        }
+        # 'key_path': os.path.expanduser('~/.ssh/id_rsa'),
+        'key_path': None,
+        'user_key': None,
+    }
     bench_hosts['paramiko'] = {
         'hostname': '127.0.0.1',
         'port': 2222,
         'username': 'bardino@nbi.ku.dk',
-        #'key_path': os.path.expanduser('~/.mig/id_rsa'), 
-        'key_path' : None,
-        'user_key' : None,
-        }
+        # 'key_path': os.path.expanduser('~/.mig/id_rsa'),
+        'key_path': None,
+        'user_key': None,
+    }
 else:
     bench_hosts['openssh'] = {
-        #'hostname': 'escistore02.hpc.ku.dk',
+        # 'hostname': 'escistore02.hpc.ku.dk',
         'hostname': 'dk-cert.migrid.org',
         'port': 22,
         'username': 'jones',
-        #'key_path': os.path.expanduser('~/.ssh/id_rsa'),
-        'key_path' : None,
-        'user_key' : None,
-        }
+        # 'key_path': os.path.expanduser('~/.ssh/id_rsa'),
+        'key_path': None,
+        'user_key': None,
+    }
     bench_hosts['paramiko'] = {
-        #'hostname': 'escistore02.hpc.ku.dk',
+        # 'hostname': 'escistore02.hpc.ku.dk',
         'hostname': 'dk-cert.migrid.org',
         'port': 2222,
         'username': 'bardino@nbi.ku.dk',
-        #'key_path': os.path.expanduser('~/.mig/id_rsa'), 
-        'key_path' : None,
-        'user_key' : None,
-        }
+        # 'key_path': os.path.expanduser('~/.mig/id_rsa'),
+        'key_path': None,
+        'user_key': None,
+    }
 
 enable_compression = False
 #bench_sizes = [1, 1024, 16*1024, 256*1024, 1024*1024, 16*1024*1024, 256*1024*1024, 1024*1024*1024]
 #bench_sizes = [1, 1024, 16*1024, 256*1024, 1024*1024, 16*1024*1024, 256*1024*1024]
-bench_sizes = [1, 1024, 4*1024, 16*1024, 64*1024, 256*1024, 1024*1024, 4*1024*1024, 16*1024*1024, 64*1024*1024, 256*1024*1024, 1024*1024*1024]
-bench_sizes = [1, 1024, 4*1024, 16*1024, 64*1024, 256*1024, 1024*1024, 4*1024*1024, 16*1024*1024, 64*1024*1024, 256*1024*1024]
+bench_sizes = [1, 1024, 4*1024, 16*1024, 64*1024, 256*1024, 1024*1024,
+               4*1024*1024, 16*1024*1024, 64*1024*1024, 256*1024*1024, 1024*1024*1024]
+bench_sizes = [1, 1024, 4*1024, 16*1024, 64*1024, 256*1024, 1024 *
+               1024, 4*1024*1024, 16*1024*1024, 64*1024*1024, 256*1024*1024]
 #bench_sizes = [1, 1024, 16*1024, 256*1024, 1024*1024, 16*1024*1024]
 #bench_sizes = [1, 1024]
 bench_pattern = 'bench-sftp-%s-%d.bin'
@@ -87,12 +90,13 @@ bench_pattern = 'bench-sftp-%s-%d.bin'
 # Timing results
 put_time, get_time = {}, {}
 
+
 def write_tmp(path, size):
     """Efficiently write dummy tmp file of given size in path"""
     print("Writing %db file for benchmark" % size)
     written = 0
     chunk_size = 1024
-    chunks = size / chunk_size
+    chunks = size // chunk_size
     if chunks * chunk_size != size:
         chunks += 1
     bench_fd = open(path, 'wb')
@@ -102,6 +106,7 @@ def write_tmp(path, size):
         written += cur_size
     bench_fd.close()
     print("Wrote %db file for benchmark" % written)
+
 
 def show_results(times, bench_sizes):
     """Pretty print results with ratio"""
@@ -116,14 +121,15 @@ def show_results(times, bench_sizes):
         target['ratio'] = {}
         for size in bench_sizes:
             output[action] += '\t%d' % size
-            ratio = target['paramiko'][size] / \
-                    target['openssh'][size]
+            ratio = target['paramiko'][size] * 1.0 / \
+                target['openssh'][size]
             target['ratio'][size] = ratio
             for name in target.keys():
                 output[name] += '\t%.2f' % target[name][size]
         for field in output_order:
             print(output[field])
         print()
+
 
 def run_bench(conf, bench_specs):
     """Efficiently write dummy tmp file of given size in path"""
@@ -141,7 +147,7 @@ def run_bench(conf, bench_specs):
             # Create file to upload if necessary
             if not os.path.exists(bench_path):
                 write_tmp(bench_path, size)
-            print("Benchmarking %s sftp upload %db to %s" % \
+            print("Benchmarking %s sftp upload %db to %s" %
                   (name, size, target['hostname']))
             before = time.time()
             ssh_transport = paramiko.SSHClient()
@@ -156,9 +162,9 @@ def run_bench(conf, bench_specs):
             ssh_transport.close()
             after = time.time()
             times['put'][name][size] = after - before
-            print("Finished %s sftp upload %db in %fs" % \
+            print("Finished %s sftp upload %db in %fs" %
                   (name, size, times['put'][name][size]))
-            print("Benchmarking %s sftp download %db from %s" % \
+            print("Benchmarking %s sftp download %db from %s" %
                   (name, size, target['hostname']))
             before = time.time()
             ssh_transport = paramiko.SSHClient()
@@ -173,10 +179,11 @@ def run_bench(conf, bench_specs):
             ssh_transport.close()
             after = time.time()
             times['get'][name][size] = after - before
-            print("Finished %s sftp download %db in %fs" % \
+            print("Finished %s sftp download %db in %fs" %
                   (name, size, times['get'][name][size]))
 
     show_results(times, bench_sizes)
+
 
 if __name__ == '__main__':
     cfg = {}

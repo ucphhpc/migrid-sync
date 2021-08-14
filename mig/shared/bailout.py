@@ -28,6 +28,7 @@
 """Emergency bailout output helpers used to display something relatively sane
 even when something essential breaks in the backend output delivery.
 """
+
 from __future__ import absolute_import
 
 import time
@@ -60,8 +61,8 @@ def bailout_title(configuration=None, title_text=""):
 def compact_lines(raw_lines, truncate_max_lines, truncate_max_chars):
     """Returns a compacted copy of raw_lines without touching the original"""
     limit_lines = []
-    keep_lines = max(1, truncate_max_lines / 2)
-    keep_chars = truncate_max_chars / 2
+    keep_lines = max(1, truncate_max_lines // 2)
+    keep_chars = truncate_max_chars // 2
     raw_line_count = len(raw_lines)
     for i in range(raw_line_count):
         if i >= keep_lines and i < len(raw_lines) - keep_lines:

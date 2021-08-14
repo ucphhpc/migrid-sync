@@ -132,7 +132,7 @@ Please contact the site admins %s if you think they should be enabled.
 
             cur_size = os.path.getsize(abs_path)
             total_size = size_list[index]
-            percent = round(100.0 * cur_size / total_size, 1)
+            percent = round(cur_size * 100.0 / total_size, 1)
             done_list[index] = (cur_size == total_size)
             progress_items.append({'object_type': 'progress', 'path': path,
                                    'cur_size': cur_size, 'total_size':

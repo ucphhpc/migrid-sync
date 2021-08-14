@@ -50,13 +50,10 @@
 #
 
 """ARC dummy interface module."""
+
 from __future__ import absolute_import
 
 import os
-import sys
-import commands
-import threading
-import tempfile
 
 # MiG utilities:
 from mig.shared.conf import get_configuration_object
@@ -140,11 +137,11 @@ def splitJobId(jobId):
 
 
 def askProxy():
-        output_objects = []
-        output_objects.append({'object_type': 'sectionheader',
-                               'text': 'Proxy upload'})
-        output_objects.append({'object_type': 'html_form',
-                              'text': """
+    output_objects = []
+    output_objects.append({'object_type': 'sectionheader',
+                           'text': 'Proxy upload'})
+    output_objects.append({'object_type': 'html_form',
+                           'text': """
 <form method="post" action="upload.py"
 enctype="multipart/form-data">
 <p>
@@ -153,14 +150,14 @@ Such a proxy file can be created using the command-line tool
 voms-proxy-init, and can be found in /tmp/x509up_u&lt;your UID&gt;.<br>
 <input type="file" name="fileupload" size="40">
 <input type="hidden" name="path" value=""" +
-                               '"' + '<DUMMY_PROXY>' + '"' +
-                               """>
+                           '"' + '<DUMMY_PROXY>' + '"' +
+                           """>
 <input type="hidden" name="restrict" value="true">
 &nbsp;
 <input type="submit" value="Send file">
 </form>
                               """})
-        return output_objects
+    return output_objects
 
 
 class Ui:
@@ -333,6 +330,7 @@ class Ui:
 # the respective names.
 # For jobs with "joined" stdout and stderr, we get an error when retrieving
 # the latter, and fall back to retrieving stdout instead.
+
 
     def getStandardOutput(self, jobId):
         """Get the standard output of a running job.

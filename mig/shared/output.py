@@ -2578,10 +2578,10 @@ def format_output(
 
 def format_timedelta(timedelta):
     """Formats timedelta as '[Years,] [days,] HH:MM:SS'"""
-    years = timedelta.days/365
+    years = timedelta.days // 365
     days = timedelta.days - (years*365)
-    hours = timedelta.seconds/3600
-    minutes = (timedelta.seconds-(hours*3600))/60
+    hours = timedelta.seconds // 3600
+    minutes = (timedelta.seconds-(hours*3600)) // 60
     seconds = timedelta.seconds - (hours*3600) - (minutes*60)
 
     hours_str = "%s" % hours

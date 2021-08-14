@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # imagepreview - Generating MiG image preview and meta data
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -47,8 +47,7 @@ from mig.shared.imagemetaio import __tables_image_volumes_preview_data_group, \
     get_image_file_ent_template_dict, get_image_volume_ent_template_dict
 
 from numpy import zeros, empty, fromfile, int8, uint8, int16, uint16, \
-    int32, uint32, int64, uint64, float64, cast, rint, mean, floor, \
-    median
+    int32, uint32, int64, uint64, float64, cast, rint, mean, median
 from libtiff import TIFF
 import hashlib
 
@@ -260,10 +259,10 @@ def fill_image_preview(logger, meta):
 
     # Resize data
 
-    dim_scale = max(data.shape[0] / y_dimension, data.shape[1]
-                    / x_dimension)
-    new_y_dimension = int(floor(data.shape[0] / dim_scale))
-    new_x_dimension = int(floor(data.shape[1] / dim_scale))
+    dim_scale = max(data.shape[0] // y_dimension, data.shape[1]
+                    // x_dimension)
+    new_y_dimension = data.shape[0] // dim_scale
+    new_x_dimension = data.shape[1] // dim_scale
 
     logger.debug('Resizing to: %s, %s' % (new_y_dimension,
                                           new_x_dimension))
@@ -1110,8 +1109,7 @@ def update_previews(logger, base_path, extension):
                     and volume_setting['z_dimension'] > 0 \
                     and volume_setting['volume_type'] \
                     == allowed_volume_types['slice']:
-                total_volume_count = int(floor(total_filecount
-                                               / volume_setting['z_dimension']))
+                total_volume_count = total_filecount // volume_setting['z_dimension']
 
             if image_setting['settings_recursive']:
                 for (root, _, files) in os.walk(base_path):

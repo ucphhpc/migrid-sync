@@ -42,6 +42,7 @@ same host if available.
 Benchmark sftp upload/download against paramiko and openssh sftp servers.
 SSH agent is used for the auth if no explicit keys are given.
 """
+
 from __future__ import print_function
 
 import os
@@ -67,7 +68,7 @@ def write_tmp(path, size):
     print("Writing %db file for benchmark" % size)
     written = 0
     chunk_size = 1024
-    chunks = size / chunk_size
+    chunks = size // chunk_size
     if chunks * chunk_size != size:
         chunks += 1
     bench_fd = open(path, 'wb')
@@ -95,7 +96,7 @@ def show_results(times, bench_sizes):
             output[action] += '\t%db' % size
             for name in target.keys():
                 try:
-                    ratio = target[name][size] / \
+                    ratio = target[name][size] * 1.0 / \
                         target['openssh=openssh'][size]
                 except KeyError:
                     ratio = 0.0
@@ -162,7 +163,7 @@ def run_bench(conf, bench_specs):
             # Create file to upload if necessary
             if not os.path.exists(bench_path):
                 write_tmp(bench_path, size)
-            print("Benchmarking %s sftp upload %db to %s" % \
+            print("Benchmarking %s sftp upload %db to %s" %
                   (name, size, target['hostname']))
             before = time.time()
             if target['client'] == 'paramiko':
@@ -192,13 +193,13 @@ def run_bench(conf, bench_specs):
                                         stderr=subprocess.STDOUT)
                 res = call.wait()
                 if not res == 0:
-                    print("ERROR: sftp returned %d:\n%s" % \
+                    print("ERROR: sftp returned %d:\n%s" %
                           (res, call.stdout.read()))
             after = time.time()
             times['put'][name][size] = after - before
-            print("Finished %s sftp upload %db in %fs" % \
+            print("Finished %s sftp upload %db in %fs" %
                   (name, size, times['put'][name][size]))
-            print("Benchmarking %s sftp download %db from %s" % \
+            print("Benchmarking %s sftp download %db from %s" %
                   (name, size, target['hostname']))
             before = time.time()
             if target['client'] == 'paramiko':
@@ -226,14 +227,15 @@ def run_bench(conf, bench_specs):
                                         stderr=subprocess.STDOUT)
                 res = call.wait()
                 if not res == 0:
-                    print("ERROR: sftp returned %d:\n%s" % \
+                    print("ERROR: sftp returned %d:\n%s" %
                           (res, call.stdout.read()))
             after = time.time()
             times['get'][name][size] = after - before
-            print("Finished %s sftp download %db in %fs" % \
+            print("Finished %s sftp download %db in %fs" %
                   (name, size, times['get'][name][size]))
 
     show_results(times, bench_sizes)
+
 
 if __name__ == '__main__':
     cfg = {}
@@ -251,8 +253,8 @@ if __name__ == '__main__':
         'hostname': migsftp_host,
         'port': migsftp_port,
         'username': migsftp_user,
-        #'key_path': os.path.expanduser('~/.ssh/id_rsa-nopw'),
-        #'key_path': os.path.expanduser('~/.mig/id_rsa'),
+        # 'key_path': os.path.expanduser('~/.ssh/id_rsa-nopw'),
+        # 'key_path': os.path.expanduser('~/.mig/id_rsa'),
         'key_path': None,
         'user_key': None,
     }
@@ -261,8 +263,8 @@ if __name__ == '__main__':
         'hostname': migsftp_host,
         'port': migsftp_port,
         'username': migsftp_user,
-        #'key_path': os.path.expanduser('~/.ssh/id_rsa-nopw'),
-        #'key_path': os.path.expanduser('~/.mig/id_rsa'),
+        # 'key_path': os.path.expanduser('~/.ssh/id_rsa-nopw'),
+        # 'key_path': os.path.expanduser('~/.mig/id_rsa'),
         'key_path': None,
         'user_key': None,
     }
@@ -274,8 +276,8 @@ if __name__ == '__main__':
             'hostname': openssh_host,
             'port': openssh_port,
             'username': openssh_user,
-            #'key_path': os.path.expanduser('~/.ssh/id_rsa-nopw'),
-            #'key_path': os.path.expanduser('~/.ssh/id_rsa'),
+            # 'key_path': os.path.expanduser('~/.ssh/id_rsa-nopw'),
+            # 'key_path': os.path.expanduser('~/.ssh/id_rsa'),
             'key_path': None,
             'user_key': None,
         }
@@ -284,8 +286,8 @@ if __name__ == '__main__':
             'hostname': openssh_host,
             'port': openssh_port,
             'username': openssh_user,
-            #'key_path': os.path.expanduser('~/.ssh/id_rsa-nopw'),
-            #'key_path': os.path.expanduser('~/.ssh/id_rsa'),
+            # 'key_path': os.path.expanduser('~/.ssh/id_rsa-nopw'),
+            # 'key_path': os.path.expanduser('~/.ssh/id_rsa'),
             'key_path': None,
             'user_key': None,
         }

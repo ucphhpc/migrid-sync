@@ -266,7 +266,7 @@ def application(environ, start_response):
         #       here as a workaround.
         chunk_parts = 1
         if content_length > download_block_size:
-            chunk_parts = content_length / download_block_size
+            chunk_parts = content_length // download_block_size
             if content_length % download_block_size != 0:
                 chunk_parts += 1
             _logger.info("WSGI %s yielding %d output parts (%db)" %

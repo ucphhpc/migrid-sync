@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # usercache - User state caching
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """User state caching: disk use, jobs, resource access"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -71,7 +72,7 @@ def format_bytes(bytes, format):
         scaler = 6
     elif "zeta" == format:
         scaler = 7
-    return 1.0 * bytes / pow(2, scaler*10)
+    return bytes * 1.0 / pow(2, scaler*10)
 
 
 def contents_changed(configuration, root, files, ref_stamp):

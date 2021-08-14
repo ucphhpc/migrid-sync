@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # events - shared event trigger and cron/at helper functions
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Event trigger and cron/at helper functions"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -288,7 +289,7 @@ def cron_match(configuration, cron_time, entry):
 def at_remain(configuration, at_time, entry):
     """Return the number of minutes remaining before entry should run"""
     _logger = configuration.logger
-    return int((entry['time_stamp'] - at_time).total_seconds() / 60)
+    return int((entry['time_stamp'] - at_time).total_seconds() // 60)
 
 
 if __name__ == '__main__':

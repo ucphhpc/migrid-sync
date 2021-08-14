@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # editor - Online editor back end
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -279,7 +279,7 @@ def lock_info(abs_path, time_left):
     (http://moinmoin.wikiwikiweb.de)
     """
 
-    lock_timeout = time_left / 60
+    lock_timeout = time_left // 60
     lock_expire = 'Your edit lock on __file__ has expired!'
     lock_mins = 'Your edit lock on __file__ will expire in # minutes.'
     lock_secs = 'Your edit lock on __file__ will expire in # seconds.'
@@ -342,7 +342,7 @@ function newcountdown(path, minutes) {
     setTimeout("countdown()", delay)
 }
 </script>
-'''\
+''' \
          % {
         'lock_timeout': lock_timeout,
         'lock_expire': lock_expire,
@@ -550,7 +550,7 @@ def main(client_id, user_arguments_dict):
 setTimeout("newcountdown('%s', %d)", 1)
 </script>
 '''\
-             % (path, time_left / 60)
+             % (path, time_left // 60)
         output_objects.append({'object_type': 'html_form', 'text': javascript})
 
         html = edit_file(configuration, client_id, path, abs_path)

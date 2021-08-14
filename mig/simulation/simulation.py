@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# simulation - [insert a few words of module description on this line]
+# simulation - simulate distributed servers exchanging jobs
 # Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -129,14 +129,14 @@ def set_peers(servers, topology, migrate_cost):
         # of the row is reached. Then continue from left in the next row.
 
         x = math.ceil(math.pow(server_cnt, 0.5))
-        y = int(math.ceil(server_cnt / x))
+        y = int(math.ceil(server_cnt * 1.0 / x))
         x = int(x)
 
         # row = ""
 
         for server in server_list:
             i = index % x
-            j = index / x
+            j = index // x
             above = (j - 1) * x + i
             below = (j + 1) * x + i
             left = (j * x + i) - 1

@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# bestfitscheduler - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# bestfitscheduler - best fit job scheduler
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Best Fit Scheduler"""
+
 from __future__ import absolute_import
 
 from mig.server.scheduler import Scheduler
@@ -69,7 +70,7 @@ class BestFitScheduler(Scheduler):
 
                 fit_rate = 1.0
             else:
-                fit_rate = job_val / res_val
+                fit_rate = job_val * 1.0 / res_val
 
             self.logger.debug('fitness: %s %f %d', attr, fit_rate,
                               prio_mult)
