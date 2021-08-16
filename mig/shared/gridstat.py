@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# gridstat - [insert a few words of module description on this line]
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# gridstat - grid monitor helpers
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -167,8 +167,8 @@ class GridStat:
 
         # Flush dict to file in the statistics
 
-        for stat_type in self.__gridstat_dict.keys():
-            for stat_value in self.__gridstat_dict[stat_type].keys():
+        for stat_type in self.__gridstat_dict:
+            for stat_value in self.__gridstat_dict[stat_type]:
                 filename = self.__configuration.gridstat_files_dir\
                     + stat_type + os.sep + stat_value + '.pck'
                 filedir = os.path.dirname(filename)

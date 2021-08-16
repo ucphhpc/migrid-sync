@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settings - helpers for handling user settings
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 from __future__ import absolute_import
+
 import datetime
 import os
 from binascii import hexlify
@@ -396,7 +397,8 @@ def load_section_helper(client_id, configuration, section_filename,
     section_dict = unpickle(section_path, configuration.logger, allow_missing)
     if section_dict and not include_meta:
         real_keys = section_keys
-        for key in section_dict.keys():
+        # NOTE: force list copy here as we delete inline below
+        for key in list(section_dict):
             if not key in real_keys:
                 del section_dict[key]
     return section_dict
@@ -408,7 +410,7 @@ def load_settings(client_id, configuration, include_meta=False):
     """
 
     return load_section_helper(client_id, configuration, settings_filename,
-                               get_settings_fields().keys(), include_meta)
+                               list(get_settings_fields()), include_meta)
 
 
 def load_widgets(client_id, configuration, include_meta=False,
@@ -418,7 +420,7 @@ def load_widgets(client_id, configuration, include_meta=False,
     """
 
     return load_section_helper(client_id, configuration, widgets_filename,
-                               get_widgets_fields().keys(), include_meta,
+                               list(get_widgets_fields()), include_meta,
                                allow_missing)
 
 
@@ -429,7 +431,7 @@ def load_profile(client_id, configuration, include_meta=False,
     """
 
     return load_section_helper(client_id, configuration, profile_filename,
-                               get_profile_fields().keys(), include_meta,
+                               list(get_profile_fields()), include_meta,
                                allow_missing)
 
 
@@ -440,7 +442,7 @@ def load_twofactor(client_id, configuration, include_meta=False,
     """
 
     return load_section_helper(client_id, configuration, twofactor_filename,
-                               get_twofactor_fields(configuration).keys(),
+                               get_twofactor_fields(list(configuration)),
                                include_meta, allow_missing)
 
 
@@ -451,7 +453,7 @@ def load_duplicati(client_id, configuration, include_meta=False,
     """
 
     return load_section_helper(client_id, configuration, duplicati_filename,
-                               get_duplicati_fields().keys(), include_meta,
+                               list(get_duplicati_fields()), include_meta,
                                allow_missing)
 
 

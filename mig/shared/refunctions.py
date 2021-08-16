@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # refunctions - runtime environment functions
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Runtime Environment functions"""
+
 from __future__ import absolute_import
 
 import base64
@@ -119,8 +120,7 @@ def refresh_re_map(configuration):
             re_map[re_name][MODTIME] = map_stamp
             dirty += [re_name]
     # Remove any missing runtimeenvs from map
-    missing_re = [re_name for re_name in re_map.keys()
-                  if not re_name in all_res]
+    missing_re = [re_name for re_name in re_map if not re_name in all_res]
     for re_name in missing_re:
         del re_map[re_name]
         dirty += [re_name]

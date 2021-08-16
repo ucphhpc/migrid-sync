@@ -52,7 +52,7 @@ def signature():
 
 def display_topic(output_objects, subject, all_docs):
     """Display specified subject"""
-    if subject in all_docs.keys():
+    if subject in all_docs:
         topic = all_docs[subject]['title']
         output_objects.append({'object_type': 'link',
                                'destination': './docs.py?show=%s' % subject,
@@ -75,7 +75,7 @@ def show_subject(subject, doc_function, doc_args):
 
 def display_doc(output_objects, subject, all_docs):
     """Show doc"""
-    if subject in all_docs.keys():
+    if subject in all_docs:
         generator = all_docs[subject]['generator']
         args = all_docs[subject]['args']
         show_subject(subject, generator, args)
@@ -90,7 +90,7 @@ def mrsl_keywords(configuration, output_objects):
     keywords_dict = mrslkeywords.get_keywords_dict(configuration)
     output_objects.append(
         {'object_type': 'header', 'text': 'Job description: mRSL'})
-    sorted_keys = keywords_dict.keys()
+    sorted_keys = list(keywords_dict)
     sorted_keys.sort()
     for keyword in sorted_keys:
         info = keywords_dict[keyword]
@@ -117,7 +117,7 @@ def resconf_keywords(configuration, output_objects):
               ('Storage node configuration', storenode_keywords)]
     for (title, keywords_dict) in topics:
         output_objects.append({'object_type': 'header', 'text': title})
-        sorted_keys = keywords_dict.keys()
+        sorted_keys = list(keywords_dict)
         sorted_keys.sort()
         for keyword in sorted_keys:
             info = keywords_dict[keyword]

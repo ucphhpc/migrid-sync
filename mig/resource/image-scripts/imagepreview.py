@@ -725,7 +725,7 @@ def add_volume_preview_slice_data(logger, meta):
 
         # Check if all slices are pre-processed
 
-        slice_count = len(volume_slice_dict.keys())
+        slice_count = len(volume_slice_dict)
         volume_progress = 0
         volume_progress_step = 100.0 / (slice_count
                                         + preview_x_dimension)
@@ -742,7 +742,7 @@ def add_volume_preview_slice_data(logger, meta):
 
             # Find slices data type, check if consistent
 
-            sorted_keys = sorted(volume_slice_dict.keys())
+            sorted_keys = sorted(list(volume_slice_dict))
             logger.debug('sorted_keys: %s' % sorted_keys)
 
             # Create tmp array to be resized

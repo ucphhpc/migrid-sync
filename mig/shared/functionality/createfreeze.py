@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createfreeze - back end for freezing archives
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Creation of frozen archives for write-once files"""
+
 from __future__ import absolute_import
 
 import datetime
@@ -197,7 +198,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
              })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    if not flavor in freeze_flavors.keys():
+    if not flavor in freeze_flavors:
         output_objects.append({'object_type': 'error_text', 'text':
                                'Invalid freeze flavor: %s' % flavor})
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -290,7 +291,7 @@ existing archive of yours!""" % freeze_id})
 
     # Now parse and validate files to archive
 
-    for name in defaults.keys():
+    for name in defaults:
         if name in user_arguments_dict:
             del user_arguments_dict[name]
 

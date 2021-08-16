@@ -1018,9 +1018,9 @@ def _get_encoder(configuration, coding):
     """"""
     coding_map = {"base16": base64.b16encode, "base32": base64.b32encode,
                   "base64": base64.b64encode}
-    if not coding in coding_map.keys():
+    if not coding in coding_map:
         raise ValueError("invalid coding value: %s (allowed: %s)" %
-                         (coding, ', '.join(coding_map.keys())))
+                         (coding, ', '.join(list(coding_map))))
     return coding_map[coding]
 
 

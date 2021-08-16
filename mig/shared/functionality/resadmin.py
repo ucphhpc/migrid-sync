@@ -583,7 +583,7 @@ def main(client_id, user_arguments_dict):
 
     owned = 0
     res_map = get_resource_map(configuration)
-    for unique_resource_name in res_map.keys():
+    for unique_resource_name in res_map:
         if sandbox_resource(unique_resource_name):
             continue
         owner_list = res_map[unique_resource_name][OWNERS]

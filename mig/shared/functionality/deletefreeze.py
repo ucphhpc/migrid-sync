@@ -5,7 +5,7 @@
 #
 
 # deletefreeze - delete an entire frozen archive or files in one
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -90,7 +90,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
              })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    if not flavor in freeze_flavors.keys():
+    if not flavor in freeze_flavors:
         output_objects.append({'object_type': 'error_text', 'text':
                                'Invalid freeze flavor: %s' % flavor})
         return (output_objects, returnvalues.CLIENT_ERROR)

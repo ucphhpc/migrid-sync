@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # extcert - External certificate account sign up backend
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Request account sign up with external certificate back end"""
+
 from __future__ import absolute_import
 
 import os
@@ -127,7 +128,7 @@ def main(client_id, user_arguments_dict):
         if override_val:
             user_fields[field] = override_val
     user_fields = canonical_user(configuration, user_fields,
-                                 user_fields.keys())
+                                 list(user_fields))
 
     # If cert auto create is on, add user without admin interaction
 

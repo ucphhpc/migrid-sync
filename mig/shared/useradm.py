@@ -464,8 +464,8 @@ with certificate or OpenID authentication to authorize the change."""
             configuration.user_openid_providers and \
             configuration.user_openid_alias:
         add_names.append(user[configuration.user_openid_alias])
-    user['openid_names'] = dict([(name, 0) for name in add_names +
-                                 openid_names]).keys()
+    user['openid_names'] = list(dict([(name, 0) for name in add_names +
+                                      openid_names]))
 
     try:
         user_db[client_id] = user
@@ -790,7 +790,7 @@ def fix_vgrid_sharelinks(conf_path, db_path, verbose=False, force=False):
 
     # Loop through sharelinks and check that the vgrid ones are registered
 
-    for mode_sub in mode_chars_map.keys():
+    for mode_sub in mode_chars_map:
         sharelink_base = os.path.join(configuration.sharelink_home, mode_sub)
         for share_id in os.listdir(sharelink_base):
             if share_id.startswith('.'):
@@ -810,7 +810,7 @@ def fix_vgrid_sharelinks(conf_path, db_path, verbose=False, force=False):
             else:
                 links_dict = {}
 
-            if not share_id in links_dict.keys():
+            if not share_id in links_dict:
                 user_path = os.readlink(sharelink_path)
                 if verbose:
                     print('Handle missing vgrid %s sharelink %s to %s (%s)' %
@@ -1247,7 +1247,7 @@ def get_openid_user_map(configuration, do_lock=True):
     db_path = os.path.join(configuration.mig_server_home, user_db_filename)
     user_map = load_user_db(db_path, do_lock=do_lock)
     user_alias = configuration.user_openid_alias
-    for cert_id in user_map.keys():
+    for cert_id in user_map:
         for oid_provider in configuration.user_openid_providers:
             full = oid_provider + client_id_dir(cert_id)
             id_map[full] = cert_id
@@ -1503,7 +1503,7 @@ def migrate_users(
     for (client_id, user) in targets.items():
         old_id = user['full_name'].replace(' ', '_')
         new_id = user['distinguished_name']
-        if new_id in user_db.keys():
+        if new_id in user_db:
             if not prune_dupes:
                 if not force:
                     if do_lock:
@@ -1515,7 +1515,7 @@ def migrate_users(
                     print('Pruning old duplicate user %s from user DB'
                           % client_id)
                 del user_db[client_id]
-        elif old_id in latest.keys():
+        elif old_id in latest:
             if not prune_dupes:
                 if not force:
                     if do_lock:

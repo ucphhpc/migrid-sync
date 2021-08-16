@@ -85,7 +85,7 @@ def extend_defaults(configuration, defaults, user_args):
             continue
 
     for topic in topic_list:
-        for keyword in keywords_map[topic].keys():
+        for keyword in keywords_map[topic]:
             defaults[keyword] = ['']
     return defaults
 
@@ -151,7 +151,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             # should never get here
             logger.warning("invalid topic: %s" % topic)
             continue
-        for keyword in keywords_dict.keys():
+        for keyword in keywords_dict:
             received_arguments = accepted[keyword]
             # Skip keywords for other topics
             if not keyword in keywords_dict:

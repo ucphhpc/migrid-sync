@@ -96,7 +96,7 @@ allowed_xdmf_data_types = {'float32': 'Float', 'uint16': 'UInt'}
 
 allowed_xdmf_precisions = {'float32': 4, 'uint16': 2}
 
-allowed_image_types = {'raw': allowed_data_types.keys(),
+allowed_image_types = {'raw': list(allowed_data_types),
                        'tiff': ['uint8', 'uint16']}
 
 allowed_volume_types = {'slice': 'Slice', 'file': 'File'}
@@ -584,8 +584,8 @@ def __modify_table_row(
     """Modify *table_row* with entries in *modify_dict*"""
 
     logger.debug('----------- modify_dict -----------')
-    modify_dict_keys = modify_dict.keys()
-    for key in modify_dict.keys():
+    modify_dict_keys = list(modify_dict)
+    for key in modify_dict:
         logger.debug("'%s' -> '%s' -> '%s'" % (key,
                                                modify_dict[key],
                                                type(modify_dict[key])))

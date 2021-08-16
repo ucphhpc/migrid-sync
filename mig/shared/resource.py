@@ -674,7 +674,7 @@ def prepare_conf(configuration, input_args, resource_id):
         store['name'] = store['storage_node'] = name
         all_stores.append(store)
     user_args['STORECONFIG'] = all_stores
-    for key in user_args.keys():
+    for key in user_args:
         if key.startswith('exe-') or key.startswith('store-'):
             del user_args[key]
 

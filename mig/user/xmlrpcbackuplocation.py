@@ -237,7 +237,7 @@ key/certificate passphrase before you can continue.
             continue
         signature_list = eval(signature.replace('none', 'None'))
         var_dict = signature_list[1]
-        var_list = var_dict.keys()
+        var_list = list(var_dict)
         print('%s : %s' % (method, var_list))
 
     if not archive_id_list:

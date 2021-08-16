@@ -285,7 +285,7 @@ def make_csrf_trust_token(configuration, method, operation, args, client_id,
     _logger = configuration.logger
     csrf_op = '%s' % operation
     if args:
-        sorted_keys = sorted(args.keys())
+        sorted_keys = sorted(list(args))
     else:
         sorted_keys = []
     for key in sorted_keys:

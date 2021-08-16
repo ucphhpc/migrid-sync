@@ -101,7 +101,7 @@ if __name__ == '__main__':
     configuration = get_configuration_object(skip_log=True)
     for cur_proto in proto_list:
         expired = expire_dead_sessions(configuration, cur_proto, username)
-        cleaned += expired.keys()
+        cleaned += list(expired)
 
     if cleaned:
         if verbose:

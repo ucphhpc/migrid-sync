@@ -554,7 +554,7 @@ class GenJobScriptSh:
         # Quote file names to protect against exotic characters
 
         cmd += 'echo -n "" > %s.inputfiles\\\n' % self.localjobname
-        for file in fe_move_dict.keys():
+        for file in fe_move_dict:
             cmd += \
                 "&& if [ -e '%s' ]; then echo -n '%s ' >> %s.inputfiles; fi\\\n"\
                 % (file, file, self.localjobname)
@@ -604,7 +604,7 @@ class GenJobScriptSh:
         # Quote file names to protect against exotic characters
 
         cmd += 'echo -n "" > %s.user.outputfiles\\\n' % self.localjobname
-        for file in exe_move_dict.keys():
+        for file in exe_move_dict:
             cmd += "&& echo -n '%s ' >> %s.user.outputfiles\\\n"\
                 % (file, self.localjobname)
 

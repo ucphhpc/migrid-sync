@@ -27,6 +27,7 @@
 #
 
 """Image meta data helper functions"""
+
 from __future__ import absolute_import
 
 import os
@@ -248,7 +249,7 @@ def __fill_image_file_settings_defaults(logger, settings_dict):
         'preview_cutoff_min': 0.0,
         'preview_cutoff_max': 0.0,
     }
-    for key in defaults.keys():
+    for key in defaults:
         if key not in settings_dict:
             try:
                 settings_dict[key] = template[key].type(defaults[key])
@@ -276,7 +277,7 @@ def __fill_image_volume_settings_defaults(logger, settings_dict):
         'preview_cutoff_max': 0.0,
     }
 
-    for key in defaults.keys():
+    for key in defaults:
         if key not in settings_dict:
             try:
                 settings_dict[key] = template[key].type(defaults[key])
@@ -295,7 +296,7 @@ def __validate_image_file_settings_dict(logger, settings_dict):
     result = {}
 
     template = get_image_file_settings_ent_template_dict(logger)
-    for key in settings_dict.keys():
+    for key in settings_dict:
         if key in template:
             try:
                 result[key] = template[key].type(settings_dict[key])
@@ -319,7 +320,7 @@ def __validate_image_volume_settings_dict(logger, settings_dict):
     result = {}
 
     template = get_image_volume_settings_ent_template_dict(logger)
-    for key in settings_dict.keys():
+    for key in settings_dict:
         if key in template:
             try:
                 result[key] = template[key].type(settings_dict[key])
@@ -479,7 +480,7 @@ def __is_valid_settings_dict(
         elif image_type not in allowed_image_types:
             status = returnvalues.ERROR
             ERROR_MSG = "Invalid image_type: '%s', allowed: '%s'" \
-                % (image_type, allowed_image_types.keys())
+                % (image_type, list(allowed_image_types))
             output_objects.append({'object_type': 'error_text',
                                    'text': ERROR_MSG})
             logger.error(ERROR_MSG)
@@ -490,7 +491,7 @@ def __is_valid_settings_dict(
         if data_type is not None and data_type not in allowed_data_types:
             status = returnvalues.ERROR
             ERROR_MSG = "Invalid data_type: '%s', allowed: '%s'" \
-                % (data_type, allowed_data_types.keys())
+                % (data_type, (allowed_data_types))
             output_objects.append({'object_type': 'error_text',
                                    'text': ERROR_MSG})
             logger.error(ERROR_MSG)

@@ -83,7 +83,7 @@ def compact_stats(configuration, stats, sep):
     fill['weekly_archives'] = stats['weekly']['archives']
 
     fill['users_by_org'] = ''
-    org_list = stats['org_counts']['all_users'].keys()
+    org_list = list(stats['org_counts']['all_users'])
     org_list.sort()
     for org in org_list:
         total_cnt = stats['org_counts']['all_users'][org]
@@ -92,7 +92,7 @@ def compact_stats(configuration, stats, sep):
             total_cnt, sep, active_cnt, sep, org)
 
     fill['users_by_domain'] = ''
-    domain_list = stats['domain_counts']['all_users'].keys()
+    domain_list = list(stats['domain_counts']['all_users'])
     domain_list.sort()
     for domain in domain_list:
         total_cnt = stats['domain_counts']['all_users'][domain]
@@ -492,7 +492,7 @@ if '__main__' == __name__:
     if verbose:
         print("== User Distribution ==")
         print("=== By Organization ===")
-        org_list = site_stats['org_counts']['all_users'].keys()
+        org_list = list(site_stats['org_counts']['all_users'])
         org_list.sort()
         for org in org_list:
             total_cnt = site_stats['org_counts']['all_users'][org]
@@ -500,7 +500,7 @@ if '__main__' == __name__:
             print('%d\t%d\t%s' % (total_cnt, active_cnt, org))
 
         print("=== By Email Domain ===")
-        domain_list = site_stats['domain_counts']['all_users'].keys()
+        domain_list = list(site_stats['domain_counts']['all_users'])
         domain_list.sort()
         for domain in domain_list:
             total_cnt = site_stats['domain_counts']['all_users'][domain]

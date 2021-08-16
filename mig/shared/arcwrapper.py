@@ -166,7 +166,7 @@ def getstatusoutput(cmd, env=None, startDir=""):
     variableDefs = ""
 
     if env:
-        for variableName in env.keys():
+        for variableName in env:
             variableDefs = variableDefs + "%s=%s " % \
                 (variableName, env[variableName])
 

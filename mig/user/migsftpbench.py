@@ -87,14 +87,14 @@ def show_results(times, bench_sizes):
     print("========")
     for (action, target) in times.items():
         output = {}
-        output_order = [action] + target.keys()
-        for name in target.keys():
+        output_order = [action] + list(target)
+        for name in target:
             output_order.append(name + ' ratio')
         for field in output_order:
             output[field] = field + ' ' * (18 - len(field))
         for size in bench_sizes:
             output[action] += '\t%db' % size
-            for name in target.keys():
+            for name in target:
                 try:
                     ratio = target[name][size] * 1.0 / \
                         target['openssh=openssh'][size]

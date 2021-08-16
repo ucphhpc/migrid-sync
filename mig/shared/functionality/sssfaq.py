@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sssfaq - SSS frequently asked questions
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """This script is the welcome site for sandbox users"""
+
 from __future__ import absolute_import
 
 from mig.shared import returnvalues
@@ -153,12 +154,11 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False,
                                   op_menu=client_id)
-    output_objects.append({'object_type': 'header', 'text'
-                          : '%s Screen Saver Sandbox FAQ' % \
-                            configuration.short_title })
+    output_objects.append({'object_type': 'header', 'text': '%s Screen Saver Sandbox FAQ' %
+                           configuration.short_title})
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
-            defaults, output_objects, allow_rejects=False)
+                                                 defaults, output_objects, allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -171,9 +171,8 @@ Please contact the site admins %s if you think they should be enabled.
 ''' % configuration.admin_email})
         return (output_objects, returnvalues.OK)
 
-    if not language in html.keys():
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Unsupported language: %s, defaulting to %s'
+    if not language in html:
+        output_objects.append({'object_type': 'error_text', 'text': 'Unsupported language: %s, defaulting to %s'
                                % (language, default_language)})
         language = default_language
 
@@ -181,9 +180,6 @@ Please contact the site admins %s if you think they should be enabled.
         # sys.exit(1)
    # output_objects.append({"object_type":"html_form", "text":html[language]})
 
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : html[language] % \
+    output_objects.append({'object_type': 'html_form', 'text': html[language] %
                            {'site': configuration.short_title}})
     return (output_objects, returnvalues.OK)
-
-

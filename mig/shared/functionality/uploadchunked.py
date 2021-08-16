@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # uploadchunked - chunked and efficient file upload back end
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -171,7 +171,7 @@ def main(client_id, user_arguments_dict, environ=None):
     defaults = signature()[1]
 
     logger.info('Extracted input in %s: %s' % (op_name,
-                                               user_arguments_dict.keys()))
+                                               list(user_arguments_dict)))
 
     # All non-file fields must be validated
     validate_args = dict([(key, user_arguments_dict.get(key, val)) for
@@ -190,7 +190,7 @@ def main(client_id, user_arguments_dict, environ=None):
                      % (op_name, validate_status, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    logger.info('validated input in %s: %s' % (op_name, validate_args.keys()))
+    logger.info('validated input in %s: %s' % (op_name, list(validate_args)))
 
     action = accepted['action'][-1]
     current_dir = os.path.normpath(accepted['current_dir'][-1].lstrip(os.sep))
@@ -292,7 +292,7 @@ def main(client_id, user_arguments_dict, environ=None):
     # Now parse and validate files to archive
     # ... this includes checking for illegal directory traversal attempts
 
-    for name in defaults.keys():
+    for name in defaults:
         if name in user_arguments_dict:
             del user_arguments_dict[name]
 

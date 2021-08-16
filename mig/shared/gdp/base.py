@@ -26,6 +26,7 @@
 #
 
 """GDP specific helper functions"""
+
 from __future__ import print_function
 
 import copy
@@ -240,14 +241,14 @@ def __validate_user_db(configuration, client_id, user_db=None):
 
     if status:
         for (key, value) in projects.iteritems():
-            if not 'client_id' in value.keys():
+            if not 'client_id' in value:
                 status = False
                 template = ": Missing 'client_id' entry for project: %r" \
                     % key
                 err_msg += template
                 _logger.error(log_err_msg + template)
                 break
-            if not 'state' in value.keys():
+            if not 'state' in value:
                 status = False
                 template = ": Missing 'state' entry" + " for project: %r" \
                     % key
@@ -256,7 +257,7 @@ def __validate_user_db(configuration, client_id, user_db=None):
                 break
             # TODO: enable this is noisy log or just fix?
             # NOTE: category and references were added later: some may lack it
-            # if not 'category_meta' in value.keys():
+            # if not 'category_meta' in value:
             #    template = ": Missing 'category_meta' entry" + " for project: %r" \
             #        % key
             #    warn_msg += template
@@ -1189,7 +1190,7 @@ def get_users(configuration, do_lock=True):
     user_db = __load_user_db(configuration, do_lock=do_lock)
 
     result = {}
-    for client_id in user_db.keys():
+    for client_id in user_db:
         short_id = __short_id_from_client_id(configuration,
                                              client_id)
         result[short_id] = client_id
@@ -1328,7 +1329,7 @@ def get_project_info(configuration,
 
     # Fill users associated with project
 
-    for client_id in user_db.keys():
+    for client_id in user_db:
         if client_id == owner_client_id:
             continue
         mig_user_dict = mig_user_map.get(client_id, None)
@@ -2100,7 +2101,7 @@ def edit_gdp_user(
         for user_alias in [configuration.user_openid_alias,
                            configuration.user_davs_alias,
                            configuration.user_sftp_alias]:
-            if user_alias in new_changes.keys():
+            if user_alias in new_changes:
                 project_user_alias = "%s@%s" \
                     % (new_changes[user_alias], project_name)
                 if not project_user_alias in aliases:
@@ -2171,7 +2172,7 @@ def edit_gdp_user(
         for user_alias in [configuration.user_openid_alias,
                            configuration.user_davs_alias,
                            configuration.user_sftp_alias]:
-            if user_alias in new_changes.keys():
+            if user_alias in new_changes:
                 new_user_alias = new_changes[user_alias]
                 if not new_user_alias in aliases:
                     aliases.append(new_user_alias)
@@ -2314,7 +2315,7 @@ def edit_gdp_user(
 
         # Delete new_user_id from GDP DB if it was added
 
-        if new_user_id and new_user_id in gdp_db.keys():
+        if new_user_id and new_user_id in gdp_db:
             msg = "removing user: %r from GDP DB" % new_user_id
             if verbose:
                 print(msg)

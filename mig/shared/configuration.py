@@ -260,7 +260,7 @@ def fix_missing(config_file, verbose=True):
         'FEASIBILITY': feasibility_section,
         'WORKFLOWS': workflows_section,
     }
-    for section in defaults.keys():
+    for section in defaults:
         if not section in config.sections():
             config.add_section(section)
 
@@ -1724,14 +1724,14 @@ location.""" % self.config_file)
             # to make ALL flavors permanent or user-removable
             permanent_freeze = config.get('SITE', 'permanent_freeze').strip()
             if permanent_freeze.lower() in ('true', '1', 'yes'):
-                permanent_freeze = freeze_flavors.keys()
+                permanent_freeze = list(freeze_flavors)
             elif permanent_freeze.lower() in ('false', '0', 'no'):
                 permanent_freeze = []
             else:
                 permanent_freeze = permanent_freeze.split(' ')
             self.site_permanent_freeze = permanent_freeze
         else:
-            self.site_permanent_freeze = freeze_flavors.keys()
+            self.site_permanent_freeze = list(freeze_flavors)
         if config.has_option('SITE', 'freeze_admins'):
             admins = config.get('SITE', 'freeze_admins')
             self.site_freeze_admins = [admin.strip()
@@ -2243,7 +2243,7 @@ location.""" % self.config_file)
 
             logger.error('%s: %s', sys.exc_info()[0], sys.exc_info()[1])
 
-        logger.info('Added %d peer(s) from %s', len(peers_dict.keys()),
+        logger.info('Added %d peer(s) from %s', len(peers_dict),
                     peerfile)
         return peers_dict
 

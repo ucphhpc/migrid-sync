@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # cloud - user control for the available cloud services
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,16 +30,16 @@
 list of tabs/buttons based on cloud services defined in the
 configuration.cloud_services entries.
 """
+
 from __future__ import absolute_import
 
 import os
 
 from mig.shared import returnvalues
-
 from mig.shared.base import client_id_dir
 from mig.shared.cloud import check_cloud_available, allowed_cloud_images, \
-     status_all_cloud_instances, cloud_access_allowed, cloud_edit_actions, \
-     cloud_load_instance
+    status_all_cloud_instances, cloud_access_allowed, cloud_edit_actions, \
+    cloud_load_instance
 from mig.shared.defaults import csrf_field, keyword_all
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
@@ -191,14 +191,13 @@ def main(client_id, user_arguments_dict):
             logger.error("Failed to connect to cloud: %s" % cloud_id)
             output_objects.append(
                 {'object_type': 'error_text', 'text':
-                 'The %s cloud service is currently unavailable' % \
+                 'The %s cloud service is currently unavailable' %
                  cloud_title})
             output_objects.append({'object_type': 'html_form', 'text': '''
         </div>
             '''})
             status = returnvalues.SYSTEM_ERROR
             continue
-
 
         # Lookup user-specific allowed images (colon-separated image names)
         allowed_images = allowed_cloud_images(configuration, client_id,
@@ -225,7 +224,7 @@ def main(client_id, user_arguments_dict):
         instance_fields = ['public_fqdn', 'status']
         status_map = status_all_cloud_instances(
             configuration, client_id, cloud_id, cloud_flavor,
-            saved_instances.keys(), instance_fields)
+            list(saved_instances), instance_fields)
 
         # TODO: halfwidth styling does not really work on select elements
         delete_html += """
@@ -283,23 +282,24 @@ def main(client_id, user_arguments_dict):
         </div>
         <div class='cloud-instance-grid-right'>
             """
-            output_objects.append({'object_type': 'html_form', 'text': instance_html})
+            output_objects.append(
+                {'object_type': 'html_form', 'text': instance_html})
             for (action, title) in action_list:
                 if action in cloud_edit_actions:
                     continue
                 query = 'action=%s;service=%s;instance_id=%s' % \
                         (action, cloud_id, instance_id)
                 url = 'reqcloudservice.py?%s' % query
-                #output_service = {
+                # output_service = {
                 #    'object_type': 'service',
                 #    'name': "%s" % title,
                 #    'targetlink': url
-                #}
-                #output_objects.append(output_service)
+                # }
+                # output_objects.append(output_service)
                 output_objects.append({
-                'object_type': 'link', 'destination': url, 'text': title,
-                'class': 'ui-button',
-                'title': '%s %s' % (title, instance_label)})
+                    'object_type': 'link', 'destination': url, 'text': title,
+                    'class': 'ui-button',
+                    'title': '%s %s' % (title, instance_label)})
 
             output_objects.append({'object_type': 'html_form', 'text': """
         </div>        

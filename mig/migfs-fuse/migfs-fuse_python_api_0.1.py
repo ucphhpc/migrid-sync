@@ -121,7 +121,7 @@ class MiGAccess:
         last,
         src,
         dst,
-        ):
+    ):
         """MiG read - read byte sequence from remote src file into
         local dst file. The first and last parameters specify the
         offset in the src file. The dst file will be truncated to
@@ -149,7 +149,7 @@ class MiGAccess:
         last,
         src,
         dst,
-        ):
+    ):
         """MiG write - write byte sequence in local src file to
         remote dst file. The first and last parameters specify the
         offset in the dst file. The data are read from the beginning
@@ -196,7 +196,7 @@ class MiGAccess:
         """MiG version of un*x operation of same name"""
 
         status = miglib.truncate_file(size, 'path=%s'
-                 % ';path='.join(path_list))
+                                      % ';path='.join(path_list))
         return status
 
     def statfs(self):
@@ -205,7 +205,7 @@ class MiGAccess:
         # TODO: better prediction - requires remote support
 
         (max_space, used_space) = (((256 * 1024) * 1024) * 1024, (16
-                                    * 1024) * 1024)
+                                                                  * 1024) * 1024)
         return (0, (max_space, used_space))
 
 
@@ -343,7 +343,7 @@ class OpenFile:
 
             if self.is_dirty:
                 log.debug('committing modified block %d'
-                           % self.current_block)
+                          % self.current_block)
                 self.commit_to_mig()
 
             log.debug('buffering new block %d' % offset_block)
@@ -362,8 +362,8 @@ class OpenFile:
             buffer_offset = self.current_offset % self.blocksize
             write_len = min(remain_len, self.blocksize - buffer_offset)
             log.debug('writing block of %d b at offset %d (%d)'
-                       % (write_len, self.current_offset,
-                      buffer_offset))
+                      % (write_len, self.current_offset,
+                          buffer_offset))
 
             # log.debug("updating buffer: buf is %s ... " % \
             #          buf[:print_block_size])
@@ -387,17 +387,17 @@ class OpenFile:
             self.current_offset += write_len
             self.is_dirty = True
             if self.current_offset / self.blocksize\
-                 > self.current_block:
+                    > self.current_block:
                 self.last_block = self.current_block
                 self.commit_to_mig()
                 self.current_block += 1
                 if remain_len > 0:
                     self.buffer.write(self.read_from_mig(self.current_block),
-                            0)
+                                      0)
                     self.is_dirty = False
 
         log.debug('wrote %s bytes offset: %s current_offset: %s'
-                   % (buflen, offset, self.current_offset))
+                  % (buflen, offset, self.current_offset))
         return buflen
 
     def commit_to_mig(self):
@@ -414,8 +414,8 @@ class OpenFile:
         arr = array.array('c')
         arr.fromlist(self.buffer.read(self.blocksize))
         log.debug('writing %s to offset %d'
-                   % (self.buffer.read(print_block_size),
-                  self.tmpfile.tell()))
+                  % (self.buffer.read(print_block_size),
+                      self.tmpfile.tell()))
         self.tmpfile.write(arr.tostring())
         self.tmpfile.flush()
 
@@ -436,9 +436,9 @@ class OpenFile:
 
         last = (first + buflen) - 1
         log.debug('writing %d-%d from %s to %s' % (first, last,
-                  self.tmpfile.name, self.path))
+                                                   self.tmpfile.name, self.path))
         (status, out) = self.mig_access.write(first, last,
-                self.tmpfile.name, self.path)
+                                              self.tmpfile.name, self.path)
         if status != 0:
             log.error('commit write failed (%s): %s' % (status, out))
             return 1
@@ -466,7 +466,7 @@ class OpenFile:
         while toread > 0:
             readoffset = (offset + upto) % self.blocksize
             thisread = min(toread, min(self.blocksize - readoffset
-                            % self.blocksize, self.blocksize))
+                                       % self.blocksize, self.blocksize))
             bytes = (offset + upto) / self.blocksize
             (from_index, to_index) = (readoffset, readoffset + thisread)
             outbuf[upto:] = \
@@ -504,9 +504,9 @@ class OpenFile:
             return content_list
 
         log.debug('reading %d-%d of %s - inode size is %d' % (first,
-                  last, self.path, inode['size']))
+                                                              last, self.path, inode['size']))
         (status, out) = self.mig_access.read(first, last, self.path,
-                self.tmpfile.name)
+                                             self.tmpfile.name)
         if status != 0:
             log.error('%s: failed to fetch %d-%d of %s into %s: %s' % (
                 status,
@@ -515,7 +515,7 @@ class OpenFile:
                 self.path,
                 self.tmpfile.name,
                 self.tmpfile.read(print_block_size),
-                ))
+            ))
             self.tmpfile.truncate(0)
             return content_list
 
@@ -530,11 +530,11 @@ class OpenFile:
             tmp_fd.seek(0)
             content = tmp_fd.read(self.blocksize)
             log.debug('read %d bytes from block %d of %s'
-                       % (len(content), readblock, self.tmpfile.name))
+                      % (len(content), readblock, self.tmpfile.name))
             tmp_fd.close()
         except Exception as err:
             log.error('failed to read block %s from %s: %s'
-                       % (readblock, self.tmpfile, err))
+                      % (readblock, self.tmpfile, err))
         self.last_block_buffer = content
         content_list[0:] = content
         return content_list
@@ -566,7 +566,7 @@ class MiGfs(Fuse):
         mount_point,
         inode_timeout,
         **kw
-        ):
+    ):
 
         Fuse.__init__(self, mount_point, **kw)
         self.mount_point = mount_point
@@ -601,7 +601,7 @@ class MiGfs(Fuse):
             'atime': 0,
             'mtime': 0,
             'ctime': 0,
-            }
+        }
 
         # Hack to make prefetch stop complaining about parent dir
 
@@ -620,7 +620,7 @@ class MiGfs(Fuse):
         path_list,
         separator,
         max_len,
-        ):
+    ):
         """Create a list of path_list sublists so that when calling
         separator.join(sublist) on each of the sublists the results
         strings will not exceed max_length in total length. This is
@@ -678,7 +678,7 @@ class MiGfs(Fuse):
                 inode['atime'],
                 inode['mtime'],
                 inode['ctime'],
-                )
+            )
             if log.isEnabledFor(logging.DEBUG):
                 log.debug('stat_tuple: %s' % (stat_tuple, ))
             return stat_tuple
@@ -716,9 +716,9 @@ class MiGfs(Fuse):
                 log.debug('prefetching dir inodes')
 
                 for part in self.__split_path_list(dir_list, uri_sep,
-                        uri_len):
+                                                   uri_len):
                     log.debug('prefetching dir inodes of %d items'
-                               % len(part))
+                              % len(part))
 
                     prefetch_thread = \
                         Thread(target=self.__prefetch_inodes,
@@ -732,7 +732,7 @@ class MiGfs(Fuse):
             _log_exception('got exception when listing dir: %s' % path)
             dir_list = None
         log.debug('getdir return: %s' % [(entry.strip(), 0)
-                  for entry in dir_list])
+                                         for entry in dir_list])
         return [(entry.strip(), 0) for entry in dir_list]
 
     def unlink(self, path):
@@ -844,13 +844,13 @@ class MiGfs(Fuse):
         path,
         user,
         group,
-        ):
+    ):
         """MiG does not support chown: warn on actual attempts and
         ignore the rest.
         """
 
         log.debug('chown called on %s with user: %s and group: %s'
-                   % (path, user, group))
+                  % (path, user, group))
         inode = self.__getinode(path)
         if not inode or inode['uid'] != user or inode['gid'] != group:
             msg = 'MiG does not allow changing owner'
@@ -867,14 +867,14 @@ class MiGfs(Fuse):
             (status, out) = self.mig_access.truncate([path], size)
             if status != 0:
                 raise IOError("truncate failed on '%s': %s" % (path,
-                              out))
+                                                               out))
             now = int(time.time())
             updates = {
                 'atime': now,
                 'mtime': now,
                 'ctime': now,
                 'size': size,
-                }
+            }
             self.__inode_cache.update_inode(path, updates)
         except Exception as exc:
             log.error('migfs.py:MiGfs:truncate: %s: %s!' % (path, exc))
@@ -889,7 +889,7 @@ class MiGfs(Fuse):
         path,
         mode,
         dev,
-        ):
+    ):
         """ Python has no os.mknod, so we can only do some things.
         Furthermore MiG does not allow anything but regular files.
         """
@@ -971,7 +971,7 @@ class MiGfs(Fuse):
         path,
         readlen,
         offset,
-        ):
+    ):
         """Read readlen bytes from file at position given by offset"""
 
         try:
@@ -993,7 +993,7 @@ class MiGfs(Fuse):
         path,
         buf,
         offset,
-        ):
+    ):
         """Write buf to file at position given by offset"""
 
         try:
@@ -1072,14 +1072,14 @@ class MiGfs(Fuse):
             files,
             files_free,
             namelen,
-            )
+        )
         return fs_stats
 
     def fsync(self, path, isfsyncfile):
         """Sync buffers to file"""
 
         log.debug('migfs.py:MiGfs:fsync: path=%s, isfsyncfile=%s'
-                   % (path, isfsyncfile))
+                  % (path, isfsyncfile))
         open_file = self.__open_files[path]
         open_file.commit_to_mig()
         return 0
@@ -1119,11 +1119,11 @@ class MiGfs(Fuse):
             'atime': 'atime',
             'mtime': 'mtime',
             'ctime': 'ctime',
-            }
-        fields = len(mapping.keys())
+        }
+        fields = len(mapping)
         try:
             log.debug('prefetch_inodes %s from MiG'
-                       % ', '.join(stat_list))
+                      % ', '.join(stat_list))
             (status, out) = self.mig_access.stat(stat_list)
             if status != 0:
                 raise IOError("stat failed on '%s': %s" % (path, out))
@@ -1133,13 +1133,13 @@ class MiGfs(Fuse):
 
             if len(out) - self.head_lines != fields * len(stat_list):
                 msg = 'failed to stat %s: %s (%d =? %d)'\
-                     % (', '.join(stat_list), out[self.head_lines:],
+                    % (', '.join(stat_list), out[self.head_lines:],
                         len(out) - self.head_lines, fields
-                         * len(stat_list))
+                       * len(stat_list))
                 raise Exception(msg)
         except Exception as exc:
             _log_exception('failed to stat MiG path: %s'
-                            % ', '.join(stat_list))
+                           % ', '.join(stat_list))
             return inode_list
 
         data = out[self.head_lines:]
@@ -1151,7 +1151,7 @@ class MiGfs(Fuse):
                 parts = line.strip().split('\t')
                 if len(parts) != 2:
                     log.warning('prefetch_inodes %s: illegal format: %s'
-                                 % (path, parts))
+                                % (path, parts))
                     continue
                 (name, val) = parts
                 # times may be float string which causes ValueError for int()
@@ -1183,13 +1183,13 @@ class MiGfs(Fuse):
                         log.debug('getinode synced data for %s' % path)
                 except Exception as err:
                     log.error('getinode failed to commit file %s: %s'
-                               % (path, err))
+                              % (path, err))
                     _log_exception('getinode')
 
                 # expire cached inode contents
 
                 log.debug('getinode resetting expired inode for %s'
-                           % path)
+                          % path)
                 inode = {}
             else:
                 log.debug('getinode %s from cache' % path)
@@ -1230,12 +1230,12 @@ class MiGfs(Fuse):
             'atime': 'atime',
             'mtime': 'mtime',
             'ctime': 'ctime',
-            }
+        }
         for line in data:
             parts = line.strip().split('\t')
             if len(parts) != 2:
                 log.warning('getinode: %s: illegal format: %s' % (path,
-                            parts))
+                                                                  parts))
                 continue
             (name, val) = parts
             # times may be float string which causes ValueError for int()
@@ -1283,13 +1283,13 @@ try:
         log.setLevel(logging._levelNames[level])
     if 'logfile' in options:
         logfile = os.path.abspath(os.path.expanduser(conf.get('log',
-                                  'logfile')))
+                                                              'logfile')))
         # TODO: Switch to ConcurrentRotatingFileHandler?
         # The regular RotatingFileHandler is not thread safe and won't work
         # consistently with threaded prefetching:
         # http://bugs.python.org/issue4749
-        file_handler = logging.handlers.RotatingFileHandler(logfile, 'a'
-                , 5242880, 3)
+        file_handler = logging.handlers.RotatingFileHandler(
+            logfile, 'a', 5242880, 3)
         file_handler.setFormatter(default_format)
         log.addHandler(file_handler)
         log.removeHandler(stdout_handler)
@@ -1305,7 +1305,7 @@ try:
             inode_timeout = conf.getint('caching', 'inode_timeout')
 except Exception as fs_err:
     log.warning('Unable to read configuration file %s: %s'
-                 % (migfs_config, fs_err))
+                % (migfs_config, fs_err))
 
 
 def main(mount_point, main_options):

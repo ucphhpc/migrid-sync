@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # xmlrpcscron - cron manipulation with XMLRPC and user certificate
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,8 @@
 # -- END_HEADER ---
 #
 
-"""XMLRPC cronhelper with support for HTTPS using client certificates"""
+"""XMLRPC cron helper with support for HTTPS using client certificates"""
+
 from __future__ import print_function
 
 import httplib
@@ -41,10 +42,10 @@ def read_user_conf():
     """Read and parse 'KEY VAL' formatted user conf file"""
     user_conf = {}
     conf_path = os.path.expanduser(os.path.join('~', '.mig',
-                                   'miguser.conf'))
+                                                'miguser.conf'))
     if not os.path.exists(conf_path):
-        print('mig user configuration not found, %s does not exist'\
-            % conf_path)
+        print('mig user configuration not found, %s does not exist'
+              % conf_path)
         sys.exit(1)
 
     needed_settings = ['migserver', 'certfile', 'keyfile']
@@ -235,7 +236,7 @@ key/certificate passphrase before you can continue.
             continue
         signature_list = eval(signature.replace('none', 'None'))
         var_dict = signature_list[1]
-        var_list = var_dict.keys()
+        var_list = list(var_dict)
         print('%s : %s' % (method, var_list))
 
     print('Running lscrontab method:')
@@ -269,7 +270,7 @@ key/certificate passphrase before you can continue.
     # crontab_args = {
     # 'freeze_id': [freeze_id],
     # csrf_field: [csrf_helpers.get('crontab', '')]
-    #}
+    # }
     # for i in xrange(len(path_list)):
     #    create_args['freeze_copy_%d' % i] = [path_list[i]]
 

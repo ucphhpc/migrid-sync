@@ -392,7 +392,7 @@ io_log.flush()''' % (io_type, result)
                 fe_move_dict[fe_move] = True
 
         cmd += 'input_fd = open("%s.inputfiles", "w")\n' % self.localjobname
-        for filename in fe_move_dict.keys():
+        for filename in fe_move_dict:
             cmd += '''
 if os.path.isfile("%s"):
     input_fd.write("%s ")
@@ -440,7 +440,7 @@ if os.path.isfile("%s"):
             if exe_move not in exe_move_dict:
                 exe_move_dict[exe_move] = True
 
-        for filename in exe_move_dict.keys():
+        for filename in exe_move_dict:
             cmd += 'output_fd.write("%s ")\n' % filename
         cmd += 'output_fd.close()\n'
         cmd += 'output_fd = open("%s.system.outputfiles", "w")\n' % \

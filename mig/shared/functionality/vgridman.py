@@ -195,7 +195,7 @@ resources.''' % label})
             logger.debug("no pending cache updates")
         member_list['pending_updates'] = pending_updates
 
-        vgrid_list = vgrid_map[VGRIDS].keys()
+        vgrid_list = list(vgrid_map[VGRIDS])
 
         # Iterate through vgrids and print details for each
 

@@ -35,7 +35,7 @@ def format_job(job_dict, detail=['JOB_ID']):
 
     out = []
     if detail == ['ALL']:
-        for attr in job_dict.keys():
+        for attr in job_dict:
             out.append('\t%s: %s' % (attr, job_dict[attr]))
     else:
 
@@ -45,6 +45,7 @@ def format_job(job_dict, detail=['JOB_ID']):
             else:
                 out.append('\t%s: UNSET' % attr)
     return out
+
 
 def print_job(job_dict, detail=['JOB_ID']):
     print('\n'.join(format_job(job_dict, detail)))
@@ -103,11 +104,11 @@ class JobQueue:
                 for queue_job in self.queue:
                     if queue_job['JOB_ID'] == job['JOB_ID']:
                         self.logger.error('enqueue_job called with a job already in the queue! Skipping enqueue_job for job_id %s!'
-                                 % job['JOB_ID'])
+                                          % job['JOB_ID'])
                         return False
             except Exception as exc:
                 self.logger.error('enqueue_job exception when checking if specified job already is in the queue: %s'
-                                   % exc)
+                                  % exc)
 
             # job must be wrapped
 
@@ -118,8 +119,7 @@ class JobQueue:
             return True
         else:
             self.logger.error("NEW JOB! failed to enqueue job - index %d \
-            out of range! (qlen %d)"
-                              , index, self.queue_length())
+            out of range! (qlen %d)", index, self.queue_length())
         return False
 
     def get_job(self, index):
@@ -130,8 +130,7 @@ class JobQueue:
             job = self.queue[index]
         else:
             self.logger.error("get_job: Failed to get job - index %d \
-            out of range! (qlen %d)"
-                              , index, self.queue_length())
+            out of range! (qlen %d)", index, self.queue_length())
         return job
 
     def get_job_by_id(self, jobid, log_errors=True):
@@ -148,7 +147,7 @@ class JobQueue:
 
         if not job and log_errors:
             self.logger.error('get_job_by_id: Failed to get job - jobid: %s '
-                               % jobid)
+                              % jobid)
         return job
 
     def dequeue_job(self, index):
@@ -160,8 +159,7 @@ class JobQueue:
             self.queue[index:index + 1] = []
         else:
             self.logger.error("dequeue_job: Failed to dequeue job - index %d \
-            out of range! (qlen %d)"
-                              , index, self.queue_length())
+            out of range! (qlen %d)", index, self.queue_length())
         return job
 
     def dequeue_job_by_id(self, jobid, log_errors=True):
@@ -181,7 +179,5 @@ class JobQueue:
 
         if not job and log_errors:
             self.logger.error('dequeue_job_by_id: Failed to dequeue job - jobid: %s '
-                               % jobid)
+                              % jobid)
         return job
-
-

@@ -43,6 +43,7 @@ import sys
 
 from mig.shared.install import create_user
 
+
 def usage(options):
     """Usage help"""
     lines = ["--%s=%s" % pair for pair in zip(options,
@@ -56,6 +57,7 @@ Where supported options include -h/--help for this help or the conf settings:
 IMPORTANT: needs to run with privileges to create system user!
 ''' % (sys.argv[0], '\n'.join(lines)))
 
+
 if __name__ == '__main__':
     settings = {
         'public_fqdn': socket.getfqdn(),
@@ -65,10 +67,10 @@ if __name__ == '__main__':
         'ext_oid_fqdn': socket.getfqdn(),
         'sid_fqdn': socket.getfqdn(),
         'debug_mode': True,
-        }
+    }
     flag_str = 'h'
-    opts_str = ["%s=" % key for key in settings.keys()] + ["help"]
-    
+    opts_str = ["%s=" % key for key in settings] + ["help"]
+
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], flag_str, opts_str)
     except getopt.GetoptError as exc:
@@ -81,7 +83,7 @@ if __name__ == '__main__':
         if opt in ('-h', '--help'):
             usage(settings)
             sys.exit(0)
-        elif opt_name in settings.keys():
+        elif opt_name in settings:
             settings[opt_name] = val
         else:
             print('Error: %s not supported!' % opt)

@@ -571,7 +571,7 @@ def validate(input_object):
                         return (False,
                                 'Required key %s for object_type %s not found!'
                                 % (req, this_object_type))
-                for checkele in obj.keys():
+                for checkele in obj:
                     if checkele == 'object_type':
                         continue
 

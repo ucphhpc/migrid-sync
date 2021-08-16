@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migadmin - admin control panel with daemon status monitor
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """MiG administrators page with daemon status and configuration"""
+
 from __future__ import absolute_import
 
 import os
@@ -144,7 +145,7 @@ def main(client_id, user_arguments_dict):
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     html = ''
-    if action and not action in grid_actions.keys() + accountreq_actions:
+    if action and not action in list(grid_actions) + accountreq_actions:
         output_objects.append(
             {'object_type': 'error_text', 'text': 'Invalid action: %s' % action})
         return (output_objects, returnvalues.SYSTEM_ERROR)

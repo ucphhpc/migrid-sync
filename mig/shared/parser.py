@@ -84,10 +84,10 @@ def get_config_sub_level_dict(
 
     # verify all required_keywords have been specified
 
-    if len(modify_dict.keys()) == 0:
+    if not modify_dict:
         specified_keywords = 'None'
     else:
-        specified_keywords = ', '.join(modify_dict.keys())
+        specified_keywords = ', '.join(list(modify_dict))
     for req_key in required_keywords:
         if req_key not in modify_dict:
             return (False,
@@ -803,7 +803,7 @@ def check_types(parse_output, external_keyword_dict, configuration):
     # (all Required fields should be False since the Required field
     # of a keyword is changed to False when the parser finds it)
 
-    for keyword_entry in external_keyword_dict.keys():
+    for keyword_entry in external_keyword_dict:
         entry = external_keyword_dict[keyword_entry]
         if 'Required' in entry:
             if entry['Required']:

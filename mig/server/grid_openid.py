@@ -109,8 +109,8 @@ configuration, logger = None, None
 # Update with extra fields
 cert_field_map.update({'role': 'ROLE', 'timezone': 'TZ', 'nickname': 'NICK',
                        'fullname': 'CN', 'o': 'O', 'ou': 'OU'})
-cert_field_names = cert_field_map.keys()
-cert_field_values = cert_field_map.values()
+cert_field_names = list(cert_field_map)
+cert_field_values = list(cert_field_map.values())
 cert_field_aliases = {}
 
 # NOTE: response may contain password on the form
@@ -1215,7 +1215,7 @@ session state.
         # Don't disclose information about other active login sessions
         ident_user = path.split('/')[-1]
         if self.user == ident_user:
-            for (aident, trust_root) in self.server.approved.keys():
+            for (aident, trust_root) in self.server.approved:
                 if aident == ident:
                     trs = '<li><span class="verbatim">%s</span></li>\n' % \
                           cgi.escape(trust_root)

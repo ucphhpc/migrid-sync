@@ -300,13 +300,13 @@ This page was generated %(now)s (automatic refresh every %(sleep_secs)s secs).
 <tr class=title><td>Runtime Envs Done</td><td></td></tr>
 """ % html_vars
 
-    if len(runtimeenv_dict.keys()) < 1:
+    if not runtimeenv_dict:
 
         # No runtimeenv requests
 
         html += '<tr><td></td><td>-</td></tr>\n'
     else:
-        for entry in runtimeenv_dict.keys():
+        for entry in runtimeenv_dict:
             if not entry == '':
                 html += '<tr><td>%s</td><td>%s</td></tr>\n' % \
                     (entry, runtimeenv_dict[entry])

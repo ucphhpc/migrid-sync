@@ -210,7 +210,7 @@ class Server:
         local_jobs = self.job_queue.queue_length()
         migrate_count = 0
 
-        if not self.peers.keys():
+        if not self.peers:
             return 0
 
     # Use previously collected resource statuses for price directed migration
@@ -420,7 +420,7 @@ class Server:
 
         self.refresh_servers()
 
-        # print self.id, self.resources.keys()
+        # print(self.id, list(self.resources))
 
     def simulate(self, timestep):
 

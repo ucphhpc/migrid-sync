@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jsonrpcsslclient - JSONRPC client with HTTPS user certificate support
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,6 +36,7 @@ or
 yum install python-jsonrpclib
 depending on the platform.
 """
+
 from __future__ import print_function
 
 import httplib
@@ -54,8 +55,8 @@ def read_user_conf():
     conf_path = os.path.expanduser(os.path.join('~', '.mig',
                                                 'miguser.conf'))
     if not os.path.exists(conf_path):
-        print('mig user configuration not found, %s does not exist'\
-            % conf_path)
+        print('mig user configuration not found, %s does not exist'
+              % conf_path)
         sys.exit(1)
 
     needed_settings = ['migserver', 'certfile', 'keyfile']
@@ -235,8 +236,8 @@ key/certificate passphrase before you can continue.
     methods = server.system.listMethods()
     print('supported remote methods:\n%s' % '\n'.join(methods))
     print()
-    print('submit() signature: %s'\
-        % server.system.methodSignature('submit'))
+    print('submit() signature: %s'
+          % server.system.methodSignature('submit'))
     print('the signature is a tuple of output object type and a list of ')
     print('expected/default input values')
     print('submit() help: %s' % server.system.methodHelp('submit'))
@@ -250,7 +251,7 @@ key/certificate passphrase before you can continue.
             continue
         signature_list = eval(signature.replace('none', 'None'))
         var_dict = signature_list[1]
-        var_list = var_dict.keys()
+        var_list = list(var_dict)
         print('%s : %s' % (method, var_list))
 
     print('Testing some action methods:')
@@ -265,8 +266,8 @@ key/certificate passphrase before you can continue.
         if 'text' in elem:
             print(elem['text'])
 
-    print('checking job status for job(s) with IDs: %s'\
-        % ' '.join(job_id_list))
+    print('checking job status for job(s) with IDs: %s'
+          % ' '.join(job_id_list))
     (inlist, retval) = server.jobstatus(
         {'job_id': job_id_list, 'flags': 'vs', 'max_jobs': '5'})
     (returnval, returnmsg) = retval
@@ -512,8 +513,8 @@ ANY
                                 output_lines = entry['lines']
                                 print('''job %s contents:
 %s
-'''\
-                                     % (name, '\n'.join(output_lines)))
+'''
+                                      % (name, '\n'.join(output_lines)))
                     job_id = None
                 else:
                     time.sleep(2)

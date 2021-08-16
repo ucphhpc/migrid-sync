@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userstats - Display some user specific stats
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Display user stats like job states and disk use"""
+
 from __future__ import absolute_import
 
 import os
@@ -35,8 +36,8 @@ from mig.shared import returnvalues
 from mig.shared.functional import validate_input
 from mig.shared.init import initialize_main_variables
 from mig.shared.usercache import refresh_disk_stats, refresh_job_stats, \
-     format_bytes, OWN, VGRID, JOBS, FILES, DIRECTORIES, BYTES, PARSE, \
-     QUEUED, EXECUTING, FINISHED, RETRY, CANCELED, EXPIRED, FAILED, FROZEN
+    format_bytes, OWN, VGRID, JOBS, FILES, DIRECTORIES, BYTES, PARSE, \
+    QUEUED, EXECUTING, FINISHED, RETRY, CANCELED, EXPIRED, FAILED, FROZEN
 from mig.shared.vgridaccess import user_allowed_res_exes
 
 
@@ -45,7 +46,7 @@ def signature():
 
     defaults = {
         'stats': ['jobs', 'disk', 'resources', 'certificate'],
-        }
+    }
     return ['user_stats', defaults]
 
 
@@ -57,7 +58,8 @@ def main(client_id, user_arguments_dict):
     status = returnvalues.OK
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
-            defaults, output_objects, allow_rejects=False)
+                                                 defaults, output_objects,
+                                                 allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -71,11 +73,13 @@ def main(client_id, user_arguments_dict):
         disk_stats = refresh_disk_stats(configuration, client_id)
         total_disk = {'own_files': disk_stats[OWN][FILES],
                       'own_directories': disk_stats[OWN][DIRECTORIES],
-                      'own_megabytes': format_bytes(disk_stats[OWN][BYTES], 'mega'),
+                      'own_megabytes': format_bytes(disk_stats[OWN][BYTES],
+                                                    'mega'),
                       'vgrid_files': disk_stats[VGRID][FILES],
                       'vgrid_directories': disk_stats[VGRID][DIRECTORIES],
-                      'vgrid_megabytes': format_bytes(disk_stats[VGRID][BYTES], 'mega')
-                  }
+                      'vgrid_megabytes': format_bytes(disk_stats[VGRID][BYTES],
+                                                      'mega')
+                      }
         user_stats['disk'] = total_disk
     if 'jobs' in stats:
         job_stats = refresh_job_stats(configuration, client_id)
@@ -94,7 +98,7 @@ def main(client_id, user_arguments_dict):
     if 'resources' in stats:
         allowed_res = user_allowed_res_exes(configuration, client_id)
         # allowed_res is dictionary of res ID and list of attached exe names
-        resource_count = len(allowed_res.keys())
+        resource_count = len(allowed_res)
         exe_count = 0
         for exes in allowed_res.values():
             exe_count += len(exes)
@@ -119,12 +123,9 @@ def main(client_id, user_arguments_dict):
             for expose in expose_env_prefixes:
                 if field.startswith(expose):
                     total_cert[field] = os.environ.get(field, "unknown")
-                
+
         user_stats['certificate'] = total_cert
 
-
     output_objects.append(user_stats)
-    
+
     return (output_objects, status)
-
-

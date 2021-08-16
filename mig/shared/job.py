@@ -394,7 +394,7 @@ def get_job_with_id(configuration, job_id, vgrid, caller_id,
 def fields_to_mrsl(configuration, user_arguments_dict, external_dict):
     """Generate mRSL from fields"""
     spec = []
-    for key in external_dict.keys():
+    for key in external_dict:
         attr_name = key
         if attr_name in user_arguments_dict:
             spec.append('::%s::' % attr_name)

@@ -139,7 +139,7 @@ def main(client_id, user_arguments_dict, environ=None):
         # Build forward query string from any real non-local args
         forward_args = {}
         for (key, val) in accepted.items():
-            if key not in defaults.keys() and val != ['AllowMe']:
+            if key not in defaults and val != ['AllowMe']:
                 forward_args[key] = val
         redirect_location = redirect_url
         if forward_args:

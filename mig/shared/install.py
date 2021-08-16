@@ -1406,7 +1406,7 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
     # Greedy match trailing space for all the values to uncomment stuff
     strip_trailing_space = ['__IF_SEPARATE_PORTS__', '__APACHE_PRE2.4__',
                             '__APACHE_RECENT__']
-    for key in user_dict.keys():
+    for key in user_dict:
         if key.endswith('_COMMENTED__'):
             strip_trailing_space.append(key)
 
@@ -1470,7 +1470,7 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
     user_dict['__SECSCAN_ADDR_PATTERN__'] = secscan_addr_pattern
 
     # Collect final variable values for log
-    sorted_keys = user_dict.keys()
+    sorted_keys = list(user_dict)
     sorted_keys.sort()
     variable_lines = '\n'.join(["%s : %s" % (i.strip('_'), user_dict[i])
                                 for i in sorted_keys])

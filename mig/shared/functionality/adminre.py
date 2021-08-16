@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # adminre - set up a runtime environment
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,13 +26,14 @@
 #
 
 """Create runtime environment"""
+
 from __future__ import absolute_import
 
 import base64
 
 from mig.shared import returnvalues
 from mig.shared.defaults import max_software_entries, max_environment_entries, \
-     csrf_field
+    csrf_field
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.init import initialize_main_variables
@@ -49,7 +50,7 @@ def signature():
         'software_entries': [-1],
         'environment_entries': [-1],
         'testprocedure_entry': [-1],
-        }
+    }
     return ['html_form', defaults]
 
 
@@ -59,8 +60,8 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Create runtime environment'})
+    output_objects.append(
+        {'object_type': 'header', 'text': 'Create runtime environment'})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -68,7 +69,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     re_template = accepted['re_template'][-1].upper().strip()
@@ -80,15 +81,15 @@ def main(client_id, user_arguments_dict):
     if re_template:
         if not is_runtime_environment(re_template, configuration):
             output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : "re_template ('%s') is not a valid existing runtime env!"
+                {'object_type': 'error_text', 'text':
+                 "re_template ('%s') is not a valid existing runtime env!"
                  % re_template})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         (template, msg) = get_re_dict(re_template, configuration)
         if not template:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'Could not read re_template %s. %s'
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Could not read re_template %s. %s'
                                    % (re_template, msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
@@ -115,8 +116,8 @@ def main(client_id, user_arguments_dict):
 
     if software_entries > max_software_entries:
         output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Maximum number of software_entries %s exceeded (%s)' % \
+            {'object_type': 'error_text', 'text':
+             'Maximum number of software_entries %s exceeded (%s)' %
              (max_software_entries, software_entries)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -124,20 +125,20 @@ def main(client_id, user_arguments_dict):
 
     if environment_entries > max_environment_entries:
         output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Maximum number of environment_entries %s exceeded (%s)' % \
+            {'object_type': 'error_text', 'text':
+             'Maximum number of environment_entries %s exceeded (%s)' %
              (max_environment_entries, environment_entries)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     rekeywords_dict = get_keywords_dict()
     (list_status, ret) = list_runtime_environments(configuration)
     if not list_status:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : ret})
+        output_objects.append({'object_type': 'error_text', 'text': ret})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    output_objects.append({'object_type': 'text', 'text'
-                          : 'Use existing Runtime Environment as template'})
+    output_objects.append(
+        {'object_type': 'text', 'text':
+         'Use existing Runtime Environment as template'})
 
     html_form = \
         """<form method='get' action='adminre.py'>
@@ -151,18 +152,17 @@ def main(client_id, user_arguments_dict):
     </select>
     <input type='submit' value='Get' />
 </form>"""
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : html_form})
+    output_objects.append({'object_type': 'html_form', 'text': html_form})
 
     output_objects.append(
-        {'object_type': 'text', 'text'
-         : '''Note that a runtime environment can not be changed after creation
+        {'object_type': 'text', 'text':
+         '''Note that a runtime environment can not be changed after creation
 and it can only be removed if not in use by any resources, so please be careful
 when filling in the details'''
          })
     output_objects.append(
-        {'object_type': 'text', 'text'
-         : '''Changing the number of software and environment entries removes
+        {'object_type': 'text', 'text':
+         '''Changing the number of software and environment entries removes
 all data in the form, so please enter the correct values before entering any
 information.'''
          })
@@ -187,8 +187,7 @@ information.'''
     title='number of environment variables provided by runtime environment' />
     </td>
 </tr>""" % environment_entries
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : html_form})
+    output_objects.append({'object_type': 'html_form', 'text': html_form})
     if testprocedure_entry == 0:
         select_string = """<option value='0' selected>No</option>
 <option value=1>Yes</option>"""
@@ -197,8 +196,8 @@ information.'''
 <option value='1' selected>Yes</option>"""
     else:
         output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'testprocedure_entry should be 0 or 1, you specified %s'
+            {'object_type': 'error_text', 'text':
+             'testprocedure_entry should be 0 or 1, you specified %s'
              % testprocedure_entry})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -219,10 +218,10 @@ information.'''
 
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
-    fill_helpers =  {'short_title': configuration.short_title,
-                     'form_method': form_method,
-                     'csrf_field': csrf_field,
-                     'csrf_limit': csrf_limit}
+    fill_helpers = {'short_title': configuration.short_title,
+                    'form_method': form_method,
+                    'csrf_field': csrf_field,
+                    'csrf_limit': csrf_limit}
     target_op = 'createre'
     csrf_token = make_csrf_token(configuration, form_method, target_op,
                                  client_id, csrf_limit)
@@ -252,7 +251,7 @@ information.'''
             for soft in soft_list:
                 html_form += """
 <textarea class='p80width' rows='6' name='software'>"""
-                for keyname in soft.keys():
+                for keyname in soft:
                     if keyname != '':
                         html_form += '%s=%s\n' % (keyname, soft[keyname])
                 html_form += '</textarea><br />'
@@ -275,7 +274,7 @@ information.'''
         for sub_opt in sublevel_optional:
             html_form += '%s=   # optional\n' % sub_opt
         html_form += '</textarea><br />'
-        
+
     if template and testprocedure_entry == 1:
         if 'TESTPROCEDURE' in template:
             html_form += """
@@ -288,8 +287,8 @@ information.'''
                 decodedstring = base64.decodestring(base64string)
                 html_form += decodedstring
             html_form += '</textarea>'
-            output_objects.append({'object_type': 'html_form', 'text'
-                                  : html_form})
+            output_objects.append(
+                {'object_type': 'html_form', 'text': html_form})
 
             html_form = """
 <br /><b>Expected .stdout file if testprocedure is executed</b><br />
@@ -338,7 +337,7 @@ ls
     sublevel_optional = []
 
     if 'Sublevel' in environmentvariable\
-         and environmentvariable['Sublevel']:
+            and environmentvariable['Sublevel']:
         sublevel_required = environmentvariable['Sublevel_required']
         sublevel_optional = environmentvariable['Sublevel_optional']
 
@@ -351,7 +350,7 @@ ls
             for env in env_list:
                 html_form += """
 <textarea class='p80width' rows='4' name='environment'>"""
-                for keyname in env.keys():
+                for keyname in env:
                     if keyname != '':
                         html_form += '%s=%s\n' % (keyname, env[keyname])
                 html_form += '</textarea><br />'
@@ -373,5 +372,3 @@ ls
     output_objects.append({'object_type': 'html_form', 'text':
                            html_form % fill_helpers})
     return (output_objects, returnvalues.OK)
-
-

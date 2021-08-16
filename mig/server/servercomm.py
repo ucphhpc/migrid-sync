@@ -387,24 +387,24 @@ def section_to_dict(
     return section_dict
 
 
-def dict_to_section(conf, dict, section_key):
+def dict_to_section(conf, input_dict, section_key):
     """
-....Dump the contents of a dictionary into a separate section
-....configparser object.
-....Use the dictionary value of section_key as the session name
-....NB: Keys in dict are automatically lowercased in the section
-...."""
+    Dump the contents of a dictionary into a separate section
+    configparser object.
+    Use the dictionary value of section_key as the session name
+    NB: Keys in input_dict are automatically lowercased in the section
+    """
 
-    if section_key not in dict:
+    if section_key not in input_dict:
         return False
 
-    section = dict[section_key]
+    section = input_dict[section_key]
     if not conf.has_section(section_key):
         conf.add_section(section)
 
-    for key in dict.keys():
+    for key in input_dict:
         if key != section_key:
-            conf.set(section, key, "%s" % dict[key])
+            conf.set(section, key, "%s" % input_dict[key])
 
     return True
 

@@ -366,7 +366,7 @@ def html_tmpl(
                 <select name='access_project_base_vgrid_name'>
                 <option value=''>Choose project</option>
                 <option value=''>───────</option>"""
-        for project in sorted(accepted_projects.keys()):
+        for project in sorted(list(accepted_projects)):
             html += \
                 """
                 <option value='%s'>%s</option>""" \
@@ -415,7 +415,7 @@ def html_tmpl(
                 <select name='project_info_base_vgrid_name'>
                 <option value=''>Choose project</option>
                 <option value=''>───────</option>"""
-        for project in sorted(info_projects.keys()):
+        for project in sorted(list(info_projects)):
             html += \
                 """
                 <option value='%s'>%s</option>""" \
@@ -464,7 +464,7 @@ def html_tmpl(
                 <select name='accept_user_base_vgrid_name' onChange='selectAcceptUserProject();'>
                 <option value=''>Choose project</option>
                 <option value=''>───────</option>"""
-        for project in sorted(invited_projects.keys()):
+        for project in sorted(list(invited_projects)):
             html += \
                 """
                 <option value='%s'>%s</option>""" \
@@ -521,7 +521,7 @@ def html_tmpl(
                 <select name='invite_user_base_vgrid_name' onChange='selectInviteUserProject();'>
                 <option value=''>Choose project</option>
                 <option value=''>───────</option>""" % configuration.short_title
-        for project in sorted(invite_projects.keys()):
+        for project in sorted(list(invite_projects)):
             html += \
                 """
                 <option value='%s'>%s</option>""" % (project, project)
@@ -584,7 +584,7 @@ def html_tmpl(
                 <select name='remove_user_base_vgrid_name' onChange='selectRemoveUserProject();'>
                 <option value=''>Choose project</option>
                 <option value=''>───────</option>"""
-        for project in sorted(remove_projects.keys()):
+        for project in sorted(list(remove_projects)):
             html += \
                 """
                 <option value='%s'>%s</option>""" \
@@ -827,7 +827,7 @@ def html_tmpl(
                 <select name='promote_to_owner_base_vgrid_name' onChange='selectSwitchOwnerProject();'>
                 <option value=''>Choose project</option>
                 <option value=''>───────</option>"""
-        for project in sorted(remove_projects.keys()):
+        for project in sorted(list(remove_projects)):
             html += \
                 """
                 <option value='%s'>%s</option>""" \
@@ -1520,7 +1520,7 @@ Please contact the site admins %s if you think it should be enabled.
     if action == 'enable2fa':
         keywords_dict = twofactor_keywords(configuration)
         topic_mrsl = ''
-        for keyword in keywords_dict.keys():
+        for keyword in keywords_dict:
             if keyword.endswith('_OID_TWOFACTOR'):
                 value = True
             elif keyword == 'WEBDAVS_TWOFACTOR':
@@ -1691,7 +1691,7 @@ Please contact the site admins %s if you think it should be enabled.
             # extract owned projects and saved data category
             invited_projects = get_projects(configuration, client_id,
                                             'invited')
-            if not base_vgrid_name in invited_projects.keys():
+            if not base_vgrid_name in invited_projects:
                 status = False
                 msg = "'%s' is NOT a valid project id" % base_vgrid_name
                 _logger.error("gdpman: accept user invitation: %s" % msg)
@@ -1737,7 +1737,7 @@ Please contact the site admins %s if you think it should be enabled.
 
             gdp_users = get_users(configuration)
 
-            if not username in gdp_users.keys():
+            if not username in gdp_users:
                 status = False
                 msg = "'%s' is NOT a valid user id" % username
                 _logger.error("gdpman: Invite user: %s" % msg)
@@ -1745,7 +1745,7 @@ Please contact the site admins %s if you think it should be enabled.
             # extract owned projects and saved data category
             invite_projects = get_projects(configuration, client_id,
                                            'accepted', owner_only=True)
-            if not base_vgrid_name in invite_projects.keys():
+            if not base_vgrid_name in invite_projects:
                 status = False
                 msg = "'%s' is NOT a valid project id" % base_vgrid_name
                 _logger.error("gdpman: Invite user: %s" % msg)
@@ -1788,7 +1788,7 @@ Please contact the site admins %s if you think it should be enabled.
 
             gdp_users = get_users(configuration)
 
-            if not username in gdp_users.keys():
+            if not username in gdp_users:
                 status = False
                 msg = "'%s' is NOT a valid user id" % username
                 _logger.error("gdpman: Remove user: %s" % msg)
@@ -1796,7 +1796,7 @@ Please contact the site admins %s if you think it should be enabled.
             # extract owned projects and saved data category
             remove_projects = get_projects(
                 configuration, client_id, 'accepted', owner_only=True)
-            if not base_vgrid_name in remove_projects.keys():
+            if not base_vgrid_name in remove_projects:
                 status = False
                 msg = "'%s' is NOT a valid project id" % base_vgrid_name
                 _logger.error("gdpman: Remove user: %s" % msg)
@@ -1839,7 +1839,7 @@ Please contact the site admins %s if you think it should be enabled.
 
             gdp_users = get_users(configuration)
 
-            if not username in gdp_users.keys():
+            if not username in gdp_users:
                 status = False
                 msg = "'%s' is NOT a valid user id" % username
                 _logger.error("gdpman: Switch project owner: %s" % msg)
@@ -1847,7 +1847,7 @@ Please contact the site admins %s if you think it should be enabled.
             # extract owned projects and saved data category
             reassign_owner_projects = get_projects(
                 configuration, client_id, 'accepted', owner_only=True)
-            if not base_vgrid_name in reassign_owner_projects.keys():
+            if not base_vgrid_name in reassign_owner_projects:
                 status = False
                 msg = "'%s' is NOT a valid project id" % base_vgrid_name
                 _logger.error("gdpman: Switch project owner: %s" % msg)

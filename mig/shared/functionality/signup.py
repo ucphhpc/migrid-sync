@@ -94,7 +94,7 @@ def main(client_id, user_arguments_dict):
 
     valid_show = get_valid_topics(configuration)
     if keyword_all in accepted['show']:
-        show = valid_show.keys()
+        show = list(valid_show)
     else:
         show = list(set([i.lower() for i in accepted['show']]))
     show = [i for i in show if i in valid_show and valid_show[i]['url']]
