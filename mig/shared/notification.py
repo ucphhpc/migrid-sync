@@ -41,6 +41,7 @@ try:
     from email.encoders import Encoders
 except ImportError:
     Encoders = None
+from email.header import Header
 from email.message import Message
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
@@ -567,7 +568,8 @@ def send_email(
         if reply_to_email:
             mime_msg['Reply-To'] = reply_to_email
         mime_msg['Date'] = formatdate(localtime=True)
-        mime_msg['Subject'] = subject
+        # Force Subject to utf8 to support e.g. full names with accented chars
+        mime_msg['Subject'] = Header(subject, "utf8")
         basemsg = MIMEText(force_utf8(message), "plain", "utf8")
         mime_msg.attach(basemsg)
         if gpg_sign:
