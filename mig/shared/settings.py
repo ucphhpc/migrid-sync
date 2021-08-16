@@ -442,7 +442,7 @@ def load_twofactor(client_id, configuration, include_meta=False,
     """
 
     return load_section_helper(client_id, configuration, twofactor_filename,
-                               get_twofactor_fields(list(configuration)),
+                               list(get_twofactor_fields(configuration)),
                                include_meta, allow_missing)
 
 
