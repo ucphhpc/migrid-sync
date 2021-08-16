@@ -1144,7 +1144,7 @@ class MiGfs(Fuse):
             'mtime': 'mtime',
             'ctime': 'ctime',
         }
-        fields = len(mapping.keys())
+        fields = len(mapping)
         try:
             log.debug('prefetch_inodes %s from MiG'
                       % ', '.join(stat_list))

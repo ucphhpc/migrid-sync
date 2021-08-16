@@ -228,15 +228,15 @@ def main(client_id, user_arguments_dict):
         logger.debug("viewuser: lookup %s or %s in visible users" %
                      (visible_user_name, real_user_name))
 
-        if visible_user_name in visible_user.keys():
+        if visible_user_name in visible_user:
             user_dict = visible_user[visible_user_name]
-        elif real_user_name in visible_user.keys():
+        elif real_user_name in visible_user:
             visible_user_name = real_user_name
             user_dict = visible_user[real_user_name]
         else:
             logger.error("viewuser: invalid user %s" % visible_user_name)
             logger.debug("viewuser: %s not found in %s" %
-                         (visible_user_name, visible_user.keys()))
+                         (visible_user_name, list(visible_user)))
             output_objects.append({'object_type': 'error_text',
                                    'text': 'No such %s user: %s' %
                                    (configuration.short_title,

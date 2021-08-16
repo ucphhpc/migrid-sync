@@ -368,7 +368,7 @@ def list_frozen_archives(configuration, client_id, strict_owner=False,
     #       and we should get eventual consistency anyway
     frozen_cache = load_cached_meta(configuration, client_id)
     if caching and frozen_cache:
-        return (True, frozen_cache.keys())
+        return (True, list(frozen_cache))
 
     frozen_list = []
     dir_content = []

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sssmonitor - Global SSS monitor back end
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,10 @@
 # -- END_HEADER ---
 #
 
+"""SSS resource monitor"""
+
 from __future__ import absolute_import
+
 from datetime import datetime, timedelta
 
 from mig.shared import returnvalues
@@ -53,13 +56,14 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False,
                                   op_menu=client_id)
-    output_objects.append({'object_type': 'header', 'text'
-                          : '%s Screen Saver Sandbox Monitor' % \
-                            configuration.short_title 
-                          })
+    output_objects.append({'object_type': 'header', 'text':
+                           '%s Screen Saver Sandbox Monitor' %
+                           configuration.short_title
+                           })
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
-            defaults, output_objects, allow_rejects=False)
+                                                 defaults, output_objects,
+                                                 allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -79,8 +83,9 @@ Please contact the site admins %s if you think they should be enabled.
     try:
         userdb = load_sandbox_db(configuration)
     except Exception as exc:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not load any sandbox information'})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Could not load any sandbox information'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Load statistics objects
@@ -127,12 +132,12 @@ Please contact the site admins %s if you think they should be enabled.
                     walltime_per_user += walltime_per_resource
             else:
                 walltime_per_resource = timedelta(0)
-                
+
             n = {resource: walltime_per_resource}
             resources_walltime.update(n)
 
         if group_by == 'users' and (jobs_per_user > 0 or show_all
-                                     == 'true'):
+                                    == 'true'):
             sandboxinfo = {'object_type': 'sandboxinfo'}
             sandboxinfo['username'] = username
             sandboxinfo['resource'] = len(userdb[username][RESOURCES])
@@ -141,13 +146,14 @@ Please contact the site admins %s if you think they should be enabled.
             sandboxinfo['walltime_sort'] = walltime_per_user
             sandboxinfos.append(sandboxinfo)
         elif jobs_per_user > 0 or show_all == 'true':
-            for res in resources_jobs.keys():
+            for res in resources_jobs:
                 if resources_jobs[res] > 0 or show_all == 'true':
                     sandboxinfo = {'object_type': 'sandboxinfo'}
                     sandboxinfo['username'] = username
                     sandboxinfo['resource'] = res
                     sandboxinfo['jobs'] = resources_jobs[res]
-                    sandboxinfo['walltime'] = format_timedelta(resources_walltime[res])
+                    sandboxinfo['walltime'] = format_timedelta(
+                        resources_walltime[res])
                     sandboxinfo['walltime_sort'] = resources_walltime[res]
                     sandboxinfos.append(sandboxinfo)
 
@@ -158,20 +164,19 @@ Please contact the site admins %s if you think they should be enabled.
         # sort by owner: case insensitive
 
         sandboxinfos.sort(cmp=lambda a, b: cmp(a['username'].lower(),
-                          b['username'].lower()))
+                                               b['username'].lower()))
     elif 'resource' == sort:
 
         # sort by numerical resource ID
 
         if group_by == 'users':
             sandboxinfos.sort(cmp=lambda a, b: cmp(int(b['resource']),
-                              int(a['resource'])))
+                                                   int(a['resource'])))
         else:
 
-            sandboxinfos.sort(cmp=lambda a, b: cmp(int(a['resource'
-                              ].lower().replace('sandbox.', '')),
-                              int(b['resource'
-                              ].lower().replace('sandbox.', ''))))
+            sandboxinfos.sort(cmp=lambda a, b: cmp(
+                int(a['resource'].lower().replace('sandbox.', '')),
+                int(b['resource'].lower().replace('sandbox.', ''))))
     elif 'jobs' == sort:
 
         # sort by most jobs done
@@ -181,10 +186,10 @@ Please contact the site admins %s if you think they should be enabled.
 
         # sort by most walltime
 
-        sandboxinfos.sort(cmp=lambda a, b: cmp(a['walltime_sort'].days
-                           * 86400 + a['walltime_sort'].seconds, b['walltime_sort'
-                          ].days * 86400 + b['walltime_sort'].seconds),
-                          reverse=True)
+        sandboxinfos.sort(cmp=lambda a, b: cmp(
+            a['walltime_sort'].days * 86400 + a['walltime_sort'].seconds,
+            b['walltime_sort'].days * 86400 + b['walltime_sort'].seconds),
+            reverse=True)
     else:
 
         # do not sort
@@ -193,17 +198,15 @@ Please contact the site admins %s if you think they should be enabled.
 
     # Sort
 
-    output_objects.append({'object_type': 'verbatim', 'text'
-                          : 'Sort by: '})
-    
+    output_objects.append({'object_type': 'verbatim', 'text': 'Sort by: '})
+
     link_list = []
     for name in ('username', 'resource', 'jobs', 'walltime'):
-        link_list.append({'object_type': 'link', 'destination'
-                         : '?sort=%s;group_by=%s' % (name, group_by),
-                         'text': '%s' % name.capitalize()})
+        link_list.append({'object_type': 'link', 'destination':
+                          '?sort=%s;group_by=%s' % (name, group_by),
+                          'text': '%s' % name.capitalize()})
 
-    output_objects.append({'object_type': 'multilinkline', 'links'
-                          : link_list})
+    output_objects.append({'object_type': 'multilinkline', 'links': link_list})
 
     # Group
 
@@ -212,25 +215,22 @@ Please contact the site admins %s if you think they should be enabled.
 
     link_list = []
     for name in ('resources', 'users'):
-        link_list.append({'object_type': 'link', 'destination'
-                         : '?sort=%s;group_by=%s' % (sort, name), 'text'
-                         : '%s' % name.capitalize()})
+        link_list.append({'object_type': 'link', 'destination':
+                          '?sort=%s;group_by=%s' % (sort, name),
+                          'text': '%s' % name.capitalize()})
 
-    output_objects.append({'object_type': 'multilinkline', 'links'
-                          : link_list})
+    output_objects.append({'object_type': 'multilinkline', 'links': link_list})
     # Time stamp
 
     now = datetime.now()
-    output_objects.append({'object_type': 'text', 'text'
-                          : 'Updated on %s' % now})
+    output_objects.append(
+        {'object_type': 'text', 'text': 'Updated on %s' % now})
     output_objects.append({'object_type': 'html_form', 'text': '<br />'})
 
-    
     # Actual stats
 
-    output_objects.append({'object_type': 'sandboxinfos', 'sandboxinfos'
-                          : sandboxinfos})
-    output_objects.append({'object_type': 'text', 'text'
-                          : 'Total jobs run by sandboxes: %s'
-                           % total_jobs})
+    output_objects.append(
+        {'object_type': 'sandboxinfos', 'sandboxinfos': sandboxinfos})
+    output_objects.append({'object_type': 'text', 'text':
+                           'Total jobs run by sandboxes: %s' % total_jobs})
     return (output_objects, returnvalues.OK)

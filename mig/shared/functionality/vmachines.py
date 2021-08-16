@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vmachines - virtual machine management
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Virtual machine administration back end functionality"""
+
 from __future__ import absolute_import
 
 import os
@@ -241,7 +242,7 @@ Please contact the site admins %s if you think they should be enabled.
         machine = {}
         for entry in user_vms:
             if machine_name == entry['name']:
-                for name in machine_req.keys():
+                for name in machine_req:
                     if isinstance(entry[name], basestring) and \
                             entry[name].isdigit():
                         machine[name] = int(entry[name])

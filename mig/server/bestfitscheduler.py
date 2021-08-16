@@ -53,7 +53,7 @@ class BestFitScheduler(Scheduler):
         }
         job_fitness = 0.0
 
-        for attr in priority_list.keys():
+        for attr in priority_list:
             prio_mult = priority_list[attr]
             try:
                 job_val = float(job[attr])

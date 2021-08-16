@@ -545,7 +545,7 @@ def forced_org_email_match(org, email, configuration):
     force_org_email_dict = dict(force_org_email)
     is_forced_email = False
     is_forced_org = False
-    if org.upper() in force_org_email_dict.keys():
+    if org.upper() in force_org_email_dict:
         is_forced_org = True
         # Consistent casing
         org = org.upper()

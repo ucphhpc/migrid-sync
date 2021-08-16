@@ -168,7 +168,7 @@ class Scheduler:
     # TODO: Find out if a built-in method exists for this operation
 
         clone = {}
-        for key in dictionary.keys():
+        for key in dictionary:
             clone[key] = dictionary[key]
         return clone
 
@@ -399,7 +399,7 @@ class Scheduler:
         # Update and return local stats for
         # server_conf
 
-        inc_list = server_conf.keys()
+        inc_list = list(server_conf)
 
         server = self.find_server(server_conf)
         if server:
@@ -488,7 +488,7 @@ class Scheduler:
         # Update and return local stats for
         # user_conf
 
-        inc_list = user_conf.keys()
+        inc_list = list(user_conf)
         fill_in = False
 
         user = self.find_user(user_conf)
@@ -547,7 +547,7 @@ class Scheduler:
         #  for jobs with specific RE requirements
         # cur_price is the current min_price without REs
 
-        inc_list = resource_conf.keys()
+        inc_list = list(resource_conf)
         fill_in = False
 
         res = self.find_resource(resource_conf)
@@ -667,7 +667,7 @@ class Scheduler:
         for (cur_id, cur_res) in self.resources.items():
             if cur_res['SERVER'] != server_id:
                 continue
-            if not cur_id in resources.keys():
+            if not cur_id in resources:
 
                 # Remove resource from local list
 
@@ -682,7 +682,7 @@ class Scheduler:
         for (cur_id, cur_user) in self.users.items():
             if cur_user['SERVER'] != server_id:
                 continue
-            if not cur_id in users.keys():
+            if not cur_id in users:
 
                 # Remove user from local list
 
@@ -961,7 +961,7 @@ class Scheduler:
 
             eval_func = safeeval.expr_eval
         else:
-            for key in replace_map.keys():
+            for key in replace_map:
 
                 # self.logger.debug("%s : %s %s" % (price_string, key,
                 #                 replace_map[key]))
@@ -1182,7 +1182,7 @@ class Scheduler:
 
         # print "going to check if resource and jobs match (keywords %s)" % checklist
 
-        for attr in job.keys():
+        for attr in job:
             if attr == 'ARCHITECTURE':
                 if job[attr] and job[attr] != res[attr]:
 
@@ -1643,7 +1643,7 @@ class Scheduler:
     def copy_schedule(self, src, dst):
         """Copy schedule fields from src to dst job"""
 
-        for field in self.__schedule_fields.keys():
+        for field in self.__schedule_fields:
             if field in src:
                 dst[field] = src[field]
         return dst
@@ -1651,7 +1651,7 @@ class Scheduler:
     def clear_schedule(self, job):
         """Remove any scheduling fields from job - used e.g. after time outs"""
 
-        for field in self.__schedule_fields.keys():
+        for field in self.__schedule_fields:
             if field in job:
                 del job[field]
         return job

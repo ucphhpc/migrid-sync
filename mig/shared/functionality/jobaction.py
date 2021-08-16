@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobaction - Request status change (freeze, cancel, ...) for one or more jobs
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,6 +28,7 @@
 """Forward valid job state requests to grid_script for consistent job status
 changes.
 """
+
 from __future__ import absolute_import
 
 import os
@@ -47,6 +48,7 @@ from mig.shared.validstring import valid_user_path
 # Valid actions and the corresponding new job state
 
 valid_actions = {'cancel': 'CANCELED', 'freeze': 'FROZEN', 'thaw': 'QUEUED'}
+
 
 def signature():
     """Signature of the main function"""
@@ -69,7 +71,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -86,13 +88,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not configuration.site_enable_jobs:
         output_objects.append({'object_type': 'error_text', 'text':
-            '''Job execution is not enabled on this system'''})
+                               '''Job execution is not enabled on this system'''})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    if not action in valid_actions.keys():
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Invalid job action "%s" (only %s supported)'
-                               % (action, ', '.join(valid_actions.keys()))})
+    if not action in valid_actions:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Invalid job action "%s" (only %s supported)'
+                               % (action, ', '.join(list(valid_actions)))})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     new_state = valid_actions[action]
@@ -102,7 +104,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     base_dir = \
         os.path.abspath(os.path.join(configuration.mrsl_files_dir,
-                        client_dir)) + os.sep
+                                     client_dir)) + os.sep
 
     status = returnvalues.OK
     filelist = []
@@ -142,8 +144,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # (allowed) match
 
         if not match:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : '%s: You do not have any matching job IDs!'
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   '%s: You do not have any matching job IDs!'
                                    % pattern})
             status = returnvalues.CLIENT_ERROR
         else:
@@ -152,8 +154,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # job state change is hard on the server, limit
 
     if len(filelist) > 500:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Too many matching jobs (%s)!'
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Too many matching jobs (%s)!'
                                % len(filelist)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -185,28 +187,28 @@ jobs!''' % (job_id, action)
         possible_cancel_states = ['PARSE', 'QUEUED', 'RETRY', 'EXECUTING',
                                   'FROZEN']
         if action == 'cancel' and \
-               not job_dict['STATUS'] in possible_cancel_states:
+                not job_dict['STATUS'] in possible_cancel_states:
             changedstatusjob['message'] = \
                 'You can only cancel jobs with status: %s.'\
-                 % ' or '.join(possible_cancel_states)
+                % ' or '.join(possible_cancel_states)
             status = returnvalues.CLIENT_ERROR
             changedstatusjobs.append(changedstatusjob)
             continue
         possible_freeze_states = ['QUEUED', 'RETRY']
         if action == 'freeze' and \
-               not job_dict['STATUS'] in possible_freeze_states:
+                not job_dict['STATUS'] in possible_freeze_states:
             changedstatusjob['message'] = \
                 'You can only freeze jobs with status: %s.'\
-                 % ' or '.join(possible_freeze_states)
+                % ' or '.join(possible_freeze_states)
             status = returnvalues.CLIENT_ERROR
             changedstatusjobs.append(changedstatusjob)
             continue
         possible_thaw_states = ['FROZEN']
         if action == 'thaw' and \
-               not job_dict['STATUS'] in possible_thaw_states:
+                not job_dict['STATUS'] in possible_thaw_states:
             changedstatusjob['message'] = \
                 'You can only thaw jobs with status: %s.'\
-                 % ' or '.join(possible_thaw_states)
+                % ' or '.join(possible_thaw_states)
             status = returnvalues.CLIENT_ERROR
             changedstatusjobs.append(changedstatusjob)
             continue
@@ -219,8 +221,8 @@ jobs!''' % (job_id, action)
         # might be old if another script has modified the file.
 
         if not unpickle_and_change_status(filepath, new_state, logger):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Job status could not be changed to %s!'
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Job status could not be changed to %s!'
                                    % new_state})
             status = returnvalues.SYSTEM_ERROR
 
@@ -241,8 +243,8 @@ jobs!''' % (job_id, action)
                                            + job_dict['UNIQUE_RESOURCE_NAME']
                                            + ' ' + job_dict['EXE'] + '\n',
                                            logger, configuration):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : '''Error sending message to grid_script,
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   '''Error sending message to grid_script,
 job may still be in the job queue.'''})
             status = returnvalues.SYSTEM_ERROR
             continue
@@ -251,5 +253,5 @@ job may still be in the job queue.'''})
         changedstatusjobs.append(changedstatusjob)
 
     output_objects.append({'object_type': 'changedstatusjobs',
-                          'changedstatusjobs': changedstatusjobs})
+                           'changedstatusjobs': changedstatusjobs})
     return (output_objects, status)

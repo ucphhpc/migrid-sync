@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showfreeze - back end to request freeze files in write-once fashion
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Show summary contents of frozen archive"""
+
 from __future__ import absolute_import
 
 import os
@@ -83,7 +84,7 @@ def main(client_id, user_arguments_dict):
     operation = accepted['operation'][-1]
     caching = (accepted['caching'][-1].lower() in ('true', 'yes'))
 
-    if not flavor in freeze_flavors.keys():
+    if not flavor in freeze_flavors:
         output_objects.append({'object_type': 'error_text', 'text':
                                'Invalid freeze flavor: %s' % flavor})
         return (output_objects, returnvalues.CLIENT_ERROR)

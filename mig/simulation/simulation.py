@@ -86,8 +86,8 @@ def set_peers(servers, topology, migrate_cost):
 
     index = 0
     server_cnt = len(servers)
-    server_names = servers.keys()
-    server_list = servers.values()
+    server_names = list(servers)
+    server_list = list(servers.values())
 
     print('Using', topology, 'topology')
 
@@ -114,7 +114,7 @@ def set_peers(servers, topology, migrate_cost):
                     server_to_dict(server_list[next], migrate_cost)
             index += 1
     elif topology == 'star':
-        server_name = servers.keys()[0]
+        server_name = list(servers)[0]
         server = servers[server_name]
         for (peer_name, peer) in servers.items():
             if server_name != peer_name:
@@ -183,7 +183,7 @@ def set_peers(servers, topology, migrate_cost):
         print('Unsupported topology:', topology)
 
     for server in servers.values():
-        print(server.id, 'peers', server.peers.keys())
+        print(server.id, 'peers', list(server.peers))
 
 
 def show_status(level):
@@ -602,7 +602,7 @@ else:
 
     # read out possibly updated values
 
-    for opt in defaults.keys():
+    for opt in defaults:
         defaults[opt] = scenario.get(general, opt)
 
     topology = defaults['topology']

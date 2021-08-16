@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # adminfreeze - back end to request freeze files in write-once fashion
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Request freeze of one or more files into a write-once archive"""
+
 from __future__ import absolute_import
 
 import datetime
@@ -70,7 +71,7 @@ def main(client_id, user_arguments_dict):
     flavor = accepted['flavor'][-1].strip()
     freeze_id = accepted['freeze_id'][-1].strip()
 
-    if not flavor in freeze_flavors.keys():
+    if not flavor in freeze_flavors:
         output_objects.append({'object_type': 'error_text', 'text':
                                'Invalid freeze flavor: %s' % flavor})
         return (output_objects, returnvalues.CLIENT_ERROR)

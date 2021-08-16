@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # xmlrpcsbackup - backup files with XMLRPC and user certificate
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2012  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """XMLRPC backuphelper with support for HTTPS using client certificates"""
+
 from __future__ import print_function
 
 import httplib
@@ -41,10 +42,10 @@ def read_user_conf():
     """Read and parse 'KEY VAL' formatted user conf file"""
     user_conf = {}
     conf_path = os.path.expanduser(os.path.join('~', '.mig',
-                                   'miguser.conf'))
+                                                'miguser.conf'))
     if not os.path.exists(conf_path):
-        print('mig user configuration not found, %s does not exist'\
-            % conf_path)
+        print('mig user configuration not found, %s does not exist'
+              % conf_path)
         sys.exit(1)
 
     needed_settings = ['migserver', 'certfile', 'keyfile']
@@ -234,7 +235,7 @@ key/certificate passphrase before you can continue.
             continue
         signature_list = eval(signature.replace('none', 'None'))
         var_dict = signature_list[1]
-        var_list = var_dict.keys()
+        var_list = list(var_dict)
         print('%s : %s' % (method, var_list))
 
     print('Running createbackup method:')
@@ -257,7 +258,7 @@ key/certificate passphrase before you can continue.
     for elem in outlist:
         if elem.get('object_type', 'UNKNOWN') != 'freezestatus':
             continue
-        print("Created %(flavor)s archive %(freeze_id)s: %(freeze_state)s" % \
+        print("Created %(flavor)s archive %(freeze_id)s: %(freeze_state)s" %
               elem)
 
     # Find actual archive ID from resulting link
@@ -282,7 +283,7 @@ key/certificate passphrase before you can continue.
 
     print('Running showfreeze method for %s:' % archive_id_list)
     (outlist, retval) = server.showfreeze({'freeze_id': archive_id_list,
-                                          'flavor': ['backup'],
+                                           'flavor': ['backup'],
                                            'checksum': ['sha1'],
                                            'operation': ['list']
                                            })

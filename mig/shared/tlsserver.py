@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # tlsserver - Shared functions for all SSL/TLS-secured servers
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,6 +28,7 @@
 """Common HTTPS/WebDAVS/FTPS server functions for e.g. SSL/TLS setup with
 strong security settings.
 """
+
 from __future__ import absolute_import
 
 import ssl
@@ -174,11 +175,11 @@ openssl dhparam 2048 -out %s""" % dhparamsfile)
             available_curves = crypto.get_elliptic_curves()
             curve_map = dict([(i.name, i) for i in available_curves])
             for curve_name in curve_priority.split(':'):
-                if curve_name in curve_map.keys():
+                if curve_name in curve_map:
                     use_curve = curve_map[curve_name]
                     break
             _logger.debug("Found elliptic curves %s and picked %s" %
-                          (', '.join(curve_map.keys()), use_curve.name))
+                          (', '.join(list(curve_map)), use_curve.name))
             ssl_ctx.set_tmp_ecdh(use_curve)
             pfs_available = True
         except Exception as exc:

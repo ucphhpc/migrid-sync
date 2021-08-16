@@ -1,11 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 #
 # --- BEGIN_HEADER ---
 #
 # autologout - auto-force-expire local login session
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,6 +26,7 @@
 #
 
 """Automatic logout to force login session expiry"""
+
 from __future__ import absolute_import
 
 import os
@@ -66,7 +66,7 @@ def main(client_id, user_arguments_dict, environ=None):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -79,20 +79,20 @@ def main(client_id, user_arguments_dict, environ=None):
         # IMPORTANT: further validate that packed redirect_to is signed and safe
         try:
             (unpacked_url, unpacked_query) = base32urldecode(configuration,
-                                                            packed_url)
+                                                             packed_url)
         except Exception as exc:
             logger.error('base32urldecode failed: %s' % exc)
             output_objects.append({'object_type': 'error_text', 'text':
                                    '''failed to unpack redirect_to value!'''
-                            })
+                                   })
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Validate trust on unpacked url and query
 
     if (unpacked_url or unpacked_query) \
             and not trust_handler(configuration, 'get', unpacked_url, unpacked_query,
-                         client_id, get_csrf_limit(configuration), environ):
-        logger.error('validation of unpacked url %s and query %s failed!' % \
+                                  client_id, get_csrf_limit(configuration), environ):
+        logger.error('validation of unpacked url %s and query %s failed!' %
                      (unpacked_url, unpacked_query))
         output_objects.append({'object_type': 'error_text', 'text': '''Only
 accepting fully signed GET requests to prevent unintended redirects'''})
@@ -102,18 +102,18 @@ accepting fully signed GET requests to prevent unintended redirects'''})
     redirect_url, redirect_query_dict = unpacked_url, unpacked_query
 
     output_objects.append({'object_type': 'header',
-                          'text': 'Auto logout'})
+                           'text': 'Auto logout'})
     (oid_db, identity) = extract_client_openid(configuration, environ,
-            lookup_dn=False)
+                                               lookup_dn=False)
     logger.info('%s from %s with identity %s' % (op_name, client_id,
-                identity))
+                                                 identity))
     if client_id and client_id == identity:
         output_objects.append({'object_type': 'warning',
-                              'text': \
-            """You're accessing %s with a user certificate and should never
+                               'text':
+                               """You're accessing %s with a user certificate and should never
             end up at this auto logout page.
             Please refer to your browser and system documentation for details."""
-                            % configuration.short_title})
+                               % configuration.short_title})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if redirect_url:
@@ -130,29 +130,30 @@ accepting fully signed GET requests to prevent unintended redirects'''})
     # OpenID session while loading the resources for this page (in parallel).
 
     logger.info('expiring active sessions for %s in %s' % (identity,
-                oid_db))
+                                                           oid_db))
     (success, _) = expire_oid_sessions(configuration, oid_db, identity)
     logger.info('verifying no active sessions left for %s' % identity)
     (found, remaining) = find_oid_sessions(configuration, oid_db,
-            identity)
+                                           identity)
     if success and found and not remaining:
 
         # Expire twofactor session
 
-        expire_twofactor_session(configuration, client_id, environ, allow_missing=True)
+        expire_twofactor_session(
+            configuration, client_id, environ, allow_missing=True)
 
         if redirect_url:
             # Generate HTML and submit redirect form
 
             csrf_limit = get_csrf_limit(configuration, environ)
             csrf_token = make_csrf_token(configuration, 'post',
-                    op_name, client_id, csrf_limit)
+                                         op_name, client_id, csrf_limit)
             html = \
                 """
             <form id='return_to_form' method='post' action='%s'>
                 <input type='hidden' name='%s' value='%s'>""" % \
-            (redirect_url, csrf_field, csrf_token)
-            for key in redirect_query_dict.keys():
+                (redirect_url, csrf_field, csrf_token)
+            for key in redirect_query_dict:
                 for value in redirect_query_dict[key]:
                     html += \
                         """
@@ -165,12 +166,12 @@ accepting fully signed GET requests to prevent unintended redirects'''})
                 document.getElementById('return_to_form').submit();
             </script>"""
             output_objects.append({'object_type': 'html_form',
-                    'text': html})
+                                   'text': html})
         else:
             text = """You are now logged out of %s""" \
-                     % configuration.short_title
+                % configuration.short_title
             output_objects.append({'object_type': 'text',
-                    'text': text})
+                                   'text': text})
     else:
         logger.error('remaining active sessions for %s: %s'
                      % (identity, remaining))
@@ -178,7 +179,7 @@ accepting fully signed GET requests to prevent unintended redirects'''})
 
     if status == returnvalues.CLIENT_ERROR:
         output_objects.append({'object_type': 'error_text',
-                              'text': 'Could not automatically log you out of %s!'
+                               'text': 'Could not automatically log you out of %s!'
                                % configuration.short_title})
 
     return (output_objects, status)

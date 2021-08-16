@@ -23,6 +23,7 @@
 # 02110-1301, USA.
 
 """A set of shared workflows functions"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -898,7 +899,7 @@ def __check_user_input(
                   % (user_input, mode, user_request))
 
     for key, value in user_input.items():
-        if key not in keyword_dict.keys():
+        if key not in keyword_dict:
             if user_request:
                 if keyword_dict[key][mode] == _FORBIDDEN:
                     msg = "key: '%s' is forbidden from a user request. " % key
@@ -972,7 +973,7 @@ def __check_recipe_inputs(configuration, user_inputs, mode, user_request=True):
                 if env_key not in VALID_ENVIRONMENT:
                     msg = "Unknown environment key '%s' was provided. " \
                           "Valid keys are %s" % \
-                          (key, ', '.join(VALID_ENVIRONMENT.keys()))
+                          (key, ', '.join(list(VALID_ENVIRONMENT)))
                     _logger.debug("WR: __check_recipe_inputs, " + msg)
                     return (False, msg)
 
@@ -1150,7 +1151,7 @@ def __correct_persistent_wp(configuration, workflow_pattern):
             _logger.error(
                 "WP: __correct_wp, workflow_pattern had an incorrect key "
                 "'%s', allowed are %s"
-                % (key, PATTERN_KEYWORDS.keys()))
+                % (key, list(PATTERN_KEYWORDS)))
             return (False, msg)
         if not isinstance(value, PATTERN_KEYWORDS[key]['type']):
             _logger.error(
@@ -1195,7 +1196,7 @@ def __correct_persistent_wr(configuration, workflow_recipe):
         if key not in RECIPE_KEYWORDS:
             _logger.error(
                 "WR: __correct_wr, workflow_recipe had an incorrect key %s, "
-                "allowed are %s" % (key, RECIPE_KEYWORDS.keys()))
+                "allowed are %s" % (key, list(RECIPE_KEYWORDS)))
             return (False, msg)
         if not isinstance(value, RECIPE_KEYWORDS[key]['type']):
             _logger.error(
@@ -1346,7 +1347,7 @@ def __refresh_map(configuration, workflow_type=WORKFLOW_PATTERN,
 
         # Remove any missing workflow patterns from map
         missing_workflow = [workflow_file for workflow_file in
-                            workflow_map.keys()
+                            workflow_map
                             if workflow_file not in
                             [_workflow_file for _workflow_path, _workflow_file
                              in all_objects]]
@@ -1846,7 +1847,7 @@ def get_wp_map(configuration, client_id=None):
     last_load[WORKFLOW_PATTERNS] = map_stamp
     # Do not print whole map here. It is dangerously big if any recipe contains
     # significant data such as an image.
-    _logger.debug("WP: got map with keys '%s'" % workflow_p_map.keys())
+    _logger.debug("WP: got map with keys '%s'" % list(workflow_p_map))
     return workflow_p_map
 
 
@@ -1878,7 +1879,7 @@ def get_wr_map(configuration, client_id=None):
     last_load[WORKFLOW_RECIPES] = map_stamp
     # Do not print whole map here. It is dangerously big if any recipe contains
     # significant data such as an image.
-    _logger.debug("WP: got map with keys '%s'" % workflow_r_map.keys())
+    _logger.debug("WP: got map with keys '%s'" % list(workflow_r_map))
     return workflow_r_map
 
 
@@ -2681,7 +2682,7 @@ def __update_workflow_pattern(
     workflow_pattern = __strip_input_pattern_attributes(workflow_pattern,
                                                         mode='modify')
 
-    for k in pattern.keys():
+    for k in pattern:
         if k not in workflow_pattern:
             workflow_pattern[k] = pattern[k]
 
@@ -2741,7 +2742,7 @@ def __update_workflow_recipe(configuration, client_id, vgrid, workflow_recipe):
                                    'persistence_id'],
                                vgrid=vgrid)
 
-    for variable in workflow_recipe.keys():
+    for variable in workflow_recipe:
         recipe[variable] = workflow_recipe[variable]
 
     # TODO, update workflow task file if new is provided
@@ -2835,7 +2836,7 @@ def workflow_match(configuration, workflow_object, user_query=False, **kwargs):
             if key in workflow_object:
                 if workflow_object[key] == value:
                     num_matches += 1
-        if num_matches == len(kwargs.keys()):
+        if num_matches == len(kwargs):
             return (True, "")
     return (False, "Failed to find an exact matching between '%s' and '%s'"
             % (workflow_object, kwargs))
@@ -2845,7 +2846,7 @@ def __soft_match(configuration, key, value, target):
     # configuration.logger.debug("Soft matching '%s', '%s'(%s) and '%s'"
     #                            % (key, value, type(value), target))
     if key not in target:
-        msg = "Requested key '%s' not in '%s'" % (key, target.keys())
+        msg = "Requested key '%s' not in '%s'" % (key, list(target))
         # configuration.logger.debug(msg)
         return (False, msg)
 
@@ -3348,7 +3349,7 @@ def __create_task_parameter_file(configuration, vgrid, pattern,
         _logger.error(msg)
         return (False, msg)
 
-    job_env_vars = [item for item in job_env_vars_map.keys()]
+    job_env_vars = [item for item in job_env_vars_map]
 
     input_file = pattern.get('input_file',
                              PATTERN_KEYWORDS['input_file']['default'])
@@ -3478,7 +3479,7 @@ def create_workflow_trigger(configuration, client_id, vgrid, path, pattern,
                         % rule_id)
         return (False, "Failed to create trigger, conflicting rule_id")
 
-    job_env_vars = [item for item in job_env_vars_map.keys()]
+    job_env_vars = [item for item in job_env_vars_map]
 
     environment_variables = {}
     if 'variables' in pattern:

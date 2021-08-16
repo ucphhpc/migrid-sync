@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # scriptinput - Handles html form style input from user
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,6 +28,7 @@
 """This module contains CGI/WSGI/... specific functions for
 handling user input.
 """
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -161,13 +162,13 @@ def fieldstorage_to_dict(fieldstorage, fields=[]):
     the cgi module. Please note that all values are on list form even
     if only a single value is provided.
     If the fields list is provided, only the provided fields are read.
-    This may be necessary in PUT requests where fieldstorage.keys() is
+    This may be necessary in PUT requests where fieldstorage key listing is
     not supported.
     """
 
     params = {}
     if not fields and fieldstorage:
-        fields = fieldstorage.keys()
+        fields = list(fieldstorage)
     for key in fields:
         try:
             params[key] = fieldstorage.getlist(key)
@@ -185,6 +186,6 @@ def fieldstorage_to_dict(fieldstorage, fields=[]):
                 except Exception as exc:
                     pass
         except Exception as err:
-            print('Warning: failed to extract values for %s: %s'\
-                % (key, err))
+            print('Warning: failed to extract values for %s: %s'
+                  % (key, err))
     return params

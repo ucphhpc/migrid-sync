@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobfeasibility - capability of the submitted job to be executed
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,6 +34,7 @@ All or individual validations can be omitted through configuration.
 Each job_cond color is a subset of the one above it; in numerical ascension
 i.e. job_cond orange is a subset of job_cond yellow.
 """
+
 from __future__ import absolute_import
 
 import os
@@ -154,7 +155,7 @@ def suggestion_implementation(configuration, job, job_cond, errors,
     to determine the feasibility of a job.
     """
 
-    vgrids = vgrid_resource_dict.keys()
+    vgrids = list(vgrid_resource_dict)
     all_resources = vgrid_resource_dict.values()
     resources = [res for sublist in all_resources for res in sublist]
     vgrid_resource_dict.clear()
@@ -519,7 +520,7 @@ def validate_runtimeenvironment(configuration, job, resource, errors):
             res_envs = [env[0] for env in resource['RUNTIMEENVIRONMENT']]
             runtime_env_errors.append('Job/Resource values: %s / %s'
                                       % (job_runtimeenv,
-                                       ' '.join(res_envs)))
+                                         ' '.join(res_envs)))
 
     if runtime_env_errors:
         errors['RUNTIMEENVIRONMENT'] = '; \n'.join(runtime_env_errors)
@@ -874,7 +875,7 @@ def default_vgrid_resources(configuration):
     resources_and_vgrids = get_vgrid_map(configuration)[RESOURCES]
     resources = []
 
-    for resource in resources_and_vgrids.keys():
+    for resource in resources_and_vgrids:
         if default_vgrid in resources_and_vgrids[resource][ALLOW]:
             resources.append(resource)
 

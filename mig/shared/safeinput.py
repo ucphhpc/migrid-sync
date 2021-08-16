@@ -1995,7 +1995,7 @@ def validated_input(
     type_checks = {}
     value_checks = {}
 
-    for name in defaults.keys():
+    for name in defaults:
         if name in type_override:
             type_checks[name] = type_override[name]
         else:
@@ -2004,7 +2004,7 @@ def validated_input(
             value_checks[name] = value_override[name]
         else:
             value_checks[name] = guess_value(name)
-    (accepted, rejected) = validate_helper(input_dict, defaults.keys(),
+    (accepted, rejected) = validate_helper(input_dict, list(defaults),
                                            type_checks, value_checks,
                                            list_wrap)
 

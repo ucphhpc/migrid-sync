@@ -195,7 +195,7 @@ def vms_list(client_id, configuration):
 
         machine['name'] = vm_def_base
         # override defaults with conf values
-        for key in machine_defaults.keys():
+        for key in machine_defaults:
             if vm_config.has_option('MiG', key):
                 machine[key] = vm_config.get('MiG', key)
         # vgrid entry must be a list of strings

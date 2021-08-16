@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # viewres - Display public details about a resource
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Get info about a resource"""
+
 from __future__ import absolute_import
 
 from mig.shared import returnvalues
@@ -137,11 +138,11 @@ def main(client_id, user_arguments_dict):
 
     for visible_res_name in resource_list:
         unique_resource_name = visible_res_name
-        if visible_res_name in anon_map.keys():
+        if visible_res_name in anon_map:
             unique_resource_name = anon_map[visible_res_name]
-        if not visible_res_name in visible_res.keys():
+        if not visible_res_name in visible_res:
             logger.warning('User %s not allowed to view %s (%s)' %
-                           (client_id, visible_res_name, visible_res.keys()))
+                           (client_id, visible_res_name, list(visible_res)))
             output_objects.append({'object_type': 'error_text',
                                    'text': 'invalid resource %s' %
                                    visible_res_name})

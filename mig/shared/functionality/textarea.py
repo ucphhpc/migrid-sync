@@ -71,7 +71,7 @@ def handle_form_input(filenumber, user_arguments_dict, configuration):
     file_type = ''
 
     output = ''
-    keys = mrslkeywords.get_keywords_dict(configuration).keys()
+    keys = list(mrslkeywords.get_keywords_dict(configuration))
 
     # FILE keyword used to indicate a plain file should be created
 

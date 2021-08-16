@@ -76,25 +76,27 @@ else:
         print('ERROR: this daemon requires the scandir module on python 2')
         sys.exit(1)
 
-
-from mig.shared.base import force_utf8
-from mig.shared.cmdapi import parse_command_args
-from mig.shared.conf import get_configuration_object
-from mig.shared.defaults import valid_trigger_changes, workflows_log_name, \
-    workflows_log_size, workflows_log_cnt, csrf_field, default_vgrid
-from mig.shared.events import get_path_expand_map
-from mig.shared.fileio import makedirs_rec, pickle, unpickle, walk
-from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.job import fill_mrsl_template, new_job
-from mig.shared.listhandling import frange
-from mig.shared.logger import daemon_logger, register_hangup_handler
-from mig.shared.safeinput import PARAM_START, PARAM_STOP, PARAM_JUMP
-from mig.shared.serial import load
-from mig.shared.vgrid import vgrid_valid_entities, vgrid_add_workflow_jobs, \
-    JOB_ID, JOB_CLIENT
-from mig.shared.vgridaccess import check_vgrid_access
-from mig.shared.workflows import get_wp_map, CONF
-
+try:
+    from mig.shared.base import force_utf8
+    from mig.shared.cmdapi import parse_command_args
+    from mig.shared.conf import get_configuration_object
+    from mig.shared.defaults import valid_trigger_changes, workflows_log_name, \
+        workflows_log_size, workflows_log_cnt, csrf_field, default_vgrid
+    from mig.shared.events import get_path_expand_map
+    from mig.shared.fileio import makedirs_rec, pickle, unpickle, walk
+    from mig.shared.handlers import get_csrf_limit, make_csrf_token
+    from mig.shared.job import fill_mrsl_template, new_job
+    from mig.shared.listhandling import frange
+    from mig.shared.logger import daemon_logger, register_hangup_handler
+    from mig.shared.safeinput import PARAM_START, PARAM_STOP, PARAM_JUMP
+    from mig.shared.serial import load
+    from mig.shared.vgrid import vgrid_valid_entities, vgrid_add_workflow_jobs, \
+        JOB_ID, JOB_CLIENT
+    from mig.shared.vgridaccess import check_vgrid_access
+    from mig.shared.workflows import get_wp_map, CONF
+except ImportError as ioe:
+    print("could not import mig modules!")
+    exit(1)
 
 # Global trigger rule dictionaries with rules for all VGrids
 
@@ -197,7 +199,7 @@ def extract_time_in_secs(rule, field):
     unit_key = _default_period
     if not limit_str[-1:].isdigit():
         val_str = limit_str[:-1]
-        if limit_str[-1] in _unit_periods.keys():
+        if limit_str[-1] in _unit_periods:
             unit_key = limit_str[-1]
         else:
 
@@ -232,7 +234,7 @@ def extract_hit_limit(rule, field):
     (number, unit) = parts
     if not number.isdigit():
         number = '-1'
-    if unit not in _unit_periods.keys():
+    if unit not in _unit_periods:
         unit = _default_period
     return (int(number), _unit_periods[unit])
 
@@ -612,7 +614,7 @@ class MiGRuleEventHandler(PatternMatchingEventHandler):
             # Remove all old rules for this vgrid and
             # leave rules for parent and sub-vgrids
 
-            for target_path in all_rules.keys():
+            for target_path in all_rules:
                 all_rules[target_path] = [i for i in
                                           all_rules[target_path] if i['vgrid_name']
                                           != vgrid_name]
@@ -1154,7 +1156,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                             vgrid_sub_path = strip_base_dirs(ent.path)
 
                             if not vgrid_sub_path in \
-                                    vgrid_dir_cache.keys() or \
+                                    vgrid_dir_cache or \
                                     vgrid_dir_cache[vgrid_sub_path]['mtime'] \
                                     < rel_path_ctime:
 
@@ -1280,7 +1282,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
         #             (pid, state, src_path, is_directory))
 
         # logger.debug('(%s) filter %s against %s' % (pid,
-        #             all_rules.keys(), src_path))
+        #             list(all_rules), src_path))
 
         if self._recent_miss(event):
             logger.debug('(%s) skip cached miss %s event for src_path: %s' %
@@ -1505,7 +1507,7 @@ def add_vgrid_file_monitor(configuration, vgrid_name, path):
                         vgrid_sub_path = strip_base_dirs(ent.path)
                         # Force utf8 everywhere to avoid encoding issues
                         vgrid_sub_path = force_utf8(vgrid_sub_path)
-                        if not vgrid_sub_path in vgrid_dir_cache.keys():
+                        if not vgrid_sub_path in vgrid_dir_cache:
                             retval &= add_vgrid_file_monitor(configuration,
                                                              vgrid_name,
                                                              vgrid_sub_path)
@@ -1532,7 +1534,7 @@ def add_vgrid_file_monitors(configuration, vgrid_name):
 
     vgrid_dir_cache = dir_cache[vgrid_name]
 
-    vgrid_dir_cache_keys = vgrid_dir_cache.keys()
+    vgrid_dir_cache_keys = list(vgrid_dir_cache)
     for path in vgrid_dir_cache_keys:
         # Make sure we only have utf8 everywhere to avoid encoding issues
         path = force_utf8(path)
@@ -1630,8 +1632,7 @@ def load_dir_cache(configuration, vgrid_name):
             generate_cache = False
             # TODO: once all caches are migrated we can remove this loop again
             # Make sure we only have utf8 everywhere to avoid encoding issues
-            for old_path in [i for i in loaded_dir_cache.keys() if
-                             i != force_utf8(i)]:
+            for old_path in [i for i in loaded_dir_cache if i != force_utf8(i)]:
                 print("NOTE: forcing old cache entry %s to utf8" % [old_path])
                 new_path = force_utf8(old_path)
                 entry = loaded_dir_cache[old_path]
@@ -1675,8 +1676,7 @@ def save_dir_cache(vgrid_name):
                                        vgrid_name)
         dir_cache_filepath = os.path.join(vgrid_home_path,
                                           dir_cache_filename)
-        vgrid_dir_cache_keys = [key for key in vgrid_dir_cache.keys()
-                                if key == vgrid_name
+        vgrid_dir_cache_keys = [key for key in vgrid_dir_cache if key == vgrid_name
                                 or key.startswith('%s%s' % (vgrid_name,
                                                             os.sep))]
         if len(vgrid_dir_cache_keys) == 0:
@@ -1697,7 +1697,7 @@ def active_targets(configuration, vgrid_name, base_dir):
     Project-Management.
     """
     base_dir_slash = base_dir + os.sep
-    active = [i for i in all_rules.keys() if i.startswith(base_dir_slash)]
+    active = [i for i in all_rules if i.startswith(base_dir_slash)]
     return active
 
 

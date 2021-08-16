@@ -32,6 +32,7 @@ make a resubmit like any other job submission (textarea, mRSL file upload).
 The client specifies a job_id, and this script loops all relevant fields,
 generates a temp file in mRSL format and submits the tempfile to new_job()
 """
+
 from __future__ import absolute_import
 
 import os
@@ -170,7 +171,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             resubmitobjs.append(resubmitobj)
             continue
 
-        resubmit_items = keywords_dict.keys()
+        resubmit_items = list(keywords_dict)
 
         # loop selected keywords and create mRSL string
 

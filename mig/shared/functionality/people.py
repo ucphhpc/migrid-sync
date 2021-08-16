@@ -163,7 +163,7 @@ def main(client_id, user_arguments_dict):
 
         for (visible_user_id, user_dict) in visible_user.items():
             user_id = visible_user_id
-            if visible_user_id in anon_map.keys():
+            if visible_user_id in anon_map:
                 # Maintain user anonymity
                 pretty_id = 'Anonymous user with unique ID %s' % visible_user_id
                 user_id = anon_map[visible_user_id]

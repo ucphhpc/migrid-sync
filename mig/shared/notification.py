@@ -190,7 +190,7 @@ Please contact the %(site)s team for details about expire policies.
             txt += """This is a message sent on behalf of %s:
 """ % from_id
             txt += frame_template % request_text
-        elif request_type in list(accept_mapper.keys()):
+        elif request_type in accept_mapper:
             kind = accept_mapper[request_type]
             if 'vgrid' == kind:
                 show_kind = configuration.site_vgrid_label
@@ -201,7 +201,7 @@ Please contact the %(site)s team for details about expire policies.
             txt += """This is a %s admission note sent on behalf of %s:
 """ % (show_kind, from_id)
             txt += frame_template % request_text
-        elif request_type in list(reject_mapper.keys()):
+        elif request_type in reject_mapper:
             kind = reject_mapper[request_type]
             if 'vgrid' == kind:
                 show_kind = configuration.site_vgrid_label
@@ -212,7 +212,7 @@ Please contact the %(site)s team for details about expire policies.
             txt += """This is a %s access rejection note sent on behalf of %s:
 """ % (show_kind, from_id)
             txt += frame_template % request_text
-        elif request_type in list(entity_mapper.keys()):
+        elif request_type in entity_mapper:
             entity = entity_mapper[request_type]
             header = '%s %s request' \
                 % (configuration.short_title, request_type)

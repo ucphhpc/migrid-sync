@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mrslview - [insert a few words of module description on this line]
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Show a human readable version of the saved internal mRSL dictionary"""
+
 from __future__ import absolute_import
 
 import os
@@ -63,7 +64,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -72,7 +73,7 @@ def main(client_id, user_arguments_dict):
 
     if not configuration.site_enable_jobs:
         output_objects.append({'object_type': 'error_text', 'text':
-            '''Job execution is not enabled on this system'''})
+                               '''Job execution is not enabled on this system'''})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -80,15 +81,14 @@ def main(client_id, user_arguments_dict):
 
     base_dir = \
         os.path.abspath(os.path.join(configuration.mrsl_files_dir,
-                        client_dir)) + os.sep
+                                     client_dir)) + os.sep
 
     mrsl_keywords_dict = get_keywords_dict(configuration)
 
     if verbose(flags):
         for flag in flags:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : '%s using flag: %s' % (op_name,
-                                  flag)})
+            output_objects.append({'object_type': 'text', 'text':
+                                   '%s using flag: %s' % (op_name, flag)})
 
     for pattern in patterns:
 
@@ -120,8 +120,8 @@ def main(client_id, user_arguments_dict):
         # (allowed) match
 
         if not match:
-            output_objects.append({'object_type': 'file_not_found', 'name'
-                                  : pattern})
+            output_objects.append(
+                {'object_type': 'file_not_found', 'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
 
         for abs_path in match:
@@ -132,7 +132,7 @@ def main(client_id, user_arguments_dict):
                 if not mrsl_dict:
                     raise Exception('could not load job mRSL')
                 for (key, val) in mrsl_dict.items():
-                    if not key in mrsl_keywords_dict.keys():
+                    if not key in mrsl_keywords_dict:
                         continue
                     if not val:
                         continue
@@ -147,21 +147,19 @@ def main(client_id, user_arguments_dict):
                         output_lines.append('%s\n' % val)
                     output_lines.append('\n')
             except Exception as exc:
-                output_objects.append({'object_type': 'error_text', 'text'
-                                      : "%s: '%s': %s" % (op_name,
-                                      relative_path, exc)})
+                output_objects.append({'object_type': 'error_text', 'text':
+                                       "%s: '%s': %s" % (op_name, relative_path,
+                                                         exc)})
                 logger.error("%s: failed on '%s': %s" % (op_name,
-                             relative_path, exc))
+                                                         relative_path, exc))
                 status = returnvalues.SYSTEM_ERROR
                 continue
             if verbose(flags):
-                output_objects.append({'object_type': 'file_output', 'path'
-                                      : relative_path, 'lines'
-                                      : output_lines})
+                output_objects.append(
+                    {'object_type': 'file_output', 'path': relative_path,
+                     'lines': output_lines})
             else:
-                output_objects.append({'object_type': 'file_output', 'lines'
-                                  : output_lines})
+                output_objects.append(
+                    {'object_type': 'file_output', 'lines': output_lines})
 
     return (output_objects, status)
-
-

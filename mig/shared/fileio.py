@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # fileio - wrappers to keep file I/O in a single replaceable module
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -60,9 +60,13 @@ else:
         walk = os.walk
         listdir = os.listdir
 
-from mig.shared.base import force_utf8_rec
-from mig.shared.defaults import default_chunk_size, default_max_chunks
-from mig.shared.serial import dump, load
+try:
+    from mig.shared.base import force_utf8_rec
+    from mig.shared.defaults import default_chunk_size, default_max_chunks
+    from mig.shared.serial import dump, load
+except ImportError as ioe:
+    print("could not import migrid modules!")
+    exit(1)
 
 __valid_hash_algos = {'md5': md5, 'sha1': sha1, 'sha256': sha256,
                       'sha512': sha512}
@@ -70,7 +74,7 @@ __valid_hash_algos = {'md5': md5, 'sha1': sha1, 'sha256': sha256,
 
 def supported_hash_algos():
     """A list of supported hash algorithm names"""
-    return __valid_hash_algos.keys()
+    return list(__valid_hash_algos)
 
 
 def write_chunk(path, chunk, offset, logger, mode='r+b'):
@@ -257,7 +261,7 @@ def filter_pickled_dict(path, changes):
 
     saved_dict = load(path)
     for (key, val) in saved_dict.items():
-        if val in changes.keys():
+        if val in changes:
             saved_dict[key] = changes[val]
     dump(saved_dict, path)
     return saved_dict

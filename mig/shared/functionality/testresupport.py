@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # testresupport - run test job to verify support for a runtime env
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Run a test job to verify support for a certain runtime environment"""
+
 from __future__ import absolute_import
 
 import base64
@@ -51,6 +52,7 @@ def signature():
     defaults = {'unique_resource_name': REJECT_UNSET, 're_name': REJECT_UNSET}
     return ['html_form', defaults]
 
+
 def create_verify_files(types, re_name, re_dict, base_dir, logger):
     """Create runtime env test files"""
     for ver_type in types:
@@ -61,16 +63,17 @@ def create_verify_files(types, re_name, re_dict, base_dir, logger):
                     file_content += line + '\n'
                 if not write_file(file_content.strip(),
                                   '%sverify_runtime_env_%s.%s'
-                                   % (base_dir, re_name,
-                                  ver_type.lower()), logger):
-                    raise Exception('could not write test job %s' % \
+                                  % (base_dir, re_name,
+                                      ver_type.lower()), logger):
+                    raise Exception('could not write test job %s' %
                                     ver_type.upper())
+
 
 def testresource_has_re_specified(unique_resource_name, re_name,
                                   configuration):
     """Check if unique_resource_name has runtime env enabled"""
     resource_config = unpickle(configuration.resource_home
-                                + unique_resource_name + '/config',
+                               + unique_resource_name + '/config',
                                configuration.logger)
     if not resource_config:
         configuration.logger.error('error unpickling resource config')
@@ -83,6 +86,7 @@ def testresource_has_re_specified(unique_resource_name, re_name,
 
     return False
 
+
 def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
@@ -91,9 +95,9 @@ def main(client_id, user_arguments_dict):
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Runtime env support'
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Test runtime environment support'})
-    
+    output_objects.append(
+        {'object_type': 'header', 'text': 'Test runtime environment support'})
+
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
@@ -103,7 +107,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         logger.warning('%s invalid input: %s' % (op_name, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
@@ -122,16 +126,16 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not re_name:
         output_objects.append(
-            {'object_type': 'error_text', 'text'
-             : 'Please specify the name of the runtime environment!'})
+            {'object_type': 'error_text', 'text':
+             'Please specify the name of the runtime environment!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not valid_dir_input(configuration.re_home, re_name):
         logger.warning(
             "possible illegal directory traversal attempt re_name '%s'"
             % re_name)
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Illegal runtime environment name: "%s"'
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Illegal runtime environment name: "%s"'
                                % re_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -139,14 +143,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     for visible_res_name in resource_list:
-        if not visible_res_name in visible_res.keys():
-            logger.warning('User %s not allowed to view %s (%s)' % \
-                           (client_id, visible_res_name, visible_res.keys()))
+        if not visible_res_name in visible_res:
+            logger.warning('User %s not allowed to view %s (%s)' %
+                           (client_id, visible_res_name, list(visible_res)))
             output_objects.append({'object_type': 'error_text',
-                                   'text': 'invalid resource %s' % \
+                                   'text': 'invalid resource %s' %
                                    visible_res_name})
             status = returnvalues.CLIENT_ERROR
             continue
@@ -193,7 +197,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             output_objects.append(
                 {'object_type': 'error_text', 'text':
                  'Could not write test job for %s: %s' % (visible_res_name,
-                                                         exc)})
+                                                          exc)})
             status = returnvalues.SYSTEM_ERROR
             continue
 
@@ -201,7 +205,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                   'RE_NAME': re_name}
 
         (success, msg) = new_job(mrslfile, client_id, configuration,
-                                forceddestination_dict)
+                                 forceddestination_dict)
         if not success:
             output_objects.append(
                 {'object_type': 'error_text', 'text':
@@ -216,7 +220,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         output_objects.append(
             {'object_type': 'text', 'text':
-             'Runtime environment test job for %s successfuly submitted! %s' \
+             'Runtime environment test job for %s successfuly submitted! %s'
              % (visible_res_name, msg)})
 
     return (output_objects, status)

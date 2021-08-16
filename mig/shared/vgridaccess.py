@@ -276,7 +276,7 @@ def refresh_user_map(configuration, clean=False):
             user_map[user][MODTIME] = map_stamp
             dirty += [user]
     # Remove any missing users from map
-    missing_user = [user for user in user_map.keys()
+    missing_user = [user for user in user_map
                     if not user in all_users]
     for user in missing_user:
         del user_map[user]
@@ -344,7 +344,7 @@ def refresh_resource_map(configuration, clean=False):
             resource_map[res][MODTIME] = map_stamp
             dirty += [res]
     # Remove any missing resources from map
-    missing_res = [res for res in resource_map.keys()
+    missing_res = [res for res in resource_map
                    if not res in all_resources]
     for res in missing_res:
         del resource_map[res]
@@ -426,7 +426,7 @@ def refresh_vgrid_map(configuration, clean=False):
                 vgrid_map[VGRIDS][vgrid][field] = entries
                 dirty[VGRIDS] = dirty.get(VGRIDS, []) + [vgrid]
     # Remove any missing vgrids from map
-    missing_vgrids = [vgrid for vgrid in vgrid_map[VGRIDS].keys()
+    missing_vgrids = [vgrid for vgrid in vgrid_map[VGRIDS]
                       if not vgrid in all_vgrids]
     for vgrid in missing_vgrids:
         vgrid_changes[vgrid] = vgrid_changes.get(vgrid, {})
@@ -487,7 +487,7 @@ def refresh_vgrid_map(configuration, clean=False):
             vgrid_map[RESOURCES][res][RESID] = public_id
             dirty[RESOURCES] = dirty.get(RESOURCES, []) + [res]
     # Remove any missing resources from map
-    missing_res = [res for res in vgrid_map[RESOURCES].keys()
+    missing_res = [res for res in vgrid_map[RESOURCES]
                    if not res in all_resources]
     for res in missing_res:
         del vgrid_map[RESOURCES][res]
@@ -506,7 +506,7 @@ def refresh_vgrid_map(configuration, clean=False):
                           (vgrid, changes))
             continue
         # _logger.info("update res vgrid %s" % vgrid)
-        for res in [i for i in vgrid_map[RESOURCES].keys()
+        for res in [i for i in vgrid_map[RESOURCES]
                     if i not in update_res]:
             # Sandboxes do not change their vgrid participation
             if sandbox_resource(res):
@@ -572,7 +572,7 @@ def refresh_vgrid_map(configuration, clean=False):
             vgrid_map[USERS][user][USERID] = public_id
             dirty[USERS] = dirty.get(USERS, []) + [user]
     # Remove any missing users from map
-    missing_user = [user for user in vgrid_map[USERS].keys()
+    missing_user = [user for user in vgrid_map[USERS]
                     if not user in all_users]
     for user in missing_user:
         del vgrid_map[USERS][user]
@@ -589,7 +589,7 @@ def refresh_vgrid_map(configuration, clean=False):
                           (vgrid, changes))
             continue
         (old, new) = (old_owners + old_members, new_owners + new_members)
-        for user in [i for i in vgrid_map[USERS].keys()
+        for user in [i for i in vgrid_map[USERS]
                      if i not in update_user]:
             if vgrid_allowed(user, old) != vgrid_allowed(user, new):
                 _logger.info("update user vgrid %s for user %s" %
@@ -657,7 +657,7 @@ def vgrid_inherit_map(configuration, vgrid_map):
     # Sort vgrids and extend participation from the end to keep it simple
     # and efficient
     # NOTE: vgrid_map may be empty dict initially
-    all_vgrids = inherit_map.get(VGRIDS, {}).keys()
+    all_vgrids = list(inherit_map.get(VGRIDS, {}))
     all_vgrids.sort()
     for vgrid_name in all_vgrids[::-1]:
         vgrid = inherit_map[VGRIDS][vgrid_name]
@@ -808,7 +808,7 @@ def get_vgrid_map_vgrids(configuration, recursive=True, sort=True,
     participation with inherited entities.
     """
     vgrid_map = get_vgrid_map(configuration, recursive, caching)
-    vgrid_list = vgrid_map.get(VGRIDS, {}).keys()
+    vgrid_list = list(vgrid_map.get(VGRIDS, {}))
     if sort:
         vgrid_list.sort()
     return vgrid_list
@@ -828,7 +828,7 @@ def user_vgrid_access(configuration, client_id, inherited=False,
     """
     vgrid_access = [default_vgrid]
     vgrid_map = get_vgrid_map(configuration, recursive, caching)
-    for vgrid in vgrid_map.get(VGRIDS, {}).keys():
+    for vgrid in vgrid_map.get(VGRIDS, {}):
         if vgrid_allowed(client_id, vgrid_map[VGRIDS][vgrid][OWNERS]) or \
                 vgrid_allowed(client_id, vgrid_map[VGRIDS][vgrid][MEMBERS]):
             if inherited:
@@ -865,7 +865,7 @@ def res_vgrid_access(configuration, client_id, recursive=True, caching=False):
     """
     vgrid_access = [default_vgrid]
     vgrid_map = get_vgrid_map(configuration, recursive, caching)
-    for vgrid in vgrid_map.get(VGRIDS, {}).keys():
+    for vgrid in vgrid_map.get(VGRIDS, {}):
         if vgrid_allowed(client_id, vgrid_map[VGRIDS][vgrid][RESOURCES]):
             vgrid_access.append(vgrid)
     return vgrid_access
@@ -885,7 +885,7 @@ def user_owned_res_confs(configuration, client_id, caching=False):
     # Map only contains the raw resource names - anonymize as requested
 
     anon_map = {}
-    for res in resource_map.keys():
+    for res in resource_map:
         anon_map[res] = resource_map[res][RESID]
 
     for (res_id, res) in resource_map.items():
@@ -925,7 +925,7 @@ def user_allowed_res_confs(configuration, client_id, caching=False):
     # Map only contains the raw resource names - anonymize as requested
 
     anon_map = {}
-    for res in vgrid_map_res.keys():
+    for res in vgrid_map_res:
         anon_map[res] = vgrid_map_res[res][RESID]
 
     # Now select only the ones that actually are assigned to a shared vgrid.
@@ -1010,7 +1010,7 @@ def user_allowed_res_units(configuration, client_id, unit_type, caching=False):
     # Map only contains the raw resource names - anonymize as requested
 
     anon_map = {}
-    for res in vgrid_map_res.keys():
+    for res in vgrid_map_res:
         anon_map[res] = vgrid_map_res[res][RESID]
 
     # Now select only the ones that actually still are allowed for that vgrid
@@ -1124,7 +1124,7 @@ def user_allowed_user_confs(configuration, client_id, caching=False):
     # Map only contains the raw user names - anonymize as requested
 
     anon_map = {}
-    for user in user_map.keys():
+    for user in user_map:
         anon_map[user] = user_map[user][USERID]
 
     # Now select only the ones that actually still are allowed for that vgrid
@@ -1246,56 +1246,56 @@ if "__main__" == __name__:
     print("res allow and access match: %s" % (vgrids_allowed == vgrid_access))
     res_map = get_resource_map(conf)
     # print "raw resource map: %s" % res_map
-    all_resources = res_map.keys()
+    all_resources = list(res_map)
     print("raw resource IDs: %s" % ', '.join(all_resources))
     all_anon = [res_map[i][RESID] for i in all_resources]
     print("raw anon names: %s" % ', '.join(all_anon))
     print()
     user_map = get_user_map(conf)
     # print "raw user map: %s" % user_map
-    all_users = user_map.keys()
+    all_users = list(user_map)
     print("raw user IDs: %s" % ', '.join(all_users))
     all_anon = [user_map[i][USERID] for i in all_users]
     print("raw anon names: %s" % ', '.join(all_anon))
     print()
     full_map = get_vgrid_map(conf)
     # print "raw vgrid map: %s" % full_map
-    all_resources = full_map[RESOURCES].keys()
+    all_resources = list(full_map[RESOURCES])
     print("raw resource IDs: %s" % ', '.join(all_resources))
-    all_users = full_map[USERS].keys()
+    all_users = list(full_map[USERS])
     print("raw user IDs: %s" % ', '.join(all_users))
-    all_vgrids = full_map[VGRIDS].keys()
+    all_vgrids = list(full_map[VGRIDS])
     print("raw vgrid names: %s" % ', '.join(all_vgrids))
     print()
     user_access_confs = user_allowed_res_confs(conf, user_id)
     user_access_exes = user_allowed_res_exes(conf, user_id)
     user_access_stores = user_allowed_res_stores(conf, user_id)
     print("%s can access resources: %s" %
-          (user_id, ', '.join(user_access_confs.keys())))
+          (user_id, ', '.join(list(user_access_confs))))
     #(user_id, ', '.join([i for (i, j) in user_access_confs.items() if j]))
     print("%s can access exes: %s" %
-          (user_id, ', '.join(user_access_exes.keys())))
+          (user_id, ', '.join(list(user_access_exes))))
     #(user_id, ', '.join([i for (i, j) in user_access_exes.items() if j]))
     print("%s can access stores: %s" %
-          (user_id, ', '.join(user_access_stores.keys())))
+          (user_id, ', '.join(list(user_access_stores))))
     #(user_id, ', '.join([i for (i, j) in user_access_stores.items() if j]))
     user_owned_confs = user_owned_res_confs(conf, user_id)
     #user_owned_exes = user_owned_res_exes(conf, user_id)
     #user_owned_stores = user_owned_res_stores(conf, user_id)
     print("%s owns: %s" %
-          (user_id, ', '.join(user_owned_confs.keys())))
+          (user_id, ', '.join(list(user_owned_confs))))
     user_visible_confs = user_visible_res_confs(conf, user_id)
     user_visible_exes = user_visible_res_exes(conf, user_id)
     user_visible_stores = user_visible_res_stores(conf, user_id)
     print("%s can view resources: %s" %
-          (user_id, ', '.join([i for i in user_visible_confs.keys()])))
+          (user_id, ', '.join([i for i in user_visible_confs])))
     # print "full access exe dicts for %s:\n%s\n%s\n%s" % \
     #      (user_id, user_access_exes, user_owned_exes, user_visible_exes)
     # print "full access conf dicts for %s:\n%s\n%s\n%s" % \
     #      (user_id, user_access_confs, user_owned_confs, user_visible_confs)
     user_visible_users = user_visible_user_confs(conf, user_id)
     print("%s can view people: %s" %
-          (user_id, ', '.join([i for i in user_visible_users.keys()])))
+          (user_id, ', '.join([i for i in user_visible_users])))
     re_resources = resources_using_re(conf, runtime_env)
     print("%s in use on resources: %s" %
           (runtime_env, ', '.join([i for i in re_resources])))

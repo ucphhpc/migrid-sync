@@ -30,6 +30,7 @@
 # Martin Rehr
 
 """parse resource configurations"""
+
 from __future__ import absolute_import
 
 from mig.shared.conf import get_configuration_object
@@ -169,7 +170,7 @@ def run(configuration, localfile_spaces, unique_resource_name,
 
             # replace unit_name with specified res_unit name
 
-            for res_unit_key in res_unit.keys():
+            for res_unit_key in res_unit:
                 if type(res_unit[res_unit_key]) == type(''):
                     res_unit[res_unit_key] = res_unit[res_unit_key].replace(
                         unit_name, res_unit['name'])

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # auth - shared helpers for authentication in init functionality backends
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Authentication helper functions"""
+
 from __future__ import absolute_import
 
 import Cookie
@@ -389,7 +390,7 @@ def list_twofactor_sessions(configuration, client_id, user_addr=None):
                           (session_data, client_id, user_addr))
             continue
         sessions[session_key] = session_data
-    _logger.debug("found sessions for %s: %s" % (client_id, sessions.keys()))
+    _logger.debug("found sessions for %s: %s" % (client_id, list(sessions)))
     return sessions
 
 

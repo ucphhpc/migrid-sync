@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ratelimits - grid daemon rate limit helper functions
-# Copyright (C) 2010-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -333,7 +333,7 @@ def expire_rate_limit(configuration, proto,
         configuration, proto, exclusive=True)
     _rate_limits = _load_rate_limits(configuration, proto, do_lock=False)
     try:
-        for _client_address in _rate_limits.keys():
+        for _client_address in _rate_limits:
             # debug_msg = "expire addr: %s" % _client_address
             _address_limits = _rate_limits[_client_address]
             address_fails = old_address_fails = _address_limits['fails']
@@ -342,14 +342,14 @@ def expire_rate_limit(configuration, proto,
             # debug_msg += ", proto: %s" % _proto
             proto_fails = old_proto_fails = _proto_limits['fails']
             proto_hits = old_proto_hits = _proto_limits['hits']
-            for _user in _proto_limits.keys():
+            for _user in _proto_limits:
                 if _user in ['hits', 'fails']:
                     continue
                 # debug_msg += ", user: %s" % _user
                 _user_limits = _proto_limits[_user]
                 user_fails = old_user_fails = _user_limits['fails']
                 user_hits = old_user_hits = _user_limits['hits']
-                for _secret in _user_limits.keys():
+                for _secret in _user_limits:
                     if _secret in ['hits', 'fails']:
                         continue
                     _secret_limits = _user_limits[_secret]

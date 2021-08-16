@@ -224,7 +224,7 @@ def refresh_disk_stats(configuration, client_id):
 
     # Update stats for any roots no longer there
 
-    for rel_root in stats.keys():
+    for rel_root in stats:
         if rel_root in list(TOTALS) + cur_roots:
             continue
         root = os.path.join(user_base, rel_root)

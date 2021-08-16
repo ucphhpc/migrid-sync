@@ -250,7 +250,7 @@ def main(client_id, user_arguments_dict, environ=None):
             output_objects.append({'object_type': 'error_text', 'text':
                                    '%s sign up not supported' % auth_flavor})
             return (output_objects, returnvalues.SYSTEM_ERROR)
-        oidc_keys = signature(AUTH_OPENID_CONNECT)[1].keys()
+        oidc_keys = list(signature(AUTH_OPENID_CONNECT)[1])
         # NOTE: again we lowercase to avoid case sensitivity in validation
         for key in environ:
             low_key = key.replace('OIDC_CLAIM_', 'oidc.claim.').lower()

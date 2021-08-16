@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqoid - OpenID account request backend
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Request OpenID account back end"""
+
 from __future__ import absolute_import
 
 import os
@@ -153,7 +154,7 @@ to your old files, jobs and privileges. </p>''' %
         if override_val:
             user_fields[field] = override_val
     user_fields = canonical_user(configuration, user_fields,
-                                 user_fields.keys())
+                                 list(user_fields))
 
     # Site policy dictates min length greater or equal than password_min_len
     policy_min_len, policy_min_classes = parse_password_policy(configuration)

@@ -179,9 +179,9 @@ to open resource management.
         #       but the owners. Similarly resources are not shown if all
         #       resource units solely participate in VGrids, which the user
         #       can't access.
-        for visible_res_name in visible_res_confs.keys():
+        for visible_res_name in visible_res_confs:
             unique_resource_name = visible_res_name
-            if visible_res_name in anon_map.keys():
+            if visible_res_name in anon_map:
                 unique_resource_name = anon_map[visible_res_name]
 
             if not show_sandboxes and sandbox_resource(unique_resource_name):

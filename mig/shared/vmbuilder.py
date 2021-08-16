@@ -6,7 +6,7 @@
 #
 # vmbuilder - shared virtual machine builder functions and script
 #
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,6 +30,7 @@
 """A collection of functions for building virtual machines for grid use and a
 simple handler for invocation as a command line vm build script.
 """
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -58,6 +59,7 @@ default_specs = {'distro': 'ubuntu', 'hypervisor': 'vbox', 'memory': 1024,
                  'late_adds': [], 'late_removes': [], 'vmbuilder_opts':
                  '--vbox-disk-format=vmdk'}
 
+
 def fill_template(src, dst, vm_specs):
     """Fills template in src with values from specs and writes it to dst. All
     fields used in template should be provided in vm_specs.
@@ -70,6 +72,7 @@ def fill_template(src, dst, vm_specs):
     dst_fd.write(filled_conf)
     dst_fd.close()
     logger.info("filled %s in %s:\n%s" % (src, dst, filled_conf))
+
 
 def build_vm(vm_specs):
     """Use vmbuilder to build an OS image with settings from the vm_specs
@@ -84,24 +87,24 @@ def build_vm(vm_specs):
     if build_specs['suite'] in ('precise', ):
         build_specs['remove_packages'].append('unity')
     # Make sure basic package adds and removes are done
-    build_specs['postinst_adds'] = ' '.join(build_specs['add_packages'] + \
+    build_specs['postinst_adds'] = ' '.join(build_specs['add_packages'] +
                                             build_specs['late_adds'])
-    build_specs['postinst_removes'] = ' '.join(build_specs['remove_packages'] \
+    build_specs['postinst_removes'] = ' '.join(build_specs['remove_packages']
                                                + build_specs['late_removes'])
     # Fill conf template (currently just copies it since all args are explicit)
     tmp_dir = mkdtemp()
     conf_path = os.path.join(tmp_dir, '%(distro)s.cfg' % build_specs)
     conf_template_path = os.path.join(configuration.vms_builder_home,
-                                 '%(distro)s.cfg' % build_specs)
+                                      '%(distro)s.cfg' % build_specs)
     bundle_path = os.path.join(tmp_dir, 'bundle-%(suite)s' % build_specs)
     bundle_template_path = os.path.join(configuration.vms_builder_home,
-                                 'bundle-%(suite)s.in' % build_specs)
+                                        'bundle-%(suite)s.in' % build_specs)
     # Install late_adds and purge late_removes in post-install to avoid
     # early install problems and clean up
-    postinst_path = os.path.join(tmp_dir, 'post-install-%(suite)s.sh' % \
+    postinst_path = os.path.join(tmp_dir, 'post-install-%(suite)s.sh' %
                                  build_specs)
     postinst_template_path = os.path.join(configuration.vms_builder_home,
-                                 'post-install-%(suite)s.sh.in' % build_specs)
+                                          'post-install-%(suite)s.sh.in' % build_specs)
     # destdir option in conf does not work - keep most on cli
     # reserve 3G for tmpfs for way faster build (and enough for sys disk)
     opts_string = "%(vmbuilder_opts)s"
@@ -116,7 +119,7 @@ def build_vm(vm_specs):
         opts_string += " --addpkg %s" % name
     for name in build_specs["remove_packages"]:
         opts_string += " --removepkg %s" % name
-        
+
     build_specs["vmbuilder_opts"] = opts_string % build_specs
     try:
         fill_template(conf_template_path, conf_path, build_specs)
@@ -140,16 +143,18 @@ def build_vm(vm_specs):
         os.remove(postinst_path)
         os.rmdir(tmp_dir)
 
+
 def usage():
     """Script usage help"""
     print("%s OPTIONS [EXTRA_PACKAGES]" % sys.argv[0])
     print("where OPTIONS include the names:")
-    for name in default_specs.keys():
+    for name in default_specs:
         if name in ('add_packages', 'late_adds', 'remove_packages',
                     'late_removes'):
             continue
         print("    %s (default: %s)" % (name.replace('_', '-'),
                                         default_specs[name]))
+
 
 if __name__ == '__main__':
     specs = {}
@@ -168,11 +173,11 @@ if __name__ == '__main__':
             'mirror=',
             'blacklist=',
             'vmbuilder-opts=',
-            ])
+        ])
     except getopt.GetoptError as exc:
         logger.error('option parsing failed: %s' % exc)
         sys.exit(1)
-        
+
     for (opt, val) in opts:
         if opt in ('-h', '--help'):
             usage()

@@ -115,7 +115,7 @@ def show_results(times, bench_sizes):
     print("========")
     for (action, target) in times.items():
         output = {}
-        output_order = [action] + target.keys() + ['ratio']
+        output_order = [action] + list(target) + ['ratio']
         for field in output_order:
             output[field] = field + ' '*(16-len(field))
         target['ratio'] = {}
@@ -124,7 +124,7 @@ def show_results(times, bench_sizes):
             ratio = target['paramiko'][size] * 1.0 / \
                 target['openssh'][size]
             target['ratio'][size] = ratio
-            for name in target.keys():
+            for name in target:
                 output[name] += '\t%.2f' % target[name][size]
         for field in output_order:
             print(output[field])

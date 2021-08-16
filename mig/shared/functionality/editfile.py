@@ -31,8 +31,8 @@
 
 from __future__ import absolute_import
 
-import os
 import glob
+import os
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir
@@ -108,10 +108,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
     output_objects.append(
         {'object_type': 'header', 'text': 'Saving changes to edited file'})
 
-    if not chosen_newline in allowed_newline.keys():
+    if not chosen_newline in allowed_newline:
         output_objects.append(
             {'object_type': 'error_text', 'text': 'Unsupported newline style supplied: %s (must be one of %s)'
-             % (chosen_newline, ', '.join(allowed_newline.keys()))})
+             % (chosen_newline, ', '.join(list(allowed_newline)))})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     saved_newline = allowed_newline[chosen_newline]

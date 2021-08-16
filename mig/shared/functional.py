@@ -115,7 +115,7 @@ def validate_input(
                                            defaults,
                                            type_override=typecheck_overrides)
     warn_on_rejects(rejected, output_objects)
-    if rejected.keys() and not allow_rejects:
+    if rejected and not allow_rejects:
         output_objects.append(
             {'object_type': 'error_text', 'text':
              'Input arguments were rejected - not allowed for this script!'

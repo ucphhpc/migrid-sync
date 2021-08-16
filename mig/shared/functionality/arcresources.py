@@ -26,6 +26,7 @@
 #
 
 """Display the ARC queues accessible for submission by this server"""
+
 from __future__ import absolute_import
 
 import os
@@ -83,8 +84,8 @@ def display_arc_queue(queue):
     # of possibly several values
 
     d = dict(queue.cluster.cpu_distribution)
-    if d.keys():
-        cores = d.keys()[0]
+    if d:
+        cores = list(d)[0]
     else:
         cores = 1
 

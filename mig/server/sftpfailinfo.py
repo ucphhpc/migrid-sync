@@ -6,7 +6,7 @@
 #
 #
 # sftpfailinfo - grep sftp negotiation log errors and lookup source FQDN
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,6 +29,7 @@
 #
 
 """Grep for sftp negotiation in sftp.log and translate source IP to FQDN"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -138,10 +139,10 @@ if '__main__' == __name__:
         sys.exit(0)
 
     if verbose:
-        print("Reverse DNS lookup %d source IP(s)" % len(ip_fail_map.keys()))
+        print("Reverse DNS lookup %d source IP(s)" % len(ip_fail_map))
     # Reverse DNS lookup is horribly slow with timeout - use multiprocessing
     workers = multiprocessing.Pool(processes=64)
-    rdns_results = workers.map(dns_lookup, ip_fail_map.keys())
+    rdns_results = workers.map(dns_lookup, list(ip_fail_map))
     fqdn_fail_map = {}
     for (source_ip, source_fqdn) in rdns_results:
         fqdn_fail_map[source_fqdn] = ip_fail_map[source_ip]
@@ -149,7 +150,7 @@ if '__main__' == __name__:
     print("")
     print("Full error statistics:")
     print("----------------------")
-    sorted_hosts = fqdn_fail_map.keys()
+    sorted_hosts = list(fqdn_fail_map)
     # Try to sort in a more intuitive way where TLD is considered first
     sorted_hosts.sort(cmp=lambda a, b: cmp(a.split(".")[::-1],
                                            b.split(".")[::-1]))
@@ -187,6 +188,6 @@ if '__main__' == __name__:
             if total > offender_limit:
                 print(" *  You may want to verify origin and block if fishy:")
                 print("\twhois %(source_ip)s|grep 'descr:'" % err_map)
-                print("\tsudo iptables -I INPUT -s %(source_ip)s/32 -j DROP" \
+                print("\tsudo iptables -I INPUT -s %(source_ip)s/32 -j DROP"
                       % err_map)
             print("")

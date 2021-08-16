@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sssadmin - SSS sandbox generator and monitor for individual users
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """This script allows users to administrate their sandboxes"""
+
 from __future__ import absolute_import
 
 import datetime
@@ -50,8 +51,9 @@ def signature():
         'password': REJECT_UNSET,
         'newuser': ['off'],
         'expert': ['false'],
-        }
+    }
     return ['html_form', defaults]
+
 
 def print_hd_selection():
     """Returns html section where a user chooses disc space"""
@@ -67,6 +69,7 @@ def print_hd_selection():
     </tr>
 """
     return html
+
 
 def print_net_selection():
     """Returns html section where a user chooses max download and upload speed"""
@@ -87,6 +90,7 @@ the sandbox to use?</td>
 """
     return html
 
+
 def print_mem_selection():
     """Prints html section where a user amount of physical memory"""
     html = """
@@ -103,6 +107,7 @@ def print_mem_selection():
 """
     return html
 
+
 def print_os_selection():
     """Prints html section where a user chooses which OS he uses"""
     html = """
@@ -115,6 +120,7 @@ def print_os_selection():
     </tr>
 """
     return html
+
 
 def print_windows_solution_selection():
     """Prints html section where a user chooses whether he wants
@@ -130,6 +136,7 @@ unsure, choose screensaver</td>
     </tr>
 """
     return html
+
 
 def print_expert_settings(configuration, display):
     """Prints html section where a user chooses whether he wants
@@ -151,7 +158,7 @@ def print_expert_settings(configuration, display):
         </select></td>
     </tr>
 """ % {'default_vgrid': default_vgrid,
-       '_label': configuration.site_vgrid_label}
+            '_label': configuration.site_vgrid_label}
     else:
         html = """
     <tr>
@@ -163,6 +170,7 @@ def print_expert_settings(configuration, display):
 """ % {'default_vgrid': default_vgrid}
     return html
 
+
 def count_jobs(grid_stat, resource_name):
     """Counts number of jobs executed by given resource"""
 
@@ -172,6 +180,7 @@ def count_jobs(grid_stat, resource_name):
                                 resource_name, 'FINISHED')
     return value
 
+
 def sum_walltime(grid_stat, resource_name):
     """Sum total walltime used by jobs executed by given resource"""
 
@@ -180,6 +189,7 @@ def sum_walltime(grid_stat, resource_name):
     value = grid_stat.get_value(grid_stat.RESOURCE_TOTAL,
                                 resource_name, 'USED_WALLTIME')
     return value
+
 
 def show_download(configuration, userdb, user, passwd, expert):
     """Shows download form"""
@@ -195,7 +205,7 @@ def show_download(configuration, userdb, user, passwd, expert):
         'form_method': form_method,
         'csrf_field': csrf_field,
         'csrf_limit': csrf_limit
-        }
+    }
     target_op = 'ssscreateimg'
     csrf_token = make_csrf_token(configuration, form_method, target_op, user,
                                  csrf_limit)
@@ -226,7 +236,7 @@ def show_download(configuration, userdb, user, passwd, expert):
             <input type='hidden' name='password' value='%(passwd)s' />
             </td>
         </tr>
-"""% fill_helpers
+""" % fill_helpers
     html += """
         <tr>
             <td>Press 'Submit' to download - please note that it may take up
@@ -269,14 +279,17 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False,
                                   op_menu=client_id)
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Personal Sandbox Administration and Monitor'})
+    output_objects.append(
+        {'object_type': 'header', 'text':
+         'Personal Sandbox Administration and Monitor'})
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
-            defaults, output_objects, allow_rejects=False)
+                                                 defaults, output_objects,
+                                                 allow_rejects=False)
     if not validate_status:
-        output_objects.append({'object_type': 'link', 'destination'
-                              : 'ssslogin.py', 'text': 'Retry login'})
+        output_objects.append(
+            {'object_type': 'link', 'destination': 'ssslogin.py', 'text':
+             'Retry login'})
         return (accepted, returnvalues.CLIENT_ERROR)
 
     username = accepted['username'][-1].strip()
@@ -305,9 +318,8 @@ Please contact the site admins %s if you think they should be enabled.
 
         userdb = {}
     except Exception as exc:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not read sandbox database! %s'
-                               % exc})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Could not read sandbox database! %s' % exc})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     grid_stat = GridStat(configuration, logger)
@@ -324,23 +336,25 @@ Please contact the site admins %s if you think they should be enabled.
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         if username in userdb:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Username is already taken - please go back and choose another one...'
-                                  })
-            output_objects.append({'object_type': 'link', 'destination'
-                                  : 'ssslogin.py', 'text': 'Retry login'
-                                  })
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Username is already taken - please go back and choose another one...'
+                 })
+            output_objects.append({'object_type': 'link', 'destination':
+                                   'ssslogin.py', 'text': 'Retry login'
+                                   })
             return (output_objects, returnvalues.CLIENT_ERROR)
         elif len(username) < 3:
 
             # print "<a href='ssslogin.py'>Back</a>"
 
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Please choose a username with 3 or more characters.'
-                                  })
-            output_objects.append({'object_type': 'link', 'destination'
-                                  : 'ssslogin.py', 'text': 'Retry login'
-                                  })
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Please choose a username with 3 or more characters.'
+                 })
+            output_objects.append({'object_type': 'link', 'destination':
+                                   'ssslogin.py', 'text': 'Retry login'
+                                   })
             return (output_objects, returnvalues.CLIENT_ERROR)
         else:
 
@@ -352,30 +366,29 @@ Please contact the site admins %s if you think they should be enabled.
                 userdb.update(newuser)
                 save_sandbox_db(userdb, configuration)
             except Exception as exc:
-                output_objects.append({'object_type': 'error_text',
-                        'text'
-                        : 'Could not save you in the user database! %s'
-                         % exc})
+                output_objects.append({'object_type': 'error_text', 'text':
+                                       'Could not save you in the user database! %s'
+                                       % exc})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
-            output_objects.append({'object_type': 'text', 'text'
-                                  : 'User created!'})
+            output_objects.append(
+                {'object_type': 'text', 'text': 'User created!'})
 
     # Existing or just created user: check that username and password is correct
 
     if username not in userdb:
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Wrong username - please go back and try again...'
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Wrong username - please go back and try again...'
                                })
-        output_objects.append({'object_type': 'link', 'destination'
-                               : 'ssslogin.py', 'text': 'Retry login'
+        output_objects.append({'object_type': 'link', 'destination':
+                               'ssslogin.py', 'text': 'Retry login'
                                })
         return (output_objects, returnvalues.CLIENT_ERROR)
     elif userdb[username][PW] != password:
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Wrong password - please go back and try again...'
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Wrong password - please go back and try again...'
                                })
-        output_objects.append({'object_type': 'link', 'destination'
-                               : 'ssslogin.py', 'text': 'Retry login'
+        output_objects.append({'object_type': 'link', 'destination':
+                               'ssslogin.py', 'text': 'Retry login'
                                })
         return (output_objects, returnvalues.CLIENT_ERROR)
     else:
@@ -386,8 +399,8 @@ Please contact the site admins %s if you think they should be enabled.
         msg = "Your SSS sandbox resources and their individual job statistics"
         output_objects.append({'object_type': 'text', 'text': msg})
         now = datetime.datetime.now()
-        output_objects.append({'object_type': 'text', 'text'
-                               : 'Updated on %s' % now})
+        output_objects.append(
+            {'object_type': 'text', 'text': 'Updated on %s' % now})
 
         sandboxinfos = []
         for resource in userdb[username][RESOURCES]:
@@ -398,17 +411,15 @@ Please contact the site admins %s if you think they should be enabled.
             sandboxinfo['walltime'] = sum_walltime(grid_stat, resource)
             sandboxinfos.append(sandboxinfo)
 
-        output_objects.append({'object_type': 'sandboxinfos', 'sandboxinfos'
-                                   : sandboxinfos})
+        output_objects.append(
+            {'object_type': 'sandboxinfos', 'sandboxinfos': sandboxinfos})
 
         output_objects.append({'object_type': 'html_form', 'text': '<br />'})
-        output_objects.append({'object_type': 'html_form', 'text'
-                               : show_download(configuration, userdb,
-                                               username, password,
-                                               expert)})
-        output_objects.append({'object_type': 'text', 'text'
-                               : """
-If you run into any problems, please contact the grid administrators (%s)""" \
+        output_objects.append({'object_type': 'html_form', 'text':
+                               show_download(configuration, userdb, username,
+                                             password, expert)})
+        output_objects.append({'object_type': 'text', 'text': """
+If you run into any problems, please contact the grid administrators (%s)"""
                                % admin_email})
 
     return (output_objects, returnvalues.OK)

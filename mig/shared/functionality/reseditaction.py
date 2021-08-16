@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reseditaction - Resource editor action handler back end
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,6 +28,7 @@
 # Martin Rehr martin@rehr.dk August 2005
 
 """Handle resource editor actions"""
+
 from __future__ import absolute_import
 
 import os
@@ -207,7 +208,7 @@ def main(client_id, user_arguments_dict):
     # is then handed to the parser for full validation.
 
     critical_arguments = {}
-    critical_fields = defaults.keys()
+    critical_fields = list(defaults)
     # IMPORTANT: we must explicitly inlude CSRF token
     critical_fields.append(csrf_field)
     for field in critical_fields:

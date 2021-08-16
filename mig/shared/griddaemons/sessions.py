@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sessions - grid daemon session tracker helper functions
-# Copyright (C) 2010-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -288,7 +288,7 @@ def track_close_expired_sessions(
     # logger.debug("open_sessions: %s" % open_sessions)
     current_timestamp = time.time()
     # logger.debug("current_timestamp: %s" % (current_timestamp))
-    for open_session_id in open_sessions.keys():
+    for open_session_id in open_sessions:
         timestamp = open_sessions[open_session_id]['timestamp']
         # logger.debug("current_timestamp - timestamp: %s / %s"
         #              % (current_timestamp - timestamp, session_timeout))
@@ -375,7 +375,7 @@ def expire_dead_sessions(
     # logger.debug("expire dead %s sessions for %s with open_sessions: %s" %
     #             (proto, client_id, open_sessions))
     current_timestamp = time.time()
-    for open_session_id in open_sessions.keys():
+    for open_session_id in open_sessions:
         if open_session_id in live_sessions:
             logger.debug("ignore live session in expire: %s" % open_session_id)
             continue
