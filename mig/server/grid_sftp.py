@@ -66,6 +66,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import base64
+import io
 import os
 import shutil
 import socket
@@ -73,7 +74,6 @@ import sys
 import threading
 import time
 from functools import wraps
-from io import BytesIO as LegacyStringIO
 
 try:
     import paramiko
@@ -84,7 +84,7 @@ except ImportError:
     sys.exit(1)
 
 from mig.shared.accountstate import check_account_accessible
-from mig.shared.base import invisible_path, force_utf8
+from mig.shared.base import invisible_path, force_utf8, force_unicode
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import keyword_auto, STRONG_SSH_KEXALGOS, \
     STRONG_SSH_CIPHERS, STRONG_SSH_MACS, STRONG_SSH_LEGACY_KEXALGOS, \
@@ -1402,7 +1402,8 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
 
     window_size = conf.get('window_size', DEFAULT_WINDOW_SIZE)
     max_packet_size = conf.get('max_packet_size', DEFAULT_MAX_PACKET_SIZE)
-    host_key_file = LegacyStringIO(host_rsa_key)
+    # NOTE: paramiko accepts unicode through io.StringIO both on python 2 and 3
+    host_key_file = io.StringIO(force_unicode(host_rsa_key))
     host_key = paramiko.RSAKey(file_obj=host_key_file)
     transport = paramiko.Transport(client, default_window_size=window_size,
                                    default_max_packet_size=max_packet_size)
