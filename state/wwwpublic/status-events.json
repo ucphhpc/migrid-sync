@@ -1,6 +1,27 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2021-08-18T11:00:00+02:00", 
+    "systems": [
+        "ERDA", "IDMC", "MiGrid"
+    ],
+    "announce_start": "2021-08-17T09:25:00+02:00",
+    "title": {
+      "EN": "Planned System and Backend Storage Maintenance",
+      "DK": "Planlagt system- og backendlager-vedligehold"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2021-08-18T17:00:00+02:00",
+    "description": {
+      "EN": "One of the storage blocks (JBOD) in the future backend storage needs to replaced by a vendor technician. The actual work should not take long but we only have the announced time frame as a guideline for when it will take place. This should only barely affect ERDA and IDMC and hopefully will not even be observed there as the block is not part of the general storage and is purely used for our own data. However, the MiGrid system will have to be taken offline during a significant part of the maintenance window and we will run pending system updates while at it.",
+      "DK": "En af disksamlingerne (JBOD) i det fremtidige backendlager må udskiftes af leverandørens tekniker. Det burde ikke tage lang tid, men vi har kun den lidt løse udmeldte tidsramme fra leverandøren. Udskiftningen burde knap nok berøre ERDA og IDMC og bemærkes forhåbentlig slet ikke der, eftersom blokken ikke er den del af det almindelige lager og alene indeholder vores egne data. MiGrid er derimod nødt til at blive lukket ned under det meste af service-vinduet og vil i samme forbindelse køre udestående systemopdateringer."
+    },
+    "announce_end": "2021-08-19T10:00:00+02:00"
+  },
+  {
+    "status": "AUTO", 
     "work_start": "2021-08-03T19:00:00+02:00", 
     "systems": [
         "ERDA",

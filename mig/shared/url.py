@@ -38,6 +38,9 @@ import sys
 # NOTE: moved to urllib.parse in python3 and are re-exposed with future.
 #       Other modules should import helpers from here for consistency.
 # TODO: handle the unicode returned by python3 and future versions!
+#       Perhaps switch to suggested "easiest option" from
+#       http://python-future.org/compatible_idioms.html#urllib-module
+#       once we have unicode/bytecode mix-up sorted out.
 if sys.version_info[0] >= 3:
     from urllib.parse import quote, unquote, urlencode, parse_qs, parse_qsl, \
         urlsplit, urlparse
