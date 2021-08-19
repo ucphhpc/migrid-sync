@@ -33,12 +33,16 @@ corresponding screenshots.
 
 from __future__ import print_function
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import input
+from builtins import range
 import getpass
 import os
 import sys
 import time
 import traceback
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 from mig.user.selenium.migcore import init_driver, ucph_login, mig_login, shared_twofactor, \
     shared_logout, save_screen, scroll_to_elem, doubleclick_elem, \
@@ -948,7 +952,7 @@ def main():
         action = None
         stop_actions = ['quit', 'exit', 'stop']
         while action not in stop_actions:
-            action = raw_input('action: ')
+            action = input('action: ')
             # Prevent IndexError
             action_args = action.split()[1:]
             if action.startswith('save'):

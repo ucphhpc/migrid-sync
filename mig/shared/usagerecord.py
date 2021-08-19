@@ -40,6 +40,9 @@
 
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
+
+from builtins import object
 import os
 import sys
 import datetime
@@ -223,7 +226,7 @@ SGAS_VO_NAMESPACE = "http://www.sgas.se/namespaces/2009/05/ur/vo"
 SGAS_VO_PREFIX = "vo:"
 
 
-class UsageRecord:
+class UsageRecord(object):
 
     """
     Provides a usage record data structure and writing it out to xml.
@@ -534,9 +537,8 @@ class UsageRecord:
             if self.node_count:
 
                 charge_delta = self.node_count * (end_time - start_time)
-                self.charge = charge_delta.days * 86400\
-                    + charge_delta.seconds + charge_delta.microseconds\
-                    / 1000000.0
+                self.charge = charge_delta.days * 86400 + \
+                    charge_delta.seconds + charge_delta.microseconds / 1000000.0
 
                 # We currently do not get microseconds because
                 # startT and endT only have second precision

@@ -33,6 +33,7 @@ Copyright (c) 2010 __MyCompanyName__. All rights reserved.
 """
 from __future__ import absolute_import
 
+from builtins import object
 import sys
 import os
 from .hierarchical import HierarchicalClass
@@ -64,7 +65,7 @@ class HDF5Storage(HierarchicalClass, data, metadata):
             
     
 
-class optionsmock:
+class optionsmock(object):
     backingstore = '/tmp/grsfstemp.h5'
 
 if __name__ == '__main__':

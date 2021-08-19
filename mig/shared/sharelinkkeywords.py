@@ -30,6 +30,7 @@ Works as a combined specification of and source of information about keywords.
 """
 from __future__ import absolute_import
 
+from past.builtins import basestring
 import datetime
 
 from mig.shared.defaults import keyword_all

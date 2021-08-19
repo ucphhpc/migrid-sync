@@ -52,7 +52,9 @@
 
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
 
+from builtins import range
 from string import ascii_letters
 import math
 import random
@@ -168,7 +170,7 @@ def translate(mrsl_dict, session_id=None):
         else:
             # random string. should not happen anyway...
             j_name = ''.join(random.choice(ascii_letters)
-                             for i in xrange(12))
+                             for i in range(12))
 #        j_name = mrsl_dict.get('JOB_ID',
 #                               ''.join(random.choice(ascii_letters) \
 #                                       for i in xrange(12)))
@@ -250,7 +252,7 @@ def translate(mrsl_dict, session_id=None):
         # requested runtime, given in minutes in (user) xrsl ...
         time = mrsl_dict.get('CPUTIME')
         if time:
-            addRel(xrsl, 'cputime', "%d" % int(math.ceil(float(time) / 60)))
+            addRel(xrsl, 'cputime', "%d" % math.ceil(float(time) / 60))
 
         # simply copy the values for these:
         copy_items = ['MEMORY', 'DISK', 'NODECOUNT']

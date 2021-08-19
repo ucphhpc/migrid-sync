@@ -36,6 +36,7 @@ are similarly hard coded to the Debian defaults on those servers.
 """
 from __future__ import print_function
 
+from builtins import zip
 import getopt
 import os
 import socket

@@ -29,14 +29,15 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import range
+import base64
+import datetime
 import getopt
 import os
 import sys
-import base64
-import datetime
 import tempfile
-import pyotp
 
+import pyotp
 
 from mig.shared.auth import reset_twofactor_key, valid_otp_window
 from mig.shared.base import client_id_dir
@@ -59,7 +60,7 @@ def enable2fa(configuration, user_id, verbose, force=False):
             return True
     keywords_dict = twofactor_keywords(configuration)
     topic_mrsl = ''
-    for keyword, _ in keywords_dict.iteritems():
+    for keyword in keywords_dict:
         topic_mrsl += '''::%s::
 %s
 

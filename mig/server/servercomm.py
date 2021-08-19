@@ -32,12 +32,15 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
 from io import BytesIO as LegacyStringIO
 import os
 import sys
 import pwd
 import time
-import ConfigParser
+import configparser
 
 import pycurl
 
@@ -323,7 +326,7 @@ def get_data(
     curl.close()
     pycurl.global_cleanup()
 
-    server_status = ConfigParser.ConfigParser()
+    server_status = configparser.ConfigParser()
 
     if http_status == http_success:
 
@@ -417,7 +420,7 @@ def post_data(config, scheduler):
 ....values
 ...."""
 
-    server_status = ConfigParser.ConfigParser()
+    server_status = configparser.ConfigParser()
 
     # write status to config object
 

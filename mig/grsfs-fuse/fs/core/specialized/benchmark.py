@@ -32,7 +32,12 @@ Created by Jan Wiberg on 2010-03-21.
 Copyright (c) 2010 Jan Wiberg. All rights reserved.
 """
 
-import time, random
+from __future__ import division
+
+import random
+import time
+
+
 # adapted from iotest by benjamin schweizer http://benjamin-schweizer.de/files/iotest/
 def _iotest(fh, eof, blocksize=512, t=10): 
     """io test"""
@@ -48,11 +53,11 @@ def _iotest(fh, eof, blocksize=512, t=10):
 
     total_ts = end_ts - start_ts
 
-    io_s = io_num/total_ts
+    io_s = io_num // total_ts
     by_s = int(blocksize*io_num/total_ts)
     #print " %sB blocks: %6.1f IOs/s, %sB/s" % (greek(blocksize), io_s, greek(by_s))
 
-    return io_num/total_ts
+    return io_num // total_ts
 
 def _iostart(dev, t = 1, maxblock = 4096):# increase t to get a more accurate test.
     blocksize = 512
@@ -70,7 +75,7 @@ def _iostart(dev, t = 1, maxblock = 4096):# increase t to get a more accurate te
             blocksize *= 2
             scores.append(iops)
             
-        return sum(scores) / len(scores)
+        return sum(scores) // len(scores)
     except IOError as xxx_todo_changeme:
         (err_no, err_str) = xxx_todo_changeme.args
         raise SystemExit(err_str)
@@ -84,10 +89,10 @@ def compute_score(options):
         
     import os, statvfs, time
     f = os.statvfs(options.freespace_target)
-    disk_free_gb = (f[statvfs.F_BAVAIL] * f[statvfs.F_FRSIZE]) / 1073741824
+    disk_free_gb = (f[statvfs.F_BAVAIL] * f[statvfs.F_FRSIZE]) // 1073741824
     
     raw_io_average = _iostart(options.iobench_target)
     #print "\tbenched at %d/%d before bias" % (disk_free_gb, raw_io_average)
-    score = (max((min(disk_free_gb, options.benchmark_max_gb_free) - options.benchmark_min_gb_free), options.benchmark_min_free_score) / (options.benchmark_max_gb_free - options.benchmark_min_gb_free)) * raw_io_average
+    score = (max((min(disk_free_gb, options.benchmark_max_gb_free) - options.benchmark_min_gb_free), options.benchmark_min_free_score) // (options.benchmark_max_gb_free - options.benchmark_min_gb_free)) * raw_io_average
     return score
     

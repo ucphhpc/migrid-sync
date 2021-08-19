@@ -45,6 +45,7 @@ SSH agent is used for the auth if no explicit keys are given.
 
 from __future__ import print_function
 
+from builtins import input
 import os
 import subprocess
 import sys
@@ -246,7 +247,7 @@ if __name__ == '__main__':
     if sys.argv[2:]:
         migsftp_user = sys.argv[2]
     else:
-        migsftp_user = raw_input('MiG SFTP Username: ')
+        migsftp_user = input('MiG SFTP Username: ')
 
     bench_hosts['paramiko=paramiko'] = {
         'client': 'paramiko',

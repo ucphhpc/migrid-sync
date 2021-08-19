@@ -31,10 +31,11 @@ the remote java mechanism where to retrieve the executable
 """
 from __future__ import absolute_import
 
+from builtins import object
 from mig.shared.defaults import job_output_dir
 
 
-class GenJobScriptJava:
+class GenJobScriptJava(object):
 
     def __init__(
         self,

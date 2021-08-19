@@ -29,13 +29,16 @@
 
 from __future__ import print_function
 
-import httplib
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+import http.client
 import os
 import ssl
 import sys
 import time
-import xmlrpclib
-from urlparse import urlparse, parse_qs
+import xmlrpc.client
+from urllib.parse import urlparse, parse_qs
 
 
 def read_user_conf():
@@ -83,7 +86,7 @@ def read_user_conf():
     return user_conf
 
 
-class SafeCertTransport(xmlrpclib.SafeTransport):
+class SafeCertTransport(xmlrpc.client.SafeTransport):
 
     """HTTPS with user certificate"""
 
@@ -96,7 +99,7 @@ class SafeCertTransport(xmlrpclib.SafeTransport):
         If not we must switch to compatibility mode where the request
         method needs to be overridden.
         """
-        xmlrpclib.SafeTransport.__init__(self, use_datetime)
+        xmlrpc.client.SafeTransport.__init__(self, use_datetime)
         self.conf.update(conf)
 
         if not hasattr(self, '_connection'):
@@ -130,7 +133,7 @@ class SafeCertTransport(xmlrpclib.SafeTransport):
         headers = resp.getheaders()
 
         if errcode != 200:
-            raise xmlrpclib.ProtocolError(host + handler, errcode,
+            raise xmlrpc.client.ProtocolError(host + handler, errcode,
                                           errmsg, headers)
 
         self.verbose = verbose
@@ -155,7 +158,7 @@ class SafeCertTransport(xmlrpclib.SafeTransport):
         if self._connection and host == self._connection[0]:
             return self._connection[1]
         try:
-            HTTPS = httplib.HTTPSConnection
+            HTTPS = http.client.HTTPSConnection
         except AttributeError:
             raise NotImplementedError(
                 "your version of httplib doesn't support HTTPS")
@@ -174,7 +177,7 @@ class SafeCertTransport(xmlrpclib.SafeTransport):
 
 def xmlrpcgetserver(conf):
     cert_transport = SafeCertTransport(conf=conf)
-    server = xmlrpclib.ServerProxy('https://%(host)s:%(port)s%(script)s' %
+    server = xmlrpc.client.ServerProxy('https://%(host)s:%(port)s%(script)s' %
                                    conf, transport=cert_transport,
                                    # encoding='utf-8',
                                    # verbose=True
@@ -243,7 +246,7 @@ key/certificate passphrase before you can continue.
     create_args = {'freeze_id': [freeze_id],
                    # csrf_field: [csrf_val]
                    }
-    for i in xrange(len(path_list)):
+    for i in range(len(path_list)):
         create_args['freeze_copy_%d' % i] = [path_list[i]]
 
     (outlist, retval) = server.createbackup(create_args)

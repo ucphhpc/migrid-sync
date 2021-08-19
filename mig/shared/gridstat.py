@@ -30,6 +30,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import object
 import datetime
 import fcntl
 import os
@@ -40,7 +41,7 @@ from mig.shared.serial import pickle as py_pickle
 from mig.shared.vgrid import validated_vgrid_list, job_fits_res_vgrid
 
 
-class GridStat:
+class GridStat(object):
     """Stat class"""
 
     # Stat types

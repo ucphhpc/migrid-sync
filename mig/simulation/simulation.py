@@ -31,9 +31,13 @@
 
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+import configparser
 import getopt
-import ConfigParser
 import logging
 import math
 import random
@@ -41,10 +45,10 @@ import os
 import sys
 import time
 
+from mig.shared.configuration import Configuration
 from mig.simulation.user import User
 from mig.simulation.resource import Resource
 from mig.simulation.server import Server
-from mig.shared.configuration import Configuration
 
 
 def usage():
@@ -536,7 +540,7 @@ if arg.count(':') == 2:
     for i in range(resource_cnt):
         name = 'resource-%d' % i
         index = random.randint(0, server_cnt - 1)
-        server = servers.values()[index]
+        server = list(servers.values())[index]
         logger.info('setting up %s connected to %s', name, server.id)
         resources[name] = Resource(
             name,
@@ -550,7 +554,7 @@ if arg.count(':') == 2:
     for i in range(user_cnt):
         name = 'user-%d' % i
         index = random.randint(0, server_cnt - 1)
-        server = servers.values()[index]
+        server = list(servers.values())[index]
         logger.info('setting up %s connected to %s', name, server.id)
         users[name] = User(
             name,
@@ -568,7 +572,7 @@ else:
         print('Error: input file %s not found!' % input_name)
         sys.exit(1)
     input_files = [input_path]
-    scenario = ConfigParser.ConfigParser()
+    scenario = configparser.ConfigParser()
 
     # Set up a minimum of default options
 
@@ -704,7 +708,7 @@ print('Seeding random with: %s' % seed)
 random.seed(seed)
 for step in range(timesteps):
     logger.info('step %d', step)
-    entities = servers.values() + resources.values() + users.values()
+    entities = list(servers.values()) + list(resources.values()) + list(users.values())
     remain = len(entities)
     while remain > 0:
         index = random.randint(0, remain - 1)

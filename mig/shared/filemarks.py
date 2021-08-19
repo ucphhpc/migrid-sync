@@ -31,6 +31,7 @@ timestamp carries information.
 """
 from __future__ import absolute_import
 
+from past.builtins import basestring
 import os
 
 from mig.shared.fileio import makedirs_rec, touch

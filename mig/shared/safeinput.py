@@ -38,6 +38,8 @@ basis.
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import range
+from past.builtins import basestring
 import cgi
 from email.utils import parseaddr, formataddr
 from string import ascii_letters, digits, printable
@@ -101,7 +103,7 @@ VALID_JOB_ATTRIBUTES = [
 # Accented character constant helpers - the allowed set of accented characters
 # is chosen based which of these constants is used as the include_accented
 # option to some of the validator functions.
-NO_ACCENTED, COMMON_ACCENTED, ANY_ACCENTED = range(3)
+NO_ACCENTED, COMMON_ACCENTED, ANY_ACCENTED = list(range(3))
 
 # Unicode letter categories as defined on
 # http://www.unicode.org/reports/tr44/#GC_Values_Table

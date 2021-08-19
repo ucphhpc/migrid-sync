@@ -28,6 +28,8 @@
 # -- END_HEADER ---
 #
 
+from future import standard_library
+standard_library.install_aliases()
 import logging
 import md5
 import os
@@ -35,7 +37,7 @@ import random
 import sys
 import threading
 import time
-import SocketServer
+import socketserver
 from binascii import hexlify
 from struct import unpack, pack
 
@@ -46,7 +48,7 @@ from migtcpserver import MiGTCPServer
 from plumber import *
 
 
-class ProxyClientHandler(SocketServer.BaseRequestHandler):
+class ProxyClientHandler(socketserver.BaseRequestHandler):
 
     """ProxyClientHandler,
   Handles connections from clients by setting up tunnels and do content
@@ -76,7 +78,7 @@ class ProxyClientHandler(SocketServer.BaseRequestHandler):
         self.provider_address = 'localhost'
         self.provider_identifier = '__foo__'
 
-        SocketServer.BaseRequestHandler.__init__(self, request,
+        socketserver.BaseRequestHandler.__init__(self, request,
                 client_address, server)
 
   # Extract client information from proxy aware user procedures

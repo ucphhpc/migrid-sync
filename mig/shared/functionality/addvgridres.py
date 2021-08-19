@@ -28,6 +28,7 @@
 """Add one or more resources to a given vgrid"""
 from __future__ import absolute_import
 
+from builtins import zip
 from binascii import unhexlify
 import os
 

@@ -29,6 +29,7 @@
 """ Jupyter service helper functions """
 
 
+from past.builtins import basestring
 def gen_balancer_proxy_template(url, define, name, member_hosts,
                                 ws_member_hosts, timeout=600):
     """ Generates an apache proxy balancer configuration section template

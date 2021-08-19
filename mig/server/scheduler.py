@@ -29,7 +29,10 @@
 
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
 
+from builtins import range
+from builtins import object
 import calendar
 import fnmatch
 import re
@@ -47,7 +50,7 @@ from mig.shared.resource import anon_resource_id
 from mig.shared.vgrid import vgrid_access_match, validated_vgrid_list
 
 
-class Scheduler:
+class Scheduler(object):
 
     """Base scheduler class to inherit from"""
 

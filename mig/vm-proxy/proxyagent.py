@@ -31,14 +31,16 @@
 #
 
 from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
 import logging
 import os
 import socket
 import sys
 import threading
 import time
-import ConfigParser
-import SocketServer
+import configparser
+import socketserver
 from struct import unpack, pack
 from threading import Thread
 
@@ -79,7 +81,7 @@ class ProxyAgent(daemon.Daemon):
 
         # Load configuration from file
 
-        cp = ConfigParser.ConfigParser()
+        cp = configparser.ConfigParser()
         cp.read([self.default_conf])
 
         self.proxy_host = cp.get(self.section_settings, 'proxy_host')

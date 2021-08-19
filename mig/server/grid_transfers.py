@@ -35,6 +35,7 @@ Requires rsync and lftp binaries to take care of the actual transfers.
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import zip
 import datetime
 import glob
 import logging

@@ -27,7 +27,9 @@
 
 """Benchmark alternating file reads and writes"""
 from __future__ import print_function
+from __future__ import division
 
+from builtins import range
 import os
 import sys
 import threading
@@ -62,7 +64,7 @@ class Writer(threading.Thread):
         
     def run(self):
         """Runner"""
-        for _ in xrange(self.conf['number']):
+        for _ in range(self.conf['number']):
             self.writefile.write(self.data)
             self.writefile.flush()
             #time.sleep(0.001)
@@ -81,7 +83,7 @@ class Reader(threading.Thread):
 
     def run(self):
         """Runner"""
-        for _ in xrange(self.conf['number']):
+        for _ in range(self.conf['number']):
             nbytes = len(self.readfile.read(self.conf['data_bytes']))
             if nbytes < self.conf['data_bytes']:
                 self.readfile.seek(0)
@@ -107,11 +109,11 @@ def main(conf):
     prepare_files(conf)
     readfile = open("readfile", "rb")
     writefile = open("writefile", "wb")
-    data = open("/dev/urandom").read(conf['data_bytes']/8)
+    data = open("/dev/urandom").read(conf['data_bytes'] // 8)
 
     start_time =  clock_fun()
 
-    for _ in xrange(1):
+    for _ in range(1):
         worker = Writer(start_time, writefile, data, conf)
         threads.append(worker)
 
@@ -128,12 +130,12 @@ def main(conf):
     threads = []
     readfile = open("readfile", "rb")
     writefile = open("writefile", "wb")
-    data = open("/dev/urandom").read(conf['data_bytes']/8)
+    data = open("/dev/urandom").read(conf['data_bytes'] // 8)
 
     start_time =  clock_fun()
     worker = Writer(start_time, writefile, data, conf)
     threads.append(worker)
-    for _ in xrange(4):
+    for _ in range(4):
         worker = Reader(start_time, readfile, conf)
         threads.append(worker)
 
@@ -152,7 +154,7 @@ def main(conf):
 
     start_time =  clock_fun()
 
-    for _ in xrange(5):
+    for _ in range(5):
         worker = Reader(start_time, readfile, conf)
         threads.append(worker)
 

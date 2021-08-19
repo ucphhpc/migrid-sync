@@ -78,7 +78,7 @@ def parse_and_save_pickle(source, destination, keywords, client_id,
 
     # move parseresult to a dictionary
 
-    for (key, value_dict) in keywords.iteritems():
+    for (key, value_dict) in keywords.items():
         new_dict[key] = value_dict['Value']
 
     new_dict['CREATOR'] = client_id

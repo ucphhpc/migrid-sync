@@ -28,6 +28,7 @@
 """Random Scheduler"""
 from __future__ import absolute_import
 
+from builtins import range
 import random
 
 from mig.server.scheduler import Scheduler

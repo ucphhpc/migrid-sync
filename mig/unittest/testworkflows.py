@@ -22,6 +22,7 @@
 
 """Unittest to verify the functionality of the workflows implementation"""
 
+from builtins import next
 import os
 import shutil
 import tempfile
@@ -978,7 +979,7 @@ class WorkflowsFunctionsTest(unittest.TestCase):
         self.assertEqual(len(patterns), 1)
 
         trigger_id = next(iter(patterns[0]['trigger_recipes']))
-        self.assertEqual(len(patterns[0]['trigger_recipes'].keys()), 1)
+        self.assertEqual(len(patterns[0]['trigger_recipes']), 1)
         # Test that the trigger is valid
         trigger, msg = get_workflow_trigger(self.configuration,
                                             self.test_vgrid,
@@ -1022,7 +1023,7 @@ class WorkflowsFunctionsTest(unittest.TestCase):
         # Validate that the trigger is empty since the recipe doesn't yet exist
         # Test that the trigger is valid
         trigger_id = next(iter(patterns[0]['trigger_recipes']))
-        self.assertEqual(len(patterns[0]['trigger_recipes'].keys()), 1)
+        self.assertEqual(len(patterns[0]['trigger_recipes']), 1)
         trigger, msg = get_workflow_trigger(self.configuration,
                                             self.test_vgrid,
                                             trigger_id)
@@ -1064,7 +1065,7 @@ class WorkflowsFunctionsTest(unittest.TestCase):
 
         u_trigger_id = next(iter(patterns[0]['trigger_recipes']))
         self.assertEqual(trigger_id, u_trigger_id)
-        self.assertEqual(len(patterns[0]['trigger_recipes'].keys()), 1)
+        self.assertEqual(len(patterns[0]['trigger_recipes']), 1)
         # Test that the trigger is valid
         trigger, msg = get_workflow_trigger(self.configuration,
                                             self.test_vgrid,
@@ -1103,7 +1104,7 @@ class WorkflowsFunctionsTest(unittest.TestCase):
                                      **pattern_attributes)
 
         trigger_id = next(iter(patterns[0]['trigger_recipes']))
-        self.assertEqual(len(patterns[0]['trigger_recipes'].keys()), 1)
+        self.assertEqual(len(patterns[0]['trigger_recipes']), 1)
         # No recipe provided == None
         self.assertEqual(patterns[0]['trigger_recipes'][trigger_id], {})
 
@@ -1156,7 +1157,7 @@ class WorkflowsFunctionsTest(unittest.TestCase):
 
         # Test that the trigger is correctly updated
         self.assertEqual(len(u_patterns), 1)
-        self.assertEqual(len(u_patterns[0]['trigger_recipes'].keys()), 1)
+        self.assertEqual(len(u_patterns[0]['trigger_recipes']), 1)
         u_trigger_id = next(iter(u_patterns[0]['trigger_recipes']))
 
         self.assertEqual(trigger_id, u_trigger_id)
@@ -1192,7 +1193,7 @@ class WorkflowsFunctionsTest(unittest.TestCase):
                                      **pattern_attributes)
 
         trigger_id = next(iter(patterns[0]['trigger_recipes']))
-        self.assertEqual(len(patterns[0]['trigger_recipes'].keys()), 1)
+        self.assertEqual(len(patterns[0]['trigger_recipes']), 1)
         # Recipe didn't exist before pattern was created == placeholder name
         # key is ready to be replaced with recipe_id
         self.assertEqual(patterns[0]['trigger_recipes'][trigger_id],
@@ -1251,7 +1252,7 @@ class WorkflowsFunctionsTest(unittest.TestCase):
                                        **{'persistence_id': u_pattern_id})
 
         trigger_id = next(iter(u_patterns[0]['trigger_recipes']))
-        self.assertEqual(len(u_patterns[0]['trigger_recipes'].keys()), 1)
+        self.assertEqual(len(u_patterns[0]['trigger_recipes']), 1)
         # Test that the new trigger is valid
         n_trigger, msg = get_workflow_trigger(self.configuration,
                                               self.test_vgrid,
@@ -2492,7 +2493,7 @@ class WorkflowsFunctionsTest(unittest.TestCase):
         # Validate that the trigger is empty since the recipe doesn't yet exist
         # Test that the trigger is valid
         trigger_id = next(iter(patterns[0]['trigger_recipes']))
-        self.assertEqual(len(patterns[0]['trigger_recipes'].keys()), 1)
+        self.assertEqual(len(patterns[0]['trigger_recipes']), 1)
         # Test that the trigger is valid
         trigger, msg = get_workflow_trigger(self.configuration,
                                             self.test_vgrid,
@@ -2513,7 +2514,7 @@ class WorkflowsFunctionsTest(unittest.TestCase):
         trigger_dict = parse_trigger_lines(trigger_lines)
         self.logger.info(trigger_dict)
 
-        self.assertEqual(len(trigger_dict.keys()), 14)
+        self.assertEqual(len(trigger_dict), 14)
 
         self.assertIn('VGRID', trigger_dict)
         self.assertEqual(trigger_dict['VGRID'], ['+TRIGGERVGRIDNAME+'])
@@ -2739,7 +2740,7 @@ class WorkflowsFunctionsTest(unittest.TestCase):
         # Validate that the trigger is empty since the recipe doesn't yet exist
         # Test that the trigger is valid
         trigger_id = next(iter(patterns[0]['trigger_recipes']))
-        self.assertEqual(len(patterns[0]['trigger_recipes'].keys()), 1)
+        self.assertEqual(len(patterns[0]['trigger_recipes']), 1)
         # Test that the trigger is valid
         trigger, msg = get_workflow_trigger(self.configuration,
                                             self.test_vgrid,
@@ -2760,7 +2761,7 @@ class WorkflowsFunctionsTest(unittest.TestCase):
         trigger_dict = parse_trigger_lines(trigger_lines)
         self.logger.info(trigger_dict)
 
-        self.assertEqual(len(trigger_dict.keys()), 14)
+        self.assertEqual(len(trigger_dict), 14)
 
         self.assertIn('VGRID', trigger_dict)
         self.assertEqual(trigger_dict['VGRID'], ['+TRIGGERVGRIDNAME+'])
@@ -3015,7 +3016,7 @@ class WorkflowsFunctionsTest(unittest.TestCase):
         # Validate that the trigger is empty since the recipe doesn't yet exist
         # Test that the trigger is valid
         trigger_id = next(iter(patterns[0]['trigger_recipes']))
-        self.assertEqual(len(patterns[0]['trigger_recipes'].keys()), 1)
+        self.assertEqual(len(patterns[0]['trigger_recipes']), 1)
         # Test that the trigger is valid
         trigger, msg = get_workflow_trigger(self.configuration,
                                             self.test_vgrid,
@@ -3036,7 +3037,7 @@ class WorkflowsFunctionsTest(unittest.TestCase):
         trigger_dict = parse_trigger_lines(trigger_lines)
         self.logger.info(trigger_dict)
 
-        self.assertEqual(len(trigger_dict.keys()), 14)
+        self.assertEqual(len(trigger_dict), 14)
 
         self.assertIn('VGRID', trigger_dict)
         self.assertEqual(trigger_dict['VGRID'], ['+TRIGGERVGRIDNAME+'])

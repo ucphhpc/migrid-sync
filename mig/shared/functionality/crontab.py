@@ -31,6 +31,9 @@ and basically just runs those on behalf of the user.
 """
 from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
 import datetime
 import os
 import re
@@ -78,7 +81,7 @@ def read_cron_log(configuration, client_id, flags):
 
     client_dir = client_id_dir(client_id)
     log_content = ''
-    for i in xrange(cron_log_cnt - 1, -1, -1):
+    for i in range(cron_log_cnt - 1, -1, -1):
         log_name = cron_log_name
         if i > 0:
             log_name += '.%d' % i

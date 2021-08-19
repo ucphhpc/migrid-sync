@@ -36,6 +36,9 @@ Create MiG developer account with dedicated web server and daemons.
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import zip
+from builtins import range
+from past.builtins import basestring
 import ast
 import base64
 import crypt
@@ -520,7 +523,7 @@ def generate_confs(
                  mig_oidc_port, ext_oidc_port, sid_port]
     fqdn_list = [mig_cert_fqdn, ext_cert_fqdn, mig_oid_fqdn, ext_oid_fqdn,
                  mig_oidc_fqdn, ext_oidc_fqdn, sid_fqdn]
-    listen_list = zip(fqdn_list, port_list)
+    listen_list = list(zip(fqdn_list, port_list))
     enabled_list = [(i, j) for (i, j) in listen_list if i]
     enabled_ports = [j for (i, j) in enabled_list]
     enabled_fqdns = [i for (i, j) in enabled_list]
@@ -1791,7 +1794,7 @@ def create_user(
     # print "uid: %d, gid: %d" % (uid, gid)
 
     svc_ports = 6
-    reserved_ports = range(svc_ports * uid, svc_ports * uid + svc_ports)
+    reserved_ports = list(range(svc_ports * uid, svc_ports * uid + svc_ports))
     public_http_port, mig_cert_port, ext_cert_port, mig_oid_port, ext_oid_port, sid_port = reserved_ports[
         :svc_ports]
     # Only one port for openid or openid connect

@@ -29,10 +29,11 @@
 # User class used for simulating users that randomly submit jobs
 #
 
+from builtins import object
 import random
 
 
-class User:
+class User(object):
 
     id = ''
     submit_prob = None

@@ -32,6 +32,7 @@ to offer site access for a time limited period.
 
 from __future__ import absolute_import
 
+from builtins import range
 import datetime
 import os
 
@@ -304,7 +305,7 @@ extensions from your peers until the given time of expiry.
     output_objects.append({'object_type': 'table_pager', 'entry_name': 'peers',
                            'default_entries': default_pager_entries})
     peers = []
-    for (peer_id, entry) in all_peers.items():
+    for (peer_id, entry) in list(all_peers.items()):
         filled_entry = dict([(field, '') for field in
                              ('label', 'kind', 'expire')])
         fill_distinguished_name(entry)

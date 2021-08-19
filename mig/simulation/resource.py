@@ -29,10 +29,11 @@
 # Resource class used for simulating resources that randomly requests jobs
 #
 
+from builtins import object
 import random
 
 
-class Resource:
+class Resource(object):
 
     id = ''
     req_prob = 0.5

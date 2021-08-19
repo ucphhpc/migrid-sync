@@ -40,6 +40,7 @@
 # simply prevents symlink, link, chmod, chown and mknod operations
 
 from __future__ import print_function
+from builtins import object
 import os, sys
 from errno import *
 from stat import *

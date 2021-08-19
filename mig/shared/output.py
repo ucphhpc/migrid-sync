@@ -30,6 +30,9 @@ specified by the client."""
 
 from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
+from past.builtins import basestring
 import os
 import time
 import traceback
@@ -2446,15 +2449,15 @@ def yaml_format(configuration, ret_val, ret_msg, out_obj):
 def xmlrpc_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in xmlrpc format"""
 
-    import xmlrpclib
+    import xmlrpc.client
     # Wrap any explicit binary entries to avoid encoding errors
     for entry in out_obj:
         if entry.get('wrap_binary', False):
             for key in entry.get('wrap_targets', []):
                 if not key in entry:
                     continue
-                entry[key] = xmlrpclib.Binary(entry[key])
-    return xmlrpclib.dumps((out_obj, ), allow_none=True)
+                entry[key] = xmlrpc.client.Binary(entry[key])
+    return xmlrpc.client.dumps((out_obj, ), allow_none=True)
 
 
 def json_format(configuration, ret_val, ret_msg, out_obj):

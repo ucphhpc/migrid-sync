@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # testgriddaemons- Set of unit tests for grid daemon helper functions
-# Copyright (C) 2010-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,11 +26,13 @@
 #
 
 """Unit tests for grid daemon helper functions"""
+
 from __future__ import print_function
 
+from builtins import range
+import logging
 import sys
 import time
-import logging
 
 from mig.shared.griddaemons.ratelimits import default_max_user_hits, \
     expire_rate_limit, hit_rate_limit, update_rate_limit
@@ -160,7 +162,8 @@ if __name__ == "__main__":
             % (test_id+"_1", active_count))
         sys.exit(1)
     if isinstance(open_session, dict):
-        if open_session.keys() == expected_session_keys:
+        # NOTE: dict keys() does not guarantee any specific order
+        if set(open_session.keys()) == set(expected_session_keys):
             print("OK")
         else:
             print("ERROR: Invalid session dictionary: '%s'" \
@@ -188,7 +191,7 @@ if __name__ == "__main__":
             % (test_id+"_1", active_count))
         sys.exit(1)
     if isinstance(open_session, dict):
-        if open_session.keys() == expected_session_keys:
+        if set(open_session.keys()) == set(expected_session_keys):
             print("OK")
         else:
             print("ERROR: Invalid session dictionary: '%s'" \
@@ -216,7 +219,7 @@ if __name__ == "__main__":
             % (test_id+"_1", active_count))
         sys.exit(1)
     if isinstance(open_session, dict):
-        if open_session.keys() == expected_session_keys:
+        if set(open_session.keys()) == set(expected_session_keys):
             print("OK")
         else:
             print("ERROR: Invalid session dictionary: '%s'" \
@@ -244,7 +247,7 @@ if __name__ == "__main__":
             % (test_id+"_1", active_count))
         sys.exit(1)
     if isinstance(open_session, dict):
-        if open_session.keys() == expected_session_keys:
+        if set(open_session.keys()) == set(expected_session_keys):
             print("OK")
         else:
             print("ERROR: Invalid session dictionary: '%s'" \
@@ -279,15 +282,15 @@ if __name__ == "__main__":
     print("Track get open sessions #3")
     cur_open_sessions = get_open_sessions(conf, test_proto)
     if isinstance(cur_open_sessions, dict):
-        if len(cur_open_sessions.keys()) != 4:
+        if len(cur_open_sessions) != 4:
             print("ERROR: Expected dictionary #keys: 4" \
-                + ", found: %s, %s" % (len(cur_open_sessions.keys()),
-                                       cur_open_sessions.keys()))
+                + ", found: %s, %s" % (len(cur_open_sessions),
+                                       list(cur_open_sessions)))
             sys.exit(1)
         status = True
-        for (key, val) in cur_open_sessions.iteritems():
+        for (key, val) in cur_open_sessions.items():
             if not isinstance(val, dict) \
-                    or val.keys() != expected_session_keys:
+                    or set(val.keys()) != set(expected_session_keys):
                 status = False
                 print("ERROR: Invalid session dictionary: '%s'" \
                     % (val))
@@ -302,15 +305,15 @@ if __name__ == "__main__":
                                           test_proto,
                                           client_id=test_id)
     if isinstance(cur_open_sessions, dict):
-        if len(cur_open_sessions.keys()) != 2:
+        if len(cur_open_sessions) != 2:
             print("ERROR: Expected dictionary #keys: 2" \
-                + ", found: %s, %s" % (len(cur_open_sessions.keys()),
-                                       cur_open_sessions.keys()))
+                + ", found: %s, %s" % (len(cur_open_sessions),
+                                       list(cur_open_sessions)))
             sys.exit(1)
         status = True
-        for (key, val) in cur_open_sessions.iteritems():
+        for (key, val) in cur_open_sessions.items():
             if not isinstance(val, dict) \
-                    or val.keys() != expected_session_keys:
+                    or set(val.keys()) != set(expected_session_keys):
                 status = False
                 print("ERROR: Invalid session dictionary: '%s'" \
                     % (val))
@@ -371,7 +374,7 @@ if __name__ == "__main__":
                                         test_id,
                                         test_session_id)
     if isinstance(active_session, dict):
-        if active_session.keys() == expected_session_keys:
+        if set(active_session.keys()) == set(expected_session_keys):
             print("OK")
         else:
             print("ERROR: Invalid session dictionary: '%s'" \
@@ -479,7 +482,7 @@ if __name__ == "__main__":
             % (test_id+"_1", active_count))
         sys.exit(1)
     if isinstance(close_session, dict):
-        if close_session.keys() == expected_session_keys:
+        if set(close_session.keys()) == set(expected_session_keys):
             print("OK")
         else:
             print("ERROR: Invalid session dictionary: '%s'" \
@@ -550,11 +553,11 @@ if __name__ == "__main__":
             % (test_id+"_1", active_count))
         sys.exit(1)
     if isinstance(expired_sessions, dict):
-        if len(expired_sessions.keys()) == 1:
+        if len(expired_sessions) == 1:
             status = True
-            for (key, val) in expired_sessions.iteritems():
+            for (key, val) in expired_sessions.items():
                 if not isinstance(val, dict) \
-                        or val.keys() != expected_session_keys:
+                        or set(val.keys()) != set(expected_session_keys):
                     status = False
                     print("ERROR: Invalid session dictionary: '%s'" \
                         % (val))
@@ -563,7 +566,7 @@ if __name__ == "__main__":
                 print("OK")
         else:
             print("ERROR: Expected 1 expired session, found: %s" \
-                % len(expired_sessions.keys()))
+                % len(expired_sessions))
             sys.exit(1)
     else:
         print("ERROR: Expected dictionary: %s" % type(expired_sessions))
@@ -582,11 +585,11 @@ if __name__ == "__main__":
             % (test_id+"_1", active_count))
         sys.exit(1)
     if isinstance(expired_sessions, dict):
-        if len(expired_sessions.keys()) == 2:
+        if len(expired_sessions) == 2:
             status = True
-            for (key, val) in expired_sessions.iteritems():
+            for (key, val) in expired_sessions.items():
                 if not isinstance(val, dict) \
-                        or val.keys() != expected_session_keys:
+                        or set(val.keys()) != set(expected_session_keys):
                     status = False
                     print("ERROR: Invalid session dictionary: '%s'" \
                         % (val))
@@ -595,7 +598,7 @@ if __name__ == "__main__":
                 print("OK")
         else:
             print("ERROR: Expected 2 expired session, found: %s" \
-                % len(expired_sessions.keys()))
+                % len(expired_sessions))
             sys.exit(1)
     else:
         print("ERROR: Expected dictionary: %s" % type(expired_sessions))

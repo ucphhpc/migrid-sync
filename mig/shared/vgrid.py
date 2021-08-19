@@ -30,6 +30,9 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import zip
+from builtins import range
+from past.builtins import basestring
 import fnmatch
 import os
 import re
@@ -654,7 +657,7 @@ def vgrid_list_parents(vgrid_name, configuration):
 
     result_list = []
     parts = vgrid_name.split(os.sep)
-    for i in xrange(len(parts)-1):
+    for i in range(len(parts)-1):
         vgrid = (os.sep).join(parts[:i+1])
         result_list.append(vgrid)
     return result_list
@@ -1146,7 +1149,7 @@ def vgrid_settings(vgrid_name, configuration, recursive=True, allow_missing=True
         # directly or forced to list of tuples depending on as_dict argument.
         output = merge_vgrid_settings(vgrid_name, configuration, output)
         if not as_dict:
-            output = output.items()
+            output = list(output.items())
     return (status, output)
 
 
@@ -2138,7 +2141,7 @@ if __name__ == "__main__":
         print("check settings: %(description)s" % check_list)
         try:
             # We save settings as a list of tuples
-            vgrid_validate_entities(conf, vgrid, kind, check_list.items())
+            vgrid_validate_entities(conf, vgrid, kind, list(check_list.items()))
             print("settings check succeeded")
         except Exception as exc:
             print("settings check failed: %s" % exc)

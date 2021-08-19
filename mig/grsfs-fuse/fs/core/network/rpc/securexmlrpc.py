@@ -30,12 +30,14 @@ python-2.7 or later to provide the ssl module.
 """
 from __future__ import print_function
 
+from future import standard_library
+standard_library.install_aliases()
 import os
 import re
 import sys
-import xmlrpclib
-from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
-from SocketServer import ThreadingMixIn
+import xmlrpc.client
+from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
+from socketserver import ThreadingMixIn
 # Expose extra ssl constants for optional overriding of server attributes
 from ssl import wrap_socket, CERT_NONE, CERT_OPTIONAL, CERT_REQUIRED, \
      PROTOCOL_SSLv23, PROTOCOL_TLSv1_2
@@ -58,19 +60,19 @@ error_pat = re.compile(r"<type 'exceptions.(?P<exception>[^:]*)'>:" + \
 # Binary wrapping
 def wrapbinary(data):
     """Pack binary data"""
-    return xmlrpclib.Binary(data)
+    return xmlrpc.client.Binary(data)
     
 def unwrapbinary(binary):
     """Unpack binary data"""
     return binary.data
 
 
-class XMLRPCUnmarshaller (xmlrpclib.Unmarshaller):
+class XMLRPCUnmarshaller (xmlrpc.client.Unmarshaller):
     """Custom unmarshaller to handle exceptions"""
     def close(self):
         """return response tuple and target method"""
         if self._type is None or self._marks:
-            raise xmlrpclib.ResponseError()
+            raise xmlrpc.client.ResponseError()
         if self._type == "fault":
             res_dict = self._stack[0]
             hit = error_pat.match(res_dict['faultString'])
@@ -86,11 +88,11 @@ class XMLRPCUnmarshaller (xmlrpclib.Unmarshaller):
                             raise exc(rest)
 
             # Fall through and just raise the fault
-            raise xmlrpclib.Fault(**res_dict)
+            raise xmlrpc.client.Fault(**res_dict)
         return tuple(self._stack)
 
 
-class SecureXMLRPCExceptionTransport (xmlrpclib.SafeTransport):
+class SecureXMLRPCExceptionTransport (xmlrpc.client.SafeTransport):
     """Exception handling transport using the HTTPS specific SafeTransport"""
     # Override user-agent if desired
     ##user_agent = "xmlrpc-exceptions/0.0.1"
@@ -98,11 +100,11 @@ class SecureXMLRPCExceptionTransport (xmlrpclib.SafeTransport):
     def getparser (self):
         """We want to use our own custom unmarshaller"""
         unmarshaller = XMLRPCUnmarshaller()
-        parser = xmlrpclib.ExpatParser(unmarshaller)
+        parser = xmlrpc.client.ExpatParser(unmarshaller)
         return parser, unmarshaller
 
 
-class SecureXMLRPCServerProxy(xmlrpclib.ServerProxy): 
+class SecureXMLRPCServerProxy(xmlrpc.client.ServerProxy):
     """Secure XMLRPC server proxy suitable for our use cases"""
     def __init__(self, address_tuple, **kwargs):
         """Supply our own transport, enable None values and translate
@@ -111,7 +113,7 @@ class SecureXMLRPCServerProxy(xmlrpclib.ServerProxy):
         kwargs['transport'] = SecureXMLRPCExceptionTransport()
         kwargs['allow_none'] = True
         kwargs['uri'] = 'https://%s:%d' % address_tuple
-        xmlrpclib.ServerProxy.__init__(self, **kwargs)
+        xmlrpc.client.ServerProxy.__init__(self, **kwargs)
 
 
 class KeepAliveRequestHandler(SimpleXMLRPCRequestHandler):

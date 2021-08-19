@@ -29,6 +29,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import object
 import logging
 import os
 import signal
@@ -86,7 +87,7 @@ class SysLogLibHandler(logging.Handler):
         syslog.syslog(self.format(record))
 
 
-class Logger:
+class Logger(object):
     """ MiG code should use an instance of this class to handle
     writing to log-files.
     """

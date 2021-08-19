@@ -29,13 +29,15 @@
 and resources
 """
 
+from builtins import range
+from builtins import object
 import time
 
 from mig.server.jobqueue import JobQueue
 from mig.server.fairfitscheduler import FairFitScheduler
 
 
-class Server:
+class Server(object):
 
     """Serversimulation"""
 

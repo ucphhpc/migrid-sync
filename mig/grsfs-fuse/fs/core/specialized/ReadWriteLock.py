@@ -40,6 +40,7 @@ Released under the BSD-license.
 # Imports
 # -------
 
+from builtins import object
 from threading import Condition, Lock, currentThread
 from time import time
 

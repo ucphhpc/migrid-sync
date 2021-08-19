@@ -27,6 +27,8 @@
 
 """MiG login daemon functions"""
 
+from past.builtins import basestring
+from builtins import object
 import glob
 import logging
 import os

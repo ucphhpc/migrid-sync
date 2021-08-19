@@ -750,7 +750,7 @@ stopping all units and the front end.
                                'You are not listed as owner of any resources!'
                                })
     else:
-        sorted_links = quick_res.items()
+        sorted_links = list(quick_res.items())
         sorted_links.sort()
         for (res_id, link_obj) in sorted_links:
             quick_links.append(link_obj)

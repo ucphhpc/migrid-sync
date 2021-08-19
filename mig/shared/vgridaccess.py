@@ -676,7 +676,7 @@ def vgrid_inherit_map(configuration, vgrid_map):
             merged = merge_vgrid_settings(vgrid_name, configuration,
                                           settings_list)
             # Force back to tuple form for symmetry with non-inherit version
-            vgrid[field] = merged.items()
+            vgrid[field] = list(merged.items())
     return inherit_map
 
 

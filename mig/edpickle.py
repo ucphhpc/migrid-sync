@@ -31,6 +31,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import input
 import os
 import sys
 
@@ -49,10 +50,10 @@ pickle_fd = open(path, 'rb+')
 obj = pickle.load(pickle_fd)
 print("pickled object loaded as 'obj'")
 while True:
-    command = raw_input("Enter command: ")
+    command = input("Enter command: ")
     command = command.lower().strip()
     if command in ['o', 'open']:
-        path = raw_input("Path to open: ")
+        path = input("Path to open: ")
         pickle_fd = open(path, 'rb+')
         obj = pickle.load(pickle_fd)
     elif command in ['h', 'help']:
@@ -65,13 +66,13 @@ while True:
     elif command in ['d', 'display']:
         print(obj)
     elif command in ['e', 'edit']:
-        edit = raw_input("Edit command: ")
+        edit = input("Edit command: ")
         # eval(edit)
         eval(compile(edit, 'command-line', 'single'))
         dirty = True
     elif command in ['c', 'close', 'q', 'quit']:
         if dirty:
-            flush = raw_input("Modified object not saved - save now?: ")
+            flush = input("Modified object not saved - save now?: ")
             if flush.lower() in ('y', 'yes'):
                 pickle_fd.seek(0)
                 pickle.dump(obj, pickle_fd)

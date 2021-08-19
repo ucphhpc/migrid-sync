@@ -31,6 +31,9 @@
 # Copyright (C) 2010  The MiG Project lead by Brian Vinter
 #
 
+from past.builtins import execfile
+from past.builtins import basestring
+from builtins import object
 import base64
 import logging
 import os

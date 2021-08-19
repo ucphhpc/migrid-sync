@@ -34,8 +34,13 @@ machines etc.
 
 from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import chr
+from builtins import range
+from past.builtins import basestring
 import datetime
-import ConfigParser
+import configparser
 import md5
 import operator
 import os
@@ -190,7 +195,7 @@ def vms_list(client_id, configuration):
 
         vm_def_base = os.path.basename(os.path.dirname(vm_def_path))
 
-        vm_config = ConfigParser.ConfigParser()
+        vm_config = configparser.ConfigParser()
         vm_config.read([vm_def_path])
 
         machine['name'] = vm_def_base
@@ -447,7 +452,7 @@ def edit_vm(client_id, configuration, machine_name, machine_specs):
     # Grab the configuration file defining the machine
 
     for conf_path in vms_conf_paths:
-        vm_config = ConfigParser.ConfigParser()
+        vm_config = configparser.ConfigParser()
         vm_config.read([conf_path])
         for (key, val) in machine_specs.items():
             if not isinstance(val, basestring) and isinstance(val, list):

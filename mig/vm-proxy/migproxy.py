@@ -29,13 +29,15 @@
 #
 
 from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
 import logging
 import os
 import sys
 import threading
 import time
-import ConfigParser
-from SimpleHTTPServer import SimpleHTTPRequestHandler
+import configparser
+from http.server import SimpleHTTPRequestHandler
 
 try:
     import OpenSSL
@@ -62,7 +64,7 @@ class Proxy(daemon.Daemon):
         
         # Load configuration from file
 
-        cp = ConfigParser.ConfigParser()
+        cp = configparser.ConfigParser()
         cp.read([self.default_conf])
 
         self.clientPort = int(cp.get(self.section_settings,

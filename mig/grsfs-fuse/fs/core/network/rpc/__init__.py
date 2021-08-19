@@ -32,9 +32,17 @@ Copyright (c) 2010 Jan Wiberg. All rights reserved.
 from __future__ import print_function
 from __future__ import absolute_import
 
-import cPickle as pickle
+from future import standard_library
+standard_library.install_aliases()
+
 import socket
+import sys
 import threading
+if sys.version_info[0] >= 3:
+    import pickle
+else:
+    import cPickle as pickle
+
 # Select actual RPC implementation here and keep details hidden in the rest 
 from .securexmlrpc import SecureXMLRPCServer as SecureRPCServer
 from .securexmlrpc import SecureXMLRPCServerProxy as SecureRPCServerProxy

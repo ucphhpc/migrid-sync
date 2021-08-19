@@ -35,7 +35,9 @@ but completely rewritten to fit our infrastructure and on-disk layout.
 
 from __future__ import absolute_import
 
-import Cookie
+from future import standard_library
+standard_library.install_aliases()
+import http.cookies
 import os
 import time
 
@@ -238,7 +240,7 @@ def main(client_id, user_arguments_dict, environ=None):
     if check_only:
         logger.info("skip session init in setup check for %s" % client_id)
     else:
-        cookie = Cookie.SimpleCookie()
+        cookie = http.cookies.SimpleCookie()
         # TODO: reuse any existing session?
         # create a secure session cookie
         session_key = generate_session_key(configuration, client_id)

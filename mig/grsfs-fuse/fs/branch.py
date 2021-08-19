@@ -30,9 +30,11 @@
 """
 from __future__ import print_function
 
-import xmlrpclib
+from future import standard_library
+standard_library.install_aliases()
+import xmlrpc.client
 
-proxy = xmlrpclib.ServerProxy("http://n0:8000/")
+proxy = xmlrpc.client.ServerProxy("http://n0:8000/")
 
 print(proxy.branch("/somedir", "/tmp/mybranch", "%s:%d/%s" % ("localhost", 8000, "mybranch")))
 

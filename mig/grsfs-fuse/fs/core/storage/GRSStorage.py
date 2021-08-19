@@ -28,6 +28,7 @@
 """
     GRSStorage - storage super class
 """
+from builtins import object
 from core.specialized import ReadWriteLock
 
 

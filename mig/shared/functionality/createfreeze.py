@@ -29,6 +29,7 @@
 
 from __future__ import absolute_import
 
+from builtins import range
 import datetime
 import os
 
@@ -76,7 +77,7 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
                                             client_dir)) + os.sep
     xfer_pattern = 'freeze_%s_%%d' % xfer
-    for i in xrange(max_freeze_files):
+    for i in range(max_freeze_files):
         if xfer_pattern % i in user_args:
             source_path = user_args[xfer_pattern % i][-1].strip()
             source_path = os.path.normpath(source_path).lstrip(os.sep)
@@ -143,7 +144,7 @@ def parse_form_upload(user_args, client_id, configuration):
     files, rejected = [], []
     i = 0
     client_dir = client_id_dir(client_id)
-    for i in xrange(max_freeze_files):
+    for i in range(max_freeze_files):
         if 'freeze_upload_%d' % i in user_args:
             file_item = user_args['freeze_upload_%d' % i]
             filename = user_args.get('freeze_upload_%dfilename' % i,

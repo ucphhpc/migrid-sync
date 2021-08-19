@@ -30,9 +30,11 @@ server.
 """
 from __future__ import print_function
 
+from future import standard_library
+standard_library.install_aliases()
 import os
 import sys
-import httplib
+import http.client
 
 try:
     HOME = os.getenv('HOME')
@@ -49,7 +51,7 @@ args = input_args[:len(input_args)] + args[len(input_args):]
 
 print('Connecting to %s:%s using key in %s and cert in %s' % tuple(args))
 try:
-    connection = httplib.HTTPSConnection(server, int(port), key_path,
+    connection = http.client.HTTPSConnection(server, int(port), key_path,
             cert_path)
 
     sys.stdin = os.open('pp.txt', os.O_RDWR)

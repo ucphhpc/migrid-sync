@@ -29,6 +29,7 @@
     Contains dispatcher related functionality
 """
 
+from builtins import object
 import errno
 import socket
 import time

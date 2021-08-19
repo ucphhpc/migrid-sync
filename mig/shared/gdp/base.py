@@ -240,7 +240,7 @@ def __validate_user_db(configuration, client_id, user_db=None):
             _logger.error(log_err_msg + template)
 
     if status:
-        for (key, value) in projects.iteritems():
+        for (key, value) in projects.items():
             if not 'client_id' in value:
                 status = False
                 template = ": Missing 'client_id' entry for project: %r" \
@@ -1232,7 +1232,7 @@ def get_projects(configuration, client_id, state, owner_only=False):
     if status:
         user_projects = user_db.get(client_id, {}).get('projects', {})
         result = {}
-        for (key, value) in user_projects.iteritems():
+        for (key, value) in user_projects.items():
             # Implicit fill once and for all for backwards compatibility
             project_state = value['state'] = value.get('state', '')
             project_category_meta = value['category_meta'] = \
@@ -2069,7 +2069,7 @@ def edit_gdp_user(
     # Change MiG DB and GDP DB for project users
 
     user_projects = gdp_user.get('projects', {})
-    for project_name, project_dict in user_projects.iteritems():
+    for project_name, project_dict in user_projects.items():
         project_user_id = project_dict.get('client_id', {})
         if not project_user_id:
             msg = "missing user_id for project: %r" % project_name
@@ -3535,7 +3535,7 @@ def project_close(
     else:
         autologout = True
         user_db = __load_user_db(configuration)
-        for (_, user_dict) in user_db.iteritems():
+        for (_, user_dict) in user_db.items():
             role = user_dict.get('account', {}).get(
                 protocol, {}).get('role', '')
             if role:
@@ -3803,7 +3803,7 @@ This directory is used for hosting private files for the %r %r.
 
         # Remove project directories
 
-        for (key, path) in rollback_dirs.iteritems():
+        for (key, path) in rollback_dirs.items():
             _logger.info(
                 "GDP: project_create : roll back :"
                 + " Recursively removing : %r -> %r" % (key, path))

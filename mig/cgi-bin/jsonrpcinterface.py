@@ -39,9 +39,11 @@ depending on the platform.
 """
 from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
 from jsonrpclib.SimpleJSONRPCServer import CGIJSONRPCRequestHandler
 # NOTE: See below for explanation of this XMLRPC dependency 
-from SimpleXMLRPCServer import CGIXMLRPCRequestHandler
+from xmlrpc.server import CGIXMLRPCRequestHandler
 
 from mig.shared.rpcfunctions import expose_functions, system_method_signature, \
        system_method_help

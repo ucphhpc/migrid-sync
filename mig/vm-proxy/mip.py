@@ -29,6 +29,7 @@
 
 # -- END_HEADER ---
 
+from builtins import object
 from struct import *
 
 identifiers = {
@@ -63,7 +64,7 @@ def setup_response(ticket, status=0):
     return pack('!BIB', 2, ticket, status)
 
 
-class ServerInfo:
+class ServerInfo(object):
 
     def __init__(
         self,

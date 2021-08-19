@@ -28,25 +28,27 @@
 """Simple test CGI server"""
 from __future__ import print_function
 
+from future import standard_library
+standard_library.install_aliases()
 import sys
-import CGIHTTPServer
-import BaseHTTPServer
-import SocketServer
+import http.server
+import http.server
+import socketserver
 
 
-class Handler(CGIHTTPServer.CGIHTTPRequestHandler):
+class Handler(http.server.CGIHTTPRequestHandler):
 
     cgi_directories = ['/cgi-bin']
 
 
-class ThreadingServer(SocketServer.ThreadingMixIn,
-    BaseHTTPServer.HTTPServer):
+class ThreadingServer(socketserver.ThreadingMixIn,
+    http.server.HTTPServer):
 
     pass
 
 
-class ForkingServer(SocketServer.ForkingMixIn,
-    BaseHTTPServer.HTTPServer):
+class ForkingServer(socketserver.ForkingMixIn,
+    http.server.HTTPServer):
 
     pass
 

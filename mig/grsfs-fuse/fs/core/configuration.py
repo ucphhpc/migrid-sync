@@ -31,12 +31,13 @@ Copyright (c) 2010 __MyCompanyName__. All rights reserved.
 """
 from __future__ import print_function
 
+from builtins import object
 import os, socket
 
 class ConfigurationException(Exception):
     pass
 
-class Configuration:
+class Configuration(object):
     def __init__(self):
         """docstring for __init__"""
         

@@ -28,6 +28,7 @@
 #
 
 from __future__ import print_function
+from builtins import object
 import logging
 import os
 import select
@@ -42,7 +43,7 @@ except ImportError:
     OpenSSL = None
 
 
-class Plumber:
+class Plumber(object):
     """Plumber, select only plumber
   
     A primitive for tunneling traffic between two sockets. If sockets where called
@@ -153,7 +154,7 @@ class Plumber:
                       self.source_fn, self.sink_fn))
 
 
-class PlumberTS:
+class PlumberTS(object):
     """PlumberTS, threading and select
     
     A primitive for tunneling traffic between two sockets. If sockets where called
@@ -232,7 +233,7 @@ class PlumberTS:
         sink.close()
 
 
-class PlumberTO:
+class PlumberTO(object):
     """PlumberTO, threading
   
     A primitive for tunneling traffic between two sockets. If sockets where called

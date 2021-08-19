@@ -30,6 +30,9 @@
 
 from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
 import ast
 import base64
 import os
@@ -104,7 +107,7 @@ def base32urldecode(configuration, encoded_url,
     encoded_url_len = len(encoded_url)
     if encoded_url_len % 8 != 0:
         padlen = 8 - encoded_url_len % 8
-        padding = ''.join('=' for i in xrange(padlen))
+        padding = ''.join('=' for i in range(padlen))
     decoded_url = base64.b32decode('%s%s' % (encoded_url, padding))
     if strip_query_arguments:
         result_url = decoded_url.split('?')[0]
@@ -115,7 +118,7 @@ def base32urldecode(configuration, encoded_url,
 
     # Regenerate query_dict value lists from their string representatives
 
-    for (key, value) in query_dict.iteritems():
+    for (key, value) in query_dict.items():
         try:
             query_dict[key] = ast.literal_eval(value)
         except ValueError as exc:

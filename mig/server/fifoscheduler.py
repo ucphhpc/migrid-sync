@@ -28,6 +28,7 @@
 """Strict FIFO Scheduler"""
 from __future__ import absolute_import
 
+from builtins import range
 from mig.server.scheduler import Scheduler
 
 

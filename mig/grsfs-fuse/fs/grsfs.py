@@ -42,22 +42,24 @@ migfuse is a fuse frontend to the MiG Distributed Storage System
 from __future__ import print_function
 from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
 import pprint
 import fuse
 
-import Queue
+import queue
 from fuse import Fuse
 import os
 from threading import Thread
 import threading
-import thread
+import _thread
 import stat, errno
 from os.path import abspath, expanduser, isfile
 
 fuse.fuse_python_api = (0, 2)
 fuse.feature_assert('stateful_files', 'has_init')
 
-import thread
+import _thread
 import quopri
 
 import sys, traceback, re, time, tempfile, array, syslog

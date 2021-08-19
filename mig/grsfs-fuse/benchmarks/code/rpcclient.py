@@ -91,7 +91,7 @@ if __name__ == '__main__':
                 print('Error in parsing %s value: %s' % (opt, err))
                 sys.exit(1)
         elif opt in ('-t', '--transport'):
-            if not val in allowed_transports.keys():
+            if not val in allowed_transports:
                 print("unknown transport: %s" % val)
                 usage()
                 sys.exit(1)

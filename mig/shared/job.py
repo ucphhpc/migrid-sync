@@ -29,6 +29,8 @@
 
 from __future__ import absolute_import
 
+from past.builtins import basestring
+from builtins import object
 import fcntl
 import os
 import time
@@ -49,7 +51,7 @@ JOB_TYPES = [
 ]
 
 
-class Job:
+class Job(object):
     """Job objects"""
 
     # job_id = None
@@ -277,7 +279,7 @@ def create_job_object_from_pickled_mrsl(filepath, logger,
     if not job_dict:
         return (False, 'could not unpickle mrsl file %s' % filepath)
     jobo = Job()
-    for (key, value) in job_dict.iteritems():
+    for (key, value) in job_dict.items():
         if "%s" % type(value) == "<type 'time.struct_time'>":
 
             # time.struct_time objects cannot be marshalled in the xmlrpc

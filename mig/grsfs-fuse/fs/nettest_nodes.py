@@ -29,10 +29,15 @@
 Created by Jan Wiberg on 2010-03-29.
 Copyright (c) 2010 __MyCompanyName__. All rights reserved.
 """
+
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
 
-import sys, time, os
+import os
+import sys
+import time
+
 from .core.entities import *
 from .core.configuration import *
 
@@ -69,7 +74,7 @@ def main():
     
     wait_time = (2 if opt.mincopies == 0 else 15)
     print("Sleeping %d seconds to allow others to get off the ground" % wait_time)
-    time.sleep(wait_time / 2)
+    time.sleep(wait_time // 2)
     print("Attempting actions")
     
     try:        

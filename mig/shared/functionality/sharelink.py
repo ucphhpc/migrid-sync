@@ -29,6 +29,7 @@
 
 from __future__ import absolute_import
 
+from builtins import range
 from binascii import hexlify
 import os
 import datetime

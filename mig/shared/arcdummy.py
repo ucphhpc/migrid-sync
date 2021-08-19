@@ -53,6 +53,7 @@
 
 from __future__ import absolute_import
 
+from builtins import object
 import os
 
 # MiG utilities:
@@ -89,7 +90,7 @@ class NoProxyError(ARCLibError):
         ARCLibError.__init__(self, ('No proxy available: %s' % msg))
 
 
-class DummyProxy:
+class DummyProxy(object):
 
     """Proxy management class.
 
@@ -160,7 +161,7 @@ voms-proxy-init, and can be found in /tmp/x509up_u&lt;your UID&gt;.<br>
     return output_objects
 
 
-class Ui:
+class Ui(object):
 
     """ARC middleware user interface class."""
 

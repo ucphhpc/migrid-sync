@@ -29,6 +29,7 @@
 
 from __future__ import absolute_import
 
+from past.builtins import basestring
 import os
 import time
 import types
@@ -76,7 +77,7 @@ def expand_variables(job_dict):
     # constant string values should be safe.
     var_map = [('+JOBID+', job_dict.get('JOB_ID', '+JOBID+')),
                ('+JOBNAME+', job_dict.get('JOBNAME', '+JOBNAME+'))]
-    for (key, value) in job_dict.iteritems():
+    for (key, value) in job_dict.items():
         if isinstance(value, list):
             newlist = []
             for elem in value[:]:
@@ -141,7 +142,7 @@ def parse(
 
     # Insert the parts from mrslkeywords we need in the rest of the MiG system
 
-    for (key, value_dict) in external_dict.iteritems():
+    for (key, value_dict) in external_dict.items():
         global_dict[key] = value_dict['Value']
 
     # We do not expand any job variables yet in order to allow any future

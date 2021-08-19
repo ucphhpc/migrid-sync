@@ -25,6 +25,7 @@
 # -- END_HEADER ---
 #
 
+from builtins import range
 import sys as _sys
 """
 Contains stuff that didn't fit anywhere else

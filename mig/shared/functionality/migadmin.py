@@ -412,7 +412,7 @@ provide access to e.g. managing the grid job queues.
                 stats = load(path, serializer=file_format)
                 all_stats[prefix].update(force_utf8_rec(stats))
 
-        sorted_stats = all_stats.items()
+        sorted_stats = list(all_stats.items())
         sorted_stats.sort()
         for (name, stats) in sorted_stats:
             html += format_stats(name, stats)

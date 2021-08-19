@@ -58,6 +58,8 @@
 # -- END_HEADER ---
 #
 
+from builtins import range
+from builtins import object
 from struct import *
 
 PIXEL_FORMAT = pack(
@@ -139,7 +141,7 @@ encodings = {
 # Experimenting with representing rectangle like this.
 # Is this overdoing it?
 
-class Rectangle:
+class Rectangle(object):
 
     def __init__(
         self,

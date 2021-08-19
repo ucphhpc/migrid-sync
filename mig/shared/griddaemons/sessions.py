@@ -210,7 +210,7 @@ def get_open_sessions(configuration,
         result = _active_sessions.get(client_id, {}).get(
             proto, {})
     else:
-        for (_, open_sessions) in _active_sessions.iteritems():
+        for (_, open_sessions) in _active_sessions.items():
             open_proto_session = open_sessions.get(proto, {})
             if open_proto_session:
                 result.update(open_proto_session)

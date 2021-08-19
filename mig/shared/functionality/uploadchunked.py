@@ -36,6 +36,7 @@ files must be non-overlapping to guarantee race-free writing.
 
 from __future__ import absolute_import
 
+from past.builtins import basestring
 import os
 
 from mig.shared import returnvalues

@@ -58,11 +58,14 @@ Requires OpenID module (https://github.com/openid/python-openid).
 from __future__ import print_function
 from __future__ import absolute_import
 
-from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
-from SocketServer import ThreadingMixIn
+from future import standard_library
+standard_library.install_aliases()
+from past.builtins import basestring
+from http.server import HTTPServer, BaseHTTPRequestHandler
+from socketserver import ThreadingMixIn
 
 import base64
-import Cookie
+import http.cookies
 import cgi
 import cgitb
 import os
@@ -648,14 +651,14 @@ Invalid '%s' input: %s
         cookies = self.headers.get('Cookie')
         # print "found cookies: %s" % cookies
         if cookies:
-            morsel = Cookie.BaseCookie(cookies).get('user')
+            morsel = http.cookies.BaseCookie(cookies).get('user')
             # Added morsel value check here since IE sends empty string from
             # cookie after initial user=;expire is sent. Others leave it out.
             if morsel and morsel.value != '':
                 self.user = morsel.value
 
             expire = int(time.time() + self.session_ttl)
-            morsel = Cookie.BaseCookie(cookies).get('session_expire')
+            morsel = http.cookies.BaseCookie(cookies).get('session_expire')
             if morsel and morsel.value != '':
                 # print "found user session_expire value: %s" % morsel.value
                 if morsel.value.isdigit() and int(morsel.value) <= expire:
@@ -782,7 +785,7 @@ session state.
             return
 
         self.send_response(webresponse.code)
-        for header, value in webresponse.headers.iteritems():
+        for header, value in webresponse.headers.items():
             self.send_header(header, value)
         self.writeUserHeader()
         self.end_headers()

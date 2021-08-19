@@ -30,6 +30,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import range
 import os
 import time
 import socket
@@ -231,7 +232,7 @@ def create_job_script(
                                                  socket.getfqdn())
         mount_known_hosts = "%s,[%s]:%s" % (sftp_addresses[0],
                                             sftp_addresses[0], sftp_port)
-        for list_idx in xrange(1, len(sftp_addresses)):
+        for list_idx in range(1, len(sftp_addresses)):
             for sftp_address in sftp_addresses[list_idx]:
                 mount_known_hosts += ",%s,[%s]:%s" % (sftp_address,
                                                       sftp_address,

@@ -30,6 +30,8 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import range
+from past.builtins import basestring
 import sys
 import time
 import datetime
@@ -797,10 +799,8 @@ while True:
 
         vgrids_in_prioritized_order = []
 
-        list_indexes = range(last_vgrid, len(exe_vgrids))
-        list_indexes = list_indexes + range(0, last_vgrid)
-
-        for index in list_indexes:
+        list_indices = [(last_vgrid + i) % len(exe_vgrids) for i in range(len(exe_vgrids))]
+        for index in list_indices:
 
             # replace "" with default_vgrid
 

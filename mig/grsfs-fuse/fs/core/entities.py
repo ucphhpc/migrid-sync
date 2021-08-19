@@ -30,6 +30,7 @@ Created by Jan Wiberg on 2010-03-21.
 Copyright (c) 2010 __MyCompanyName__. All rights reserved.
 """
 
+from builtins import object
 import sys, os, syslog, stat, errno
 import fuse
 from core.kernel import Kernel

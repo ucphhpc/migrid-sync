@@ -277,7 +277,7 @@ def cron_match(configuration, cron_time, entry):
                  'month': cron_time.month, 'dayofmonth': cron_time.day,
                  'dayofweek': cron_time.weekday()}
     # TODO: extend to support e.g. */5 and the likes?
-    for name, val in time_vals.items():
+    for (name, val) in time_vals.items():
         # Strip any leading zeros before integer match
         if not fnmatch.fnmatch("%s" % val, entry[name].lstrip('0')):
             _logger.debug("cron_match failed on %s: %s vs %s" %

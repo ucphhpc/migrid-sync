@@ -30,6 +30,7 @@ Pyro and m2crypto to provide the SSL functionality.
 """
 from __future__ import print_function
 
+from builtins import object
 import os
 import sys
 import Pyro.core
@@ -73,14 +74,14 @@ class SecurePyroServerProxy(Pyro.core.DynamicProxyWithAttrs):
         Pyro.core.DynamicProxyWithAttrs.__init__(self, '%(uri)s' % kwargs)
 
 
-class DummyHelper:
+class DummyHelper(object):
     """Wrapper object"""
     def echo_test(self, text):
         """For testing only"""
         return text
 
 
-class IntrospectionHelper:
+class IntrospectionHelper(object):
     """For introspection functions"""
     introspect = {'system.listMethods': ('None', 'list of method names'),
                   'system.listSignatures': ('None', 'list of signatures'),
@@ -91,13 +92,13 @@ class IntrospectionHelper:
 
     def listMethods(self):
         """List available methods"""
-        methods = self.introspect.keys()
+        methods = list(self.introspect)
         # TODO: should look up methods from parent, too
         return methods
 
     def listSignatures(self):
         """List available signatures"""
-        methods = self.introspect.keys()
+        methods = list(self.introspect)
         signatures = []
         # TODO: should look up methods from parent, too
         for name in methods:
@@ -106,7 +107,7 @@ class IntrospectionHelper:
 
     def methodHelp(self, method):
         """Show method docs"""
-        methods = self.introspect.keys()
+        methods = list(self.introspect)
         # TODO: should look up methods from parent
         if method in methods:
             return 'doc for %s: none' % method

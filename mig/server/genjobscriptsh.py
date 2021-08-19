@@ -29,13 +29,14 @@
 
 from __future__ import absolute_import
 
+from builtins import object
 import os
 
 from mig.shared.defaults import job_output_dir, src_dst_sep
 from mig.shared.url import quote
 
 
-class GenJobScriptSh:
+class GenJobScriptSh(object):
     """Bourne shell script generator"""
 
     def __init__(

@@ -44,10 +44,13 @@ multiprotocol transports.
 from __future__ import print_function
 from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
 import os
 import sys
 import time
-import thread
+import _thread
 
 try:
     import irclib
@@ -405,7 +408,7 @@ unless it is available in mig/server/MiGserver.conf
                 irc_server.add_global_handler('disconnect', on_disconnect)
                 irc_server.add_global_handler('privmsg', on_privmsg)
                 irc_server.add_global_handler('pubmsg', on_pubmsg)
-                thread.start_new_thread(irc_process_forever, ())
+                _thread.start_new_thread(irc_process_forever, ())
 
             # Handle messages
 

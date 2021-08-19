@@ -50,6 +50,7 @@ inform imported users about their login.
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import zip
 import fileinput
 
 from mig.shared.base import fill_distinguished_name

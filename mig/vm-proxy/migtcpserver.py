@@ -28,13 +28,16 @@
 #
 
 from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
 import logging
 import os
 import socket
 import sys
 import threading
 import time
-import SocketServer
+import socketserver
 
 try:
     import OpenSSL
@@ -46,7 +49,7 @@ from mig.shared.conf import get_configuration_object
 from mig.shared.tlsserver import hardened_openssl_context
 
 
-class Whitelist:
+class Whitelist(object):
 
     """Whitelisting mixin requests are only allowed from the list of peers"""
 
@@ -74,8 +77,8 @@ def verify_cb(
     return ok
 
 
-class MiGTCPServer(Whitelist, SocketServer.ThreadingMixIn,
-    SocketServer.TCPServer):
+class MiGTCPServer(Whitelist, socketserver.ThreadingMixIn,
+    socketserver.TCPServer):
     """An extension of TcpServer adding:
   
     * Threading (mix-in)
@@ -107,7 +110,7 @@ class MiGTCPServer(Whitelist, SocketServer.ThreadingMixIn,
         ):
         """Constructor overwritten to initialize TLS"""
 
-        SocketServer.BaseServer.__init__(self, server_address,
+        socketserver.BaseServer.__init__(self, server_address,
                 RequestHandlerClass)
 
         self.tls_conf = tls_conf
@@ -144,7 +147,7 @@ class MiGTCPServer(Whitelist, SocketServer.ThreadingMixIn,
         vnc servers and many others, so it is conveniently added in this generic class.
         """
 
-        SocketServer.TCPServer.server_bind(self)
+        socketserver.TCPServer.server_bind(self)
         (host, port) = self.socket.getsockname()[:2]
 
         self.server_host = host

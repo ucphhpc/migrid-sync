@@ -28,6 +28,7 @@
 
 """Default values for use in other modules"""
 
+from builtins import zip
 from string import ascii_lowercase, ascii_uppercase, digits
 import sys
 

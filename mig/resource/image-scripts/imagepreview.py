@@ -27,7 +27,9 @@
 #
 
 """Image preview and meta data generator helper functions"""
+from __future__ import division
 
+from builtins import range
 import os
 import re
 import cv2
@@ -144,7 +146,7 @@ def fill_image_data(logger, meta):
             logger.debug('data.dtype: %s' % data.dtype)
 
             data_type = None
-            for (key, value) in allowed_data_types.iteritems():
+            for (key, value) in allowed_data_types.items():
                 if value == data.dtype:
                     data_type = key
 
@@ -727,8 +729,7 @@ def add_volume_preview_slice_data(logger, meta):
 
         slice_count = len(volume_slice_dict)
         volume_progress = 0
-        volume_progress_step = 100.0 / (slice_count
-                                        + preview_x_dimension)
+        volume_progress_step = 100.0 / (slice_count + preview_x_dimension)
         if slice_count >= z_dimension:
             logger.debug('Creating preview volume from: %s slices'
                          % slice_count)
@@ -809,7 +810,7 @@ def add_volume_preview_slice_data(logger, meta):
                          % (tmp_volume.shape, ))
             resized_volume = zeros(resized_volume_shape,
                                    dtype=data_type)
-            for x in xrange(resize_x_dimension):
+            for x in range(resize_x_dimension):
                 update_volume_setting['settings_update_progress'] = \
                     '%s/%s : %s%%' % (volume_nr, volume_count,
                                       int(round(volume_progress)))

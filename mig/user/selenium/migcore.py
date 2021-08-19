@@ -37,6 +37,8 @@ mig_login(driver, url, login, passwd)
 
 from __future__ import print_function
 
+from builtins import range
+
 # Robust import - only fail if used without being available
 try:
     import pyotp

@@ -31,6 +31,7 @@ even when something essential breaks in the backend output delivery.
 
 from __future__ import absolute_import
 
+from builtins import range
 import time
 
 # IMPORTANT: this is emergency handling so do NOT import any custom modules!

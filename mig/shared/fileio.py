@@ -30,6 +30,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import range
 from hashlib import md5, sha1, sha256, sha512
 import errno
 import fcntl
@@ -104,7 +105,7 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
         except:
             filehandle.seek(0, 2)
             file_size = filehandle.tell()
-            for _ in xrange(offset - file_size):
+            for _ in range(offset - file_size):
                 filehandle.write('\0')
         logger.info('write %s chunk of size %d at position %d' %
                     (path, len(chunk), filehandle.tell()))
@@ -730,7 +731,7 @@ def responsive_acquire_lock(lock_path, exclusive, max_attempts=10,
     locking retries.
     """
     lock_handle = None
-    for i in xrange(max_attempts):
+    for i in range(max_attempts):
         lock_handle = acquire_file_lock(lock_path, exclusive, False)
         if lock_handle is None:
             time.sleep(retry_delay)

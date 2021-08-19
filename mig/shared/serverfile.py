@@ -32,6 +32,7 @@ be used as a template for other IO modules that hide the underlying
 physical location of server files.
 """
 
+from builtins import object
 __version__ = '$Revision: 1564 $'
 __revision__ = __version__
 

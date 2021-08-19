@@ -2295,7 +2295,7 @@ def get(
                     ERROR_MSG = \
                         "Invalid volume type: '%s', allowed: %s" \
                         % (image_settings['volume_type'],
-                           allowed_volume_types.values())
+                           list(allowed_volume_types.values()))
                     output_objects.append({'object_type': 'error_text',
                                            'text': ERROR_MSG})
                     logger.error(ERROR_MSG)
@@ -2568,7 +2568,7 @@ def clean(
                     # Add imagesetting to remove list
 
                     remove_imagesettings_ids.append(imagesetting_id)
-                    remove_triggers = imagesetting['triggers'].values()
+                    remove_triggers = list(imagesetting['triggers'].values())
 
                     (remove_status, remove_msg) = \
                         vgrid_remove_triggers(configuration, vgrid,

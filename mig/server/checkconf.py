@@ -33,6 +33,8 @@ extended to include other variable checks.
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import input
+from past.builtins import basestring
 import os
 import re
 import sys
@@ -56,7 +58,7 @@ The script checks the default MiG server configuration or server_conf for errors
 def ask_reply(question):
     """Read user input"""
 
-    return raw_input(question)
+    return input(question)
 
 
 def ask_confirm(question, allow_always=False):

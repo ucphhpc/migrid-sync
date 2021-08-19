@@ -41,7 +41,7 @@ if __name__ == '__main__':
         if domain_suffix not in domain_map:
             domain_map[domain_suffix] = 0
         domain_map[domain_suffix] += 1
-    domain_list = domain_map.items()
+    domain_list = list(domain_map.items())
     domain_list.sort()
     for (domain, cnt) in domain_list:
         print('%d\t%s' % (cnt, domain))

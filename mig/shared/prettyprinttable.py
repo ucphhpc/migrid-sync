@@ -36,6 +36,7 @@ http://www.ginstrom.com/scribbles/2007/09/04/pretty-printing-a-table-in-python/
 Modified to suit MiG
 """
 
+from builtins import range
 import locale
 locale.setlocale(locale.LC_NUMERIC, '')
 

@@ -10,6 +10,7 @@ Copyright (c) 2010 __MyCompanyName__. All rights reserved.
 """
 from __future__ import print_function
 
+from builtins import object
 import sys, os, inspect, subprocess
 import constants
 
@@ -34,7 +35,7 @@ def return_status(f):
     except Exception as v:
         return (constants.RET_FAIL, v)
 
-class superunit:
+class superunit(object):
     def __init__(self):
         pass
 

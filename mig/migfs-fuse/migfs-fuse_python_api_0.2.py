@@ -31,9 +31,13 @@ which at the time of this writing uses curl as a HTTPS transport
 with client certificate support.
 """
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
+
 __version__ = '0.5.3'
 
-import ConfigParser
+import configparser
 import array
 import fuse
 import logging
@@ -45,7 +49,7 @@ import os
 import stat
 import sys
 import tempfile
-import thread
+import _thread
 import time
 import traceback
 from threading import Thread
@@ -82,7 +86,7 @@ def _log_exception(msg):
     log.exception(msg)
 
 
-class MiGAccess:
+class MiGAccess(object):
 
     """Class providing wrappers to all low level MiG access"""
 
@@ -209,7 +213,7 @@ class MiGAccess:
         return (0, (max_space, used_space))
 
 
-class InodeCache:
+class InodeCache(object):
 
     """
     Class holding all cached inode data: requires locking in
@@ -222,7 +226,7 @@ class InodeCache:
         """
 
         self.__cache = {}
-        self.__lock = thread.allocate_lock()
+        self.__lock = _thread.allocate_lock()
         self.__inode_timeout = timeout
 
     def read_inode(self, path):
@@ -264,7 +268,7 @@ class InodeCache:
         self.__lock.release()
 
 
-class FileBuffer:
+class FileBuffer(object):
 
     """Generic file buffering class"""
 
@@ -284,7 +288,7 @@ class FileBuffer:
         return self.__buffer[pos:pos + size]
 
 
-class OpenFile:
+class OpenFile(object):
 
     """
     Class holding any currently open files. Includes a reference
@@ -1082,8 +1086,8 @@ class MiGfs(Fuse):
             raise IOError("statfs failed: %s" % out)
         (fs_blocks, used) = out
         if fs_blocks:
-            total_blocks = long(fs_blocks // block_size)
-            blocks_free = long((fs_blocks - used) // block_size)
+            total_blocks = int(fs_blocks // block_size)
+            blocks_free = int((fs_blocks - used) // block_size)
             blocks_free_user = blocks_free
             log.debug('total blocks: %s' % total_blocks)
             log.debug('blocks_free: %s' % blocks_free)
@@ -1296,7 +1300,7 @@ log.addHandler(stdout_handler)
 
 inode_timeout = 300
 
-conf = ConfigParser.ConfigParser()
+conf = configparser.ConfigParser()
 try:
     conf.read(migfs_config)
     sections = conf.sections()

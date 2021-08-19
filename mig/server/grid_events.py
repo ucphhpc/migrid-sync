@@ -973,7 +973,7 @@ class MiGFileEventHandler(PatternMatchingEventHandler):
                     # created.
                     if pattern['parameterize_over']:
                         all_values = []
-                        for var, sweep in pattern['parameterize_over'].items():
+                        for (var, sweep) in pattern['parameterize_over'].items():
 
                             start = float(sweep[PARAM_START])
                             stop = float(sweep[PARAM_STOP])

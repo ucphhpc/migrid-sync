@@ -29,6 +29,7 @@
 
 from __future__ import absolute_import
 
+from builtins import range
 import os
 
 from mig.shared import returnvalues

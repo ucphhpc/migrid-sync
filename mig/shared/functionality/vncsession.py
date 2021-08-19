@@ -28,6 +28,7 @@
 """Start a new vnc session"""
 from __future__ import absolute_import
 
+from builtins import range
 import os
 import socket
 

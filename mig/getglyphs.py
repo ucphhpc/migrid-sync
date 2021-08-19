@@ -36,14 +36,16 @@ Usage:
 
 from __future__ import print_function
 
+from future import standard_library
+standard_library.install_aliases()
 import os
 import sys
-import HTMLParser
+import html.parser
 
 from mig.shared.url import urlopen
 
 
-class GlyphParser(HTMLParser.HTMLParser):
+class GlyphParser(html.parser.HTMLParser):
     """Extract glyph tag content from html document"""
 
     in_glyph = False

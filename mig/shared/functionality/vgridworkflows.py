@@ -33,6 +33,9 @@ status and so on to ease workflow collaboration.
 """
 from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
 import os
 import re
 import time
@@ -78,7 +81,7 @@ def read_trigger_log(configuration, vgrid_name, flags):
     """
 
     log_content = ''
-    for i in xrange(workflows_log_cnt - 1, -1, -1):
+    for i in range(workflows_log_cnt - 1, -1, -1):
         log_name = '%s.%s' % (configuration.vgrid_triggers,
                               workflows_log_name)
         if i > 0:
@@ -294,7 +297,7 @@ access the workflows.'''
                 vars_html += "    %s: %s<br/>" % (key, val)
         commands_html = ''
         commands = get_usage_map(configuration)
-        for usage in commands.values():
+        for usage in list(commands.values()):
             commands_html += "    %s<br/>" % usage
 
         helper_html = """

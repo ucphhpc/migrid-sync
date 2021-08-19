@@ -37,13 +37,21 @@ Callers should use join/leave meta-operations rather than operating on the membe
 Created by Jan Wiberg on 2010-03-21.
 Copyright (c) 2010 Jan Wiberg. All rights reserved.
 """
+
 from __future__ import print_function
 
-import sys
-import os
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
 import itertools
+import os
+import sys
 import time
-import cPickle as pickle
+if sys.version_info[0] >= 3:
+    import pickle
+else:
+    import cPickle as pickle
+
 from core.specialized.aux import total_ordering
 
 SINGULAR = 0  # standalone

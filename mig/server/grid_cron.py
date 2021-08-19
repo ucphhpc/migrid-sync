@@ -165,8 +165,8 @@ def run_command(
         import traceback
         logger.info('traceback:\n%s' % traceback.format_exc())
         raise exc
-    logger.info('(%s) done running command for %s: %s' % (pid,
-                                                          target_path, command_str))
+    logger.info('(%s) done running command for %s: %s' %
+                (pid, target_path, command_str))
 
     # logger.debug('(%s) raw output is: %s' % (pid, output_objects))
 
@@ -528,7 +528,7 @@ def monitor(configuration):
             loop_minute = loop_start.replace(second=0, microsecond=0)
             logger.debug('main loop started with %d crontabs and %d atjobs' %
                          (len(all_crontabs), len(all_atjobs)))
-            for crontab_path, user_crontab in all_crontabs.items():
+            for (crontab_path, user_crontab) in all_crontabs.items():
                 client_dir = os.path.basename(os.path.dirname(crontab_path))
                 client_id = client_dir_id(client_dir)
                 for entry in user_crontab:
@@ -538,7 +538,7 @@ def monitor(configuration):
                         logger.info('run matching cron entry: %s' % entry)
                         run_handler(configuration, client_id, loop_minute,
                                     entry)
-            for atjobs_path, user_atjobs in all_atjobs.items():
+            for (atjobs_path, user_atjobs) in all_atjobs.items():
                 client_dir = os.path.basename(os.path.dirname(atjobs_path))
                 client_id = client_dir_id(client_dir)
                 remaining = []

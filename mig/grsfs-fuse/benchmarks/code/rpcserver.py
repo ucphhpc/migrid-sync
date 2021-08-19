@@ -29,6 +29,8 @@
 """Minimal RPC benchmark server"""
 from __future__ import print_function
 
+from future import standard_library
+standard_library.install_aliases()
 import sys
 import getopt
 
@@ -54,7 +56,7 @@ def true():
 def main(conf):
     """Run minimal benchmark server"""
     if conf["transport"] == "xmlrpc":
-        from SimpleXMLRPCServer import SimpleXMLRPCServer, \
+        from xmlrpc.server import SimpleXMLRPCServer, \
              SimpleXMLRPCRequestHandler
         handler = SimpleXMLRPCRequestHandler
         # Force keep-alive support - please note that pypy clients may need to

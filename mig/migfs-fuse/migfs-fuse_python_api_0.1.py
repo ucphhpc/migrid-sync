@@ -31,9 +31,15 @@ which at the time of this writing uses curl as a HTTPS transport
 with client certificate support.
 """
 
+from __future__ import division
+
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
+
 __version__ = '0.5.3'
 
-import ConfigParser
+import configparser
 import array
 import fuse
 import logging
@@ -45,7 +51,7 @@ import os
 import stat
 import sys
 import tempfile
-import thread
+import _thread
 import time
 import traceback
 from threading import Thread
@@ -82,7 +88,7 @@ def _log_exception(msg):
     log.exception(msg)
 
 
-class MiGAccess:
+class MiGAccess(object):
 
     """Class providing wrappers to all low level MiG access"""
 
@@ -209,7 +215,7 @@ class MiGAccess:
         return (0, (max_space, used_space))
 
 
-class InodeCache:
+class InodeCache(object):
 
     """
     Class holding all cached inode data: requires locking in
@@ -222,7 +228,7 @@ class InodeCache:
         """
 
         self.__cache = {}
-        self.__lock = thread.allocate_lock()
+        self.__lock = _thread.allocate_lock()
         self.__inode_timeout = timeout
 
     def read_inode(self, path):
@@ -264,7 +270,7 @@ class InodeCache:
         self.__lock.release()
 
 
-class FileBuffer:
+class FileBuffer(object):
 
     """Generic file buffering class"""
 
@@ -284,7 +290,7 @@ class FileBuffer:
         return self.__buffer[pos:pos + size]
 
 
-class OpenFile:
+class OpenFile(object):
 
     """
     Class holding any currently open files. Includes a reference
@@ -331,8 +337,8 @@ class OpenFile:
 
         log.debug('writing %d bytes at offset %d' % (buflen, offset))
 
-        self.current_block = self.current_offset / self.blocksize
-        offset_block = offset / self.blocksize
+        self.current_block = self.current_offset // self.blocksize
+        offset_block = offset // self.blocksize
 
         # refresh buffer if it is not ready
 
@@ -386,7 +392,7 @@ class OpenFile:
                 self.__inode_cache.update_inode(self.path, updates)
             self.current_offset += write_len
             self.is_dirty = True
-            if self.current_offset / self.blocksize\
+            if self.current_offset // self.blocksize \
                     > self.current_block:
                 self.last_block = self.current_block
                 self.commit_to_mig()
@@ -429,7 +435,7 @@ class OpenFile:
         buflen = self.blocksize
 
         (time_stamp, inode) = self.__inode_cache.read_inode(self.path)
-        if self.current_block >= inode['size'] / self.blocksize:
+        if self.current_block >= inode['size'] // self.blocksize:
             buflen = inode['size'] % self.blocksize
 
         # correct for inclusion of first and last byte in write
@@ -467,7 +473,7 @@ class OpenFile:
             readoffset = (offset + upto) % self.blocksize
             thisread = min(toread, min(self.blocksize - readoffset
                                        % self.blocksize, self.blocksize))
-            bytes = (offset + upto) / self.blocksize
+            bytes = (offset + upto) // self.blocksize
             (from_index, to_index) = (readoffset, readoffset + thisread)
             outbuf[upto:] = \
                 self.read_from_mig(bytes)[from_index:to_index]
@@ -1059,8 +1065,8 @@ class MiGfs(Fuse):
             raise IOError("statfs failed: %s" % out)
         (fs_blocks, used) = out
         if fs_blocks:
-            total_blocks = long(fs_blocks / block_size)
-            blocks_free = long((fs_blocks - used) / block_size)
+            total_blocks = int(fs_blocks // block_size)
+            blocks_free = int((fs_blocks - used) // block_size)
             blocks_free_user = blocks_free
             log.debug('total blocks: %s' % total_blocks)
             log.debug('blocks_free: %s' % blocks_free)
@@ -1272,7 +1278,7 @@ log.addHandler(stdout_handler)
 
 inode_timeout = 300
 
-conf = ConfigParser.ConfigParser()
+conf = configparser.ConfigParser()
 try:
     conf.read(migfs_config)
     sections = conf.sections()

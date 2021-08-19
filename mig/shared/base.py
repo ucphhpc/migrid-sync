@@ -30,6 +30,8 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import range
+from past.builtins import basestring
 import base64
 import os
 
@@ -638,6 +640,6 @@ if __name__ == '__main__':
         (allow, msg) = allow_script(configuration, script_name, client_id)
         print("check %s with client id '%s': %s %s" % (script_name, client_id,
                                                        allow, msg))
-    print("brief format of short list: %s" % brief_list(range(5)))
-    print("brief format of long list: %s" % brief_list(range(30)))
-    print("brief format of huge list: %s" % brief_list(range(200)))
+    print("brief format of short list: %s" % brief_list(list(range(5))))
+    print("brief format of long list: %s" % brief_list(list(range(30))))
+    print("brief format of huge list: %s" % brief_list(list(range(200))))

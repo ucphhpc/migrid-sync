@@ -51,6 +51,8 @@ client acting on your MiG home.
 """
 from __future__ import print_function
 
+from builtins import input
+from builtins import range
 import getpass
 import netrc
 import os
@@ -214,7 +216,7 @@ if __name__ == "__main__":
     if not user_name:
         print("""Please enter/paste the short alias username from your %s
 WebDAVS Settings page""" % server_fqdn)
-        user_name = raw_input('Username: ')
+        user_name = input('Username: ')
 
         print("""Please enter your password entered on your %s WebDAVS
 Settings page""" % server_fqdn)

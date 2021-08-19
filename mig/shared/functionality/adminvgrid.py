@@ -30,6 +30,7 @@ controls to administrate them.
 """
 from __future__ import absolute_import
 
+from builtins import zip
 import os
 from binascii import hexlify
 

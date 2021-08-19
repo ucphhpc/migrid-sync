@@ -34,6 +34,8 @@ from the normal server operation.
 """
 from __future__ import print_function
 
+from builtins import zip
+from builtins import object
 __version__ = '$Revision: 2084 $'
 __revision__ = __version__
 

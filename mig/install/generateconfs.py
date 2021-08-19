@@ -31,6 +31,7 @@ Creates MiG server and Apache configurations to fit the provided settings.
 
 from __future__ import print_function
 
+from builtins import zip
 import datetime
 import getopt
 import os

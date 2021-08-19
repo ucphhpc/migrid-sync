@@ -75,7 +75,11 @@ loglevel = info
 
 """
 
-import ConfigParser
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+from builtins import object
+import configparser
 import errno
 import grp
 import logging
@@ -168,7 +172,7 @@ class Daemon(object):
         """Read basic options from the daemon config file"""
 
         self.config_filename = self.options.config_filename
-        cp = ConfigParser.ConfigParser()
+        cp = configparser.ConfigParser()
         cp.read([self.config_filename])
         self.config_parser = cp
 

@@ -114,7 +114,7 @@ def display_arc_queue(queue):
         row('%s' % queue.node_cpu,
             ' ', '(%s)' % queue.mds_validfrom)
 
-    if zero_install_arc in map(str, queue.cluster.runtime_environments):
+    if zero_install_arc in ["%s" % rte for rte in queue.cluster.runtime_environments]:
         html += row('Node Memory: %s' % queue.node_memory,
                     'Provides Zero-Install runtime environment')
     else:
@@ -177,7 +177,7 @@ def queue_resource(queue):
 
     resource['RUNTIMEENVIRONMENT'] = []
     z_i = 'ENV/ZERO-INSTALL'  # hard-wired name, same as in jobscriptgenerator
-    if z_i in map(str, queue.cluster.runtime_environments):
+    if z_i in ["%s" % rte for rte in queue.cluster.runtime_environments]:
         resource['RUNTIMEENVIRONMENT'] = ['ZERO-INSTALL (ARC)']
 
     return resource

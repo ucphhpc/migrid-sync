@@ -27,12 +27,16 @@
 # -- END_HEADER ---
 #
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import chr
+from builtins import range
 import logging
 import md5
 import os
 import sys
 import time
-import SocketServer
+import socketserver
 from binascii import hexlify
 from struct import unpack, pack
 
@@ -75,7 +79,7 @@ def vnc_jobid(job_id='Unknown'):
 
 # TODO: -add timeouts to the handshake, it should not wait forever if the other side is hanging in a handshake
 
-class ProxyAgentHandler(SocketServer.BaseRequestHandler):
+class ProxyAgentHandler(socketserver.BaseRequestHandler):
     """ProxyAgentHandler,
     A MIP server.
     """

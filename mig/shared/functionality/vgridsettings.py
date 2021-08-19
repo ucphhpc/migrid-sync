@@ -108,7 +108,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     (ret_val, msg, ret_variables) = \
         init_vgrid_script_add_rem(vgrid_name, client_id,
-                                  new_settings.items(), 'settings',
+                                  list(new_settings.items()), 'settings',
                                   configuration)
     if not ret_val:
         output_objects.append({'object_type': 'error_text', 'text': msg})
@@ -350,7 +350,7 @@ write to %s on %s shared files""" % (write_shared_files.lower(), vgrid_name)})
     # format as list of tuples to fit usual form and then pickle
 
     (set_status, set_msg) = vgrid_set_settings(configuration, vgrid_name,
-                                               new_settings.items())
+                                               list(new_settings.items()))
     if not set_status:
         output_objects.append({'object_type': 'error_text', 'text': '%s'
                                % set_msg})

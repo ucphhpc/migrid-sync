@@ -31,6 +31,7 @@ the functionality dir.
 
 from __future__ import absolute_import
 
+from past.builtins import basestring
 import os
 import time
 

@@ -32,6 +32,7 @@ flooding.
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import range
 import os
 import multiprocessing
 import signal
@@ -101,7 +102,7 @@ def send_notifications(configuration):
     logger = configuration.logger
     # logger.debug("send_notifications")
     result = []
-    for (client_id, client_dict) in received_notifications.iteritems():
+    for (client_id, client_dict) in received_notifications.items():
         timestamp = client_dict.get('timestamp', 0)
 
         timestr = (datetime.fromtimestamp(timestamp)
@@ -113,11 +114,11 @@ def send_notifications(configuration):
         total_events = 0
         notify_message = ""
         messages_dict = client_dict.get('messages', {})
-        for (header, value) in messages_dict.iteritems():
+        for (header, value) in messages_dict.items():
             if notify_message:
                 notify_message += "\n\n"
             notify_message += "= %s =\n" % header
-            for (message, events) in value.iteritems():
+            for (message, events) in value.items():
                 notify_message += "#%s : %s\n" % (events, message)
                 total_events += events
         subject = "System notification: %s new events" % total_events
@@ -250,7 +251,7 @@ def unittest(configuration, emailaddr, delay):
         return
     nr_debug_users = 2
     client_ids = []
-    for i in xrange(nr_debug_users):
+    for i in range(nr_debug_users):
         client_ids.append(
             "/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Grid Notify %i/emailAddress=%s"
             % (i, emailaddr))
@@ -258,7 +259,7 @@ def unittest(configuration, emailaddr, delay):
     print("======= Starting test =======")
     print("=============================")
     for client_id in client_ids:
-        for i in xrange(5):
+        for i in range(5):
             for protocol in ['SFTP', 'WebDAVS']:
                 if stop_running.is_set():
                     return

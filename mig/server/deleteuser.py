@@ -29,6 +29,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import input
 import os
 import sys
 import getopt
@@ -123,11 +124,11 @@ if '__main__' == __name__:
         user_dict = distinguished_name_to_user(user_id)
     elif not configuration.site_enable_gdp:
         print('Please enter the details for the user to be removed:')
-        user_dict['full_name'] = raw_input('Full Name: ').title()
-        user_dict['organization'] = raw_input('Organization: ')
-        user_dict['state'] = raw_input('State: ')
-        user_dict['country'] = raw_input('2-letter Country Code: ')
-        user_dict['email'] = raw_input('Email: ')
+        user_dict['full_name'] = input('Full Name: ').title()
+        user_dict['organization'] = input('Organization: ')
+        user_dict['state'] = input('State: ')
+        user_dict['country'] = input('2-letter Country Code: ')
+        user_dict['email'] = input('Email: ')
     else:
         print("Error: Missing one or more of the arguments: " \
             + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] " \

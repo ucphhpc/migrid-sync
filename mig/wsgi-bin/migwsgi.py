@@ -25,6 +25,7 @@
 # -- END_HEADER ---
 #
 
+from builtins import range
 import os
 import sys
 import cgi
@@ -271,7 +272,7 @@ def application(environ, start_response):
                 chunk_parts += 1
             _logger.info("WSGI %s yielding %d output parts (%db)" %
                          (backend, chunk_parts, content_length))
-        for i in xrange(chunk_parts):
+        for i in range(chunk_parts):
             # _logger.debug("WSGI %s yielding part %d / %d output parts" %
             #              (backend, i+1, chunk_parts))
             # end index may be after end of content - but no problem

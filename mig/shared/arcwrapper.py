@@ -36,7 +36,12 @@
 
 from __future__ import absolute_import
 
-import commands
+from future import standard_library
+standard_library.install_aliases()
+from builtins import next
+from builtins import filter
+from builtins import object
+import subprocess
 import os
 import sys
 import tempfile
@@ -173,9 +178,9 @@ def getstatusoutput(cmd, env=None, startDir=""):
     execCmd = variableDefs + cmd
 
     if startDir == "":
-        resultVal, result = commands.getstatusoutput(execCmd)
+        resultVal, result = subprocess.getstatusoutput(execCmd)
     else:
-        resultVal, result = commands.getstatusoutput(
+        resultVal, result = subprocess.getstatusoutput(
             'cd "%s";set;%s' % (startDir, execCmd))
 
     resultLines = result.split('\n')
@@ -239,7 +244,7 @@ def create_grid_proxy(cert_path, key_path, proxy_path):
         raise
 
 
-class Ui:
+class Ui(object):
 
     """ARC middleware user interface class."""
 
@@ -841,7 +846,7 @@ class Ui:
         def notGmlog(file):
             return ((not file.isDir) or (file.filename != 'gmlog'))
 
-        return (filter(notGmlog, files))
+        return (list(filter(notGmlog, files)))
 
 
 # stdout of a job can be found directly in its job directory, but might have

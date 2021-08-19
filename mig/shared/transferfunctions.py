@@ -30,6 +30,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import range
 import datetime
 import os
 import time
@@ -436,12 +437,12 @@ if __name__ == "__main__":
     client, transfer = "testuser", "testtransfer"
     sub_procs = sub_pid_list(conf, sub_procs_map, client, transfer)
     print("initial sub pids: %s" % sub_procs)
-    for pid in xrange(3):
+    for pid in range(3):
         print("add sub pid: %s" % pid)
         add_sub_pid(conf, sub_procs_map, client, transfer, pid)
         sub_procs = sub_pid_list(conf, sub_procs_map, client, transfer)
         print("current sub pids: %s" % sub_procs)
-    for pid in xrange(3):
+    for pid in range(3):
         print("del sub pid: %s" % pid)
         del_sub_pid(conf, sub_procs_map, client, transfer, pid)
         sub_procs = sub_pid_list(conf, sub_procs_map, client, transfer)
@@ -450,7 +451,7 @@ if __name__ == "__main__":
     workers_map = {}
     transfer_workers = all_worker_transfers(conf, workers_map)
     print("initial transfer workers: %s" % transfer_workers)
-    for i in xrange(3):
+    for i in range(3):
         transfer_id = "%s-%d" % (transfer, i)
         worker = "dummy-worker-%d" % i
         print("add %s %s %s " % (client, transfer_id, worker))
@@ -460,7 +461,7 @@ if __name__ == "__main__":
         print("verify latest transfer worker: %s" % verify_worker)
     transfer_workers = all_worker_transfers(conf, workers_map)
     print("all transfer workers: %s" % transfer_workers)
-    for i in xrange(3):
+    for i in range(3):
         transfer_id = "%s-%d" % (transfer, i)
         worker = "dummy-worker-%d" % i
         print("remove %s %s %s " % (client, transfer_id, worker))

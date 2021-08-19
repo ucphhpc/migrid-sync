@@ -30,6 +30,7 @@
 
 from __future__ import absolute_import
 
+from builtins import range
 import os
 import traceback
 
@@ -644,7 +645,7 @@ def __get_row_idx_list(logger, table, condition):
     on *condition*, if condition is '' return all row indexes"""
 
     if condition is None or condition == '':
-        row_idx_list = [i for i in xrange(table.nrows)]
+        row_idx_list = [i for i in range(table.nrows)]
     else:
         row_idx_list = table.get_where_list(condition)
 
@@ -1034,7 +1035,7 @@ def get_image_file_settings_ent_template_dict(logger):
 
     template = image_file_settings_ent
     return {template.names[idx]: template[idx]
-            for idx in xrange(len(template))}
+            for idx in range(len(template))}
 
 
 def get_image_file_ent_template_dict(logger):
@@ -1042,7 +1043,7 @@ def get_image_file_ent_template_dict(logger):
 
     template = image_file_ent
     return {template.names[idx]: template[idx]
-            for idx in xrange(len(template))}
+            for idx in range(len(template))}
 
 
 def get_image_volume_settings_ent_template_dict(logger):
@@ -1050,7 +1051,7 @@ def get_image_volume_settings_ent_template_dict(logger):
 
     template = image_volume_settings_ent
     return {template.names[idx]: template[idx]
-            for idx in xrange(len(template))}
+            for idx in range(len(template))}
 
 
 def get_image_volume_ent_template_dict(logger):
@@ -1058,7 +1059,7 @@ def get_image_volume_ent_template_dict(logger):
 
     template = image_volume_ent
     return {template.names[idx]: template[idx]
-            for idx in xrange(len(template))}
+            for idx in range(len(template))}
 
 
 def get_preview_image_url(

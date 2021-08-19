@@ -29,6 +29,7 @@
 
 from __future__ import absolute_import
 
+from past.builtins import cmp
 from datetime import datetime, timedelta
 
 from mig.shared import returnvalues

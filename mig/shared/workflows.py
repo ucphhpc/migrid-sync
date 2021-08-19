@@ -27,6 +27,8 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import next
+from past.builtins import basestring
 import datetime
 import fcntl
 import os
@@ -2598,7 +2600,7 @@ def __update_workflow_pattern(
                         if rule_path[1] not in workflow_pattern['input_paths']]
 
         # [path1, path2]
-        ep = dict(map(lambda x: x, existing_paths))
+        ep = dict(existing_paths)
         missing_paths = [np for np in workflow_pattern['input_paths']
                          if np not in ep.values()]
 

@@ -30,12 +30,13 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import object
 import os
 
 from mig.shared.defaults import job_output_dir
 
 
-class GenJobScriptPython:
+class GenJobScriptPython(object):
     """Python job script generator"""
 
     def __init__(

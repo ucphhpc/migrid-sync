@@ -28,6 +28,7 @@
 """Unit tests for core helper functions"""
 from __future__ import print_function
 
+from builtins import range
 import sys
 import time
 import logging
@@ -141,7 +142,7 @@ if __name__ == "__main__":
 
     print("Check brief format list limit")
     for (size, outlen) in [(5, 15), (30, 58), (200, 63)]:
-        shortened = "%s" % brief_list(range(size))
+        shortened = "%s" % brief_list(list(range(size)))
         if len(shortened) != outlen:
             print("ERROR: Expected brief range %d list of length %d but not the case: %s" %
                   (size, outlen, len(shortened)))

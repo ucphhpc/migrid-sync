@@ -30,6 +30,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import range
 import base64
 import hashlib
 import json
@@ -96,7 +97,7 @@ def __wait_available(configuration, client_id, cloud_id, cloud_flavor,
     # TODO: lookup the openstack client V3 version of the utils.wait_for_X
     _logger = configuration.logger
     try:
-        for i in xrange(__max_wait_secs // __poll_delay_secs):
+        for i in range(__max_wait_secs // __poll_delay_secs):
             status, msg = status_of_cloud_instance(configuration, client_id,
                                                    cloud_id, cloud_flavor,
                                                    force_utf8(instance.name))
@@ -122,7 +123,7 @@ def __wait_gone(configuration, client_id, cloud_id, cloud_flavor, instance):
     """Wait for instance to be truly gone after delete"""
     _logger = configuration.logger
     try:
-        for i in xrange(__max_wait_secs // __poll_delay_secs):
+        for i in range(__max_wait_secs // __poll_delay_secs):
             status, msg = status_of_cloud_instance(configuration, client_id,
                                                    cloud_id, cloud_flavor,
                                                    force_utf8(instance.name))
@@ -406,15 +407,13 @@ def openstack_status_all_cloud_instances(configuration, client_id, cloud_id,
                     #   {..., 'addr': EXT_IP, 'OS-EXT-IPS:type': 'floating'}
                     # ]}
                     if name == 'public_ip':
-                        address_entries = field_val.values()
-                        for entry in address_entries:
+                        for entry in field_val.values():
                             if entry and entry[-1] and \
                                     'floating' in entry[-1].values():
                                 field_val = entry[-1].get('addr', 'UNKNOWN')
                                 break
                     elif name == 'public_fqdn':
-                        address_entries = field_val.values()
-                        for entry in address_entries:
+                        for entry in field_val.values():
                             if entry and entry[-1] and \
                                     'floating' in entry[-1].values():
                                 addr = entry[-1].get('addr', '')

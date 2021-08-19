@@ -32,6 +32,7 @@
 
 from __future__ import absolute_import
 
+from past.builtins import basestring
 import base64
 import os
 import time

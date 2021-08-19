@@ -32,6 +32,7 @@ and output the matches and mismatches.
 from __future__ import print_function
 from __future__ import absolute_import
 
+from past.builtins import basestring
 import getopt
 import re
 import sys

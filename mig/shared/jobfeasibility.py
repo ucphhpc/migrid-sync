@@ -156,7 +156,7 @@ def suggestion_implementation(configuration, job, job_cond, errors,
     """
 
     vgrids = list(vgrid_resource_dict)
-    all_resources = vgrid_resource_dict.values()
+    all_resources = list(vgrid_resource_dict.values())
     resources = [res for sublist in all_resources for res in sublist]
     vgrid_resource_dict.clear()
 
@@ -805,7 +805,7 @@ def pass_job_cond(configuration, job_cond, job_cond_color):
     the required validations configured for a specific job_cond color.
     """
 
-    if reduce(lambda x, y: x and y, job_cond.values()):
+    if reduce(lambda x, y: x and y, list(job_cond.values())):
         return True
     else:
         job_cond_config = []

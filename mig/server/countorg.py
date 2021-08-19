@@ -41,7 +41,7 @@ if __name__ == '__main__':
         if org_prefix not in org_map:
             org_map[org_prefix] = 0
         org_map[org_prefix] += 1
-    org_list = org_map.items()
+    org_list = list(org_map.items())
     org_list.sort()
     for (org, cnt) in org_list:
         print('%d\t%s' % (cnt, org))

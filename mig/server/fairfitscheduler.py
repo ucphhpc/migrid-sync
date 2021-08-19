@@ -30,6 +30,7 @@ with an absolute and a relative waiting-time bonus to counter inherent
 starvation tendencies of pure best-fit scheduling.
 """
 from __future__ import absolute_import
+from __future__ import division
 
 import time
 

@@ -25,10 +25,11 @@
 # -- END_HEADER ---
 #
 
+from builtins import object
 import os
 import logging, logging.handlers
 
-class Logger:
+class Logger(object):
     """
     This class (c) pupyMPI group.
     """

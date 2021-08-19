@@ -26,15 +26,20 @@
 #
 
 """Pickle based serializing"""
+
 from __future__ import print_function
+
+from future import standard_library
+standard_library.install_aliases()
+
+import json
+import yaml
 
 # Python 2 requires explicit cPickle where as python 3 defaults to it
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
-import json
-import yaml
 
 
 def dumps(data, protocol=0, serializer='pickle', **kwargs):

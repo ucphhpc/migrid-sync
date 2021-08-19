@@ -36,6 +36,7 @@ couchdb (for sgas-experimental).
 
 from __future__ import absolute_import
 
+from builtins import zip
 import json
 import os
 import re
@@ -343,7 +344,7 @@ The query you have requested did not return any data.
                 else:
                     new_keys.append(k)
 
-            lookupdict = dict(lookupdict.items() + sumdict.items())
+            lookupdict = dict(list(lookupdict.items()) + list(sumdict.items()))
             keys = list(set(new_keys))
 
         # keys should be shortened, especially only use the CN part of

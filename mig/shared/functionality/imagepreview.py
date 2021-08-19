@@ -115,7 +115,7 @@ def main(client_id, user_arguments_dict):
     # Convert accepted values to string and filter out NON-set values
 
     accepted_joined_values = {key: ''.join(value)
-                              for (key, value) in accepted.iteritems() if len(value) > 0}
+                              for (key, value) in accepted.items() if len(value) > 0}
 
     action = accepted_joined_values['action']
     flags = accepted_joined_values['flags']

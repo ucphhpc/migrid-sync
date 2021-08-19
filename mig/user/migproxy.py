@@ -1,5 +1,8 @@
 from __future__ import print_function
 #!/bin/sh -
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
 "exec" "python" "-O" "$0" "$@"
 
 __doc__ = """Minimum intrusion Grid Proxy - an extension of Tiny HTTP Proxy.
@@ -25,14 +28,14 @@ described in the distributed LICENSE file for details.
 __version__ = "0.2.1"
 
 import os
-import BaseHTTPServer
+import http.server
 import select
 import socket
-import SocketServer
-import urlparse
+import socketserver
+import urllib.parse
 
 
-class MiGSSLSocket:
+class MiGSSLSocket(object):
 
     """SSL socket wrapper to mimic plain socket API"""
     _sock = None
@@ -64,8 +67,8 @@ class MiGSSLSocket:
         return self._sock.close()
 
 
-class ProxyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
-    __base = BaseHTTPServer.BaseHTTPRequestHandler
+class ProxyHandler (http.server.BaseHTTPRequestHandler):
+    __base = http.server.BaseHTTPRequestHandler
     __base_handle = __base.handle
 
     server_version = "MiGHTTPProxy/" + __version__
@@ -163,7 +166,7 @@ class ProxyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 
     def do_GET(self):
         print("DEBUG: in get")
-        (scm, netloc, path, params, query, fragment) = urlparse.urlparse(
+        (scm, netloc, path, params, query, fragment) = urllib.parse.urlparse(
             self.path, 'http')
         if scm != 'http' or fragment or not netloc:
             self.send_error(400, "bad url %s" % self.path)
@@ -174,7 +177,7 @@ class ProxyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
                 self.log_request()
                 self.sock.send("%s %s %s\r\n" % (
                     self.command,
-                    urlparse.urlunparse(('', '', path, params, query, '')),
+                    urllib.parse.urlunparse(('', '', path, params, query, '')),
                     self.request_version))
                 self.headers['Connection'] = 'close'
                 del self.headers['Proxy-Connection']
@@ -220,8 +223,8 @@ class ProxyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
     do_DELETE = do_GET
 
 
-class ThreadingHTTPServer (SocketServer.ThreadingMixIn,
-                           BaseHTTPServer.HTTPServer):
+class ThreadingHTTPServer (socketserver.ThreadingMixIn,
+                           http.server.HTTPServer):
     pass
 
 
@@ -266,4 +269,4 @@ if __name__ == '__main__':
         else:
             print("Any clients will be served...")
 
-        BaseHTTPServer.test(ProxyHandler, MiGProxy)
+        http.server.test(ProxyHandler, MiGProxy)

@@ -31,12 +31,15 @@ server IO. It is imported and used by the public interface modules.
 
 from __future__ import print_function
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
 __version__ = '$Revision: 2084 $'
 __revision__ = __version__
 
 # $Id: distbase.py 2084 2007-09-11 08:39:37Z jones $
 
-import httplib
+import http.client
 import sys
 import time
 from io import BytesIO as LegacyStringIO
@@ -197,10 +200,10 @@ def http_no_payload(
     location = normpath(path)
     for _ in range(max_redirects):
         if HTTPS_CERT_PORT == port:
-            connection = httplib.HTTPSConnection(host, port, KEY_PATH,
+            connection = http.client.HTTPSConnection(host, port, KEY_PATH,
                                                  CERT_PATH)
         else:
-            connection = httplib.HTTPSConnection(host, port)
+            connection = http.client.HTTPSConnection(host, port)
 
         connection.connect()
         ssl_socket = connection.sock._ssl
@@ -365,10 +368,10 @@ def http_get(host, port, path):
 
     path = normpath(path)
     if HTTPS_CERT_PORT == port:
-        connection = httplib.HTTPSConnection(host, port, KEY_PATH,
+        connection = http.client.HTTPSConnection(host, port, KEY_PATH,
                                              CERT_PATH)
     else:
-        connection = httplib.HTTPSConnection(host, port)
+        connection = http.client.HTTPSConnection(host, port)
 
     connection.connect()
     ssl_socket = connection.sock._ssl
@@ -422,10 +425,10 @@ def http_put(
 
     path = normpath(path)
     if HTTPS_CERT_PORT == port:
-        connection = httplib.HTTPSConnection(host, port, KEY_PATH,
+        connection = http.client.HTTPSConnection(host, port, KEY_PATH,
                                              CERT_PATH)
     else:
-        connection = httplib.HTTPSConnection(host, port)
+        connection = http.client.HTTPSConnection(host, port)
 
     connection.connect()
     ssl_socket = connection.sock._ssl

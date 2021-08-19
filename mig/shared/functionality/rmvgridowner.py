@@ -28,6 +28,7 @@
 """Remove an owner from a given vgrid"""
 from __future__ import absolute_import
 
+from past.builtins import basestring
 import os
 from binascii import hexlify
 

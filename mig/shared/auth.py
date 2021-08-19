@@ -29,10 +29,13 @@
 
 from __future__ import absolute_import
 
-import Cookie
+from future import standard_library
+standard_library.install_aliases()
+from builtins import zip
 import base64
 import glob
 import hashlib
+import http.cookies
 import os
 import re
 import time
@@ -307,7 +310,7 @@ def client_twofactor_session(configuration,
     if configuration.site_enable_gdp:
         client_id = get_base_client_id(
             configuration, client_id, expand_oid_alias=False)
-    session_cookie = Cookie.SimpleCookie()
+    session_cookie = http.cookies.SimpleCookie()
     session_cookie.load(environ.get('HTTP_COOKIE', ""))
     session_cookie = session_cookie.get('2FA_Auth', None)
     if session_cookie is None:

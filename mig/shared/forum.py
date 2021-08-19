@@ -65,6 +65,9 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 """
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
 import fcntl
 try:
     from hashlib import md5 as md5_hash

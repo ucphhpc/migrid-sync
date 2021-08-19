@@ -30,6 +30,9 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import zip
+from builtins import input
+from past.builtins import basestring
 from email.utils import parseaddr
 import datetime
 import fnmatch
@@ -327,7 +330,7 @@ def create_user(
 
     if not os.path.exists(db_path):
         print('User DB in %s does not exist - okay if first user' % db_path)
-        create_answer = raw_input('Create new user DB? [Y/n] ')
+        create_answer = input('Create new user DB? [Y/n] ')
         if create_answer.lower().startswith('n'):
             if do_lock:
                 unlock_user_db(flock)
@@ -385,7 +388,7 @@ def create_user(
                             (account_status, accepted_peer_list))
         if ask_renew:
             print('User DB entry for "%s" already exists' % client_id)
-            renew_answer = raw_input('Renew existing entry? [Y/n] ')
+            renew_answer = input('Renew existing entry? [Y/n] ')
             renew = not renew_answer.lower().startswith('n')
         else:
             renew = default_renew
@@ -408,7 +411,7 @@ def create_user(
                     print("""User '%s' exists with *different* password!
 Generally users with an existing account should sign up again through Xgi-bin
 using their existing credentials to authorize password changes.""" % client_id)
-                    accept_answer = raw_input(
+                    accept_answer = input(
                         'Accept password change? [y/N] ')
                     authorized = accept_answer.lower().startswith('y')
                     if not authorized:
@@ -1166,7 +1169,7 @@ def delete_user(
         print('User ID: %s\n' % client_id)
 
     if not force:
-        delete_answer = raw_input(
+        delete_answer = input(
             "Really PERMANENTLY delete %r including user home data? [y/N] " %
             client_id)
         if not delete_answer.lower().startswith('y'):

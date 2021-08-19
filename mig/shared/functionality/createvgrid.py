@@ -29,9 +29,13 @@
 
 from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import zip
+from past.builtins import basestring
 import os
 import traceback
-import ConfigParser
+import configparser
 from email.utils import parseaddr
 from tempfile import NamedTemporaryFile
 
@@ -333,7 +337,7 @@ def create_tracker(
 
             # We want to customize generated project trac.ini with project info
 
-            conf = ConfigParser.SafeConfigParser()
+            conf = configparser.SafeConfigParser()
             conf.read(target_tracker_conf_file)
 
             conf_overrides = {

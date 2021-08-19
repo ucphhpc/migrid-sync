@@ -269,7 +269,7 @@ def create_runtimeenv(filename, client_id, configuration):
 
     # move parse result to a dictionary
 
-    for (key, value_dict) in external_dict.iteritems():
+    for (key, value_dict) in external_dict.items():
         new_dict[key] = value_dict['Value']
 
     new_dict['CREATOR'] = client_id

@@ -29,6 +29,7 @@
 from __future__ import print_function
 
 
+from builtins import object
 def format_job(job_dict, detail=['JOB_ID']):
 
     # Keyword all shows all values
@@ -51,7 +52,7 @@ def print_job(job_dict, detail=['JOB_ID']):
     print('\n'.join(format_job(job_dict, detail)))
 
 
-class JobQueue:
+class JobQueue(object):
 
     """Simple job queue implemantation using a list"""
 

@@ -62,7 +62,7 @@ def get_resource_config_dict(configuration, config_file):
 
     global_dict = {}
 
-    for (key, value_dict) in external_dict.iteritems():
+    for (key, value_dict) in external_dict.items():
         global_dict[key] = value_dict['Value']
 
     return (status, msg, global_dict)

@@ -28,6 +28,8 @@
 """Add one or more owners to a vgrid"""
 from __future__ import absolute_import
 
+from builtins import zip
+from past.builtins import basestring
 from binascii import unhexlify
 import os
 

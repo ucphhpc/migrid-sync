@@ -30,6 +30,10 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+from builtins import object
 import base64
 import datetime
 import os
@@ -37,7 +41,7 @@ import pwd
 import socket
 import sys
 import time
-from ConfigParser import ConfigParser
+from configparser import ConfigParser
 
 from mig.shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
     CSRF_FULL, POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, \
@@ -167,7 +171,7 @@ def fix_missing(config_file, verbose=True):
         'user_davs_log': 'davs.log',
         'user_ftps_address': fqdn,
         'user_ftps_ctrl_port': 8021,
-        'user_ftps_pasv_ports': range(8100, 8400),
+        'user_ftps_pasv_ports': list(range(8100, 8400)),
         'user_ftps_key': '~/certs/combined.pem',
         'user_ftps_key_sha256': '',
         'user_ftps_auth': ['password'],
@@ -287,7 +291,7 @@ def fix_missing(config_file, verbose=True):
         fd.close()
 
 
-class Configuration:
+class Configuration(object):
 
     """Server configuration in parsed form"""
 
@@ -412,7 +416,7 @@ class Configuration:
     user_davs_log = 'davs.log'
     user_ftps_address = ''
     user_ftps_ctrl_port = 8021
-    user_ftps_pasv_ports = range(8100, 8400)
+    user_ftps_pasv_ports = list(range(8100, 8400))
     user_ftps_show_address = ''
     user_ftps_show_ctrl_port = 8021
     user_ftps_key = ''
@@ -497,7 +501,7 @@ class Configuration:
     vm_client_port = 8111
     vm_applet_port = 8114
     # Interactive job VNC port
-    job_vnc_ports = range(8080, 8099)
+    job_vnc_ports = list(range(8080, 8099))
     enable_server_dist = False
     sleep_secs = 0
     sleep_update_totals = 0
@@ -1020,7 +1024,7 @@ location.""" % self.config_file)
         if config.has_option('GLOBAL', 'user_ftps_pasv_ports'):
             text_range = config.get('GLOBAL', 'user_ftps_pasv_ports')
             first, last = text_range.split(':')[:2]
-            self.user_ftps_pasv_ports = range(int(first), int(last))
+            self.user_ftps_pasv_ports = list(range(int(first), int(last)))
         if config.has_option('GLOBAL', 'user_ftps_show_address'):
             self.user_ftps_show_address = config.get('GLOBAL',
                                                      'user_ftps_show_address')
@@ -1285,7 +1289,7 @@ location.""" % self.config_file)
         if config.has_option('GLOBAL', 'job_vnc_ports'):
             text_range = config.get('GLOBAL', 'job_vnc_ports')
             first, last = text_range.split(':')[:2]
-            self.job_vnc_ports = range(int(first), int(last))
+            self.job_vnc_ports = list(range(int(first), int(last)))
 
         if config.has_option('GLOBAL', 'user_shared_dhparams'):
             self.user_shared_dhparams = config.get('GLOBAL',

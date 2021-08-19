@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from builtins import object
 import os, inspect,pprint,time, errno, fcntl
 from stat import *
 

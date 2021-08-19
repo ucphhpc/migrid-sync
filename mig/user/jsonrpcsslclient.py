@@ -39,14 +39,16 @@ depending on the platform.
 
 from __future__ import print_function
 
-import httplib
+from future import standard_library
+standard_library.install_aliases()
+import http.client
 import os
 import ssl
 import sys
 import time
 
 from jsonrpclib import jsonrpc
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 
 def read_user_conf():
@@ -169,7 +171,7 @@ class SafeCertTransport(jsonrpc.SafeTransport):
         if self._connection and host == self._connection[0]:
             return self._connection[1]
         try:
-            HTTPS = httplib.HTTPSConnection
+            HTTPS = http.client.HTTPSConnection
         except AttributeError:
             raise NotImplementedError(
                 "your version of httplib doesn't support HTTPS")
