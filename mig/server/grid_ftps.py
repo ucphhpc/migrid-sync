@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_ftps - secure ftp server wrapping ftp in tls/ssl and mapping user home
-# Copyright (C) 2014-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2014-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -93,7 +93,7 @@ except ImportError:
     OpenSSL = None
 
 from mig.shared.accountstate import check_account_accessible
-from mig.shared.base import invisible_path, force_utf8
+from mig.shared.base import invisible_path, force_utf8, force_native_str
 from mig.shared.conf import get_configuration_object
 from mig.shared.fileio import user_chroot_exceptions
 from mig.shared.griddaemons.ftps import default_max_user_hits, \
@@ -125,7 +125,9 @@ class MiGTLSFTPHandler(TLS_FTPHandler):
         # NOTE: fix for https://github.com/giampaolo/pyftpdlib/issues/315
         print("DEBUG: reset in buffer on switch to secure channel")
         print("I.e. truncate '%s'" % self.ac_in_buffer)
-        self.ac_in_buffer = ''
+        # IMPORTANT: buffer must be bytes on all python versions
+        self.ac_in_buffer = b''
+        self.incoming = []
         return res
 
 
@@ -133,8 +135,6 @@ class MiGUserAuthorizer(DummyAuthorizer):
     """Authenticate/authorize against MiG users DB and user password files.
     Only instantiated once from central server thread so we don't need locking
     in creds refresh.
-
-    NOTE: The username arguments are unicode so we need to force utf8.
     """
 
     authenticated_user = None
@@ -181,7 +181,8 @@ class MiGUserAuthorizer(DummyAuthorizer):
             logger.debug("add user to user_table: %s" % user_obj)
             # The add_user format and perm string meaning is explained at:
             # http://code.google.com/p/pyftpdlib/wiki/Tutorial#2.2_-_Users
-            self.add_user(username, user_obj.password,
+            # NOTE: force saved password hash to native string format
+            self.add_user(username, force_native_str(user_obj.password),
                           home_path, perm='elradfmwM')
         logger.debug("updated user_table: %s" % self.user_table)
 
@@ -213,7 +214,8 @@ class MiGUserAuthorizer(DummyAuthorizer):
         exceeded_rate_limit = False
         client_ip = handler.remote_ip
         client_port = handler.remote_port
-        username = force_utf8(username)
+        # NOTE: keep username on native form in general
+        username = force_native_str(username)
         daemon_conf = configuration.daemon_conf
         max_user_hits = daemon_conf['auth_limits']['max_user_hits']
         user_abuse_hits = daemon_conf['auth_limits']['user_abuse_hits']
@@ -243,9 +245,11 @@ class MiGUserAuthorizer(DummyAuthorizer):
             invalid_username = True
         elif daemon_conf['allow_password']:
             hash_cache = daemon_conf['hash_cache']
-            password_offered = password
+            # NOTE: keep password on native form in general
+            password_offered = force_native_str(password)
+            # NOTE: base64 encode requires byte string and returns byte string
             hashed_secret = make_simple_hash(
-                base64.b64encode(password_offered))
+                base64.b64encode(force_utf8(password_offered)))
             # Only sharelinks should be excluded from strict password policy
             if configuration.site_enable_sharelinks and \
                     possible_sharelink_id(configuration, username):
@@ -268,7 +272,8 @@ class MiGUserAuthorizer(DummyAuthorizer):
             for entry in entries:
                 if entry['pwd'] is not None:
                     password_enabled = True
-                    password_allowed = entry['pwd']
+                    # NOTE: make sure allowed value is native string as well
+                    password_allowed = force_native_str(entry['pwd'])
                     logger.debug("Password check for %s" % username)
                     if check_password_hash(
                             configuration, 'ftps', username,

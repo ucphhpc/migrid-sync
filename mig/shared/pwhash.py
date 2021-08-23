@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 #
 # --- BEGIN_HEADER ---
 #
@@ -55,9 +54,7 @@ from os import urandom
 from random import SystemRandom
 from string import ascii_lowercase, ascii_uppercase, digits
 
-# From https://github.com/mitsuhiko/python-pbkdf2
-from mig.shared.base import force_utf8
-from mig.shared.pbkdf2 import pbkdf2_bin
+from mig.shared.base import force_utf8, force_native_str
 
 try:
     import cracklib
@@ -82,14 +79,12 @@ def make_hash(password):
     """Generate a random salt and return a new hash for the password."""
     password = force_utf8(password)
     salt = b64encode(urandom(SALT_LENGTH))
-    # Python 2.6 fails to parse implicit positional args (-Jonas)
-    # return 'PBKDF2${}${}${}${}'.format(
-    return 'PBKDF2${0}${1}${2}${3}'.format(
+    return 'PBKDF2${}${}${}${}'.format(
         HASH_FUNCTION,
         COST_FACTOR,
         salt,
-        b64encode(pbkdf2_bin(password, salt, COST_FACTOR, KEY_LENGTH,
-                             getattr(hashlib, HASH_FUNCTION))))
+        b64encode(hashlib.pbkdf2_hmac(HASH_FUNCTION, force_utf8(password),
+                                      force_utf8(salt), COST_FACTOR, KEY_LENGTH)))
 
 
 def check_hash(configuration, service, username, password, hashed,
@@ -103,11 +98,13 @@ def check_hash(configuration, service, username, password, hashed,
     sharelinks where the policy is not guaranteed to apply.
     """
     _logger = configuration.logger
-    password = force_utf8(password)
-    pw_hash = hashlib.md5(password).hexdigest()
+    # NOTE: hashlib requires bytes
+    pw_bytes = force_utf8(password)
+    hash_bytes = force_utf8(hashed)
+    pw_hash = hashlib.md5(pw_bytes).hexdigest()
     if isinstance(hash_cache, dict) and \
-            hash_cache.get(pw_hash, None) == hashed:
-        # print "found cached hash: %s" % hash_cache.get(pw_hash, None)
+            hash_cache.get(pw_hash, None) == hash_bytes:
+        #_logger.debug("found cached hash: %s" % [hash_cache.get(pw_hash, None)])
         return True
     # We check policy AFTER cache lookup since it is already verified for those
     if strict_policy:
@@ -120,21 +117,30 @@ def check_hash(configuration, service, username, password, hashed,
     else:
         _logger.debug("password policy check disabled for %s login as %s" %
                       (service, username))
-    algorithm, hash_function, cost_factor, salt, hash_a = hashed.split('$')
+    # NOTE: we need native string format here for split
+    hashed_str = force_native_str(hashed)
+    algorithm, hash_function, cost_factor, salt, hash_a = hashed_str.split('$')
     assert algorithm == 'PBKDF2'
     hash_a = b64decode(hash_a)
-    hash_b = pbkdf2_bin(password, salt, int(cost_factor), len(hash_a),
-                        getattr(hashlib, hash_function))
-    assert len(hash_a) == len(hash_b)  # we requested this from pbkdf2_bin()
+    # NOTE: pbkdf2_hmac requires bytes for password and salt
+    hash_b = hashlib.pbkdf2_hmac(hash_function, pw_bytes, force_utf8(salt),
+                                 int(cost_factor), len(hash_a))
+    assert len(hash_a) == len(hash_b)  # we requested this from pbkdf2_hmac()
     # Same as "return hash_a == hash_b" but takes a constant time.
     # See http://carlos.bueno.org/2011/10/timing.html
     diff = 0
+    # NOTE: hashes are byte strings, but on python 3 iterating through them
+    #       yields individual integer byte values directly vs individual char
+    #       values on python 2. Apply ord() in the latter case for same result
+    if isinstance(b'1'[0], int):
+        byte_xlator = int
+    else:
+        byte_xlator = ord
     for char_a, char_b in zip(hash_a, hash_b):
-        diff |= ord(char_a) ^ ord(char_b)
+        diff |= byte_xlator(char_a) ^ byte_xlator(char_b)
     match = (diff == 0)
     if isinstance(hash_cache, dict) and match:
-        hash_cache[pw_hash] = hashed
-        # print "cached hash: %s" % hash_cache.get(pw_hash, None)
+        hash_cache[pw_hash] = hash_bytes
     return match
 
 
@@ -365,8 +371,8 @@ def assure_password_strength(configuration, password):
         if i not in base_chars and 'other' not in pw_classes:
             pw_classes.append('other')
             continue
-        for (char_class, values) in list(char_class_map.items()):
-            if i in values and not char_class in pw_classes:
+        for (char_class, values) in char_class_map.items():
+            if i in "%s" % values and not char_class in pw_classes:
                 pw_classes.append(char_class)
                 break
     if len(pw_classes) < min_classes:

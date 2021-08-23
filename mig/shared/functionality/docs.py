@@ -426,16 +426,6 @@ Web interfaces are served with the Apache HTTP Server:"""})
                                'title': 'RSync Home Page',
                                'text':
                                'RSync incremental file transfer client (GPL license)'})
-    if password_dep:
-        output_objects.append({'object_type': 'text', 'text': """
-The optional password authentication support in SFTP/DAVS/FTPS servers relies
-on the PBKDF2 module (embedded) from:"""})
-        output_objects.append({'object_type': 'link',
-                               'destination':
-                               'https://pypi.python.org/pypi/pbkdf2',
-                               'class': 'urllink iconspace',
-                               'title': 'pbkdf2 at Python Package Index',
-                               'text': 'PBKDF2 Module (MIT license)'})
     if configuration.site_password_cracklib:
         output_objects.append({'object_type': 'text', 'text': """
 The optional password strength testing for SFTP/DAVS/FTPS servers relies

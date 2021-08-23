@@ -94,7 +94,8 @@ def client_alias(client_id):
     This is for e.g. commandline friendly use and it is a one-to-one mapping.
     """
     # sftp and friends choke on potential '=' padding - replace by underscore
-    return base64.urlsafe_b64encode(client_id).replace('=', '_')
+    # NOTE: base64 encode requires bytes
+    return base64.urlsafe_b64encode(force_utf8(client_id.replace('=', '_')))
 
 
 def expand_openid_alias(alias_id, configuration):
@@ -335,7 +336,11 @@ def force_utf8(val, highlight=''):
         val = "%s" % val
     if not is_unicode(val):
         return val
-    return "%s%s%s" % (highlight, val.encode("utf8"), highlight)
+    if is_unicode(highlight):
+        hl_utf = highlight.encode("utf8")
+    else:
+        hl_utf = highlight
+    return (b"%s%s%s" % (hl_utf, val.encode("utf8"), hl_utf))
 
 
 def force_utf8_rec(input_obj, highlight=''):
@@ -361,9 +366,13 @@ def force_unicode(val, highlight=''):
     # We run into all kind of nasty encoding problems if we mix
     if not isinstance(val, basestring):
         val = "%s" % val
-    if not is_unicode(val):
-        return "%s%s%s" % (highlight, val.decode("utf8"), highlight)
-    return val
+    if is_unicode(val):
+        return val
+    if is_unicode(highlight):
+        hl_uni = highlight
+    else:
+        hl_uni = highlight.decode("utf8")
+    return u"%s%s%s" % (hl_uni, val.decode("utf8"), hl_uni)
 
 
 def force_unicode_rec(input_obj, highlight=''):
@@ -406,6 +415,22 @@ def force_default_str_coding(input_obj, highlight=''):
 
 
 def force_default_fs_coding(input_obj, highlight=''):
+    """A helper to force input_obj to the default filesystem coding.
+    Use the active interpreter and the shared.defaults helpers to force the
+    current default.
+    """
+    return _force_default_coding(input_obj, FS_KIND, highlight)
+
+
+def force_native_str(input_obj, highlight=''):
+    """A helper to force input_obj to the default string coding.
+    Use the active interpreter and the shared.defaults helpers to force the
+    current default.
+    """
+    return _force_default_coding(input_obj, STR_KIND, highlight)
+
+
+def force_native_fs(input_obj, highlight=''):
     """A helper to force input_obj to the default filesystem coding.
     Use the active interpreter and the shared.defaults helpers to force the
     current default.
@@ -469,6 +494,54 @@ def is_default_str_coding(input_str):
 def is_default_fs_coding(input_str):
     """Checks if input_str is on the default_fs_coding form"""
     return _is_default_coding(input_str, FS_KIND)
+
+
+def is_native_fs(input_str):
+    """Checks if input_str is on the default_fs_coding form"""
+    return _is_default_coding(input_str, FS_KIND)
+
+
+def UTF8StringIO(initial_value='', newline='\n'):
+    """Mock StringIO pseudo-class to create a StringIO matching the legacy
+    native string coding form. That is, a BytesIO for utf8 and with optional
+    string helpers automatically converted accordingly.
+    """
+    return io.BytesIO(force_utf8(initial_value), force_utf8(newline))
+
+
+def UnicodeStringIO(initial_value='', newline='\n'):
+    """Mock StringIO pseudo-class to create a StringIO matching the modern
+    native string coding form. That is, a StringIO for unicode and with
+    optional string helpers automatically converted accordingly.
+    """
+    return io.StringIO(force_unicode(initial_value), force_unicode(newline))
+
+
+def NativeStringIO(initial_value='', newline='\n'):
+    """Mock StringIO pseudo-class to create a StringIO matching the native
+    string coding form. That is a BytesIO with utf8 on python 2 and unicode
+    StringIO otherwise. Optional string helpers are automatically converted
+    accordingly.
+    """
+    if sys.version_info[0] >= 3:
+        return UnicodeStringIO(initial_value, newline)
+    else:
+        return UTF8StringIO(initial_value, newline)
+
+
+def DefaultStringIO(initial_value='', newline='\n'):
+    """Mock StringIO pseudo-class to create a StringIO matching the default
+    string coding form. That is a BytesIO if default coding is utf8 and unicode
+    StringIO otherwise. Optional string helpers are automatically converted
+    accordingly.
+    """
+    if default_str_coding == "unicode":
+        return UnicodeStringIO(initial_value, newline)
+    elif default_str_coding == "utf8":
+        return UTF8StringIO(initial_value, newline)
+    else:
+        raise Exception("DefaultStringIO found invalid default: %s" %
+                        default_str_coding)
 
 
 def get_xgi_bin(configuration, force_legacy=False):
