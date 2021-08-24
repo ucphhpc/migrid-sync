@@ -1,6 +1,27 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2021-08-24T11:00:00+02:00", 
+    "systems": [
+        "ERDA", "IDMC", "SIF"
+    ],
+    "announce_start": "2021-08-24T13:00:00+02:00",
+    "title": {
+      "EN": "Unplanned downtime due to Gluster storage brick failure",
+      "DK": "Ikke planlagt nedetid pga. en disk fejlede i vores Gluster storage system"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2021-08-24T14:35:00+02:00",
+    "description": {
+      "EN": "Both ERDA and IDMC were down due to a failure in one of underlying disks in our Gluster storage system. This had the side effect of causing so much noise in the storage system that everything else got slowed down to a halt to avoid any damages. We corrected this issue by removing the disk from the system and restarted the service. Everything should now be back to normal",
+      "DK": "Både ERDA og IDMC var nede på grund af en fejl i  af de underliggende diske i vores Gluster lagersystem. Dette havde den bivirkning, at det forårsagede så meget støj i lagersystemet, at alt andet endte med at stoppe for at undyderligere fejl. Vi rettede dette problem ved at fjerne disken fra systemet og genstarte tjenesten. Alt skulle nu være tilbage til normalen."  
+  },
+    "announce_end": "2021-08-25T10:00:00+02:00"
+  },
+  {
+    "status": "AUTO", 
     "work_start": "2021-08-18T11:00:00+02:00", 
     "systems": [
         "ERDA", "IDMC", "MiGrid"
