@@ -1,6 +1,27 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2021-09-01T20:47:00+02:00", 
+    "systems": [
+        "SIF"
+    ], 
+    "announce_start": "2021-09-02T09:00:00+02:00", 
+    "title": {
+      "EN": "SIF Outage", 
+      "DK": "SIF nede"
+    }, 
+    "services": [
+      "ALL"
+    ], 
+    "work_end": "2021-09-02T10:50:00+02:00", 
+    "description": {
+      "EN": "We had a central log partition run full on SIF and since we are not allowed to miss any log entries it automatically shut off the entire system. After adding more disk space it is now back online. Sorry for the inconvenience from the lack of access.", 
+      "DK": "En central log-partition på SIF løb tør for plads, og eftersom vi ikke må undlade at logge noget, lukkede den automatisk hele systemet ned. Vi har tilføjet mere diskplads og startet igen, så alt skulle være tilbage i normal drift. Beklager generne fra den manglende adgang."
+    }, 
+    "announce_end": "2021-09-03T10:00:00+02:00"
+  }, 
+  {
+    "status": "AUTO", 
     "work_start": "2021-08-24T11:00:00+02:00", 
     "systems": [
         "ERDA", "IDMC", "SIF"
