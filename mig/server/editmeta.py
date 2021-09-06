@@ -34,6 +34,8 @@ import os
 import sys
 
 from mig.shared.useradm import init_user_adm, edit_user
+from mig.shared.userdb import lock_user_db, unlock_user_db, load_user_db, \
+    save_user_db
 
 
 def usage(name='editmeta.py'):
@@ -47,6 +49,7 @@ Where OPTIONS may be one or more of:
    -c CONF_FILE        Use CONF_FILE as server configuration
    -d DB_FILE          Use DB_FILE as user data base file
    -f                  Force operations to continue past errors
+   -r                  Remove field
    -h                  Show this help
    -v                  Verbose output
 """ % {'name': name})
@@ -58,10 +61,11 @@ if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()
     conf_path = None
     force = False
+    remove = False
     verbose = False
     user_id = None
     user_dict = {}
-    opt_args = 'c:d:fhv'
+    opt_args = 'c:d:frhv'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
@@ -76,6 +80,8 @@ if '__main__' == __name__:
             db_path = val
         elif opt == '-f':
             force = True
+        elif opt == '-r':
+            remove = True
         elif opt == '-h':
             usage()
             sys.exit(0)
@@ -97,6 +103,9 @@ if '__main__' == __name__:
     if len(args) == 3:
         user_id = user_dict['distinguished_name'] = args[0]
         user_dict[args[1]] = args[2]
+    elif remove and len(args) == 2:
+        user_id = args[0]
+        remove_field = args[1]
     else:
         usage()
         sys.exit(1)
@@ -104,10 +113,22 @@ if '__main__' == __name__:
     if verbose:
         print('Update DB entry for %s: %s' % (user_id, user_dict))
     try:
-        user = edit_user(user_id, user_dict, conf_path, db_path, force,
-                         verbose, True)
+        if remove:
+            flock = lock_user_db(db_path)
+            user_db = load_user_db(db_path, do_lock=False)
+            user = user_db.get(user_id)
+            if user.get(remove_field, ''):
+                del user[remove_field]
+            else:
+                raise ValueError("Field: %r was not found for user: %r"
+                                 % (remove_field, user_id))
+            save_user_db(user_db, db_path, do_lock=False)
+            unlock_user_db(flock)
+        else:
+            user = edit_user(user_id, user_dict, conf_path, db_path, force,
+                             verbose, True)
     except Exception as err:
         print(err)
         sys.exit(1)
-    print('%s\nchanged to\n%s\nin user database' % \
+    print('%s\nchanged to\n%s\nin user database' %
           (user_id, user))
