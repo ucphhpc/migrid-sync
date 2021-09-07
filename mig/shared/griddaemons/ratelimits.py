@@ -342,14 +342,16 @@ def expire_rate_limit(configuration, proto,
             # debug_msg += ", proto: %s" % _proto
             proto_fails = old_proto_fails = _proto_limits['fails']
             proto_hits = old_proto_hits = _proto_limits['hits']
-            for _user in _proto_limits:
+            # NOTE: iterate over a copy of proto limit keys to allow delete
+            for _user in list(_proto_limits):
                 if _user in ['hits', 'fails']:
                     continue
                 # debug_msg += ", user: %s" % _user
                 _user_limits = _proto_limits[_user]
                 user_fails = old_user_fails = _user_limits['fails']
                 user_hits = old_user_hits = _user_limits['hits']
-                for _secret in _user_limits:
+                # NOTE: iterate over a copy of user limit keys to allow delete
+                for _secret in list(_user_limits):
                     if _secret in ['hits', 'fails']:
                         continue
                     _secret_limits = _user_limits[_secret]
