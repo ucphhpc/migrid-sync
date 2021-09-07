@@ -1,4 +1,25 @@
 [
+    {
+    "status": "AUTO", 
+    "work_start": "2021-09-10T19:00:00+02:00", 
+    "systems": [
+        "ERDA", "IDMC"
+    ], 
+    "announce_start": "2021-09-07T09:00:00+02:00", 
+    "title": {
+      "EN": "MODI Compute nodes maintenance", 
+      "DK": "MODI Compute node vedligeholdelse"
+    }, 
+    "services": [
+      "MODI"
+    ], 
+    "work_end": "2021-09-10T21:00:00+02:00", 
+    "description": {
+      "EN": "We will apply general updates to the MODI compute nodes, interruption of compute jobs will happend.", 
+      "DK": "Vi vil udrulle generelle opdateringer til MODI-beregningsknuderne, afbrydelse af beregningsjobs vil ske."
+    }, 
+    "announce_end": "2021-09-13T12:00:00+02:00"
+  },
   {
     "status": "AUTO", 
     "work_start": "2021-09-01T20:47:00+02:00", 
