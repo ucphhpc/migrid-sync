@@ -840,6 +840,7 @@ def fix_vgrid_sharelinks(conf_path, db_path, verbose=False, force=False):
 def edit_user(
     client_id,
     changes,
+    removes,
     conf_path,
     db_path,
     force=False,
@@ -847,7 +848,9 @@ def edit_user(
     meta_only=False,
     do_lock=True,
 ):
-    """Edit user"""
+    """Edit user: updates client_id in user DB and on disk with key/val pairs
+    from changes dict and deletes any existing dict keys in removes list.
+    """
 
     flock = None
     user_db = {}
@@ -895,6 +898,9 @@ def edit_user(
         old_user = user_db[client_id]
         user_dict.update(old_user)
         user_dict.update(changes)
+        for del_field in removes:
+            if del_field in user_dict:
+                del user_dict[del_field]
         fill_user(user_dict)
         # Force distinguished_name update
         del user_dict["distinguished_name"]
