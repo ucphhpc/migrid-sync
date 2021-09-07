@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # edituser - Edit a MiG user
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,9 +26,11 @@
 #
 
 """Edit MiG user in user database and file system"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import input
 import getopt
 import os
 import sys
@@ -53,10 +55,11 @@ Where OPTIONS may be one or more of:
    -h                  Show this help
    -i CERT_DN          CERT_DN of user to edit
    -o SHORT_ID         Change OpenID alias of user to SHORT_ID
+   -r FIELDS           Remove FIELDS for user in user DB
    -R ROLES            Change user affiliation to ROLES
    -v                  Verbose output
-"""\
-         % {'name': name})
+"""
+          % {'name': name})
 
 
 # ## Main ###
@@ -69,8 +72,9 @@ if '__main__' == __name__:
     user_id = None
     short_id = None
     role = None
+    remove_fields = []
     user_dict = {}
-    opt_args = 'c:d:fhi:o:R:v'
+    opt_args = 'c:d:fhi:o:r:R:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
@@ -92,6 +96,8 @@ if '__main__' == __name__:
             user_id = val
         elif opt == '-o':
             short_id = val
+        elif opt == '-r':
+            remove_fields += val.split()
         elif opt == '-R':
             role = val
         elif opt == '-v':
@@ -109,8 +115,9 @@ if '__main__' == __name__:
         else:
             print('using configuration from MIG_CONF (or default)')
 
-    configuration = get_configuration_object(config_file=conf_path, skip_log=True)
-    
+    configuration = get_conifiguration_object(config_file=conf_path,
+                                              skip_log=True)
+
     if not user_id:
         print('Error: Existing user ID is required')
         usage()
@@ -131,18 +138,18 @@ if '__main__' == __name__:
 
             pass
     elif not configuration.site_enable_gdp:
-        # NOTE: We do not allow interactive user management on GDP systems 
+        # NOTE: We do not allow interactive user management on GDP systems
         print('Please enter the new details for %s:' % user_id)
         print('[enter to skip field]')
-        user_dict['full_name'] = raw_input('Full Name: ').title()
-        user_dict['organization'] = raw_input('Organization: ')
-        user_dict['state'] = raw_input('State: ')
-        user_dict['country'] = raw_input('2-letter Country Code: ')
-        user_dict['email'] = raw_input('Email: ')
+        user_dict['full_name'] = input('Full Name: ').title()
+        user_dict['organization'] = input('Organization: ')
+        user_dict['state'] = input('State: ')
+        user_dict['country'] = input('2-letter Country Code: ')
+        user_dict['email'] = input('Email: ')
     else:
-        print("Error: Missing one or more of the arguments: " \
-            + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] " \
-            + "[EMAIL] [COMMENT] [PASSWORD]")
+        print("Error: Missing one or more of the arguments: "
+              + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] "
+              + "[EMAIL] [COMMENT] [PASSWORD]")
         sys.exit(1)
 
     # Pass optional short_id as well
@@ -162,12 +169,12 @@ if '__main__' == __name__:
     if verbose:
         print('Update DB entry and dirs for %s: %s' % (user_id, user_dict))
     try:
-        user = edit_user(user_id, user_dict, conf_path, db_path, force,
+        user = edit_user(user_id, user_dict, remove_fields, conf_path, db_path, force,
                          verbose)
     except Exception as err:
         print(err)
         sys.exit(1)
-    print('%s\nchanged to\n%s\nin user database and file system' % \
+    print('%s\nchanged to\n%s\nin user database and file system' %
           (user_id, user['distinguished_name']))
     print()
     print('Please revoke/reissue any related certificates!')
