@@ -100,12 +100,12 @@ if '__main__' == __name__:
         else:
             print('using configuration from MIG_CONF (or default)')
 
-    if len(args) == 3:
-        user_id = user_dict['distinguished_name'] = args[0]
-        user_dict[args[1]] = args[2]
-    elif remove and len(args) > 1:
+    if remove and len(args) > 1:
         user_id = user_dict['distinguished_name'] = args[0]
         remove_fields += args[1:]
+    elif len(args) == 3:
+        user_id = user_dict['distinguished_name'] = args[0]
+        user_dict[args[1]] = args[2]
     else:
         usage()
         sys.exit(1)
