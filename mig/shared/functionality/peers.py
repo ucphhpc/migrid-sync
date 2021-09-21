@@ -304,11 +304,14 @@ extensions from your peers until the given time of expiry.
 
     output_objects.append({'object_type': 'table_pager', 'entry_name': 'peers',
                            'default_entries': default_pager_entries})
+    export_peers = []
     peers = []
-    for (peer_id, entry) in list(all_peers.items()):
+    for (peer_id, entry) in all_peers.items():
         filled_entry = dict([(field, '') for field in
                              ('label', 'kind', 'expire')])
         fill_distinguished_name(entry)
+        export_peers.append(csv_sep.join(
+            [entry.get(i, '') for i in peers_fields]))
         filled_entry.update(entry)
         filled_entry['anon_peer_id'] = anon_user_id(peer_id)
         filled_entry['object_type'] = 'peer'
@@ -504,10 +507,17 @@ at the bottom.
 %s
 </p>
 </div>
+<div class="peers_export init-collapsed accordion invert-theme">
+<h4>Accepted Peers</h4>
+<p class="verbatim">%s
+%s
+</p>
+</div>
 </div>
 ''' % (fill_helpers['csv_header'],
        csv_sep.join([sample_users[0].get(i, '') for i in peers_fields]),
-       csv_sep.join([sample_users[-1].get(i, '') for i in peers_fields]))
+       csv_sep.join([sample_users[-1].get(i, '') for i in peers_fields]),
+       fill_helpers['csv_header'], '\n'.join(export_peers))
 
     tabs_html += '''
 <div id="requests-tab" >

@@ -245,8 +245,11 @@ def check_update_account_expire(configuration, client_id, environ=None,
     # NOTE: first check if account is expired using cache or user DB
     (pending_expire, account_expire, user_dict) = check_account_expire(
         configuration, client_id, environ)
-    # Now check actual expire
-    if account_expire and account_expire < time.time() + min_days_left * 86400:
+    # Now check actual expire and allow renew if from interactive use
+    if environ.get('REMOTE_ADDR', '') == '127.0.0.1' or \
+            environ.get('HTTP_USER_AGENT', '') == 'grid cron daemon':
+        try_renew = False
+    elif account_expire and account_expire < time.time() + min_days_left * 86400:
         try_renew = True
     else:
         try_renew = False
