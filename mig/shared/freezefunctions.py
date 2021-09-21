@@ -1318,15 +1318,16 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
                       (freeze_id, client_id, freeze_entries))
         return (False, "Error: final archives must have one or more files")
 
+    # NOTE: force cache generation without chksums for immediate use everywhere
+    (files_status, cached) = get_frozen_files(client_id, freeze_id,
+                                              configuration, [],
+                                              force_refresh=True)
+    if not files_status:
+        return (False, 'failed to build cached files for %s' % freeze_id)
+    _logger.debug("loaded cached files for '%s': %s" %
+                  (freeze_id, brief_list(cached)))
+
     if freeze_dict.get('PUBLISH', False):
-        # NOTE: force cache generation without chksums for immediate use here
-        (files_status, cached) = get_frozen_files(client_id, freeze_id,
-                                                  configuration, [],
-                                                  force_refresh=True)
-        if not files_status:
-            return (False, 'failed to build cached files for %s' % freeze_id)
-        _logger.debug("loaded cached files for '%s': %s" %
-                      (freeze_id, brief_list(cached)))
         # Add human-friendly text timestamp
         for i in cached:
             i['date'] = "%s" % \
