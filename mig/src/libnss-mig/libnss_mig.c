@@ -58,6 +58,7 @@
 #include <dirent.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <limits.h>
 
 /* Shared helpers for MiG auth */
 #include "migauth.h"
@@ -74,7 +75,7 @@
 /*
  * the configuration /etc/libnss-mig.conf is a line
  * with the local user data as in /etc/passwd. For example:
- * mig-user:x:1001:1001:P D ,,,:/home/mig/state/user_home/:/bin/bash
+ * mig-user:x:1001:1001:P D ,,,:/home/mig/state/user_home/:/bin/sh
  * Extra lines are comments (not processed).
  * The home folder is expected to point to the MiG state folder,
  * where the supplied username will be appended
@@ -123,14 +124,14 @@ static struct passwd *read_conf()
  *  Taken from glibc 
  */
 
-static char *get_static(char **buffer, size_t * buflen, int len)
+static char *get_static(char **buffer, size_t * buflen, size_t len)
 {
     char *result;
 
     /* Error check.  We return false if things aren't set up right, or
      * there isn't enough buffer space left. */
 
-    if ((buffer == NULL) || (buflen == NULL) || (*buflen < len)) {
+    if ((buffer == NULL) || (buflen == NULL) || (*buflen > INT_MAX) || (*buflen < len)) {
         return NULL;
     }
 
@@ -149,6 +150,7 @@ _nss_mig_getpwnam_r(const char *name,
 {
     struct passwd *conf;
     size_t name_len = strlen(name);
+
     /* Since we rely on mapping the username to a path on disk,
        double check that the name does not contain path traversal attempts
        after basic input validation */
@@ -178,7 +180,7 @@ _nss_mig_getpwnam_r(const char *name,
        - get_sharelink_home()/SHARELINK_SUBDIR/username must exist as a symlink
        - username and password must be identical
      */
-    if (keep_trying && strlen(name) == get_sharelink_length()) {
+    if (keep_trying && name_len == get_sharelink_length()) {
         WRITELOGMESSAGE(LOG_DEBUG, "Checking for sharelink: %s\n", name);
         memset(pathbuf, 0, PATH_BUF_LEN);
         if (PATH_BUF_LEN ==
@@ -220,7 +222,7 @@ _nss_mig_getpwnam_r(const char *name,
             is_share = 1;
             pathlen =
                 strlen(get_sharelink_home()) +
-                strlen(SHARELINK_SUBDIR) + strlen(name) + 2;
+                strlen(SHARELINK_SUBDIR) + name_len + 2;
         }
     }
     WRITELOGMESSAGE(LOG_DEBUG, "Detect sharelink: %d\n", is_share);
@@ -232,7 +234,7 @@ _nss_mig_getpwnam_r(const char *name,
        - get_jobsidmount_home()/username must exist as a symlink
        - session ssh key must match for access
      */
-    if (keep_trying && strlen(name) == get_jobsidmount_length()) {
+    if (keep_trying && name_len == get_jobsidmount_length()) {
         WRITELOGMESSAGE(LOG_DEBUG, "Checking for jobsidmount: %s\n", name);
         memset(pathbuf, 0, PATH_BUF_LEN);
         if (PATH_BUF_LEN ==
@@ -273,7 +275,7 @@ _nss_mig_getpwnam_r(const char *name,
             keep_trying = 0;
             /* Match - override home path with jobsidmount base */
             is_job = 1;
-            pathlen = strlen(get_jobsidmount_home()) + strlen(name) + 1;
+            pathlen = strlen(get_jobsidmount_home()) + name_len + 1;
         }
     }
     WRITELOGMESSAGE(LOG_DEBUG, "Detect jobsidmount: %d\n", is_job);
@@ -285,7 +287,7 @@ _nss_mig_getpwnam_r(const char *name,
        - get_jupytersidmount_home()/username must exist as a symlink
        - session ssh key must match for access
      */
-    if (keep_trying && strlen(name) == get_jupytersidmount_length()) {
+    if (keep_trying && name_len == get_jupytersidmount_length()) {
         WRITELOGMESSAGE(LOG_DEBUG, "Checking for jupytersidmount: %s\n", name);
         memset(pathbuf, 0, PATH_BUF_LEN);
         if (PATH_BUF_LEN ==
@@ -326,7 +328,7 @@ _nss_mig_getpwnam_r(const char *name,
             keep_trying = 0;
             /* Match - override home path with jupytersidmount base */
             is_jupyter = 1;
-            pathlen = strlen(get_jupytersidmount_home()) + strlen(name) + 1;
+            pathlen = strlen(get_jupytersidmount_home()) + name_len + 1;
         }
     }
     WRITELOGMESSAGE(LOG_DEBUG, "Detect jupytersidmount: %d\n", is_jupyter);
@@ -393,7 +395,7 @@ _nss_mig_getpwnam_r(const char *name,
     *p = *conf;
 
     /* If out of memory */
-    if ((p->pw_name = get_static(&buffer, &buflen, strlen(name) + 1)) == NULL) {
+    if ((p->pw_name = get_static(&buffer, &buflen, name_len + 1)) == NULL) {
         return NSS_STATUS_TRYAGAIN;
     }
 

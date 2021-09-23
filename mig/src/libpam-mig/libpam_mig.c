@@ -129,11 +129,16 @@ static const char *get_service_dir(const char *service)
     }
 }
 
-static int get_password_min_length()
+static size_t get_password_min_length()
 {
-    return get_runtime_var_int("PASSWORD_MIN_LENGTH",
-                               "site->password_min_length",
-                               PASSWORD_MIN_LENGTH);
+  int minlen = get_runtime_var_int("PASSWORD_MIN_LENGTH",
+                                   "site->password_min_length",
+                                   PASSWORD_MIN_LENGTH);
+  if (minlen < 0) {
+      return 0;
+  } else {
+      return (size_t)minlen;
+  }
 }
 
 static int get_password_min_classes()
@@ -146,11 +151,11 @@ static int get_password_min_classes()
 /* password input validation using char class and length helpers */
 static int validate_password(const char *password)
 {
-    /* NOTE: never log raw password */
-    WRITELOGMESSAGE(LOG_DEBUG, "Validate password: %s\n", password);
+    uint i;
+    /* NOTE: do NOT ever log raw password as it makes logs sensitive */
     if (strlen(password) < get_password_min_length()) {
         WRITELOGMESSAGE(LOG_INFO,
-                        "Invalid password - too short (%zd < %d)\n",
+                        "Invalid password - too short (%zd < %zd)\n",
                         strlen(password), get_password_min_length());
         return 1;
     } else if (strlen(password) > PASSWORD_MAX_LENGTH) {
@@ -159,10 +164,20 @@ static int validate_password(const char *password)
                         strlen(password), PASSWORD_MAX_LENGTH);
         return 2;
     }
-
     WRITELOGMESSAGE(LOG_DEBUG, "Validated length of password: %zd\n",
                     strlen(password));
-    int i;
+
+    /* NOTE: we can safely include a masked password in debug mode */
+    char masked[strlen(password)+1];
+    for (i = 0; i < strlen(password); i++) {
+      masked[i] = '*';
+    }
+    masked[0] = password[0];
+    masked[strlen(password)-1] = password[strlen(password)-1];
+    // null terminate the masked string
+    masked[strlen(password)] = 0;
+    WRITELOGMESSAGE(LOG_DEBUG, "Validate password: %s\n", masked);
+
     int lower = 0, upper = 0, digit = 0, other = 0, classes = 0;
     for (i = 0; i < strlen(password); i++) {
         if (islower(password[i])) {
@@ -973,7 +988,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         return pam_sm_authenticate_exit(PAM_AUTH_ERR, pwresp);
 
     }
-    if (fread(pbkdf, sizeof(char), st.st_size, fd) != st.st_size) {
+    if (fread(pbkdf, sizeof(char), (size_t)st.st_size, fd) != (size_t)st.st_size) {
         WRITELOGMESSAGE(LOG_WARNING,
                         "Failed to read %zd bytes from filename: %s\n",
                         st.st_size, auth_filename);

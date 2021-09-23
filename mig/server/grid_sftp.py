@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
@@ -66,7 +66,6 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import base64
-import io
 import os
 import shutil
 import socket
@@ -84,7 +83,8 @@ except ImportError:
     sys.exit(1)
 
 from mig.shared.accountstate import check_account_accessible
-from mig.shared.base import invisible_path, force_utf8, force_unicode
+from mig.shared.base import invisible_path, force_utf8, force_native_str, \
+    force_native_fs, NativeStringIO
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import keyword_auto, STRONG_SSH_KEXALGOS, \
     STRONG_SSH_CIPHERS, STRONG_SSH_MACS, STRONG_SSH_LEGACY_KEXALGOS, \
@@ -347,20 +347,34 @@ class SFTPHandle(paramiko.SFTPHandle):
     def chattr(self, attr):
         """Handle operations of same name"""
         path = getattr(self, "path", "unknown")
-        # self.logger.debug("SFTPHandle chattr %s on path %s" % \
-        #                  (repr(attr), path))
+        # self.logger.debug("SFTPHandle chattr %s on path %s" %
+        #                  (repr(attr), [path]))
         return self.sftpserver._chattr(path, attr, self)
 
     @__gdp_log
     def read(self, offset, length):
         """Handle operations of same name"""
-        return super(SFTPHandle, self).read(offset, length)
+        path = getattr(self, "path", "unknown")
+        #self.logger.debug("read %db @%d of %s" % (length, offset, [path]))
+        try:
+            return super(SFTPHandle, self).read(offset, length)
+        except Exception as exc:
+            self.logger.error("read %db @%d of %s failed: %s" %
+                              (length, offset, [path], exc))
+            raise exc
 
     @__gdp_log
     @__workflow_history_log
     def write(self, offset, data):
         """Handle operations of same name"""
-        return super(SFTPHandle, self).write(offset, data)
+        path = getattr(self, "path", "unknown")
+        #self.logger.debug("write %db @%d of %s" % (len(data), offset, [path]))
+        try:
+            return super(SFTPHandle, self).write(offset, data)
+        except Exception as exc:
+            self.logger.error("write %db @%d of %s failed: %s" %
+                              (len(data), offset, [path], exc))
+            raise exc
 
     @__gdp_log
     def close(self):
@@ -435,7 +449,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                          (self.user_name, self.ip_addr, self.src_port))
         else:
             # logger.debug('active env: %s' % os.environ)
-            username = force_utf8(os.environ.get('USER', 'INVALID'))
+            username = force_native_str(os.environ.get('USER', 'INVALID'))
             logger.debug('refresh user entry for %s' % username)
             # Either of user, job and share keys may have changed
             daemon_conf = self.conf
@@ -448,7 +462,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             #       handler for now.
             # TODO: implement session limit in subsys and disable workaround
             # Env holds client info in 'SSH_CLIENT' as 'a.b.c.d rport lport'
-            ssh_client = force_utf8(os.environ.get('SSH_CLIENT', 'NONE'))
+            ssh_client = force_native_str(os.environ.get('SSH_CLIENT', 'NONE'))
             # Pad with zeros to make sure exraction fails gracefully if missing
             ssh_client += ' 0 0'
             src_ip, src_port = ssh_client.split()[0:2]
@@ -503,8 +517,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             raise Exception("user not found in login map!")
         for entry in entries:
             if entry.chroot:
-                # IMPORTANT: Must be utf8 for 'ls' to work on user home!
-                self.root = force_utf8("%s/%s" % (self.root, entry.home))
+                # TODO: we used to force utf8 here - where should it take place now?
+                self.root = force_native_str("%s/%s" % (self.root, entry.home))
                 break
         # logger.debug('auth user chroot is %s' % self.root)
 
@@ -636,14 +650,21 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def _get_fs_path(self, sftp_path):
         """Wrap helper"""
-        # self.logger.debug("get_fs_path: %s" % sftp_path)
-        abs_path = os.path.abspath(os.path.join(self.root,
-                                                sftp_path.lstrip(os.sep)))
-        reply = get_fs_path(configuration, abs_path, self.root,
-                            self.chroot_exceptions)
-        # self.logger.debug("get_fs_path returns: %s :: %s" % (sftp_path,
-        #                                                     reply))
-        return reply
+        try:
+            # self.logger.debug("get_fs_path: %s" % [sftp_path])
+            abs_path = os.path.abspath(os.path.join(self.root,
+                                                    sftp_path.lstrip(os.sep)))
+            # self.logger.debug("get_fs_path abs: %s" % [abs_path])
+            reply = get_fs_path(configuration, abs_path, self.root,
+                                self.chroot_exceptions)
+            # self.logger.debug("get_fs_path returns: %s :: %s" % ([sftp_path],
+            #                                                      [reply]))
+            return reply
+        except Exception as exc:
+            self.logger.error("get_fs_path failed: %s" % exc)
+            # import traceback
+            # self.logger.debug("Traceback:\n%s" % traceback.format_exc())
+            raise exc
 
     def _strip_root(self, sftp_path):
         """Wrap helper"""
@@ -668,22 +689,27 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
     def _chattr(self, path, attr, sftphandle=None):
         """Handle chattr for SimpleSftpServer and SFTPHandle"""
         file_obj = None
-        path = force_utf8(path)
-        # self.logger.debug("_chattr %s" % path)
+        # TODO: should we still force utf8 and if so where?
+        # path = force_utf8(path)
+        # Paramiko seems to handle *native* strings correctly across py version
+        path = force_native_str(path)
+        # self.logger.debug("_chattr %s" % [path])
         try:
             real_path = self._get_fs_path(path)
         except ValueError as err:
-            self.logger.warning('chattr %s: %s' % (path, err))
+            self.logger.warning('chattr %s: %s' % ([path], [err]))
             return paramiko.SFTP_PERMISSION_DENIED
         if not os.path.exists(real_path):
             self.logger.warning("chattr on missing path %s :: %s" %
-                                (path, real_path))
+                                ([path], [real_path]))
             return paramiko.SFTP_NO_SUCH_FILE
+        # self.logger.debug("_chattr %s check write acces" % [path])
         # TODO: let non-modifying requests through here?
         if not check_write_access(real_path):
             self.logger.warning('chattr on read-only path %s :: %s' %
-                                (path, real_path))
+                                ([path], [real_path]))
             return paramiko.SFTP_PERMISSION_DENIED
+        #self.logger.debug("_chattr %s activate" % [path])
         if sftphandle is not None:
             active = getattr(sftphandle, 'active')
             file_obj = getattr(sftphandle, active)
@@ -694,29 +720,31 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         # if we rejected those other attribute changes in the past but it may
         # not be a problem anymore. If it ain't broken...
         # self.logger.debug("chattr %s for path %s :: %s" %
-        #                  (repr(attr), path, real_path))
+        #                  (repr(attr), [path], [real_path]))
         ignored = True
         if getattr(attr, 'st_mode', None) is not None and attr.st_mode > 0:
             # self.logger.debug('_chattr st_mode: %s' % attr.st_mode)
             ignored = False
-            # self.logger.debug("chattr %s forwarding for path %s :: %s" % \
-            #                    (repr(attr), path, real_path))
+            # self.logger.debug("chattr %s forwarding for path %s :: %s" %
+            #                  (repr(attr), [path], [real_path]))
             return self._chmod(path, attr.st_mode, sftphandle)
         if getattr(attr, 'st_atime', None) is not None or \
                 getattr(attr, 'st_mtime', None) is not None:
+            # self.logger.debug('_chattr st_atime or st_mtime: %s' % [path])
             ignored = False
             change_atime = getattr(attr, 'st_atime',
                                    os.path.getatime(real_path))
             change_mtime = getattr(attr, 'st_mtime',
                                    os.path.getmtime(real_path))
-            # self.logger.debug('_chattr st_atime: %s, st_mtime: %s' % \
-            #                    (change_atime, change_mtime))
+            # self.logger.debug('_chattr st_atime: %s, st_mtime: %s' %
+            #                  (change_atime, change_mtime))
             os.utime(real_path, (change_atime, change_mtime))
             self.logger.info("changed times %s %s for path %s :: %s" %
-                             (change_atime, change_mtime, path, real_path))
+                             (change_atime, change_mtime, [path], [real_path]))
         if getattr(attr, 'st_size', None) is not None:
             # self.logger.debug('_chattr st_size: %s' % attr.st_size)
             ignored = False
+            # self.logger.debug("_chattr truncate %s" % [path])
             if file_obj is None:
                 # We must open file to truncate as there is no os.truncate
                 try:
@@ -725,21 +753,26 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                     tmp_fd.close()
                 except Exception as exc:
                     self.logger.error("truncate %s to %s failed: %s" %
-                                      (real_path, attr.st_size, exc))
+                                      ([real_path], attr.st_size, exc))
             else:
                 os.ftruncate(file_obj.fileno(), attr.st_size)
             self.logger.info("truncated file: %s to size: %s" %
-                             (real_path, attr.st_size))
+                             ([real_path], attr.st_size))
+        # self.logger.debug('_chattr check mode 0: %s ignored %s st mode %s' %
+        #                  ([path], ignored, getattr(attr, 'st_mode', -1)))
         # NOTE: chmod 0 PATH are very common - silently ignore to reduce noise
-        if ignored and getattr(attr, 'st_mode', 0) > 0:
+        #       st_mode may be 0 or None depending on python version.
+        if ignored and getattr(attr, 'st_mode', None) is not None and attr.st_mode > 0:
             self.logger.warning("chattr %s ignored on path %s :: %s" %
-                                (repr(attr), path, real_path))
+                                (repr(attr), [path], [real_path]))
+        # self.logger.debug("_chattr %s complete" % [path])
         return paramiko.SFTP_OK
 
     def _chmod(self, path, mode, sftphandle=None):
         """Handle chmod for SimpleSftpServer and SFTPHandle"""
         file_obj = None
-        path = force_utf8(path)
+        # TODO: where should we force utf8 now?
+        # path = force_utf8(path)
         # self.logger.debug("_chmod %s" % path)
         try:
             real_path = self._get_fs_path(path)
@@ -787,15 +820,19 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def open(self, path, flags, attr):
         """Handle operations of same name"""
-        path = force_utf8(path)
-        # self.logger.debug('open %s' % path)
+        # TODO: where should we force utf8 now?
+        # path = force_utf8(path)
+        # self.logger.debug('open %s' % [path])
         try:
             real_path = self._get_fs_path(path)
         except ValueError as err:
-            self.logger.warning('open %s: %s' % (path, err))
+            self.logger.warning('open %s: %s' % ([path], [err]))
             return paramiko.SFTP_PERMISSION_DENIED
-        # self.logger.debug("open on %s :: %s (%s %s)" % \
-        #                  (path, real_path, repr(flags), repr(attr)))
+        except Exception as exc:
+            self.logger.warning('open %s: %s' % ([path], [exc]))
+            return paramiko.SFTP_PERMISSION_DENIED
+        # self.logger.debug("open on %s :: %s (%s %s)" %
+        #                   ([path], [real_path], repr(flags), repr(attr)))
         if not (flags & os.O_CREAT) and not os.path.exists(real_path):
             self.logger.error("open existing file on missing path %s :: %s" %
                               (path, real_path))
@@ -811,11 +848,13 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             return paramiko.SFTP_PERMISSION_DENIED
         if not self.__gdp_log("open", path, flags=flags):
             return paramiko.SFTP_FAILURE
+        # self.logger.debug("open SFTPHandle on %s" % [path])
         handle = SFTPHandle(flags, sftpserver=self)
         setattr(handle, 'real_path', real_path)
         setattr(handle, 'path', path)
         setattr(handle, 'user_name', self.user_name)
         setattr(handle, 'ip_addr', self.ip_addr)
+        # self.logger.debug("Prepared SFTPHandle on %s" % [path])
         try:
             # Fake OS level open call first to avoid most flag parsing.
             # This is necessary to make things like O_CREAT, O_EXCL and
@@ -824,11 +863,13 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             os.close(fake)
             # Now fake our own chattr to set any requested mode and times
             # self.logger.debug("fake chattr on %s :: %s (%s %s)" %
-            #                  (path, real_path, repr(flags), repr(attr)))
+            #                   ([path], [real_path], repr(flags), repr(attr)))
             self.chattr(path, attr)
-            # self.logger.debug("chattr done on %s :: %s (%s %s)" % \
-            #                  (path, real_path, repr(flags), repr(attr)))
+            # self.logger.debug("chattr done on %s :: %s (%s %s)" %
+            #                   ([path], [real_path], repr(flags), repr(attr)))
             mode = flags_to_mode(flags)
+            # NOTE: force binary here to avoid unicode in py3
+            mode += 'b'
             if flags == os.O_RDONLY:
                 # Read-only mode
                 readfile = open(real_path, mode)
@@ -846,60 +887,74 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             setattr(handle, 'readfile', readfile)
             setattr(handle, 'writefile', writefile)
             setattr(handle, 'active', active)
-            # self.logger.debug("open done %s :: %s (%s %s)" % \
-            #                  (path, real_path, handle, mode))
+            # self.logger.debug("open done %s :: %s (%s %s)" %
+            #                   ([path], [real_path], handle, mode))
             return handle
         except Exception as err:
+            self.logger.error("open on %s :: %s (%s) failed: %s" %
+                              ([path], [real_path], mode, [err]))
             self.__gdp_log("open", path, flags=flags, error=err)
             self.logger.error("open on %s :: %s (%s) failed: %s" %
-                              (path, real_path, mode, err))
+                              ([path], [real_path], mode, [err]))
             return paramiko.SFTP_FAILURE
 
     def list_folder(self, path):
         """Handle operations of same name"""
-        path = force_utf8(path)
-        # self.logger.debug('list_folder %s' % path)
+        # self.logger.debug('list_folder %s' % [path])
         try:
             real_path = self._get_fs_path(path)
         except ValueError as err:
-            self.logger.warning('list_folder %s: %s' % (path, err))
+            self.logger.warning('list_folder %s: %s' % ([path], [err]))
             return paramiko.SFTP_PERMISSION_DENIED
-        # self.logger.debug("list_folder %s :: %s" % (path, real_path))
+        except Exception as exc:
+            self.logger.warning('list_folder %s: %s' % ([path], [exc]))
+            return paramiko.SFTP_PERMISSION_DENIED
+        # self.logger.debug("list_folder %s :: %s" % ([path], [real_path]))
         reply = []
         if not os.path.exists(real_path):
             self.logger.warning("list_folder on missing path %s :: %s" %
-                                (path, real_path))
+                                ([path], [real_path]))
             return paramiko.SFTP_NO_SUCH_FILE
         try:
             files = os.listdir(real_path)
         except Exception as err:
             self.logger.error("list_folder on %s :: %s failed: %s" %
-                              (path, real_path, err))
+                              ([path], [real_path], [err]))
             return paramiko.SFTP_FAILURE
-        if not self.__gdp_log("list_folder", path):
+        if not self.__gdp_log("list_folder", [path]):
             return paramiko.SFTP_FAILURE
+        self.logger.debug("list_folder files :: %s" % files)
         for filename in files:
+            # self.logger.debug("list_folder for %s" % filename)
             if invisible_path(filename):
                 continue
-            full_name = ("%s/%s" % (real_path, filename)).replace("//", "/")
+            #full_name = ("%s/%s" % (real_path, filename)).replace("//", "/")
+            full_name = os.path.join(real_path, filename.lstrip(os.sep)).replace("//", "/")
+            self.logger.debug("list_folder stat %s" % [full_name])
             # stat may fail e.g. if filename is a stale storage mount point
             try:
+                # NOTE: filename must be on native string format
                 reply.append(paramiko.SFTPAttributes.from_stat(
-                    os.stat(full_name), self._strip_root(filename)))
+                    os.stat(full_name),
+                    force_native_str(self._strip_root(filename))))
             except Exception as err:
                 self.logger.warning("list_folder %s: stat on %s failed: %s" %
-                                    (path, full_name, err))
-        # self.logger.debug("list_folder %s reply %s" % (path, reply))
+                                    ([path], [full_name], [err]))
+        # self.logger.debug("list_folder %s reply %s" % ([path], [reply]))
         return reply
 
     def stat(self, path):
         """Handle operations of same name"""
-        path = force_utf8(path)
+        # TODO: where should we force utf8 now?
+        # path = force_utf8(path)
         # self.logger.debug('stat %s' % path)
         try:
             real_path = self._get_fs_path(path)
         except ValueError as err:
             self.logger.warning('stat %s: %s' % (path, err))
+            return paramiko.SFTP_PERMISSION_DENIED
+        except Exception as exc:
+            self.logger.warning('stat %s: %s' % ([path], [err]))
             return paramiko.SFTP_PERMISSION_DENIED
         # self.logger.debug("stat %s :: %s" % (path, real_path))
         # for consistency with lstat
@@ -917,7 +972,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def lstat(self, path):
         """Handle operations of same name"""
-        path = force_utf8(path)
+        # TODO: where should we force utf8 now?
+        # path = force_utf8(path)
         # self.logger.debug('lstat %s' % path)
         try:
             real_path = self._get_fs_path(path)
@@ -940,7 +996,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def remove(self, path):
         """Handle operations of same name"""
-        path = force_utf8(path)
+        # TODO: where should we force utf8 now?
+        # path = force_utf8(path)
         # self.logger.debug("remove %s" % path)
         try:
             real_path = self._get_fs_path(path)
@@ -979,8 +1036,9 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def rename(self, oldpath, newpath):
         """Handle operations of same name"""
-        oldpath = force_utf8(oldpath)
-        newpath = force_utf8(newpath)
+        # TODO: where should we force utf8 now?
+        # oldpath = force_utf8(oldpath)
+        # newpath = force_utf8(newpath)
         # self.logger.debug("rename %s %s" % (oldpath, newpath))
         try:
             real_oldpath = self._get_fs_path(oldpath)
@@ -1027,7 +1085,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def mkdir(self, path, mode):
         """Handle operations of same name"""
-        path = force_utf8(path)
+        # TODO: where should we force utf8 now?
+        # path = force_utf8(path)
         # self.logger.debug("mkdir %s" % path)
         try:
             real_path = self._get_fs_path(path)
@@ -1057,7 +1116,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def rmdir(self, path):
         """Handle operations of same name"""
-        path = force_utf8(path)
+        # TODO: where should we force utf8 now?
+        # path = force_utf8(path)
         # self.logger.debug("rmdir %s" % path)
         try:
             real_path = self._get_fs_path(path)
@@ -1104,7 +1164,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def readlink(self, path):
         """Handle operations of same name"""
-        path = force_utf8(path)
+        # TODO: where should we force utf8 now?
+        # path = force_utf8(path)
         # self.logger.debug("readlink %s" % path)
         try:
             real_path = self._get_fs_path(path)
@@ -1124,8 +1185,9 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
     def symlink(self, target_path, path):
         """Handle operations of same name"""
-        target_path = force_utf8(target_path)
-        path = force_utf8(path)
+        # TODO: where should we force utf8 now?
+        # target_path = force_utf8(target_path)
+        # path = force_utf8(path)
         # self.logger.debug('symlink %s %s' % (target_path, path))
         # Prevent users from creating symlinks for security reasons
         self.logger.error("symlink rejected on path %s :: %s" % (target_path,
@@ -1134,10 +1196,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
 
 class SimpleSSHServer(paramiko.ServerInterface):
-    """Custom SSH server with multi pub key support.
-
-    NOTE: The username arguments are unicode so we need to force utf8.
-    """
+    """Custom SSH server with multi pub key support"""
 
     # Init internal args so that they can be overriden on class before init
     # when instantiation needs to be implicit.
@@ -1193,7 +1252,8 @@ class SimpleSSHServer(paramiko.ServerInterface):
         update_key_map = False
         update_password_map = False
         daemon_conf = self.conf
-        username = force_utf8(username)
+        # NOTE: keep username on native form in general
+        username = force_native_str(username)
         client_ip = self.client_addr[0]
         tcp_port = self.client_addr[1]
         active_count = active_sessions(configuration, 'sftp', username)
@@ -1235,12 +1295,14 @@ class SimpleSSHServer(paramiko.ServerInterface):
             if password is not None:
                 update_password_map = True
                 hash_cache = daemon_conf['hash_cache']
-                password_offered = password
+                # NOTE: keep password on native form in general
+                password_offered = force_native_str(password)
                 # IMPORTANT: pass a hash of password to register_auth_attempt
                 # since we NEVER want to save passwords to disk. We base64
                 # encode it before hashing for symmetry with how we do in PAM.
-                hashed_secret = make_simple_hash(base64.b64encode(
-                    password_offered))
+                # NOTE: base64 encode requires byte string and returns byte string
+                hashed_secret = make_simple_hash(base64.b64encode(force_utf8(
+                    password_offered)))
                 # Only sharelinks should be excluded from strict password policy
                 if possible_sharelink_id(configuration, username):
                     strict_password_policy = False
@@ -1257,7 +1319,8 @@ class SimpleSSHServer(paramiko.ServerInterface):
             for entry in login_map:
                 if password is not None and entry.password is not None:
                     password_enabled = True
-                    password_allowed = entry.password
+                    # NOTE: make sure allowed value is native string as well
+                    password_allowed = force_native_str(entry.password)
                 if key is not None and self.allow_publickey \
                         and entry.public_key is not None:
                     key_enabled = True
@@ -1402,8 +1465,8 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
 
     window_size = conf.get('window_size', DEFAULT_WINDOW_SIZE)
     max_packet_size = conf.get('max_packet_size', DEFAULT_MAX_PACKET_SIZE)
-    # NOTE: paramiko accepts unicode through io.StringIO both on python 2 and 3
-    host_key_file = io.StringIO(force_unicode(host_rsa_key))
+    # NOTE: felxible native string StringIO supported on both python 2 and 3
+    host_key_file = NativeStringIO(force_native_str(host_rsa_key))
     host_key = paramiko.RSAKey(file_obj=host_key_file)
     transport = paramiko.Transport(client, default_window_size=window_size,
                                    default_max_packet_size=max_packet_size)

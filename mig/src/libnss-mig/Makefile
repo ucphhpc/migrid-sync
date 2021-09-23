@@ -15,7 +15,9 @@
 # Leave like this to lookup values in $MIG_CONF or default MiGserver.conf .
 #MIG_DEFAULTS=-D'SHARELINK_HOME=""' -D'SHARELINK_LENGTH=-1' -D'USERNAME_REGEX=""' 
 # ... or hard code to your site values like this (NOTE: escaped dollar = '$$')
-MIG_DEFAULTS=-D'SHARELINK_HOME="$(shell ~mig/mig/server/readconfval.py sharelink_home)"' \
+MIG_DEFAULTS=-D'MIG_UID=$(shell id -u mig)' \
+	-D'MIG_GID=$(shell id -g mig)' \
+       -D'SHARELINK_HOME="$(shell ~mig/mig/server/readconfval.py sharelink_home)"' \
 	-D'SHARELINK_LENGTH=10' \
 	-D'JOBSIDMOUNT_HOME="$(shell ~mig/mig/server/readconfval.py webserver_home)"' \
 	-D'JOBSIDMOUNT_LENGTH=64' \
@@ -31,14 +33,19 @@ DEBUG_CFLAGS=
 #DEBUG_DEFINES=-D'DEBUG'
 #DEBUG_CFLAGS=-g
 
+# NOTE: decide underlying python version to use or use pythonN-config below
+#PYTHON_VERSION = 3.6m
+#PYTHON_VERSION = 2.7
+
 CC = gcc
-INCLUDES=-I./
+PYCONF = $(shell which python3-config || which python2-config)
+#INCLUDES=-I./
 DEFINES=$(MIG_DEFAULTS) \
 		$(DEBUG_DEFINES)
-CFLAGS=-Wall \
-	   -Wpedantic \
-	   ${DEBUG_CFLAGS}
-LDFLAGS= -shared
+#CFLAGS=-Wall -Wpedantic  ${DEBUG_CFLAGS}
+CFLAGS=${DEBUG_CFLAGS} $(shell ${PYCONF} --cflags)
+#LDFLAGS= -shared
+LDFLAGS= -shared $(shell ${PYCONF} --ldflags)
 
 #### End of compiler configuration section ###
 

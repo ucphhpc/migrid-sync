@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # conf - Server configuration handling
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Configuration functions"""
+
 from __future__ import absolute_import
 
 import os
@@ -49,7 +50,7 @@ def get_configuration_object(config_file=None, skip_log=False):
             _config_file = '../server/MiGserver.conf'
         else:
             _config_file = os.path.join(app_dir, '..', 'server',
-                    'MiGserver.conf')
+                                        'MiGserver.conf')
     configuration = Configuration(_config_file, False, skip_log)
     return configuration
 
@@ -57,11 +58,11 @@ def get_configuration_object(config_file=None, skip_log=False):
 def get_resource_configuration(resource_home, unique_resource_name,
                                logger):
     """Load a resource configuration from file"""
-    
+
     # open the configuration file
 
     resource_config_file = resource_home + '/' + unique_resource_name\
-         + '/config'
+        + '/config'
     resource_config = unpickle(resource_config_file, logger)
     if not resource_config:
         msg = 'could not unpickle %s' % resource_config_file
@@ -95,7 +96,7 @@ def get_resource_exe(resource_config, exe_name, logger):
 
         if exe['name'] == exe_name:
             logger.debug('The configuration for %s was found'
-                          % exe_name)
+                         % exe_name)
             return (True, exe)
 
     # not found
@@ -112,6 +113,7 @@ def get_resource_all_exes(resource_config, logger):
         logger.error(msg)
         return (False, msg)
     return (True, resource_config['EXECONFIG'])
+
 
 def get_all_exe_names(unique_resource_name):
     exe_names = []
@@ -150,7 +152,7 @@ def get_resource_store(resource_config, store_name, logger):
 
         if store['name'] == store_name:
             logger.debug('The configuration for %s was found'
-                          % store_name)
+                         % store_name)
             return (True, store)
 
     # not found
@@ -158,6 +160,7 @@ def get_resource_store(resource_config, store_name, logger):
     msg = 'Error: The configuration for %s was not found!' % store_name
     logger.error(msg)
     return (False, msg)
+
 
 def get_resource_all_stores(resource_config, logger):
     msg = ''
@@ -194,5 +197,6 @@ def get_all_store_vgrids(unique_resource_name):
     store_units = resource_config.get('STORECONFIG', [])
     # filter any bogus stores without name
     store_units = [store for store in store_units if store['name']]
-    store_vgrids = dict([(store['name'], store['vgrid']) for store in store_units])
+    store_vgrids = dict([(store['name'], store['vgrid'])
+                        for store in store_units])
     return store_vgrids

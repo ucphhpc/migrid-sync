@@ -117,6 +117,7 @@ def flags_to_mode(flags):
     if not (flags & os.O_TRUNC):
         mode = mode.replace('w+', 'r+', 1)
         mode = mode.replace('w', 'r+', 1)
+    # TODO: should we always force binary here to avoid unicode in py3?
     return mode
 
 

@@ -1,10 +1,10 @@
-#!/usr/bin/python -s
+#!/usr/bin/python3 -s
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
 #
 # sftp_subsys - SFTP subsys exposing access to MiG user homes through openssh
-# Copyright (C) 2010-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -68,6 +68,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 from builtins import object
+
+import io
 import os
 import sys
 import threading
@@ -90,10 +92,10 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 # NOTE: moved mig imports into try/except to avoid autopep8 moving to top!
 try:
-    from mig.shared.logger import daemon_logger, register_hangup_handler
-    from mig.shared.fileio import user_chroot_exceptions
-    from mig.shared.conf import get_configuration_object
     from mig.server.grid_sftp import SimpleSftpServer as SftpServerImpl
+    from mig.shared.conf import get_configuration_object
+    from mig.shared.fileio import user_chroot_exceptions
+    from mig.shared.logger import daemon_logger, register_hangup_handler
 except ImportError:
     print("ERROR: the migrid modules must be in PYTHONPATH")
     sys.exit(1)
@@ -103,15 +105,27 @@ configuration, logger = None, None
 
 
 class IOSocketAdapter(object):
-    """Adapt stdout and stdin to the usual socket API"""
+    """Adapt stdout and stdin to the usual socket API.
+    Transparently handles the differences between python 2 and 3 sys.stdX
+    format by unwrapping the python 3 io.TextIOWrappers back to the raw byte
+    buffers.
+    """
 
     def __init__(self, stdin, stdout):
-        self._stdin = stdin
-        self._stdout = stdout
+        # IMPORTANT: force underlying buffer on py3 to avoid str/byte mix-up
+        if isinstance(stdin, io.TextIOWrapper):
+            self._stdin = stdin.buffer
+        else:
+            self._stdin = stdin
+        if isinstance(stdout, io.TextIOWrapper):
+            self._stdout = stdout.buffer
+        else:
+            self._stdout = stdout
         self._transport = None
 
     def send(self, data, flags=0):
         """Fake send"""
+        #logger.debug("IOSocketAdapter send: %s" % [data])
         self._stdout.flush()
         self._stdout.write(data)
         self._stdout.flush()
@@ -120,10 +134,12 @@ class IOSocketAdapter(object):
     def recv(self, bufsize, flags=0):
         """Fake recv"""
         data = self._stdin.read(bufsize)
+        #logger.debug("IOSocketAdapter recvd: %s" % [data])
         return data
 
     def close(self):
         """Fake close"""
+        #logger.debug("IOSocketAdapter close")
         self._stdin.close()
         self._stdout.close()
 
@@ -133,6 +149,7 @@ class IOSocketAdapter(object):
 
     def get_name(self):
         """Used for paramiko logging"""
+        # NOTE: we still need to set transport log explicitly
         return 'sftp'
 
     def get_transport(self):
@@ -211,10 +228,18 @@ if __name__ == '__main__':
         SftpServerImpl.logger = logger
         sftp_server = SFTPServer(socket_adapter, 'sftp', server=server_if,
                                  sftp_si=SftpServerImpl)
+        # IMPORTANT: make sure spawned client handler thread uses main log
+        socket_adapter.get_transport().set_log_channel('sftp-subsys')
         logger.info('(%s) Start sftp subsys server' % pid)
         # NOTE: we explicitly loop and join thread to act on hangup signal
-        sftp_server.setDaemon(False)
-        sftp_server.start()
+        try:
+            sftp_server.setDaemon(False)
+            sftp_server.start()
+        except Exception as exc:
+            logger.error("(%d) Crashed with exception: %s" % (pid, exc))
+            configuration.daemon_conf['stop_running'].set()
+
+        logger.info('(%s) Handling client' % pid)
         while True:
             try:
                 if configuration.daemon_conf['stop_running'].is_set():
@@ -227,10 +252,15 @@ if __name__ == '__main__':
                     sftp_server.join(1)
                     # Check alive to decide if join succeeded or timed out
                     if not sftp_server.isAlive():
+                        # logger.debug(
+                        #     '(%d) Joined sftp subsys server worker' % pid)
                         configuration.daemon_conf['stop_running'].set()
                         break
             except KeyboardInterrupt:
                 logger.info("(%d) Received user interrupt" % pid)
+                configuration.daemon_conf['stop_running'].set()
+            except Exception as exc:
+                logger.error("(%d) Crashed with exception: %s" % (pid, exc))
                 configuration.daemon_conf['stop_running'].set()
         logger.info('(%d) Finished sftp subsys server' % pid)
     except Exception as exc:

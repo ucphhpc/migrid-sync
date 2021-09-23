@@ -71,12 +71,17 @@ def parse_pub_key(public_key):
         raise ValueError(msg)
 
     head, tail = public_key.split(' ')[ssh_type_idx:2+ssh_type_idx]
-    bits = base64.decodestring(tail)
+    bits = base64.b64decode(tail)
     msg = paramiko.Message(bits)
     if head == 'ssh-rsa':
         parse_key = paramiko.RSAKey
     elif head == 'ssh-dss':
         parse_key = paramiko.DSSKey
+    elif head == 'ssh-ecdsa':
+        parse_key = paramiko.ECDSAKey
+    elif head == 'ssh-ed25519':
+        # NOTE: this may or may not be supported depending on paramiko stack
+        parse_key = getattr(paramiko, 'Ed25519Key', paramiko.RSAKey)
     else:
         # Try RSA for unknown key types
         parse_key = paramiko.RSAKey

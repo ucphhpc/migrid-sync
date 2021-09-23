@@ -29,11 +29,9 @@
 
 from __future__ import print_function
 from __future__ import absolute_import
-
-from future import standard_library
-standard_library.install_aliases()
 from builtins import range
 from builtins import object
+
 import base64
 import datetime
 import os
@@ -41,16 +39,31 @@ import pwd
 import socket
 import sys
 import time
-from configparser import ConfigParser
 
-from mig.shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
-    CSRF_FULL, POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, \
-    POLICY_CUSTOM, freeze_flavors, duplicati_protocol_choices, \
-    default_css_filename, keyword_any, cert_valid_days, oid_valid_days, \
-    generic_valid_days
-from mig.shared.logger import Logger, SYSLOG_GDP
-from mig.shared.html import menu_items, vgrid_items
-from mig.shared.fileio import read_file, load_json
+# Init future py2/3 compatibility helpers
+
+from future import standard_library
+standard_library.install_aliases()
+
+
+# NOTE: should be handled by future aliases but fails in PAM C extension
+try:
+    from configparser import ConfigParser
+except ImportError as ioe:
+    from ConfigParser import ConfigParser
+
+# NOTE: protect migrid import from autopep8 reordering
+try:
+    from mig.shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
+        CSRF_FULL, POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, \
+        POLICY_CUSTOM, freeze_flavors, duplicati_protocol_choices, \
+        default_css_filename, keyword_any, cert_valid_days, oid_valid_days, \
+        generic_valid_days
+    from mig.shared.logger import Logger, SYSLOG_GDP
+    from mig.shared.html import menu_items, vgrid_items
+    from mig.shared.fileio import read_file, load_json
+except ImportError as ioe:
+    print("could not import migrid modules")
 
 
 def fix_missing(config_file, verbose=True):
