@@ -33,7 +33,9 @@ from __future__ import absolute_import
 from builtins import range
 from past.builtins import basestring
 import base64
+import io
 import os
+import sys
 
 # IMPORTANT: do not import any other MiG modules here - to avoid import loops
 from mig.shared.defaults import default_str_coding, default_fs_coding, \
@@ -501,44 +503,29 @@ def is_native_fs(input_str):
     return _is_default_coding(input_str, FS_KIND)
 
 
-def UTF8StringIO(initial_value='', newline='\n'):
-    """Mock StringIO pseudo-class to create a StringIO matching the legacy
-    native string coding form. That is, a BytesIO for utf8 and with optional
-    string helpers automatically converted accordingly.
-    """
-    return io.BytesIO(force_utf8(initial_value), force_utf8(newline))
-
-
-def UnicodeStringIO(initial_value='', newline='\n'):
-    """Mock StringIO pseudo-class to create a StringIO matching the modern
-    native string coding form. That is, a StringIO for unicode and with
-    optional string helpers automatically converted accordingly.
-    """
-    return io.StringIO(force_unicode(initial_value), force_unicode(newline))
-
-
-def NativeStringIO(initial_value='', newline='\n'):
+def NativeStringIO(initial_value=''):
     """Mock StringIO pseudo-class to create a StringIO matching the native
     string coding form. That is a BytesIO with utf8 on python 2 and unicode
     StringIO otherwise. Optional string helpers are automatically converted
     accordingly.
     """
     if sys.version_info[0] >= 3:
-        return UnicodeStringIO(initial_value, newline)
+        return io.StringIO(initial_value)
     else:
-        return UTF8StringIO(initial_value, newline)
+        from StringIO import StringIO
+        return StringIO(initial_value)
 
 
-def DefaultStringIO(initial_value='', newline='\n'):
+def DefaultStringIO(initial_value=''):
     """Mock StringIO pseudo-class to create a StringIO matching the default
     string coding form. That is a BytesIO if default coding is utf8 and unicode
     StringIO otherwise. Optional string helpers are automatically converted
     accordingly.
     """
     if default_str_coding == "unicode":
-        return UnicodeStringIO(initial_value, newline)
+        return io.StringIO(force_unicode(initial_value))
     elif default_str_coding == "utf8":
-        return UTF8StringIO(initial_value, newline)
+        return io.BytesIO(force_utf8(initial_value))
     else:
         raise Exception("DefaultStringIO found invalid default: %s" %
                         default_str_coding)

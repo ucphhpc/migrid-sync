@@ -184,7 +184,7 @@ def check_digest(configuration, service, realm, username, password, digest,
     username = force_utf8(username)
     password = force_utf8(password)
     merged_creds = ':'.join([realm, username, password])
-    creds_hash = hashlib.md5(merged_creds).hexdigest()
+    creds_hash = hashlib.md5(force_utf8(merged_creds)).hexdigest()
     if isinstance(digest_cache, dict) and \
             digest_cache.get(creds_hash, None) == digest:
         # print "found cached digest: %s" % digest_cache.get(creds_hash, None)
@@ -273,6 +273,7 @@ def make_csrf_token(configuration, method, operation, client_id, limit=None):
     merged = "%s:%s:%s:%s" % (method, operation, client_id, limit)
     # configuration.logger.debug("CSRF for %s" % merged)
     xor_id = "%s" % (int(salt, 16) ^ int(b16encode(merged), 16))
+    # TODO: force to bytes (utf8) here?
     token = hashlib.sha256(xor_id).hexdigest()
     return token
 
@@ -397,7 +398,9 @@ def assure_password_strength(configuration, password):
 
 def make_simple_hash(val):
     """Generate a simple md5 hash for val and return the 32-char hexdigest"""
-    return hashlib.md5(val).hexdigest()
+    # NOTE: bytes required for md5
+    val_bytes = force_utf8(val)
+    return hashlib.md5(val_bytes).hexdigest()
 
 
 def make_path_hash(configuration, path):

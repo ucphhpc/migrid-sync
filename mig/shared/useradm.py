@@ -2203,7 +2203,7 @@ def get_authkeys(authkeys_path):
     """Return the authorized keys from authkeys_path"""
 
     try:
-        authkeys_fd = open(authkeys_path, 'rb')
+        authkeys_fd = open(authkeys_path, 'r')
         authorized_keys = authkeys_fd.readlines()
         authkeys_fd.close()
         # Remove extra space and skip blank lines
@@ -2217,7 +2217,7 @@ def get_authpasswords(authpasswords_path):
     """Return the non-empty authorized passwords from authpasswords_path"""
 
     try:
-        authpasswords_fd = open(authpasswords_path, 'rb')
+        authpasswords_fd = open(authpasswords_path, 'r')
         authorized_passwords = authpasswords_fd.readlines()
         authpasswords_fd.close()
         # Remove extra space and skip blank lines
@@ -2263,7 +2263,9 @@ def check_password_hash(configuration, service, username, password,
         return check_hash(configuration, service, username, password,
                           stored_hash, hash_cache, strict_policy)
     except Exception as exc:
+        import traceback
         _logger.warning("in check_password_hash: %s" % exc)
+        _logger.debug("in check_password_hash: %s" % traceback.format_exc())
         return False
 
 
