@@ -30,9 +30,14 @@
 
 from __future__ import absolute_import
 
-from future import standard_library
-standard_library.install_aliases()
-from builtins import range
+try:
+    from builtins import range
+    from future import standard_library
+    standard_library.install_aliases()
+except Exception as exc:
+    print("Could not init compatibility modules!")
+    exit(1)
+
 import ast
 import base64
 import os

@@ -58,15 +58,20 @@ Requires OpenID module (https://github.com/openid/python-openid).
 from __future__ import print_function
 from __future__ import absolute_import
 
-from future import standard_library
-standard_library.install_aliases()
-from past.builtins import basestring
-from http.server import HTTPServer, BaseHTTPRequestHandler
-from socketserver import ThreadingMixIn
+# NOTE: we use additional try/except wrapping here to prevent autopep8 mess up
+
+try:
+    from future import standard_library
+    standard_library.install_aliases()
+    from past.builtins import basestring
+    import http.cookies
+    from http.server import HTTPServer, BaseHTTPRequestHandler
+    from socketserver import ThreadingMixIn
+except Exception as exc:
+    print("ERROR: failed to init py 2/3 compatibility")
+    sys.exit(1)
 
 import base64
-import http.cookies
-import cgi
 import cgitb
 import os
 import re
@@ -81,31 +86,40 @@ except ImportError:
     print("ERROR: the python openid module is required for this daemon")
     sys.exit(1)
 
-from openid.extensions import sreg
-from openid.server import server
-from openid.store.filestore import FileOpenIDStore
-from openid.consumer import discover
+try:
+    from openid.consumer import discover
+    from openid.extensions import sreg
+    from openid.server import server
+    from openid.store.filestore import FileOpenIDStore
+except ImportError:
+    print("ERROR: one or more python openid modules missing")
+    sys.exit(1)
 
-from mig.shared.accountstate import check_account_accessible
-from mig.shared.base import client_id_dir, cert_field_map
-from mig.shared.conf import get_configuration_object
-from mig.shared.defaults import user_db_filename
-from mig.shared.griddaemons.openid import default_max_user_hits, \
-    default_user_abuse_hits, default_proto_abuse_hits, \
-    default_username_validator, refresh_user_creds, update_login_map, \
-    login_map_lookup, hit_rate_limit, expire_rate_limit, \
-    validate_auth_attempt
-from mig.shared.html import openid_page_template
-from mig.shared.logger import daemon_logger, register_hangup_handler
-from mig.shared.pwhash import make_simple_hash
-from mig.shared.safeinput import valid_distinguished_name, valid_password, \
-    valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url, \
-    valid_complex_url, InputException
-from mig.shared.tlsserver import hardened_ssl_context
-from mig.shared.url import urlparse
-from mig.shared.useradm import get_openid_user_dn, check_password_scramble, \
-    check_hash
-from mig.shared.validstring import possible_user_id
+try:
+    from mig.shared.accountstate import check_account_accessible
+    from mig.shared.base import client_id_dir, cert_field_map, force_utf8, \
+        force_native_str
+    from mig.shared.conf import get_configuration_object
+    from mig.shared.defaults import user_db_filename
+    from mig.shared.griddaemons.openid import default_max_user_hits, \
+        default_user_abuse_hits, default_proto_abuse_hits, \
+        default_username_validator, refresh_user_creds, update_login_map, \
+        login_map_lookup, hit_rate_limit, expire_rate_limit, \
+        validate_auth_attempt
+    from mig.shared.html import openid_page_template
+    from mig.shared.logger import daemon_logger, register_hangup_handler
+    from mig.shared.pwhash import make_simple_hash
+    from mig.shared.safeinput import valid_distinguished_name, valid_password, \
+        valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url, \
+        valid_complex_url, html_escape, InputException
+    from mig.shared.tlsserver import hardened_ssl_context
+    from mig.shared.url import urlparse, parse_qsl
+    from mig.shared.useradm import get_openid_user_dn, check_password_scramble, \
+        check_hash
+    from mig.shared.validstring import possible_user_id
+except Exception as exc:
+    print("ERROR: migrid modules could not be loaded: %s" % exc)
+    sys.exit(1)
 
 configuration, logger = None, None
 
@@ -124,7 +138,7 @@ pw_regexp = re.compile(pw_pattern)
 
 def quoteattr(val):
     """Escape string for safe printing"""
-    esc = cgi.escape(val, 1)
+    esc = html_escape(val, 1)
     return '"%s"' % (esc,)
 
 
@@ -378,10 +392,11 @@ class ServerHandler(BaseHTTPRequestHandler):
         # Make sure key is always available for exception handler
         key = 'UNSET'
         try:
-            self.parsed_uri = urlparse(self.path)
+            # NOTE: force native string even if socketserver provides bytes
+            self.parsed_uri = urlparse(force_native_str(self.path))
             self.query = {}
-            for (key, val) in cgi.parse_qsl(self.parsed_uri[4]):
-                # print "DEBUG: checking input arg %s: '%s'" % (key, val)
+            for (key, val) in parse_qsl(self.parsed_uri[4]):
+                print("DEBUG: checking input arg %s: '%s'" % (key, val))
                 validate_helper = self.validators.get(key, invalid_argument)
                 # Let validation errors pass to general exception handler below
                 validate_helper(val)
@@ -451,13 +466,15 @@ if this persistently happens.
     def do_POST(self):
         """Handle all HTTP POST requests"""
         try:
-            self.parsed_uri = urlparse(self.path)
+            # NOTE: force native string even if socketserver provides bytes
+            self.parsed_uri = urlparse(force_native_str(self.path))
 
             content_length = int(self.headers['Content-Length'])
-            post_data = self.rfile.read(content_length)
+            # NOTE: force native string even if socketserver provides bytes
+            post_data = force_native_str(self.rfile.read(content_length))
 
             self.query = {}
-            for (key, val) in cgi.parse_qsl(post_data):
+            for (key, val) in parse_qsl(post_data):
                 # print "DEBUG: checking post input arg %s: '%s'" % (key, val)
                 validate_helper = self.validators.get(key, invalid_argument)
                 # Let validation errors pass to general exception handler below
@@ -501,7 +518,9 @@ Invalid '%s' input: %s
             self.send_response(500)
             self.send_header('Content-type', 'text/html')
             self.end_headers()
-            self.wfile.write(cgitb.html(sys.exc_info(), context=10))
+            # NOTE: socket write expects byte strings
+            self.wfile.write(force_utf8(
+                cgitb.html(sys.exc_info(), context=10)))
             logger.error(cgitb.text(sys.exc_info(), context=10))
             print("ERROR: %s" % cgitb.text(sys.exc_info(), context=10))
 
@@ -582,8 +601,9 @@ Invalid '%s' input: %s
                 if 'password' in self.query:
                     logger.debug("setting password")
                     self.password = self.query['password']
+                    # NOTE: base64 encode expects byte strings
                     hashed_secret = make_simple_hash(
-                        base64.b64encode(self.password))
+                        base64.b64encode(force_utf8(self.password)))
                 else:
                     logger.debug("no password in query")
                     self.password = None
@@ -781,7 +801,7 @@ session state.
 </p>
 <h3>Error details:</h3>
 <pre>%s</pre>
-''' % cgi.escape(text))
+''' % html_escape(text))
             return
 
         self.send_response(webresponse.code)
@@ -791,7 +811,8 @@ session state.
         self.end_headers()
 
         if webresponse.body:
-            self.wfile.write(webresponse.body)
+            # NOTE: socket write expects byte strings
+            self.wfile.write(force_utf8(webresponse.body))
 
     def checkLogin(self, username, password, addr):
         """Check username and password stored in MiG user DB"""
@@ -813,7 +834,6 @@ session state.
             allowed = entry.password
             if allowed is None or not password:
                 continue
-            # print "DEBUG: Check password against allowed %s" % allowed
             # NOTE: We always enforce password policy here to refuse weak
             #       legacy passwords.
             # NOTE: we prefer password hash but with fall back to scrambled
@@ -838,7 +858,8 @@ session state.
                 self.login_expire = int(time.time() + self.session_ttl)
                 return True
             else:
-                logger.warning("Failed password check for user %s" % username)
+                logger.warning(
+                    "Failed password check for user %s" % username)
         logger.error("Failed password login for %s from %s" % (username, addr))
         return False
 
@@ -878,8 +899,9 @@ session state.
             else:
                 if 'password' in self.query:
                     self.password = self.query['password']
+                    # NOTE: base64 encode expects byte strings
                     hashed_secret = make_simple_hash(base64.b64encode(
-                        self.password))
+                        force_utf8(self.password)))
                 else:
                     self.password = None
 
@@ -985,7 +1007,7 @@ session state.
 
         def link(url):
             url_attr = quoteattr(url)
-            url_text = cgi.escape(url)
+            url_text = html_escape(url)
             return '<a href=%s><code>%s</code></a>' % (url_attr, url_text)
 
         def term(url, text):
@@ -1017,7 +1039,7 @@ session state.
 
         def link(url):
             url_attr = quoteattr(url)
-            url_text = cgi.escape(url)
+            url_text = html_escape(url)
             return '<a href=%s><code>%s</code></a>' % (url_attr, url_text)
 
         # IMPORTANT: This is the format availability checker looks for.
@@ -1221,7 +1243,7 @@ session state.
             for (aident, trust_root) in self.server.approved:
                 if aident == ident:
                     trs = '<li><span class="verbatim">%s</span></li>\n' % \
-                          cgi.escape(trust_root)
+                        html_escape(trust_root)
                     approved_trust_roots.append(trs)
         else:
             logger.debug("Not disclosing trust roots for %s (active user %s)"
@@ -1248,8 +1270,9 @@ session state.
 
         endpoint_url = self.server.base_url + 'openidserver'
         user_url = self.server.base_url + 'id/' + user
-        self.wfile.write("""\
-<?xml version="1.0" encoding="UTF-8"?>
+        # NOTE: socket write expects byte strings
+        self.wfile.write(force_utf8(
+            '''<?xml version="1.0" encoding="UTF-8"?>
 <xrds:XRDS
     xmlns:xrds="xri://$xrds"
     xmlns="xri://$xrd*($v*2.0)">
@@ -1264,8 +1287,8 @@ session state.
 
   </XRD>
 </xrds:XRDS>
-""" % (discover.OPENID_2_0_TYPE, discover.OPENID_1_0_TYPE,
-            endpoint_url, user_url))
+''' % (discover.OPENID_2_0_TYPE, discover.OPENID_1_0_TYPE,
+                endpoint_url, user_url)))
 
     def showServerYadis(self):
         """Server YADIS page provider"""
@@ -1274,8 +1297,9 @@ session state.
         self.end_headers()
 
         endpoint_url = self.server.base_url + 'openidserver'
-        self.wfile.write("""\
-<?xml version="1.0" encoding="UTF-8"?>
+        # NOTE: socket write expects byte strings
+        self.wfile.write(force_utf8(
+            '''<?xml version="1.0" encoding="UTF-8"?>
 <xrds:XRDS
     xmlns:xrds="xri://$xrds"
     xmlns="xri://$xrd*($v*2.0)">
@@ -1288,7 +1312,7 @@ session state.
 
   </XRD>
 </xrds:XRDS>
-""" % (discover.OPENID_IDP_2_0_TYPE, endpoint_url,))
+''' % (discover.OPENID_IDP_2_0_TYPE, endpoint_url,)))
 
     def showMainPage(self):
         """Main page provider"""
@@ -1355,7 +1379,7 @@ session state.
         """Show page helper"""
         if self.user is None:
             user_link = '<a href="/%s/login">not logged in</a>.' % \
-                        self.server.server_base
+                self.server.server_base
         else:
             user_link = '''logged in as <a href="/%s/id/%s">%s</a>.<br />
 <a href="/%s/logout?return_to=/%s/login">Log out</a>''' % \
@@ -1430,7 +1454,8 @@ session state.
         self.send_header('Content-type', 'text/html')
         self.end_headers()
         page_template = openid_page_template(configuration, head_extras)
-        self.wfile.write(page_template % fill_helpers)
+        # NOTE: socket write expects byte strings
+        self.wfile.write(force_utf8(page_template % fill_helpers))
 
 
 def limited_accept(self, *args, **kwargs):

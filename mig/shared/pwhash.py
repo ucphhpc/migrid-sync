@@ -77,14 +77,15 @@ COST_FACTOR = 10000
 
 def make_hash(password):
     """Generate a random salt and return a new hash for the password."""
-    password = force_utf8(password)
+    # NOTE: urandom already returns bytes as required for base64 encode
     salt = b64encode(urandom(SALT_LENGTH))
+    # NOTE: hashlib functions require bytes
     return 'PBKDF2${}${}${}${}'.format(
         HASH_FUNCTION,
         COST_FACTOR,
         salt,
         b64encode(hashlib.pbkdf2_hmac(HASH_FUNCTION, force_utf8(password),
-                                      force_utf8(salt), COST_FACTOR, KEY_LENGTH)))
+                                      salt, COST_FACTOR, KEY_LENGTH)))
 
 
 def check_hash(configuration, service, username, password, hashed,
@@ -146,7 +147,8 @@ def check_hash(configuration, service, username, password, hashed,
 
 def scramble_digest(salt, digest):
     """Scramble digest for saving"""
-    b16_digest = b16encode(digest)
+    # NOTE: base64 encoders require bytes
+    b16_digest = b16encode(force_utf8(digest))
     xor_int = int(salt, 16) ^ int(b16_digest, 16)
     # Python 2.6 fails to parse implicit positional args (-Jonas)
     # return '{:X}'.format(xor_int)
@@ -180,10 +182,8 @@ def check_digest(configuration, service, realm, username, password, digest,
     policy incompliance to unconditional rejects.
     """
     _logger = configuration.logger
-    realm = force_utf8(realm)
-    username = force_utf8(username)
-    password = force_utf8(password)
     merged_creds = ':'.join([realm, username, password])
+    # NOTE: hashlib functions require bytes
     creds_hash = hashlib.md5(force_utf8(merged_creds)).hexdigest()
     if isinstance(digest_cache, dict) and \
             digest_cache.get(creds_hash, None) == digest:
@@ -197,7 +197,9 @@ def check_digest(configuration, service, realm, username, password, digest,
                         % (service, username, exc))
         if strict_policy:
             return False
-    match = (make_digest(realm, username, password, salt) == digest)
+    # NOTE: we need to get cimputed bytes back to native format
+    computed = force_native_str(make_digest(realm, username, password, salt))
+    match = (computed == digest)
     if isinstance(digest_cache, dict) and match:
         digest_cache[creds_hash] = digest
         # print "cached digest: %s" % digest_cache.get(creds_hash, None)
@@ -206,13 +208,12 @@ def check_digest(configuration, service, realm, username, password, digest,
 
 def scramble_password(salt, password):
     """Scramble password for saving"""
-    b64_password = b64encode(password)
+    # NOTE: base64 encoders require bytes
+    b64_password = b64encode(force_utf8(password))
     if not salt:
         return b64_password
     xor_int = int(salt, 64) ^ int(b64_password, 64)
-    # Python 2.6 fails to parse implicit positional args (-Jonas)
-    # return '{:X}'.format(xor_int)
-    return '{0:X}'.format(xor_int)
+    return '{:X}'.format(xor_int)
 
 
 def unscramble_password(salt, password):
@@ -243,7 +244,6 @@ def check_scramble(configuration, service, username, password, scrambled,
     passwords in the user DB and they would easily give full account access.
     """
     _logger = configuration.logger
-    password = force_utf8(password)
     if isinstance(scramble_cache, dict) and \
             scramble_cache.get(password, None) == scrambled:
         # print "found cached scramble: %s" % scramble_cache.get(password,
@@ -257,7 +257,9 @@ def check_scramble(configuration, service, username, password, scrambled,
                         % (service, username, exc))
         if strict_policy:
             return False
-    match = (make_scramble(password, salt) == scrambled)
+    # NOTE: we need to get computed back from bytes to native string format
+    computed = force_native_str(make_scramble(password, salt))
+    match = (computed == scrambled)
     if isinstance(scramble_cache, dict) and match:
         scramble_cache[password] = scrambled
         # print "cached digest: %s" % scramble_cache.get(password, None)
@@ -272,9 +274,9 @@ def make_csrf_token(configuration, method, operation, client_id, limit=None):
     salt = configuration.site_digest_salt
     merged = "%s:%s:%s:%s" % (method, operation, client_id, limit)
     # configuration.logger.debug("CSRF for %s" % merged)
-    xor_id = "%s" % (int(salt, 16) ^ int(b16encode(merged), 16))
-    # TODO: force to bytes (utf8) here?
-    token = hashlib.sha256(xor_id).hexdigest()
+    # NOTE: base64 encoders and hashlib functions require bytes
+    xor_id = "%s" % (int(salt, 16) ^ int(b16encode(force_utf8(merged)), 16))
+    token = hashlib.sha256(force_utf8(xor_id)).hexdigest()
     return token
 
 
@@ -398,9 +400,8 @@ def assure_password_strength(configuration, password):
 
 def make_simple_hash(val):
     """Generate a simple md5 hash for val and return the 32-char hexdigest"""
-    # NOTE: bytes required for md5
-    val_bytes = force_utf8(val)
-    return hashlib.md5(val_bytes).hexdigest()
+    # NOTE: hashlib functions require bytes
+    return hashlib.md5(force_utf8(val)).hexdigest()
 
 
 def make_path_hash(configuration, path):

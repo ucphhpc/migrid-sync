@@ -62,7 +62,7 @@ else:
         listdir = os.listdir
 
 try:
-    from mig.shared.base import force_utf8_rec
+    from mig.shared.base import force_utf8_rec, force_native_str
     from mig.shared.defaults import default_chunk_size, default_max_chunks
     from mig.shared.serial import dump, load
 except ImportError as ioe:
@@ -340,7 +340,7 @@ def send_message_to_grid_script(message, logger, configuration):
     try:
         filehandle = open(configuration.grid_stdin, 'a')
         fcntl.flock(filehandle.fileno(), fcntl.LOCK_EX)
-        filehandle.write(message)
+        filehandle.write(force_native_str(message))
         filehandle.close()
         return True
     except Exception as err:
@@ -358,7 +358,7 @@ def send_message_to_grid_notify(message, logger, configuration):
             prefix='',
             dir=configuration.notify_home)
         filehandle = os.fdopen(filedescriptor, 'a')
-        filehandle.write(message)
+        filehandle.write(force_native_str(message))
         filehandle.close()
         return True
     except Exception as err:

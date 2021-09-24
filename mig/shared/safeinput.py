@@ -40,10 +40,10 @@ from __future__ import absolute_import
 
 from builtins import range
 from past.builtins import basestring
-import cgi
 from email.utils import parseaddr, formataddr
 from string import ascii_letters, digits, printable
 from unicodedata import category, normalize, name as unicode_name
+import html
 
 try:
     import nbformat
@@ -312,16 +312,18 @@ def __wrap_unicode_val(char):
 
 # Public functions
 
-def html_escape(contents):
-    """Uses cgi.escape() to encode contents in a html safe way. In that
+def html_escape(contents, quote=None):
+    """Uses html.escape() to encode contents in a html safe way. In that
     way the resulting data can be included in a html page without risk
     of XSS vulnerabilities.
+    The optional quote argument is passed as is to enable additional escaping
+    of single and double quotes.
     """
 
     # We use html_escape as a general protection even though it is
-    # mostly html (cgi) related
+    # mostly html request related
 
-    return cgi.escape(contents)
+    return html.escape(contents, quote)
 
 
 def valid_printable(contents, min_length=0, max_length=-1):

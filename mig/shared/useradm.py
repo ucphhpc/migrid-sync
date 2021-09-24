@@ -2303,6 +2303,8 @@ def check_password_scramble(configuration, service, username, password,
                               strict_policy)
     except Exception as exc:
         _logger.warning("in check_password_scramble: %s" % exc)
+        import traceback
+        _logger.info("traceback: %s" % traceback.format_exc())
         return False
 
 
