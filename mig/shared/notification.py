@@ -340,7 +340,16 @@ The full status and output files are available at:
         user_req['ro_fields'] = keyword_auto
         id_query = '%s' % urlencode(user_req)
         user_dict.update(user_req)
-        header = '%s account request rejected' % configuration.short_title
+        user_name = user_dict.get('full_name', 'UNKNOWN')
+        if auth_type == 'oid':
+            auth_name = 'OpenID'
+        elif auth_type == 'cert':
+            auth_name = 'certificate'
+        else:
+            logger.warning("unexpected auth_type: %r" % auth_type)
+            auth_name = 'OpenID'
+        header = '%s %s account request for %s rejected' % \
+                 (configuration.short_title, auth_name, user_name)
         txt += """This is an auto-generated account request rejection from %s.
 
 Reject message: %s
@@ -369,6 +378,7 @@ The %s Admins.
 documentation.
 """
     elif status == 'ACCOUNTINTRO':
+        # TODO: don't hardcode OpenID here
         from_id = args_list[0]
         user_email = args_list[1]
         user_name = args_list[2]
@@ -394,6 +404,7 @@ Regards,
 The %s Admins
 """ % (short_title, user_email, migoid_url, entry_url, short_title, short_title)
     elif status == 'ACCOUNTEXPIRE':
+        # TODO: don't hardcode OpenID here
         from_id = args_list[0]
         user_email = args_list[1]
         user_name = args_list[2]
