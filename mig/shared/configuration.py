@@ -1580,7 +1580,7 @@ location.""" % self.config_file)
             req = config.get('SITE', 'default_menu').split()
             self.site_default_menu = [i for i in req if i in menu_items]
         else:
-            self.site_default_menu = ['dashboard', 'files', 'submitjob',
+            self.site_default_menu = ['home', 'files', 'submitjob',
                                       'jobs', 'resources', 'vgrids',
                                       'downloads', 'runtimeenvs', 'people',
                                       'settings', 'crontab', 'docs', 'logout']
@@ -1588,13 +1588,13 @@ location.""" % self.config_file)
             req = config.get('SITE', 'simple_menu').split()
             self.site_simple_menu = [i for i in req if i in menu_items]
         else:
-            self.site_simple_menu = ['dashboard', 'files', 'vgrids',
+            self.site_simple_menu = ['home', 'files', 'vgrids',
                                      'settings', 'logout']
         if config.has_option('SITE', 'advanced_menu'):
             req = config.get('SITE', 'advanced_menu').split()
             self.site_advanced_menu = [i for i in req if i in menu_items]
         else:
-            self.site_advanced_menu = ['dashboard', 'submitjob', 'files',
+            self.site_advanced_menu = ['home', 'submitjob', 'files',
                                        'jobs', 'vgrids', 'resources',
                                        'downloads', 'runtimeenvs', 'people',
                                        'settings', 'crontab', 'vmachines',
