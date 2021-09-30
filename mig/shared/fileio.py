@@ -44,7 +44,7 @@ import zipfile
 #       Requires stand-alone scandir module on python 2 whereas the native os
 #       functions are built-in and optimized similarly on python 3+
 slow_walk, slow_listdir = False, False
-if sys.version_info[0] < 3:
+if sys.version_info[0] > 2:
     from os import walk, listdir
 else:
     try:
