@@ -1,6 +1,27 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2021-10-06T16:00:00+02:00", 
+    "systems": [
+        "ERDA", "IDMC"
+    ],
+    "announce_start": "2021-10-06T08:00:00+02:00",
+    "title": {
+      "EN": "Unplanned downtime for MODI service due to power outage",
+      "DK": "Ikke planlagt nedetid for MODI servicen pga. strømudfald"
+    },
+    "services": [
+      "MODI"
+    ],
+    "work_end": "2021-10-06T22:00:00+02:00",
+    "description": {
+      "EN": "Unplanned downtime in the MODI service due to power a outage. Sorry for the inconvenience from the lack of access.",
+      "DK": "Ikke planlagt nedetid pga. en strømafbrydelse. Beklager generne fra den manglende adgang."
+  },
+    "announce_end": "2021-10-07T08:00:00+02:00"
+  },
+  {
+    "status": "AUTO", 
     "work_start": "2021-10-06T08:00:00+02:00", 
     "systems": [
         "ERDA", "IDMC", "SIF"
