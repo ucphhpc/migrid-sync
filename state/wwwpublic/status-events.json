@@ -5,20 +5,20 @@
     "systems": [
         "ERDA", "IDMC", "SIF"
     ],
-    "announce_start": "2021-08-24T13:00:00+02:00",
+    "announce_start": "2021-10-06T08:00:00+02:00",
     "title": {
-      "EN": "Unplanned downtime due to Gluster storage brick failure",
-      "DK": "Ikke planlagt nedetid pga. en disk fejlede i vores Gluster storage system"
+      "EN": "Unplanned downtime due to a Power Drop",
+      "DK": "Ikke planlagt nedetid pga. strømudfald"
     },
     "services": [
       "ALL"
     ],
-    "work_end": "2021-10-07T08:00:00+02:00",
+    "work_end": "2021-10-06T11:00:00+02:00",
     "description": {
-      "EN": "All systems are down due to a failure in the Gluster storage backend. We are investigating.",
-      "DK": "Alle systemer er nede pga. en fejl i Gluster storage backenden, vi undersøger sagen."  
+      "EN": "Unplanned downtime due to a power drop that took out a couple of the Gluster backend storage bricks. Sorry for the inconvenience from the lack of access.",
+      "DK": "Ikke planlagt nedetid pga. et strømudfald der lagde et par af vores Gluster backend storage bricks ned. Beklager generne fra den manglende adgang."
   },
-    "announce_end": "2021-10-07T08:00:00+02:00"
+    "announce_end": "2021-10-06T11:00:00+02:00"
   },
   {
     "status": "AUTO", 
