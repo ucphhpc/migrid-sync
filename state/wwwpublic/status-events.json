@@ -7,16 +7,16 @@
     ],
     "announce_start": "2021-10-06T08:00:00+02:00",
     "title": {
-      "EN": "Unplanned downtime due to a Power Drop",
-      "DK": "Ikke planlagt nedetid pga. strømudfald"
+      "EN": "Unplanned downtime due to hardware failure",
+      "DK": "Ikke planlagt nedetid pga. hardware fejl"
     },
     "services": [
       "ALL"
     ],
     "work_end": "2021-10-06T11:00:00+02:00",
     "description": {
-      "EN": "Unplanned downtime due to a power drop that took out a couple of the Gluster backend storage bricks. Sorry for the inconvenience from the lack of access.",
-      "DK": "Ikke planlagt nedetid pga. et strømudfald der lagde et par af vores Gluster backend storage bricks ned. Beklager generne fra den manglende adgang."
+      "EN": "Unplanned downtime due to PSU failures in two of our Gluster backend storage bricks. These PSU's have now been replaced. Sorry for the inconvenience from the lack of access.",
+      "DK": "Ikke planlagt nedetid pga. fejl i PSU'erne på to af vores Gluster backend storage bricks. Disse PSU'er er nu skiftet. Beklager generne fra den manglende adgang."
   },
     "announce_end": "2021-10-06T11:00:00+02:00"
   },
