@@ -13,10 +13,10 @@
     "services": [
       "MODI"
     ],
-    "work_end": "2021-10-06T22:00:00+02:00",
+    "work_end": "2021-10-06T17:30:00+02:00",
     "description": {
-      "EN": "Unplanned downtime in the MODI service due to power a outage. Sorry for the inconvenience from the lack of access.",
-      "DK": "Ikke planlagt nedetid pga. en strømafbrydelse. Beklager generne fra den manglende adgang."
+      "EN": "Unplanned downtime in the MODI service due to power a outage. Sorry for the inconvenience from the lack of access. The failed storage volume has been corrected and the service is now back online. Sorry for this inconvenience.",
+      "DK": "Ikke planlagt nedetid pga. en strømafbrydelse. Det fejlende datalager er nu blevet fixet og servicen er igen oppe. Beklager generne fra den manglende adgang."
   },
     "announce_end": "2021-10-07T08:00:00+02:00"
   },
