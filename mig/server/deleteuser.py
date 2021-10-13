@@ -102,8 +102,7 @@ if '__main__' == __name__:
         else:
             print('using configuration from MIG_CONF (or default)')
 
-    configuration = get_configuration_object(
-        config_file=conf_path)
+    configuration = get_configuration_object(config_file=conf_path)
     logger = configuration.logger
 
     if user_id and args:
@@ -112,7 +111,7 @@ if '__main__' == __name__:
         sys.exit(1)
 
     if args:
-        logger.debug('deleteuser called with args: %s' % args)
+        #logger.debug('deleteuser called with args: %s' % args)
         user_dict['full_name'] = args[0]
         try:
             user_dict['organization'] = args[1]
@@ -125,7 +124,7 @@ if '__main__' == __name__:
 
             pass
     elif user_id:
-        logger.debug('deleteuser called with user_id: %s' % [user_id])
+        #logger.debug('deleteuser called with user_id: %s' % [user_id])
         user_dict = distinguished_name_to_user(user_id)
     elif not configuration.site_enable_gdp:
         print('Please enter the details for the user to be removed:')
@@ -143,7 +142,7 @@ if '__main__' == __name__:
     if 'distinguished_name' not in user_dict:
         fill_distinguished_name(user_dict)
 
-    logger.debug('deleteuser with ID: %s' % [user_dict['distinguished_name']])
+    #logger.debug('deleteuser with ID: %s' % [user_dict['distinguished_name']])
     fill_user(user_dict)
 
     # Now all user fields are set and we can begin deleting the user
@@ -151,7 +150,7 @@ if '__main__' == __name__:
     if verbose:
         print('Removing DB entry and dirs for user: %s' % user_dict)
     try:
-        logger.debug('Removing DB entry and dirs for user: %s' % [user_dict])
+        #logger.debug('Removing DB entry and dirs for user: %s' % [user_dict])
         delete_user(user_dict, conf_path, db_path, force, verbose)
     except Exception as err:
         print(err)

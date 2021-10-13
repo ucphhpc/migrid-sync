@@ -177,9 +177,9 @@ if '__main__' == __name__:
         expire = default_account_expire(configuration, auth_type)
 
     if args:
-        logger.debug('createuser called with args: %s' % args)
-        logger.debug('createuser using default %s and fs %s encoding' %
-                     (sys.getdefaultencoding(), sys.getfilesystemencoding()))
+        #logger.debug('createuser called with args: %s' % args)
+        #logger.debug('createuser using default %s and fs %s encoding' %
+        #             (sys.getdefaultencoding(), sys.getfilesystemencoding()))
         try:
             user_dict['full_name'] = args[0]
             user_dict['organization'] = args[1]
@@ -201,7 +201,7 @@ if '__main__' == __name__:
             usage()
             sys.exit(1)
     elif default_renew and user_id:
-        logger.debug('createuser called with user_id: %s' % [user_id])
+        #logger.debug('createuser called with user_id: %s' % [user_id])
         saved = load_user_dict(logger, user_id, db_path, verbose)
         if not saved:
             print('Error: no such user in user db: %s' % user_id)
@@ -242,12 +242,12 @@ if '__main__' == __name__:
     elif 'distinguished_name' not in user_dict:
         fill_distinguished_name(user_dict)
 
-    logger.debug('createuser with ID: %s' % [user_dict['distinguished_name']])
+    #logger.debug('createuser with ID: %s' % [user_dict['distinguished_name']])
     fill_user(user_dict)
 
     force_native_str_rec(user_dict)
-    logger.debug('createuser forced to ID: %s' %
-                 [user_dict['distinguished_name']])
+    #logger.debug('createuser forced to ID: %s' %
+    #             [user_dict['distinguished_name']])
 
     # Make sure account expire is set with local certificate or OpenID login
 
