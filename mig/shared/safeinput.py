@@ -2176,7 +2176,7 @@ class InputException(Exception):
     def __str__(self):
         """Return string representation"""
 
-        return force_utf8(force_unicode(self.value))
+        return force_native_str(self.value)
 
 
 if __name__ == '__main__':

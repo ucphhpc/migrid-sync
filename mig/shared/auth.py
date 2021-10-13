@@ -29,12 +29,17 @@
 
 from __future__ import absolute_import
 
-from future import standard_library
-standard_library.install_aliases()
+# NOTE: wrap in try/except to avoid autopep8 interference in import order
+try:
+    from future import standard_library
+    standard_library.install_aliases()
+except Exception as exc:
+    print("ERROR: failed to init compatibility setup")
+    exit(1)
+
 from builtins import zip
 import base64
 import glob
-import hashlib
 import http.cookies
 import os
 import re
@@ -46,13 +51,15 @@ try:
 except ImportError:
     pyotp = None
 
-from mig.shared.base import client_id_dir, extract_field, force_utf8
+from mig.shared.base import client_id_dir, extract_field, force_utf8, \
+    force_native_str
 from mig.shared.defaults import twofactor_key_name, twofactor_interval_name, \
     twofactor_key_bytes, twofactor_cookie_bytes, twofactor_cookie_ttl
 from mig.shared.fileio import read_file, delete_file, delete_symlink, \
     pickle, unpickle, make_symlink
 from mig.shared.gdp.all import get_base_client_id
-from mig.shared.pwhash import scramble_password, unscramble_password
+from mig.shared.pwhash import scramble_password, unscramble_password, \
+    make_simple_hash
 from mig.shared.url import quote
 
 # Set OTP windows range (+/-) to compensate for offset
@@ -242,7 +249,7 @@ def generate_session_prefix(configuration, client_id):
     if configuration.site_enable_gdp:
         client_id = get_base_client_id(
             configuration, client_id, expand_oid_alias=False)
-    return hashlib.sha256(client_id).hexdigest()
+    return make_simple_hash(client_id, 'sha256')
 
 
 def generate_session_key(configuration, client_id):
@@ -254,7 +261,9 @@ def generate_session_key(configuration, client_id):
             configuration, client_id, expand_oid_alias=False)
     session_key = generate_session_prefix(configuration, client_id)
     random_key = os.urandom(twofactor_cookie_bytes)
-    session_key += re.sub(r'[=+/]+', '', base64.b64encode(random_key))
+    # NOTE: base64 encode returns bytes - we need native string
+    session_key += re.sub(r'[=+/]+', '',
+                          force_native_str(base64.b64encode(random_key)))
     return session_key
 
 

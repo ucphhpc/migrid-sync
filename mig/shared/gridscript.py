@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # gridscript - main script helper functions
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Main MiG daemon (grid_script) helper functions"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -33,7 +34,7 @@ import os
 import time
 
 from mig.shared.base import client_id_dir
-from mig.shared.defaults import job_output_dir
+from mig.shared.defaults import job_output_dir, ignore_file_names
 from mig.shared.fileio import send_message_to_grid_script, pickle, unpickle, \
     delete_file, touch, walk, slow_walk
 from mig.shared.notification import notify_user_thread
@@ -133,6 +134,8 @@ def check_mrsl_files(
                     (len(files), root))
         file_count = 0
         for name in files:
+            if name in ignore_file_names:
+                continue
             filename = os.path.join(root, name)
             file_count += 1
             if file_count % 1000 == 0:

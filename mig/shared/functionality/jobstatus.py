@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobstatus - Display status of jobs
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,16 +26,16 @@
 #
 
 """Job status back end functionality"""
+
 from __future__ import absolute_import
 
 from past.builtins import cmp
 import glob
 import os
 import time
-from binascii import hexlify
 
 from mig.shared import returnvalues
-from mig.shared.base import client_id_dir
+from mig.shared.base import client_id_dir, hexlify
 from mig.shared.defaults import all_jobs, job_output_dir, csrf_field
 from mig.shared.fileio import unpickle
 from mig.shared.functional import validate_input_and_cert
@@ -74,10 +74,11 @@ def sort(paths, new_first=True):
     """
 
     mtime = os.path.getmtime
+    # NOTE: switched to use key instead of cmp to support both python 2 and 3
+    # https://portingguide.readthedocs.io/en/latest/comparisons.html#the-cmp-argument
+    paths.sort(key=lambda i: mtime(i))
     if new_first:
-        paths.sort(lambda i, j: cmp(mtime(j), mtime(i)))
-    else:
-        paths.sort(lambda i, j: cmp(mtime(i), mtime(j)))
+        paths = paths[::-1]
     return paths
 
 

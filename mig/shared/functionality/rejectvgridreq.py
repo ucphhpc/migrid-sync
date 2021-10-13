@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rejectvgridreq - reject a vgrid access request
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,18 +26,19 @@
 #
 
 """Reject access request to a given vgrid"""
+
 from __future__ import absolute_import
 
-from binascii import unhexlify
 import os
 
 from mig.shared.accessrequests import load_access_request, delete_access_request
+from mig.shared.base import unhexlify
 from mig.shared.defaults import any_protocol, csrf_field
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.vgrid import init_vgrid_script_add_rem, vgrid_is_resource, \
-     vgrid_list_subvgrids, vgrid_add_resources
+    vgrid_list_subvgrids, vgrid_add_resources
 from mig.shared import returnvalues
 
 
@@ -58,8 +59,8 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     label = "%s" % configuration.site_vgrid_label
     title_entry['text'] = "Reject %s Request" % label
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Reject %s Request' % label})
+    output_objects.append(
+        {'object_type': 'header', 'text': 'Reject %s Request' % label})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -67,7 +68,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -89,8 +90,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         init_vgrid_script_add_rem(vgrid_name, client_id, request_name,
                                   'request', configuration)
     if not ret_val:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : msg})
+        output_objects.append({'object_type': 'error_text', 'text': msg})
         return (output_objects, returnvalues.CLIENT_ERROR)
     elif msg:
 
@@ -103,13 +103,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
         req = load_access_request(configuration, request_dir, request_name)
     if not req or not delete_access_request(configuration, request_dir,
                                             request_name):
-            logger.error("failed to delete owner request for %s in %s" % \
-                         (vgrid_name, request_name))
-            output_objects.append({
-                'object_type': 'error_text', 'text':
-                'Failed to remove saved vgrid request for %s in %s!'\
-                % (vgrid_name, request_name)})
-            return (output_objects, returnvalues.CLIENT_ERROR)
+        logger.error("failed to delete owner request for %s in %s" %
+                     (vgrid_name, request_name))
+        output_objects.append({
+            'object_type': 'error_text', 'text':
+            'Failed to remove saved vgrid request for %s in %s!'
+            % (vgrid_name, request_name)})
+        return (output_objects, returnvalues.CLIENT_ERROR)
     output_objects.append({'object_type': 'text', 'text': '''
 Deleted %(request_type)s access request to %(target)s for %(entity)s .
 ''' % req})

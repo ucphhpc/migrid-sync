@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rmvgridowner - remove a vgrid owner
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,7 +30,6 @@ from __future__ import absolute_import
 
 from past.builtins import basestring
 import os
-from binascii import hexlify
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir, distinguished_name_to_user

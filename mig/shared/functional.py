@@ -39,7 +39,7 @@ import time
 
 from mig.shared.accountstate import check_account_status, \
     check_update_account_expire
-from mig.shared.base import requested_page, force_utf8, get_site_base_url
+from mig.shared.base import requested_page, force_native_str, get_site_base_url
 from mig.shared.defaults import csrf_field, auth_openid_ext_db
 from mig.shared.findtype import is_user
 from mig.shared.httpsclient import extract_client_cert, extract_client_openid, \
@@ -56,8 +56,8 @@ def warn_on_rejects(rejects, output_objects):
             for err in err_list:
                 output_objects.append({'object_type': 'error_text',
                                        'text': 'input parsing error: %s: %s: %s'
-                                       % (key, force_utf8(err[0]),
-                                          force_utf8(err[1]))})
+                                       % (key, force_native_str(err[0]),
+                                          force_native_str(err[1]))})
 
 
 def merge_defaults(user_input, defaults):
@@ -158,10 +158,13 @@ def validate_input_and_cert(
     if not client_id:
         creds_error = "Invalid or missing user credentials"
     elif require_user and not is_user(client_id, configuration.mig_server_home):
+        #logger.debug("user not found: %s" % [client_id])
         creds_error = "No such user (%s)" % client_id
     else:
         (account_accessible, account_status, _) = check_account_status(
             configuration, client_id)
+        # logger.debug("account status said %s , %s" %
+        #             (account_accessible, account_status))
         if not account_accessible:
             creds_error = "User account is %s!" % account_status
         else:
@@ -260,7 +263,7 @@ and just need to sign up for a local %s account on the''' %
                             signup_query = '?show=extoid'
                         else:
                             logger.error("unknown migoid client_id %s on %s"
-                                         % (client_id, base_url))
+                                         % ([client_id], base_url))
                 else:
                     logger.warning("unexpected client_id %s on %s" %
                                    (client_id, base_url))

@@ -600,7 +600,7 @@ so you may have to avoid blank lines in your text below.
     if 'job' in topic_list:
         mrsl_path = os.path.join(base_dir, default_mrsl_filename)
 
-        default_mrsl = get_default_mrsl(mrsl_path)
+        default_mrsl = get_default_mrsl(mrsl_path, logger)
         target_op = 'editfile'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
@@ -654,7 +654,7 @@ your submit job page.
 
     if 'style' in topic_list:
         css_path = os.path.join(base_dir, default_css_filename)
-        default_css = get_default_css(css_path)
+        default_css = get_default_css(css_path, logger)
         target_op = 'editfile'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)

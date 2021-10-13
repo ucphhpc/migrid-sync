@@ -33,6 +33,7 @@ from __future__ import absolute_import
 from builtins import zip
 from builtins import input
 from past.builtins import basestring
+
 from email.utils import parseaddr
 import datetime
 import fnmatch
@@ -48,7 +49,8 @@ from mig.shared.accountstate import update_account_expire_cache, \
     update_account_status_cache
 from mig.shared.base import client_id_dir, client_dir_id, client_alias, \
     sandbox_resource, fill_user, fill_distinguished_name, extract_field, \
-    is_gdp_user
+    is_gdp_user, force_native_str, force_native_str_rec, native_str_escape, \
+    native_args
 from mig.shared.conf import get_configuration_object
 from mig.shared.configuration import Configuration
 from mig.shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
@@ -58,7 +60,7 @@ from mig.shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
     authpasswords_filename, authdigests_filename, cert_field_order, \
     twofactor_filename
 from mig.shared.fileio import filter_pickled_list, filter_pickled_dict, \
-    make_symlink, delete_symlink
+    make_symlink, delete_symlink, read_file, write_file
 from mig.shared.modified import mark_user_modified
 from mig.shared.refunctions import list_runtime_environments, \
     update_runtimeenv_owner
@@ -99,8 +101,10 @@ https_authdigests = user_db_filename
 def init_user_adm():
     """Shared init function for all user administration scripts"""
 
-    args = sys.argv[1:]
-    app_dir = os.path.dirname(sys.argv[0])
+    # NOTE: keep app name on default string format but force rest to term enc
+    raw_args = force_native_str_rec(native_args(sys.argv))
+    args = raw_args[1:]
+    app_dir = os.path.dirname(raw_args[0])
     if not app_dir:
         app_dir = '.'
     db_path = os.path.join(app_dir, user_db_filename)
@@ -549,7 +553,6 @@ with certificate or OpenID authentication to authorize the change."""
     # Always write htaccess to catch any updates
 
     try:
-        filehandle = open(htaccess_path, 'w')
 
         # Match certificate or OpenID distinguished name
 
@@ -560,11 +563,11 @@ with certificate or OpenID authentication to authorize the change."""
         # match in htaccess
 
         dn_plain = info['distinguished_name']
-        dn_enc = dn_plain.encode('string_escape')
+        dn_enc = force_native_str(native_str_escape(dn_plain))
 
         def upper_repl(match):
             """Translate hex codes to upper case form"""
-            return '\\\\x' + match.group(1).upper()
+            return '\\x' + match.group(1).upper()
 
         info['distinguished_name_enc'] = re.sub(r'\\x(..)', upper_repl, dn_enc)
 
@@ -622,13 +625,16 @@ require user "%(distinguished_name)s"
 </IfVersion>
 '''
 
-        filehandle.write(access % info)
-        filehandle.close()
+        if not write_file(access % info, htaccess_path, _logger, umask=0o033):
+            _logger.error("failed to write %s in %s" %
+                          (access % info, htaccess_path))
+            raise Exception("write htaccess failed!")
 
         # try to prevent further user modification
 
         os.chmod(htaccess_path, 0o444)
-    except:
+    except Exception as exc:
+        _logger.error("createuser failed to write htaccess: %s" % exc)
         if not force:
             raise Exception('could not create htaccess file: %s'
                             % htaccess_path)
@@ -708,16 +714,11 @@ The %(short_title)s admins
 
     # Write missing default css to avoid apache error log entries
 
-    if not os.path.exists(css_path):
-        try:
-            filehandle = open(css_path, 'w')
-            filehandle.write(get_default_css(css_path))
-            filehandle.close()
-        except:
-            _logger.error("could not write %s" % css_path)
-            if not force:
-                raise Exception('could not create custom css file: %s'
-                                % css_path)
+    if not os.path.exists(css_path) and not \
+            write_file(get_default_css(css_path, _logger, True), css_path, _logger):
+        _logger.error("could not write %s" % css_path)
+        if not force:
+            raise Exception('could not create custom css file: %s' % css_path)
 
     _logger.info("created/renewed user %s" % client_id)
     mark_user_modified(configuration, client_id)
@@ -1252,12 +1253,15 @@ def get_openid_user_map(configuration, do_lock=True):
     """Translate user DB to OpenID mapping between a verified login URL and a
     pseudo certificate DN.
     """
+    _logger = configuration.logger
     id_map = {}
     db_path = os.path.join(configuration.mig_server_home, user_db_filename)
     user_map = load_user_db(db_path, do_lock=do_lock)
     user_alias = configuration.user_openid_alias
     for cert_id in user_map:
         for oid_provider in configuration.user_openid_providers:
+            _logger.debug("oid user map: cert id %r vs oid provider %r" %
+                          ([cert_id], [oid_provider]))
             full = oid_provider + client_id_dir(cert_id)
             id_map[full] = cert_id
             alias = oid_provider + client_alias(cert_id)
@@ -1290,17 +1294,18 @@ def get_openid_user_dn(configuration, login_url,
     yet signed up.
     """
     _logger = configuration.logger
-    _logger.debug('extracting openid dn from %s' % login_url)
+    _logger.debug('extracting openid dn from %s' % [login_url])
     found_openid_prefix = False
     for oid_provider in configuration.user_openid_providers:
         oid_prefix = oid_provider.rstrip('/') + '/'
         if login_url.startswith(oid_prefix):
-            found_openid_prefix = oid_prefix
+            found_openid_prefix = force_native_str(oid_prefix)
             break
     if not found_openid_prefix:
         _logger.error("openid login from invalid provider: %s" % login_url)
         return ''
     raw_login = login_url.replace(found_openid_prefix, '')
+    _logger.debug("get_openid_user_dn with raw login: %s" % [raw_login])
     return get_any_oid_user_dn(configuration, raw_login, user_check, do_lock)
 
 
@@ -1342,15 +1347,24 @@ def get_any_oid_user_dn(configuration, raw_login,
     yet signed up.
     """
     _logger = configuration.logger
-    _logger.debug("trying openid raw login: %s" % raw_login)
+    _logger.debug("trying openid raw login: %s" % [raw_login])
     # Lookup native user_home from openid user symlink
     link_path = os.path.join(configuration.user_home, raw_login)
+    _logger.debug('found link %s from %s user base' %
+                  ([link_path], [configuration.user_home]))
+    _logger.debug('list user base: %s' % os.listdir(configuration.user_home))
+    _logger.debug('default %s and fs %s encoding' % (sys.getdefaultencoding(),
+                                                     sys.getfilesystemencoding()))
     if os.path.islink(link_path):
         native_path = os.path.realpath(link_path)
+        _logger.debug('found path %s from %s link' %
+                      ([native_path], [link_path]))
         native_dir = os.path.basename(native_path)
+        _logger.debug('found dir %s from %s link' %
+                      ([native_dir], [link_path]))
         distinguished_name = client_dir_id(native_dir)
         _logger.info('found full ID %s from %s link'
-                     % (distinguished_name, raw_login))
+                     % ([distinguished_name], [raw_login]))
         return distinguished_name
     elif configuration.user_openid_alias:
         db_path = os.path.join(configuration.mig_server_home, user_db_filename)
@@ -1360,7 +1374,7 @@ def get_any_oid_user_dn(configuration, raw_login,
         for (distinguished_name, user) in user_map.items():
             if user[user_alias] in (raw_login, client_alias(raw_login)):
                 _logger.info('found full ID %s from %s alias'
-                             % (distinguished_name, raw_login))
+                             % ([distinguished_name], [raw_login]))
                 return distinguished_name
 
     # Fall back to try direct DN (possibly on cert dir form)
@@ -2142,19 +2156,13 @@ def user_twofactor_status(user_id, conf_path, db_path, fields,
     return (configuration, errors)
 
 
-def get_default_mrsl(template_path):
+def get_default_mrsl(template_path, logger, allow_missing=True):
     """Return the default mRSL template from template_path"""
 
-    try:
-        template_fd = open(template_path, 'rb')
-        default_mrsl = template_fd.read()
-        template_fd.close()
-    except:
-
+    default_mrsl = read_file(template_path, logger, allow_missing)
+    if default_mrsl is None:
         # Use default hello grid example
-
-        default_mrsl = \
-            """::EXECUTE::
+        default_mrsl = """::EXECUTE::
 echo 'hello grid!'
 echo '...each line here is executed'
 
@@ -2169,7 +2177,7 @@ jabber: SETTINGS
 ::EXECUTABLES::
 
 ::MEMORY::
-1
+64
 
 ::DISK::
 1
@@ -2183,15 +2191,11 @@ jabber: SETTINGS
     return default_mrsl
 
 
-def get_default_css(template_path):
-    """Return the default css template template_path"""
+def get_default_css(template_path, logger, allow_missing=True):
+    """Return the default css template from template_path"""
 
-    try:
-        template_fd = open(template_path, 'rb')
-        default_css = template_fd.read()
-        template_fd.close()
-    except:
-
+    default_css = read_file(template_path, logger, allow_missing)
+    if default_css is None:
         # Use default style - i.e. do not override anything
 
         default_css = '/* No changes - use default */'
@@ -2202,6 +2206,7 @@ def get_default_css(template_path):
 def get_authkeys(authkeys_path):
     """Return the authorized keys from authkeys_path"""
 
+    # TODO: use read_file instead
     try:
         authkeys_fd = open(authkeys_path, 'r')
         authorized_keys = authkeys_fd.readlines()

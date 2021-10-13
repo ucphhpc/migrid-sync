@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python-version-from-mod-wsgi
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
@@ -26,16 +26,17 @@
 #
 
 from builtins import range
+import cgi
+import importlib
 import os
 import sys
-import cgi
 import time
 
 from mig.shared import returnvalues
 from mig.shared.bailout import bailout_helper, crash_helper
 from mig.shared.base import requested_page, allow_script, \
-    is_default_str_coding, force_default_str_coding_rec
-from mig.shared.defaults import download_block_size
+    is_default_str_coding, force_native_str_rec, force_utf8, force_utf8_rec
+from mig.shared.defaults import download_block_size, default_fs_coding
 from mig.shared.conf import get_configuration_object
 from mig.shared.objecttypes import get_object_type_info
 from mig.shared.output import validate, format_output, dummy_main, reject_main
@@ -63,6 +64,8 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
     output_objects = []
     main = dummy_main
 
+    _logger.debug("stub for backend %r" % backend)
+
     # IMPORTANT: we cannot trust potentially user-provided backend value.
     #            NEVER print/output it verbatim before it is validated below.
 
@@ -84,7 +87,10 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
     try:
         # Import main from backend module
 
-        exec('from %s import main' % import_path)
+        #_logger.debug("import main from %r" % import_path)
+        # NOTE: dynamic module loading to find corresponding main function
+        module_handle = importlib.import_module(import_path)
+        main = module_handle.main
     except Exception as err:
         _logger.error("%s could not import %r (%s): %s" %
                       (_addr, backend, import_path, err))
@@ -96,6 +102,8 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
              'destination': configuration.site_landing_page}
         ])
         return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    #_logger.debug("imported main %s" % main)
 
     # Now backend value is validated to be safe for output
 
@@ -142,16 +150,29 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
 def application(environ, start_response):
     """MiG app called automatically by wsgi"""
 
-    # TODO: verify security of this environment exposure
-
-    # pass environment on to sub handlers
+    # TODO: verify security of this environment exposure or limit to known vars
+    # NOTE: pass environment on to sub handlers
 
     os.environ = environ
+
+    # NOTE: enable to debug runtime environment to apache error log
+    # print("DEBUG: python %s" %
+    #      (sys.version_info, ), file=environ['wsgi.errors'])
+    #print("DEBUG: path %s" % sys.path, file=environ['wsgi.errors'])
 
     # TODO: we should avoid print calls completely in backends
     # make sure print calls do not interfere with wsgi
 
-    sys.stdout = sys.stderr
+    # NOTE: redirect stdout to stderr in python 2 only. It breaks logger in 3
+    #       and stdout redirection apparently is already handled there.
+    if sys.version_info[0] < 3:
+        sys.stdout = sys.stderr
+
+    # IMPORTANT: avoid default ascii encoding in WSGI from breaking utf8 paths
+    #            by rendering with unicode surrogate codes.
+    if sys.getfilesystemencoding() != 'utf-8' and default_fs_coding == 'utf8':
+        environ["LC_CTYPE"] = "en_US.UTF-8"
+
     configuration = get_configuration_object()
     _logger = configuration.logger
 
@@ -172,6 +193,8 @@ def application(environ, start_response):
     output_objs = []
     user_arguments_dict = {}
 
+    _logger.debug("handling wsgi request with python %s from %s" %
+                  (sys.version_info, client_id))
     try:
         if not configuration.site_enable_wsgi:
             _logger.error("WSGI interface is disabled in configuration")
@@ -188,13 +211,17 @@ def application(environ, start_response):
         script_path = requested_page(environ, configuration.site_landing_page)
         script_name = os.path.basename(script_path)
         backend = os.path.splitext(script_name)[0]
-        module_path = 'shared.functionality.%s' % backend
+        # _logger.debug("handling wsgi %r request from %s" %
+        #              (backend, client_id))
+        module_path = 'mig.shared.functionality.%s' % backend
         (allow, msg) = allow_script(configuration, script_name, client_id)
         if allow:
+            #_logger.debug("wsgi handling script: %s" % script_name)
             (output_objs, ret_val) = stub(configuration, client_id,
                                           module_path, backend,
                                           user_arguments_dict, environ)
         else:
+            _logger.warning("wsgi handling refused script:%s" % script_name)
             (output_objs, ret_val) = reject_main(client_id,
                                                  user_arguments_dict)
         status = '200 OK'
@@ -230,16 +257,19 @@ def application(environ, start_response):
         start_entry['headers'] = default_headers
     response_headers = start_entry['headers']
 
+    _logger.debug("call format %r output to %s" % (backend, output_format))
     output = format_output(configuration, backend, ret_code, ret_msg,
                            output_objs, output_format)
+    #_logger.debug("formatted %s output to %s" % (backend, output_format))
+    #_logger.debug("output:\n%s" % [output])
 
     if not is_default_str_coding(output):
         _logger.error(
             "Formatted output is NOT on default str coding: %s" % [output[:100]])
         err_mark = '__****__'
         output = format_output(configuration, backend, ret_code, ret_msg,
-                               force_default_str_coding_rec(
-                                   output_objs, highlight=err_mark),
+                               force_native_str_rec(output_objs,
+                                                    highlight=err_mark),
                                output_format)
         _logger.warning(
             "forced output to default coding with highlight: %s" % err_mark)
@@ -248,7 +278,7 @@ def application(environ, start_response):
     # An empty string on the other hand is quite okay.
 
     if output is None:
-        _logger.error("WSGI %s output formatting failed: %s" % output_format)
+        _logger.error("WSGI %s output formatting failed" % output_format)
         output = 'Error: output could not be correctly delivered!'
 
     content_length = len(output)
@@ -256,9 +286,15 @@ def application(environ, start_response):
         # _logger.debug("WSGI adding explicit content length %s" % content_length)
         response_headers.append(('Content-Length', "%d" % content_length))
 
+    _logger.debug("send %r response as %s to %s" %
+                  (backend, output_format, client_id))
     # NOTE: send response to client but don't crash e.g. on closed connection
     try:
-        start_response(status, response_headers)
+        # IMPORTANT: headers must be on native string format here
+        native_headers = force_native_str_rec(response_headers)
+        #_logger.debug("native headers: %s" % native_headers)
+        start_response(status, native_headers)
+        #_logger.debug("started response to client")
 
         # NOTE: we consistently hit download error for archive files reaching ~2GB
         #       with showfreezefile.py on wsgi but the same on cgi does NOT suffer
@@ -272,15 +308,20 @@ def application(environ, start_response):
                 chunk_parts += 1
             _logger.info("WSGI %s yielding %d output parts (%db)" %
                          (backend, chunk_parts, content_length))
+        #_logger.debug("send chunked %r response to client" % backend)
         for i in range(chunk_parts):
             # _logger.debug("WSGI %s yielding part %d / %d output parts" %
             #              (backend, i+1, chunk_parts))
             # end index may be after end of content - but no problem
             part = output[i*download_block_size:(i+1)*download_block_size]
-            yield part
+            #_logger.debug("yield %r chunk to client" % backend)
+            # IMPORTANT: bytes are required here for all python versions
+            yield force_utf8(part)
         if chunk_parts > 1:
             _logger.info("WSGI %s finished yielding all %d output parts" %
                          (backend, chunk_parts))
+        _logger.debug("done sending %d chunk(s) of %r response to client" %
+                      (chunk_parts, backend))
     except IOError as ioe:
         _logger.warning("WSGI %s for %s could not deliver output: %s" %
                         (backend, client_id, ioe))

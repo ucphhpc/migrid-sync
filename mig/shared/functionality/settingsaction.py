@@ -30,12 +30,12 @@
 from __future__ import absolute_import
 
 import os
-import tempfile
 
 from mig.shared import returnvalues
 from mig.shared.accountstate import check_update_account_expire, \
     account_expire_info
 from mig.shared.duplicatikeywords import get_keywords_dict as duplicati_keywords
+from mig.shared.fileio import write_named_tempfile
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.gdp.all import get_client_id_from_project_client_id
 from mig.shared.handlers import get_csrf_limit, safe_handler
@@ -157,18 +157,19 @@ CSRF-filtered POST requests to prevent unintended updates'''
             if not keyword in keywords_dict:
                 continue
             if received_arguments != None and received_arguments != ['\r\n']:
+                contiguous_arguments = ''
+                for entry in received_arguments:
+                    contiguous_arguments += '\n'.join(
+                        [i for i in entry.split('\n') if i.strip()])
                 topic_mrsl += '''::%s::
 %s
 
-''' % (keyword.upper(), '\n'.join(received_arguments))
+''' % (keyword.upper(), contiguous_arguments)
 
         # Save content to temp file
 
-        try:
-            (filehandle, tmptopicfile) = tempfile.mkstemp(text=True)
-            os.write(filehandle, topic_mrsl)
-            os.close(filehandle)
-        except Exception:
+        tmptopicfile = write_named_tempfile(configuration, topic_mrsl)
+        if tmptopicfile is None:
             output_objects.append(
                 {'object_type': 'error_text', 'text':
                  'Problem writing temporary topic file on server.'})

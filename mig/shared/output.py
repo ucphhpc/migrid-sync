@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
@@ -30,17 +30,23 @@ specified by the client."""
 
 from __future__ import absolute_import
 
-from future import standard_library
-standard_library.install_aliases()
+# NOTE: wrapped in try/except to avoid autopep8 interference
+try:
+    from future import standard_library
+    standard_library.install_aliases()
+except Exception as exc:
+    print("ERROR: failed to init compatibility helpers")
+    exit(1)
+
 from past.builtins import basestring
 import os
 import time
 import traceback
-from binascii import hexlify
 
 from mig.shared import returnvalues
 from mig.shared.bailout import bailout_title, crash_helper, \
     filter_output_objects
+from mig.shared.base import force_native_str, hexlify
 from mig.shared.defaults import file_dest_sep, keyword_any
 from mig.shared.html import get_xgi_html_header, get_xgi_html_footer, \
     vgrid_items, html_post_helper, tablesorter_pager
@@ -48,7 +54,10 @@ from mig.shared.objecttypes import validate
 from mig.shared.prettyprinttable import pprint_table
 from mig.shared.safeinput import html_escape
 
+
 row_name = ('even', 'odd')
+_valid_output_formats = ['txt', 'html', 'soap', 'pickle', 'pickle1', 'pickle2',
+                         'yaml', 'xmlrpc', 'resource', 'json', 'file']
 
 
 def reject_main(client_id, user_arguments_dict):
@@ -2468,6 +2477,12 @@ def json_format(configuration, ret_val, ret_msg, out_obj):
     return json.dumps(out_obj)
 
 
+def resource_format(configuration, ret_val, ret_msg, out_obj):
+    """Generate output in resource format"""
+    # TODO: is this right? not sure where it is used if ever!
+    return txt_format(configuration, ret_val, ret_msg, out_obj)
+
+
 def file_format(configuration, ret_val, ret_msg, out_obj):
     """Dump raw file contents"""
 
@@ -2483,20 +2498,28 @@ def file_format(configuration, ret_val, ret_msg, out_obj):
 
 def get_valid_outputformats():
     """Return list of valid outputformats"""
+    return list(_valid_output_formats)
 
-    return [
-        'html',
-        'txt',
-        'soap',
-        'pickle',
-        'pickle1',
-        'pickle2',
-        'yaml',
-        'xmlrpc',
-        'resource',
-        'json',
-        'file'
-    ]
+
+def get_outputformat_helper(name, default_format='html'):
+    """Lookup the format helper function for outputformat name, with fallback
+    to default_format if not available.
+    """
+    if not name in _valid_output_formats:
+        if default_format in _valid_output_formats:
+            # Fall back to default format
+            name = default_format
+        else:
+            # Emergency fall back to plain txt
+            name = 'txt'
+    # TODO: can we use functools or similar to generate this map on the fly?
+    valid_format_map = {'txt': txt_format, 'html': html_format,
+                        'soap': soap_format, 'pickle': pickle_format,
+                        'pickle1': pickle1_format, 'pickle2': pickle2_format,
+                        'yaml': yaml_format, 'xmlrpc': xmlrpc_format,
+                        'resource': resource_format, 'json': json_format,
+                        'file': file_format}
+    return valid_format_map[name]
 
 
 def format_output(
@@ -2510,6 +2533,7 @@ def format_output(
     """This is the public method that should be called from other scripts"""
 
     logger = configuration.logger
+    #logger.debug("format output to %s" % outputformat)
     valid_formats = get_valid_outputformats()
     (val_ret, val_msg) = validate(out_obj)
     if not val_ret:
@@ -2555,12 +2579,13 @@ def format_output(
                 'script': {},
             }] + out_obj
 
-    if not outputformat in valid_formats:
-        return txt_format(configuration, ret_val, ret_msg, out_obj)
-
+    #logger.debug("%s formatting output" % outputformat)
     try:
-        return eval('%s_format(configuration, ret_val, ret_msg, out_obj)' %
-                    outputformat)
+        # return eval('%s_format(configuration, ret_val, ret_msg, out_obj)' %
+        #            outputformat)
+        format_helper = get_outputformat_helper(outputformat, 'txt')
+        formatted = format_helper(configuration, ret_val, ret_msg, out_obj)
+        return force_native_str(formatted)
     except Exception as err:
         logger.error("%s formatting failed: %s\n%s" %
                      (outputformat, err, traceback.format_exc()))
@@ -2569,9 +2594,13 @@ def format_output(
 
     # Try simple crash message on requested format
     try:
+        logger.warning("trying to %s format simple crash info" % outputformat)
         crash_out = crash_helper(configuration, backend, [])
-        return eval('%s_format(configuration, ret_val, ret_msg, crash_out)' %
-                    outputformat)
+        # return eval('%s_format(configuration, ret_val, ret_msg, crash_out)' %
+        #             outputformat)
+        format_helper = get_outputformat_helper(outputformat, 'txt')
+        formatted = format_helper(configuration, ret_val, ret_msg, crash_out)
+        return force_native_str(formatted)
     except Exception as err:
         logger.error("%s formatting even simple crash info failed: %s\n%s" %
                      (outputformat, err, traceback.format_exc()))

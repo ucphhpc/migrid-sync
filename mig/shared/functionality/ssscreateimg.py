@@ -34,11 +34,10 @@ import os
 import time
 import tempfile
 import shutil
-from binascii import hexlify
 import fcntl
 
-from mig.shared import resadm
-from mig.shared import returnvalues
+from mig.shared import resadm, returnvalues
+from mig.shared.base import hexlify
 from mig.shared.conf import get_resource_configuration, get_resource_exe
 from mig.shared.defaults import default_vgrid
 from mig.shared.fileio import make_symlink, write_zipfile, copy

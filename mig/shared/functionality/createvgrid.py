@@ -29,33 +29,40 @@
 
 from __future__ import absolute_import
 
-from future import standard_library
-standard_library.install_aliases()
-from builtins import zip
-from past.builtins import basestring
-import os
-import traceback
-import configparser
+# NOTE: we use additional try/except wrapping here to prevent autopep8 mess up
+
+try:
+    from past.builtins import basestring
+    from builtins import zip
+    from future import standard_library
+    standard_library.install_aliases()
+except Exception as exc:
+    print("ERROR: failed to init py 2/3 compatibility")
+    sys.exit(1)
+
 from email.utils import parseaddr
 from tempfile import NamedTemporaryFile
+import configparser
+import traceback
+import os
 
-from mig.shared import returnvalues
-from mig.shared.base import client_id_dir, generate_https_urls, valid_dir_input, \
-    distinguished_name_to_user, get_site_base_url
-from mig.shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
-    keyword_owners, keyword_members, default_vgrid_settings_limit
-from mig.shared.fileio import write_file, make_symlink, delete_file, walk
-from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
-from mig.shared.handlers import safe_handler, get_csrf_limit
-from mig.shared.init import initialize_main_variables, find_entry
-from mig.shared.safeeval import subprocess_call, subprocess_popen, \
-    subprocess_stdout, subprocess_pipe
-from mig.shared.useradm import get_full_user_map
+from mig.shared.vgridkeywords import get_settings_keywords_dict
 from mig.shared.vgrid import vgrid_is_owner, vgrid_set_owners, vgrid_set_members, \
     vgrid_set_resources, vgrid_set_triggers, vgrid_set_settings, \
     vgrid_set_workflow_jobs, vgrid_create_allowed, \
     vgrid_restrict_write_support, vgrid_flat_name, vgrid_settings
-from mig.shared.vgridkeywords import get_settings_keywords_dict
+from mig.shared.useradm import get_full_user_map
+from mig.shared.safeeval import subprocess_call, subprocess_popen, \
+    subprocess_stdout, subprocess_pipe
+from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.handlers import safe_handler, get_csrf_limit
+from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
+from mig.shared.fileio import write_file, make_symlink, delete_file, walk
+from mig.shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
+    keyword_owners, keyword_members, default_vgrid_settings_limit
+from mig.shared.base import client_id_dir, generate_https_urls, valid_dir_input, \
+    distinguished_name_to_user, get_site_base_url
+from mig.shared import returnvalues
 
 
 def signature():
@@ -1101,9 +1108,10 @@ for job input and output.
         if spec['Required']:
             init_settings[key] = spec['Value']
     init_settings['vgrid_name'] = vgrid_name
+    # NOTE: the actual list-form of init_settings items is expected in helper
     (settings_status, settings_msg) = vgrid_set_settings(configuration,
                                                          vgrid_name,
-                                                         init_settings.items())
+                                                         list(init_settings.items()))
     if not settings_status:
         output_objects.append({'object_type': 'error_text', 'text':
                                'Could not save settings list: %s' %

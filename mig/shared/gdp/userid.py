@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userid - gdp userid helper functions related to GDP actions
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,11 +28,11 @@
 """GDP userid specific helper functions"""
 
 import base64
-import hashlib
 import os
 
 from mig.shared.base import expand_openid_alias, get_short_id
 from mig.shared.defaults import gdp_distinguished_field
+from mig.shared.pwhash import make_simple_hash
 
 client_id_project_postfix = '/%s=' % gdp_distinguished_field
 
@@ -232,7 +232,7 @@ def __scamble_user_id(configuration, user_id):
 
     result = None
     try:
-        result = hashlib.sha256(user_id).hexdigest()
+        result = make_simple_hash(user_id, 'sha256')
     except Exception as exc:
         _logger.error("GDP: __scamble_user_id failed for user: %r: %s"
                       % (user_id, exc))

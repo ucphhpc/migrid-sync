@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addvgridres - add one or more vgrid resources
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,13 +26,14 @@
 #
 
 """Add one or more resources to a given vgrid"""
+
 from __future__ import absolute_import
 
 from builtins import zip
-from binascii import unhexlify
 import os
 
 from mig.shared.accessrequests import delete_access_request
+from mig.shared.base import unhexlify
 from mig.shared.defaults import any_protocol, csrf_field
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token

@@ -29,7 +29,6 @@ from __future__ import absolute_import
 
 import datetime
 import os
-from binascii import hexlify
 
 from mig.shared.base import client_id_dir
 from mig.shared.defaults import settings_filename, profile_filename, \
@@ -39,7 +38,7 @@ from mig.shared.defaults import settings_filename, profile_filename, \
     authdigests_filename, keyword_unchanged, dav_domain
 from mig.shared.duplicatikeywords import get_keywords_dict as get_duplicati_fields, \
     extract_duplicati_helper, duplicati_conf_templates
-from mig.shared.fileio import pickle, unpickle
+from mig.shared.fileio import pickle, unpickle, write_file
 from mig.shared.modified import mark_user_modified
 from mig.shared.parser import parse, check_types
 from mig.shared.profilekeywords import get_keywords_dict as get_profile_fields
@@ -194,9 +193,11 @@ Backup destination page during import.'''
                 pass
             json_name = "%s.json" % backup_name
             json_path = os.path.join(duplicati_dir, json_name)
-            json_fd = open(json_path, "w")
-            json_fd.write(filled_json)
-            json_fd.close()
+            if not write_file(filled_json, json_path, _logger):
+                _logger.error("failed to write duplicati backup %s to %s" % (
+                    backup_name, json_path))
+                status[0] = False
+                status[1] += " Failed to write duplicati backup %s" % backup_name
     return status
 
 
@@ -230,8 +231,10 @@ twofactor enabled for your web login.'''
 def parse_and_save_publickeys(keys_path, keys_content, client_id,
                               configuration):
     """Validate and write the contents to the keys_path"""
+    _logger = configuration.logger
     status, msg = True, ''
     try:
+        keys_content = keys_content.strip()
         # Verify all keys to avoid e.g. stray line splits or missing key type
         for key in keys_content.splitlines():
             key = key.split('#', 1)[0]
@@ -241,9 +244,10 @@ def parse_and_save_publickeys(keys_path, keys_content, client_id,
                 parse_pub_key(key)
             except Exception as exc:
                 raise Exception('Invalid public key: %s' % key)
-        keys_fd = open(keys_path, 'wb')
-        keys_fd.write(keys_content)
-        keys_fd.close()
+        if not write_file(keys_content, keys_path, _logger):
+            _logger.error("failed to write public keys for %s to %s" %
+                          (client_id, keys_path))
+            raise Exception("internal public keys write error")
         tighten_key_perms(configuration, client_id)
     except Exception as exc:
         status = False
@@ -259,6 +263,7 @@ def parse_and_save_passwords(passwords_path, passwords_content, client_id,
     validity as well as compliance with configured site policy. No need to do
     that again if already done in parse_and_save_digests call.
     """
+    _logger = configuration.logger
     status, msg = True, ''
     if passwords_content == keyword_unchanged:
         return (status, msg)
@@ -271,9 +276,10 @@ def parse_and_save_passwords(passwords_path, passwords_content, client_id,
                 valid_password(passwords_content)
                 assure_password_strength(configuration, passwords_content)
             password_hash = make_hash(passwords_content)
-        passwords_fd = open(passwords_path, 'wb')
-        passwords_fd.write(password_hash)
-        passwords_fd.close()
+        if not write_file(password_hash, passwords_path, _logger):
+            _logger.error("failed to write password hash for %s to %s" %
+                          (client_id, passwords_path))
+            raise Exception("internal password hash write error")
     except ValueError as vae:
         status = False
         msg = 'invalid password: %s' % vae
@@ -291,6 +297,7 @@ def parse_and_save_digests(digests_path, passwords_content, client_id,
     validity as well as compliance with configured site policy. No need to do
     that again if already done in parse_and_save_passwords call.
     """
+    _logger = configuration.logger
     status, msg = True, ''
     if passwords_content == keyword_unchanged:
         return (status, msg)
@@ -305,9 +312,10 @@ def parse_and_save_digests(digests_path, passwords_content, client_id,
             password_digest = make_digest(dav_domain, client_id,
                                           passwords_content,
                                           configuration.site_digest_salt)
-        digests_fd = open(digests_path, 'wb')
-        digests_fd.write(password_digest)
-        digests_fd.close()
+        if not write_file(password_digest, digests_path, _logger):
+            _logger.error("failed to write password digest for %s to %s" %
+                          (client_id, digests_path))
+            raise Exception("internal password digest write error")
     except ValueError as vae:
         status = False
         msg = 'invalid password: %s' % vae
@@ -473,7 +481,7 @@ def _load_auth_pw_keys(client_id, configuration, proto, proto_conf_dir,
                                proto_conf_dir, authdigests_filename)
     try:
         keys_fd = open(keys_path)
-        section_dict['authkeys'] = keys_fd.read()
+        section_dict['authkeys'] = keys_fd.read().strip()
         keys_fd.close()
     except Exception as exc:
         if not allow_missing:

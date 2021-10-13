@@ -36,7 +36,7 @@ from mig.shared.base import client_id_dir, distinguished_name_to_user, \
     canonical_user, cert_field_map
 from mig.shared.accountreq import valid_password_chars, valid_name_chars, \
     password_min_len, password_max_len, account_request_template, \
-    account_css_helpers, account_js_helpers, list_country_codes
+    account_css_helpers, account_js_helpers
 from mig.shared.defaults import csrf_field, keyword_auto
 from mig.shared.functional import validate_input
 from mig.shared.handlers import get_csrf_limit, make_csrf_token

@@ -29,6 +29,7 @@
 
 from __future__ import absolute_import
 
+from past.builtins import basestring
 import base64
 import datetime
 import fcntl
@@ -208,7 +209,8 @@ def is_runtime_environment(re_name, configuration):
 
 def get_re_dict(name, configuration):
     """Helper to extract a saved runtime environment"""
-    re_dict = load(os.path.join(configuration.re_home, name))
+    spec_path = os.path.join(configuration.re_home, name)
+    re_dict = load(spec_path)
     if not re_dict:
         return (False, 'Could not open runtime environment %s' % name)
     else:
@@ -382,7 +384,19 @@ def build_reitem_object(configuration, re_dict):
                 'example': environment_item['example'],
                 'description': environment_item['description'],
             })
-    created_timetuple = re_dict['CREATED_TIMESTAMP'].timetuple()
+
+    raw_timestamp = re_dict['CREATED_TIMESTAMP']
+    created_timestamp = None
+    if isinstance(raw_timestamp, basestring):
+        # NOTE: fromisoformat was only added in python 3.x
+        try:
+            created_timestamp = datetime.datetime.fromisoformat(raw_timestamp)
+        except:
+            # Fall back to old fragile parser
+            created_timestamp = datetime.datetime.strptime(
+                raw_timestamp, '%Y-%m-%d %H:%M:%S.%f')
+
+    created_timetuple = created_timestamp.timetuple()
     created_asctime = time.asctime(created_timetuple)
     created_epoch = time.mktime(created_timetuple)
     return {

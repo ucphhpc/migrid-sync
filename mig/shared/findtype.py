@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # findtype - Detect client entity type
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,16 +26,17 @@
 #
 
 """Entity kind detection"""
+
 from __future__ import absolute_import
 
 import os
 from string import ascii_letters, digits
 
-from mig.shared.defaults import user_db_filename
 from mig.shared.base import client_id_dir
+from mig.shared.defaults import user_db_filename
 from mig.shared.listhandling import is_item_in_pickled_list
-from mig.shared.validstring import valid_user_path
 from mig.shared.serial import load
+from mig.shared.validstring import valid_user_path
 
 VALID_FQDN_CHARACTERS = ascii_letters + digits + '.-'
 MIG_SERVER_ID = 'MiG-Server'
@@ -51,9 +52,8 @@ def is_user(entity_id, mig_server_home):
         user_db = load(db_path)
         if entity_id in user_db:
             result = True
-    except:
+    except Exception as exc:
         pass
-
     return result
 
 
@@ -68,9 +68,6 @@ def is_server(entity_id, server_home, local=False):
     for char in entity_lower:
         if not char in VALID_FQDN_CHARACTERS:
             return False
-
-    # print "Cert found as a Server cert!"
-
     return True
 
 
@@ -121,3 +118,12 @@ def is_admin(client_id, configuration, logger):
     """Check that client_id is listed in MiG admins"""
 
     return client_id in configuration.admin_list
+
+
+if __name__ == "__main__":
+    import sys
+    from mig.shared.conf import get_configuration_object
+    conf = get_configuration_object()
+    for user_id in sys.argv[1:]:
+        print("check is user %r: %s" %
+              (user_id, is_user(user_id, conf.mig_server_home)))

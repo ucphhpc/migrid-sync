@@ -29,7 +29,7 @@
 
 from __future__ import absolute_import
 
-import os.path
+import os
 import re
 
 from mig.shared.base import invisible_path

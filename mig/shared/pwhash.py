@@ -48,8 +48,8 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 from builtins import zip, range
+from base64 import b64encode, b64decode, b16encode, b16decode, binascii
 import hashlib
-from base64 import b64encode, b64decode, b16encode, b16decode
 from os import urandom
 from random import SystemRandom
 from string import ascii_lowercase, ascii_uppercase, digits
@@ -102,10 +102,10 @@ def check_hash(configuration, service, username, password, hashed,
     # NOTE: hashlib requires bytes
     pw_bytes = force_utf8(password)
     hash_bytes = force_utf8(hashed)
-    pw_hash = hashlib.md5(pw_bytes).hexdigest()
+    pw_hash = make_simple_hash(password)
     if isinstance(hash_cache, dict) and \
             hash_cache.get(pw_hash, None) == hash_bytes:
-        #_logger.debug("found cached hash: %s" % [hash_cache.get(pw_hash, None)])
+        # _logger.debug("found cached hash: %s" % [hash_cache.get(pw_hash, None)])
         return True
     # We check policy AFTER cache lookup since it is already verified for those
     if strict_policy:
@@ -161,7 +161,7 @@ def unscramble_digest(salt, digest):
     # Python 2.6 fails to parse implicit positional args (-Jonas)
     # b16_digest = '{:X}'.format(xor_int)
     b16_digest = '{0:X}'.format(xor_int)
-    return b16decode(b16_digest)
+    return force_native_str(b16decode(b16_digest))
 
 
 def make_digest(realm, username, password, salt):
@@ -225,7 +225,12 @@ def unscramble_password(salt, password):
         b64_password = '{0:X}'.format(xor_int)
     else:
         b64_password = password
-    return b64decode(b64_password)
+    try:
+        unscrambled = b64decode(b64_password)
+    except binascii.Error:
+        # Mimic legacy TypeError on py3 for consistency
+        raise TypeError("Incorrect padding")
+    return force_native_str(unscrambled)
 
 
 def make_scramble(password, salt):

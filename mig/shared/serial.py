@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # serial - object serialization operations using pickle or json
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,8 +29,13 @@
 
 from __future__ import print_function
 
-from future import standard_library
-standard_library.install_aliases()
+# NOTE: wrap in try/except to avoid autopep8 interference in import order
+try:
+    from future import standard_library
+    standard_library.install_aliases()
+except Exception as exc:
+    print("ERROR: failed to init compatibility setup")
+    exit(1)
 
 import json
 import yaml
@@ -41,9 +46,15 @@ try:
 except ImportError:
     import pickle
 
+from mig.shared.base import force_native_str_rec, force_utf8_rec
+
 
 def dumps(data, protocol=0, serializer='pickle', **kwargs):
-    """Dump data to serialized string using given serializer."""
+    """Dump data to serialized string using given serializer.
+    IMPORTANT: we always force data onto UTF-8 bytes for consistency and
+    backwards compliance with data from legacy Python versions.
+    """
+    utf8_data = force_utf8_rec(data)
     if serializer == 'pickle':
         serial_helper = pickle.dumps
         if 'protocol' not in kwargs:
@@ -52,25 +63,23 @@ def dumps(data, protocol=0, serializer='pickle', **kwargs):
         serial_helper = json.dumps
     if serializer == 'yaml':
         serial_helper = yaml.dump
-    return serial_helper(data, **kwargs)
+    return serial_helper(utf8_data, **kwargs)
 
 
 def dump(data, path, protocol=0, serializer='pickle', mode='wb', **kwargs):
-    """Dump data to file given by path"""
-    if serializer == 'pickle':
-        serial_helper = pickle.dump
-        if 'protocol' not in kwargs:
-            kwargs['protocol'] = protocol
-    if serializer == 'json':
-        serial_helper = json.dump
-    if serializer == 'yaml':
-        serial_helper = yaml.dump
+    """Dump data to file given by path.
+    IMPORTANT: we always force data onto UTF-8 bytes for consistency and
+    backwards compatibility with data from legacy Python versions.
+    """
     with open(path, mode) as fh:
-        serial_helper(data, fh, **kwargs)
+        fh.write(dumps(data, protocol, serializer, **kwargs))
 
 
 def loads(data, serializer='pickle', **kwargs):
-    """Load data from serialized string"""
+    """Load data from serialized string.
+    IMPORTANT: we force data into native string format for consistency and
+    backwards compatibility with data from legacy Python versions.
+    """
     serial_helper = pickle.loads
     if serializer == 'json':
         serial_helper = json.loads
@@ -78,25 +87,27 @@ def loads(data, serializer='pickle', **kwargs):
         # NOTE: yaml load supports both string and file-like obj
         serial_helper = yaml.load
         kwargs['Loader'] = yaml.SafeLoader
-    return serial_helper(data)
+    # Python3+ fallback to read as bytes, which Python2 always implicitly did.
+    try:
+        result = serial_helper(data, **kwargs)
+    except UnicodeDecodeError:
+        result = serial_helper(data, encoding="bytes", **kwargs)
+    return force_native_str_rec(result)
 
 
 def load(path, serializer='pickle', mode='rb', **kwargs):
-    """Load serialized data from file given by path"""
-    serial_helper = pickle.load
-    if serializer == 'json':
-        serial_helper = json.load
-    if serializer == 'yaml':
-        serial_helper = yaml.load
-        kwargs['Loader'] = yaml.SafeLoader
+    """Load serialized data from file given by path.
+    IMPORTANT: we force data into native string format for consistency and
+    backwards compatibility with data from legacy Python versions.
+    """
     with open(path, mode) as fh:
-        return serial_helper(fh, **kwargs)
+        return loads(fh.read(), serializer, **kwargs)
 
 
 if "__main__" == __name__:
     print("Testing serializer")
     tmp_path = "dummyserial.tmp"
-    orig = {'abc': 123, 'def': 'def', 'ghi': 42.0}
+    orig = {'abc': 123, 'def': 'def', 'ghi': 42.0, 'accented': 'TéstÆøå'}
     print("testing serializing to string and back")
     data = loads(dumps(orig))
     print("original\n%s\nloaded\n%s\nMatch: %s" % (orig, data, orig == data))

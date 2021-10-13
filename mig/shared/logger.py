@@ -69,9 +69,9 @@ def _name_to_format(name):
 class SysLogLibHandler(logging.Handler):
     """A logging handler that emits messages to syslog.syslog."""
 
-    # Dummy attribute to avoid isinstance(X, SysLogLibHandler) 
+    # Dummy attribute to avoid isinstance(X, SysLogLibHandler)
     # import confusion: https://bugs.python.org/issue1249615
-    # USE: hasattr(X, "shared_logger_sysloglibhandler") 
+    # USE: hasattr(X, "shared_logger_sysloglibhandler")
     # instead of isinstance(X, SysLogLibHandler)
     shared_logger_sysloglibhandler = True
 
@@ -146,7 +146,7 @@ class Logger(object):
             return
         elif reload_handlers:
             self.logger.debug("Hanging up, logger handlers expired logger handlers: %s"
-                             % self.logger.handlers)
+                              % self.logger.handlers)
             self.hangup()
 
         if self.logfile:
@@ -197,6 +197,13 @@ class Logger(object):
         """
 
         logging.shutdown()
+
+
+def dummy_logger():
+    """Dummy logger for locations where API needs a logger but we don't care """
+    logger_obj = Logger('critical', logfile='/dev/null', app='dummy')
+
+    return logger_obj.logger
 
 
 def daemon_logger(name, path=None, level="INFO", log_format=None):

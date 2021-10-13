@@ -29,12 +29,11 @@
 
 from __future__ import absolute_import
 
-import hashlib
 import os
-from binascii import hexlify
 
 from mig.shared import returnvalues
-from mig.shared.base import client_id_dir, pretty_format_user, extract_field
+from mig.shared.base import client_id_dir, pretty_format_user, extract_field, \
+    hexlify
 from mig.shared.defaults import any_vgrid, csrf_field
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import get_csrf_limit, make_csrf_token

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqcertaction - handle certificate account requests and send email to admins
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,7 +36,7 @@ import tempfile
 
 from mig.shared import returnvalues
 from mig.shared.accountreq import existing_country_code, forced_org_email_match, \
-    user_manage_commands
+    user_manage_commands, save_account_request
 from mig.shared.accountstate import default_account_expire
 from mig.shared.base import client_id_dir, force_utf8, force_unicode, \
     generate_https_urls, fill_distinguished_name
@@ -45,7 +45,6 @@ from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.notification import send_email
 from mig.shared.pwhash import scramble_password, assure_password_strength
-from mig.shared.serial import dumps
 
 
 def signature():
@@ -224,20 +223,17 @@ resources anyway.
 User certificate requests are not supported on this site!"""})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    req_path = None
-    try:
-        (os_fd, req_path) = tempfile.mkstemp(dir=user_pending)
-        os.write(os_fd, dumps(user_dict))
-        os.close(os_fd)
-    except Exception as err:
-        logger.error('Failed to write certificate account request to %s: %s'
-                     % (req_path, err))
-        output_objects.append(
-            {'object_type': 'error_text', 'text':
-             """Request could not be sent to site administrators. Please
-contact them manually on %s if this error persists.""" % admin_email})
+    (save_status, save_out) = save_account_request(configuration, user_dict)
+    if not save_status:
+        logger.error(
+            'Failed to write certificate account request: %s' % save_out)
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '''Request could not be sent to site
+administrators. Please contact them manually on %s if this error persists.'''
+                               % admin_email})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    req_path = save_out
     logger.info('Wrote certificate account request to %s' % req_path)
     tmp_id = os.path.basename(req_path)
     user_dict['tmp_id'] = tmp_id

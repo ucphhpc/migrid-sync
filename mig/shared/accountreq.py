@@ -41,16 +41,16 @@ try:
 except ImportError:
     iso3166 = None
 
-from mig.shared.base import force_utf8, canonical_user, client_id_dir, \
-    distinguished_name_to_user
+from mig.shared.base import force_utf8, force_native_str_rec, canonical_user, \
+    client_id_dir, distinguished_name_to_user
 from mig.shared.defaults import peers_fields, peers_filename, \
     pending_peers_filename
-from mig.shared.fileio import delete_file
+from mig.shared.fileio import delete_file, make_temp_file
 # Expose some helper variables for functionality backends
 from mig.shared.safeinput import name_extras, password_extras, password_min_len, \
     password_max_len, valid_password_chars, valid_name_chars, dn_max_len, \
     html_escape, validated_input, REJECT_UNSET
-from mig.shared.serial import load, dump
+from mig.shared.serial import load, dump, dumps
 
 
 def account_css_helpers(configuration):
@@ -299,7 +299,7 @@ def account_request_template(configuration, password=True, default_values={}):
       <label for='validationCustom03'>Country</label>
     """
     # Generate drop-down of countries and codes if available, else simple input
-    sorted_countries = list_country_codes(configuration)
+    sorted_countries = force_native_str_rec(list_country_codes(configuration))
     if sorted_countries and not default_values.get('readonly_country', ''):
         html += """
         <select class='form-control themed-select html-select' id='country_field' name=country minlength=2 maxlength=2 value='%(country)s' placeholder='Two letter country-code' required pattern='[A-Z]{2}' title='Please select your country from the list' onChange='toggle_state();'>
@@ -571,6 +571,23 @@ def forced_org_email_match(org, email, configuration):
         return False
     else:
         return True
+
+
+def save_account_request(configuration, req_dict):
+    """Save req_dict account request as pickle in configured user_pending
+    location.
+    Returns a tuple of save status and output, where the latter is the request
+    path on success or the error message otherwise. 
+    """
+    req_path = None
+    try:
+        # NOTE: mkstemp opens in binary mode and dumps forces req to utf8
+        (os_fd, req_path) = make_temp_file(dir=configuration.user_pending)
+        os.write(os_fd, dumps(req_dict))
+        os.close(os_fd)
+    except Exception as err:
+        return (False, "save account req failed: %s" % err)
+    return (True, req_path)
 
 
 def user_manage_commands(configuration, mig_user, req_path, user_id, user_dict,

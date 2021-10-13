@@ -45,7 +45,7 @@ import zipfile
 #       Requires stand-alone scandir module on python 2 whereas the native os
 #       functions are built-in and optimized similarly on python 3+
 slow_walk, slow_listdir = False, False
-if sys.version_info[0] < 3:
+if sys.version_info[0] > 2:
     from os import walk, listdir
 else:
     try:
@@ -82,6 +82,8 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
     """Wrapper to handle writing of chunks with offset to path.
     Creates file first if it doesn't already exist.
     """
+    if not logger:
+        logger = dummy_logger()
     logger.info('writing chunk to %s at offset %d' % (path, offset))
 
     # create dir and file if it does not exists
@@ -109,7 +111,8 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
                 filehandle.write('\0')
         logger.info('write %s chunk of size %d at position %d' %
                     (path, len(chunk), filehandle.tell()))
-        filehandle.write(chunk)
+        # NOTE: we need to force bytes here in binary mode
+        filehandle.write(force_utf8(chunk))
         filehandle.close()
         logger.debug('file chunk written: %s' % path)
         return True
@@ -121,6 +124,8 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
 
 def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
     """Wrapper to handle writing of contents to path"""
+    if not logger:
+        logger = dummy_logger()
     logger.debug('writing file: %s' % path)
 
     # create dir if it does not exists
@@ -148,7 +153,7 @@ def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
     return retval
 
 
-def read_file(path, logger):
+def read_file(path, logger, allow_missing=False):
     """Wrapper to handle reading of contents from path"""
     #logger.debug('reading file: %s' % path)
     content = None
@@ -158,7 +163,8 @@ def read_file(path, logger):
         filehandle.close()
         #logger.debug('read %db from: %s' % (len(content), path))
     except Exception as err:
-        logger.error('could not read %s: %s' % (path, err))
+        if not allow_missing:
+            logger.error('could not read %s: %s' % (path, err))
     return content
 
 
@@ -203,6 +209,8 @@ def delete_file(path, logger, allow_broken_symlink=False, allow_missing=False):
     """Wrapper to handle deletion of path. The optional allow_broken_symlink is
     used to accept delete even if path is a broken symlink.
     """
+    if not logger:
+        logger = dummy_logger()
     logger.debug('deleting file: %s' % path)
     if os.path.exists(path) or allow_broken_symlink and os.path.islink(path):
         try:
@@ -222,6 +230,8 @@ def delete_file(path, logger, allow_broken_symlink=False, allow_missing=False):
 
 def make_symlink(dest, src, logger, force=False):
     """Wrapper to make src a symlink to dest path"""
+    if not logger:
+        logger = dummy_logger()
 
     # NOTE: we use islink instead of exists here to handle broken symlinks
     if os.path.islink(src) and force and delete_symlink(src, logger):
@@ -239,6 +249,8 @@ def make_symlink(dest, src, logger, force=False):
 def delete_symlink(path, logger, allow_broken_symlink=True,
                    allow_missing=False):
     """Wrapper to handle deletion of symlinks"""
+    if not logger:
+        logger = dummy_logger()
     logger.debug('deleting symlinks: %s' % path)
     return delete_file(path, logger, allow_broken_symlink, allow_missing)
 
@@ -296,6 +308,8 @@ def unpickle_and_change_status(path, newstatus, logger):
 
 def unpickle(path, logger, allow_missing=False):
     """Unpack pickled object in path"""
+    if not logger:
+        logger = dummy_logger()
     try:
         data_object = load(path)
         logger.debug('%s was unpickled successfully' % path)
@@ -321,6 +335,8 @@ def pickle(data_object, path, logger):
 
 def load_json(path, logger, allow_missing=False, convert_utf8=True):
     """Unpack json object in path"""
+    if not logger:
+        logger = dummy_logger()
     try:
         data_object = load(path, serializer='json')
         logger.debug('%s was loaded successfully' % path)
@@ -627,6 +643,22 @@ def make_temp_dir(suffix='', prefix='tmp', dir=None):
     return tempfile.mkdtemp(suffix, prefix, dir)
 
 
+def write_named_tempfile(configuration, contents):
+    """Create a named tempfile and write contents to its.
+    Returns the name of the file for further use and manual delete later.
+    """
+    _logger = configuration.logger
+    try:
+        (filehandle, tmpname) = make_temp_file(text=True)
+        # NOTE: low level write requires bytes
+        os.write(filehandle, force_utf8(contents))
+        os.close(filehandle)
+    except Exception as exc:
+        _logger.error("failed to write settings tempfile: %s" % exc)
+        tmpname = None
+    return tmpname
+
+
 def __checksum_file(path, hash_algo, chunk_size=default_chunk_size,
                     max_chunks=default_max_chunks):
     """Simple block hashing for checksumming of files inspired by  
@@ -772,6 +804,7 @@ def check_writable(configuration, path):
     """Check and return boolean to indicate if path is a non-empty string and
     a writable location.
     """
+    _logger = configuration.logger
     if not path:
         return False
     elif not check_write_access(path):

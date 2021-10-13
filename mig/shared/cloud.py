@@ -32,7 +32,6 @@ from __future__ import absolute_import
 
 from builtins import range
 import base64
-import hashlib
 import json
 import os
 import re
@@ -53,6 +52,7 @@ from mig.shared.base import force_utf8, force_utf8_rec, client_id_dir
 from mig.shared.defaults import keyword_all
 from mig.shared.fileio import pickle, unpickle, acquire_file_lock, \
     release_file_lock
+from mig.shared.pwhash import make_simple_hash
 from mig.shared.safeeval import subprocess_call
 
 # Internal helper to map individual operations to flavored cloud functions
@@ -535,7 +535,7 @@ def openstack_register_cloud_keys(configuration, client_id, cloud_id,
                 continue
             # Build a unique ID to identify this key
             user_key = "%s : %s" % (client_id, pub_key)
-            key_id = hashlib.sha256(user_key).hexdigest()
+            key_id = make_simple_hash(user_key, 'sha256')
 
             # TODO: more carefully clean up old keys?
             if not conn.search_keypairs(key_id):
@@ -584,7 +584,7 @@ def openstack_update_cloud_instance_keys(configuration, client_id, cloud_id,
                 continue
             # Build a unique ID to identify this key
             user_key = "%s : %s" % (client_id, pub_key)
-            key_id = hashlib.sha256(user_key).hexdigest()
+            key_id = make_simple_hash(user_key, 'sha256')
             _logger.info("update %s cloud ssh key for %s: %s" %
                          (cloud_id, client_id, key_id))
 
@@ -654,7 +654,7 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
                                       auth_keys)
         # Build a unique ID to identify the first key
         user_key = "%s : %s" % (client_id, auth_keys[0])
-        key_id = hashlib.sha256(user_key).hexdigest()
+        key_id = make_simple_hash(user_key, 'sha256')
         _logger.info("%s registering key %s for %s instance %s" %
                      (client_id, key_id, cloud_id, instance_id))
 

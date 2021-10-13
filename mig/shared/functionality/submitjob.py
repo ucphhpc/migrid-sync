@@ -115,7 +115,7 @@ def main(client_id, user_arguments_dict):
     title_entry['text'] = 'Submit Job'
     user_settings = title_entry.get('user_settings', {})
     output_objects.append({'object_type': 'header', 'text': 'Submit Job'})
-    default_mrsl = get_default_mrsl(template_path)
+    default_mrsl = get_default_mrsl(template_path, logger)
     if not user_settings or 'SUBMITUI' not in user_settings:
         logger.info('Settings dict does not have SUBMITUI key - using default'
                     )

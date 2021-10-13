@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # crontab - user task scheduling back end
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,11 +29,19 @@
 do interactively. Restricted to the same backends that are otherwise exposed
 and basically just runs those on behalf of the user.
 """
+
 from __future__ import absolute_import
 
-from future import standard_library
-standard_library.install_aliases()
-from builtins import range
+# NOTE: we use additional try/except wrapping here to prevent autopep8 mess up
+
+try:
+    from builtins import range
+    from future import standard_library
+    standard_library.install_aliases()
+except Exception as exc:
+    print("ERROR: failed to init py 2/3 compatibility")
+    sys.exit(1)
+
 import datetime
 import os
 import re

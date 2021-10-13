@@ -31,8 +31,8 @@ from __future__ import absolute_import
 
 import os
 import tempfile
-from binascii import hexlify
 
+from mig.shared.base import hexlify
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import default_vgrid, keyword_auto
 from mig.shared.fileio import make_symlink

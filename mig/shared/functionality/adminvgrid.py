@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # adminvgrid - administrate a vgrid
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,9 +32,9 @@ from __future__ import absolute_import
 
 from builtins import zip
 import os
-from binascii import hexlify
 
 from mig.shared import returnvalues
+from mig.shared.base import hexlify
 from mig.shared.defaults import default_pager_entries, keyword_all, keyword_auto, \
     valid_trigger_changes, valid_trigger_actions, keyword_owners, \
     keyword_members, keyword_none, csrf_field, default_vgrid_settings_limit

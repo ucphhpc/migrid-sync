@@ -32,10 +32,9 @@ from __future__ import absolute_import
 from past.builtins import basestring
 import os
 import time
-from binascii import hexlify
 
-from mig.shared import returnvalues
-from mig.shared import vms
+from mig.shared import returnvalues, vms
+from mig.shared.base import hexlify
 from mig.shared.defaults import any_vgrid, csrf_field
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token

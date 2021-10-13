@@ -29,15 +29,14 @@
 
 from __future__ import absolute_import
 
-from binascii import hexlify
-import glob
 import datetime
+import glob
 import os
 import socket
 import time
 
 from mig.shared import returnvalues
-from mig.shared.base import client_id_dir
+from mig.shared.base import client_id_dir, hexlify
 from mig.shared.conf import get_resource_exe
 from mig.shared.defaults import all_jobs, job_output_dir, default_pager_entries, \
     csrf_field

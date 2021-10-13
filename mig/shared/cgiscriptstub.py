@@ -33,6 +33,7 @@ from __future__ import absolute_import
 import cgi
 import cgitb
 import os
+import sys
 import time
 
 # DUMMY try/except to avoid autopep8 from mangling import order
@@ -59,7 +60,7 @@ def init_cgi_script(environ, delayed_input=None):
     # get and log ID of user currently logged in
 
     client_id = extract_client_id(configuration, environ)
-    logger.info('script: %s cert: %s' % (requested_page(), client_id))
+    logger.info('script: %r , client ID: %s' % (requested_page(), client_id))
     if not delayed_input:
         fieldstorage = cgi.FieldStorage()
         user_arguments_dict = fieldstorage_to_dict(fieldstorage)
@@ -143,6 +144,9 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None,
     environ = os.environ
     (configuration, logger, client_id, user_arguments_dict) = \
         init_cgi_script(environ, delayed_input)
+
+    logger.debug("handling cgi request with python %s from %s  (%s)" %
+                 (sys.version_info, client_id, environ))
 
     # default to html output
 
