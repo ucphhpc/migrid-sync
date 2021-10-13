@@ -102,7 +102,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     # save to temporary file
 
@@ -111,8 +111,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     if real_path is None:
         logger.error("failed to write temporary mrsl file")
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Failed to write temporary mRSL file: %s' %
-                               err})
+                               'Failed to write temporary mRSL file'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     relative_path = os.path.basename(real_path)
@@ -168,8 +167,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             logger.error("failed to write default mrsl template: %s" %
                          template_path)
             output_objects.append({'object_type': 'error_text', 'text':
-                                   'Failed to write default job template: %s' %
-                                   err})
+                                   'Failed to write default job template'})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
     return (output_objects, status)

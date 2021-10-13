@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # logger - logging helpers
-# Copyright (C) 2003-2015  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -197,13 +197,6 @@ class Logger(object):
         """
 
         logging.shutdown()
-
-
-def dummy_logger():
-    """Dummy logger for locations where API needs a logger but we don't care """
-    logger_obj = Logger('critical', logfile='/dev/null', app='dummy')
-
-    return logger_obj.logger
 
 
 def dummy_logger():

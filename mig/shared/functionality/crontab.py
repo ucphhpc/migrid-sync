@@ -40,7 +40,7 @@ try:
     standard_library.install_aliases()
 except Exception as exc:
     print("ERROR: failed to init py 2/3 compatibility")
-    sys.exit(1)
+    exit(1)
 
 import datetime
 import os

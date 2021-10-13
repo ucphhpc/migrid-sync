@@ -74,18 +74,26 @@ HASH_FUNCTION = 'sha256'  # Must be in hashlib.
 # python -m timeit -s 'import passwords as p' 'p.make_hash("something")'
 COST_FACTOR = 10000
 
+# NOTE hook up available hashing algorithms once and for all
+valid_hash_algos = {'md5': hashlib.md5}
+for algo in hashlib.algorithms_guaranteed:
+    valid_hash_algos[algo] = getattr(hashlib, algo)
+
 
 def make_hash(password):
     """Generate a random salt and return a new hash for the password."""
     # NOTE: urandom already returns bytes as required for base64 encode
     salt = b64encode(urandom(SALT_LENGTH))
-    # NOTE: hashlib functions require bytes
+    # NOTE: hashlib functions require bytes, and post string format needs
+    #       native strings to avoid actually inserting string type markers.
     return 'PBKDF2${}${}${}${}'.format(
         HASH_FUNCTION,
         COST_FACTOR,
-        salt,
-        b64encode(hashlib.pbkdf2_hmac(HASH_FUNCTION, force_utf8(password),
-                                      salt, COST_FACTOR, KEY_LENGTH)))
+        force_native_str(salt),
+        force_native_str(b64encode(hashlib.pbkdf2_hmac(HASH_FUNCTION,
+                                                       force_utf8(password),
+                                                       salt, COST_FACTOR,
+                                                       KEY_LENGTH))))
 
 
 def check_hash(configuration, service, username, password, hashed,
@@ -152,7 +160,7 @@ def scramble_digest(salt, digest):
     xor_int = int(salt, 16) ^ int(b16_digest, 16)
     # Python 2.6 fails to parse implicit positional args (-Jonas)
     # return '{:X}'.format(xor_int)
-    return '{0:X}'.format(xor_int)
+    return force_native_str('{0:X}'.format(xor_int))
 
 
 def unscramble_digest(salt, digest):
@@ -183,8 +191,7 @@ def check_digest(configuration, service, realm, username, password, digest,
     """
     _logger = configuration.logger
     merged_creds = ':'.join([realm, username, password])
-    # NOTE: hashlib functions require bytes
-    creds_hash = hashlib.md5(force_utf8(merged_creds)).hexdigest()
+    creds_hash = make_simple_hash(merged_creds)
     if isinstance(digest_cache, dict) and \
             digest_cache.get(creds_hash, None) == digest:
         # print "found cached digest: %s" % digest_cache.get(creds_hash, None)
@@ -213,7 +220,7 @@ def scramble_password(salt, password):
     if not salt:
         return b64_password
     xor_int = int(salt, 64) ^ int(b64_password, 64)
-    return '{:X}'.format(xor_int)
+    return force_native_str('{:X}'.format(xor_int))
 
 
 def unscramble_password(salt, password):
@@ -279,9 +286,9 @@ def make_csrf_token(configuration, method, operation, client_id, limit=None):
     salt = configuration.site_digest_salt
     merged = "%s:%s:%s:%s" % (method, operation, client_id, limit)
     # configuration.logger.debug("CSRF for %s" % merged)
-    # NOTE: base64 encoders and hashlib functions require bytes
+    # NOTE: base64 enc and hashlib hash require bytes and return native string
     xor_id = "%s" % (int(salt, 16) ^ int(b16encode(force_utf8(merged)), 16))
-    token = hashlib.sha256(force_utf8(xor_id)).hexdigest()
+    token = make_simple_hash(xor_id, 'sha256')
     return token
 
 
@@ -403,10 +410,16 @@ def assure_password_strength(configuration, password):
     return True
 
 
-def make_simple_hash(val):
-    """Generate a simple md5 hash for val and return the 32-char hexdigest"""
-    # NOTE: hashlib functions require bytes
-    return hashlib.md5(force_utf8(val)).hexdigest()
+def make_simple_hash(val, algo='md5'):
+    """Generate a simple hash for val and return the N character hexdigest.
+    By default the hash algorithm is md5 with 32-char hash, but other hashlib
+    algorithms are supported as well.
+    """
+    # NOTE: hashlib functions require bytes and hexdigest returns native string
+    if not algo in valid_hash_algos:
+        algo = 'md5'
+    hash_helper = valid_hash_algos[algo]
+    return hash_helper(force_utf8(val)).hexdigest()
 
 
 def make_path_hash(configuration, path):

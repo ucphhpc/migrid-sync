@@ -38,7 +38,7 @@ try:
     standard_library.install_aliases()
 except Exception as exc:
     print("ERROR: failed to init py 2/3 compatibility")
-    sys.exit(1)
+    exit(1)
 
 from email.utils import parseaddr
 from tempfile import NamedTemporaryFile
@@ -66,7 +66,7 @@ try:
     from mig.shared.vgridkeywords import get_settings_keywords_dict
 except Exception as exc:
     print("ERROR: failed to load migrid module")
-    sys.exit(1)
+    exit(1)
 
 
 def signature():

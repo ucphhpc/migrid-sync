@@ -62,8 +62,9 @@ else:
         listdir = os.listdir
 
 try:
-    from mig.shared.base import force_utf8_rec, force_native_str
+    from mig.shared.base import force_utf8, force_utf8_rec, force_native_str
     from mig.shared.defaults import default_chunk_size, default_max_chunks
+    from mig.shared.logger import dummy_logger
     from mig.shared.serial import dump, load
 except ImportError as ioe:
     print("could not import migrid modules!")
@@ -155,6 +156,8 @@ def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
 
 def read_file(path, logger, allow_missing=False):
     """Wrapper to handle reading of contents from path"""
+    if not logger:
+        logger = dummy_logger()
     #logger.debug('reading file: %s' % path)
     content = None
     try:
@@ -324,6 +327,8 @@ def unpickle(path, logger, allow_missing=False):
 
 def pickle(data_object, path, logger):
     """Pack data_object as pickled object in path"""
+    if not logger:
+        logger = dummy_logger()
     try:
         dump(data_object, path)
         logger.debug('pickle success: %s' % path)
@@ -353,28 +358,37 @@ def load_json(path, logger, allow_missing=False, convert_utf8=True):
 
 def send_message_to_grid_script(message, logger, configuration):
     """Write an instruction to the grid_script name pipe input"""
+    if not logger:
+        logger = dummy_logger()
+    logger.debug('write %r to grid_stdin: %s' %
+                 (message, configuration.grid_stdin))
     try:
-        filehandle = open(configuration.grid_stdin, 'a')
+        # NOTE: in python3 we can't open append-only here
+        filehandle = open(configuration.grid_stdin, 'w')
         fcntl.flock(filehandle.fileno(), fcntl.LOCK_EX)
         filehandle.write(force_native_str(message))
         filehandle.close()
         return True
     except Exception as err:
-        print('could not get exclusive access or write to grid_stdin!')
-        logger.error('could not write "%s" to grid_stdin: %s' %
+        logger.error('could not write %r to grid_stdin: %s' %
                      (message, err))
+        #print('could not get exclusive access or write to grid_stdin!')
         return False
 
 
 def send_message_to_grid_notify(message, logger, configuration):
     """Write message to notify home"""
+    if not logger:
+        logger = dummy_logger()
     try:
         (filedescriptor, filepath) = make_temp_file(
             suffix='.%s' % time.time(),
             prefix='',
             dir=configuration.notify_home)
-        filehandle = os.fdopen(filedescriptor, 'a')
-        filehandle.write(force_native_str(message))
+        # NOTE: in python3 we can't open append-only here
+        # NOTE: low-level os fd requires binary and bytes
+        filehandle = os.fdopen(filedescriptor, 'wb')
+        filehandle.write(force_utf8(message))
         filehandle.close()
         return True
     except Exception as err:
@@ -641,22 +655,6 @@ def make_temp_file(suffix='', prefix='tmp', dir=None, text=False):
 def make_temp_dir(suffix='', prefix='tmp', dir=None):
     """Expose tempfile.mkdtemp functionality"""
     return tempfile.mkdtemp(suffix, prefix, dir)
-
-
-def write_named_tempfile(configuration, contents):
-    """Create a named tempfile and write contents to its.
-    Returns the name of the file for further use and manual delete later.
-    """
-    _logger = configuration.logger
-    try:
-        (filehandle, tmpname) = make_temp_file(text=True)
-        # NOTE: low level write requires bytes
-        os.write(filehandle, force_utf8(contents))
-        os.close(filehandle)
-    except Exception as exc:
-        _logger.error("failed to write settings tempfile: %s" % exc)
-        tmpname = None
-    return tmpname
 
 
 def write_named_tempfile(configuration, contents):

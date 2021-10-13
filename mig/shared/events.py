@@ -110,8 +110,7 @@ def load_crontab(client_id, configuration, allow_missing=True):
     crontab_contents = read_file(crontab_path, _logger, allow_missing)
     if crontab_contents is None:
         if not allow_missing:
-            _logger.error('failed reading %s crontab file: %s' %
-                          (client_id, exc))
+            _logger.error('failed reading %s crontab file' % client_id)
         crontab_contents = ''
     return crontab_contents
 
@@ -125,8 +124,7 @@ def load_atjobs(client_id, configuration, allow_missing=True):
     atjobs_contents = read_file(atjobs_path, _logger, allow_missing)
     if atjobs_contents is None:
         if not allow_missing:
-            _logger.error('failed reading %s atjobs file: %s' % (client_id,
-                                                                 exc))
+            _logger.error('failed reading %s atjobs file' % client_id)
         atjobs_contents = ''
     return atjobs_contents
 

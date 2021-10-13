@@ -2483,12 +2483,6 @@ def resource_format(configuration, ret_val, ret_msg, out_obj):
     return txt_format(configuration, ret_val, ret_msg, out_obj)
 
 
-def resource_format(configuration, ret_val, ret_msg, out_obj):
-    """Generate output in resource format"""
-    # TODO: is this right? not sure where it is used if ever!
-    return txt_format(configuration, ret_val, ret_msg, out_obj)
-
-
 def file_format(configuration, ret_val, ret_msg, out_obj):
     """Dump raw file contents"""
 

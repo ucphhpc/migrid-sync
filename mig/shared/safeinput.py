@@ -50,7 +50,7 @@ try:
 except ImportError:
     nbformat = None
 
-from mig.shared.base import force_unicode, force_utf8
+from mig.shared.base import force_unicode, force_native_str
 from mig.shared.defaults import src_dst_sep, user_id_charset, \
     user_id_max_length, session_id_charset, session_id_length, \
     workflow_id_length, MAX_SWEEP, maxfill_fields

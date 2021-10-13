@@ -577,23 +577,6 @@ def save_account_request(configuration, req_dict):
     """Save req_dict account request as pickle in configured user_pending
     location.
     Returns a tuple of save status and output, where the latter is the request
-    path on success or the error message otherwise.
-    """
-    req_path = None
-    try:
-        # NOTE: mkstemp opens in binary mode and dumps forces req to utf8
-        (os_fd, req_path) = make_temp_file(dir=configuration.user_pending)
-        os.write(os_fd, dumps(req_dict))
-        os.close(os_fd)
-    except Exception as err:
-        return (False, "save account req failed: %s" % err)
-    return (True, req_path)
-
-
-def save_account_request(configuration, req_dict):
-    """Save req_dict account request as pickle in configured user_pending
-    location.
-    Returns a tuple of save status and output, where the latter is the request
     path on success or the error message otherwise. 
     """
     req_path = None
