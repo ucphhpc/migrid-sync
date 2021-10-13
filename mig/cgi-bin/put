@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
@@ -56,7 +56,7 @@ from mig.shared.safeinput import valid_path, valid_sid, valid_alphanumeric
 from mig.shared.sharelinks import extract_mode_id
 from mig.shared.url import unquote
 
-cgitb.enable()
+# cgitb.enable()
 
 
 block_size = 1024 * 1024

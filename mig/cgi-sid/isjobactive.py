@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
@@ -27,7 +27,7 @@
 
 import cgi
 import cgitb
-cgitb.enable()
+# cgitb.enable()
 
 from mig.shared.functionality.isjobactive import main
 from mig.shared.cgiscriptstub import run_cgi_script_possibly_with_cert

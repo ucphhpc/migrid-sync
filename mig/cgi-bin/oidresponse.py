@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
@@ -32,7 +32,7 @@ from mig.shared.cgiscriptstub import run_cgi_script_possibly_with_cert
 from mig.shared.functionality.oidresponse import main
 import cgi
 import cgitb
-cgitb.enable()
+# cgitb.enable()
 
 
 run_cgi_script_possibly_with_cert(main)

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
@@ -30,7 +30,7 @@
 from __future__ import absolute_import
 
 import cgitb
-cgitb.enable()
+# cgitb.enable()
 
 from mig.shared.functionality.jsoninterface import main
 from mig.shared.cgiscriptstub import run_cgi_script_possibly_with_cert

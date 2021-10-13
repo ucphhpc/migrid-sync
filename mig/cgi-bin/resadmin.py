@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
@@ -28,7 +28,7 @@
 from __future__ import absolute_import
 import cgi
 import cgitb
-cgitb.enable()
+# cgitb.enable()
 
 from mig.shared.functionality.resadmin import main
 from mig.shared.cgiscriptstub import run_cgi_script

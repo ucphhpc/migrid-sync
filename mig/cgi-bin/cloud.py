@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
@@ -30,7 +30,7 @@ from mig.shared.cgiscriptstub import run_cgi_script
 from mig.shared.functionality.cloud import main
 import cgi
 import cgitb
-cgitb.enable()
+# cgitb.enable()
 
 
 run_cgi_script(main)
