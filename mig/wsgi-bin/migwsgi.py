@@ -168,11 +168,6 @@ def application(environ, start_response):
     if sys.version_info[0] < 3:
         sys.stdout = sys.stderr
 
-    # IMPORTANT: avoid default ascii encoding in WSGI from breaking utf8 paths
-    #            by rendering with unicode surrogate codes.
-    if sys.getfilesystemencoding() != 'utf-8' and default_fs_coding == 'utf8':
-        environ["LC_CTYPE"] = "en_US.UTF-8"
-
     configuration = get_configuration_object()
     _logger = configuration.logger
 
@@ -195,6 +190,16 @@ def application(environ, start_response):
 
     _logger.debug("handling wsgi request with python %s from %s" %
                   (sys.version_info, client_id))
+    default_enc, fs_enc = sys.getdefaultencoding(), sys.getfilesystemencoding()
+    _logger.debug("using %s default and %s file system encoding" %
+                  (default_enc, fs_enc))
+    # IMPORTANT: we want to avoid 'ascii' as file system encoding, which is
+    #            the default here on Python3 unless environment is correctly
+    #            set up. If so it breaks actual utf8 paths and thus client_id
+    #            by rendering them with unicode surrogate codes.
+    if fs_enc != 'utf-8' and default_fs_coding == 'utf8':
+        _logger.error("Expected utf-8 filesys encoding but found %r!" % fs_enc)
+
     try:
         if not configuration.site_enable_wsgi:
             _logger.error("WSGI interface is disabled in configuration")
