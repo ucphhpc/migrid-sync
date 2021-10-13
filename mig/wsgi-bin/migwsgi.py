@@ -162,7 +162,7 @@ def application(environ, start_response):
     # NOTE: enable to debug runtime environment to apache error log
     # print("DEBUG: python %s" %
     #      (sys.version_info, ), file=environ['wsgi.errors'])
-    #print("DEBUG: path %s" % sys.path, file=environ['wsgi.errors'])
+    # print("DEBUG: path %s" % sys.path, file=environ['wsgi.errors'])
 
     # TODO: we should avoid print calls completely in backends
     # make sure print calls do not interfere with wsgi
@@ -201,7 +201,7 @@ def application(environ, start_response):
     #            the default here on Python3 unless environment is correctly
     #            set up. If so it breaks actual utf8 paths and thus client_id
     #            by rendering them with unicode surrogate codes.
-    if fs_enc != 'utf-8' and default_fs_coding == 'utf8':
+    if fs_enc.lower() != 'utf-8' and default_fs_coding == 'utf8':
         _logger.error("Expected utf-8 filesys encoding but found %r!" % fs_enc)
 
     _logger.debug("handling wsgi request with python %s from %s" %
