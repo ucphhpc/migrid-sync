@@ -1270,7 +1270,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
             authtype = 'password'
         elif (key is None and password is None) \
                 or (key is not None and password is not None):
-            logger.error("Excatly one of key or password is expected")
+            logger.error("Exactly one of key or password is expected")
             self.transport.close()
             return paramiko.AUTH_FAILED
 
