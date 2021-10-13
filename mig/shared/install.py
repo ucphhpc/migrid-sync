@@ -254,6 +254,7 @@ def generate_confs(
     enable_ftps=True,
     enable_wsgi=True,
     wsgi_procs=10,
+    wsgi_py_suffix='',
     enable_gdp=False,
     enable_jobs=True,
     enable_resources=True,
@@ -418,6 +419,7 @@ def generate_confs(
     user_dict['__ENABLE_FTPS__'] = "%s" % enable_ftps
     user_dict['__ENABLE_WSGI__'] = "%s" % enable_wsgi
     user_dict['__WSGI_PROCS__'] = "%s" % wsgi_procs
+    user_dict['__WSGI_PY_SUFFIX__'] = wsgi_py_suffix
     user_dict['__ENABLE_GDP__'] = "%s" % enable_gdp
     user_dict['__ENABLE_JOBS__'] = "%s" % enable_jobs
     user_dict['__ENABLE_RESOURCES__'] = "%s" % enable_resources
@@ -1827,6 +1829,7 @@ def create_user(
     enable_sitestatus = True
     enable_wsgi = True
     wsgi_procs = 5
+    wsgi_py_suffix = ''
     enable_jobs = True
     enable_resources = True
     enable_workflows = False
@@ -1945,6 +1948,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_ftps,
         enable_wsgi,
         wsgi_procs,
+        wsgi_py_suffix,
         enable_jobs,
         enable_resources,
         enable_workflows,

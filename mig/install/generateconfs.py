@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
@@ -138,6 +138,7 @@ if '__main__' == __name__:
         'secscan_addr',
         'user_interface',
         'vgrid_label',
+        'wsgi_py_suffix',
     ]
     int_names = [
         'apache_worker_procs',
@@ -253,7 +254,7 @@ if '__main__' == __name__:
         if val == 'DEFAULT':
             del settings[key]
     conf = generate_confs(**settings)
-    #print "DEBUG: %s" % conf
+    # print "DEBUG: %s" % conf
     instructions_path = "%(destination)s/instructions.txt" % conf
     try:
         instructions_fd = open(instructions_path, "r")

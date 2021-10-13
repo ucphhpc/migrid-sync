@@ -34,6 +34,7 @@ from builtins import object
 
 import base64
 import datetime
+import functools
 import os
 import pwd
 import socket
@@ -54,6 +55,7 @@ except ImportError as ioe:
 
 # NOTE: protect migrid import from autopep8 reordering
 try:
+    from mig.shared.base import force_native_str
     from mig.shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
         CSRF_FULL, POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, \
         POLICY_CUSTOM, freeze_flavors, duplicati_protocol_choices, \
@@ -302,6 +304,16 @@ def fix_missing(config_file, verbose=True):
         fd = open(config_file, 'w')
         config.write(fd)
         fd.close()
+
+
+class NativeConfigParser(ConfigParser):
+    """Wraps configparser.ConfigParser to force get method to return native
+    string instead of always returning unicode.
+    """
+
+    def get(self, *args, **kwargs):
+        """Wrap in force native string"""
+        return force_native_str(ConfigParser.get(self, *args, **kwargs))
 
 
 class Configuration(object):
@@ -610,7 +622,8 @@ need to point the MIG_CONF environment to your actual MiGserver.conf
 location.""" % self.config_file)
             raise IOError
 
-        config = ConfigParser()
+        # IMPORTANT: for python 2 and 3 compat config.get string type
+        config = NativeConfigParser()
         config.read([self.config_file])
 
         # print "expanding config paths"
@@ -1597,7 +1610,7 @@ location.""" % self.config_file)
             req = config.get('SITE', 'default_menu').split()
             self.site_default_menu = [i for i in req if i in menu_items]
         else:
-            self.site_default_menu = ['dashboard', 'files', 'submitjob',
+            self.site_default_menu = ['home', 'files', 'submitjob',
                                       'jobs', 'resources', 'vgrids',
                                       'downloads', 'runtimeenvs', 'people',
                                       'settings', 'crontab', 'docs', 'logout']
@@ -1605,13 +1618,13 @@ location.""" % self.config_file)
             req = config.get('SITE', 'simple_menu').split()
             self.site_simple_menu = [i for i in req if i in menu_items]
         else:
-            self.site_simple_menu = ['dashboard', 'files', 'vgrids',
+            self.site_simple_menu = ['home', 'files', 'vgrids',
                                      'settings', 'logout']
         if config.has_option('SITE', 'advanced_menu'):
             req = config.get('SITE', 'advanced_menu').split()
             self.site_advanced_menu = [i for i in req if i in menu_items]
         else:
-            self.site_advanced_menu = ['dashboard', 'submitjob', 'files',
+            self.site_advanced_menu = ['home', 'submitjob', 'files',
                                        'jobs', 'vgrids', 'resources',
                                        'downloads', 'runtimeenvs', 'people',
                                        'settings', 'crontab', 'vmachines',
@@ -2269,3 +2282,5 @@ if '__main__' == __name__:
     conf = \
         Configuration(os.path.expanduser('~/mig/server/MiGserver.conf'
                                          ), True)
+    print("conf.site_signup_methods: %s" % conf.site_signup_methods)
+    print("conf.user_home: %s" % [conf.user_home])
