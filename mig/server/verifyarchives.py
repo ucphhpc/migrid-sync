@@ -44,6 +44,15 @@ from mig.shared.defaults import freeze_meta_filename, freeze_lock_filename, \
     keyword_pending, keyword_final
 
 
+def fuzzy_match(i, j, offset=2.0):
+    """Compare the float values i and j and return true if j is within offset
+    value of i.
+    Useful for comparing e.g. file timestamps with minor fluctuations due to
+    I/O times and rounding.
+    """
+    return (i - offset < j and j < i + offset)
+
+
 def check_archive_integrity(configuration, user_id, freeze_path, verbose=False):
     """Inspect Archives in freeze_path and compare contents to pickled cache.
     The cache is a list with one dictionary per file using the format:
@@ -57,6 +66,19 @@ def check_archive_integrity(configuration, user_id, freeze_path, verbose=False):
         print("Compare cache and contents for %s" % freeze_path)
     cache_path = "%s.cache" % freeze_path
     meta_path = os.path.join(freeze_path, freeze_meta_filename)
+    ignore_files = [freeze_lock_filename, freeze_meta_filename, '%s.lock' %
+                    freeze_meta_filename, public_archive_index,
+                    public_archive_files, public_archive_doi]
+    # NOTE: if archive has no actual files it has no cache file either
+    if not os.path.exists(cache_path):
+        archive_list = os.listdir(freeze_path)
+        if [i for i in archive_list if not i in ignore_files]:
+            print("Archive %s has data content but no file cache in %s" %
+                  (freeze_path, cache_path))
+            return False
+        else:
+            return True
+
     try:
         cache_fd = open(cache_path)
         cache = pickle.load(cache_fd)
@@ -68,9 +90,6 @@ def check_archive_integrity(configuration, user_id, freeze_path, verbose=False):
         print("Could not open archive helpers %s and %s for verification: %s" %
               (cache_path, meta_path, exc))
         return False
-    ignore_files = [freeze_lock_filename, freeze_meta_filename, '%s.lock' %
-                    freeze_meta_filename, public_archive_index,
-                    public_archive_files, public_archive_doi]
     for entry in cache:
         if entry['name'] in ignore_files:
             continue
@@ -89,9 +108,11 @@ def check_archive_integrity(configuration, user_id, freeze_path, verbose=False):
                 elif verbose:
                     print("ignore size mismatch on non-final %s" %
                           archive_path)
-            elif int(entry['timestamp']) not in [int(archived_created), int(archived_modified)]:
+            # NOTE: we allow a minor time offset to accept various fs hiccups
+            elif not fuzzy_match(entry['timestamp'], archived_created) and \
+                    not fuzzy_match(entry['timestamp'], archived_modified):
                 if meta_state == keyword_final:
-                    print("Archive entry %s has wrong timestamp %d / %d (expected %d, %s)" %
+                    print("Archive entry %s has wrong timestamp %f / %f (expected %f, %s)" %
                           (archive_path, archived_created, archived_modified,
                            entry['timestamp'], archived_stat))
                     return False
@@ -201,7 +222,7 @@ if '__main__' == __name__:
                           (freeze_name, archive_name))
                 continue
             freeze_path = os.path.join(base_path, freeze_name)
-            created_time = int(os.path.getctime(freeze_path))
+            created_time = int(round(os.path.getctime(freeze_path)))
             if created_time < created_after or created_time > created_before:
                 if verbose:
                     print("skip Archive %s outside creation window %d - %d" %
