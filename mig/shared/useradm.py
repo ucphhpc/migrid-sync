@@ -2221,6 +2221,7 @@ def get_authkeys(authkeys_path):
 def get_authpasswords(authpasswords_path):
     """Return the non-empty authorized passwords from authpasswords_path"""
 
+    # TODO: use read_file instead
     try:
         authpasswords_fd = open(authpasswords_path, 'r')
         authorized_passwords = authpasswords_fd.readlines()

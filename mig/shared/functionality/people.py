@@ -145,6 +145,7 @@ def main(client_id, user_arguments_dict):
                                                caching)
         vgrid_access = user_vgrid_access(configuration, client_id,
                                          caching=caching)
+        logger.debug("anon to real user map: %s" % visible_user)
         anon_map = anon_to_real_user_map(configuration)
         if not visible_user and not caching:
             # NOTE: only okay for new installations without users created

@@ -316,6 +316,16 @@ class NativeConfigParser(ConfigParser):
         return force_native_str(ConfigParser.get(self, *args, **kwargs))
 
 
+class NativeConfigParser(ConfigParser):
+    """Wraps configparser.ConfigParser to force get method to return native
+    string instead of always returning unicode.
+    """
+
+    def get(self, *args, **kwargs):
+        """Wrap in force native string"""
+        return force_native_str(ConfigParser.get(self, *args, **kwargs))
+
+
 class Configuration(object):
 
     """Server configuration in parsed form"""

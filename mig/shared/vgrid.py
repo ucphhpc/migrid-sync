@@ -1597,7 +1597,7 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
     Use the dict_field if the entries are dictionaries and the id_list should
     be matched against dict_field in each of them.
     """
-
+    _logger = configuration.logger
     if kind == 'owners':
         entity_filename = configuration.vgrid_owners
     elif kind == 'members':

@@ -137,6 +137,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     logger.debug("submit job returned: %s" % job_status)
 
+    logger.debug("submit job returned: %s" % job_status)
+
     if not job_status:
 
         # output_objects.append({"object_type":"error_text", "text":"%s" % newmsg})

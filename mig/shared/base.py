@@ -97,8 +97,9 @@ def client_alias(client_id):
     This is for e.g. commandline friendly use and it is a one-to-one mapping.
     """
     # sftp and friends choke on potential '=' padding - replace by underscore
-    # NOTE: base64 encode requires bytes
-    return base64.urlsafe_b64encode(force_utf8(client_id.replace('=', '_')))
+    # NOTE: base64 encode requires+returns bytes but we want a native string
+    return force_native_str(base64.urlsafe_b64encode(force_utf8(
+        client_id.replace('=', '_'))))
 
 
 def expand_openid_alias(alias_id, configuration):
@@ -126,6 +127,20 @@ def get_short_id(configuration, user_id, user_alias):
             short_id = "%s@%s" % (short_id, gdp_id)
 
     return short_id
+
+
+# TODO: migrate all uses of binascii hexlify to use this helper instead
+def hexlify(strval):
+    """Convert strval to hexadecimal with only lower case letters"""
+    # NOTE: base64 encoders require bytes and we want native string back
+    return force_native_str(base64.b16encode(force_utf8(strval))).lower()
+
+
+# TODO: migrate all uses of binascii unhexlify to use this helper instead
+def unhexlify(hexval):
+    """Convert hexlified hexval back to str"""
+    # NOTE: base64 encoders require bytes and we want native string back
+    return force_native_str(base64.b16decode(force_utf8(hexval.lower())))
 
 
 def is_gdp_user(configuration, client_id):
@@ -225,9 +240,11 @@ def canonical_user(configuration, user_dict, limit_fields):
         if not key in limit_fields:
             continue
         if key == 'full_name':
+            # TODO: is this right for py2+3 support now?
             # IMPORTANT: we get utf8 coded bytes here and title() treats such
             # chars as word termination. Temporarily force to unicode.
-            val = force_utf8(force_unicode(val).title())
+            #val = force_utf8(force_unicode(val).title())
+            val = force_native_str(force_unicode(val).title())
         elif key == 'email':
             val = val.lower()
         elif key == 'country':
@@ -356,6 +373,8 @@ def force_utf8_rec(input_obj, highlight=''):
                 input_obj.items()}
     elif isinstance(input_obj, list):
         return [force_utf8_rec(i, highlight) for i in input_obj]
+    elif isinstance(input_obj, tuple):
+        return tuple([force_utf8_rec(i, highlight) for i in input_obj])
     elif is_unicode(input_obj):
         return force_utf8(input_obj, highlight)
     else:
@@ -388,6 +407,8 @@ def force_unicode_rec(input_obj, highlight=''):
                 input_obj.items()}
     elif isinstance(input_obj, list):
         return [force_unicode_rec(i, highlight) for i in input_obj]
+    elif isinstance(input_obj, tuple):
+        return tuple([force_unicode_rec(i, highlight) for i in input_obj])
     elif not is_unicode(input_obj):
         return force_unicode(input_obj, highlight)
     else:
@@ -473,6 +494,28 @@ def force_default_fs_coding_rec(input_obj, highlight=''):
     return _force_default_coding_rec(input_obj, FS_KIND, highlight)
 
 
+def force_native_str_rec(input_obj, highlight=''):
+    """A helper to force input_obj to the default string coding recursively.
+    Use the active interpreter and the shared.defaults helpers to force the
+    current default.
+    """
+    return _force_default_coding_rec(input_obj, STR_KIND, highlight)
+
+
+def native_str_escape(val):
+    """applies either the .encode('string_escape') or .encode('unicode_escape')
+    depending on the native string format, to escape existing backslashes like
+    often occuring with accented chars.
+    """
+    if default_str_coding == "unicode":
+        return val.encode('unicode_escape')
+    elif default_str_coding == "utf8":
+        return val.encode('string_escape')
+    else:
+        raise ValueError('Unsupported default str coding: %s' %
+                         default_str_coding)
+
+
 def _is_default_coding(input_str, kind):
     """Checks if input_str is on the default coding form for given kind"""
     if is_unicode(input_str):
@@ -502,6 +545,20 @@ def is_default_fs_coding(input_str):
 def is_native_fs(input_str):
     """Checks if input_str is on the default_fs_coding form"""
     return _is_default_coding(input_str, FS_KIND)
+
+
+def native_args(argv):
+    """Detect python major version and treat supplied sys.argv list accordingly
+    to always return the original bytes rather than letting python3+ make
+    surrogate escaped unicode string from terminal bytes usually already on
+    utf8 format. Please refer to
+    https://docs.python.org/3/library/sys.html#sys.argv
+    for further details.
+    """
+    if sys.version_info[0] >= 3:
+        return [os.fsencode(arg) for arg in argv]
+    else:
+        return argv
 
 
 def NativeStringIO(initial_value=''):

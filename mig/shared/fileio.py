@@ -659,6 +659,22 @@ def write_named_tempfile(configuration, contents):
     return tmpname
 
 
+def write_named_tempfile(configuration, contents):
+    """Create a named tempfile and write contents to its.
+    Returns the name of the file for further use and manual delete later.
+    """
+    _logger = configuration.logger
+    try:
+        (filehandle, tmpname) = make_temp_file(text=True)
+        # NOTE: low level write requires bytes
+        os.write(filehandle, force_utf8(contents))
+        os.close(filehandle)
+    except Exception as exc:
+        _logger.error("failed to write settings tempfile: %s" % exc)
+        tmpname = None
+    return tmpname
+
+
 def __checksum_file(path, hash_algo, chunk_size=default_chunk_size,
                     max_chunks=default_max_chunks):
     """Simple block hashing for checksumming of files inspired by  

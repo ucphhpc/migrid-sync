@@ -148,6 +148,9 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None,
     logger.debug("handling cgi request with python %s from %s  (%s)" %
                  (sys.version_info, client_id, environ))
 
+    logger.debug("handling cgi request with python %s from %s  (%s)" %
+                 (sys.version_info, client_id, environ))
+
     # default to html output
 
     output_format = user_arguments_dict.get('output_format', ['html'])[-1]

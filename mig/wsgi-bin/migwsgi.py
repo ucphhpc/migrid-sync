@@ -66,6 +66,8 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
 
     _logger.debug("stub for backend %r" % backend)
 
+    _logger.debug("stub for backend %r" % backend)
+
     # IMPORTANT: we cannot trust potentially user-provided backend value.
     #            NEVER print/output it verbatim before it is validated below.
 
@@ -102,6 +104,8 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
              'destination': configuration.site_landing_page}
         ])
         return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    #_logger.debug("imported main %s" % main)
 
     #_logger.debug("imported main %s" % main)
 
@@ -200,6 +204,8 @@ def application(environ, start_response):
     if fs_enc != 'utf-8' and default_fs_coding == 'utf8':
         _logger.error("Expected utf-8 filesys encoding but found %r!" % fs_enc)
 
+    _logger.debug("handling wsgi request with python %s from %s" %
+                  (sys.version_info, client_id))
     try:
         if not configuration.site_enable_wsgi:
             _logger.error("WSGI interface is disabled in configuration")

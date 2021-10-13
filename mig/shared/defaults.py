@@ -109,6 +109,8 @@ peers_fields = ['full_name', 'organization', 'email', 'country', 'state']
 
 ignore_file_names = ['.placeholder', '.svn', '.git']
 
+ignore_file_names = ['.placeholder', '.svn', '.git']
+
 mqueue_prefix = 'message_queues'
 default_mqueue = 'default'
 mqueue_empty = 'NO MESSAGES'
