@@ -218,7 +218,7 @@ def scramble_password(salt, password):
     # NOTE: base64 encoders require bytes
     b64_password = b64encode(force_utf8(password))
     if not salt:
-        return b64_password
+        return force_native_str(b64_password)
     xor_int = int(salt, 64) ^ int(b64_password, 64)
     return force_native_str('{:X}'.format(xor_int))
 
