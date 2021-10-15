@@ -13,7 +13,7 @@
     "services": [
       "Web"
     ],
-    "work_end": "2021-10-15T16:40:00+02:00",
+    "work_end": "2021-10-15T16:52:00+02:00",
     "description": {
       "EN": "Unplanned downtime in the ERDA web service due to an internal database overloading. Apart from the landing page and certain static or simple user pages, all ERDA web pages would simply hang until timeout. The problem was identified and corrected, so that all services are now back online. Sorry for this inconvenience in relation to the missing web access.",
       "DK": "Ikke planlagt nedetid i ERDA web servicen pga. en overbelastet intern database. Bortset fra forsiden og enkelte statiske eller simple brugersider, hang alle ERDA websider bare indtil timeout. Det bagvedliggende problem er identificeret og rettet så alle services er tilbage i almindelig drift. Beklager generne fra den manglende webadgang."
