@@ -26,6 +26,7 @@
 #
 
 """Provide all the client access setup subpages"""
+
 from __future__ import absolute_import
 
 import os
@@ -452,7 +453,7 @@ Enter the following values in the PuTTY Site Manager:</p>
 <li>Host <var>%(cloud_host_pattern)s</var></li>
 <li>Port <var>22</var></li>
 <li>Protocol <var>SSH</var></li>
-<li>User <var>%(username)s</var></li>
+<li>User <var>%(cloud_host_user)s</var></li>
 <li>Password <var>[YOUR CHOSEN PASSWORD]</var> (leave empty for ssh key from key-agent)</li>
 </ul>
 
@@ -474,9 +475,9 @@ Save something like the following lines in your local ~/.ssh/config
 to avoid typing the full login details every time:</p>
 <textarea rows=6 cols=78 class="code" readonly=readonly>Host %(cloud_host_pattern)s
 Hostname %(cloud_host_pattern)s
-User %(username)s
-# Uncomment next line to use your private key in ~/.ssh/id_rsa
-# IdentityFile ~/.ssh/id_rsa</textarea>
+User %(cloud_host_user)s
+# Use your matching private key in ~/.ssh/id_rsa or change next line to fit
+IdentityFile ~/.ssh/id_rsa</textarea>
 <p>From then on you can use ssh to access your %(site)s instance:</p>
 <pre class="codeblock">
 ssh %(cloud_host_pattern)s
@@ -1553,6 +1554,7 @@ client versions from the link above.</p>
         default_authpassword = current_cloud_dict.get('authpassword', '')
         username = client_alias(client_id)
         cloud_host_pattern = '[cloud-instance-address]'
+        cloud_host_user = '[cloud-instance-username]'
         if configuration.user_cloud_alias:
             username = get_short_id(configuration, client_id,
                                     configuration.user_cloud_alias)
@@ -1581,7 +1583,7 @@ specific instance login details.
 However, in general login requires the following:</p>
 <ul>
 <li>Host <var>%(cloud_host_pattern)s</var></li>
-<li>Username <var>%(username)s</var></li>
+<li>Username <var>%(cloud_host_user)s</var></li>
 <li>%(auth_methods)s <var>as you choose below</var></li>
 </ul>
 '''
@@ -1658,6 +1660,7 @@ value="%(default_authpassword)s" />
             'keyword_password': keyword_password,
             'username': username,
             'cloud_host_pattern': cloud_host_pattern,
+            'cloud_host_user': cloud_host_user,
             'auth_methods': ' / '.join(configuration.user_cloud_ssh_auth).title(),
         })
 
