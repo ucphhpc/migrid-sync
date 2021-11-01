@@ -449,6 +449,7 @@ valid_gdp_auth_scripts = [
     'settingsaction.py',
     'twofactor.py',
     'uploadchunked.py',
+    'rmvgridowner.py'
 ]
 # NOTE: these are cgi-sid scripts to allow
 valid_gdp_anon_scripts = [
