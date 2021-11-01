@@ -2043,8 +2043,7 @@ def allow_resources_adm(configuration, vgrid_name, client_id):
     return _shared_allow_adm(configuration, vgrid_name, client_id, 'resources')
 
 
-def vgrid_rm_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir,
-                     output_objects):
+def vgrid_rm_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir):
     """Remove Trac issue tracker owner"""
     _logger = configuration.logger
     success = False

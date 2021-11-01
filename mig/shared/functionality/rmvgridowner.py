@@ -61,15 +61,15 @@ def rm_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir,
     """Remove Trac issue tracker owner"""
     _logger = configuration.logger
 
-    (status, msg) = vgrid_rm_tracker_admin(
+    (success, msg) = vgrid_rm_tracker_admin(
         configuration, vgrid_name, cert_id, tracker_dir)
-    if not status:
+    if not success:
         output_objects.append(
             {'object_type': 'error_text', 'text':
              'Could not remove %s tracker admin rights: %s' % (cert_id, msg)
              })
 
-    return status
+    return success
 
 
 def main(client_id, user_arguments_dict):
