@@ -81,6 +81,7 @@ def create_notify_message(
 ):
     """Helper to create notifications"""
 
+    logger = configuration.logger
     header = ''
     txt = ''
     jobid = jobdict['JOB_ID']
@@ -340,7 +341,16 @@ The full status and output files are available at:
         user_req['ro_fields'] = keyword_auto
         id_query = '%s' % urlencode(user_req)
         user_dict.update(user_req)
-        header = '%s account request rejected' % configuration.short_title
+        user_name = user_dict.get('full_name', 'UNKNOWN')
+        if auth_type == 'oid':
+            auth_name = 'OpenID'
+        elif auth_type == 'cert':
+            auth_name = 'certificate'
+        else:
+            logger.warning("unexpected auth_type: %r" % auth_type)
+            auth_name = 'OpenID'
+        header = '%s %s account request for %s rejected' % \
+                 (configuration.short_title, auth_name, user_name)
         txt += """This is an auto-generated account request rejection from %s.
 
 Reject message: %s
@@ -376,6 +386,7 @@ documentation.
         migoid_title = configuration.user_mig_oid_title
         migoid_url = configuration.migserver_https_mig_oid_url
         entry_url = get_site_base_url(configuration)
+        # TODO: don't hardcode OpenID here
         header = 'Re: %s OpenID request for %s' % (short_title, user_name)
         txt += """This is an auto-generated intro message from %s to inform
 about the creation or renewal of your user account with OpenID login.
