@@ -40,7 +40,7 @@ from mig.shared.fileio import walk
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.init import initialize_main_variables
-from mig.shared.parseflags import verbose
+from mig.shared.parseflags import verbose, file_info
 from mig.shared.safeinput import valid_path_pattern
 from mig.shared.url import quote
 from mig.shared.validstring import valid_user_path
@@ -49,8 +49,29 @@ from mig.shared.validstring import valid_user_path
 def signature():
     """Signature of the main function"""
 
-    defaults = {'path': ['.'], 'flags': [''], 'name': ['*']}
+    defaults = {'path': ['.'], 'flags': [''], 'pattern': ['*']}
     return ['dir_listings', defaults]
+
+# TODO: refactor to fileio and use from here and in ls?
+
+
+def fileinfo_stat(path):
+    """Additional stat information for file manager"""
+    file_information = {'size': 0, 'created': 0, 'modified': 0, 'accessed': 0,
+                        'ext': ''}
+    if os.path.exists(path):
+        ext = 'dir'
+        if not os.path.isdir(path):
+            ext = os.path.splitext(path)[1].lstrip('.')
+        file_information['ext'] = ext
+        try:
+            file_information['size'] = os.path.getsize(path)
+            file_information['created'] = os.path.getctime(path)
+            file_information['modified'] = os.path.getmtime(path)
+            file_information['accessed'] = os.path.getatime(path)
+        except OSError as ose:
+            pass
+    return file_information
 
 
 def main(client_id, user_arguments_dict):
@@ -76,7 +97,7 @@ def main(client_id, user_arguments_dict):
 
     flags = ''.join(accepted['flags'])
     patterns = accepted['path']
-    name_pattern = accepted['name'][-1]
+    name_pattern = accepted['pattern'][-1]
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
@@ -181,6 +202,8 @@ def main(client_id, user_arguments_dict):
                             'flags': flags,
                             'special': '',
                         }
+                        if file_info(flags):
+                            file_obj['file_info'] = fileinfo_stat(abs_path)
                         entries.append(file_obj)
             except Exception as exc:
                 output_objects.append({'object_type': 'error_text',

@@ -821,7 +821,8 @@ if (jQuery) (function($){
 
         function parseWrapped(jsonRes, jsonSettings) {
             var misc_output = '';
-            var i, j, field;
+            var i, j, k, field, entry;
+            var bytes, modified;
             for (i = 0; i < jsonRes.length; i++) {
                 if (jsonRes[i]['object_type'] === 'submitstatuslist') {
                     field = 'submitstatuslist';
@@ -863,6 +864,32 @@ if (jQuery) (function($){
                         misc_output += '<h4>File usage for ' + jsonRes[i][field][j]['name'] +
                             '</h4><p>bytes: ' + jsonRes[i][field][j]['bytes'] +
                             '</p>';
+                    }
+                } else if (jsonRes[i]['object_type'] === 'dir_listings') {
+                    for (j = 0; j < jsonRes[i].dir_listings.length; j++) {
+                        misc_output += '<h3>Find in ' + jsonRes[i].dir_listings[j].relative_path + '</h3>';
+                        misc_output += '<div class="row">';
+                        misc_output += '<div class="col-lg-8 left"><h4>Path</h4></div>';
+                        misc_output += '<div class="col-lg-2 middle"><h4>Size</h4></div>';
+                        misc_output += '<div class="col-lg-2 right"><h4>Modified</h4></div>';
+                        misc_output += '</div>';
+                        for (k = 0; k < jsonRes[i].dir_listings[j]['entries'].length; k++) {
+                            entry = jsonRes[i].dir_listings[j].entries[k];
+                            misc_output += '<div class="row">';
+                            misc_output += '<div class="col-lg-8 left">';
+                            misc_output += '<a href="/cert_redirect/' + entry.rel_path + '">';
+                            misc_output += entry.rel_path + '</a></div>';
+                            if (entry.file_info) {
+                                bytes = pp_bytes(entry.file_info.size);
+                                modified = pp_date(entry.file_info.modified);
+                            } else {
+                                bytes = '';
+                                modified = '';
+                            }
+                            misc_output += '<div class="col-lg-2 middle">' + bytes + '</div>';
+                            misc_output += '<div class="col-lg-2 right">' + modified + '</div>';
+                            misc_output += '</div>';
+                        }
                     }
                 } else if (jsonRes[i]['object_type'] === 'sharelinks') {
                     field = 'sharelinks';
@@ -1456,6 +1483,30 @@ if (jQuery) (function($){
                 });
                 $("#grep_dialog").dialog('open');
                 $("#grep_form input[name='pattern']").focus();
+            },
+            find:  function (action, el, pos) {
+                // Initialize the form
+                $("#find_form input[name='path']").val($(el).attr(pathAttribute));
+                $("#find_form input[name='pattern']").val('');
+                $("#find_dialog").dialog({
+                    buttons: {
+                        Ok: function() {
+                            startProgress("Find file or folder...");
+                            /* user may specify path pattern so don't use implict elem path */
+                            var path = $("#find_form input[name='path']").val();
+                            var pattern = $("#find_form input[name='pattern']").val();
+                            $(this).dialog('close');
+                            jsonWrapper(el, '#cmd_dialog', 'find.py', {path: path, pattern: pattern, flags: 'f'});
+                        },
+                        Cancel: function() {
+                            $(this).dialog('close');
+                        }
+                    },
+                    autoOpen: false, closeOnEscape: true, modal: true, 
+                    width: '700px'
+                });
+                $("#find_dialog").dialog('open');
+                $("#find_form input[name='pattern']").focus();
             },
             sharelinks:   function (action, el, pos) {
                 //var path_enc = encodeURI($(el).attr(pathAttribute));
@@ -2194,9 +2245,7 @@ if (jQuery) (function($){
                             "touch": {name: "Update Timestamp (touch)", icon: "touch"},
                             "stat": {name: "File Info (stat)", icon: "stat"},
                             "du": {name: "Disk Use (du)", icon: "du"},
-                            /* TODO: add find support */
-                            //"search-sep": "---------",
-                            //"find": {name: "Locate File/Folder (find)", icon: "find"},
+                            "find": {name: "Search Folder (find)", icon: "find"}
                         }
                     }
                 };
@@ -2570,6 +2619,22 @@ if (jQuery) (function($){
                      $(".fm_files").parent().reload(reload_path);
                  }
                 });
+
+            $("#find_form").ajaxForm(
+                {target: '#find_output', dataType: 'json',
+                 success: function(responseObject, statusText) {
+                     var errors = $(this).renderError(responseObject);
+                     var warnings = $(this).renderWarning(responseObject);
+                     if (errors.length > 0) {
+                         $("#find_output").html(errors);
+                     } else if (warnings.length > 0) {
+                         $("#find_output").html(warnings);
+                     } else {
+                         $("#find_dialog").dialog('close');
+                     }
+                 }
+                });
+
 
             $("#create_sharelink_form").ajaxForm(
                 {target: '#create_sharelink_output', dataType: 'json',
