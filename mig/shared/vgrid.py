@@ -33,6 +33,7 @@ from __future__ import absolute_import
 import fnmatch
 import os
 import re
+import sys
 import time
 
 from mig.shared.base import valid_dir_input, client_id_dir, \
@@ -428,7 +429,7 @@ doubt, just let the user request access and accept it with the
                              field.replace('_', ' ').title()
         if isinstance(limit, basestring):
             add_html = '%s' % limit
-        elif limit == None:
+        elif limit is None:
             add_html = '''
         <input class="fillwidth padspace" type="text" size=70 name="%s" />
         ''' % field
@@ -2106,9 +2107,12 @@ def vgrid_rm_share(configuration, user_dir, vgrid):
         user_dir/vgrid
     In case of a sub-vgrid, enclosing empty directories are removed as well.
     """
+    _logger = configuration.logger
     success = True
     msg = ""
     path = os.path.join(user_dir, vgrid)
+    _logger.debug("remove share with user dir %s and vgrid %s" %
+                  (user_dir, vgrid))
     try:
         if os.path.exists(path):
             os.remove(path)
@@ -2116,6 +2120,8 @@ def vgrid_rm_share(configuration, user_dir, vgrid):
             if os.path.isdir(path) and os.listdir(path) == []:
                 os.removedirs(path)
     except Exception as err:
+        _logger.errors("could not remove share for %s vgrid: %s" %
+                       (vgrid, err))
         success = False
         msg += "\nCould not remove link %s: %s" % (path, err)
     return (success, msg[1:])
@@ -2135,8 +2141,11 @@ def vgrid_rm_web_folders(configuration, user_dir, vgrid):
         user_dir/public_base/vgrid
     In case of a sub-vgrid, enclosing empty directories are removed as well.
     """
+    _logger = configuration.logger
     success = True
     msg = ""
+    _logger.debug("remove web folders with user dir %s and vgrid %s" %
+                  (user_dir, vgrid))
     for infix in ["private_base", "public_base"]:
         path = os.path.join(user_dir, infix, vgrid)
         try:
@@ -2146,6 +2155,8 @@ def vgrid_rm_web_folders(configuration, user_dir, vgrid):
                 if os.path.isdir(path) and os.listdir(path) == []:
                     os.removedirs(path)
         except Exception as err:
+            _logger.errors("could not remove web folders for %s vgrid: %s" %
+                           (vgrid, err))
             success = False
             msg += "\nCould not remove link %s: %s" % (path, err)
     return (success, msg[1:])
@@ -2200,8 +2211,8 @@ def vgrid_rm_files(configuration, vgrid):
             _logger.debug('delete symlink: %s' % link_path)
             delete_symlink(link_path, _logger)
         if not os.path.exists(data_path):
-            _logger.warning('vgrid_rm_files: missing data path: %r' \
-                % data_path)
+            _logger.warning('vgrid_rm_files: missing data path: %r'
+                            % data_path)
             continue
         success_here = remove_rec(data_path, configuration)
         if not success_here:
@@ -2333,6 +2344,8 @@ if __name__ == "__main__":
     from mig.shared.conf import get_configuration_object
     conf = get_configuration_object()
     client_id = '/C=DK/CN=John Doe/emailAddress=john@doe.org'
+    if sys.argv[1:]:
+        client_id = sys.argv[1]
     vgrid = "MyGroup"
     kind = 'triggers'
     valid_trigger = {'rule_id': 'valid_rule',
