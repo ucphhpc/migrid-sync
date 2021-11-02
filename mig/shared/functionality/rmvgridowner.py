@@ -61,8 +61,8 @@ def rm_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir,
     """Remove Trac issue tracker owner"""
     _logger = configuration.logger
 
-    (success, msg) = vgrid_rm_tracker_admin(
-        configuration, vgrid_name, cert_id, tracker_dir)
+    (success, msg) = vgrid_rm_tracker_admin(configuration, cert_id,
+                                            vgrid_name, tracker_dir)
     if not success:
         output_objects.append(
             {'object_type': 'error_text', 'text':
@@ -237,9 +237,8 @@ Owner removal has to be performed at the topmost vgrid''' %
 Preserving access to corresponding %s.''' % (cert_id, label,
                                              inherit_vgrid_member, label)})
             else:
-                (success, msg) = vgrid_rm_share(configuration,
-                                                vgrid_name,
-                                                user_dir)
+                (success, msg) = vgrid_rm_share(configuration, user_dir,
+                                                vgrid_name)
                 if not success:
                     logger.error('Could not remove share link: %s.' % msg)
                     output_objects.append({'object_type': 'error_text', 'text':
@@ -249,8 +248,8 @@ Preserving access to corresponding %s.''' % (cert_id, label,
 
             # unlink shared web folders
 
-            (success, msg) = vgrid_rm_web_folders(
-                configuration, vgrid_name, user_dir)
+            (success, msg) = vgrid_rm_web_folders(configuration, user_dir,
+                                                  vgrid_name)
 
             if not success:
                 logger.error('Could not remove web links: %s.' % msg)
@@ -421,10 +420,10 @@ on the admin page and then try again.""" % label})
 
             user_dir = os.path.abspath(os.path.join(configuration.user_home,
                                                     cert_dir)) + os.sep
-            (share_lnk, share_msg) = vgrid_rm_share(
-                configuration, vgrid_name, user_dir)
-            (web_lnk, web_msg) = vgrid_rm_web_folders(
-                configuration, vgrid_name, user_dir)
+            (share_lnk, share_msg) = vgrid_rm_share(configuration, user_dir,
+                                                    vgrid_name)
+            (web_lnk, web_msg) = vgrid_rm_web_folders(configuration, user_dir,
+                                                      vgrid_name)
             (files_act, files_msg) = vgrid_rm_files(configuration, vgrid_name)
         else:
 
