@@ -17,8 +17,7 @@ This document has been sent to the project registrant and the SCIENCE legal offi
 <br>
 <b>Project legal references:</b>
 <br>
-None
-
+%(workzone_id_name)s from the acceptance of %(category_title)s access: %(workzone_id_value)s
 
 <H2>Facility responsibilities</H2>
 The %(site_title)s, %(short_title)s, will keep data in accordance with the requirements stipulated by the EU GDPR rules. This includes strict access control and logging of all access to the data. Upon a legal request %(short_title)s will provide access to such logfiles. Data transfers to and from %(short_title)s are enforced to be encrypted. If data secrecy or integrity at %(short_title)s is compromised the facility must, as soon as the extent of the incident is fully established, inform all concerned project registrants.

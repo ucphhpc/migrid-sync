@@ -786,6 +786,7 @@ span.fakelink:hover {
 
 .vgridshared { background: url(/images/icons/folder_link.svg) left top no-repeat; background-size: 16px 16px; }
 .expanded.vgridshared { background: url(/images/icons/folder_open_link.svg) left top no-repeat; background-size: 16px 16px; }
+.vgridshared.readonly { filter: grayscale(1); }
 
 .trashbin { background: url(/images/icons/trash_closed.svg) left top no-repeat; background-size: 16px 16px; }
 .expanded.trashbin { background: url(/images/icons/trash_open.svg) left top no-repeat; background-size: 16px 16px; }

@@ -598,7 +598,7 @@ UL.jqueryFileList A:hover {
 /* override folder icon for user home and vgrid folders */
 .userhome { background: url(/images/icons/folder_user.png) left top no-repeat; }
 .vgridshared { background: url(/images/icons/folder_link.png) left top no-repeat; }
-.vgridshared.readonly { background: url(/images/icons/other/folder_link-blue.png) left top no-repeat; }
+.vgridshared.readonly { filter: grayscale(1); }
 .vgridpublicweb { background: url(/images/icons/folder_table.png) left top no-repeat; }
 .vgridprivateweb { background: url(/images/icons/folder_key.png) left top no-repeat; }
 .vgridstoreres { background: url(/images/icons/folder_server.png) left top no-repeat; }
@@ -615,9 +615,6 @@ UL.jqueryFileList A:hover {
 }
 .expanded.vgridshared { 
     background: url(/images/icons/folder_open_link.png) left top no-repeat;
-}
-.expanded.vgridshared.readonly { 
-    background: url(/images/icons/other/folder_open_link-blue.png) left top no-repeat;
 }
 .expanded.vgridpublicweb { 
     background: url(/images/icons/folder_open_table.png) left top no-repeat;

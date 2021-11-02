@@ -68,7 +68,7 @@ SETTINGS = '__settings__'
 # Never repeatedly refresh maps within this number of seconds in same process
 # Used to avoid refresh floods with e.g. runtime envs page calling
 # refresh for each env when extracting providers.
-MAP_CACHE_SECONDS = 60
+MAP_CACHE_SECONDS = 120
 
 last_refresh = {USERS: 0, RESOURCES: 0, VGRIDS: 0}
 last_load = {USERS: 0, RESOURCES: 0, VGRIDS: 0}
