@@ -1,6 +1,29 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2021-11-10T17:00:00+01:00", 
+    "systems": [
+        "ERDA",
+        "IDMC",
+        "SIF"
+    ],
+    "announce_start": "2021-11-02T13:00:00+01:00",
+    "title": {
+      "EN": "Planned ERDA/IDMC and SIF Maintenance",
+      "DK": "Planlagt ERDA/IDMC og SIF vedligehold"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2021-11-11T07:59:00+01:00",
+    "description": {
+      "EN": "It's time for a thorough update of the ERDA/IDMC and SIF systems to apply pending bug fixes and add a few new features. The work will involve frontend down-time for low-level system updates. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect it to take a couple of hours, but keep the maintenance window open until next morning in case it drags out. Further info will follow here.",
+      "DK": "Det er tid til en gennemgribende opdatering af ERDA/IDMC og SIF systemerne mhp at lægge udestående fejlrettelser ind og tilføje lidt nye funktionaliteter. Arbejdet kræver nedetid på frontend til grundlæggende systemopdateringer og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi forventer at det kan klares på et par timer, men holder vedligeholdelsesvinduet åbent i tilfælde af at det trækker ud. Yderligere info vil følge her."
+    },
+    "announce_end": "2021-11-12T10:00:00+01:00"
+  },
+  {
+    "status": "AUTO", 
     "work_start": "2021-11-01T20:00:00+02:00",
     "systems": [
       "ERDA", "IDMC"
