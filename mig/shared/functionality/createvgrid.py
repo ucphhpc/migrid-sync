@@ -39,8 +39,8 @@ from mig.shared import returnvalues
 from mig.shared.base import client_id_dir, generate_https_urls, valid_dir_input, \
     distinguished_name_to_user, get_site_base_url
 from mig.shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
-    keyword_owners, keyword_members, default_vgrid_settings_limit
-from mig.shared.fileio import write_file, make_symlink, delete_file, walk
+    keyword_owners, keyword_members
+from mig.shared.fileio import write_file, make_symlink, walk
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables, find_entry
@@ -500,7 +500,7 @@ ahead with style changes as you see fit.
 == Limitations ==
 For security reasons all project trackers are quite locked down to avoid abuse.
 This implies a number of restrictions on the freedom to fully tweak them e.g.
-by installing additional plugins or modifying the core configuration.  
+by installing additional plugins or modifying the core configuration.
 
 == Further Information ==
 Please see TitleIndex for a complete list of local wiki pages or refer to
@@ -887,6 +887,39 @@ parent %(vgrid_label)s before creating a sub-%(vgrid_label)s.""" %
              })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    # IMPORTANT: set owners+members right away to avoid orphans on error, but
+    #            delay linking of share etc until all components are in place.
+
+    # Create with client_id as owner but only add user in owners list
+    # if new vgrid is a base vgrid (because symlinks to subdirs are not
+    # necessary, and an owner is per definition owner of sub vgrids).
+
+    owner_list = []
+    if new_base_vgrid:
+        owner_list.append(client_id)
+        allow_empty = False
+    else:
+        allow_empty = True
+
+    (owner_status, owner_msg) = vgrid_set_owners(configuration, vgrid_name,
+                                                 owner_list,
+                                                 allow_empty=allow_empty)
+    if not owner_status:
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Could not save owner list: %s' % owner_msg})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    # create empty pickled members list
+
+    (member_status, member_msg) = vgrid_set_members(configuration, vgrid_name,
+                                                    [])
+    if not member_status:
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Could not save member list: %s' % member_msg})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
+
     # create directory to store vgrid public_base files
 
     try:
@@ -1038,36 +1071,6 @@ for job input and output.
                             output_objects):
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    # Create with client_id as owner but only add user in owners list
-    # if new vgrid is a base vgrid (because symlinks to subdirs are not
-    # necessary, and an owner is per definition owner of sub vgrids).
-
-    owner_list = []
-    if new_base_vgrid == True:
-        owner_list.append(client_id)
-        allow_empty = False
-    else:
-        allow_empty = True
-
-    (owner_status, owner_msg) = vgrid_set_owners(configuration, vgrid_name,
-                                                 owner_list,
-                                                 allow_empty=allow_empty)
-    if not owner_status:
-        output_objects.append(
-            {'object_type': 'error_text', 'text':
-             'Could not save owner list: %s' % owner_msg})
-        return (output_objects, returnvalues.SYSTEM_ERROR)
-
-    # create empty pickled members list
-
-    (member_status, member_msg) = vgrid_set_members(configuration, vgrid_name,
-                                                    [])
-    if not member_status:
-        output_objects.append(
-            {'object_type': 'error_text', 'text':
-             'Could not save member list: %s' % member_msg})
-        return (output_objects, returnvalues.SYSTEM_ERROR)
-
     # create empty pickled resources list
 
     (resource_status, resource_msg) = vgrid_set_resources(configuration,
@@ -1112,8 +1115,8 @@ for job input and output.
                                                         vgrid_name, [])
     if not queue_status:
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Could not save job queue: %s' %
-                               trigger_msg})
+                               'Could not save workflow job queue: %s' %
+                               queue_msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if new_base_vgrid:
