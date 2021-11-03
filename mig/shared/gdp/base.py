@@ -50,7 +50,7 @@ from mig.shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
     user_db_filename as mig_user_db_filename, \
     valid_gdp_auth_scripts as valid_auth_scripts
 from mig.shared.fileio import touch, make_symlink, write_file, remove_rec, \
-    acquire_file_lock, release_file_lock, copy_file
+    acquire_file_lock, release_file_lock, copy_file, move_rec, makedirs_rec
 from mig.shared.gdp.userid import __validate_user_id, \
     __client_id_from_project_client_id, \
     __project_name_from_project_client_id, \
@@ -72,6 +72,8 @@ from mig.shared.vgridkeywords import get_settings_keywords_dict
 
 user_db_filename = 'gdp-users.db'
 user_log_filename = 'gdp-users.log'
+notify_home_dirname = 'notify'
+notify_attic_dirname = 'notify_attic'
 
 skip_client_id_rewrite = [
     'adminvgrid.py',
@@ -460,6 +462,7 @@ def __send_project_action_confirmation(configuration,
     log_ok_msg = "GDP: Send project %s confirmation email" % action
     ref_pairs = [(i['ref_id'], i['value']) for i in
                  category_dict.get('references', {}).get(action, [])]
+    # _logger.debug("ref_pairs: %s" % ref_pairs)
     log_ok_msg += " for targets: %r, project: %r, %s %s" % \
                   (target_dict, project_name, target, ref_pairs)
     log_err_msg = "GDP: Failed to send project %s confirmation email" % action
@@ -468,8 +471,9 @@ def __send_project_action_confirmation(configuration,
     template = None
     notify = []
     notify_filename = 'notifyemails.txt'
-    template_filename = category_dict.get(
-        '%s_notify_template' % action, False)
+    template_filename = category_dict.get('templates', {}).\
+                            get('%s' % action, {}).get('notify', '')
+    # _logger.debug("template_filename: %s: %r" % (action, template_filename))
     if not template_filename:
         _logger.info("No %s notification email configured for %s projects" %
                      (action, category_dict.get('category_id', '')))
@@ -519,7 +523,9 @@ def __send_project_action_confirmation(configuration,
 
         # Check for project home dir
 
-        project_home = os.path.join(configuration.gdp_home, project_name)
+        project_home = os.path.join(configuration.gdp_home,
+                        os.path.join(notify_home_dirname,
+                                    project_name))
         if status and not os.path.isdir(project_home):
             status = False
             _logger.error("%s: Missing project home dir: %r"
@@ -531,6 +537,7 @@ def __send_project_action_confirmation(configuration,
 
         template_filepath = os.path.join(configuration.gdp_home,
                                          template_filename)
+        # _logger.debug("template_filepath: %r" % template_filepath)
         if status:
             try:
                 fh = open(template_filepath)
@@ -544,8 +551,10 @@ def __send_project_action_confirmation(configuration,
     # Generate project action PDF
 
     if status:
-        pdf_filename = '%s.pdf' % project_name
+        timestamp = time.time()
+        pdf_filename = '%s.%d.pdf' % (action, int(timestamp))
         pdf_filepath = os.path.join(project_home, pdf_filename)
+        # _logger.debug("pdf_filepath: %r" % pdf_filepath)
         # NOTE: quiet is needed to avoid stdout breaking cgi
         pdf_options = {
             'page-size': 'Letter',
@@ -556,9 +565,8 @@ def __send_project_action_confirmation(configuration,
             'encoding': 'UTF-8',
             'quiet': '',
         }
-
-        timestamp = datetime.datetime.fromtimestamp(time.time())
-        date = timestamp.strftime('%d/%m/%Y %H:%M:%S')
+        current_datetime = datetime.datetime.fromtimestamp(timestamp)
+        date = current_datetime.strftime('%d/%m/%Y %H:%M:%S')
         fill_entries = {'site_title': configuration.site_title,
                         'short_title': configuration.short_title,
                         'server_fqdn': configuration.server_fqdn,
@@ -836,8 +844,9 @@ def __update_user_log(configuration, client_id, do_lock=True):
             if not os.path.exists(log_filepath):
                 touch(log_filepath, configuration)
             fh = open(log_filepath, 'ab')
-            timestamp = datetime.datetime.fromtimestamp(time.time())
-            date = timestamp.strftime('%d-%m-%Y_%H-%M-%S')
+            timestamp = time.time()
+            current_datetime = datetime.datetime.fromtimestamp(timestamp)
+            date = current_datetime.strftime('%d-%m-%Y_%H-%M-%S')
             client_id_hash = __scamble_user_id(configuration, client_id)
             msg = "%s : %s : %s :\n" \
                 % (date, client_id, client_id_hash)
@@ -1788,7 +1797,7 @@ def project_invite_user(
             _logger.debug("default_category_dict: %s" % default_category_dict)
             ref_pairs = [(i['ref_id'], 'AUTO') for i in
                          default_category_dict.get('references', {}).get('invite_user', [])]
-            _logger.debug("ref_pairs: %s" % ref_pairs)
+            # _logger.debug("ref_pairs: %s" % ref_pairs)
             ref_dict = dict(ref_pairs)
             # Update with values from create action
             ref_dict.update(dict(ref_pairs_create))
@@ -3927,7 +3936,11 @@ This directory is used for hosting private files for the %r %r.
     # Create directory to store GDP project files
 
     if status:
-        project_home = os.path.join(configuration.gdp_home,
+        project_home_base = os.path.join(configuration.gdp_home,
+                                    notify_home_dirname)
+        # Ensure project home base dir
+        makedirs_rec(project_home_base, configuration)
+        project_home = os.path.join(project_home_base,
                                     project_name)
         if not os.path.isdir(project_home):
             try:
@@ -4135,6 +4148,7 @@ def project_remove(
     if status:
         project_ref_dict = {i['ref_id']: i['value'] for i in
                             ref_action.get('references', [])}
+        # _logger.debug("project_ref_dict: %s" % project_ref_dict)
         try:
             project_remove_category_entry = fill_category_meta(configuration,
                                                                category_id, 'remove_project',
@@ -4276,25 +4290,32 @@ def project_remove(
             err_msg += template
             _logger.error(log_err_msg + template)
 
-    # Remove GDP project home entry
-    # NOTE: Must be done after send notification
+    # Move GDP project home entry to the attic
+    # NOTE: Must be done after send notification to preserve move notifications
 
     if status:
         project_home = os.path.join(configuration.gdp_home,
-                                    project_name)
-        if len(project_home) <= len(configuration.gdp_home)+1 \
-                or not os.path.isdir(project_home):
+                            os.path.join(notify_home_dirname,
+                                        project_name))
+        if not os.path.isdir(project_home):
             status = False
             template = ": Invalid project home: %s" % project_home
             err_msg += ": %s" % msg
             _logger.error(log_err_msg + template)
         else:
-            status = remove_rec(project_home, configuration)
+            project_attic = os.path.join(configuration.gdp_home,
+                                os.path.join(notify_attic_dirname,
+                                    "%s.%d" % (project_name,
+                                            int(time.time()))))
+            (status, move_msg) = move_rec(project_home,
+                                        project_attic,
+                                        configuration)
             if not status:
-                template = ": Failed to remove project home"
-                err_msg += ": %s" % msg
-                _logger.error("%s%s: %s" %
-                              (log_err_msg, template, project_home))
+                template = ": Could not move project to attic"
+                err_msg += template
+                _logger.error(log_err_msg + template \
+                            + ": %r -> %r: %s" \
+                            % (project_home, project_attic, move_msg))
 
     # Remove project from GDP database
     # NOTE: Traverse complete database to catch pending invites

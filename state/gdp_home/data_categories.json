@@ -58,13 +58,29 @@
              }
          ]
      },
-     "create_project_notify_template": "notify-create_project-personal_data.txt",
-     "remove_project_notify_template": "notify-remove_project-personal_data.txt",
-     "invite_user_notify_template": "notify-invite_user-personal_data.txt",
-     "accept_user_notify_template": "notify-accept_user-personal_data.txt",
-     "remove_user_notify_template": "notify-remove_user-personal_data.txt",
-     "promote_to_owner_notify_template": "notify-promote_to_owner-personal_data.txt",
-     "demote_owner_notify_template": "notify-demote_owner-personal_data.txt"
+     "templates": {
+        "create_project": {
+            "notify" : "notify-create_project-personal_data.txt"
+        },
+        "remove_project": {
+            "notify" : "notify-remove_project-personal_data.txt"
+        },
+        "invite_user": {
+            "notify" : "notify-invite_user-personal_data.txt"
+        },
+        "accept_user": {
+            "notify" : "notify-accept_user-personal_data.txt"
+        },
+        "remove_user": {
+            "notify" : "notify-remove_user-personal_data.txt"
+        },
+        "promote_to_owner": {
+            "notify" : "notify-promote_to_owner-personal_data.txt"
+        },
+        "demote_owner_notify": {
+            "notify" : "notify-demote_owner-personal_data.txt"
+        }
+     }
     },
     {"category_id": "agreement_data",
      "category_title": "Data Subject to an Agreement",
@@ -121,13 +137,29 @@
              }
         ]
      },
-     "create_project_notify_template": "notify-create_project-agreement_data.txt",
-     "remove_project_notify_template": "notify-remove_project-agreement_data.txt",
-     "invite_user_notify_template": "notify-invite_user-agreement_data.txt",
-     "accept_user_notify_template": "notify-accept_user-agreement_data.txt",
-     "remove_user_notify_template": "notify-remove_user-agreement_data.txt",
-     "promote_to_owner_notify_template": "notify-promote_to_owner-agreement_data.txt",
-     "demote_owner_notify_template": "notify-demote_owner-agreement_data.txt"
+    "templates": {
+        "create_project": {
+            "notify" : "notify-create_project-agreement_data.txt"
+        },
+        "remove_project": {
+            "notify" : "notify-remove_project-agreement_data.txt"
+        },
+        "invite_user": {
+            "notify" : ""
+        },
+        "accept_user": {
+            "notify" : ""
+        },
+        "remove_user": {
+            "notify" : ""
+        },
+        "promote_to_owner": {
+            "notify" : "notify-promote_to_owner-agreement_data.txt"
+        },
+        "demote_owner_notify": {
+            "notify" : "notify-demote_owner-agreement_data.txt"
+        }
+     }
     },
     {"category_id": "general_data",
      "category_title": "General Sensitive Data",
@@ -140,12 +172,28 @@
          "promote_to_owner": [],
          "demote_owner": []
      },
-     "create_project_notify_template": "notify-create_project-general_data.txt",
-     "remove_project_notify_template": "notify-remove_project-general_data.txt",
-     "invite_user_notify_template": "notify-invite_user-general_data.txt",
-     "accept_user_notify_template": "notify-accept_user-general_data.txt",
-     "remove_user_notify_template": "notify-remove_user-general_data.txt",
-     "promote_to_owner_notify_template": "notify-promote_to_owner-general_data.txt",
-     "demote_owner_notify_template": "notify-demote_owner-general_data.txt"
+    "templates": {
+        "create_project": {
+            "notify" : "notify-create_project-general_data.txt"
+        },
+        "remove_project": {
+            "notify" : "notify-remove_project-general_data.txt"
+        },
+        "invite_user": {
+            "notify" : "notify-invite_user-general_data.txt"
+        },
+        "accept_user": {
+            "notify" : "notify-accept_user-general_data.txt"
+        },
+        "remove_user": {
+            "notify" : "notify-remove_user-general_data.txt"
+        },
+        "promote_to_owner": {
+            "notify" : "notify-promote_to_owner-general_data.txt"
+        },
+        "demote_owner_notify": {
+            "notify" : "notify-demote_owner-general_data.txt"
+        }
+     }
     }
 ]
