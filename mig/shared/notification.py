@@ -36,11 +36,7 @@ import pickle
 import smtplib
 import threading
 import time
-# TODO: email.Encoders are deprecated/gone in python3
-try:
-    from email.encoders import Encoders
-except ImportError:
-    Encoders = None
+from email.encoders import encode_base64
 from email.header import Header
 from email.message import Message
 from email.mime.base import MIMEBase
@@ -545,6 +541,7 @@ def send_email(
     enable automatic gpg-signing of outgoing messages.
     """
 
+    _logger = configuration.logger
     gpg_sign = False
     if configuration.site_gpg_passphrase is not None:
         if gnupg is None:
@@ -601,8 +598,7 @@ def send_email(
         for name in files:
             part = MIMEBase('application', "octet-stream")
             part.set_payload(open(name, "rb").read())
-            if Encoders is not None:
-                Encoders.encode_base64(part)
+            encode_base64(part)
             part.add_header('Content-Disposition',
                             'attachment; filename="%s"'
                             % os.path.basename(name))
@@ -615,8 +611,8 @@ def send_email(
                                  recipients_list, mime_msg.as_string())
         server.quit()
         if errors:
-            logger.warning('Partial error(s) sending email: %s'
-                           % errors)
+            _logger.warning('Partial error(s) sending email: %s'
+                            % errors)
             return False
         else:
             logger.debug('Email was sent to %s' % recipients)
