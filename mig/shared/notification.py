@@ -571,7 +571,7 @@ def send_email(
                                      protocol="application/pgp-signature")
         else:
             mime_msg = MIMEMultipart()
-        mime_msg['From'] = from_email
+        mime_msg['From'] = Header(from_email, "utf8")
         mime_msg['To'] = recipients
         if reply_to_email:
             mime_msg['Reply-To'] = reply_to_email
@@ -600,8 +600,7 @@ def send_email(
             part.set_payload(open(name, "rb").read())
             encode_base64(part)
             part.add_header('Content-Disposition',
-                            'attachment; filename="%s"'
-                            % os.path.basename(name))
+                            'attachment', filename=os.path.basename(name))
             mime_msg.attach(part)
         logger.debug('sending email from %s to %s:\n%s' %
                      (from_email, recipients, mime_msg.as_string()))
