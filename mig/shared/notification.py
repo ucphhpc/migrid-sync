@@ -42,7 +42,7 @@ from email.message import Message
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.utils import formatdate
+from email.utils import formatdate, formataddr, parseaddr
 
 # Optional gnupg support - delay any error until use
 try:
@@ -77,6 +77,7 @@ def create_notify_message(
 ):
     """Helper to create notifications"""
 
+    logger = configuration.logger
     header = ''
     txt = ''
     jobid = jobdict['JOB_ID']
@@ -382,6 +383,7 @@ documentation.
         migoid_title = configuration.user_mig_oid_title
         migoid_url = configuration.migserver_https_mig_oid_url
         entry_url = get_site_base_url(configuration)
+        # TODO: don't hardcode OpenID here
         header = 'Re: %s OpenID request for %s' % (short_title, user_name)
         txt += """This is an auto-generated intro message from %s to inform
 about the creation or renewal of your user account with OpenID login.
@@ -539,6 +541,9 @@ def send_email(
     invitations and trigger various requests that may receive manual replies.
     If gnupg is available and configuration sets a gpg_passphrase it is used to
     enable automatic gpg-signing of outgoing messages.
+
+    UTF8 encoding inspired by e.g. the recipe at
+    https://code.activestate.com/recipes/578150-sending-non-ascii-emails-from-python-3/
     """
 
     _logger = configuration.logger
@@ -571,7 +576,10 @@ def send_email(
                                      protocol="application/pgp-signature")
         else:
             mime_msg = MIMEMultipart()
-        mime_msg['From'] = from_email
+        # Only force Full Name part of email to utf8 to support accented chars
+        from_name, from_address = parseaddr(from_email)
+        from_enc = Header(from_name, "utf8").encode()
+        mime_msg['From'] = formataddr((from_enc, from_address))
         mime_msg['To'] = recipients
         if reply_to_email:
             mime_msg['Reply-To'] = reply_to_email
@@ -600,8 +608,7 @@ def send_email(
             part.set_payload(open(name, "rb").read())
             encode_base64(part)
             part.add_header('Content-Disposition',
-                            'attachment; filename="%s"'
-                            % os.path.basename(name))
+                            'attachment', filename=os.path.basename(name))
             mime_msg.attach(part)
         logger.debug('sending email from %s to %s:\n%s' %
                      (from_email, recipients, mime_msg.as_string()))
