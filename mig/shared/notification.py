@@ -42,7 +42,7 @@ from email.message import Message
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.utils import formatdate
+from email.utils import formatdate, formataddr, parseaddr
 
 # Optional gnupg support - delay any error until use
 try:
@@ -539,6 +539,9 @@ def send_email(
     invitations and trigger various requests that may receive manual replies.
     If gnupg is available and configuration sets a gpg_passphrase it is used to
     enable automatic gpg-signing of outgoing messages.
+
+    UTF8 encoding inspired by e.g. the recipe at
+    https://code.activestate.com/recipes/578150-sending-non-ascii-emails-from-python-3/
     """
 
     _logger = configuration.logger
@@ -571,7 +574,10 @@ def send_email(
                                      protocol="application/pgp-signature")
         else:
             mime_msg = MIMEMultipart()
-        mime_msg['From'] = Header(from_email, "utf8")
+        # Only force Full Name part of email to utf8 to support accented chars
+        from_name, from_address = parseaddr(from_email)
+        from_enc = Header(from_name, "utf8").encode()
+        mime_msg['From'] = formataddr((from_enc, from_address))
         mime_msg['To'] = recipients
         if reply_to_email:
             mime_msg['Reply-To'] = reply_to_email
