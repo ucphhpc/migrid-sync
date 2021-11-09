@@ -351,6 +351,10 @@ default_vgrid_settings_limit = 10
 # Seperator used in flat vgrid structure for read-only support
 vgrid_nest_sep = ':'
 
+vgrid_pub_base_dir = 'public_base'
+vgrid_priv_base_dir = 'private_base'
+vgrid_web_dirs = [vgrid_pub_base_dir, vgrid_priv_base_dir]
+
 # Password policy helpers
 POLICY_NONE, POLICY_WEAK = "NONE", "WEAK"
 POLICY_MEDIUM, POLICY_HIGH = "MEDIUM", "HIGH"

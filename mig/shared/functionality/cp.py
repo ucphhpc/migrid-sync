@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cp - copy file between user home locations
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -45,6 +45,8 @@ from mig.shared.safeinput import valid_path_pattern
 from mig.shared.sharelinks import extract_mode_id
 from mig.shared.userio import GDPIOLogError, gdp_iolog
 from mig.shared.validstring import valid_user_path
+from mig.shared.vgrid import in_vgrid_share
+from mig.shared.vgridaccess import is_vgrid_parent_placeholder
 
 
 def signature():
@@ -293,6 +295,22 @@ copy entire special folders like %s shared folders!"""
                     {'object_type': 'warning', 'text':
                      "You're not allowed to copy your entire home directory!"
                      })
+                status = returnvalues.CLIENT_ERROR
+                continue
+            # Additionally refuse operations on inherited subvgrid share roots
+            elif in_vgrid_share(configuration, abs_path) == relative_path:
+                output_objects.append(
+                    {'object_type': 'warning', 'text': """You're not allowed to
+copy entire %s shared folders!""" % configuration.site_vgrid_label})
+                status = returnvalues.CLIENT_ERROR
+                continue
+            # And refuse operations on parent vgrid placeholders for subvgrid
+            elif is_vgrid_parent_placeholder(configuration, relative_path,
+                                             abs_path, False, client_id):
+                output_objects.append(
+                    {'object_type': 'warning', 'text': """You're not allowed to
+copy parent placeholders for %s shared folders!""" %
+                     configuration.site_vgrid_label})
                 status = returnvalues.CLIENT_ERROR
                 continue
 

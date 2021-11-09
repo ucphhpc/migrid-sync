@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_ftps - secure ftp server wrapping ftp in tls/ssl and mapping user home
-# Copyright (C) 2014-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2014-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -108,6 +108,7 @@ from mig.shared.tlsserver import hardened_openssl_context
 from mig.shared.useradm import check_password_hash
 from mig.shared.validstring import possible_user_id, possible_sharelink_id
 from mig.shared.vgrid import in_vgrid_share
+from mig.shared.vgridaccess import is_vgrid_parent_placeholder
 
 
 configuration, logger = None, None
@@ -402,9 +403,14 @@ class MiGRestrictedFilesystem(AbstractedFS):
         """Handle operations of same name"""
         ftp_path = self.fs2ftp(path)
         # Prevent removal of special dirs
-        if in_vgrid_share(configuration, path) == ftp_path[1:]:
-            logger.error("rmdir on vgrid src %s :: %s" % (ftp_path,
-                                                          path))
+        if in_vgrid_share(configuration, path) == ftp_path.lstrip(os.sep):
+            logger.error("rmdir on vgrid share root %s :: %s" % (ftp_path,
+                                                                 path))
+            raise FilesystemError("requested rmdir not allowed")
+        elif is_vgrid_parent_placeholder(configuration,
+                                         ftp_path.lstrip(os.sep), path, False):
+            logger.error("rmdir on vgrid parent placeholder %s :: %s" %
+                         (ftp_path, path))
             raise FilesystemError("requested rmdir not allowed")
         return AbstractedFS.rmdir(self, path)
 
@@ -412,9 +418,14 @@ class MiGRestrictedFilesystem(AbstractedFS):
         """Handle operations of same name"""
         ftp_path = self.fs2ftp(path)
         # Prevent removal of special files
-        if in_vgrid_share(configuration, path) == ftp_path[1:]:
-            logger.error("remove on vgrid src %s :: %s" % (ftp_path,
-                                                           path))
+        if in_vgrid_share(configuration, path) == ftp_path.lstrip(os.sep):
+            logger.error("remove on vgrid share root %s :: %s" %
+                         (ftp_path, path))
+            raise FilesystemError("requested remove not allowed")
+        elif is_vgrid_parent_placeholder(configuration,
+                                         ftp_path.lstrip(os.sep), path, False):
+            logger.error("remove on vgrid parent placeholder %s :: %s" %
+                         (ftp_path, path))
             raise FilesystemError("requested remove not allowed")
         return AbstractedFS.remove(self, path)
 
@@ -423,9 +434,15 @@ class MiGRestrictedFilesystem(AbstractedFS):
         ftp_old_path = self.fs2ftp(old_path)
         ftp_new_path = self.fs2ftp(new_path)
         # Prevent rename of special files
-        if in_vgrid_share(configuration, old_path) == ftp_old_path[1:]:
-            logger.error("rename on vgrid src %s :: %s" % (ftp_old_path,
-                                                           old_path))
+        if in_vgrid_share(configuration, old_path) == ftp_old_path.lstrip(os.sep):
+            logger.error("rename on vgrid share root %s :: %s" %
+                         (ftp_old_path, old_path))
+            raise FilesystemError("requested rename not allowed")
+        elif is_vgrid_parent_placeholder(configuration,
+                                         ftp_old_path.lstrip(os.sep),
+                                         old_path, False):
+            logger.error("rename on vgrid parent placeholder %s :: %s" %
+                         (ftp_old_path, old_path))
             raise FilesystemError("requested rename not allowed")
         return AbstractedFS.rename(self, old_path, new_path)
 

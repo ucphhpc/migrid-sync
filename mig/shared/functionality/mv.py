@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mv - backend to move files/directories in user home
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Emulate the un*x function with the same name"""
+
 from __future__ import absolute_import
 
 import os
@@ -43,6 +44,7 @@ from mig.shared.safeinput import valid_path_pattern
 from mig.shared.userio import GDPIOLogError, gdp_iolog
 from mig.shared.validstring import valid_user_path
 from mig.shared.vgrid import in_vgrid_share
+from mig.shared.vgridaccess import is_vgrid_parent_placeholder
 
 
 def signature():
@@ -183,6 +185,15 @@ move entire special folders like %s shared folders!"""
                 output_objects.append(
                     {'object_type': 'warning', 'text': """You're not allowed to
 move entire %s shared folders!""" % configuration.site_vgrid_label})
+                status = returnvalues.CLIENT_ERROR
+                continue
+            # And refuse operations on parent vgrid placeholders for subvgrid
+            elif is_vgrid_parent_placeholder(configuration, relative_path,
+                                             abs_path, False, client_id):
+                output_objects.append(
+                    {'object_type': 'warning', 'text': """You're not allowed to
+move parent placeholders for %s shared folders!""" %
+                     configuration.site_vgrid_label})
                 status = returnvalues.CLIENT_ERROR
                 continue
             elif os.path.realpath(abs_path) == os.path.realpath(base_dir):
