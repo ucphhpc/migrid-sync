@@ -1132,6 +1132,7 @@ for job input and output.
                                    })
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
+        # TODO: use vgrid_pub_base_dir from shared.defaults everywhere
         # make sure public_base dir exists in users home dir
 
         user_public_base = os.path.join(configuration.user_home,
@@ -1152,6 +1153,7 @@ for job input and output.
                                    })
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
+        # TODO: use vgrid_priv_base_dir from shared.defaults everywhere
         # make sure private_base dir exists in users home dir
 
         user_private_base = os.path.join(configuration.user_home,

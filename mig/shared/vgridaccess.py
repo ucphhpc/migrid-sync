@@ -35,11 +35,11 @@ import fcntl
 import os
 import time
 
-from mig.shared.base import sandbox_resource, client_id_dir
+from mig.shared.base import sandbox_resource, client_id_dir, client_dir_id
 from mig.shared.conf import get_all_exe_vgrids, get_all_store_vgrids, \
     get_resource_fields, get_resource_configuration
 from mig.shared.defaults import settings_filename, profile_filename, \
-    default_vgrid, keyword_all
+    default_vgrid, keyword_all, vgrid_pub_base_dir, vgrid_priv_base_dir
 from mig.shared.fileio import acquire_file_lock, release_file_lock
 from mig.shared.modified import mark_resource_modified, mark_vgrid_modified, \
     check_users_modified, check_resources_modified, check_vgrids_modified, \
@@ -1183,6 +1183,138 @@ def get_re_provider_map(configuration, caching=False):
     return provider_map
 
 
+def fill_placeholder_cache(configuration, cache, vgrid_list):
+    """Given a cache dctionary, fill it for use in is_vgrid_parent_placeholder
+    based on the vgrid names in vgrid_list. Inserts entries for all parents of
+    vgrids in vgrid_list and None for the names themselves.
+    """
+    _logger = configuration.logger
+    for name in vgrid_list:
+        cache[name] = None
+        parts = name.split(os.sep)
+        # Top-level vgrids don't have parents
+        if not parts[1:]:
+            cache[name] = None
+            continue
+        for parent in [os.path.join(*parts[:i]) for i in range(1, len(parts))]:
+            cache[parent] = parent
+            #_logger.debug("found parent %r for %r in cache" % (parent, name))
+    #_logger.debug("filled placeholder cache: %s" % cache)
+    return cache
+
+
+def is_vgrid_parent_placeholder(configuration, path, real_path, cache=None,
+                                client_id=None):
+    """Checks if real_path is a parent vgrid placeholder folder for a sub-vgrid
+    in which client_id participates. Returns the name of that parent vgrid if
+    so. This complements the check for path is inside a vgrid special folder
+    itself and covers the case where path is an auto-created folder to hold
+    protected vgrid symlinks, because client_id participates in a sub-vgrid
+    with same relative path prefix. That is, in case we have nested vgrids
+    A, A/B and A/B/C where client_id is a member only of the deepest A/B/C
+    sub-vgrid then path A and A/B would also give a hit here. That way the
+    caller will know that e.g. moving of said placeholder folder should be
+    prohibited to avoid indirect tampering with the nested protected symlinks.
+    Otherwise users may be able to issue actions we would otherwise refuse on
+    vgrid shares or even effectively circumvent having their shared access link
+    deleted upon removal from the corresponding sub-vgrids.
+
+    The optional cache argument is used for caching recent results to avoid
+    excess load and speed up delivery of results that can be deducted from
+    previous calls when used e.g. for 'ls', where overlap is likely for dir
+    listings. One can provide an empty dict to get it filled on-the-fly or a
+    fully pre-filled dictionary with relative paths mapped to either None or
+    the path itself if it is a parent placeholder folder.
+    Caching should only be used for operations like 'ls' where stale data is
+    acceptable, not for strict access control like in 'mv', 'rm', 'cp', etc.
+    """
+    _logger = configuration.logger
+    # NOTE: don't trust path and real_path to be properly normalized
+    path = os.path.normpath(path)
+    real_path = os.path.normpath(real_path)
+
+    _logger.debug("checking if %s is a vgrid parent placeholder: %r" %
+                  (path, real_path))
+
+    # NOTE: handle public_base/private_base, too
+    if path.startswith(vgrid_pub_base_dir) or \
+            path.startswith(vgrid_priv_base_dir):
+        parts = path.split(os.sep, 1)
+        # NOTE: refuse all modification of public_base and private_base root
+        if not parts[1:]:
+            _logger.debug("path %r is a parent for all vgrid web dirs" % path)
+            return keyword_all
+        else:
+            _logger.debug("strip path %r of vgrid web dir prefix" % path)
+            path = parts[1]
+
+    if not client_id:
+        client_dir = real_path.replace(configuration.user_home, '')
+        client_dir = client_dir.lstrip(os.sep).split(os.sep, 1)[0]
+        client_id = client_dir_id(client_dir)
+        user_base = os.path.join(configuration.user_home, client_dir)
+    else:
+        client_dir = client_id_dir(client_id)
+        user_base = os.path.join(configuration.user_home, client_dir)
+
+    # Caching - build cache on first use and reuse from there
+    if isinstance(cache, dict):
+        # Only do one expensive lookup of vgrid access when called repeatedly
+        if not cache:
+            # Insert root entry - doubles as initialization marker
+            _logger.debug("build parent cache for %r (%s)" %
+                          (path, real_path))
+            cache = {'/': None}
+
+            # Recursion is irrelevant for parent placeholders and we handle
+            # inheritance in cache fill.
+            direct_vgrids = user_vgrid_access(configuration, client_id,
+                                              inherited=False, recursive=False,
+                                              caching=True)
+            fill_placeholder_cache(configuration, cache, direct_vgrids)
+            _logger.debug("filled parent cache for %r (%s)" %
+                          (path, real_path))
+        else:
+            _logger.debug("reusing existing parent cache for %r (%s)" %
+                          (path, real_path))
+
+        cached_parent = cache.get(path)
+        _logger.debug("found %r in parent cache for %r" %
+                      (cached_parent, path))
+        return cached_parent
+
+    # No cache - lookup everything from file system
+    if not real_path.startswith(configuration.user_home):
+        _logger.debug("ignore path %r outside user home" % real_path)
+        return None
+    if not os.path.isdir(real_path):
+        _logger.debug("ignore non-dir path %r" % real_path)
+        return None
+
+    # Limit expensive lookups by checking for path vs vgrid match first
+    vgrid_root = os.path.join(configuration.vgrid_home, path)
+    if not os.path.isdir(vgrid_root):
+        _logger.debug("path %r does not match a vgrid" % path)
+        return None
+
+    # More expensive lookup now the cheap checks failed to rule out a hit.
+    # Recursion is irrelevant for parent placeholders and we handle
+    # inheritance in local cache fill.
+    local_cache = {}
+    direct_vgrids = user_vgrid_access(configuration, client_id,
+                                      inherited=False, recursive=False,
+                                      caching=False)
+    fill_placeholder_cache(configuration, local_cache, direct_vgrids)
+    _logger.debug("filled parent dummy cache for %r" % path)
+    hit = local_cache.get(path, None)
+    if hit:
+        _logger.debug("%s is a vgrid parent: %s" % (path, hit))
+        return hit
+    else:
+        _logger.debug("%s is not a vgrid parent" % path)
+        return None
+
+
 def unmap_resource(configuration, res_id):
     """Remove res_id from resource and vgrid maps - simply force refresh"""
     mark_resource_modified(configuration, res_id)
@@ -1215,6 +1347,9 @@ if "__main__" == __name__:
     res_id = 'localhost.0'
     if len(sys.argv) > 3:
         res_id = sys.argv[3]
+    test_paths = []
+    if len(sys.argv) > 4:
+        test_paths = sys.argv[4:]
     conf = get_configuration_object()
     # Test listing alternative to vgrid_list_vgrids
     vgrid_list = get_vgrid_map_vgrids(conf)
@@ -1303,3 +1438,14 @@ if "__main__" == __name__:
     print("direct vgrid map vgrids: %s" % direct_map[VGRIDS])
     inherited_map = get_vgrid_map(conf, recursive=True)
     print("inherited vgrid map vgrids: %s" % inherited_map[VGRIDS])
+
+    print("= testing in vgrid specials =")
+    cache = {}
+    client_dir = client_id_dir(user_id)
+    print("Testing with user home  %r" % client_dir)
+    for path in ['.', './', 'welcome.txt', 'test', 'test/test'
+                 'nosuchvgridanywhere/bla', 'nosuchvgridanywhere'] + test_paths:
+        real_path = os.path.join(conf.user_home, client_dir, path)
+        result = is_vgrid_parent_placeholder(
+            conf, path, real_path, cache, user_id)
+        print("%r in vgrid parent placeholder: %s" % (path, result))

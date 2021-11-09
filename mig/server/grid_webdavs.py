@@ -94,6 +94,7 @@ from mig.shared.useradm import check_password_hash, generate_password_hash, \
 from mig.shared.validstring import possible_user_id, possible_gdp_user_id, \
     possible_sharelink_id
 from mig.shared.vgrid import in_vgrid_share
+from mig.shared.vgridaccess import is_vgrid_parent_placeholder
 
 configuration, logger = None, None
 
@@ -105,12 +106,18 @@ def _handle_allowed(request, abs_path, path):
     As noted in dav_handler.py doc strings raising a DAVError here prevents all
     further handling of the request with an error to the client.
 
-    NOTE: We prevent any direct operation on symlinks used in vgrid shares.
-    This is in line with other grid_X daemons and the web interface.
+    NOTE: We prevent any direct or indirect operation on protected symlinks
+    used e.g. in vgrid shares. This is in line with other grid_X daemons and
+    the web interface.
     """
-    if request != "copy" \
-            and in_vgrid_share(configuration, abs_path) == path[1:]:
-        logger.warning("refused %s on vgrid: %s" % (request, abs_path))
+    if in_vgrid_share(configuration, abs_path) == path.lstrip(os.sep):
+        logger.warning("refused %s on vgrid share root: %s" %
+                       (request, abs_path))
+        raise DAVError(HTTP_FORBIDDEN)
+    elif is_vgrid_parent_placeholder(configuration, path.lstrip(os.sep),
+                                     abs_path, False):
+        logger.warning("refused %s on vgrid parent placeholder: %s" %
+                       (request, abs_path))
         raise DAVError(HTTP_FORBIDDEN)
     elif os.path.islink(abs_path):
         logger.warning("refused %s on symlink: %s" % (request, abs_path))

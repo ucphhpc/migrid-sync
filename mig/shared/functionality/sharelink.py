@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sharelink - backend to create and manage share links
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -50,6 +50,8 @@ from mig.shared.sharelinks import build_sharelinkitem_object, load_share_links, 
 from mig.shared.validstring import valid_user_path
 from mig.shared.vgrid import in_vgrid_share, vgrid_is_owner, vgrid_settings, \
     vgrid_add_sharelinks, vgrid_remove_sharelinks
+from mig.shared.vgridaccess import is_vgrid_parent_placeholder
+
 
 get_actions = ['show', 'edit']
 post_actions = ['create', 'update', 'delete']
@@ -81,7 +83,7 @@ def main(client_id, user_arguments_dict):
         configuration,
         allow_rejects=False,
         # NOTE: path cannot use wildcards here
-        typecheck_overrides={},
+        typecheck_overrides={}
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
@@ -272,6 +274,12 @@ comma-separated recipients.
         real_path = os.path.realpath(abs_path)
         single_file = os.path.isfile(real_path)
         vgrid_name = in_vgrid_share(configuration, abs_path)
+        # NOTE: use force vgrid map caching here to limit load
+        vgrid_parent = is_vgrid_parent_placeholder(configuration,
+                                                   relative_path,
+                                                   real_path,
+                                                   False,
+                                                   client_id)
 
         if action == 'delete':
             header_entry['text'] = 'Delete Share Link'
@@ -425,6 +433,15 @@ think you should be allowed to do that.
 ''' % {'vgrid_name': vgrid_name, 'vgrid_label': configuration.site_vgrid_label}
                         })
                     return (output_objects, returnvalues.CLIENT_ERROR)
+            # Prohibit sharing of vgrid parent placeholder dirs to avoid
+            # circumvention of any sub-vgrid sharing controls.
+            if vgrid_parent is not None:
+                output_objects.append(
+                    {'object_type': 'error_text', 'text': '''Illegal path "%s":
+you can only share your own data, and not folders with e.g. %s shared folders
+nested in them.''' % (path, configuration.site_vgrid_label)
+                     })
+                return (output_objects, returnvalues.CLIENT_ERROR)
 
             access_list = []
             if read_access:
@@ -513,7 +530,7 @@ think you should be allowed to do that.
                 {'object_type': 'sharelinks', 'sharelinks': sharelinks})
             if action == 'create':
                 # NOTE: Leave editsharelink here for use in fileman overlay
-                #del share_item['editsharelink']
+                # del share_item['editsharelink']
                 output_objects.append({'object_type': 'html_form', 'text':
                                        '<br />'})
                 submit_button = '''<span>

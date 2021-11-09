@@ -49,6 +49,7 @@ from mig.shared.userio import remove_path, delete_path, get_trash_location, \
     GDPIOLogError, gdp_iolog
 from mig.shared.validstring import valid_user_path
 from mig.shared.vgrid import in_vgrid_share
+from mig.shared.vgridaccess import is_vgrid_parent_placeholder
 
 
 def signature():
@@ -246,6 +247,15 @@ You're not allowed to delete entire special folders like %s shares and %s
                 output_objects.append(
                     {'object_type': 'warning', 'text': """You're not allowed to
 remove entire %s shared folders!""" % configuration.site_vgrid_label})
+                status = returnvalues.CLIENT_ERROR
+                continue
+            # And refuse operations on parent vgrid placeholders for subvgrid
+            elif is_vgrid_parent_placeholder(configuration, relative_path,
+                                             abs_path, False, client_id):
+                output_objects.append(
+                    {'object_type': 'warning', 'text': """You're not allowed to
+remove parent placeholders for %s shared folders!""" %
+                     configuration.site_vgrid_label})
                 status = returnvalues.CLIENT_ERROR
                 continue
             elif os.path.isdir(abs_path) and not recursive(flags):
