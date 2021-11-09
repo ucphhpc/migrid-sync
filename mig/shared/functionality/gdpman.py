@@ -1114,8 +1114,7 @@ def js_tmpl_parts(configuration, csrf_token):
         if (project_info.OK.length == 1) {
             for (var i=0; i<project_info.OK[0].users.length; i++ ) {
                 if (project_info.OK[0].users[i].allowed_owner === true &&
-                    (project_info.OK[0].users[i].state == 'accepted' \
-                        || project_info.OK[0].users[i].state == 'invited')) {
+                    (project_info.OK[0].users[i].state == 'accepted')) {
                     users.push(project_info.OK[0].users[i]);
                 }
             }
