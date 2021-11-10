@@ -15,12 +15,12 @@
     "services": [
       "ALL"
     ],
-    "work_end": "2021-11-11T07:59:00+01:00",
+    "work_end": "2021-11-10T21:00:00+01:00",
     "description": {
-      "EN": "It's time for a thorough update of the ERDA/IDMC and SIF systems to apply pending bug fixes and add a few new features. The work will involve frontend down-time for low-level system updates. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect it to take a couple of hours, but keep the maintenance window open until next morning in case it drags out. Further info will follow here.",
-      "DK": "Det er tid til en gennemgribende opdatering af ERDA/IDMC og SIF systemerne mhp at lægge udestående fejlrettelser ind og tilføje lidt nye funktionaliteter. Arbejdet kræver nedetid på frontend til grundlæggende systemopdateringer og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi forventer at det kan klares på et par timer, men holder vedligeholdelsesvinduet åbent i tilfælde af at det trækker ud. Yderligere info vil følge her."
+      "EN": "It's time for a thorough update of the ERDA/IDMC and SIF systems to apply pending bug fixes and add a few new features. The work will involve frontend down-time for low-level system updates. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect it to take a couple of hours, but keep the maintenance window open until next morning in case it drags out. The updates of ERDA/IDMC completed before 7pm and all their services are back online. SIF required more work and went back online towards 9pm. Please report any problems to our support as usual.",
+      "DK": "Det er tid til en gennemgribende opdatering af ERDA/IDMC og SIF systemerne mhp at lægge udestående fejlrettelser ind og tilføje lidt nye funktionaliteter. Arbejdet kræver nedetid på frontend til grundlæggende systemopdateringer og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi forventer at det kan klares på et par timer, men holder vedligeholdelsesvinduet åbent i tilfælde af at det trækker ud. Opdateringerne blev overstået på ERDA/IDMC inden kl. 19 og alle deres services er tilbage i almindelig drift. SIF krævede mere arbejde og kom tilbage i almindelig drift henved kl. 21. Kontakt os som altid gerne på vores support omkring evt problemer."
     },
-    "announce_end": "2021-11-12T10:00:00+01:00"
+    "announce_end": "2021-11-11T12:00:00+01:00"
   },
   {
     "status": "AUTO", 
