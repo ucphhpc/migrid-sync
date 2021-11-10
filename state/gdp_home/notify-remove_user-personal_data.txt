@@ -1,5 +1,5 @@
 <body>
-<H1>%(site_title)s Project Remove User</H1>
+<H1>%(site_title)s Project Removed User</H1>
 
 <H2>Recipients</H2>
 This document has been sent to the project registrant and the SCIENCE legal office. The %(site_title)s also stores a copy.

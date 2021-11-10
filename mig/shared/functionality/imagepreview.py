@@ -314,6 +314,5 @@ def main(client_id, user_arguments_dict):
             output_objects.append({'object_type': 'error_text',
                                    'text': ERROR_MSG})
 
-    logger.debug('output_objects: %s' % output_objects)
-    logger.debug('status: %s' % status)
+    logger.debug('output_objects: %s ; status: %s' % (output_objects, status))
     return (output_objects, status)

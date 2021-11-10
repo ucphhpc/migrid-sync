@@ -77,7 +77,7 @@
         "promote_to_owner": {
             "notify" : "notify-promote_to_owner-personal_data.txt"
         },
-        "demote_owner_notify": {
+        "demote_owner": {
             "notify" : "notify-demote_owner-personal_data.txt"
         }
      }
@@ -145,18 +145,18 @@
             "notify" : "notify-remove_project-agreement_data.txt"
         },
         "invite_user": {
-            "notify" : ""
+            "notify" : "notify-invite_user-agreement_data.txt"
         },
         "accept_user": {
-            "notify" : ""
+            "notify" : "notify-accept_user-agreement_data.txt"
         },
         "remove_user": {
-            "notify" : ""
+            "notify" : "notify-remove_user-agreement_data.txt"
         },
         "promote_to_owner": {
             "notify" : "notify-promote_to_owner-agreement_data.txt"
         },
-        "demote_owner_notify": {
+        "demote_owner": {
             "notify" : "notify-demote_owner-agreement_data.txt"
         }
      }
@@ -191,7 +191,7 @@
         "promote_to_owner": {
             "notify" : "notify-promote_to_owner-general_data.txt"
         },
-        "demote_owner_notify": {
+        "demote_owner": {
             "notify" : "notify-demote_owner-general_data.txt"
         }
      }
