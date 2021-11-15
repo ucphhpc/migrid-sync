@@ -1,6 +1,27 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2021-11-15T00:29:00+02:00", 
+    "systems": [
+        "ERDA", "SIF"
+    ], 
+    "announce_start": "2021-11-15T08:00:00+02:00", 
+    "title": {
+      "EN": "ERDA and SIF Outage", 
+      "DK": "ERDA og SIF nede"
+    }, 
+    "services": [
+      "ALL"
+    ], 
+    "work_end": "2021-11-15T09:10:00+02:00", 
+    "description": {
+      "EN": "Our backend storage acted up and took out both ERDA and SIF this morning. In addition the problems caused a central log partition to run full on ERDA, and since we are not allowed to miss important log entries it automatically shut off the entire frontend system. After getting the backend storage online and cleaning up space for logs both systems are back online. Sorry for the inconvenience from the lack of access.", 
+      "DK": "Vores backendlager ville ikke makke ret til morgen og fik både ERDA og SIF offline. Oveni løb en central log-partition på ERDA tør for plads af samme grund, og eftersom vi skal logge vigtige beskeder, lukkede den automatisk hele frontend systemet ned. Efter vi fik backendlageret tilbage og fandt plads til logs er begge systemer tilbage online. Vi Beklager generne fra den manglende adgang."
+    }, 
+    "announce_end": "2021-11-16T10:00:00+02:00"
+  },
+  {
+    "status": "AUTO", 
     "work_start": "2021-11-10T17:00:00+01:00", 
     "systems": [
         "ERDA",
