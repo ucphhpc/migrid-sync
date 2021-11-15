@@ -156,8 +156,9 @@ def validate_input_and_cert(
     user_dict = None
     if not client_id:
         creds_error = "Invalid or missing user credentials"
-    elif require_user and not is_user(client_id, configuration.mig_server_home):
-        creds_error = "No such user (%s)" % client_id
+    elif not is_user(client_id, configuration.mig_server_home):
+        if require_user:
+            creds_error = "No such user (%s)" % client_id
     else:
         (account_accessible, account_status, _) = check_account_status(
             configuration, client_id)
