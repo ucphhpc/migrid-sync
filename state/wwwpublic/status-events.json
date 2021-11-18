@@ -1,6 +1,37 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2021-11-16T10:00:00+01:00", 
+    "systems": [
+        "ERDA"
+    ], 
+    "announce_start": "2021-11-16T10:00:00+01:00", 
+    "title": {
+      "EN": "ERDA Unstable/Offline", 
+      "DK": "ERDA ustabil/nede"
+    }, 
+    "services": [
+      "ALL"
+    ], 
+    "work_end": "2021-11-16T11:38:00+01:00", 
+    "description": {
+      "EN": "ERDA Web was severely overloaded resulting in connections getting dropped with timeout and general web instabilities. It looks like the legacy Seafile proxy access caused the troubles with thousands of stale connections hanging around and dragging the web server to a halt. We disabled it to see if it solves the problem. For long-time Seafile users still using the ancient setup with the legacy server address[0] this means that it is now strictly necessary to migrate to the new stand-alone Seafile server address[1]. We did a restart of the frontend to clean up hanging processes/connections and will keep an eye on the system to see if the problems return.", 
+      "DK": "ERDAs webserver var ekstremt overbelastet, hvilket første til at nye forbindelser blev afvist med timeout og generel ustabilitet på web. Det ser ud til at den gamle Seafile proxy-adgang efterlod tusindvis af hængende forbindelser som til sidst tvang webserveren i knæ. Vi har slået proxy-adgangen fra for at se om det løser problemet. Det betyder at langvarige Seafile-brugere nu endegyldigt er tvunget til at opdatere deres klient fra at bruge den gamle server-adresse[0] til at bruge den aktuelle adresse[1] på den særskilte Seafile-server. Vi genstartede frontend for at få ryddet op i de hængende processer/forbindelser og holder fortsat øje med systemet mhp om problemerne skulle vende tilbage."
+    }, 
+    "references": {
+      "EN": [
+          "https://sid.erda.dk/seafile",
+          "https://seafile.erda.dk/seafile"
+      ], 
+      "DK": [
+          "https://sid.erda.dk/seafile",
+          "https://seafile.erda.dk/seafile"
+      ]
+    },
+    "announce_end": "2021-11-17T10:00:00+01:00"
+  },
+  {
+    "status": "AUTO", 
     "work_start": "2021-11-15T00:29:00+01:00", 
     "systems": [
         "ERDA", "SIF"

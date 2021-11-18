@@ -223,8 +223,9 @@ def refresh_disk_stats(configuration, client_id):
                               files, total)
 
     # Update stats for any roots no longer there
+    # NOTE: use copy of list as we delete inline
 
-    for rel_root in stats:
+    for rel_root in list(stats):
         if rel_root in list(TOTALS) + cur_roots:
             continue
         root = os.path.join(user_base, rel_root)
