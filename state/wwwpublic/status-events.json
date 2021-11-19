@@ -1,14 +1,35 @@
 [
   {
     "status": "AUTO", 
+    "work_start": "2022-02-01T18:00:00+01:00", 
+    "systems": [
+        "ERDA", "IDMC", "SIF"
+    ], 
+    "announce_start": "2021-11-19T10:00:00+01:00", 
+    "title": {
+      "EN": "Supply Chain Problems and Continued Storage Scaling", 
+      "DK": "Leveringproblemer og fortsat lagerskalering"
+    }, 
+    "services": [
+      "ALL"
+    ], 
+    "work_end": "2022-04-30T18:00:00+01:00", 
+    "description": {
+      "EN": "The current global computer chip shortage and reduced production capacities are beginning to cause serious headaches regarding the continued gradual expansion of the ERDA/IDMC and SIF backend storage. We still have additional storage bricks to add, but we are running low and vendors report several months of delivery time even on already ordered hardware. In effect this MIGHT lead to a situation where we will have to throttle data growth on ERDA/IDMC and SIF e.g. through upload rate limits or have You as users clean up any big (~terabyte) data sets of little or no importance. This is of course rather inconvenient and something we are trying our best to avoid, but we think it only fair to announce well ahead to let you plan and act in due time.", 
+      "DK": "De aktuelle globale problemer med mangel på computer-chips og begrænset produktionskapacitet begynder at føre til alvorlige bekymringer omkring den fortsatte løbende opskalering af ERDA/IDMC og SIF backend-lageret. Vi har stadig ekstra bricks at sætte på, men der er ved at være lavvande i lageret og leverandørerne melder om måneders leveringstid selv på allerede bestilt hardware. Resultatet KAN blive at vi ender i en situation hvor vi bliver nødt til at skrue ned for datavæksten på ERDA/IDMC og SIF f.eks. via begrænsning på uploadhastigheden eller at I som brugere rydder op i evt store (~terabyte) datasæt af begrænset eller ingen værdi. Det er selvfølgelig en ubehagelig situation og noget vi gør vores bedste for at undgå, men vi foretrækker at melde ud allerede nu mhp at give alle mulighed for at planlægge og agere rettidigt."
+    }, 
+    "announce_end": "2022-05-30T16:00:00+01:00"
+  },
+  {
+    "status": "AUTO", 
     "work_start": "2021-11-16T10:00:00+01:00", 
     "systems": [
         "ERDA"
     ], 
     "announce_start": "2021-11-16T10:00:00+01:00", 
     "title": {
-      "EN": "ERDA Unstable/Offline", 
-      "DK": "ERDA ustabil/nede"
+      "EN": "ERDA Unstable/Offline, Seafile Change", 
+      "DK": "ERDA ustabil/nede, Seafile ændring"
     }, 
     "services": [
       "ALL"
