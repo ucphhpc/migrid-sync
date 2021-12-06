@@ -1,2 +1,22 @@
 # Public security reporting info in line with https://securitytxt.org/
+
+# Our security reporting and inquiry email address
 Contact: mailto:security@erda.dk
+
+# The details here should stay relevant for at least 10 years
+Expires: 2031-12-31T22:59:00.000Z
+
+# Our PGP/GPG public keys(s) concatenated
+# Rehr key fingerprint: 480B F846 E5C3 7AA9 8997 82DA AC53 263C 217C 0799
+# Bardino key fingerprint: F837 F853 167D 93A5 25C2 F6AE 1B80 5793 2FB2 03BE
+Encryption: https://erda.ku.dk/.well-known/security-pub-keys.txt
+
+# We understand security reports and inquiries in English and Danish 
+Preferred-Languages: en,dk
+
+# Our responsible disclosure policy
+Policy: https://erda.ku.dk/.well-known/security-disclosure-policy.txt
+
+# Signature of this file generated with one of the above keys
+https://erda.ku.dk/.well-known/security.txt.asc
+
