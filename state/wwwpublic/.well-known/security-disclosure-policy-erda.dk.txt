@@ -1,0 +1,32 @@
+= Responsible Disclosure for ERDA =
+The SCIENCE HPC Center at the University of Copenhagen develops and
+hosts a number of services under the erda.dk / erda.ku.dk domains.
+
+We are a small team with limited resources and rely on our own internal
+security monitoring as well as the national DK-Cert monitoring. So we
+do NOT have a bug/vulnerability reward program. Yet, we are of course
+grateful for any bug or security reports, which might improve our
+services or prevent abuse.
+
+Like e.g. Google we do NOT consider the presence of version
+information a security vulnerability in itself. Flaws affecting only
+users of out-of-date browsers and software are similarly of limited
+interest to us. Apart from such trivial cases, please report your
+bug or security findings.
+In case you want to pass any confidential information to us you can
+use our supplied PGP/GPG public keys for encryption or send us an
+initial message requesting a secure channel.
+We generally strive to respond to all messages no later than the next
+business day, but please bear with us if we don't always manage
+that. In such cases we'd appreciate if you at least repeat your
+inquiry and give us a few weeks before disclosing potential or
+verified security issues to anyone else. 
+
+You can find our contact details and other information in our
+https://erda.ku.dk/.well-known/security.txt
+in line with the proposed new Internet standard described on
+https://securitytxt.org/
+
+Thanks in advance!
+
+The ERDA Team
