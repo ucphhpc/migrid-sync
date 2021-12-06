@@ -18,5 +18,4 @@ Preferred-Languages: en,dk
 Policy: https://www.migrid.org/.well-known/security-disclosure-policy.txt
 
 # Signature of this file generated with one of the above keys
-https://www.migrid.org/.well-known/security.txt.asc
-
+Signature: https://www.migrid.org/.well-known/security.txt.asc

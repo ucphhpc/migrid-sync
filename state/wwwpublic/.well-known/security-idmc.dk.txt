@@ -18,5 +18,4 @@ Preferred-Languages: en,dk
 Policy: https://www.idmc.dk/.well-known/security-disclosure-policy.txt
 
 # Signature of this file generated with one of the above keys
-https://www.idmc.dk/.well-known/security.txt.asc
-
+Signature: https://www.idmc.dk/.well-known/security.txt.asc

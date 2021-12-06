@@ -18,5 +18,4 @@ Preferred-Languages: en,dk
 Policy: https://sif.ku.dk/.well-known/security-disclosure-policy.txt
 
 # Signature of this file generated with one of the above keys
-https://sif.ku.dk/.well-known/security.txt.asc
-
+Signature: https://sif.ku.dk/.well-known/security.txt.asc
