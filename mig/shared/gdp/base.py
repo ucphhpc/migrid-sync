@@ -626,7 +626,7 @@ def __send_project_action_confirmation(configuration,
             elif isinstance(target, list):
                 recipients += ", %s" % ", ".join(target)
         for admin in notify:
-            recipients += ", %s" % admin['name']
+            recipients += ", %s" % " ".join(admin.values())
         mail_fill['recipients'] = recipients
         subject = "%(short_title)s project %(action)s: %(project_name)r" % \
                   mail_fill
