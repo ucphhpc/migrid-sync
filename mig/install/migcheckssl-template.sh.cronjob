@@ -77,11 +77,12 @@ else
 fi
 
 # Generate getssl command with args
+# NOTE: we force modern X1 root chain to avoid cert expired warnings
 
 if [[ "$#" -eq 0 ]]; then
-    getssl_cmd="${getssl_script} -q ${domain}"
+    getssl_cmd="${getssl_script} --preferred-chain X1 -q ${domain}"
 else
-    getssl_cmd="${getssl_script} $@ ${domain}"
+    getssl_cmd="${getssl_script} --preferred-chain X1 $@ ${domain}"
 fi
 
 # Run in verbose mode if run without -q arg
