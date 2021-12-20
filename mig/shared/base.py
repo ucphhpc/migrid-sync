@@ -347,13 +347,17 @@ def is_unicode(val):
     return (type(u"") == type(val))
 
 
-def force_utf8(val, highlight=''):
+def force_utf8(val, highlight='', stringify=True):
     """Internal helper to encode unicode strings to utf8 version. Actual
     changes are marked out with the highlight string if given.
+    The optional stringify turns ALL values including numbers into string.
     """
     # We run into all kind of nasty encoding problems if we mix
     if not isinstance(val, basestring):
-        val = "%s" % val
+        if stringify:
+            val = "%s" % val
+        else:
+            return val
     if not is_unicode(val):
         return val
     if is_unicode(highlight):
@@ -363,31 +367,38 @@ def force_utf8(val, highlight=''):
     return (b"%s%s%s" % (hl_utf, val.encode("utf8"), hl_utf))
 
 
-def force_utf8_rec(input_obj, highlight=''):
+def force_utf8_rec(input_obj, highlight='', stringify=False):
     """Recursive object conversion from unicode to utf8: useful to convert e.g.
     dictionaries with nested unicode strings to a pure utf8 version. Actual
     changes are marked out with the highlight string if given.
+    Please note that the default here is to NOT stringify non-string values
+    like numbers.
     """
     if isinstance(input_obj, dict):
-        return {force_utf8_rec(i, highlight): force_utf8_rec(j, highlight) for (i, j) in
+        return {force_utf8_rec(i, highlight, stringify):
+                force_utf8_rec(j, highlight, stringify) for (i, j) in
                 input_obj.items()}
     elif isinstance(input_obj, list):
-        return [force_utf8_rec(i, highlight) for i in input_obj]
+        return [force_utf8_rec(i, highlight, stringify) for i in input_obj]
     elif isinstance(input_obj, tuple):
-        return tuple([force_utf8_rec(i, highlight) for i in input_obj])
+        return tuple([force_utf8_rec(i, highlight, stringify) for i in input_obj])
     elif is_unicode(input_obj):
-        return force_utf8(input_obj, highlight)
+        return force_utf8(input_obj, highlight, stringify)
     else:
         return input_obj
 
 
-def force_unicode(val, highlight=''):
+def force_unicode(val, highlight='', stringify=True):
     """Internal helper to decode unicode strings from utf8 version. Actual
     changes are marked out with the highlight string if given.
+    The optional stringify turns ALL values including numbers into string.
     """
     # We run into all kind of nasty encoding problems if we mix
     if not isinstance(val, basestring):
-        val = "%s" % val
+        if stringify:
+            val = "%s" % val
+        else:
+            return val
     if is_unicode(val):
         return val
     if is_unicode(highlight):
@@ -397,20 +408,23 @@ def force_unicode(val, highlight=''):
     return u"%s%s%s" % (hl_uni, val.decode("utf8"), hl_uni)
 
 
-def force_unicode_rec(input_obj, highlight=''):
+def force_unicode_rec(input_obj, highlight='', stringify=False):
     """Recursive object conversion from utf8 to unicode: useful to convert e.g.
     dictionaries with nested utf8 strings to a pure unicode version. Actual
     changes are marked out with the highlight string if given.
+    Please note that the default here is to NOT stringify non-string values
+    like numbers.
     """
     if isinstance(input_obj, dict):
-        return {force_unicode_rec(i, highlight): force_unicode_rec(j, highlight) for (i, j) in
+        return {force_unicode_rec(i, highlight, stringify):
+                force_unicode_rec(j, highlight, stringify) for (i, j) in
                 input_obj.items()}
     elif isinstance(input_obj, list):
-        return [force_unicode_rec(i, highlight) for i in input_obj]
+        return [force_unicode_rec(i, highlight, stringify) for i in input_obj]
     elif isinstance(input_obj, tuple):
-        return tuple([force_unicode_rec(i, highlight) for i in input_obj])
+        return tuple([force_unicode_rec(i, highlight, stringify) for i in input_obj])
     elif not is_unicode(input_obj):
-        return force_unicode(input_obj, highlight)
+        return force_unicode(input_obj, highlight, stringify)
     else:
         return input_obj
 
@@ -462,44 +476,52 @@ def force_native_fs(input_obj, highlight=''):
     return _force_default_coding(input_obj, FS_KIND, highlight)
 
 
-def _force_default_coding_rec(input_obj, kind, highlight=''):
+def _force_default_coding_rec(input_obj, kind, highlight='', stringify=False):
     """A helper to force all strings in input_obj into the python-specific
     default string coding recursively.
     Use the active interpreter and the shared.defaults helpers to force the
     current default.
+    Please note that the default here is to NOT stringify non-string values
+    like numbers.
     """
     if kind == STR_KIND and default_str_coding == "unicode" or \
             kind == FS_KIND and default_fs_coding == "unicode":
-        return force_unicode_rec(input_obj, highlight)
+        return force_unicode_rec(input_obj, highlight, stringify)
     elif kind == STR_KIND and default_str_coding == "utf8" or \
             kind == FS_KIND and default_fs_coding == "utf8":
-        return force_utf8_rec(input_obj, highlight)
+        return force_utf8_rec(input_obj, highlight, stringify)
     else:
         raise ValueError('Unsupported default coding kind: %s' % kind)
 
 
-def force_default_str_coding_rec(input_obj, highlight=''):
+def force_default_str_coding_rec(input_obj, highlight='', stringify=False):
     """A helper to force input_obj to the default string coding recursively.
     Use the active interpreter and the shared.defaults helpers to force the
     current default.
+    Please note that the default here is to NOT stringify non-string values
+    like numbers.
     """
-    return _force_default_coding_rec(input_obj, STR_KIND, highlight)
+    return _force_default_coding_rec(input_obj, STR_KIND, highlight, stringify)
 
 
-def force_default_fs_coding_rec(input_obj, highlight=''):
+def force_default_fs_coding_rec(input_obj, highlight='', stringify=False):
     """A helper to force input_obj to the default filesystem coding recursively. 
     Use the active interpreter and the shared.defaults helpers to force the
     current default.
+    Please note that the default here is to NOT stringify non-string values
+    like numbers.
     """
-    return _force_default_coding_rec(input_obj, FS_KIND, highlight)
+    return _force_default_coding_rec(input_obj, FS_KIND, highlight, stringify)
 
 
-def force_native_str_rec(input_obj, highlight=''):
+def force_native_str_rec(input_obj, highlight='', stringify=False):
     """A helper to force input_obj to the default string coding recursively.
     Use the active interpreter and the shared.defaults helpers to force the
     current default.
+    Please note that the default here is to NOT stringify non-string values
+    like numbers.
     """
-    return _force_default_coding_rec(input_obj, STR_KIND, highlight)
+    return _force_default_coding_rec(input_obj, STR_KIND, highlight, stringify)
 
 
 def native_str_escape(val):
