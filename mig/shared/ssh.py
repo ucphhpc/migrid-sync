@@ -38,6 +38,14 @@ import os
 import sys
 import tempfile
 
+# NOTE: we would prefer the modern io.BytesIO but it fails in python2 during
+#       rsa_key.write_private_key(string_io_obj) with a Paramiko error:
+#       TypeError: 'unicode' does not have the buffer interface
+try:
+    from cStringIO import StringIO as LegacyStringIO
+except ImportError:
+    from io import BytesIO as LegacyStringIO
+
 try:
     import paramiko
 except ImportError:

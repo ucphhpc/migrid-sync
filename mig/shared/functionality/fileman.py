@@ -365,6 +365,21 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
         <div id="grep_output"><!-- dynamic --></div>
     </div>
 
+    <div id="find_dialog" title="Find file or folder" style="display: none;">
+
+        <form id="find_form" method="post" action="find.py">
+        <fieldset>
+            <input type="hidden" name="output_format" value="json" />
+            <label for="path">Folder to search in:</label>
+            <input id="path" class="singlefield" type="text" name="path" size=50 />
+            <br />
+            <label for="pattern">Search name/pattern:</label>
+            <input id="pattern" class="singlefield" type="text" name="pattern" size=50 />
+        </fieldset>
+        </form>
+        <div id="find_output"><!-- dynamic --></div>
+    </div>
+
     <div id="create_sharelink_dialog" title="Create Share Link"
         style="display: none;">
     %(create_sharelink_form)s

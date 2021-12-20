@@ -1,4 +1,142 @@
-[
+[  
+  {
+    "status": "AUTO", 
+    "work_start": "2021-11-26T17:00:00+01:00", 
+    "systems": [
+        "SIF"
+    ], 
+    "announce_start": "2021-11-26T17:00:00+01:00", 
+    "title": {
+      "EN": "SIF Outage", 
+      "DK": "SIF nede"
+    }, 
+    "services": [
+      "ALL"
+    ], 
+    "work_end": "2021-11-29T10:15:00+01:00",
+    "description": {
+      "EN": "A central log partition ran full on SIF, and since we are not allowed to miss important log entries it automatically shut off the entire frontend system. After cleaning up space for logs the system is back online. Sorry for the inconvenience from the lack of access.", 
+      "DK": "En central log-partition på SIF løb tør for plads, og eftersom vi skal logge vigtige beskeder, lukkede den automatisk hele frontend systemet ned. Efter en oprydning fandt vi plads til logs og systemet er atter tilbage online. Vi Beklager generne fra den manglende adgang."
+    }, 
+    "announce_end": "2021-11-29T10:15:00+01:00"
+  },
+  {
+    "status": "AUTO", 
+    "work_start": "2022-02-01T18:00:00+01:00", 
+    "systems": [
+        "ERDA", "IDMC", "SIF"
+    ], 
+    "announce_start": "2021-11-19T10:00:00+01:00", 
+    "title": {
+      "EN": "Supply Chain Problems and Continued Storage Scaling", 
+      "DK": "Leveringproblemer og fortsat lagerskalering"
+    }, 
+    "services": [
+      "ALL"
+    ], 
+    "work_end": "2022-04-30T18:00:00+01:00", 
+    "description": {
+      "EN": "The current global computer chip shortage and reduced production capacities are beginning to cause serious headaches regarding the continued gradual expansion of the ERDA/IDMC and SIF backend storage. We still have additional storage bricks to add, but we are running low and vendors report several months of delivery time even on already ordered hardware. In effect this MIGHT lead to a situation where we will have to throttle data growth on ERDA/IDMC and SIF e.g. through upload rate limits or have You as users clean up any big (~terabyte) data sets of little or no importance. This is of course rather inconvenient and something we are trying our best to avoid, but we think it only fair to announce well ahead to let you plan and act in due time.", 
+      "DK": "De aktuelle globale problemer med mangel på computer-chips og begrænset produktionskapacitet begynder at føre til alvorlige bekymringer omkring den fortsatte løbende opskalering af ERDA/IDMC og SIF backend-lageret. Vi har stadig ekstra bricks at sætte på, men der er ved at være lavvande i lageret og leverandørerne melder om måneders leveringstid selv på allerede bestilt hardware. Resultatet KAN blive at vi ender i en situation hvor vi bliver nødt til at skrue ned for datavæksten på ERDA/IDMC og SIF f.eks. via begrænsning på uploadhastigheden eller at I som brugere rydder op i evt store (~terabyte) datasæt af begrænset eller ingen værdi. Det er selvfølgelig en ubehagelig situation og noget vi gør vores bedste for at undgå, men vi foretrækker at melde ud allerede nu mhp at give alle mulighed for at planlægge og agere rettidigt."
+    }, 
+    "announce_end": "2022-05-30T16:00:00+01:00"
+  },
+  {
+    "status": "AUTO", 
+    "work_start": "2021-11-16T10:00:00+01:00", 
+    "systems": [
+        "ERDA"
+    ], 
+    "announce_start": "2021-11-16T10:00:00+01:00", 
+    "title": {
+      "EN": "ERDA Unstable/Offline, Seafile Change", 
+      "DK": "ERDA ustabil/nede, Seafile ændring"
+    }, 
+    "services": [
+      "ALL"
+    ], 
+    "work_end": "2021-11-16T11:38:00+01:00", 
+    "description": {
+      "EN": "ERDA Web was severely overloaded resulting in connections getting dropped with timeout and general web instabilities. It looks like the legacy Seafile proxy access caused the troubles with thousands of stale connections hanging around and dragging the web server to a halt. We disabled it to see if it solves the problem. For long-time Seafile users still using the ancient setup with the legacy server address[0] this means that it is now strictly necessary to migrate to the new stand-alone Seafile server address[1]. We did a restart of the frontend to clean up hanging processes/connections and will keep an eye on the system to see if the problems return.", 
+      "DK": "ERDAs webserver var ekstremt overbelastet, hvilket første til at nye forbindelser blev afvist med timeout og generel ustabilitet på web. Det ser ud til at den gamle Seafile proxy-adgang efterlod tusindvis af hængende forbindelser som til sidst tvang webserveren i knæ. Vi har slået proxy-adgangen fra for at se om det løser problemet. Det betyder at langvarige Seafile-brugere nu endegyldigt er tvunget til at opdatere deres klient fra at bruge den gamle server-adresse[0] til at bruge den aktuelle adresse[1] på den særskilte Seafile-server. Vi genstartede frontend for at få ryddet op i de hængende processer/forbindelser og holder fortsat øje med systemet mhp om problemerne skulle vende tilbage."
+    }, 
+    "references": {
+      "EN": [
+          "https://sid.erda.dk/seafile",
+          "https://seafile.erda.dk/seafile"
+      ], 
+      "DK": [
+          "https://sid.erda.dk/seafile",
+          "https://seafile.erda.dk/seafile"
+      ]
+    },
+    "announce_end": "2021-11-17T10:00:00+01:00"
+  },
+  {
+    "status": "AUTO", 
+    "work_start": "2021-11-15T00:29:00+01:00", 
+    "systems": [
+        "ERDA", "SIF"
+    ], 
+    "announce_start": "2021-11-15T08:00:00+01:00", 
+    "title": {
+      "EN": "ERDA and SIF Outage", 
+      "DK": "ERDA og SIF nede"
+    }, 
+    "services": [
+      "ALL"
+    ], 
+    "work_end": "2021-11-15T09:10:00+01:00", 
+    "description": {
+      "EN": "Our backend storage acted up and took out both ERDA and SIF this morning. In addition the problems caused a central log partition to run full on ERDA, and since we are not allowed to miss important log entries it automatically shut off the entire frontend system. After getting the backend storage online and cleaning up space for logs both systems are back online. Sorry for the inconvenience from the lack of access.", 
+      "DK": "Vores backendlager ville ikke makke ret til morgen og fik både ERDA og SIF offline. Oveni løb en central log-partition på ERDA tør for plads af samme grund, og eftersom vi skal logge vigtige beskeder, lukkede den automatisk hele frontend systemet ned. Efter vi fik backendlageret tilbage og fandt plads til logs er begge systemer tilbage online. Vi Beklager generne fra den manglende adgang."
+    }, 
+    "announce_end": "2021-11-16T10:00:00+01:00"
+  },
+  {
+    "status": "AUTO", 
+    "work_start": "2021-11-10T17:00:00+01:00", 
+    "systems": [
+        "ERDA",
+        "IDMC",
+        "SIF"
+    ],
+    "announce_start": "2021-11-02T13:00:00+01:00",
+    "title": {
+      "EN": "Planned ERDA/IDMC and SIF Maintenance",
+      "DK": "Planlagt ERDA/IDMC og SIF vedligehold"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2021-11-10T21:00:00+01:00",
+    "description": {
+      "EN": "It's time for a thorough update of the ERDA/IDMC and SIF systems to apply pending bug fixes and add a few new features. The work will involve frontend down-time for low-level system updates. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect it to take a couple of hours, but keep the maintenance window open until next morning in case it drags out. The updates of ERDA/IDMC completed before 7pm and all their services are back online. SIF required more work and went back online towards 9pm. Please report any problems to our support as usual.",
+      "DK": "Det er tid til en gennemgribende opdatering af ERDA/IDMC og SIF systemerne mhp at lægge udestående fejlrettelser ind og tilføje lidt nye funktionaliteter. Arbejdet kræver nedetid på frontend til grundlæggende systemopdateringer og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi forventer at det kan klares på et par timer, men holder vedligeholdelsesvinduet åbent i tilfælde af at det trækker ud. Opdateringerne blev overstået på ERDA/IDMC inden kl. 19 og alle deres services er tilbage i almindelig drift. SIF krævede mere arbejde og kom tilbage i almindelig drift henved kl. 21. Kontakt os som altid gerne på vores support omkring evt problemer."
+    },
+    "announce_end": "2021-11-11T12:00:00+01:00"
+  },
+  {
+    "status": "AUTO", 
+    "work_start": "2021-11-01T20:00:00+02:00",
+    "systems": [
+      "ERDA", "IDMC"
+    ],
+    "announce_start": "2021-10-26T12:00:00+02:00",
+    "title": {
+      "EN": "Monthly maintenance of DAG and MODI",
+      "DK": "Månedlig vedligeholdelse af DAG og MODI"
+    },
+    "services": [
+      "DAG", "MODI"
+    ],
+    "work_end": "2021-11-01T23:00:00+02:00",
+    "description": {
+      "EN": "We will apply general maintenance to the DAG and MODI services. Interruptions to these services will occur.", 
+      "DK": "Vi udruller den månedelige opdatering og vedligeholdelse af DAG og MODI tjenesterne. Afbrydelser af disse tjenester vil forekomme."
+    },
+    "announce_end": "2021-11-03T12:00:00+02:00"
+  },
   {
     "status": "AUTO", 
     "work_start": "2021-10-15T14:24:00+02:00", 

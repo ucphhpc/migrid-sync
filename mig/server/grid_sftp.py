@@ -108,6 +108,7 @@ from mig.shared.useradm import check_password_hash
 from mig.shared.validstring import possible_user_id, possible_gdp_user_id, \
     possible_job_id, possible_sharelink_id, possible_jupyter_mount_id
 from mig.shared.vgrid import in_vgrid_share
+from mig.shared.vgridaccess import is_vgrid_parent_placeholder
 from mig.shared.workflows import add_workflow_job_history_entry
 
 configuration, logger = None, None
@@ -153,12 +154,11 @@ class SFTPHandle(paramiko.SFTPHandle):
             path = getattr(self, "path", None)
             user_name = getattr(self, "user_name", None)
 
-            # Get rid of leading '/'. This should only be
-            # necesary when testing manually
-            if path.startswith(os.path.sep):
-                path = path[1:]
-            if os.path.sep in path:
-                vgrid = path[:path.find(os.path.sep)]
+            # Strip leading slash - should only be necessary in manual testing
+            path = path.lstrip(os.sep)
+            if os.sep in path:
+                # TODO: is this really correct for nested vgrids?
+                vgrid = path.split(os.sep, 1)[0]
             else:
                 vgrid = path
 
@@ -1014,8 +1014,13 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.error("remove rejected on link path %s :: %s" %
                               (path, real_path))
             return paramiko.SFTP_PERMISSION_DENIED
-        if in_vgrid_share(configuration, real_path) == path[1:]:
-            self.logger.error("remove rejected on vgrid path %s :: %s" %
+        if in_vgrid_share(configuration, real_path) == path.lstrip(os.sep):
+            self.logger.error("remove rejected on vgrid root %s :: %s" %
+                              (path, real_path))
+            return paramiko.SFTP_PERMISSION_DENIED
+        if is_vgrid_parent_placeholder(configuration, path.lstrip(os.sep),
+                                       real_path, False):
+            self.logger.error("remove rejected on vgrid parent placeholder %s :: %s" %
                               (path, real_path))
             return paramiko.SFTP_PERMISSION_DENIED
         if not os.path.exists(real_path):
@@ -1050,9 +1055,14 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.error("rename on link src %s :: %s" % (oldpath,
                                                                real_oldpath))
             return paramiko.SFTP_PERMISSION_DENIED
-        if in_vgrid_share(configuration, real_oldpath) == oldpath[1:]:
-            self.logger.error("rename on vgrid src %s :: %s" % (oldpath,
-                                                                real_oldpath))
+        if in_vgrid_share(configuration, real_oldpath) == oldpath.lstrip(os.sep):
+            self.logger.error("rename on vgrid share root %s :: %s" % (oldpath,
+                                                                       real_oldpath))
+            return paramiko.SFTP_PERMISSION_DENIED
+        if is_vgrid_parent_placeholder(configuration, oldpath.lstrip(os.sep),
+                                       real_oldpath, False):
+            self.logger.error("rename on vgrid parent placeholder %s :: %s"
+                              % (oldpath, real_oldpath))
             return paramiko.SFTP_PERMISSION_DENIED
         if not os.path.exists(real_oldpath):
             self.logger.error("rename on missing path %s :: %s" %
@@ -1129,8 +1139,13 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.logger.error("rmdir rejected on link path %s :: %s" %
                               (path, real_path))
             return paramiko.SFTP_PERMISSION_DENIED
-        if in_vgrid_share(configuration, real_path) == path[1:]:
-            self.logger.error("rmdir rejected on vgrid path %s :: %s" %
+        if in_vgrid_share(configuration, real_path) == path.lstrip(os.sep):
+            self.logger.error("rmdir rejected on vgrid share root %s :: %s" %
+                              (path, real_path))
+            return paramiko.SFTP_PERMISSION_DENIED
+        if is_vgrid_parent_placeholder(configuration, path.lstrip(os.sep),
+                                       real_path, False):
+            self.logger.error("rmdir rejected on vgrid parent placeholder %s :: %s" %
                               (path, real_path))
             return paramiko.SFTP_PERMISSION_DENIED
         if not os.path.exists(real_path):

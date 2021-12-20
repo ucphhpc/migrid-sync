@@ -36,20 +36,25 @@ from past.builtins import basestring
 import fnmatch
 import os
 import re
+import sys
 import time
 
-from mig.shared.base import valid_dir_input, client_id_dir
-from mig.shared.defaults import default_vgrid, keyword_owners, keyword_members, \
-    keyword_all, keyword_auto, keyword_never, keyword_any, keyword_none, \
-    csrf_field, default_vgrid_settings_limit, vgrid_nest_sep, _dot_vgrid
-from .fileio import make_symlink, move, check_readonly, check_writable, \
+from mig.shared.base import valid_dir_input, client_id_dir, \
+    distinguished_name_to_user
+from mig.shared.defaults import default_vgrid, keyword_owners, \
+    keyword_members, keyword_all, keyword_never, keyword_any, \
+    keyword_none, csrf_field, default_vgrid_settings_limit, \
+    vgrid_nest_sep, _dot_vgrid
+from mig.shared.fileio import make_symlink, move, check_readonly, check_writable, \
     check_write_access, unpickle, acquire_file_lock, release_file_lock, walk, \
-    slow_walk
+    slow_walk, remove_rec, move_rec, delete_symlink
 from mig.shared.findtype import is_user, is_resource
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.html import html_post_helper
 from mig.shared.modified import mark_vgrid_modified
 from mig.shared.output import html_link
+from mig.shared.safeeval import subprocess_popen, subprocess_pipe, \
+    subprocess_stdout
 from mig.shared.serial import load, dump
 from mig.shared.sharelinkkeywords import get_sharelink_keywords_dict
 from mig.shared.user import anon_user_id
@@ -427,7 +432,7 @@ doubt, just let the user request access and accept it with the
                              field.replace('_', ' ').title()
         if isinstance(limit, basestring):
             add_html = '%s' % limit
-        elif limit == None:
+        elif limit is None:
             add_html = '''
         <input class="fillwidth padspace" type="text" size=70 name="%s" />
         ''' % field
@@ -1863,7 +1868,7 @@ def __in_vgrid_special(configuration, path, vgrid_special_base, flat=False):
     Checks if path is really inside a vgrid special folder with home in
     vgrid_special_base, and returns the name of the deepest such sub-vgrid it
     is inside if so.
-    The optional flat parameter can be given to rely on flat naming 
+    The optional flat parameter can be given to rely on flat naming
     """
     _logger = configuration.logger
     vgrid_path = None
@@ -2045,10 +2050,308 @@ def allow_resources_adm(configuration, vgrid_name, client_id):
     return _shared_allow_adm(configuration, vgrid_name, client_id, 'resources')
 
 
+def vgrid_rm_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir):
+    """Remove Trac issue tracker owner"""
+    _logger = configuration.logger
+    success = False
+    msg = ""
+    cgi_tracker_var = os.path.join(tracker_dir, 'var')
+    if not os.path.isdir(cgi_tracker_var):
+        msg = 'No tracker (%s) for %s %s - skipping tracker admin rights' \
+            % (tracker_dir, configuration.site_vgrid_label, vgrid_name)
+        _logger.error(msg)
+        return (False, msg)
+
+    # Trac requires tweaking for certain versions of setuptools
+    # http://trac.edgewall.org/wiki/setuptools
+    admin_env = {}
+    # strip non-string args from env to avoid wsgi execv errors like
+    # http://stackoverflow.com/questions/13213676
+    for (key, val) in os.environ.items():
+        if isinstance(val, basestring):
+            admin_env[key] = val
+    admin_env["PKG_RESOURCES_CACHE_ZIP_MANIFESTS"] = "1"
+
+    try:
+        admin_user = distinguished_name_to_user(cert_id)
+        admin_id = admin_user.get(configuration.trac_id_field, 'unknown_id')
+        # Remove admin rights for owner using trac-admin command:
+        # trac-admin tracker_dir deploy cgi_tracker_bin
+        perms_cmd = [configuration.trac_admin_path, cgi_tracker_var,
+                     'permission', 'remove', admin_id, 'TRAC_ADMIN']
+        _logger.info('remove admin rights from owner: %s' % perms_cmd)
+        # NOTE: we use command list here to avoid shell requirement
+        proc = subprocess_popen(perms_cmd, stdout=subprocess_pipe,
+                                stderr=subprocess_stdout, env=admin_env)
+        retval = proc.wait()
+        if retval != 0:
+            out = proc.stdout.read()
+            if out.find("user has not been granted the permission") != -1:
+                _logger.warning(
+                    "ignore missing Trac admin for legacy user %s" % admin_id)
+            else:
+                raise Exception("tracker permissions %s failed: %s (%d)" %
+                                (perms_cmd, out, retval))
+        return True
+    except Exception as err:
+        success = False
+        msg = err
+
+    return (success, msg)
+
+
+def vgrid_rm_share(configuration, user_dir, vgrid):
+    """Utility function to remove link to shared vgrid folder.
+
+    user_dir: the full path to the user home where deletion should happen
+
+    vgrid: the name of the vgrid to delete
+
+    Returns boolean success indicator and potential messages as a pair.
+
+    Note: Removed links are hard-coded (as in other modules)
+        user_dir/vgrid
+    In case of a sub-vgrid, enclosing empty directories are removed as well.
+    """
+    _logger = configuration.logger
+    success = True
+    msg = ""
+    path = os.path.join(user_dir, vgrid)
+    _logger.debug("remove share with user dir %s and vgrid %s" %
+                  (user_dir, vgrid))
+    try:
+        if os.path.exists(path):
+            os.remove(path)
+            path = os.path.dirname(path)
+            if os.path.isdir(path) and os.listdir(path) == []:
+                os.removedirs(path)
+    except Exception as err:
+        _logger.errors("could not remove share for %s vgrid: %s" %
+                       (vgrid, err))
+        success = False
+        msg += "\nCould not remove link %s: %s" % (path, err)
+    return (success, msg[1:])
+
+
+def vgrid_rm_web_folders(configuration, user_dir, vgrid):
+    """Utility function to remove links to shared vgrid web folders.
+
+    user_dir: the full path to the user home where deletion should happen
+
+    vgrid: the name of the vgrid to delete
+
+    Returns boolean success indicator and potential messages as a pair.
+
+    Note: Removed links are hard-coded (as in other modules)
+        user_dir/private_base/vgrid
+        user_dir/public_base/vgrid
+    In case of a sub-vgrid, enclosing empty directories are removed as well.
+    """
+    _logger = configuration.logger
+    success = True
+    msg = ""
+    _logger.debug("remove web folders with user dir %s and vgrid %s" %
+                  (user_dir, vgrid))
+    for infix in ["private_base", "public_base"]:
+        path = os.path.join(user_dir, infix, vgrid)
+        try:
+            if os.path.exists(path):
+                os.remove(path)
+                path = os.path.dirname(path)
+                if os.path.isdir(path) and os.listdir(path) == []:
+                    os.removedirs(path)
+        except Exception as err:
+            _logger.errors("could not remove web folders for %s vgrid: %s" %
+                           (vgrid, err))
+            success = False
+            msg += "\nCould not remove link %s: %s" % (path, err)
+    return (success, msg[1:])
+
+
+def vgrid_rm_files(configuration, vgrid):
+    """Remove all files which belong to the given VGrid (parameter).
+    This corresponds to the functionality in createvgrid.py, but we
+    can make our life easy by removing recursively, using a function
+    in fileio.py for this purpose. The VGrid is assumed to be abandoned
+    entirely.
+    The function recursively removes the following directories:
+            configuration.vgrid_public_base/<vgrid>
+            configuration.vgrid_private_base/<vgrid>
+            configuration.vgrid_files_home/<vgrid>
+    including any actual data for new flat format vgrids in
+            configuration.vgrid_files_writable/<vgrid>
+    and the soft link (if it is a link, not a directory)
+            configuration.wwwpublic/vgrid/<vgrid>
+
+    vgrid: The name of the VGrid to delete
+    configuration: to determine the location of the directories
+
+
+    Note: the entry for the VGrid itself, configuration.vgrid_home/<vgrid>
+            is removed separately, see remove_vgrid_entry
+    Returns: Success indicator and potential messages.
+    """
+
+    _logger = configuration.logger
+    _logger.debug('Deleting all files for vgrid %s' % vgrid)
+    success = True
+    msg = ""
+
+    # removing this soft link may fail, since it is a directory for sub-VGrids
+
+    try:
+        os.remove(os.path.join(configuration.wwwpublic, 'vgrid', vgrid))
+    except Exception as err:
+        _logger.debug(
+            'not removing soft link to public vgrids pages for %s: %s' %
+            (vgrid, err))
+
+    for prefix in [configuration.vgrid_public_base,
+                   configuration.vgrid_private_base,
+                   configuration.vgrid_files_home]:
+        data_path = os.path.join(prefix, vgrid)
+        # VGrids on flat format with readonly support has a link and a dir
+        if os.path.islink(data_path):
+            link_path = data_path
+            data_path = os.path.realpath(link_path)
+            _logger.debug('delete symlink: %s' % link_path)
+            delete_symlink(link_path, _logger)
+        if not os.path.exists(data_path):
+            _logger.warning('vgrid_rm_files: missing data path: %r'
+                            % data_path)
+            continue
+        success_here = remove_rec(data_path, configuration)
+        if not success_here:
+            kind = prefix.strip(os.sep).split(os.sep)[-1]
+            msg += "Error while removing %s %s" % (vgrid, kind)
+            success = False
+
+    if msg:
+        _logger.debug('Messages: %s.' % msg)
+
+    return (success, msg)
+
+
+def vgrid_inherit_files(configuration, vgrid):
+    """Transfer ownership of all files which belong to the given VGrid argument
+    to parent VGrid. This is the default when a nested VGrid is removed.
+    This corresponds to the functionality in createvgrid.py, but we
+    can make our life easy by moving recursively, using a function
+    in fileio.py for this purpose. The VGrid shared and web folders are taken
+    over entirely by parent and the for new flat style VGrids it is more work
+    because they require migration of linked dir into parent one.
+    The function recursively moves the following directories:
+            configuration.vgrid_public_base/<vgrid>
+            configuration.vgrid_private_base/<vgrid>
+            configuration.vgrid_files_home/<vgrid>
+    including any actual data for new flat format vgrids in
+            configuration.vgrid_files_writable/<vgrid>
+
+    vgrid: The name of the VGrid to let parent take over
+    configuration: to determine the location of the directories
+
+    Note: the entry for the VGrid itself, configuration.vgrid_home/<vgrid>
+            is removed separately, see remove_vgrid_entry
+    Returns: Success indicator and potential messages.
+    """
+
+    _logger = configuration.logger
+    _logger.debug('Migrate all files for vgrid %s to parent' % vgrid)
+    success = True
+    msg = ""
+
+    parent_vgrid = vgrid_list_parents(vgrid, configuration)[-1]
+    for prefix in [configuration.vgrid_public_base,
+                   configuration.vgrid_private_base,
+                   configuration.vgrid_files_home]:
+        data_path = os.path.join(prefix, vgrid)
+        parent_dir_path = os.path.join(prefix, parent_vgrid)
+        # VGrids on flat format with readonly support has a link and a dir.
+        # The actual linked dir must then be renamed/moved to replace the link.
+        if os.path.islink(data_path):
+            link_path = data_path
+            link_name = os.path.basename(link_path)
+            parent_data_path = os.path.join(parent_dir_path, link_name)
+            data_path = os.path.realpath(link_path)
+            _logger.debug('delete symlink: %s' % link_path)
+            delete_symlink(link_path, _logger)
+
+            _logger.debug('migrate old vgrid dir %s to %s' %
+                          (data_path, parent_data_path))
+            success_here = move_rec(data_path, parent_data_path, configuration)
+            if not success_here:
+                kind = prefix.strip(os.sep).split(os.sep)[-1]
+                msg += "Error while migrating %s %s to parent" % (vgrid, kind)
+                success = False
+    if msg:
+        _logger.debug('Messages: %s.' % msg)
+
+    return (success, msg)
+
+
+def vgrid_rm_entry(configuration, vgrid):
+    """Remove an entry for a VGrid in the vgrid configuration directory.
+            configuration.vgrid_home/<vgrid>
+
+    The VGrid contents (shared files and web pages) are assumed to either
+    be abandoned entirely, or become subdirectory of another vgrid (for
+    sub-vgrids). Wiki and SCM are deleted as well, as they would  be unusable
+    and undeletable.
+
+    vgrid: the name of the VGrid to delete
+    configuration: to determine configuration.vgrid_home
+
+    Returns: Success indicator and potential messages.
+    """
+
+    _logger = configuration.logger
+    _logger.debug('Removing entry for vgrid %s' % vgrid)
+
+    msg = ''
+    success = remove_rec(os.path.join(configuration.vgrid_home, vgrid),
+                         configuration)
+    if not success:
+
+        _logger.debug('Error while removing %s.' % vgrid)
+        msg += "Error while removing entry for %s." % vgrid
+
+    else:
+
+        for prefix in [configuration.vgrid_public_base,
+                       configuration.vgrid_private_base,
+                       configuration.vgrid_files_home]:
+
+            # Gracefully delete any public, member, and owner SCMs/Trackers/...
+            # They may already have been wiped with parent dir if they existed
+
+            for collab_dir in _dot_vgrid:
+                collab_path = os.path.join(prefix, vgrid, collab_dir)
+                if not os.path.exists(collab_path):
+                    continue
+
+                # Re-map to writable if collab_path points inside readonly dir
+                if prefix == configuration.vgrid_files_home:
+                    (_, _, rw_path, ro_path) = \
+                        vgrid_restrict_write_paths(vgrid, configuration)
+                    real_collab = os.path.realpath(collab_path)
+                    if real_collab.startswith(ro_path):
+                        collab_path = real_collab.replace(ro_path, rw_path)
+
+                if not remove_rec(collab_path, configuration):
+                    _logger.warning('Error while removing %s.' % collab_path)
+                    collab_name = collab_dir.replace('.vgrid', '')
+                    msg += "Error while removing %s for %s" % (collab_name,
+                                                               vgrid)
+
+    return (success, msg)
+
+
 if __name__ == "__main__":
     from mig.shared.conf import get_configuration_object
     conf = get_configuration_object()
     client_id = '/C=DK/CN=John Doe/emailAddress=john@doe.org'
+    if sys.argv[1:]:
+        client_id = sys.argv[1]
     vgrid = "MyGroup"
     kind = 'triggers'
     valid_trigger = {'rule_id': 'valid_rule',

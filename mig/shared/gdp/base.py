@@ -50,7 +50,7 @@ from mig.shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
     user_db_filename as mig_user_db_filename, \
     valid_gdp_auth_scripts as valid_auth_scripts
 from mig.shared.fileio import touch, make_symlink, write_file, remove_rec, \
-    acquire_file_lock, release_file_lock, copy_file
+    acquire_file_lock, release_file_lock, copy_file, move_rec, makedirs_rec
 from mig.shared.gdp.userid import __validate_user_id, \
     __client_id_from_project_client_id, \
     __project_name_from_project_client_id, \
@@ -64,13 +64,16 @@ from mig.shared.useradm import create_user, delete_user, edit_user, \
     get_full_user_map, lock_user_db
 from mig.shared.vgrid import vgrid_flat_name, vgrid_owners, vgrid_is_owner, \
     vgrid_is_member, vgrid_set_owners, vgrid_add_members, vgrid_set_settings, \
-    vgrid_create_allowed, vgrid_remove_members, vgrid_restrict_write_support
+    vgrid_members, vgrid_create_allowed, vgrid_remove_members, vgrid_remove_owners, \
+    vgrid_restrict_write_support, vgrid_rm_files, vgrid_rm_entry
 from mig.shared.vgridaccess import force_update_user_map, \
     force_update_vgrid_map, force_update_resource_map
 from mig.shared.vgridkeywords import get_settings_keywords_dict
 
 user_db_filename = 'gdp-users.db'
 user_log_filename = 'gdp-users.log'
+notify_home_dirname = 'notify'
+notify_attic_dirname = 'notify_attic'
 
 skip_client_id_rewrite = [
     'adminvgrid.py',
@@ -86,6 +89,7 @@ skip_client_id_rewrite = [
     'twofactor.py',
     'vgridman.py',
     'viewvgrid.py',
+    'rmvgridowner.py',
 ]
 
 valid_log_actions = [
@@ -94,6 +98,7 @@ valid_log_actions = [
     'auto_logged_out',
     'copied',
     'created',
+    'removed',
     'modified',
     'truncated',
     'deleted',
@@ -169,6 +174,7 @@ def __validate_user_db(configuration, client_id, user_db=None):
                         'category_id': basestring,
                         'actions': [{
                             'date: basestring,
+                            'source': basestring,
                             'user': basestring,
                             'action': basestring,
                             'references': [{
@@ -430,6 +436,12 @@ def __send_project_action_confirmation(configuration,
     target_dict = {}
     if action == "create_project":
         target_dict['registrant'] = login
+    elif action == "remove_project":
+        target_dict['registrant'] = login
+        if isinstance(target, list):
+            target_dict['participants'] = ", ".join(target)
+        else:
+            target_dict['participants'] = target
     elif action == "invite_user":
         target_dict['registrant'] = login
         target_dict['target_user'] = target
@@ -451,6 +463,7 @@ def __send_project_action_confirmation(configuration,
     log_ok_msg = "GDP: Send project %s confirmation email" % action
     ref_pairs = [(i['ref_id'], i['value']) for i in
                  category_dict.get('references', {}).get(action, [])]
+    # _logger.debug("ref_pairs: %s" % ref_pairs)
     log_ok_msg += " for targets: %r, project: %r, %s %s" % \
                   (target_dict, project_name, target, ref_pairs)
     log_err_msg = "GDP: Failed to send project %s confirmation email" % action
@@ -459,11 +472,12 @@ def __send_project_action_confirmation(configuration,
     template = None
     notify = []
     notify_filename = 'notifyemails.txt'
-    template_filename = category_dict.get(
-        '%s_notify_template' % action, False)
+    template_filename = category_dict.get('templates', {}).\
+        get('%s' % action, {}).get('notify', '')
+    # _logger.debug("template_filename: %s: %r" % (action, template_filename))
     if not template_filename:
         _logger.info("No %s notification email configured for %s projects" %
-                     (action, category_dict['category_id']))
+                     (action, category_dict.get('category_id', '')))
         return True
 
     # Check for PDF generation packages
@@ -510,7 +524,9 @@ def __send_project_action_confirmation(configuration,
 
         # Check for project home dir
 
-        project_home = os.path.join(configuration.gdp_home, project_name)
+        project_home = os.path.join(configuration.gdp_home,
+                                    os.path.join(notify_home_dirname,
+                                                 project_name))
         if status and not os.path.isdir(project_home):
             status = False
             _logger.error("%s: Missing project home dir: %r"
@@ -522,6 +538,7 @@ def __send_project_action_confirmation(configuration,
 
         template_filepath = os.path.join(configuration.gdp_home,
                                          template_filename)
+        # _logger.debug("template_filepath: %r" % template_filepath)
         if status:
             try:
                 fh = open(template_filepath)
@@ -535,8 +552,10 @@ def __send_project_action_confirmation(configuration,
     # Generate project action PDF
 
     if status:
-        pdf_filename = '%s.pdf' % project_name
+        timestamp = time.time()
+        pdf_filename = '%s.%d.pdf' % (action, int(timestamp))
         pdf_filepath = os.path.join(project_home, pdf_filename)
+        # _logger.debug("pdf_filepath: %r" % pdf_filepath)
         # NOTE: quiet is needed to avoid stdout breaking cgi
         pdf_options = {
             'page-size': 'Letter',
@@ -547,9 +566,8 @@ def __send_project_action_confirmation(configuration,
             'encoding': 'UTF-8',
             'quiet': '',
         }
-
-        timestamp = datetime.datetime.fromtimestamp(time.time())
-        date = timestamp.strftime('%d/%m/%Y %H:%M:%S')
+        current_datetime = datetime.datetime.fromtimestamp(timestamp)
+        date = current_datetime.strftime('%d/%m/%Y %H:%M:%S')
         fill_entries = {'site_title': configuration.site_title,
                         'short_title': configuration.short_title,
                         'server_fqdn': configuration.server_fqdn,
@@ -603,11 +621,13 @@ def __send_project_action_confirmation(configuration,
                      action, 'project_name': project_name}
         recipients = "%s" % login
         if target:
-            recipients += ", %s" % target
+            if isinstance(target, str):
+                recipients += ", %s" % target
+            elif isinstance(target, list):
+                recipients += ", %s" % ", ".join(target)
         for admin in notify:
-            recipients += ', %s %s' % (admin['name'], admin['email'])
+            recipients += ", %s" % " ".join(admin.values())
         mail_fill['recipients'] = recipients
-
         subject = "%(short_title)s project %(action)s: %(project_name)r" % \
                   mail_fill
         message = """*** IMPORTANT: direct replies to this automated message will NOT be read! ***
@@ -623,7 +643,7 @@ Attached you'll find the details registered in relation to the operation.
             message,
             _logger,
             configuration,
-            [pdf_filepath],
+            files=[pdf_filepath],
         )
         if not status:
             _logger.error("%s: send_email failed" % log_err_msg)
@@ -646,6 +666,18 @@ def __send_project_create_confirmation(configuration,
                                               project_name, category_dict)
 
 
+def __send_project_remove_confirmation(configuration,
+                                       login,
+                                       participants,
+                                       project_name,
+                                       category_dict):
+    """Send project create confirmation to *login* and GDP admins"""
+    return __send_project_action_confirmation(configuration,
+                                              "remove_project",
+                                              login, participants,
+                                              project_name, category_dict)
+
+
 def __send_project_invite_user_confirmation(configuration,
                                             login,
                                             user,
@@ -660,12 +692,13 @@ def __send_project_invite_user_confirmation(configuration,
 
 def __send_project_accept_user_confirmation(configuration,
                                             login,
+                                            owner_login,
                                             project_name,
                                             category_dict):
     """Send project invite accept confirmation to *login* and GDP admins"""
     return __send_project_action_confirmation(configuration,
                                               "accept_user",
-                                              login, '', project_name,
+                                              login, owner_login, project_name,
                                               category_dict)
 
 
@@ -705,7 +738,9 @@ def __send_project_promote_to_owner_confirmation(configuration,
                                               category_dict)
 
 
-def __delete_mig_user(configuration, client_id, allow_missing=False):
+def __delete_mig_user(configuration,
+                      client_id,
+                      allow_missing=False):
     """Helper to delete MiG user"""
 
     _logger = configuration.logger
@@ -810,8 +845,9 @@ def __update_user_log(configuration, client_id, do_lock=True):
             if not os.path.exists(log_filepath):
                 touch(log_filepath, configuration)
             fh = open(log_filepath, 'ab')
-            timestamp = datetime.datetime.fromtimestamp(time.time())
-            date = timestamp.strftime('%d-%m-%Y_%H-%M-%S')
+            timestamp = time.time()
+            current_datetime = datetime.datetime.fromtimestamp(timestamp)
+            date = current_datetime.strftime('%d-%m-%Y_%H-%M-%S')
             client_id_hash = __scamble_user_id(configuration, client_id)
             msg = "%s : %s : %s :\n" \
                 % (date, client_id, client_id_hash)
@@ -899,11 +935,38 @@ def get_active_project_short_id(configuration, user_id, protocol):
     return result
 
 
+def fill_category_meta(configuration, category_id, action, ref_dict):
+    """Fill a data category meta dict for *category_id* based on configuration
+    categories for *action* and actual reference values in *ref_dict*.
+    Raises ValueError if one or more required category reference fields are
+    missing from ref_dict or if category doesn't exist in data categories.
+    """
+    _logger = configuration.logger
+    _logger.debug('fill %s dict from %s with %s values' % (category_id, action,
+                                                           ref_dict))
+    category_dict = {'category_id': category_id}
+    category_map = dict([(i['category_id'], i) for i in
+                         configuration.gdp_data_categories])
+    if category_id not in category_map:
+        raise ValueError('no such data category: %s' % category_id)
+    category_dict.update(category_map[category_id])
+    for ref_fill in category_dict.get('references', {}).get(action, []):
+        key = ref_fill['ref_id']
+        if key not in ref_dict:
+            _logger.error('no %s with %s value in ref dict: %s' %
+                          (category_id, key, ref_dict))
+            raise ValueError('no %s value' % key)
+        ref_fill['value'] = ref_dict[key]
+
+    return category_dict
+
+
 def update_category_meta(configuration, client_id, project, category_dict,
-                         action, source=None, target=None):
+                         action, source=None, user=None):
     """Update *project* category meta dict with one or more category and
     *action* references from *category_dict* on behalf of *client_id*.
     """
+    _logger = configuration.logger
     # Lazy fill missing entries
     meta = project['category_meta'] = project.get('category_meta', {})
     meta['category_id'] = meta.get('category_id', '')
@@ -914,9 +977,10 @@ def update_category_meta(configuration, client_id, project, category_dict,
                   'action': action, 'references': []}
     if source:
         save_entry['source'] = source
-    if target:
-        save_entry['target'] = target
-    action_refs = category_dict.get('references', []).get(action, [])
+    if user:
+        save_entry['user'] = user
+    action_refs = category_dict.get('references', {}).get(action, [])
+    _logger.debug("action: %s, refs: %s" % (action, action_refs))
     for ref_entry in action_refs:
         if ref_entry and ref_entry.get('value', None):
             save_entry['references'].append(ref_entry)
@@ -1337,9 +1401,6 @@ def get_project_info(configuration,
         project = user_projects.get(project_name, {})
         # _logger.debug("client: %s, project: %s" % (client_id, project))
         if project:
-
-            status = False
-
             result['users'].append({
                 'name': extract_field(client_id, 'full_name'),
                 'email': extract_field(client_id, 'email'),
@@ -1473,7 +1534,8 @@ def project_remove_user(
         owner_client_id,
         client_id,
         project_name,
-        category_dict):
+        allow_owner=False,
+        send_notify=True):
     """User *owner_client_id* removed user *client_id* from *project_name"""
 
     _logger = configuration.logger
@@ -1484,6 +1546,7 @@ def project_remove_user(
     #     % (client_id, project_name))
 
     status = True
+    category_dict = {}
 
     # Get login handle (email) from client_id
 
@@ -1506,6 +1569,8 @@ def project_remove_user(
         + ", failed to remove user (%s): %r from project %r" \
         % (login, project_client_id, project_name)
 
+    # Check if owner_client_id is in owners
+
     if not vgrid_is_owner(project_name,
                           owner_client_id,
                           configuration,
@@ -1515,14 +1580,21 @@ def project_remove_user(
         err_msg += template
         _logger.error(log_err_msg + template)
 
-    if vgrid_is_owner(project_name,
-                      client_id,
-                      configuration,
-                      recursive=False):
+    # Check if client_id is in owners
+
+    if status \
+        and not allow_owner \
+        and vgrid_is_owner(project_name,
+                           client_id,
+                           configuration,
+                           recursive=False):
         status = False
         template = ": The project owner can't be removed from project"
         err_msg += template
         _logger.error(log_err_msg + template)
+
+    # Update user project actions, remove from vgrid members
+    # and delete
 
     if status:
         (_, db_lock_filepath) = __user_db_filepath(configuration)
@@ -1549,14 +1621,16 @@ def project_remove_user(
         elif project_state == 'accepted':
             _logger.info("GDP: Removing member: %r from vgrid: %r" %
                          (project_client_id, project_name))
+            # Remove user as vgrid member
             (status, vgrid_msg) = vgrid_remove_members(configuration,
                                                        project_name,
                                                        [project_client_id],
-                                                       allow_empty=False)
+                                                       allow_empty=allow_owner)
             if not status:
                 _logger.error(log_err_msg
                               + ": %s" % vgrid_msg)
             else:
+                # Delete MiG user
                 (status, delete_msg) \
                     = __delete_mig_user(configuration, project_client_id)
                 if not status:
@@ -1569,36 +1643,80 @@ def project_remove_user(
             status = False
             _logger.error(log_err_msg
                           + ": Unexpected project state: %r" % project_state)
-        if status:
-            project_log_msg = "User id: %s" \
-                % __scamble_user_id(configuration, client_id)
 
-            status = project_log(
-                configuration,
-                'https',
-                owner_client_id,
-                owner_client_addr,
-                'removed_user',
-                details=project_log_msg,
-                project_name=project_name,
-            )
-            if not status:
-                _logger.error(log_err_msg
-                              + ": Project log failed")
-        if status:
-            # Always register remove with owner
-            owner_projects = user_db.get(owner_client_id, {}).get('projects',
-                                                                  {})
-            owner_project = owner_projects[project_name]
-            update_category_meta(configuration,
-                                 owner_client_id, owner_project,
-                                 category_dict,
-                                 'remove_user', target=client_id)
-
-            __save_user_db(configuration, user_db, do_lock=False)
-        release_file_lock(flock)
+    # Log removed user
 
     if status:
+        project_log_msg = "User id: %s" \
+            % __scamble_user_id(configuration, client_id)
+
+        status = project_log(
+            configuration,
+            'https',
+            owner_client_id,
+            owner_client_addr,
+            'removed_user',
+            details=project_log_msg,
+            project_name=project_name,
+        )
+        if not status:
+            _logger.error(log_err_msg
+                          + ": Project log failed")
+
+    # Update owner project actions
+
+    if status:
+        # Always register remove with owner
+        owner_projects = user_db.get(owner_client_id, {}).get('projects',
+                                                              {})
+        owner_project = owner_projects[project_name]
+        owner_project_category_meta = owner_project.get('category_meta', {})
+        owner_project_category_id = owner_project_category_meta.get(
+            'category_id', '')
+        owner_project_actions = owner_project_category_meta.get('actions', [])
+
+        # Find references for last owner action
+        # Fist look for an 'invite_user' action
+        category_status = False
+        for opa in reversed(owner_project_actions):
+            _logger.debug("opa: %s" % opa)
+            opa_action = opa.get('action', '')
+            opa_user = opa.get('user', '')
+            if opa_user == client_id and opa_action == 'invite_user':
+                category_dict = {i['ref_id']: i['value'] for i in
+                                 opa.get('references', [])}
+                category_status = True
+                break
+        if not category_status:
+            status = False
+            template = ": Could not find any valid reference in owner actions"
+            err_msg += template
+            _logger.error(log_err_msg + template)
+
+    if status:
+        _logger.debug("category_dict: %s" % category_dict)
+        category_entry = fill_category_meta(configuration,
+                                            owner_project_category_id,
+                                            'remove_user', category_dict)
+        _logger.debug("category_entry: %s" % category_entry)
+        # Update owner actions
+        update_category_meta(configuration,
+                             owner_client_id, owner_project,
+                             category_dict,
+                             'remove_user',
+                             source=owner_client_id,
+                             user=client_id)
+        # Update user actions
+        update_category_meta(configuration,
+                             client_id, project,
+                             category_dict,
+                             'remove_user',
+                             source=owner_client_id,
+                             user=client_id)
+        __save_user_db(configuration, user_db, do_lock=False)
+    release_file_lock(flock)
+
+    if status and send_notify:
         _logger.info("handle remove notify")
         owner_login = __short_id_from_client_id(
             configuration, owner_client_id)
@@ -1606,7 +1724,7 @@ def project_remove_user(
                                                          owner_login,
                                                          login,
                                                          project_name,
-                                                         category_dict)
+                                                         category_entry)
         if not status:
             template = ": Failed to send project remove confirmation email"
             err_msg += template
@@ -1636,18 +1754,10 @@ def project_invite_user(
 
     _logger = configuration.logger
     # _logger.debug(
-    #     "owner_client_addr: %r, owner_client_id: %r"
-    #     % (owner_client_addr, owner_client_id)
-    #     + ", client_id: %r, project_name: %r"
-    #     % (client_id, project_name))
-
-    status = True
-
-    real_action = 'invite_user'
-    target = client_id
-    if in_create:
-        real_action = 'create_project'
-        target = None
+    #    "owner_client_addr: %r, owner_client_id: %r"
+    #    % (owner_client_addr, owner_client_id)
+    #    + ", client_id: %r, project_name: %r"
+    #    % (client_id, project_name))
 
     # Get login handle (email) from client_id
 
@@ -1657,8 +1767,7 @@ def project_invite_user(
         client_id,
         project_name)
 
-    ref_pairs = [(i['ref_id'], i['value']) for i in
-                 category_dict.get('references', {}).get(real_action, [])]
+    status = True
     ok_msg = "Invited user: %r to project %r" % (login, project_name)
     err_msg = "Failed to invite user: %r to project: %r" % (
         login, project_name)
@@ -1671,6 +1780,45 @@ def project_invite_user(
         + ", failed to invite user (%s): %r to project %r" \
         % (login, project_client_id, project_name)
 
+    # Resolve category metadata, if in create then resolve for both
+    # 'invite_user' and 'create_project'
+    category_id = category_dict.get('category_id', '')
+    if not in_create:
+        project_category_dict = None
+        invite_category_dict = category_dict
+        ref_pairs = [(i['ref_id'], i['value']) for i in
+                     invite_category_dict.get('references', {}).get('invite_user', [])]
+    else:
+        project_category_dict = category_dict
+        _logger.debug("project_category_dict: %s" % project_category_dict)
+        ref_pairs_create = [(i['ref_id'], i['value']) for i in
+                            project_category_dict.get('references', {}).get('create_project', [])]
+        _logger.debug("ref_pairs_create: %s" % ref_pairs_create)
+        try:
+            # Generate 'fake' invite ref pairs if in_create
+            default_category_dict = [i
+                                     for i in configuration.gdp_data_categories
+                                     if i['category_id'] == category_id][0]
+            _logger.debug("default_category_dict: %s" % default_category_dict)
+            ref_pairs = [(i['ref_id'], 'AUTO') for i in
+                         default_category_dict.get('references', {}).get('invite_user', [])]
+            # _logger.debug("ref_pairs: %s" % ref_pairs)
+            ref_dict = dict(ref_pairs)
+            # Update with values from create action
+            ref_dict.update(dict(ref_pairs_create))
+            invite_category_dict = fill_category_meta(configuration,
+                                                      category_id, 'invite_user',
+                                                      ref_dict)
+            _logger.debug("project_category_dict: %s" % project_category_dict)
+            _logger.debug("invite_category_dict: %s" % invite_category_dict)
+        except Exception as exc:
+            template = ": failed to fill category meta for 'invite_user'"
+            err_msg += template
+            _logger.error("%s%s, err: %s" % (log_err_msg, template, exc))
+            return (False, err_msg)
+
+    # Check ownership
+
     if not vgrid_is_owner(project_name,
                           owner_client_id,
                           configuration,
@@ -1679,6 +1827,8 @@ def project_invite_user(
         template = ": Invalid project owner"
         err_msg += template
         _logger.error(log_err_msg + template)
+
+    # Create invitation
 
     if status:
         (_, db_lock_filepath) = __user_db_filepath(configuration)
@@ -1693,7 +1843,7 @@ def project_invite_user(
             {'state': '',
              'client_id': project_client_id,
              'category_meta': {
-                 'category_id': category_dict.get('category_id', ''),
+                 'category_id': category_id,
                  'actions': []},
              })
         project_state = project.get('state', '')
@@ -1734,8 +1884,32 @@ def project_invite_user(
                 owner_projects = user_db.get(owner_client_id, {}).get(
                     'projects', {})
                 owner_project = owner_projects[project_name]
-            update_category_meta(configuration, owner_client_id, owner_project,
-                                 category_dict, real_action, target=target)
+            # If in create then register 'create_project' action with owner
+            if in_create:
+
+                _logger.debug("updating create meta: %s" %
+                              project_category_dict)
+                update_category_meta(configuration, owner_client_id, owner_project,
+                                     project_category_dict, 'create_project',
+                                     source=owner_client_id,
+                                     user=owner_client_id
+                                     )
+                # Register fake 'invite_user' action with owner
+                update_category_meta(configuration, owner_client_id, owner_project,
+                                     invite_category_dict, 'invite_user',
+                                     source=owner_client_id,
+                                     user=owner_client_id)
+            else:
+                # Register 'invite_user' action with owner
+                update_category_meta(configuration, owner_client_id, owner_project,
+                                     invite_category_dict, 'invite_user',
+                                     source=owner_client_id,
+                                     user=client_id)
+                # Register 'invite_user' action with user
+                update_category_meta(configuration, client_id, project,
+                                     invite_category_dict, 'invite_user',
+                                     source=owner_client_id,
+                                     user=client_id)
 
             project['state'] = 'invited'
             user_projects[project_name] = project
@@ -1759,8 +1933,7 @@ def project_invite_user(
                                                              project_name,
                                                              category_dict)
         if not status:
-            template = ": Failed to send project %s confirmation email" % \
-                       real_action
+            template = ": Failed to send project invite user confirmation email"
             err_msg += template
             _logger.error(log_err_msg + template)
 
@@ -2522,10 +2695,13 @@ def project_promote_to_owner(
         # Find create or promote_to_owner action
 
         project_action = ""
+        user_invites = []
         for ent in project_actions:
             value = ent.get('action', '')
             if value == 'create_project' or value == 'promote_to_owner':
                 project_action = ent
+            elif value == 'invite_user':
+                user_invites.append(copy.deepcopy(ent))
 
         if not project_action:
             status = False
@@ -2539,7 +2715,6 @@ def project_promote_to_owner(
         # Fill promote_to_owner action with references
         # from project create action or last promote action
 
-        category_id = category_meta.get('category_id', '')
         ref_dict = {i['ref_id']: i['value'] for i in
                     project_action.get('references', [])}
 
@@ -2551,7 +2726,8 @@ def project_promote_to_owner(
 
         update_category_meta(configuration, client_id, project,
                              ref_dict, 'promote_to_owner',
-                             target=promotee_client_id)
+                             source=client_id,
+                             user=promotee_client_id)
 
         # Update promotee action list
 
@@ -2559,9 +2735,27 @@ def project_promote_to_owner(
         update_category_meta(configuration,
                              promotee_client_id, promotee_project,
                              promotee_ref_dict, 'promote_to_owner',
-                             source=client_id)
+                             source=client_id,
+                             user=promotee_client_id)
+
+        # Append all old invites to new owner actions
+        # to preserve category information
+
+        promotee_category_meta = promotee_project.get('category_meta', {})
+        promotee_actions = promotee_category_meta.get('actions', [])
+        if not promotee_actions:
+            status = False
+            template = ": No promotee project actions found"
+            err_msg += template
+            _logger.error(log_err_msg + template)
+
+        for invite in user_invites:
+            # _logger.debug("Adding original invite: %s" % invite)
+            promotee_actions.append(invite)
 
         __save_user_db(configuration, user_db, do_lock=False)
+
+    if flock:
         release_file_lock(flock)
         flock = None
 
@@ -2796,7 +2990,8 @@ def project_demote_owner(
         ref_dict.update(category_dict)
         update_category_meta(configuration, client_id, project,
                              ref_dict, 'demote_owner',
-                             source=client_id)
+                             source=client_id,
+                             user=demotee_client_id)
 
         # Do not log redundant action entries
 
@@ -2805,7 +3000,8 @@ def project_demote_owner(
             update_category_meta(configuration, demotee_client_id,
                                  demotee_project,
                                  demotee_ref_dict, 'demote_owner',
-                                 source=client_id)
+                                 source=client_id,
+                                 user=demotee_client_id)
 
         __save_user_db(configuration, user_db, do_lock=False)
         release_file_lock(flock)
@@ -3005,9 +3201,6 @@ def project_accept_user(
     project_client_id = None
     add_member_status = False
     add_user_status = False
-    real_action = 'accept_user'
-    if in_create:
-        real_action = 'create_project'
 
     # Get login handle (email) from client_id
 
@@ -3028,6 +3221,39 @@ def project_accept_user(
     (_, db_lock_filepath) = __user_db_filepath(configuration)
     flock = acquire_file_lock(db_lock_filepath)
     user_db = __load_user_db(configuration, do_lock=False)
+
+    # Resolve category metadata, if in create then resolve for both
+    # 'accept_user' and 'create_project'
+    category_id = category_dict.get('category_id', '')
+    if not in_create:
+        accept_category_dict = category_dict
+        ref_pairs = [(i['ref_id'], i['value']) for i in
+                     accept_category_dict.get('references', {}).get('accept_user', [])]
+    else:
+        ref_pairs_create = [(i['ref_id'], i['value']) for i in
+                            category_dict.get('references', {}).get('create_project', [])]
+        _logger.debug("ref_pairs_create: %s" % ref_pairs_create)
+        try:
+            # Generate 'fake' invite ref pairs if in_create
+            default_category_dict = [i
+                                     for i in configuration.gdp_data_categories
+                                     if i['category_id'] == category_id][0]
+            _logger.debug("default_category_dict: %s" % default_category_dict)
+            ref_pairs = [(i['ref_id'], 'AUTO') for i in
+                         default_category_dict.get('references', {}).get('accept_user', [])]
+            _logger.debug("ref_pairs: %s" % ref_pairs)
+            ref_dict = dict(ref_pairs)
+            # Update with values from create action
+            ref_dict.update(dict(ref_pairs_create))
+            accept_category_dict = fill_category_meta(configuration,
+                                                      category_id, 'accept_user',
+                                                      ref_dict)
+            _logger.debug("accept_category_dict: %s" % accept_category_dict)
+        except Exception as exc:
+            template = ": failed to fill category meta for 'accept_user'"
+            err_msg += template
+            _logger.error("%s%s, err: %s" % (log_err_msg, template, exc))
+            return (False, err_msg)
 
     # Retrieve user
 
@@ -3126,19 +3352,35 @@ def project_accept_user(
                 _logger.error(template
                               + " Failed : %s" % (delete_msg))
     else:
-        if not in_create:
-            # Register accepted invitation for invited user
-            update_category_meta(configuration, client_id, project,
-                                 category_dict, 'accept_user')
+        # Register accepted invitation for invited user
+        update_category_meta(configuration, client_id, project,
+                             accept_category_dict, 'accept_user',
+                             source=client_id,
+                             user=client_id)
         project['state'] = 'accepted'
         __save_user_db(configuration, user_db, do_lock=False)
         release_file_lock(flock)
 
     if status and not in_create:
         _logger.info("handle accept notify")
+        project_actions = project.get('category_meta', {}).get('actions', [])
+        # Find inviting owner
+        owner_login = ''
+        owner_client_id = ''
+        for ent in reversed(project_actions):
+            _logger.debug("action: %s" % ent.get('action', ''))
+            if ent.get('action', '') == 'invite_user':
+                owner_client_id = ent.get('source', '')
+                break
+        if owner_client_id:
+            owner_login = __short_id_from_client_id(
+                configuration, owner_client_id)
+        _logger.debug("owner_client_id: %s" % owner_client_id)
+        _logger.debug("owner_login: %s" % owner_login)
         status = __send_project_accept_user_confirmation(configuration, login,
+                                                         owner_login,
                                                          project_name,
-                                                         category_dict)
+                                                         accept_category_dict)
         if not status:
             template = ": Failed to send project accept confirmation email"
             err_msg += template
@@ -3729,7 +3971,11 @@ This directory is used for hosting private files for the %r %r.
     # Create directory to store GDP project files
 
     if status:
-        project_home = os.path.join(configuration.gdp_home,
+        project_home_base = os.path.join(configuration.gdp_home,
+                                         notify_home_dirname)
+        # Ensure project home base dir
+        makedirs_rec(project_home_base, configuration)
+        project_home = os.path.join(project_home_base,
                                     project_name)
         if not os.path.isdir(project_home):
             try:
@@ -3843,6 +4089,287 @@ This directory is used for hosting private files for the %r %r.
                     + " NOT found in GDP database")
             __save_user_db(configuration, user_db, do_lock=False)
             release_file_lock(flock)
+
+    ret_msg = err_msg
+    if status:
+        ret_msg = ok_msg
+        _logger.info(log_ok_msg)
+
+    return (status, ret_msg)
+
+
+def project_remove(
+        configuration,
+        client_addr,
+        client_id,
+        project_name):
+    """Remove project with *project_name* and owner *client_id*.
+    Removes all owners, participants and data.
+    """
+
+    _logger = configuration.logger
+    # _logger.debug(
+    #    "project_remove: client_id: %r"
+    #     + ", project_name: %r", client_id, project_name)
+
+    status = True
+
+    ok_msg = "Removed project: %r" % project_name
+    err_msg = "Failed to remove project: %r" % project_name
+    log_ok_msg = "GDP: User: %r from ip: %s, removed project: %r" % (
+        client_id, client_addr, project_name)
+    log_err_msg = "GDP: User: %r from ip: %s" \
+        % (client_id, client_addr) \
+        + ", failed to remove project: %r" % project_name
+
+    # Get GDP project info
+
+    (_, db_lock_filepath) = __user_db_filepath(configuration)
+    user_db = __load_user_db(configuration)
+    project = user_db.get(client_id, {}).get(
+        'projects', {}).get(project_name, {})
+    if not project:
+        status = False
+        template = ": Could not retrieve project: %r from GDP database" \
+            % project_name
+        err_msg += template
+        _logger.error(log_err_msg + template)
+
+    # retrieve project meta
+
+    if status:
+        category_meta = project.get('category_meta', {})
+        if not category_meta:
+            status = False
+            template = ": No project meta found"
+            err_msg += template
+            _logger.error(log_err_msg + template)
+
+    if status:
+        category_id = category_meta.get('category_id', '')
+        if not category_id:
+            status = False
+            template = ": No project category id found"
+            err_msg += template
+            _logger.error(log_err_msg + template)
+
+    if status:
+        project_actions = category_meta.get('actions', [])
+        if not project_actions:
+            status = False
+            template = ": No project actions found"
+            err_msg += template
+            _logger.error(log_err_msg + template)
+
+    # Find create or promote_to_owner action
+
+    if status:
+        ref_action = {}
+        for ent in project_actions:
+            value = ent.get('action', '')
+            if value == 'create_project' or value == 'promote_to_owner':
+                ref_action = ent
+
+        if not ref_action:
+            status = False
+            template = ": no project create or promote action found"
+            err_msg += template
+            _logger.error(log_err_msg + template
+                          + ": %s" % project_actions)
+
+    # Fill remove action with references
+    # from project create action or last promote action
+
+    if status:
+        project_ref_dict = {i['ref_id']: i['value'] for i in
+                            ref_action.get('references', [])}
+        # _logger.debug("project_ref_dict: %s" % project_ref_dict)
+        try:
+            project_remove_category_entry = fill_category_meta(configuration,
+                                                               category_id, 'remove_project',
+                                                               project_ref_dict)
+        except ValueError as err:
+            status = False
+            template = ": Failed to fill category meta"
+            err_msg += template
+            _logger.error(log_err_msg + template
+                          + ": %s" % err)
+
+    # Get owners list
+
+    if status:
+        (status, vgrid_owners_list) = vgrid_owners(project_name,
+                                                   configuration,
+                                                   recursive=False)
+        if not status:
+            template = ": Could not retrieve owners list"
+            err_msg += template
+            _logger.error(log_err_msg + template)
+        elif not client_id in vgrid_owners_list:
+            # Check is client_id is owner
+            status = False
+            template = ": not project owner"
+            err_msg += template
+            _logger.error(log_err_msg + template)
+
+    # Get members list
+
+    (status, vgrid_members_list) = vgrid_members(project_name,
+                                                 configuration,
+                                                 recursive=False)
+    if not status:
+        template = ": Could not retrieve members list"
+        err_msg += template
+        _logger.error(log_err_msg + template)
+
+    # Remove project participants
+
+    if status:
+        _logger.debug("vgrid_members_list: %s" % vgrid_members_list)
+        for vgrid_member in vgrid_members_list:
+            base_client_id = __client_id_from_project_client_id(configuration,
+                                                                vgrid_member)
+            (remove_status, msg) = project_remove_user(
+                configuration,
+                client_addr,
+                client_id,
+                base_client_id,
+                project_name,
+                allow_owner=True,
+                send_notify=False)
+            if not remove_status:
+                status = False
+                template = ": Failed to remove project member: %s" % vgrid_member
+                err_msg += ": %s" % msg
+                _logger.error(log_err_msg + template)
+                break
+
+    # Remove project owners
+
+    if status:
+        (remove_status, msg) = vgrid_remove_owners(configuration,
+                                                   project_name,
+                                                   vgrid_owners_list,
+                                                   allow_empty=True)
+        if not remove_status:
+            status = False
+            template = ": Failed to remove project owners"
+            err_msg += template
+            _logger.error(log_err_msg + template)
+
+    # Remove vgrid files
+
+    if status:
+        (remove_status, msg) = vgrid_rm_files(configuration, project_name)
+        if not remove_status:
+            status = False
+            template = ": Failed to remove project files"
+            err_msg += template
+            _logger.error("%s%s: %s" % (log_err_msg, template, msg))
+
+    # Remove vgrid home entry
+
+    if status:
+        (remove_status, msg) = vgrid_rm_entry(configuration, project_name)
+        if not remove_status:
+            status = False
+            template = ": Failed to remove project entry"
+            err_msg += template
+            _logger.error("%s%s: %s" % (log_err_msg, template, msg))
+
+    # Log project removed
+
+    if status:
+        log_msg = "Removed project"
+
+        status = project_log(
+            configuration,
+            'https',
+            client_id,
+            client_addr,
+            'removed',
+            details=log_msg,
+            project_name=project_name,
+        )
+        if not status:
+            _logger.error(log_err_msg
+                          + ": Project log failed")
+
+    # Send notification
+
+    if status:
+        _logger.info("handle remove project notify")
+        owner_login = __short_id_from_client_id(
+            configuration, client_id)
+        participants = []
+        for vgrid_member in vgrid_members_list:
+            _logger.debug("vgrid_member: %s" % vgrid_member)
+            base_client_id = __client_id_from_project_client_id(configuration,
+                                                                vgrid_member)
+            _logger.debug("vgrid_member base_client_id: %s" % vgrid_member)
+            participant_login = __short_id_from_client_id(configuration,
+                                                          base_client_id)
+            _logger.debug("vgrid_member participant_login: %s" %
+                          participant_login)
+            if participant_login != owner_login:
+                participants.append(participant_login)
+            _logger.debug("vgrid_member participants: %s" % participants)
+
+        status = __send_project_remove_confirmation(configuration,
+                                                    owner_login,
+                                                    participants,
+                                                    project_name,
+                                                    project_remove_category_entry)
+        if not status:
+            template = ": Failed to send project remove confirmation email"
+            err_msg += template
+            _logger.error(log_err_msg + template)
+
+    # Move GDP project home entry to the attic
+    # NOTE: Must be done after send notification to preserve move notifications
+
+    if status:
+        project_home = os.path.join(configuration.gdp_home,
+                                    os.path.join(notify_home_dirname,
+                                                 project_name))
+        if not os.path.isdir(project_home):
+            status = False
+            template = ": Invalid project home: %s" % project_home
+            err_msg += ": %s" % msg
+            _logger.error(log_err_msg + template)
+        else:
+            project_attic = os.path.join(configuration.gdp_home,
+                                         os.path.join(notify_attic_dirname,
+                                                      "%s.%d" % (project_name,
+                                                                 int(time.time()))))
+            (status, move_msg) = move_rec(project_home,
+                                          project_attic,
+                                          configuration)
+            if not status:
+                template = ": Could not move project to attic"
+                err_msg += template
+                _logger.error(log_err_msg + template
+                              + ": %r -> %r: %s"
+                              % (project_home, project_attic, move_msg))
+
+    # Remove project from GDP database
+    # NOTE: Traverse complete database to catch pending invites
+
+    if status:
+        (_, db_lock_filepath) = __user_db_filepath(configuration)
+        flock = acquire_file_lock(db_lock_filepath)
+        user_db = __load_user_db(configuration, do_lock=False)
+        for user in user_db.keys():
+            user_projects = user_db.get(user, {}).get('projects', {})
+            if project_name in user_projects:
+                try:
+                    del user_projects[project_name]
+                except Exception as err:
+                    status = False
+                    err_msg += ": %s" % err
+                    _logger.error(err_msg)
+        __save_user_db(configuration, user_db, do_lock=False)
+        release_file_lock(flock)
 
     ret_msg = err_msg
     if status:

@@ -619,7 +619,7 @@ def send_email(
         server.quit()
         if errors:
             _logger.warning('Partial error(s) sending email: %s'
-                           % errors)
+                            % errors)
             return False
         else:
             logger.debug('Email was sent to %s' % recipients)

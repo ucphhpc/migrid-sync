@@ -1821,7 +1821,6 @@ def guess_type(name):
             'openid.sreg.cn',
             'openid.sreg.fullname',
             'openid.sreg.full_name',
-            'openid.sreg.role',
             'openid.sreg.association',
             'oidc.claim.fullname',
             'oidc.claim.role',
@@ -1831,7 +1830,7 @@ def guess_type(name):
             'version',
         ):
             __type_map[key] = valid_commonname
-        # openid.sreg.required may have commas - reuse organization
+        # some openid fields may have commas - reuse organization
         for key in (
             'org',
             'openid.sreg.o',
@@ -1842,6 +1841,7 @@ def guess_type(name):
             'oidc.claim.ou',
             'oidc.claim.organizational_unit',
             'oidc.claim.locality',
+            'openid.sreg.role',
             'openid.sreg.required',
         ):
             __type_map[key] = valid_organization

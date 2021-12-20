@@ -47,6 +47,7 @@ from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.safeinput import valid_path
 from mig.shared.validstring import valid_user_path
 from mig.shared.vgrid import in_vgrid_share
+from mig.shared.vgridaccess import is_vgrid_parent_placeholder
 
 
 def signature():
@@ -113,6 +114,15 @@ def _parse_form_xfer(xfer, user_args, client_id, configuration):
                     (xfer, source_path))
                 rejected.append('invalid path: %s (%s)' %
                                 (source_path, 'entire %s share not allowed!'
+                                 % configuration.site_vgrid_label))
+                continue
+            elif is_vgrid_parent_placeholder(configuration, source_path,
+                                             abs_path, {}, client_id):
+                _logger.warning(
+                    'refusing archival of vgrid parent placeholder %s: %s' %
+                    (xfer, source_path))
+                rejected.append('invalid path: %s (%s)' %
+                                (source_path, '%s parent placeholder not allowed!'
                                  % configuration.site_vgrid_label))
                 continue
 

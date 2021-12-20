@@ -40,10 +40,10 @@ from mig.shared.defaults import csrf_field
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.gdp.all import ensure_user, get_projects, get_users, \
     get_active_project_client_id, get_short_id_from_user_id, \
-    project_accept_user, project_create, \
+    project_accept_user, project_create, project_remove, \
     project_invite_user, project_login, project_logout, project_remove_user, \
     validate_user, get_project_info, get_project_from_client_id, \
-    project_promote_to_owner, project_demote_owner
+    project_promote_to_owner, project_demote_owner, fill_category_meta
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from mig.shared.html import twofactor_wizard_html, twofactor_wizard_js, \
     twofactor_token_html
@@ -69,41 +69,6 @@ def signature():
         'status_msg': [''],
     }
     return ['text', defaults]
-
-
-def fill_category(configuration, category_id, action, ref_dict):
-    """Fill a data category dict for *category_id* based on configuration
-    categories for *action* and actual reference values in *ref_dict*.
-    Raises ValueError if one or more required category reference fields are
-    missing from ref_dict or if category doesn't exist in data categories.
-    """
-    _logger = configuration.logger
-    if action == 'demote_owner':
-        _logger.debug('fill %s dict from %s with %s values' % (category_id, action,
-                                                               ref_dict))
-    category_dict = {'category_id': category_id}
-    if action == 'demote_owner':
-        _logger.debug('build map to fill %s with %s dict from: %s' %
-                      (category_id, action, configuration.gdp_data_categories))
-    category_map = dict([(i['category_id'], i) for i in
-                         configuration.gdp_data_categories])
-    if category_id not in category_map:
-        raise ValueError('no such data category: %s' % category_id)
-    category_dict.update(category_map[category_id])
-    if action == 'demote_owner':
-        _logger.debug('fill %s dict %s with %s values' % (category_id,
-                                                          category_dict,
-                                                          ref_dict))
-    for ref_fill in category_dict.get('references', {}).get(action, []):
-        key = ref_fill['ref_id']
-        if key not in ref_dict:
-            _logger.error('no %s with %s value in ref dict: %s' %
-                          (category_id, key, ref_dict))
-            raise ValueError('no %s value' % key)
-        ref_fill['value'] = ref_dict[key]
-    if action == 'demote_owner':
-        _logger.debug('filled %s dict: %s' % (category_id, category_dict))
-    return category_dict
 
 
 def html_category_fields(configuration, action):
@@ -189,6 +154,7 @@ def html_tmpl(
     info_projects = False
     invited_projects = False
     invite_projects = False
+    remove_participant_projects = False
     remove_projects = False
     await_projects = False
     reassign_owner_projects = False
@@ -212,7 +178,8 @@ def html_tmpl(
         if user_dict and vgrid_manage_allowed(configuration,
                                               user_dict):
             info_projects = invite_projects = \
-                remove_projects = reassign_owner_projects = \
+                remove_participant_projects = reassign_owner_projects = \
+                remove_projects = \
                 get_projects(configuration, client_id,
                              'accepted', owner_only=True)
         accepted_projects = get_projects(configuration, client_id,
@@ -221,7 +188,7 @@ def html_tmpl(
 
     # Gather all projects known to user and use in await and category map
     known_projects = {}
-    for entry in [invite_projects, remove_projects, accepted_projects,
+    for entry in [invite_projects, remove_participant_projects, accepted_projects,
                   invited_projects]:
         if entry and isinstance(entry, dict):
             known_projects.update(entry)
@@ -237,6 +204,7 @@ def html_tmpl(
         html += """
 <div id='info_dialog' class='hidden'></div>
 <div id='help_dialog' class='hidden'></div>
+<div id='remove_dialog' class='hidden'></div>
 <div id='otp_verify_dialog' title='Verify Authenticator App Token'
    class='hidden'>
 """
@@ -292,7 +260,7 @@ def html_tmpl(
         if action == 'accept_user':
             preselected_tab = tab_count
         tab_count += 1
-    if remove_projects:
+    if remove_participant_projects:
         html += """<li><a href='#remove_user_tab'>Remove Participant</a></li>"""
         if action == 'remove_user':
             preselected_tab = tab_count
@@ -303,8 +271,13 @@ def html_tmpl(
             preselected_tab = tab_count
         tab_count += 1
     if reassign_owner_projects:
-        html += """<li><a href='#reassign_owner_projects_tab'>Reassign owner</a></li>"""
+        html += """<li><a href='#reassign_owner_projects_tab'>Reassign Owner</a></li>"""
         if action == 'promote_to_owner':
+            preselected_tab = tab_count
+        tab_count += 1
+    if remove_projects:
+        html += """<li><a href='#remove_project_tab'>Remove Project</a></li>"""
+        if action == 'remove_project':
             preselected_tab = tab_count
         tab_count += 1
     if configuration.site_enable_twofactor:
@@ -566,7 +539,7 @@ def html_tmpl(
 
     # Show project remove selectbox
 
-    if remove_projects:
+    if remove_participant_projects:
         html += \
             """
         <div id='remove_user_tab'>"""
@@ -607,11 +580,6 @@ def html_tmpl(
                 </select>
                 </div>
             </td></tr>
-            """
-
-        # Insert all category refs but show only the ones for chosen project
-        html += html_category_fields(configuration, 'remove_user')
-        html += """
         </tbody>
         </table>
         <table class='gm_projects_table' style='border-spacing=0;'>
@@ -797,7 +765,7 @@ def html_tmpl(
         </div>
         """
 
-    # Show project remove selectbox
+    # Show project reassing selectbox
 
     if reassign_owner_projects:
         reassign_owner_projects_help = "Promote project member to project owner."
@@ -872,6 +840,71 @@ def html_tmpl(
         </table>
         </div>
         """
+
+    # Show project remove selectbox
+
+    if remove_projects:
+        remove_project_help = "Remove project:"
+        remove_project_help += " All participants are removed."
+        remove_project_help += " The complete dataset is deleted."
+        html += \
+            """
+        <div id='remove_project_tab'>"""
+        html += status_html
+        html +=  \
+            """
+        <table class='gm_projects_table' style='border-spacing=0;'>
+        <thead>
+            <tr>
+                <th>Remove project:
+                <span  class='fakelink'
+                onclick='showHelp("Remove Project Help", "%s");'>
+                <img align='top' src='%s/icons/help.png' title='%s'>
+                </span></th>""" % (remove_project_help,
+                                   configuration.site_images,
+                                   remove_project_help)
+        html += """</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>
+                <div class='styled-select gm_select semi-square'>
+                <select name='remove_project_base_vgrid_name'>
+                <option value=''>Choose project</option>
+                <option value=''>───────</option>"""
+        for project in list(sorted(remove_projects)):
+            html += \
+                """
+                <option value='%s'>%s</option>""" \
+                % (project, project)
+        html += \
+            """
+                <option value=''>───────</option>
+                </select>
+                </div>
+                </td></tr>
+            </td></tr>
+            """
+
+        # Insert all category refs but show only the ones for chosen project
+        # html += html_category_fields(configuration, 'remove_project')
+        html += """
+        </tbody>
+        </table>
+        <table class='gm_projects_table' style='border-spacing=0;'>
+        <thead>
+            <tr>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>
+                <!-- NOTE: must have href for correct cursor on mouse-over -->
+                <a class='ui-button' id='remove_project_button' href='#' onclick='showRemoveDialog(\"remove_project\"); return false;'>Remove</a>
+            </td></tr>
+        </tbody>
+        </table>
+        </div>"""
 
     # 2-FA
 
@@ -1001,6 +1034,7 @@ def js_tmpl_parts(configuration, csrf_token):
 
     function selectRef(project_action, category_id) {
         /* Hide and disable inactive input fields to avoid interference */
+        console.debug(JSON.stringify($('.category_section.'+project_action)));
         $('.category_section.'+project_action).hide();
         $('.'+category_id+'_section.'+project_action).show();
         $('.'+category_id+'_section.'+project_action+' .category_ref').prop('disabled', true);
@@ -1081,8 +1115,7 @@ def js_tmpl_parts(configuration, csrf_token):
         if (project_info.OK.length == 1) {
             for (var i=0; i<project_info.OK[0].users.length; i++ ) {
                 if (project_info.OK[0].users[i].allowed_owner === true &&
-                    (project_info.OK[0].users[i].state == 'accepted' \
-                        || project_info.OK[0].users[i].state == 'invited')) {
+                    (project_info.OK[0].users[i].state == 'accepted')) {
                     users.push(project_info.OK[0].users[i]);
                 }
             }
@@ -1289,6 +1322,14 @@ def js_tmpl_parts(configuration, csrf_token):
             if (!handleDynamicFields(project_action, category_name)) return false;
             $('#gm_project_submit_form').submit();
         }
+        else if (project_action == 'remove_project') {
+            var project_name = extractProject(project_action);
+            var category_name = extractCategory(project_action, project_name);
+            if (!handleStaticFields(project_action, project_name, '', category_name)) return false;
+            // TODO: Is JURA to be notified when project is removed ? */
+            // if (!handleDynamicFields(project_action, category_name)) return false;
+            $('#gm_project_submit_form').submit();
+        }
         else if (project_action == 'logout') {
             if (!handleStaticFields(project_action, '', '', '')) return false;
             $('#gm_project_submit_form').submit();
@@ -1378,6 +1419,18 @@ def js_tmpl_parts(configuration, csrf_token):
         $('#info_dialog').dialog('open');
     }
 
+    function showRemoveDialog(project_action) {
+        var project_name = extractProject(project_action);
+        var title = 'Remove Project ' + project_name;
+        var msg = 'All project participants will be removed and all associated data will be permanently deleted.';
+        msg += '<br>This action might take a long time - please do NOT touch anything until it completes with a status message.';
+        var warn_msg = 'Last warning, this action CANNOT be undone.';
+        var html = msg+'<br><br><span class=\"warningtext\">'+warn_msg+'</span>';
+        $('#remove_dialog').dialog('option', 'title', title);
+        $('#remove_dialog').html('<p>'+html+'</p>');
+        $('#remove_dialog').dialog('open');
+    }
+
     function showProjectInfo() {
         var project_name = extractProject('project_info');
         if (project_name === null) {
@@ -1418,6 +1471,16 @@ def js_tmpl_parts(configuration, csrf_token):
                 closeOnEscape: true,
 
                 buttons: { 'Ok': function() { $(this).dialog('close'); }}
+              });
+        $('#remove_dialog').dialog(
+              { autoOpen: false,
+                width: 500,
+                height: 250,
+                modal: true,
+                closeOnEscape: true,
+                overflow: scroll,
+                buttons: { 'Remove': function() { submitform('remove_project') },
+                           'Cancel': function() { $(this).dialog('close'); }}
               });
 
     %(tfa_ready)s
@@ -1709,9 +1772,9 @@ Please contact the site admins %s if you think it should be enabled.
                 # Check and fill references
 
                 try:
-                    category_entry = fill_category(configuration,
-                                                   gdp_category_id, action,
-                                                   dict(gdp_ref_pairs))
+                    category_entry = fill_category_meta(configuration,
+                                                        gdp_category_id, action,
+                                                        dict(gdp_ref_pairs))
                 except ValueError as err:
                     status = False
                     msg = "missing reference: %s" % err
@@ -1763,9 +1826,9 @@ Please contact the site admins %s if you think it should be enabled.
                 # Check and fill references
 
                 try:
-                    category_entry = fill_category(configuration,
-                                                   gdp_category_id, action,
-                                                   dict(gdp_ref_pairs))
+                    category_entry = fill_category_meta(configuration,
+                                                        gdp_category_id, action,
+                                                        dict(gdp_ref_pairs))
                 except ValueError as err:
                     status = False
                     msg = "missing reference: %s" % err
@@ -1795,40 +1858,27 @@ Please contact the site admins %s if you think it should be enabled.
                 _logger.error("gdpman: Remove user: %s" % msg)
 
             # extract owned projects and saved data category
-            remove_projects = get_projects(
+            remove_participant_projects = get_projects(
                 configuration, client_id, 'accepted', owner_only=True)
-            if not base_vgrid_name in remove_projects:
+            if not base_vgrid_name in remove_participant_projects:
                 status = False
                 msg = "'%s' is NOT a valid project id" % base_vgrid_name
                 _logger.error("gdpman: Remove user: %s" % msg)
             else:
-                project = remove_projects[base_vgrid_name]
+                project = remove_participant_projects[base_vgrid_name]
                 gdp_category_id = project['category_meta']['category_id']
                 if not gdp_category_id:
                     status = False
                     msg = "%s does NOT have a data category" % base_vgrid_name
                     _logger.warning("gdpman: remove user: %s" % msg)
                     gdp_category_id = 'UNKNOWN'
-
-            if status:
-                # Check and fill references
-
-                try:
-                    category_entry = fill_category(configuration,
-                                                   gdp_category_id, action,
-                                                   dict(gdp_ref_pairs))
-                except ValueError as err:
-                    status = False
-                    msg = "missing reference: %s" % err
-
             if status:
                 remove_client_id = gdp_users[username]
                 (status, msg) = project_remove_user(configuration,
                                                     client_addr,
                                                     client_id,
                                                     remove_client_id,
-                                                    base_vgrid_name,
-                                                    category_entry)
+                                                    base_vgrid_name)
             if status:
                 action_msg = 'OK: %s' % msg
             else:
@@ -1863,15 +1913,15 @@ Please contact the site admins %s if you think it should be enabled.
 
             try:
                 #logger.debug("gdp_category_id: %s" % gdp_category_id)
-                promote_category_entry = fill_category(configuration,
-                                                       gdp_category_id,
-                                                       'promote_to_owner',
-                                                       dict(gdp_ref_pairs))
+                promote_category_entry = fill_category_meta(configuration,
+                                                            gdp_category_id,
+                                                            'promote_to_owner',
+                                                            dict(gdp_ref_pairs))
                 #logger.debug("promote_category_entry: %s" % promote_category_entry)
-                demote_category_entry = fill_category(configuration,
-                                                      gdp_category_id,
-                                                      'demote_owner',
-                                                      dict(gdp_ref_pairs))
+                demote_category_entry = fill_category_meta(configuration,
+                                                           gdp_category_id,
+                                                           'demote_owner',
+                                                           dict(gdp_ref_pairs))
                 logger.debug("demote_category_entry: %s" %
                              demote_category_entry)
             except ValueError as err:
@@ -1919,8 +1969,8 @@ Please contact the site admins %s if you think it should be enabled.
             # Check and fill references
 
             try:
-                category_entry = fill_category(configuration, gdp_category_id,
-                                               action, dict(gdp_ref_pairs))
+                category_entry = fill_category_meta(configuration, gdp_category_id,
+                                                    action, dict(gdp_ref_pairs))
             except ValueError as err:
                 status = False
                 msg = "missing reference: %s" % err
@@ -1942,6 +1992,32 @@ Please contact the site admins %s if you think it should be enabled.
                                        client_id,
                                        base_vgrid_name,
                                    )})
+        elif action == 'remove_project':
+            logger.debug(": %s : removing project: '%s' : %s %s : from ip: %s'"
+                         % (client_id,
+                            base_vgrid_name,
+                            gdp_category_id,
+                            gdp_ref_pairs,
+                            client_addr))
+            # Check and fill references
+            logger.debug("gdp_ref_pairs: %s" % gdp_ref_pairs)
+            try:
+                category_entry = fill_category_meta(configuration,
+                                                    gdp_category_id, action,
+                                                    dict(gdp_ref_pairs))
+            except ValueError as err:
+                status = False
+                msg = "missing reference: %s" % err
+
+            (status, msg) = project_remove(configuration,
+                                           client_addr,
+                                           client_id,
+                                           base_vgrid_name)
+            if status:
+                action_msg = 'OK: %s' % msg
+            else:
+                action_msg = 'ERROR: %s' % msg
+
         elif action == 'enable2fa':
             action_msg = status_msg
         elif action:

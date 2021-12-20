@@ -30,12 +30,13 @@
 from mig.shared.gdp.base import skip_client_id_rewrite, valid_log_actions, \
     valid_project_states, valid_account_states, valid_protocols, \
     get_active_project_client_id, get_active_project_short_id, \
-    update_category_meta, project_log, validate_user,  get_users, \
-    get_projects, get_project_info, get_project_user_dn, ensure_user, \
-    project_remove_user, project_invite_user, reset_account_roles, \
-    set_account_state, edit_gdp_user, create_project_user, \
-    project_accept_user, project_login, project_logout, project_open, \
-    project_close, project_create, project_demote_owner, project_promote_to_owner
+    fill_category_meta, update_category_meta, project_log, validate_user, \
+    get_users, get_projects, get_project_info, get_project_user_dn, \
+    ensure_user, project_remove_user, project_invite_user, \
+    reset_account_roles, set_account_state, edit_gdp_user, \
+    create_project_user, project_accept_user, project_login, project_logout, \
+    project_open, project_close, project_create, project_remove, \
+    project_demote_owner, project_promote_to_owner
 from mig.shared.gdp.userid import client_id_project_postfix, \
     get_project_client_id, get_base_client_id, \
     get_client_id_from_project_client_id, \
