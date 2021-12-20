@@ -27,8 +27,10 @@
 
 
 """Home page generator with dynamic app selection"""
+
 from __future__ import absolute_import
 
+import os
 
 from mig.shared import returnvalues
 from mig.shared.defaults import csrf_field
@@ -255,5 +257,13 @@ def main(client_id, user_arguments_dict):
 
     html = html_tmpl(configuration, client_id, title_entry)
     output_objects.append({'object_type': 'html_form', 'text': html})
+
+    # NOTE: only for openid connect tracing
+    if configuration.loglevel == 'debug':
+        claim_dump = ''
+        for (key, val) in os.environ.items():
+            if key.startswith('OIDC_CLAIM_'):
+                claim_dump += "%s: %s<br/>" % (key, val)
+        output_objects.append({'object_type': 'html_form', 'text': claim_dump})
 
     return (output_objects, returnvalues.OK)

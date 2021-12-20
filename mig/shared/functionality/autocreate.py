@@ -125,6 +125,7 @@ def signature(auth_type):
         defaults = {
             'oidc.claim.sub': REJECT_UNSET,
             'oidc.claim.upn': REJECT_UNSET,
+            'oidc.claim.aud': REJECT_UNSET,
             'oidc.claim.nickname': [''],
             'oidc.claim.fullname': REJECT_UNSET,
             'oidc.claim.o': REJECT_UNSET,
@@ -330,6 +331,7 @@ def main(client_id, user_arguments_dict, environ=None):
             or accepted['oidc.claim.organization'][-1].strip()
         org_unit = accepted['oidc.claim.ou'][-1].strip() \
             or accepted['oidc.claim.organizational_unit'][-1].strip()
+        token_audience = accepted['oidc.claim.aud'][-1].strip()
 
         # We may receive multiple roles and associations
 
@@ -500,7 +502,17 @@ Auto log out first to avoid sign up problems ...
 accepting authentic requests through %s OpenID 2.0''' %
                                configuration.user_ext_oid_title})
         return (output_objects, returnvalues.CLIENT_ERROR)
-    elif auth_flavor != AUTH_EXT_OID and not safe_handler(
+    # NOTE: implict openid connect claim signature and manually check audience
+    elif auth_flavor == AUTH_EXT_OIDC and \
+            configuration.user_ext_oidc_audience != token_audience:
+        logger.error('stray %s autocreate rejected for %r (aud: %r vs %r)' %
+                     (auth_flavor, client_id, token_audience,
+                      configuration.user_ext_oidc_audience))
+        output_objects.append({'object_type': 'error_text', 'text': '''Only
+accepting authentic requests through %s OpenID Connect''' %
+                               configuration.user_ext_oid_title})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+    elif auth_flavor not in [AUTH_EXT_OID, AUTH_EXT_OIDC] and not safe_handler(
             configuration, 'post', op_name, client_id,
             get_csrf_limit(configuration), accepted):
         logger.error('unsafe %s autocreate rejected for %s' % (auth_flavor,
