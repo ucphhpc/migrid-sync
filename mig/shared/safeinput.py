@@ -1819,25 +1819,26 @@ def guess_type(name):
             'openid.sreg.full_name',
             'openid.sreg.association',
             'oidc.claim.fullname',
-            'oidc.claim.role',
             'oidc.claim.association',
             'oidc.claim.sub',
+            'oidc.claim.aud',
             'changes',
             'version',
         ):
             __type_map[key] = valid_commonname
-        # some openid fields may have commas - reuse organization
+        # openid.sreg.required and role may have commas - reuse organization
         for key in (
             'org',
+            'openid.sreg.role',
             'openid.sreg.o',
             'openid.sreg.ou',
             'organization',
+            'oidc.claim.role',
             'oidc.claim.o',
             'oidc.claim.organization',
             'oidc.claim.ou',
             'oidc.claim.organizational_unit',
             'oidc.claim.locality',
-            'openid.sreg.role',
             'openid.sreg.required',
         ):
             __type_map[key] = valid_organization
@@ -2300,6 +2301,7 @@ if __name__ == '__main__':
     autocreate_defaults = {
         'oidc.claim.upn': [''],
         'oidc.claim.sub': [''],
+        'oidc.claim.aud': [''],
         'oidc.claim.nickname': [''],
         'oidc.claim.email': [''],
         'oidc.claim.fullname': [''],
@@ -2319,11 +2321,12 @@ if __name__ == '__main__':
         'proxy_uploadfilename': [''],
     }
     user_arguments_dict = {'oidc.claim.sub': ['xyz-123-nsd-e2e-e3e-dd3'],
-                           'oidc.claim.ou': ['nbi'],
+                           'oidc.claim.aud': ['d34db33f-a13f-4ea0-de63-3bd8f9ef9392'],
+                           'oidc.claim.ou': ['nbi, faksek'],
                            'oidc.claim.upn': ['brs278@ku.dk'],
                            'oidc.claim.nickname': ['brs278'],
                            'oidc.claim.fullname': ['Jonas Bardino'],
-                           'oidc.claim.role': ['tap'],
+                           'oidc.claim.role': ['tap, ansat'],
                            'oidc.claim.association': ['sci-nbi-tap'],
                            'oidc.claim.o': ['science'],
                            'oidc.claim.email': ['bardino@nbi.ku.dk']}

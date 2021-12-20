@@ -205,6 +205,7 @@ def fix_missing(config_file, verbose=True):
         'user_mig_oidc_provider': '',
         'user_ext_oidc_provider': '',
         'user_openidconnect_providers': [],
+        'user_ext_oidc_audience': '',
         'user_mig_cert_title': '',
         'user_ext_cert_title': '',
         'user_monitor_log': 'monitor.log',
@@ -447,6 +448,7 @@ class Configuration:
     user_mig_oidc_provider = ''
     user_ext_oidc_provider = ''
     user_openidconnect_providers = []
+    user_ext_oidc_audience = ''
     user_mig_cert_title = ''
     user_ext_cert_title = ''
     user_monitor_log = 'monitor.log'
@@ -1245,6 +1247,9 @@ location.""" % self.config_file)
                 self.user_mig_oidc_provider,
                 self.user_ext_oidc_provider] if i]
             self.user_openidconnect_providers = providers
+        if config.has_option('GLOBAL', 'user_ext_oidc_audience'):
+            self.user_ext_oidc_audience = config.get('GLOBAL',
+                                                     'user_ext_oidc_audience')
         if config.has_option('GLOBAL', 'user_mig_cert_title'):
             self.user_mig_cert_title = config.get('GLOBAL',
                                                   'user_mig_cert_title')
