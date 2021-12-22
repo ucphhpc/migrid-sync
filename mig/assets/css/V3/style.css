@@ -776,3 +776,9 @@ var, sampl, code {
     font-family: monospace, sans-serif;
 }
 
+/* Various pages like datatransfer where tables potentially extend beyond
+   available screen width. Let them fill available with horizontal scroll 
+*/
+.table-responsive .table td, .table-responsive .table th {
+    padding: 0.5rem  1.2rem;
+}

@@ -765,7 +765,10 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
         elif i['object_type'] == 'job_list':
             if len(i['jobs']) > 0:
                 jobs = i['jobs']
-                lines.append("<table class='jobs'>")
+                lines.append('''
+<div class="table-responsive">
+<table class="jobs">
+''')
                 for obj in jobs:
                     lines.append('<tr><th>Job Id</th><th>%s</th></tr>'
                                  % obj['job_id'])
@@ -873,7 +876,10 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                                      % html_link(obj['outputfileslink']))
                     lines.append('<tr><td colspan=2><br /></td></tr>')
 
-                lines.append('</table>')
+                lines.append('''
+</table>
+</div>
+''')
         elif i['object_type'] == 'trigger_job_list':
             jobs = i['trigger_jobs']
             lines.append('''
@@ -1185,8 +1191,10 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             if len(filewcs) == 0:
                 lines.append('No files to run wc on')
             else:
-                lines.append('<table class="wc"><tr><th>File</th><th>Lines</th>'
-                             '<th>Words</th><th>Bytes</th></tr>')
+                lines.append('''
+<table class="wc">
+<tr><th>File</th><th>Lines</th><th>Words</th><th>Bytes</th></tr>
+''')
                 for filewc in filewcs:
                     lines.append('<tr><td>%s</td>' % filewc['name'])
                     lines.append('<td>')
@@ -1205,8 +1213,9 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             if len(filedus) == 0:
                 lines.append('No files to run du on')
             else:
-                lines.append('<table class="du"><tr><th>File</th><th>Bytes</th>'
-                             '</tr>')
+                lines.append('''
+<table class="du"><tr><th>File</th><th>Bytes</th></tr>
+''')
                 for filedu in filedus:
                     lines.append('<tr><td>%s</td>' % filedu['name'])
                     lines.append('<td>')
@@ -1274,13 +1283,18 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             if len(submitstatuslist) == 0:
                 lines.append('No job submit status found!')
             else:
-                lines.append('<table class="submitstatus"><tr><th>File</th>'
-                             '<th>Status</th><th>Job Id</th><th>Message</th>'
-                             '</tr>')
+                lines.append('''
+<div class="table-responsive">
+<table class="submitstatus">
+<tr><th>File</th><th>Status</th><th>Job Id</th><th>Message</th></tr>
+''')
                 for submitstatus in submitstatuslist:
                     lines.append('<tr>%s</tr>' % html_table_if_have_keys(
                         submitstatus, ['name', 'status', 'job_id', 'message']))
-                lines.append('</table>')
+                lines.append('''
+</table>
+</div>
+''')
         elif i['object_type'] == 'objects':
             objects = i['objects']
             if len(objects) == 0:
@@ -1314,6 +1328,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
         elif i['object_type'] == 'runtimeenvironments':
             runtimeenvironments = i['runtimeenvironments']
             lines.append('''
+<div class="table-responsive">
 <table class="runtimeenvs columnsort" id="runtimeenvtable">
 <thead class="title">
     <tr>
@@ -1344,10 +1359,15 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 
             lines.append('''
 </tbody>
-</table>''')
+</table>
+</div>
+''')
         elif i['object_type'] == 'runtimeenvironment':
 
-            software_html = '<table class="runtimeenvsw">'
+            software_html = '''
+<div class="table-responsive">
+<table class="runtimeenvsw">
+'''
             for software in i['software']:
                 software_html += '''
 <tr>
@@ -1419,10 +1439,14 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             provider_links = [html_link(res) for res in view_providers]
             lines.append('<tr><td>Resources</td><td>%s</td></tr>'
                          % ', '.join(provider_links))
-            lines.append('</table>')
+            lines.append('''
+</table>
+</div>
+''')
         elif i['object_type'] == 'peers':
             peers = i['peers']
             lines.append('''
+<div class="table-responsive">
 <table class="peers columnsort" id="peers">
 <thead class="title">
     <tr>
@@ -1471,11 +1495,13 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 ''' % single_peer)
             lines.append('''
 </tbody>
-</table>''')
-
+</table>
+</div>
+''')
         elif i['object_type'] == 'frozenarchives':
             frozenarchives = i['frozenarchives']
             lines.append('''
+<div class="table-responsive">
 <table class="frozenarchives columnsort" id="frozenarchivetable">
 <thead class="title">
     <tr>
@@ -1515,12 +1541,15 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 
             lines.append('''
 </tbody>
-</table>''')
+</table>
+</div>
+''')
         elif i['object_type'] == 'frozenarchive':
 
             lines.append('<div class="archive">')
             frozenfile_html = '''
 <div class="archive-files">
+<div class="table-responsive">
 <table class="frozenfiles columnsort" id="frozenfilestable">
 <thead class="title">
     <tr>
@@ -1556,7 +1585,11 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
         <td class="sha512sum monospace">%(sha512sum)s</td>
     </tr>
 ''' % frozenfile
-            frozenfile_html += '</tbody></table></div>'
+            frozenfile_html += '''
+</tbody>
+</table>
+</div>
+</div>'''
             lines.append(frozenfile_html)
             flavor = i.get('flavor', 'freeze')
             lines.append('<div class="archive-metadata">')
@@ -1604,16 +1637,19 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             for (location, store_date) in i.get('location', []):
                 lines.append('<tr><td class="title">On %s</td><td>%s</td></tr>'
                              % (location, store_date))
-            lines.append('</table>')
-            lines.append('</div>')
-            lines.append('</div>')
+            lines.append('''
+</table>
+</div>
+</div>
+''')
         elif i['object_type'] == 'freezestatus':
             # We only use this element for scripted archive creation
             pass
         elif i['object_type'] == 'datatransfers':
             datatransfers = i['datatransfers']
             lines.append('''
-<table class="datatransfers columnsort" id="datatransferstable">
+<div class="table-responsive">
+<table class="table datatransfers columnsort" id="datatransferstable">
 <thead class="title">
     <tr>
         <th>ID</th>
@@ -1682,10 +1718,13 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                     redolink_html))
             lines.append('''
 </tbody>
-</table>''')
+</table>
+</div>
+''')
         elif i['object_type'] == 'transferkeys':
             transferkeys = i['transferkeys']
             lines.append('''
+<div class="table-responsive">
 <table class="transferkeys columnsort" id="transferkeystable">
 <thead class="title">
     <tr>
@@ -1714,7 +1753,9 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                     single_key['bits'], single_key['public_key']))
             lines.append('''
 </tbody>
-</table>''')
+</table>
+</div>
+''')
         elif i['object_type'] == 'sharelinks':
             sharelinks = i['sharelinks']
             skip_list = i.get('skip_list', [])
@@ -1727,6 +1768,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             #            so we stray from naming pattern and call it linkshares
             #            here to avoid trouble.
             lines.append('''
+<div class="table-responsive">
 <table class="linkshares columnsort" id="sharelinkstable">
 <thead class="title">
     <tr>
@@ -1781,10 +1823,12 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             lines.append('''
 </tbody>
 </table>
+</div>
 ''')
         elif i['object_type'] == 'accessrequests':
             accessrequests = i['accessrequests']
             lines.append('''
+<div class="table-responsive">
 <table class="accessrequests columnsort" id="accessrequeststable">
 <thead class="title">
     <tr>
@@ -1825,10 +1869,12 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             lines.append('''
 </tbody>
 </table>
+</div>
 ''')
         elif i['object_type'] == 'accountreqs':
             accountreqs = i['accountreqs']
             lines.append('''
+<div class="table-responsive">
 <table class="accountreqs columnsort" id="accountreqtable">
 <thead class="title">
     <tr>
@@ -1871,6 +1917,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             lines.append('''
 </tbody>
 </table>
+</div>
 <br/>''')
         elif i['object_type'] == 'table_pager':
             id_prefix = i.get('id_prefix', '')
@@ -1894,6 +1941,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                               'DISK', 'ARCHITECTURE']
                 resources = i['resources']
                 lines.append('''
+<div class="table-responsive">
 <table class="resources columnsort" id="resourcetable">
 <thead class="title">
 <tr>
@@ -1998,6 +2046,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 
             resource_html += '''
 </table>
+</div>
 '''
             lines.append(resource_html)
         elif i['object_type'] == 'upgrade_info':
@@ -2016,6 +2065,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                                       proto
                 users = i['users']
                 lines.append('''
+<div class="table-responsive">
 <table class="people columnsort" id="usertable"><thead class="title">
 <tr>
   <th class="avatar iconspace"><!-- avatar --></th>
@@ -2048,7 +2098,11 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                             lines.append('---')
                         lines.append('</td>')
                     lines.append('</tr>')
-                lines.append('</tbody></table>')
+                lines.append('''
+</tbody>
+</table>
+</div>
+''')
             else:
                 lines.append('No matching users found')
         elif i['object_type'] == 'user_info':
@@ -2082,6 +2136,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             if len(i['threads']) > 0:
                 threads = i['threads']
                 lines.append('''
+<div class="table-responsive">
 <table class="forum_threads columnsort" id="forumtable">
 <thead class="title">
 <tr>
@@ -2116,7 +2171,11 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                         # Reset marker after first entry
                         marker_class = ''
                     lines.append('</tr>')
-                lines.append('</tbody></table>')
+                lines.append('''
+</tbody>
+</table>
+</div>
+''')
             else:
                 lines.append('No matching threads found')
             max_subject_len, max_body_len = 100, 10000
@@ -2191,6 +2250,7 @@ onclick="javascript:toggle_new('new_form', 'new_link'); return false;"/>
             if len(i['messages']) > 0:
                 lines.append("<h2>%s</h2>" % i['messages'][0]['subject'])
                 lines.append('''
+<div class="table-responsive">
 <table class="forum_messages columnsort" id="forumtable">
 <thead class="title">
 <tr>
@@ -2213,7 +2273,10 @@ onclick="javascript:toggle_new('new_form', 'new_link'); return false;"/>
                         # Reset marker after first entry
                         marker_class = ''
                     lines.append('</tr>')
-                lines.append('</table>')
+                lines.append('''
+</table>
+</div>
+''')
             else:
                 lines.append('No messages in thread')
             if 'vgrid_name' in i and 'thread' in i:
@@ -2276,9 +2339,10 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                     'workflows': ['privateworkflowslink'],
                     'monitor': ['privatemonitorlink'],
                 }
-                lines.append("""
-<table class='vgrids columnsort' id='vgridtable'>
-""")
+                lines.append('''
+<div class="table-responsive">
+<table class="vgrids columnsort" id="vgridtable">
+''')
                 # make vgrid component links optional, like it is in the
                 # configuration
                 for key in components:
@@ -2328,7 +2392,11 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                                 lines.append('')
                         lines.append('</td>')
                     lines.append('</tr>')
-                lines.append('</tbody></table>')
+                lines.append('''
+</tbody>
+</table>
+</div>
+''')
             else:
                 lines.append('No matching %ss found' %
                              configuration.site_vgrid_label)
