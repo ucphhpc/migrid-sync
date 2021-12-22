@@ -52,29 +52,18 @@
 }
 
 @media (max-width: 1000px) {
-    .sidebar-container {
-	display: block;
-    }
-    .sidebar-header {
-	height: 120px;
-    }
-}
-
-@media (max-width: 1000px) {
     .sidebar-middle {
 	background: 0%;
-    /*margin-top: -70px;*/
     }
 }
 
 .sidebar-middle {
-/*margin-top: -100px;*/
 }
 
 .sidebar-middle a {
     /* See skin color note at the top
        color: #46743C;
-       */
+    */
     font-weight: 300;
     font-size: 25px;
     display: block;
@@ -177,15 +166,6 @@
 
 .slider-header {
     height: 90px;
-}
-
-@media (max-width: 1000px) {
-    .slider-container__inner {
-	display: block;
-    }
-    .slider-header {
-	height: 120px;
-    }
 }
 
 .slider-header h2 {
@@ -340,7 +320,7 @@
     color: #444;
 }
 
-/*CUSTOM ICON FA (JUPYTER)*/
+/* CUSTOM ICON FA (JUPYTER) - let height follow width here */
 .fa-jupyter {
     background: url(/images/icons/jupyter_icon.svg) center center no-repeat; 
     display: inline-block;
@@ -373,7 +353,7 @@
 }
 
 
-/*CUSTOM ICON FA (DATATRANSFER)*/
+/* CUSTOM ICON FA (DATATRANSFER) - let height follow width here */
 .fa-datatransfer {
     background: url(/images/icons/datatransfer_icon.svg) center center no-repeat; 
     display: inline-block;
@@ -402,7 +382,7 @@
 }
 
 
-/*CUSTOM ICON FA (SEAFILE)*/
+/* CUSTOM ICON FA (SEAFILE) - let height follow width here */
 .fa-seafile {
     background: url(/images/icons/seafile.svg) center center no-repeat; 
     display: inline-block;
@@ -434,6 +414,49 @@
     }
 }
 
+/* Size-constrained screens */
+@media (max-width: 1000px), (max-height: 800px) {
+    .sidebar-middle a {
+        font-size: 18px;
+        height: 32px;
+        margin: 0px 16px;
+    }
+    
+    .sidebar-middle span {
+        width: 32px;
+    }
+
+    .fa-seafile, .fa-datatransfer, .fa-jupyter {
+        height: 32px;
+    }
+
+    .slider-middle a {
+        font-size: 18px;
+        height: 32px;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 700px), (max-height: 640px) {
+    .sidebar-middle a {
+        font-size: 13px;
+        height: 25px;
+        margin: 0px 16px;
+    }
+    
+    .sidebar-middle span {
+        width: 25px;
+    }
+
+    .fa-seafile, .fa-datatransfer, .fa-jupyter {
+        height: 25px;
+    }
+
+    .slider-middle a {
+        font-size: 13px;
+        height: 25px;
+    }
+}
 
 
 .hidden {
