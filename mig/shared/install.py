@@ -279,7 +279,7 @@ def generate_confs(
     enable_openid=False,
     enable_gravatars=True,
     enable_sitestatus=True,
-    user_interface="V2 V3",
+    user_interface="V3 V2",
     mig_oid_provider='',
     ext_oid_provider='',
     mig_oidc_provider_meta_url='',
@@ -1848,7 +1848,7 @@ def create_user(
     enable_notify = False
     enable_imnotify = False
     enable_dev_accounts = False
-    user_interface = "V2 V3"
+    user_interface = "V3 V2"
     mig_oid_provider = ''
     ext_oid_provider = ''
     mig_oidc_provider_meta_url = ''
