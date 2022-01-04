@@ -283,7 +283,7 @@ def generate_confs(
     enable_openid=False,
     enable_gravatars=True,
     enable_sitestatus=True,
-    user_interface="V2 V3",
+    user_interface="V3 V2",
     mig_oid_provider='',
     ext_oid_provider='',
     mig_oidc_provider_meta_url='',
@@ -942,7 +942,7 @@ cert, oid and sid based https!
             for i_h, host in enumerate(values['hosts']):
                 name_index = '%s_%s' % (u_name, i_h)
                 # https://httpd.apache.org/docs/2.4/mod/mod_proxy.html
-                member = "BalancerMember %s route=%s retry=600 timeout=60 keepalive=On connectiontimeout=60\n" \
+                member = "BalancerMember %s route=%s retry=600 timeout=120 keepalive=On connectiontimeout=120\n" \
                     % ("${JUPYTER_%s}" % name_index, i_h)
                 ws_member = member.replace("${JUPYTER_%s}" % name_index,
                                            "${WS_JUPYTER_%s}" % name_index)
@@ -1854,7 +1854,7 @@ def create_user(
     enable_notify = False
     enable_imnotify = False
     enable_dev_accounts = False
-    user_interface = "V2 V3"
+    user_interface = "V3 V2"
     mig_oid_provider = ''
     ext_oid_provider = ''
     mig_oidc_provider_meta_url = ''
