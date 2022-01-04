@@ -495,7 +495,7 @@ vhost-specific certificates from LetsEncrypt and OpenID with optional
                    --destination_suffix="_svn$(svnversion -n ~/)" \
                    --base_fqdn=migrid.org \
                    --public_fqdn=www.migrid.org \
-                   --public_alias_fqdn=migrid-www.erda.dk \
+                   --public_alias_fqdn=dk-www.migrid.org \
                    --mig_cert_fqdn=dk-cert.migrid.org \
                    --ext_cert_fqdn= \
                    --mig_oid_fqdn=dk-ext.migrid.org \
@@ -550,7 +550,7 @@ or the same on centos
                    --destination_suffix="_svn$(svnversion -n ~/)" \
                    --base_fqdn=migrid.org \
                    --public_fqdn=www.migrid.org \
-                   --public_alias_fqdn=migrid-www.erda.dk \
+                   --public_alias_fqdn=dk-www.migrid.org \
                    --mig_cert_fqdn=dk-cert.migrid.org \
                    --ext_cert_fqdn= \
                    --mig_oid_fqdn=dk-ext.migrid.org \
@@ -842,7 +842,7 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --login_methods="extoid migoid" \
                    --password_policy=HIGH --distro=centos \
                    --skin=erda-ucph-science --short_title=SIF \
-                   --wsgi_procs=25 \
+                   --wsgi_procs=25 --user_interface='V2' \
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
 
 Most of the arguments should be relatively straight forward, but you

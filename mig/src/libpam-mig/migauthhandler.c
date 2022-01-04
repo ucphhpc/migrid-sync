@@ -1,6 +1,6 @@
 /*
  * migauthhandler.c - C <-> Python wrappers for MiG user authentication
- * Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+ * Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
  *
  * This file is part of MiG
  *
@@ -249,7 +249,7 @@ static bool mig_validate_username(const char *username)
     return result;
 }
 
-static bool register_auth_attempt(const unsigned int mode,
+static bool mig_reg_auth_attempt(const unsigned int mode,
                                   const char *username,
                                   const char *address, const char *secret)
 {
@@ -264,7 +264,7 @@ static bool register_auth_attempt(const unsigned int mode,
         strncat(&pycmd[0], "'password', ", MAX_PYCMD_LENGTH - strlen(pycmd));
     } else {
         WRITELOGMESSAGE(LOG_ERR,
-                        "register_auth_attempt: No valid auth-type in mode: 0x%X\n",
+                        "mig_reg_auth_attempt: No valid auth-type in mode: 0x%X\n",
                         mode);
         return false;
     }
@@ -339,7 +339,7 @@ static bool register_auth_attempt(const unsigned int mode,
     }
     strncat(&pycmd[0], ")", MAX_PYCMD_LENGTH - strlen(pycmd));
     if (MAX_PYCMD_LENGTH == strlen(pycmd)) {
-        WRITELOGMESSAGE(LOG_ERR, "register_auth_attempt: pycmd overflow\n");
+        WRITELOGMESSAGE(LOG_ERR, "mig_reg_auth_attempt: pycmd overflow\n");
         return false;
     }
     pyrun(&pycmd[0]);
