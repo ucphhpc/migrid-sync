@@ -679,7 +679,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     /* Optional anonymous share link access:
        - username must have fixed length matching get_sharelink_length()
        - get_sharelink_home()/SHARELINK_SUBDIR/username must exist as a symlink
-       - username and password must be identical
+       - username and password must be identical if we get here (key skips PAM)
      */
     WRITELOGMESSAGE(LOG_DEBUG, "Checking for sharelink: %s\n", pUsername);
     if (strlen(pUsername) == get_sharelink_length()) {

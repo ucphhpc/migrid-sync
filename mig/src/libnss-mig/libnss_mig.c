@@ -2,7 +2,7 @@
  * --- BEGIN_HEADER ---
  *
  * libnss_mig - NSS module for MiG user authentication
- * Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+ * Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
  *
  * This file is part of MiG
  *
@@ -176,7 +176,7 @@ _nss_mig_getpwnam_r(const char *name,
     /* Optional anonymous share link access:
        - username must have fixed length matching get_sharelink_length()
        - get_sharelink_home()/SHARELINK_SUBDIR/username must exist as a symlink
-       - username and password must be identical
+       - username and password must be identical or pub key fit authorized_keys
      */
     if (keep_trying && strlen(name) == get_sharelink_length()) {
         WRITELOGMESSAGE(LOG_DEBUG, "Checking for sharelink: %s\n", name);
