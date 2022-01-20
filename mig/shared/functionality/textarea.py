@@ -445,7 +445,16 @@ CSRF-filtered POST requests to prevent unintended updates'''
                         'File seems to be saved, but could not get file size %s'
                         % err})
                     return (output_objects, returnvalues.SYSTEM_ERROR)
-            fileuploadobj['size'] = os.path.getsize(local_filename)
+
+            try:
+                fileuploadobj['size'] = os.path.getsize(local_filename)
+            except Exception as err:
+                output_objects.append({
+                    'object_type': 'error_text', 'text':
+                    'File seems to be saved, but could not get file size %s' % err
+                })
+                return (output_objects, returnvalues.SYSTEM_ERROR)
+
             fileuploadobj['name'] = remote_filename
 
             # Check if the extension is .mRSL
