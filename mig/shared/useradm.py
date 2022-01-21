@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # useradm - user administration functions
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -2197,7 +2197,8 @@ def get_authkeys(authkeys_path):
         authkeys_fd = open(authkeys_path, 'rb')
         authorized_keys = authkeys_fd.readlines()
         authkeys_fd.close()
-        # Remove extra space and skip blank lines
+        # Remove extra space / comments and skip blank lines
+        authorized_keys = [i.split('#', 1)[0].strip() for i in authorized_keys]
         authorized_keys = [i.strip() for i in authorized_keys if i.strip()]
     except:
         authorized_keys = []
