@@ -1,4 +1,4 @@
-#!/usr/bin/env python3 -s
+#!/usr/bin/python3 -s
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
