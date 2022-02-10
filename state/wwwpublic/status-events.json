@@ -6,7 +6,7 @@
         "IDMC",
         "SIF"
     ],
-    "announce_start": "2022-02-01T011:00:00+01:00",
+    "announce_start": "2022-02-01T11:00:00+01:00",
     "title": {
       "EN": "Planned ERDA/IDMC and SIF Maintenance",
       "DK": "Planlagt ERDA/IDMC og SIF vedligehold"
@@ -14,12 +14,12 @@
     "services": [
       "ALL"
     ],
-    "work_end": "2022-02-11T08:00:00+01:00",
+    "work_end": "2022-02-10T17:00:00+01:00",
     "description": {
-      "EN": "It's time for a thorough update of the ERDA/IDMC and SIF in order to apply new storage space. The work will involve both frontend and backend down-time for low-level system updates. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect it to take a couple of hours, but keep the maintenance window open until next morning in case it drags out.",
-      "DK": "Det er tid til en gennemgribende opdatering af ERDA/IDMC og SIF systemerne mhp at tilføje nyt lagerplads. Arbejdet kræver nedetid på både frontend og backend til grundlæggende systemopdateringer og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi forventer at det kan klares på et par timer, men holder vedligeholdelsesvinduet åbent i tilfælde af at det trækker ud."
+      "EN": "It's time for a thorough update of the ERDA/IDMC and SIF in order to apply new storage space. The work will involve both frontend and backend down-time for low-level system updates. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We finished the ERDA/IDMC and SIF work in a couple of hours before 17:00 as expected. All systems should be back online. Please note that the MODI service specifically may still suffer downtime until tomorrow morning due to roll-out of some unrelated but urgent security updates.",
+      "DK": "Det er tid til en gennemgribende opdatering af ERDA/IDMC og SIF systemerne mhp at tilføje nyt lagerplads. Arbejdet kræver nedetid på både frontend og backend til grundlæggende systemopdateringer og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi blev som forventet færdige med arbejdet på et par timer inden kl 17:00. Alle systemer er tilbage i almindelig drift. Bemærk dog at MODI specifikt vil kunne opleve nedetid indtil i morgen tidlig grundet udrulning af ikke-relaterede men vigtige sikkerhedsopdateringer."
     },
-    "announce_end": "2022-02-11T08:00:00+01:00"
+    "announce_end": "2022-02-11T10:00:00+01:00"
   }, 
   {
     "status": "AUTO", 
