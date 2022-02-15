@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # login - grid daemon login helper functions
-# Copyright (C) 2010-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -204,9 +204,10 @@ def get_job_changes(conf, username, mrsl_path):
     return changed_paths
 
 
-def get_share_changes(conf, username, sharelink_path):
+def get_share_changes(conf, username, sharelink_path, authkeys_path):
     """Check if sharelink changed for username using the provided
-    sharelink_path file and the saved time stamp from shares embedded in conf.
+    sharelink_path file, authkeys_path file and the saved time stamp from
+    shares embedded in conf.
     Returns a list of changed sharelink files with the empty list if none
     changed.
     """
@@ -215,8 +216,17 @@ def get_share_changes(conf, username, sharelink_path):
     if creds_lock:
         creds_lock.acquire()
     old_users = [i for i in conf['shares'] if i.username == username]
+    old_key_users = [i for i in old_users if i.public_key]
     if creds_lock:
         creds_lock.release()
+    # We do not save share entry for key files without proper pub keys, so to
+    # avoid repeatedly refreshing keys for such shares we check against any
+    # other last update marker in case of no matching key shares.
+    any_last_update = -1
+    if old_users:
+        any_last_update = old_users[0].last_update
+    if old_key_users:
+        any_last_update = max(any_last_update, old_key_users[0].last_update)
     changed_paths = []
     if old_users:
         first = old_users[0]
@@ -228,6 +238,19 @@ def get_share_changes(conf, username, sharelink_path):
     elif os.path.exists(sharelink_path) and \
             os.path.isdir(sharelink_path):
         changed_paths.append(sharelink_path)
+    if conf["allow_publickey"]:
+        if old_key_users:
+            first = old_key_users[0]
+            if not os.path.exists(authkeys_path):
+                changed_paths.append(authkeys_path)
+            elif os.path.getmtime(authkeys_path) > first.last_update:
+                first.last_update = os.path.getmtime(authkeys_path)
+                changed_paths.append(authkeys_path)
+        elif os.path.exists(authkeys_path) and \
+                os.path.getsize(authkeys_path) >= min_pub_key_bytes and \
+                os.path.getmtime(authkeys_path) > any_last_update:
+            # logger.debug("found changed pub keys for %s" % username)
+            changed_paths.append(authkeys_path)
     return changed_paths
 
 
@@ -881,9 +904,23 @@ def refresh_share_creds(configuration, protocol, username,
         logger.error("invalid share mode %s for %s" % (mode, username))
         return (conf, changed_shares)
 
+    if protocol in ('ssh', 'sftp', 'scp', 'rsync'):
+        proto_authkeys = ssh_authkeys
+    elif protocol in ('dav', 'davs'):
+        proto_authkeys = davs_authkeys
+    elif protocol in ('ftp', 'ftps'):
+        proto_authkeys = ftps_authkeys
+    else:
+        logger.error("invalid protocol: %s" % protocol)
+        return (conf, changed_shares)
+
     # logger.debug("Updating share creds for %s" % username)
     link_path = os.path.join(configuration.sharelink_home, mode, username)
-    changed_paths = get_share_changes(conf, username, link_path)
+    # NOTE: accept any pub keys in standard authorized_keys location, too
+    authkeys_path = os.path.realpath(os.path.join(link_path, proto_authkeys))
+    # logger.debug("Checking share creds changes for %s (%s)" %
+    #              (username, authkeys_path))
+    changed_paths = get_share_changes(conf, username, link_path, authkeys_path)
     if not changed_paths:
         # logger.debug("No share creds changes for %s" % username)
         return (conf, changed_shares)
@@ -900,22 +937,34 @@ def refresh_share_creds(configuration, protocol, username,
         logger.error("invalid share %s: %s" % (username, err))
 
     share_dict = None
-    if os.path.islink(link_path) and link_dest and \
-            last_update < os.path.getmtime(link_path):
+    if os.path.islink(link_path) and link_dest:
         share_id = username
         # NOTE: share link points inside user home of owner so we extract here.
         #       We strip leading AND trailing slashes to make get_fs_path work.
         #       Otherwise it would choke on shares with trailing slash in path.
         share_root = link_dest.replace(base_dir, '').strip(os.sep)
-        # NOTE: just use share_id as password/digest for now
-        share_pw_hash = generate_password_hash(configuration, share_id)
-        share_pw_digest = generate_password_digest(
-            configuration, dav_domain, share_id, share_id,
-            configuration.site_digest_salt)
+        share_pw_hash, share_pw_digest = None, None
+        # NOTE: just use share_id as static password/digest for now
+        if conf['allow_password']:
+            share_pw_hash = generate_password_hash(configuration, share_id)
+        if conf['allow_digest']:
+            share_pw_digest = generate_password_digest(
+                configuration, dav_domain, share_id, share_id,
+                configuration.site_digest_salt)
+        all_keys = []
+        if conf['allow_publickey'] and os.path.exists(authkeys_path):
+            all_keys = get_authkeys(authkeys_path)
+        # Clean up all old key entries for this user
+        # logger.debug("Clean share creds keys for %s" % share_id)
+        conf['shares'] = [i for i in conf['shares']
+                          if not i.username == share_id or
+                          i.public_key is None]
+
         # TODO: load pickle from user_settings of owner (from link_dest)?
         share_dict = {'share_id': share_id, 'share_root': share_root,
                       'share_pw_hash': share_pw_hash,
-                      'share_pw_digest': share_pw_digest}
+                      'share_pw_digest': share_pw_digest,
+                      'share_pubkeys': all_keys}
 
     # We only allow access to active shares
     if share_dict is not None and isinstance(share_dict, dict) and \
@@ -927,12 +976,20 @@ def refresh_share_creds(configuration, protocol, username,
         user_dir = share_dict['share_root']
         user_password = share_dict['share_pw_hash']
         user_digest = share_dict['share_pw_digest']
-        logger.info("Adding login for share %s" % user_alias)
+        user_pubkeys = share_dict.get('share_pubkeys', [])
+        logger.info("Adding password login for share %s" % user_alias)
         add_share_object(configuration,
                          user_alias,
                          user_dir,
                          password=user_password,
                          digest=user_digest)
+        logger.info("Adding key login(s) for share %s: %s" %
+                    (user_alias, user_pubkeys))
+        for share_pubkey in user_pubkeys:
+            add_share_object(configuration,
+                             user_alias,
+                             user_dir,
+                             pubkey=share_pubkey)
         changed_shares.append(user_alias)
 
     # Share was removed: remove from logins and mark as changed
@@ -970,9 +1027,16 @@ def refresh_shares(configuration, protocol, share_modes=['read-write']):
     if creds_lock:
         creds_lock.release()
     cur_usernames = []
-    if not protocol in ('sftp', 'davs', 'ftps', ):
+    if protocol in ('ssh', 'sftp', 'scp', 'rsync'):
+        proto_authkeys = ssh_authkeys
+    elif protocol in ('dav', 'davs'):
+        proto_authkeys = davs_authkeys
+    elif protocol in ('ftp', 'ftps'):
+        proto_authkeys = ftps_authkeys
+    else:
         logger.error("invalid protocol: %s" % protocol)
         return (conf, changed_shares)
+
     if [kind for kind in share_modes if kind != 'read-write']:
         logger.error("invalid share_modes: %s" % share_modes)
         return (conf, changed_shares)
@@ -995,15 +1059,31 @@ def refresh_shares(configuration, protocol, share_modes=['read-write']):
             share_id = link_name
             # NOTE: share link points inside user home of owner so extract here
             share_root = link_dest.replace(base_dir, '').lstrip(os.sep)
-            # NOTE: just use share_id as password/digest for now
-            share_pw_hash = generate_password_hash(configuration, share_id)
-            share_pw_digest = generate_password_digest(
-                configuration, dav_domain, share_id, share_id,
-                configuration.site_digest_salt)
+            share_pw_hash, share_pw_digest = None, None
+            # NOTE: just use share_id as static password/digest for now
+            if conf['allow_password']:
+                share_pw_hash = generate_password_hash(configuration, share_id)
+            if conf['allow_digest']:
+                share_pw_digest = generate_password_digest(
+                    configuration, dav_domain, share_id, share_id,
+                    configuration.site_digest_salt)
+
+            authkeys_path = os.path.realpath(os.path.join(share_root,
+                                                          proto_authkeys))
+            all_keys = []
+            if conf['allow_publickey'] and os.path.exists(authkeys_path):
+                all_keys = get_authkeys(authkeys_path)
+            # Clean up all old key entries for this user
+            logger.debug("Clean share creds keys for %s" % share_id)
+            conf['shares'] = [i for i in conf['shares']
+                              if not i.username == share_id or
+                              i.public_key is None]
+
             # TODO: load pickle from user_settings of owner (from link_dest)?
             share_dict = {'share_id': share_id, 'share_root': share_root,
                           'share_pw_hash': share_pw_hash,
-                          'share_pw_digest': share_pw_digest}
+                          'share_pw_digest': share_pw_digest,
+                          'share_pubkeys': all_keys}
 
         # We only allow access to active shares
         if share_dict is not None and isinstance(share_dict, dict) and \
@@ -1015,10 +1095,18 @@ def refresh_shares(configuration, protocol, share_modes=['read-write']):
             user_dir = share_dict['share_root']
             user_password = share_dict['share_pw_hash']
             user_digest = share_dict['share_pw_digest']
-            logger.info("Adding login for share %s" % user_alias)
+            user_pubkeys = share_dict.get('share_pubkey', [])
+            logger.info("Adding password login for share %s" % user_alias)
             add_share_object(configuration, user_alias, user_dir,
                              password=user_password,
                              digest=user_digest)
+            logger.info("Adding key login(s) for share %s : %s" %
+                        (user_alias, user_pubkeys))
+            for share_pubkey in user_pubkeys:
+                add_share_object(configuration,
+                                 user_alias,
+                                 user_dir,
+                                 pubkey=share_pubkey)
             cur_usernames.append(user_alias)
             changed_shares.append(user_alias)
 
