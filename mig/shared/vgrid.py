@@ -2126,8 +2126,8 @@ def vgrid_rm_share(configuration, user_dir, vgrid):
             if os.path.isdir(path) and os.listdir(path) == []:
                 os.removedirs(path)
     except Exception as err:
-        _logger.errors("could not remove share for %s vgrid: %s" %
-                       (vgrid, err))
+        _logger.error("could not remove share for %s vgrid: %s" %
+                      (vgrid, err))
         success = False
         msg += "\nCould not remove link %s: %s" % (path, err)
     return (success, msg[1:])
@@ -2161,8 +2161,8 @@ def vgrid_rm_web_folders(configuration, user_dir, vgrid):
                 if os.path.isdir(path) and os.listdir(path) == []:
                     os.removedirs(path)
         except Exception as err:
-            _logger.errors("could not remove web folders for %s vgrid: %s" %
-                           (vgrid, err))
+            _logger.error("could not remove web folders for %s vgrid: %s" %
+                          (vgrid, err))
             success = False
             msg += "\nCould not remove link %s: %s" % (path, err)
     return (success, msg[1:])

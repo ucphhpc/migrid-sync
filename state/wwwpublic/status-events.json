@@ -1,4 +1,26 @@
-[  
+[ {
+    "status": "AUTO", 
+    "work_start": "2022-02-10T15:00:00+01:00", 
+    "systems": [
+        "ERDA",
+        "IDMC",
+        "SIF"
+    ],
+    "announce_start": "2022-02-01T11:00:00+01:00",
+    "title": {
+      "EN": "Planned ERDA/IDMC and SIF Maintenance",
+      "DK": "Planlagt ERDA/IDMC og SIF vedligehold"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2022-02-10T17:00:00+01:00",
+    "description": {
+      "EN": "It's time for a thorough update of the ERDA/IDMC and SIF in order to apply new storage space. The work will involve both frontend and backend down-time for low-level system updates. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We finished the ERDA/IDMC and SIF work in a couple of hours before 17:00 as expected. All systems should be back online. Please note that the MODI service specifically may still suffer downtime until tomorrow morning due to roll-out of some unrelated but urgent security updates.",
+      "DK": "Det er tid til en gennemgribende opdatering af ERDA/IDMC og SIF systemerne mhp at tilføje nyt lagerplads. Arbejdet kræver nedetid på både frontend og backend til grundlæggende systemopdateringer og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi blev som forventet færdige med arbejdet på et par timer inden kl 17:00. Alle systemer er tilbage i almindelig drift. Bemærk dog at MODI specifikt vil kunne opleve nedetid indtil i morgen tidlig grundet udrulning af ikke-relaterede men vigtige sikkerhedsopdateringer."
+    },
+    "announce_end": "2022-02-11T10:00:00+01:00"
+  }, 
   {
     "status": "AUTO", 
     "work_start": "2021-12-23T11:00:00+01:00", 
@@ -13,12 +35,12 @@
     "services": [
       "ALL"
     ], 
-    "work_end": "2022-04-30T18:00:00+01:00", 
+    "work_end": "2022-02-10T18:00:00+01:00", 
     "description": {
-      "EN": "As previously announced the current global computer chip shortage and reduced production capacities give us serious headaches regarding the continued gradual expansion of the ERDA/IDMC and SIF backend storage. We have recently added our last remaining spare storage brick and within a short time frame it already received 25TB data! So we are running out of space too fast and vendors report several months of delivery time even on already ordered hardware. We have therefore taken the drastic but required counter measure of introducing throttling on the write speed at IDMC since December 23rd and on ERDA since December 27th. This will remain in effect until we have enough free space again. That is, we still strongly urge You as users to clean up any big (~terabyte) data sets of little or no importance to help us all out of this bind. Otherwise it will last until we receive the ordered additional storage hardware. The data growth on SIF is much smaller so we are are still considering the situation there.",
-      "DK": "Som tidligere meldt ud giver de aktuelle globale problemer med mangel på computer-chips og begrænset produktionskapacitet os gevaldig hovedpine omkring den fortsatte løbende opskalering af ERDA/IDMC og SIF backend-lageret. Vi har for nyligt koblet den sidste ledige brick på backend-lageret og den havde allerede efter kort tid modtaget 25TB data! Så vi løber for hurtigt tør for ledig plads i lageret og leverandørerne melder om måneders leveringstid selv på allerede bestilt hardware. Derfor har vi i dag taget det drastiske men åbenbart nødvendige skridt at indføre begrænsning på skrivehastigheden på IDMC fra den 23. december og ligeledes på ERDA fra den 27. december. Det vil blive opretholdt indtil vi igen har nok ledig plads. D.v.s. vi opfordrer stadig kraftigt til at I som brugere rydder op i evt store (~terabyte) datasæt af begrænset eller ingen værdi for at hjælpe os alle ud af denne kattepine. Alternativt må vi afvente modtagelsen af det allerede bestilte yderligere lagringshardware. Datavæksten på SIF er markant mindre så der afventer vi situationen for nu."
+      "EN": "As previously announced the current global computer chip shortage and reduced production capacities give us serious headaches regarding the continued gradual expansion of the ERDA/IDMC and SIF backend storage. We have recently added our last remaining spare storage brick and within a short time frame it already received 25TB data! So we are running out of space too fast and vendors report several months of delivery time even on already ordered hardware. We have therefore taken the drastic but required counter measure of introducing throttling on the write speed at IDMC since December 23rd and on ERDA since December 27th. This will remain in effect until we have enough free space again. That is, we still strongly urge You as users to clean up any big (~terabyte) data sets of little or no importance to help us all out of this bind. Otherwise it will last until we receive the ordered additional storage hardware. The data growth on SIF is much smaller so we are are still considering the situation there. The throttling only applies to the new brick with much space and it has the unpleasant side effect that reads from that same brick may be significantly slowed when writes are stalling. The good news is that we have actually started receiving the new storage hardware, and it looks like we will have it all at hand and installed within the next weeks. Update: We have phased out the write throttling completely and will add new storage very soon as announced separately.",
+      "DK": "Som tidligere meldt ud giver de aktuelle globale problemer med mangel på computer-chips og begrænset produktionskapacitet os gevaldig hovedpine omkring den fortsatte løbende opskalering af ERDA/IDMC og SIF backend-lageret. Vi har for nyligt koblet den sidste ledige brick på backend-lageret og den havde allerede efter kort tid modtaget 25TB data! Så vi løber for hurtigt tør for ledig plads i lageret og leverandørerne melder om måneders leveringstid selv på allerede bestilt hardware. Derfor har vi i dag taget det drastiske men åbenbart nødvendige skridt at indføre begrænsning på skrivehastigheden på IDMC fra den 23. december og ligeledes på ERDA fra den 27. december. Det vil blive opretholdt indtil vi igen har nok ledig plads. D.v.s. vi opfordrer stadig kraftigt til at I som brugere rydder op i evt store (~terabyte) datasæt af begrænset eller ingen værdi for at hjælpe os alle ud af denne kattepine. Alternativt må vi afvente modtagelsen af det allerede bestilte yderligere lagringshardware. Datavæksten på SIF er markant mindre så der afventer vi situationen for nu. Skrivehastigheden er i praksis kun begrænset på den nyeste brick med meget plads, og den har desværre den ubehagelige sideeffekt at læsning derfra også til tider er hårdt ramt på hastigheden når mange skrivninger hænger i kø. Den gode nyhed er at vi nu rent faktisk er begyndt at modtage det bestilte nye hardware og regner med at have det hele modtaget og installeret i løbet af de næste uger. Opdatering: Vi har nu udfaset skrivebegrænsningerne helt og tilføjer nyt lagerplads meget snart som annonceret særskilt."
     }, 
-    "announce_end": "2022-05-30T16:00:00+01:00"
+    "announce_end": "2022-02-17T16:00:00+01:00"
   },
   {
     "status": "AUTO", 
@@ -55,7 +77,7 @@
     "services": [
       "ALL"
     ], 
-    "work_end": "2022-04-30T18:00:00+01:00", 
+    "work_end": "2022-02-11T18:00:00+01:00", 
     "description": {
       "EN": "The current global computer chip shortage and reduced production capacities are beginning to cause serious headaches regarding the continued gradual expansion of the ERDA/IDMC and SIF backend storage. We still have additional storage bricks to add, but we are running low and vendors report several months of delivery time even on already ordered hardware. In effect this MIGHT lead to a situation where we will have to throttle data growth on ERDA/IDMC and SIF e.g. through upload rate limits or have You as users clean up any big (~terabyte) data sets of little or no importance. This is of course rather inconvenient and something we are trying our best to avoid, but we think it only fair to announce well ahead to let you plan and act in due time.", 
       "DK": "De aktuelle globale problemer med mangel på computer-chips og begrænset produktionskapacitet begynder at føre til alvorlige bekymringer omkring den fortsatte løbende opskalering af ERDA/IDMC og SIF backend-lageret. Vi har stadig ekstra bricks at sætte på, men der er ved at være lavvande i lageret og leverandørerne melder om måneders leveringstid selv på allerede bestilt hardware. Resultatet KAN blive at vi ender i en situation hvor vi bliver nødt til at skrue ned for datavæksten på ERDA/IDMC og SIF f.eks. via begrænsning på uploadhastigheden eller at I som brugere rydder op i evt store (~terabyte) datasæt af begrænset eller ingen værdi. Det er selvfølgelig en ubehagelig situation og noget vi gør vores bedste for at undgå, men vi foretrækker at melde ud allerede nu mhp at give alle mulighed for at planlægge og agere rettidigt."
