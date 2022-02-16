@@ -1928,7 +1928,12 @@ def guess_type(name):
             __type_map[key] = valid_alphanumeric
         for key in ('proxy_upload', ):
             __type_map[key] = valid_printable
-        for key in ('openid.ns', 'openid.ns.sreg', 'url', 'icon', ):
+        for key in (
+                'openid.ns',
+                'openid.ns.sreg',
+                'oidc.claim.iss',
+                'url',
+                'icon', ):
             __type_map[key] = valid_base_url
         for key in ('modauthopenid.referrer',
                     'transfer_src',
@@ -2305,6 +2310,7 @@ if __name__ == '__main__':
     autocreate_defaults = {
         'oidc.claim.upn': [''],
         'oidc.claim.sub': [''],
+        'oidc.claim.iss': [''],
         'oidc.claim.aud': [''],
         'oidc.claim.nickname': [''],
         'oidc.claim.email': [''],
@@ -2325,6 +2331,7 @@ if __name__ == '__main__':
         'proxy_uploadfilename': [''],
     }
     user_arguments_dict = {'oidc.claim.sub': ['xyz-123-nsd-e2e-e3e-dd3'],
+                           'oidc.claim.iss': ['https://your.id.provider/nidp/oauth/nam'],
                            'oidc.claim.aud': ['d34db33f-a13f-4ea0-de63-3bd8f9ef9392'],
                            'oidc.claim.ou': ['nbi, faksek'],
                            'oidc.claim.upn': ['brs278@ku.dk'],
