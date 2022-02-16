@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqoid - OpenID account request backend
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -50,6 +50,10 @@ def signature():
 
     defaults = {'full_name': [''],
                 'organization': [''],
+                # NOTE: we accept organizational_unit but don't use it.
+                #       If explicitly set e.g. to NA in the user db the expire
+                #       emails will include value in semi-filled renew link.
+                'organizational_unit': [''],
                 'email': [''],
                 'country': [''],
                 'state': [''],
