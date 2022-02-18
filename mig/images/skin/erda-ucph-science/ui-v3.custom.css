@@ -736,6 +736,9 @@ a {
 .additemlink {
   background-image: url('/images/icons/page_white_add_46743c.svg');
   }
+.peerlink {
+  background-image: url('/images/icons/page_white_add_46743c.svg');
+  }
 
 .removelink {
     background-image: url('/images/icons/delete_46743c.svg');
@@ -745,6 +748,9 @@ a {
 }
 
 .removeitemlink {
+  background-image: url('/images/icons/page_white_delete_46743c.svg');
+  }
+.rejectlink {
   background-image: url('/images/icons/page_white_delete_46743c.svg');
   }
 

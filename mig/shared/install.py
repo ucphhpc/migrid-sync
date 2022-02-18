@@ -244,6 +244,7 @@ def generate_confs(
     mig_code='/home/mig/mig',
     mig_state='/home/mig/state',
     mig_certs='/home/mig/certs',
+    enable_migadmin=False,
     enable_sftp=True,
     enable_sftp_subsys=True,
     sftp_subsys_auth_procs=10,
@@ -406,6 +407,7 @@ def generate_confs(
     user_dict['__APACHE_LOG__'] = apache_log
     user_dict['__APACHE_WORKER_PROCS__'] = "%s" % apache_worker_procs
     user_dict['__OPENSSH_VERSION__'] = openssh_version
+    user_dict['__ENABLE_MIGADMIN__'] = "%s" % enable_migadmin
     user_dict['__ENABLE_SFTP__'] = "%s" % enable_sftp
     user_dict['__ENABLE_SFTP_SUBSYS__'] = "%s" % enable_sftp_subsys
     user_dict['__SFTP_SUBSYS_START_AUTH_PROCS__'] = "%s" % sftp_subsys_auth_procs
@@ -1813,6 +1815,7 @@ def create_user(
     apache_worker_procs = 256
     openssh_version = '7.4'
     cert_dir = '%s/MiG-certificates' % apache_dir
+    enable_migadmin = False
     # We don't necessarily have free ports for daemons
     enable_sftp = False
     enable_sftp_subsys = False
@@ -1938,6 +1941,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         mig_dir,
         state_dir,
         cert_dir,
+        enable_migadmin,
         enable_sftp,
         enable_sftp_subsys,
         sftp_subsys_auth_procs,

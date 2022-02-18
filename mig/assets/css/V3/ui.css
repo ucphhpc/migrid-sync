@@ -1218,6 +1218,12 @@ background: url(/images/icons/compress.png) left center no-repeat;
   background-size: 18px 18px;
   background-position: left center;
   }
+.peerlink {
+  background: url('/images/icons/page_white_add.svg') no-repeat;
+  padding-left: 18px;
+  background-size: 18px 18px;
+  background-position: left center;
+  }
 
 .removelink {
     background: url('/images/icons/delete.svg') no-repeat;
@@ -1233,6 +1239,12 @@ background: url(/images/icons/compress.png) left center no-repeat;
 }
 
 .removeitemlink {
+  background: url('/images/icons/page_white_delete.svg') no-repeat;
+  padding-left: 18px;
+  background-size: 18px 18px;
+  background-position: left center;
+  }
+.rejectlink {
   background: url('/images/icons/page_white_delete.svg') no-repeat;
   padding-left: 18px;
   background-size: 18px 18px;

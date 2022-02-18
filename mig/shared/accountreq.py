@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # accountreq - helpers for certificate/OpenID account requests
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -486,6 +486,25 @@ def accept_account_req(req_id, configuration):
     req_path = os.path.join(configuration.user_pending, req_id)
     # TODO: run createuser
     _logger.warning('account creation from admin page not implemented yet')
+    return False
+
+
+def peer_account_req(req_id, configuration):
+    """Helper to request peer accept for a pending account request"""
+    _logger = configuration.logger
+    req_path = os.path.join(configuration.user_pending, req_id)
+    # TODO: run reqacceptpeer
+    _logger.warning('request account peer from admin page not implemented yet')
+    return False
+
+
+def reject_account_req(req_id, configuration):
+    """Helper to reject a pending account request"""
+    _logger = configuration.logger
+    req_path = os.path.join(configuration.user_pending, req_id)
+    # TODO: run rejectuser
+    _logger.warning(
+        'reject account request from admin page not implemented yet')
     return False
 
 
