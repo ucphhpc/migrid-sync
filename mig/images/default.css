@@ -1203,7 +1203,7 @@ div.archive pre {
   background: url('/images/icons/cog_add.png') no-repeat;
   padding-left: 18px;
 }
-.additemlink, .invitelink {
+.additemlink, .invitelink, .peerlink {
   background: url('/images/icons/page_white_add.png') no-repeat;
   padding-left: 18px;
 }
@@ -1215,7 +1215,7 @@ div.archive pre {
   background: url('/images/icons/cog_delete.png') no-repeat;
   padding-left: 18px;
 }
-.removeitemlink {
+.removeitemlink, .rejectlink {
   background: url('/images/icons/page_white_delete.png') no-repeat;
   padding-left: 18px;
 }

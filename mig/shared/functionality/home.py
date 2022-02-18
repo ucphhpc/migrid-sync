@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # home - home page
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,6 +34,7 @@ import os
 
 from mig.shared import returnvalues
 from mig.shared.defaults import csrf_field
+from mig.shared.findtype import is_admin
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.init import initialize_main_variables, find_entry, extract_menu
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
@@ -150,10 +151,19 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
 
     html += '''						<div class="app-grid row">
     '''
+
+    # Only include migadmin for actual admins and when enabled
+    skip_migadmin = True
+    if 'migadmin' in app_list and configuration.site_enable_migadmin and \
+            is_admin(client_id, configuration, configuration.logger):
+        skip_migadmin = False
+
     for app_id in app_list:
         app = menu_items[app_id]
         app_name = app['title']
         if not legacy_ui and app.get('legacy_only', False):
+            continue
+        if app_id == 'migadmin' and skip_migadmin:
             continue
         if app_id == 'vgrids':
             app_name = '%ss' % configuration.site_vgrid_label
