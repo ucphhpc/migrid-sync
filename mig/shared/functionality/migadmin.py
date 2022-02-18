@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migadmin - admin control panel with daemon status monitor
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,22 +25,27 @@
 # -- END_HEADER ---
 #
 
-"""MiG administrators page with daemon status and configuration"""
+"""MiG administrators page with basic user management, daemon status, site
+status and configuration view.
+"""
 
 from __future__ import absolute_import
 
 import os
 
 from mig.shared import returnvalues
-from mig.shared.accountreq import build_accountreqitem_object, list_account_reqs, \
-    get_account_req, delete_account_req, accept_account_req
+from mig.shared.accountreq import build_accountreqitem_object, \
+    list_account_reqs, get_account_req, accept_account_req, \
+    peer_account_req, reject_account_req, delete_account_req
 from mig.shared.base import force_utf8_rec
-from mig.shared.defaults import default_pager_entries, csrf_field
+from mig.shared.defaults import default_pager_entries, csrf_field, \
+    keyword_any, AUTH_CERTIFICATE, AUTH_OPENID_V2, AUTH_OPENID_CONNECT
 from mig.shared.fileio import send_message_to_grid_script, read_tail, listdir
 from mig.shared.findtype import is_admin
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.html import man_base_js, man_base_html, html_post_helper
+from mig.shared.httpsclient import detect_client_auth
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.safeeval import subprocess_popen, subprocess_pipe, \
     subprocess_stdout
@@ -54,13 +59,23 @@ grid_actions = {'reloadconfig': 'RELOADCONFIG',
                 'dropexecuting': 'DROPEXECUTING',
                 'dropdone': 'DROPDONE',
                 }
-accountreq_actions = ['addaccountreq', 'delaccountreq']
+accountreq_actions = ['createaccountreq', 'peeraccountreq', 'rejectaccountreq',
+                      'deleteaccountreq']
+
+all_actions = list(grid_actions) + accountreq_actions
+view_ops, act_ops = [''], []
+for entry in all_actions:
+    if entry.startswith('show'):
+        view_ops.append(entry)
+    else:
+        act_ops.append(entry)
 
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {'action': [''], 'req_id': [], 'job_id': [], 'lines': [20]}
+    defaults = {'action': [''], 'request_text': [''], 'req_id': [], 'job_id': [],
+                'lines': [20]}
     return ['html_form', defaults]
 
 
@@ -97,9 +112,11 @@ def format_stats(filename, stats):
     return html
 
 
-def main(client_id, user_arguments_dict):
+def main(client_id, user_arguments_dict, environ=None):
     """Main function used by front end"""
 
+    if environ is None:
+        environ = os.environ
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
@@ -113,7 +130,8 @@ def main(client_id, user_arguments_dict):
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
-    action = accepted['action'][-1]
+    action = accepted['action'][-1].strip()
+    request_text = accepted['request_text'][-1]
     req_list = accepted['req_id']
     job_list = accepted['job_id']
     lines = int(accepted['lines'][-1])
@@ -122,6 +140,7 @@ def main(client_id, user_arguments_dict):
 ''' % configuration.sleep_secs
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s administration panel' % configuration.short_title
+    title_entry['container_class'] = 'fillwidth',
     title_entry['meta'] = meta
 
     # jquery support for tablesorter and confirmation on "remove"
@@ -139,9 +158,40 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'html_form',
                            'text': man_base_html(configuration)})
 
-    if not is_admin(client_id, configuration, logger):
+    if not configuration.site_enable_migadmin:
         output_objects.append(
-            {'object_type': 'error_text', 'text': 'You must be an admin to access this control panel.'})
+            {'object_type': 'error_text', 'text':
+             'Site administration not enabled for this site!'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+    elif not is_admin(client_id, configuration, logger):
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'You MUST be a site admin to access this control panel.'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
+    (auth_type, auth_flavor) = detect_client_auth(configuration, environ)
+    # TODO: Support OpenID with 2FA requirement as well
+    view_auth, act_auth = [], []
+    auth_map = {'cert': AUTH_CERTIFICATE, 'oid': AUTH_OPENID_V2,
+                'oidc': AUTH_OPENID_CONNECT}
+    for (auth_name, auth_code) in auth_map.items():
+        if auth_name in configuration.site_migadmin_view_access or \
+                keyword_any in configuration.site_migadmin_view_access:
+            view_auth.append(auth_code)
+        if auth_name in configuration.site_migadmin_act_access or \
+                keyword_any in configuration.site_migadmin_act_access:
+            act_auth.append(auth_code)
+    if (not action or action in view_ops) and auth_type not in view_auth:
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Admin view access requires %s auth on this site.' %
+             ' or '.join(view_auth)})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+    elif action in act_ops and auth_type not in act_auth:
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Admin act access requires %s auth on this site.' %
+             ' or '.join(act_auth)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     html = ''
@@ -160,7 +210,7 @@ def main(client_id, user_arguments_dict):
                  })
             status = returnvalues.SYSTEM_ERROR
     elif action in accountreq_actions:
-        if action == "addaccountreq":
+        if action == "createaccountreq":
             for req_id in req_list:
                 if accept_account_req(req_id, configuration):
                     output_objects.append(
@@ -171,7 +221,29 @@ def main(client_id, user_arguments_dict):
                         {'object_type': 'error_text', 'text':
                          'Accept account request failed - details in log'
                          })
-        elif action == "delaccountreq":
+        elif action == "peeraccountreq":
+            for req_id in req_list:
+                if peer_account_req(req_id, configuration):
+                    output_objects.append(
+                        {'object_type': 'text', 'text':
+                         'Peer account request %s' % req_id})
+                else:
+                    output_objects.append(
+                        {'object_type': 'error_text', 'text':
+                         'Peer account request failed - details in log'
+                         })
+        elif action == "rejectaccountreq":
+            for req_id in req_list:
+                if reject_account_req(req_id, configuration):
+                    output_objects.append(
+                        {'object_type': 'text', 'text':
+                         'Rejected account request %s' % req_id})
+                else:
+                    output_objects.append(
+                        {'object_type': 'error_text', 'text':
+                         'Reject account request failed - details in log'
+                         })
+        elif action == "deleteaccountreq":
             for req_id in req_list:
                 if delete_account_req(req_id, configuration):
                     output_objects.append(
@@ -182,6 +254,8 @@ def main(client_id, user_arguments_dict):
                         {'object_type': 'error_text', 'text':
                          'Delete account request failed - details in log'
                          })
+        else:
+            logger.error("unsupported account request action: %s" % action)
 
     show, drop = '', ''
     general = """
@@ -266,10 +340,11 @@ provide access to e.g. managing the grid job queues.
         daemon_names.append('grid_transfers.py')
     if configuration.site_enable_crontab:
         daemon_names.append('grid_cron.py')
-    if configuration.site_enable_seafile:
+    if configuration.site_enable_seafile and \
+            configuration.user_seafile_local_instance:
         daemon_names += ['seafile-controller', 'seaf-server', 'ccnet-server',
                          'seahub']
-        if configuration.seafile_mount:
+        if configuration.seafile_mount and configuration.user_seafile_ro_access:
             daemon_names.append('seaf-fuse')
     if configuration.site_enable_sftp_subsys:
         daemon_names.append(
@@ -357,24 +432,52 @@ provide access to e.g. managing the grid job queues.
 
         js_name = 'create%s' % req_id
         helper = html_post_helper(js_name, '%s.py' % target_op,
-                                  {'action': 'addaccountreq', 'req_id': req_id,
+                                  {'action': 'createaccountreq', 'req_id': req_id,
                                    csrf_field: csrf_token})
         output_objects.append({'object_type': 'html_form', 'text': helper})
-        req_item['addaccountreqlink'] = {
+        req_item['createaccountreqlink'] = {
             'object_type': 'link', 'destination':
             "javascript: confirmDialog(%s, '%s');" %
-            (js_name, 'Really accept %s?' % req_id),
-            'class': 'addlink iconspace', 'title': 'Accept %s' % req_id, 'text': ''}
+            (js_name, 'Really accept account request %s?' % req_id),
+            'class': 'addlink iconspace', 'title': 'Accept request %s' %
+            req_id, 'text': ''}
+        js_name = 'peer%s' % req_id
+        helper = html_post_helper(js_name, '%s.py' % target_op,
+                                  {'action': 'peeraccountreq', 'req_id': req_id,
+                                   csrf_field: csrf_token})
+        output_objects.append({'object_type': 'html_form', 'text': helper})
+        req_item['peeraccountreqlink'] = {
+            'object_type': 'link', 'destination':
+            "javascript: confirmDialog(%s, '%s');" %
+            (js_name, 'Really issue Peer accept mails for account request %s?'
+             % req_id),
+            'class': 'peerlink iconspace', 'title': 'Request Peer for %s' %
+            req_id, 'text': ''}
+        js_name = 'reject%s' % req_id
+        helper = html_post_helper(js_name, '%s.py' % target_op,
+                                  {'action': 'rejectaccountreq', 'req_id': req_id,
+                                   'request_text': '', csrf_field: csrf_token})
+        output_objects.append({'object_type': 'html_form', 'text': helper})
+        req_item['rejectaccountreqlink'] = {
+            'object_type': 'link', 'destination':
+            "javascript: confirmDialog(%s, '%s', '%s');" %
+            (js_name, 'Really reject account request %s? (enter reason)' %
+             req_id, 'request_text'),
+            'class': 'rejectlink iconspace', 'title': 'Reject request %s' %
+            req_id,
+            'text': ''}
         js_name = 'delete%s' % req_id
         helper = html_post_helper(js_name, '%s.py' % target_op,
-                                  {'action': 'delaccountreq', 'req_id': req_id,
+                                  {'action': 'deleteaccountreq', 'req_id': req_id,
                                    csrf_field: csrf_token})
         output_objects.append({'object_type': 'html_form', 'text': helper})
-        req_item['delaccountreqlink'] = {
+        req_item['deleteaccountreqlink'] = {
             'object_type': 'link', 'destination':
             "javascript: confirmDialog(%s, '%s');" %
-            (js_name, 'Really remove %s?' % req_id),
-            'class': 'removelink iconspace', 'title': 'Remove %s' % req_id, 'text': ''}
+            (js_name, 'Really delete account request %s?' % req_id),
+            'class': 'removelink iconspace', 'title': 'Delete request %s' %
+            req_id,
+            'text': ''}
         accountreqs.append(req_item)
 
     output_objects.append({'object_type': 'table_pager', 'entry_name':

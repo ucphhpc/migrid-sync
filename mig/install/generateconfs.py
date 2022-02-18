@@ -170,6 +170,7 @@ if '__main__' == __name__:
         'seafile_quota',
     ]
     bool_names = [
+        'enable_migadmin',
         'enable_sftp',
         'enable_sftp_subsys',
         'enable_davs',

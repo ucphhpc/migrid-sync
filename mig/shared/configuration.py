@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # configuration - configuration wrapper
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -195,6 +195,7 @@ def fix_missing(config_file, verbose=True):
         'user_seahub_url': '',
         'user_seafile_url': '',
         'user_seafile_auth': ['password'],
+        'user_seafile_local_instance': False,
         'user_seafile_ro_access': False,
         'user_duplicati_protocols': [],
         'user_cloud_console_access': [],
@@ -465,7 +466,8 @@ class Configuration(object):
     user_seafile_url = ''
     user_seafile_auth = ['password']
     user_seafile_alias = ''
-    user_seafile_ro_access = True
+    user_seafile_local_instance = False
+    user_seafile_ro_access = False
     user_duplicati_protocols = []
     user_cloud_console_access = []
     user_cloud_ssh_auth = ['publickey']
@@ -895,6 +897,22 @@ location.""" % self.config_file)
 
         # Component settings
 
+        if config.has_option('SITE', 'enable_migadmin'):
+            self.site_enable_migadmin = config.getboolean(
+                'SITE', 'enable_migadmin')
+        else:
+            self.site_enable_migadmin = False
+        if config.has_option('SITE', 'migadmin_view_access'):
+            self.site_migadmin_view_access = config.get(
+                'SITE', 'migadmin_view_access').split()
+        else:
+            self.site_migadmin_view_access = [keyword_any]
+        if config.has_option('SITE', 'migadmin_act_access'):
+            self.site_migadmin_act_access = config.get(
+                'SITE', 'migadmin_act_access').split()
+        else:
+            self.site_migadmin_act_access = [keyword_any]
+
         if config.has_option('SITE', 'enable_jobs'):
             self.site_enable_jobs = config.getboolean('SITE', 'enable_jobs')
         else:
@@ -1117,6 +1135,9 @@ location.""" % self.config_file)
         if config.has_option('GLOBAL', 'user_seafile_alias'):
             self.user_seafile_alias = config.get('GLOBAL',
                                                  'user_seafile_alias')
+        if config.has_option('GLOBAL', 'user_seafile_local_instance'):
+            self.user_seafile_local_instance = config.getboolean(
+                'GLOBAL', 'user_seafile_local_instance')
         if config.has_option('GLOBAL', 'user_seafile_ro_access'):
             self.user_seafile_ro_access = config.getboolean(
                 'GLOBAL', 'user_seafile_ro_access')

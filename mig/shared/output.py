@@ -1879,8 +1879,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 <thead class="title">
     <tr>
         <th>ID</th>
-        <th class="icon"><!-- Add --></th>
-        <th class="icon"><!-- Del --></th>
+        <th class="icon"><!-- Action icons --></th>
         <th>Full Name</th>
         <th>Email</th>
         <th>Organization</th>
@@ -1895,20 +1894,29 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 '''
                          )
             for single_accountreq in accountreqs:
-                addlink = single_accountreq.get('addaccountreqlink', '')
-                addlink_html = ''
-                if addlink:
-                    addlink_html = '%s' % html_link(addlink)
-                dellink = single_accountreq.get('delaccountreqlink', '')
-                dellink_html = ''
-                if dellink:
-                    dellink_html = '%s' % html_link(dellink)
+                createlink = single_accountreq.get('createaccountreqlink', '')
+                createlink_html = ''
+                if createlink:
+                    createlink_html = '%s' % html_link(createlink)
+                peerlink = single_accountreq.get('peeraccountreqlink', '')
+                peerlink_html = ''
+                if peerlink:
+                    peerlink_html = '%s' % html_link(peerlink)
+                rejectlink = single_accountreq.get('rejectaccountreqlink', '')
+                rejectlink_html = ''
+                if rejectlink:
+                    rejectlink_html = '%s' % html_link(rejectlink)
+                deletelink = single_accountreq.get('deleteaccountreqlink', '')
+                deletelink_html = ''
+                if deletelink:
+                    deletelink_html = '%s' % html_link(deletelink)
                 lines.append('''
 <tr>
-<td>%s</td><td class="centertext">%s</td><td class="centertext">%s</td>
+<td>%s</td><td class="centertext iconspace">%s %s %s %s</td>
 <td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>
 <td>%s</td>
-</tr>''' % (single_accountreq['id'], addlink_html, dellink_html,
+</tr>''' % (single_accountreq['id'], createlink_html, peerlink_html,
+                    rejectlink_html, deletelink_html,
                     single_accountreq['full_name'], single_accountreq['email'],
                     single_accountreq['organization'], single_accountreq['country'],
                     single_accountreq['state'], single_accountreq['comment'],
