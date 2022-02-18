@@ -238,13 +238,13 @@ def make_symlink(dest, src, logger, force=False):
 
     # NOTE: we use islink instead of exists here to handle broken symlinks
     if os.path.islink(src) and force and delete_symlink(src, logger):
-        logger.debug('deleted existing symlink: %s' % (src))
+        logger.debug('deleted existing symlink: %s' % src)
 
     try:
         logger.debug('creating symlink: %s %s' % (dest, src))
         os.symlink(dest, src)
     except Exception as err:
-        logger.error('Could not create symlink %s' % err)
+        logger.error('Could not create symlink %s %s: %s' % (dest, src, err))
         return False
     return True
 
