@@ -44,6 +44,7 @@ body {
 }
 .global-container.staticpage {
   padding-left: 0;
+}
 /* Hide systemwarn announcement 'hack' for reqoid and similar narrow pages
    where it almost always leads to overflow. */
 body.staticpage #logotitle span.systemwarn {
