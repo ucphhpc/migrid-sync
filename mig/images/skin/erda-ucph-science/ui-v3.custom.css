@@ -264,7 +264,7 @@ span.fakelink:hover {
 }
 
 
-h1, h2, h3, .supporttitle, .privacytitle {
+h1, h2, h3, .supporttitle:not(.staticpage p), .privacytitle:not(div.staticpage p) {
     color: #46743C;
     background-color: #FFF;
 }

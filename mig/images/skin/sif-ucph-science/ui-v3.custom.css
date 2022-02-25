@@ -108,7 +108,7 @@ button.avatar-link {
     color: #46743C;
 }
 
-button.avatar-link:active {
+button.avatar-link:active, button.avatar-link:hover {
     color: #46743C;
 }
 
@@ -264,13 +264,19 @@ span.fakelink:hover {
 }
 
 
-h1, h2, h3, .supporttitle, .privacytitle {
+h1, h2, h3, .supporttitle:not(.staticpage p), .privacytitle:not(div.staticpage p) {
     color: #46743C;
     background-color: #FFF;
 }
 /* Strip border when using color on white */
 h1 {
     border: 0;
+}
+/* Slightly smaller font for h1 to keep e.g. Home title on a single line */
+@media (min-width: 1000px) {
+    h1 {
+	font-size: 90px;
+    }
 }
 
 a {
