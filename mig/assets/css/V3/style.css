@@ -72,6 +72,11 @@ html, body {
     line-height: 1.5;
     -webkit-text-size-adjust: 100%
 }
+/* Fit body and borders to entire height e.g. on Archive landing pages with
+   dynamic file list */
+body.staticpage {
+    height: max-content;
+}
 
 body {
     /* TODO: re-enable these if okay with KU style guides? */
@@ -205,6 +210,13 @@ p.wordbreak {
 .supporttitle, .privacytitle {
     padding: 10px 0px 2px 0px;
     border-bottom: 0;
+    font-size: 11px;
+    font-weight: normal;
+}
+.creditstext {
+    padding: 4px 0px 2px 0px;
+    font-size: 11px;
+    font-weight: normal;
 }
 
 ul {

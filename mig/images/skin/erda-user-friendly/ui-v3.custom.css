@@ -108,7 +108,7 @@ button.avatar-link {
     color: #46743C;
 }
 
-button.avatar-link:active {
+button.avatar-link:active, button.avatar-link:hover {
     color: #46743C;
 }
 
@@ -264,7 +264,7 @@ span.fakelink:hover {
 }
 
 
-h1, h2, h3, .supporttitle, .privacytitle {
+h1, h2, h3, .supporttitle:not(.staticpage p), .privacytitle:not(div.staticpage p) {
     color: #46743C;
     background-color: #FFF;
 }
@@ -278,7 +278,6 @@ h1 {
 	font-size: 90px;
     }
 }
-
 
 a {
     color: #46743C;
