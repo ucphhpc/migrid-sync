@@ -777,6 +777,10 @@ code {
     color: silver;
 }
 
+/* Wrap long lines by default e.g on Archive publish pages to avoid scroll */
+pre:not(pre.codeblock) {
+    white-space: break-spaces;
+}
 /* Setup commands etc. */
 pre.codeblock {
     color: #666;
