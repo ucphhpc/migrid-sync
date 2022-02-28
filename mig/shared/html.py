@@ -361,9 +361,17 @@ def render_body_start(configuration, script_map={}, user_settings={},
     if body_extras.find('id=') != -1:
         configuration.logger.error("Body cannot have a 2nd 'id'!")
         body_extras = ''
+    # NOTE: add staticpage class without breaking any existing class spec
+    if body_extras.find('class=') != -1:
+        body_extras = body_extras.replace('class="', 'class="%s ' %
+                                          static_class)
+        body_extras = body_extras.replace("class='", "class='%s " %
+                                          static_class)
+    else:
+        body_extras += "class='%s'" % static_class
     return '''
-<body id="%s" class="%s" %s>
-    ''' % (body_id, static_class, body_extras)
+<body id="%s" %s>
+    ''' % (body_id, body_extras)
 
 
 def render_body_end(configuration, user_settings={}, mark_static=False):
