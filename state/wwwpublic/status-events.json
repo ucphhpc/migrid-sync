@@ -20,6 +20,31 @@
     }, 
     "announce_end": "2022-03-10T12:00:00+01:00"
   }, 
+  {
+    "status": "AUTO", 
+    "work_start": "2022-03-02T11:00:00+01:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
+    "systems": [
+        "ERDA", "IDMC", "SIF", "MiGrid"
+    ], 
+    "announce_start": "2022-03-02T11:00:00+01:00", 
+    "title": {
+      "EN": "UCPH Login and Access Issues", 
+      "DK": "Problemer med KU-login og adgang"
+    }, 
+    "services": [
+        "HTTP", "HTTPS", "DAG", "MODI"
+    ], 
+    "work_end": "2022-03-04T16:00:00+01:00", 
+    "description": {
+      "EN": "According to our logs and user reports the UCPH OpenID service, which is used for ERDA/IDMC, SIF and MiGrid web access, has been unstable since Friday afternoon. Every operation involving actual login or just login session checks may take a long time and some times so long that it results in a page load timeout and various other page navigation errors. We tracked it down to be a problem with the UCPH OpenID service response times and have reported it to University IT. Now we await a response and further information will follow here.", 
+      "DK": "Ud fra vores logs og brugerhenvendelser at dømme har KUs OpenID service, som benyttes til ERDA/IDMC, SIF og MiGrid web-adgang, været ustabil siden fredag eftermiddag. Alle operationer som involverede enten login eller kontrol af aktiv login session kan tage lang tid, og fører nogle gange ligefrem til timeout og forskellige andre sideindlæsningsfejl. Vi har analyseret os frem til at det er et problem med svartiderne fra KUs OpenID service, og har kontaktet KU-IT om sagen. Vi afventer svar og melder yderligere information ud her."
+    }, 
+    "announce_end": "2022-03-08T12:00:00+01:00"
+  }, 
  {
     "status": "AUTO", 
     "work_start": "2022-02-10T15:00:00+01:00", 
