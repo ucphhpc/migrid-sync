@@ -22,7 +22,7 @@
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2022-03-02T11:00:00+01:00", 
+    "work_start": "2022-02-25T13:15:00+01:00", 
     "references": {
       "EN": [], 
       "DK": []
@@ -30,7 +30,7 @@
     "systems": [
         "ERDA", "IDMC", "SIF", "MiGrid"
     ], 
-    "announce_start": "2022-03-02T11:00:00+01:00", 
+    "announce_start": "2022-02-25T13:15:00+01:00", 
     "title": {
       "EN": "UCPH Login and Access Issues", 
       "DK": "Problemer med KU-login og adgang"
@@ -112,7 +112,7 @@
   },
   {
     "status": "AUTO", 
-    "work_start": "2022-11-19T18:00:00+01:00", 
+    "work_start": "2021-11-19T18:00:00+01:00", 
     "systems": [
         "ERDA", "IDMC", "SIF"
     ], 
@@ -124,12 +124,12 @@
     "services": [
       "ALL"
     ], 
-    "work_end": "2022-02-11T18:00:00+01:00", 
+    "work_end": "2022-02-01T12:00:00+01:00", 
     "description": {
-      "EN": "The current global computer chip shortage and reduced production capacities are beginning to cause serious headaches regarding the continued gradual expansion of the ERDA/IDMC and SIF backend storage. We still have additional storage bricks to add, but we are running low and vendors report several months of delivery time even on already ordered hardware. In effect this MIGHT lead to a situation where we will have to throttle data growth on ERDA/IDMC and SIF e.g. through upload rate limits or have You as users clean up any big (~terabyte) data sets of little or no importance. This is of course rather inconvenient and something we are trying our best to avoid, but we think it only fair to announce well ahead to let you plan and act in due time.", 
-      "DK": "De aktuelle globale problemer med mangel på computer-chips og begrænset produktionskapacitet begynder at føre til alvorlige bekymringer omkring den fortsatte løbende opskalering af ERDA/IDMC og SIF backend-lageret. Vi har stadig ekstra bricks at sætte på, men der er ved at være lavvande i lageret og leverandørerne melder om måneders leveringstid selv på allerede bestilt hardware. Resultatet KAN blive at vi ender i en situation hvor vi bliver nødt til at skrue ned for datavæksten på ERDA/IDMC og SIF f.eks. via begrænsning på uploadhastigheden eller at I som brugere rydder op i evt store (~terabyte) datasæt af begrænset eller ingen værdi. Det er selvfølgelig en ubehagelig situation og noget vi gør vores bedste for at undgå, men vi foretrækker at melde ud allerede nu mhp at give alle mulighed for at planlægge og agere rettidigt."
+      "EN": "The current global computer chip shortage and reduced production capacities are beginning to cause serious headaches regarding the continued gradual expansion of the ERDA/IDMC and SIF backend storage. We still have additional storage bricks to add, but we are running low and vendors report several months of delivery time even on already ordered hardware. In effect this MIGHT lead to a situation where we will have to throttle data growth on ERDA/IDMC and SIF e.g. through upload rate limits or have You as users clean up any big (~terabyte) data sets of little or no importance. This is of course rather inconvenient and something we are trying our best to avoid, but we think it only fair to announce well ahead to let you plan and act in due time. Please refer to the newer announcement for details and updates.", 
+      "DK": "De aktuelle globale problemer med mangel på computer-chips og begrænset produktionskapacitet begynder at føre til alvorlige bekymringer omkring den fortsatte løbende opskalering af ERDA/IDMC og SIF backend-lageret. Vi har stadig ekstra bricks at sætte på, men der er ved at være lavvande i lageret og leverandørerne melder om måneders leveringstid selv på allerede bestilt hardware. Resultatet KAN blive at vi ender i en situation hvor vi bliver nødt til at skrue ned for datavæksten på ERDA/IDMC og SIF f.eks. via begrænsning på uploadhastigheden eller at I som brugere rydder op i evt store (~terabyte) datasæt af begrænset eller ingen værdi. Det er selvfølgelig en ubehagelig situation og noget vi gør vores bedste for at undgå, men vi foretrækker at melde ud allerede nu mhp at give alle mulighed for at planlægge og agere rettidigt. Se venligst nyere punkt om samme for detaljer og opdatering."
     }, 
-    "announce_end": "2022-05-30T16:00:00+01:00"
+    "announce_end": "2022-02-01T16:00:00+01:00"
   },
   {
     "status": "AUTO", 
