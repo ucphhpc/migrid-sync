@@ -365,9 +365,9 @@ function fill_server_status_accordion(status_events, brief_targets, status_targe
             var en_items = [];
             var dk_items = [];
             var en_entry, en_title, en_workdatetimes, en_systems, en_services;
-            var en_description, en_references;
+            var en_description, en_references, en_workdates;
             var dk_entry, dk_title, dk_workdatetimes, dk_systems, dk_services;
-            var dk_description, dk_references;
+            var dk_description, dk_references, dk_workdates;
             var work_start, work_end, announce_start, announce_end, outage_start, outage_end;
             var entry_systems;
             var entry_services;
@@ -382,6 +382,7 @@ function fill_server_status_accordion(status_events, brief_targets, status_targe
                 en_entry = "";
                 en_title = "";
                 en_workdatetimes = "<b>Date:</b><br/>";
+                en_workdates = "";
                 en_systems = "<b>Systems:</b><br/>";
                 en_services = "<b>Services:</b><br/>";
                 en_description = "<b>Description:</b><br/>";
@@ -389,6 +390,7 @@ function fill_server_status_accordion(status_events, brief_targets, status_targe
                 dk_entry = "";
                 dk_title = "";
                 dk_workdatetimes = "<b>Dato:</b><br/>";
+                dk_workdates = "";
                 dk_systems = "<b>Systemer:</b><br/>";
                 dk_services = "<b>Services:</b><br/>";
                 dk_description = "<b>Beskrivelse:</b><br/>";
@@ -483,22 +485,28 @@ function fill_server_status_accordion(status_events, brief_targets, status_targe
                     title_class += "ok iconleftpad";
                 }
                 work_dates = work_start.toLocaleDateString(locale);
+                en_workdates = work_start.toLocaleDateString("en");
+                dk_workdates = work_start.toLocaleDateString("da");
                 if (work_end.toLocaleDateString(locale) != work_dates) {
                     work_dates += " - "+work_end.toLocaleDateString(locale);
+                    en_workdates += " - "+work_end.toLocaleDateString("en");
+                    dk_workdates += " - "+work_end.toLocaleDateString("da");
                 }
                 work_datetimes = work_start.toLocaleString(locale);
+                en_workdatetimes += work_start.toLocaleString("en");
+                dk_workdatetimes += work_start.toLocaleString("da");
                 if (work_end.toLocaleString(locale) != work_datetimes) {
                     work_datetimes += " - "+work_end.toLocaleString(locale);
+                    en_workdatetimes += " - "+work_end.toLocaleString("en");
+                    dk_workdatetimes += " - "+work_end.toLocaleString("da");
                 }
-                en_workdatetimes += work_datetimes;
-                dk_workdatetimes += work_datetimes;
 
                 if (show_entry) {
                     /* NOTE: JQuery UI accordion maps hX-tags to titles with p-tags
                        as associated entries */
-                    en_entry = "<h4><span class='"+title_class+"'>"+work_dates+"</span>: "+en_title+"</h4><p><span class='"+workdatetimes_class+"'>" + en_workdatetimes +"</span><br/><span class='"+systems_class+"'>" + en_systems +"</span><br/><span class='"+services_class+"'>" + en_services +"</span><br/><span class='"+description_class+"'>" + en_description +"</span><br/><span class='"+references_class+"'>"+en_references+"</span></p>";
+                    en_entry = "<h4><span class='"+title_class+"'>"+en_workdates+"</span>: "+en_title+"</h4><p><span class='"+workdatetimes_class+"'>" + en_workdatetimes +"</span><br/><span class='"+systems_class+"'>" + en_systems +"</span><br/><span class='"+services_class+"'>" + en_services +"</span><br/><span class='"+description_class+"'>" + en_description +"</span><br/><span class='"+references_class+"'>"+en_references+"</span></p>";
                     en_items.push(en_entry);
-                    dk_entry = "<h4><span class='"+title_class+"'>"+work_dates+"</span>: "+dk_title+"</h4><p><span class='"+workdatetimes_class+"'>" + dk_workdatetimes +"</span><br/><span class='"+systems_class+"'>" + dk_systems + "</span><br/><span class='"+services_class+"'>" + dk_services + "</span><br/><span class='"+description_class+"'>" + dk_description + "</span><br/><span class='"+references_class+"'>"+dk_references+"</span></p>";
+                    dk_entry = "<h4><span class='"+title_class+"'>"+dk_workdates+"</span>: "+dk_title+"</h4><p><span class='"+workdatetimes_class+"'>" + dk_workdatetimes +"</span><br/><span class='"+systems_class+"'>" + dk_systems + "</span><br/><span class='"+services_class+"'>" + dk_services + "</span><br/><span class='"+description_class+"'>" + dk_description + "</span><br/><span class='"+references_class+"'>"+dk_references+"</span></p>";
                     dk_items.push(dk_entry);
                     //console.debug("include entry for "+entry_systems+" and match for "+system_match+" : "+systems_overlap);
                 }

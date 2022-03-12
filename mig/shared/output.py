@@ -1894,21 +1894,18 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 rejectlink_html = ''
                 if rejectlink:
                     rejectlink_html = '%s' % html_link(rejectlink)
-                deletelink = single_accountreq.get('deleteaccountreqlink', '')
-                deletelink_html = ''
-                if deletelink:
-                    deletelink_html = '%s' % html_link(deletelink)
                 lines.append('''
 <tr>
-<td>%s</td><td class="centertext iconspace">%s %s %s %s</td>
+<td>%s</td><td class="centertext iconspace">%s %s %s</td>
 <td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>
 <td>%s</td>
 </tr>''' % (single_accountreq['id'], createlink_html, peerlink_html,
-                    rejectlink_html, deletelink_html,
-                    single_accountreq['full_name'], single_accountreq['email'],
-                    single_accountreq['organization'], single_accountreq['country'],
-                    single_accountreq['state'], single_accountreq['comment'],
-                    ', '.join(single_accountreq['auth']), single_accountreq['created']))
+                    rejectlink_html, single_accountreq['full_name'],
+                    single_accountreq['email'], single_accountreq['organization'],
+                    single_accountreq['country'], single_accountreq['state'],
+                    single_accountreq['comment'], ', '.join(
+                        single_accountreq['auth']),
+                    single_accountreq['created']))
 
             lines.append('''
 </tbody>

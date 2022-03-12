@@ -35,11 +35,15 @@ body {
 }
 
 /* Fixed width layout in line with UCPH style guidelines */
-body.staticpage {
+#modern-ui-body.staticpage, body.staticpage {
   margin: 0 auto;
-  width: 984px;
+  /* Top center logo width should not exceed this minus 2 x border width */
+  width: 985px;
   border-right: 1px solid #CCC;
   border-left: 1px solid #CCC;
+}
+.global-container.staticpage {
+  padding-left: 0;
 }
 /* Hide systemwarn announcement 'hack' for reqoid and similar narrow pages
    where it almost always leads to overflow. */
@@ -48,7 +52,7 @@ body.staticpage #logotitle span.systemwarn {
 }
 
 .home-nav-logo {
-	background-image: url("home-logo.jpg");
+    background-image: url("home-logo.jpg");
 }
 
 a {
@@ -169,13 +173,6 @@ table {
 }
 
 
-
-/* Used in one place... maybe that place should be fixed? to use h1 instead */
-#migheader {
-  color: #eee;
-  background: url("/images/skin/erda-ucph-science/background.png") repeat scroll left center #eee;
-}
-
 #toplogo {
   border: 0;
   color: #333;
@@ -259,6 +256,10 @@ table {
   height: 76px;
   border-bottom: 1px solid #CCC;
 }
+#bottomlogo.staticpage {
+  /* override bootstrap shrinking of footer area here */
+  box-sizing: unset;
+}
 
 #bottomlogo p, #bottomlogo span {
   font-size: 11px;
@@ -282,7 +283,7 @@ table {
   line-height: 1.15em;
   padding: 0px 4px;
 }
-#supportimage {
+#supportimage, #privacyimage {
   display: none;
 }
 #privacy {

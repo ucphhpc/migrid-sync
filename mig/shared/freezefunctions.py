@@ -51,8 +51,9 @@ from mig.shared.fileio import md5sum_file, sha1sum_file, sha256sum_file, \
     makedirs_rec, make_symlink, make_temp_dir, acquire_file_lock, \
     release_file_lock, walk, listdir
 from mig.shared.filemarks import get_filemark, update_filemark
-from mig.shared.html import get_xgi_html_preamble, get_xgi_html_footer, \
-    man_base_js, themed_styles, themed_scripts, tablesorter_pager
+from mig.shared.html import get_xgi_html_header, get_xgi_html_footer, \
+    man_base_js, themed_styles, themed_scripts, \
+    tablesorter_pager
 from mig.shared.pwhash import make_path_hash
 from mig.shared.serial import load, dump
 from mig.shared.url import quote
@@ -1040,42 +1041,19 @@ THIS IS ONLY A DRAFT - EXPLICIT FREEZE IS STILL PENDING!
     script_entry['init'] += add_init
     script_entry['ready'] += add_ready
 
-    # Use the default preamble to get style, skin and so on right
-
-    contents = get_xgi_html_preamble(configuration, publish_title, "",
-                                     style_map=style_entry,
-                                     script_map=script_entry,
-                                     widgets=False,
-                                     userstyle=False,
-                                     user_settings={})
-
-    # Manually create modified page start like get_xgi_html_header but
-    # using staticpage class for flexible skinning
-
-    contents += """
-<body class='staticpage'>
-<div id='topspace'>
-</div>
-<div class='staticpage' id='toplogo'>
-
-<div class='staticpage' id='toplogoleft'>
-</div>
-<div class='staticpage' id='toplogocenter'>
-<img src='%s/banner-logo.jpg' id='logoimagecenter'
-     class='staticpage' alt='site logo center'/>
-</div>
-<div class='staticpage' id='toplogoright'>
-</div>
-</div>
-
-<div class='contentblock staticpage archive' id='nomenu'>
-<div id='migheader'>
-</div>
-<div class='staticpage' id='content' lang='en'>
-""" % configuration.site_skin_base
+    # NOTE: use mark_static to insert classic page top logo like on V2 pages
+    # using staticpage class for flexible skinning. Otherwise archives have no
+    # branding/skin whatsoever.
+    contents = get_xgi_html_header(configuration, publish_title, '',
+                                   style_map=style_entry,
+                                   script_map=script_entry,
+                                   frame=False,
+                                   menu=False,
+                                   widgets=False,
+                                   userstyle=False,
+                                   mark_static=True)
 
     # Then fill actual archive page
-
     auto_line = ''
     auto_map = {'published_id': published_id}
     # TODO: drop meta_label here
@@ -1125,6 +1103,7 @@ on %(created_timestamp)s by %(creator)s.""" % auto_map
 <div class='archive-filestable'>
 <h2 class='staticpage'>Archive Files</h2>
     %s
+    <div class='table-responsive'>
     <table id='frozenfilestable' class='frozenfiles columnsort'>
         <thead class='title'>
             <tr><th>Name</th><th>Date</th><th>Size</th>
@@ -1136,10 +1115,11 @@ on %(created_timestamp)s by %(creator)s.""" % auto_map
         </thead>
         <tbody><!-- rows filled by AJAX call--></tbody>
     </table>
+    </div>
     """ % toolbar
     contents += """</div>
 %s
-    """ % get_xgi_html_footer(configuration, widgets=False)
+    """ % get_xgi_html_footer(configuration, widgets=False, mark_static=True)
     if not make_symlink(arch_dir, real_pub_dir, _logger, force=True) or \
             not write_file(contents, real_pub_index, _logger) or \
             not write_file(json.dumps(cached), real_pub_files, _logger):

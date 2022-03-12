@@ -1,4 +1,51 @@
-[ {
+[
+  {
+    "status": "AUTO", 
+    "work_start": "2022-03-09T16:00:00+01:00", 
+    "systems": [
+      "ERDA"
+    ], 
+    "announce_start": "2022-03-02T09:00:00+01:00", 
+    "title": {
+      "EN": "Planned ERDA Seafile Maintenance", 
+      "DK": "Planlagt vedligehold på ERDA Seafile"
+    }, 
+    "services": [
+      "Seafile"
+    ], 
+    "work_end": "2022-03-09T18:00:00+01:00", 
+    "description": {
+      "EN": "We have a number of pending system and minor bugfixes on ERDA Seafile. The work will require a full Seafile system restart after the system updates. ERDA Seafile will therefore be down for shorter or longer periods during the work, but all other ERDA services should remain fully available. We expect the work to last a couple of hours, but reserve until next morning in case of unforeseen problems. We did in fact complete the upgrades within a couple of hours so everything is back to normal with the updated Seafile version 9.0.4.", 
+      "DK": "Vi har en række udestående system- og mindre funktionelle opdateringer på ERDAs Seafile. Arbejdet kræver genstart af hele Seafile systemet efter systemopdateringerne. ERDA Seafile vil derfor være utilgængelig i kortere eller længere perioder under opdateringen, men det skulle ikke berøre øvrige ERDA services. Arbejdet forventes at tage et par timer, men vi afsætter indtil næste morgen i tilfælde af uforudsete problemer. Vi klarede opgraderingen på et par timer så alt er tilbage i normal drift med den opdaterede Seafile version 9.0.4."
+    }, 
+    "announce_end": "2022-03-10T12:00:00+01:00"
+  }, 
+  {
+    "status": "AUTO", 
+    "work_start": "2022-02-25T13:15:00+01:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
+    "systems": [
+        "ERDA", "IDMC", "SIF", "MiGrid"
+    ], 
+    "announce_start": "2022-02-25T13:15:00+01:00", 
+    "title": {
+      "EN": "UCPH Login and Access Issues", 
+      "DK": "Problemer med KU-login og adgang"
+    }, 
+    "services": [
+        "HTTP", "HTTPS", "DAG", "MODI"
+    ], 
+    "work_end": "2022-03-07T12:15:00+01:00", 
+    "description": {
+      "EN": "According to our logs and user reports the UCPH OpenID service, which is used for ERDA/IDMC, SIF and MiGrid web access, has been unstable since Friday afternoon. Every operation involving actual login or just login session checks may take a long time and some times so long that it results in a page load timeout and various other page navigation errors. We tracked it down to be a problem with the UCPH OpenID service response times and have reported it to University IT. They have restarted their OpenID service and it looks like it solved the problem. At least we observed no more errors at our end since they did about noon today, March 7th.", 
+      "DK": "Ud fra vores logs og brugerhenvendelser at dømme har KUs OpenID service, som benyttes til ERDA/IDMC, SIF og MiGrid web-adgang, været ustabil siden fredag eftermiddag. Alle operationer som involverede enten login eller kontrol af aktiv login session kan tage lang tid, og fører nogle gange ligefrem til timeout og forskellige andre sideindlæsningsfejl. Vi har analyseret os frem til at det er et problem med svartiderne fra KUs OpenID service, og har kontaktet KU-IT om sagen. De har genstartet deres OpenID service og det ser ud til at det løste problemet. I hvert fald har vi ikke observeret fejl hos os siden de gjorde det omkring middag idag, den 7. marts."
+    }, 
+    "announce_end": "2022-03-09T12:00:00+01:00"
+  }, 
+ {
     "status": "AUTO", 
     "work_start": "2022-02-10T15:00:00+01:00", 
     "systems": [
@@ -65,7 +112,7 @@
   },
   {
     "status": "AUTO", 
-    "work_start": "2022-11-19T18:00:00+01:00", 
+    "work_start": "2021-11-19T18:00:00+01:00", 
     "systems": [
         "ERDA", "IDMC", "SIF"
     ], 
@@ -77,12 +124,12 @@
     "services": [
       "ALL"
     ], 
-    "work_end": "2022-02-11T18:00:00+01:00", 
+    "work_end": "2022-02-01T12:00:00+01:00", 
     "description": {
-      "EN": "The current global computer chip shortage and reduced production capacities are beginning to cause serious headaches regarding the continued gradual expansion of the ERDA/IDMC and SIF backend storage. We still have additional storage bricks to add, but we are running low and vendors report several months of delivery time even on already ordered hardware. In effect this MIGHT lead to a situation where we will have to throttle data growth on ERDA/IDMC and SIF e.g. through upload rate limits or have You as users clean up any big (~terabyte) data sets of little or no importance. This is of course rather inconvenient and something we are trying our best to avoid, but we think it only fair to announce well ahead to let you plan and act in due time.", 
-      "DK": "De aktuelle globale problemer med mangel på computer-chips og begrænset produktionskapacitet begynder at føre til alvorlige bekymringer omkring den fortsatte løbende opskalering af ERDA/IDMC og SIF backend-lageret. Vi har stadig ekstra bricks at sætte på, men der er ved at være lavvande i lageret og leverandørerne melder om måneders leveringstid selv på allerede bestilt hardware. Resultatet KAN blive at vi ender i en situation hvor vi bliver nødt til at skrue ned for datavæksten på ERDA/IDMC og SIF f.eks. via begrænsning på uploadhastigheden eller at I som brugere rydder op i evt store (~terabyte) datasæt af begrænset eller ingen værdi. Det er selvfølgelig en ubehagelig situation og noget vi gør vores bedste for at undgå, men vi foretrækker at melde ud allerede nu mhp at give alle mulighed for at planlægge og agere rettidigt."
+      "EN": "The current global computer chip shortage and reduced production capacities are beginning to cause serious headaches regarding the continued gradual expansion of the ERDA/IDMC and SIF backend storage. We still have additional storage bricks to add, but we are running low and vendors report several months of delivery time even on already ordered hardware. In effect this MIGHT lead to a situation where we will have to throttle data growth on ERDA/IDMC and SIF e.g. through upload rate limits or have You as users clean up any big (~terabyte) data sets of little or no importance. This is of course rather inconvenient and something we are trying our best to avoid, but we think it only fair to announce well ahead to let you plan and act in due time. Please refer to the newer announcement for details and updates.", 
+      "DK": "De aktuelle globale problemer med mangel på computer-chips og begrænset produktionskapacitet begynder at føre til alvorlige bekymringer omkring den fortsatte løbende opskalering af ERDA/IDMC og SIF backend-lageret. Vi har stadig ekstra bricks at sætte på, men der er ved at være lavvande i lageret og leverandørerne melder om måneders leveringstid selv på allerede bestilt hardware. Resultatet KAN blive at vi ender i en situation hvor vi bliver nødt til at skrue ned for datavæksten på ERDA/IDMC og SIF f.eks. via begrænsning på uploadhastigheden eller at I som brugere rydder op i evt store (~terabyte) datasæt af begrænset eller ingen værdi. Det er selvfølgelig en ubehagelig situation og noget vi gør vores bedste for at undgå, men vi foretrækker at melde ud allerede nu mhp at give alle mulighed for at planlægge og agere rettidigt. Se venligst nyere punkt om samme for detaljer og opdatering."
     }, 
-    "announce_end": "2022-05-30T16:00:00+01:00"
+    "announce_end": "2022-02-01T16:00:00+01:00"
   },
   {
     "status": "AUTO", 

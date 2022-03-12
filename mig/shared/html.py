@@ -344,10 +344,14 @@ def render_apps(configuration, title_entry, active_menu):
     return app_lines
 
 
-def render_body_start(configuration, script_map={}, user_settings={}):
+def render_body_start(configuration, script_map={}, user_settings={},
+                      mark_static=False):
     """Render the default body init for specific UI configuration and insert
     provided body additions like classes and meta.
     """
+    static_class = ''
+    if mark_static:
+        static_class = 'staticpage'
     if legacy_user_interface(configuration, user_settings):
         body_id = 'legacy-ui-body'
     else:
@@ -357,21 +361,33 @@ def render_body_start(configuration, script_map={}, user_settings={}):
     if body_extras.find('id=') != -1:
         configuration.logger.error("Body cannot have a 2nd 'id'!")
         body_extras = ''
+    # NOTE: add staticpage class without breaking any existing class spec
+    if body_extras.find('class=') != -1:
+        body_extras = body_extras.replace('class="', 'class="%s ' %
+                                          static_class)
+        body_extras = body_extras.replace("class='", "class='%s " %
+                                          static_class)
+    else:
+        body_extras += "class='%s'" % static_class
     return '''
 <body id="%s" %s>
     ''' % (body_id, body_extras)
 
 
-def render_body_end(configuration, user_settings={}):
+def render_body_end(configuration, user_settings={}, mark_static=False):
     """Render the default body termination"""
     return """</body>
     """
 
 
-def render_before_menu(configuration, script_map={}, user_settings={}):
+def render_before_menu(configuration, script_map={}, user_settings={},
+                       mark_static=False):
     """Render the default structure from body and until the navigation menu
     entries using the user provided script_map for further customization.
     """
+    static_class = ''
+    if mark_static:
+        static_class = 'staticpage'
     fill_helper = {'short_title': configuration.short_title,
                    'status_url': configuration.site_status_url,
                    'sitestatus_button': '', 'support_icon': '',
@@ -379,44 +395,57 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
     if configuration.site_support_image:
         fill_helper['support_icon'] = '<img src="%s" id="supportimage" />' % \
                                       configuration.site_support_image
-    if legacy_user_interface(configuration, user_settings):
-        html = '''
-<div id="topspace">
-</div>
-<div id="toplogo">
-<div id="toplogoleft">
-<img src="%s" id="logoimageleft" alt="site logo left"/>
-</div>
-<div id="toplogocenter">
-<span id="logotitle">
-%s
+    html = ''
+
+    if mark_static or legacy_user_interface(configuration, user_settings):
+        if mark_static:
+            logo_center = '''
+<img src="%s/banner-logo.jpg" id="logoimagecenter" class="staticpage" alt="site logo center"/>
+''' % configuration.site_skin_base
+        else:
+            logo_center = '''
+<span id="logotitle" class="%(static_class)s">
+%(site_logo_center)s
 </span>
+''' % {'static_class': static_class,
+                'site_logo_center': configuration.site_logo_center}
+        html += '''
+<div id="topspace" class="%(static_class)s">
 </div>
-<div id="toplogoright">
-<img src="%s" id="logoimageright" alt="site logo right"/>
+<div id="toplogo" class="%(static_class)s">
+<div id="toplogoleft" class="%(static_class)s">
+<img src="%(logo_left)s" id="logoimageleft" class="%(static_class)s" alt="site logo left"/>
+</div>
+<div id="toplogocenter" class="%(static_class)s">
+%(logo_center)s
+</div>
+<div id="toplogoright" class="%(static_class)s">
+<img src="%(logo_right)s" id="logoimageright" class="%(static_class)s" alt="site logo right"/>
 </div>
 </div>
-        ''' % (configuration.site_logo_left, configuration.site_logo_center,
-               configuration.site_logo_right)
+        ''' % {'static_class': static_class, 'logo_left': configuration.site_logo_left,
+               'logo_center': logo_center,
+               'logo_right': configuration.site_logo_right}
     else:
-        if configuration.site_enable_sitestatus:
+        if configuration.site_enable_sitestatus and not mark_static:
             fill_helper['sitestatus_button'] = '''
                 <li id="sitestatus-button" class="nav__item nav_item--expanded fas fa-question-circle custom-show" onclick="show_message()" title="Site status - click for details"></li>
             '''
 
-        html = '''
-    <!-- Push notifications: updated/filled by AJAX -->
-    <div id="sitestatus-popup" class="toast hidden" data-autohide="false">
-        <div id="sitestatus-top" class="toast-header">
-            <div id="sitestatus-title" class="toast-title">
-                <!-- TODO: move inline style to css files -->
-                <!-- NOTE: reuse 1.5rem size with ml-2 and mb-1 classes to mimic close -->
-                <span id="sitestatus-icon" class="fas fa-question-circle ml-2 mb-1" style="color: grey; font-size: 1.5rem; float: left;"></span>
-                <strong class="mr-auto text-primary" style="float: left;">
-                    <h3 id="sitestatus-caption" style="margin-left: 5px;">SITE STATUS</h3>
-                </strong>
-                <small id="sitestatus-timestamp" class="text-muted" style="float: right;"></small>
-            </div>
+        if not mark_static:
+            html += '''
+<!-- Push notifications: updated/filled by AJAX -->
+<div id="sitestatus-popup" class="toast hidden" data-autohide="false">
+    <div id="sitestatus-top" class="toast-header">
+        <div id="sitestatus-title" class="toast-title">
+            <!-- TODO: move inline style to css files -->
+            <!-- NOTE: reuse 1.5rem size with ml-2 and mb-1 classes to mimic close -->
+            <span id="sitestatus-icon" class="fas fa-question-circle ml-2 mb-1" style="color: grey; font-size: 1.5rem; float: left;"></span>
+             <strong class="mr-auto text-primary" style="float: left;">
+                 <h3 id="sitestatus-caption" style="margin-left: 5px;">SITE STATUS</h3>
+             </strong>
+             <small id="sitestatus-timestamp" class="text-muted" style="float: right;"></small>
+        </div>
         <div id="sitestatus-close" class="">
             <button type="button" class="ml-2 mb-1 close" data-dismiss="toast">&times;</button>
         </div>
@@ -436,7 +465,7 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
 </div>
 '''
 
-        html += '''
+            html += '''
 
 <!--HEADER INFO AREA-->
 <nav id="headerNav">
@@ -447,11 +476,11 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
         <li class="nav__item nav_item--expanded">
             <a id="aboutInfoButton" href="#" class="nav__label" onclick="toggle_info(\'aboutInfo\')">About</a>
         </li>
-                <!-- NOTE: completely skip feedback button for now to avoid border
-                <li id="sitefeedback-button" class="nav__item nav_item--expanded fas fa-thumbs-up custom-hidden"></li>
-                -->
-                %(sitestatus_button)s
-    </ul>
+        <!-- NOTE: completely skip feedback button for now to avoid border
+            <li id="sitefeedback-button" class="nav__item nav_item--expanded fas fa-thumbs-up custom-hidden"></li>
+        -->
+        %(sitestatus_button)s
+     </ul>
 </nav>
 
 <div id="infoArea" class="infoArea-container">
@@ -481,12 +510,12 @@ def render_before_menu(configuration, script_map={}, user_settings={}):
         </div>
     </div>
 </div>
-    '''
+'''
 
     return html % fill_helper
 
 
-def render_after_menu(configuration, user_settings={}):
+def render_after_menu(configuration, user_settings={}, mark_static=False):
     """Render the default structure after the navigation menu and until the end
     of the page.
     """
@@ -1669,7 +1698,8 @@ def get_xgi_html_preamble(
     user_settings={},
     user_widgets={},
     user_profile={},
-    head_extras=''
+    head_extras='',
+    mark_static=False,
 ):
     """Return the html tags to mark the beginning of a page."""
 
@@ -1803,13 +1833,17 @@ def get_xgi_html_header(
     user_settings={},
     user_widgets={},
     user_profile={},
-    head_extras=''
+    head_extras='',
+    mark_static=False,
 ):
     """Return the html tags to mark the beginning of a page."""
 
     if not html:
         return ''
 
+    static_class = ''
+    if mark_static:
+        static_class = 'staticpage'
     user_pre_menu = ''
     user_post_menu = ''
     user_pre_content = ''
@@ -1818,21 +1852,21 @@ def get_xgi_html_header(
         post_menu = '\n'.join(user_widgets.get('POSTMENU', ['<!-- empty -->']))
         pre_content = '\n'.join(user_widgets.get(
             'PRECONTENT', ['<!-- empty -->']))
-        user_pre_menu = '''<div class="premenuwidgets">
+        user_pre_menu = '''<div class="premenuwidgets %s">
 <!-- begin user supplied pre menu widgets -->
 %s
 <!-- end user supplied pre menu widgets -->
-</div>''' % pre_menu
-        user_post_menu = '''<div class="postmenuwidgets">
+</div>''' % (static_class, pre_menu)
+        user_post_menu = '''<div class="postmenuwidgets %s">
 <!-- begin user supplied post menu widgets -->
 %s
 <!-- end user supplied post menu widgets -->
-</div>''' % post_menu
-        user_pre_content = '''<div class="precontentwidgets">
+</div>''' % (static_class, post_menu)
+        user_pre_content = '''<div class="precontentwidgets %s">
 <!-- begin user supplied pre content widgets -->
 %s
 <!-- end user supplied pre content widgets -->
-</div>''' % pre_content
+</div>''' % (static_class, pre_content)
 
     out = get_xgi_html_preamble(configuration,
                                 title,
@@ -1846,10 +1880,13 @@ def get_xgi_html_header(
                                 user_widgets,
                                 user_profile,
                                 head_extras,
+                                mark_static,
                                 )
 
-    out += render_body_start(configuration, script_map, user_settings)
-    out += render_before_menu(configuration, script_map, user_settings)
+    out += render_body_start(configuration, script_map,
+                             user_settings, mark_static)
+    out += render_before_menu(configuration, script_map,
+                              user_settings, mark_static)
 
     # User account menu and slider only enabled along with menu
     menu_slider = ''
@@ -1878,8 +1915,8 @@ def get_xgi_html_header(
             out += '''
 <!--Legacy nav side bar -->
 <nav id="sideBar" >
-<div class="menublock sidebar-container row">
-'''
+<div class="menublock sidebar-container row %s">
+''' % static_class
 
             if menu:
                 out += '''
@@ -2017,27 +2054,29 @@ def get_xgi_html_header(
 <!-- No frame or menu on this page --->
 '''
 
-    out += render_after_menu(configuration, user_settings)
+    out += render_after_menu(configuration, user_settings, mark_static)
 
     out += '''
 
-<section id="globalContainer" class="global-container %s">
-<div class="wallpaper"></div>
+<section id="globalContainer" class="global-container %(maximize)s %(static_class)s">
+<div class="wallpaper %(static_class)s"></div>
 
-%s
-<div id="migheader">
-%s
+%(pre_content)s
+<div id="migheader" class="%(static_class)s">
+%(header)s
 </div>
 
 
-<div id="content" class="i18n" lang="en">
-''' % (maximize, user_pre_content, header)
+<div id="content" class="i18n %(static_class)s" lang="en">
+''' % {'maximize': maximize, 'static_class': static_class,
+       'pre_content': user_pre_content, 'header': header}
 
     return out
 
 
 def get_xgi_html_footer(configuration, footer='', html=True, user_settings={},
-                        widgets=True, user_widgets={}):
+                        widgets=True, user_widgets={}, mark_static=False,
+                        ):
     """Return the html tags to mark the end of a page. If a footer string
     is supplied it is inserted at the bottom of the page.
     """
@@ -2045,6 +2084,9 @@ def get_xgi_html_footer(configuration, footer='', html=True, user_settings={},
     if not html:
         return ''
 
+    static_class = ''
+    if mark_static:
+        static_class = 'staticpage'
     user_post_content = ''
     if widgets:
         post_content = '\n'.join(user_widgets.get(
@@ -2065,43 +2107,44 @@ def get_xgi_html_footer(configuration, footer='', html=True, user_settings={},
     out += '''
 </section>
     '''
-    if legacy_user_interface(configuration, user_settings):
+    if mark_static or legacy_user_interface(configuration, user_settings):
         out += '''
 
-<div id="bottomlogo">
-<div id="bottomlogoleft">
-<div id="support">
-<img src="%s" id="supportimage" alt=""/>
-<div class="supporttext i18n" lang="en">
-%s
+<div id="bottomlogo" class="%(static_class)s">
+<div id="bottomlogoleft" class="%(static_class)s">
+<div id="support" class="%(static_class)s">
+<img src="%(support_image)s" id="supportimage" class="%(static_class)s" alt=""/>
+<div class="supporttext i18n %(static_class)s" lang="en">
+%(support_text)s
 </div>
 </div>
 </div>
-<div id="bottomlogoright">
-<div id="privacy">
-<img src="%s" id="privacyimage" alt=""/>
-<div class="privacytext i18n" lang="en">
-%s
+<div id="bottomlogoright" class="%(static_class)s">
+<div id="privacy" class="%(static_class)s">
+<img src="%(privacy_image)s" id="privacyimage" class="%(static_class)s" alt=""/>
+<div class="privacytext i18n %(static_class)s" lang="en">
+%(privacy_text)s
 </div>
 </div>
-<div id="credits">
-<img src="%s" id="creditsimage" alt=""/>
-<div class="creditstext i18n" lang="en">
-%s
+<div id="credits" class="%(static_class)s">
+<img src="%(credits_image)s" id="creditsimage" class="%(static_class)s" alt=""/>
+<div class="creditstext i18n %(static_class)s" lang="en">
+%(credits_text)s
 </div>
 </div>
 </div>
 </div>
-<div id="bottomspace">
+<div id="bottomspace" class="%(static_class)s">
 </div>
-        ''' % (configuration.site_support_image,
-               configuration.site_support_text,
-               configuration.site_privacy_image,
-               configuration.site_privacy_text,
-               configuration.site_credits_image,
-               configuration.site_credits_text)
+''' % {'static_class': static_class,
+            'support_image': configuration.site_support_image,
+            'support_text': configuration.site_support_text,
+            'privacy_image': configuration.site_privacy_image,
+            'privacy_text': configuration.site_privacy_text,
+            'credits_image': configuration.site_credits_image,
+            'credits_text': configuration.site_credits_text}
 
-    out += render_body_end(configuration, user_settings)
+    out += render_body_end(configuration, user_settings, mark_static)
     out += '''
 </html>
     '''
