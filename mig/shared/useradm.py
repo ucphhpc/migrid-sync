@@ -40,7 +40,6 @@ import sqlite3
 import sys
 import time
 
-from mig.shared.accountreq import get_accepted_peers
 from mig.shared.accountstate import update_account_expire_cache, \
     update_account_status_cache
 from mig.shared.base import client_id_dir, client_dir_id, client_alias, \
@@ -53,7 +52,7 @@ from mig.shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
     settings_filename, profile_filename, default_css_filename, \
     widgets_filename, seafile_ro_dirname, authkeys_filename, \
     authpasswords_filename, authdigests_filename, cert_field_order, \
-    twofactor_filename
+    twofactor_filename, peers_filename
 from mig.shared.fileio import filter_pickled_list, filter_pickled_dict, \
     make_symlink, delete_symlink
 from mig.shared.modified import mark_user_modified
@@ -179,6 +178,22 @@ def remove_seafile_mount_link(client_id, configuration):
             _logger.error("failed to unlink seafile mount from %s: %s"
                           % (mount_link, exc))
             raise
+
+
+def get_accepted_peers(configuration, client_id):
+    """Helper to get the list of peers accepted by client_id"""
+    _logger = configuration.logger
+    client_dir = client_id_dir(client_id)
+    peers_path = os.path.join(configuration.user_settings, client_dir,
+                              peers_filename)
+    try:
+        accepted_peers = load(peers_path)
+    except Exception as exc:
+        if os.path.exists(peers_path):
+            _logger.warning("could not load peers from %s: %s" %
+                            (peers_path, exc))
+        accepted_peers = {}
+    return accepted_peers
 
 
 def create_user(
@@ -1906,7 +1921,7 @@ def user_password_reminder(user_id, targets, conf_path, db_path,
 
 
 def user_account_notify(user_id, targets, conf_path, db_path, verbose=False,
-                        admin_copy=False):
+                        admin_copy=False, extra_copies=False):
     """Find notification addresses for user_id and targets"""
     (configuration, fields, addresses, errors) = _user_general_notify(
         user_id, targets, conf_path, db_path, verbose, ['username',
@@ -1922,6 +1937,8 @@ def user_account_notify(user_id, targets, conf_path, db_path, verbose=False,
             if plain_addr:
                 admin_addresses.append(plain_addr)
         addresses['email'] += admin_addresses
+    if extra_copies:
+        addresses['email'] += extra_copies
     return (configuration, fields['username'], fields['full_name'], addresses,
             errors)
 
