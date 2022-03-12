@@ -647,6 +647,8 @@ def notify_user(
     Please take a look at notify_user_thread() if that is a requirement.
     """
 
+    send_status, send_errors = True, []
+
     # Usage records: quickly hacked in here.
     # later, we might want a general plugin / hook interface
 
@@ -723,6 +725,9 @@ def notify_user(
                 else:
                     logger.error('Instant message NOT sent to %s protocol %s jobid: %s'
                                  % (single_dest, protocol, jobid))
+                    send_errors.append('Instant message NOT sent to %s' %
+                                       single_dest)
+                    send_status = False
         else:
             notify_line_first_part = notify_line_colon_split[0].strip()
             all_dest = []
@@ -779,7 +784,10 @@ def notify_user(
                 else:
                     logger.error('email NOT sent to %s, jobid: %s'
                                  % (single_dest, jobid))
+                    send_errors.append('email NOT sent to %s' % single_dest)
+                    send_status = False
     # logger.info("notify_user end")
+    return (send_status, send_errors)
 
 
 def notify_user_wrap(jobdict, args_list, status, logger, statusfile,

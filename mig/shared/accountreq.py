@@ -41,16 +41,23 @@ try:
 except ImportError:
     iso3166 = None
 
+from mig.shared.accountstate import default_account_expire
 from mig.shared.base import force_utf8, force_native_str_rec, canonical_user, \
-    client_id_dir, distinguished_name_to_user
+    client_id_dir, distinguished_name_to_user, fill_distinguished_name, fill_user
 from mig.shared.defaults import peers_fields, peers_filename, \
-    pending_peers_filename
+    pending_peers_filename, keyword_auto, user_db_filename, \
+    gdp_distinguished_field
 from mig.shared.fileio import delete_file, make_temp_file
+from mig.shared.notification import notify_user
 # Expose some helper variables for functionality backends
-from mig.shared.safeinput import name_extras, password_extras, password_min_len, \
-    password_max_len, valid_password_chars, valid_name_chars, dn_max_len, \
-    html_escape, validated_input, REJECT_UNSET
+from mig.shared.safeinput import name_extras, password_extras, \
+    password_min_len, password_max_len, valid_password_chars, \
+    valid_name_chars, dn_max_len, html_escape, validated_input, REJECT_UNSET
 from mig.shared.serial import load, dump, dumps
+from mig.shared.useradm import init_user_adm, user_request_reject, \
+    user_account_notify, default_search, search_users, create_user, \
+    load_user_dict
+from mig.shared.validstring import valid_email_addresses
 
 
 def account_css_helpers(configuration):
@@ -481,38 +488,308 @@ def get_account_req(req_id, configuration):
         return (True, req_dict)
 
 
-def accept_account_req(req_id, configuration):
+def accept_account_req(req_id, configuration, peer_id, user_copy=True,
+                       admin_copy=True, auth_type='oid', default_renew=False):
     """Helper to accept a pending account request"""
     _logger = configuration.logger
+    _logger.info('accept account %s with peer %s' % (req_id, peer_id))
+    # NOTE: conf_path accepts configuration object
+    conf_path = configuration
+    db_path = os.path.join(configuration.mig_server_home, user_db_filename)
     req_path = os.path.join(configuration.user_pending, req_id)
-    # TODO: run createuser
-    _logger.warning('account creation from admin page not implemented yet')
-    return False
+    expire = None
+    user_id = None
+    user_dict = {}
+    override_fields = {}
+
+    if expire is None:
+        expire = default_account_expire(configuration, auth_type)
+
+    if peer_id:
+        override_fields['peer_pattern'] = peer_id
+        override_fields['status'] = 'temporal'
+
+    try:
+        req_dict = load(req_path)
+    except Exception as err:
+        err_msg = 'peer account request %s extraction failed: %s' % \
+                  (req_id, err)
+        _logger.error(err_msg)
+        return (False, err_msg)
+
+    _logger.debug('accept request: %s' % req_dict)
+    if 'distinguished_name' not in req_dict:
+        fill_distinguished_name(req_dict)
+    fill_user(req_dict)
+    user_id = req_dict['distinguished_name']
+    # Default to inform mail used in request
+    raw_targets = {}
+    raw_targets['email'] = raw_targets.get('email', [])
+    if user_copy:
+        raw_targets['email'].append(req_dict.get('email', keyword_auto))
+
+    user_dict.update(req_dict)
+    operation_type = 'create'
+    saved = load_user_dict(_logger, user_id, db_path, False)
+    if saved:
+        _logger.info('updating existing user in user db: %s' % user_id)
+        operation_type = 'update'
+        user_dict.update(saved)
+        del user_dict['expire']
+
+    # Make sure account expire is set with local certificate or OpenID login
+
+    if 'expire' not in user_dict:
+        override_fields['expire'] = expire
+
+    # Now all user fields are set and we can reject and warn the user
+    # NOTE: let non-ID command line values override loaded values
+    for (key, val) in list(override_fields.items()):
+        user_dict[key] = val
+
+    # Now all user fields are set and we can begin adding the user
+
+    _logger.info('%s %s in user database and in file system' %
+                 (operation_type.title(), user_dict['distinguished_name']))
+    try:
+        create_user(user_dict, conf_path, db_path, False, False, False,
+                    default_renew, verify_peer=peer_id)
+    except Exception as exc:
+        err_msg = "%s user %s failed: %s" % (operation_type.title(),
+                                             user_dict['distinguished_name'],
+                                             exc)
+        _logger.error(err_msg)
+        return (False, err_msg)
+
+    _logger.info('%sd %s in user database and in file system' %
+                 (operation_type.title(), user_dict['distinguished_name']))
+    if not delete_file(req_path, _logger):
+        err_msg = 'failed to clean up request %s after user %s' % \
+                  (req_path, operation_type)
+        _logger.errors(err_msg)
+        return (False, err_msg)
+    return (True, '')
 
 
-def peer_account_req(req_id, configuration):
+def peer_account_req(req_id, configuration, target_id, user_copy=False,
+                     admin_copy=True, auth_type='oid'):
     """Helper to request peer accept for a pending account request"""
+    # TODO: enable user_copy if it can be clearly marked only CC?
     _logger = configuration.logger
+    _logger.info('request account peer for %s with peer %s' %
+                 (req_id, target_id))
+    # NOTE: conf_path accepts configuration object
+    conf_path = configuration
+    db_path = os.path.join(configuration.mig_server_home, user_db_filename)
     req_path = os.path.join(configuration.user_pending, req_id)
-    # TODO: run reqacceptpeer
-    _logger.warning('request account peer from admin page not implemented yet')
-    return False
+    regex_keys = []
+    search_filter = default_search()
+    # IMPORTANT: Default to nobody to avoid spam if called without target_id
+    search_filter['distinguished_name'] = ''
+    try:
+        req_dict = load(req_path)
+    except Exception as err:
+        err_msg = 'peer account request %s extraction failed: %s' % \
+            (req_id, err)
+        _logger.error(err_msg)
+        return (False, err_msg)
+    _logger.debug('peer account request: %s' % req_dict)
+    if 'distinguished_name' not in req_dict:
+        fill_distinguished_name(req_dict)
+    fill_user(req_dict)
+    peer_id = req_dict['distinguished_name']
+    if target_id == keyword_auto:
+        target_str = req_dict['comment']
+    else:
+        target_str = target_id
+    peer_emails = valid_email_addresses(configuration, target_str)
+    if peer_emails[1:]:
+        regex_keys.append('email')
+        search_filter['email'] = '(' + '|'.join(peer_emails) + ')'
+    elif peer_emails:
+        search_filter['email'] = peer_emails[0]
+    elif search_filter['distinguished_name']:
+        search_filter['email'] = '*'
+    else:
+        search_filter['email'] = ''
+
+    # If email is provided or detected DN may be almost anything
+    if search_filter['email'] and not search_filter['distinguished_name']:
+        search_filter['distinguished_name'] = '*emailAddress=*'
+
+    # Use email from user DB by default
+    raw_targets = {}
+    raw_targets['email'] = [keyword_auto]
+
+    extra_copies = []
+    if user_copy and req_dict.get('email', ''):
+        extra_copies.append(req_dict['email'])
+
+    _logger.debug('handling peer %s request to users matching %s' %
+                  (peer_id, search_filter))
+
+    # Lookup users to request formal acceptance from
+    (_, hits) = search_users(search_filter, conf_path,
+                             db_path, False, regex_match=regex_keys)
+    gdp_prefix = "%s=" % gdp_distinguished_field
+    if len(hits) < 1:
+        _logger.error("no target users to request peer acceptance from: %s" %
+                      req_dict)
+        return (False, "no valid target peer acceptance users")
+    elif len(hits) > 3:
+        _logger.error("refuse to request peer acceptance from %d users for %s"
+                      % (len(hits), req_dict))
+        return (False, "too many requested peer acceptance users")
+    else:
+        _logger.debug("request peer acceptance from users: %s" %
+                      '\n'.join([i[0] for i in hits]))
+
+    all_sent, all_errors = True, []
+    for (user_id, user_dict) in hits:
+        _logger.debug('request peer - check for %s' % user_id)
+        if configuration.site_enable_gdp and \
+                user_id.split('/')[-1].startswith(gdp_prefix):
+            _logger.debug("skip peer request for GDP project account: %s" %
+                          user_id)
+            continue
+        if peer_id == user_id:
+            _logger.warning("skip peer request for self: %s" % user_id)
+            continue
+        if not peers_permit_allowed(configuration, user_dict):
+            _logger.warning("skip peer request for %s without permission" %
+                            user_id)
+            continue
+        if not manage_pending_peers(configuration, user_id, "add",
+                                    [(peer_id, req_dict)]):
+            _logger.error("Failed to forward accept peer %s to %s" %
+                          (peer_id, user_id))
+            continue
+
+        _logger.info("added peer request from %s to %s" % (peer_id, user_id))
+
+        (_, _, full_name, addresses, errors) = user_account_notify(
+            user_id, raw_targets, conf_path, db_path, False, admin_copy,
+            extra_copies)
+        if errors:
+            _logger.warning("peer accept address lookup errors for %s: %s" %
+                            (user_id, '\n'.join(errors)))
+            continue
+
+        notify_dict = {'JOB_ID': 'NOJOBID', 'USER_CERT': user_id, 'NOTIFY': []}
+        for (proto, address_list) in addresses.items():
+            for address in address_list:
+                notify_dict['NOTIFY'].append('%s: %s' % (proto, address))
+
+        # Don't actually send unless requested
+        if not raw_targets and not admin_copy:
+            _logger.warning("no targets for request accept peer %s from %s" %
+                            (peer_id, user_id))
+            continue
+        _logger.info("send request accept peer message for '%s' to:\n%s"
+                     % (peer_id, '\n'.join(notify_dict['NOTIFY'])))
+        (send_status, send_errors) = notify_user(
+            notify_dict, [peer_id, configuration.short_title, 'peeraccount',
+                          req_dict['comment'], req_dict['email'], user_id],
+            'SENDREQUEST', _logger, '', configuration)
+
+        if send_status:
+            _logger.debug("sent accept peer request for '%s' to:\n%s" %
+                          (user_id, req_dict['email']))
+        else:
+            _logger.warning('notify failed for peer request recipient(s): %s' %
+                            '\n'.join(send_errors))
+            all_sent = False
+            all_errors += send_errors
+
+    if all_sent:
+        _logger.info('sent accept peer requests for %s' % req_path)
+        return (True, '')
+    else:
+        err_msg = 'one or more accept peer requests failed for %s' % \
+                  req_path
+        _logger.warning(err_msg)
+        return (False, err_msg)
 
 
-def reject_account_req(req_id, configuration):
+def reject_account_req(req_id, configuration, reject_reason,
+                       user_copy=True, admin_copy=True, auth_type='oid'):
     """Helper to reject a pending account request"""
     _logger = configuration.logger
+    _logger.info('reject account request %s with msg %s' %
+                 (req_id, reject_reason))
+    # NOTE: conf_path accepts configuration object
+    conf_path = configuration
+    db_path = os.path.join(configuration.mig_server_home, user_db_filename)
     req_path = os.path.join(configuration.user_pending, req_id)
-    # TODO: run rejectuser
-    _logger.warning(
-        'reject account request from admin page not implemented yet')
-    return False
+    try:
+        req_dict = load(req_path)
+    except Exception as err:
+        err_msg = 'peer account request %s extraction failed: %s' % \
+                  (req_id, err)
+        _logger.error(err_msg)
+        return (False, err_msg)
+    _logger.debug('reject request: %s' % req_dict)
+    if 'distinguished_name' not in req_dict:
+        fill_distinguished_name(req_dict)
+    fill_user(req_dict)
+    user_id = req_dict['distinguished_name']
+    # Default to inform mail used in request
+    raw_targets = {}
+    raw_targets['email'] = raw_targets.get('email', [])
+    if user_copy:
+        raw_targets['email'].append(req_dict.get('email', keyword_auto))
+    if reject_reason == keyword_auto:
+        msg = "invalid or missing mandatory info"
+    else:
+        msg = reject_reason
+    # Now all user fields are set and we can reject and warn the user
+    (configuration, addresses, errors) = \
+        user_request_reject(user_id, raw_targets, conf_path,
+                            db_path, False, admin_copy)
+    if errors:
+        err_msg = "reject request address lookup errors: %s" % \
+                  '\n'.join(errors)
+        _logger.error(err_msg)
+        return (False, err_msg)
+    if not addresses:
+        err_msg = "reject request found no suitable addresses"
+        _logger.error(err_msg)
+        return (False, err_msg)
+    _logger.debug('reject request notify: %s' % addresses)
+    notify_dict = {'JOB_ID': 'NOJOBID', 'USER_CERT': user_id, 'NOTIFY': []}
+    all_sent, all_errors = True, []
+    for (proto, address_list) in addresses.items():
+        for address in address_list:
+            notify_dict['NOTIFY'].append('%s: %s' % (proto, address))
+            _logger.info("send reject account request for '%s' to:\n%s" %
+                         (user_id, '\n'.join(notify_dict['NOTIFY'])))
+            (send_status, send_errors) = notify_user(notify_dict,
+                                                     [user_id, req_dict,
+                                                      auth_type, msg],
+                                                     'ACCOUNTREQUESTREJECT',
+                                                     _logger, '',
+                                                     configuration)
+            if send_status:
+                _logger.debug("sent reject account request for '%s' to:\n%s" %
+                              (user_id, '\n'.join(notify_dict['NOTIFY'])))
+            else:
+                _logger.warning('notify failed for reject recipient(s): %s' %
+                                '\n'.join(send_errors))
+                all_sent = False
+                all_errors += send_errors
 
-
-def delete_account_req(req_id, configuration):
-    """Helper to delete a pending account request"""
-    req_path = os.path.join(configuration.user_pending, req_id)
-    return delete_file(req_path, configuration.logger)
+    if all_sent:
+        _logger.info('reject request cleaning up tmp file: %s' % req_path)
+        if not delete_file(req_path, _logger):
+            err_msg = 'failed to clean up request %s' % req_path
+            _logger.error(err_msg)
+            return (False, err_msg)
+        return (True, '')
+    else:
+        err_msg = 'one or more reject messages failed - keeping %s' % \
+                  req_path
+        _logger.warning(err_msg)
+        return (False, err_msg)
 
 
 def existing_country_code(country_code, configuration):
@@ -800,19 +1077,3 @@ def manage_pending_peers(configuration, client_id, action, change_list):
         _logger.warning("could not save pending peers to %s: %s" %
                         (pending_peers_path, exc))
         return False
-
-
-def get_accepted_peers(configuration, client_id):
-    """Helper to get the list of peers accepted by client_id"""
-    _logger = configuration.logger
-    client_dir = client_id_dir(client_id)
-    peers_path = os.path.join(configuration.user_settings, client_dir,
-                              peers_filename)
-    try:
-        accepted_peers = load(peers_path)
-    except Exception as exc:
-        if os.path.exists(peers_path):
-            _logger.warning("could not load peers from %s: %s" %
-                            (peers_path, exc))
-        accepted_peers = {}
-    return accepted_peers

@@ -36,10 +36,11 @@ import os
 from mig.shared import returnvalues
 from mig.shared.accountreq import build_accountreqitem_object, \
     list_account_reqs, get_account_req, accept_account_req, \
-    peer_account_req, reject_account_req, delete_account_req
+    peer_account_req, reject_account_req
 from mig.shared.base import force_utf8_rec
 from mig.shared.defaults import default_pager_entries, csrf_field, \
-    keyword_any, AUTH_CERTIFICATE, AUTH_OPENID_V2, AUTH_OPENID_CONNECT
+    keyword_any, keyword_auto, AUTH_CERTIFICATE, AUTH_OPENID_V2, \
+    AUTH_OPENID_CONNECT
 from mig.shared.fileio import send_message_to_grid_script, read_tail, listdir
 from mig.shared.findtype import is_admin
 from mig.shared.functional import validate_input_and_cert
@@ -60,7 +61,7 @@ grid_actions = {'reloadconfig': 'RELOADCONFIG',
                 'dropdone': 'DROPDONE',
                 }
 accountreq_actions = ['createaccountreq', 'peeraccountreq', 'rejectaccountreq',
-                      'deleteaccountreq']
+                      'reloadaccountreq']
 
 all_actions = list(grid_actions) + accountreq_actions
 view_ops, act_ops = [''], []
@@ -145,13 +146,24 @@ def main(client_id, user_arguments_dict, environ=None):
 
     # jquery support for tablesorter and confirmation on "remove"
     # table initially sorted by col. 9 (created)
+    # Hard-wire pager reload button to reloadaccountreq action for now
+    # TODO: switch to AJAX actions in general, including table reload
 
-    table_spec = {'table_id': 'accountreqtable', 'sort_order': '[[9,0]]'}
+    table_spec = {'table_id': 'accountreqtable', 'sort_order': '[[9,0]]',
+                  'refresh_call': 'document.location="?action=reloadaccountreq"'}
     (add_import, add_init, add_ready) = man_base_js(configuration,
                                                     [table_spec])
+    show_tab_index = 0
+    if action in accountreq_actions:
+        # NOTE: show Account Requests tab and disable reload
+        show_tab_index = 1
+        title_entry['meta'] = ''
     add_ready += '''
-            $(".migadmin-tabs").tabs();
-'''
+            var preselected_tab = %d;
+            $(".migadmin-tabs").tabs({
+                active: preselected_tab
+                });
+''' % show_tab_index
     title_entry['script']['advanced'] += add_import
     title_entry['script']['init'] += add_init
     title_entry['script']['ready'] += add_ready
@@ -199,63 +211,58 @@ def main(client_id, user_arguments_dict, environ=None):
         output_objects.append(
             {'object_type': 'error_text', 'text': 'Invalid action: %s' % action})
         return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    # Handle action and set response in action_msg or action_err for inline use
+    action_msg, action_err = '', ''
     if action in grid_actions:
         msg = "%s" % grid_actions[action]
         if job_list:
             msg += ' %s' % ' '.join(job_list)
         msg += '\n'
         if not send_message_to_grid_script(msg, logger, configuration):
-            output_objects.append(
-                {'object_type': 'error_text', 'text': '''Error sending %s message to grid_script.''' % action
-                 })
+            action_err = '''Error sending %s message to grid_script.''' % action
             status = returnvalues.SYSTEM_ERROR
     elif action in accountreq_actions:
-        if action == "createaccountreq":
+        if action == "reloadaccountreq":
+            action_msg = 'Reloaded account requests'
+        elif action == "createaccountreq":
+            peer_id = request_text
             for req_id in req_list:
-                if accept_account_req(req_id, configuration):
-                    output_objects.append(
-                        {'object_type': 'text', 'text':
-                         'Accepted account request %s' % req_id})
+                (success, err) = accept_account_req(req_id, configuration,
+                                                    peer_id,
+                                                    default_renew=True)
+                if success:
+                    action_msg = 'Accepted account request %s' % req_id
                 else:
-                    output_objects.append(
-                        {'object_type': 'error_text', 'text':
-                         'Accept account request failed - details in log'
-                         })
+                    action_err = 'Accept account request %s failed: %s' % \
+                                 (req_id, err)
+                    status = returnvalues.SYSTEM_ERROR
         elif action == "peeraccountreq":
+            peer_id = request_text
             for req_id in req_list:
-                if peer_account_req(req_id, configuration):
-                    output_objects.append(
-                        {'object_type': 'text', 'text':
-                         'Peer account request %s' % req_id})
+                (success, err) = peer_account_req(req_id, configuration,
+                                                  peer_id)
+                if success:
+                    action_msg = 'Made Peer account request for %s' % req_id
                 else:
-                    output_objects.append(
-                        {'object_type': 'error_text', 'text':
-                         'Peer account request failed - details in log'
-                         })
+                    action_err = 'Peer account request failed for %s: %s' % \
+                                 (req_id, err)
+                    status = returnvalues.SYSTEM_ERROR
         elif action == "rejectaccountreq":
+            reject_msg = request_text
             for req_id in req_list:
-                if reject_account_req(req_id, configuration):
-                    output_objects.append(
-                        {'object_type': 'text', 'text':
-                         'Rejected account request %s' % req_id})
+                (success, err) = reject_account_req(req_id, configuration,
+                                                    reject_msg)
+                if success:
+                    action_msg = 'Rejected account request %s' % req_id
                 else:
-                    output_objects.append(
-                        {'object_type': 'error_text', 'text':
-                         'Reject account request failed - details in log'
-                         })
-        elif action == "deleteaccountreq":
-            for req_id in req_list:
-                if delete_account_req(req_id, configuration):
-                    output_objects.append(
-                        {'object_type': 'text', 'text':
-                         'Deleted account request %s' % req_id})
-                else:
-                    output_objects.append(
-                        {'object_type': 'error_text', 'text':
-                         'Delete account request failed - details in log'
-                         })
+                    action_err = 'Reject account request %s failed: %s' % \
+                                 (req_id, err)
+                    status = returnvalues.SYSTEM_ERROR
         else:
-            logger.error("unsupported account request action: %s" % action)
+            action_err = 'Unsupported account request action: %s' % action
+            logger.error(action_err)
+            status = returnvalues.SYSTEM_ERROR
 
     show, drop = '', ''
     general = """
@@ -383,6 +390,25 @@ provide access to e.g. managing the grid job queues.
         html += '''</textarea>
 '''
 
+    if action_err:
+        status_frame = """
+<div id='action_status' class='status_box'>
+    <span class='error errortext iconleftpad iconspace'>%s</span>
+</div>
+""" % action_err
+    elif action_msg:
+        status_frame = """
+<div id='action_status' class='status_box'>
+    <span class='ok iconleftpad iconspace'>%s</span>
+</div>
+""" % action_msg
+    else:
+        status_frame = ""
+
+    if status_frame:
+        output_objects.append({'object_type': 'html_form', 'text':
+                               status_frame})
+
     output_objects.append({'object_type': 'html_form', 'text': """
 <div id='wrap-tabs' class='migadmin-tabs'>
 <ul>
@@ -430,54 +456,52 @@ provide access to e.g. managing the grid job queues.
             return (output_objects, returnvalues.SYSTEM_ERROR)
         req_item = build_accountreqitem_object(configuration, req_dict)
 
+        # TODO: support optional peer requirement and allow renew checkbox
+        # TODO: support checkboxes with notify user and perhaps admin copy
         js_name = 'create%s' % req_id
         helper = html_post_helper(js_name, '%s.py' % target_op,
                                   {'action': 'createaccountreq', 'req_id': req_id,
+                                   'request_text': keyword_auto,
                                    csrf_field: csrf_token})
         output_objects.append({'object_type': 'html_form', 'text': helper})
+        dialog_help = "Really accept account request %s? Optionally provide a specific user as Peer below or %s to auto-extract from request." % (
+            req_id, keyword_auto)
         req_item['createaccountreqlink'] = {
             'object_type': 'link', 'destination':
-            "javascript: confirmDialog(%s, '%s');" %
-            (js_name, 'Really accept account request %s?' % req_id),
+            "javascript: confirmDialog(%s, '%s', '%s', '', '%s');" %
+            (js_name, dialog_help, 'request_text', keyword_auto),
             'class': 'addlink iconspace', 'title': 'Accept request %s' %
             req_id, 'text': ''}
+        # TODO: support checkboxes with notify user and perhaps admin copy
         js_name = 'peer%s' % req_id
         helper = html_post_helper(js_name, '%s.py' % target_op,
                                   {'action': 'peeraccountreq', 'req_id': req_id,
+                                   'request_text': keyword_auto,
                                    csrf_field: csrf_token})
         output_objects.append({'object_type': 'html_form', 'text': helper})
+        dialog_help = "Really trigger Peer accept for account request %s? Optionally provide a specific user as Peer below or %s to auto-extract from request." % (
+            req_id, keyword_auto)
         req_item['peeraccountreqlink'] = {
             'object_type': 'link', 'destination':
-            "javascript: confirmDialog(%s, '%s');" %
-            (js_name, 'Really issue Peer accept mails for account request %s?'
-             % req_id),
+            "javascript: confirmDialog(%s, '%s', '%s', '', '%s');" %
+            (js_name, dialog_help, 'request_text', keyword_auto),
             'class': 'peerlink iconspace', 'title': 'Request Peer for %s' %
             req_id, 'text': ''}
+        # TODO: support checkboxes with notify user and perhaps admin copy
         js_name = 'reject%s' % req_id
         helper = html_post_helper(js_name, '%s.py' % target_op,
                                   {'action': 'rejectaccountreq', 'req_id': req_id,
                                    'request_text': '', csrf_field: csrf_token})
         output_objects.append({'object_type': 'html_form', 'text': helper})
+        dialog_help = "Really reject account request %s? Enter reason below." % req_id
         req_item['rejectaccountreqlink'] = {
             'object_type': 'link', 'destination':
-            "javascript: confirmDialog(%s, '%s', '%s');" %
-            (js_name, 'Really reject account request %s? (enter reason)' %
-             req_id, 'request_text'),
-            'class': 'rejectlink iconspace', 'title': 'Reject request %s' %
-            req_id,
+            "javascript: confirmDialog(%s, '%s', '%s', '', '%s');" %
+            (js_name, dialog_help, 'request_text', keyword_auto),
+            'class': 'rejectlink iconspace', 'title': 'Reject request %s' % req_id,
             'text': ''}
-        js_name = 'delete%s' % req_id
-        helper = html_post_helper(js_name, '%s.py' % target_op,
-                                  {'action': 'deleteaccountreq', 'req_id': req_id,
-                                   csrf_field: csrf_token})
-        output_objects.append({'object_type': 'html_form', 'text': helper})
-        req_item['deleteaccountreqlink'] = {
-            'object_type': 'link', 'destination':
-            "javascript: confirmDialog(%s, '%s');" %
-            (js_name, 'Really delete account request %s?' % req_id),
-            'class': 'removelink iconspace', 'title': 'Delete request %s' %
-            req_id,
-            'text': ''}
+
+        # Insert created request item
         accountreqs.append(req_item)
 
     output_objects.append({'object_type': 'table_pager', 'entry_name':
@@ -535,4 +559,5 @@ provide access to e.g. managing the grid job queues.
     output_objects.append({'object_type': 'html_form', 'text':  '''
 </div>
 '''})
+
     return (output_objects, returnvalues.OK)
