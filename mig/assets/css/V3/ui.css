@@ -197,6 +197,14 @@ a.greenBtn:active {
     vertical-align: top;
 }
 
+.form-row {
+    /* NOTE: override bootstrap-5 default block display.
+       It breaks field row layout e.g. on peers and reqX sign up pages
+    */
+    /* TODO: country drop-down arrow icon is still hidden with bootstrap-5 */
+    display: flex;
+}
+
 /* TODO: these should probably be the default slider color settings
    input:checked + .slider {
    background-color: #2196F3;
