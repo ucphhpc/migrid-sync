@@ -41,7 +41,7 @@ from ConfigParser import ConfigParser
 
 from mig.shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
     CSRF_FULL, POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, \
-    POLICY_CUSTOM, freeze_flavors, duplicati_protocol_choices, \
+    POLICY_MODERN, POLICY_CUSTOM, freeze_flavors, duplicati_protocol_choices, \
     default_css_filename, keyword_any, cert_valid_days, oid_valid_days, \
     generic_valid_days
 from mig.shared.logger import Logger, SYSLOG_GDP
@@ -130,6 +130,7 @@ def fix_missing(config_file, verbose=True):
         'site_login_methods': '',
         'site_csrf_protection': '',
         'site_password_policy': '',
+        'site_password_legacy_policy': '',
         'site_password_cracklib': '',
         'hg_path': '/usr/bin/hg',
         'hgweb_scripts': '/usr/share/doc/mercurial-common/examples/',
@@ -376,6 +377,7 @@ class Configuration:
     site_csrf_protection = CSRF_MEDIUM
     # Default to POLICY_MEDIUM to avoid reduce risk of dictionary attacks etc.
     site_password_policy = POLICY_MEDIUM
+    site_password_legacy_policy = False
     site_password_cracklib = False
     hg_path = ''
     hgweb_scripts = ''
@@ -1703,10 +1705,20 @@ location.""" % self.config_file)
             password_policy = config.get('SITE', 'password_policy')
             if password_policy in (POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM,
                                    POLICY_HIGH) or \
-                    password_policy.startswith(POLICY_CUSTOM):
+                    password_policy.startswith(POLICY_MODERN) \
+                    or password_policy.startswith(POLICY_CUSTOM):
                 self.site_password_policy = password_policy
         else:
             self.site_password_policy = POLICY_NONE
+        # Default to one global password_policy, but allow legacy log in policy
+        # e.g. during a policy transition phase.
+        if config.has_option('SITE', 'password_legacy_policy'):
+            legacy_policy = config.get('SITE', 'password_legacy_policy')
+            if legacy_policy in (POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM,
+                                 POLICY_HIGH) or \
+                    legacy_policy.startswith(POLICY_MODERN) or \
+                    legacy_policy.startswith(POLICY_CUSTOM):
+                self.site_password_legacy_policy = legacy_policy
         if config.has_option('SITE', 'password_cracklib'):
             self.site_password_cracklib = config.getboolean(
                 'SITE', 'password_cracklib')

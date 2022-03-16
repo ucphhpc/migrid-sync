@@ -146,20 +146,34 @@ static int get_password_min_classes()
 /* password input validation using char class and length helpers */
 static int validate_password(const char *password)
 {
-    /* NOTE: never log raw password */
+    /* NOTE: *never* log raw password */
     WRITELOGMESSAGE(LOG_DEBUG, "Validate password: %s\n", password);
-    if (strlen(password) < get_password_min_length()) {
-        WRITELOGMESSAGE(LOG_INFO,
-                        "Invalid password - too short (%zd < %d)\n",
-                        strlen(password), get_password_min_length());
-        return 1;
-    } else if (strlen(password) > PASSWORD_MAX_LENGTH) {
+    if (strlen(password) > PASSWORD_MAX_LENGTH) {
         WRITELOGMESSAGE(LOG_INFO,
                         "Invalid password - too long (%zd > %d)\n",
                         strlen(password), PASSWORD_MAX_LENGTH);
         return 2;
     }
 
+    int classes = -1;
+
+#ifdef ENABLE_AUTHHANDLER
+    /* NOTE: prefer python assure_password_strength if available */
+    bool valid_password = mig_validate_password(password);
+    if (valid_password == false) {
+        WRITELOGMESSAGE(LOG_INFO, 
+                        "password of length %zd failed policy check\n",
+                        strlen(password));
+        return 1;
+    }
+#else
+    /* NOTE: fall back to static password policy check otherwise */
+    if (strlen(password) < get_password_min_length()) {
+        WRITELOGMESSAGE(LOG_INFO,
+                        "Invalid password - too short (%zd < %d)\n",
+                        strlen(password), get_password_min_length());
+        return 1;
+    }    
     WRITELOGMESSAGE(LOG_DEBUG, "Validated length of password: %zd\n",
                     strlen(password));
     int i;
@@ -182,6 +196,7 @@ static int validate_password(const char *password)
                         classes, get_password_min_classes());
         return 1;
     }
+#endif
     /* Success - password matches regex and length limits */
     WRITELOGMESSAGE(LOG_DEBUG,
                     "Validated password of length %zd and %d char classes\n",

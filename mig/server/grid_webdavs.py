@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_webdavs - secure WebDAV server providing access to MiG user homes
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -86,7 +86,7 @@ from mig.shared.logger import daemon_logger, daemon_gdp_logger, \
     register_hangup_handler
 from mig.shared.notification import send_system_notification
 from mig.shared.pwhash import make_scramble, unscramble_digest, \
-    make_simple_hash, assure_password_strength
+    make_simple_hash, valid_login_password
 from mig.shared.sslsession import ssl_session_token
 from mig.shared.tlsserver import hardened_ssl_context
 from mig.shared.useradm import check_password_hash, generate_password_hash, \
@@ -775,6 +775,8 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             strict_policy = False
         else:
             strict_policy = True
+        # Support password legacy policy during log in for transition periods
+        allow_legacy = True
         for user_obj in user_list:
             # list of User login objects for username
             offered = password
@@ -784,7 +786,7 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                 # logger.debug("Password check for %s" % username)
                 if check_password_hash(configuration, 'webdavs', username,
                                        offered, allowed, self.hash_cache,
-                                       strict_policy):
+                                       strict_policy, allow_legacy):
                     success = True
 
         if password_auth:
@@ -850,14 +852,13 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
                                             payload)
             _, _, password = unscrambled.split(":")
             # Mimic password policy compliance from check_password_digest here
-            try:
-                assure_password_strength(configuration, password)
-            except Exception as exc:
-                if strict_policy:
-                    msg = "%s password for %s" % ('webdavs', username) \
-                        + "does not satisfy local policy: %s" % exc
-                    logger.warning(msg)
-                    password = ''
+            # Support password legacy policy during log in
+            if strict_policy and not valid_login_password(configuration,
+                                                          password):
+                msg = "%s password for %s" % ('webdavs', username) \
+                    + "does not satisfy local policy: %s" % exc
+                logger.warning(msg)
+                password = ''
             digest_enabled = True
         except Exception as exc:
             digest_enabled = False
