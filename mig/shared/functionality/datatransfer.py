@@ -360,10 +360,10 @@ else, so the public key can be inserted in your authorized_keys file as:
             transfer_item['status'] = transfer_item.get('status', 'NEW')
             data_url = ''
             # NOTE: we need to urlencode any exotic chars in paths here
-            if transfer_item['action'] == 'import':
+            if transfer_item['action'] == 'import' and 'dst' in transfer_item:
                 enc_path = quote(("%(dst)s" % transfer_item))
                 data_url = "fileman.py?path=%s" % enc_path
-            elif transfer_item['action'] == 'export':
+            elif transfer_item['action'] == 'export' and 'src' in transfer_item:
                 enc_paths = [quote(i) for i in transfer_item['src']]
                 data_url = "fileman.py?path=" + ';path='.join(enc_paths)
             if data_url:
