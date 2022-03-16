@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_openid - openid server authenticating users against user database
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -825,6 +825,9 @@ session state.
                                                             username)
         update_login_map(daemon_conf, changed_users, [], [])
 
+        strict_policy = True
+        # Support password legacy policy during log in for transition periods
+        allow_legacy = True
         # username may be None here
         login_url = os.path.join(configuration.user_mig_oid_provider,
                                  username or '')
@@ -840,7 +843,8 @@ session state.
             is_hashed = allowed.startswith('PBKDF2$')
             if is_hashed and check_hash(configuration, 'openid', username,
                                         password, allowed,
-                                        self.server.hash_cache, True):
+                                        self.server.hash_cache, strict_policy,
+                                        allow_legacy):
                 logger.info("Accepted password hash login for %s from %s" %
                             (username, addr))
                 self.user_dn = distinguished_name
@@ -850,7 +854,7 @@ session state.
             elif not is_hashed and check_password_scramble(
                     configuration, 'openid', username, password, allowed,
                     configuration.site_password_salt,
-                    self.server.scramble_cache, True):
+                    self.server.scramble_cache, strict_policy, allow_legacy):
                 logger.info("Accepted password login for %s from %s" %
                             (username, addr))
                 self.user_dn = distinguished_name

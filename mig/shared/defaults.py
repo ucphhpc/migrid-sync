@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # defaults - default constant values used in many locations
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -363,7 +363,9 @@ vgrid_web_dirs = [vgrid_pub_base_dir, vgrid_priv_base_dir]
 # Password policy helpers
 POLICY_NONE, POLICY_WEAK = "NONE", "WEAK"
 POLICY_MEDIUM, POLICY_HIGH = "MEDIUM", "HIGH"
-POLICY_CUSTOM = "CUSTOM"
+POLICY_MODERN, POLICY_CUSTOM = "MODERN", "CUSTOM"
+PASSWORD_POLICIES = [POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH,
+                     POLICY_MODERN, POLICY_CUSTOM]
 
 # Prioritized protocol choices and internal values
 duplicati_protocol_choices = [('SFTP', 'sftp'), ('FTPS', 'ftps'),

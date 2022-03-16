@@ -1994,7 +1994,7 @@ def user_request_reject(user_id, targets, conf_path, db_path, verbose=False,
 
 
 def user_password_check(user_id, conf_path, db_path, verbose=False,
-                        override_policy=None, do_lock=True):
+                        override_policy=None, allow_legacy=False, do_lock=True):
     """Check password policy compliance for user_id. If the optional
     override_policy is left unset the configuration policy value will be used
     otherwise the given value is used"""
@@ -2036,7 +2036,7 @@ def user_password_check(user_id, conf_path, db_path, verbose=False,
         errors.append('No password set for %s' % user_id)
     else:
         try:
-            assure_password_strength(configuration, password)
+            assure_password_strength(configuration, password, allow_legacy)
         except Exception as exc:
             errors.append('password for %s does not satisfy local policy: %s'
                           % (user_id, exc))
@@ -2067,7 +2067,7 @@ def user_password_check(user_id, conf_path, db_path, verbose=False,
                           % (user_id, unscrambled, exc))
             continue
         try:
-            assure_password_strength(configuration, password)
+            assure_password_strength(configuration, password, allow_legacy)
         except Exception as exc:
             errors.append('digest for %s does not satisfy local policy: %s'
                           % (user_id, exc))
@@ -2076,7 +2076,7 @@ def user_password_check(user_id, conf_path, db_path, verbose=False,
 
 
 def req_password_check(req_path, conf_path, db_path, verbose=False,
-                       override_policy=None):
+                       override_policy=None, allow_legacy=False):
     """Check password policy compliance for request in req_path. If the optional
     override_policy is left unset the configuration policy value will be used
     otherwise the given value is used"""
@@ -2109,7 +2109,7 @@ def req_password_check(req_path, conf_path, db_path, verbose=False,
         return (configuration, errors)
 
     try:
-        assure_password_strength(configuration, password)
+        assure_password_strength(configuration, password, allow_legacy)
     except Exception as exc:
         errors.append('password for %s does not satisfy local policy: %s'
                       % (user_id, exc))
@@ -2267,7 +2267,8 @@ def generate_password_hash(configuration, password):
 
 
 def check_password_hash(configuration, service, username, password,
-                        stored_hash, hash_cache=None, strict_policy=True):
+                        stored_hash, hash_cache=None, strict_policy=True,
+                        allow_legacy=False):
     """Return a boolean indicating if offered password matches stored_hash
     information. We use PBKDF2 to help with the hash comparison and store the
     data in a form close to the one recommended there:
@@ -2285,7 +2286,7 @@ def check_password_hash(configuration, service, username, password,
     _logger = configuration.logger
     try:
         return check_hash(configuration, service, username, password,
-                          stored_hash, hash_cache, strict_policy)
+                          stored_hash, hash_cache, strict_policy, allow_legacy)
     except Exception as exc:
         import traceback
         _logger.warning("in check_password_hash: %s" % exc)
@@ -2308,7 +2309,7 @@ def generate_password_scramble(configuration, password, salt):
 
 def check_password_scramble(configuration, service, username, password,
                             stored_scramble, salt, scramble_cache=None,
-                            strict_policy=True):
+                            strict_policy=True, allow_legacy=False):
     """Return a boolean indicating if offered password matches stored_scramble
     information. We use a simple salted encoding to avoid storing passwords in
     the clear when we can't avoid saving the actual password instead of just a
@@ -2324,7 +2325,7 @@ def check_password_scramble(configuration, service, username, password,
     try:
         return check_scramble(configuration, service, username, password,
                               stored_scramble, salt, scramble_cache,
-                              strict_policy)
+                              strict_policy, allow_legacy)
     except Exception as exc:
         _logger.warning("in check_password_scramble: %s" % exc)
         import traceback
@@ -2344,7 +2345,7 @@ def generate_password_digest(configuration, realm, username, password, salt):
 
 def check_password_digest(configuration, service, realm, username, password,
                           stored_digest, salt, digest_cache=None,
-                          strict_policy=True):
+                          strict_policy=True, allow_legacy=False):
     """Return a boolean indicating if offered password matches stored_digest
     information.
 
@@ -2357,7 +2358,8 @@ def check_password_digest(configuration, service, realm, username, password,
     _logger = configuration.logger
     try:
         return check_digest(configuration, service, realm, username, password,
-                            stored_digest, salt, digest_cache, strict_policy)
+                            stored_digest, salt, digest_cache, strict_policy,
+                            allow_legacy)
     except Exception as exc:
         _logger.warning("in check_password_digest: %s" % exc)
         return False

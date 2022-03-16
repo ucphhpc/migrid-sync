@@ -596,6 +596,7 @@ or the same on centos
                    --daemon_pubkey_from_dns=True \
                    --signup_methods="extoid migoid migcert" \
                    --login_methods="extoid migoid migcert" \
+                   --password_policy=MODERN:12 --password_legacy_policy=MEDIUM \
                    --distro=centos --skin=migrid-basic --short_title=MiG \
                    --wsgi_procs=25 \
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
@@ -651,6 +652,7 @@ optimized SFTP, Seafile integration and OpenID login:
                    --daemon_pubkey_from_dns=True \
                    --signup_methods="extoid migoid extcert" \
                    --login_methods="extoid migoid extcert" \
+                   --password_policy=MODERN:12 --password_legacy_policy=MEDIUM \
                    --distro=centos \
                    --skin=erda-ucph-science --short_title=ERDA \
                    --vgrid_label=Workgroup --wsgi_procs=25 \
@@ -712,6 +714,7 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --daemon_pubkey_from_dns=True \
                    --signup_methods="extoid migoid extcert" \
                    --login_methods="extoid migoid extcert" \
+                   --password_policy=MODERN:12 --password_legacy_policy=MEDIUM \
                    --distro=centos \
                    --skin=erda-ucph-science --short_title=ERDA \
                    --vgrid_label=Workgroup --apache_worker_procs=2048 \
@@ -776,6 +779,7 @@ with optional 2-FA support and legacy sftp clients:
                    --daemon_show_address=io.idmc.dk \
                    --signup_methods="extoid migoid extcert" \
                    --login_methods="extoid migoid extcert" \
+                   --password_policy=MODERN:12 --password_legacy_policy=MEDIUM \
                    --distro=centos \
                    --skin=idmc-basic --short_title=IDMC \
                    --vgrid_label=Workgroup --apache_worker_procs=512 \
@@ -840,8 +844,8 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --daemon_pubkey_from_dns=True \
                    --signup_methods="extoid migoid" \
                    --login_methods="extoid migoid" \
-                   --password_policy=HIGH --distro=centos \
-                   --skin=erda-ucph-science --short_title=SIF \
+                   --password_policy=MODERN:12 --password_legacy_policy=HIGH \
+                   --distro=centos --skin=erda-ucph-science --short_title=SIF \
                    --wsgi_procs=25 --user_interface='V2' \
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
 

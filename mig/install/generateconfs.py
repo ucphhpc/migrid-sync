@@ -122,6 +122,7 @@ if '__main__' == __name__:
         'login_methods',
         'csrf_protection',
         'password_policy',
+        'password_legacy_policy',
         'hg_path',
         'hgweb_scripts',
         'trac_admin_path',

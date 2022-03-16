@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_sftp - SFTP server providing access to MiG user homes
-# Copyright (C) 2010-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -1252,6 +1252,8 @@ class SimpleSSHServer(paramiko.ServerInterface):
         hashed_secret = None
         disconnect = False
         strict_password_policy = True
+        # Support password legacy policy during log in for transition periods
+        allow_legacy = True
         password_offered = None
         key_offered = None
         password_enabled = False
@@ -1353,7 +1355,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
                 if password_enabled and check_password_hash(
                         configuration, 'sftp', username,
                         password_offered, password_allowed,
-                        hash_cache, strict_password_policy):
+                        hash_cache, strict_password_policy, allow_legacy):
                     valid_password = True
                     break
             if (valid_key and check_twofactor_session(

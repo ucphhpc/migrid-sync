@@ -162,7 +162,7 @@ static bool mig_pyinit()
             ("from mig.shared.logger import daemon_logger, register_hangup_handler");
         pyrun("from mig.shared.conf import get_configuration_object");
         pyrun("from mig.shared.accountstate import check_account_accessible");
-        pyrun("from mig.shared.pwhash import make_simple_hash");
+        pyrun("from mig.shared.pwhash import make_simple_hash, valid_login_password");
         pyrun("configuration = get_configuration_object(skip_log=True)");
         pyrun("log_level = configuration.loglevel");
         pyrun
@@ -313,6 +313,23 @@ static bool mig_validate_username(const char *username)
     } else {
         result = PyObject_IsTrue(py_valid_username);
         Py_DECREF(py_valid_username);
+    }
+    return result;
+}
+
+static bool mig_validate_password(const char *password)
+{
+    bool result = false;
+    pyrun("valid_password = valid_login_password(configuration, '%s')",
+          password);
+    PyObject *py_valid_password =
+        PyObject_GetAttrString(py_main, "valid_password");
+    if (py_valid_password == NULL) {
+        WRITELOGMESSAGE(LOG_ERR,
+                        "Missing python variable: py_valid_password\n");
+    } else {
+        result = PyObject_IsTrue(py_valid_password);
+        Py_DECREF(py_valid_password);
     }
     return result;
 }

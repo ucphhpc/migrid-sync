@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_ftps - secure ftp server wrapping ftp in tls/ssl and mapping user home
-# Copyright (C) 2014-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2014-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -205,6 +205,8 @@ class MiGUserAuthorizer(DummyAuthorizer):
         hashed_secret = None
         disconnect = False
         strict_password_policy = True
+        # Support password legacy policy during log in for transition periods
+        allow_legacy = True
         password_offered = None
         password_enabled = False
         invalid_username = False
@@ -279,7 +281,7 @@ class MiGUserAuthorizer(DummyAuthorizer):
                     if check_password_hash(
                             configuration, 'ftps', username,
                             password_offered, password_allowed,
-                            hash_cache, strict_password_policy):
+                            hash_cache, strict_password_policy, allow_legacy):
                         valid_password = True
                         break
             if valid_password and check_twofactor_session(

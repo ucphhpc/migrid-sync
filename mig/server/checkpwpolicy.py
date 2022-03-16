@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # checkpwpolicy - Check user database for password compliance with site policy
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,7 +35,6 @@ import sys
 
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import keyword_auto
-from mig.shared.pwhash import assure_password_strength, unscramble_password
 from mig.shared.useradm import init_user_adm, search_users, default_search, \
     user_password_check, req_password_check
 
@@ -51,6 +50,7 @@ Where CHECK_OPTIONS may be one or more of:
    -d DB_PATH          Use DB_PATH as user data base file path
    -h                  Show this help
    -I CERT_DN          Check only for user with ID (distinguished name)
+   -L                  Run check against any defined password legacy policy
    -p POLICY           Check against POLICY instead of configured value
    -u USER_FILE        Read user information from pickle file
    -v                  Verbose output
@@ -65,8 +65,9 @@ if '__main__' == __name__:
     policy = None
     verbose = False
     user_file = None
+    legacy = False
     search_filter = default_search()
-    opt_args = 'c:d:hI:p:u:v'
+    opt_args = 'c:d:hI:Lp:u:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
@@ -84,6 +85,8 @@ if '__main__' == __name__:
             sys.exit(0)
         elif opt == '-I':
             search_filter['distinguished_name'] = val
+        elif opt == '-L':
+            legacy = True
         elif opt == '-p':
             policy = val
         elif opt == '-u':
@@ -100,11 +103,17 @@ if '__main__' == __name__:
         usage()
         sys.exit(1)
 
+    if policy and legacy:
+        print('Error: specific policy cannot be used together with legacy')
+        usage()
+        sys.exit(1)
+
     uid = 'unknown'
     errors = []
     if user_file:
         (configuration, errors) = req_password_check(user_file, conf_path,
-                                                     db_path, verbose, policy)
+                                                     db_path, verbose, policy,
+                                                     legacy)
     else:
         (configuration, hits) = search_users(search_filter, conf_path, db_path,
                                              verbose)
@@ -119,7 +128,7 @@ if '__main__' == __name__:
                     print("Checking %s" % uid)
                 (_, err) = user_password_check(uid, conf_path,
                                                db_path, verbose,
-                                               policy)
+                                               policy, legacy)
                 errors += err
     if errors:
         print('\n'.join(errors))
