@@ -298,6 +298,7 @@ def generate_confs(
     login_methods='extcert',
     csrf_protection='MEDIUM',
     password_policy='MEDIUM',
+    password_legacy_policy='',
     hg_path='',
     hgweb_scripts='',
     trac_admin_path='',
@@ -495,6 +496,7 @@ def generate_confs(
     user_dict['__LOGIN_METHODS__'] = login_methods
     user_dict['__CSRF_PROTECTION__'] = csrf_protection
     user_dict['__PASSWORD_POLICY__'] = password_policy
+    user_dict['__PASSWORD_LEGACY_POLICY__'] = password_legacy_policy
     user_dict['__HG_PATH__'] = hg_path
     user_dict['__HGWEB_SCRIPTS__'] = hgweb_scripts
     user_dict['__TRAC_ADMIN_PATH__'] = trac_admin_path
@@ -598,6 +600,14 @@ cert, oid and sid based https!
     # Values must be strings
     user_dict['__PASSWORD_MIN_LEN__'] = "%d" % min_len
     user_dict['__PASSWORD_MIN_CLASSES__'] = "%d" % min_classes
+
+    # Just check that password_legacy_policy is unset or valid here
+    if password_legacy_policy:
+        _, _, errors = password_requirements(password_legacy_policy)
+        if errors:
+            print("Invalid password legacy policy %s: %s" %
+                  (password_legacy_policy, '\n'.join(errors)))
+            sys.exit(1)
 
     # Define some FQDN helpers if set
     user_dict['__IFDEF_BASE_FQDN__'] = 'UnDefine'
