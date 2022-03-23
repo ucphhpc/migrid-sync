@@ -146,8 +146,7 @@ static int get_password_min_classes()
 /* password input validation using char class and length helpers */
 static int validate_password(const char *password)
 {
-    /* NOTE: *never* log raw password */
-    WRITELOGMESSAGE(LOG_DEBUG, "Validate password: %s\n", password);
+    /* IMPORTANT: do NOT ever log raw password as it makes logs sensitive */
     if (strlen(password) > PASSWORD_MAX_LENGTH) {
         WRITELOGMESSAGE(LOG_INFO,
                         "Invalid password - too long (%zd > %d)\n",
