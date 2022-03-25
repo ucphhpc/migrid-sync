@@ -1,5 +1,29 @@
 [
   {
+    "status": "AUTO",
+    "work_start": "2022-03-25T09:45:00+01:00", 
+    "systems": [
+        "ERDA", "IDMC", "SIF", "MiGrid"
+    ], 
+    "announce_start": "2022-03-25T09:30:00+01:00", 
+    "title": {
+      "EN": "Short notice ERDA/IDMC, SIF and MiGrid Maintenance and outages", 
+      "DK": "Udfald på ERDA/IDMC, SIF og MiGrid med kort varsel"
+    }, 
+    "services": [
+        "HTTPS",
+        "DAG",
+        "MODI",
+        "HEL"
+    ], 
+    "work_end": "2022-03-25T10:15:00+01:00", 
+    "description": {
+      "EN": "We have to deploy a fix for a serious security issue in the Apache web server, which we rely on for a number of our services. This will result in a brief outage of the web server on all systems and may break active Jupyter sessions. Users with active sessions may need to logout of and stop their Jupyter servers then reload the main Jupyter page and Start DAG and so forth again. We are sorry for the inconvenience but security is first priority.", 
+      "DK": "Vi er nødt til at udrulle en sikkerhedsrettelse i den Apache web server vi benytter til en del af vores services. Det vil medføre et kort udfald på web-serveren på de nævnte systemer og muligvis afbryde igangværende Jupyter sessioner. Brugere med aktive Jupyter sessioner kan være nødt til at logge ud og stoppe deres Jupyter server for derefter at genindlæse Jupyter-forsiden og klikke Start DAG o.s.v. igen. Vi beklager de gener det måtte medføre, men sikkerhed har første prioritet."
+    }, 
+    "announce_end": "2022-03-26T10:00:00+01:00"
+  },
+  {
     "status": "AUTO", 
     "work_start": "2022-03-09T16:00:00+01:00", 
     "systems": [
