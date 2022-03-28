@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # generateconfs - create custom MiG server configuration files
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -138,8 +138,13 @@ if '__main__' == __name__:
         'secscan_addr',
         'user_interface',
         'vgrid_label',
+        'default_menu',
+        'user_menu',
     ]
     int_names = [
+        'cert_valid_days',
+        'oid_valid_days',
+        'generic_valid_days',
         'apache_worker_procs',
         'sftp_subsys_auth_procs',
         'wsgi_procs',
@@ -169,6 +174,9 @@ if '__main__' == __name__:
         'seafile_quota',
     ]
     bool_names = [
+        'auto_add_cert_user',
+        'auto_add_oid_user',
+        'auto_add_oidc_user',
         'enable_migadmin',
         'enable_sftp',
         'enable_sftp_subsys',
@@ -206,6 +214,7 @@ if '__main__' == __name__:
         'daemon_pubkey_from_dns',
         'seafile_ro_access',
         'public_use_https',
+        'prefer_python3',
     ]
     names = str_names + int_names + bool_names
     settings = {}
