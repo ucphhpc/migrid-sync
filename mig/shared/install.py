@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # install - MiG server install helpers
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -57,6 +57,7 @@ from mig.shared.defaults import default_http_port, default_https_port, \
     STRONG_TLS_CURVES, STRONG_SSH_KEXALGOS, STRONG_SSH_LEGACY_KEXALGOS, \
     STRONG_SSH_CIPHERS, STRONG_SSH_LEGACY_CIPHERS, STRONG_SSH_MACS, \
     STRONG_SSH_LEGACY_MACS, CRACK_USERNAME_REGEX, CRACK_WEB_REGEX
+from mig.shared.html import menu_items
 from mig.shared.jupyter import gen_balancer_proxy_template, gen_openid_template, \
     gen_rewrite_template
 from mig.shared.pwhash import password_requirements
@@ -247,6 +248,12 @@ def generate_confs(
     mig_code='/home/mig/mig',
     mig_state='/home/mig/state',
     mig_certs='/home/mig/certs',
+    auto_add_cert_user=False,
+    auto_add_oid_user=False,
+    auto_add_oidc_user=False,
+    cert_valid_days=365,
+    oid_valid_days=365,
+    generic_valid_days=365,
     enable_migadmin=False,
     enable_sftp=True,
     enable_sftp_subsys=True,
@@ -255,7 +262,6 @@ def generate_confs(
     enable_ftps=True,
     enable_wsgi=True,
     wsgi_procs=10,
-    wsgi_py_suffix='',
     enable_gdp=False,
     enable_jobs=True,
     enable_resources=True,
@@ -284,6 +290,7 @@ def generate_confs(
     enable_openid=False,
     enable_gravatars=True,
     enable_sitestatus=True,
+    prefer_python3=False,
     user_interface="V3 V2",
     mig_oid_provider='',
     ext_oid_provider='',
@@ -343,6 +350,8 @@ def generate_confs(
     short_title='MiG',
     vgrid_label='VGrid',
     secscan_addr='UNSET',
+    default_menu='',
+    user_menu=''
 ):
     """Generate Apache and MiG server confs with specified variables"""
 
@@ -412,6 +421,12 @@ def generate_confs(
     user_dict['__APACHE_LOG__'] = apache_log
     user_dict['__APACHE_WORKER_PROCS__'] = "%s" % apache_worker_procs
     user_dict['__OPENSSH_VERSION__'] = openssh_version
+    user_dict['__AUTO_ADD_CERT_USER__'] = "%s" % auto_add_cert_user
+    user_dict['__AUTO_ADD_OID_USER__'] = "%s" % auto_add_oid_user
+    user_dict['__AUTO_ADD_OIDC_USER__'] = "%s" % auto_add_oidc_user
+    user_dict['__CERT_VALID_DAYS__'] = "%s" % cert_valid_days
+    user_dict['__OID_VALID_DAYS__'] = "%s" % oid_valid_days
+    user_dict['__GENERIC_VALID_DAYS__'] = "%s" % generic_valid_days
     user_dict['__ENABLE_MIGADMIN__'] = "%s" % enable_migadmin
     user_dict['__ENABLE_SFTP__'] = "%s" % enable_sftp
     user_dict['__ENABLE_SFTP_SUBSYS__'] = "%s" % enable_sftp_subsys
@@ -422,7 +437,6 @@ def generate_confs(
     user_dict['__ENABLE_FTPS__'] = "%s" % enable_ftps
     user_dict['__ENABLE_WSGI__'] = "%s" % enable_wsgi
     user_dict['__WSGI_PROCS__'] = "%s" % wsgi_procs
-    user_dict['__WSGI_PY_SUFFIX__'] = wsgi_py_suffix
     user_dict['__ENABLE_GDP__'] = "%s" % enable_gdp
     user_dict['__ENABLE_JOBS__'] = "%s" % enable_jobs
     user_dict['__ENABLE_RESOURCES__'] = "%s" % enable_resources
@@ -451,6 +465,7 @@ def generate_confs(
     user_dict['__ENABLE_OPENID__'] = "%s" % enable_openid
     user_dict['__ENABLE_GRAVATARS__'] = "%s" % enable_gravatars
     user_dict['__ENABLE_SITESTATUS__'] = "%s" % enable_sitestatus
+    user_dict['__PREFER_PYTHON3__'] = "%s" % prefer_python3
     user_dict['__USER_INTERFACE__'] = user_interface
     user_dict['__MIG_OID_PROVIDER_BASE__'] = mig_oid_provider
     user_dict['__MIG_OID_PROVIDER_ID__'] = mig_oid_provider
@@ -515,6 +530,8 @@ def generate_confs(
     user_dict['__SHORT_TITLE__'] = short_title
     user_dict['__VGRID_LABEL__'] = vgrid_label
     user_dict['__SECSCAN_ADDR__'] = secscan_addr
+    user_dict['__DEFAULT_MENU__'] = default_menu
+    user_dict['__USER_MENU__'] = user_menu
     user_dict['__PUBLIC_HTTPS_LISTEN__'] = listen_clause
     user_dict['__PUBLIC_ALIAS_HTTPS_LISTEN__'] = listen_clause
 
@@ -707,10 +724,23 @@ cert, oid and sid based https!
     #       like e.g. in if enable_wsgi: BLA
 
     # Enable WSGI web interface only if explicitly requested
-    if user_dict['__ENABLE_WSGI__'].lower() == 'true':
+    if enable_wsgi:
+        # WSGI shares auth and bin and only discriminates in backend
+        xgi_bin = xgi_auth = 'wsgi-bin'
         user_dict['__WSGI_COMMENTED__'] = ''
+        # Switch between python 2 and 3 wsgi module on request
+        if prefer_python3:
+            user_dict['__WSGI_PY3_COMMENTED__'] = ''
+            user_dict['__WSGI_PY2_COMMENTED__'] = '#'
+        else:
+            user_dict['__WSGI_PY2_COMMENTED__'] = ''
+            user_dict['__WSGI_PY3_COMMENTED__'] = '#'
     else:
+        xgi_bin = 'cgi-bin'
+        xgi_auth = 'cgi-auth'
         user_dict['__WSGI_COMMENTED__'] = '#'
+        user_dict['__WSGI_PY2_COMMENTED__'] = '#'
+        user_dict['__WSGI_PY3_COMMENTED__'] = '#'
 
     # Enable HSTS security improvement only if explicitly requested
     if user_dict['__ENABLE_HSTS__'].lower() == 'true':
@@ -1441,12 +1471,6 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
                                                '%u.authorized_keys'))
     user_dict['__SSH_AUTH_KEY_LOCATIONS__'] = ' '.join(auth_key_locations)
 
-    if enable_wsgi:
-        # WSGI shares auth and bin and only discriminates in backend
-        xgi_bin = xgi_auth = 'wsgi-bin'
-    else:
-        xgi_bin = 'cgi-bin'
-        xgi_auth = 'cgi-auth'
     user_dict['__TWOFACTOR_PAGE__'] = os.path.join(
         '/', xgi_auth, 'twofactor.py')
     if autolaunch_page is None:
@@ -1485,6 +1509,17 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
     secscan_addr_list = secscan_addr.split()
     secscan_addr_pattern = '(' + '|'.join(secscan_addr_list) + ')'
     user_dict['__SECSCAN_ADDR_PATTERN__'] = secscan_addr_pattern
+
+    if not default_menu:
+        default_menu = 'home files submitjob jobs vgrids resources ' \
+                       'runtimeenvs people settings downloads transfers ' \
+                       'sharelinks crontab docs logout'
+    allow_menu = ' '.join([i for i in default_menu.split() if i in menu_items])
+    user_dict['__DEFAULT_MENU__'] = allow_menu
+    if not user_menu:
+        user_menu = ''
+    allow_menu = ' '.join([i for i in user_menu.split() if i in menu_items])
+    user_dict['__USER_MENU__'] = allow_menu
 
     # Collect final variable values for log
     sorted_keys = list(user_dict)
@@ -1830,6 +1865,12 @@ def create_user(
     apache_worker_procs = 256
     openssh_version = '7.4'
     cert_dir = '%s/MiG-certificates' % apache_dir
+    auto_add_cert_user = False
+    auto_add_oid_user = False
+    auto_add_oidc_user = False
+    cert_valid_days = 365
+    oid_valid_days = 365
+    generic_valid_days = 365
     enable_migadmin = False
     # We don't necessarily have free ports for daemons
     enable_sftp = False
@@ -1845,7 +1886,6 @@ def create_user(
     enable_sitestatus = True
     enable_wsgi = True
     wsgi_procs = 5
-    wsgi_py_suffix = ''
     enable_jobs = True
     enable_resources = True
     enable_workflows = False
@@ -1957,6 +1997,12 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         mig_dir,
         state_dir,
         cert_dir,
+        auto_add_cert_user,
+        auto_add_oid_user,
+        auto_add_oidc_user,
+        cert_valid_days,
+        oid_valid_days,
+        generic_valid_days,
         enable_migadmin,
         enable_sftp,
         enable_sftp_subsys,
@@ -1965,7 +2011,6 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_ftps,
         enable_wsgi,
         wsgi_procs,
-        wsgi_py_suffix,
         enable_jobs,
         enable_resources,
         enable_workflows,
