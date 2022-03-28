@@ -337,16 +337,24 @@ settings:
 --base_fqdn=BASE_FQDN
 --public_fqdn=PUBLIC_FQDN
 --public_alias_fqdn=PUBLIC_ALIAS_FQDN
+--public_sec_fqdn=PUBLIC_SEC_FQDN
 --mig_cert_fqdn=MIG_CERT_FQDN
 --ext_cert_fqdn=EXT_CERT_FQDN
 --mig_oid_fqdn=MIG_OID_FQDN
 --ext_oid_fqdn=EXT_OID_FQDN
+--mig_oidc_fqdn=MIG_OIDC_FQDN
+--ext_oidc_fqdn=EXT_OIDC_FQDN
 --sid_fqdn=SID_FQDN
 --io_fqdn=IO_FQDN
 --seafile_fqdn=SEAFILE_FQDN
 --seafile_base=SEAFILE_BASE
 --seafmedia_base=SEAFMEDIA_BASE
 --seafhttp_base=SEAFHTTP_BASE
+--openid_address=OPENID_ADDRESS
+--sftp_address=SFTP_ADDRESS
+--sftp_subsys_address=SFTP_SUBSYS_ADDRESS
+--ftps_address=FTPS_ADDRESS
+--davs_address=DAVS_ADDRESS
 --jupyter_services=JUPYTER_SERVICES
 --jupyter_services_desc=JUPYTER_SERVICES_DESC
 --cloud_fqdn=CLOUD_FQDN
@@ -365,6 +373,11 @@ settings:
 --mig_certs=MIG_CERTS
 --mig_oid_provider=MIG_OID_PROVIDER
 --ext_oid_provider=EXT_OID_PROVIDER
+--mig_oidc_provider_meta_url=MIG_OIDC_PROVIDER_META_URL
+--ext_oidc_provider_meta_url=EXT_OIDC_PROVIDER_META_URL
+--ext_oidc_client_name=EXT_OIDC_CLIENT_NAME
+--ext_oidc_client_id=EXT_OIDC_CLIENT_ID
+--ext_oidc_scope=EXT_OIDC_SCOPE
 --dhparams_path=DHPARAMS_PATH
 --daemon_keycert=DAEMON_KEYCERT
 --daemon_pubkey=DAEMON_PUBKEY
@@ -374,6 +387,7 @@ settings:
 --login_methods=LOGIN_METHODS
 --csrf_protection=CSRF_PROTECTION
 --password_policy=PASSWORD_POLICY
+--password_legacy_policy=PASSWORD_LEGACY_POLICY
 --hg_path=HG_PATH
 --hgweb_scripts=HGWEB_SCRIPTS
 --trac_admin_path=TRAC_ADMIN_PATH
@@ -383,12 +397,18 @@ settings:
 --listen_clause=LISTEN_CLAUSE
 --serveralias_clause=SERVERALIAS_CLAUSE
 --distro=DISTRO
+--autolaunch_page=AUTOLAUNCH_PAGE
 --landing_page=LANDING_PAGE
 --skin=SKIN
 --short_title=SHORT_TITLE
 --secscan_addr=SECSCAN_ADDR
 --user_interface=USER_INTERFACE
 --vgrid_label=VGRID_LABEL
+--default_menu=DEFAULT_MENU
+--user_menu=USER_MENU
+--cert_valid_days=CERT_VALID_DAYS
+--oid_valid_days=OID_VALID_DAYS
+--generic_valid_days=GENERIC_VALID_DAYS
 --apache_worker_procs=APACHE_WORKER_PROCS
 --sftp_subsys_auth_procs=SFTP_SUBSYS_AUTH_PROCS
 --wsgi_procs=WSGI_PROCS
@@ -399,6 +419,8 @@ settings:
 --ext_cert_port=EXT_CERT_PORT
 --mig_oid_port=MIG_OID_PORT
 --ext_oid_port=EXT_OID_PORT
+--mig_oidc_port=MIG_OIDC_PORT
+--ext_oidc_port=EXT_OIDC_PORT
 --sid_port=SID_PORT
 --sftp_port=SFTP_PORT
 --sftp_show_port=SFTP_SHOW_PORT
@@ -414,6 +436,10 @@ settings:
 --seafile_seafhttp_port=SEAFILE_SEAFHTTP_PORT
 --seafile_client_port=SEAFILE_CLIENT_PORT
 --seafile_quota=SEAFILE_QUOTA
+--auto_add_cert_user=AUTO_ADD_CERT_USER
+--auto_add_oid_user=AUTO_ADD_OID_USER
+--auto_add_oidc_user=AUTO_ADD_OIDC_USER
+--enable_migadmin=ENABLE_MIGADMIN
 --enable_sftp=ENABLE_SFTP
 --enable_sftp_subsys=ENABLE_SFTP_SUBSYS
 --enable_davs=ENABLE_DAVS
@@ -449,6 +475,8 @@ settings:
 --enable_sitestatus=ENABLE_SITESTATUS
 --daemon_pubkey_from_dns=DAEMON_PUBKEY_FROM_DNS
 --seafile_ro_access=SEAFILE_RO_ACCESS
+--public_use_https=PUBLIC_USE_HTTPS
+--prefer_python3=PREFER_PYTHON3
 
 For one of our servers running MiG as the 'mig' user with the code
 checked out directly in the home directory and Debian apache 2.4 without OpenID:
@@ -599,6 +627,7 @@ or the same on centos
                    --password_policy=MODERN:12 --password_legacy_policy=MEDIUM \
                    --distro=centos --skin=migrid-basic --short_title=MiG \
                    --wsgi_procs=25 \
+                   --auto_add_oid_user=True --auto_add_cert_user=True \
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
 
 and a storage-only setup with CentOS 7.x, apache 2.4, WSGI (default web), 
@@ -656,6 +685,9 @@ optimized SFTP, Seafile integration and OpenID login:
                    --distro=centos \
                    --skin=erda-ucph-science --short_title=ERDA \
                    --vgrid_label=Workgroup --wsgi_procs=25 \
+                   --default_menu="home files submitjob jobs vgrids settings setup logout" \
+                   --user_menu="sharelinks people seafile crontab transfers peers downloads docs migadmin" \
+                   --auto_add_oid_user=True --auto_add_cert_user=True \
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
                    
 and the same with added Jupyter+cloud integration and optional 2FA support:
@@ -720,6 +752,9 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --vgrid_label=Workgroup --apache_worker_procs=2048 \
                    --davs_port=8020 --openid_port=8001 \
                    --wsgi_procs=100 --sftp_subsys_auth_procs=50 \
+                   --default_menu="home files vgrids archives jupyter settings setup logout" \
+                   --user_menu="sharelinks seafile crontab transfers cloud people downloads peers docs migadmin" \
+                   --auto_add_oid_user=True --auto_add_cert_user=True \
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
 
 and a similar setup with CentOS 7.x, apache 2.4, WSGI (default web), 
@@ -785,6 +820,9 @@ with optional 2-FA support and legacy sftp clients:
                    --vgrid_label=Workgroup --apache_worker_procs=512 \
                    --wsgi_procs=25 --sftp_subsys_auth_procs=25 \
                    --davs_port=8020 --openid_port=8001 \
+                   --default_menu="home files submitjob jobs vgrids jupyter settings setup logout" \
+                   --user_menu="sharelinks people cloud crontab transfers runtimeenvs resources downloads peers docs migadmin" \
+                   --auto_add_oid_user=True --auto_add_cert_user=True \
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
 
 Finally a storage-only with CentOS 7.x, apache 2.4, WSGI (default web), 
@@ -847,6 +885,7 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --password_policy=MODERN:12 --password_legacy_policy=HIGH \
                    --distro=centos --skin=erda-ucph-science --short_title=SIF \
                    --wsgi_procs=25 --user_interface='V2' \
+                   --auto_add_oid_user=True --oid_valid_days=180 \
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
 
 Most of the arguments should be relatively straight forward, but you
