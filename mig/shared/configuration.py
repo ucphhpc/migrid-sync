@@ -394,6 +394,7 @@ class Configuration(object):
     workflows_vgrid_patterns_home = ''
     workflows_vgrid_recipes_home = ''
     workflows_vgrid_history_home = ''
+    site_prefer_python3 = False
     site_autolaunch_page = ''
     site_landing_page = ''
     site_skin = ''
@@ -1624,6 +1625,11 @@ location.""" % self.config_file)
             self.site_assets = config.get('SITE', 'assets')
         else:
             self.site_assets = "/assets"
+        if config.has_option('SITE', 'prefer_python3'):
+            self.site_prefer_python3 = config.getboolean('SITE',
+                                                         'prefer_python3')
+        else:
+            self.site_prefer_python3 = False
         if config.has_option('SITE', 'autolaunch_page'):
             self.site_autolaunch_page = config.get('SITE', 'autolaunch_page')
         else:
