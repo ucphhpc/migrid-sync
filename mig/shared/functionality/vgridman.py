@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridman - backend to manage vgrids
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -195,13 +195,14 @@ resources.''' % label})
             logger.debug("no pending cache updates")
         member_list['pending_updates'] = pending_updates
 
-        vgrid_list = list(vgrid_map[VGRIDS])
+        # NOTE: on clean install vgrid_map may not yet be populated
+        vgrid_list = list(vgrid_map.get(VGRIDS, []))
 
         # Iterate through vgrids and print details for each
 
         if 'monitor' in active_vgrid_links:
             vgrid_list = [all_vgrids] + vgrid_list
-        else:
+        elif default_vgrid in vgrid_list:
             vgrid_list.remove(default_vgrid)
         # User vgrid_list here to include default and all mangling above
         for vgrid_name in vgrid_list:
