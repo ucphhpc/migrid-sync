@@ -157,14 +157,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
             if not keyword in keywords_dict:
                 continue
             if received_arguments != None and received_arguments != ['\r\n']:
-                contiguous_arguments = ''
-                for entry in received_arguments:
-                    contiguous_arguments += '\n'.join(
-                        [i for i in entry.split('\n') if i.strip()])
+                all_arguments = []
+                for arg in received_arguments:
+                    all_arguments += [i for i in arg.split('\n') if i.strip()]
                 topic_mrsl += '''::%s::
 %s
 
-''' % (keyword.upper(), contiguous_arguments)
+''' % (keyword.upper(), '\n'.join(all_arguments))
 
         # Save content to temp file
 
