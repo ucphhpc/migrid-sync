@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # notifyexpire - Send account expire warning email to user(s)
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,10 +29,14 @@
 instructions for renewing if expire is imminent. Used to remind users signed up
 with internal OpenID access where we don't have another logical hook to send
 based on e.g. certificate expiration.
+Extended to also cover the users signed up with external OpenID where web login
+automatically renews the account but where access to SFTP, WebDAVS, FTPS,
+Seafile and Cloud can still expire upon long periods without web use.
 By default sends the information on email to the registered notification
 address or email from Distinguished Name field of user entry. If user
 configured additional messaging protocols they can also be used.
 """
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -41,10 +45,16 @@ import getopt
 import sys
 import time
 
-from mig.shared.defaults import keyword_auto, gdp_distinguished_field
+from mig.shared.accountstate import check_account_expire
+from mig.shared.cloud import check_cloud_available, cloud_access_allowed, \
+    status_all_cloud_instances, cloud_load_instance
+from mig.shared.defaults import keyword_auto, gdp_distinguished_field, \
+    keyword_all
 from mig.shared.notification import notify_user
+from mig.shared.settings import load_ssh, load_ftps, load_davs, load_seafile, \
+    load_cloud
 from mig.shared.useradm import init_user_adm, search_users, default_search, \
-    user_migoid_notify
+    user_account_notify
 
 
 def usage(name='notifyexpire.py'):
@@ -65,6 +75,7 @@ Where NOTIFY_OPTIONS may be one or more of:
    -h                  Show this help
    -I CERT_DN          Send warning for user(s) with ID (distinguished name)
    -s PROTOCOL         Send warning to notification protocol from settings
+   -S SERVICES         Send warning regarding expiry of  SERVICES as well
    -v                  Verbose output
 
 One or more destinations may be set by combining multiple -e, -s and -a
@@ -84,9 +95,11 @@ if '__main__' == __name__:
     search_filter['distinguished_name'] = '*'
     search_filter['expire_after'] = int(time.time())
     search_filter['expire_before'] = int(time.time() + 30 * 24 * 3600)
+    # Default to only internal openid warnings
+    services = ['migoid']
     now = int(time.time())
     exit_code = 0
-    opt_args = 'aA:B:c:Cd:e:hI:s:v'
+    opt_args = 'aA:B:c:Cd:e:hI:s:S:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
@@ -134,6 +147,9 @@ if '__main__' == __name__:
             val = val.lower()
             raw_targets[val] = raw_targets.get(val, [])
             raw_targets[val].append('SETTINGS')
+        elif opt == '-S':
+            # Force unique list of non-empty entries
+            services = list(dict([(i, 0) for i in val.split() if i.strip()]))
         elif opt == '-v':
             verbose = True
         else:
@@ -156,12 +172,24 @@ if '__main__' == __name__:
     after = datetime.datetime.fromtimestamp(search_filter['expire_after'])
     if verbose:
         if hits:
-            print("Check %d expire(s) between %s and %s for user ID '%s'" % \
+            print("Check %d expire(s) between %s and %s for user ID '%s'" %
                   (len(hits), after, before, search_dn))
         else:
-            print("No expires between %s and %s for user ID '%s'" % \
+            print("No expires between %s and %s for user ID '%s'" %
                   (after, before, search_dn))
+
+    if 'cloud' in services and not configuration.site_enable_cloud:
+        print("WARNING: removing cloud which is not enabled on this site!")
+        services.remove('cloud')
+    elif 'seafile' in services and not configuration.site_enable_seafile:
+        print("WARNING: removing seafile which is not enabled on this site!")
+        services.remove('seafile')
+    elif 'migoid' in services and not configuration.site_enable_openid:
+        print("WARNING: removing migoid which is not enabled on this site!")
+        services.remove('migoid')
+
     for (user_id, user_dict) in hits:
+        affected = []
         if verbose:
             print('Check for %s' % user_id)
 
@@ -171,13 +199,126 @@ if '__main__' == __name__:
                 print("Skip GDP project account: %s" % user_id)
             continue
 
-        if not user_dict.get('password', '') and \
-                not user_dict.get('password_hash', ''):
+        # Don't warn about already disabled or suspended accounts
+        account_state = user_dict.get('status', 'active')
+        if not account_state in ('active', 'temporal'):
             if verbose:
-                print("Skip account %s without local password" % user_id)
+                print('Skip handling of already %s user %s' % (account_state,
+                                                               user_id))
             continue
 
-        (_, username, full_name, addresses, errors) = user_migoid_notify(
+        known_auth = user_dict.get('auth', [])
+        if not known_auth:
+            if user_dict.get('openid_names', []):
+                if user_dict.get('password_hash', ''):
+                    known_auth.append("migoid")
+                else:
+                    known_auth.append("extoid")
+            elif user_dict.get('password', ''):
+                known_auth.append("migcert")
+            else:
+                if verbose:
+                    print('Skip handling of user %s without auth info' %
+                          user_id)
+                continue
+
+        auth_services = [i for i in known_auth if i in services]
+        if auth_services:
+            (pending_expire, account_expire, _) = check_account_expire(
+                configuration, user_id)
+            if account_expire > search_filter['expire_after'] and \
+                    account_expire < search_filter['expire_before']:
+                affected += auth_services
+
+        if 'ssh' in services or 'sftp' in services:
+            svc_dict = load_ssh(user_id, configuration)
+            if not svc_dict:
+                svc_dict = {}
+            svc_creds = svc_dict.get('authpassword', '') or \
+                svc_dict.get('authkeys', '')
+            if svc_creds:
+                affected.append('sftp')
+
+        if 'ftps' in services:
+            svc_dict = load_ftps(user_id, configuration)
+            if not svc_dict:
+                svc_dict = {}
+            svc_creds = svc_dict.get('authpassword', '')
+            if svc_creds:
+                affected.append('ftps')
+
+        if 'davs' in services or 'webdavs' in services:
+            svc_dict = load_davs(user_id, configuration)
+            if not svc_dict:
+                svc_dict = {}
+            svc_creds = svc_dict.get('authpassword', '')
+            if svc_creds:
+                affected.append('webdavs')
+
+        if 'seafile' in services:
+            svc_dict = load_seafile(user_id, configuration)
+            if not svc_dict:
+                svc_dict = {}
+            svc_creds = svc_dict.get('authpassword', '')
+            if svc_creds:
+                affected.append('seafile')
+
+        if 'cloud' in services:
+            if not cloud_access_allowed(configuration, user_dict):
+                if verbose:
+                    print('Skip handling of cloud without access for %s' %
+                          user_id)
+                cloud_services = []
+            else:
+                cloud_services = configuration.cloud_services
+
+            # TODO: check or warn admins about purging keys?
+            svc_dict = load_cloud(user_id, configuration)
+            if not svc_dict:
+                svc_dict = {}
+            svc_creds = svc_dict.get('authkeys', '')
+            # TODO: only count cloud effected if active instances?
+            # We most likely need to at least remove cloud keys from jump host
+            if svc_creds:
+                affected.append('cloud')
+
+            for cloud_svc in cloud_services:
+                cloud_id = cloud_svc['service_name']
+                cloud_title = cloud_svc['service_title']
+                cloud_flavor = cloud_svc.get("service_provider_flavor",
+                                             "openstack")
+
+                if not check_cloud_available(configuration, user_id, cloud_id,
+                                             cloud_flavor):
+                    if verbose:
+                        print('Skip handling of unavailable cloud %s for %s' %
+                              (cloud_title, user_id))
+                    continue
+
+                # Check instances created and running
+                saved_instances = cloud_load_instance(configuration, user_id,
+                                                      cloud_id, keyword_all)
+
+                instance_fields = ['public_fqdn', 'status']
+                status_map = status_all_cloud_instances(configuration, user_id,
+                                                        cloud_id, cloud_flavor,
+                                                        list(saved_instances),
+                                                        instance_fields)
+                for (instance_id, instance_dict) in saved_instances.items():
+                    instance_label = instance_dict.get('INSTANCE_LABEL',
+                                                       instance_id)
+                    instance_status = status_map[instance_id].get('status',
+                                                                  "UNKNOWN")
+                    if instance_status in ['stopped']:
+                        if verbose:
+                            print('Skip stopped %s instance %s for %s' %
+                                  (cloud_title, instance_id, user_id))
+                        continue
+                    else:
+                        if not 'cloud' in affected:
+                            affected.append('cloud')
+
+        (_, username, full_name, addresses, errors) = user_account_notify(
             user_id, raw_targets, conf_path, db_path, verbose, admin_copy)
         if errors:
             print("Address lookup errors for %s :" % user_id)
@@ -188,8 +329,14 @@ if '__main__' == __name__:
             print("Error: found no username for %s" % user_id)
             exit_code += 1
             continue
+        if not affected:
+            if verbose:
+                print("No affected services for %s" % user_id)
+            continue
+
         expire = datetime.datetime.fromtimestamp(user_dict['expire'])
-        print("Account %s expires on %s" % (user_id, expire))
+        print("Account %s expires on %s - affected services: %s" %
+              (user_id, expire, ', '.join(affected)))
         notify_dict = {'JOB_ID': 'NOJOBID', 'USER_CERT': user_id, 'NOTIFY': []}
         for (proto, address_list) in addresses.items():
             for address in address_list:
@@ -197,9 +344,10 @@ if '__main__' == __name__:
         # Don't actually send unless requested
         if not raw_targets and not admin_copy:
             continue
-        print("Send internal OpenID account expire warning for '%s' to:\n%s" \
+        print("Send account expire warning for '%s' to:\n%s"
               % (user_id, '\n'.join(notify_dict['NOTIFY'])))
-        notify_user(notify_dict, [user_id, username, full_name, user_dict],
-                    'ACCOUNTEXPIRE', logger, '', configuration)
+        notify_user(notify_dict, [user_id, username, full_name, user_dict,
+                                  affected], 'ACCOUNTEXPIRE', logger, '',
+                    configuration)
 
     sys.exit(exit_code)
