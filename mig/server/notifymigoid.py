@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # notifymigoid - Send internal openid account create/renew email to user
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,6 +33,7 @@ By default sends the information on email to the registered notification
 address or email from Distinguished Name field of user entry. If user
 configured additional messaging protocols they can also be used.
 """
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -41,7 +42,7 @@ import sys
 
 from mig.shared.defaults import keyword_auto
 from mig.shared.notification import notify_user
-from mig.shared.useradm import init_user_adm, user_migoid_notify
+from mig.shared.useradm import init_user_adm, user_account_notify
 
 
 def usage(name='notifymigoid.py'):
@@ -121,8 +122,8 @@ if '__main__' == __name__:
         sys.exit(1)
 
     (configuration, username, full_name, addresses, errors) = \
-        user_migoid_notify(user_id, raw_targets, conf_path, db_path, verbose,
-                           admin_copy)
+        user_account_notify(user_id, raw_targets, conf_path, db_path, verbose,
+                            admin_copy)
 
     if errors:
         print("Address lookup errors:")
@@ -139,7 +140,7 @@ if '__main__' == __name__:
     for (proto, address_list) in addresses.items():
         for address in address_list:
             notify_dict['NOTIFY'].append('%s: %s' % (proto, address))
-    print("Sending internal OpenID account intro for '%s' to:\n%s" % \
+    print("Sending internal OpenID account intro for '%s' to:\n%s" %
           (user_id, '\n'.join(notify_dict['NOTIFY'])))
     notify_user(notify_dict, [user_id, username, full_name], 'ACCOUNTINTRO',
                 logger, '', configuration)

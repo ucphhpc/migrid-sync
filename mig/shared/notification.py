@@ -53,7 +53,8 @@ except ImportError as ierr:
 from mig.shared.base import force_utf8, generate_https_urls, canonical_user, \
     cert_field_map, extract_field, get_site_base_url
 from mig.shared.defaults import email_keyword_list, job_output_dir, \
-    transfer_output_dir, keyword_auto
+    transfer_output_dir, keyword_auto, cert_auto_extend_days, \
+    oid_auto_extend_days
 from mig.shared.fileio import send_message_to_grid_notify
 from mig.shared.safeinput import is_valid_simple_email
 from mig.shared.settings import load_settings
@@ -394,7 +395,7 @@ You can log in with username %s and your chosen password at
 The terms of use are always available from %s along with our privacy and cookie
 policy.
 
-Please contact the %s admins in case you should ever loose or forget your
+Please contact the %s admins in case you should ever lose or forget your
 password. The same applies if you suspect or know that someone may have gotten
 hold of your login.
 
@@ -407,10 +408,13 @@ The %s Admins
         user_email = args_list[1]
         user_name = args_list[2]
         user_dict = args_list[3]
+        affected = args_list[4]
         short_title = configuration.short_title
         migoid_title = configuration.user_mig_oid_title
         auth_migoid_url = configuration.migserver_https_mig_oid_url
-        anon_migoid_url = configuration.migserver_https_sid_url
+        auth_migcert_url = configuration.migserver_https_mig_cert_url
+        anon_migreq_url = configuration.migserver_https_sid_url
+        www_url = configuration.migserver_https_url
         expire = datetime.datetime.fromtimestamp(user_dict['expire'])
         # Only include actual values in query
         req_fields = [i for i in cert_field_map if user_dict.get(i, '')]
@@ -424,39 +428,89 @@ Email address: %(email)s
 Organization: %(organization)s
 Two letter country-code: %(country)s
 State: %(state)s""" % user_dict
-        header = '%s OpenID login expire for %s' % (short_title, user_name)
+        header = '%s account expire for %s' % (short_title, user_name)
         txt += """This is an automatic account access expire warning from %s.
-Basically you need to renew your OpenID login before %s
-if you want to preserve that account access method.
 
-Until that date you can always simply login with your username %s and request
-semi-automatic renewal, only filling the password and comment fields at
-%s/cgi-bin/reqoid.py
+Basically you need to renew your account before %s if you want to
+preserve full account access. """ % (short_title, expire)
+        if "migoid" in affected or "migcert" in affected:
+            if "migoid" in affected:
+                auth_migreq_url = auth_migoid_url
+                req_name = "reqoid"
+                user_credentials = "username %s" % user_email
+            else:
+                auth_migreq_url = auth_migcert_url
+                req_name = "reqcert"
+                user_credentials = "%s certificate" % from_id
+            txt += """Until that date you can always simply log on with
+your %s
+and request semi-automatic renewal, only filling the password and comment
+fields at
+%s/cgi-bin/%s.py
 In that way you can also choose a new password if you like.
 
-After account access expiry you can only renew by submitting another account
-request matching your original one. I.e. open the semi-filled account request
-page at
-%s/cgi-sid/reqoid.py?%s
+After account access expiry you will temporarily lose ALL access and can only
+regain it by submitting another account request matching your original one.
+I.e. open the semi-filled account request page at
+%s/cgi-sid/%s.py?%s
 or manually fill it all on
-%s/cgi-sid/reqoid.py
-For expired accounts the form MUST be filled with the exact values you're
-signed up with - including your EXISTING password!
+%s/cgi-sid/%s.py
+For already expired accounts the form MUST be filled with the exact values
+you're signed up with - including your EXISTING password!
 In case you use the last link you need to enter your ID values:
 %s
 
-In either case please enter a few lines of comment including why you (still)
-need access. Mentioning names of project and main collaboration partners
-on-site may also be helpful to speed up our verification and renewal process.
+In either case please ALWAYS enter a few lines of comment about why you still
+need access and who your main on-site employed contacts are (name AND email).
+Names of the specific collaboration projects or courses you need access for
+may also be helpful to speed up our verification and renewal process.
 
-Please contact the %s admins in case you should ever loose or forget your
+We reserve the right to eventually suspend or even permanently delete accounts
+that have remained expired and unused for a prolonged period of time. We will
+first try to contact you again on email in that case.
+
+Please contact the %s admins in case you should ever lose or forget your
 password. The same applies if you suspect or know that someone may have gotten
 hold of your login.
 
 Regards,
 The %s Admins
-""" % (short_title, expire, user_email, auth_migoid_url, anon_migoid_url,
-            id_query, anon_migoid_url, id_lines, short_title, short_title)
+""" % (user_credentials, auth_migreq_url, req_name, anon_migreq_url, req_name,
+                id_query, anon_migreq_url, req_name, id_lines, short_title, short_title)
+        else:
+            if "extoid" in affected:
+                extend_days = oid_auto_extend_days
+                account_valid_days = configuration.oid_valid_days
+            elif "extcert" in affected:
+                extend_days = cert_auto_extend_days
+                account_valid_days = configuration.cert_valid_days
+            else:
+                extend_days = oid_auto_extend_days
+                account_valid_days = configuration.generic_valid_days
+            txt += """Until that date you can always simply log on to
+%s web to extend your access for another %d days. If e.g. you don't
+use %s web regularly you can also choose to instead repeat sign up to
+extend your account access for %d days.
+
+Please note that if you do not react before %s you should expect to
+temporarily lose ALL but basic web access to %s. This may include one or
+more services like:
+%s
+and they will remain inaccessible until you reactivate your account as
+explained above.
+
+We reserve the right to eventually suspend or even permanently delete accounts
+that have remained expired and unused for a prolonged period of time. We will
+first try to contact you again on email in that case.
+
+Please contact us on our usual support channels as explained on
+%s
+in case you have any questions regarding this email.
+
+Regards,
+The %s Admins
+""" % (short_title, extend_days, short_title, account_valid_days,
+                expire, short_title, ', '.join(affected), www_url, short_title)
     elif status == 'FORUMUPDATE':
         vgrid_name = args_list[0]
         author = args_list[1]
