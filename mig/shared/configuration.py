@@ -1848,12 +1848,23 @@ location.""" % self.config_file)
                 self.loglevel, syslog=syslog_gdp, app='main-gdp')
         self.gdp_logger = self.gdp_logger_obj.logger
 
+        self.gdp_email_notify = True
+        if config.has_option('GLOBAL', 'gdp_email_notify'):
+            self.gdp_email_notify \
+                = config.getboolean('GLOBAL', 'gdp_email_notify')
+
         self.gdp_data_categories = []
-        if config.has_option('GLOBAL', 'gdp_data_categories'):
+        if self.site_enable_gdp and \
+                config.has_option('GLOBAL', 'gdp_data_categories'):
+            data_categories = None
             load_path = config.get('GLOBAL', 'gdp_data_categories')
-            data_categories = load_json(load_path, logger)
-            if data_categories:
-                self.gdp_data_categories = data_categories
+            if os.path.isfile(load_path):
+                data_categories = load_json(load_path, logger)
+                if data_categories:
+                    self.gdp_data_categories = data_categories
+            if not data_categories:
+                logger.error('gdp_data_categories: %r ' % load_path
+                    + 'is not a valid data_categoriesfile!')
 
         if config.has_option('SITE', 'transfers_from'):
             transfers_from_str = config.get('SITE', 'transfers_from')
@@ -2254,9 +2265,12 @@ location.""" % self.config_file)
             self.arc_clusters = config.get('ARC',
                                            'arc_clusters').split()
 
-        # Force same 2FA address for IO logins in GDP mode
-        if self.site_enable_gdp:
-            self.site_twofactor_strict_address = True
+        # Warn about missing IP check if in GDP mode
+        if self.site_enable_gdp \
+                and not self.site_twofactor_strict_address:
+            logger.warning("twofactor_strict_address:"
+                    + " DISABLED and GDP ENABLED: Hope this is a develop/test environment ?!?")
+
 
     def parse_peers(self, peerfile):
 

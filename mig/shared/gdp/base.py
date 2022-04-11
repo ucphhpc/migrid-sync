@@ -616,7 +616,9 @@ def __send_project_action_confirmation(configuration,
 
     # Send project action mail
 
-    if status:
+    if status and not configuration.gdp_email_notify:
+        _logger.warning("Skipping GDP email notification, disabled in conf")
+    elif status:
         mail_fill = {'short_title': configuration.short_title, 'action':
                      action, 'project_name': project_name}
         recipients = "%s" % login
@@ -645,12 +647,13 @@ Attached you'll find the details registered in relation to the operation.
             configuration,
             files=[pdf_filepath],
         )
-        if not status:
+        if status:
+            log_ok_msg + ": Recipients: %s" % recipients
+        else:
             _logger.error("%s: send_email failed" % log_err_msg)
 
     if status:
-        _logger.info(log_ok_msg
-                     + ": Recipients: %s" % recipients)
+        _logger.info(log_ok_msg)
 
     return status
 
