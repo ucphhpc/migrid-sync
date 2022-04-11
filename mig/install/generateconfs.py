@@ -141,6 +141,7 @@ if '__main__' == __name__:
         'vgrid_label',
         'default_menu',
         'user_menu',
+        'gdp_data_categories'
     ]
     int_names = [
         'cert_valid_days',
@@ -216,6 +217,7 @@ if '__main__' == __name__:
         'seafile_ro_access',
         'public_use_https',
         'prefer_python3',
+        'gdp_email_notify',
     ]
     names = str_names + int_names + bool_names
     settings = {}

@@ -291,6 +291,7 @@ def generate_confs(
     enable_gravatars=True,
     enable_sitestatus=True,
     prefer_python3=False,
+    gdp_email_notify=True,
     user_interface="V3 V2",
     mig_oid_provider='',
     ext_oid_provider='',
@@ -351,7 +352,8 @@ def generate_confs(
     vgrid_label='VGrid',
     secscan_addr='UNSET',
     default_menu='',
-    user_menu=''
+    user_menu='',
+    gdp_data_categories='data_categories.json'
 ):
     """Generate Apache and MiG server confs with specified variables"""
 
@@ -466,6 +468,7 @@ def generate_confs(
     user_dict['__ENABLE_GRAVATARS__'] = "%s" % enable_gravatars
     user_dict['__ENABLE_SITESTATUS__'] = "%s" % enable_sitestatus
     user_dict['__PREFER_PYTHON3__'] = "%s" % prefer_python3
+    user_dict['__GDP_EMAIL_NOTIFY__'] = "%s" % gdp_email_notify
     user_dict['__USER_INTERFACE__'] = user_interface
     user_dict['__MIG_OID_PROVIDER_BASE__'] = mig_oid_provider
     user_dict['__MIG_OID_PROVIDER_ID__'] = mig_oid_provider
@@ -532,6 +535,7 @@ def generate_confs(
     user_dict['__SECSCAN_ADDR__'] = secscan_addr
     user_dict['__DEFAULT_MENU__'] = default_menu
     user_dict['__USER_MENU__'] = user_menu
+    user_dict['__GDP_DATA_CATEGORIES__'] = gdp_data_categories
     user_dict['__PUBLIC_HTTPS_LISTEN__'] = listen_clause
     user_dict['__PUBLIC_ALIAS_HTTPS_LISTEN__'] = listen_clause
 
