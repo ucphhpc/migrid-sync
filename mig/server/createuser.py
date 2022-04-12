@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createuser - Create or renew a MiG user with all the necessary directories
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -42,12 +42,12 @@ from mig.shared.base import fill_distinguished_name, fill_user, \
     force_native_str_rec
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import valid_auth_types
-from mig.shared.pwhash import unscramble_password, scramble_password
+from mig.shared.pwhash import unscramble_password, scramble_password, \
+    make_hash
 from mig.shared.serial import load
 from mig.shared.useradm import init_user_adm, create_user, load_user_dict
 
-cert_warn = \
-    """
+cert_warn = """
 Please note that you *must* use either the -i CERT_DN option to createuser
 or use importuser instead if you want to use other certificate DN formats
 than the one expected by MiG (/C=.*/ST=.*/L=NA/O=.*/CN=.*/emailAddress=.*)
@@ -68,7 +68,7 @@ or
 or
 %(name)s [OPTIONS] -i CERT_DN
 Where OPTIONS may be one or more of:
-   -a AUTH_TYPE        Prepare account for AUTH_TYPE login (mainly expire)
+   -a AUTH_TYPE        Prepare account for AUTH_TYPE login (expire, password)
    -c CONF_FILE        Use CONF_FILE as server configuration
    -d DB_FILE          Use DB_FILE as user data base file
    -e EXPIRE           Set user account expiration to EXPIRE (epoch)
@@ -98,6 +98,7 @@ if '__main__' == __name__:
     short_id = None
     role = None
     peer_pattern = None
+    hash_password = True
     user_dict = {}
     override_fields = {}
     opt_args = 'a:c:d:e:fhi:o:p:rR:u:v'
@@ -141,6 +142,8 @@ if '__main__' == __name__:
             override_fields['role'] = role
         elif opt == '-u':
             user_file = val
+            # NOTE: hashing should already be handled explicitly
+            hash_password = False
         elif opt == '-v':
             verbose = True
         else:
@@ -172,6 +175,10 @@ if '__main__' == __name__:
               (auth_type, ', '.join(valid_auth_types)))
         usage()
         sys.exit(1)
+
+    # NOTE: renew requires original password
+    if auth_type == 'cert':
+        hash_password = False
 
     if expire is None:
         expire = default_account_expire(configuration, auth_type)
@@ -229,13 +236,17 @@ if '__main__' == __name__:
 
     # Encode password if set but not already encoded
 
-    salt = configuration.site_password_salt
     if user_dict['password']:
-        try:
-            unscramble_password(salt, user_dict['password'])
-        except TypeError:
-            user_dict['password'] = scramble_password(
-                salt, user_dict['password'])
+        if hash_password:
+            user_dict['password_hash'] = make_hash(user_dict['password'])
+            del user_dict['password']
+        else:
+            salt = configuration.site_password_salt
+            try:
+                unscramble_password(salt, user_dict['password'])
+            except TypeError:
+                user_dict['password'] = scramble_password(
+                    salt, user_dict['password'])
 
     if user_id:
         user_dict['distinguished_name'] = user_id
