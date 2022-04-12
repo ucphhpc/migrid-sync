@@ -367,19 +367,25 @@ def create_user(
                 unlock_user_db(flock)
             raise Exception("Failed to load user DB: '%s'" % db_path)
 
-    # Prevent alias clashes by preventing addition of new users with same
+    # Prevent alias clashes by refusing addition of new users with same
     # alias. We only allow renew of existing user.
 
-    # TODO: If check is required for GDP then use get_short_id instead of
-    #       user[configuration.user_openid_alias]
-    #       val[configuration.user_openid_alias]
-
-    if not configuration.site_enable_gdp and \
-            configuration.user_openid_providers and \
+    # NOTE: careful to skip GDP project users here
+    if configuration.user_openid_providers and \
             configuration.user_openid_alias:
-        user_aliases = dict([(key, val[configuration.user_openid_alias])
-                             for (key, val) in user_db.items()])
-        alias = user[configuration.user_openid_alias]
+        if not configuration.site_enable_gdp:
+            user_aliases = dict([(key, val[configuration.user_openid_alias])
+                                 for (key, val) in user_db.items()])
+            alias = user[configuration.user_openid_alias]
+        elif not is_gdp_user(configuration, client_id):
+            user_aliases = dict([(key, val[configuration.user_openid_alias])
+                                 for (key, val) in user_db.items() if not
+                                 is_gdp_user(configuration, key)])
+            alias = user[configuration.user_openid_alias]
+        else:
+            user_aliases = {}
+            alias = None
+
         if alias in user_aliases.values() and \
                 user_aliases.get(client_id, None) != alias:
             if do_lock:
@@ -479,13 +485,13 @@ with certificate or OpenID authentication to authorize the change."""
         openid_names.append(short_id)
     add_names = []
 
-    # TODO: If implicit append of GDP openid alias' are required then use
-    #       get_short_id instead of user[configuration.user_openid_alias]
-
-    if not configuration.site_enable_gdp and \
-            configuration.user_openid_providers and \
+    # NOTE: careful to skip GDP project users here
+    if configuration.user_openid_providers and \
             configuration.user_openid_alias:
-        add_names.append(user[configuration.user_openid_alias])
+        if not configuration.site_enable_gdp:
+            add_names.append(user[configuration.user_openid_alias])
+        elif not is_gdp_user(configuration, client_id):
+            add_names.append(user[configuration.user_openid_alias])
     user['openid_names'] = list(dict([(name, 0) for name in add_names +
                                       openid_names]))
 
