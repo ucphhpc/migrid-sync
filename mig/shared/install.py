@@ -305,6 +305,9 @@ def generate_confs(
     daemon_pubkey_from_dns=False,
     daemon_show_address='',
     alias_field='',
+    peers_permit='distinguished_name:.*',
+    vgrid_creators='distinguished_name:.*',
+    vgrid_managers='distinguished_name:.*',
     signup_methods='extcert',
     login_methods='extcert',
     csrf_protection='MEDIUM',
@@ -520,6 +523,9 @@ def generate_confs(
     user_dict['__SEAFILE_RO_ACCESS__'] = "%s" % seafile_ro_access
     user_dict['__PUBLIC_USE_HTTPS__'] = "%s" % public_use_https
     user_dict['__ALIAS_FIELD__'] = alias_field
+    user_dict['__PEERS_PERMIT__'] = peers_permit
+    user_dict['__VGRID_CREATORS__'] = vgrid_creators
+    user_dict['__VGRID_MANAGERS__'] = vgrid_managers
     user_dict['__SIGNUP_METHODS__'] = signup_methods
     user_dict['__LOGIN_METHODS__'] = login_methods
     user_dict['__CSRF_PROTECTION__'] = csrf_protection
