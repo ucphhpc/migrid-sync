@@ -511,6 +511,7 @@ Invalid '%s' input: %s
         hashed_secret = None
         exceeded_rate_limit = False
         invalid_username = False
+        invalid_user = False
         account_accessible = False
         valid_password = False
         daemon_conf = configuration.daemon_conf
@@ -587,7 +588,11 @@ Invalid '%s' input: %s
 
                 account_accessible = check_account_accessible(
                     configuration, self.user, 'openid')
-                if self.checkLogin(self.user, self.password, client_ip):
+                # NOTE: returns None for invalid user, and boolean otherwise
+                accepted = self.checkLogin(self.user, self.password, client_ip)
+                if accepted is None:
+                    invalid_user = True
+                elif accepted:
                     valid_password = True
 
             # Update rate limits and write to auth log
@@ -601,6 +606,7 @@ Invalid '%s' input: %s
                 tcp_port,
                 secret=hashed_secret,
                 invalid_username=invalid_username,
+                invalid_user=invalid_user,
                 account_accessible=account_accessible,
                 skip_twofa_check=True,
                 authtype_enabled=True,
@@ -791,7 +797,11 @@ session state.
             self.wfile.write(webresponse.body)
 
     def checkLogin(self, username, password, addr):
-        """Check username and password stored in MiG user DB"""
+        """Check username and password stored in MiG user DB.
+
+        Returns True on valid username+password, False on password mismatch and
+        None if no such user was found or username is invalid.
+        """
 
         # Only need to update users here
         changed_users = []
@@ -799,6 +809,9 @@ session state.
             daemon_conf, changed_users = refresh_user_creds(configuration,
                                                             'openid',
                                                             username)
+        else:
+            logger.warning("Invalid username %s from %s" % (username, addr))
+            return None
         update_login_map(daemon_conf, changed_users, [], [])
 
         strict_policy = True
@@ -840,8 +853,13 @@ session state.
                 return True
             else:
                 logger.warning("Failed password check for user %s" % username)
-        logger.error("Failed password login for %s from %s" % (username, addr))
-        return False
+        if not entries:
+            logger.warning("No such user %s from %s" % (username, addr))
+            return None
+        else:
+            logger.error("Failed password login for %s from %s" %
+                         (username, addr))
+            return False
 
     def doLogin(self):
         """Login handler"""
@@ -886,7 +904,11 @@ session state.
 
                 account_accessible = check_account_accessible(
                     configuration, self.user, 'openid')
-                if self.checkLogin(self.user, self.password, client_ip):
+                # NOTE: returns None for invalid user, and boolean otherwise
+                accepted = self.checkLogin(self.user, self.password, client_ip)
+                if accepted is None:
+                    invalid_user = True
+                elif accepted:
                     valid_password = True
                     if not self.query['success_to']:
                         self.query['success_to'] = '%s/id/' \
@@ -905,6 +927,7 @@ session state.
                 tcp_port,
                 secret=hashed_secret,
                 invalid_username=invalid_username,
+                invalid_user=invalid_user,
                 account_accessible=account_accessible,
                 skip_twofa_check=True,
                 authtype_enabled=True,
