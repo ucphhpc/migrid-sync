@@ -182,6 +182,7 @@
     font-size: 25px;
     display: block;
     height: 40px;
+    text-decoration: none;
 }
 
 .slider-middle span {
