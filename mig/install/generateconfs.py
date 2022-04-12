@@ -106,7 +106,9 @@ if '__main__' == __name__:
         'mig_code',
         'mig_state',
         'mig_certs',
+        'mig_oid_title',
         'mig_oid_provider',
+        'ext_oid_title',
         'ext_oid_provider',
         'mig_oidc_provider_meta_url',
         'ext_oidc_provider_meta_url',
@@ -135,12 +137,16 @@ if '__main__' == __name__:
         'autolaunch_page',
         'landing_page',
         'skin',
+        'title',
         'short_title',
         'secscan_addr',
         'user_interface',
         'vgrid_label',
         'default_menu',
         'user_menu',
+        'admin_email',
+        'admin_list',
+        'log_level',
         'gdp_data_categories'
     ]
     int_names = [

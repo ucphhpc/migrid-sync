@@ -41,6 +41,7 @@ the following additional software:
 -Seafile server, community edition (https://www.seafile.com/en/download/)
 -Apache WSGI module (https://code.google.com/p/modwsgi/)
 -Apache OpenID auth module (http://findingscience.com/mod_auth_openid/)
+-Apache OpenID Connect auth module (https://github.com/zmartzone/mod_auth_openidc)
 -Python OpenID module (https://github.com/openid/python-openid/)
 -Python irclib module (https://pypi.python.org/pypi/python-irclib/)
 -Python Paramiko module (https://pypi.python.org/pypi/paramiko/)
@@ -81,11 +82,11 @@ installed with:
 sudo apt install apache2 openssh-client python python-pip python-setuptools \
      python-dev build-essential
 and most of the optional dependencies similarly with:
-sudo apt install libapache2-mod-wsgi libapache2-mod-auth-openid  \
-     python-irclib python-paramiko python-enchant python-jsonrpclib \
-     python-requests python-psutil python-future python-cracklib python-yaml \
-     python-cffi python-sendfile openssh-server libpam0g-dev mercurial trac \
-     trac-mercurial lftp rsync fail2ban ipset
+sudo apt install libapache2-mod-wsgi libapache2-mod-auth-openid \
+     libapache2-mod-auth-openidc python-irclib python-paramiko python-enchant \
+     python-jsonrpclib python-requests python-psutil python-future \
+     python-cracklib python-yaml python-cffi python-sendfile openssh-server \
+     libpam0g-dev mercurial trac trac-mercurial lftp rsync fail2ban ipset
 
 On RedHat/CentOS servers the basic packages can be installed with:
 sudo yum install epel-release
@@ -93,10 +94,10 @@ sudo yum install httpd mod_ssl openssh-clients python python-pip \
      python-setuptools python-devel gcc
 
 and most of the optional dependencies similarly with:
-sudo yum install mod_wsgi mod_auth_openid python-paramiko python-enchant \
-     python-jsonrpclib python-requests python2-psutil python-future python2-cffi \
-     PyYAML pysendfile cracklib-python openssh-server pam-devel mercurial lftp \
-     rsync fail2ban ipset
+sudo yum install mod_wsgi mod_auth_openid mod_auth_openidc python-paramiko \
+     python-enchant python-jsonrpclib python-requests python2-psutil \
+     python-future python2-cffi PyYAML pysendfile cracklib-python \
+     openssh-server pam-devel mercurial lftp rsync fail2ban ipset
 
 while the remaining ones need to be installed from EPEL
 sudo yum install trac trac-mercurial-plugin
@@ -754,6 +755,10 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --wsgi_procs=100 --sftp_subsys_auth_procs=50 \
                    --default_menu="home files vgrids archives jupyter settings setup logout" \
                    --user_menu="sharelinks seafile crontab transfers cloud people downloads peers docs migadmin" \
+                   --admin_email="ERDA Info <info@erda.dk>" --log_level=info \
+                   --title="University of Copenhagen - Electronic Research Data Archive" \
+                   --short_title="UCPH ERDA" \
+                   --mig_oid_title="Non-KU/UCPH" --ext_oid_title="KU/UCPH" \
                    --auto_add_oid_user=True --auto_add_cert_user=True \
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
 

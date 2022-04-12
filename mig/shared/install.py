@@ -293,7 +293,9 @@ def generate_confs(
     prefer_python3=False,
     gdp_email_notify=True,
     user_interface="V3 V2",
+    mig_oid_title='MiG',
     mig_oid_provider='',
+    ext_oid_title='External',
     ext_oid_provider='',
     mig_oidc_provider_meta_url='',
     ext_oidc_provider_meta_url='',
@@ -348,11 +350,15 @@ def generate_confs(
     autolaunch_page=None,
     landing_page=None,
     skin='migrid-basic',
+    title='Minimum intrusion Grid',
     short_title='MiG',
     vgrid_label='VGrid',
     secscan_addr='UNSET',
     default_menu='',
     user_menu='',
+    admin_email='mig',
+    admin_list='',
+    log_level='info',
     gdp_data_categories='data_categories.json'
 ):
     """Generate Apache and MiG server confs with specified variables"""
@@ -470,9 +476,11 @@ def generate_confs(
     user_dict['__PREFER_PYTHON3__'] = "%s" % prefer_python3
     user_dict['__GDP_EMAIL_NOTIFY__'] = "%s" % gdp_email_notify
     user_dict['__USER_INTERFACE__'] = user_interface
+    user_dict['__MIG_OID_TITLE__'] = mig_oid_title
     user_dict['__MIG_OID_PROVIDER_BASE__'] = mig_oid_provider
     user_dict['__MIG_OID_PROVIDER_ID__'] = mig_oid_provider
     user_dict['__MIG_OID_AUTH_DB__'] = auth_openid_mig_db
+    user_dict['__EXT_OID_TITLE__'] = ext_oid_title
     user_dict['__EXT_OID_PROVIDER_BASE__'] = ext_oid_provider
     user_dict['__EXT_OID_PROVIDER_ID__'] = ext_oid_provider
     user_dict['__EXT_OID_AUTH_DB__'] = auth_openid_ext_db
@@ -530,11 +538,15 @@ def generate_confs(
     user_dict['__SERVERALIAS_CLAUSE__'] = serveralias_clause
     user_dict['__DISTRO__'] = distro
     user_dict['__SKIN__'] = skin
+    user_dict['__TITLE__'] = title
     user_dict['__SHORT_TITLE__'] = short_title
     user_dict['__VGRID_LABEL__'] = vgrid_label
     user_dict['__SECSCAN_ADDR__'] = secscan_addr
     user_dict['__DEFAULT_MENU__'] = default_menu
     user_dict['__USER_MENU__'] = user_menu
+    user_dict['__ADMIN_EMAIL__'] = admin_email
+    user_dict['__ADMIN_LIST__'] = admin_list
+    user_dict['__LOG_LEVEL__'] = log_level
     user_dict['__GDP_DATA_CATEGORIES__'] = gdp_data_categories
     user_dict['__PUBLIC_HTTPS_LISTEN__'] = listen_clause
     user_dict['__PUBLIC_ALIAS_HTTPS_LISTEN__'] = listen_clause
@@ -1912,7 +1924,9 @@ def create_user(
     enable_imnotify = False
     enable_dev_accounts = False
     user_interface = "V3 V2"
+    mig_oid_title = 'MiG'
     mig_oid_provider = ''
+    ext_oid_title = 'External'
     ext_oid_provider = ''
     mig_oidc_provider_meta_url = ''
     ext_oidc_provider_meta_url = ''
@@ -2042,7 +2056,9 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_gravatars,
         enable_sitestatus,
         user_interface,
+        mig_oid_title,
         mig_oid_provider,
+        ext_oid_title,
         ext_oid_provider,
         mig_oidc_provider_meta_url,
         ext_oidc_provider_meta_url,
