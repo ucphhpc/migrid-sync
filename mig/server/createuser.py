@@ -239,7 +239,7 @@ if '__main__' == __name__:
     if user_dict['password']:
         if hash_password:
             user_dict['password_hash'] = make_hash(user_dict['password'])
-            del user_dict['password']
+            user_dict['password'] = ''
         else:
             salt = configuration.site_password_salt
             try:
@@ -277,7 +277,8 @@ if '__main__' == __name__:
         create_user(user_dict, conf_path, db_path, force, verbose, ask_renew,
                     default_renew, verify_peer=peer_pattern)
     except Exception as exc:
-        print(exc)
+        import traceback
+        print("Error creating user: %s" % traceback.format_exc())
         sys.exit(1)
     print('Created or updated %s in user database and in file system' %
           user_dict['distinguished_name'])
