@@ -298,7 +298,7 @@ def generate_confs(
     ext_oidc_provider_meta_url='',
     ext_oidc_client_name='',
     ext_oidc_client_id='',
-    ext_oidc_scope='sub upn fullName organization state country email role',
+    ext_oidc_scope='profile sub oid upn fullName organization state country email role',
     ext_oidc_remote_user_claim='sub',
     dhparams_path='',
     daemon_keycert='',

@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # autocreate - auto create user from signed certificate or openid login
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -60,6 +60,7 @@ from mig.shared.notification import send_email
 from mig.shared.safeinput import filter_commonname
 from mig.shared.useradm import create_user
 from mig.shared.url import openid_autologout_url
+from mig.shared.validstring import is_valid_email_address
 
 try:
     from mig.shared import arcwrapper
@@ -122,9 +123,11 @@ def signature(auth_type):
         }
     elif auth_type == AUTH_OPENID_CONNECT:
         # IMPORTANT: consistently lowercase to avoid case sensitive validation
+        # NOTE: at least one of sub, oid or upn should be set - check later
         defaults = {
-            'oidc.claim.sub': REJECT_UNSET,
-            'oidc.claim.upn': REJECT_UNSET,
+            'oidc.claim.sub': [''],
+            'oidc.claim.oid': [''],
+            'oidc.claim.upn': [''],
             'oidc.claim.iss': REJECT_UNSET,
             'oidc.claim.aud': REJECT_UNSET,
             'oidc.claim.nickname': [''],
@@ -286,7 +289,9 @@ def main(client_id, user_arguments_dict, environ=None):
     # Extract raw values
 
     if auth_type == AUTH_CERTIFICATE:
-        uniq_id = accepted['cert_id'][-1].strip()
+        main_id = accepted['cert_id'][-1].strip()
+        # TODO: consider switching short_id to email?
+        short_id = main_id
         raw_name = accepted['cert_name'][-1].strip()
         country = accepted['country'][-1].strip()
         state = accepted['state'][-1].strip()
@@ -299,8 +304,10 @@ def main(client_id, user_arguments_dict, environ=None):
         timezone = ''
         email = accepted['email'][-1].strip()
     elif auth_type == AUTH_OPENID_V2:
-        uniq_id = accepted['openid.sreg.nickname'][-1].strip() \
+        # No guaranteed unique ID from OpenID 2.0 - mirror main and short
+        main_id = accepted['openid.sreg.nickname'][-1].strip() \
             or accepted['openid.sreg.short_id'][-1].strip()
+        short_id = main_id
         raw_name = accepted['openid.sreg.fullname'][-1].strip() \
             or accepted['openid.sreg.full_name'][-1].strip()
         country = accepted['openid.sreg.country'][-1].strip()
@@ -318,13 +325,13 @@ def main(client_id, user_arguments_dict, environ=None):
                                 if i])
         locality = accepted['openid.sreg.locality'][-1].strip()
         timezone = accepted['openid.sreg.timezone'][-1].strip()
-
-        # We may encounter results without an email, fall back to uniq_id then
-
-        email = accepted['openid.sreg.email'][-1].strip() or uniq_id
+        email = accepted['openid.sreg.email'][-1].strip()
     elif auth_type == AUTH_OPENID_CONNECT:
-        uniq_id = accepted['oidc.claim.upn'][-1].strip() \
-            or accepted['oidc.claim.sub'][-1].strip()
+        # OpenID Connect identity advice recommends sub or oid as unique
+        main_id = accepted['oidc.claim.sub'][-1].strip() \
+            or accepted['oidc.claim.oid'][-1].strip()
+        # NOTE: UCPH provides common abc123@ku.dk username in upn
+        short_id = accepted['oidc.claim.upn'][-1].strip()
         raw_name = accepted['oidc.claim.fullname'][-1].strip()
         country = accepted['oidc.claim.country'][-1].strip()
         state = accepted['oidc.claim.state'][-1].strip()
@@ -343,10 +350,14 @@ def main(client_id, user_arguments_dict, environ=None):
                                 if i])
         locality = accepted['oidc.claim.locality'][-1].strip()
         timezone = accepted['oidc.claim.timezone'][-1].strip()
+        email = accepted['oidc.claim.email'][-1].strip()
 
-        # We may encounter results without an email, fall back to uniq_id then
-
-        email = accepted['oidc.claim.email'][-1].strip() or uniq_id
+    # We may encounter results without an email, fall back to try plain IDs then
+    if not email:
+        if is_valid_email_address(short_id, logger):
+            email = short_id
+        elif is_valid_email_address(main_id, logger):
+            email = main_id
 
     # TODO: switch to canonical_user fra mig.shared.base instead?
     # Fix case of values:
@@ -439,7 +450,8 @@ def main(client_id, user_arguments_dict, environ=None):
     #                   (op_name, client_id, authsig_list))
 
     user_dict = {
-        'short_id': uniq_id,
+        'main_id': main_id,
+        'short_id': short_id,
         'full_name': full_name,
         'organization': org,
         'organizational_unit': org_unit,
@@ -459,7 +471,7 @@ def main(client_id, user_arguments_dict, environ=None):
     # We must receive some ID from the provider otherwise we probably hit the
     # already logged in situation and must autologout first
 
-    if not uniq_id and not email:
+    if not short_id and not email:
         if auth_type == AUTH_OPENID_V2 and identity and \
                 accepted.get('openid.sreg.required', ''):
             logger.warning('autocreate forcing autologut for %s' % client_id)
@@ -533,8 +545,8 @@ accepting CSRF-filtered POST requests to prevent unintended updates'''})
         user_dict['expire'] = default_account_expire(configuration,
                                                      AUTH_CERTIFICATE)
         try:
-            distinguished_name_to_user(uniq_id)
-            user_dict['distinguished_name'] = uniq_id
+            distinguished_name_to_user(main_id)
+            user_dict['distinguished_name'] = main_id
         except:
             logger.error('%s autocreate with bad DN refused for %s' %
                          (auth_flavor, client_id))
@@ -550,14 +562,12 @@ multiple "key=val" fields separated by "/".
         user_dict['expire'] = default_account_expire(configuration,
                                                      AUTH_OPENID_V2)
         fill_distinguished_name(user_dict)
-        uniq_id = user_dict['distinguished_name']
     elif auth_flavor == AUTH_EXT_OIDC:
         ext_login_title = "%s login" % configuration.user_ext_oid_title
         personal_page_url = configuration.migserver_https_ext_oidc_url
         user_dict['expire'] = default_account_expire(configuration,
                                                      AUTH_OPENID_CONNECT)
         fill_distinguished_name(user_dict)
-        uniq_id = user_dict['distinguished_name']
     else:
         # Reject the migX sign up methods through this handler
         logger.error('%s autocreate not supported for %s - only ext auth' %
@@ -568,8 +578,10 @@ sign up wrappers or go through the dedicated web form for %s.''' %
                                (auth_type, auth_flavor)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    user_id = user_dict['distinguished_name']
+
     # IMPORTANT: do NOT let a user create with ID different from client_id
-    if auth_type == AUTH_CERTIFICATE and client_id != uniq_id:
+    if auth_type == AUTH_CERTIFICATE and client_id != user_id:
         logger.error('refusing autocreate invalid user for %s: %s' %
                      (client_id, user_dict))
         output_objects.append({'object_type': 'error_text', 'text': '''Only
@@ -624,18 +636,18 @@ accepting create matching supplied ID!'''})
 
                 # save the file, display expiration date
 
-                proxy_out = handle_proxy(proxy_content, uniq_id,
+                proxy_out = handle_proxy(proxy_content, user_id,
                                          configuration)
                 output_objects.extend(proxy_out)
         except Exception as err:
-            logger.error('create failed for %s: %s' % (uniq_id, err))
+            logger.error('create failed for %s: %s' % (user_id, err))
             output_objects.append({'object_type': 'error_text', 'text': '''
 Could not create the user account for you:
 Please report this problem to the site administrators (%(admin_email)s).'''
                                    % fill_helper})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
-        logger.info('created user account for %s' % uniq_id)
+        logger.info('created user account for %s' % user_id)
 
         email_header = 'Welcome to %s' % configuration.short_title
         email_msg = """Hi and welcome to %(short_title)s!
@@ -667,7 +679,7 @@ to send your account welcome email. Please inform the site admins (%s) manually
 and include the session ID: %s""" % (admin_email, tmp_id)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
-        logger.info('sent welcome email for %s to %s' % (uniq_id, email))
+        logger.info('sent welcome email for %s to %s' % (user_id, email))
 
         output_objects.append({'object_type': 'html_form', 'text': """
 <p>Creating your %(short_title)s user account and sending welcome email ... </p>
