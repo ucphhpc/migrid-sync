@@ -115,6 +115,7 @@ if '__main__' == __name__:
         'ext_oidc_client_name',
         'ext_oidc_client_id',
         'ext_oidc_scope',
+        'ext_oidc_remote_user_claim',
         'dhparams_path',
         'daemon_keycert',
         'daemon_pubkey',
