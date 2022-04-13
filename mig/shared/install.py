@@ -299,6 +299,7 @@ def generate_confs(
     ext_oidc_client_name='',
     ext_oidc_client_id='',
     ext_oidc_scope='sub upn fullName organization state country email role',
+    ext_oidc_remote_user_claim='sub',
     dhparams_path='',
     daemon_keycert='',
     daemon_pubkey='',
@@ -487,6 +488,7 @@ def generate_confs(
     user_dict['__MIG_OIDC_PROVIDER_META_URL__'] = mig_oidc_provider_meta_url
     user_dict['__EXT_OIDC_PROVIDER_META_URL__'] = ext_oidc_provider_meta_url
     user_dict['__EXT_OIDC_SCOPE__'] = ext_oidc_scope
+    user_dict['__EXT_OIDC_REMOTE_USER_CLAIM__'] = ext_oidc_remote_user_claim
     user_dict['__PUBLIC_URL__'] = ''
     user_dict['__PUBLIC_HTTP_URL__'] = ''
     user_dict['__PUBLIC_HTTPS_URL__'] = ''
@@ -1936,6 +1938,7 @@ def create_user(
     ext_oidc_client_name = ''
     ext_oidc_client_id = ''
     ext_oidc_scope = ''
+    ext_oidc_remote_user_claim = ''
     dhparams_path = ''
     daemon_keycert = ''
     daemon_pubkey = ''
@@ -2068,6 +2071,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         ext_oidc_client_name,
         ext_oidc_client_id,
         ext_oidc_scope,
+        ext_oidc_remote_user_claim,
         dhparams_path,
         daemon_keycert,
         daemon_pubkey,
