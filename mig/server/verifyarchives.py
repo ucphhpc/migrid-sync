@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # verifyarchives - Search for missing files in user Archives
-# Copyright (C) 2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2021-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -196,6 +196,7 @@ if '__main__' == __name__:
             sys.exit(0)
 
     archive_hits = {}
+    archive_fails = 0
     from mig.shared.conf import get_configuration_object
     configuration = get_configuration_object()
     print("searching for Archives with creation stamp between %d and %d" %
@@ -243,3 +244,5 @@ if '__main__' == __name__:
                 print("%s [PASS]" % freeze_path)
             else:
                 print("%s [FAIL]" % freeze_path)
+                archive_fails += 1
+    sys.exit(archive_fails)
