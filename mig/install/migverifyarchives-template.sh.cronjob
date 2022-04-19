@@ -1,0 +1,60 @@
+#!/bin/bash
+#
+# run verifyarchives as mig user
+#
+# NOTE: some kind of manual or automated operator procedure to actually extract
+# information about new archives to send to tape is required for this to have
+# any effect. Basically the ready-finalized-YYYYMMDD.txt files in archivestaging
+# must be filled with root paths of pending archives to check.
+
+# Where to look up pending archive checks
+archivestaging="__MIG_STATE__/freeze_tape/staging"
+
+if [ ! -d "$archivestaging" ]; then
+    echo "ERROR: No such archive staging directory: $archivestaging"
+    exit 42
+fi
+
+totalcount=0
+totalfailed=0
+for archivelist in $(/bin/find "$archivestaging" -type f -regex '.*/ready-finalized-[0-9]+.txt' -mtime -90) ; do
+    passedlist="${archivelist/-finalized-/-finalized-and-verified-}"
+    failedlist="${archivelist/-finalized-/-finalized-but-failed-verify-}"
+    if [ ! -s "$archivelist" ]; then
+        #echo "DEBUG: Nothing to verify for $archivelist"
+        continue
+    fi
+    if [ -e "$passedlist" ]; then
+        #echo "DEBUG: skip verify for previously handled $archivelist"
+        continue
+    fi
+    echo "INFO: Verifying archives in $archivelist"
+    touch $passedlist $failedlist
+    verifycount=0
+    verifyfailed=0
+    IFS=$'\n'
+    for archpath in $(cat $archivelist); do
+        verifycount=$((verifycount+1))
+        email=$(echo "$archpath" | sed 's@.*emailAddress=\([^/]*\)\/archive-.*@\1@g')
+        archname=$(echo "$archpath"|sed 's@.*\/\(archive-.*\)@\1@g')
+        su - mig -c "PYTHONPATH=__MIG_BASE__ mig/server/verifyarchives.py -A $(date +%s -d 'a month ago') -I \"*${email}*\" -n \"$archname\""
+        checkfailed=$?
+        if [ $checkfailed -eq 0 ]; then
+            echo "$archpath" >> "$passedlist"
+        else
+            verifyfailed=$((verifyfailed+checkfailed))
+            echo "$archpath" >> "$failedlist"
+        fi
+    done
+    echo "INFO: Checked $verifycount archives from $archivelist with $verifyfailed failure(s)"
+    if [ $verifycount -gt $verifyfailed ]; then
+        echo "INFO: Archives that passed verification are listed in $passedlist"
+    fi
+    if [ $verifyfailed -gt 0 ]; then
+        echo "INFO: Archives that failed verification are listed in $failedlist"
+    fi
+    totalcount=$((totalcount+verifycount))
+    totalfailed=$((totalfailed+verifyfailed))
+done
+
+exit $totalfailed
