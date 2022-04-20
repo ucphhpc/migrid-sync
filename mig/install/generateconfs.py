@@ -149,6 +149,7 @@ if '__main__' == __name__:
         'admin_email',
         'admin_list',
         'log_level',
+        'freeze_to_tape',
         'gdp_data_categories'
     ]
     int_names = [

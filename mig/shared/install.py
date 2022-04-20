@@ -359,6 +359,7 @@ def generate_confs(
     admin_email='mig',
     admin_list='',
     log_level='info',
+    freeze_to_tape='',
     gdp_data_categories='data_categories.json'
 ):
     """Generate Apache and MiG server confs with specified variables"""
@@ -550,6 +551,7 @@ def generate_confs(
     user_dict['__ADMIN_EMAIL__'] = admin_email
     user_dict['__ADMIN_LIST__'] = admin_list
     user_dict['__LOG_LEVEL__'] = log_level
+    user_dict['__FREEZE_TO_TAPE__'] = freeze_to_tape
     user_dict['__GDP_DATA_CATEGORIES__'] = gdp_data_categories
     user_dict['__PUBLIC_HTTPS_LISTEN__'] = listen_clause
     user_dict['__PUBLIC_ALIAS_HTTPS_LISTEN__'] = listen_clause
