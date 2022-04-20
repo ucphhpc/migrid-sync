@@ -372,7 +372,9 @@ settings:
 --mig_code=MIG_CODE
 --mig_state=MIG_STATE
 --mig_certs=MIG_CERTS
+--mig_oid_title=MIG_OID_TITLE
 --mig_oid_provider=MIG_OID_PROVIDER
+--ext_oid_title=EXT_OID_TITLE
 --ext_oid_provider=EXT_OID_PROVIDER
 --mig_oidc_provider_meta_url=MIG_OIDC_PROVIDER_META_URL
 --ext_oidc_provider_meta_url=EXT_OIDC_PROVIDER_META_URL
@@ -384,6 +386,9 @@ settings:
 --daemon_pubkey=DAEMON_PUBKEY
 --daemon_show_address=DAEMON_SHOW_ADDRESS
 --alias_field=ALIAS_FIELD
+--peers_permit=PEERS_PERMIT
+--vgrid_creators=VGRID_CREATORS
+--vgrid_managers=VGRID_MANAGERS
 --signup_methods=SIGNUP_METHODS
 --login_methods=LOGIN_METHODS
 --csrf_protection=CSRF_PROTECTION
@@ -401,12 +406,24 @@ settings:
 --autolaunch_page=AUTOLAUNCH_PAGE
 --landing_page=LANDING_PAGE
 --skin=SKIN
+--title=TITLE
 --short_title=SHORT_TITLE
+--external_doc=EXTERNAL_DOC
 --secscan_addr=SECSCAN_ADDR
 --user_interface=USER_INTERFACE
 --vgrid_label=VGRID_LABEL
 --default_menu=DEFAULT_MENU
 --user_menu=USER_MENU
+--collaboration_links=COLLABORATION_LINKS
+--default_vgrid_links=DEFAULT_VGRID_LINKS
+--advanced_vgrid_links=ADVANCED_VGRID_LINKS
+--admin_email=ADMIN_EMAIL
+--admin_list=ADMIN_LIST
+--log_level=LOG_LEVEL
+--freeze_to_tape=FREEZE_TO_TAPE
+--status_system_match=STATUS_SYSTEM_MATCH
+--duplicati_protocols=DUPLICATI_PROTOCOLS
+--gdp_data_categories=GDP_DATA_CATEGORIES
 --cert_valid_days=CERT_VALID_DAYS
 --oid_valid_days=OID_VALID_DAYS
 --generic_valid_days=GENERIC_VALID_DAYS
@@ -478,6 +495,8 @@ settings:
 --seafile_ro_access=SEAFILE_RO_ACCESS
 --public_use_https=PUBLIC_USE_HTTPS
 --prefer_python3=PREFER_PYTHON3
+--io_account_expire=IO_ACCOUNT_EXPIRE
+--gdp_email_notify=GDP_EMAIL_NOTIFY
 
 For one of our servers running MiG as the 'mig' user with the code
 checked out directly in the home directory and Debian apache 2.4 without OpenID:
@@ -560,7 +579,7 @@ vhost-specific certificates from LetsEncrypt and OpenID with optional
                    --enable_events=True --enable_imnotify=True \
                    --enable_twofactor=True --enable_cracklib=True \
                    --enable_hsts=True --enable_vhost_certs=True \
-                   --enable_verify_certs=True \
+                   --enable_verify_certs=True --enable_migadmin=True \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='ServerAlias' --alias_field=email \
@@ -570,7 +589,7 @@ vhost-specific certificates from LetsEncrypt and OpenID with optional
                    --daemon_pubkey_from_dns=True \
                    --signup_methods="extoid migoid migcert" \
                    --login_methods="extoid migoid migcert" \
-                   --skin=migrid-basic --short_title=MiG \
+                   --skin=migrid-basic \
                    --wsgi_procs=25 \
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
 
@@ -586,6 +605,7 @@ or the same on centos
                    --ext_oid_fqdn=dk-oid.migrid.org \
                    --sid_fqdn=dk-sid.migrid.org \
                    --io_fqdn=dk-io.migrid.org \
+                   --daemon_show_address=dk-io.migrid.org \
                    --user=mig --group=mig \
                    --apache_version=2.4 \
                    --apache_etc=/etc/httpd \
@@ -614,8 +634,8 @@ or the same on centos
                    --enable_resources=True --enable_notify=True \
                    --enable_events=True --enable_imnotify=True \
                    --enable_twofactor=True --enable_cracklib=True \
-                   --enable_hsts=True --enable_vhost_certs=True \
-                   --enable_verify_certs=True \
+                   --enable_freeze=False --enable_hsts=True \
+                   --enable_vhost_certs=True --enable_verify_certs=True \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='ServerAlias' --alias_field=email \
@@ -625,10 +645,24 @@ or the same on centos
                    --daemon_pubkey_from_dns=True \
                    --signup_methods="extoid migoid migcert" \
                    --login_methods="extoid migoid migcert" \
-                   --password_policy=MODERN:12 --password_legacy_policy=MEDIUM \
-                   --distro=centos --skin=migrid-basic --short_title=MiG \
-                   --wsgi_procs=25 \
+                   --distro=centos --skin=migrid-basic \
+                   --collaboration_links="default advanced" \
+                   --default_vgrid_links="files web" \
+                   --advanced_vgrid_links="files web scm tracker workflows monitor" \
+                   --admin_email="MiGrid Info <info@migrid.org>" --log_level=info \
+                   --title="Minimum intrusion Grid" \
+                   --short_title="MiG" \
+                   --external_doc=https://www.migrid.org \
+                   --mig_oid_title="Non-KU/UCPH" --ext_oid_title="KU/UCPH" \
+                   --default_menu="home files submitjob jobs vgrids settings setup logout" \
+                   --user_menu="sharelinks people cloud crontab transfers runtimeenvs resources peers downloads docs dashboard migadmin" \
+                   --wsgi_procs=25 --sftp_subsys_auth_procs=20 \
                    --auto_add_oid_user=True --auto_add_cert_user=True \
+                   --io_account_expire=True \
+                   --password_policy="MODERN:12" \
+                   --password_legacy_policy=MEDIUM \
+                   --peers_permit="role:.*(vip|tap)" \
+                   --status_system_match="MiGrid ALL" \
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
 
 and a storage-only setup with CentOS 7.x, apache 2.4, WSGI (default web), 
@@ -682,9 +716,7 @@ optimized SFTP, Seafile integration and OpenID login:
                    --daemon_pubkey_from_dns=True \
                    --signup_methods="extoid migoid extcert" \
                    --login_methods="extoid migoid extcert" \
-                   --password_policy=MODERN:12 --password_legacy_policy=MEDIUM \
-                   --distro=centos \
-                   --skin=erda-ucph-science --short_title=ERDA \
+                   --distro=centos --skin=erda-ucph-science \
                    --vgrid_label=Workgroup --wsgi_procs=25 \
                    --default_menu="home files submitjob jobs vgrids settings setup logout" \
                    --user_menu="sharelinks people seafile crontab transfers peers downloads docs migadmin" \
@@ -705,6 +737,9 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --sid_fqdn=sid.erda.dk \
                    --io_fqdn=io.erda.dk \
                    --seafile_fqdn=sid.erda.dk \
+                   --daemon_show_address=io.erda.dk \
+                   --sftp_show_port=22 --ftps_ctrl_show_port=21 \
+                   --davs_show_port=443 --openid_show_port=443 \
                    --user=mig --group=mig \
                    --apache_version=2.4 \
                    --apache_etc=/etc/httpd \
@@ -728,6 +763,7 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --enable_davs=True --enable_ftps=True \
                    --enable_duplicati=True --enable_seafile=True \
                    --seafile_fqdn=seafile.erda.dk \
+                   --seafile_ro_access=False \
                    --enable_sandboxes=False --enable_vmachines=False \
                    --enable_crontab=True --enable_jobs=False \
                    --enable_resources=False --enable_events=False \
@@ -735,9 +771,10 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --enable_cracklib=True --enable_hsts=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
                    --enable_notify=True --enable_jupyter=True \
-                   --jupyter_services='DAG.http://dag002.science DAG.http://dag003.science DAG.http://dag004.science DAG.http://dag005.science DAG.http://dag006.science DAG.http://dag007.science DAG.http://dag200.science MODI.http://130.225.104.218' \
+                   --jupyter_services='DAG.http://dag002.science DAG.http://dag003.science DAG.http://dag004.science DAG.http://dag005.science DAG.http://dag006.science DAG.http://dag007.science DAG.http://dag200.science DAG.http://dag201.science DAG.http://dag202.science DAG.http://dag203.science DAG.http://dag204.science MODI.http://130.225.104.218' \
                    --jupyter_services_desc="{'DAG': '/home/mig/state/wwwpublic/dag_desc.html', 'MODI': '/home/mig/state/wwwpublic/modi_desc.html'}" \
                    --enable_cloud=True \
+                   --enable_migadmin=True \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
                    --serveralias_clause='#ServerAlias' --alias_field=email \
@@ -747,19 +784,27 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --daemon_pubkey_from_dns=True \
                    --signup_methods="extoid migoid extcert" \
                    --login_methods="extoid migoid extcert" \
-                   --password_policy=MODERN:12 --password_legacy_policy=MEDIUM \
-                   --distro=centos \
-                   --skin=erda-ucph-science --short_title=ERDA \
+                   --distro=centos --skin=erda-ucph-science \
                    --vgrid_label=Workgroup --apache_worker_procs=2048 \
                    --davs_port=8020 --openid_port=8001 \
                    --wsgi_procs=100 --sftp_subsys_auth_procs=50 \
                    --default_menu="home files vgrids archives jupyter settings setup logout" \
                    --user_menu="sharelinks seafile crontab transfers cloud people downloads peers docs migadmin" \
+                   --collaboration_links="default advanced" \
+                   --default_vgrid_links="files web" \
+                   --advanced_vgrid_links="files web scm workflows monitor" \
                    --admin_email="ERDA Info <info@erda.dk>" --log_level=info \
                    --title="University of Copenhagen - Electronic Research Data Archive" \
                    --short_title="UCPH ERDA" \
+                   --external_doc=https://erda.ku.dk \
                    --mig_oid_title="Non-KU/UCPH" --ext_oid_title="KU/UCPH" \
                    --auto_add_oid_user=True --auto_add_cert_user=True \
+                   --freeze_to_tape="4w" --io_account_expire=True \
+                   --password_policy="MODERN:12" \
+                   --password_legacy_policy=MEDIUM \
+                   --peers_permit="role:.*(vip|tap)" \
+                   --vgrid_creators="role:.*(vip|tap)" \
+                   --status_system_match="ERDA IDMC SIF ALL" \
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
 
 and a similar setup with CentOS 7.x, apache 2.4, WSGI (default web), 
@@ -781,7 +826,7 @@ with optional 2-FA support and legacy sftp clients:
                    --apache_run=/var/run/httpd \
                    --apache_lock=/var/lock/subsys/httpd \
                    --apache_log=/var/log/httpd \
-                   --openssh_version=5.3 \
+                   --openssh_version=7.2 \
                    --mig_code=/home/mig/mig \
                    --mig_state=/home/mig/state \
                    --mig_certs=/etc/httpd/MiG-certificates \
@@ -806,8 +851,8 @@ with optional 2-FA support and legacy sftp clients:
                    --enable_notify=True --enable_preview=True \
                    --enable_workflows=True --enable_hsts=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
-                   --enable_jupyter=True \
-                   --jupyter_services='DAG.http://dag002.science DAG.http://dag003.science DAG.http://dag004.science DAG.http://dag005.science DAG.http://dag006.science DAG.http://dag007.science DAG.http://dag200.science MODI.http://130.225.104.218' \
+                   --enable_jupyter=True --enable_migadmin=True \
+                   --jupyter_services='DAG.http://dag002.science DAG.http://dag003.science DAG.http://dag004.science DAG.http://dag005.science DAG.http://dag006.science DAG.http://dag007.science DAG.http://dag200.science DAG.http://dag201.science DAG.http://dag202.science DAG.http://dag203.science DAG.http://dag204.science MODI.http://130.225.104.218' \
                    --jupyter_services_desc="{'DAG': '/home/mig/state/wwwpublic/dag_desc.html', 'MODI': '/home/mig/state/wwwpublic/modi_desc.html'}" \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
@@ -819,15 +864,27 @@ with optional 2-FA support and legacy sftp clients:
                    --daemon_show_address=io.idmc.dk \
                    --signup_methods="extoid migoid extcert" \
                    --login_methods="extoid migoid extcert" \
-                   --password_policy=MODERN:12 --password_legacy_policy=MEDIUM \
-                   --distro=centos \
-                   --skin=idmc-basic --short_title=IDMC \
+                   --distro=centos --skin=idmc-basic \
                    --vgrid_label=Workgroup --apache_worker_procs=512 \
                    --wsgi_procs=25 --sftp_subsys_auth_procs=25 \
                    --davs_port=8020 --openid_port=8001 \
                    --default_menu="home files submitjob jobs vgrids jupyter settings setup logout" \
                    --user_menu="sharelinks people cloud crontab transfers runtimeenvs resources downloads peers docs migadmin" \
+                   --collaboration_links="default advanced" \
+                   --default_vgrid_links="files web" \
+                   --advanced_vgrid_links="files web scm workflows monitor" \
+                   --admin_email="IDMC Info <info@idmc.dk>" --log_level=info \
+                   --title="Imaging Data Management Center" \
+                   --short_title="IDMC" \
+                   --external_doc=https://www.idmc.dk \
+                   --mig_oid_title="Non-KU/UCPH" --ext_oid_title="KU/UCPH" \
                    --auto_add_oid_user=True --auto_add_cert_user=True \
+                   --io_account_expire=True \
+                   --password_policy="MODERN:12" \
+                   --password_legacy_policy=MEDIUM \
+                   --peers_permit="role:.*(vip|tap)" \
+                   --vgrid_creators="role:.*(vip|tap)" \
+                   --status_system_match="IDMC ERDA ALL" \
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
 
 Finally a storage-only with CentOS 7.x, apache 2.4, WSGI (default web), 
@@ -873,7 +930,7 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --enable_crontab=False --enable_jobs=False \
                    --enable_resources=False --enable_events=False \
                    --enable_freeze=False --enable_preview=False \
-                   --enable_gdp=True \
+                   --enable_gdp=True --gdp_email_notify=True \
                    --enable_notify=True --enable_twofactor=True \
                    --enable_twofactor_strict_address=True \
                    --enable_cracklib=True --enable_hsts=True \
@@ -889,6 +946,7 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --login_methods="extoid migoid" \
                    --password_policy=MODERN:12 --password_legacy_policy=HIGH \
                    --distro=centos --skin=erda-ucph-science --short_title=SIF \
+                   --external_doc=https://sif.ku.dk \
                    --wsgi_procs=25 --user_interface='V2' \
                    --auto_add_oid_user=True --oid_valid_days=180 \
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"

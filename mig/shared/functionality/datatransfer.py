@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # datatransfer - import and export data in the backgroud
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -116,8 +116,8 @@ def main(client_id, user_arguments_dict):
     protocol = accepted['protocol'][-1]
     fqdn = accepted['fqdn'][-1]
     port = accepted['port'][-1]
-    src_list = accepted['transfer_src']
-    dst = accepted['transfer_dst'][-1]
+    src_list = [src.strip() for src in accepted['transfer_src']]
+    dst = accepted['transfer_dst'][-1].strip()
     username = accepted['username'][-1]
     password = accepted['transfer_pw'][-1]
     key_id = accepted['key_id'][-1]
@@ -358,12 +358,16 @@ else, so the public key can be inserted in your authorized_keys file as:
             transfer_item = build_transferitem_object(configuration,
                                                       transfer_dict)
             transfer_item['status'] = transfer_item.get('status', 'NEW')
+            if not 'src' in transfer_item or not 'dst' in transfer_item:
+                logger.warning("skip invalid transfer missing src or dst: %s"
+                               % transfer_item)
+                continue
             data_url = ''
             # NOTE: we need to urlencode any exotic chars in paths here
-            if transfer_item['action'] == 'import' and 'dst' in transfer_item:
+            if transfer_item['action'] == 'import':
                 enc_path = quote(("%(dst)s" % transfer_item))
                 data_url = "fileman.py?path=%s" % enc_path
-            elif transfer_item['action'] == 'export' and 'src' in transfer_item:
+            elif transfer_item['action'] == 'export':
                 enc_paths = [quote(i) for i in transfer_item['src']]
                 data_url = "fileman.py?path=" + ';path='.join(enc_paths)
             if data_url:
