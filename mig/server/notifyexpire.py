@@ -75,7 +75,7 @@ Where NOTIFY_OPTIONS may be one or more of:
    -h                  Show this help
    -I CERT_DN          Send warning for user(s) with ID (distinguished name)
    -s PROTOCOL         Send warning to notification protocol from settings
-   -S SERVICES         Send warning regarding expiry of  SERVICES as well
+   -S SERVICES         Send warning regarding expiry of SERVICES as well
    -v                  Verbose output
 
 One or more destinations may be set by combining multiple -e, -s and -a

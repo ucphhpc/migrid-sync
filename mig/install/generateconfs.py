@@ -152,6 +152,7 @@ if '__main__' == __name__:
         'admin_list',
         'log_level',
         'freeze_to_tape',
+        'status_system_match',
         'gdp_data_categories'
     ]
     int_names = [
@@ -228,6 +229,7 @@ if '__main__' == __name__:
         'seafile_ro_access',
         'public_use_https',
         'prefer_python3',
+        'io_account_expire',
         'gdp_email_notify',
     ]
     names = str_names + int_names + bool_names
