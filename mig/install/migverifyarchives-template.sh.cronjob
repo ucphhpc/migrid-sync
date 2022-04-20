@@ -7,6 +7,14 @@
 # any effect. Basically the ready-finalized-YYYYMMDD.txt files in archivestaging
 # must be filled with root paths of pending archives to check.
 
+# The target maximum delay before archives hit tape - empty means no tape archiving
+tapedeadline="__FREEZE_TO_TAPE__"
+
+if [ -z "$tapedeadline" ]; then
+    #echo "DEBUG: No tape archiving on this site: ${tapedeadline}"
+    exit 0
+fi
+
 # Where to look up pending archive checks
 archivestaging="__MIG_STATE__/freeze_tape/staging"
 
