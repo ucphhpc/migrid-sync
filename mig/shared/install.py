@@ -53,7 +53,7 @@ from mig.shared.defaults import default_http_port, default_https_port, \
     auth_openid_mig_db, auth_openid_ext_db, STRONG_TLS_CIPHERS, \
     STRONG_TLS_CURVES, STRONG_SSH_KEXALGOS, STRONG_SSH_LEGACY_KEXALGOS, \
     STRONG_SSH_CIPHERS, STRONG_SSH_LEGACY_CIPHERS, STRONG_SSH_MACS, \
-    STRONG_SSH_LEGACY_MACS, CRACK_USERNAME_REGEX, CRACK_WEB_REGEX
+    STRONG_SSH_LEGACY_MACS, CRACK_USERNAME_REGEX, CRACK_WEB_REGEX, keyword_any
 from mig.shared.html import menu_items
 from mig.shared.jupyter import gen_balancer_proxy_template, gen_openid_template, \
     gen_rewrite_template
@@ -288,6 +288,7 @@ def generate_confs(
     enable_gravatars=True,
     enable_sitestatus=True,
     prefer_python3=False,
+    io_account_expire=False,
     gdp_email_notify=True,
     user_interface="V3 V2",
     mig_oid_title='MiG',
@@ -360,6 +361,7 @@ def generate_confs(
     admin_list='',
     log_level='info',
     freeze_to_tape='',
+    status_system_match=keyword_any,
     gdp_data_categories='data_categories.json'
 ):
     """Generate Apache and MiG server confs with specified variables"""
@@ -475,6 +477,7 @@ def generate_confs(
     user_dict['__ENABLE_GRAVATARS__'] = "%s" % enable_gravatars
     user_dict['__ENABLE_SITESTATUS__'] = "%s" % enable_sitestatus
     user_dict['__PREFER_PYTHON3__'] = "%s" % prefer_python3
+    user_dict['__IO_ACCOUNT_EXPIRE__'] = "%s" % io_account_expire
     user_dict['__GDP_EMAIL_NOTIFY__'] = "%s" % gdp_email_notify
     user_dict['__USER_INTERFACE__'] = user_interface
     user_dict['__MIG_OID_TITLE__'] = mig_oid_title
@@ -552,6 +555,7 @@ def generate_confs(
     user_dict['__ADMIN_LIST__'] = admin_list
     user_dict['__LOG_LEVEL__'] = log_level
     user_dict['__FREEZE_TO_TAPE__'] = freeze_to_tape
+    user_dict['__STATUS_SYSTEM_MATCH__'] = status_system_match
     user_dict['__GDP_DATA_CATEGORIES__'] = gdp_data_categories
     user_dict['__PUBLIC_HTTPS_LISTEN__'] = listen_clause
     user_dict['__PUBLIC_ALIAS_HTTPS_LISTEN__'] = listen_clause
