@@ -357,6 +357,7 @@ def generate_confs(
     skin='migrid-basic',
     title='Minimum intrusion Grid',
     short_title='MiG',
+    external_doc='https://sourceforge.net/p/migrid/wiki',
     vgrid_label='VGrid',
     secscan_addr='UNSET',
     default_menu='',
@@ -556,6 +557,7 @@ def generate_confs(
     user_dict['__SKIN__'] = skin
     user_dict['__TITLE__'] = title
     user_dict['__SHORT_TITLE__'] = short_title
+    user_dict['__EXTERNAL_DOC__'] = external_doc
     user_dict['__VGRID_LABEL__'] = vgrid_label
     user_dict['__SECSCAN_ADDR__'] = secscan_addr
     user_dict['__DEFAULT_MENU__'] = default_menu
