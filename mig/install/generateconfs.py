@@ -141,6 +141,7 @@ if '__main__' == __name__:
         'skin',
         'title',
         'short_title',
+        'external_doc',
         'secscan_addr',
         'user_interface',
         'vgrid_label',
