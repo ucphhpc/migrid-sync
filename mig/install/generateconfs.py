@@ -148,11 +148,15 @@ if '__main__' == __name__:
         'vgrid_label',
         'default_menu',
         'user_menu',
+        'collaboration_links',
+        'default_vgrid_links',
+        'advanced_vgrid_links',
         'admin_email',
         'admin_list',
         'log_level',
         'freeze_to_tape',
         'status_system_match',
+        'duplicati_protocols',
         'gdp_data_categories'
     ]
     int_names = [

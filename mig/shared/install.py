@@ -292,7 +292,7 @@ def generate_confs(
     enable_sitestatus=True,
     prefer_python3=False,
     io_account_expire=False,
-    gdp_email_notify=True,
+    gdp_email_notify=False,
     user_interface="V3 V2",
     mig_oid_title='MiG',
     mig_oid_provider='',
@@ -361,11 +361,15 @@ def generate_confs(
     secscan_addr='UNSET',
     default_menu='',
     user_menu='',
+    collaboration_links='default advanced',
+    default_vgrid_links='files web',
+    advanced_vgrid_links='files web scm tracker workflows monitor',
     admin_email='mig',
     admin_list='',
     log_level='info',
     freeze_to_tape='',
     status_system_match=keyword_any,
+    duplicati_protocols='',
     gdp_data_categories='data_categories.json'
 ):
     """Generate Apache and MiG server confs with specified variables"""
@@ -556,6 +560,9 @@ def generate_confs(
     user_dict['__SECSCAN_ADDR__'] = secscan_addr
     user_dict['__DEFAULT_MENU__'] = default_menu
     user_dict['__USER_MENU__'] = user_menu
+    user_dict['__COLLABORATION_LINKS__'] = collaboration_links
+    user_dict['__DEFAULT_VGRID_LINKS__'] = default_vgrid_links
+    user_dict['__ADVANCED_VGRID_LINKS__'] = advanced_vgrid_links
     user_dict['__ADMIN_EMAIL__'] = admin_email
     user_dict['__ADMIN_LIST__'] = admin_list
     user_dict['__LOG_LEVEL__'] = log_level
@@ -798,12 +805,25 @@ cert, oid and sid based https!
     if user_dict['__ENABLE_SFTP_SUBSYS__'].lower() == 'true':
         fail2ban_daemon_ports.append(sftp_subsys_port)
         fail2ban_daemon_ports.append(sftp_show_port)
-    if user_dict['__ENABLE_DAVS__'].lower() == 'true':
-        fail2ban_daemon_ports.append(davs_port)
-        fail2ban_daemon_ports.append(davs_show_port)
     if user_dict['__ENABLE_FTPS__'].lower() == 'true':
         fail2ban_daemon_ports.append(ftps_ctrl_port)
         fail2ban_daemon_ports.append(ftps_ctrl_show_port)
+    if user_dict['__ENABLE_DAVS__'].lower() == 'true':
+        fail2ban_daemon_ports.append(davs_port)
+        fail2ban_daemon_ports.append(davs_show_port)
+
+    if duplicati_protocols:
+        prio_duplicati_protocols = duplicati_protocols.split()
+    else:
+        # NOTE: prioritized order based on performance and robustness
+        prio_duplicati_protocols = []
+        if enable_sftp_subsys or enable_sftp:
+            prio_duplicati_protocols.append('sftp')
+        if enable_ftps:
+            prio_duplicati_protocols.append('ftps')
+        if enable_davs:
+            prio_duplicati_protocols.append('davs')
+    user_dict['__DUPLICATI_PROTOCOLS__'] = ' '.join(prio_duplicati_protocols)
 
     sys_timezone = 'UTC'
     timezone_cmd = ["/usr/bin/timedatectl", "status"]
