@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # httpsclient - Shared functions for all HTTPS clients
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -51,13 +51,6 @@ generic_id_field = 'REMOTE_USER'
 # certificate distinguished name available in this field
 
 cert_id_field = 'SSL_CLIENT_S_DN'
-
-# All OpenID Connect authenticated clients will have their unique ID set in
-# this ID field. We do support apache mangling of env value to oidc.claim.X
-# with the alternate value.
-
-oidc_id_field = 'OIDC_CLAIM_upn'
-oidc_id_field_alternate = oidc_id_field.replace('OIDC_CLAIM_', 'oidc.claim.')
 
 # Requests using Session ID as auth should include this field
 # NOTE: it is not really used at the moment except to discriminate between SID
@@ -123,7 +116,7 @@ def extract_client_cert(configuration, environ):
 
 
 def extract_client_oidc(configuration, environ, lookup_dn=True):
-    """Extract unique user credentials from OIDC_CLAIM_X values in provided
+    """Extract unique user credentials from REMOTE_USER value in provided
     environment.
     NOTE: We must provide the environment as os.environ may be from the time
     of load, which is not the right one for wsgi scripts.
@@ -135,15 +128,14 @@ def extract_client_oidc(configuration, environ, lookup_dn=True):
 
     # We accept utf8 chars (e.g. '\xc3') in login field but they get
     # auto backslash-escaped in environ so we need to unescape first
-    _logger.debug('oidc id field: %s' % oidc_id_field)
-    login = unescape(environ.get(oidc_id_field, '')).strip()
-    if not login:
-        login = unescape(environ.get(oidc_id_field_alternate, '')).strip()
+    _logger.debug('oidc id field: %s' % generic_id_field)
+    login = unescape(environ.get(generic_id_field, '')).strip()
     _logger.debug('raw login: %s' % login)
-    # _logger.debug('configuration.user_mig_oidc_provider: %s'
-    #              % len(configuration.user_mig_oidc_provider))
+    _logger.debug('configuration.user_mig_oidc_provider: %s'
+                  % len(configuration.user_mig_oidc_provider))
     if not login:
         return (oidc_db, "")
+
     # TODO: do we need session DB here?
     # if configuration.user_mig_oidc_provider and \
     #        login.startswith(configuration.user_mig_oidc_provider):
@@ -232,14 +224,15 @@ def detect_client_auth(configuration, environ):
     # IMPORTANT: order does matter here because oid is generic REMOTE_USER
     if environ.get(cert_id_field, None):
         return (AUTH_CERTIFICATE, flavor)
-    elif environ.get(oidc_id_field, None) or \
-            environ.get(oidc_id_field_alternate, None):
-        return (AUTH_OPENID_CONNECT, flavor)
     elif environ.get(generic_id_field, None):
-        # OpenID 2.0 lacks specific environment fields but use generic_id_field
-        # and the actual ID starts with the authenicating server URL
         user_id = environ[generic_id_field]
-        if user_id.startswith('https://') or user_id.startswith('http://'):
+        # NOTE: OpenID Connect always have ID token claims in env
+        # NOTE: OpenID 2.0 lacks specific environment fields but use
+        # generic_id_field and the actual ID starts with the authenicating
+        # server URL
+        if [i for i in environ if i.startswith('OIDC_CLAIM_')]:
+            return (AUTH_OPENID_CONNECT, flavor)
+        elif user_id.startswith('https://') or user_id.startswith('http://'):
             return (AUTH_OPENID_V2, flavor)
         elif user_id is not None:
             return (AUTH_GENERIC, flavor)
