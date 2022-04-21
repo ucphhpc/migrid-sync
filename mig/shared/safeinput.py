@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # safeinput - user input validation functions
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -1823,8 +1823,10 @@ def guess_type(name):
             'openid.sreg.full_name',
             'openid.sreg.association',
             'oidc.claim.fullname',
+            'oidc.claim.name',
             'oidc.claim.association',
             'oidc.claim.sub',
+            'oidc.claim.oid',
             'oidc.claim.aud',
             'changes',
             'version',
@@ -2308,9 +2310,10 @@ if __name__ == '__main__':
 
     # OpenID Connect version
     autocreate_defaults = {
-        'oidc.claim.upn': [''],
-        'oidc.claim.sub': [''],
         'oidc.claim.iss': [''],
+        'oidc.claim.sub': [''],
+        'oidc.claim.upn': [''],
+        'oidc.claim.oid': [''],
         'oidc.claim.aud': [''],
         'oidc.claim.nickname': [''],
         'oidc.claim.email': [''],
@@ -2333,6 +2336,7 @@ if __name__ == '__main__':
     user_arguments_dict = {'oidc.claim.sub': ['xyz-123-nsd-e2e-e3e-dd3'],
                            'oidc.claim.iss': ['https://your.id.provider/nidp/oauth/nam'],
                            'oidc.claim.aud': ['d34db33f-a13f-4ea0-de63-3bd8f9ef9392'],
+                           'oidc.claim.oid': ['a323-d34db33f-a13f-de63-3bd8f9ef1234'],
                            'oidc.claim.ou': ['nbi, faksek'],
                            'oidc.claim.upn': ['brs278@ku.dk'],
                            'oidc.claim.nickname': ['brs278'],

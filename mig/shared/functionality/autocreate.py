@@ -133,6 +133,7 @@ def signature(auth_type):
             'oidc.claim.aud': REJECT_UNSET,
             'oidc.claim.nickname': [''],
             'oidc.claim.fullname': [''],
+            'oidc.claim.name': [''],
             'oidc.claim.o': [''],
             'oidc.claim.ou': [''],
             'oidc.claim.timezone': [''],
@@ -334,7 +335,8 @@ def main(client_id, user_arguments_dict, environ=None):
             or accepted['oidc.claim.oid'][-1].strip()
         # NOTE: UCPH provides common abc123@ku.dk username in upn
         short_id = accepted['oidc.claim.upn'][-1].strip()
-        raw_name = accepted['oidc.claim.fullname'][-1].strip()
+        raw_name = accepted['oidc.claim.fullname'][-1].strip() \
+            or accepted['oidc.claim.name'][-1].strip()
         country = accepted['oidc.claim.country'][-1].strip()
         state = accepted['oidc.claim.state'][-1].strip()
         org = accepted['oidc.claim.o'][-1].strip() \
