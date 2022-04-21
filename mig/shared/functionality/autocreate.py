@@ -108,8 +108,8 @@ def signature(auth_type):
         # TODO: switch to add fields from cert_field_order in shared.defaults
         defaults = {
             'cert_id': REJECT_UNSET,
-            'cert_name': REJECT_UNSET,
-            'org': REJECT_UNSET,
+            'cert_name': [''],
+            'org': [''],
             'email': [''],
             'country': [''],
             'state': [''],
@@ -131,8 +131,8 @@ def signature(auth_type):
             'oidc.claim.iss': REJECT_UNSET,
             'oidc.claim.aud': REJECT_UNSET,
             'oidc.claim.nickname': [''],
-            'oidc.claim.fullname': REJECT_UNSET,
-            'oidc.claim.o': REJECT_UNSET,
+            'oidc.claim.fullname': [''],
+            'oidc.claim.o': [''],
             'oidc.claim.ou': [''],
             'oidc.claim.timezone': [''],
             'oidc.claim.email': [''],
@@ -140,6 +140,7 @@ def signature(auth_type):
             'oidc.claim.state': [''],
             'oidc.claim.locality': [''],
             'oidc.claim.role': [''],
+            'oidc.claim.roles': [''],
             'oidc.claim.association': [''],
             'comment': [''],
             'accept_terms': [''],
@@ -344,7 +345,8 @@ def main(client_id, user_arguments_dict, environ=None):
 
         # We may receive multiple roles and associations
 
-        role = ','.join([i for i in accepted['oidc.claim.role'] if i])
+        role = ','.join([i for i in accepted['oidc.claim.role'] +
+                         accepted['oidc.claim.roles'] if i])
         association = ','.join([i for i in
                                 accepted['oidc.claim.association']
                                 if i])
@@ -368,8 +370,7 @@ def main(client_id, user_arguments_dict, environ=None):
     try:
         full_name = force_utf8(force_unicode(raw_name).title())
     except Exception:
-        logger.warning('could not use unicode form to capitalize full name'
-                       )
+        logger.warning('could not use unicode form to capitalize full name')
         full_name = raw_name.title()
     country = country.upper()
     state = state.upper()
