@@ -278,7 +278,8 @@ if '__main__' == __name__:
         suffix = "-%s" % datetime.datetime.now().isoformat()
         settings['destination_suffix'] = suffix
     print('# Creating confs with:')
-    for (key, val) in settings.items():
+    # NOTE: force list to avoid problems with in-line edits
+    for (key, val) in list(settings.items()):
         print('%s: %s' % (key, val))
         # Remove default values to use generate_confs default values
         if val == 'DEFAULT':
