@@ -1305,7 +1305,9 @@ cert, oid and sid based https!
         if not os.path.isfile(os.path.expanduser("%(__DHPARAMS_PATH__)s" %
                                                  user_dict)):
             print("ERROR: requested dhparams file not found!")
-            print("""You can create it with:
+            print("""You can download a pre-generated strong one from
+https://ssl-config.mozilla.org/ffdhe4096.txt
+and save it into %(__DHPARAMS_PATH__)s or generate a unique one with:
 openssl dhparam 2048 -out %(__DHPARAMS_PATH__)s""" % user_dict)
             sys.exit(1)
 
@@ -1330,6 +1332,7 @@ openssl genrsa -out %(__DAEMON_KEYCERT__)s 2048""" % user_dict)
         except Exception as exc:
             print("ERROR: failed to extract sha256 fingerprint of %s: %s" %
                   (key_path, exc))
+            daemon_keycert_sha256 = ''
         user_dict['__DAEMON_KEYCERT_SHA256__'] = daemon_keycert_sha256
     if user_dict['__DAEMON_PUBKEY__']:
         if not os.path.isfile(os.path.expanduser("%(__DAEMON_PUBKEY__)s" %
@@ -1359,6 +1362,7 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
         except Exception as exc:
             print("ERROR: failed to extract fingerprints of %s : %s" %
                   (pubkey_path, exc))
+            daemon_pubkey_sha256 = ''
         user_dict['__DAEMON_PUBKEY_MD5__'] = daemon_pubkey_md5
         user_dict['__DAEMON_PUBKEY_SHA256__'] = daemon_pubkey_sha256
 
