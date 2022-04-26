@@ -52,6 +52,7 @@ import socket
 import subprocess
 import sys
 
+from mig.shared.base import force_native_str, force_utf8
 from mig.shared.defaults import default_http_port, default_https_port, \
     auth_openid_mig_db, auth_openid_ext_db, STRONG_TLS_CIPHERS, \
     STRONG_TLS_CURVES, STRONG_SSH_KEXALGOS, STRONG_SSH_LEGACY_KEXALGOS, \
@@ -832,17 +833,19 @@ cert, oid and sid based https!
     try:
         timezone_proc = subprocess_popen(timezone_cmd, stdout=subprocess_pipe)
         for line in timezone_proc.stdout.readlines():
-            line = line.strip()
+            # NOTE: subprocess output is expected to follow sys encoding
+            line = force_native_str(line).strip()
             if not line.startswith("Time zone: "):
                 continue
             sys_timezone = line.replace("Time zone: ", "").split(" ", 1)[0]
     except Exception as exc:
         print("WARNING: failed to extract system time zone: %s" % exc)
     user_dict['__SEAFILE_TIMEZONE__'] = sys_timezone
-    user_dict['__SEAFILE_SECRET_KEY__'] = base64.b64encode(
-        os.urandom(32)).lower()
-    user_dict['__SEAFILE_CCNET_ID__'] = base64.b16encode(
-        os.urandom(20)).lower()
+    # NOTE: bNencode takes bytes and returns bytes
+    user_dict['__SEAFILE_SECRET_KEY__'] = force_native_str(base64.b64encode(
+        os.urandom(32))).lower()
+    user_dict['__SEAFILE_CCNET_ID__'] = force_native_str(base64.b16encode(
+        os.urandom(20))).lower()
     user_dict['__SEAFILE_SHORT_NAME__'] = short_title.replace(' ', '-')
     # IMPORTANT: we discriminate on local and remote seafile service
     #            for local ones we partly integrate directly with apache etc.
@@ -1329,7 +1332,8 @@ openssl genrsa -out %(__DAEMON_KEYCERT__)s 2048""" % user_dict)
         try:
             openssl_proc = subprocess_popen(
                 openssl_cmd, stdout=subprocess_pipe)
-            raw_sha256 = openssl_proc.stdout.read().strip()
+            # NOTE: subprocess output is expected to follow sys encoding
+            raw_sha256 = force_native_str(openssl_proc.stdout.read()).strip()
             daemon_keycert_sha256 = raw_sha256.replace("SHA256 Fingerprint=",
                                                        "")
         except Exception as exc:
@@ -1354,14 +1358,16 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
             print("Failed to read provided daemon key: %s" % exc)
         # The desired values are hashes of the base64 encoded actual key
         try:
-            b64_key = base64.b64decode(
-                pubkey.strip().split()[1].encode('ascii'))
+            # NOTE: b64decode takes bytes or string and returns bytes
+            b64_key = base64.b64decode(pubkey.strip().split()[1])
             raw_md5 = hashlib.md5(b64_key).hexdigest()
             # reformat into colon-spearated octets
             daemon_pubkey_md5 = ':'.join(a + b for a, b in zip(raw_md5[::2],
                                                                raw_md5[1::2]))
             raw_sha256 = hashlib.sha256(b64_key).digest()
-            daemon_pubkey_sha256 = base64.b64encode(raw_sha256).rstrip('=')
+            # NOTE: b64encode takes bytes and returns bytes
+            daemon_pubkey_sha256 = force_native_str(
+                base64.b64encode(raw_sha256)).rstrip('=')
         except Exception as exc:
             print("ERROR: failed to extract fingerprints of %s : %s" %
                   (pubkey_path, exc))
@@ -1503,7 +1509,8 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
             user_dict['__SID_URL__'] += ':%(__SID_PORT__)s' % user_dict
 
     # Generate random hex salt for scrambling saved digest credentials
-    digest_salt = base64.b16encode(os.urandom(16))
+    # NOTE: b16encode takes bytes and returns bytes
+    digest_salt = force_native_str(base64.b16encode(os.urandom(16)))
     user_dict['__DIGEST_SALT__'] = digest_salt
 
     # Greedy match trailing space for all the values to uncomment stuff
@@ -1568,8 +1575,8 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
 
     if not default_menu:
         default_menu = 'home files submitjob jobs vgrids resources ' \
-                       'runtimeenvs people settings downloads transfers ' \
-                       'sharelinks crontab docs logout'
+            'runtimeenvs people settings downloads transfers ' \
+            'sharelinks crontab docs logout'
     allow_menu = ' '.join([i for i in default_menu.split() if i in menu_items])
     user_dict['__DEFAULT_MENU__'] = allow_menu
     if not user_menu:
