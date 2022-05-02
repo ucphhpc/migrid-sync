@@ -360,6 +360,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         # NOTE: drop idle clients after N seconds to clean stale connections.
         #       Does NOT include clients that connect and do nothing at all :-(
         self.timeout = 120
+        self.retry_url = ''
         BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
 
     def clearUser(self):
@@ -388,6 +389,19 @@ class ServerHandler(BaseHTTPRequestHandler):
 
             # print "DEBUG: checking path '%s'" % self.parsed_uri[2]
             valid_path(self.parsed_uri[2])
+
+            # Resolve retry url, strip password and err
+
+            retry_url = self.parsed_uri[2]
+            if self.parsed_uri[4]:
+                retry_url += "?%s" % self.parsed_uri[4]
+                for key in ['password', 'err']:
+                    retry_url = re.sub("\?%s=.*$" % key, "", retry_url)
+                    retry_url = re.sub("&%s=.*$" % key, "", retry_url)
+                    retry_url = re.sub("\?%s=.*&" % key, "?", retry_url)
+                    retry_url = re.sub("&%s=.*&" % key, "&", retry_url)
+            self.retry_url = retry_url
+
             path = self.parsed_uri[2]
 
             # Strip server_base before testing location
@@ -633,13 +647,21 @@ Invalid '%s' input: %s
                 fail_user, fail_pw = self.user, self.password
                 self.clearUser()
                 # Login failed - return to refering page to let user try again
-                retry_url = self.headers.get('Referer', '')
-                # Add error message to display
-                if retry_url.find('?') == -1:
-                    retry_url += '?'
+                cookies = self.headers.get('Cookie')
+                # print "found cookies: %s" % cookies
+                if cookies:
+                    morsel = Cookie.BaseCookie(cookies).get('retry_url')
+                    self.retry_url = morsel.value
+                retry_url = self.retry_url
+                if retry_url:
+                    # Add error message to display
+                    if retry_url.find('?') == -1:
+                        retry_url += '?'
+                    else:
+                        retry_url += '&'
+                    retry_url += 'err=loginfail'
                 else:
-                    retry_url += '&'
-                retry_url += 'err=loginfail'
+                    retry_url = self.server.base_url
                 self.redirect(retry_url)
                 return
         elif 'no' in query:
@@ -945,13 +967,21 @@ session state.
                 logger.debug("full query: %s" % self.query)
                 self.clearUser()
                 # Login failed - return to refering page to let user try again
-                retry_url = self.headers.get('Referer', self.server.base_url)
-                # Add error message to display
-                if retry_url.find('?') == -1:
-                    retry_url += '?'
+                cookies = self.headers.get('Cookie')
+                # print "found cookies: %s" % cookies
+                if cookies:
+                    morsel = Cookie.BaseCookie(cookies).get('retry_url')
+                    self.retry_url = morsel.value
+                retry_url = self.retry_url
+                if retry_url:
+                    # Add error message to display
+                    if retry_url.find('?') == -1:
+                        retry_url += '?'
+                    else:
+                        retry_url += '&'
+                    retry_url += 'err=loginfail'
                 else:
-                    retry_url += '&'
-                retry_url += 'err=loginfail'
+                    retry_url = self.server.base_url
                 self.redirect(retry_url)
         elif 'cancel' in self.query:
             self.redirect(self.query['fail_to'])
@@ -1451,6 +1481,8 @@ session state.
 
         self.send_response(response_code)
         self.writeUserHeader()
+        self.send_header('Set-Cookie', 'retry_url=%s;secure;httponly' \
+                         % self.retry_url)
         self.send_header('Content-type', 'text/html')
         self.end_headers()
         page_template = openid_page_template(configuration, head_extras)
