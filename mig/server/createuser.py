@@ -277,8 +277,9 @@ if '__main__' == __name__:
         create_user(user_dict, conf_path, db_path, force, verbose, ask_renew,
                     default_renew, verify_peer=peer_pattern)
     except Exception as exc:
+        print("Error creating user: %s" % exc)
         import traceback
-        print("Error creating user: %s" % traceback.format_exc())
+        logger.warning("Error creating user: %s" % traceback.format_exc())
         sys.exit(1)
     print('Created or updated %s in user database and in file system' %
           user_dict['distinguished_name'])
