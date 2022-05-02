@@ -80,6 +80,7 @@ import sys
 import time
 import types
 
+
 try:
     import openid
 except ImportError:
@@ -113,7 +114,7 @@ try:
         valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url, \
         valid_complex_url, html_escape, InputException
     from mig.shared.tlsserver import hardened_ssl_context
-    from mig.shared.url import urlparse, parse_qsl
+    from mig.shared.url import urlparse, urlencode, parse_qsl
     from mig.shared.useradm import get_openid_user_dn, check_password_scramble, \
         check_hash
     from mig.shared.validstring import possible_user_id
@@ -380,6 +381,27 @@ class ServerHandler(BaseHTTPRequestHandler):
         self.retry_url = ''
         BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
 
+    def __retry_url_from_cookie(self):
+        """Extract retry_url from cookie and validate"""
+        retry_url = None
+        try:
+            cookies = self.headers.get('Cookie')
+            cookie = Cookie.SimpleCookie(cookies)
+            cookie_dict = dict((k, v.value) for k, v in cookie.iteritems())
+            retry_url = cookie_dict.get('retry_url', '')
+            if retry_url and retry_url.startswith("http"):
+                raise InputException("invalid retry_url: %s" % retry_url)
+            elif retry_url:
+                valid_url(retry_url)
+        except Cookie.CookieError as err:
+            retry_url = None
+            logger.error("found invalid cookie: %s" % err)
+        except InputException as exc:
+            retry_url = None
+            logger.error("found invalid cookie content: %s" % exc)
+
+        return retry_url
+
     def clearUser(self):
         """Reset all saved user variables"""
         self.user = None
@@ -410,15 +432,10 @@ class ServerHandler(BaseHTTPRequestHandler):
 
             # Resolve retry url, strip password and err
 
-            retry_url = self.parsed_uri[2]
-            if self.parsed_uri[4]:
-                retry_url += "?%s" % self.parsed_uri[4]
-                for key in ['password', 'err']:
-                    retry_url = re.sub("\?%s=.*$" % key, "", retry_url)
-                    retry_url = re.sub("&%s=.*$" % key, "", retry_url)
-                    retry_url = re.sub("\?%s=.*&" % key, "?", retry_url)
-                    retry_url = re.sub("&%s=.*&" % key, "&", retry_url)
-            self.retry_url = retry_url
+            retry_query = {key: val for (key, val) in self.query.items()
+                           if not key in ['password', 'err']}
+            self.retry_url = "%s?%s" \
+                % (self.parsed_uri[2], urlencode(retry_query))
 
             path = self.parsed_uri[2]
 
@@ -670,12 +687,7 @@ Invalid '%s' input: %s
                 fail_user, fail_pw = self.user, self.password
                 self.clearUser()
                 # Login failed - return to refering page to let user try again
-                cookies = self.headers.get('Cookie')
-                # print "found cookies: %s" % cookies
-                if cookies:
-                    morsel = Cookie.BaseCookie(cookies).get('retry_url')
-                    self.retry_url = morsel.value
-                retry_url = self.retry_url
+                retry_url = self.__retry_url_from_cookie()
                 if retry_url:
                     # Add error message to display
                     if retry_url.find('?') == -1:
@@ -993,10 +1005,7 @@ session state.
                 # Login failed - return to refering page to let user try again
                 cookies = self.headers.get('Cookie')
                 # print "found cookies: %s" % cookies
-                if cookies:
-                    morsel = Cookie.BaseCookie(cookies).get('retry_url')
-                    self.retry_url = morsel.value
-                retry_url = self.retry_url
+                retry_url = self.__retry_url_from_cookie()
                 if retry_url:
                     # Add error message to display
                     if retry_url.find('?') == -1:
@@ -1507,7 +1516,7 @@ session state.
 
         self.send_response(response_code)
         self.writeUserHeader()
-        self.send_header('Set-Cookie', 'retry_url=%s;secure;httponly' \
+        self.send_header('Set-Cookie', 'retry_url=%s;secure;httponly'
                          % self.retry_url)
         self.send_header('Content-type', 'text/html')
         self.end_headers()
