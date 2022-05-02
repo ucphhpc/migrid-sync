@@ -1,4 +1,25 @@
-[
+[ 
+  {
+    "status": "AUTO",
+    "work_start": "2022-06-03T12:00:00+02:00",
+    "systems": [
+        "SIF"
+    ],
+    "announce_start": "2022-05-02T12:00:00+02:00",
+    "title": {
+      "EN": "SIF storage backend replacement", 
+      "DK": "Udskiftning af SIF storage backend"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2022-06-10T12:00:00+02:00",
+    "description": {
+      "EN": "We are changing the SIF storage backend from Gluster to Lustre. During this task SIF will be either in read-only mode or offline. In effect no project administration can be done during this period and data upload is not possible. We will try to keep the downtime as short as possible. Addtional information will be posted on this page.",
+      "DK": "Vi står for at skulle udskifte SIF storage backenden fra Gluster og til Lustre. I denne process vil SIF enten være offline eller i read-only mode, hvilket vi sige at der ikke kan udføres projektadministration eller uploades data. Vi vil prøve at holde nedetiden så kort som mulig og annoncere yderligere information via denne side. "
+    },
+    "announce_end": "2022-06-10T12:00:00+02:00"
+  },
   {
     "status": "AUTO",
     "work_start": "2022-03-30T16:00:00+02:00",
