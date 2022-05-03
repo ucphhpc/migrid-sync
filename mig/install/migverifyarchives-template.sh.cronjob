@@ -7,6 +7,12 @@
 # any effect. Basically the ready-finalized-YYYYMMDD.txt files in archivestaging
 # must be filled with root paths of pending archives to check.
 
+# Force bash to handle uninitialized variables and errors
+# https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
+# NOTE: 'set -eE' exits on failure, good for debug but we want to handle errors
+#set -eEuo pipefail
+set -uo pipefail
+
 # The target maximum delay before archives hit tape - empty means no tape archiving
 tapedeadline="__FREEZE_TO_TAPE__"
 
@@ -23,11 +29,28 @@ if [ ! -d "$archivestaging" ]; then
     exit 42
 fi
 
+# Monthly long range search for pending finalized files, otherwise only look for today
+today=$(date +%Y%m%d)
+day_of_month=$(date +%d)
+hour_of_day=$(date +%H)
+if [ "${day_of_month}" -eq "01" -a "${hour_of_day}" = "01" ]; then
+    marker_pattern='.*/ready-finalized-[0-9]+.txt'
+    maxdays=90
+else
+    marker_pattern=".*/ready-finalized-${today}.txt"
+    maxdays=1
+fi 
+
 totalcount=0
 totalfailed=0
-for archivelist in $(/bin/find "$archivestaging" -type f -regex '.*/ready-finalized-[0-9]+.txt' -mtime -90) ; do
+#echo "DEBUG: searching for $marker_pattern files in: $archivestaging"
+for archivelist in $(/bin/find "$archivestaging" -type f -regex "$marker_pattern" -mtime -${maxdays}); do
+    #echo "DEBUG: inspecting: $archivelist"
     passedlist="${archivelist/-finalized-/-finalized-and-verified-}"
     failedlist="${archivelist/-finalized-/-finalized-but-failed-verify-}"
+    # Temporary working helpers
+    tmppassedlist="${passedlist}.working"
+    tmpfailedlist="${failedlist}.working"
     if [ ! -s "$archivelist" ]; then
         #echo "DEBUG: Nothing to verify for $archivelist"
         continue
@@ -37,7 +60,7 @@ for archivelist in $(/bin/find "$archivestaging" -type f -regex '.*/ready-finali
         continue
     fi
     echo "INFO: Verifying archives in $archivelist"
-    touch $passedlist $failedlist
+    touch $tmppassedlist $tmpfailedlist
     verifycount=0
     verifyfailed=0
     IFS=$'\n'
@@ -48,12 +71,14 @@ for archivelist in $(/bin/find "$archivestaging" -type f -regex '.*/ready-finali
         su - mig -c "PYTHONPATH=__MIG_BASE__ mig/server/verifyarchives.py -A $(date +%s -d 'a month ago') -I \"*${email}*\" -n \"$archname\""
         checkfailed=$?
         if [ $checkfailed -eq 0 ]; then
-            echo "$archpath" >> "$passedlist"
+            echo "$archpath" >> "$tmppassedlist"
         else
             verifyfailed=$((verifyfailed+checkfailed))
-            echo "$archpath" >> "$failedlist"
+            echo "$archpath" >> "$tmpfailedlist"
         fi
     done
+    mv "$tmppassedlist" "$passedlist"
+    mv "$tmpfailedlist" "$failedlist"
     echo "INFO: Checked $verifycount archives from $archivelist with $verifyfailed failure(s)"
     if [ $verifycount -gt $verifyfailed ]; then
         echo "INFO: Archives that passed verification are listed in $passedlist"
