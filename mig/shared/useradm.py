@@ -57,7 +57,7 @@ from mig.shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
     settings_filename, profile_filename, default_css_filename, \
     widgets_filename, seafile_ro_dirname, authkeys_filename, \
     authpasswords_filename, authdigests_filename, cert_field_order, \
-    twofactor_filename, peers_filename
+    twofactor_filename, peers_filename, gdp_distinguished_field
 from mig.shared.fileio import filter_pickled_list, filter_pickled_dict, \
     make_symlink, delete_symlink, read_file, write_file
 from mig.shared.modified import mark_user_modified
@@ -201,6 +201,25 @@ def get_accepted_peers(configuration, client_id):
                             (peers_path, exc))
         accepted_peers = {}
     return accepted_peers
+
+
+def sync_gdp_users(configuration,
+                   user_db,
+                   user,
+                   client_id):
+    """Update status and expire data for GDP users"""
+    if not configuration.site_enable_gdp:
+        return user_db
+
+    gdp_client_id = "%s/%s=" % (client_id, gdp_distinguished_field)
+    for (key, _) in user_db.items():
+        if key.startswith(gdp_client_id):
+            if user.get('expire', None):
+                user_db[key]['expire'] = user['expire']
+            if user.get('status', None):
+                user_db[key]['status'] = user['status']
+
+    return user_db
 
 
 def create_user(
@@ -497,6 +516,7 @@ with certificate or OpenID authentication to authorize the change."""
 
     try:
         user_db[client_id] = user
+        sync_gdp_users(configuration, user_db, user, client_id)
         save_user_db(user_db, db_path, do_lock=False)
         if verbose:
             print('User %s was successfully added/updated in user DB!'
