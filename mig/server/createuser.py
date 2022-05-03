@@ -42,6 +42,7 @@ from mig.shared.base import fill_distinguished_name, fill_user, \
     force_native_str_rec
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import valid_auth_types
+from mig.shared.gdp.all import ensure_user
 from mig.shared.pwhash import unscramble_password, scramble_password, \
     make_hash
 from mig.shared.serial import load
@@ -276,6 +277,13 @@ if '__main__' == __name__:
     try:
         create_user(user_dict, conf_path, db_path, force, verbose, ask_renew,
                     default_renew, verify_peer=peer_pattern)
+        if configuration.site_enable_gdp:
+            (success_here, msg) = ensure_user(configuration,
+                                    "127.0.0.1",
+                                    user_dict['distinguished_name'])
+            if not success_here:
+                raise Exception("Failed to ensure GDP user: %s" % msg)
+
     except Exception as exc:
         print("Error creating user: %s" % exc)
         import traceback
