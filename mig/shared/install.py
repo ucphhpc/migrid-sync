@@ -1785,7 +1785,7 @@ You can install them with:
 chmod 700 %(destination)s/migcheckssl
 sudo cp %(destination)s/migcheckssl /etc/cron.daily/
 chmod 700 %(destination)s/migverifyarchives
-sudo cp %(destination)s/migverifyarchives /etc/cron.daily/
+sudo cp %(destination)s/migverifyarchives /etc/cron.hourly/
 chmod 700 %(destination)s/migacctexpire
 sudo cp %(destination)s/migacctexpire /etc/cron.monthly/
 
