@@ -85,7 +85,9 @@ if method.lower() == 'post' and auto_csrf:
     target_op = os.path.splitext(os.path.basename(script))[0]
     csrf_token = make_csrf_token(configuration, form_method, target_op,
                                  client_id, csrf_limit)
-    query += ";%s=%s" % (csrf_field, csrf_token)
+    # IMPORTANT: in python3 urllib.parse.parse_qs* changed to '&' as sep to
+    #            avoid a web cache poisoning issue (CVE-2021-23336)
+    query += "&%s=%s" % (csrf_field, csrf_token)
 
 extra_environment = {
     'REQUEST_METHOD': method,
