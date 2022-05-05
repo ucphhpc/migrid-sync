@@ -69,7 +69,7 @@ try:
     from socketserver import ThreadingMixIn
 except Exception as exc:
     print("ERROR: failed to init py 2/3 compatibility")
-    sys.exit(1)
+    exit(1)
 
 import base64
 import cgitb
@@ -386,14 +386,14 @@ class ServerHandler(BaseHTTPRequestHandler):
         retry_url = None
         try:
             cookies = self.headers.get('Cookie')
-            cookie = Cookie.SimpleCookie(cookies)
-            cookie_dict = dict((k, v.value) for k, v in cookie.iteritems())
+            cookie = http.cookies.SimpleCookie(cookies)
+            cookie_dict = dict((k, v.value) for k, v in cookie.items())
             retry_url = cookie_dict.get('retry_url', '')
             if retry_url and retry_url.startswith("http"):
                 raise InputException("invalid retry_url: %s" % retry_url)
             elif retry_url:
                 valid_url(retry_url)
-        except Cookie.CookieError as err:
+        except http.cookies.CookieError as err:
             retry_url = None
             logger.error("found invalid cookie: %s" % err)
         except InputException as exc:
