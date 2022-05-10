@@ -2092,7 +2092,7 @@ def vgrid_rm_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir):
             else:
                 raise Exception("tracker permissions %s failed: %s (%d)" %
                                 (perms_cmd, out, retval))
-        return True
+        return (True, '')
     except Exception as err:
         success = False
         msg = err
