@@ -1,6 +1,29 @@
 [ 
   {
     "status": "AUTO",
+    "work_start": "2022-05-10T08:00:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC",
+        "SIF"
+    ],
+    "announce_start": "2022-05-10T08:00:00+02:00",
+    "title": {
+      "EN": "Major outage in the storage backend: very limited or no access",
+      "DK": "Stort udfald i backend-lageret: meget begrænset eller ingen adgang"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2022-05-11T08:00:00+02:00",
+    "description": {
+      "EN": "We experience serious problems with the backend storage infrastructure in the HPC Centre and it leads to massive outages on ERDA/IDMC and SIF. We are looking into the issue and will keep you updated here!", 
+      "DK": "Vi er ramt af alvorlige problem med backend lagerets infrastruktur på HPC Centeret, og det fører til omfattende udfald på ERDA/IDMC og SIF. Vi arbejder på sagen og melder yderligere ud her!"
+    },
+    "announce_end": "2022-05-11T12:00:00+02:00"
+  },
+  {
+    "status": "AUTO",
     "work_start": "2022-06-03T12:00:00+02:00",
     "systems": [
         "SIF"
