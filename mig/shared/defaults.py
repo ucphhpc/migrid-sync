@@ -110,6 +110,8 @@ mqueue_prefix = 'message_queues'
 default_mqueue = 'default'
 mqueue_empty = 'NO MESSAGES'
 
+user_home_label = "USER HOME LABEL"
+
 # User ID is email or hexlified version of full cert DN.
 # Shortest email would have to be something like a@ku.dk
 user_id_min_length = 7
