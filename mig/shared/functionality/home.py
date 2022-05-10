@@ -33,7 +33,7 @@ from __future__ import absolute_import
 import os
 
 from mig.shared import returnvalues
-from mig.shared.defaults import csrf_field
+from mig.shared.defaults import csrf_field, user_home_label
 from mig.shared.findtype import is_admin
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.init import initialize_main_variables, find_entry, extract_menu
@@ -55,10 +55,12 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
         user_msg = html_user_messages(configuration, client_id)
         show_user_msg = ''
     fill_helpers = {'short_title': configuration.short_title,
-                    'user_msg': user_msg, 'show_user_msg': show_user_msg}
+                    'user_msg': user_msg, 'show_user_msg': show_user_msg,
+                    'home_label': user_home_label}
     html = '''
-    <!-- CONTENT -->
+    <!-- %(home_label)s - Please do NOT change: used in user scripts -->
 
+    <!-- CONTENT -->
 			<div class="container">
 				<div id="app-nav-container" class="row">
                                 <h1>Welcome to %(short_title)s!</h1>
@@ -103,9 +105,9 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
         <input type="hidden" name="%s" value="%s">
     ''' % (form_method, csrf_field, csrf_token)
     fill_helpers['form_suffix'] = '''
-            %s
-            <input type="submit" value="Save">
-        </form>
+        %s
+        <input type="submit" value="Save">
+    </form>
     ''' % save_settings_html(configuration)
     apps_field = 'SITE_USER_MENU'
     # NOTE: build list of all default and user selectable apps in that order
