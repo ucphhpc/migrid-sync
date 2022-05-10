@@ -31,11 +31,12 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 from builtins import input
+from getpass import getpass
+import datetime
+import getopt
+import os
 import sys
 import time
-import os
-import getopt
-from getpass import getpass
 
 from mig.shared.accountstate import default_account_expire
 from mig.shared.base import fill_distinguished_name, fill_user
@@ -53,6 +54,10 @@ or use importuser instead if you want to use other certificate DN formats
 than the one expected by MiG (/C=.*/ST=.*/L=NA/O=.*/CN=.*/emailAddress=.*)
 Otherwise those users will NOT be able to access their MiG interfaces!
 """
+
+# NOTE: codes explained in the python library reference e.g. as for python3 on
+# https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior
+expire_formats = ["%Y-%m-%d", "%Y-%m-%d %H:%M", "%x", "%c"]
 
 
 def usage(name='createuser.py'):
@@ -117,9 +122,25 @@ if '__main__' == __name__:
         elif opt == '-d':
             db_path = val
         elif opt == '-e':
-            expire = int(val)
-            override_fields['expire'] = expire
-            override_fields['status'] = 'temporal'
+            parsed = False
+            for fmt in ["EPOCH"] + expire_formats:
+                try:
+                    if fmt == "EPOCH":
+                        raw = val
+                    else:
+                        raw = datetime.datetime.strptime(val, fmt)
+                        raw = raw.strftime("%s")
+                    expire = int(raw)
+                    parsed = True
+                    break
+                except ValueError:
+                    pass
+            if parsed:
+                override_fields['expire'] = expire
+                override_fields['status'] = 'temporal'
+            else:
+                print('Failed to parse expire value: %s' % val)
+                sys.exit(1)
         elif opt == '-f':
             force = True
         elif opt == '-h':
@@ -269,8 +290,8 @@ if '__main__' == __name__:
                     default_renew, verify_peer=peer_pattern)
         if configuration.site_enable_gdp:
             (success_here, msg) = ensure_user(configuration,
-                                    "127.0.0.1",
-                                    user_dict['distinguished_name'])
+                                              "127.0.0.1",
+                                              user_dict['distinguished_name'])
             if not success_here:
                 raise Exception("Failed to ensure GDP user: %s" % msg)
 
