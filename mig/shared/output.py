@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # output - general formatting of backend output objects
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -684,6 +684,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                          (i.get('class', ''), html_escape(i['text'])))
         elif i['object_type'] == 'title':
             meta = i.get('meta', '')
+            backend = i.get('backend', '')
             style_entry = i.get('style', '')
             style_helpers = {'base': '', 'advanced': '', 'page': '',
                              'skin': ''}
@@ -710,6 +711,12 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             user_settings = i.get('user_settings', {})
             user_widgets = i.get('user_widgets', {})
             user_profile = i.get('user_profile', {})
+            # NOTE: record backend as general information and user script helper
+            if backend:
+                # IMPORTANT: keep any changes here in sync with publicscriptgen
+                meta += '''<meta name="generator" content="%s">
+''' % backend
+
             if configuration.site_enable_openid:
                 oid_url = os.path.join(configuration.migserver_https_sid_url,
                                        'cgi-sid', 'oiddiscover.py')

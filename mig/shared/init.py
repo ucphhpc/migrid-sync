@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # init - shared helpers to init functionality backends
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Script initialization helper functions"""
+
 from __future__ import absolute_import
 
 import os
@@ -50,7 +51,8 @@ def make_start_entry(headers=[]):
 
 
 def make_title_entry(text, meta='', style={}, script={}, skipmenu=False,
-                     skipwidgets=False, skipuserstyle=False, skipuserprofile=False):
+                     skipwidgets=False, skipuserstyle=False,
+                     skipuserprofile=False, backend=''):
     """Create title entry for output_objects"""
     return make_basic_entry('title', {'text': text,
                                       'meta': meta,
@@ -60,6 +62,7 @@ def make_title_entry(text, meta='', style={}, script={}, skipmenu=False,
                                       'skipwidgets': skipwidgets,
                                       'skipuserstyle': skipuserstyle,
                                       'skipuserprofile': skipuserprofile,
+                                      'backend': backend,
                                       })
 
 
@@ -97,7 +100,8 @@ def initialize_main_variables(client_id, op_title=True, op_header=True,
         title_object = make_title_entry('%s' % op_name, skipmenu=(not op_menu),
                                         skipwidgets=skipwidgets,
                                         skipuserstyle=skipuserstyle,
-                                        skipuserprofile=(not client_id))
+                                        skipuserprofile=(not client_id),
+                                        backend=op_name,)
         # Make sure base_menu is always set for extract_menu
         # Typicall overriden based on client_id cases below
         title_object['base_menu'] = configuration.site_default_menu
