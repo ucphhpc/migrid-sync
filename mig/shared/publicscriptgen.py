@@ -25,18 +25,19 @@
 # -- END_HEADER ---
 #
 
-# TODO: allow use of xmlrpc instead of curl from python
+# TODO: allow use of native https instead of curl from python
 
 """Shared helper functions for generating public MiG scripts
 for the supported programming languages.
 """
+
 from __future__ import print_function
 from __future__ import absolute_import
 
 import os
 
 from mig.shared.base import get_xgi_bin
-from mig.shared.defaults import csrf_field, user_home_label
+from mig.shared.defaults import csrf_field
 
 # Generator version (automagically updated by svn)
 
@@ -727,7 +728,7 @@ def curl_chain_login_steps(
                         '' '')
     
     # Use modern Home marker label to check if logged in
-    echo $out | grep -q '%(home_label)s'
+    echo $out | grep -q -E '.*<meta name=.generator. content=.home.>.*'
     home_marker=$?
     if [ ${home_marker} -eq 0 ]; then
         echo 'Already logged in!'
@@ -816,7 +817,7 @@ def curl_chain_login_steps(
     fi
 
     # Use modern Home marker label to check if logged in
-    echo $out | grep -q '%(home_label)s'
+    echo $out | grep -q -E '.*<meta name=.generator. content=.home.>.*'
     home_marker=$?
     if [ ${home_marker} -eq 0 ]; then
         echo 'Login succeeded!'
@@ -872,8 +873,7 @@ def curl_chain_login_steps(
         #echo \"DEBUG: $out\"
         exit 3
     fi
-    """ % {'mig_csrf': csrf_field, 'extoid_csrf': extoid_csrf,
-           'home_label': user_home_label}
+    """ % {'mig_csrf': csrf_field, 'extoid_csrf': extoid_csrf}
     elif lang == 'python':
         s += """
     retval, msg = 0, []
@@ -883,15 +883,12 @@ def curl_chain_login_steps(
                                 post_val,
                                 '',
                                 '')
-    
-    # Use modern Home marker label to check if logged in
-    home_marker = [True for line in out if '%(home_label)s' in line]
-    if home_marker:
-        msg.append('Already logged in!')
-        return (0, msg)
 
-    # Fall back to use csrf token as logged-in marker
     # NOTE: careful not to assume specific quoting, which might change again
+    # Use modern Home marker label to check if logged in
+    home_pattern = \".*<meta name=.generator. content=.home.>.*\"
+    home_extract = re.compile(home_pattern)
+    # Fall back to use csrf token as logged-in marker
     csrf_pattern = \".*<input .* name=.%(mig_csrf)s. value=.([0-9a-f]*).*>.*\"
     csrf_extract = re.compile(csrf_pattern)
     ct_pattern = \".*<input .* name=.%(extoid_csrf)s. value=.([0-9a-f]*).*>.*\"
@@ -899,10 +896,11 @@ def curl_chain_login_steps(
 
     csrf_value = ''
     for line in out:
+        home_marker = home_extract.match(line)
         match = csrf_extract.match(line)
         if match:
             csrf_value = match.group(1)
-    if len(csrf_value) == 64:
+    if home_marker or len(csrf_value) == 64:
         msg.append('Already logged in!')
         return (0, msg)
     elif [line for line in out if extoid_base in line]:
@@ -963,21 +961,17 @@ def curl_chain_login_steps(
         msg.append('Invalid OpenID password!')
         return (1, msg)
         
-    # Use modern Home marker label to check if logged in
-    home_marker = [True for line in out if '%(home_label)s' in line]
-    if home_marker:
-        msg.append('Login succeeded!')
-        return (0, msg)
 
     # Fall back to use csrf token as logged-in marker
     for line in out:
+        home_marker = home_extract.match(line)
         match = csrf_extract.match(line)
         if match:
             csrf_value = match.group(1)
 
     # Optional 2FA at this point if enabled and not already logged in
     twofactor_enabled=False
-    if twofactor_url:
+    if not home_marker and twofactor_url:
         twofactor_enabled = True
         for attempt in range(3):
             if len(csrf_value) != 64 \\
@@ -1006,7 +1000,7 @@ def curl_chain_login_steps(
                 #msg.append('DEBUG: '+out)
                 break
     #msg.append('DEBUG: '+out)
-    if len(csrf_value) == 64:
+    if home_marker or len(csrf_value) == 64:
         msg.append('Login succeeded!')
         return (0, msg)
     elif twofactor_enabled:
@@ -1015,8 +1009,7 @@ def curl_chain_login_steps(
     else:
         msg.append('Login failed with unexpected result!')
         return (3, msg)
-        """ % {'mig_csrf': csrf_field, 'extoid_csrf': extoid_csrf,
-               'home_label': user_home_label}
+        """ % {'mig_csrf': csrf_field, 'extoid_csrf': extoid_csrf}
 
     return s
 
@@ -1078,7 +1071,7 @@ def curl_chain_logout_steps(
     out=$(curl_get_flex \"$user_conf\" \"$url_base\" \"$url_val\" \"$post_val\" '' '')
 
     # Use modern Home marker label to check if logged in
-    echo $out | grep -q '%(home_label)s'
+    echo $out | grep -q -E '.*<meta name=.generator. content=.home.>.*'
     home_marker=$?
     if [ $home_marker -ne 0 ]; then
         # Fall back to use csrf token as logged-in marker
@@ -1106,7 +1099,7 @@ def curl_chain_logout_steps(
 
     # TODO: clear cookies?
     #rm -f ${auth_cookie_file}
-""" % {'mig_csrf': csrf_field, 'home_label': user_home_label}
+""" % {'mig_csrf': csrf_field}
     elif lang == 'python':
         s += """
     retval, msg = 0, []
@@ -1126,13 +1119,15 @@ def curl_chain_logout_steps(
     # NOTE: careful not to assume specific quoting, which might change again
     csrf_pattern = \".*<input .* name=.%(mig_csrf)s. value=.([0-9a-f]*).*>.*\"
     csrf_extract = re.compile(csrf_pattern)
+    home_pattern = \".*<meta name=.generator. content=.home.>.*\"
+    home_extract = re.compile(home_pattern)
 
     # Extract CSRF token
 
     csrf_value = ''
     home_marker = False
     for line in out:
-        home_marker = ('%(home_label)s' in line)
+        home_marker = home_extract.match(line)
         # Fall back to use csrf token as logged-in marker
         match = csrf_extract.match(line)
         if match:
@@ -1162,7 +1157,7 @@ def curl_chain_logout_steps(
     #os.remove(auth_cookie_file)
 
     return (retval, msg)
-""" % {'mig_csrf': csrf_field, 'home_label': user_home_label}
+""" % {'mig_csrf': csrf_field}
 
     return s
 
