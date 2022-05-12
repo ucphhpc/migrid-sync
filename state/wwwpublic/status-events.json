@@ -1,4 +1,26 @@
-[ 
+[
+  {
+    "status": "AUTO",
+    "work_start": "2022-05-15T18:00:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2022-05-11T12:00:00+02:00",
+    "title": {
+      "EN": "Planned maintenance and upgrading the MODI service",
+      "DK": "Planlagt MODI opgradering og vedligehold"
+    },
+    "services": [
+      "MODI"
+    ],
+    "work_end": "2022-05-15T23:59:59+02:00",
+    "description": {
+      "EN": "We are applying general updates to the service and upgrading the underlying SLURM version on MODI. Service interruptions will occur duing this window.", 
+      "DK": "Vi udfører generelle opdateringer til tjenesten og opgraderer den underliggende SLURM version på MODI. Serviceafbrydelser vil forekomme i denne periode."
+    },
+    "announce_end": "2022-05-17T12:00:00+02:00"
+  },
   {
     "status": "AUTO",
     "work_start": "2022-05-10T08:00:00+02:00",
@@ -58,12 +80,12 @@
     "services": [
       "ALL"
     ],
-    "work_end": "2022-04-29T16:00:00+02:00",
+    "work_end": "2022-05-31T16:00:00+02:00",
     "description": {
-      "EN": "We've restored most of the remaining recovered data from the lost brick in the backend storage to bring back the last approximate 20TB of data missing after we had to restore from the April 10th snapshot last Summer. Please refer to the older news from July and August for details. We do not want to cause further trouble by restoring into potential live data, so instead we've generally recovered with the original directory structure inside new 'storage-brick-recovery' folders in the root of the relevant user homes and workgroups shares. If you find such data in your home or Workgroup shares please copy or move data back into place if necessary. We apologize for the resulting inconvenience and don't hesitate to contact us on support@erda.dk if you have questions or need advice about how to copy/move any such data back into place e.g. with the Schedule Tasks functionality. We're following up about restoring a little additional recovered data mainly to locations without direct user access to modification, and we expect to finish that within the next few weeks.",
+      "EN": "We've restored most of the remaining recovered data from the lost brick in the backend storage to bring back the last approximate 20TB of data missing after we had to restore from the April 10th snapshot last Summer. Please refer to the older news from July and August for details. We do not want to cause further trouble by restoring into potential live data, so instead we've generally recovered with the original directory structure inside new 'storage-brick-recovery' folders in the root of the relevant user homes and workgroups shares. If you find such data in your home or Workgroup shares please copy or move data back into place if necessary. We apologize for the resulting inconvenience and don't hesitate to contact us on support@erda.dk if you have questions or need advice about how to copy/move any such data back into place e.g. with the Schedule Tasks functionality. We're following up about restoring a little additional recovered data mainly to locations without direct user access to modification, and we expect to finish that within the next weeks.",
       "DK": "Vi har genskabt størstedelen af de udtrukne data fra den ødelagte brick i backendlageret, for igen at gøre de ca. 20TB data tilgængelige, som manglede efter vi sidste sommer var nødt til at genskabe fra et snapshot fra 10. april. Se venligst tidligere nyheder fra juli og august for nærmere detaljer. For ikke at skabe yderligere problemer ved at genskabe ind oveni potentielt aktive data, har vi valgt at genskabe samme struktur i nye 'storage-brick-recovery'-mapper i roden af de relevante brugermapper og workgroup shares. Hvis Du finder sådanne mapper i dit private lager eller Workgroup shares bedes Du selv flytte eller kopiere relevant data derfra og ind på plads. Vi beklager de gener det medfører og tøv ikke med at kontakte os på support@erda.dk ved spørgsmål eller om råd til at flytte evt store datasæt på plads, f.eks. ved hjælp af Schedule Tasks. Vi følger op på lidt tilbageværende data at genskabe hovedsageligt i placeringer hvor man som bruger ikke selv har adgang til at ændre, og det regner vi med at få overstået i løbet af de næste uger."
     },
-    "announce_end": "2022-05-02T16:00:00+02:00"
+    "announce_end": "2022-06-02T16:00:00+02:00"
     },
   {
     "status": "AUTO",
