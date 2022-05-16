@@ -1,7 +1,7 @@
 [
   {
     "status": "AUTO",
-    "work_start": "2022-05-15T18:00:00+02:00",
+    "work_start": "2022-05-18T18:00:00+02:00",
     "systems": [
         "ERDA",
         "IDMC"
@@ -14,12 +14,12 @@
     "services": [
       "MODI"
     ],
-    "work_end": "2022-05-15T23:59:59+02:00",
+    "work_end": "2022-05-18T23:59:59+02:00",
     "description": {
       "EN": "We are applying general updates to the service and upgrading the underlying SLURM version on MODI. Service interruptions will occur duing this window.", 
       "DK": "Vi udfører generelle opdateringer til tjenesten og opgraderer den underliggende SLURM version på MODI. Serviceafbrydelser vil forekomme i denne periode."
     },
-    "announce_end": "2022-05-17T12:00:00+02:00"
+    "announce_end": "2022-05-19T12:00:00+02:00"
   },
   {
     "status": "AUTO",
