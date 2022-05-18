@@ -451,9 +451,9 @@ def assure_password_strength(configuration, password, allow_legacy=False):
         return True
     except ValueError as err:
         if site_legacy_policy and allow_legacy:
-            _logger.warning("%s. Proceed with legacy policy check." % err)
+            _logger.info("%s. Proceed with legacy policy check." % err)
         else:
-            _logger.error("%s" % err)
+            _logger.warning("%s" % err)
             raise err
 
     try:
@@ -462,7 +462,7 @@ def assure_password_strength(configuration, password, allow_legacy=False):
                       site_legacy_policy)
         return True
     except ValueError as err:
-        _logger.error("%s" % err)
+        _logger.warning("%s" % err)
         raise err
 
 
