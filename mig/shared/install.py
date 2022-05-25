@@ -64,6 +64,7 @@ from mig.shared.jupyter import gen_balancer_proxy_template, gen_openid_template,
 from mig.shared.pwhash import password_requirements
 from mig.shared.safeeval import subprocess_call, subprocess_popen, subprocess_pipe
 from mig.shared.safeinput import valid_alphanumeric, InputException
+from mig.shared.url import urlparse
 
 
 def fill_template(template_file, output_file, settings, eat_trailing_space=[],
@@ -1278,10 +1279,27 @@ cert, oid and sid based https!
         fail2ban_daemon_ports.append(openid_show_port)
     else:
         user_dict['__OPENID_COMMENTED__'] = '#'
+    mig_issuer_url, ext_issuer_url = '', ''
+    issuer_split_mark = '/.well-known/'
     # Enable OpenID Connect auth module only if openidconnect_providers is given
     if user_dict['__EXT_OIDC_PROVIDER_META_URL__'].strip() or \
             user_dict['__MIG_OIDC_PROVIDER_META_URL__'].strip():
         user_dict['__OPENIDCONNECT_COMMENTED__'] = ''
+        if user_dict['__MIG_OIDC_PROVIDER_META_URL__'].strip():
+            meta_url = user_dict['__MIG_OIDC_PROVIDER_META_URL__'].strip()
+            if issuer_split_mark in meta_url:
+                mig_issuer_url = meta_url.split(issuer_split_mark, 1)[0]
+            else:
+                parsed = urlparse(meta_url)
+                mig_issuer_url = "%s://%s" % (parsed.scheme, parsed.netloc)
+        if user_dict['__EXT_OIDC_PROVIDER_META_URL__'].strip():
+            meta_url = user_dict['__EXT_OIDC_PROVIDER_META_URL__'].strip()
+            if issuer_split_mark in meta_url:
+                ext_issuer_url = meta_url.split(issuer_split_mark, 1)[0]
+            else:
+                parsed = urlparse(meta_url)
+                ext_issuer_url = "%s://%s" % (parsed.scheme, parsed.netloc)
+
         # TODO: enable next lines if openid connect requires proxy for
         #       cert_redirect support
         # user_dict['__PROXY_HTTP_COMMENTED__'] = ''
@@ -1291,6 +1309,9 @@ cert, oid and sid based https!
         # fail2ban_daemon_ports.append(openidconnect_show_port)
     else:
         user_dict['__OPENIDCONNECT_COMMENTED__'] = '#'
+
+    user_dict['__MIG_OIDC_ISSUER_URL__'] = mig_issuer_url
+    user_dict['__EXT_OIDC_ISSUER_URL__'] = ext_issuer_url
     if ext_oidc_client_name:
         user_dict['__EXT_OIDC_CLIENT_NAME__'] = ext_oidc_client_name
     else:
