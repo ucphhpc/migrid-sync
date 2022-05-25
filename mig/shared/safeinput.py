@@ -1724,6 +1724,8 @@ def guess_type(name):
             'key_id',
             'share_id',
             'miguser',
+            'oidc.claim.sub',
+            'oidc.claim.oid',
         ):
             __type_map[key] = valid_job_id
         for key in (
@@ -1821,8 +1823,6 @@ def guess_type(name):
             'oidc.claim.fullname',
             'oidc.claim.name',
             'oidc.claim.association',
-            'oidc.claim.sub',
-            'oidc.claim.oid',
             'oidc.claim.aud',
             'changes',
             'version',
@@ -2329,10 +2329,10 @@ if __name__ == '__main__':
         'proxy_upload': [''],
         'proxy_uploadfilename': [''],
     }
-    user_arguments_dict = {'oidc.claim.sub': ['xyz-123-nsd-e2e-e3e-dd3'],
+    user_arguments_dict = {'oidc.claim.sub': ['e_zahNgeiwaet6loNah3ieD7x_hZ0su6'],
                            'oidc.claim.iss': ['https://your.id.provider/nidp/oauth/nam'],
                            'oidc.claim.aud': ['d34db33f-a13f-4ea0-de63-3bd8f9ef9392'],
-                           'oidc.claim.oid': ['a323-d34db33f-a13f-de63-3bd8f9ef1234'],
+                           'oidc.claim.oid': ['a323_d34db33f-a13f_de63-3bd8f9ef1234'],
                            'oidc.claim.ou': ['nbi, faksek'],
                            'oidc.claim.upn': ['brs278@ku.dk'],
                            'oidc.claim.nickname': ['brs278'],
