@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rmvgridowner - remove a vgrid owner
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Remove an owner from a given vgrid"""
+
 from __future__ import absolute_import
 
 from past.builtins import basestring
@@ -169,13 +170,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
          via mail about what you wanted to do when the error happened.'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    parent_vgrids = vgrid_list_parents(vgrid_name, configuration)
     logger.info('%s removing owner %s from %s' % (client_id, cert_id,
                                                   vgrid_name))
 
-    # find out whether to just remove an owner or delete the whole thing.
-    # ask about delete if last or no direct owners.
+    # Find out whether to just remove an owner or delete the whole vgrid.
+    # Ask about delete if only owner or inherited owner with no direct owners.
 
-    if len(owners_direct) > 1:
+    if len(owners_direct) > 1 or (len(owners_direct) == 1 and len(owners) > 1):
 
         logger.debug('Removing %s, one of several owners, from %s.' %
                      (cert_id, vgrid_name))
@@ -262,7 +264,8 @@ Preserving access to corresponding %s.''' % (cert_id, label,
             # remove user from saved owners list
             (rm_status, rm_msg) = vgrid_remove_owners(configuration,
                                                       vgrid_name,
-                                                      [cert_id])
+                                                      [cert_id],
+                                                      allow_empty=parent_vgrids)
             if not rm_status:
                 output_objects.append({'object_type': 'error_text', 'text':
                                        '%s of owners of %s'

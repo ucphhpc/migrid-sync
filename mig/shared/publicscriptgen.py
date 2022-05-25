@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # publicscriptgen - Basic script generator functions
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,21 +25,26 @@
 # -- END_HEADER ---
 #
 
-# TODO: allow use of xmlrpc instead of curl from python
+# TODO: allow use of native https instead of curl from python
 
 """Shared helper functions for generating public MiG scripts
 for the supported programming languages.
 """
+
 from __future__ import print_function
 from __future__ import absolute_import
 
 import os
 
 from mig.shared.base import get_xgi_bin
+from mig.shared.defaults import csrf_field
 
 # Generator version (automagically updated by svn)
 
 __version__ = '$Revision$'
+
+# Name of CSRF helper in extoid - probably should be configurable
+extoid_csrf = 'ct'
 
 # ##########################
 # Script helper functions #
@@ -681,6 +686,7 @@ def curl_chain_login_steps(
     # Run curl and extract location of openid redirector from output
     # NOTE: no form or query args for initial call
 """
+    # TODO: hard-coding extoid_base and migoid_base here breaks cross-site use
     if lang == 'sh':
         s += """
     extoid_base='%s'
@@ -721,16 +727,24 @@ def curl_chain_login_steps(
                         \"$post_val\" \\
                         '' '')
     
-    # Use CSRF token to check if logged in
+    # Use modern Home marker label to check if logged in
+    echo $out | grep -q -E '.*<meta name=.generator. content=.home.>.*'
+    home_marker=$?
+    if [ ${home_marker} -eq 0 ]; then
+        echo 'Already logged in!'
+        exit 0
+    fi
+    # Fall back to use csrf token as logged-in marker
+    # NOTE: careful not to assume specific quoting, which might change again
     csrf_value=$(echo $out \\
-        | sed "s@.* name='_csrf' value='\\([0-9a-f]*\\)'.*@\\1@g")
+        | sed 's@.* name=.%(mig_csrf)s. value=.\\([0-9a-f]*\\).*@\\1@g')
     if [ ${#csrf_value} -eq 64 ]; then
-        echo "Already logged in!"
+        echo 'Already logged in!'
         exit 0
     elif echo $out | grep -q \"$extoid_base\" ; then
-        # Extract OpenID CSRF token
+        # Extract External OpenID CSRF token
         ct_value=$(echo $out \\
-            | sed 's@.* name=\"ct\" value=\"\([0-9a-f]*\)\".*@\\1@g')
+            | sed 's@.* name=.%(extoid_csrf)s. value=.\([0-9a-f]*\).*@\\1@g')
         if [ ${#ct_value} -ne 40 ]; then
             echo 'Could not extract extoid CSRF token value'
             exit 1
@@ -785,6 +799,8 @@ def curl_chain_login_steps(
         if [ -z \"$out\" ]; then
             out='Authentication failed'
         fi
+    else
+        echo 'Login type or state detection failed!'
     fi
 
     if echo $out | grep -q 'Authentication failed' ; then
@@ -800,9 +816,18 @@ def curl_chain_login_steps(
         exit 1
     fi
 
-    # Update CSRF value
+    # Use modern Home marker label to check if logged in
+    echo $out | grep -q -E '.*<meta name=.generator. content=.home.>.*'
+    home_marker=$?
+    if [ ${home_marker} -eq 0 ]; then
+        echo 'Login succeeded!'
+        exit 0
+    fi
+
+    # Check and update CSRF value if needed for 2FA
+    # NOTE: careful not to assume specific quoting, which might change again
     csrf_value=$(echo $out \\
-        | sed "s@.* name='_csrf' value='\\([0-9a-f]*\\)'.*@\\1@g")
+        | sed 's@.* name=.%(mig_csrf)s. value=.\\([0-9a-f]*\\).*@\\1@g')
 
     # Optional 2FA at this point if enabled and not already logged in
     twofactor_enabled=0
@@ -827,7 +852,7 @@ def curl_chain_login_steps(
                                     '' '')
                 # Update CSRF value
                 csrf_value=$(echo $out \\
-                    | sed "s@.* name='_csrf' value='\\([0-9a-f]*\\)'.*@\\1@g")
+                    | sed 's@.* name=.%(mig_csrf)s. value=.\\([0-9a-f]*\\).*@\\1@g')
             else
                 #echo 'DEBUG: past 2FA auth'
                 #echo \"DEBUG: $out\"
@@ -848,7 +873,7 @@ def curl_chain_login_steps(
         #echo \"DEBUG: $out\"
         exit 3
     fi
-        """
+    """ % {'mig_csrf': csrf_field, 'extoid_csrf': extoid_csrf}
     elif lang == 'python':
         s += """
     retval, msg = 0, []
@@ -858,26 +883,33 @@ def curl_chain_login_steps(
                                 post_val,
                                 '',
                                 '')
-    
-    # Use CSRF token to check if logged in
 
-    csrf_val = ''
-    csrf_prefix = \" name='_csrf' value='\"
-    csrf_suffix = \"' />\"
+    # NOTE: careful not to assume specific quoting, which might change again
+    # Use modern Home marker label to check if logged in
+    home_pattern = \".*<meta name=.generator. content=.home.>.*\"
+    home_extract = re.compile(home_pattern)
+    # Fall back to use csrf token as logged-in marker
+    csrf_pattern = \".*<input .* name=.%(mig_csrf)s. value=.([0-9a-f]*).*>.*\"
+    csrf_extract = re.compile(csrf_pattern)
+    ct_pattern = \".*<input .* name=.%(extoid_csrf)s. value=.([0-9a-f]*).*>.*\"
+    ct_extract = re.compile(ct_pattern)
+
+    csrf_value = ''
     for line in out:
-        if csrf_prefix in line:
-            csrf_val = line.split(csrf_prefix, 1)[1].split(csrf_suffix, 1)[0]
-    if len(csrf_val) == 64:
+        home_marker = home_extract.match(line)
+        match = csrf_extract.match(line)
+        if match:
+            csrf_value = match.group(1)
+    if home_marker or len(csrf_value) == 64:
         msg.append('Already logged in!')
         return (0, msg)
     elif [line for line in out if extoid_base in line]:
-        # Extract OpenID CSRF token
+        # Extract External OpenID CSRF token
         ct_value = ''
-        ct_prefix = ' name=\"ct\" value=\"'
-        ct_suffix = '\">'
         for line in out:
-            if ct_prefix in line:
-                ct_value = line.split(ct_prefix, 1)[1].split(ct_suffix, 1)[0]
+            match = ct_extract.match(line)
+            if match:
+                ct_value = match.group(1)
         if len(ct_value) != 40:
             msg.append('Could not extract extoid CSRF token value')
             return (1, msg)
@@ -888,8 +920,8 @@ def curl_chain_login_steps(
         # Post login and password credentials, redirects to actual site URL
         base_val = extoid_base + '/' 
         url_val = \"processTrustResult\" 
-        post_val = 'user=%s&pwd=%s&ct=%s&allow=Yes' \\
-            % (username, password, ct_value)
+        post_val = 'user=%%s&pwd=%%s&ct=%%s&allow=Yes' \\
+            %% (username, password, ct_value)
         (status, out) = curl_post_flex(user_conf,
                                     base_val,
                                     url_val,
@@ -905,8 +937,8 @@ def curl_chain_login_steps(
             password = getpass.getpass()
         base_val = migoid_base + '/'
         url_val = \"allow\"
-        post_val = 'identifier=%s&password=%s&remember=yes&yes=yes' \\
-            % (username, password)
+        post_val = 'identifier=%%s&password=%%s&remember=yes&yes=yes' \\
+            %% (username, password)
         (status, out) = curl_post_flex(user_conf,
                                     base_val,
                                     url_val,
@@ -916,6 +948,8 @@ def curl_chain_login_steps(
         # NOTE: curl fails hard with retval 22 and 404 Not found on login error
         if status == 22:
             out.append('Authentication failed')
+    else:
+        print('Login type or state detection failed!')
 
     if [line for line in out if 'Authentication failed' in line]:
         msg.append('OpenID login failed!')
@@ -927,17 +961,20 @@ def curl_chain_login_steps(
         msg.append('Invalid OpenID password!')
         return (1, msg)
         
-    # Update CSRF value
+
+    # Fall back to use csrf token as logged-in marker
     for line in out:
-        if csrf_prefix in line:
-            csrf_val = line.split(csrf_prefix, 1)[1].split(csrf_suffix, 1)[0]
+        home_marker = home_extract.match(line)
+        match = csrf_extract.match(line)
+        if match:
+            csrf_value = match.group(1)
 
     # Optional 2FA at this point if enabled and not already logged in
     twofactor_enabled=False
-    if twofactor_url:
+    if not home_marker and twofactor_url:
         twofactor_enabled = True
         for attempt in range(3):
-            if len(csrf_val) != 64 \\
+            if len(csrf_value) != 64 \\
                 and [line for line in out \\
                     if 'div id=\"twofactorstatus\"' in line]:
                 token = ''
@@ -953,17 +990,17 @@ def curl_chain_login_steps(
                                             post_val,
                                             '',
                                             '')
-                # Update CSRF value
+
                 for line in out:
-                    if csrf_prefix in line:
-                        csrf_val = line.split(csrf_prefix, 1)[1] \
-                            .split(csrf_suffix, 1)[0]
+                    match = csrf_extract.match(line)
+                    if match:
+                        csrf_value = match.group(1)
             else:
                 #msg.append('DEBUG: past 2FA auth')
                 #msg.append('DEBUG: '+out)
                 break
     #msg.append('DEBUG: '+out)
-    if (len(csrf_val) == 64):
+    if home_marker or len(csrf_value) == 64:
         msg.append('Login succeeded!')
         return (0, msg)
     elif twofactor_enabled:
@@ -972,7 +1009,7 @@ def curl_chain_login_steps(
     else:
         msg.append('Login failed with unexpected result!')
         return (3, msg)
-        """
+        """ % {'mig_csrf': csrf_field, 'extoid_csrf': extoid_csrf}
 
     return s
 
@@ -1022,33 +1059,39 @@ def curl_chain_logout_steps(
 
     # Resolve openid base url
 
-    if [ "${mig_server}" == "${migoid_base:0:${#mig_server}}" ]; then
-        openid_url_base="${migoid_base}/"
+    if [ \"${mig_server}\" == \"${migoid_base:0:${#mig_server}}\" ]; then
+        openid_url_base=\"${migoid_base}/\"
     else
-        openid_url_base="${extoid_base}/"
+        openid_url_base=\"${extoid_base}/\"
     fi
 
     # Check if logged in
 
     # NOTE: curl_post_flex sets return val in $exit_code and curl output on stdout
-    out=$(curl_get_flex "$user_conf" "$url_base" "$url_val" "$post_val" '' '')
+    out=$(curl_get_flex \"$user_conf\" \"$url_base\" \"$url_val\" \"$post_val\" '' '')
 
-    # Extract CSRF token
-    csrf_val=$(echo $out | sed "s@.* name='_csrf' value='\\([0-9a-f]*\\)'.*@\\1@g")
-    
-    if [ ${#csrf_val} -ne 64 ]; then
-        echo 'No active login session found.'
-        exit 1
+    # Use modern Home marker label to check if logged in
+    echo $out | grep -q -E '.*<meta name=.generator. content=.home.>.*'
+    home_marker=$?
+    if [ $home_marker -ne 0 ]; then
+        # Fall back to use csrf token as logged-in marker
+        # NOTE: careful not to assume specific quoting, which might change again
+        csrf_value=$(echo $out \\
+            | sed 's@.* name=.%(mig_csrf)s. value=.\\([0-9a-f]*\\).*@\\1@g')
+        if [ ${#csrf_value} -ne 64 ]; then
+            echo 'No active login session found.'
+            exit 1
+        fi
     fi
     
     # Call openid logout with redirect to autologut.py for session cleanup
 
-    autologout_url="${mig_server}/${return_url_val:1:-1}"
+    autologout_url=\"${mig_server}/${return_url_val:1:-1}\"
     url_val='logout'
-    post_val="return_to=${autologout_url}"
-    out=$(curl_get_flex "$user_conf" "$openid_url_base" "$url_val" "$post_val" '' '')
+    post_val=\"return_to=${autologout_url}\"
+    out=$(curl_get_flex \"$user_conf\" \"$openid_url_base\" \"$url_val\" \"$post_val\" '' '')
 
-    if echo $out | grep "___AUTO LOGOUT___" | grep -q "Exit code: 0" ; then
+    if echo $out | grep \"___AUTO LOGOUT___\" | grep -q \"Exit code: 0\" ; then
         echo 'Logout succeeded!'
     else
         echo 'Logout failed!'
@@ -1056,7 +1099,7 @@ def curl_chain_logout_steps(
 
     # TODO: clear cookies?
     #rm -f ${auth_cookie_file}
-"""
+""" % {'mig_csrf': csrf_field}
     elif lang == 'python':
         s += """
     retval, msg = 0, []
@@ -1064,31 +1107,40 @@ def curl_chain_logout_steps(
     # Resolve openid base url
 
     if (mig_server.startswith(migoid_base)):
-        openid_url_base = migoid_base + "/"
+        openid_url_base = migoid_base + \"/\"
     else:
-        openid_url_base = extoid_base + "/"
+        openid_url_base = extoid_base + \"/\"
 
     # Check if logged in
 
     (status, out) = curl_post_flex(user_conf, url_base, url_val, post_val, '', '')
 
+
+    # NOTE: careful not to assume specific quoting, which might change again
+    csrf_pattern = \".*<input .* name=.%(mig_csrf)s. value=.([0-9a-f]*).*>.*\"
+    csrf_extract = re.compile(csrf_pattern)
+    home_pattern = \".*<meta name=.generator. content=.home.>.*\"
+    home_extract = re.compile(home_pattern)
+
     # Extract CSRF token
 
-    csrf_val = ''
-    csrf_prefix = \" name='_csrf' value='\"
-    csrf_suffix = \"' />\"
+    csrf_value = ''
+    home_marker = False
     for line in out:
-        if csrf_prefix in line:
-            csrf_val = line.split(csrf_prefix, 1)[1].split(csrf_suffix, 1)[0]
-    if len(csrf_val) != 64:
+        home_marker = home_extract.match(line)
+        # Fall back to use csrf token as logged-in marker
+        match = csrf_extract.match(line)
+        if match:
+            csrf_value = match.group(1)
+    if not home_marker and len(csrf_value) != 64:
         msg.append('No active login session found.')
         return (1, msg)
 
     # Call openid logout with redirect to autologut.py for session cleanup
 
-    autologout_url = mig_server + "/" + return_url_val[1:-1]
+    autologout_url = mig_server + \"/\" + return_url_val[1:-1]
     url_val = 'logout'
-    post_val = "return_to=" + autologout_url
+    post_val = \"return_to=\" + autologout_url
     (status, out) = curl_get_flex(user_conf, openid_url_base, url_val, post_val, '', '')
 
     if len([line for line in out \\
@@ -1105,7 +1157,7 @@ def curl_chain_logout_steps(
     #os.remove(auth_cookie_file)
 
     return (retval, msg)
-"""
+""" % {'mig_csrf': csrf_field}
 
     return s
 
@@ -1127,7 +1179,7 @@ auth_redir=""
 flags=""
 server_flags=""
 mig_server=""
-script_path="$0"
+script_path=\"$0\"
 script_name=`basename $script_path`
 script_dir=`dirname $script_path`
 """
@@ -1435,7 +1487,7 @@ def init_script(
     header = \
         """
 mig%s - a part of the MiG scripts
-Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 
 This file is part of MiG.
 
@@ -1471,6 +1523,7 @@ Any changes should be made in the generator and not here !!!
 import getopt
 import getpass
 import os
+import re
 import sys
 import subprocess
 
