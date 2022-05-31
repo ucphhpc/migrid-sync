@@ -1,5 +1,26 @@
 [
   {
+    "status": "AUTO", 
+    "work_start": "2022-05-31T09:30:00+02:00", 
+    "systems": [
+        "ERDA", "IDMC"
+    ], 
+    "announce_start": "2022-05-31T09:30:00+02:00", 
+    "title": {
+      "EN": "DAG/HEL Unstable or Unavailable", 
+      "DK": "DAG/HEL ustabil eller utilgængelig"
+    }, 
+    "services": [
+        "DAG", "HEL"
+    ], 
+    "work_end": "2022-05-31T15:00:00+02:00", 
+    "description": {
+      "EN": "We've experienced performance issues on DAG/HEL Jupyter sessions since this morning and while we were investigating the cause and trying to address it the problem got worse with new sessions just hanging. The original issue appears to be related to one or more misbehaving SFTP clients constantly hammering our SFTP service, which is also used for transparent data access in DAG/HEL sessions. Unfortunately our initial attempts to take evasive action against the misbehaving SFTP clients inadvertently blocked valid DAG/HEL session access as well. We have adjusted the filtering so that the valid sessions are allowed through again now and the service should be back in normal production. We're sorry for the inconvenience it caused both for course and individual use of DAG/HEL.",
+      "DK": "Vi har oplevet langsom adgang til DAG/HEL Jupyter-sessioner siden i morges og ifm at vi ledte efter årsagen og forsøgte at afhjælpe problemet blev det kun værre så nye sessioner bare hang. Det ser ud til at det oprindelige problem skyltes en eller flere vildfarne SFTP-klienter, der konstant hamrede løs på vores SFTP service, som også bruges til transparent dataadgang fra DAG/HEL-sessioner. Desværre fik vi i vores forsøg på at frasortere disse vildfarne SFTP-klienter, ved en fejl også spærret adgang fra gyldige DAG/HEL-sessioner. Vi har justeret på filteret så de gyldige sessioner nu igen har adgang og alting skulle være tilbage i normal drift. Vi beklager de gener det medførte både for kursus - og individuel brug af DAG/HEL."
+    }, 
+    "announce_end": "2022-06-01T12:00:00+02:00"
+  },
+  {
     "status": "AUTO",
     "work_start": "2022-05-18T18:00:00+02:00",
     "systems": [
