@@ -95,6 +95,7 @@ def signature(auth_type):
             'openid.sreg.state': [''],
             'openid.sreg.locality': [''],
             'openid.sreg.role': [''],
+            'openid.sreg.roles': [''],
             'openid.sreg.association': [''],
             'openid.sreg.required': [''],
             'openid.ns': [''],
@@ -324,7 +325,8 @@ def main(client_id, user_arguments_dict, environ=None):
 
         # We may receive multiple roles and associations
 
-        role = ','.join([i for i in accepted['openid.sreg.role'] if i])
+        merged = accepted['openid.sreg.role'] + accepted['openid.sreg.roles']
+        role = ','.join([i for i in merged if i])
         association = ','.join([i for i in
                                 accepted['openid.sreg.association']
                                 if i])
@@ -350,8 +352,8 @@ def main(client_id, user_arguments_dict, environ=None):
 
         # We may receive multiple roles and associations
 
-        role = ','.join([i for i in accepted['oidc.claim.role'] +
-                         accepted['oidc.claim.roles'] if i])
+        merged = accepted['oidc.claim.role'] + accepted['oidc.claim.roles']
+        role = ','.join([i for i in merged if i])
         association = ','.join([i for i in
                                 accepted['oidc.claim.association']
                                 if i])
