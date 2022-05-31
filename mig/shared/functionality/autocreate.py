@@ -34,7 +34,7 @@ OpenID Connect logins.
    Also see req-/extcertaction.py
    Differences:
      - automatic upload of a proxy certificate when provided
-     - no special check for KU organisation
+     - no special check for KU organization
      - allows empty fields for things like country, email, and state
 """
 
@@ -136,6 +136,8 @@ def signature(auth_type):
             'oidc.claim.name': [''],
             'oidc.claim.o': [''],
             'oidc.claim.ou': [''],
+            'oidc.claim.organization': [''],
+            'oidc.claim.organizational_unit': [''],
             'oidc.claim.timezone': [''],
             'oidc.claim.email': [''],
             'oidc.claim.country': [''],
