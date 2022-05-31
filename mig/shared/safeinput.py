@@ -1832,10 +1832,12 @@ def guess_type(name):
         for key in (
             'org',
             'openid.sreg.role',
+            'openid.sreg.roles',
             'openid.sreg.o',
             'openid.sreg.ou',
             'organization',
             'oidc.claim.role',
+            'oidc.claim.roles',
             'oidc.claim.o',
             'oidc.claim.organization',
             'oidc.claim.ou',
@@ -2265,6 +2267,7 @@ if __name__ == '__main__':
         'openid.sreg.state': [''],
         'openid.sreg.locality': [''],
         'openid.sreg.role': [''],
+        'openid.sreg.roles': [''],
         'openid.sreg.association': [''],
         # Please note that we only get sreg.required here if user is
         # already logged in at OpenID provider when signing up so
@@ -2281,7 +2284,8 @@ if __name__ == '__main__':
                            'openid.sreg.ou': ['nbi'],
                            'openid.sreg.nickname': ['brs278@ku.dk'],
                            'openid.sreg.fullname': ['Jonas Bardino'],
-                           'openid.sreg.role': ['tap'],
+                           'openid.sreg.role': ['tap', 'staff'],
+                           'openid.sreg.roles': ['tap, staff', 'developer'],
                            'openid.sreg.association': ['sci-nbi-tap'],
                            'openid.sreg.o': ['science'],
                            'openid.sreg.email': ['bardino@nbi.ku.dk']}
@@ -2322,6 +2326,7 @@ if __name__ == '__main__':
         'oidc.claim.state': [''],
         'oidc.claim.locality': [''],
         'oidc.claim.role': [''],
+        'oidc.claim.roles': [''],
         'oidc.claim.association': [''],
         'oidc.claim.timezone': [''],
         'password': [''],
@@ -2337,7 +2342,8 @@ if __name__ == '__main__':
                            'oidc.claim.upn': ['brs278@ku.dk'],
                            'oidc.claim.nickname': ['brs278'],
                            'oidc.claim.fullname': ['Jonas Bardino'],
-                           'oidc.claim.role': ['tap, ansat'],
+                           'oidc.claim.role': ['tap', 'staff'],
+                           'oidc.claim.roles': ['tap, staff', 'developer'],
                            'oidc.claim.association': ['sci-nbi-tap'],
                            'oidc.claim.o': ['science'],
                            'oidc.claim.email': ['bardino@nbi.ku.dk']}
