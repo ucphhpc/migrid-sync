@@ -34,6 +34,7 @@ import os
 import sys
 
 from mig.shared.conf import get_configuration_object
+from mig.shared.base import is_gdp_user
 from mig.shared.useradm import init_user_adm, edit_user
 
 
@@ -110,10 +111,16 @@ if '__main__' == __name__:
             print('using configuration from MIG_CONF (or default)')
 
     configuration = get_configuration_object(config_file=conf_path, skip_log=True)
-    
+
     if not user_id:
         print('Error: Existing user ID is required')
         usage()
+        sys.exit(1)
+
+    if is_gdp_user(configuration, user_id) and not force:
+        print("Error: GDP user ID detected")
+        print("You probalby want to use 'editgdpuser.py'")
+        print("If you really mean it then use: 'edituser.py -f'")
         sys.exit(1)
 
     if args:
