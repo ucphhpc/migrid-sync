@@ -109,6 +109,93 @@
     "announce_end": "2022-06-07T10:00:00+02:00"
   },
   {
+    "status": "AUTO", 
+    "work_start": "2022-05-31T09:30:00+02:00", 
+    "systems": [
+        "ERDA", "IDMC"
+    ], 
+    "announce_start": "2022-05-31T09:30:00+02:00", 
+    "title": {
+      "EN": "DAG/HEL Unstable or Unavailable", 
+      "DK": "DAG/HEL ustabil eller utilgængelig"
+    }, 
+    "services": [
+        "DAG", "HEL"
+    ], 
+    "work_end": "2022-05-31T15:00:00+02:00", 
+    "description": {
+      "EN": "We've experienced performance issues on DAG/HEL Jupyter sessions since this morning and while we were investigating the cause and trying to address it the problem got worse with new sessions just hanging. The original issue appears to be related to one or more misbehaving SFTP clients constantly hammering our SFTP service, which is also used for transparent data access in DAG/HEL sessions. Unfortunately our initial attempts to take evasive action against the misbehaving SFTP clients inadvertently blocked valid DAG/HEL session access as well. We have adjusted the filtering so that the valid sessions are allowed through again now and the service should be back in normal production. We're sorry for the inconvenience it caused both for course and individual use of DAG/HEL.",
+      "DK": "Vi har oplevet langsom adgang til DAG/HEL Jupyter-sessioner siden i morges og ifm at vi ledte efter årsagen og forsøgte at afhjælpe problemet blev det kun værre så nye sessioner bare hang. Det ser ud til at det oprindelige problem skyltes en eller flere vildfarne SFTP-klienter, der konstant hamrede løs på vores SFTP service, som også bruges til transparent dataadgang fra DAG/HEL-sessioner. Desværre fik vi i vores forsøg på at frasortere disse vildfarne SFTP-klienter, ved en fejl også spærret adgang fra gyldige DAG/HEL-sessioner. Vi har justeret på filteret så de gyldige sessioner nu igen har adgang og alting skulle være tilbage i normal drift. Vi beklager de gener det medførte både for kursus - og individuel brug af DAG/HEL."
+    }, 
+    "announce_end": "2022-06-01T12:00:00+02:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2022-05-18T18:00:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2022-05-11T12:00:00+02:00",
+    "title": {
+      "EN": "Planned maintenance and upgrading the MODI service",
+      "DK": "Planlagt MODI opgradering og vedligehold"
+    },
+    "services": [
+      "MODI"
+    ],
+    "work_end": "2022-05-18T23:59:59+02:00",
+    "description": {
+      "EN": "We are applying general updates to the service and upgrading the underlying SLURM version on MODI. Service interruptions will occur duing this window.", 
+      "DK": "Vi udfører generelle opdateringer til tjenesten og opgraderer den underliggende SLURM version på MODI. Serviceafbrydelser vil forekomme i denne periode."
+    },
+    "announce_end": "2022-05-19T12:00:00+02:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2022-05-10T08:00:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC",
+        "SIF"
+    ],
+    "announce_start": "2022-05-10T08:00:00+02:00",
+    "title": {
+      "EN": "Major outage in the storage backend: very limited or no access",
+      "DK": "Stort udfald i backend-lageret: meget begrænset eller ingen adgang"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2022-05-10T10:55:00+02:00",
+    "description": {
+      "EN": "We experienced serious problems with the backend storage in the HPC Centre this morning and it lead to massive outages on ERDA/IDMC and SIF. We identified the cause to be a the (ZFS) file system on one of the storage bricks misbehaving and going into suspended state. After recovering and getting that brick back to service we got the entire backend storage plus ERDA/IDMC and SIF along with it back online. Everything should thus be back to normal operation now.", 
+      "DK": "Vi blev ramt af alvorlige problemer med backend lageret på HPC Centeret, og det førte til omfattende udfald på ERDA/IDMC og SIF. Vi fandt frem til at årsagen var at et fejlramt (ZFS-)filsystem på en brick i backendlageret. Efter at have fået den fikset lykkedes det også at få hele backendlageret og med det ERDA/IMC og SIF tilbage online. Alt skulle således være tilbage i normal drift nu."
+    },
+    "announce_end": "2022-05-10T16:00:00+02:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2022-06-03T12:00:00+02:00",
+    "systems": [
+        "SIF"
+    ],
+    "announce_start": "2022-05-02T12:00:00+02:00",
+    "title": {
+      "EN": "SIF storage backend replacement", 
+      "DK": "Udskiftning af SIF storage backend"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2022-06-10T12:00:00+02:00",
+    "description": {
+      "EN": "We are changing the SIF storage backend from Gluster to Lustre. During this task SIF will be either in read-only mode or offline. In effect no project administration can be done during this period and data upload is not possible. We will try to keep the downtime as short as possible. Addtional information will be posted on this page.",
+      "DK": "Vi står for at skulle udskifte SIF storage backenden fra Gluster og til Lustre. I denne process vil SIF enten være offline eller i read-only mode, hvilket vi sige at der ikke kan udføres projektadministration eller uploades data. Vi vil prøve at holde nedetiden så kort som mulig og annoncere yderligere information via denne side. "
+    },
+    "announce_end": "2022-06-10T12:00:00+02:00"
+  },
+  {
     "status": "AUTO",
     "work_start": "2022-03-30T16:00:00+02:00",
     "systems": [
