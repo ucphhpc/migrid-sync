@@ -170,6 +170,10 @@ name_extras = ' -.'
 # NOTE: organization may also contain comma as in UNIVERSITY, DEPARTMENT
 org_extras = name_extras + ','
 
+# NOTE: We may encounter exotic chars in roles e.g. from AD
+# IMPORTANT: never use role values in shell commands!
+role_extras = name_extras + ',_!#^~'
+
 # *****************************************************************************
 # * IMPORTANT: never allow '+' in DN: reserved for path translation!          *
 # *****************************************************************************
@@ -197,6 +201,7 @@ valid_name_chars = ascii_letters + digits + name_extras
 valid_org_chars = ascii_letters + digits + org_extras
 valid_dn_chars = ascii_letters + digits + dn_extras
 valid_username_chars = user_id_charset
+valid_role_chars = ascii_letters + digits + role_extras
 VALID_INTEGER_CHARACTERS = valid_integer_chars
 VALID_FLOAT_CHARACTERS = valid_float_chars
 VALID_PASSWORD_CHARACTERS = valid_password_chars
@@ -204,6 +209,7 @@ VALID_NAME_CHARACTERS = valid_name_chars
 VALID_ORG_CHARACTERS = valid_org_chars
 VALID_DN_CHARACTERS = valid_dn_chars
 VALID_USERNAME_CHARACTERS = valid_username_chars
+VALID_ROLE_CHARACTERS = valid_role_chars
 
 # Helper functions and variables
 
@@ -524,6 +530,21 @@ def valid_username(
 
     valid_chars = VALID_USERNAME_CHARACTERS + extra_chars
     __valid_contents(username, valid_chars, min_length, max_length)
+
+
+def valid_role(
+    role,
+    min_length=1,
+    max_length=255,
+    extra_chars='',
+):
+    """Verify that supplied role name only contains
+    characters that we consider valid.
+    """
+
+    valid_chars = VALID_ROLE_CHARACTERS + extra_chars
+    __valid_contents(role, valid_chars, min_length, max_length,
+                     COMMON_ACCENTED)
 
 
 def valid_base_url(
@@ -1835,13 +1856,9 @@ def guess_type(name):
         # openid.sreg.required and role may have commas - reuse organization
         for key in (
             'org',
-            'openid.sreg.role',
-            'openid.sreg.roles',
             'openid.sreg.o',
             'openid.sreg.ou',
             'organization',
-            'oidc.claim.role',
-            'oidc.claim.roles',
             'oidc.claim.o',
             'oidc.claim.organization',
             'oidc.claim.ou',
@@ -1850,6 +1867,13 @@ def guess_type(name):
             'openid.sreg.required',
         ):
             __type_map[key] = valid_organization
+        for key in (
+            'openid.sreg.role',
+            'openid.sreg.roles',
+            'oidc.claim.role',
+            'oidc.claim.roles',
+        ):
+            __type_map[key] = valid_role
         for key in ('cert_id',
                     'run_as',):
             __type_map[key] = valid_distinguished_name
@@ -2347,7 +2371,7 @@ if __name__ == '__main__':
                            'oidc.claim.nickname': ['brs278'],
                            'oidc.claim.fullname': ['Jonas Bardino'],
                            'oidc.claim.role': ['tap', 'staff'],
-                           'oidc.claim.roles': ['tap, staff', 'developer'],
+                           'oidc.claim.roles': ['tap, staff', 'developer', 'full-time_employee'],
                            'oidc.claim.association': ['sci-nbi-tap'],
                            'oidc.claim.o': ['science'],
                            'oidc.claim.email': ['bardino@nbi.ku.dk']}
