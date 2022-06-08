@@ -1,4 +1,26 @@
 [
+ {
+    "status": "AUTO", 
+    "work_start": "2022-06-23T07:00:00+02:00", 
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2022-06-01T09:00:00+02:00",
+    "title": {
+      "EN": "Planned ERDA/IDMC Maintenance",
+      "DK": "Planlagt ERDA/IDMC vedligehold"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2022-06-23T10:00:00+02:00",
+    "description": {
+      "EN": "It's time for a thorough update of the ERDA/IDMC and addition of more physical storage space. The work will involve both frontend and backend down-time for low-level system updates. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect a longer downtime of approximately one hour for the main upgrades if everything runs smoothly. That downtime will start about half an hour into the window and should therefore not extend far into standard working hours, but we conservatively set the maintenance window somewhat longer. Further information will follow here.",
+      "DK": "Det er tid til en gennemgribende opdatering af ERDA/IDMC systemerne og tilføjelse af mere fysisk lagerplads. Arbejdet kræver nedetid på både frontend og backend til grundlæggende systemopdateringer og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi forventer en længere nedetid på en times tid til hovedopgraderingerne hvis alting forløber planmæssigt. Den del vil begynde omkring en halv time inde i arbejdet og skulle derfor ikke strække sig langt ind i standard arbejdstid, men for en sikkerheds skyld er vedligeholdelsesvinduet sat noget længere. Yderligere information følger her."
+    },
+    "announce_end": "2022-06-24T10:00:00+02:00"
+  }, 
   {
     "status": "AUTO", 
     "work_start": "2022-05-31T09:30:00+02:00", 
@@ -74,17 +96,17 @@
     "announce_start": "2022-05-02T12:00:00+02:00",
     "title": {
       "EN": "SIF storage backend replacement", 
-      "DK": "Udskiftning af SIF storage backend"
+      "DK": "Udskiftning af SIF backendlager"
     },
     "services": [
       "ALL"
     ],
-    "work_end": "2022-06-10T12:00:00+02:00",
+    "work_end": "2022-06-07T10:00:00+02:00",
     "description": {
-      "EN": "We are changing the SIF storage backend from Gluster to Lustre. During this task SIF will be either in read-only mode or offline. In effect no project administration can be done during this period and data upload is not possible. We will try to keep the downtime as short as possible. Addtional information will be posted on this page.",
-      "DK": "Vi står for at skulle udskifte SIF storage backenden fra Gluster og til Lustre. I denne process vil SIF enten være offline eller i read-only mode, hvilket vi sige at der ikke kan udføres projektadministration eller uploades data. Vi vil prøve at holde nedetiden så kort som mulig og annoncere yderligere information via denne side. "
+      "EN": "We replaced the SIF Gluster storage backend with Lustre. During this task SIF was in read-only mode. In effect project administration and data upload was disabled within the period. A general system update including host, vm and pending software updates was done in the process and caused a total downtime of three hours Friday the 3rd from 12 to 15 and one hour on Tuesday the 7th from 9 to 10.",
+      "DK": "Vi har erstattet vores SIF Gluster backendlager med Lustre. I forbindelse med dette var SIF i read-only mode, hvilket betød at projekt administration samt data upload ikke var mulig. En generel system update af host, vm og software stakken blev ligeledes udført hvilket medførte en total nedetid på tre timer fredag den 3 fra 12 til 15 og en time tirsdag den 7 fra 9 til 10."
     },
-    "announce_end": "2022-06-10T12:00:00+02:00"
+    "announce_end": "2022-06-07T10:00:00+02:00"
   },
   {
     "status": "AUTO",
