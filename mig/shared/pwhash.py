@@ -404,8 +404,11 @@ def __assure_password_strength_helper(configuration, password, use_legacy=False)
             #       but we just make sure cracklib does not directly increase
             #       policy requirements.
             cracklib.MIN_LENGTH = min_len + min_classes
-            # NOTE: this raises ValueError if password is too simple
-            cracklib.VeryFascistCheck(password)
+            try:
+                # NOTE: this raises ValueError if password is too simple
+                cracklib.VeryFascistCheck(password)
+            except Exception as exc:
+                raise ValueError("cracklib refused password: %s" % exc)
         else:
             raise Exception('cracklib requested in conf but not available')
     return True
