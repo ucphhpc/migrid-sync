@@ -1,12 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 #
 # --- BEGIN_HEADER ---
 #
 #
 # migrateusers - a simple helper to migrate old CN to new DN user IDs
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -14,12 +13,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # MiG is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
@@ -30,13 +29,15 @@
 
 """Upgrade all files and dirs to use the new certificate DN based user ID
 instead of the old CN based ones"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
-import sys
 import getopt
+import sys
 
 from mig.shared.useradm import init_user_adm, migrate_users
+
 
 def usage(name='migrateusers.py'):
     """Usage help"""
@@ -53,8 +54,9 @@ Where OPTIONS may be one or more of:
    -h                  Show this help
    -p                  Prune duplicate users (keeps the one with latest expire)
    -v                  Verbose output
-"""\
-         % {'name': name})
+"""
+          % {'name': name})
+
 
 if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()
@@ -92,4 +94,4 @@ if '__main__' == __name__:
         migrate_users(conf_path, db_path, force, verbose, prune)
     except Exception as err:
         print(err)
-        sys.exit(1)        
+        sys.exit(1)

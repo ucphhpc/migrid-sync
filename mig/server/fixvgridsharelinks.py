@@ -1,12 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 #
 # --- BEGIN_HEADER ---
 #
 #
 # fixvgridsharelinks - fix missing vgrid sharelinks on adminvgrid pages
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -38,11 +37,12 @@ not correctly updated after the switch from the legacy vgrid_files_home to
 the new vgrid_files_writable and vgrid_files_readonly so the vgrid sharelink
 pickle didn't get updated for recent vgrids. 
 """
+
 from __future__ import print_function
 from __future__ import absolute_import
 
-import sys
 import getopt
+import sys
 
 from mig.shared.useradm import init_user_adm, fix_vgrid_sharelinks
 
@@ -61,8 +61,8 @@ Where OPTIONS may be one or more of:
    -f                  Force operations to continue past errors
    -h                  Show this help
    -v                  Verbose output
-"""\
-         % {'name': name})
+"""
+          % {'name': name})
 
 
 if '__main__' == __name__:

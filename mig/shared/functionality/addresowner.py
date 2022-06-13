@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addresowner - add one or more resource owners
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,6 +28,7 @@
 # Minimum Intrusion Grid
 
 """Add one or more users to the list of administrators for a given resource"""
+
 from __future__ import absolute_import
 
 from binascii import unhexlify
@@ -59,8 +60,8 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
     status = returnvalues.OK
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Add Resource Owner(s)'})
+    output_objects.append(
+        {'object_type': 'header', 'text': 'Add Resource Owner(s)'})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -68,7 +69,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -86,8 +87,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'You must be an owner of %s to add a new owner!'
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'You must be an owner of %s to add a new owner!'
                                % unique_resource_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -99,9 +100,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
         cert_id = cert_id.strip()
         if not cert_id:
             continue
-        if not is_user(cert_id, configuration.mig_server_home):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : '%s is not a valid %s user!'
+        if not is_user(cert_id, configuration):
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   '%s is not a valid %s user!'
                                    % (cert_id, configuration.short_title)})
             status = returnvalues.CLIENT_ERROR
             continue
@@ -109,8 +110,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # don't add if already an owner
 
         if resource_is_owner(unique_resource_name, cert_id, configuration):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : '%s is already an owner of %s.'
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   '%s is already an owner of %s.'
                                    % (cert_id, unique_resource_name)})
             status = returnvalues.CLIENT_ERROR
             continue
@@ -121,8 +122,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                                     unique_resource_name,
                                                     [cert_id])
         if not add_status:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'Could not add new owner, reason: %s'
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Could not add new owner, reason: %s'
                                    % add_msg})
             status = returnvalues.SYSTEM_ERROR
             continue
@@ -132,18 +133,18 @@ CSRF-filtered POST requests to prevent unintended updates'''
         request_dir = os.path.join(configuration.resource_home,
                                    unique_resource_name)
         if not delete_access_request(configuration, request_dir, request_name):
-                logger.error("failed to delete owner request for %s in %s" % \
-                             (unique_resource_name, request_name))
-                output_objects.append({
-                    'object_type': 'error_text', 'text':
-                    'Failed to remove saved request for %s in %s!' % \
-                    (unique_resource_name, request_name)})
+            logger.error("failed to delete owner request for %s in %s" %
+                         (unique_resource_name, request_name))
+            output_objects.append({
+                'object_type': 'error_text', 'text':
+                'Failed to remove saved request for %s in %s!' %
+                (unique_resource_name, request_name)})
 
     if cert_id_added:
-        output_objects.append({'object_type': 'html_form', 'text'
-                          : 'New owner(s)<br/>%s<br/>successfully added to %s!'
-                           % ('<br />'.join(cert_id_added),
-                              unique_resource_name)})
+        output_objects.append({'object_type': 'html_form', 'text':
+                               'New owner(s)<br/>%s<br/>successfully added to %s!'
+                               % ('<br />'.join(cert_id_added),
+                                  unique_resource_name)})
         cert_id_fields = ''
         for cert_id in cert_id_added:
             cert_id_fields += """<input type=hidden name=cert_id value='%s' />
@@ -151,12 +152,12 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         form_method = 'post'
         csrf_limit = get_csrf_limit(configuration)
-        fill_helpers =  {'res_id': unique_resource_name,
-                         'cert_id_fields': cert_id_fields,
-                         'any_protocol': any_protocol,
-                         'form_method': form_method,
-                         'csrf_field': csrf_field,
-                         'csrf_limit': csrf_limit}
+        fill_helpers = {'res_id': unique_resource_name,
+                        'cert_id_fields': cert_id_fields,
+                        'any_protocol': any_protocol,
+                        'form_method': form_method,
+                        'csrf_field': csrf_field,
+                        'csrf_limit': csrf_limit}
         target_op = 'sendrequestaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
@@ -189,7 +190,7 @@ Regards, the %(res_id)s resource owners
 """ % fill_helpers})
 
     output_objects.append({'object_type': 'link', 'destination':
-                           'resadmin.py?unique_resource_name=%s' % \
+                           'resadmin.py?unique_resource_name=%s' %
                            unique_resource_name, 'class':
                            'adminlink iconspace', 'title':
                            'Administrate resource', 'text': 'Manage resource'})

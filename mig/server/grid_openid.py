@@ -87,7 +87,6 @@ from openid.consumer import discover
 from mig.shared.accountstate import check_account_accessible
 from mig.shared.base import client_id_dir, cert_field_map
 from mig.shared.conf import get_configuration_object
-from mig.shared.defaults import user_db_filename
 from mig.shared.griddaemons.openid import default_max_user_hits, \
     default_user_abuse_hits, default_proto_abuse_hits, \
     default_username_validator, refresh_user_creds, update_login_map, \
@@ -103,6 +102,7 @@ from mig.shared.tlsserver import hardened_ssl_context
 from mig.shared.url import urlparse, urlencode
 from mig.shared.useradm import get_openid_user_dn, check_password_scramble, \
     check_hash
+from mig.shared.userdb import default_db_path
 from mig.shared.validstring import possible_user_id
 
 configuration, logger = None, None
@@ -1663,8 +1663,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'address': address,
         'port': port,
         'root_dir': os.path.abspath(configuration.user_home),
-        'db_path': os.path.abspath(os.path.join(configuration.mig_server_home,
-                                                user_db_filename)),
+        'db_path': os.path.abspath(default_db_path(configuration)),
         'session_store': os.path.abspath(configuration.openid_store),
         'session_ttl': 24*3600,
         'allow_password': 'password' in configuration.user_openid_auth,

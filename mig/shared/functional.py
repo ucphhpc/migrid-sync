@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # functional - functionality backend helpers
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -156,7 +156,7 @@ def validate_input_and_cert(
     user_dict = None
     if not client_id:
         creds_error = "Invalid or missing user credentials"
-    elif not is_user(client_id, configuration.mig_server_home):
+    elif not is_user(client_id, configuration):
         if require_user:
             creds_error = "No such user (%s)" % client_id
     else:

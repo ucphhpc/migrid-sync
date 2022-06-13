@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # importusers - Import users from text or xml file in provided uri
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,10 +30,10 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
-import os
-import sys
 import getopt
+import os
 import re
+import sys
 import time
 
 from mig.shared import returnvalues
@@ -263,7 +263,7 @@ if '__main__' == __name__:
                       (client_id, name, request))
                 output_format = 'text'
                 (ret_code, ret_msg) = status
-                output = format_output(configuration, ret_code,
+                output = format_output(configuration, target_op, ret_code,
                                        ret_msg, output_objs, output_format)
 
                 # Explicit None means error during output formatting

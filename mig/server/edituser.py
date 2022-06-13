@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # edituser - Edit a MiG user
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Edit MiG user in user database and file system"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -33,8 +34,8 @@ import getopt
 import os
 import sys
 
-from mig.shared.conf import get_configuration_object
 from mig.shared.base import is_gdp_user
+from mig.shared.conf import get_configuration_object
 from mig.shared.useradm import init_user_adm, edit_user
 
 
@@ -56,8 +57,8 @@ Where OPTIONS may be one or more of:
    -o SHORT_ID         Change OpenID alias of user to SHORT_ID
    -R ROLES            Change user affiliation to ROLES
    -v                  Verbose output
-"""\
-         % {'name': name})
+"""
+          % {'name': name})
 
 
 # ## Main ###
@@ -110,7 +111,8 @@ if '__main__' == __name__:
         else:
             print('using configuration from MIG_CONF (or default)')
 
-    configuration = get_configuration_object(config_file=conf_path, skip_log=True)
+    configuration = get_configuration_object(
+        config_file=conf_path, skip_log=True)
 
     if not user_id:
         print('Error: Existing user ID is required')
@@ -138,7 +140,7 @@ if '__main__' == __name__:
 
             pass
     elif not configuration.site_enable_gdp:
-        # NOTE: We do not allow interactive user management on GDP systems 
+        # NOTE: We do not allow interactive user management on GDP systems
         print('Please enter the new details for %s:' % user_id)
         print('[enter to skip field]')
         user_dict['full_name'] = raw_input('Full Name: ').title()
@@ -147,9 +149,9 @@ if '__main__' == __name__:
         user_dict['country'] = raw_input('2-letter Country Code: ')
         user_dict['email'] = raw_input('Email: ')
     else:
-        print("Error: Missing one or more of the arguments: " \
-            + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] " \
-            + "[EMAIL] [COMMENT] [PASSWORD]")
+        print("Error: Missing one or more of the arguments: "
+              + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] "
+              + "[EMAIL] [COMMENT] [PASSWORD]")
         sys.exit(1)
 
     # Pass optional short_id as well
@@ -174,7 +176,7 @@ if '__main__' == __name__:
     except Exception as err:
         print(err)
         sys.exit(1)
-    print('%s\nchanged to\n%s\nin user database and file system' % \
+    print('%s\nchanged to\n%s\nin user database and file system' %
           (user_id, user['distinguished_name']))
     print()
     print('Please revoke/reissue any related certificates!')

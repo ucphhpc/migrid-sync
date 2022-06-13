@@ -48,9 +48,9 @@ from mig.shared.accountstate import default_account_expire
 from mig.shared.base import client_id_dir, force_utf8, force_unicode, \
     fill_user, distinguished_name_to_user, fill_distinguished_name, \
     get_site_base_url
-from mig.shared.defaults import user_db_filename, AUTH_CERTIFICATE, \
-    AUTH_OPENID_V2, AUTH_OPENID_CONNECT, AUTH_MIG_CERT, AUTH_EXT_CERT, \
-    AUTH_MIG_OID, AUTH_EXT_OID, AUTH_MIG_OIDC, AUTH_EXT_OIDC
+from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_V2, \
+    AUTH_OPENID_CONNECT, AUTH_MIG_CERT, AUTH_EXT_CERT, AUTH_MIG_OID, \
+    AUTH_EXT_OID, AUTH_MIG_OIDC, AUTH_EXT_OIDC
 from mig.shared.fileio import write_file
 from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
@@ -59,6 +59,7 @@ from mig.shared.init import initialize_main_variables
 from mig.shared.notification import send_email
 from mig.shared.safeinput import filter_commonname
 from mig.shared.useradm import create_user
+from mig.shared.userdb import default_db_path
 from mig.shared.url import openid_autologout_url
 from mig.shared.validstring import is_valid_email_address
 
@@ -633,8 +634,7 @@ accepting create matching supplied ID!'''})
 
         # Now all user fields are set and we can begin adding the user
 
-        db_path = os.path.join(configuration.mig_server_home,
-                               user_db_filename)
+        db_path = default_db_path(configuration)
         try:
             create_user(user_dict, configuration.config_file, db_path,
                         ask_renew=False, default_renew=True)
