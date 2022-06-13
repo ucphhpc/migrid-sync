@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userdb - core user database handling functions
-# Copyright (C) 2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2020-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Core user database functions"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -37,8 +38,22 @@ from mig.shared.serial import load, dump
 
 
 def default_db_path(configuration):
-    """Return default user db path"""
-    return os.path.join(configuration.mig_server_home, user_db_filename)
+    """Return default site user db path.
+
+    NOTE: for installations still storing the user database in the legacy
+    mig/server/ location a warning is logged.
+    Please manually move the database to the current user_db_home state dir or
+    adjust your MiGserver.conf to point to the actual user database dir if you
+    receive the below warning.
+    """
+    _logger = configuration.logger
+    db_path = os.path.join(configuration.user_db_home, user_db_filename)
+    legacy_path = os.path.join(configuration.mig_server_home, user_db_filename)
+    if not os.path.exists(db_path) and os.path.exists(legacy_path):
+        _logger.warning("user DB not found in %s - fall back to legacy %s" %
+                        (db_path, legacy_path))
+        return legacy_path
+    return db_path
 
 
 def lock_user_db(db_path, exclusive=True):

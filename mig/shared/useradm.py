@@ -68,7 +68,7 @@ from mig.shared.sharelinks import load_share_links, update_share_link, \
     get_share_link, mode_chars_map
 from mig.shared.twofactorkeywords import get_twofactor_specs
 from mig.shared.userdb import lock_user_db, unlock_user_db, load_user_db, \
-    load_user_dict, save_user_db
+    load_user_dict, save_user_db, default_db_path
 from mig.shared.validstring import possible_user_id, valid_email_addresses
 from mig.shared.vgrid import vgrid_add_owners, vgrid_remove_owners, \
     vgrid_add_members, vgrid_remove_members, in_vgrid_share, \
@@ -92,14 +92,22 @@ https_authpasswords = user_db_filename
 https_authdigests = user_db_filename
 
 
-def init_user_adm():
-    """Shared init function for all user administration scripts"""
+def init_user_adm(dynamic_db_path=True):
+    """Shared init function for all user administration scripts.
+    The optional dynamic_db_path argument toggles dynamic user db path lookup
+    in the sense that if disabled the user adm script dir is used as db base
+    dir and otherwise an AUTO marker is returned and the path only looked up
+    later from the loaded configuration.
+    """
 
     args = sys.argv[1:]
     app_dir = os.path.dirname(sys.argv[0])
     if not app_dir:
         app_dir = '.'
-    db_path = os.path.join(app_dir, user_db_filename)
+    if dynamic_db_path:
+        db_path = keyword_auto
+    else:
+        db_path = os.path.join(app_dir, user_db_filename)
     return (args, app_dir, db_path)
 
 
@@ -239,8 +247,10 @@ def create_user(
             configuration = conf_path
     else:
         configuration = get_configuration_object()
-
     _logger = configuration.logger
+    if db_path == keyword_auto:
+        db_path = default_db_path(configuration)
+
     fill_distinguished_name(user)
     client_id = user['distinguished_name']
     client_dir = client_id_dir(client_id)
@@ -255,6 +265,7 @@ def create_user(
     else:
         authorized = False
 
+    _logger.info('trying to create or renew user %r' % client_id)
     accepted_peer_list = []
     verify_pattern = verify_peer
     if verify_peer == keyword_auto:
@@ -774,6 +785,8 @@ def fix_user_sharelinks(old_id, client_id, conf_path, db_path,
     else:
         configuration = get_configuration_object()
     _logger = configuration.logger
+    if db_path == keyword_auto:
+        db_path = default_db_path(configuration)
 
     if verbose:
         print('User ID: %s\n' % client_id)
@@ -828,6 +841,8 @@ def fix_vgrid_sharelinks(conf_path, db_path, verbose=False, force=False):
     else:
         configuration = get_configuration_object()
     _logger = configuration.logger
+    if db_path == keyword_auto:
+        db_path = default_db_path(configuration)
 
     # Loop through sharelinks and check that the vgrid ones are registered
 
@@ -900,9 +915,12 @@ def edit_user(
     else:
         configuration = get_configuration_object()
     _logger = configuration.logger
+    if db_path == keyword_auto:
+        db_path = default_db_path(configuration)
 
     client_dir = client_id_dir(client_id)
 
+    _logger.info('trying to edit user %r' % client_id)
     if verbose:
         print('User ID: %s\n' % client_id)
 
@@ -1204,6 +1222,9 @@ def delete_user(
             configuration = conf_path
     else:
         configuration = get_configuration_object()
+    _logger = configuration.logger
+    if db_path == keyword_auto:
+        db_path = default_db_path(configuration)
 
     fill_distinguished_name(user)
     client_id = user['distinguished_name']
@@ -1219,6 +1240,7 @@ def delete_user(
         if not delete_answer.lower().startswith('y'):
             raise Exception("Aborted removal of %s from user DB" % client_id)
 
+    _logger.info('trying to delete user %r and all user data' % client_id)
     if do_lock:
         flock = lock_user_db(db_path)
 
@@ -1231,12 +1253,14 @@ def delete_user(
                 if verbose:
                     print('Loaded existing user DB from: %s' % db_path)
         except Exception as err:
+            _logger.warning("failed to load user db: %s" % err)
             if not force:
                 if do_lock:
                     unlock_user_db(flock)
                 raise Exception('Failed to load user DB: %s' % err)
 
         if client_id not in user_db:
+            _logger.warning("user %r not found in user db" % client_id)
             if not force:
                 if do_lock:
                     unlock_user_db(flock)
@@ -1251,6 +1275,8 @@ def delete_user(
             print('User %s was successfully removed from user DB!'
                   % client_id)
     except Exception as err:
+        _logger.error("failed to remove %r from user db: %s" %
+                      (client_id, err))
         if not force:
             if do_lock:
                 unlock_user_db(flock)
@@ -1277,6 +1303,7 @@ def delete_user(
         try:
             delete_dir(user_path)
         except Exception as exc:
+            _logger.error("could not delete %s: %s" % (user_path, exc))
             if not force:
                 raise Exception('could not remove %s: %s'
                                 % (user_path, exc))
@@ -1284,6 +1311,7 @@ def delete_user(
         print('User dirs for %s was successfully removed!'
               % client_id)
     mark_user_modified(configuration, client_id)
+    _logger.info("deleted user %r including user dirs" % client_id)
 
 
 def get_openid_user_map(configuration, do_lock=True):
@@ -1291,7 +1319,7 @@ def get_openid_user_map(configuration, do_lock=True):
     pseudo certificate DN.
     """
     id_map = {}
-    db_path = os.path.join(configuration.mig_server_home, user_db_filename)
+    db_path = default_db_path(configuration)
     user_map = load_user_db(db_path, do_lock=do_lock)
     user_alias = configuration.user_openid_alias
     for cert_id in user_map:
@@ -1391,7 +1419,7 @@ def get_any_oid_user_dn(configuration, raw_login,
                      % (distinguished_name, raw_login))
         return distinguished_name
     elif configuration.user_openid_alias:
-        db_path = os.path.join(configuration.mig_server_home, user_db_filename)
+        db_path = default_db_path(configuration)
         user_map = load_user_db(db_path, do_lock=do_lock)
         user_alias = configuration.user_openid_alias
         _logger.debug('user_map')
@@ -1424,7 +1452,7 @@ def get_any_oid_user_dn(configuration, raw_login,
 
 def get_full_user_map(configuration, do_lock=True):
     """Load complete user map including any OpenID aliases"""
-    db_path = os.path.join(configuration.mig_server_home, user_db_filename)
+    db_path = default_db_path(configuration)
     user_map = load_user_db(db_path, do_lock=do_lock)
     oid_aliases = get_openid_user_map(configuration)
     for (alias, cert_id) in oid_aliases.items():
@@ -1515,6 +1543,8 @@ def migrate_users(
             configuration = conf_path
     else:
         configuration = get_configuration_object()
+    if db_path == keyword_auto:
+        db_path = default_db_path(configuration)
 
     if do_lock:
         flock = lock_user_db(db_path)
@@ -1704,6 +1734,8 @@ def fix_entities(
             configuration = conf_path
     else:
         configuration = get_configuration_object()
+    if db_path == keyword_auto:
+        db_path = default_db_path(configuration)
 
     if os.path.exists(db_path):
         try:
@@ -1763,6 +1795,8 @@ def fix_userdb_keys(
             configuration = conf_path
     else:
         configuration = get_configuration_object()
+    if db_path == keyword_auto:
+        db_path = default_db_path(configuration)
 
     if do_lock:
         flock = lock_user_db(db_path)
@@ -1834,6 +1868,8 @@ def search_users(search_filter, conf_path, db_path,
     else:
         configuration = get_configuration_object()
     _logger = configuration.logger
+    if db_path == keyword_auto:
+        db_path = default_db_path(configuration)
 
     try:
         if isinstance(db_path, dict):
@@ -1889,6 +1925,8 @@ def _user_general_notify(user_id, targets, conf_path, db_path,
     else:
         configuration = get_configuration_object()
     _logger = configuration.logger
+    if db_path == keyword_auto:
+        db_path = default_db_path(configuration)
     try:
         if isinstance(db_path, dict):
             user_db = db_path
@@ -2010,6 +2048,8 @@ def user_password_check(user_id, conf_path, db_path, verbose=False,
     else:
         configuration = get_configuration_object()
     _logger = configuration.logger
+    if db_path == keyword_auto:
+        db_path = default_db_path(configuration)
     try:
         if isinstance(db_path, dict):
             user_db = db_path
@@ -2092,6 +2132,8 @@ def req_password_check(req_path, conf_path, db_path, verbose=False,
     else:
         configuration = get_configuration_object()
     _logger = configuration.logger
+    if db_path == keyword_auto:
+        db_path = default_db_path(configuration)
 
     try:
         user_dict = load(req_path)
@@ -2131,6 +2173,8 @@ def user_twofactor_status(user_id, conf_path, db_path, fields,
     else:
         configuration = get_configuration_object()
     _logger = configuration.logger
+    if db_path == keyword_auto:
+        db_path = default_db_path(configuration)
     try:
         if isinstance(db_path, dict):
             user_db = db_path

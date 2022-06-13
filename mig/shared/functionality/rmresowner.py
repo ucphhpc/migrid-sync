@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rmresowner - remove resource owner
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,9 +25,10 @@
 # -- END_HEADER ---
 #
 
-"""Add a CN to the list of administrators for a given resource. The CN is
+"""Remove a CN from the list of administrators for a given resource. The CN is
 not required to be that of an existing MiG user.
 """
+
 from __future__ import absolute_import
 
 import os
@@ -54,8 +55,8 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Remove Resource Owner'})
+    output_objects.append(
+        {'object_type': 'header', 'text': 'Remove Resource Owner'})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -63,7 +64,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -80,25 +81,25 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'You must be an owner of %s to remove another owner!'
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'You must be an owner of %s to remove another owner!'
                                % unique_resource_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # is_owner incorporates unique_resource_name verification - no need to
     # specifically check for illegal directory traversal
 
-    if not is_user(cert_id, configuration.mig_server_home):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s is not a valid %s user!' % \
-                                (cert_id, configuration.short_title) })
+    if not is_user(cert_id, configuration):
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '%s is not a valid %s user!' %
+                               (cert_id, configuration.short_title)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # reject remove if cert_id is not an owner
 
     if not resource_is_owner(unique_resource_name, cert_id, configuration):
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : '%s is not an owner of %s.'
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '%s is not an owner of %s.'
                                % (cert_id, unique_resource_name)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -108,19 +109,17 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                                  unique_resource_name,
                                                  [cert_id])
     if not rm_status:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not remove owner, reason: %s'
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Could not remove owner, reason: %s'
                                % rm_msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    output_objects.append({'object_type': 'text', 'text'
-                          : '%s was successfully removed and is no longer an owner of %s!'
+    output_objects.append({'object_type': 'text', 'text':
+                           '%s was successfully removed and is no longer an owner of %s!'
                            % (cert_id, unique_resource_name)})
     output_objects.append({'object_type': 'link', 'destination':
-                        'resadmin.py?unique_resource_name=%s' % \
+                           'resadmin.py?unique_resource_name=%s' %
                            unique_resource_name, 'class': 'adminlink iconspace',
                            'title': 'Administrate resource',
                            'text': 'Manage resource'})
     return (output_objects, returnvalues.OK)
-
-

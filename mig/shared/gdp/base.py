@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # base - gdp base helper functions related to GDP actions
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -46,8 +46,7 @@ except:
 from mig.shared.base import client_id_dir, valid_dir_input, extract_field, \
     fill_distinguished_name, expand_openid_alias, get_short_id
 from mig.shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
-    gdp_distinguished_field, io_session_timeout, \
-    user_db_filename as mig_user_db_filename, \
+    keyword_auto, gdp_distinguished_field, io_session_timeout, \
     valid_gdp_auth_scripts as valid_auth_scripts
 from mig.shared.fileio import touch, make_symlink, write_file, remove_rec, \
     acquire_file_lock, release_file_lock, copy_file, move_rec, makedirs_rec
@@ -62,6 +61,7 @@ from mig.shared.notification import send_email
 from mig.shared.serial import load, dump
 from mig.shared.useradm import create_user, delete_user, edit_user, \
     get_full_user_map, lock_user_db
+from mig.shared.userdb import default_db_path
 from mig.shared.vgrid import vgrid_flat_name, vgrid_owners, vgrid_is_owner, \
     vgrid_is_member, vgrid_set_owners, vgrid_add_members, vgrid_set_settings, \
     vgrid_members, vgrid_create_allowed, vgrid_remove_members, vgrid_remove_owners, \
@@ -755,8 +755,7 @@ def __delete_mig_user(configuration,
     log_ok_msg = "GDP: %s" % ok_msg
     log_missing_msg = "GDP: %s" % missing_msg
     log_err_msg = "GDP: %s" % err_msg
-    mig_user_db_path = os.path.join(configuration.mig_server_home,
-                                    mig_user_db_filename)
+    mig_user_db_path = default_db_path(configuration)
     mig_user_map = get_full_user_map(configuration)
     mig_user_dict = mig_user_map.get(client_id, None)
     if mig_user_dict is None:
@@ -2117,6 +2116,10 @@ def edit_gdp_user(
                                                          db_path=gdp_db_path)
     (log_filepath, log_lock_filepath) = __user_log_filepath(configuration)
 
+    # NOTE: we need explicit mig_db_path lookup here for direct calls
+    if mig_db_path == keyword_auto:
+        mig_db_path = default_db_path(configuration)
+
     if verbose:
         print(log_prefix)
 
@@ -3147,8 +3150,7 @@ def create_project_user(
         mig_user_dict['short_id'] = ''
         mig_user_dict['old_password'] = ''
         mig_user_dict['password'] = ''
-        mig_user_db_path = os.path.join(configuration.mig_server_home,
-                                        mig_user_db_filename)
+        mig_user_db_path = default_db_path(configuration)
         try:
             create_user(mig_user_dict, configuration.config_file,
                         mig_user_db_path, ask_renew=False,

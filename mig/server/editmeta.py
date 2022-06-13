@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # editmeta - Edit a MiG user metadata in user database
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -118,4 +118,5 @@ if '__main__' == __name__:
     except Exception as err:
         print(err)
         sys.exit(1)
-    print('%s\nchanged to\n%s\nin user database' % (user_id, user))
+    print('%s\nchanged to\n%s\nin user database' %
+          (user_id, user))

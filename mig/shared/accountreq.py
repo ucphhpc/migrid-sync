@@ -53,9 +53,9 @@ from mig.shared.safeinput import name_extras, password_extras, \
     password_min_len, password_max_len, valid_password_chars, \
     valid_name_chars, dn_max_len, html_escape, validated_input, REJECT_UNSET
 from mig.shared.serial import load, dump
-from mig.shared.useradm import init_user_adm, user_request_reject, \
-    user_account_notify, default_search, search_users, create_user, \
-    load_user_dict
+from mig.shared.useradm import user_request_reject, user_account_notify, \
+    default_search, search_users, create_user, load_user_dict
+from mig.shared.userdb import default_db_path
 from mig.shared.validstring import valid_email_addresses
 
 
@@ -494,7 +494,7 @@ def accept_account_req(req_id, configuration, peer_id, user_copy=True,
     _logger.info('accept account %s with peer %s' % (req_id, peer_id))
     # NOTE: conf_path accepts configuration object
     conf_path = configuration
-    db_path = os.path.join(configuration.mig_server_home, user_db_filename)
+    db_path = default_db_path(configuration)
     req_path = os.path.join(configuration.user_pending, req_id)
     expire = None
     user_id = None
@@ -579,7 +579,7 @@ def peer_account_req(req_id, configuration, target_id, user_copy=False,
                  (req_id, target_id))
     # NOTE: conf_path accepts configuration object
     conf_path = configuration
-    db_path = os.path.join(configuration.mig_server_home, user_db_filename)
+    db_path = default_db_path(configuration)
     req_path = os.path.join(configuration.user_pending, req_id)
     regex_keys = []
     search_filter = default_search()
@@ -718,7 +718,7 @@ def reject_account_req(req_id, configuration, reject_reason,
                  (req_id, reject_reason))
     # NOTE: conf_path accepts configuration object
     conf_path = configuration
-    db_path = os.path.join(configuration.mig_server_home, user_db_filename)
+    db_path = default_db_path(configuration)
     req_path = os.path.join(configuration.user_pending, req_id)
     try:
         req_dict = load(req_path)
@@ -878,10 +878,10 @@ def user_manage_commands(configuration, mig_user, req_path, user_id, user_dict,
     else:
         cmd_helpers['command_cert_create'] = """on CA host (%s):
 sudo su - %s
-rsync -aP %s@%s:mig/server/%s ~/
+rsync -aP %s@%s:%s ~/
 ./ca-scripts/createusercert.py -a '%s' -d ~/%s -r '%s' -s '%s' -u '%s'""" % \
             (configuration.ca_fqdn, configuration.ca_user, mig_user,
-             configuration.server_fqdn, user_db_filename,
+             configuration.server_fqdn, default_db_path(configuration),
              configuration.admin_email, user_db_filename, configuration.ca_smtp,
              configuration.server_fqdn, user_id)
         cmd_helpers['command_cert_revoke'] = """on CA host (%s):

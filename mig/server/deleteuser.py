@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # deleteuser - Remove a MiG user
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,15 +26,16 @@
 #
 
 """Remove MiG user from user database and file system"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
+import getopt
 import os
 import sys
-import getopt
 
 from mig.shared.base import fill_distinguished_name, fill_user, \
-     distinguished_name_to_user
+    distinguished_name_to_user
 from mig.shared.conf import get_configuration_object
 from mig.shared.useradm import init_user_adm, delete_user
 
@@ -100,7 +101,8 @@ if '__main__' == __name__:
         else:
             print('using configuration from MIG_CONF (or default)')
 
-    configuration = get_configuration_object(config_file=conf_path, skip_log=True)
+    configuration = get_configuration_object(
+        config_file=conf_path, skip_log=True)
 
     if user_id and args:
         print('Error: Only one kind of user specification allowed at a time')
@@ -129,9 +131,9 @@ if '__main__' == __name__:
         user_dict['country'] = raw_input('2-letter Country Code: ')
         user_dict['email'] = raw_input('Email: ')
     else:
-        print("Error: Missing one or more of the arguments: " \
-            + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] " \
-            + "[EMAIL]")
+        print("Error: Missing one or more of the arguments: "
+              + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] "
+              + "[EMAIL]")
         sys.exit(1)
 
     if 'distinguished_name' not in user_dict:
@@ -148,5 +150,5 @@ if '__main__' == __name__:
     except Exception as err:
         print(err)
         sys.exit(1)
-    print('Deleted %s from user database and from file system'\
+    print('Deleted %s from user database and from file system'
           % user_dict['distinguished_name'])

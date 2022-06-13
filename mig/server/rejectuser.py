@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rejectuser - Reject a MiG user request with an explanation on email
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,9 +30,9 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
-import sys
-import os
 import getopt
+import os
+import sys
 
 from mig.shared.base import fill_distinguished_name, fill_user
 from mig.shared.defaults import keyword_auto, valid_auth_types

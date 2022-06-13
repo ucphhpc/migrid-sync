@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # extcertaction - handle external certificate sign up and send email to admins
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """External certificate sign up action back end"""
+
 from __future__ import absolute_import
 
 # TODO: this backend is horribly KU/UCPH-specific, should move that to conf
@@ -39,13 +40,13 @@ from mig.shared.accountreq import user_manage_commands
 from mig.shared.accountstate import default_account_expire
 from mig.shared.base import force_utf8, force_unicode, generate_https_urls, \
     distinguished_name_to_user, fill_distinguished_name, fill_user
-from mig.shared.defaults import user_db_filename
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables
 from mig.shared.notification import send_email
 from mig.shared.serial import dumps
 from mig.shared.useradm import create_user
+from mig.shared.userdb import default_db_path
 
 
 def signature():
@@ -197,7 +198,7 @@ multiple "key=val" fields separated by "/".
 
         # Now all user fields are set and we can begin adding the user
 
-        db_path = os.path.join(configuration.mig_server_home, user_db_filename)
+        db_path = default_db_path(configuration)
         try:
             create_user(user_dict, configuration.config_file, db_path,
                         ask_renew=False)

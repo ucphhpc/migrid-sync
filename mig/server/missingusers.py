@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # missingusers - Search for missing users in MiG user database
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,13 +26,14 @@
 #
 
 """Find all users in user_home and compare with data base"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
 import fnmatch
+import getopt
 import os
 import sys
-import getopt
 
 from mig.shared.base import client_dir_id, distinguished_name_to_user
 from mig.shared.useradm import init_user_adm, search_users, default_search

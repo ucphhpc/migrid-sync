@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # edituser - Edit a MiG user
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,8 +35,8 @@ import getopt
 import os
 import sys
 
-from mig.shared.conf import get_configuration_object
 from mig.shared.base import is_gdp_user
+from mig.shared.conf import get_configuration_object
 from mig.shared.useradm import init_user_adm, edit_user
 
 
@@ -116,8 +116,8 @@ if '__main__' == __name__:
         else:
             print('using configuration from MIG_CONF (or default)')
 
-    configuration = get_configuration_object(config_file=conf_path,
-                                              skip_log=True)
+    configuration = get_configuration_object(
+        config_file=conf_path, skip_log=True)
 
     if not user_id:
         print('Error: Existing user ID is required')
