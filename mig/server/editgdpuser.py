@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # editgdpuser - Edit a MiG GDP user
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,12 +27,13 @@
 
 """Edit MiG GDP user in the GDP database and all related GDP project users
 in the MiG user database and file system"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
+import getopt
 import os
 import sys
-import getopt
 
 from mig.shared.conf import get_configuration_object
 from mig.shared.gdp.all import edit_gdp_user, reset_account_roles, \
@@ -59,8 +60,8 @@ Where OPTIONS may be one or more of:
    -r                  Reset project logins
    -S ACCOUNT_STATE    Change GDP user account state to ACCOUNT_STATE
    -v                  Verbose output
-"""\
-         % {'name': name})
+"""
+          % {'name': name})
 
 
 # ## Main ###
@@ -139,9 +140,9 @@ if '__main__' == __name__:
             pass
 
     elif not (account_state or reset_roles):
-        print("Error: Missing one or more of the arguments: " \
-            + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] " \
-            + "[EMAIL]")
+        print("Error: Missing one or more of the arguments: "
+              + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] "
+              + "[EMAIL]")
         sys.exit(1)
 
     # Remove empty value fields

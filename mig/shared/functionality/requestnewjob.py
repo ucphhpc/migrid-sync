@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # requestnewjob - Request a new job to execute on resource
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -101,7 +101,7 @@ def main(client_id, user_arguments_dict):
     base_dir = os.path.abspath(os.path.join(configuration.resource_home,
                                             unique_resource_name)) + os.sep
 
-    if not is_resource(unique_resource_name, configuration.resource_home):
+    if not is_resource(unique_resource_name, configuration):
         output_objects.append(
             {'object_type': 'error_text', 'text':
              "Failure: You must be an owner of '%s' to get the PGID!" %

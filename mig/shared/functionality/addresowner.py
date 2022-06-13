@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addresowner - add one or more resource owners
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -87,7 +87,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
-        output_objects.append({'object_type': 'error_text', 'text': 'You must be an owner of %s to add a new owner!'
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'You must be an owner of %s to add a new owner!'
                                % unique_resource_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -99,8 +100,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
         cert_id = cert_id.strip()
         if not cert_id:
             continue
-        if not is_user(cert_id, configuration.mig_server_home):
-            output_objects.append({'object_type': 'error_text', 'text': '%s is not a valid %s user!'
+        if not is_user(cert_id, configuration):
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   '%s is not a valid %s user!'
                                    % (cert_id, configuration.short_title)})
             status = returnvalues.CLIENT_ERROR
             continue
@@ -108,7 +110,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # don't add if already an owner
 
         if resource_is_owner(unique_resource_name, cert_id, configuration):
-            output_objects.append({'object_type': 'error_text', 'text': '%s is already an owner of %s.'
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   '%s is already an owner of %s.'
                                    % (cert_id, unique_resource_name)})
             status = returnvalues.CLIENT_ERROR
             continue
@@ -119,7 +122,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                                     unique_resource_name,
                                                     [cert_id])
         if not add_status:
-            output_objects.append({'object_type': 'error_text', 'text': 'Could not add new owner, reason: %s'
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Could not add new owner, reason: %s'
                                    % add_msg})
             status = returnvalues.SYSTEM_ERROR
             continue
@@ -137,7 +141,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 (unique_resource_name, request_name)})
 
     if cert_id_added:
-        output_objects.append({'object_type': 'html_form', 'text': 'New owner(s)<br/>%s<br/>successfully added to %s!'
+        output_objects.append({'object_type': 'html_form', 'text':
+                               'New owner(s)<br/>%s<br/>successfully added to %s!'
                                % ('<br />'.join(cert_id_added),
                                   unique_resource_name)})
         cert_id_fields = ''

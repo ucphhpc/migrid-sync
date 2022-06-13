@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # requestinteractivejob - handle interactive job requests from resources
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -70,7 +70,7 @@ def signature():
 (logger, configuration, client_id, o) = \
     init_cgiscript_possibly_with_cert()
 
-if configuration.site_enable_gdp or not configuration.site_enable_jobs:
+if not configuration.site_enable_live_jobs:
     o.out('Not available on this site!')
     o.reply_and_exit(o.CLIENT_ERROR)
 
@@ -207,7 +207,7 @@ if mrsldict['STATUS'] == 'FINISHED':
     o.out('requestinteractivejob error! Job already executed!')
     o.reply_and_exit(o.ERROR)
 
-if not is_resource(unique_resource_name, configuration.resource_home):
+if not is_resource(unique_resource_name, configuration):
     o.out('requestinteractivejob error! Your unique_resource_name ' +
           ' is not recognized as a %s resource!' % configuration.short_title
           )

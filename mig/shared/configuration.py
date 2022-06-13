@@ -109,6 +109,7 @@ def fix_missing(config_file, verbose=True):
         'vgrid_private_base': '~/state/vgrid_private_base/',
         'user_home': '~/state/user_home/',
         'user_settings': '~/state/user_settings/',
+        'user_db_home': '~/state/user_db_home/',
         'user_cache': '~/state/user_cache/',
         'user_messages': '~/state/user_messages/',
         'server_home': '~/state/server_home/',
@@ -335,6 +336,11 @@ class Configuration(object):
     """Server configuration in parsed form"""
 
     mig_server_id = None
+    # Optional conf options with default values
+    state_path = os.path.expanduser('~/state')
+    mig_path = os.path.expanduser('~/mig')
+    certs_path = os.path.expanduser('~/certs')
+    # Mandatory conf options
     mrsl_files_dir = ''
     re_files_dir = ''
     re_pending_dir = ''
@@ -372,6 +378,7 @@ class Configuration(object):
     webserver_home = ''
     user_home = ''
     user_settings = ''
+    user_db_home = ''
     user_cache = ''
     user_messages = ''
     sss_home = ''
@@ -787,6 +794,20 @@ location.""" % self.config_file)
         else:
             self.new_user_default_ui = self.user_interface[0]
 
+        if config.has_option('GLOBAL', 'state_path'):
+            self.state_path = config.get('GLOBAL', 'state_path')
+        if config.has_option('GLOBAL', 'mig_path'):
+            self.mig_path = config.get('GLOBAL', 'mig_path')
+        if config.has_option('GLOBAL', 'certs_path'):
+            self.certs_path = config.get('GLOBAL', 'certs_path')
+
+        # NOTE: site user DB is migrated from mig_server_home to user_db_home
+        #       in state, with legacy fall-back in the default_db_path helper.
+        if config.has_option('GLOBAL', 'user_db_home'):
+            self.user_db_home = config.get('GLOBAL', 'user_db_home')
+        else:
+            self.user_db_home = os.path.join(self.state_path, 'user_db_home')
+
         if config.has_option('GLOBAL', 'admin_list'):
             # Parse semi-colon separated list of admins with optional spaces
             admins = config.get('GLOBAL', 'admin_list')
@@ -925,6 +946,16 @@ location.""" % self.config_file)
                                                            'enable_resources')
         else:
             self.site_enable_resources = True
+        # NOTE: disable legacy interactive jobs unless specifically enabled
+        if config.has_option('SITE', 'enable_live_jobs'):
+            self.site_enable_live_jobs = config.getboolean('SITE',
+                                                           'enable_live_jobs')
+        else:
+            self.site_enable_live_jobs = False
+        # NOTE: disable legacy interactive jobs unless fully supported
+        if not self.site_enable_jobs or not self.site_enable_resources:
+            self.site_enable_live_jobs = False
+
         if config.has_option('GLOBAL', 'user_monitor_log'):
             self.user_monitor_log = config.get('GLOBAL', 'user_monitor_log')
         if config.has_option('SITE', 'enable_workflows'):
@@ -1904,7 +1935,7 @@ location.""" % self.config_file)
                     self.gdp_data_categories = data_categories
             if not data_categories:
                 logger.error('gdp_data_categories: %r ' % load_path
-                    + 'is not a valid data_categoriesfile!')
+                             + 'is not a valid data_categoriesfile!')
 
         if config.has_option('SITE', 'transfers_from'):
             transfers_from_str = config.get('SITE', 'transfers_from')
@@ -2135,6 +2166,7 @@ location.""" % self.config_file)
             # NOTE: compute jobs will require vast modifications to support GDP
             self.site_enable_resources = False
             self.site_enable_jobs = False
+            self.site_enable_live_jobs = False
             self.site_enable_sshmux = False
             self.site_enable_preview = False
             self.site_enable_vmachines = False
@@ -2309,8 +2341,7 @@ location.""" % self.config_file)
         if self.site_enable_gdp \
                 and not self.site_twofactor_strict_address:
             logger.warning("twofactor_strict_address:"
-                    + " DISABLED and GDP ENABLED: Hope this is a develop/test environment ?!?")
-
+                           + " DISABLED and GDP ENABLED: Hope this is a develop/test environment ?!?")
 
     def parse_peers(self, peerfile):
 

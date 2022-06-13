@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # findtype - Detect client entity type
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,18 +36,19 @@ from mig.shared.base import client_id_dir
 from mig.shared.defaults import user_db_filename
 from mig.shared.listhandling import is_item_in_pickled_list
 from mig.shared.serial import load
+from mig.shared.userdb import default_db_path
 from mig.shared.validstring import valid_user_path
 
 VALID_FQDN_CHARACTERS = ascii_letters + digits + '.-'
 MIG_SERVER_ID = 'MiG-Server'
 
 
-def is_user(entity_id, mig_server_home):
-    """Check if user exists in database"""
+def is_user(entity_id, configuration):
+    """Check if user exists in database. """
 
     result = False
 
-    db_path = os.path.join(mig_server_home, user_db_filename)
+    db_path = default_db_path(configuration)
     try:
         user_db = load(db_path)
         if entity_id in user_db:
@@ -57,7 +58,7 @@ def is_user(entity_id, mig_server_home):
     return result
 
 
-def is_server(entity_id, server_home, local=False):
+def is_server(entity_id, configuration, local=False):
     """Check that entity_id is a valid FQDN and make sure that
     org_unit matches a predefined MiG server ID string.
     When called from a basic cgi handler all IO must remain local
@@ -71,12 +72,12 @@ def is_server(entity_id, server_home, local=False):
     return True
 
 
-def is_resource(entity_id, resource_home):
+def is_resource(entity_id, configuration):
     """loop though resource_home and find out if a matching
     directory is found"""
 
     entity_upper = entity_id.upper()
-    dir_list = os.listdir(resource_home)
+    dir_list = os.listdir(configuration.resource_home)
     for dir_entry in dir_list:
         if dir_entry.upper().strip() == entity_upper.strip():
             return True

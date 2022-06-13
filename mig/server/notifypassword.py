@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # notifypassword - Send forgotten password from user database to user
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,11 +29,12 @@
 reminder to saved notification address or email from Distinguished Name field
 of user entry.
 """
+
 from __future__ import print_function
 from __future__ import absolute_import
 
-import sys
 import getopt
+import sys
 
 from mig.shared.defaults import keyword_auto
 from mig.shared.notification import notify_user
@@ -130,7 +131,7 @@ if '__main__' == __name__:
     for (proto, address_list) in addresses.items():
         for address in address_list:
             notify_dict['NOTIFY'].append('%s: %s' % (proto, address))
-    print("Sending password reminder(s) for '%s' to:\n%s" % \
+    print("Sending password reminder(s) for '%s' to:\n%s" %
           (user_id, '\n'.join(notify_dict['NOTIFY'])))
     notify_user(notify_dict, [user_id, password], 'PASSWORDREMINDER', logger,
                 '', configuration)

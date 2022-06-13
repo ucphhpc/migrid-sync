@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # handlers - back end handler helpers
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -192,13 +192,13 @@ def get_allowed_path(configuration, client_id, path):
             + path_slash_stripped[:path_slash_stripped.rfind('/')]
         target_file = path_slash_stripped[path_slash_stripped.rfind('/')
                                           + 1:]
-    elif is_user(client_id, configuration.mig_server_home):
+    elif is_user(client_id, configuration):
         real_path = \
             os.path.normpath(os.path.join(configuration.user_home,
                                           client_dir, path))
         target_dir = os.path.dirname(real_path)
         target_file = os.path.basename(real_path)
-    elif is_server(client_id, configuration.server_home):
+    elif is_server(client_id, configuration):
         real_path = \
             os.path.normpath(os.path.join(configuration.server_home,
                                           client_dir, path))

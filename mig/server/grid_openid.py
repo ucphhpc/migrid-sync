@@ -117,6 +117,7 @@ try:
     from mig.shared.url import urlparse, urlencode, parse_qsl
     from mig.shared.useradm import get_openid_user_dn, check_password_scramble, \
         check_hash
+    from mig.shared.userdb import default_db_path
     from mig.shared.validstring import possible_user_id
 except Exception as exc:
     print("ERROR: migrid modules could not be loaded: %s" % exc)
@@ -1690,8 +1691,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'address': address,
         'port': port,
         'root_dir': os.path.abspath(configuration.user_home),
-        'db_path': os.path.abspath(os.path.join(configuration.mig_server_home,
-                                                user_db_filename)),
+        'db_path': os.path.abspath(default_db_path(configuration)),
         'session_store': os.path.abspath(configuration.openid_store),
         'session_ttl': 24*3600,
         'allow_password': 'password' in configuration.user_openid_auth,

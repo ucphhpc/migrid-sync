@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 #
 # --- BEGIN_HEADER ---
 #
 #
 # fixusersharelinks - update sharelinks for legacy edituser victims
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,11 +30,12 @@
 """Fix any leftover sharelinks not previously handled by edituser by relinking
 them to the current user home and updating the pickled owner info.
 """
+
 from __future__ import print_function
 from __future__ import absolute_import
 
-import sys
 import getopt
+import sys
 
 from mig.shared.useradm import init_user_adm, fix_user_sharelinks
 
@@ -54,8 +54,8 @@ Where OPTIONS may be one or more of:
    -f                  Force operations to continue past errors
    -h                  Show this help
    -v                  Verbose output
-"""\
-         % {'name': name})
+"""
+          % {'name': name})
 
 
 if '__main__' == __name__:

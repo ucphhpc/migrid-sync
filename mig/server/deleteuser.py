@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # deleteuser - Remove a MiG user
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,9 +31,9 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 from builtins import input
+import getopt
 import os
 import sys
-import getopt
 
 from mig.shared.base import fill_distinguished_name, fill_user, \
     distinguished_name_to_user
@@ -102,8 +102,8 @@ if '__main__' == __name__:
         else:
             print('using configuration from MIG_CONF (or default)')
 
-    configuration = get_configuration_object(config_file=conf_path)
-    logger = configuration.logger
+    configuration = get_configuration_object(
+        config_file=conf_path, skip_log=True)
 
     if user_id and args:
         print('Error: Only one kind of user specification allowed at a time')
@@ -111,7 +111,6 @@ if '__main__' == __name__:
         sys.exit(1)
 
     if args:
-        #logger.debug('deleteuser called with args: %s' % args)
         user_dict['full_name'] = args[0]
         try:
             user_dict['organization'] = args[1]
@@ -124,7 +123,6 @@ if '__main__' == __name__:
 
             pass
     elif user_id:
-        #logger.debug('deleteuser called with user_id: %s' % [user_id])
         user_dict = distinguished_name_to_user(user_id)
     elif not configuration.site_enable_gdp:
         print('Please enter the details for the user to be removed:')
@@ -142,7 +140,6 @@ if '__main__' == __name__:
     if 'distinguished_name' not in user_dict:
         fill_distinguished_name(user_dict)
 
-    #logger.debug('deleteuser with ID: %s' % [user_dict['distinguished_name']])
     fill_user(user_dict)
 
     # Now all user fields are set and we can begin deleting the user
@@ -150,12 +147,9 @@ if '__main__' == __name__:
     if verbose:
         print('Removing DB entry and dirs for user: %s' % user_dict)
     try:
-        #logger.debug('Removing DB entry and dirs for user: %s' % [user_dict])
         delete_user(user_dict, conf_path, db_path, force, verbose)
     except Exception as err:
         print(err)
         sys.exit(1)
-    logger.info('Removed user %r from user database and file system' %
-                [user_dict['distinguished_name']])
     print('Deleted %s from user database and from file system'
           % user_dict['distinguished_name'])

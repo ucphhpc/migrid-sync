@@ -42,12 +42,13 @@ from mig.shared.accountstate import default_account_expire
 from mig.shared.base import fill_distinguished_name, fill_user, \
     force_native_str_rec
 from mig.shared.conf import get_configuration_object
-from mig.shared.defaults import valid_auth_types
+from mig.shared.defaults import valid_auth_types, keyword_auto
 from mig.shared.gdp.all import ensure_user
 from mig.shared.pwhash import unscramble_password, scramble_password, \
     make_hash
 from mig.shared.serial import load
 from mig.shared.useradm import init_user_adm, create_user, load_user_dict
+from mig.shared.userdb import default_db_path
 
 cert_warn = """
 Please note that you *must* use either the -i CERT_DN option to createuser
@@ -186,6 +187,9 @@ if '__main__' == __name__:
 
     configuration = get_configuration_object(config_file=conf_path)
     logger = configuration.logger
+    # NOTE: we nedd explicit db_path lookup here for load_user_dict call
+    if db_path == keyword_auto:
+        db_path = default_db_path(configuration)
 
     if user_file and args:
         print('Error: Only one kind of user specification allowed at a time')

@@ -726,7 +726,7 @@ def init_vgrid_script_add_rem(
         return (False, msg, None)
 
     if subject_type == 'member' or subject_type == 'owner':
-        if not is_user(subject, configuration.mig_server_home):
+        if not is_user(subject, configuration):
             msg += """%(user_id)s is NOT a known %(short_title)s user and
 %(vgrid_label)s participation is limited to users already signed up to
 %(short_title)s""" % {'user_id': subject, 'vgrid_label':
@@ -734,7 +734,7 @@ def init_vgrid_script_add_rem(
                       configuration.short_title}
             return (False, msg, None)
     elif subject_type == 'resource':
-        if not is_resource(subject, configuration.resource_home):
+        if not is_resource(subject, configuration):
             msg += '%s is not a valid %s resource' % \
                 (subject, configuration.short_title)
             msg += \
