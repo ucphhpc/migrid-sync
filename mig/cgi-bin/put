@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # put - HTTP PUT handler
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -414,7 +414,7 @@ elif not client_id and filename.startswith('/share_redirect/'):
 
     o.reply_and_exit(o.OK)
 
-elif is_user(client_id, configuration.mig_server_home):
+elif is_user(client_id, configuration):
 
     # logger.info("Certificate found as a user cert: " + client_id)
 
@@ -634,7 +634,7 @@ Please contact the server administrator.""")
         o.client("A 'normal' file was uploaded (%s). It can now be used as an inputfile in your .mRSL files"
                  % filename)
         o.reply_and_exit(o.OK)
-elif is_server(client_id, configuration.server_home):
+elif is_server(client_id, configuration):
 
     logger.info('Certificate found as a server cert: %s'
                 % client_id)
