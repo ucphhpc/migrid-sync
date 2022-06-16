@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # archives - zip/tar packing and unpacking helpers
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Helpers for zip/tar archive packing and unpacking"""
+
 from __future__ import absolute_import
 
 import os
@@ -75,7 +76,14 @@ def handle_package_upload(
     real_dst += os.sep
     mrslfiles_to_parse = []
 
+    # NOTE: we keep real_src_lower on default string form for .endswith(str)
     real_src_lower = real_src.lower()
+
+    # NOTE: we need all path components on utf form for mangling
+    base_dir = force_utf8(base_dir)
+    real_dst = force_utf8(real_dst)
+    real_src = force_utf8(real_src)
+
     if real_src_lower.endswith('.zip'):
 
         # Handle .zip file
