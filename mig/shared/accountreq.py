@@ -521,11 +521,6 @@ def accept_account_req(req_id, configuration, peer_id, user_copy=True,
         fill_distinguished_name(req_dict)
     fill_user(req_dict)
     user_id = req_dict['distinguished_name']
-    # Default to inform mail used in request
-    raw_targets = {}
-    raw_targets['email'] = raw_targets.get('email', [])
-    if user_copy:
-        raw_targets['email'].append(req_dict.get('email', keyword_auto))
 
     user_dict.update(req_dict)
     operation_type = 'create'
@@ -541,12 +536,10 @@ def accept_account_req(req_id, configuration, peer_id, user_copy=True,
     if 'expire' not in user_dict:
         override_fields['expire'] = expire
 
-    # Now all user fields are set and we can reject and warn the user
+    # Now all user fields are set and we can create and notify the user
     # NOTE: let non-ID command line values override loaded values
     for (key, val) in list(override_fields.items()):
         user_dict[key] = val
-
-    # Now all user fields are set and we can begin adding the user
 
     _logger.info('%s %s in user database and in file system' %
                  (operation_type.title(), user_dict['distinguished_name']))
@@ -562,6 +555,47 @@ def accept_account_req(req_id, configuration, peer_id, user_copy=True,
 
     _logger.info('%sd %s in user database and in file system' %
                  (operation_type.title(), user_dict['distinguished_name']))
+
+    if user_copy or admin_copy:
+        extra_copies = []
+        # Default to inform mail used in request
+        raw_targets = {}
+        raw_targets['email'] = raw_targets.get('email', [])
+        if user_copy:
+            raw_targets['email'].append(keyword_auto)
+
+        (_, username, full_name, addresses, errors) = user_account_notify(
+            user_id, raw_targets, conf_path, db_path, False, admin_copy,
+            extra_copies)
+        if errors:
+            _logger.warning("account intro address lookup errors for %s: %s" %
+                            (user_id, '\n'.join(errors)))
+
+        if not addresses:
+            _logger.warning("no email targets for %s account intro" % user_id)
+        else:
+            _logger.debug('send account intro to %s' % addresses)
+            notify_dict = {'JOB_ID': 'NOJOBID',
+                           'USER_CERT': user_id, 'NOTIFY': []}
+            for (proto, address_list) in addresses.items():
+                for address in address_list:
+                    notify_dict['NOTIFY'].append('%s: %s' % (proto, address))
+
+            _logger.info("send account intro for '%s' to:\n%s" %
+                         (user_id, '\n'.join(notify_dict['NOTIFY'])))
+            (send_status, send_errors) = notify_user(
+                notify_dict, [user_id, username, full_name], 'ACCOUNTINTRO',
+                _logger, '', configuration)
+            if send_status:
+                _logger.debug("sent account intro for '%s' to:\n%s" %
+                              (user_id, '\n'.join(notify_dict['NOTIFY'])))
+            else:
+                _logger.warning('send account intro failed for recipient(s): %s'
+                                % '\n'.join(send_errors))
+    else:
+        _logger.error('one or more account intro messages failed for %s' %
+                      req_path)
+
     if not delete_file(req_path, _logger):
         err_msg = 'failed to clean up request %s after user %s' % \
                   (req_path, operation_type)

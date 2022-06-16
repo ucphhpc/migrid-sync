@@ -23,6 +23,31 @@
   }, 
   {
     "status": "AUTO", 
+    "work_start": "2022-06-13T08:00:00+02:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
+    "systems": [
+        "ERDA", "IDMC"
+    ], 
+    "announce_start": "2022-06-14T08:00:00+02:00", 
+    "title": {
+      "EN": "DAG instability and General Slow Storage Access", 
+      "DK": "Ustabilitet på DAG og langsom adgang til datalageret generelt"
+    }, 
+    "services": [
+      "ALL"
+    ], 
+    "work_end": "2022-06-14T15:08:00+02:00", 
+    "description": {
+      "EN": "We have received reports of unstable DAG sessions and general slow ERDA/IDMC storage access at least today and perhaps somewhat further back. We pin-pointed it to be an issue with the backend storage and after further investigation we found a storage brick in the backend storage acting up, effectively eating up massive amounts of memory. Restarting the brick in question seems to have brought back the normal performance and response times. Please contact us at ERDA support if you still experience instability or slowdowns.",
+      "DK": "Vi har modtaget flere rapporter om ustabile DAG-sessioner og generel langsom adgang til datalageret på ERDA/IDMC mindst idag og måske længere bagud. Vi lokaliserede det til at være et problem med backend-lageret og efter yderligere undersøgelser fandt vi en storage brick som var gået i selvsving med et enormt hukommelsesforbrug. En genstart af pågældende brick ser ud til at have bragt backend-lageret tilbage til normalen mht ydelse og svartider. Kontakt os gerne på ERDA support såfremt der fortsat er problemer med ustabilitet og sløvhed."
+    }, 
+    "announce_end": "2022-06-15T12:00:00+02:00"
+  }, 
+  {
+    "status": "AUTO", 
     "work_start": "2022-05-31T09:30:00+02:00", 
     "systems": [
         "ERDA", "IDMC"
