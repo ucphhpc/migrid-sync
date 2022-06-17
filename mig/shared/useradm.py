@@ -1490,8 +1490,8 @@ def __oid_sessions_execute(configuration, db_name, query, query_vars,
 
 
 def find_oid_sessions(configuration, db_name, identity):
-    """Find active OpenID session(s) for user with OpenID identity. Queries the
-    Apache mod auth openid sqlite database directly.
+    """Find active OpenID 2.0 session(s) for user with given identity. Queries
+    the Apache mod auth openid sqlite database directly.
     """
     query = 'SELECT * FROM sessionmanager WHERE identity=?'
     args = (identity, )
@@ -1499,8 +1499,8 @@ def find_oid_sessions(configuration, db_name, identity):
 
 
 def expire_oid_sessions(configuration, db_name, identity):
-    """Expire active OpenID session(s) for user with OpenID identity. Modifies
-    the Apache mod auth openid sqlite database directly.
+    """Expire active OpenID 2.0 session(s) for user with given identity.
+    Modifies the Apache mod auth openid sqlite database directly.
     """
     query = 'DELETE FROM sessionmanager WHERE identity=?'
     args = (identity, )
