@@ -146,7 +146,7 @@ def extract_client_oidc(configuration, environ, lookup_dn=True):
     # else:
     #    _logger.warning("could not detect openid provider db for %s: %s"
     #                    % (login, environ))
-    #_logger.debug('oidc_db: %s' % oidc_db)
+    # _logger.debug('oidc_db: %s' % oidc_db)
     if lookup_dn:
         # Let backend do user_check
         login = get_oidc_user_dn(configuration, login, user_check=False)
@@ -160,6 +160,16 @@ def extract_client_oidc(configuration, environ, lookup_dn=True):
     return (oidc_db, login)
 
 
+def extract_plain_login(configuration, environ, id_field=generic_id_field):
+    """Extract just the plain login from id_field value in environ"""
+    _logger = configuration.logger
+    # We accept utf8 chars (e.g. '\xc3') in login field but they get
+    # auto backslash-escaped in environ so we need to unescape first
+    _logger.debug('extract login field: %s' % id_field)
+    login = unescape(environ.get(id_field, '')).strip()
+    return login
+
+
 def extract_client_openid(configuration, environ, lookup_dn=True):
     """Extract unique user credentials from REMOTE_USER value in provided
     environment.
@@ -171,10 +181,7 @@ def extract_client_openid(configuration, environ, lookup_dn=True):
     _logger = configuration.logger
     oid_db = ""
 
-    # We accept utf8 chars (e.g. '\xc3') in login field but they get
-    # auto backslash-escaped in environ so we need to unescape first
-    _logger.debug('openid login field: %s' % generic_id_field)
-    login = unescape(environ.get(generic_id_field, '')).strip()
+    login = extract_plain_login(configuration, environ)
     _logger.debug('login: %s' % login)
     _logger.debug('configuration.user_mig_oid_provider: %s'
                   % len(configuration.user_mig_oid_provider))
@@ -201,6 +208,46 @@ def extract_client_openid(configuration, environ, lookup_dn=True):
                 configuration, environ["REQUEST_URI"], login, 'https')
 
     return (oid_db, login)
+
+
+def build_logout_url(configuration, environ):
+    """Find associated auth provider logout url and build url to completely
+    logout using whatever chaining required.
+    """
+    _logger = configuration.logger
+    (auth_type, auth_flavor) = detect_client_auth(configuration, environ)
+    local_logout = '%(SCRIPT_URI)s?logout=true' % environ
+    if auth_type == AUTH_OPENID_V2:
+        # NOTE: OpenID 2.0 logout requires local session database scrubbing.
+        #       Logout at provider and return to local logout page for that.
+        login = extract_plain_login(configuration, environ)
+        logout_base = os.path.dirname(os.path.dirname(login))
+        logout_url = os.path.join(logout_base, 'logout?return_to=%s' %
+                                  local_logout)
+    elif auth_type == AUTH_OPENID_CONNECT:
+        # NOTE: OpenID Connect module handles chained logout through vanity url
+        logout_base = '/dynamic/redirect_uri'
+        if auth_flavor == AUTH_MIG_OIDC:
+            #logout_base = configuration.user_mig_oidc_issuer
+            post_logout_url = configuration.migserver_https_mig_oidc_url
+        elif auth_flavor == AUTH_EXT_OIDC:
+            #logout_base = configuration.user_ext_oidc_issuer
+            post_logout_url = configuration.migserver_https_ext_oidc_url
+
+        logout_url = logout_base + '?logout=%s' % post_logout_url
+
+        # TODO: do we need to mimic the openid 2.0 chained logout?
+        # If so something like this might be a qualified guess based on
+        # https://www.microfocus.com/documentation/access-manager/developer-documentation-5.0/oauth-application-developer-guide/logout-endpoint.html
+        # combined_url = os.path.join(
+        #    logout_base, 'end_session?post_logout_redirect_uri=%s' %
+        #    local_logout)
+
+    else:
+        _logger.warning("unknown logout chaining for %s" % auth_type)
+        logout_url = local_logout
+    _logger.debug("chain logout url: %s" % logout_url)
+    return logout_url
 
 
 def detect_client_auth(configuration, environ):
