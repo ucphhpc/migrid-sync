@@ -187,6 +187,7 @@ if '__main__' == __name__:
         'ftps_ctrl_show_port',
         'openid_port',
         'openid_show_port',
+        'openid_session_lifetime',
         'seafile_seahub_port',
         'seafile_seafhttp_port',
         'seafile_client_port',

@@ -343,6 +343,7 @@ def generate_confs(
     ftps_ctrl_show_port=21,
     openid_port=8443,
     openid_show_port=443,
+    openid_session_lifetime=43200,
     seafile_seahub_port=8000,
     seafile_seafhttp_port=8082,
     seafile_client_port=13419,
@@ -532,6 +533,7 @@ def generate_confs(
     user_dict['__FTPS_CTRL_SHOW_PORT__'] = "%s" % ftps_ctrl_show_port
     user_dict['__OPENID_PORT__'] = "%s" % openid_port
     user_dict['__OPENID_SHOW_PORT__'] = "%s" % openid_show_port
+    user_dict['__OPENID_SESSION_LIFETIME__'] = "%s" % openid_session_lifetime
     user_dict['__SEAFILE_SEAHUB_PORT__'] = "%s" % seafile_seahub_port
     user_dict['__SEAFILE_SEAFHTTP_PORT__'] = "%s" % seafile_seafhttp_port
     user_dict['__SEAFILE_CLIENT_PORT__'] = "%s" % seafile_client_port
