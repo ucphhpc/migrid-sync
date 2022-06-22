@@ -37,7 +37,7 @@ from mig.shared.auth import get_twofactor_secrets
 from mig.shared.base import get_xgi_bin
 from mig.shared.defaults import csrf_field
 from mig.shared.functional import validate_input_and_cert
-from mig.shared.gdp.all import ensure_user, get_projects, get_users, \
+from mig.shared.gdp.all import ensure_gdp_user, get_projects, get_users, \
     get_active_project_client_id, get_short_id_from_user_id, \
     project_accept_user, project_create, project_remove, \
     project_invite_user, project_login, project_logout, project_remove_user, \
@@ -1629,7 +1629,7 @@ Please contact the site admins %s if you think it should be enabled.
 
     # Make sure user exists in GDP user db
 
-    (status, ensure_msg) = ensure_user(configuration, client_addr, client_id)
+    (status, ensure_msg) = ensure_gdp_user(configuration, client_addr, client_id)
 
     if status and not action or action == 'logout':
         redirect_url = ""
