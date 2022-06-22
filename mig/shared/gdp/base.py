@@ -790,7 +790,7 @@ def __delete_mig_user(configuration,
     return (status, ret_msg)
 
 
-def __get_gdp_gdp_user_log_entry(configuration,
+def __get_gdp_user_log_entry(configuration,
                          client_id,
                          match_client_id=True,
                          match_hashed_client_id=True,
@@ -817,7 +817,7 @@ def __get_gdp_gdp_user_log_entry(configuration,
                 result = (line_arr[1], line_arr[2])
         fh.close()
     except Exception as exc:
-        _logger.error("GDP: __get_gdp_gdp_user_log_entry failed: %s" % exc)
+        _logger.error("GDP: __get_gdp_user_log_entry failed: %s" % exc)
         result = None
     if do_lock:
         release_file_lock(flock)
@@ -835,7 +835,7 @@ def __update_gdp_user_log(configuration, client_id, do_lock=True):
     if do_lock:
         flock = acquire_file_lock(log_lock_filepath)
 
-    gdp_user_log_entry = __get_gdp_gdp_user_log_entry(configuration,
+    gdp_user_log_entry = __get_gdp_user_log_entry(configuration,
                                           client_id,
                                           match_client_id=True,
                                           do_lock=False)
@@ -1489,7 +1489,7 @@ def ensure_gdp_user(configuration, client_addr, client_id):
     else:
         (_, log_lock_filepath) = __gdp_user_log_filepath(configuration)
         log_flock = acquire_file_lock(log_lock_filepath)
-        gdp_user_log_entry = __get_gdp_gdp_user_log_entry(configuration,
+        gdp_user_log_entry = __get_gdp_user_log_entry(configuration,
                                               client_id,
                                               match_client_id=False,
                                               do_lock=False)
@@ -3117,7 +3117,7 @@ def create_project_user(
         % (client_id, client_addr) \
         + ", failed to create project_user: %r" % project_client_id
 
-    gdp_user_log_entry = __get_gdp_gdp_user_log_entry(configuration,
+    gdp_user_log_entry = __get_gdp_user_log_entry(configuration,
                                           project_client_id,
                                           match_client_id=False)
     if gdp_user_log_entry and gdp_user_log_entry[0] != project_client_id:
