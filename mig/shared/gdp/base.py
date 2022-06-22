@@ -70,8 +70,8 @@ from mig.shared.vgridaccess import force_update_user_map, \
     force_update_vgrid_map, force_update_resource_map
 from mig.shared.vgridkeywords import get_settings_keywords_dict
 
-user_db_filename = 'gdp-users.db'
-user_log_filename = 'gdp-users.log'
+gdp_db_filename = 'gdp-users.db'
+gdp_user_log_filename = 'gdp-users.log'
 notify_home_dirname = 'notify'
 notify_attic_dirname = 'notify_attic'
 
@@ -118,23 +118,23 @@ valid_account_states = ['active', 'suspended', 'removed']
 valid_protocols = ['https', 'davs', 'sftp']
 
 
-def __user_db_filepath(configuration, db_path=None):
+def __gdp_db_filepath(configuration, db_path=None):
     """Generate GDP user_db filepath"""
 
     if db_path:
         db_filepath = db_path
     else:
         db_filepath = os.path.join(
-            configuration.gdp_home, user_db_filename)
+            configuration.gdp_home, gdp_db_filename)
     db_lock_filepath = '%s.lock' % db_filepath
 
     return (db_filepath, db_lock_filepath)
 
 
-def __user_log_filepath(configuration):
+def __gdp_user_log_filepath(configuration):
     """Generate GDP user_db filepath"""
 
-    log_filepath = os.path.join(configuration.gdp_home, user_log_filename)
+    log_filepath = os.path.join(configuration.gdp_home, gdp_user_log_filename)
     log_lock_filepath = '%s.lock' % log_filepath
 
     return (log_filepath, log_lock_filepath)
@@ -375,7 +375,7 @@ def __load_user_db(configuration,
 
     _logger = configuration.logger
 
-    (db_filepath, db_lock_filepath) = __user_db_filepath(configuration,
+    (db_filepath, db_lock_filepath) = __gdp_db_filepath(configuration,
                                                          db_path=db_path)
     if do_lock:
         flock = acquire_file_lock(db_lock_filepath, exclusive=False)
@@ -404,7 +404,7 @@ def __save_user_db(configuration, user_db, do_lock=True, db_path=None):
 
     _logger = configuration.logger
 
-    (db_filepath, db_lock_filepath) = __user_db_filepath(configuration,
+    (db_filepath, db_lock_filepath) = __gdp_db_filepath(configuration,
                                                          db_path=db_path)
 
     if do_lock:
@@ -790,7 +790,7 @@ def __delete_mig_user(configuration,
     return (status, ret_msg)
 
 
-def __get_user_log_entry(configuration,
+def __get_gdp_gdp_user_log_entry(configuration,
                          client_id,
                          match_client_id=True,
                          match_hashed_client_id=True,
@@ -799,7 +799,7 @@ def __get_user_log_entry(configuration,
     _logger = configuration.logger
 
     result = None
-    (log_filepath, log_lock_filepath) = __user_log_filepath(configuration)
+    (log_filepath, log_lock_filepath) = __gdp_user_log_filepath(configuration)
     hashed_client_id = __scamble_user_id(configuration, client_id)
     if hashed_client_id is None:
         return result
@@ -817,7 +817,7 @@ def __get_user_log_entry(configuration,
                 result = (line_arr[1], line_arr[2])
         fh.close()
     except Exception as exc:
-        _logger.error("GDP: __get_user_log_entry failed: %s" % exc)
+        _logger.error("GDP: __get_gdp_gdp_user_log_entry failed: %s" % exc)
         result = None
     if do_lock:
         release_file_lock(flock)
@@ -825,21 +825,21 @@ def __get_user_log_entry(configuration,
     return result
 
 
-def __update_user_log(configuration, client_id, do_lock=True):
+def __update_gdp_user_log(configuration, client_id, do_lock=True):
     """Add *client_id* and it's hash to GDP users log"""
     _logger = configuration.logger
 
     result = False
     flock = None
-    (log_filepath, log_lock_filepath) = __user_log_filepath(configuration)
+    (log_filepath, log_lock_filepath) = __gdp_user_log_filepath(configuration)
     if do_lock:
         flock = acquire_file_lock(log_lock_filepath)
 
-    user_log_entry = __get_user_log_entry(configuration,
+    gdp_user_log_entry = __get_gdp_gdp_user_log_entry(configuration,
                                           client_id,
                                           match_client_id=True,
                                           do_lock=False)
-    if user_log_entry:
+    if gdp_user_log_entry:
         result = True
         _logger.info("User: %r already exists in GDP user log" % client_id)
     else:
@@ -857,7 +857,7 @@ def __update_user_log(configuration, client_id, do_lock=True):
             fh.close()
             result = True
         except Exception as exc:
-            _logger.error("GDP: __update_user_log failed: %s" % exc)
+            _logger.error("GDP: __update_gdp_user_log failed: %s" % exc)
             result = False
     if do_lock:
         release_file_lock(flock)
@@ -1469,7 +1469,7 @@ def get_project_user_dn(configuration, requested_script, client_id, protocol):
     return result
 
 
-def ensure_user(configuration, client_addr, client_id):
+def ensure_gdp_user(configuration, client_addr, client_id):
     """Ensure GDP user db entry for *client_id*"""
 
     _logger = configuration.logger
@@ -1477,7 +1477,7 @@ def ensure_user(configuration, client_addr, client_id):
     #               % (client_addr, client_id))
 
     status = False
-    (_, db_lock_filepath) = __user_db_filepath(configuration)
+    (_, db_lock_filepath) = __gdp_db_filepath(configuration)
 
     user_db = __load_user_db(configuration, allow_missing=True)
     user = user_db.get(client_id, None)
@@ -1487,19 +1487,19 @@ def ensure_user(configuration, client_addr, client_id):
     if user is not None:
         status = True
     else:
-        (_, log_lock_filepath) = __user_log_filepath(configuration)
+        (_, log_lock_filepath) = __gdp_user_log_filepath(configuration)
         log_flock = acquire_file_lock(log_lock_filepath)
-        user_log_entry = __get_user_log_entry(configuration,
+        gdp_user_log_entry = __get_gdp_gdp_user_log_entry(configuration,
                                               client_id,
                                               match_client_id=False,
                                               do_lock=False)
-        if user_log_entry and user_log_entry[0] != client_id:
+        if gdp_user_log_entry and gdp_user_log_entry[0] != client_id:
             err_msg += ": User-hash already exists in user log"
             _logger.error(log_err_msg + ": User-hash: %r"
-                          % user_log_entry[1]
+                          % gdp_user_log_entry[1]
                           + " already exists in user log for user: %r"
-                          % user_log_entry[0])
-        elif user_log_entry and user_log_entry[0] == client_id:
+                          % gdp_user_log_entry[0])
+        elif gdp_user_log_entry and gdp_user_log_entry[0] == client_id:
             template = ": User already exists in user log"
             err_msg += template
             _logger.error(log_err_msg + template)
@@ -1508,7 +1508,7 @@ def ensure_user(configuration, client_addr, client_id):
             user_db = __load_user_db(configuration,
                                      do_lock=False, allow_missing=True)
             user_db[client_id] = __create_gdp_user_db_entry(configuration)
-            update_status = __update_user_log(
+            update_status = __update_gdp_user_log(
                 configuration, client_id, do_lock=False)
             if update_status:
                 __save_user_db(configuration, user_db, do_lock=False)
@@ -1599,7 +1599,7 @@ def project_remove_user(
     # and delete
 
     if status:
-        (_, db_lock_filepath) = __user_db_filepath(configuration)
+        (_, db_lock_filepath) = __gdp_db_filepath(configuration)
         flock = acquire_file_lock(db_lock_filepath)
 
         # Retrieve user and project info
@@ -1833,7 +1833,7 @@ def project_invite_user(
     # Create invitation
 
     if status:
-        (_, db_lock_filepath) = __user_db_filepath(configuration)
+        (_, db_lock_filepath) = __gdp_db_filepath(configuration)
         flock = acquire_file_lock(db_lock_filepath)
 
         # Retrieve project info
@@ -1968,7 +1968,7 @@ def reset_account_roles(
         + ", failed to reset account roles"
 
     if status:
-        (_, db_lock_filepath) = __user_db_filepath(configuration,
+        (_, db_lock_filepath) = __gdp_db_filepath(configuration,
                                                    db_path=gdp_db_path)
         flock = acquire_file_lock(db_lock_filepath)
         gdp_db = __load_user_db(
@@ -2046,7 +2046,7 @@ def set_account_state(
         _logger.error(log_err_msg + template)
 
     if status:
-        (_, db_lock_filepath) = __user_db_filepath(configuration,
+        (_, db_lock_filepath) = __gdp_db_filepath(configuration,
                                                    db_path=gdp_db_path)
         flock = acquire_file_lock(db_lock_filepath)
         gdp_db = __load_user_db(
@@ -2112,9 +2112,9 @@ def edit_gdp_user(
     mig_edit_transactions = []
     new_user_id = None
     new_user_ids = []
-    (db_filepath, db_lock_filepath) = __user_db_filepath(configuration,
+    (db_filepath, db_lock_filepath) = __gdp_db_filepath(configuration,
                                                          db_path=gdp_db_path)
-    (log_filepath, log_lock_filepath) = __user_log_filepath(configuration)
+    (log_filepath, log_lock_filepath) = __gdp_user_log_filepath(configuration)
 
     # NOTE: we need explicit mig_db_path lookup here for direct calls
     if mig_db_path == keyword_auto:
@@ -2437,7 +2437,7 @@ def edit_gdp_user(
 
         flock_log = acquire_file_lock(log_lock_filepath)
         for log_user_id in new_user_ids:
-            status = __update_user_log(
+            status = __update_gdp_user_log(
                 configuration, log_user_id, do_lock=False)
             if not status:
                 msg = "Error: Failed to update GDP users log" \
@@ -2626,7 +2626,7 @@ def project_promote_to_owner(
 
         # Retrieve promoter project entry
 
-        (_, db_lock_filepath) = __user_db_filepath(configuration)
+        (_, db_lock_filepath) = __gdp_db_filepath(configuration)
         flock = acquire_file_lock(db_lock_filepath)
         user_db = __load_user_db(configuration, do_lock=False)
 
@@ -2910,7 +2910,7 @@ def project_demote_owner(
 
         # Retrieve demoter project entry
 
-        (_, db_lock_filepath) = __user_db_filepath(configuration)
+        (_, db_lock_filepath) = __gdp_db_filepath(configuration)
         flock = acquire_file_lock(db_lock_filepath)
         user_db = __load_user_db(configuration, do_lock=False)
 
@@ -3117,13 +3117,13 @@ def create_project_user(
         % (client_id, client_addr) \
         + ", failed to create project_user: %r" % project_client_id
 
-    user_log_entry = __get_user_log_entry(configuration,
+    gdp_user_log_entry = __get_gdp_gdp_user_log_entry(configuration,
                                           project_client_id,
                                           match_client_id=False)
-    if user_log_entry and user_log_entry[0] != project_client_id:
+    if gdp_user_log_entry and gdp_user_log_entry[0] != project_client_id:
         status = False
-        _logger.error("GDP: Project user hash: %r" % user_log_entry[1]
-                      + " is already used for user: %r" % user_log_entry[0])
+        _logger.error("GDP: Project user hash: %r" % gdp_user_log_entry[1]
+                      + " is already used for user: %r" % gdp_user_log_entry[0])
 
     if status:
 
@@ -3175,8 +3175,8 @@ def create_project_user(
 
     # Update user log if project_client_id not yet in it
 
-    if status and not user_log_entry:
-        status = __update_user_log(configuration, project_client_id)
+    if status and not gdp_user_log_entry:
+        status = __update_gdp_user_log(configuration, project_client_id)
 
     ret_msg = err_msg
     if status:
@@ -3223,7 +3223,7 @@ def project_accept_user(
         + ", failed to accept invite to project: %r" % project_name
     project_client_id = get_project_client_id(client_id,
                                               project_name)
-    (_, db_lock_filepath) = __user_db_filepath(configuration)
+    (_, db_lock_filepath) = __gdp_db_filepath(configuration)
     flock = acquire_file_lock(db_lock_filepath)
     user_db = __load_user_db(configuration, do_lock=False)
 
@@ -3439,7 +3439,7 @@ def project_login(
 
     if status:
         if do_lock:
-            (_, db_lock_filepath) = __user_db_filepath(configuration)
+            (_, db_lock_filepath) = __gdp_db_filepath(configuration)
             flock = acquire_file_lock(db_lock_filepath)
 
         # Retrieve user and project info
@@ -3567,7 +3567,7 @@ def project_logout(
         log_err_msg += ", project: %r" % project_name
 
     if do_lock:
-        (_, db_lock_filepath) = __user_db_filepath(configuration)
+        (_, db_lock_filepath) = __gdp_db_filepath(configuration)
         flock = acquire_file_lock(db_lock_filepath)
     user_db = __load_user_db(configuration, do_lock=False)
 
@@ -3684,7 +3684,7 @@ def project_open(
         % (user_id, client_addr, protocol) \
         + ", failed to open project: %r" % project_name
 
-    (_, db_lock_filepath) = __user_db_filepath(configuration)
+    (_, db_lock_filepath) = __gdp_db_filepath(configuration)
     flock = acquire_file_lock(db_lock_filepath)
 
     # NOTE: validate_user updates timestamp, extract active_project first
@@ -4079,7 +4079,7 @@ This directory is used for hosting private files for the %r %r.
                 + " Deleting GDP user: %r, project: %r from GDP database"
                 % (client_id, project_name))
 
-            (_, db_lock_filepath) = __user_db_filepath(configuration)
+            (_, db_lock_filepath) = __gdp_db_filepath(configuration)
             flock = acquire_file_lock(db_lock_filepath)
             user_db = __load_user_db(configuration, do_lock=False)
             if user_db.get(client_id, {}).get(
@@ -4129,7 +4129,7 @@ def project_remove(
 
     # Get GDP project info
 
-    (_, db_lock_filepath) = __user_db_filepath(configuration)
+    (_, db_lock_filepath) = __gdp_db_filepath(configuration)
     user_db = __load_user_db(configuration)
     project = user_db.get(client_id, {}).get(
         'projects', {}).get(project_name, {})
@@ -4361,7 +4361,7 @@ def project_remove(
     # NOTE: Traverse complete database to catch pending invites
 
     if status:
-        (_, db_lock_filepath) = __user_db_filepath(configuration)
+        (_, db_lock_filepath) = __gdp_db_filepath(configuration)
         flock = acquire_file_lock(db_lock_filepath)
         user_db = __load_user_db(configuration, do_lock=False)
         for user in user_db.keys():
