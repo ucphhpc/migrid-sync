@@ -8,18 +8,18 @@
     ],
     "announce_start": "2022-06-01T09:00:00+02:00",
     "title": {
-      "EN": "Planned ERDA/IDMC Maintenance",
-      "DK": "Planlagt ERDA/IDMC vedligehold"
+      "EN": "Planned ERDA/IDMC Maintenance - with delays",
+      "DK": "Planlagt ERDA/IDMC vedligehold - med forsinkelser"
     },
     "services": [
       "ALL"
     ],
-    "work_end": "2022-06-23T10:00:00+02:00",
+    "work_end": "2022-06-23T13:00:00+02:00",
     "description": {
-      "EN": "It's time for a thorough update of the ERDA/IDMC and addition of more physical storage space. The work will involve both frontend and backend down-time for low-level system updates. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect a longer downtime of approximately one hour for the main upgrades if everything runs smoothly. That downtime will start about half an hour into the window and should therefore not extend far into standard working hours, but we conservatively set the maintenance window somewhat longer. Further information will follow here.",
-      "DK": "Det er tid til en gennemgribende opdatering af ERDA/IDMC systemerne og tilføjelse af mere fysisk lagerplads. Arbejdet kræver nedetid på både frontend og backend til grundlæggende systemopdateringer og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi forventer en længere nedetid på en times tid til hovedopgraderingerne hvis alting forløber planmæssigt. Den del vil begynde omkring en halv time inde i arbejdet og skulle derfor ikke strække sig langt ind i standard arbejdstid, men for en sikkerheds skyld er vedligeholdelsesvinduet sat noget længere. Yderligere information følger her."
+      "EN": "It's time for a thorough update of the ERDA/IDMC and addition of more physical storage space. The work will involve both frontend and backend down-time for low-level system updates. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect a longer downtime of approximately one hour for the main upgrades if everything runs smoothly. That downtime will start about half an hour into the window and should therefore not extend far into standard working hours, but we conservatively set the maintenance window somewhat longer. We started the maintenance tasks requiring downtime and completed the planned system updates as planned. The storage space extension work unfortunately acted up, so we had to extend the maintenace window until after noon. We finished a few hours late and everything should be back in normal production now. We're sorry for the inconvenience it caused.",
+      "DK": "Det er tid til en gennemgribende opdatering af ERDA/IDMC systemerne og tilføjelse af mere fysisk lagerplads. Arbejdet kræver nedetid på både frontend og backend til grundlæggende systemopdateringer og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi forventer en længere nedetid på en times tid til hovedopgraderingerne hvis alting forløber planmæssigt. Den del vil begynde omkring en halv time inde i arbejdet og skulle derfor ikke strække sig langt ind i standard arbejdstid, men for en sikkerheds skyld er vedligeholdelsesvinduet sat noget længere. Vi er gik igang med den del af arbejdet med nedetid og fik overstået de planlagte systemopdateringer efter planen. Lagertilføjelsen ville desværre ikke makke ret, så vi blev nødt til at forlænge vedligeholdelsesvinduet yderligere til over middag. Vi nåede i mål med nogle timers forsinkelse og alt skulle være tilbage i normal drift nu. Vi beklager de gener arbejdet og forsinkelsen medførte."
     },
-    "announce_end": "2022-06-24T10:00:00+02:00"
+    "announce_end": "2022-06-24T13:00:00+02:00"
   }, 
   {
     "status": "AUTO", 
