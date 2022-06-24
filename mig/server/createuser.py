@@ -39,7 +39,7 @@ import sys
 import time
 
 from mig.shared.accountstate import default_account_expire
-from mig.shared.base import fill_distinguished_name, fill_user
+from mig.shared.base import fill_distinguished_name, fill_user, canonical_user
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import valid_auth_types, keyword_auto
 from mig.shared.gdp.all import ensure_gdp_user
@@ -208,20 +208,24 @@ if '__main__' == __name__:
     if expire is None:
         expire = default_account_expire(configuration, auth_type)
 
+    raw_user = {}
     if args:
         try:
-            user_dict['full_name'] = args[0]
-            user_dict['organization'] = args[1]
-            user_dict['state'] = args[2]
-            user_dict['country'] = args[3]
-            user_dict['email'] = args[4]
-            user_dict['comment'] = args[5]
-            user_dict['password'] = args[6]
+            raw_user['full_name'] = args[0]
+            raw_user['organization'] = args[1]
+            raw_user['state'] = args[2]
+            raw_user['country'] = args[3]
+            raw_user['email'] = args[4]
+            raw_user['comment'] = args[5]
+            raw_user['password'] = args[6]
         except IndexError:
             print('Error: too few arguments given (expected 7 got %d)'
                   % len(args))
             usage()
             sys.exit(1)
+        # Force user ID fields to canonical form for consistency
+        # Title name, lowercase email, uppercase country and state, etc.
+        user_dict = canonical_user(configuration, raw_user, raw_user.keys())
     elif user_file:
         try:
             user_dict = load(user_file)
@@ -242,13 +246,16 @@ if '__main__' == __name__:
             print('''Entering interactive mode
 %s''' % cert_warn)
         print('Please enter the details for the new user:')
-        user_dict['full_name'] = input('Full Name: ').title()
-        user_dict['organization'] = input('Organization: ')
-        user_dict['state'] = input('State: ')
-        user_dict['country'] = input('2-letter Country Code: ')
-        user_dict['email'] = input('Email: ')
-        user_dict['comment'] = input('Comment: ')
-        user_dict['password'] = getpass('Password: ')
+        raw_user['full_name'] = input('Full Name: ').title()
+        raw_user['organization'] = input('Organization: ')
+        raw_user['state'] = input('State: ')
+        raw_user['country'] = input('2-letter Country Code: ')
+        raw_user['email'] = input('Email: ')
+        raw_user['comment'] = input('Comment: ')
+        raw_user['password'] = getpass('Password: ')
+        # Force user ID fields to canonical form for consistency
+        # Title name, lowercase email, uppercase country and state, etc.
+        user_dict = canonical_user(configuration, raw_user, raw_user.keys())
     else:
         print("Error: Missing one or more of the arguments: "
               + "[FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] "
@@ -294,8 +301,8 @@ if '__main__' == __name__:
                     default_renew, verify_peer=peer_pattern)
         if configuration.site_enable_gdp:
             (success_here, msg) = ensure_gdp_user(configuration,
-                                              "127.0.0.1",
-                                              user_dict['distinguished_name'])
+                                                  "127.0.0.1",
+                                                  user_dict['distinguished_name'])
             if not success_here:
                 raise Exception("Failed to ensure GDP user: %s" % msg)
 

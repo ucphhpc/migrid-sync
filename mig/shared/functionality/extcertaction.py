@@ -38,7 +38,7 @@ import tempfile
 from mig.shared import returnvalues
 from mig.shared.accountreq import user_manage_commands
 from mig.shared.accountstate import default_account_expire
-from mig.shared.base import force_utf8, force_unicode, generate_https_urls, \
+from mig.shared.base import canonical_user, generate_https_urls, \
     distinguished_name_to_user, fill_distinguished_name, fill_user
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
@@ -94,23 +94,11 @@ def main(client_id, user_arguments_dict):
 
     cert_id = accepted['cert_id'][-1].strip()
 
-    # TODO: switch to canonical_user fra mig.shared.base instead?
-    # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
-    # please note that we get utf8 coded bytes here and title() treats such
-    # chars as word termination. Temporarily force to unicode.
-
-    raw_name = accepted['cert_name'][-1].strip()
-    try:
-        cert_name = force_utf8(force_unicode(raw_name).title())
-    except Exception:
-        cert_name = raw_name.title()
-    country = accepted['country'][-1].strip().upper()
-    state = accepted['state'][-1].strip().upper()
+    cert_name = accepted['cert_name'][-1].strip()
+    country = accepted['country'][-1].strip()
+    state = accepted['state'][-1].strip()
     org = accepted['org'][-1].strip()
-
-    # lower case email address
-
-    email = accepted['email'][-1].strip().lower()
+    email = accepted['email'][-1].strip()
 
     # keep comment to a single line
 
@@ -170,7 +158,7 @@ multiple "key=val" fields separated by "/".
 '''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    user_dict = {
+    raw_user = {
         'distinguished_name': cert_id,
         'full_name': cert_name,
         'organization': org,
@@ -183,6 +171,9 @@ multiple "key=val" fields separated by "/".
         'openid_names': [],
         'auth': ['extcert'],
     }
+    # Force user ID fields to canonical form for consistency
+    # Title name, lowercase email, uppercase country and state, etc.
+    user_dict = canonical_user(configuration, raw_user, raw_user.keys())
     fill_distinguished_name(user_dict)
     user_id = user_dict['distinguished_name']
     if configuration.user_openid_providers and configuration.user_openid_alias:
