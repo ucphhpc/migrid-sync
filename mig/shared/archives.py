@@ -76,14 +76,7 @@ def handle_package_upload(
     real_dst += os.sep
     mrslfiles_to_parse = []
 
-    # NOTE: we keep real_src_lower on default string form for .endswith(str)
     real_src_lower = real_src.lower()
-
-    # NOTE: we need all path components on utf form for mangling
-    base_dir = force_utf8(base_dir)
-    real_dst = force_utf8(real_dst)
-    real_src = force_utf8(real_src)
-
     if real_src_lower.endswith('.zip'):
 
         # Handle .zip file
