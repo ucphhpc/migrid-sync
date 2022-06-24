@@ -882,7 +882,8 @@ def forced_org_email_match(org, email, configuration):
     email_hit = '__BOGUS__'
     for (forced_org, forced_email_list) in force_org_email:
         for forced_email in forced_email_list:
-            if re.match(forced_email, email):
+            # Consistent casing
+            if re.match(forced_email, email.lower()):
                 is_forced_email = True
                 email_hit = forced_email
                 logger.debug('email match on %s vs %s' % (email, forced_email))

@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 #
 # --- BEGIN_HEADER ---
 #
@@ -45,7 +44,7 @@ import time
 
 from mig.shared import returnvalues
 from mig.shared.accountstate import default_account_expire
-from mig.shared.base import client_id_dir, force_utf8, force_unicode, \
+from mig.shared.base import client_id_dir, canonical_user, \
     fill_user, distinguished_name_to_user, fill_distinguished_name, \
     get_site_base_url
 from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_V2, \
@@ -298,7 +297,7 @@ def main(client_id, user_arguments_dict, environ=None):
         main_id = accepted['cert_id'][-1].strip()
         # TODO: consider switching short_id to email?
         short_id = main_id
-        raw_name = accepted['cert_name'][-1].strip()
+        full_name = accepted['cert_name'][-1].strip()
         country = accepted['country'][-1].strip()
         state = accepted['state'][-1].strip()
         org = accepted['org'][-1].strip()
@@ -314,7 +313,7 @@ def main(client_id, user_arguments_dict, environ=None):
         main_id = accepted['openid.sreg.nickname'][-1].strip() \
             or accepted['openid.sreg.short_id'][-1].strip()
         short_id = main_id
-        raw_name = accepted['openid.sreg.fullname'][-1].strip() \
+        full_name = accepted['openid.sreg.fullname'][-1].strip() \
             or accepted['openid.sreg.full_name'][-1].strip()
         country = accepted['openid.sreg.country'][-1].strip()
         state = accepted['openid.sreg.state'][-1].strip()
@@ -339,7 +338,7 @@ def main(client_id, user_arguments_dict, environ=None):
             or accepted['oidc.claim.oid'][-1].strip()
         # NOTE: UCPH provides common abc123@ku.dk username in upn
         short_id = accepted['oidc.claim.upn'][-1].strip()
-        raw_name = accepted['oidc.claim.fullname'][-1].strip() \
+        full_name = accepted['oidc.claim.fullname'][-1].strip() \
             or accepted['oidc.claim.name'][-1].strip()
         country = accepted['oidc.claim.country'][-1].strip()
         state = accepted['oidc.claim.state'][-1].strip()
@@ -368,20 +367,6 @@ def main(client_id, user_arguments_dict, environ=None):
         elif is_valid_email_address(main_id, logger):
             email = main_id
 
-    # TODO: switch to canonical_user fra mig.shared.base instead?
-    # Fix case of values:
-    # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
-    # please note that we get utf8 coded bytes here and title() treats such
-    # chars as word termination. Temporarily force to unicode.
-
-    try:
-        full_name = force_utf8(force_unicode(raw_name).title())
-    except Exception:
-        logger.warning('could not use unicode form to capitalize full name')
-        full_name = raw_name.title()
-    country = country.upper()
-    state = state.upper()
-    email = email.lower()
     accept_terms = (accepted['accept_terms'][-1].strip().lower() in
                     ('1', 'o', 'y', 't', 'on', 'yes', 'true'))
 
@@ -457,7 +442,7 @@ def main(client_id, user_arguments_dict, environ=None):
     #    logger.warning('%s from %s got invalid authsig: %s' %
     #                   (op_name, client_id, authsig_list))
 
-    user_dict = {
+    raw_user = {
         'main_id': main_id,
         'short_id': short_id,
         'full_name': full_name,
@@ -474,7 +459,10 @@ def main(client_id, user_arguments_dict, environ=None):
         'comment': 'Signed up through autocreate with %s' % auth_type,
         'openid_names': openid_names,
     }
-    user_dict.update(oid_extras)
+    raw_user.update(oid_extras)
+    # Force user ID fields to canonical form for consistency
+    # Title name, lowercase email, uppercase country and state, etc.
+    user_dict = canonical_user(configuration, raw_user, raw_user.keys())
 
     # We must receive some ID from the provider otherwise we probably hit the
     # already logged in situation and must autologout first
