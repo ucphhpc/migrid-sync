@@ -33,7 +33,7 @@ import os
 import tarfile
 import zipfile
 
-from mig.shared.base import client_id_dir, invisible_path, force_utf8
+from mig.shared.base import client_id_dir, invisible_path, force_native_str
 from mig.shared.fileio import write_file, walk
 from mig.shared.job import new_job
 from mig.shared.safeinput import valid_user_path_name
@@ -92,7 +92,8 @@ def handle_package_upload(
         logger.info("unpack entries of %s to %s" %
                     (real_src, real_dst))
         for zip_entry in zip_object.infolist():
-            entry_filename = force_utf8(zip_entry.filename)
+            # NOTE: forcing utf8 here breaks path checks in py3 due to enc mix
+            entry_filename = force_native_str(zip_entry.filename)
             msg += 'Extracting: %s . ' % entry_filename
 
             # write zip_entry to disk
@@ -214,7 +215,8 @@ def handle_package_upload(
         logger.info("unpack entries of %s to %s" %
                     (real_src, real_dst))
         for tar_entry in tar_object:
-            entry_filename = force_utf8(tar_entry.name)
+            # NOTE: forcing utf8 here breaks path checks in py3 due to enc mix
+            entry_filename = force_native_str(tar_entry.name)
             msg += 'Extracting: %s . ' % entry_filename
 
             # write tar_entry to disk
