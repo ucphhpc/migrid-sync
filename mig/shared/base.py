@@ -239,6 +239,8 @@ def canonical_user(configuration, user_dict, limit_fields):
     for (key, val) in user_dict.items():
         if not key in limit_fields:
             continue
+        if isinstance(val, basestring):
+            val = val.strip()
         if key == 'full_name':
             # TODO: is this right for py2+3 support now?
             # IMPORTANT: we get utf8 coded bytes here and title() treats such

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqoidaction - handle OpenID account requests and send email to admins
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -39,8 +39,8 @@ from mig.shared import returnvalues
 from mig.shared.accountreq import existing_country_code, forced_org_email_match, \
     user_manage_commands, save_account_request
 from mig.shared.accountstate import default_account_expire
-from mig.shared.base import client_id_dir, force_utf8, force_unicode, \
-    force_native_str, force_native_str_rec, force_utf8_rec, \
+from mig.shared.base import client_id_dir, canonical_user, force_utf8, \
+    force_unicode, force_native_str, force_native_str_rec, force_utf8_rec, \
     generate_https_urls, fill_distinguished_name
 from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
@@ -104,23 +104,11 @@ def main(client_id, user_arguments_dict):
     logger.info("request oid account for %s" %
                 [force_native_str_rec(force_utf8_rec(accepted))])
 
-    # TODO: switch to canonical_user fra mig.shared.base instead?
-    # force name to capitalized form (henrik karlsen -> Henrik Karlsen)
-    # please note that we may get utf8 coded bytes here and title() treats such
-    # chars as word termination. Temporarily force to unicode.
-
-    raw_name = accepted['cert_name'][-1].strip()
-    try:
-        cert_name = force_native_str(force_unicode(raw_name).title())
-    except Exception:
-        cert_name = raw_name.title()
-    country = accepted['country'][-1].strip().upper()
-    state = accepted['state'][-1].strip().upper()
+    cert_name = accepted['cert_name'][-1].strip()
+    country = accepted['country'][-1].strip()
+    state = accepted['state'][-1].strip()
     org = accepted['org'][-1].strip()
-
-    # lower case email address
-
-    email = accepted['email'][-1].strip().lower()
+    email = accepted['email'][-1].strip()
     password = accepted['password'][-1]
     verifypassword = accepted['verifypassword'][-1]
     # The checkbox typically returns value 'on' if selected
@@ -214,7 +202,7 @@ resources anyway.
     else:
         logger.info('only saving %s password hash' % email)
         scrambled_pw = ''
-    user_dict = {
+    raw_user = {
         'full_name': cert_name,
         'organization': org,
         'state': state,
@@ -227,7 +215,9 @@ resources anyway.
         'openid_names': [],
         'auth': ['migoid'],
     }
-
+    # Force user ID fields to canonical form for consistency
+    # Title name, lowercase email, uppercase country and state, etc.
+    user_dict = canonical_user(configuration, raw_user, raw_user.keys())
     fill_distinguished_name(user_dict)
     logger.debug("request oid account for %s" % user_dict)
     user_id = user_dict['distinguished_name']
