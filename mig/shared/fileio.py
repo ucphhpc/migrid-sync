@@ -142,7 +142,8 @@ def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
             logger.error('could not create dir: %s' % err)
     try:
         filehandle = open(path, mode)
-        filehandle.write(content)
+        # NOTE: we need to force native str here as file is opened in text mode
+        filehandle.write(force_native_str(content))
         filehandle.close()
         # logger.debug('file written: %s' % path)
         retval = True
