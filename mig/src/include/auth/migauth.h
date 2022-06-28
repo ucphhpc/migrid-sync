@@ -57,7 +57,7 @@
 
 #define PASSWORD_FILENAME "authorized_passwords"
 
-/* Various settings used for username input validation */
+/* Various settings used for username and password input validation */
 /* Something similar to most UN*X account name restrictions */
 #ifndef USERNAME_REGEX
 /* Default fall-back value used unless given */
@@ -71,6 +71,18 @@
 #ifndef USERNAME_MAX_LENGTH
 /* Default fall-back value used unless given */
 #define USERNAME_MAX_LENGTH 128
+#endif
+#ifndef PASSWORD_MIN_LENGTH
+/* Default fall-back value used unless given */
+#define PASSWORD_MIN_LENGTH 6
+#endif
+#ifndef PASSWORD_MAX_LENGTH
+/* Default fall-back value used unless given */
+#define PASSWORD_MAX_LENGTH 128
+#endif
+#ifndef PASSWORD_MIN_CLASSES
+/* Default fall-back value used unless given */
+#define PASSWORD_MIN_CLASSES 2
 #endif
 
 /* Various settings used by ordinary user access */
