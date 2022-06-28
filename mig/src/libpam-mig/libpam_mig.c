@@ -73,20 +73,6 @@
 #define WEBDAVS_SERVICE "webdavs"
 #define WEBDAVS_AUTH_DIR "davs"
 
-/* Various settings used for password input validation */
-#ifndef PASSWORD_MIN_LENGTH
-/* Default fall-back value used unless given */
-#define PASSWORD_MIN_LENGTH 6
-#endif
-#ifndef PASSWORD_MAX_LENGTH
-/* Default fall-back value used unless given */
-#define PASSWORD_MAX_LENGTH 128
-#endif
-#ifndef PASSWORD_MIN_CLASSES
-/* Default fall-back value used unless given */
-#define PASSWORD_MIN_CLASSES 2
-#endif
-
 /* The sizes here are use to handle static
    allocations of buffers */
 #define MAX_DIGEST_SIZE (2048)
@@ -146,12 +132,27 @@ static int get_password_min_classes()
 /* password input validation using char class and length helpers */
 static int validate_password(const char *password)
 {
+    /* NOTE: always look up and use these to avoid compile warnings */
+    const int pw_min_len = get_password_min_length();
+    const int pw_min_cls = get_password_min_classes();
+    WRITELOGMESSAGE(LOG_DEBUG, "pw helpers: minlen %d minclass %d\n",
+                    pw_min_len, pw_min_cls);
+
     /* IMPORTANT: do NOT ever log raw password as it makes logs sensitive */
     if (strlen(password) > PASSWORD_MAX_LENGTH) {
         WRITELOGMESSAGE(LOG_INFO,
                         "Invalid password - too long (%zd > %d)\n",
                         strlen(password), PASSWORD_MAX_LENGTH);
         return 2;
+    }
+    /* IMPORTANT: we rely on checking password policy in python calls wrapping
+       args in strings and thus must do very basic input validation to avoid
+       quoting interference issues. 
+    */
+    if (strstr(password, "'") != NULL || strstr(password, "\"") != NULL) {
+        WRITELOGMESSAGE(LOG_INFO,
+                        "Invalid password - contains quote(s)\n");
+        return 3;
     }
 
     int classes = -1;
@@ -167,10 +168,10 @@ static int validate_password(const char *password)
     }
 #else
     /* NOTE: fall back to static password policy check otherwise */
-    if (strlen(password) < get_password_min_length()) {
+    if (strlen(password) < pw_min_len) {
         WRITELOGMESSAGE(LOG_INFO,
                         "Invalid password - too short (%zd < %d)\n",
-                        strlen(password), get_password_min_length());
+                        strlen(password), pw_min_len);
         return 1;
     }    
     WRITELOGMESSAGE(LOG_DEBUG, "Validated length of password: %zd\n",
@@ -189,10 +190,10 @@ static int validate_password(const char *password)
         }
     }
     classes = (lower > 0) + (upper > 0) + (digit > 0) + (other > 0);
-    if (classes < get_password_min_classes()) {
+    if (classes < pw_min_cls) {
         WRITELOGMESSAGE(LOG_INFO,
                         "password has too few character classes (%d < %d)\n",
-                        classes, get_password_min_classes());
+                        classes, pw_min_cls);
         return 1;
     }
 #endif

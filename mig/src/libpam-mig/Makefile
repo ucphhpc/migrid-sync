@@ -15,8 +15,9 @@
 # Leave like this to lookup values in $MIG_CONF or default MiGserver.conf .
 #MIG_DEFAULTS=-D'SHARELINK_HOME=""' -D'SHARELINK_LENGTH=-1' -D'USERNAME_REGEX=""'
 # ... or hard code to your site values like this (NOTE: escaped dollar = '$$')
-# NOTE: we looup UID and GID of 'mig' user to limit hard-coding but we may stil
+# NOTE: we lookup UID and GID of 'mig' user to limit hard-coding but we may stil
 #       need to update paths and even the user name if using custom install
+# IMPORTANT: do NOT allow single/double quotes in USERNAME_REGEX: breaks pyrun
 MIG_DEFAULTS=-D'MIG_UID=$(shell id -u mig)' \
 	-D'MIG_GID=$(shell id -g mig)' \
 	-D'RATE_LIMIT_EXPIRE_DELAY=300' \

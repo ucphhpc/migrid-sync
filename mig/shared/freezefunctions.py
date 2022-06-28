@@ -303,7 +303,8 @@ def update_cached_meta(configuration, client_id, freeze_id, freeze_meta):
     user_cache = os.path.join(configuration.user_cache, client_dir)
     archives_cache = os.path.join(user_cache, archives_cache_filename)
     lock_path = "%s.lock" % archives_cache
-    _logger.debug('load archives cache %s' % archives_cache)
+    _logger.debug('update archives cache %s with %s' %
+                  (archives_cache, freeze_id))
     lock_handle = None
     try:
         lock_handle = acquire_file_lock(lock_path, exclusive=True)
@@ -365,6 +366,7 @@ def list_frozen_archives(configuration, client_id, strict_owner=False,
     unconditionally be used.
     """
     _logger = configuration.logger
+    #_logger.debug('list frozen archives for %s' % client_id)
     # NOTE: we rely on quite lax cache locking here as it's single user cache
     #       and we should get eventual consistency anyway
     frozen_cache = load_cached_meta(configuration, client_id)
@@ -392,6 +394,7 @@ def list_frozen_archives(configuration, client_id, strict_owner=False,
 
         if not entry.startswith(ARCHIVE_PREFIX) or entry.endswith(CACHE_EXT):
             continue
+        #_logger.debug('checking archive %s for %s' % (entry, client_id))
         if is_frozen_archive(client_id, entry, configuration):
 
             # entry is a frozen archive - check ownership
@@ -412,7 +415,7 @@ def list_frozen_archives(configuration, client_id, strict_owner=False,
                 update_cached_meta(configuration, client_id, freeze_id,
                                    meta_out)
         else:
-            _logger.warning('%s in %s is not a directory, move it?' %
+            _logger.warning('%s in %s is not a user directory, move it?' %
                             (entry, configuration.freeze_home))
             # Remove any bogus or no longer available archives from cache
             if entry in frozen_cache:
@@ -526,7 +529,7 @@ def get_frozen_meta(client_id, freeze_id, configuration, caching=False):
         if freeze_dict:
             break
     if freeze_dict:
-        update_cached_meta(configuration, client_id, freeze_id, freeze_dict)
+        # IMPORTANT: do NOT update cache here - called for ALL legacy archives
         return (True, freeze_dict)
     return (False, 'Could not open metadata for frozen archive %s' % freeze_id)
 
