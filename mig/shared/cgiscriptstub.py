@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cgiscriptstub - cgi wrapper functions for functionality backends
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -41,9 +41,9 @@ try:
 except:
     pass
 
+from mig.shared.bailout import crash_helper
 from mig.shared.base import requested_page, allow_script, \
     is_default_str_coding, force_default_str_coding_rec
-from mig.shared.bailout import crash_helper
 from mig.shared.conf import get_configuration_object
 from mig.shared.httpsclient import extract_client_id
 from mig.shared.output import format_output, reject_main
@@ -59,7 +59,8 @@ def init_cgi_script(environ, delayed_input=None):
     # get and log ID of user currently logged in
 
     client_id = extract_client_id(configuration, environ)
-    logger.info('script: %s cert: %s' % (requested_page(), client_id))
+    script_name = requested_page(environ, name_only=True)
+    logger.info('script: %s cert: %s' % (script_name, client_id))
     if not delayed_input:
         fieldstorage = cgi.FieldStorage()
         user_arguments_dict = fieldstorage_to_dict(fieldstorage)
@@ -150,7 +151,7 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None,
 
     # TODO: add environ arg support to all main backends and use here
 
-    script_name = os.path.basename(environ.get('SCRIPT_NAME', 'UNKNOWN'))
+    script_name = requested_page(environ, name_only=True)
     backend = os.path.splitext(script_name)[0]
     logger.debug("check allow script %s from %s" % (script_name, client_id))
     (allow, msg) = allow_script(configuration, script_name, client_id)

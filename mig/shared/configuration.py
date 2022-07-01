@@ -43,7 +43,7 @@ from mig.shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
     CSRF_FULL, POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, \
     POLICY_MODERN, POLICY_CUSTOM, freeze_flavors, duplicati_protocol_choices, \
     default_css_filename, keyword_any, cert_valid_days, oid_valid_days, \
-    generic_valid_days
+    generic_valid_days, keyword_all
 from mig.shared.logger import Logger, SYSLOG_GDP
 from mig.shared.html import menu_items, vgrid_items
 from mig.shared.fileio import read_file, load_json
@@ -1175,6 +1175,11 @@ location.""" % self.config_file)
                 'SITE', 'enable_twofactor')
         else:
             self.site_enable_twofactor = False
+        if config.has_option('SITE', 'twofactor_mandatory_protos'):
+            self.site_twofactor_mandatory_protos = config.get(
+                'SITE', 'twofactor_mandatory_protos').split()
+        else:
+            self.site_twofactor_mandatory_protos = []
         if config.has_option('SITE', 'twofactor_strict_address'):
             self.site_twofactor_strict_address = config.getboolean(
                 'SITE', 'twofactor_strict_address')
@@ -2300,8 +2305,15 @@ location.""" % self.config_file)
         # Warn about missing IP check if in GDP mode
         if self.site_enable_gdp \
                 and not self.site_twofactor_strict_address:
-            logger.warning("twofactor_strict_address:"
-                           + " DISABLED and GDP ENABLED: Hope this is a develop/test environment ?!?")
+            logger.warning("twofactor_strict_address: "
+                           + "DISABLED and GDP ENABLED: "
+                           + "Hope this is a develop/test environment ?!?")
+        # Warn about missing 2FA requirement if in GDP mode
+        if self.site_enable_gdp \
+                and not self.site_twofactor_mandatory_protos:
+            logger.debug("default %s twofactor_mandatory_protos in GDP mode."
+                         % keyword_all)
+            self.site_twofactor_mandatory_protos = [keyword_all]
 
     def parse_peers(self, peerfile):
 

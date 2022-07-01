@@ -292,7 +292,7 @@ def invisible_path(path, allow_vgrid_scripts=False):
     return False
 
 
-def requested_page(environ=None, fallback='home.py'):
+def requested_page(environ=None, fallback='home.py', name_only=False):
     """Lookup requested page from environ or os.environ if not provided.
     Return fallback if no page was found in environ.
     """
@@ -304,7 +304,10 @@ def requested_page(environ=None, fallback='home.py'):
         environ.get('SCRIPT_URI', False) or \
         environ.get('PATH_INFO', False) or \
         environ.get('REQUEST_URI', fallback).split('?', 1)[0]
-    return page_path
+    if name_only:
+        return os.path.basename(page_path)
+    else:
+        return page_path
 
 
 def requested_url_base(environ=None):

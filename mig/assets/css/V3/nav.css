@@ -526,7 +526,7 @@
     font-size: 14px;
 }
 
-button.avatar-link {
+button.avatar-link, a.avatar-link {
     /* See skin color note at the top
        color: #46743C;;
        */
@@ -537,9 +537,9 @@ button.avatar-link {
     padding: 0;
     background-color: transparent;
     border: none;
+    text-decoration: none;
 }
-
-button.avatar-link:hover {
+button.avatar-link:hover, a.avatar-link:hover {
     color: orange;
     cursor: pointer;
     display: block;
@@ -549,7 +549,7 @@ button.avatar-link:hover {
     border: none;
 }
 
-button.avatar-link:active {
+button.avatar-link:active, a.avatar-link:active {
     /* See skin color note at the top
        color: #46743C;;
        */
@@ -560,6 +560,10 @@ button.avatar-link:active {
     padding: 0;
     background-color: transparent;
     border: none;
+}
+.avatar-link.disable-link {
+    color: grey;
+    cursor: none;
 }
 
 .user-menu__item {
@@ -576,6 +580,11 @@ button.avatar-link:active {
     text-decoration: none;
     display: block;
 }
+.user-menu__item.disable-link {
+  cursor: default;
+  color: gray;
+}
+
 
 .modal-backdrop {
     z-index: 99 !important;

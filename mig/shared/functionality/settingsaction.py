@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settingsaction - handle user settings updates
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -39,13 +39,14 @@ from mig.shared.duplicatikeywords import get_keywords_dict as duplicati_keywords
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.gdp.all import get_client_id_from_project_client_id
 from mig.shared.handlers import get_csrf_limit, safe_handler
+from mig.shared.httpsclient import protected_twofactor_settings
 from mig.shared.init import initialize_main_variables
 from mig.shared.profilekeywords import get_keywords_dict as profile_keywords
 from mig.shared.safeinput import valid_email_addresses
 from mig.shared.settings import parse_and_save_settings, parse_and_save_widgets, \
     parse_and_save_profile, parse_and_save_ssh, parse_and_save_davs, \
     parse_and_save_ftps, parse_and_save_seafile, parse_and_save_duplicati, \
-    parse_and_save_cloud, parse_and_save_twofactor
+    parse_and_save_cloud, parse_and_save_twofactor, load_twofactor
 from mig.shared.settingskeywords import get_keywords_dict as settings_keywords
 from mig.shared.useradm import create_seafile_mount_link, remove_seafile_mount_link
 from mig.shared.twofactorkeywords import get_keywords_dict as twofactor_keywords
@@ -97,7 +98,7 @@ def signature():
     return ['text', defaults]
 
 
-def main(client_id, user_arguments_dict):
+def main(client_id, user_arguments_dict, called_as=None):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
@@ -118,11 +119,15 @@ def main(client_id, user_arguments_dict):
         typecheck_overrides={'EMAIL': valid_email_addresses},
     )
     if not validate_status:
-        logger.debug("failed validation: %s %s" % (accepted, defaults))
+        logger.warning("failed validation: %s %s" % (accepted, defaults))
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    if not safe_handler(configuration, 'post', op_name, client_id,
+    if called_as is None:
+        called_as = op_name
+    if not safe_handler(configuration, 'post', called_as, client_id,
                         get_csrf_limit(configuration), accepted):
+        logger.warning("failed safe handler: %s (%s) %s" % (called_as, op_name,
+                                                            accepted))
         output_objects.append(
             {'object_type': 'error_text', 'text': '''Only accepting
 CSRF-filtered POST requests to prevent unintended updates'''
@@ -198,9 +203,17 @@ CSRF-filtered POST requests to prevent unintended updates'''
             if configuration.site_enable_gdp:
                 real_user = get_client_id_from_project_client_id(configuration,
                                                                  client_id)
+            # NOTE: refuse to toggle any mandatory 2FA settings already enabled
+            current_dict = load_twofactor(client_id, configuration)
+            if not current_dict:
+                current_dict = {}
+            overrides = protected_twofactor_settings(configuration, client_id,
+                                                     current_dict)
+            logger.debug("preserving twofactor values during update: %s" %
+                         overrides)
             (parse_status, parse_msg) = \
                 parse_and_save_twofactor(tmptopicfile, real_user,
-                                         configuration)
+                                         configuration, overrides)
         elif topic == 'sftp':
             publickeys = '\n'.join(accepted.get('publickeys', ['']))
             password = accepted.get('password', [''])[-1].strip()
