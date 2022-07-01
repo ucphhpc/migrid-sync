@@ -124,7 +124,7 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
 
     try:
 
-        # TODO: add environ arg to all main backends and pass it here
+        # TODO: add environ arg to all main backends and pass it here?
 
         (output_objects, (ret_code, ret_msg)) = main(client_id,
                                                      user_arguments_dict)
@@ -148,8 +148,6 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
                            "done in %.3fs" % (after_time - before_time)})
     return (output_objects, (ret_code, ret_msg))
 
-
-# ## Main ###
 
 def application(environ, start_response):
     """MiG app called automatically by wsgi"""
@@ -218,9 +216,9 @@ def application(environ, start_response):
             output_format = user_arguments_dict['output_format'][0]
 
         # Environment contains python script _somewhere_ , try in turn
-        # and fall back to dashboard if all fails
-        script_path = requested_page(environ, configuration.site_landing_page)
-        script_name = os.path.basename(script_path)
+        # and fall back to landing page if all fails
+        script_name = requested_page(environ, configuration.site_landing_page,
+                                     name_only=True)
         backend = os.path.splitext(script_name)[0]
         # _logger.debug("handling wsgi %r request from %s" %
         #              (backend, client_id))
