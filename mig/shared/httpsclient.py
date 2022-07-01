@@ -36,8 +36,10 @@ import socket
 from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_V2, \
     AUTH_OPENID_CONNECT, AUTH_GENERIC, AUTH_NONE, AUTH_MIG_OID, AUTH_EXT_OID, \
     AUTH_MIG_OIDC, AUTH_EXT_OIDC, AUTH_MIG_CERT, AUTH_EXT_CERT, \
-    AUTH_SID_GENERIC, AUTH_UNKNOWN, auth_openid_mig_db, auth_openid_ext_db
+    AUTH_SID_GENERIC, AUTH_UNKNOWN, auth_openid_mig_db, auth_openid_ext_db, \
+    keyword_all
 from mig.shared.gdp.all import get_project_user_dn
+from mig.shared.settings import load_twofactor
 from mig.shared.url import urlencode, parse_qsl
 from mig.shared.useradm import get_oidc_user_dn, get_openid_user_dn
 
@@ -57,6 +59,15 @@ cert_id_field = 'SSL_CLIENT_S_DN'
 #       and unexpected auth methods.
 
 session_id_field = 'SESSION_ID'
+
+# Helper to lookup mandatory twofactor settings matching conf values
+twofactor_setting_flavors = {'extoid': 'EXT_OID_TWOFACTOR',
+                             'extoidc': 'EXT_OID_TWOFACTOR',
+                             'migoid': 'MIG_OID_TWOFACTOR',
+                             'migoidc': 'MIG_OID_TWOFACTOR',
+                             'sftp': 'SFTP_PASSWORD_TWOFACTOR',
+                             'webdavs': 'WEBDAVS_TWOFACTOR',
+                             'ftps': 'FTPS_TWOFACTOR'}
 
 
 def pop_openid_query_fields(environ):
@@ -331,6 +342,109 @@ def extract_client_id(configuration, environ, lookup_dn=True):
         # Fall back to use certificate value in any case
         distinguished_name = extract_client_cert(configuration, environ)
     return distinguished_name
+
+
+def require_twofactor_setup(configuration, script_name, client_id, environ):
+    """Check if site requires twofactor for this web access and if so return
+    the corresponding functionality backedn main function.
+    """
+    _logger = configuration.logger
+    # Helper to detect twofactor required and protected settings
+    twofactor_short_flavors = {AUTH_EXT_OID: 'extoid', AUTH_EXT_OIDC: 'extoidc',
+                               AUTH_MIG_OID: 'migoid', AUTH_MIG_OIDC: 'migoidc',
+                               AUTH_EXT_CERT: 'extcert', AUTH_MIG_CERT: 'migcert',
+                               AUTH_UNKNOWN: 'unknown'}
+    twofactor_protos = configuration.site_twofactor_mandatory_protos
+    (auth_type, auth_flavor) = detect_client_auth(configuration, environ)
+    if keyword_all in twofactor_protos or 'https' in twofactor_protos or \
+            twofactor_short_flavors[auth_flavor] in twofactor_protos:
+        #_logger.debug("checking %s forced twofactor setup" % client_id)
+        saved = load_twofactor(client_id, configuration)
+        if not saved:
+            _logger.debug(
+                "no saved twofactor setup for %s - force" % client_id)
+            return True
+        if auth_flavor in (AUTH_EXT_OID, AUTH_EXT_OIDC) and \
+                not saved.get('EXT_OID_TWOFACTOR', False):
+            _logger.debug(
+                "missing %s twofactor setup for %s - force" % (auth_flavor,
+                                                               client_id))
+            return True
+        elif auth_flavor in (AUTH_MIG_OIDC, AUTH_MIG_OIDC) and \
+                not saved.get('MIG_OID_TWOFACTOR', False):
+            _logger.debug(
+                "missing %s twofactor setup for %s - force" % (auth_flavor,
+                                                               client_id))
+            return True
+        else:
+            _logger.debug(
+                "found flavor %s for %s and saved: %s" % (auth_flavor,
+                                                          client_id, saved))
+
+        #_logger.debug("required twofactor setup complete for %s" % client_id)
+
+    _logger.debug("not forcing %s to twofactor setup" % client_id)
+    return False
+
+
+def protected_twofactor_settings(configuration, client_id, settings_dict):
+    """Return a dictionary of twofactor settings from settings_dict that must
+    be preserved because they are already enabled and marked mandatory in the
+    configuration.
+    """
+    _logger = configuration.logger
+    twofactor_protos = configuration.site_twofactor_mandatory_protos
+    protected = {}
+    if not twofactor_protos:
+        return protected
+    else:
+        if keyword_all in twofactor_protos:
+            mandatory_protos = list(twofactor_setting_flavors)
+        else:
+            mandatory_protos = list(twofactor_protos)
+        for key in mandatory_protos:
+            mandatory_key = twofactor_setting_flavors.get(key, None)
+            if not mandatory_key:
+                _logger.warning("ignore unknown mandatory twofactor value: %s"
+                                % key)
+                continue
+            val = settings_dict.get(mandatory_key, None)
+            if val:
+                _logger.debug("protect twofactor %r setting" % key)
+                protected[mandatory_key] = val
+    _logger.debug("found protected 2FA settings for %s: %s" % (client_id,
+                                                               protected))
+    return protected
+
+
+def missing_twofactor_settings(configuration, client_id, settings_dict):
+    """Return a dictionary of twofactor settings from settings_dict that must
+    be set because they are not yet enabled but marked mandatory in the
+    configuration.
+    """
+    _logger = configuration.logger
+    twofactor_protos = configuration.site_twofactor_mandatory_protos
+    missing = {}
+    if not twofactor_protos:
+        return missing
+    else:
+        if keyword_all in twofactor_protos:
+            mandatory_protos = list(twofactor_setting_flavors)
+        else:
+            mandatory_protos = list(twofactor_protos)
+        for key in mandatory_protos:
+            mandatory_key = twofactor_setting_flavors.get(key, None)
+            if not mandatory_key:
+                _logger.warning("ignore unknown mandatory twofactor value: %s"
+                                % key)
+                continue
+            val = settings_dict.get(mandatory_key, None)
+            if not val:
+                _logger.debug("force missing twofactor %r setting" % key)
+                missing[mandatory_key] = True
+    _logger.debug("found missing 2FA settings for %s: %s" % (client_id,
+                                                             missing))
+    return missing
 
 
 def check_source_ip(remote_ip, unique_resource_name, proxy_fqdn=None):

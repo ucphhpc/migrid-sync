@@ -464,7 +464,7 @@ valid_gdp_auth_scripts = [
     'uploadchunked.py',
     'rmvgridowner.py'
 ]
-# NOTE: these are cgi-sid scripts to allow
+# NOTE: these are cgi-sid scripts to always allow
 valid_gdp_anon_scripts = [
     'reqoid.py',
     'reqoidaction.py',

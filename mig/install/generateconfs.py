@@ -155,6 +155,7 @@ if '__main__' == __name__:
         'admin_email',
         'admin_list',
         'log_level',
+        'twofactor_mandatory_protos',
         'freeze_to_tape',
         'status_system_match',
         'duplicati_protocols',

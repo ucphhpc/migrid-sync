@@ -52,9 +52,12 @@ from mig.shared.widgetskeywords import get_keywords_dict as get_widgets_fields
 
 
 def parse_and_save_pickle(source, destination, keywords, client_id,
-                          configuration, strip_space, strip_comments):
+                          configuration, strip_space, strip_comments,
+                          overrides={}):
     """Use conf parser to parse settings in mRSL file and save resulting
     dictionary in a pickled file in user_settings.
+    Optional overrides dictionary can be used to force certain values to be
+    or remain set.
     """
     client_dir = client_id_dir(client_id)
     result = parse(source, strip_space, strip_comments)
@@ -79,6 +82,9 @@ def parse_and_save_pickle(source, destination, keywords, client_id,
 
     for (key, value_dict) in keywords.items():
         new_dict[key] = value_dict['Value']
+    # apply any overrides
+    for key in overrides:
+        new_dict[key] = overrides[key]
 
     new_dict['CREATOR'] = client_id
     new_dict['CREATED_TIMESTAMP'] = datetime.datetime.now()
@@ -201,7 +207,7 @@ Backup destination page during import.'''
     return status
 
 
-def parse_and_save_twofactor(filename, client_id, configuration):
+def parse_and_save_twofactor(filename, client_id, configuration, overrides={}):
     """Validate and write twofactor entries from filename. The 2FA user key
     and any required auth files need to be handled separately.
     After saving we check and warn if primary 2FA settings aren't enabled and
@@ -211,7 +217,8 @@ def parse_and_save_twofactor(filename, client_id, configuration):
     _logger = configuration.logger
     status = parse_and_save_pickle(filename, twofactor_filename,
                                    get_twofactor_fields(configuration),
-                                   client_id, configuration, False, False)
+                                   client_id, configuration, False, False,
+                                   overrides)
     if status[0]:
         saved_values = load_twofactor(client_id, configuration)
         if not saved_values:

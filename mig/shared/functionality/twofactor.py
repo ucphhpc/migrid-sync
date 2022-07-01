@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # twofactor - handle two-factor authentication with per-user shared key
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -45,21 +45,27 @@ from mig.shared import returnvalues
 from mig.shared.auth import twofactor_available, load_twofactor_key, \
     get_twofactor_token, verify_twofactor_token, generate_session_key, \
     save_twofactor_session, expire_twofactor_session
+from mig.shared.base import requested_page
 from mig.shared.defaults import twofactor_cookie_ttl, AUTH_MIG_OID, \
     AUTH_EXT_OID, AUTH_MIG_OIDC, AUTH_EXT_OIDC
 from mig.shared.functional import validate_input
 from mig.shared.init import initialize_main_variables
 from mig.shared.html import twofactor_token_html, themed_styles, themed_scripts
-from mig.shared.httpsclient import detect_client_auth
+from mig.shared.httpsclient import detect_client_auth, require_twofactor_setup
 from mig.shared.settings import load_twofactor
 from mig.shared.twofactorkeywords import get_keywords_dict as twofactor_defaults
 from mig.shared.url import urlencode, unquote, parse_qs
 
 
-def signature():
+def signature(configuration, setup_mode=False):
     """Signature of the main function"""
 
     defaults = {'action': ['auth'], 'token': [None], 'redirect_url': ['']}
+    if setup_mode:
+        defaults['topic'] = ['']
+        setup_defaults = twofactor_defaults(configuration)
+        for key in setup_defaults:
+            defaults[key] = ['']
     return ['text', defaults]
 
 
@@ -96,7 +102,8 @@ def main(client_id, user_arguments_dict, environ=None):
 
     # IMPORTANT: use all actual args as base and override with real signature
     all_args = query_args(environ)
-    defaults = signature()[1]
+    # TODO: detect save settings and differentiate here
+    defaults = signature(configuration, setup_mode=True)[1]
     all_args.update(defaults)
     (validate_status, accepted) = validate_input(user_arguments_dict,
                                                  all_args, output_objects,
@@ -109,8 +116,10 @@ def main(client_id, user_arguments_dict, environ=None):
     redirect_url = accepted['redirect_url'][-1]
     check_only = False
 
-    # logger.debug("User: %s executing %s with redirect url %s" %
-    #             (client_id, op_name, redirect_url))
+    script_name = requested_page(environ, "%s.py" % op_name, name_only=True)
+
+    logger.debug("User: %s executing %s with redirect url %r" %
+                 (client_id, op_name, redirect_url))
     # logger.debug("env: %s" % environ)
 
     if not configuration.site_enable_twofactor:
@@ -129,7 +138,6 @@ def main(client_id, user_arguments_dict, environ=None):
         output_objects.append(
             {'object_type': 'error_text', 'text':
              "Internal error: could not expire old 2FA sessions!"})
-
         return (output_objects, returnvalues.ERROR)
 
     status = returnvalues.OK
@@ -163,10 +171,13 @@ def main(client_id, user_arguments_dict, environ=None):
         twofactor_dict = dict([(i, j['Value']) for (i, j) in
                                twofactor_defaults(configuration).items()])
 
+    check_missing_setup = False
     # NOTE: twofactor_defaults field availability depends on configuration
     if action == 'auth' and not redirect_url:
         # This is the 2FA setup check mode
         require_twofactor = True
+        # We also get here on no action and no redirect_url after setup
+        check_missing_setup = True
     elif action == 'check':
         check_only = True
         require_twofactor = True
@@ -187,13 +198,39 @@ def main(client_id, user_arguments_dict, environ=None):
         require_twofactor = True
     else:
         require_twofactor = False
+        check_missing_setup = True
 
-    # Fail gently if twofactor dependencies are unavailable
+    pending_setup = False
+    if check_missing_setup:
+        #logger.debug("checking for pending 2FA setup")
+        #  No twofactor requirement detected - mandatory setup may be pending
+        pending_setup = require_twofactor_setup(configuration, script_name,
+                                                client_id, environ)
+        if pending_setup:
+            logger.debug("send %s to required 2FA setup" % client_id)
+            require_twofactor = True
+
+    # Fail hard if twofactor dependencies are unavailable but requested
     if require_twofactor and not twofactor_available(configuration):
-        logger.error("Required dependencies are missing for 2FA support")
-        require_twofactor = False
+        logger.error("required dependencies are missing for 2FA support")
+        output_objects.append({'object_type': 'error_text', 'text':
+                               "Internal error: invalid site 2FA requirement!"})
+        return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    if require_twofactor:
+    if pending_setup:
+        if redirect_url:
+            logger.info("send %s through required 2FA setup wizard" %
+                        client_id)
+            from mig.shared.functionality.setup import main as setup
+            user_arguments_dict = {'topic': ['twofactor']}
+            # Point setup back here for handling save below
+            return setup(client_id, user_arguments_dict, target_op=op_name)
+        else:
+            logger.info("save result of required 2FA setup for %s" % client_id)
+            from mig.shared.functionality.settingsaction import main as save
+            # Inform save operation that it's called from here for CSRF check
+            return save(client_id, user_arguments_dict, called_as=op_name)
+    elif require_twofactor:
         logger.info("detected 2FA requirement for %s on %s" % (client_id,
                                                                request_url))
         b32_secret = None
@@ -228,6 +265,7 @@ def main(client_id, user_arguments_dict, environ=None):
                 output_objects.append({'object_type': 'html_form', 'text': '''
 </div>
 </div>'''})
+
                 # TODO: proper rate limit source / user here?
                 time.sleep(3)
             return (output_objects, status)

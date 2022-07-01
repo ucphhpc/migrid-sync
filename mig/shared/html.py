@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # html - html helper functions
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -218,6 +218,7 @@ def render_menu(configuration, menu_class='navmenu',
         <a href="%(url)s" %(selected)s %(attr)s class=%(link_class)s title="%(hover)s">
         %(title)s</a></li>
         '''
+        menu_lines_append = ''
     else:
         menu_wrap = '''%s
         '''
@@ -227,11 +228,20 @@ def render_menu(configuration, menu_class='navmenu',
         %%s
     </div>
         ''' % menu_class
+        menu_lines_append = '''
+    <div id="hamBtn" class="hamburger hamburger--vortex" onclick="hamburgerMenuToggle()">
+        <div class="hamburger-box">
+            <!--<div class="hamburger-inner"></div>-->
+            <h3>...</h3>
+        </div>
+        <!--<div id="menuTxt">Menu</div>-->
+    </div>
+        '''
         # Icon and selected marker are on span in modern mode
         menu_item_wrap = '''<a href="%(url)s" %(selected)s %(attr)s class="%(link_class)s" title="%(hover)s">
         <span %(selected)s class="%(class)s"></span>%(title)s</a>
         '''
-    menu_lines = ''
+    menu_lines, menu_entries = '', 0
     for name in menu_order:
         spec = menu_items.get(name, None)
         if not spec:
@@ -281,7 +291,9 @@ def render_menu(configuration, menu_class='navmenu',
         #       spec.get('hover', ''), item_icon, item_text)
 
         menu_lines += menu_item_wrap % menu_entry
-
+        menu_entries += 1
+    if menu_entries:
+        menu_lines += menu_lines_append
     return menu_wrap % menu_lines
 
 
@@ -1070,14 +1082,15 @@ def fancy_upload_html(configuration):
     return html
 
 
-def save_settings_js(configuration):
+def save_settings_js(configuration, target_op='settingsaction',
+                     auto_refresh=True):
     """Build AJAX save settings/setup dependency imports, init and ready
     snippets.
     """
     if configuration.site_enable_wsgi:
-        save_url = "/wsgi-bin/settingsaction.py"
+        save_url = "/wsgi-bin/%s.py" % target_op
     else:
-        save_url = "/cgi-bin/settingsaction.py"
+        save_url = "/cgi-bin/%s.py" % target_op
     add_import = '''
 <!-- for AJAX submit form -->
 <script type="text/javascript" src="/assets/vendor/jquery.form/js/jquery.form.js"></script>
@@ -1116,6 +1129,7 @@ def save_settings_js(configuration):
                     success: function(responseObject, statusText) {
                         /* Reset status */
                         saved = false;
+                        auto_refresh = %(auto_refresh)s;
                         statusText = "";
                         warningMsg = "";
                         errorMsg = "";
@@ -1132,7 +1146,8 @@ def save_settings_js(configuration):
                                                 ":", "");
                                     break;
                                 } else if (statusMsg.indexOf("Input ") !== -1) {
-                                    errorMsg = "Save failed: "+responseObject[i]["text"];
+                                    errorMsg = "Save failed: "+ \
+                                        responseObject[i]["text"];
                                     console.error(errorMsg);
                                     break;
                                 } else {
@@ -1140,11 +1155,13 @@ def save_settings_js(configuration):
                                             "ignoring other text entry: "+statusMsg);
                                 }
                             } else if(responseObject[i]["object_type"] === "error_text") {
-                                errorMsg = "Save failure: "+responseObject[i]["text"];
+                                errorMsg = "Save failure: "+ \
+                                    responseObject[i]["text"];
                                 console.error(errorMsg);
                                 break;
                             } else if(responseObject[i]["object_type"] === "warning") {
-                                warningMsg = "warning: "+responseObject[i]["text"];
+                                warningMsg = "warning: "+ \
+                                    responseObject[i]["text"];
                                 console.warn(warningMsg);
                             }
                         }
@@ -1157,21 +1174,14 @@ def save_settings_js(configuration):
                             $(".savestatus span").fadeIn(200);
                             setTimeout(function() { $(".savestatus span").fadeOut(3000);
                                                 }, 1000);
-                            if (statusMsg.indexOf("duplicati") >= 0) {
+                            if (auto_refresh) {
                                 console.info(
-                                    "force reload for duplicati to update backup sets");
+                                    "auto refresh to apply changes");
                                 setTimeout(function() {
                                     $(".savestatus").html(renderWorking("refreshing ..."));
                                     $(".savestatus span").fadeIn(200);
-                                }, 4000);
-                                setTimeout(function() { location.reload(); }, 5000);
-                            } else if (location.href.indexOf("home") >= 0) {
-                                console.info("force reload for apps to update");
-                                setTimeout(function() {
-                                    $(".savestatus").html(renderWorking("refreshing ..."));
-                                    $(".savestatus span").fadeIn(200);
-                                }, 4000);
-                                setTimeout(function() { location.reload(); }, 5000);
+                                }, 3000);
+                                setTimeout(function() { location.reload(); }, 4000);
                             }
                         } else {
                             if (!errorMsg) {
@@ -1191,7 +1201,7 @@ def save_settings_js(configuration):
                         $(".savestatus span").fadeIn(100);
                     }
                 };
-    ''' % {'save_url': save_url}
+    ''' % {'save_url': save_url, 'auto_refresh': ("%s" % auto_refresh).lower()}
     add_ready = '''
     //console.debug("submit form serialized: "+$(".save_settings").serialize());
     /* Prevent enter in fields submitting directly to backend */
@@ -1318,7 +1328,8 @@ def twofactor_wizard_js(configuration):
                                 }
                             }
                             if (acceptedOTP) {
-                                console.debug("accepted - inform user and proceed");
+                                console.debug(
+                                    "accepted - inform user and proceed");
                                 /* NOTE: we massively chain the effects here
                                          for sequential action without extra
                                          timers.
@@ -1357,7 +1368,7 @@ def twofactor_wizard_js(configuration):
                         } else {
                             errorMsg = "Please enter your 6-digit authenticator token";
                             $("#twofactorstatus").html(renderError(errorMsg));
-                            console.error(errorMsg);                        
+                            console.error(errorMsg);
                         }
                 } catch(err) {
                     console.error("ajaxform error: "+ err);
@@ -1424,7 +1435,7 @@ def twofactor_wizard_js(configuration):
                 fade_time *= 4;
             }
             $(".requires-twofactor-base.manual-show").fadeOut(fade_time);
-        }        
+        }
     }
     function initOTPDepends(static) {
         //console.debug("init deps");
@@ -1509,7 +1520,10 @@ def twofactor_wizard_js(configuration):
 
 
 def twofactor_wizard_html(configuration):
-    """Build standard html twofactor wizard table content"""
+    """Build standard html twofactor wizard table content. Some content is left
+    for delayed string expansion in order for it to be shared between cases
+    where twofactor authentication is mandatory/optional and pending/enabled.
+    """
     html = """
 <tr class='otp_wizard otp_intro'><td>
 <div id='warning_dialog' title='Warning'
@@ -1519,9 +1533,9 @@ def twofactor_wizard_html(configuration):
 <p>We %(demand_twofactor)s 2-factor authentication on %(site)s for greater
 password login security.
 In short it means that you enter a generated single-use <em>token</em> from
-e.g. your phone or tablet along with your usual login. This combination makes
+e.g. your phone or tablet after your usual login. This combination makes
 account abuse <b>much</b> harder, because even if your password gets stolen,
-it can't be used without your device.</p>
+it doesn't offer access without your mobile device.</p>
 </td></tr>
 <tr class='otp_wizard otp_intro'><td>
 <p>Preparing and enabling 2-factor authentication for your login is done in four
@@ -1885,12 +1899,14 @@ def get_xgi_html_header(
                 out += '''
 %s
                 ''' % user_pre_menu
+
                 # Render classic menu
-                menu_helpers['menu_lines'] = render_menu(configuration, 'navmenu', current_page,
-                                                         base_menu, user_menu, user_settings)
+                menu_helpers['menu_lines'] = render_menu(
+                    configuration, 'navmenu', current_page, base_menu,
+                    user_menu, user_settings)
                 out += '''
-                %(menu_lines)s
-                ''' % menu_helpers
+                    %(menu_lines)s
+                    ''' % menu_helpers
                 out += '''
 %s
                 ''' % user_post_menu
@@ -1916,46 +1932,45 @@ def get_xgi_html_header(
                 out += '''
                 %s
                 ''' % user_pre_menu
-                # Render apps icons with slider menu and user profile access
-                menu_helpers['icon_lines'] = render_menu(configuration, 'navmenu', current_page,
-                                                         base_menu, user_menu, user_settings, display=ICONS_ONLY)
-                menu_helpers['text_lines'] = render_menu(configuration, 'navmenu', current_page,
-                                                         base_menu, user_menu, user_settings, display=TEXT_ONLY)
                 out += '''
 
         <div class="sidebar-middle col-12 align-self-center">
+                '''
 
+                # Render apps icons with slider menu and user profile access
+                menu_helpers['icon_lines'] = render_menu(
+                    configuration, 'navmenu', current_page, base_menu,
+                    user_menu, user_settings, display=ICONS_ONLY)
+                menu_helpers['text_lines'] = render_menu(
+                    configuration, 'navmenu', current_page, base_menu,
+                    user_menu, user_settings, display=TEXT_ONLY)
+                out += '''
                     %(icon_lines)s
+                    ''' % menu_helpers
 
-                    <div id="hamBtn" class="hamburger hamburger--vortex" onclick="hamburgerMenuToggle()">
-                        <div class="hamburger-box">
-                            <!--<div class="hamburger-inner"></div>-->
-                            <h3>...</h3>
-                        </div>
-                        <!--<div id="menuTxt">Menu</div>-->
-                    </div>
+                out += '''
         </div>
-        <div class="col-12 align-self-end home-nav-user__container">
-            <div id="userMenuButton" class="fas fa-user home-nav-user" onclick="userMenuToggle()" title="Your personal settings for %(short_title)s"></div>
+        <div class = "col-12 align-self-end home-nav-user__container" >
+            <div id = "userMenuButton" class = "fas fa-user home-nav-user" onclick = "userMenuToggle()" title = "Your personal settings for %(short_title)s" > </div>
         </div>
 
                 ''' % menu_helpers
 
                 menu_slider += '''
-                <div id="hamMenu" class="slidernav-container">
+        <div id = "hamMenu" class = "slidernav-container" >
 
-                    <div class="slider-container__inner row">
-            <div class="slider-header col-12 align-self-start">
-                <h2>%(short_title)s</h2>
-            </div>
-            <div class="slider-middle col-12 align-self-center">
-                            %(text_lines)s
-            </div>
-            <div class="slider-footer col-12 align-self-end home-nav-user__inner">
-                            <a onclick="userMenuToggle()">User</a>
-            </div>
-            </div>
+            <div class = "slider-container__inner row" >
+                <div class="slider-header col-12 align-self-start">
+                    <h2>%(short_title)s</h2>
                 </div>
+                <div class="slider-middle col-12 align-self-center">
+                            %(text_lines)s
+                </div>
+                <div class="slider-footer col-12 align-self-end home-nav-user__inner">
+                    <a onclick="userMenuToggle()">User</a>
+                </div>
+            </div>
+        </div>
                 ''' % menu_helpers
 
                 profile_helper = {'full_name': '',
@@ -1971,6 +1986,16 @@ def get_xgi_html_header(
                     profile_helper['avatar_image'] = '''
                     <span class="avatar-image anonymous"></span>
                     '''
+                # Never disable logout or help
+                for user_entry in ['logout', 'help']:
+                    profile_helper['disable%s' % user_entry] = ''
+                # Disable any other entries missing from base and user menu
+                for user_entry in ['home', 'settings', 'setup']:
+                    profile_helper['disable%s' % user_entry] = ''
+                    if not user_entry in base_menu + user_menu:
+                        profile_helper['disable%s' %
+                                       user_entry] = 'disable-link'
+
                 account_menu = '''
 <!--USER ACCOUNT MENU POPUP - HIDDEN-->
 <div id="userMenu" class="popup-container row">
@@ -1983,18 +2008,18 @@ def get_xgi_html_header(
             </div>
             <div class="col-9">
                 %(full_name)s
-                <button class="avatar-link" onclick="window.location.href='settings.py'">Change photo</button>
+                <a class="user-menu__link avatar-link %(disablesettings)s" href="settings.py">Change photo</a>
             </div>
         </div>
     </div>
     <div class="popup-middle col-12">
-        <a class="user-menu__item link-home" href="home.py">Home</a>
-        <a class="user-menu__item link-settings" href="settings.py">Settings</a>
-        <a class="user-menu__item link-setup" href="setup.py">Setup</a>
-        <a class="user-menu__item link-help" href="%(help_url)s">Help</a>
+        <a class="user-menu__item link-home %(disablehome)s" href="home.py">Home</a>
+        <a class="user-menu__item link-settings %(disablesettings)s" href="settings.py">Settings</a>
+        <a class="user-menu__item link-setup %(disablesetup)s " href="setup.py">Setup</a>
+        <a class="user-menu__item link-help %(disablehelp)s " href="%(help_url)s">Help</a>
     </div>
     <div class="popup-footer col-12">
-        <a class="user-menu__item link-logout" href="logout.py">Sign Out</a>
+        <a class="user-menu__item link-logout %(disablelogout)s " href="logout.py">Sign Out</a>
     </div>
 </div>
                 ''' % profile_helper
