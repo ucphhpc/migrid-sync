@@ -33,13 +33,14 @@ import os
 
 from mig.shared import returnvalues
 from mig.shared.auth import expire_twofactor_session
+from mig.shared.base import requested_page
 from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_V2, \
     AUTH_OPENID_CONNECT, AUTH_MIG_OID, AUTH_EXT_OID, AUTH_MIG_OIDC, \
     AUTH_EXT_OIDC
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.gdp.all import project_logout, get_client_id_from_project_client_id
 from mig.shared.httpsclient import extract_client_id, detect_client_auth, \
-    build_logout_url, extract_client_openid
+    require_twofactor_setup, build_logout_url, extract_client_openid
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.useradm import expire_oid_sessions, find_oid_sessions
 
@@ -91,6 +92,20 @@ logout you need to make sure it is protected by a password and then close the
 browser. Please refer to your browser and system documentation for details.
 """ % configuration.short_title})
         return (output_objects, status)
+
+    title_entry = find_entry(output_objects, 'title')
+
+    # Always rely on os.environ here as that's what we have
+    environ = os.environ
+    script_name = requested_page(name_only=True)
+    # Check if twofactor is mandatory and not yet set up
+    forced_twofactor = require_twofactor_setup(configuration, script_name,
+                                               client_id, environ)
+    if forced_twofactor:
+        # Hide usual menu entries to only allow logout
+        title_entry['base_menu'] = [i for i in title_entry['base_menu']
+                                    if i in ['setup', 'logout']]
+        title_entry['user_menu'] = []
 
     # OpenID requires logout on provider and in local mod-auth-openid database.
     # IMPORTANT: some browsers like Firefox may inadvertently renew the local
@@ -173,7 +188,6 @@ documentation for details.""" % (configuration.short_title, auth_type)})
                     {'object_type': 'text', 'text':
                      """You are now logged out of %s locally - you may want to
 close your web browser to finish""" % configuration.short_title})
-                title_entry = find_entry(output_objects, 'title')
                 title_entry['skipmenu'] = True
 
         else:

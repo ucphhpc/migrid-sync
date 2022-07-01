@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # setup - back end for the client access setup page
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,7 +36,7 @@ from mig.shared import returnvalues
 from mig.shared.accountstate import account_expire_info
 from mig.shared.auth import get_twofactor_secrets
 from mig.shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin, \
-    get_short_id, requested_url_base
+    get_short_id, requested_url_base, requested_page
 from mig.shared.defaults import seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
     duplicati_protocol_choices, duplicati_schedule_choices, keyword_all, \
     AUTH_MIG_OID, AUTH_EXT_OID, AUTH_MIG_OIDC, AUTH_EXT_OIDC
@@ -47,7 +47,8 @@ from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.html import man_base_js, man_base_html, console_log_javascript, \
     twofactor_wizard_html, twofactor_wizard_js, twofactor_token_html, \
     save_settings_js, save_settings_html
-from mig.shared.httpsclient import detect_client_auth
+from mig.shared.httpsclient import detect_client_auth, require_twofactor_setup, \
+    protected_twofactor_settings, missing_twofactor_settings
 from mig.shared.init import initialize_main_variables, find_entry, extract_menu
 from mig.shared.pwhash import parse_password_policy
 from mig.shared.safeinput import html_escape, password_min_len, password_max_len, \
@@ -490,7 +491,7 @@ ssh %(cloud_host_pattern)s
         return html
 
 
-def main(client_id, user_arguments_dict):
+def main(client_id, user_arguments_dict, target_op='settingsaction'):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
@@ -521,7 +522,8 @@ def main(client_id, user_arguments_dict):
 
     (add_import, add_init, add_ready) = man_base_js(configuration, [])
     (tfa_import, tfa_init, tfa_ready) = twofactor_wizard_js(configuration)
-    (save_import, save_init, save_ready) = save_settings_js(configuration)
+    (save_import, save_init, save_ready) = save_settings_js(configuration,
+                                                            target_op)
     # prepare support for toggling the views (by css/jquery)
     title_entry['style']['skin'] += '''
 %s
@@ -588,9 +590,22 @@ def main(client_id, user_arguments_dict):
         valid_topics.append('duplicati')
     if configuration.site_enable_cloud:
         valid_topics.append('cloud')
+    # TODO: merge gdp and non-gdp handling?
     if configuration.site_enable_twofactor \
             and not configuration.site_enable_gdp:
         valid_topics.append('twofactor')
+    # Always rely on os.environ here as that's what we have
+    environ = os.environ
+    script_name = requested_page(name_only=True)
+    # Check if twofactor is mandatory and not yet set up
+    forced_twofactor = require_twofactor_setup(configuration, script_name,
+                                               client_id, environ)
+    if forced_twofactor:
+        # Hide usual menu entries to only allow logout
+        title_entry['base_menu'] = [i for i in title_entry['base_menu']
+                                    if i in ['setup', 'logout']]
+        title_entry['user_menu'] = []
+        valid_topics = ['twofactor']
     topic_list = accepted['topic']
     # Backwards compatibility
     if topic_list and 'ssh' in topic_list:
@@ -608,25 +623,25 @@ def main(client_id, user_arguments_dict):
                        ]:
         if key in valid_topics:
             topic_titles[key] = val
-
-    output_objects.append({'object_type': 'header', 'text': 'Setup'})
-
+    if not forced_twofactor:
+        output_objects.append({'object_type': 'header', 'text': 'Setup'})
     links = []
-    for name in valid_topics:
-        active_menu = ''
-        if topic_list[0] == name:
-            active_menu = 'activebutton'
-        links.append({'object_type': 'link',
-                      'destination': "setup.py?topic=%s" % name,
-                      'class': '%ssettingslink settingsbutton %s'
-                      % (name, active_menu),
-                      'title': 'Switch to %s setup' % topic_titles[name],
-                      'text': '%s' % topic_titles[name],
-                      })
+    if not forced_twofactor:
+        for name in valid_topics:
+            active_menu = ''
+            if topic_list[0] == name:
+                active_menu = 'activebutton'
+            links.append({'object_type': 'link',
+                          'destination': "setup.py?topic=%s" % name,
+                          'class': '%ssettingslink settingsbutton %s'
+                          % (name, active_menu),
+                          'title': 'Switch to %s setup' % topic_titles[name],
+                          'text': '%s' % topic_titles[name],
+                          })
 
-    output_objects.append({'object_type': 'multilinkline', 'links': links,
-                           'sep': '  '})
-    output_objects.append({'object_type': 'text', 'text': ''})
+        output_objects.append({'object_type': 'multilinkline', 'links': links,
+                               'sep': '  '})
+        output_objects.append({'object_type': 'text', 'text': ''})
 
     if not topic_list:
         output_objects.append({'object_type': 'error_text', 'text':
@@ -639,7 +654,8 @@ def main(client_id, user_arguments_dict):
     (expire_warn, expire_time, renew_days, extend_days) = account_expire_info(
         configuration, client_id)
     expire_html = ''
-    if expire_warn:
+    # NOTE: skip warn on forced_twofactor as Save is required anyway
+    if expire_warn and not forced_twofactor:
         expire_warn_msg = '''<p class="warningtext">
 NOTE: your %s account access including efficient file service access expires on
 %s. You can always repeat sign up to extend general access with another %s days.
@@ -706,7 +722,6 @@ NOTE: your %s account access including efficient file service access expires on
 fingerprint %s first time you connect.''' % ' or '.join(fingerprints)
         if sftp_trust_dns:
             hostkey_from_dns = 'yes'
-        target_op = 'settingsaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
@@ -858,7 +873,6 @@ value="%(default_authpassword)s" />
         if fingerprints:
             fingerprint_info = '''You may be asked to verify the server key
 fingerprint %s first time you connect.''' % ' or '.join(fingerprints)
-        target_op = 'settingsaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
@@ -1000,7 +1014,6 @@ value="%(default_authpassword)s" />
         if fingerprints:
             fingerprint_info = '''You may be asked to verify the server key
 fingerprint <sampl>%s</sampl> first time you connect.''' % ' or '.join(fingerprints)
-        target_op = 'settingsaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
@@ -1130,7 +1143,6 @@ value="%(default_authpassword)s" />
                 client_id, configuration.user_seafile_alias)
             create_alias_link(username, client_id, configuration.user_home)
 
-        target_op = 'settingsaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
@@ -1379,7 +1391,6 @@ value="%(default_authpassword)s" />
             if not username_map[proto] in configuration.username:
                 configuration.username.append(username_map[proto])
 
-        target_op = 'settingsaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
@@ -1559,7 +1570,6 @@ client versions from the link above.</p>
             username = get_short_id(configuration, client_id,
                                     configuration.user_cloud_alias)
             create_alias_link(username, client_id, configuration.user_home)
-        target_op = 'settingsaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
@@ -1668,6 +1678,8 @@ value="%(default_authpassword)s" />
                                html % fill_helpers})
 
     if 'twofactor' in topic_list:
+        twofactor_enabled = False
+        save_overrides = {}
 
         # load current twofactor
 
@@ -1677,8 +1689,8 @@ value="%(default_authpassword)s" />
             # no current twofactor found
 
             current_twofactor_dict = {}
-
-        target_op = 'settingsaction'
+        else:
+            twofactor_enabled = True
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
@@ -1712,11 +1724,29 @@ value="%(default_authpassword)s" />
             html += twofactor_wizard_html(configuration)
             check_url = '/%s/twofactor.py?action=check' % get_xgi_bin(
                 configuration)
+            # Make sure already set mandatory values remain unchanged and force
+            # any additional mandatory ones on.
+            missing = missing_twofactor_settings(configuration, client_id,
+                                                 current_twofactor_dict)
+            save_overrides.update(missing)
+            protected = protected_twofactor_settings(configuration, client_id,
+                                                     current_twofactor_dict)
+            save_overrides.update(protected)
+            logger.debug("preserve twofactor values: %s" % save_overrides)
+
+            demand_twofactor = 'allow'
+            if forced_twofactor:
+                demand_twofactor = 'demand'
+            if twofactor_enabled and not missing:
+                enable_hint = 'enable it (as you already did)'
+            else:
+                enable_hint = 'enable and save it below'
+
             fill_helpers.update({'otp_uri': otp_uri, 'b32_key': b32_key,
                                  'otp_interval': otp_interval,
                                  'check_url': check_url, 'demand_twofactor':
-                                 'allow', 'enable_hint':
-                                 'enable it for login below'})
+                                 demand_twofactor, 'enable_hint':
+                                 enable_hint})
 
         twofactor_entries = get_twofactor_specs(configuration)
         html += '''
@@ -1737,6 +1767,8 @@ value="%(default_authpassword)s" />
             twofactor_entries[0], twofactor_entries[1] = \
                 twofactor_entries[1], twofactor_entries[0]
         for (keyword, val) in twofactor_entries:
+            switch_class, switch_action = 'switch', ''
+            switch_mandatory, switch_hint = False, 'optional'
             if val.get('Editor', None) == 'hidden':
                 continue
             # Mark the dependent options to ease hiding when not relevant
@@ -1748,6 +1780,16 @@ value="%(default_authpassword)s" />
                     val['__extra_class__'] += ' active-openid-access'
             if val.get('Context', None) == 'twofactor_dep':
                 val['__extra_class__'] = 'requires-twofactor-base manual-show'
+            if keyword in save_overrides:
+                switch_mandatory = True
+                switch_action = 'onchange="this.checked=true"'
+                if keyword in missing:
+                    switch_class += ' force-enable'
+                    switch_hint = "mandatory - must be enabled / saved"
+                else:
+                    switch_class += ' protect'
+                    switch_hint = "mandatory - cannot be disabled"
+
             entry = """
             <tr class='otp_wizard otp_ready hidden %(__extra_class__)s'>
             <td class='title'>
@@ -1821,11 +1863,12 @@ value="%(default_authpassword)s" />
                 if keyword in current_twofactor_dict:
                     current_choice = current_twofactor_dict[keyword]
                 checked = ''
-                if current_choice == True:
+                if current_choice == True or switch_mandatory:
                     checked = 'checked'
-                entry += '<label class="switch">'
-                entry += '<input type="checkbox" name="%s" %s>' % (keyword,
-                                                                   checked)
+                entry += '<label class="%s" title="%s">' % (switch_class,
+                                                            switch_hint)
+                entry += '<input type="checkbox" name="%s" %s %s>' % \
+                    (keyword, checked, switch_action)
                 entry += '<span class="slider round"></span></label>'
                 entry += '<br /><br />'
             html += """%s

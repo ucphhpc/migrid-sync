@@ -1072,6 +1072,12 @@ div.archive pre {
     background-image: url('/images/icons/lightbulb.png');
     background-repeat: no-repeat;
 }
+.disable-link {
+  pointer-events: none;
+  cursor: default;
+  color: gray;
+  text-decoration: none;
+}
 .urllink {
   background: url('/images/icons/html.png') no-repeat;
   padding-left: 18px;

@@ -508,6 +508,7 @@ legend {
     font-size: 15px;
     width: 100%;
     height: 100%;
+    text-decoration: none;
 }
 
 .add-app__btn span {
@@ -601,7 +602,8 @@ input[type=checkbox]:checked + label {
 /* Tips in Home page above apps */
 #tips-container {
     padding-top: 1%;
-    width: auto;
+    /* auto is too narrow here with bootstrap-5 */
+    width: 100%;
 }
 #tips-content .tips-entry h4 {
     font-size: 16px;
@@ -618,7 +620,7 @@ input[type=checkbox]:checked + label {
 /* User messages in Home page below tips */
 #user-msg-container {
     padding-top: 1%;
-    width: auto;
+    width: 100%;
 }
 #user-msg-content .user-msg-entry h4 {
     font-size: 16px;

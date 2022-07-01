@@ -228,6 +228,50 @@ input:checked + .slider:before {
     -ms-transform: translateX(26px);
     transform: translateX(26px);
 }
+/* NOTE: just the visual adjustment to gray-out protected sliders somewhat and
+   to highlight the force-enabled missing ones with an animation.
+   Both also require action override on checkbox elem as done in setup.py with
+   the onchange event and backend prevention as done in settingsaction.py with
+   the twofactor overrides for mandatory items.
+*/
+/* Gray-out protected */
+.switch.protect input:checked + .slider {
+    filter: grayscale(50%);
+}
+/* Animate force-enabled background */
+.switch.force-enable input:checked + .slider {
+    /* filter: grayscale(20%); */
+    animation-duration: 3s;
+    animation-name: force-enable-slider-bg;
+}
+@keyframes force-enable-slider-bg {
+  0% {
+      background-color: #ccc; 
+      /* filter: grayscale(0%); */
+  }
+  100% {
+      /* background-color: #679c5b; */
+      background-color: parent;
+      /* filter: grayscale(20%); */
+  }
+}
+/* Animate force-enabled sliders */
+.switch.force-enable input:checked + .slider:before {
+    animation-name: force-enable-slider-dot;
+    animation-duration: 3s;
+}
+@keyframes force-enable-slider-dot {
+  0% {
+      -webkit-transform: translateX(0px);
+      -ms-transform: translateX(0px);
+      transform: translateX(0px);
+  }
+  100% {
+      -webkit-transform: translateX(26px);
+      -ms-transform: translateX(26px);
+      transform: translateX(26px);
+  }
+}
 
 /* Rounded sliders */
 .slider.round {
@@ -1435,7 +1479,7 @@ background: url(/images/icons/compress.png) left center no-repeat;
     z-index: 999;
 }
 #sitestatus-button {
-    color:grey;
+    color: gray;
 }
 body.openid #migheader {
     display: none;

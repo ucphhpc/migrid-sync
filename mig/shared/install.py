@@ -283,6 +283,7 @@ def generate_confs(
     enable_imnotify=False,
     enable_dev_accounts=False,
     enable_twofactor=False,
+    twofactor_mandatory_protos='',
     enable_twofactor_strict_address=False,
     enable_cracklib=False,
     enable_openid=False,
@@ -479,6 +480,7 @@ def generate_confs(
     user_dict['__ENABLE_IMNOTIFY__'] = "%s" % enable_imnotify
     user_dict['__ENABLE_DEV_ACCOUNTS__'] = "%s" % enable_dev_accounts
     user_dict['__ENABLE_TWOFACTOR__'] = "%s" % enable_twofactor
+    user_dict['__TWOFACTOR_MANDATORY_PROTOS__'] = twofactor_mandatory_protos
     user_dict['__ENABLE_TWOFACTOR_STRICT_ADDRESS__'] = "%s" % enable_twofactor_strict_address
     user_dict['__ENABLE_CRACKLIB__'] = "%s" % enable_cracklib
     user_dict['__ENABLE_OPENID__'] = "%s" % enable_openid
@@ -1211,6 +1213,13 @@ cert, oid and sid based https!
     else:
         user_dict['__TWOFACTOR_COMMENTED__'] = '#'
         user_dict['__CRON_TWOFACTOR_CLEANUP__'] = '0'
+
+    # Enable 2FA mandatory protos only if explicitly requested
+    if user_dict['__TWOFACTOR_MANDATORY_PROTOS__'].lower().strip():
+        if not user_dict['__ENABLE_TWOFACTOR__'].lower() == 'true':
+            print("ERROR: twofactor mandatory protos requested"
+                  + " but twofactor is disabled!")
+            sys.exit(1)
 
     # Enable 2FA strict address only if explicitly requested
     if user_dict['__ENABLE_TWOFACTOR_STRICT_ADDRESS__'].lower() == 'true':
@@ -1959,6 +1968,7 @@ def create_user(
     enable_davs = False
     enable_ftps = False
     enable_twofactor = False
+    twofactor_mandatory_protos = ''
     enable_twofactor_strict_address = False
     enable_cracklib = False
     enable_openid = False
@@ -2116,6 +2126,8 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_imnotify,
         enable_dev_accounts,
         enable_twofactor,
+        twofactor_mandatory_protos,
+        enable_twofactor_strict_address,
         enable_cracklib,
         enable_openid,
         enable_gravatars,
