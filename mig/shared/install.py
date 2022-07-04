@@ -1059,6 +1059,11 @@ cert, oid and sid based https!
                     else:
                         member_def += ":80\n"
                         ws_member_def += ":80\n"
+                else:
+                    # Else, use the user provided port
+                    port = host.split(":")[2]
+                    member_def += ":%s\n" % port 
+                    ws_member_def += ":%s\n" % port
 
                 jupyter_defs.extend([member_def, ws_member_def])
             # Get proxy template and append to template conf
