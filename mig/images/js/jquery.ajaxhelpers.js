@@ -4,7 +4,7 @@
   # --- BEGIN_HEADER ---
   #
   # jquery.ajaxhelpers - jquery based ajax helpers for managers
-  # Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+  # Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
   #
   # This file is part of MiG.
   #
@@ -441,7 +441,7 @@ function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_updating,
               console.debug("changing publish_url from "+$("#registerfreeze"+freeze_doi_url_field+"field").val()+" to "+publish_url);
               $("#registerfreeze"+freeze_doi_url_field+"field").val(publish_url);
               console.debug("changed publish_url to "+$("#registerfreeze"+freeze_doi_url_field+"field").val());
-              $("#registerfreezeform").attr('action', $("#registerfreezeform").attr('action')+'&'+freeze_doi_url_field+"="+publish_url);
+              $("#registerfreezeform").attr('action', freeze_doi_url+'&'+freeze_doi_url_field+"="+publish_url);
               console.debug("changed action to "+$("#registerfreezeform").attr('action'));
           } else {
               console.info("not showing edit or register DOI");
