@@ -1672,6 +1672,7 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
         ("migerrors-template.sh.cronjob", "migerrors"),
         ("migsftpmon-template.sh.cronjob", "migsftpmon"),
         ("migimportdoi-template.sh.cronjob", "migimportdoi"),
+        ("migindexdoi-template.sh.cronjob", "migindexdoi"),
         ("mignotifyexpire-template.sh.cronjob", "mignotifyexpire"),
         ("migstateclean-template.sh.cronjob", "migstateclean"),
         ("migcheckssl-template.sh.cronjob", "migcheckssl"),
