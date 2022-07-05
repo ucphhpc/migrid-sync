@@ -1,0 +1,8 @@
+#!/bin/bash
+#
+# run indexdoi as mig user
+
+# No more edits below
+su - mig -c "PYTHONPATH=__MIG_BASE__ mig/server/indexdoi.py"
+
+exit 0
