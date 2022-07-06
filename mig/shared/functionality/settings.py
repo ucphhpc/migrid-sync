@@ -195,7 +195,7 @@ def main(client_id, user_arguments_dict):
         valid_topics.append('style')
     if 'submitjob' in active_menu:
         valid_topics.append('job')
-    if 'people' in active_menu:
+    if 'people' in active_menu + configuration.site_user_menu:
         valid_topics.append('profile')
     if configuration.site_enable_widgets and configuration.site_script_deps:
         valid_topics.append('widgets')
