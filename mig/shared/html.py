@@ -2023,6 +2023,11 @@ def get_xgi_html_header(
                     profile_helper['avatar_image'] = '''
                     <span class="avatar-image anonymous"></span>
                     '''
+                # Only show Change photo if backend is available
+                profile_helper['disableprofile'] = 'hidden'
+                if 'people' in configuration.site_default_menu + \
+                        configuration.site_user_menu:
+                    profile_helper['disableprofile'] = ''
                 # Never disable logout or help
                 for user_entry in ['logout', 'help']:
                     profile_helper['disable%s' % user_entry] = ''
@@ -2045,7 +2050,7 @@ def get_xgi_html_header(
             </div>
             <div class="col-9">
                 %(full_name)s
-                <a class="user-menu__link avatar-link %(disablesettings)s" href="settings.py">Change photo</a>
+                <a class="user-menu__link avatar-link %(disablesettings)s %(disableprofile)s" href="settings.py">Change photo</a>
             </div>
         </div>
     </div>
