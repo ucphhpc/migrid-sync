@@ -49,6 +49,9 @@ from mig.shared.base import requested_page
 from mig.shared.defaults import twofactor_cookie_ttl, AUTH_MIG_OID, \
     AUTH_EXT_OID, AUTH_MIG_OIDC, AUTH_EXT_OIDC
 from mig.shared.functional import validate_input
+from mig.shared.griddaemons.openid import default_max_user_hits, \
+    default_user_abuse_hits, default_proto_abuse_hits, hit_rate_limit, \
+    expire_rate_limit, validate_auth_attempt
 from mig.shared.init import initialize_main_variables
 from mig.shared.html import twofactor_token_html, themed_styles, themed_scripts
 from mig.shared.httpsclient import detect_client_auth, require_twofactor_setup
@@ -99,6 +102,7 @@ def main(client_id, user_arguments_dict, environ=None):
     user_agent = environ.get('HTTP_USER_AGENT', '')
     user_addr = environ.get('REMOTE_ADDR', '')
     auth_type, auth_flavor = detect_client_auth(configuration, environ)
+    proto = 'https'
 
     # IMPORTANT: use all actual args as base and override with real signature
     all_args = query_args(environ)
@@ -115,12 +119,29 @@ def main(client_id, user_arguments_dict, environ=None):
     token = accepted['token'][-1]
     redirect_url = accepted['redirect_url'][-1]
     check_only = False
+    client_addr = environ.get('REMOTE_ADDR', None)
+    tcp_port = int(environ.get('REMOTE_PORT', '0'))
 
     script_name = requested_page(environ, "%s.py" % op_name, name_only=True)
 
     logger.debug("User: %s executing %s with redirect url %r" %
                  (client_id, op_name, redirect_url))
     # logger.debug("env: %s" % environ)
+
+    # Seconds to delay next 2FA attempt after hitting rate limit
+    delay_retry = 300
+    scripts['init'] += '''
+function update_reload_counter(cnt, delay) {
+    var remain = (delay - cnt);
+    $("#reload_counter").html(remain.toString());
+    if (cnt >= delay) {
+        /* Load page again without re-posting last attempt */
+        location = location
+    } else {
+        setTimeout(function() { update_reload_counter(cnt+1, delay); }, 1000);
+    }
+}
+    '''
 
     if not configuration.site_enable_twofactor:
         output_objects.append({'object_type': 'error_text', 'text':
@@ -233,8 +254,17 @@ def main(client_id, user_arguments_dict, environ=None):
     elif require_twofactor:
         logger.info("detected 2FA requirement for %s on %s" % (client_id,
                                                                request_url))
+
         b32_secret = None
-        if token:
+        valid_password, authorized = False, False
+        disconnect, exceeded_rate_limit = False, False
+        # Clean up expired entries in persistent rate limit cache
+        expire_rate_limit(configuration, proto, fail_cache=delay_retry,
+                          expire_delay=delay_retry)
+        if hit_rate_limit(configuration, proto, client_addr, client_id,
+                          max_user_hits=default_max_user_hits):
+            exceeded_rate_limit = True
+        elif token:
             b32_secret = load_twofactor_key(client_id, configuration)
             if not b32_secret:
                 logger.warning("found no saved 2FA secret for %s" % client_id)
@@ -243,10 +273,60 @@ def main(client_id, user_arguments_dict, environ=None):
                      "Please contact the %s admins to get your 2FA secret" %
                      configuration.short_title})
                 return (output_objects, returnvalues.ERROR)
-        # Check that user provided matching token and set cookie on success
-        if token and b32_secret and verify_twofactor_token(
-                configuration, client_id, b32_secret, token):
-            logger.info('Accepted valid auth token from %s' % client_id)
+
+            # Check that user provided matching token and set cookie on success
+            if verify_twofactor_token(configuration, client_id, b32_secret,
+                                      token):
+                valid_password = True
+
+        if token:
+            # Update rate limits and write to auth log
+            (authorized, disconnect) = validate_auth_attempt(
+                configuration,
+                proto,
+                op_name,
+                client_id,
+                client_addr,
+                tcp_port,
+                secret=token,
+                valid_twofa=valid_password,
+                authtype_enabled=True,
+                valid_auth=valid_password,
+                exceeded_rate_limit=exceeded_rate_limit,
+                user_abuse_hits=default_user_abuse_hits,
+                proto_abuse_hits=default_proto_abuse_hits,
+                max_secret_hits=1,
+            )
+
+        if exceeded_rate_limit or disconnect:
+            logger.warning('Throttle twofactor from %s (%s) - past rate limit'
+                           % (client_id, client_addr))
+            # NOTE: we keep actual result in plain text for json extract
+            output_objects.append({'object_type': 'html_form', 'text': '''
+<div class="vertical-spacer"></div>
+<div class="twofactorstatus">
+<div class="error leftpad errortext">
+'''})
+            output_objects.append({'object_type': 'text', 'text': """
+Incorrect twofactor token provided and rate limit exceeded - please wait %d
+seconds before retrying.
+""" % delay_retry
+                                   })
+            output_objects.append({'object_type': 'html_form', 'text': '''
+</div>
+<div class="vertical-spacer"></div>
+<div class="info leftpad">
+Page will reload automatically in <span id="reload_counter">%d</span> seconds.
+</div>
+</div>
+''' % delay_retry})
+            scripts['ready'] += '''
+    setTimeout(function() { update_reload_counter(1, %d); }, 1000);
+''' % delay_retry
+            return (output_objects, status)
+        elif authorized:
+            logger.info('Accepted valid auth token from %s at %s' %
+                        (client_id, client_addr))
         else:
             output_objects.append({'object_type': 'html_form', 'text':
                                    twofactor_token_html(configuration)})
@@ -266,8 +346,6 @@ def main(client_id, user_arguments_dict, environ=None):
 </div>
 </div>'''})
 
-                # TODO: proper rate limit source / user here?
-                time.sleep(3)
             return (output_objects, status)
     else:
         logger.info("no 2FA requirement for %s on %s" % (client_id,

@@ -95,6 +95,8 @@ def check_twofactor_session(configuration, username, addr, proto):
         proto_field = 'WEBDAVS'
     elif proto in ('ftp', 'ftps'):
         proto_field = 'FTPS'
+    elif proto in ('http', 'https'):
+        proto_field = 'HTTPS'
     else:
         logger.error("Invalid protocol: %s" % proto)
         return False
@@ -258,10 +260,14 @@ def validate_auth_attempt(configuration,
     elif protocol == 'sftp-subsys' \
             and authtype in configuration.user_sftp_auth:
         pass
+    elif protocol == 'https' \
+            and authtype in "twofactor":
+        pass
     elif protocol == 'openid' \
             and authtype in configuration.user_openid_auth:
         pass
-    elif not protocol in ['davs', 'ftps', 'sftp', 'sftp-subsys', 'openid']:
+    elif not protocol in ['davs', 'ftps', 'sftp', 'sftp-subsys', 'https',
+                          'openid']:
         logger.error("Invalid protocol: %r" % protocol)
         return (authorized, disconnect)
     else:
