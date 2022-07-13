@@ -1027,10 +1027,10 @@ def valid_workflow_recipes(recipes):
 
 
 def valid_workflow_variables(variables):
-    """Verify that supplied vars dictionary only contains characters that
+    """Verify that supplied variables dictionary only contains characters that
     we consider valid workflow variable key value pairs.
     """
-    if not isinstance(vars, dict):
+    if not isinstance(variables, dict):
         raise InputException("Workflow attribute: variables must be of "
                              "type dict. Was given %s. " % type(variables))
     for _key, _value in variables.items():
