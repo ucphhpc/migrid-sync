@@ -85,6 +85,7 @@ Where OPTIONS may be one or more of:
    -p PEER_PATTERN     Verify in Peers of existing account matching PEER_PATTERN
    -r                  Renew user account with existing values
    -R ROLES            Set user affiliation to ROLES
+   -s SLACK_DAYS       Allow peers even with account expired within SLACK_DAYS
    -u USER_FILE        Read user information from pickle file
    -v                  Verbose output
 """ % {'name': name, 'cert_warn': cert_warn})
@@ -104,10 +105,11 @@ if '__main__' == __name__:
     short_id = None
     role = None
     peer_pattern = None
+    slack_secs = 0
     hash_password = True
     user_dict = {}
     override_fields = {}
-    opt_args = 'a:c:d:e:fhi:o:p:rR:u:v'
+    opt_args = 'a:c:d:e:fhi:o:p:rR:s:u:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
@@ -162,6 +164,9 @@ if '__main__' == __name__:
         elif opt == '-R':
             role = val
             override_fields['role'] = role
+        elif opt == '-s':
+            # Translate slack days into seconds as
+            slack_secs = int(float(val)*24*3600)
         elif opt == '-u':
             user_file = val
             # NOTE: hashing should already be handled explicitly
@@ -298,7 +303,8 @@ if '__main__' == __name__:
         print('using user dict: %s' % user_dict)
     try:
         create_user(user_dict, conf_path, db_path, force, verbose, ask_renew,
-                    default_renew, verify_peer=peer_pattern)
+                    default_renew, verify_peer=peer_pattern,
+                    peer_expire_slack=slack_secs)
         if configuration.site_enable_gdp:
             (success_here, msg) = ensure_gdp_user(configuration,
                                                   "127.0.0.1",

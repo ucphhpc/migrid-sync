@@ -233,6 +233,7 @@ def create_user(
     default_renew=False,
     do_lock=True,
     verify_peer=None,
+    peer_expire_slack=0,
 ):
     """Add user"""
     flock = None
@@ -304,7 +305,8 @@ def create_user(
         if not hits:
             peer_notes.append("no match for peers")
         for (sponsor_id, sponsor_dict) in hits:
-            if configuration.site_enable_gdp and is_gdp_user(configuration, sponsor_id):
+            if configuration.site_enable_gdp and is_gdp_user(configuration,
+                                                             sponsor_id):
                 _logger.debug(
                     "skip gdp project user %s as sponsor" % sponsor_id)
                 continue
@@ -315,9 +317,11 @@ def create_user(
                 _logger.warning(warn_msg)
                 continue
             sponsor_expire = sponsor_dict.get('expire', -1)
-            if sponsor_expire >= 0 and time.time() > sponsor_expire:
-                warn_msg = "expire %s prevents %s as peer for %s" % \
-                           (sponsor_expire, sponsor_id, client_id)
+            if sponsor_expire >= 0 and \
+                    time.time() > sponsor_expire + peer_expire_slack:
+                warn_msg = "expire %s (slack %d) prevents %s as peer for %s" \
+                           % (sponsor_expire, peer_expire_slack, sponsor_id,
+                              client_id)
                 _logger.warning(warn_msg)
                 peer_notes.append(warn_msg)
                 continue
