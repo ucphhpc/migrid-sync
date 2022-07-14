@@ -274,6 +274,8 @@ def create_user(
         authorized = False
 
     _logger.info('trying to create or renew user %r' % client_id)
+    now = time.time()
+    now_dt = datetime.datetime.fromtimestamp(now)
     accepted_peer_list = []
     verify_pattern = verify_peer
     if verify_peer == keyword_auto:
@@ -311,6 +313,14 @@ def create_user(
         peer_notes = []
         if not hits:
             peer_notes.append("no match for peers")
+        # Request can ask for expire with fall-back cap to highest peer value
+        # in case the original expire is not satisfied by any sponsors.
+        # TODO: migrate this cap expire choice to a conf option?
+        cap_expire = user.get('cap_expire', True)
+        client_expire = user['expire']
+        client_expire_dt = datetime.datetime.fromtimestamp(client_expire)
+        # Best available expire value accepted by any peer (init to now)
+        effective_expire_dt = now_dt
         for (sponsor_id, sponsor_dict) in hits:
             if configuration.site_enable_gdp and is_gdp_user(configuration,
                                                              sponsor_id):
@@ -323,39 +333,67 @@ def create_user(
                            (client_id, sponsor_id)
                 _logger.warning(warn_msg)
                 continue
+            # Check that sponsor account is not suspended or similar
+            sponsor_status = sponsor_dict.get('status', 'active')
+            if sponsor_status not in ['active', 'temporal']:
+                warn_msg = "status %s prevents %s as peer, including for %s" \
+                           % (sponsor_status, sponsor_id, client_id)
+                _logger.warning(warn_msg)
+                peer_notes.append(warn_msg)
+                continue
+            # Check that sponsor account is not itself expired (with slack)
             sponsor_expire = sponsor_dict.get('expire', -1)
-            if sponsor_expire >= 0 and \
-                    time.time() > sponsor_expire + peer_expire_slack:
+            # Only allow slack if not temporal account
+            allowed_slack = 0
+            if sponsor_status == 'active':
+                allowed_slack = peer_expire_slack
+            if sponsor_expire >= 0 and now > sponsor_expire + allowed_slack:
                 warn_msg = "expire %s (slack %d) prevents %s as peer for %s" \
-                           % (sponsor_expire, peer_expire_slack, sponsor_id,
+                           % (sponsor_expire, allowed_slack, sponsor_id,
                               client_id)
                 _logger.warning(warn_msg)
                 peer_notes.append(warn_msg)
                 continue
-            sponsor_status = sponsor_dict.get('status', 'active')
-            if sponsor_status not in ['active', 'temporal']:
-                warn_msg = "status %s prevents %s as peer for %s" % \
-                           (sponsor_status, sponsor_id, client_id)
-                _logger.warning(warn_msg)
-                peer_notes.append(warn_msg)
-                continue
+            # TODO: make sure sponsor is (still) allowed to have peers at all,
+            #       check in reqacceptpeer and on peer creation may be stale
+            #       by now after conf changes.
+            #       May require move of peers_permit_allowed to separate module
+            #       to avoid circular imports.
+            # Check if among accepted peers
             accepted_peers = get_accepted_peers(configuration, sponsor_id)
             peer_entry = accepted_peers.get(client_id, None)
             if not peer_entry:
-                _logger.warning("could not validate %s as peer for %s" %
+                _logger.warning("%s has not (yet) accepted %s as peer" %
                                 (sponsor_id, client_id))
                 continue
-            # NOTE: adjust expire date to mean end of that day
-            peer_expire = datetime.datetime.strptime(
+            # Found a potential sponsor, check peer expire vs client expire
+            # NOTE: adjust selected peer expire date to mean end of that day
+            peer_expire_dt = datetime.datetime.strptime(
                 peer_entry.get('expire', 0), '%Y-%m-%d') + \
                 datetime.timedelta(days=1, microseconds=-1)
-            client_expire = datetime.datetime.fromtimestamp(user['expire'])
-            if peer_expire < client_expire:
-                warn_msg = "expire %s vs %s prevents %s as peer for %s" % \
-                           (peer_expire, client_expire, sponsor_id, client_id)
-                _logger.warning(warn_msg)
-                peer_notes.append(warn_msg)
-                continue
+            if peer_expire_dt < client_expire_dt:
+                if cap_expire and peer_expire_dt > now_dt:
+                    info_msg = "%s accepts %s as peer with expire cap %s" % \
+                               (sponsor_id, client_id, peer_expire_dt)
+                    _logger.info(info_msg)
+                    peer_notes.append(info_msg)
+                    # NOTE: only grow effective expire with multiple sponsors
+                    if peer_expire_dt > effective_expire_dt:
+                        _logger.info("bump effective expire to %s" %
+                                     peer_expire_dt)
+                        effective_expire_dt = peer_expire_dt
+                else:
+                    warn_msg = "expire %s vs %s prevents %s as peer for %s" % \
+                               (peer_expire_dt, client_expire_dt, sponsor_id,
+                                client_id)
+                    _logger.warning(warn_msg)
+                    peer_notes.append(warn_msg)
+                    continue
+            else:
+                _logger.info("%s accepts %s as peer with requested expire %s"
+                             % (sponsor_id, client_id, client_expire_dt))
+                effective_expire_dt = client_expire_dt
+
             _logger.debug("validated %s accepts %s as peer" % (sponsor_id,
                                                                client_id))
             accepted_peer_list.append(sponsor_id)
@@ -365,12 +403,16 @@ def create_user(
             raise Exception("Failed verify peers for %s using pattern %r: %s" %
                             (client_id, verify_pattern, '\n'.join(peer_notes)))
 
+        # Encorce effective_expire_dt as highest actual account expire value
+        effective_expire = int(time.mktime(effective_expire_dt.timetuple()))
+        user['expire'] = effective_expire
         # Save peers in user DB for updates etc. but ignore peer search pattern
         user['peers'] = accepted_peer_list
         if user.get('peer_pattern', None):
             del user['peer_pattern']
-        _logger.info("accept create user %s with peer validator(s): %s" %
-                     (client_id, ', '.join(accepted_peer_list)))
+        _logger.info("accept create user %s (expire %s) with sponsor(s): %s" %
+                     (client_id, effective_expire_dt,
+                      ', '.join(accepted_peer_list)))
 
     else:
         _logger.info('Skip peer verification for %s' % client_id)
@@ -432,7 +474,7 @@ def create_user(
 
     if client_id not in user_db:
         default_ui = configuration.new_user_default_ui
-        user['created'] = time.time()
+        user['created'] = now
     else:
         default_ui = None
         account_status = user_db[client_id].get('status', 'active')
@@ -500,7 +542,7 @@ with certificate or OpenID authentication to authorize the change."""
                     updated_user[key] = val
             user.clear()
             user.update(updated_user)
-            user['renewed'] = time.time()
+            user['renewed'] = now
         elif not force:
             if do_lock:
                 unlock_user_db(flock)
