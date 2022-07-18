@@ -1077,7 +1077,7 @@ cert, oid and sid based https!
                                                          hosts, ws_hosts)
             jupyter_proxies.append(proxy_template)
 
-        user_dict['__JUPYTER_DEFS__'] = ''.join(jupyter_defs)
+        user_dict['__JUPYTER_DEFS__'] = '\n'.join(jupyter_defs)
         user_dict['__JUPYTER_OPENIDS__'] = '\n'.join(jupyter_openids)
         user_dict['__JUPYTER_REWRITES__'] = '\n'.join(jupyter_rewrites)
         user_dict['__JUPYTER_PROXIES__'] = '\n'.join(jupyter_proxies)
