@@ -1,11 +1,11 @@
 [
   {
     "status": "AUTO", 
-    "work_start": "2022-06-24T18:00:00+02:00",
+    "work_start": "2022-07-24T18:00:00+02:00",
     "systems": [
       "ERDA", "IDMC"
     ],
-    "announce_start": "2021-06-21T12:00:00+02:00",
+    "announce_start": "2021-07-21T12:00:00+02:00",
     "title": {
       "EN": "Monthly maintenance of DAG and MODI",
       "DK": "Månedlig vedligeholdelse af DAG og MODI"
@@ -13,12 +13,12 @@
     "services": [
       "DAG", "MODI"
     ],
-    "work_end": "2022-06-24T23:00:00+02:00",
+    "work_end": "2022-07-24T23:00:00+02:00",
     "description": {
       "EN": "We will apply general maintenance to the DAG and MODI services. Interruptions to these services will occur.", 
       "DK": "Vi udruller den månedelige opdatering og vedligeholdelse af DAG og MODI tjenesterne. Afbrydelser af disse tjenester vil forekomme."
     },
-    "announce_end": "2021-06-25T12:00:00+02:00"
+    "announce_end": "2021-07-25T12:00:00+02:00"
   },
  {
     "status": "AUTO", 
