@@ -888,6 +888,16 @@ background: url(/images/icons/code.png) left center no-repeat;
 .form_container select, .form_container textarea {
     width: 99%;
 }
+/* Adjust account request form rows to be of equal width */
+.form_container .col-md-4 input.form-control {
+    width: 97%;
+}
+.form_container .col-md-6 input.form-control {
+    width: 98%;
+}
+.form_container .col-md-12 input.form-control {
+    width: 99%;
+}
 
 #submit_button {
     width: auto;

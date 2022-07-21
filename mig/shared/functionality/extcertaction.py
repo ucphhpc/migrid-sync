@@ -49,7 +49,7 @@ from mig.shared.useradm import create_user
 from mig.shared.userdb import default_db_path
 
 
-def signature():
+def signature(configuration):
     """Signature of the main function"""
 
     defaults = {
@@ -62,6 +62,13 @@ def signature():
         'comment': [''],
         'accept_terms': [''],
     }
+    if configuration.site_enable_peers:
+        if configuration.site_peers_mandatory:
+            peers_default = REJECT_UNSET
+        else:
+            peers_default = ['']
+        for field_name in configuration.site_peers_explicit_fields:
+            defaults['peers_%s' % field_name] = peers_default
     return ['text', defaults]
 
 
@@ -74,7 +81,7 @@ def main(client_id, user_arguments_dict):
                            '%s external certificate sign up' %
                            configuration.short_title})
 
-    defaults = signature()[1]
+    defaults = signature(configuration)[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -98,7 +105,20 @@ def main(client_id, user_arguments_dict):
     country = accepted['country'][-1].strip()
     state = accepted['state'][-1].strip()
     org = accepted['org'][-1].strip()
+    # NOTE: safeinput thoroughly checks that emails are on valid form
     email = accepted['email'][-1].strip()
+
+    if configuration.site_enable_peers:
+        # Peers are passed as multiple strings of comma or space separated emails
+        # so we reformat to a consistently comma+space separated string.
+        peers_full_name_list = []
+        for entry in accepted.get('peers_full_name', ['']):
+            peers_full_name_list += [i.strip() for i in entry.split(',')]
+        peers_full_name = ', '.join(peers_full_name_list)
+        peers_email_list = []
+        for entry in accepted.get('peers_email', ['']):
+            peers_email_list += [i.strip() for i in entry.split(',')]
+        peers_email = ', '.join(peers_email_list)
 
     # keep comment to a single line
 
@@ -171,6 +191,10 @@ multiple "key=val" fields separated by "/".
         'openid_names': [],
         'auth': ['extcert'],
     }
+    if configuration.site_enable_peers:
+        raw_user['peers_full_name'] = peers_full_name
+        raw_user['peers_email'] = peers_email
+
     # Force user ID fields to canonical form for consistency
     # Title name, lowercase email, uppercase country and state, etc.
     user_dict = canonical_user(configuration, raw_user, raw_user.keys())
@@ -247,7 +271,11 @@ Received an existing certificate sign up request with certificate data
  * Organization: %(organization)s
  * State: %(state)s
  * Country: %(country)s
- * Email: %(email)s
+ * Email: %(email)s"""
+    if configuration.site_enable_peers:
+        email_msg += """
+ * Peers: %(peers_full_name)s (%(peers_email)s)"""
+    email_msg += """
  * Comment: %(comment)s
  * Expire: %(expire)s
 
@@ -271,7 +299,8 @@ Command to delete user again on %(site)s server:
 %(command_user_delete)s
 ---
 
-""" % user_dict
+"""
+    email_msg = email_msg % user_dict
 
     logger.info('Sending email: to: %s, header: %s, msg: %s, smtp_server: %s'
                 % (admin_email, email_header, email_msg, smtp_server))

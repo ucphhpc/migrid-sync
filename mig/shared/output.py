@@ -1868,7 +1868,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 ''')
         elif i['object_type'] == 'accountreqs':
             accountreqs = i['accountreqs']
-            lines.append('''
+            table_head = '''
 <div class="table-responsive">
 <table class="accountreqs columnsort" id="accountreqtable">
 <thead class="title">
@@ -1879,7 +1879,12 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
         <th>Email</th>
         <th>Organization</th>
         <th>Country</th>
-        <th>State</th>
+        <th>State</th>'''
+            if configuration.site_enable_peers:
+                for name in configuration.site_peers_explicit_fields:
+                    table_head += '''<th>Peers contact(s) %s</th>
+                ''' % name.replace('_', ' ').capitalize()
+            table_head += '''
         <th>Comment</th>
         <th>Auth Access</th>
         <th>Created</th>
@@ -1887,7 +1892,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 </thead>
 <tbody>
 '''
-                         )
+            lines.append(table_head)
             for single_accountreq in accountreqs:
                 createlink = single_accountreq.get('createaccountreqlink', '')
                 createlink_html = ''
@@ -1901,19 +1906,30 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                 rejectlink_html = ''
                 if rejectlink:
                     rejectlink_html = '%s' % html_link(rejectlink)
-                lines.append('''
+                table_line = '''
 <tr>
 <td>%s</td><td class="centertext iconspace">%s %s %s</td>
-<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>
+<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>'''
+                if configuration.site_enable_peers:
+                    for name in configuration.site_peers_explicit_fields:
+                        field = 'peers_%s' % name
+                        value = single_accountreq.get(field, '')
+                        table_line += '''<td>%s</td>''' % value
+                table_line += '''<td>%s</td><td>%s</td>
 <td>%s</td>
-</tr>''' % (single_accountreq['id'], createlink_html, peerlink_html,
-                    rejectlink_html, single_accountreq['full_name'],
-                    single_accountreq['email'], single_accountreq['organization'],
-                    single_accountreq['country'], single_accountreq['state'],
-                    single_accountreq['comment'], ', '.join(
-                        single_accountreq['auth']),
+</tr>'''
+                lines.append(table_line % (single_accountreq['id'],
+                                           createlink_html, peerlink_html,
+                                           rejectlink_html,
+                                           single_accountreq['full_name'],
+                                           single_accountreq['email'],
+                                           single_accountreq['organization'],
+                                           single_accountreq['country'],
+                                           single_accountreq['state'],
+                                           single_accountreq['comment'],
+                                           ', '.join(
+                    single_accountreq['auth']),
                     single_accountreq['created']))
-
             lines.append('''
 </tbody>
 </table>

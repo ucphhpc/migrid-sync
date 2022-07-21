@@ -45,7 +45,7 @@ from mig.shared.pwhash import parse_password_policy
 from mig.shared.safeinput import html_escape
 
 
-def signature():
+def signature(configuration):
     """Signature of the main function"""
 
     defaults = {'full_name': [''],
@@ -60,6 +60,9 @@ def signature():
                 'comment': [''],
                 'ro_fields': [''],
                 }
+    if configuration.site_enable_peers:
+        for field_name in configuration.site_peers_explicit_fields:
+            defaults['peers_%s' % field_name] = ['']
     return ['html_form', defaults]
 
 
@@ -69,7 +72,7 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False, op_menu=False)
     client_dir = client_id_dir(client_id)
-    defaults = signature()[1]
+    defaults = signature(configuration)[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
                                                  defaults, output_objects,
                                                  allow_rejects=False)
@@ -117,6 +120,9 @@ def main(client_id, user_arguments_dict):
     user_fields = {'full_name': '', 'organization': '', 'email': '',
                    'state': '', 'country': '', 'password': '',
                    'verifypassword': '', 'comment': ''}
+    for field_name in configuration.site_peers_explicit_fields:
+        user_fields['peers_%s' % field_name] = ''
+
     if not os.path.isdir(base_dir) and client_id:
 
         # Redirect to extcert page with certificate requirement but without
@@ -169,6 +175,7 @@ to your old files, jobs and privileges. </p>''' %
         'password_min_len': max(policy_min_len, password_min_len),
         'password_max_len': password_max_len,
         'password_min_classes': max(policy_min_classes, 1),
+        'peers_contact_hint': configuration.site_peers_contact_hint,
         'site': configuration.short_title
     })
     form_method = 'post'
@@ -179,14 +186,17 @@ to your old files, jobs and privileges. </p>''' %
     csrf_token = make_csrf_token(configuration, form_method, target_op,
                                  client_id, csrf_limit)
     fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
-
     fill_helpers.update({'site_signup_hint': configuration.site_signup_hint})
-    # Write-protect ID fields if requested
-    for field in cert_field_map:
+    # Write-protect ID and peers helper fields if requested
+    peers_fields = ['peers_%s' % field for field in
+                    configuration.site_peers_explicit_fields]
+    for field in list(cert_field_map) + peers_fields:
         fill_helpers['readonly_%s' % field] = ''
-    ro_fields = [i for i in accepted['ro_fields'] if i in cert_field_map]
+    ro_fields = [i for i in accepted['ro_fields'] if i in
+                 list(cert_field_map) + peers_fields]
     if keyword_auto in accepted['ro_fields']:
-        ro_fields += [i for i in cert_field_map if not i in ro_fields]
+        ro_fields += [i for i in list(cert_field_map) + peers_fields
+                      if not i in ro_fields]
     for field in ro_fields:
         fill_helpers['readonly_%s' % field] = 'readonly'
     fill_helpers.update(user_fields)

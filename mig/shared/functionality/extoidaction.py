@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # extoidaction - handle account sign up with external OpenID credentials
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """OpenID account sign up action back end"""
+
 from __future__ import absolute_import
 
 import os
@@ -37,8 +38,8 @@ import re
 from mig.shared import returnvalues
 from mig.shared.accountreq import user_manage_commands
 from mig.shared.accountstate import default_account_expire
-from mig.shared.base import client_id_dir, generate_https_urls, \
-    fill_distinguished_name
+from mig.shared.base import client_id_dir, canonical_user, \
+    generate_https_urls, fill_distinguished_name
 from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables, find_entry
@@ -46,7 +47,7 @@ from mig.shared.notification import send_email
 from mig.shared.serial import dumps
 
 
-def signature():
+def signature(configuration):
     """Signature of the main function"""
 
     defaults = {
@@ -63,6 +64,13 @@ def signature():
         'comment': [''],
         'accept_terms': [''],
     }
+    if configuration.site_enable_peers:
+        if configuration.site_peers_mandatory:
+            peers_default = REJECT_UNSET
+        else:
+            peers_default = ['']
+        for field_name in configuration.site_peers_explicit_fields:
+            defaults['peers_%s' % field_name] = peers_default
     return ['text', defaults]
 
 
@@ -71,7 +79,7 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False, op_menu=False)
-    defaults = signature()[1]
+    defaults = signature(configuration)[1]
     logger.debug('in extoidaction: %s' % user_arguments_dict)
     (validate_status, accepted) = validate_input(user_arguments_dict,
                                                  defaults, output_objects,
@@ -117,6 +125,18 @@ def main(client_id, user_arguments_dict):
     password = accepted['password'][-1]
     #verifypassword = accepted['verifypassword'][-1]
 
+    if configuration.site_enable_peers:
+        # Peers are passed as multiple strings of comma or space separated emails
+        # so we reformat to a consistently comma+space separated string.
+        peers_full_name_list = []
+        for entry in accepted.get('peers_full_name', ['']):
+            peers_full_name_list += [i.strip() for i in entry.split(',')]
+        peers_full_name = ', '.join(peers_full_name_list)
+        peers_email_list = []
+        for entry in accepted.get('peers_email', ['']):
+            peers_email_list += [i.strip() for i in entry.split(',')]
+        peers_email = ', '.join(peers_email_list)
+
     # keep comment to a single line
 
     comment = accepted['comment'][-1].replace('\n', '   ')
@@ -143,7 +163,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
              'class': 'genericbutton', 'text': "Try again"})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    user_dict = {
+    raw_user = {
         'full_name': full_name,
         'organization': organization,
         'organizational_unit': organizational_unit,
@@ -157,8 +177,16 @@ CSRF-filtered POST requests to prevent unintended updates'''
         'openid_names': [raw_login],
         'auth': ['extoid'],
     }
+    if configuration.site_enable_peers:
+        raw_user['peers_full_name'] = peers_full_name
+        raw_user['peers_email'] = peers_email
+
+    # Force user ID fields to canonical form for consistency
+    # Title name, lowercase email, uppercase country and state, etc.
+    user_dict = canonical_user(configuration, raw_user, raw_user.keys())
     fill_distinguished_name(user_dict)
     user_id = user_dict['distinguished_name']
+    user_dict['authorized'] = (user_id == client_id)
     if configuration.user_openid_providers and configuration.user_openid_alias:
         user_dict['openid_names'].append(
             user_dict[configuration.user_openid_alias])
@@ -198,7 +226,11 @@ Received an OpenID account sign up with user data
  * Organization: %(organization)s
  * State: %(state)s
  * Country: %(country)s
- * Email: %(email)s
+ * Email: %(email)s"""
+    if configuration.site_enable_peers:
+        email_msg += """
+ * Peers: %(peers_full_name)s (%(peers_email)s)"""
+    email_msg += """
  * Comment: %(comment)s
  * Expire: %(expire)s
 
@@ -237,7 +269,8 @@ Command to delete user again on %(site)s server:
 
 ---
 
-""" % user_dict
+"""
+    email_msg = email_msg % user_dict
 
     logger.info('Sending email: to: %s, header: %s, msg: %s, smtp_server: %s'
                 % (admin_email, email_header, email_msg, smtp_server))

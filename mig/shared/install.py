@@ -285,6 +285,10 @@ def generate_confs(
     enable_twofactor=False,
     twofactor_mandatory_protos='',
     enable_twofactor_strict_address=False,
+    enable_peers=False,
+    peers_mandatory=False,
+    peers_explicit_fields='',
+    peers_contact_hint='employed here and authorized to invite external users',
     enable_cracklib=False,
     enable_openid=False,
     enable_gravatars=True,
@@ -482,6 +486,10 @@ def generate_confs(
     user_dict['__ENABLE_TWOFACTOR__'] = "%s" % enable_twofactor
     user_dict['__TWOFACTOR_MANDATORY_PROTOS__'] = twofactor_mandatory_protos
     user_dict['__ENABLE_TWOFACTOR_STRICT_ADDRESS__'] = "%s" % enable_twofactor_strict_address
+    user_dict['__ENABLE_PEERS__'] = "%s" % enable_peers
+    user_dict['__PEERS_MANDATORY__'] = "%s" % peers_mandatory
+    user_dict['__PEERS_EXPLICIT_FIELDS__'] = peers_explicit_fields
+    user_dict['__PEERS_CONTACT_HINT__'] = peers_contact_hint
     user_dict['__ENABLE_CRACKLIB__'] = "%s" % enable_cracklib
     user_dict['__ENABLE_OPENID__'] = "%s" % enable_openid
     user_dict['__ENABLE_GRAVATARS__'] = "%s" % enable_gravatars
@@ -1062,7 +1070,7 @@ cert, oid and sid based https!
                 else:
                     # Else, use the user provided port
                     port = host.split(":")[2]
-                    member_def += ":%s\n" % port 
+                    member_def += ":%s\n" % port
                     ws_member_def += ":%s\n" % port
 
                 jupyter_defs.extend([member_def, ws_member_def])
@@ -1976,6 +1984,10 @@ def create_user(
     enable_twofactor = False
     twofactor_mandatory_protos = ''
     enable_twofactor_strict_address = False
+    enable_peers = False
+    peers_mandatory = False
+    peers_explicit_fields = ''
+    peers_contact_hint = ''
     enable_cracklib = False
     enable_openid = False
     enable_gravatars = True
@@ -2134,6 +2146,10 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_twofactor,
         twofactor_mandatory_protos,
         enable_twofactor_strict_address,
+        enable_peers,
+        peers_mandatory,
+        peers_explicit_fields,
+        peers_contact_hint,
         enable_cracklib,
         enable_openid,
         enable_gravatars,

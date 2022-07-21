@@ -190,6 +190,12 @@ function transfer_id_fields() {
 
     output_objects.append({'object_type': 'header', 'text': 'Peers'})
 
+    if not configuration.site_enable_peers:
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Peers not enabled for this site!'})
+        return (output_objects, returnvalues.CLIENT_ERROR)
+
     user_map = get_full_user_map(configuration)
     user_dict = user_map.get(client_id, None)
     # Optional site-wide limitation of peers permission
@@ -374,7 +380,7 @@ MUST be filled for the row to be treated.
 %(form_prefix_html)s
 %(shared_peer_html)s
 <input type="hidden" name="peers_format" value="userid" />
-<div class="form-row one-col-grid">
+<div class="form-row one-col-grid single-entry">
     <div class="col-md-12 mb-1 form-cell">
     <label for="action">Action</label>
     <select class="form-control themed-select html-select fill-width" name="action">
@@ -522,11 +528,11 @@ at the bottom.
 <div id="requests-tab" >
 <p>
 If someone requests an external user account on %(site)s and explicitly
-references you as sponsor or contact person the site admins will generally
-forward the request, so that it shows up here for you to confirm. You can then
-accept or reject the individual requests below to let the site admins proceed
-with account creation or rejection. Please select an expire date to provide
-limited but sufficiently long account access - it can always be extended later.
+references you as peers contact person the site admins will generally forward
+the request, so that it shows up here for you to confirm. You can then accept
+or reject the individual requests below to let the site admins proceed with
+account creation or rejection. Please select an expire date to provide limited
+but sufficiently long account access - it can always be extended later.
 </p>
 '''
 

@@ -39,6 +39,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import cgi
+import re
 from email.utils import parseaddr, formataddr
 from string import ascii_letters, digits, printable
 from unicodedata import category, normalize, name as unicode_name
@@ -53,7 +54,7 @@ from mig.shared.defaults import src_dst_sep, user_id_charset, \
     user_id_max_length, session_id_charset, session_id_length, \
     workflow_id_length, MAX_SWEEP, maxfill_fields
 from mig.shared.listhandling import frange
-from mig.shared.validstring import valid_user_path
+from mig.shared.validstring import valid_user_path, silent_email_validator
 from mig.shared.valuecheck import lines_value_checker, \
     max_jobs_value_checker
 
@@ -852,7 +853,7 @@ def valid_email_address(addr, allow_real_name=True):
     (real_name, plain_addr) = name_address_pair = parseaddr(addr)
     if real_name and not allow_real_name:
         raise InputException("Only plain addresses without name allowed")
-    if not plain_addr or not '@' in plain_addr:
+    if not silent_email_validator(plain_addr):
         raise InputException("No actual email address included")
     merged = formataddr(name_address_pair)
     if merged != addr:
@@ -866,12 +867,14 @@ def valid_simple_email_address(addr):
     valid_email_address(addr, False)
 
 
-def valid_email_addresses(addresses, allow_real_name=False):
-    """Parse one or more whitespace-separated email addresses contained in a
-    single string. Useful e.g. for checking textarea emails.
+def valid_email_addresses(addresses, allow_real_name=False, delimiter=None):
+    """Parse one or more delimiter-separated email addresses contained in a
+    single string. Useful e.g. for checking input fields and textarea for
+    one or more emails. If delimiter is None any white-space string is a
+    separator and empty strings are removed from the result.
     """
-    for addr in addresses.split():
-        valid_email_address(addr, allow_real_name)
+    for addr in addresses.split(delimiter):
+        valid_email_address(addr.strip(), allow_real_name)
 
 
 def is_valid_simple_email(addr):
@@ -1926,6 +1929,19 @@ def guess_type(name):
             'adminemail',
         ):
             __type_map[key] = valid_email_address
+        for key in (
+            'peers_full_name',
+        ):
+            # NOTE: allow space or comma as delimiter
+            __type_map[key] = lambda x: valid_commonname(
+                x, extra_chars=',')
+        for key in (
+            'peers_email',
+        ):
+            # NOTE: allow space or comma as delimiter
+            __type_map[key] = lambda x: valid_email_addresses(
+                x, delimiter=',')
+
         for key in ('username', 'ro_fields', ):
             __type_map[key] = valid_username
         for key in (

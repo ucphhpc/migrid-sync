@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # docs - online documentation generator
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -243,6 +243,16 @@ This software is mainly implemented in Python and extension modules:"""})
                            'class': 'urllink iconspace',
                            'title': 'Python Enchant Module at Python Package Index',
                            'text': 'Python Enchant Module (LGPL license)'})
+    output_objects.append({'object_type': 'link',
+                           'destination': 'https://pypi.org/project/email-validator',
+                           'class': 'urllink iconspace',
+                           'title': 'Python email-validator Module at Python Package Index',
+                           'text': 'Python email-validator Module (CC0 1.0 license)'})
+    output_objects.append({'object_type': 'link',
+                           'destination': 'https://pypi.org/project/dnspython',
+                           'class': 'urllink iconspace',
+                           'title': 'Python dnspython Module at Python Package Index',
+                           'text': 'Python dnspython Module (Freeware / ISC license)'})
     output_objects.append({'object_type': 'text', 'text': ''})
     output_objects.append({'object_type': 'text', 'text': """
 Web interfaces are served with the Apache HTTP Server:"""})

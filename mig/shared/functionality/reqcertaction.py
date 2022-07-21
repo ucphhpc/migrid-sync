@@ -49,7 +49,7 @@ from mig.shared.pwhash import scramble_password, assure_password_strength
 from mig.shared.serial import dumps
 
 
-def signature():
+def signature(configuration):
     """Signature of the main function"""
 
     defaults = {
@@ -63,6 +63,13 @@ def signature():
         'comment': [''],
         'accept_terms': [''],
     }
+    if configuration.site_enable_peers:
+        if configuration.site_peers_mandatory:
+            peers_default = REJECT_UNSET
+        else:
+            peers_default = ['']
+        for field_name in configuration.site_peers_explicit_fields:
+            defaults['peers_%s' % field_name] = peers_default
     return ['text', defaults]
 
 
@@ -71,7 +78,7 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False, op_menu=False)
-    defaults = signature()[1]
+    defaults = signature(configuration)[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
                                                  defaults, output_objects,
                                                  allow_rejects=False)
@@ -105,6 +112,18 @@ def main(client_id, user_arguments_dict):
     email = accepted['email'][-1].strip()
     password = accepted['password'][-1]
     verifypassword = accepted['verifypassword'][-1]
+
+    if configuration.site_enable_peers:
+        # Peers are passed as multiple strings of comma or space separated emails
+        # so we reformat to a consistently comma+space separated string.
+        peers_full_name_list = []
+        for entry in accepted.get('peers_full_name', ['']):
+            peers_full_name_list += [i.strip() for i in entry.split(',')]
+        peers_full_name = ', '.join(peers_full_name_list)
+        peers_email_list = []
+        for entry in accepted.get('peers_email', ['']):
+            peers_email_list += [i.strip() for i in entry.split(',')]
+        peers_email = ', '.join(peers_email_list)
 
     # keep comment to a single line
 
@@ -193,6 +212,10 @@ resources anyway.
         'openid_names': [],
         'auth': ['migcert'],
     }
+    if configuration.site_enable_peers:
+        raw_user['peers_full_name'] = peers_full_name
+        raw_user['peers_email'] = peers_email
+
     # Force user ID fields to canonical form for consistency
     # Title name, lowercase email, uppercase country and state, etc.
     user_dict = canonical_user(configuration, raw_user, raw_user.keys())
@@ -251,7 +274,11 @@ Received a certificate request with account data
  * Organization: %(organization)s
  * State: %(state)s
  * Country: %(country)s
- * Email: %(email)s
+ * Email: %(email)s"""
+    if configuration.site_enable_peers:
+        email_msg += """
+ * Peers: %(peers_full_name)s (%(peers_email)s)"""
+    email_msg += """
  * Comment: %(comment)s
  * Expire: %(expire)s
 
@@ -290,8 +317,8 @@ Command to delete user again on %(site)s server:
 
 ---
 
-"""\
-         % user_dict
+"""
+    email_msg = email_msg % user_dict
 
     logger.info('Sending email: to: %s, header: %s, msg: %s, smtp_server: %s'
                 % (admin_email, email_header, email_msg, smtp_server))
