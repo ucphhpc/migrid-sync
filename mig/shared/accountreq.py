@@ -77,21 +77,62 @@ def account_js_helpers(configuration, fields):
     add_init = """
   /* Helper to define countries for which State field makes sense */
   var enable_state = ['US', 'CA', 'AU'];
+  var peers_mandatory = %(peers_mandatory)s;
+  var peers_explicit_fields = %(peers_explicit_fields)s;
 
   function rtfm_warn(message) {
       return confirm(message + ': Proceed anyway? (If you read and followed the instructions!)');
   }
+  function rtfm_error(message) {
+      alert(message + ': Please read and follow the instructions!');
+  }
 
+  function valid_distinguished_name(value) {
+      /* TODO: use regexp test instead? */
+      if (value.indexOf('/') == -1 || value.indexOf('=') == -1) {
+          return false;
+      } else {
+          return true;
+      }
+  }
+  function valid_full_name(value) {
+      /* TODO: use regexp test instead? */
+      /* Just test for space separated strings */
+      var parts = value.trim().split(' ');
+      if (parts.length < 2) {
+          return false;
+      } else {
+          return true;
+      }
+  }
+  function valid_email(value) {
+      /* TODO: use regexp test instead? */
+      /* Just test for @ and domain part with dot for now */  
+      var parts = value.trim().split('@');
+      if (parts.length < 2 || parts[1].indexOf('.') < 1) {
+          return false;
+      } else {
+          return true;
+      }
+  }
+  function deprecated_email(value) {
+      if (value.search('@gmail.com') != -1 || value.search('@yahoo.com') != -1 || value.search('@hotmail.com') != -1) {
+          return true;
+      } else {
+          return false;
+      }
+  }
+  
   function check_account_id() {
       //alert('#account_id_help');
-      if ($('#cert_id_field').val().indexOf('/') == -1) {
+      if (!valid_distinguished_name($('#cert_id_field').val())) {
           return rtfm_warn('Account ID does not look like a proper x509 DN');
       }
       return true;
   }
   function check_account_name() {
       //alert('#account_name_help');
-      if ($('#cert_name_field').val().indexOf(' ') == -1) {
+      if (!valid_full_name($('#cert_name_field').val())) {
           return rtfm_warn('Full name does not look like a real name');
       }
       return true;
@@ -105,18 +146,18 @@ def account_js_helpers(configuration, fields):
   }
   function check_full_name() {
       //alert('#full_name_help');
-      if ($('#full_name_field').val().indexOf(' ') == -1) {
+      if (!valid_full_name($('#full_name_field').val())) {
           return rtfm_warn('Full name does not look like a real name');
       }
       return true;
   }
   function check_email() {
       //alert('#email_help');
-      if ($('#email_field').val().search('@') == -1) {
+      if (!valid_email($('#email_field').val())) {
           return rtfm_warn('Email is invalid');
       }
-      if ($('#email_field').val().search('@gmail.com') != -1 || $('#email_field').val().search('@yahoo.com') != -1 || $('#email_field').val().search('@hotmail.com') != -1) {
-          return rtfm_warn('Email does not look like a organization address');
+      if (deprecated_email($('#email_field').val())) {
+          return rtfm_warn('Email does not look like an organization address');
       }
       return true;
   }
@@ -165,11 +206,65 @@ def account_js_helpers(configuration, fields):
       }
       return true;
   }
+  function check_peers_full_name() {
+      //alert('#peers_full_name_help');
+      if (!peers_mandatory || !(peers_explicit_fields.includes('full_name'))) {
+          return true;
+      }
+      var base_err = 'One or more peers contact full names must be provided';
+      /* NOTE: split on comma and verbatim 'and' with space removal */
+      var all_parts = $('#peers_full_name_field').val().trim().split(/\s*,\s*|\s+and\s+/);
+      if (all_parts.length < 1) {
+          rtfm_error(base_err);
+          return false;
+      }
+      for (var i = 0; i < all_parts.length; i++) {
+          if (!valid_full_name(all_parts[i])) {
+              rtfm_error('Peers full name is invalid: '+all_parts[i] + '\\n' + base_err);
+              return false;
+          }
+      }
+      return true;
+  }
+  function check_peers_email() {
+      //alert('#peers_email_help');
+      /* if (!peers_mandatory || !(peers_explicit_fields.includes('email'))) {*/
+      if (!peers_mandatory) {
+          return true;
+      }
+      var base_err = 'One or more peers contact emails must be provided';
+      /* NOTE: split on comma and verbatim 'and' with space removal */
+      var all_parts = $('#peers_email_field').val().trim().split(/\s*,\s*|\s+and\s+/);
+      if (all_parts.length < 1) {
+          rtfm_error(base_err);
+          return false;
+      }
+      for (var i = 0; i < all_parts.length; i++) {
+          if (!valid_email(all_parts[i])) {
+              /* Bail if peers email on invalid format */
+              rtfm_error('Peer contact email is invalid: '+all_parts[i] + '\\n' + base_err);
+              return false;
+          }
+      }
+      return true;
+  }
   function check_comment() {
+      /* NOTE: HTML5 and  bootstrap ignore validation of textarea patterns.
+         We can use setCustomValidity, which is native javascript funtion.
+         https://stackoverflow.com/questions/30958536/custom-validity-jquery
+         Set it to something to mark invalid and to empty string to mark valid.
+      */
       //alert('#comment_help');
+      var invalid_msg = 'Comment must justify your account needs. '+hint;
+      /* Comment only needed if peers are mandatory and not explicitly given */
+      if (!peers_mandatory || peers_explicit_fields.length > 0) {
+          $('#comment_field')[0].setCustomValidity('');
+          return true;
+      }
       var comment = $('#comment_field').val();
       if (!comment) {
-          /* Comment is mandatory */
+          /* Comment is mandatory in this case */
+          $('#comment_field')[0].setCustomValidity(invalid_msg);
           return false;
       }
       /* Comment must contain purpose and contact email.
@@ -183,9 +278,12 @@ def account_js_helpers(configuration, fields):
           var patternRegex = new RegExp('^' + pattern.replace(/^\^|\$$/g, '') + '$', 'gm');
       }
       if (patternRegex && !comment.match(patternRegex)) {
-          /* Prompt about continuing if comment on invalid format */
-          return rtfm_warn('Comment must justify your account needs. '+hint);
+          /* Warn about comment on invalid format */
+          rtfm_error('Comment must justify your account needs. '+hint);
+          $('#comment_field')[0].setCustomValidity(invalid_msg);
+          return false;
       }
+      $('#comment_field')[0].setCustomValidity('');
       return true;
   }
 
@@ -229,13 +327,21 @@ def account_js_helpers(configuration, fields):
           contextualHelp.show();
       });
   }
-""" % {'password_min_len': password_min_len, 'password_max_len': password_max_len}
+""" % {'password_min_len': password_min_len,
+       'password_max_len': password_max_len,
+       'peers_mandatory': ("%s" % configuration.site_peers_mandatory).lower(),
+       'peers_explicit_fields': "%s" % configuration.site_peers_explicit_fields,
+       }
     add_init += """
   function validate_form() {
       //alert('validate form');
 """
+    # NOTE: dynamically add checks for all explicit peers fields configured
+    checks = [] + fields
+    for field_name in configuration.site_peers_explicit_fields:
+        checks.append("peers_%s" % field_name)
     add_init += """
-      var status = %s""" % ' && '.join(['check_%s()' % name for name in fields])
+      var status = %s""" % ' && '.join(['check_%s()' % name for name in checks])
     add_init += """
       //alert('old validate form: ' +status);
       return status;
@@ -244,7 +350,9 @@ def account_js_helpers(configuration, fields):
 """
     add_ready = """
       init_context_help();
+
 """
+    # TODO: add help for peers fields here?
     for name in fields:
         add_ready += """
       bind_help($('#%s_field'), $('#%s_help').html());
@@ -255,7 +363,7 @@ def account_js_helpers(configuration, fields):
 def account_request_template(configuration, password=True, default_values={}):
     """A general form template used for various account requests"""
     html = """
-<div id='account-request-grid' class=form_container>
+<div id='account-request-grid' class='form_container'>
 
 <!-- use post here to avoid field contents in URL -->
 <form method='%(form_method)s' action='%(target_op)s.py' onSubmit='return validate_form();' class='needs-validation' novalidate>
@@ -271,7 +379,7 @@ def account_request_template(configuration, password=True, default_values={}):
 <div class='form-row'>
     <div class='col-md-4 mb-3 form-cell'>
       <label for='validationCustom01'>Full name</label>
-      <input type='text' class='form-control' id='full_name_field' type=text name=cert_name value='%(full_name)s' placeholder='Full name' required pattern='[^ ]+([ ][^ ]+)+' %(readonly_full_name)s title='Your full name, i.e. two or more names separated by space' />
+      <input type='text' class='form-control' id='full_name_field' type=text name='cert_name' value='%(full_name)s' placeholder='Firstname Middlenames Lastname' required pattern='[^ ]+([ ][^ ]+)+' %(readonly_full_name)s title='Your full name, i.e. two or more names separated by space' />
       <div class='valid-feedback'>
         Looks good!
       </div>
@@ -281,7 +389,7 @@ def account_request_template(configuration, password=True, default_values={}):
     </div>
     <div class='col-md-4 mb-3 form-cell'>
       <label for='validationCustom02'>Email address</label>
-      <input class='form-control' id='email_field' type=email name=email value='%(email)s' placeholder='username@organization.org' required  %(readonly_email)s title='Email address should match your organization - and you need to read mail sent there' />
+      <input class='form-control' id='email_field' type=email name='email' value='%(email)s' placeholder='username@organization.org' required %(readonly_email)s title='Email address should match your organization - and you need to read mail sent there' />
       <div class='valid-feedback'>
         Looks good!
       </div>
@@ -291,7 +399,7 @@ def account_request_template(configuration, password=True, default_values={}):
     </div>
     <div class='col-md-4 mb-3 form-cell'>
       <label for='validationCustom01'>Organization</label>
-      <input class='form-control' id='organization_field' type=text name=org value='%(organization)s' placeholder='Organization or company' required pattern='[^ ]+([ ][^ ]+)*' %(readonly_organization)s title='Name of your organization or company: one or more words or abbreviations separated by space' />
+      <input class='form-control' id='organization_field' type=text name='org' value='%(organization)s' placeholder='Organization or company' required pattern='[^ ]+([ ][^ ]+)*' %(readonly_organization)s title='Name of your organization or company: one or more words or abbreviations separated by space' />
       <div class='valid-feedback'>
         Looks good!
       </div>
@@ -300,15 +408,15 @@ def account_request_template(configuration, password=True, default_values={}):
       </div>
     </div>
   </div>
-  <div class='form-row'>
-    <div class='col-md-4 mb-3 form-cell'>
+  <div class='form-row two-entries'>
+    <div class='col-md-8 mb-3 form-cell'>
       <label for='validationCustom03'>Country</label>
     """
     # Generate drop-down of countries and codes if available, else simple input
     sorted_countries = list_country_codes(configuration)
     if sorted_countries and not default_values.get('readonly_country', ''):
         html += """
-        <select class='form-control themed-select html-select' id='country_field' name=country minlength=2 maxlength=2 value='%(country)s' placeholder='Two letter country-code' required pattern='[A-Z]{2}' title='Please select your country from the list' onChange='toggle_state();'>
+        <select class='form-control themed-select html-select' id='country_field' name='country' minlength=2 maxlength=2 value='%(country)s' placeholder='Two letter country-code' required pattern='[A-Z]{2}' title='Please select your country from the list' onChange='toggle_state();'>
 """
         # TODO: detect country based on browser info?
         # Start out without a country selection
@@ -323,7 +431,7 @@ def account_request_template(configuration, password=True, default_values={}):
     """
     else:
         html += """
-        <input class='form-control' id='country_field' type=text name=country value='%(country)s' placeholder='Two letter country-code' required pattern='[A-Z]{2}' %(readonly_country)s minlength=2 maxlength=2 title='The two capital letters used to abbreviate your country' onBlur='toggle_state();' />
+        <input class='form-control' id='country_field' type=text name='country' value='%(country)s' placeholder='Two letter country-code' required pattern='[A-Z]{2}' %(readonly_country)s minlength=2 maxlength=2 title='The two capital letters used to abbreviate your country' onBlur='toggle_state();' />
         """
 
     html += """
@@ -337,17 +445,17 @@ def account_request_template(configuration, password=True, default_values={}):
     </div>
     <div class='col-md-4 mb-3 form-cell'>
       <label for='validationCustom04'>Optional state code</label>
-      <input class='form-control' id='state_field' type=text name=state value='%(state)s' placeholder='NA' pattern='([A-Z]{2})?' %(readonly_state)s maxlength=2 title='Mainly for U.S. users - please just leave empty if in doubt' readonly>
+      <input class='form-control' id='state_field' type=text name='state' value='%(state)s' placeholder='NA' pattern='([A-Z]{2})?' %(readonly_state)s maxlength=2 title='Mainly for U.S. users - please just leave empty if in doubt' readonly>
     </div>
   </div>
     """
 
     if password:
         html += """
-  <div class='form-row'>
-    <div class='col-md-4 mb-3 form-cell'>
+  <div class='form-row two-entries'>
+    <div class='col-md-6 mb-3 form-cell'>
       <label for='validationCustom01'>Password</label>
-      <input type='password' class='form-control' id='password_field' type=password name=password minlength=%(password_min_len)d maxlength=%(password_max_len)d value='%(password)s' placeholder='Your password' required pattern='.{%(password_min_len)d,%(password_max_len)d}' title='Password of your choice - site policies about password strength apply and will give you feedback below if refused' />
+      <input type='password' class='form-control' id='password_field' type=password name='password' minlength=%(password_min_len)d maxlength=%(password_max_len)d value='%(password)s' placeholder='Your password' required pattern='.{%(password_min_len)d,%(password_max_len)d}' title='Password of your choice - site policies about password strength apply and will give you feedback below if refused' />
       <div class='valid-feedback'>
         Looks good!
       </div>
@@ -356,14 +464,71 @@ def account_request_template(configuration, password=True, default_values={}):
         I.e. %(password_min_len)d to %(password_max_len)d characters from at least %(password_min_classes)d of the 4 different character classes: lowercase, uppercase, digits, other.
       </div>
     </div>
-    <div class='col-md-4 mb-3 form-cell'>
+    <div class='col-md-6 mb-3 form-cell'>
       <label for='validationCustom03'>Verify password</label>
-      <input type='password' class='form-control' id='verifypassword_field' type=password name=verifypassword minlength=%(password_min_len)d maxlength=%(password_max_len)d value='%(verifypassword)s' placeholder='Repeat password' required pattern='.{%(password_min_len)d,%(password_max_len)d}' title='Repeat your chosen password to rule out most simple typing errors' />
+      <input type='password' class='form-control' id='verifypassword_field' type=password name='verifypassword' minlength=%(password_min_len)d maxlength=%(password_max_len)d value='%(verifypassword)s' placeholder='Repeat password' required pattern='.{%(password_min_len)d,%(password_max_len)d}' title='Repeat your chosen password to rule out most simple typing errors' />
       <div class='valid-feedback'>
         Looks good!
       </div>
       <div class='invalid-feedback'>
         Please repeat your chosen password to verify.
+      </div>
+    </div>
+  </div>
+        """
+
+    email_text_pattern = '.*[^ ]+@[a-zA-Z0-9.-]+\.[a-zA-Z]+.*'
+    if configuration.site_peers_explicit_fields:
+        # NOTE: dedicated peers field(s) instead of legacy Comment use
+        comment_add = ''
+        comment_required = ''
+        comment_pattern = ''
+    elif configuration.site_peers_mandatory:
+        comment_add = ' AND the name + email of your peer contact(s) %(peers_contact_hint)s'
+        comment_required = 'required'
+        comment_pattern = email_text_pattern
+    elif configuration.site_enable_peers:
+        # NOTE: no peers field(s) instead of legacy Comment use
+        comment_add = ' and the name + email of any peer contact(s) %(peers_contact_hint)s'
+        comment_required = 'required'
+        comment_pattern = ''
+    else:
+        # NOTE: peers disabled
+        comment_add = ''
+        comment_required = ''
+        comment_pattern = ''
+
+    if 'full_name' in configuration.site_peers_explicit_fields:
+        html += """
+  <div class='form-row single-entry'>
+    <div class='col-md-12 mb-3 form-cell'>
+      <!-- NOTE: this simple form control just looks for one or more full names.
+      -->
+      <label for='validationCustom11'>Peer contact full name(s)</label>
+      <input type='text' class='form-control' id='peers_full_name_field' type=text name='peers_full_name' value='%(peers_full_name)s' placeholder='First Contact Name, Second Contact Name, ...' required %(readonly_peers_full_name)s pattern='(\w\w+(\s+\w+)+)(\s*(,| & | and )\s*(\w\w+(\s+\w+)+))*' title='One or more full names of your %(site)s peer contacts %(peers_contact_hint)s' />
+      <div class='valid-feedback'>
+        Looks good!
+      </div>
+      <div class='invalid-feedback'>
+        Please enter the full name of your peer contact(s) %(peers_contact_hint)s.
+      </div>
+    </div>
+  </div>
+        """
+    if 'email' in configuration.site_peers_explicit_fields:
+        html += """
+  <div class='form-row single-entry'>
+    <div class='col-md-12 mb-3 form-cell'>
+      <!-- NOTE: this simple form control just looks for one or more emails.
+           Using 'multiple' renders 'required' useless so we set minlength.
+      -->
+      <label for='validationCustom12'>Peer contact email(s)</label>
+      <input type='text' class='form-control' id='peers_email_field' type=email name='peers_email' value='%(peers_email)s' placeholder='your.1st.contact@here.org, your.2nd.contact@here.org, ...' multiple minlength=5 required %(readonly_peers_email)s pattern='^(\w+@\w+(\.\w+)+)(\s*,?\s*(\w+@\w+(\.\w+)+))*$' title='One or more email address of your %(site)s peer contacts %(peers_contact_hint)s' />
+      <div class='valid-feedback'>
+        Looks good!
+      </div>
+      <div class='invalid-feedback'>
+        Please enter the email of your peer contact(s) %(peers_contact_hint)s.
       </div>
     </div>
   </div>
@@ -377,12 +542,12 @@ def account_request_template(configuration, password=True, default_values={}):
                       javascript checking.
       -->
       <label for='validationCustom03'>Comment with reason why you should be granted a %(site)s account:</label>
-      <textarea class='form-control' id='comment_field' rows=4 name=comment placeholder='Typically which collaboration, project or course you need the account for AND the name and email of your affiliated contact' required pattern='.*[^ ]+@[a-zA-Z0-9.-]+\.[a-zA-Z]+.*' title='A free-form comment to justify your account needs'>%(comment)s</textarea>
+      <textarea class='form-control' id='comment_field' rows=4 name='comment' placeholder='Typically which collaboration, project or course you need the account for__COMMENT_ADD__' __COMMENT_REQUIRED__ pattern='__COMMENT_PATTERN__' title='A free-form comment to justify your account needs'>%(comment)s</textarea>
       <div class='valid-feedback'>
         Looks good!
       </div>
       <div class='invalid-feedback'>
-        Please mention collaboration, project or course you need the account for AND the name and email of your affiliated contact.
+        Please mention collaboration, project or course you need the account for__COMMENT_ADD__.
       </div>
     </div>
   </div>
@@ -407,7 +572,7 @@ def account_request_template(configuration, password=True, default_values={}):
 </form>
 
 </div>
-    """
+""".replace('__COMMENT_ADD__', comment_add).replace('__COMMENT_REQUIRED__', comment_required).replace('__COMMENT_PATTERN__', comment_pattern)
     return html
 
 
@@ -429,6 +594,10 @@ def build_accountreqitem_object(configuration, accountreq_dict):
         'created': "<div class='sortkey'>%d</div>%s" % (created_epoch,
                                                         created_asctime),
     }
+    if configuration.site_enable_peers:
+        for name in configuration.site_peers_explicit_fields:
+            field = 'peers_%s' % name
+            accountreq_obj[field] = accountreq_dict.get(field, '')
     return accountreq_obj
 
 
@@ -632,7 +801,11 @@ def peer_account_req(req_id, configuration, target_id, user_copy=False,
     fill_user(req_dict)
     peer_id = req_dict['distinguished_name']
     if target_id == keyword_auto:
-        target_str = req_dict['comment']
+        if 'email' in configuration.site_peers_explicit_fields:
+            # Try peers_email with fallback to comment
+            target_str = req_dict.get('peers_email', req_dict['comment'])
+        else:
+            target_str = req_dict['comment']
     else:
         target_str = target_id
     peer_emails = valid_email_addresses(configuration, target_str)
@@ -720,9 +893,16 @@ def peer_account_req(req_id, configuration, target_id, user_copy=False,
             continue
         _logger.info("send request accept peer message for '%s' to:\n%s"
                      % (peer_id, '\n'.join(notify_dict['NOTIFY'])))
+        peers_details = ''
+        for peers_field in configuration.site_peers_explicit_fields:
+            field_name = 'peers_%s' % peers_field
+            peers_details += """Peers contact %s(s): %s
+""" % (peers_field.replace('_', ' '), req_dict.get(field_name, ''))
+        peers_details += """Comment: %(comment)s
+""" % req_dict
         (send_status, send_errors) = notify_user(
             notify_dict, [peer_id, configuration.short_title, 'peeraccount',
-                          req_dict['comment'], req_dict['email'], user_id],
+                          peers_details, req_dict['email'], user_id],
             'SENDREQUEST', _logger, '', configuration)
 
         if send_status:
@@ -907,6 +1087,13 @@ def user_manage_commands(configuration, mig_user, req_path, user_id, user_dict,
                          kind):
     """Generate user create and delete commands for sign up backends"""
     cmd_helpers = {}
+    if configuration.site_enable_peers:
+        peers = '-p AUTO'
+    else:
+        peers = ''
+    # NOTE: peers are not yet exposed in gdp_mode so don't try automatic check
+    if configuration.site_enable_gdp:
+        peers = ''
     if not configuration.ca_fqdn or not configuration.ca_user:
         cmd_helpers['command_cert_create'] = '[Disabled On This Site]'
         cmd_helpers['command_cert_revoke'] = '[Disabled On This Site]'
@@ -934,8 +1121,8 @@ sudo su - %s
             (mig_user, configuration.server_fqdn, user_id)
 
     cmd_helpers['command_user_create'] = """As '%s' on %s:
-./mig/server/createuser.py -a %s -p AUTO -u '%s'""" % \
-        (mig_user, configuration.server_fqdn, kind, req_path)
+./mig/server/createuser.py -a %s %s -u '%s'""" % \
+        (mig_user, configuration.server_fqdn, kind, peers, req_path)
     cmd_helpers['command_user_suspend'] = """As '%s' on %s:
 ./mig/server/editmeta.py '%s' status suspended""" % \
         (mig_user, configuration.server_fqdn, user_id)

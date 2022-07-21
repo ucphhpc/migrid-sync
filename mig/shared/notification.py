@@ -231,7 +231,7 @@ who would like it to be added as a %s in %s and included the reason:
                 txt += """This is a %s request sent on behalf of
 %s
 who requested an external user account on %s and specifically pointed to you
-(%s) as the local sponsor or representative with the account request comment:
+(%s) as a local peers contact in the account request details.
 %s
 """ % (request_type, from_id, target_name, recipient_email, request_text)
             else:
@@ -242,7 +242,7 @@ who would like to be added as a %s in %s and included the reason:
 """ % (request_type, from_id, entity, target_name, request_text)
 
             txt += '''
-If you want to handle the %s request please visit:
+If you know the requestor and want to handle the %s request please visit:
 ''' % entity
 
             vgrid_res_help = ''' and add or

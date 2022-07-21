@@ -897,6 +897,37 @@ location.""" % self.config_file)
         else:
             self.site_migadmin_act_access = [keyword_any]
 
+        # NOTE: Peers are enabled by default but not fully exposed for GDP, yet.
+        #       One may still leave it enabled and enable peers_mandatory to
+        #       require users to provide peer info for manual verification by
+        #       site operators. Either with e.g. peers_explicit_fields = email
+        #       or with the legacy style use of the Comment textarea.
+        if config.has_option('SITE', 'enable_peers'):
+            self.site_enable_peers = config.getboolean('SITE', 'enable_peers')
+        else:
+            self.site_enable_peers = True
+
+        if self.site_enable_peers:
+            if config.has_option('SITE', 'peers_mandatory'):
+                self.site_peers_mandatory = config.getboolean('SITE',
+                                                              'peers_mandatory')
+            else:
+                self.site_peers_mandatory = False
+            if config.has_option('SITE', 'peers_explicit_fields'):
+                self.site_peers_explicit_fields = config.get(
+                    'SITE', 'peers_explicit_fields').split()
+            else:
+                self.site_peers_explicit_fields = []
+        else:
+            self.site_peers_mandatory = False
+            self.site_peers_explicit_fields = []
+
+        if config.has_option('SITE', 'peers_contact_hint'):
+            self.site_peers_contact_hint = config.get('SITE',
+                                                      'peers_contact_hint')
+        else:
+            self.site_peers_contact_hint = 'employed and authorized to invite you as peer'
+
         if config.has_option('SITE', 'enable_jobs'):
             self.site_enable_jobs = config.getboolean('SITE', 'enable_jobs')
         else:
