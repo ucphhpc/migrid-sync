@@ -281,9 +281,12 @@ def create_user(
     if verify_peer == keyword_auto:
         _logger.debug('auto-detect peers for: %s' % client_id)
         peer_email_list = []
-        # extract email of vouchee from comment if possible
+        # Extract email of peers contact from explicit peers field or comment
+        # We don't try peers full name here as it is far too tricky to match
+        peers_email = user.get('peers_email', '')
         comment = user.get('comment', '')
-        all_matches = valid_email_addresses(configuration, comment)
+        peers_source = "%s\n%s" % (peers_email, comment)
+        all_matches = valid_email_addresses(configuration, peers_source)
         for i in all_matches:
             peer_email = "%s" % i
             if not possible_user_id(configuration, peer_email):
@@ -295,7 +298,7 @@ def create_user(
             _logger.error("requested peer auto-detect failed for %s" %
                           client_id)
             raise Exception("Failed auto-detect peers in request for %s: %r"
-                            % (client_id, comment))
+                            % (client_id, peers_source))
         verify_pattern = '|'.join(['.*emailAddress=%s' %
                                    i for i in peer_email_list])
 
@@ -314,89 +317,90 @@ def create_user(
         if not hits:
             peer_notes.append("no match for peers")
         # Request can ask for expire with fall-back cap to highest peer value
-        # in case the original expire is not satisfied by any sponsors.
+        # in case the original expire is not satisfied by any peer contacts.
         # TODO: migrate this cap expire choice to a conf option?
         cap_expire = user.get('cap_expire', True)
         client_expire = user['expire']
         client_expire_dt = datetime.datetime.fromtimestamp(client_expire)
-        # Best available expire value accepted by any peer (init to now)
+        # Latest expire value accepted by any peers contact (init to now)
         effective_expire_dt = now_dt
-        for (sponsor_id, sponsor_dict) in hits:
+        for (contact_id, contact_dict) in hits:
             if configuration.site_enable_gdp and is_gdp_user(configuration,
-                                                             sponsor_id):
+                                                             contact_id):
                 _logger.debug(
-                    "skip gdp project user %s as sponsor" % sponsor_id)
+                    "skip gdp project user %s as peers contact" % contact_id)
                 continue
-            _logger.debug("check %s in peers for %s" % (client_id, sponsor_id))
-            if client_id == sponsor_id:
-                warn_msg = "users cannot vouch for themselves: %s for %s" % \
-                           (client_id, sponsor_id)
+            _logger.debug("check %s in peers contacts for %s" % (client_id,
+                                                                 contact_id))
+            if client_id == contact_id:
+                warn_msg = "users cannot invite themselves as peer: %s vs %s" \
+                           % (client_id, contact_id)
                 _logger.warning(warn_msg)
                 continue
-            # Check that sponsor account is not suspended or similar
-            sponsor_status = sponsor_dict.get('status', 'active')
-            if sponsor_status not in ['active', 'temporal']:
+            # Check that peers contact account is not suspended or similar
+            contact_status = contact_dict.get('status', 'active')
+            if contact_status not in ['active', 'temporal']:
                 warn_msg = "status %s prevents %s as peer, including for %s" \
-                           % (sponsor_status, sponsor_id, client_id)
+                           % (contact_status, contact_id, client_id)
                 _logger.warning(warn_msg)
                 peer_notes.append(warn_msg)
                 continue
-            # Check that sponsor account is not itself expired (with slack)
-            sponsor_expire = sponsor_dict.get('expire', -1)
+            # Check that peers contact account is not expired (with slack)
+            contact_expire = contact_dict.get('expire', -1)
             # Only allow slack if not temporal account
             allowed_slack = 0
-            if sponsor_status == 'active':
+            if contact_status == 'active':
                 allowed_slack = peer_expire_slack
-            if sponsor_expire >= 0 and now > sponsor_expire + allowed_slack:
+            if contact_expire >= 0 and now > contact_expire + allowed_slack:
                 warn_msg = "expire %s (slack %d) prevents %s as peer for %s" \
-                           % (sponsor_expire, allowed_slack, sponsor_id,
+                           % (contact_expire, allowed_slack, contact_id,
                               client_id)
                 _logger.warning(warn_msg)
                 peer_notes.append(warn_msg)
                 continue
-            # TODO: make sure sponsor is (still) allowed to have peers at all,
-            #       check in reqacceptpeer and on peer creation may be stale
-            #       by now after conf changes.
+            # TODO: make sure peers contact can (still) have peers at all
+            #       Checks in reqacceptpeer and on peer creation may be stale
+            #       by now upon any conf changes.
             #       May require move of peers_permit_allowed to separate module
             #       to avoid circular imports.
             # Check if among accepted peers
-            accepted_peers = get_accepted_peers(configuration, sponsor_id)
+            accepted_peers = get_accepted_peers(configuration, contact_id)
             peer_entry = accepted_peers.get(client_id, None)
             if not peer_entry:
                 _logger.warning("%s has not (yet) accepted %s as peer" %
-                                (sponsor_id, client_id))
+                                (contact_id, client_id))
                 continue
-            # Found a potential sponsor, check peer expire vs client expire
-            # NOTE: adjust selected peer expire date to mean end of that day
+            # Found a potential peers contact, check contact vs client expire
+            # NOTE: adjust given peer contact expire date to the end of that day
             peer_expire_dt = datetime.datetime.strptime(
                 peer_entry.get('expire', 0), '%Y-%m-%d') + \
                 datetime.timedelta(days=1, microseconds=-1)
             if peer_expire_dt < client_expire_dt:
                 if cap_expire and peer_expire_dt > now_dt:
                     info_msg = "%s accepts %s as peer with expire cap %s" % \
-                               (sponsor_id, client_id, peer_expire_dt)
+                               (contact_id, client_id, peer_expire_dt)
                     _logger.info(info_msg)
                     peer_notes.append(info_msg)
-                    # NOTE: only grow effective expire with multiple sponsors
+                    # NOTE: only allow effective expire to increase
                     if peer_expire_dt > effective_expire_dt:
                         _logger.info("bump effective expire to %s" %
                                      peer_expire_dt)
                         effective_expire_dt = peer_expire_dt
                 else:
                     warn_msg = "expire %s vs %s prevents %s as peer for %s" % \
-                               (peer_expire_dt, client_expire_dt, sponsor_id,
+                               (peer_expire_dt, client_expire_dt, contact_id,
                                 client_id)
                     _logger.warning(warn_msg)
                     peer_notes.append(warn_msg)
                     continue
             else:
                 _logger.info("%s accepts %s as peer with requested expire %s"
-                             % (sponsor_id, client_id, client_expire_dt))
+                             % (contact_id, client_id, client_expire_dt))
                 effective_expire_dt = client_expire_dt
 
-            _logger.debug("validated %s accepts %s as peer" % (sponsor_id,
-                                                               client_id))
-            accepted_peer_list.append(sponsor_id)
+            _logger.debug("validated %s accepts %s as peers contact" %
+                          (contact_id, client_id))
+            accepted_peer_list.append(contact_id)
         if not accepted_peer_list:
             _logger.error("requested peer validation with %r for %s failed" %
                           (verify_pattern, client_id))
@@ -410,7 +414,7 @@ def create_user(
         user['peers'] = accepted_peer_list
         if user.get('peer_pattern', None):
             del user['peer_pattern']
-        _logger.info("accept create user %s (expire %s) with sponsor(s): %s" %
+        _logger.info("accept create user %s (expire %s) with contact(s): %s" %
                      (client_id, effective_expire_dt,
                       ', '.join(accepted_peer_list)))
 

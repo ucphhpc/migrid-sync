@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # logger - logging helpers
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Logging helpers"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -225,6 +226,15 @@ def daemon_gdp_logger(name, path=None, level="INFO", log_format=None):
             name, path=path, level=level, log_format=log_format)
 
     return gdp_logger
+
+
+def null_logger(name):
+    """A simple helper for cases where a logger object is needed but unwanted
+    so we just provide a create a dummy with only a NullHandler attached.
+    """
+    logger_obj = logging.getLogger(name)
+    logger_obj.addHandler(logging.NullHandler())
+    return logger_obj
 
 
 def reopen_log(conf):

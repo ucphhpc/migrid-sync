@@ -910,11 +910,17 @@ background: url(/images/icons/code.png) left center no-repeat;
     display: block;
     padding: 2px;
 }
-.form_container select, .form_container textarea {
+.form_container select {
     width: 99%;
+}
+.form_container textarea {
+    width: parent;
 }
 .form_container .form-cell {
     width: 96%;
+}
+.form_container .form-row.single-entry .form-cell {
+    width: 100%;
 }
 .form_container .form-cell .fill-width {
     width: 98%;
@@ -1073,18 +1079,23 @@ background: url(/images/icons/code.png) left center no-repeat;
 }
 
 /* V2 Account request form */
-/* form with field grid */
+/* form with field grid. Default to three even-sized columns */
 #account-request-grid .form-row {
     display: grid;
     grid-gap: 10px;
     grid-template-columns: repeat(auto-fill, 32%);
     margin: 10px 0px;
 }
+/* For rows with only two columns */
+#account-request-grid .form-row.two-entries {
+    grid-template-columns: repeat(auto-fill, 49%);
+}
+/* For rows with only a single column */
 #account-request-grid .form-row.single-entry {
     grid-template-columns: repeat(auto-fill, 98%);
 }
-#account-request-grid .form-row .single-entry .form-cell{
-    width: 98%;
+#account-request-grid .form-row.single-entry .form-cell {
+    width: 100%;
     display: block;
 }
 #account-request-grid .form-row select {

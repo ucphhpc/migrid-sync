@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # validstring - string validators
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,12 +32,19 @@ from __future__ import absolute_import
 import os
 import re
 
+# NOTE: we rely on email-validator if available but fall-back to home-brew
+try:
+    from email_validator import validate_email
+except Exception as exc:
+    validate_email = None
+
 from mig.shared.base import invisible_path
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import keyword_auto, session_id_length, \
     session_id_charset, share_id_charset, share_mode_charset, \
     user_id_charset, user_id_min_length, user_id_max_length
 from mig.shared.fileio import user_chroot_exceptions, untrusted_store_res_symlink
+from mig.shared.logger import null_logger
 
 
 def cert_name_format(input_string):
@@ -46,10 +53,33 @@ def cert_name_format(input_string):
     return input_string.title().replace(' ', '_')
 
 
-def is_valid_email_address(addr, logger):
-    """From http://www.secureprogramming.com/?action=view&feature=recipes&recipeid=1"""
+def is_valid_email_address(addr, logger, with_dns=False):
+    """Test if addr is a valid email address according to RFCs and optionally
+    checking the domain in DNS.
+    We rely on the email-validator library if available but fall back to a
+    native implementation if not. The latter was inspired by:
+    http://www.secureprogramming.com/?action=view&feature=recipes&recipeid=1
+    """
 
     logger.debug("verifying if '%s' is a valid email address" % addr)
+
+    if not validate_email is None:
+        logger.debug("relying on email-validator library")
+        try:
+            _valid = validate_email(addr, check_deliverability=with_dns).email
+            if _valid != addr:
+                raise Exception("address %r is not properly sanitized" % addr)
+            logger.debug("validation of %r succeeded: %s" % (addr, _valid))
+            return True
+        except Exception as exc:
+            logger.warning("validation of %r failed: %s" % (addr, exc))
+            return False
+
+    logger.warning("email-validator lib unavailable - fall back to native one")
+
+    if with_dns:
+        logger.warning("DNS checks require the email-validator library!")
+
     rfc822_specials = '()<>@,;:\\"[]'
 
     # First we validate the name portion (name@domain)
@@ -122,6 +152,11 @@ def valid_email_addresses(configuration, text, lowercase=True):
         _logger.debug('found valid email: %s' % email)
         email_list.append(email)
     return email_list
+
+
+def silent_email_validator(addr):
+    """Wrap is_valid_email_address to avoid depending on a logger instance"""
+    return is_valid_email_address(addr, null_logger("null"))
 
 
 def possible_user_id(configuration, user_id):
@@ -256,7 +291,7 @@ def valid_user_path(configuration, path, home_dir, allow_equal=False,
 
     _logger = configuration.logger
 
-    #_logger.debug("valid_user_path on %s %s" % (path, home_dir))
+    # _logger.debug("valid_user_path on %s %s" % (path, home_dir))
 
     # Make sure caller has explicitly forced abs path
 
@@ -276,13 +311,13 @@ def valid_user_path(configuration, path, home_dir, allow_equal=False,
     real_path = os.path.realpath(path)
     real_home = os.path.realpath(abs_home)
     accept_roots = [real_home] + chroot_exceptions
-    #_logger.debug("check that path %s (%s) is inside %s" % (path, real_path, accept_roots))
+    # _logger.debug("check that path %s (%s) is inside %s" % (path, real_path, accept_roots))
     accepted = False
     for accept_path in accept_roots:
         if real_path == accept_path or \
                 real_path.startswith(accept_path + os.sep):
             accepted = True
-            #_logger.debug("path %s is inside chroot %s" % (real_path, accept_path))
+            # _logger.debug("path %s is inside chroot %s" % (real_path, accept_path))
             break
     if not accepted:
         _logger.error("%s is outside chroot boundaries!" % path)
@@ -293,7 +328,7 @@ def valid_user_path(configuration, path, home_dir, allow_equal=False,
     # they have direct access to, so *don't ever* trust such symlinks unless
     # they point inside the storage resource mount itself.
 
-    #_logger.debug("check that path %s is not inside store res" % path)
+    # _logger.debug("check that path %s is not inside store res" % path)
     if path != real_path and untrusted_store_res_symlink(configuration, path):
         _logger.error("untrusted symlink on a storage resource: %s" % path)
         return False
@@ -303,7 +338,7 @@ def valid_user_path(configuration, path, home_dir, allow_equal=False,
     # a path in user home in addition to being in home or (general) chroots.
     inside = (path.startswith(abs_home + os.sep) or
               path.startswith(real_home + os.sep))
-    #_logger.debug("path %s is inside " % path)
+    # _logger.debug("path %s is inside " % path)
     if not allow_equal:
 
         # path must be abs_home/X
@@ -330,4 +365,13 @@ if __name__ == "__main__":
 nosuchemail@abc.%!?.com and Some.user-name@example.org
 with whatever text trailing."""
     print("Extract email addresses from:\n%r" % comment)
-    print(', '.join(valid_email_addresses(conf, comment)))
+    valid = valid_email_addresses(conf, comment)
+    print(', '.join(valid))
+    print("Test email validation")
+    test_emails = ['abc', 'abc@', 'abc@def', 'abd@def.', 'abc@def.gh',
+                   'abc@def.gh.ij', 'AbC@DeF.gH', u'abc@æøå.dk',
+                   'abc@def.test', 'abc @ def.test', 'abc@def.gh  ',
+                   'abc@def.%&/.gh']
+    for addr in test_emails:
+        print("Test if %r is valid email: %s" %
+              (addr, is_valid_email_address(addr, conf.logger)))

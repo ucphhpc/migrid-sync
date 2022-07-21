@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # extcert - External certificate account sign up backend
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -43,7 +43,7 @@ from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.safeinput import html_escape
 
 
-def signature():
+def signature(configuration):
     """Signature of the main function"""
 
     defaults = {'full_name': [''],
@@ -54,6 +54,9 @@ def signature():
                 'comment': [''],
                 'ro_fields': [''],
                 }
+    if configuration.site_enable_peers:
+        for field_name in configuration.site_peers_explicit_fields:
+            defaults['peers_%s' % field_name] = ['']
     return ['html_form', defaults]
 
 
@@ -62,7 +65,7 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False, op_menu=False)
-    defaults = signature()[1]
+    defaults = signature(configuration)[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -108,6 +111,8 @@ def main(client_id, user_arguments_dict):
 
     user_fields = {'full_name': '', 'organization': '', 'email': '',
                    'state': '', 'country': '', 'comment': ''}
+    for field_name in configuration.site_peers_explicit_fields:
+        user_fields['peers_%s' % field_name] = ''
 
     # Redirect to reqcert page without certificate requirement but without
     # changing access method (CGI vs. WSGI).
@@ -130,18 +135,19 @@ def main(client_id, user_arguments_dict):
     user_fields = canonical_user(configuration, user_fields,
                                  list(user_fields))
 
-    # If cert auto create is on, add user without admin interaction
-
+    user_fields.update({
+        'client_id': client_id,
+        'cert_id': client_id,
+        'dn_max_len': dn_max_len,
+        'valid_name_chars': html_escape(valid_name_chars),
+        'peers_contact_hint': configuration.site_peers_contact_hint,
+        'site': configuration.short_title
+    })
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
-    fill_helpers = {'valid_name_chars': valid_name_chars,
-                    'client_id': client_id,
-                    'cert_id': client_id,
-                    'dn_max_len': dn_max_len,
-                    'site': configuration.short_title,
-                    'form_method': form_method,
-                    'csrf_field': csrf_field,
+    fill_helpers = {'form_method': form_method, 'csrf_field': csrf_field,
                     'csrf_limit': csrf_limit}
+    # If cert auto create is on, add user without admin interaction
     if configuration.auto_add_cert_user == False:
         target_op = 'extcertaction'
     else:
@@ -150,12 +156,16 @@ def main(client_id, user_arguments_dict):
                                  client_id, csrf_limit)
     fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
     fill_helpers.update({'site_signup_hint': configuration.site_signup_hint})
-    # Write-protect ID fields if requested
-    for field in cert_field_map:
+    # Write-protect ID and peers helper fields if requested
+    peers_fields = ['peers_%s' % field for field in
+                    configuration.site_peers_explicit_fields]
+    for field in list(cert_field_map) + peers_fields:
         fill_helpers['readonly_%s' % field] = ''
-    ro_fields = [i for i in accepted['ro_fields'] if i in cert_field_map]
+    ro_fields = [i for i in accepted['ro_fields'] if i in
+                 list(cert_field_map) + peers_fields]
     if keyword_auto in accepted['ro_fields']:
-        ro_fields += [i for i in cert_field_map if not i in ro_fields]
+        ro_fields += [i for i in list(cert_field_map) + peers_fields
+                      if not i in ro_fields]
     # NOTE: lock all ID fields to current certificate here
     ro_fields += [i for i in id_fields if not i in ro_fields]
     for field in ro_fields:

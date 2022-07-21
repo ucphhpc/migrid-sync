@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # peersaction - handle management of peers
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -278,6 +278,16 @@ site administrators (%s).
                     peer_req = {}
                     for field in peers_fields:
                         peer_req[field] = peer_user.get(field, '')
+                    for explicit_field in configuration.site_peers_explicit_fields:
+                        field_name = 'peers_%s' % explicit_field
+                        if explicit_field == 'full_name':
+                            peer_req[field_name] = client_name
+                        elif explicit_field == 'email':
+                            peer_req[field_name] = client_email
+                        else:
+                            logger.warning('unhandled explicit peers field: %s'
+                                           % explicit_field)
+                            continue
                     peer_req['comment'] = 'Invited by %s (%s) for %s purposes' \
                                           % (client_name, client_email, kind)
                     # Mark ID fields as readonly in the form to limit errors
