@@ -937,15 +937,15 @@ location.""" % self.config_file)
         else:
             self.site_migadmin_act_access = [keyword_any]
 
-        # NOTE: Peers are enabled by default but not fully exposed for GDP, yet.
-        #       One may still leave it enabled and enable peers_mandatory to
-        #       require users to provide peer info for manual verification by
-        #       site operators. Either with e.g. peers_explicit_fields = email
-        #       or with the legacy style use of the Comment textarea.
+        # NOTE: Peers are disabled by default and not exposed for GDP, yet.
+        #       One may still set it enabled and set peers_mandatory to require
+        #       users to provide peer info for manual verification by site
+        #       operators. Either with e.g. peers_explicit_fields = email or
+        #       with the legacy style use of the Comment textarea.
         if config.has_option('SITE', 'enable_peers'):
             self.site_enable_peers = config.getboolean('SITE', 'enable_peers')
         else:
-            self.site_enable_peers = True
+            self.site_enable_peers = False
 
         if self.site_enable_peers:
             if config.has_option('SITE', 'peers_mandatory'):
