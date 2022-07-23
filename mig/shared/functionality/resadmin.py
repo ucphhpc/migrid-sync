@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resadmin - Administrate a MiG Resource
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -118,7 +118,7 @@ def display_resource(
 <h3>Configuration</h3>
 
 Use the <a class="editlink iconspace"
-href="resedit.py?hosturl=%(hosturl)s;hostidentifier=%(identifier)s">
+href="resedit.py?hosturl=%(hosturl)s&hostidentifier=%(identifier)s">
 editing interface
 </a>
 or make any changes manually in the text box below.<br />

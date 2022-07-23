@@ -1,11 +1,10 @@
-
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
 #
 # cloud - user control for the available cloud services
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -287,7 +286,7 @@ def main(client_id, user_arguments_dict):
             for (action, title) in action_list:
                 if action in cloud_edit_actions:
                     continue
-                query = 'action=%s;service=%s;instance_id=%s' % \
+                query = 'action=%s&service=%s&instance_id=%s' % \
                         (action, cloud_id, instance_id)
                 url = 'reqcloudservice.py?%s' % query
                 # output_service = {

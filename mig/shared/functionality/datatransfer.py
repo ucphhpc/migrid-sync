@@ -369,7 +369,7 @@ else, so the public key can be inserted in your authorized_keys file as:
                 data_url = "fileman.py?path=%s" % enc_path
             elif transfer_item['action'] == 'export':
                 enc_paths = [quote(i) for i in transfer_item['src']]
-                data_url = "fileman.py?path=" + ';path='.join(enc_paths)
+                data_url = "fileman.py?path=" + '&path='.join(enc_paths)
             if data_url:
                 transfer_item['viewdatalink'] = {
                     'object_type': 'link',

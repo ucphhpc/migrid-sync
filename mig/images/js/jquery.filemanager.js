@@ -4,7 +4,7 @@
   # --- BEGIN_HEADER ---
   #
   # jquery.filemanager - jquery based file manager
-  # Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+  # Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
   #
   # This file is part of MiG.
   #
@@ -1326,11 +1326,11 @@ if (jQuery) (function($){
             },
             dataimport:   function (action, el, pos) {
                 var path_enc = encodeURI($(el).attr(pathAttribute));
-                window.open('datatransfer.py?action=fillimport;transfer_dst='+path_enc);
+                window.open('datatransfer.py?action=fillimport&transfer_dst='+path_enc);
             },
             dataexport:   function (action, el, pos) {
                 var path_enc = encodeURI($(el).attr(pathAttribute));
-                window.open('datatransfer.py?action=fillexport;transfer_src='+path_enc);
+                window.open('datatransfer.py?action=fillexport&transfer_src='+path_enc);
             },
             submit: function (action, el, pos) {
                 jsonWrapper(el, '#cmd_dialog', 'submit.py');
@@ -2917,7 +2917,7 @@ function local_filechooser_init(name, callback) {
 
 /* expose these helpers in general */
 
-var base_url = "uploadchunked.py?output_format=json;action=";
+var base_url = "uploadchunked.py?output_format=json&action=";
 var upload_url = base_url+"put";
 var status_url = base_url+"status";
 var delete_url = base_url+"delete";
@@ -2927,7 +2927,7 @@ $.fn.delete_upload = function(name, dest_dir, share_id, csrf_token) {
     //console.debug("delete upload: "+name+" "+dest_dir+" "+share_id+" "+csrf_token);
     var deleted = false;
     $.ajax({
-        url: delete_url+";share_id="+share_id+";"+csrf_field+"="+csrf_token,
+        url: delete_url+"&share_id="+share_id+"&"+csrf_field+"="+csrf_token,
         dataType: "json",
         data: {"files[]filename": name, "files[]": "dummy",
                "current_dir": dest_dir},
@@ -2978,7 +2978,7 @@ $.fn.move_upload = function(name, dest_dir, share_id, csrf_token) {
     //console.debug("move upload: "+name+" "+dest_dir+" "+share_id+" "+csrf_token);
     var moved = false;
     $.ajax({
-        url: move_url+";share_id="+share_id+";"+csrf_field+"="+csrf_token,
+        url: move_url+"&share_id="+share_id+"&"+csrf_field+"="+csrf_token,
         dataType: "json",
         data: {"files[]filename": name, "files[]": "dummy",
                "current_dir": dest_dir},
@@ -3176,7 +3176,7 @@ function mig_fancyuploadchunked_init(name, options, callback) {
         $("#fancyfileupload").fancyfileupload({
             // Uncomment the following to send cross-domain cookies:
             //xhrFields: {withCredentials: true},
-            url: upload_url+";share_id="+share_id+";"+csrf_field+"="+csrf_token,
+            url: upload_url+"&share_id="+share_id+"&"+csrf_field+"="+csrf_token,
             // TODO: can we somehow move to data like this?
             //data: {"share_id": share_id, csrf_field: csrf_token},
             dataType: "json",

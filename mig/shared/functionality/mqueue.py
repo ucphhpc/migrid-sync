@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mqueue - POSIX like message queue job inter-communication
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,7 +37,7 @@ import fcntl
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir
 from mig.shared.defaults import default_mqueue, mqueue_prefix, mqueue_empty, \
-     csrf_field
+    csrf_field
 from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from mig.shared.init import initialize_main_variables, find_entry
@@ -47,6 +47,7 @@ get_actions = ['interactive', 'listqueues', 'listmessages', 'show']
 post_actions = ['create', 'remove', 'send', 'receive']
 valid_actions = get_actions + post_actions
 lock_name = 'mqueue.lock'
+
 
 def signature():
     """Signature of the main function"""
@@ -64,7 +65,8 @@ def main(client_id, user_arguments_dict):
                                   op_menu=client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
-            defaults, output_objects, allow_rejects=False)
+                                                 defaults, output_objects,
+                                                 allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     queue = accepted['queue'][-1]
@@ -76,8 +78,8 @@ def main(client_id, user_arguments_dict):
     # Web format for cert access and no header for SID access
 
     if client_id:
-        output_objects.append({'object_type': 'header', 'text'
-                               : 'Message queue %s' % action})
+        output_objects.append(
+            {'object_type': 'header', 'text': 'Message queue %s' % action})
     else:
         output_objects.append({'object_type': 'start'})
 
@@ -89,8 +91,8 @@ def main(client_id, user_arguments_dict):
                   'wrap_targets': ['lines']}
 
     if not action in valid_actions:
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Invalid action "%s" (supported: %s)' % \
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Invalid action "%s" (supported: %s)' %
                                (action, ', '.join(valid_actions))})
         output_objects.append(file_entry)
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -108,26 +110,27 @@ def main(client_id, user_arguments_dict):
 
     if iosessionid:
         client_home = os.path.realpath(os.path.join(configuration.webserver_home,
-                                                  iosessionid))
+                                                    iosessionid))
         client_dir = os.path.basename(client_home)
     elif client_id:
         client_dir = client_id_dir(client_id)
     else:
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Either certificate or session ID is required'
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Either certificate or session ID is required'
                                })
         output_objects.append(file_entry)
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
-        
+
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
                                             client_dir)) + os.sep
 
     if not os.path.isdir(base_dir):
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'No matching session or user home!'})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'No matching session or user home!'})
         output_objects.append(file_entry)
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -146,8 +149,9 @@ def main(client_id, user_arguments_dict):
     # IMPORTANT: path must be expanded to abs for proper chrooting
     queue_path = os.path.abspath(os.path.join(mqueue_base, queue))
     if not valid_user_path(configuration, queue_path, mqueue_base):
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Invalid queue name: "%s"' % queue})
+        output_objects.append(
+            {'object_type': 'error_text', 'text': 'Invalid queue name: "%s"'
+             % queue})
         output_objects.append(file_entry)
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -159,16 +163,16 @@ def main(client_id, user_arguments_dict):
     if action == "interactive":
         form_method = 'post'
         csrf_limit = get_csrf_limit(configuration)
-        fill_helpers =  {'queue': queue,
-                         'msg': msg,
-                         'form_method': form_method,
-                         'csrf_field': csrf_field,
-                         'csrf_limit': csrf_limit, }
+        fill_helpers = {'queue': queue,
+                        'msg': msg,
+                        'form_method': form_method,
+                        'csrf_field': csrf_field,
+                        'csrf_limit': csrf_limit, }
         target_op = 'mqueue'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
-        
+
         output_objects.append({'object_type': 'text', 'text': '''
 Fill in the fields below to control and access your personal message queues.
 Jobs can receive from and send to the message queues during execution, and use
@@ -207,8 +211,7 @@ Queue:<br />
 </table>
 </form>
 ''' % fill_helpers
-        output_objects.append({'object_type': 'html_form', 'text'
-                               : html})
+        output_objects.append({'object_type': 'html_form', 'text': html})
         output_objects.append({'object_type': 'text', 'text': '''
 Further live job control is avalable through the live I/O interface.
 They provide a basic interface for centrally managing input and output files
@@ -225,8 +228,8 @@ for active jobs.
             output_objects.append({'object_type': 'text', 'text':
                                    'New "%s" queue created' % queue})
         except Exception as err:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'Could not create "%s" queue: "%s"' % \
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Could not create "%s" queue: "%s"' %
                                    (queue, err)})
             status = returnvalues.CLIENT_ERROR
     elif action == 'remove':
@@ -237,8 +240,8 @@ for active jobs.
             output_objects.append({'object_type': 'text', 'text':
                                    'Existing "%s" queue removed' % queue})
         except Exception as err:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'Could not remove "%s" queue: "%s"' % \
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Could not remove "%s" queue: "%s"' %
                                    (queue, err)})
             status = returnvalues.CLIENT_ERROR
     elif action == 'send':
@@ -252,8 +255,8 @@ for active jobs.
             output_objects.append({'object_type': 'text', 'text':
                                    'Message sent to "%s" queue' % queue})
         except Exception as err:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'Could not send to "%s" queue: "%s"' % \
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Could not send to "%s" queue: "%s"' %
                                    (queue, err)})
             status = returnvalues.CLIENT_ERROR
     elif action == 'receive':
@@ -275,8 +278,8 @@ for active jobs.
             # Update file_output entry for raw data with output_format=file
             file_entry['lines'] = message
         except Exception as err:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'Could not receive from "%s" queue: "%s"'
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Could not receive from "%s" queue: "%s"'
                                    % (queue, err)})
             status = returnvalues.CLIENT_ERROR
     elif action == 'show':
@@ -286,7 +289,7 @@ for active jobs.
                 messages.sort()
                 if messages:
                     msg_id = messages[0]
-            if msg_id:                    
+            if msg_id:
                 message_path = os.path.join(queue_path, msg_id)
                 message_fd = open(message_path, 'r')
                 message = message_fd.readlines()
@@ -297,8 +300,8 @@ for active jobs.
             # Update file_output entry for raw data with output_format=file
             file_entry['lines'] = message
         except Exception as err:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'Could not show %s from "%s" queue: "%s"'
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Could not show %s from "%s" queue: "%s"'
                                    % (msg_id, queue, err)})
             status = returnvalues.CLIENT_ERROR
     elif action == 'listmessages':
@@ -307,29 +310,32 @@ for active jobs.
             messages.sort()
             output_objects.append({'object_type': 'list', 'list': messages})
         except Exception as err:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'Could not list "%s" queue: "%s"' % \
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Could not list "%s" queue: "%s"' %
                                    (queue, err)})
             status = returnvalues.CLIENT_ERROR
     elif action == 'listqueues':
         try:
-            queues = [i for i in os.listdir(mqueue_base) if \
+            queues = [i for i in os.listdir(mqueue_base) if
                       os.path.isdir(os.path.join(mqueue_base, i))]
             queues.sort()
             output_objects.append({'object_type': 'list', 'list': queues})
         except Exception as err:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                   : 'Could not list queues: "%s"' % err})
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Could not list queues: "%s"' % err})
             status = returnvalues.CLIENT_ERROR
     else:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Unexpected mqueue action: "%s"' % action})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Unexpected mqueue action: "%s"' % action})
         status = returnvalues.SYSTEM_ERROR
 
     lock_handle.close()
-    
+
     output_objects.append(file_entry)
-    output_objects.append({'object_type': 'link', 'destination'
-                           : 'mqueue.py?queue=%s;msg=%s' % (queue, msg),
+    output_objects.append({'object_type': 'link',
+                           'destination': 'mqueue.py?queue=%s&msg=%s' %
+                           (queue, msg),
                            'text': 'Back to message queue interaction'})
     return (output_objects, returnvalues.OK)

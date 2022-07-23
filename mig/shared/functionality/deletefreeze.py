@@ -5,7 +5,7 @@
 #
 
 # deletefreeze - delete an entire frozen archive or files in one
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -165,7 +165,7 @@ Please contact the site admins %s if you think it should be enabled.
              (flavor, freeze_id)})
         output_objects.append({
             'object_type': 'link',
-            'destination': 'showfreeze.py?freeze_id=%s;flavor=%s' %
+            'destination': 'showfreeze.py?freeze_id=%s&flavor=%s' %
             (freeze_id, flavor),
             'class': 'viewarchivelink iconspace genericbutton',
             'title': 'View details about your %s archive' % flavor,

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ls - emulate ls command
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -568,13 +568,13 @@ def main(client_id, user_arguments_dict, environ=None):
                            'text': confirm_html(configuration)})
 
     # Shared URL helpers
-    ls_url_template = 'ls.py?%scurrent_dir=%%(rel_dir_enc)s;flags=%s' % \
+    ls_url_template = 'ls.py?%scurrent_dir=%%(rel_dir_enc)s&flags=%s' % \
                       (id_args, flags)
     csrf_token = make_csrf_token(configuration, form_method, 'rm', client_id,
                                  csrf_limit)
-    rm_url_template = 'rm.py?%spath=%%(rel_path_enc)s;%s=%s' % \
+    rm_url_template = 'rm.py?%spath=%%(rel_path_enc)s&%s=%s' % \
                       (id_args, csrf_field, csrf_token)
-    rmdir_url_template = 'rm.py?%spath=%%(rel_path_enc)s;flags=r;%s=%s' % \
+    rmdir_url_template = 'rm.py?%spath=%%(rel_path_enc)s&flags=r&%s=%s' % \
         (id_args, csrf_field, csrf_token)
     editor_url_template = 'editor.py?%spath=%%(rel_path_enc)s' % id_args
     redirect_url_template = '/%s/%%(rel_path_enc)s' % redirect_path

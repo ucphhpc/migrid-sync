@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # freezedb - manage frozen archives
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -196,7 +196,7 @@ from the management.
             # Users may view all their archives
             freeze_item['viewfreezelink'] = {
                 'object_type': 'link',
-                'destination': "showfreeze.py?freeze_id=%s;flavor=%s" %
+                'destination': "showfreeze.py?freeze_id=%s&flavor=%s" %
                 (freeze_id, flavor),
                 'class': 'infolink iconspace',
                 'title': 'View frozen archive %s' % freeze_id,
