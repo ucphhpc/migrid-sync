@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createfreeze - back end for freezing archives
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -370,7 +370,7 @@ freezing.""" % (flavor, freeze_id)})
     # Always allow show archive
     output_objects.append({
         'object_type': 'link',
-        'destination': 'showfreeze.py?freeze_id=%s;flavor=%s' % (freeze_id,
+        'destination': 'showfreeze.py?freeze_id=%s&flavor=%s' % (freeze_id,
                                                                  flavor),
         'class': 'viewarchivelink iconspace genericbutton',
         'title': 'View details about your %s archive' % flavor,

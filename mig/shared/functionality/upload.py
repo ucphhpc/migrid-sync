@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # upload - Plain and efficient file upload back end
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -230,7 +230,7 @@ Please contact the site admins %s if you think they should be enabled.
         output_objects.append(
             {'object_type': 'text', 'text': 'Upload of %s in progress' % path})
         progress_link = {'object_type': 'link', 'text': 'show progress',
-                         'destination': 'uploadprogress.py?path=%s;size=%d'
+                         'destination': 'uploadprogress.py?path=%s&size=%d'
                          % (path, total_size)}
         output_objects.append(progress_link)
 

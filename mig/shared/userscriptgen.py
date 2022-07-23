@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userscriptgen - Generator backend for user scripts
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -1075,10 +1075,10 @@ def cancel_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/jobaction.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags;action=cancel"'
+        post_data = '"$default_args&flags=$server_flags&action=cancel"'
         urlenc_data = '(${job_list[@]})'
     elif lang == 'python':
-        post_data = "'%s;flags=%s;action=cancel' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s&action=cancel' % (default_args, server_flags)"
         urlenc_data = "job_list"
     else:
         print('Error: %s not supported!' % lang)
@@ -1108,10 +1108,10 @@ def cat_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/cat.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
         urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
         print('Error: %s not supported!' % lang)
@@ -1141,10 +1141,10 @@ def cp_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/cp.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
         urlenc_data = '("${src_list[@]}" "dst=$dst")'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
         urlenc_data = 'src_list + ["dst=" + dst]'
     else:
         print('Error: %s not supported!' % lang)
@@ -1176,10 +1176,10 @@ def createbackup_function(configuration, lang, curl_cmd, curl_flags='--compresse
     relative_url = '"%s/createbackup.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
         urlenc_data = '("freeze_name=$freeze_name" "freeze_copy_0=$src")'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
         urlenc_data = '["freeze_name=" + freeze_name, "freeze_copy_0=" + src]'
     else:
         print('Error: %s not supported!' % lang)
@@ -1212,10 +1212,10 @@ def createfreeze_function(configuration, lang, curl_cmd, curl_flags='--compresse
     relative_url = '"%s/createfreeze.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
         urlenc_data = '("flavor=$flavor" "freeze_name=$freeze_name" "freeze_description=$freeze_description" "freeze_author=$freeze_author" "freeze_department=$freeze_department" "freeze_organization=$freeze_organization" "freeze_publish=$freeze_publish" "freeze_copy_0=$src")'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
         urlenc_data = '["flavor=" + flavor, "freeze_name=" + freeze_name, "freeze_description=" + freeze_description, "freeze_author=" + freeze_author, "freeze_department=" + freeze_department, "freeze_organization=" + freeze_organization, "freeze_publish=" + freeze_publish, "freeze_copy_0=" + src]'
     else:
         print('Error: %s not supported!' % lang)
@@ -1245,15 +1245,15 @@ def datatransfer_function(configuration, lang, curl_cmd, curl_flags='--compresse
     relative_url = '"%s/datatransfer.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags;action=$action;'
-        post_data += 'transfer_id=$transfer_id;protocol=$protocol;fqdn=$fqdn;'
-        post_data += 'port=$port;username=$username;key_id=$key_id;'
-        post_data += 'flags=$flags;"'
+        post_data = '"$default_args&flags=$server_flags&action=$action&'
+        post_data += 'transfer_id=$transfer_id&protocol=$protocol&fqdn=$fqdn&'
+        post_data += 'port=$port&username=$username&key_id=$key_id&'
+        post_data += 'flags=$flags&"'
         urlenc_data = '("transfer_pw=$transfer_pw" "notify=$notify" '
         urlenc_data += '"${transfer_src[@]}" "transfer_dst=$transfer_dst")'
     elif lang == 'python':
-        post_data = "'%s;flags=%s;action=%s;transfer_id=%s;protocol=%s;"
-        post_data += "fqdn=%s;port=%s;username=%s;key_id=%s;flags=%s'"
+        post_data = "'%s&flags=%s&action=%s&transfer_id=%s&protocol=%s&"
+        post_data += "fqdn=%s&port=%s&username=%s&key_id=%s&flags=%s'"
         post_data += "% (default_args, server_flags, action, transfer_id, "
         post_data += "protocol, fqdn, port, username, key_id, flags)"
         urlenc_data = '["transfer_pw=" + transfer_pw, "notify=" + notify] + '
@@ -1291,10 +1291,10 @@ def deletebackup_function(configuration, lang, curl_cmd, curl_flags='--compresse
     relative_url = '"%s/deletebackup.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
         urlenc_data = '("freeze_id=$freeze_id")'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
         urlenc_data = '["freeze_id=" + freeze_id]'
     else:
         print('Error: %s not supported!' % lang)
@@ -1325,10 +1325,10 @@ def deletefreeze_function(configuration, lang, curl_cmd, curl_flags='--compresse
     relative_url = '"%s/deletefreeze.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
         urlenc_data = '("flavor=$flavor" "freeze_id=$freeze_id")'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
         urlenc_data = '["flavor=" + flavor, "freeze_id=" + freeze_id]'
     else:
         print('Error: %s not supported!' % lang)
@@ -1360,10 +1360,10 @@ def doc_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/docs.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
         urlenc_data = '("search=$search" "show=$show")'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
         urlenc_data = '["search=" + search, "show=" + show]'
     else:
         print('Error: %s not supported!' % lang)
@@ -1395,10 +1395,10 @@ def expand_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/expand.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags;with_dest=$destinations"'
+        post_data = '"$default_args&flags=$server_flags&with_dest=$destinations"'
         urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
-        post_data = "'%s;flags=%s;with_dest=%s' % (default_args, server_flags, destinations)"
+        post_data = "'%s&flags=%s&with_dest=%s' % (default_args, server_flags, destinations)"
         urlenc_data = 'path_list'
     else:
         print('Error: %s not supported!' % lang)
@@ -1431,9 +1431,9 @@ def freezedb_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     urlenc_data = '""'
     # NOTE: we request non-AJAX version (showlist) below to get useful output
     if lang == 'sh':
-        post_data = '"$default_args;operation=showlist;flags=$server_flags"'
+        post_data = '"$default_args&operation=showlist&flags=$server_flags"'
     elif lang == 'python':
-        post_data = "'%s;operation=showlist;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&operation=showlist&flags=%s' % (default_args, server_flags)"
     else:
         print('Error: %s not supported!' % lang)
         return ''
@@ -1465,10 +1465,10 @@ def imagepreview_function(configuration, lang, curl_cmd, curl_flags='--compresse
     query = '""'
     # TODO: is arg_list really a list here?
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags;action=$action"'
+        post_data = '"$default_args&flags=$server_flags&action=$action"'
         urlenc_data = '("path=$path" "${arg_list[@]}")'
     elif lang == 'python':
-        post_data = "'%s;flags=%s;action=%s' % (default_args, server_flags, action)"
+        post_data = "'%s&flags=%s&action=%s' % (default_args, server_flags, action)"
         urlenc_data = '["path=" + path] + arg_list'
 
     else:
@@ -1546,10 +1546,10 @@ def grep_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/grep.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
         urlenc_data = '("${path_list[@]}" "pattern=$pattern")'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
         urlenc_data = 'path_list + ["pattern=" + pattern]'
     else:
         print('Error: %s not supported!' % lang)
@@ -1579,10 +1579,10 @@ def head_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/head.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags;lines=$lines"'
+        post_data = '"$default_args&flags=$server_flags&lines=$lines"'
         urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
-        post_data = "'%s;flags=%s;lines=%s' % (default_args, server_flags, lines)"
+        post_data = "'%s&flags=%s&lines=%s' % (default_args, server_flags, lines)"
         urlenc_data = "path_list"
     else:
         print('Error: %s not supported!' % lang)
@@ -1614,10 +1614,10 @@ def jobaction_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/jobaction.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags;action=$action"'
+        post_data = '"$default_args&flags=$server_flags&action=$action"'
         urlenc_data = '(${job_list[@]})'
     elif lang == 'python':
-        post_data = "'%s;flags=%s;action=%s' % (default_args, server_flags, action)"
+        post_data = "'%s&flags=%s&action=%s' % (default_args, server_flags, action)"
         urlenc_data = "job_list"
     else:
         print('Error: %s not supported!' % lang)
@@ -1649,10 +1649,10 @@ def liveio_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/liveio.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags;action=$action"'
+        post_data = '"$default_args&flags=$server_flags&action=$action"'
         urlenc_data = '("${src_list[@]}" "job_id=$job_id" "dst=$dst")'
     elif lang == 'python':
-        post_data = "'%s;flags=%s;action=%s' % (default_args, server_flags, action)"
+        post_data = "'%s&flags=%s&action=%s' % (default_args, server_flags, action)"
         urlenc_data = 'src_list + ["job_id=" + job_id, "dst=" + dst]'
     else:
         print('Error: %s not supported!' % lang)
@@ -1683,10 +1683,10 @@ def ls_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/ls.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
         urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
         print('Error: %s not supported!' % lang)
@@ -1718,9 +1718,9 @@ def login_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     # Strip / prefix from landing page get the required url form
     relative_url = configuration.site_landing_page.strip('/')
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
     else:
         print('Error: %s not supported!' % lang)
         return ''
@@ -1759,9 +1759,9 @@ def logout_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_return_url = '"%s/autologout.py?output_format=txt"' \
         % get_xgi_bin(configuration)
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
     else:
         print('Error: %s not supported!' % lang)
         return ''
@@ -1795,10 +1795,10 @@ def md5sum_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/chksum.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags;hash_algo=md5"'
+        post_data = '"$default_args&flags=$server_flags&hash_algo=md5"'
         urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
-        post_data = "'%s;flags=%s;hash_algo=md5' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s&hash_algo=md5' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
         print('Error: %s not supported!' % lang)
@@ -1828,10 +1828,10 @@ def mkdir_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/mkdir.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
         urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
         print('Error: %s not supported!' % lang)
@@ -1862,10 +1862,10 @@ def mqueue_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/mqueue.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags;action=$action"'
+        post_data = '"$default_args&flags=$server_flags&action=$action"'
         urlenc_data = '("queue=$queue" "msg=$msg")'
     elif lang == 'python':
-        post_data = "'%s;flags=%s;action=%s' % (default_args, server_flags, action)"
+        post_data = "'%s&flags=%s&action=%s' % (default_args, server_flags, action)"
         urlenc_data = '["queue=" + queue, "msg=" + msg]'
     else:
         print('Error: %s not supported!' % lang)
@@ -1895,10 +1895,10 @@ def mv_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/mv.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
         urlenc_data = '("${src_list[@]}" "dst=$dst")'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
         urlenc_data = 'src_list + ["dst=" + dst]'
     else:
         print('Error: %s not supported!' % lang)
@@ -2007,16 +2007,16 @@ def read_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     urlenc_data = '""'
     if lang == 'sh':
         query = \
-            '"?$default_args;flags=$server_flags;file_startpos=$first;file_endpos=$last;path=$src_path"'
+            '"?$default_args&flags=$server_flags&file_startpos=$first&file_endpos=$last&path=$src_path"'
         # post_data = \
-        #    '"$default_args;flags=$server_flags;file_startpos=$first;file_endpos=$last"'
+        #    '"$default_args&flags=$server_flags&file_startpos=$first&file_endpos=$last"'
         #urlenc_data = '("src_path=$src_path")'
         curl_target = '("--output \'$dst_path\'")'
     elif lang == 'python':
         query = \
-            "'?%s;flags=%s;file_startpos=%s;file_endpos=%s;path=%s' % (default_args, server_flags, first, last, src_path)"
+            "'?%s&flags=%s&file_startpos=%s&file_endpos=%s&path=%s' % (default_args, server_flags, first, last, src_path)"
         # post_data = \
-        #    "'%s;flags=%s;file_startpos=%s;file_endpos=%s' % (default_args, server_flags, first, last)"
+        #    "'%s&flags=%s&file_startpos=%s&file_endpos=%s' % (default_args, server_flags, first, last)"
         #urlenc_data = '["src_path=%s" % src_path]'
         curl_target = "['--output', dst_path]"
     else:
@@ -2049,10 +2049,10 @@ def resubmit_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/resubmit.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
         urlenc_data = '(${job_list[@]})'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
         urlenc_data = "job_list"
     else:
         print('Error: %s not supported!' % lang)
@@ -2082,10 +2082,10 @@ def rm_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/rm.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
         urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
         print('Error: %s not supported!' % lang)
@@ -2115,10 +2115,10 @@ def rmdir_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/rmdir.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
         urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
         print('Error: %s not supported!' % lang)
@@ -2150,10 +2150,10 @@ def scripts_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/scripts.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
         urlenc_data = '("lang=$lang" "flavor=$flavor" "script_dir=$script_dir")'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
         urlenc_data = '["lang=" + lang, "flavor=" + flavor, "script_dir=" + script_dir]'
     else:
         print('Error: %s not supported!' % lang)
@@ -2186,10 +2186,10 @@ def sha1sum_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/chksum.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags;hash_algo=sha1"'
+        post_data = '"$default_args&flags=$server_flags&hash_algo=sha1"'
         urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
-        post_data = "'%s;flags=%s;hash_algo=sha1' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s&hash_algo=sha1' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
         print('Error: %s not supported!' % lang)
@@ -2219,13 +2219,13 @@ def sharelink_function(configuration, lang, curl_cmd, curl_flags='--compressed')
     relative_url = '"%s/sharelink.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags;action=$action;'
-        post_data += 'share_id=$share_id;read_access=$read_access;'
-        post_data += 'write_access=$write_access;expire=$expire"'
+        post_data = '"$default_args&flags=$server_flags&action=$action&'
+        post_data += 'share_id=$share_id&read_access=$read_access&'
+        post_data += 'write_access=$write_access&expire=$expire"'
         urlenc_data = '("path=$path" "invite=$invite" "msg=$msg")'
     elif lang == 'python':
-        post_data = "'%s;flags=%s;action=%s;share_id=%s;read_access=%s;"
-        post_data += "write_access=%s;expire=%s' % (default_args, "
+        post_data = "'%s&flags=%s&action=%s&share_id=%s&read_access=%s&"
+        post_data += "write_access=%s&expire=%s' % (default_args, "
         post_data += "server_flags, action, share_id, read_access, "
         post_data += "write_access, expire)"
         urlenc_data = '["path=" + path, "invite=" + invite, "msg=" + msg]'
@@ -2261,10 +2261,10 @@ def showbackup_function(configuration, lang, curl_cmd, curl_flags='--compressed'
     query = '""'
     # NOTE: we request non-AJAX version (showlist) below to get useful output
     if lang == 'sh':
-        post_data = '"$default_args;operation=showlist;flags=$server_flags"'
+        post_data = '"$default_args&operation=showlist&flags=$server_flags"'
         urlenc_data = '("freeze_id=$freeze_id")'
     elif lang == 'python':
-        post_data = "'%s;operation=showlist;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&operation=showlist&flags=%s' % (default_args, server_flags)"
         urlenc_data = '["freeze_id=" + freeze_id]'
     else:
         print('Error: %s not supported!' % lang)
@@ -2296,10 +2296,10 @@ def showfreeze_function(configuration, lang, curl_cmd, curl_flags='--compressed'
     query = '""'
     # NOTE: we request non-AJAX version (showlist) below to get useful output
     if lang == 'sh':
-        post_data = '"$default_args;operation=showlist;flags=$server_flags"'
+        post_data = '"$default_args&operation=showlist&flags=$server_flags"'
         urlenc_data = '("flavor=$flavor" "freeze_id=$freeze_id")'
     elif lang == 'python':
-        post_data = "'%s;operation=showlist;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&operation=showlist&flags=%s' % (default_args, server_flags)"
         urlenc_data = '["flavor=" + flavor, "freeze_id=" + freeze_id]'
     else:
         print('Error: %s not supported!' % lang)
@@ -2329,10 +2329,10 @@ def stat_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/statpath.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
         urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
         print('Error: %s not supported!' % lang)
@@ -2362,10 +2362,10 @@ def status_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/jobstatus.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags;max_jobs=$max_job_count"'
+        post_data = '"$default_args&flags=$server_flags&max_jobs=$max_job_count"'
         urlenc_data = '(${job_list[@]})'
     elif lang == 'python':
-        post_data = "'%s;flags=%s;max_jobs=%s' % (default_args, server_flags, max_job_count)"
+        post_data = "'%s&flags=%s&max_jobs=%s' % (default_args, server_flags, max_job_count)"
         urlenc_data = "job_list"
     else:
         print('Error: %s not supported!' % lang)
@@ -2395,10 +2395,10 @@ def submit_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/submit.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
         urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
         print('Error: %s not supported!' % lang)
@@ -2437,10 +2437,10 @@ def tail_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/tail.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags;lines=$lines"'
+        post_data = '"$default_args&flags=$server_flags&lines=$lines"'
         urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
-        post_data = "'%s;flags=%s;lines=%s' % (default_args, server_flags, lines)"
+        post_data = "'%s&flags=%s&lines=%s' % (default_args, server_flags, lines)"
         urlenc_data = "path_list"
     else:
         print('Error: %s not supported!' % lang)
@@ -2933,10 +2933,10 @@ def touch_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/touch.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
         urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
         print('Error: %s not supported!' % lang)
@@ -2966,10 +2966,10 @@ def truncate_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/truncate.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags;size=$size"'
+        post_data = '"$default_args&flags=$server_flags&size=$size"'
         urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
-        post_data = "'%s;flags=%s;size=%s' % (default_args, server_flags, size)"
+        post_data = "'%s&flags=%s&size=%s' % (default_args, server_flags, size)"
         urlenc_data = "path_list"
     else:
         print('Error: %s not supported!' % lang)
@@ -3000,10 +3000,10 @@ def twofactor_function(configuration, lang, curl_cmd, curl_flags='--compressed')
     relative_url = '"%s/twofactor.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags;action=$action;token=$token"'
+        post_data = '"$default_args&flags=$server_flags&action=$action&token=$token"'
         urlenc_data = '("redirect_url=$redirect_url")'
     elif lang == 'python':
-        post_data = "'%s;flags=%s;action=%s;token=%s' % (default_args, server_flags, action, token)"
+        post_data = "'%s&flags=%s&action=%s&token=%s' % (default_args, server_flags, action, token)"
         urlenc_data = '["redirect_url=" + redirect_url]'
     else:
         print('Error: %s not supported!' % lang)
@@ -3035,10 +3035,10 @@ def unzip_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/unzip.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
         urlenc_data = '("${src_list[@]}" "dst=$dst")'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
         urlenc_data = 'src_list + ["dst=" + dst]'
     else:
         print('Error: %s not supported!' % lang)
@@ -3177,10 +3177,10 @@ def wc_function(configuration, lang, curl_cmd, curl_flags=''):
     relative_url = '"%s/wc.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
         urlenc_data = '(${path_list[@]})'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
         urlenc_data = "path_list"
     else:
         print('Error: %s not supported!' % lang)
@@ -3218,16 +3218,16 @@ def write_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     urlenc_data = '""'
     if lang == 'sh':
         query = \
-            '"?$default_args;flags=$server_flags;file_startpos=$first;file_endpos=$last;path=$dst_path"'
+            '"?$default_args&flags=$server_flags&file_startpos=$first&file_endpos=$last&path=$dst_path"'
         # post_data = \
-        #    '"$default_args;flags=$server_flags;file_startpos=$first;file_endpos=$last"'
+        #    '"$default_args&flags=$server_flags&file_startpos=$first&file_endpos=$last"'
         #urlenc_data = '("path=$dst_path")'
         curl_target = '("--upload-file \'$src_path\'")'
     elif lang == 'python':
         query = \
-            "'?%s;flags=%s;file_startpos=%s;file_endpos=%s;path=%s' % (default_args, server_flags, first, last, dst_path)"
+            "'?%s&flags=%s&file_startpos=%s&file_endpos=%s&path=%s' % (default_args, server_flags, first, last, dst_path)"
         # post_data = \
-        #    "'%s;flags=%s;file_startpos=%s;file_endpos=%s' % (default_args, server_flags, first, last)"
+        #    "'%s&flags=%s&file_startpos=%s&file_endpos=%s' % (default_args, server_flags, first, last)"
         #urlenc_data = '["path=%s" % dst_path]'
         curl_target = "['--upload-file', src_path]"
     else:
@@ -3262,10 +3262,10 @@ def zip_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     relative_url = '"%s/zip.py"' % get_xgi_bin(configuration)
     query = '""'
     if lang == 'sh':
-        post_data = '"$default_args;flags=$server_flags"'
+        post_data = '"$default_args&flags=$server_flags"'
         urlenc_data = '("${src_list[@]}" "current_dir=$current_dir" "dst=$dst")'
     elif lang == 'python':
-        post_data = "'%s;flags=%s' % (default_args, server_flags)"
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
         urlenc_data = 'src_list + ["current_dir=" + current_dir, "dst=" + dst]'
     else:
         print('Error: %s not supported!' % lang)
@@ -5199,7 +5199,7 @@ truncate_file \"$size\" ${path_list[@]}
 """
     elif lang == 'python':
         s += """
-path_list = \"path=%s\" % \";path=\".join(sys.argv[1:])
+path_list = \"path=%s\" % \"&path=\".join(sys.argv[1:])
 (status, out) = truncate_file(size, path_list)
 # Trailing comma to prevent double newlines
 print ''.join(out),

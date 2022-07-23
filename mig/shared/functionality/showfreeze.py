@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showfreeze - back end to request freeze files in write-once fashion
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -248,7 +248,7 @@ Show archive with file checksums - might take quite a while to calculate:
             output_objects.append({'object_type': 'html_form', 'text': '<p>'})
             output_objects.append({
                 'object_type': 'link',
-                'destination': "showfreeze.py?freeze_id=%s;flavor=%s;checksum=%s"
+                'destination': "showfreeze.py?freeze_id=%s&flavor=%s&checksum=%s"
                 % (freeze_id, flavor, algo),
                 'class': 'infolink iconspace genericbutton',
                 'title': 'View archive with %s checksums' % algo.upper(),
@@ -273,7 +273,7 @@ then finalize it for actual persistent freezing.
 <p>""" % hide_elems})
         output_objects.append({
             'object_type': 'link',
-            'destination': "adminfreeze.py?freeze_id=%s;flavor=%s" %
+            'destination': "adminfreeze.py?freeze_id=%s&flavor=%s" %
             (freeze_id, flavor),
             'class': 'editarchivelink iconspace genericbutton',
             'title': 'Further modify your pending %s archive' % flavor,

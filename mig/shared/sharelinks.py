@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sharelinks - share link helper functions
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -134,7 +134,7 @@ def build_sharelinkitem_object(configuration, share_dict):
         'class': 'urllink iconspace',
         'title': 'Open share link %s' % share_id,
         'text': ''}
-    edit_url = 'sharelink.py?action=edit;share_id=%s' % share_id
+    edit_url = 'sharelink.py?action=edit&share_id=%s' % share_id
     share_item['editsharelink'] = {
         'object_type': 'link',
         'destination': edit_url,

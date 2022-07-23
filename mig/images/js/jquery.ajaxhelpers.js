@@ -128,7 +128,7 @@ function ajax_redb() {
     /* Request runtime envs list in the background and handle as soon as
     results come in */
     $.ajax({
-      url: "?output_format=json;operation=list",
+      url: "?output_format=json&operation=list",
       type: "GET",
       dataType: "json",
       cache: false,
@@ -206,7 +206,7 @@ function ajax_freezedb(permanent_freeze, keyword_final, caching) {
     /* Request archive list in the background and handle as soon as
     results come in */
     $.ajax({
-      url: "?output_format=json;operation=list;caching="+caching,
+      url: "?output_format=json&operation=list&caching="+caching,
       type: "GET",
       dataType: "json",
       cache: false,
@@ -309,8 +309,8 @@ function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_updating,
     /* Request archive list in the background and handle as soon as
     results come in */
     $.ajax({
-        url: "?freeze_id="+freeze_id+";flavor="+flavor+";checksum="+
-            checksum_list.join(";checksum=")+";output_format=json;operation=list;caching="+caching,
+        url: "?freeze_id="+freeze_id+"&flavor="+flavor+"&checksum="+
+            checksum_list.join("&checksum=")+"&output_format=json&operation=list&caching="+caching,
       type: "GET",
       dataType: "json",
       cache: false,
@@ -470,7 +470,7 @@ function ajax_vgridman(vgrid_label, vgrid_links, caching) {
     /* Request vgrid list in the background and handle as soon as
     results come in */
     $.ajax({
-      url: "?output_format=json;operation=list;caching="+caching,
+      url: "?output_format=json&operation=list&caching="+caching,
       type: "GET",
       dataType: "json",
       cache: false,
@@ -629,7 +629,7 @@ function ajax_resman(caching) {
     /* Request resource list in the background and handle as soon as
     results come in */
     $.ajax({
-      url: "?output_format=json;operation=list;caching="+caching,
+      url: "?output_format=json&operation=list&caching="+caching,
       type: "GET",
       dataType: "json",
       cache: false,
@@ -732,7 +732,7 @@ function ajax_people(protocols, caching) {
     /* Request user list in the background and handle as soon as
     results come in */
     $.ajax({
-      url: "?output_format=json;operation=list;caching="+caching,
+      url: "?output_format=json&operation=list&caching="+caching,
       type: "GET",
       dataType: "json",
       cache: false,
@@ -825,7 +825,7 @@ function ajax_workflowjobs(vgrid_name, flags) {
     /* Request workflow jobs and log in the background and handle as soon as
     results come in */
     $.ajax({
-        url: "?output_format=json;operation=list;vgrid_name="+vgrid_name+";flags="+flags,
+        url: "?output_format=json&operation=list&vgrid_name="+vgrid_name+"&flags="+flags,
       type: "GET",
       dataType: "json",
       cache: false,
@@ -954,7 +954,7 @@ function check_oid_available(action, oid_title, oid_url, tag_prefix) {
     $("#"+tag_prefix+"msg").append("checking availability ...");
     /* Run oidping check in the background and handle as soon as results come in */
     $.ajax({
-        url: "oidping.py?output_format=json;url="+oid_url,
+        url: "oidping.py?output_format=json&url="+oid_url,
         type: "GET",
         dataType: "json",
         cache: false,

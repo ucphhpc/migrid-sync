@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # uploadchunked - chunked and efficient file upload back end
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -343,10 +343,10 @@ def main(client_id, user_arguments_dict, environ=None):
     logger.info('Looping through files: %s'
                 % ' '.join([i[0] for i in upload_files]))
 
-    del_url = "uploadchunked.py?%soutput_format=%s;action=delete;" \
-        + "%s=%s;%s=%s;%s=%s"
-    move_url = "uploadchunked.py?%soutput_format=%s;action=move;" \
-        + "%s=%s;%s=%s;%s=%s;%s=%s"
+    del_url = "uploadchunked.py?%soutput_format=%s&action=delete&" \
+        + "%s=%s&%s=%s&%s=%s"
+    move_url = "uploadchunked.py?%soutput_format=%s&action=move&" \
+        + "%s=%s&%s=%s&%s=%s&%s=%s"
 
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)

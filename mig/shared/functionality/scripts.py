@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # scripts - backend to generate user and resource scripts
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -68,7 +68,7 @@ def usage(output_objects, valid_langs, valid_flavors):
 
     output_objects.append(
         {'object_type': 'sectionheader', 'text': 'Generator usage'})
-    output_objects.append({'object_type': 'text', 'text': 'SERVER_URL/scripts.py?[with_html=(true|false);][lang=(%s);[...]][flags=h;][flavor=(%s);[...]][sh_cmd=sh_path;][python_cmd=python_path;]'
+    output_objects.append({'object_type': 'text', 'text': 'SERVER_URL/scripts.py?[with_html=(true|false)&][lang=(%s)&[...]][flags=h&][flavor=(%s)&[...]][sh_cmd=sh_path&][python_cmd=python_path&]'
                            % ('|'.join(list(valid_langs)),
                               '|'.join(list(valid_flavors)))})
     output_objects.append({'object_type': 'text', 'text': '- each occurrence of lang adds the specified scripting language to the list of scripts to be generated.'

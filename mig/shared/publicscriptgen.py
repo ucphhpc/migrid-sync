@@ -764,7 +764,7 @@ def curl_chain_login_steps(
         # Post login and password credentials, redirects to actual site URL
         base_val=\"${extoid_base}/\" 
         url_val=\"processTrustResult\" 
-        post_val=\"user=${username}&pwd=${password}&ct=${ct_value};allow=Yes\"
+        post_val=\"user=${username}&pwd=${password}&ct=${ct_value}&allow=Yes\"
         out=$(curl_post_flex \"$user_conf\" \\
                             \"$base_val\" \\
                             \"$url_val\" \\

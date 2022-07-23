@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # unpack - unpack a zip/tar archive
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -59,8 +59,8 @@ def usage(output_objects):
     output_objects.append({'object_type': 'header', 'text': 'unpack usage:'})
     output_objects.append(
         {'object_type': 'text', 'text':
-         'SERVER_URL/unpack.py?[output_format=(html|txt|xmlrpc|..);]'
-         '[flags=h;][src=src_path;[...]]src=src_path;dst=dst_path'})
+         'SERVER_URL/unpack.py?[output_format=(html|txt|xmlrpc|..)&]'
+         '[flags=h&][src=src_path&[...]]src=src_path&dst=dst_path'})
     output_objects.append(
         {'object_type': 'text', 'text':
          '- output_format specifies how the script should format the output'

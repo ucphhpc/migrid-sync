@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # freezefunctions - freeze archive helper functions
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -155,7 +155,7 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False,
                 type_icon += " ext_%s" % file_ext
             showfile_link = {
                 'object_type': 'link',
-                'destination': 'showfreezefile.py?freeze_id=%s;path=%s' %
+                'destination': 'showfreezefile.py?freeze_id=%s&path=%s' %
                 (freeze_dict['ID'], quoted_name),
                 'class': '%s iconleftpad iconspace' % type_icon,
                 'title': 'Show archive file %(name)s' % file_item,

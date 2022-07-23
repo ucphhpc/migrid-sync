@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # fileman - File manager UI for browsing and manipulating files and folders
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -180,7 +180,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
             <!-- The file upload form used as target for the file upload widget -->
             <!-- TODO: this form action and args do not seem to have any effect -->
             <!-- Probably all overriden in our filemanager upload JS -->
-            <form id="fancyfileupload" action="uploadchunked.py?output_format=json;action=put"
+            <form id="fancyfileupload" action="uploadchunked.py?output_format=json&action=put"
                 method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="%(csrf_field)s" value="%(uploadchunked_csrf_token)s" />
                 <fieldset id="fancyfileuploaddestbox">

@@ -294,7 +294,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             {'object_type': 'text', 'text': 'Saved %s settings:' % topic})
 
     if topic_list:
-        topics_str = '?topic=%s' % ';topic='.join(topic_list)
+        topics_str = '?topic=%s' % '&topic='.join(topic_list)
     else:
         topics_str = ''
     output_objects.append({'object_type': 'link',

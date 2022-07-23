@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # notification - instant message and email notification helpers
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -110,7 +110,7 @@ def create_notify_message(
         header = '%s JOB finished' % configuration.short_title
         var_dict['generated_links'] = generate_https_urls(
             configuration,
-            '%(auto_base)s/%(auto_bin)s/jobstatus.py?job_id=%(jobid)s;flags=i',
+            '%(auto_base)s/%(auto_bin)s/jobstatus.py?job_id=%(jobid)s&flags=i',
             var_dict)
         txt += \
             '''
@@ -147,7 +147,7 @@ Link to stderr file (might not be available):
         header = '%s JOB Failed' % configuration.short_title
         var_dict['generated_links'] = generate_https_urls(
             configuration,
-            '%(auto_base)s/%(auto_bin)s/jobstatus.py?job_id=%(jobid)s;flags=i',
+            '%(auto_base)s/%(auto_bin)s/jobstatus.py?job_id=%(jobid)s&flags=i',
             var_dict)
         txt += \
             '''
@@ -161,7 +161,7 @@ Please contact the %(site)s team if the problem occurs multiple times.
         header = '%s JOB Expired' % configuration.short_title
         var_dict['generated_links'] = generate_https_urls(
             configuration,
-            '%(auto_base)s/%(auto_bin)s/jobstatus.py?job_id=%(jobid)s;flags=i',
+            '%(auto_base)s/%(auto_bin)s/jobstatus.py?job_id=%(jobid)s&flags=i',
             var_dict)
         txt += \
             '''
