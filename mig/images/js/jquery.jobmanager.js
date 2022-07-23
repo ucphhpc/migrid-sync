@@ -4,7 +4,7 @@
   # --- BEGIN_HEADER ---
   #
   # jquery.jobmanager - jquery based job manager
-  # Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+  # Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
   #
   # This file is part of MiG.
   #
@@ -347,7 +347,7 @@ if (jQuery) (function($){
                     jsonWrapper(job_id, "#cmd_dialog", "jobfeasible.py", {job_id: job_id});
                 },
                 verbosestatus: function (job_id) {
-                    url = "jobstatus.py?flags=v;job_id="+job_id;
+                    url = "jobstatus.py?flags=v&job_id="+job_id;
                     windowWrapper(job_id, "#cmd_dialog", url);
                 },
             };
@@ -539,20 +539,20 @@ if (jQuery) (function($){
                     var output_url = '';
                     var max_jobs = -1;
                     var filter_id = '';
-                    var limit_opts = 'flags=i;';
+                    var limit_opts = 'flags=i&';
 
                     // Read out current max jobs and filter settings from fields
                     max_jobs = parseInt($(".maxjobs", config.container).val());
                     if (max_jobs > 0) {
-                        limit_opts += "flags=s;max_jobs=" + max_jobs + ';';
+                        limit_opts += "flags=s&max_jobs=" + max_jobs + '&';
                     }
                     filter_id = $(".filterid", config.container).val();
                     if (filter_id !== '') {
-                        limit_opts += "job_id=" + filter_id + ';';
+                        limit_opts += "job_id=" + filter_id + '&';
                     }
                     // add some html
                     $.ajax({
-                            url: "jobstatus.py?output_format=json;"+limit_opts, 
+                            url: "jobstatus.py?output_format=json&"+limit_opts, 
                                 type: "GET",
                                 dataType: "json",
                                 cache: false, // Avoid IE caching

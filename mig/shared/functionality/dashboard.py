@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # dashboard - Dashboard entry page backend
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -85,7 +85,7 @@ def main(client_id, user_arguments_dict):
           $("#cert_stats").html("Loading certificate information...");
           /* Run certificate request in the background and handle as soon as results come in */
           $.ajax({
-              url: "userstats.py?output_format=json;stats=certificate",
+              url: "userstats.py?output_format=json&stats=certificate",
               type: "GET",
               dataType: "json",
               cache: false,
@@ -119,7 +119,7 @@ def main(client_id, user_arguments_dict):
           });
           /* Run jobs request in the background and handle as soon as results come in */
           $.ajax({
-              url: "userstats.py?output_format=json;stats=jobs",
+              url: "userstats.py?output_format=json&stats=jobs",
               type: "GET",
               dataType: "json",
               cache: false,
@@ -146,7 +146,7 @@ def main(client_id, user_arguments_dict):
           });
           /* Run resources request in the background and handle as soon as results come in */
           $.ajax({
-              url: "userstats.py?output_format=json;stats=resources",
+              url: "userstats.py?output_format=json&stats=resources",
               type: "GET",
               dataType: "json",
               cache: false,
@@ -169,7 +169,7 @@ def main(client_id, user_arguments_dict):
           });
           /* Run disk request in the background and handle as soon as results come in */
           $.ajax({
-              url:"userstats.py?output_format=json;stats=disk",
+              url:"userstats.py?output_format=json&stats=disk",
               type: "GET",
               dataType: "json",
               cache: false,

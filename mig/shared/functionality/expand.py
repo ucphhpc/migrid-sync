@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # expand - emulate shell wild card expansion
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -249,7 +249,7 @@ def main(client_id, user_arguments_dict):
         base_dir = configuration.sharelink_home
         redirect_name = 'share_redirect'
         redirect_path = os.path.join(redirect_name, share_id)
-        id_args = 'share_id=%s;' % share_id
+        id_args = 'share_id=%s&' % share_id
         root_link_name = '%s' % share_id
         main_class = "sharelink_expand"
         page_title = 'Shared Files - Path Expansion'
@@ -298,7 +298,7 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'header', 'text': page_title})
 
     # Shared URL helpers
-    ls_url_template = 'ls.py?%scurrent_dir=%%(rel_dir_enc)s;flags=%s' % \
+    ls_url_template = 'ls.py?%scurrent_dir=%%(rel_dir_enc)s&flags=%s' % \
                       (id_args, flags)
     redirect_url_template = '/%s/%%(rel_path_enc)s' % redirect_path
 

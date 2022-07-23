@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sssmonitor - Global SSS monitor back end
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -203,7 +203,7 @@ Please contact the site admins %s if you think they should be enabled.
     link_list = []
     for name in ('username', 'resource', 'jobs', 'walltime'):
         link_list.append({'object_type': 'link', 'destination':
-                          '?sort=%s;group_by=%s' % (name, group_by),
+                          '?sort=%s&group_by=%s' % (name, group_by),
                           'text': '%s' % name.capitalize()})
 
     output_objects.append({'object_type': 'multilinkline', 'links': link_list})
@@ -216,7 +216,7 @@ Please contact the site admins %s if you think they should be enabled.
     link_list = []
     for name in ('resources', 'users'):
         link_list.append({'object_type': 'link', 'destination':
-                          '?sort=%s;group_by=%s' % (sort, name),
+                          '?sort=%s&group_by=%s' % (sort, name),
                           'text': '%s' % name.capitalize()})
 
     output_objects.append({'object_type': 'multilinkline', 'links': link_list})
