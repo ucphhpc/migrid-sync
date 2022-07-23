@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # oidping - OpenID 2.0 and Connect server availability checker backend
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,6 +28,8 @@
 """Check availability of OpenID 2.0 and Connect server back end"""
 
 from __future__ import absolute_import
+
+import os
 
 from mig.shared import returnvalues
 from mig.shared.functional import validate_input
@@ -67,7 +69,8 @@ def main(client_id, user_arguments_dict):
         logger.debug("%s openid server on %s" % (op_name, ping_url))
         try:
             # Never use proxies
-            ping_status = urlopen(ping_url, proxies={})
+            os.environ['no_proxy'] = '*'
+            ping_status = urlopen(ping_url)
             http_status = ping_status.getcode()
             data = ping_status.read()
             ping_status.close()
@@ -99,7 +102,8 @@ def main(client_id, user_arguments_dict):
         logger.debug("%s openid connect server on %s" % (op_name, ping_url))
         try:
             # Never use proxies
-            ping_status = urlopen(ping_url, proxies={})
+            os.environ['no_proxy'] = '*'
+            ping_status = urlopen(ping_url)
             http_status = ping_status.getcode()
             data = ping_status.read()
             ping_status.close()
