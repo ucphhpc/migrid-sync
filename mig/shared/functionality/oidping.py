@@ -32,6 +32,7 @@ from __future__ import absolute_import
 import os
 
 from mig.shared import returnvalues
+from mig.shared.base import force_native_str
 from mig.shared.functional import validate_input
 from mig.shared.init import initialize_main_variables
 from mig.shared.url import urlopen
@@ -72,7 +73,8 @@ def main(client_id, user_arguments_dict):
             os.environ['no_proxy'] = '*'
             ping_status = urlopen(ping_url)
             http_status = ping_status.getcode()
-            data = ping_status.read()
+            # NOTE: we may get utf8 bytes here
+            data = force_native_str(ping_status.read())
             ping_status.close()
             if http_status == 200:
                 # TODO: better parsing
@@ -105,7 +107,8 @@ def main(client_id, user_arguments_dict):
             os.environ['no_proxy'] = '*'
             ping_status = urlopen(ping_url)
             http_status = ping_status.getcode()
-            data = ping_status.read()
+            # NOTE: we may get utf8 bytes here
+            data = force_native_str(ping_status.read())
             ping_status.close()
             if http_status == 200:
                 # TODO: better parsing
