@@ -654,8 +654,8 @@ or the same on centos
                    --enable_twofactor=True --enable_cracklib=True \
                    --enable_freeze=False --enable_hsts=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
-                   --enable_peers=True --peers_mandatory=True \
-                   --peers_explicit_fields='full_name email' \
+                   --enable_migadmin=True --enable_peers=True \
+                   --peers_mandatory=True --peers_explicit_fields='full_name email' \
                    --peers_contact_hint='employed at UCPH and authorized to invite external users' \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
@@ -740,7 +740,7 @@ optimized SFTP, Seafile integration and OpenID login:
                    --distro=centos --skin=erda-ucph-science \
                    --vgrid_label=Workgroup --wsgi_procs=25 \
                    --default_menu="home files submitjob jobs vgrids settings setup logout" \
-                   --user_menu="sharelinks people seafile crontab transfers peers downloads docs migadmin" \
+                   --user_menu="sharelinks people seafile crontab transfers peers downloads docs" \
                    --auto_add_oid_user=True --auto_add_cert_user=True \
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
                    
@@ -962,8 +962,8 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --enable_twofactor_strict_address=True \
                    --enable_cracklib=True --enable_hsts=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
-                   --enable_peers=True --peers_mandatory=True \
-                   --peers_explicit_fields='full_name email' \
+                   --enable_migadmin=False --enable_peers=True \
+                   --peers_mandatory=True --peers_explicit_fields='full_name email' \
                    --peers_contact_hint='employed at UCPH and authorized to invite external users' \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
