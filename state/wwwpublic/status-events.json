@@ -15,8 +15,8 @@
     ],
     "work_end": "2022-07-24T23:00:00+02:00",
     "description": {
-      "EN": "We will apply general maintenance to the DAG and MODI services. Interruptions to these services will occur.", 
-      "DK": "Vi udruller den månedelige opdatering og vedligeholdelse af DAG og MODI tjenesterne. Afbrydelser af disse tjenester vil forekomme."
+      "EN": "We will apply general maintenance to the DAG and MODI services. Interruptions to these services will occur. We carried this work out in the specified timeframe and the services came back as expected afterwards.", 
+      "DK": "Vi udruller den månedelige opdatering og vedligeholdelse af DAG og MODI tjenesterne. Afbrydelser af disse tjenester vil forekomme. Vi udførte dette arbejde inden for den angivne tidsramme, og tjenesterne kom tilbage som forventet bagefter."
     },
     "announce_end": "2022-07-25T12:00:00+02:00"
   },
