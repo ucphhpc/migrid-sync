@@ -698,8 +698,8 @@ def accept_account_req(req_id, configuration, peer_id, user_copy=True,
     if saved:
         _logger.info('updating existing user in user db: %s' % user_id)
         operation_type = 'update'
-        user_dict.update(saved)
-        del user_dict['expire']
+        # NOTE: don't update with saved here as it truncates request values.
+        #       It will be properly handled in the create_user call below.
 
     # Make sure account expire is set with local certificate or OpenID login
 
