@@ -110,14 +110,29 @@ Apache comes with a number of modules natively included, so it is usually not
 necessary to explicitly install e.g. mod-proxy and mod-rewrite, only the modules
 explicitly packaged separately.
 
-We highly recommend installing the optional python wsgidav and openid modules
-directly from upstream, because packaged versions are generally outdated
-even on pypi. The packaged openid module lacks some security fixes and
-the wsgidav one lacks proper chrooting support and a fix for upload/write
-access for OSX clients.
-They can easily be installed with pip:
+We highly recommend installing the optional python openid module directly from
+upstream, because packaged versions are generally outdated even on pypi. 
+The packaged openid module lacks some security fixes and the upstream one can
+easily be installed with pip:
 sudo pip install https://github.com/openid/python-openid/archive/master.zip
-sudo pip install wsgidav
+
+The stable wsgidav version used to lack proper chrooting support and a fix for
+upload/write access for OSX clients but it should have been fixed in pypi
+releases.
+We're currently in the process of migrating to a modern 3.x+ version of wsgidav
+in order to also support python 3 use. For the time being we recommend running
+the old and thoroughly tested legacy 1.3.x version for production setups on
+python 2.x and it can easily be installed with pip:
+sudo pip install 'wsgidav<2'
+
+On python 2 setups one can try out the more recent 3.x series of wsgidav still
+maintained as stable and supported there. It can be installed with pip:
+sudo pip install 'more-itertools<6' 'jaraco.functools<3' 'jinja2<3' \
+         'markupsafe<2' 'pyyaml<6' cheroot 'wsgidav<4'
+
+On python 3 setups a more recent wsgidav 3.x or later is required. It
+can easily be installed with pip:
+sudo pip install cheroot wsgidav
 
 Additional packaged Trac extensions can be installed with:
 sudo aptitude install trac-customfieldadmin trac-graphviz \
@@ -173,8 +188,9 @@ paramiko packages without these conflicts. Please carefully read
 https://docs.openstack.org/install-guide/environment-packages-rdo.html
 for the implications like potential EPEL conflicts if going with the latter.
 
-The optional grid_webdavs daemon requires the wsgidav module in a recent
-version (1.3.0+), so it is easiest to install it with pip as mentioned above.
+The optional grid_webdavs daemon requires the wsgidav module in a specific
+version (1.3.0+ or 3.x for python 2 and 3.x+ for python 3), so it is easiest
+to install it with pip as mentioned above.
 
 The optional grid_openid daemon requires the openid module in a recent
 version, so it is easiest to install it with pip as mentioned above.
