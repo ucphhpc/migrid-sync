@@ -70,6 +70,9 @@ try:
     import cheroot.ssl.builtin
     # NOTE: middleware components moved to 'mw' and cors was added in wsgidav 4
     if wsgidav_major >= 4:
+        if sys.version_info[0] < 3:
+            raise ValueError("wsgidav 3.x is required for python 2: found %s"
+                             % wsgidav_version)
         from wsgidav.mw.debug_filter import WsgiDavDebugFilter
         from wsgidav.mw.cors import Cors
     elif wsgidav_major >= 3:
@@ -1432,8 +1435,8 @@ def is_authorized_session(configuration, username, session_id):
     """Returns True if user session is open
     and authorized and within expire timestamp"""
 
-    logger.debug("session_id: %s, user_sessions: %s" %
-                 (session_id, user_sessions))
+    # logger.debug("session_id: %s, user_sessions: %s" %
+    #             (session_id, user_sessions))
     result = False
     session_timeout = io_session_timeout.get('davs', 0)
     session = get_active_session(configuration,
@@ -1698,7 +1701,7 @@ def run(configuration):
     # NOTE: Slightly modified default middleware stack from
     # https://wsgidav.readthedocs.io/en/latest/user_guide_configure.html
     middleware_stack = []
-    if configuration.loglevel == 'debug' or dav_domain['verbose'] > 0:
+    if configuration.loglevel == 'debug' or dav_conf['verbose'] > 0:
         logger.debug("adding WsgiDavDebugFilter middleware")
         middleware_stack.append(WsgiDavDebugFilter)
     if Cors:
@@ -1706,7 +1709,7 @@ def run(configuration):
         middleware_stack.append(Cors)
     middleware_stack += [
         ErrorPrinter,
-        # TODO: switch back to our own authenticator
+        # TODO: switch back to our own authenticator or eliminate it for plain
         HTTPAuthenticator,
         # MiGHTTPAuthenticator,
         # configured under dir_browser option (see below)
@@ -1847,9 +1850,6 @@ def run(configuration):
         key = config['ssl_private_key'] = configuration.user_davs_key
         chain = config['ssl_certificate_chain'] = ''
         ciphers = config['ssl_ciphers'] = None
-        # TODO: is this conf needed?
-        # adapter = config['ssl_adapter'] = 'builtin'
-        # adapter = config['ssl_adapter'] = 'pyopenssl'
 
     # NOTE: Briefly insert dummy user to avoid bogus warning about anon access
     #       We dynamically add users as they connect so it isn't empty.
