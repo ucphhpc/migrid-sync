@@ -68,14 +68,18 @@ try:
         _loopback_for_cert_thread as orig_loopback_for_cert_thread
     # For hot-patching _loopback_for_cert_thread function
     import cheroot.ssl.builtin
-    # NOTE: middleware components moved to 'mw' and cors was added in wsgidav 4
+    # NOTE: in wsgidav 4 middleware components moved to 'mw', cors was added
+    #       and compat module was dropped along with python 2 support.
     if wsgidav_major >= 4:
         if sys.version_info[0] < 3:
             raise ValueError("wsgidav 3.x is required for python 2: found %s"
                              % wsgidav_version)
         from wsgidav.mw.debug_filter import WsgiDavDebugFilter
         from wsgidav.mw.cors import Cors
+
+        def is_native(x): return True
     elif wsgidav_major >= 3:
+        from wsgidav.compat import is_native
         from wsgidav.debug_filter import WsgiDavDebugFilter
         # No Cors middelware here
         Cors = None
@@ -293,9 +297,11 @@ def wrap_socketpair_sock(s):
     return s
 
 
-# NOTE: now override built-in function with patched version
-cheroot.ssl.builtin._loopback_for_cert_thread = lambda c, s: orig_loopback_for_cert_thread(
-    c, wrap_socketpair_sock(s))
+# NOTE: wrapping is only needed in python 2.x
+if sys.version_info[0] < 3:
+    # NOTE: override built-in function with patched version
+    cheroot.ssl.builtin._loopback_for_cert_thread = lambda c, s: \
+        orig_loopback_for_cert_thread(c, wrap_socketpair_sock(s))
 
 
 class HardenedSSLAdapter(BuiltinSSLAdapter):
@@ -1277,8 +1283,11 @@ class MiGFolderResource(FolderResource):
         Call parent version just with debug logging added.
         """
         # logger.debug("in get_descendants wrap for %s" % self)
-        res = FolderResource.get_descendants(self, collections, resources,
-                                             depth_first, depth, add_self)
+        # NOTE: wsgidav 4 API changed to variable length args so use named args
+        res = FolderResource.get_descendants(self, collections=collections,
+                                             resources=resources,
+                                             depth_first=depth_first,
+                                             depth=depth, add_self=add_self)
         # logger.debug("get_descendants wrap returning %s" % res)
         return res
 
@@ -1339,8 +1348,8 @@ class MiGFilesystemProvider(FilesystemProvider):
         # NOTE: copied from parent method
         root_path = self.root_folder_path
         assert root_path is not None
-        assert compat.is_native(root_path)
-        assert compat.is_native(path)
+        assert is_native(root_path)
+        assert is_native(path)
 
         if environ is None:
             raise RuntimeError("A modern wsgidav version is needed, see code")
@@ -1366,7 +1375,7 @@ class MiGFilesystemProvider(FilesystemProvider):
 
         # TODO: verify chrooting after wsgidav updates
         assert user_chroot
-        assert compat.is_native(user_chroot)
+        assert is_native(user_chroot)
 
         # NOTE: copied from parent method
         path_parts = path.strip("/").split("/")
@@ -1517,7 +1526,7 @@ class SessionExpire(threading.Thread):
 
         logger = configuration.logger
         closed_sessions = track_close_expired_sessions(configuration, 'davs')
-        for (_, session) in closed_sessions.iteritems():
+        for (_, session) in closed_sessions.items():
             msg = "closed expired session for: %s from %s:%s:%s" \
                 % (session['client_id'],
                    session['ip_addr'],
@@ -1713,8 +1722,9 @@ def run(configuration):
         RequestResolver  # this must be the last middleware item
     ]
 
+    # NOTE: parent FilesystemProvider changed constructor API slightly in 4
     mig_fs_provider = MiGFilesystemProvider(daemon_conf['root_dir'],
-                                            daemon_conf['read_only'])
+                                            readonly=daemon_conf['read_only'])
     mig_fs_provider.post_init(configuration, dav_conf)
 
     config = DEFAULT_CONFIG.copy()
