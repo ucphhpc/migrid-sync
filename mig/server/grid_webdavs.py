@@ -30,11 +30,9 @@
 Replaces the old pywebdav-based grid_davs daemon with similar functionality,
 but bad performance and limited platform support.
 
-Requires wsgidav module (https://github.com/mar10/wsgidav) in a 3.x or later
-version.
-
-We no longer support wsgidav 1.x or 2.x as especially the domain controller API
-changed considerably with 2.x and 3.x.
+Requires wsgidav module (https://github.com/mar10/wsgidav) in a recent version
+or with a minor patch (see https://github.com/mar10/wsgidav/issues/29) to allow
+per-user subdir chrooting inside root_dir.
 """
 
 from __future__ import print_function
@@ -49,50 +47,28 @@ import traceback
 from functools import wraps
 
 try:
-    # NOTE: shared version-independent wsgidav imports
-    from wsgidav import __version__ as wsgidav_version
     from wsgidav.wsgidav_app import DEFAULT_CONFIG, WsgiDAVApp
+    # Use cherrypy bundled with wsgidav < 2.0 - needs module path mangling
+    from wsgidav.server import __file__ as server_init_path
+    sys.path.append(os.path.dirname(server_init_path))
+    from cherrypy import wsgiserver
+    from cherrypy.wsgiserver.ssl_builtin import BuiltinSSLAdapter, ssl
+    from wsgidav.debug_filter import WsgiDavDebugFilter
     from wsgidav.dir_browser import WsgiDavDirBrowser
     from wsgidav.error_printer import ErrorPrinter
     from wsgidav.fs_dav_provider import FileResource, FolderResource, \
         FilesystemProvider
+    from wsgidav.domain_controller import WsgiDAVDomainController
     from wsgidav.http_authenticator import HTTPAuthenticator
     from wsgidav.dav_error import DAVError, HTTP_FORBIDDEN
-    from wsgidav.request_resolver import RequestResolver
-    # NOTE: use cheroot now that we require any 3.x wsgidav
-    wsgidav_major = int(wsgidav_version.split('.')[0])
-    from cheroot.wsgi import WSGIServer
-    from cheroot.errors import NoSSLError
-    from cheroot.ssl.builtin import BuiltinSSLAdapter, ssl
-    # NOTE: middleware components moved to 'mw' and cors was added in wsgidav 4
-    if wsgidav_major >= 4:
-        from wsgidav.mw.debug_filter import WsgiDavDebugFilter
-        from wsgidav.mw.cors import Cors
-    elif wsgidav_major >= 3:
-        from wsgidav.debug_filter import WsgiDavDebugFilter
-        # No Cors middelware here
-        Cors = None
-    else:
-        raise ValueError("Only wsgidav 3.x and later is supported: found %s"
-                         % wsgidav_version)
-    from wsgidav import util
-    # NOTE: we use built-in wsgidav unicode helper rather than force_unicode
-    from wsgidav import compat
-    # NOTE: SimpleDomainController was introduced with wsgidav 2.x and later
-    #       changed API completely.
-    #       Similar functionality was handled by WsgiDAVDomainController in 1.x
-    #       versions, which we used to run.
-    from wsgidav.dc.simple_dc import SimpleDomainController
+    from wsgidav.util import getRfc1123Time
 except ImportError as ierr:
     print("ERROR: the python wsgidav module is required for this daemon")
-    print("NOTE: You may need to install cherrypy on legacy wsgidav version")
-    print("NOTE: You always need to install cheroot on recent wsgidav versions")
-    print("DEBUG: %s" % ierr)
+    print("You may need to install cherrypy if your wsgidav does not bundle it")
     sys.exit(1)
 
-
 from mig.shared.accountstate import check_account_accessible
-from mig.shared.base import invisible_path
+from mig.shared.base import invisible_path, force_unicode
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import dav_domain, litmus_id, io_session_timeout, \
     STRONG_TLS_CIPHERS, STRONG_TLS_LEGACY_CIPHERS
@@ -155,17 +131,8 @@ def _handle_allowed(request, abs_path, path):
 
 
 def _username_from_env(environ):
-    """Extract authenticated user credentials from environ dicionary.
-
-    The HTTPAuthenticator will put the following authenticated information in the
-    environ dictionary::
-
-    environ["wsgidav.auth.realm"] = realm name
-    environ["wsgidav.auth.user_name"] = user_name
-    environ["wsgidav.auth.roles"] = <tuple> (optional)
-    environ["wsgidav.auth.permissions"] = <tuple> (optional)
-    """
-    username = environ.get("wsgidav.auth.user_name", None)
+    """Extract authenticated user credentials from environ dicionary"""
+    username = environ.get("http_authenticator.username", None)
     if username is None:
         raise Exception("No authenticated username!")
     return username
@@ -218,8 +185,8 @@ def _find_authenticator(application):
 
 def _open_session(username, ip_addr, tcp_port, session_id):
     """Keep track of new session"""
-    logger.debug("auth succeeded for %s from %s:%s with session: %s" %
-                 (username, ip_addr, tcp_port, session_id))
+    # logger.debug("auth succeeded for %s from %s:%s with session: %s" %
+    #             (username, ip_addr, tcp_port, session_id))
 
     status = track_open_session(configuration,
                                 'davs',
@@ -250,8 +217,8 @@ def _open_session(username, ip_addr, tcp_port, session_id):
 
 def _close_session(username, ip_addr, tcp_port, session_id):
     """Mark session as closed"""
-    logger.debug("_close_session for %s from %s:%s with session: %s" %
-                 (username, ip_addr, tcp_port, session_id))
+    # logger.debug("_close_session for %s from %s:%s with session: %s" %
+    #              (username, ip_addr, tcp_port, session_id))
 
     track_close_session(configuration,
                         'davs',
@@ -346,16 +313,16 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         """
         _socket_list = [sock]
         try:
-            logger.debug("Wrapping socket in SSL/TLS: 0x%x : %s" %
-                         (id(sock), sock.getpeername()))
-            logger.debug("SSL/TLS session stats: %s" %
-                         self.ssl_ctx.session_stats())
+            # logger.debug("Wrapping socket in SSL/TLS: 0x%x : %s" %
+            #             (id(sock), sock.getpeername()))
+            # logger.debug("SSL/TLS session stats: %s" %
+            #             self.ssl_ctx.session_stats())
             ssl_sock = self.ssl_ctx.wrap_socket(sock, server_side=True)
             _socket_list.append(ssl_sock)
             ssl_env = self.get_environ(ssl_sock)
-            logger.debug("wrapped sock from %s with ciphers %s" %
-                         (ssl_sock.getpeername(), ssl_sock.cipher()))
-            logger.debug("system ssl_sock timeout: %s" % ssl_sock.gettimeout())
+            # logger.debug("wrapped sock from %s with ciphers %s" %
+            #             (ssl_sock.getpeername(), ssl_sock.cipher()))
+            # logger.debug("system ssl_sock timeout: %s" % ssl_sock.gettimeout())
             session_timeout = io_session_timeout.get('davs', 0)
             if session_timeout > 0:
                 ssl_sock.settimeout(float(session_timeout))
@@ -366,24 +333,20 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                 # This is almost certainly due to the cherrypy engine
                 # 'pinging' the socket to assert it's connectable;
                 # the 'ping' isn't SSL.
-                logger.debug("SSL/TLS received EOF: %s" % exc)
                 return None, {}
             elif exc.errno == ssl.SSL_ERROR_SSL:
                 logger.warning("SSL/TLS wrap failed: %s" % exc)
                 if exc.args[1].find('http request') != -1:
                     # The client is speaking HTTP to an HTTPS server.
-                    logger.debug("SSL/TLS got unexpected plain HTTP: %s" % exc)
-                    raise NoSSLError
+                    raise wsgiserver.NoSSLError
                 elif exc.args[1].find('unknown protocol') != -1:
                     # Drop clients speaking some non-HTTP protocol.
-                    logger.debug("SSL/TLS got unexpected protocol: %s" % exc)
                     return None, {}
                 elif exc.args[1].find('wrong version number') != -1 or \
                         exc.args[1].find('no shared cipher') != -1 or \
                         exc.args[1].find('inappropriate fallback') != -1 or \
                         exc.args[1].find('ccs received early') != -1:
                     # Drop clients trying banned protocol, cipher or operation
-                    logger.debug("SSL/TLS got invalid request: %s" % exc)
                     return None, {}
                 else:
                     # Make sure we clean up before we forward
@@ -403,28 +366,28 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
     3) SSL session based auth
     4) Rate limit auth throtteling
     """
-    __wsgidav_app = None
+    __application = None
     min_expire_delay = 0
     last_expire = 0
 
-    def __init__(self, wsgidav_app, next_app, config):
+    def __init__(self, application, config):
         self.min_expire_delay = 300
         self.last_expire = time.time()
-        self.__wsgidav_app = wsgidav_app
+        self.__application = application
         self._init_stats(config['enable_stats'])
         super(MiGHTTPAuthenticator, self).__init__(
-            self._wsgidav_app_wrapper, next_app, config)
+            self._application_wrapper, config)
 
-    def _wsgidav_app_wrapper(self, environ, start_response):
+    def _application_wrapper(self, environ, start_response):
         """Prevent HTTPAuthenticator (parent) from sending response
         to client while auth is being processed
-        by  MiGHTTPAuthenticator._auth_request
+        by  MiGHTTPAuthenticator.authRequest
         """
         result = None
         # If _NOT_ in authorization mode then allow
-        # HTTPAuthenticator to call _wsgidav_app
+        # HTTPAuthenticator to call _application
         if not "HTTP_AUTHORIZATION" in environ:
-            result = self.__wsgidav_app(environ, start_response)
+            result = self.__application(environ, start_response)
 
         return result
 
@@ -503,8 +466,8 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
     def _authheader(self, environ):
         """Returns dict with HTTP AUTH REQUEST header
         This code is blended/modified version of
-        HTTPAuthenticator.handle_basic_auth_request and
-        HTTPAuthenticator.handle_digest_auth_request"""
+        HTTPAuthenticator.authBasicAuthRequest and
+        HTTPAuthenticator.authDigestAuthRequest"""
         authheaderdict = dict([])
         authheaders = environ.get("HTTP_AUTHORIZATION", '')
 
@@ -517,7 +480,6 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
             authheaderdict['password'] = password
         else:
             authheaders += ","
-            # TODO: is this hotfix still needed here?
             # Hotfix for Windows file manager and OSX Finder:
             # Some clients don't urlencode paths in auth header, so uri value may
             # contain commas, which break the usual regex headerparser. Example:
@@ -537,17 +499,17 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
 
         return authheaderdict
 
-    def handle_basic_auth_request(self, environ, start_response):
-        """Overrides HTTPAuthenticator.handle_basic_auth_request"""
-        return self._auth_request(environ, start_response, password_auth=True)
+    def authBasicAuthRequest(self, environ, start_response):
+        """Overrides HTTPAuthenticator.authBasicAuthRequest"""
+        return self.authRequest(environ, start_response, password_auth=True)
 
-    def handle_digest_auth_request(self, environ, start_response):
-        """Overrides HTTPAuthenticator.handle_digest_auth_request"""
-        return self._auth_request(environ, start_response, digest_auth=True)
+    def authDigestAuthRequest(self, environ, start_response):
+        """Overrides HTTPAuthenticator.authDigestAuthRequest"""
+        return self.authRequest(environ, start_response, digest_auth=True)
 
-    def _auth_request(self, environ, start_response,
-                      password_auth=False, digest_auth=False):
-        """Shared backend to handle all auth requests from  HTTPAuthenticator.
+    def authRequest(self, environ, start_response,
+                    password_auth=False, digest_auth=False):
+        """Overrides HTTPAuthenticator.authRequest
         Authorize users and log auth attempts.
         When auth is granted the session is tracked
         based on the SSL-session-id for reuse in future requests
@@ -604,8 +566,8 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
                                                 username,
                                                 session_id):
             valid_session = authorized = pre_authorized = True
-            environ['wsgidav.auth.user_name'] = username
-            environ['wsgidav.auth.realm'] = '/'
+            environ['http_authenticator.username'] = username
+            environ['http_authenticator.realm'] = '/'
         elif hit_rate_limit(configuration, 'davs', ip_addr, username,
                             max_user_hits=max_user_hits):
             exceeded_rate_limit = True
@@ -616,16 +578,13 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
                                                           username, 'davs',
                                                           environ)
             if password_auth:
-                result = super(MiGHTTPAuthenticator,
-                               self).handle_basic_auth_request(environ,
-                                                               start_response)
+                result = super(MiGHTTPAuthenticator, self) \
+                    .authBasicAuthRequest(environ, start_response)
             elif digest_auth:
-                result = super(MiGHTTPAuthenticator,
-                               self).handle_digest_auth_request(environ,
-                                                                start_response)
-            # NOTE: user name and realm is in wsgidav.auth.X env in 3.x+
-            auth_username = environ.get('wsgidav.auth.user_name', None)
-            auth_realm = environ.get('wsgidav.auth.realm', None)
+                result = super(MiGHTTPAuthenticator, self) \
+                    .authDigestAuthRequest(environ, start_response)
+            auth_username = environ.get('http_authenticator.username', None)
+            auth_realm = environ.get('http_authenticator.realm', None)
             # print "DEBUG: auth_username: %s" % auth_username
             # print "DEBUG: auth_realm: %s" % auth_realm
             if auth_username and auth_username == username and auth_realm:
@@ -685,13 +644,13 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
             )
 
         if authorized and valid_session:
-            result = self.__wsgidav_app(environ, start_response)
+            result = self.__application(environ, start_response)
             if result:
                 response_ok = True
             else:
                 _close_session(username, ip_addr, tcp_port, session_id)
                 logger.error(
-                    "MiGHTTPAuthenticator._auth_request failed for %s from %s:%s"
+                    "MiGHTTPAuthenticator.authRequest failed for %s from %s:%s"
                     % (username, ip_addr, tcp_port))
         elif authorized and not valid_session:
             response_ok = True
@@ -700,24 +659,24 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
             # logger.debug("503 Service Unavailable")
             start_response("503 Service Unavailable",
                            [("Content-Length", "0"),
-                            ("Date", util.get_rfc3339_time()),
+                            ("Date", getRfc1123Time()),
                             ])
             result = ['']
         elif disconnect:
             response_ok = True
-            logger.debug("403 Forbidden for %s from %s:%s"
-                         % (username, ip_addr, tcp_port))
-            start_response("403 Forbidden",
-                           [("Content-Length", "0"),
-                            ("Date", util.get_rfc3339_time()), ])
+            # logger.debug("403 Forbidden for %s from %s:%s" \
+            #   % (username, ip_addr, tcp_port))
+            start_response("403 Forbidden", [("Content-Length", "0"),
+                                             ("Date", getRfc1123Time()),
+                                             ])
             result = ['']
         else:
-            result = self.send_digest_auth_response(environ, start_response)
+            result = self.sendDigestAuthResponse(environ, start_response)
             if result:
                 response_ok = True
             else:
                 logger.error(
-                    "MiGHTTPAuthenticator.send_digest_auth_response failed"
+                    "MiGHTTPAuthenticator.sendDigestAuthResponse failed"
                     + " for %s from %s:%s"
                     % (username, ip_addr, tcp_port))
 
@@ -726,7 +685,7 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
                          + " for %s from %s:%s"
                          % (username, ip_addr, tcp_port))
             start_response("400 Bad Request", [("Content-Length", "0"),
-                                               ("Date", util.get_rfc3339_time()),
+                                               ("Date", getRfc1123Time()),
                                                ])
             result = ['']
 
@@ -744,47 +703,47 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
         return result
 
 
-class MiGDomainController(SimpleDomainController):
+class MiGWsgiDAVDomainController(WsgiDAVDomainController):
     """Override auth database lookups to use username and password hash for
     basic auth and digest otherwise.
 
     NOTE: The username arguments are already on utf8 here so no need to force.
-
-    NOTE: we generally ignore the parent class user_map and rely on login_map
-    from daemon_conf directly.
-
-    IMPORTANT: this class is instantiated for each session by HTTPAuthenticator!
     """
 
-    # NOTE: the API changed significantly between 1.x, 2.x and 3.x+
-    #       We use the default constructor here and instead do the init
-    #       in our custom configure_dc method.
-    # def __init__(self, *args):
-    #    WSGIDavDomainController.__init__(self, userMap)
-    #    SimpleDomainController.__init__(self, users, realm)
-    #    SimpleDomainController.__init__(self, wsgi_app, config)
+    root_dir = None
+    min_expire_delay = 0
+    last_expire = 0
+
+    def __init__(self, root_dir, userMap):
+        WsgiDAVDomainController.__init__(self, userMap)
+        # Alias to CamelCase version userMap required internally
+        self.root_dir = root_dir
+        self.user_map = self.userMap = userMap
+        self.last_expire = time.time()
+        self.min_expire_delay = 300
+        self.hash_cache = {}
+        self.digest_cache = {}
 
     def _expire_caches(self):
         """Expire old entries in the hash and digest caches"""
-        self.config['mig_dc']['hash_cache'].clear()
-        self.config['mig_dc']['digest_cache'].clear()
+        self.hash_cache.clear()
+        self.digest_cache.clear()
         # logger.debug("Expired hash and digest caches")
 
     def _expire_volatile(self):
         """Expire old entries in the volatile helper dictionaries"""
-        if self.config['mig_dc']['last_expire'] + \
-                self.config['mig_dc']['min_expire_delay'] < time.time():
-            self.config['mig_dc']['last_expire'] = time.time()
+        if self.last_expire + self.min_expire_delay < time.time():
+            self.last_expire = time.time()
             self._expire_caches()
 
     def _get_user_digests(self, realm, username):
         """Find the allowed digest values for supplied username - this is for
         use in the actual digest authorization.
         """
-        user_list = login_map_lookup(daemon_conf, username)
+        user_list = self.user_map[realm].get(username, [])
         return [i for i in user_list if i.digest is not None]
 
-    def basic_auth_user(self, realmname, username, password, environ):
+    def authDomainUser(self, realmname, username, password, environ):
         """Returns True if username / password pair is valid for the realm,
         False otherwise.
         This method is only used for the 'basic' auth method, while
@@ -793,29 +752,23 @@ class MiGDomainController(SimpleDomainController):
         NOTE: We explicitly compare against saved hash rather than password.
 
         NOTE: Set environ['http_authenticator.valid_user'] for use in
-              MiGHTTPAuthenticator._auth_request
+              MiGHTTPAuthenticator.authRequest
         """
 
-        # logger.debug("auth:basic_auth_user: " \
+        # logger.debug("auth:authDomainUser: " \
         #     + "realmname: %s, username: %s, password: %s" \
         #     % (realmname, username, password))
         success = False
         password_auth = False
-        #logger.debug("update user %s auth" % username)
-        update_users(configuration, None, username)
-        # logger.debug("lookup user %s in login map %s" %
-        #             (username, daemon_conf['login_map']))
-        user_list = login_map_lookup(daemon_conf, username)
-        # logger.debug("checking user list %s and user dir %s in %s" %
-        #             (user_list, username, self.config['mig_dc']['root_dir']))
-        if not user_list and not os.path.islink(
-                os.path.join(self.config['mig_dc']['root_dir'], username)):
+        # logger.debug("refresh user %s" % username)
+        update_users(configuration, self.user_map, username)
+        user_list = self.user_map[realmname].get(username, [])
+        if not user_list \
+            and not os.path.islink(
+                os.path.join(self.root_dir, username)):
             environ['http_authenticator.valid_user'] = False
         else:
             environ['http_authenticator.valid_user'] = True
-        # logger.debug("set valid user %s: %s (%s)" %
-        #             (username, environ['http_authenticator.valid_user'],
-        #              user_list))
 
         # Only sharelinks should be excluded from strict password policy
         if possible_sharelink_id(configuration, username):
@@ -830,10 +783,9 @@ class MiGDomainController(SimpleDomainController):
             allowed = user_obj.password
             if allowed is not None:
                 password_auth = True
-                logger.debug("Password check for %s" % username)
+                # logger.debug("Password check for %s" % username)
                 if check_password_hash(configuration, 'webdavs', username,
-                                       offered, allowed,
-                                       self.config['mig_dc']['hash_cache'],
+                                       offered, allowed, self.hash_cache,
                                        strict_policy, allow_legacy):
                     success = True
 
@@ -844,7 +796,7 @@ class MiGDomainController(SimpleDomainController):
 
         return success
 
-    def is_realm_user(self, realmname, username, environ):
+    def isRealmUser(self, realmname, username, environ):
         """Returns True if this username is valid for the realm,
         False otherwise.
 
@@ -852,35 +804,35 @@ class MiGDomainController(SimpleDomainController):
         update creds and reject users without digest password set.
 
         NOTE: Set environ['http_authenticator.valid_user'] for use in
-              MiGHTTPAuthenticator._auth_request
+              MiGHTTPAuthenticator.authRequest
         """
-        # logger.debug("auth:is_realm_user: realmname: %s, username: %s" \
+        # logger.debug("auth:isRealmUser: realmname: %s, username: %s" \
         #     % (realmname, username))
         success = False
         # logger.debug("refresh user %s" % username)
-        update_users(configuration, None, username)
+        update_users(configuration, self.user_map, username)
         if not self._get_user_digests(realmname, username) \
             and not os.path.islink(
-                os.path.join(self.config['mig_dc']['root_dir'], username)):
+                os.path.join(self.root_dir, username)):
             success = environ['http_authenticator.valid_user'] = False
         else:
             success = environ['http_authenticator.valid_user'] = True
 
         return success
 
-    def digest_auth_user(self, realmname, username, environ):
+    def getRealmUserPassword(self, realmname, username, environ):
         """Return the password for the given username for the realm.
 
-        Used only for 'digest' auth and always called after is_realm_user, so
+        Used only for 'digest' auth and always called after isRealmUser, so
         update creds is already applied.
         """
         # TODO: consider digest caching here!
         #       we should really use something like check_password_digest,
         #       but we need to return password to caller here.
 
-        # print "DEBUG: env in digest_auth_user: %s" % environ
+        # print "DEBUG: env in getRealmUserPassword: %s" % environ
         # traceback.print_stack()
-        # logger.debug("auth:digest_auth_user: " \
+        # logger.debug("auth:getRealmUserPassword: " \
         #      + "realmname: %s, username: %s" \
         #     % (realmname, username))
         # Only sharelinks should be excluded from strict password policy
@@ -927,10 +879,10 @@ class MiGFileResource(FileResource):
     Parent constructor saves environ as self.environ for later use in chroot.
     """
 
-    def __init__(self, path, environ, file_path):
+    def __init__(self, path, environ, filePath):
         self.username = _username_from_env(environ)
         self.ip_addr = _get_addr(environ)
-        FileResource.__init__(self, path, environ, file_path)
+        FileResource.__init__(self, path, environ, filePath)
         if invisible_path(path):
             raise DAVError(HTTP_FORBIDDEN)
 
@@ -938,14 +890,14 @@ class MiGFileResource(FileResource):
         """Decorator wrapper for _handle_allowed"""
         @wraps(method)
         def _impl(self, *method_args, **method_kwargs):
-            if method.__name__ == 'handle_copy':
-                _handle_allowed("copy", self._file_path, self.path)
-            elif method.__name__ == 'handle_move':
-                _handle_allowed("move", self._file_path, self.path)
-            elif method.__name__ == 'handle_delete':
-                _handle_allowed("delete", self._file_path, self.path)
+            if method.__name__ == 'handleCopy':
+                _handle_allowed("copy", self._filePath, self.path)
+            elif method.__name__ == 'handleMove':
+                _handle_allowed("move", self._filePath, self.path)
+            elif method.__name__ == 'handleDelete':
+                _handle_allowed("delete", self._filePath, self.path)
             else:
-                _handle_allowed("unknown", self._file_path, self.path)
+                _handle_allowed("unknown", self._filePath, self.path)
             return method(self, *method_args, **method_kwargs)
         return _impl
 
@@ -954,32 +906,29 @@ class MiGFileResource(FileResource):
         @wraps(method)
         def _impl(self, *method_args, **method_kwargs):
             if not configuration.site_enable_gdp:
-                try:
-                    return method(self, *method_args, **method_kwargs)
-                except Exception as exc:
-                    logger.error("crash in method %s: %s" % (method, exc))
+                return method(self, *method_args, **method_kwargs)
             operation = method.__name__
             src_path = self.path
             dst_path = None
             log_src_path = None
             log_dst_path = None
-            if operation == "handle_copy":
+            if operation == "handleCopy":
                 dst_path = method_args[0]
                 log_action = "copied"
                 log_src_path = src_path.strip('/')
                 log_dst_path = dst_path.strip('/')
-            elif operation == "handle_move":
+            elif operation == "handleMove":
                 dst_path = method_args[0]
                 log_action = "moved"
                 log_src_path = src_path.strip('/')
                 log_dst_path = dst_path.strip('/')
-            elif operation == "handle_delete":
+            elif operation == "handleDelete":
                 log_action = "deleted"
                 log_src_path = src_path.strip('/')
-            elif operation == "get_content":
+            elif operation == "getContent":
                 log_action = "accessed"
                 log_src_path = src_path.strip('/')
-            elif operation == "begin_write":
+            elif operation == "beginWrite":
                 log_action = "modified"
                 log_src_path = src_path.strip('/')
             else:
@@ -1020,47 +969,47 @@ class MiGFileResource(FileResource):
 
     @__allow_handle
     @__gdp_log
-    def handle_copy(self, dest_path, depth_infinity):
+    def handleCopy(self, destPath, depthInfinity):
         """Handle a COPY request natively, but with our restrictions"""
-        return super(MiGFileResource, self).handle_copy(
-            dest_path, depth_infinity)
+        return super(MiGFileResource, self).handleCopy(
+            destPath, depthInfinity)
 
     @__allow_handle
     @__gdp_log
-    def handle_move(self, dest_path):
+    def handleMove(self, destPath):
         """Handle a MOVE request natively, but with our restrictions"""
-        return super(MiGFileResource, self).handle_move(dest_path)
+        return super(MiGFileResource, self).handleMove(destPath)
 
     @__allow_handle
     @__gdp_log
-    def handle_delete(self):
+    def handleDelete(self):
         """Handle a DELETE request natively, but with our restrictions"""
-        return super(MiGFileResource, self).handle_delete()
+        return super(MiGFileResource, self).handleDelete()
 
     @__gdp_log
-    def get_content(self):
+    def getContent(self):
         """Handle a GET request natively and log for GDP"""
-        return super(MiGFileResource, self).get_content()
+        return super(MiGFileResource, self).getContent()
 
     @__gdp_log
-    def begin_write(self, contentType=None):
+    def beginWrite(self, contentType=None):
         """Handle a PUT request natively and log for GDP"""
-        return super(MiGFileResource, self).begin_write()
+        return super(MiGFileResource, self).beginWrite()
 
 
 class MiGFolderResource(FolderResource):
     """Hide invisible files from all access.
-    We must override get_member_names to filter out hidden names and get_member
-    to avoid inherited methods like get_descendants from receiving the parent
+    We must override getMemberNames to filter out hidden names and getMember
+    to avoid inherited methods like getDescendants from receiving the parent
     unrestricted FileResource and FolderResource objects when doing e.g.
     directory listings.
     Parent constructor saves environ as self.environ for later use in chroot.
     """
 
-    def __init__(self, path, environ, file_path):
+    def __init__(self, path, environ, filePath):
         self.username = _username_from_env(environ)
         self.ip_addr = _get_addr(environ)
-        FolderResource.__init__(self, path, environ, file_path)
+        FolderResource.__init__(self, path, environ, filePath)
         if invisible_path(path):
             raise DAVError(HTTP_FORBIDDEN)
 
@@ -1068,14 +1017,14 @@ class MiGFolderResource(FolderResource):
         """Decorator wrapper for _handle_allowed"""
         @wraps(method)
         def _impl(self, *method_args, **method_kwargs):
-            if method.__name__ == 'handle_copy':
-                _handle_allowed("copy", self._file_path, self.path)
-            elif method.__name__ == 'handle_move':
-                _handle_allowed("move", self._file_path, self.path)
-            elif method.__name__ == 'handle_delete':
-                _handle_allowed("delete", self._file_path, self.path)
+            if method.__name__ == 'handleCopy':
+                _handle_allowed("copy", self._filePath, self.path)
+            elif method.__name__ == 'handleMove':
+                _handle_allowed("move", self._filePath, self.path)
+            elif method.__name__ == 'handleDelete':
+                _handle_allowed("delete", self._filePath, self.path)
             else:
-                _handle_allowed("unknown", self._file_path, self.path)
+                _handle_allowed("unknown", self._filePath, self.path)
             return method(self, *method_args, **method_kwargs)
         return _impl
 
@@ -1084,39 +1033,36 @@ class MiGFolderResource(FolderResource):
         @wraps(method)
         def _impl(self, *method_args, **method_kwargs):
             if not configuration.site_enable_gdp:
-                try:
-                    return method(self, *method_args, **method_kwargs)
-                except Exception as exc:
-                    logger.error("crash in method %s: %s" % (method, exc))
+                return method(self, *method_args, **method_kwargs)
             operation = method.__name__
             src_path = self.path
             dst_path = None
             log_src_path = None
             log_dst_path = None
-            if operation == "handle_copy":
+            if operation == "handleCopy":
                 dst_path = method_args[0]
                 log_action = "copied"
                 log_src_path = src_path.strip('/')
                 log_dst_path = dst_path.strip('/')
-            elif operation == "handle_move":
+            elif operation == "handleMove":
                 dst_path = method_args[0]
                 log_action = "moved"
                 log_src_path = src_path.strip('/')
                 log_dst_path = dst_path.strip('/')
-            elif operation == "handle_delete":
+            elif operation == "handleDelete":
                 log_action = "deleted"
                 log_src_path = src_path.strip('/')
-            elif operation == "create_collection":
+            elif operation == "createCollection":
                 log_action = "created"
                 dst_path = method_args[0]
                 relpath = "%s%s" % (src_path, dst_path)
                 log_src_path = relpath.strip('/')
-            elif operation == "create_empty_resource":
+            elif operation == "createEmptyResource":
                 log_action = "created"
                 dst_path = method_args[0]
                 relpath = "%s%s" % (src_path, dst_path)
                 log_src_path = relpath.strip('/')
-            elif operation == "get_member_names":
+            elif operation == "getMemberNames":
                 log_action = "accessed"
                 log_src_path = src_path.strip('/')
             else:
@@ -1159,84 +1105,82 @@ class MiGFolderResource(FolderResource):
 
     @__allow_handle
     @__gdp_log
-    def handle_copy(self, dest_path, depth_infinity):
+    def handleCopy(self, destPath, depthInfinity):
         """Handle a COPY request natively, but with our restrictions"""
-        return super(MiGFolderResource, self).handle_copy(
-            dest_path, depth_infinity)
+        return super(MiGFolderResource, self).handleCopy(
+            destPath, depthInfinity)
 
     @__allow_handle
     @__gdp_log
-    def handle_move(self, dest_path):
+    def handleMove(self, destPath):
         """Handle a MOVE request natively, but with our restrictions"""
-        return super(MiGFolderResource, self).handle_move(dest_path)
+        return super(MiGFolderResource, self).handleMove(destPath)
 
     @__allow_handle
     @__gdp_log
-    def handle_delete(self):
+    def handleDelete(self):
         """Handle a DELETE request natively, but with our restrictions"""
-        return super(MiGFolderResource, self).handle_delete()
+        return super(MiGFolderResource, self).handleDelete()
 
     @__gdp_log
-    def create_collection(self, name):
+    def createCollection(self, name):
         """Handle a MKCOL request natively, but with our restrictions"""
-        return super(MiGFolderResource, self).create_collection(name)
+        return super(MiGFolderResource, self).createCollection(name)
 
     @__gdp_log
-    def create_empty_resource(self, name):
+    def createEmptyResource(self, name):
         """Handle operation of same name, but with our restrictions"""
-        return super(MiGFolderResource, self).create_empty_resource(name)
+        return super(MiGFolderResource, self).createEmptyResource(name)
 
     @__gdp_log
-    def get_member_names(self):
+    def getMemberNames(self):
         """Return list of direct collection member names (utf-8 encoded).
 
-        See DAVCollection.get_member_names()
+        See DAVCollection.getMemberNames()
 
         Use parent version and filter out any invisible file names.
         """
-        logger.debug("in get_member_names: %s" % self.path)
-        res = [i for i in super(MiGFolderResource, self).get_member_names() if
-               not invisible_path(i)]
-        logger.debug("return from get_member_names %s: %s" % (self.path, res))
-        return res
+        # logger.debug("in getMemberNames: %s" % self.path)
+        return [i for i in super(MiGFolderResource, self).getMemberNames() if
+                not invisible_path(i)]
 
-    def get_member(self, name):
+    def getMember(self, name):
         """Return direct collection member (DAVResource or derived).
 
-        See DAVCollection.get_member()
+        See DAVCollection.getMember()
 
-        The inherited get_member_list and get_descendants methods implicitly call
-        self.get_member on all folder names, so we need to override here to
+        The inherited getMemberList and getDescendants methods implicitly call
+        self.getMember on all folder names, so we need to override here to
         avoid the FolderResource and FileResource objects being returned.
 
         Call parent version, filter invisible and mangle to our own
         MiGFileResource and MiGFolderResource objects.
         """
-        logger.debug("in get_member: %s" % [name])
-        res = FolderResource.get_member(self, name)
+        # logger.debug("in getMember: %s" % name)
+        res = FolderResource.getMember(self, name)
         if invisible_path(res.name):
             res = None
-        logger.debug("get_member found %s" % [res])
-        if res and not res.is_collection and \
+        # logger.debug("getMember found %s" % res)
+        if res and not res.isCollection and \
                 not isinstance(res, MiGFileResource):
-            res = MiGFileResource(res.path, self.environ, res._file_path)
-        elif res and res.is_collection and \
+            res = MiGFileResource(res.path, self.environ, res._filePath)
+        elif res and res.isCollection and \
                 not isinstance(res, MiGFolderResource):
-            res = MiGFolderResource(res.path, self.environ, res._file_path)
-        logger.debug("get_member returning %s" % [res])
+            res = MiGFolderResource(res.path, self.environ, res._filePath)
+        # logger.debug("getMember returning %s" % res)
         return res
 
-    def get_descendants(self, collections=True, resources=True,
-                        depth_first=False, depth="infinity", add_self=False):
+    def getDescendants(self, collections=True, resources=True,
+                       depthFirst=False, depth="infinity", addSelf=False):
         """Return a list _DAVResource objects of a collection (children,
         grand-children, ...).
 
-        This default implementation calls self.get_member_list() recursively.
+        This default implementation calls self.getMemberList() recursively.
 
-        This function may also be called for non-collections (with add_self=True).
+        This function may also be called for non-collections (with addSelf=True).
 
         :Parameters:
-        depth_first : bool
+        depthFirst : bool
         use <False>, to list containers before content.
         (e.g. when moving / copying branches.)
         Use <True>, to list content before containers.
@@ -1246,10 +1190,10 @@ class MiGFolderResource(FolderResource):
 
         Call parent version just with debug logging added.
         """
-        logger.debug("in get_descendants wrap for %s" % self)
-        res = FolderResource.get_descendants(self, collections, resources,
-                                             depth_first, depth, add_self)
-        logger.debug("get_descendants wrap returning %s" % res)
+        # logger.debug("in getDescendantsWrap for %s" % self)
+        res = FolderResource.getDescendants(self, collections, resources,
+                                            depthFirst, depth, addSelf)
+        # logger.debug("getDescendants wrap returning %s" % res)
         return res
 
 
@@ -1259,20 +1203,13 @@ class MiGFilesystemProvider(FilesystemProvider):
     restrictions and hidden files like in other MiG file interfaces.
     """
 
-    daemon_conf = None
-    chroot_exceptions = None
-    chmod_exceptions = None
-
-    # Just user parent constructor and call post_init to add extras
-    # def __init__(self, root_folder_path, readonly=False):
-    #    """Simply call parent constructor"""
-    #    FilesystemProvider.__init__(self, root_folder_path, readonly)
-
-    def post_init(self, server_conf, dav_conf):
-        """Additions after parent constructor"""
+    def __init__(self, directory, server_conf, dav_conf):
+        """Simply call parent constructor"""
+        FilesystemProvider.__init__(self, directory)
         self.daemon_conf = server_conf.daemon_conf
         self.chroot_exceptions = self.daemon_conf['chroot_exceptions']
         self.chmod_exceptions = self.daemon_conf['chmod_exceptions']
+        self.readonly = self.daemon_conf['read_only']
 
     # Use shared daemon fs helper functions
 
@@ -1287,9 +1224,9 @@ class MiGFilesystemProvider(FilesystemProvider):
         #                                                     reply))
         return reply
 
-    # IMPORTANT: a recent version of wsgidav is needed for environ arg.
+    # IMPORTANT: we need a recent/patched version of wsgidav for environ arg.
     # It is required to allow per-user chrooting inside root share folder.
-    def _loc_to_file_path(self, path, environ=None):
+    def _locToFilePath(self, path, environ=None):
         """Convert resource path to a unicode absolute file path:
         We enforce chrooted absolute unicode path in user_chroot extraction so
         just make sure user_chroot+path is not outside user_chroot when used
@@ -1301,25 +1238,13 @@ class MiGFilesystemProvider(FilesystemProvider):
         move and delete operations on all MiGFileResource and MiGFolderResource
         objects.
         """
-        # IMPORTANT: make sure post_init is explicitly called before use
-        assert self.daemon_conf is not None
-        assert self.chroot_exceptions is not None
-        assert self.chmod_exceptions is not None
-
-        # NOTE: copied from parent method
-        root_path = self.root_folder_path
-        assert root_path is not None
-        assert compat.is_native(root_path)
-        assert compat.is_native(path)
-
         if environ is None:
             raise RuntimeError("A recent/patched wsgidav is needed, see code")
         if path is None:
             raise RuntimeError("Invalid path: %s" % path)
-        logger.debug("_loc_to_file_path: %s" % [path])
+        # logger.debug("_locToFilePath: %s" % path)
         username = _username_from_env(environ)
-        logger.debug("_loc_to_file_path %s: find chroot for %s" %
-                     ([path], username))
+        # logger.debug("_locToFilePath %s: find chroot for %s" % (path, username))
         entries = login_map_lookup(self.daemon_conf, username)
         for entry in entries:
             if entry.chroot:
@@ -1333,55 +1258,32 @@ class MiGFilesystemProvider(FilesystemProvider):
                         logger.error("could not expand link %s" % user_chroot)
                         continue
                 break
-
-        assert user_chroot
-        assert compat.is_native(user_chroot)
-
-        # NOTE: copied from parent method
-        path_parts = path.strip("/").split("/")
-        # NOTE: adjust this default chrooting a bit to allow several chroot dirs
-        #file_path = os.path.abspath(os.path.join(root_path, *path_parts))
-        # if not file_path.startswith(root_path):
-        #    logger.error("illegal access attempt for %s with %s outside %s" %
-        #                 (username, path, root_path))
-        #    raise RuntimeError(
-        #        "Security exception: tried to access file outside root: {}".format(
-        #            file_path
-        #        )
-        #    )
-        abs_path = os.path.abspath(os.path.join(user_chroot, *path_parts))
+        pathInfoParts = path.strip('/').split('/')
+        abs_path = os.path.abspath(os.path.join(user_chroot, *pathInfoParts))
         try:
             abs_path = get_fs_path(configuration, abs_path, user_chroot,
                                    self.chroot_exceptions)
         except ValueError as vae:
-            logger.error("illegal access attempt for %s with %s: %s" %
-                         (username, path, vae))
             raise RuntimeError("Access out of bounds: %s in %s : %s"
-                               % ([path], [user_chroot], vae))
-        except Exception as exc:
-            logger.error("_loc_to_file_path crash for %s: %s" % ([path], exc))
-
-        # Convert to unicode
-        #file_path = util.to_unicode_safe(file_path)
-        #logger.debug("_loc_to_file_path on %s: %s" % (path, file_path))
-        abs_path = util.to_unicode_safe(abs_path)
-        logger.debug("_loc_to_file_path on %s: %s" % (path, [abs_path]))
+                               % (path, user_chroot, vae))
+        abs_path = force_unicode(abs_path)
+        # logger.debug("_locToFilePath on %s: %s" % (path, abs_path))
         return abs_path
 
-    def get_resource_inst(self, path, environ):
+    def getResourceInst(self, path, environ):
         """Return info dictionary for path.
 
-        See DAVProvider.get_resource_inst()
+        See DAVProvider.getResourceInst()
 
         Override to chroot and filter MiG invisible paths from content.
         """
 
-        logger.debug("get_resource_inst: %s" % [path])
-        self._count_get_resource_inst += 1
+        # logger.debug("getResourceInst: %s" % path)
+        self._count_getResourceInst += 1
         try:
-            abs_path = self._loc_to_file_path(path, environ)
+            abs_path = self._locToFilePath(path, environ)
         except RuntimeError as rte:
-            logger.warning("get_resource_inst: %s : %s" % (path, rte))
+            logger.warning("getResourceInst: %s : %s" % (path, rte))
             raise DAVError(HTTP_FORBIDDEN)
 
         if not os.path.exists(abs_path):
@@ -1396,8 +1298,8 @@ def is_authorized_session(configuration, username, session_id):
     """Returns True if user session is open
     and authorized and within expire timestamp"""
 
-    logger.debug("session_id: %s, user_sessions: %s" %
-                 (session_id, user_sessions))
+    # logger.debug("session_id: %s, user_sessions: %s" %
+    #             (session_id, user_sessions))
     result = False
     session_timeout = io_session_timeout.get('davs', 0)
     session = get_active_session(configuration,
@@ -1415,11 +1317,10 @@ def is_authorized_session(configuration, username, session_id):
     return result
 
 
-def update_users(configuration, login_map, username):
+def update_users(configuration, user_map, username):
     """Update creds dict for username and aliases"""
     # Only need to update users and shares here, since jobs only use sftp
     changed_users, changed_shares = [], []
-    daemon_conf = configuration.daemon_conf
     if possible_user_id(configuration, username) \
             or (configuration.site_enable_gdp
                 and possible_gdp_user_id(configuration, username)):
@@ -1437,34 +1338,23 @@ def update_users(configuration, login_map, username):
             os.makedirs(litmus_home)
         except:
             pass
-        for (auth_type, conf_name) in (('basic', 'password'),
-                                       ('digest', 'digest')):
-            if not daemon_conf.get('allow_%s' % conf_name, False):
-                #logger.debug("skip %s auth for %s" % (auth_type, username))
+        for auth in ('basic', 'digest'):
+            if not daemon_conf.get('accept%s' % auth, False):
                 continue
-            logger.info("enabling litmus %s test accounts" % auth_type)
+            logger.info("enabling litmus %s test accounts" % auth)
             changed_users.append(litmus_id)
-            if auth_type == 'basic':
+            if auth == 'basic':
                 pw_hash = generate_password_hash(configuration, litmus_pw)
-                logger.info("add litmus user obj to daemon_conf %s" %
-                            daemon_conf)
-                add_user_object(configuration, litmus_id, litmus_home,
+                add_user_object(daemon_conf, litmus_id, litmus_home,
                                 password=pw_hash)
             else:
                 digest = generate_password_digest(
                     configuration, dav_domain, litmus_id, litmus_pw,
                     configuration.site_digest_salt)
-                add_user_object(configuration, litmus_id, litmus_home,
+                add_user_object(daemon_conf, litmus_id, litmus_home,
                                 digest=digest)
-            logger.info("enabled litmus user")
-    else:
-        logger.debug("no litmus: %s && %s && %s" % (
-            litmus_id, litmus_pw, login_map_lookup(daemon_conf, litmus_id)))
-    #logger.debug("changed users for %s: %s" % (username, changed_users))
     update_login_map(daemon_conf, changed_users, changed_jobs=[],
                      changed_shares=changed_shares)
-    # logger.debug("done updating users for %s with map %s" %
-    #             (username, login_map))
 
 
 class SessionExpire(threading.Thread):
@@ -1534,8 +1424,8 @@ class LogStats(threading.Thread):
         self.last_http_requests = 0
         self.stats = {'server': server.stats}
         try:
-            self.stats['auth'] = (_find_authenticator(
-                self.server.wsgi_app)).stats
+            self.stats['auth'] = \
+                (_find_authenticator(self.server.wsgi_app)).stats
         except Exception:
             self.stats['auth'] = None
             logger.warning("Failed to retreive auth stats")
@@ -1554,18 +1444,22 @@ class LogStats(threading.Thread):
                          or self.last_http_requests != http_requests)
                         and (not self.idle_only or threads_idle == threads)):
                 socket_connections = int(server_stats['Accepts'])
-                bytes_read = float(server_stats['Bytes Read'](server_stats))
-                bytes_written = float(
-                    server_stats['Bytes Written'](server_stats))
-                socket_connections_sec = float(
-                    server_stats['Accepts/sec'](server_stats))
-                read_throughput = float(
-                    server_stats['Read Throughput'](server_stats))
-                write_throughput = float(
-                    server_stats['Write Throughput'](server_stats))
-                runtime = float(server_stats['Run time'](server_stats))
-                worktime = float(server_stats['Work Time'](server_stats))
-                socket_errors = int(server_stats['Socket Errors'])
+                bytes_read = \
+                    float(server_stats['Bytes Read'](server_stats))
+                bytes_written = \
+                    float(server_stats['Bytes Written'](server_stats))
+                socket_connections_sec = \
+                    float(server_stats['Accepts/sec'](server_stats))
+                read_throughput = \
+                    float(server_stats['Read Throughput'](server_stats))
+                write_throughput = \
+                    float(server_stats['Write Throughput'](server_stats))
+                runtime = \
+                    float(server_stats['Run time'](server_stats))
+                worktime = \
+                    float(server_stats['Work Time'](server_stats))
+                socket_errors = \
+                    int(server_stats['Socket Errors'])
                 msg = "\n------------------------------------------------\n" \
                     + "\t\tServer\n" \
                     + "------------------------------------------------\n" \
@@ -1659,191 +1553,68 @@ def run(configuration):
     daemon_conf = configuration.daemon_conf
     # We just wrap login_map in domain user map as needed here
     user_map = {dav_domain: daemon_conf['login_map']}
-    # NOTE: Slightly modified default middleware stack from
-    # https://wsgidav.readthedocs.io/en/latest/user_guide_configure.html
-    middleware_stack = []
-    if configuration.loglevel == 'debug' or dav_domain['verbose'] > 0:
-        logger.debug("adding WsgiDavDebugFilter middleware")
-        middleware_stack.append(WsgiDavDebugFilter)
-    if Cors:
-        logger.debug("adding Cors middleware")
-        middleware_stack.append(Cors)
-    middleware_stack += [
-        ErrorPrinter,
-        # TODO: switch back to our own authenticator
-        HTTPAuthenticator,
-        # MiGHTTPAuthenticator,
-        # configured under dir_browser option (see below)
-        WsgiDavDirBrowser,
-        RequestResolver  # this must be the last middleware item
-    ]
-
-    mig_fs_provider = MiGFilesystemProvider(daemon_conf['root_dir'],
-                                            daemon_conf['read_only'])
-    mig_fs_provider.post_init(configuration, dav_conf)
-
     config = DEFAULT_CONFIG.copy()
     config.update(dav_conf)
     config.update(daemon_conf)
     config.update({
-        # "server": "cheroot",
-        # "server_args": {},
-        # "host": "localhost",
-        # "port": 8080,
-        # "mount_path": None,  # Application root, e.g. <mount_path>/<share_name>/<res_path>
-        # "provider_mapping": {},
         "provider_mapping": {
-            dav_domain: mig_fs_provider,
+            dav_domain: MiGFilesystemProvider(daemon_conf['root_dir'],
+                                              configuration,
+                                              dav_conf)
         },
-        # "add_header_MS_Author_Via": True,
-        # "hotfixes": {
-        #    "emulate_win32_lastmod": False,  # True: support Win32LastModifiedTime
-        #    "re_encode_path_info": True,  # (See issue #73)
-        #    "unquote_path_info": False,  # (See issue #8, #228)
-        #    # "treat_root_options_as_asterisk": False, # Hotfix for WinXP / Vista: accept 'OPTIONS /' for a 'OPTIONS *'
-        #    # "win_accept_anonymous_options": False,
-        #    # "winxp_accept_root_share_login": False,
-        # },
-        # "property_manager": None,  # True: use property_manager.PropertyManager
-        "property_manager": True,
-        # "mutable_live_props": [],
+        "user_mapping": user_map,
+        # Use these to tweak logging target and verbosity. E.g. increase
+        # verbose value to 2 to get more debug info like full XML messages.
+        # "verbose": 2,
+        # "enable_loggers": ["lock_manager", "property_manager", "http_authenticator", ...]
+        # "debug_methods": ["COPY", "DELETE", "GET", "HEAD", "LOCK", "MOVE", "OPTIONS", "PROPFIND", "PROPPATCH", "PUT", "UNLOCK"],
+        # "verbose": 2,
+        # "enable_loggers": ["http_authenticator"],
+        # "debug_methods": ["PROPFIND", "PUT"],
+        "verbose": 0,
+        "enable_loggers": [],
+        "debug_methods": [],
+        "propsmanager": True,      # True: use property_manager.PropertyManager
+        "locksmanager": True,      # True: use lock_manager.LockManager
         # Allow last modified timestamp updates from client to support rsync -a
         "mutable_live_props": ["{DAV:}getlastmodified"],
-        # True: use LockManager(lock_storage.LockStorageDict)
-        "lock_storage": True,
-        "middleware_stack": middleware_stack,
-        # HTTP Authentication Options
-        "http_authenticator": {
-            #: Domain controller that is used to resolve realms and authorization.
-            #: Default null: which uses SimpleDomainController and the
-            #: `simple_dc.user_mapping` option below.
-            #: (See http://wsgidav.readthedocs.io/en/latest/user_guide_configure.html
-            #: for details.)
-            # None: dc.simple_dc.SimpleDomainController(user_mapping)
-            # "domain_controller": None,
-            # domain_controller: wsgidav.dc.simple_dc.SimpleDomainController
-            # domain_controller: wsgidav.dc.pam_dc.PAMDomainController
-            # domain_controller: wsgidav.dc.nt_dc.NTDomainController
-            "domain_controller": MiGDomainController,
-            # Allow basic authentication, True or False
-            "accept_basic": daemon_conf['allow_password'],
-            # Allow digest authentication, True or False
-            "accept_digest": daemon_conf['allow_digest'],
-            # True (default digest) or False (default basic)
-            "default_to_digest": 'digest' in configuration.user_davs_auth[:1],
-            # Name of a header field that will be accepted as authorized user
-            "trusted_auth_header": None,
-        },
-        #: Used by SimpleDomainController only
-        # NO anonymous access by default
-        "simple_dc": {"user_mapping": user_map},
-        # IMPORTANT: DC state moved here since class is instantiated repeatedly
-        "mig_dc": {
-            "user_mapping": user_map,
-            "root_dir": daemon_conf["root_dir"],
-            "last_expire": time.time(),
-            "min_expire_delay": 300,
-            "hash_cache": {},
-            "digest_cache": {},
-        },
-        # TODO: figure out why the use of verbose and debug broke with 3.x
-        # https://wsgidav.readthedocs.io/en/latest/user_guide_lib.html#logging
-        #: Verbose Output
-        #: 0 - no output
-        #: 1 - no output (excepting application exceptions)
-        #: 2 - show warnings
-        #: 3 - show single line request summaries (for HTTP logging)
-        #: 4 - show additional events
-        #: 5 - show full request/response header info (HTTP Logging)
-        #:     request body and GET response bodies not shown
-        # "verbose": DEFAULT_VERBOSE,
-        "verbose": 5,
-        #: Log options
-        "logging": {
-            # "logger_date_format": DEFAULT_LOGGER_DATE_FORMAT,
-            # "logger_format": DEFAULT_LOGGER_FORMAT,
-            # "enable_loggers": ["lock_manager", "property_manager",
-            #                   "http_authenticator", ...],
-            # "enable_loggers": [],
-            "enable_loggers": ["lock_manager", "property_manager",
-                               "http_authenticator"],
-            # "debug_methods": ["COPY", "DELETE", "GET", "HEAD", "LOCK", "MOVE",
-            #                  "OPTIONS", "PROPFIND", "PROPPATCH", "PUT",
-            #                  "UNLOCK"],
-            # "debug_methods": [],
-            "debug_methods": ["COPY", "DELETE", "GET", "HEAD", "LOCK", "MOVE",
-                              "OPTIONS", "PROPFIND", "PROPPATCH", "PUT",
-                              "UNLOCK"],
-        },
-        #: Options for `WsgiDavDirBrowser`
-        "dir_browser": {
-            "enable": True,  # Render HTML listing for GET requests on collections
-            # List of fnmatch patterns:
-            "ignore": [
-                ".DS_Store",  # macOS folder meta data
-                "._*",  # macOS hidden data files
-                "Thumbs.db",  # Windows image previews
-            ],
-            "icon": True,
-            # Raw HTML code, appended as footer (True: use a default)
-            "response_trailer": True,
-            # TODO: investigate if this show user option causes DN visible in mount
-            "show_user": True,  # Show authenticated user an realm
-            # Send <dm:mount> response if request URL contains '?davmount' (rfc4709)
-            "davmount": True,
-            # Add 'Mount' link at the top
-            "davmount_links": False,
-            "ms_sharepoint_support": True,  # Invoke MS Office documents for editing using WebDAV
-            # Invoke Libre Office documents for editing using WebDAV
-            "libre_office_support": True,
-            # The path to the directory that contains template.html and associated assets.
-            # The default is the htdocs directory within the dir_browser directory.
-            "htdocs_path": None,
-        },
+        "domaincontroller": MiGWsgiDAVDomainController(daemon_conf['root_dir'], user_map),
+        "middleware_stack": [WsgiDavDirBrowser, MiGHTTPAuthenticator, ErrorPrinter, WsgiDavDebugFilter],
         "enable_stats": False
     })
 
     # NOTE: Briefly insert dummy user to avoid bogus warning about anon access
     #       We dynamically add users as they connect so it isn't empty.
     fake_user = 'nosuchuser-%s' % time.time()
-    user_map[dav_domain][fake_user] = None
+    config['user_mapping'][dav_domain][fake_user] = None
     app = WsgiDAVApp(config)
-    del user_map[dav_domain][fake_user]
-    #print('User list: %s' % user_map)
+    del config['user_mapping'][dav_domain][fake_user]
+    # print('User list: %s' % config['user_mapping'])
+
+    # Find and mangle HTTPAuthenticator in application stack
+
+    # app_authenticator = _find_authenticator(app)
 
     # print('Config: %s' % config)
-    # print('Daemon Conf: %s' % daemon_conf)
     # print('app auth: %s' % app_authenticator)
-    WSGIServer.ssl_adapter = None
+    wsgiserver.CherryPyWSGIServer.ssl_adapter = None
     nossl = config.get('nossl', False)
-    ssl_adapter = None
     if not nossl:
         cert = config['ssl_certificate'] = configuration.user_davs_key
         key = config['ssl_private_key'] = configuration.user_davs_key
         chain = config['ssl_certificate_chain'] = ''
-        # TODO: switch back to HardenedSSLAdapter
-        ssl_adapter = config['ssl_adapter'] = 'builtin'
-        # WSGIServer.ssl_adapter = BuiltinSSLAdapter(cert, key, chain)
-        # WSGIServer.ssl_adapter = HardenedSSLAdapter(
-        #    cert, key, chain, configuration.site_enable_davs_legacy_tls)
+        # wsgiserver.CherryPyWSGIServer.ssl_adapter = BuiltinSSLAdapter(
+        #     cert, key, chain)
+        wsgiserver.CherryPyWSGIServer.ssl_adapter = HardenedSSLAdapter(
+            cert, key, chain, configuration.site_enable_davs_legacy_tls)
 
     # Use bundled CherryPy WSGI Server to support SSL
     version = "%s WebDAV" % configuration.short_title
-    # TODO: ssl cert args can be passed to WSGIServer now
-    server = WSGIServer((config["host"], config["port"]), app,
-                        server_name=version)
+    server = wsgiserver.CherryPyWSGIServer((config["host"], config["port"]),
+                                           app, server_name=version)
     server.stats['Enabled'] = config['enable_stats']
 
     logger.info('Listening on %(host)s (%(port)s)' % config)
-
-    # NOTE: native wsgidav logging gets overridden by our logger init
-    #       enable next lines to override
-    # TODO: figure out how to avoid such logging interference
-    enable_loggers = config.get("logging", {}).get("enable_loggers", [])
-    verbose = config.get("verbose", 0)
-    if enable_loggers and verbose > 0:
-        logger.info('init wsgidav logging for %s' % enable_loggers)
-        util.init_logging(config)
 
     sessionexpiretracker = SessionExpire()
     logstats = LogStats(config, server, interval=60,
@@ -1859,7 +1630,7 @@ def run(configuration):
         logstats.stop()
         # forward KeyboardInterrupt to main thread
         raise
-    except Exception as exc:
+    except Exception:
         sessionexpiretracker.stop()
         logstats.stop()
         # forward error to main thread
@@ -1908,7 +1679,7 @@ if __name__ == "__main__":
 
     configuration.dav_cfg = {
         'nossl': nossl,
-        'verbose': 2,
+        'verbose': 1,
     }
 
     if not configuration.site_enable_davs:
@@ -1971,6 +1742,10 @@ unless it is available in mig/server/MiGserver.conf
              },
     }
     daemon_conf = configuration.daemon_conf
+    daemon_conf['acceptbasic'] = daemon_conf['allow_password']
+    daemon_conf['acceptdigest'] = daemon_conf['allow_digest']
+    # Keep order of auth methods (please note the 2GB+ upload bug with digest)
+    daemon_conf['defaultdigest'] = 'digest' in configuration.user_davs_auth[:1]
     if configuration.site_enable_gdp:
         # Close projects marked as open due to NON-clean exits
         project_close(configuration, 'davs',
@@ -1981,10 +1756,6 @@ unless it is available in mig/server/MiGserver.conf
     info_msg = "Listening on address '%s' and port %d" % (address, port)
     logger.info(info_msg)
     print(info_msg)
-    #print("using stdout encoding %s" % sys.stdout.encoding)
-    #print("using stderr encoding %s" % sys.stderr.encoding)
-    print("default enc %s and default fs enc %s" %
-          (sys.getdefaultencoding(), sys.getfilesystemencoding()))
     try:
         run(configuration)
     except KeyboardInterrupt:
