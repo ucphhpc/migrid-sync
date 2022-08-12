@@ -1757,9 +1757,23 @@ def guess_type(name):
         ):
             __type_map[key] = valid_job_id
         for key in (
-            'flags',
             'country',
+            'openid.sreg.country',
+            'oidc.claim.country',
+        ):
+            # Country must be a two-letter ascii code
+            __type_map[key] = lambda x: valid_ascii(x, min_length=2,
+                                                    max_length=2)
+        for key in (
             'state',
+            'openid.sreg.state',
+            'oidc.claim.state',
+        ):
+            # State must be empty or a two-letter ascii code
+            __type_map[key] = lambda x: len(x) == 0 or \
+                valid_ascii(x, min_length=2, max_length=2)
+        for key in (
+            'flags',
             'desktopname',
             'menu',
             'group_in_time',
