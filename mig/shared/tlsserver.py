@@ -40,7 +40,10 @@ from mig.shared.defaults import STRONG_TLS_CIPHERS, STRONG_TLS_CURVES
 def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
                          ciphers=STRONG_TLS_CIPHERS,
                          curve_priority=STRONG_TLS_CURVES,
-                         allow_pre_tlsv12=False):
+                         allow_pre_tlsv12=False,
+                         allow_pre_tlsv13=True,
+                         allow_renegotiation=False,
+                         ):
     """Build and return a hardened native SSL context to apply to a socket"""
     _logger = configuration.logger
     _logger.info("enforcing strong SSL/TLS connections")
@@ -58,6 +61,16 @@ def hardened_ssl_context(configuration, keyfile, certfile, dhparamsfile=None,
     if not allow_pre_tlsv12:
         ssl_options |= getattr(ssl, 'OP_NO_TLSv1', 0x4000000)
         ssl_options |= getattr(ssl, 'OP_NO_TLSv1_1', 0x10000000)
+    # NOTE: refuse slightly dated TLS 1.2 protocol unless allow_pre_tlsv13
+    if not allow_pre_tlsv13:
+        if getattr(ssl, 'HAS_TLSv1_3', False):
+            ssl_options |= getattr(ssl, 'OP_NO_TLSv1_2', 0x8000000)
+        else:
+            _logger.warning("won't disable TLS 1.2 without TLS 1.3 support")
+    # NOTE: refuse client TLS renegotiation unless allow_renegotiation
+    if not allow_renegotiation:
+        ssl_options |= getattr(ssl, 'OP_NO_RENEGOTIATION', 0x40000000)
+    # NOTE: recommended hardening against various potential weaknesses
     ssl_options |= getattr(ssl, 'OP_NO_COMPRESSION', 0x20000)
     ssl_options |= getattr(ssl, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000)
     ssl_options |= getattr(ssl, 'OP_SINGLE_ECDH_USE', 0x80000)
@@ -103,7 +116,7 @@ openssl dhparam 2048 -out %s""" % dhparamsfile)
                 _logger.warning("Couldn't init elliptic curve %s: %s" %
                                 (curve_name, exc))
         if not activated_curve:
-            _logger.info("""You need a recent pyopenssl built with elliptic
+            _logger.info("""You need a recent openssl built with elliptic
 curves to take advantage of this optional improved security feature""")
 
     if not pfs_available:
@@ -118,7 +131,10 @@ def hardened_openssl_context(configuration, OpenSSL, keyfile, certfile,
                              cacertfile=None, dhparamsfile=None,
                              ciphers=STRONG_TLS_CIPHERS,
                              curve_priority=STRONG_TLS_CURVES,
-                             allow_pre_tlsv12=False):
+                             allow_pre_tlsv12=False,
+                             allow_pre_tlsv13=True,
+                             allow_renegotiation=False,
+                             ):
     """Build and return a hardened OpenSSL context to apply to a socket"""
     _logger = configuration.logger
     SSL, crypto = OpenSSL.SSL, OpenSSL.crypto
@@ -141,6 +157,16 @@ def hardened_openssl_context(configuration, OpenSSL, keyfile, certfile,
     if not allow_pre_tlsv12:
         ssl_options |= getattr(SSL, 'OP_NO_TLSv1', 0x4000000)
         ssl_options |= getattr(SSL, 'OP_NO_TLSv1_1', 0x10000000)
+    # NOTE: refuse slightly dated TLS 1.2 protocol unless allow_pre_tlsv13
+    if not allow_pre_tlsv13:
+        if getattr(SSL, 'HAS_TLSv1_3', False):
+            ssl_options |= getattr(SSL, 'OP_NO_TLSv1_2', 0x8000000)
+        else:
+            _logger.warning("won't disable TLS 1.2 without TLS 1.3 support")
+    # NOTE: refuse client TLS renegotiation unless allow_renegotiation
+    if not allow_renegotiation:
+        ssl_options |= getattr(SSL, 'OP_NO_RENEGOTIATION', 0x40000000)
+    # NOTE: recommended hardening against various potential weaknesses
     ssl_options |= getattr(SSL, 'OP_NO_COMPRESSION', 0x20000)
     ssl_options |= getattr(SSL, 'OP_CIPHER_SERVER_PREFERENCE', 0x400000)
     ssl_options |= getattr(SSL, 'OP_SINGLE_ECDH_USE', 0x80000)

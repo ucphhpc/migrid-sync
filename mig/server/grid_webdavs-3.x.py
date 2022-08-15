@@ -1721,6 +1721,8 @@ def run(configuration):
         middleware_stack.append(WsgiDavDebugFilter)
     if Cors:
         logger.debug("adding Cors middleware")
+        # TODO: add HSTS etc. for example through Cors add_always conf
+        # https://wsgidav.readthedocs.io/en/latest/_modules/wsgidav/mw/cors.html
         middleware_stack.append(Cors)
     middleware_stack += [
         ErrorPrinter,
@@ -1908,7 +1910,6 @@ def run(configuration):
         # logger.debug("init ssl_adapter for Server")
         try:
             # TODO: verify hardening after wsgidav upgrade
-            # TODO: add HSTS etc
             # ssl_adapter = server.ssl_adapter = BuiltinSSLAdapter(
             #    cert, key, chain, ciphers)
             ssl_adapter = server.ssl_adapter = HardenedSSLAdapter(
