@@ -41,6 +41,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import base64
+import logging
 import os
 import socket
 import sys
@@ -87,6 +88,7 @@ try:
         raise ValueError("Only wsgidav 3.x and later is supported: found %s"
                          % wsgidav_version)
     from wsgidav import util
+    # TODO: should we switch to force_unicode to avoid obsolete compat module?
     # NOTE: we use built-in wsgidav unicode helper rather than force_unicode
     from wsgidav import compat
     # NOTE: SimpleDomainController was introduced with wsgidav 2.x and later
@@ -102,7 +104,7 @@ except ImportError as ierr:
 
 
 from mig.shared.accountstate import check_account_accessible
-from mig.shared.base import invisible_path
+from mig.shared.base import invisible_path, force_unicode, force_utf8
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import dav_domain, litmus_id, io_session_timeout, \
     STRONG_TLS_CIPHERS, STRONG_TLS_LEGACY_CIPHERS
@@ -796,6 +798,7 @@ class MiGDomainController(SimpleDomainController):
     from daemon_conf directly.
 
     IMPORTANT: this class is instantiated for each session by HTTPAuthenticator!
+    Any global or cross-session state must be kept e.g. in shared config.
     """
 
     # NOTE: the API changed significantly between 1.x, 2.x and 3.x+
@@ -825,6 +828,10 @@ class MiGDomainController(SimpleDomainController):
         """
         user_list = login_map_lookup(daemon_conf, username)
         return [i for i in user_list if i.digest is not None]
+
+    def is_share_anonymous(self, share):
+        """Do NOT allow anonymous access at all"""
+        return False
 
     def basic_auth_user(self, realmname, username, password, environ):
         """Returns True if username / password pair is valid for the realm,
@@ -1374,6 +1381,7 @@ class MiGFilesystemProvider(FilesystemProvider):
                 break
 
         # TODO: verify chrooting after wsgidav updates
+        #       Testing with /../ IS rejected for user, litmus and sharelink.
         assert user_chroot
         assert is_native(user_chroot)
 
@@ -1406,6 +1414,8 @@ class MiGFilesystemProvider(FilesystemProvider):
         # file_path = util.to_unicode_safe(file_path)
         # logger.debug("_loc_to_file_path on %s: %s" % (path, file_path))
         abs_path = util.to_unicode_safe(abs_path)
+        # abs_path = force_unicode(abs_path)
+        # abs_path = force_utf8(abs_path)
         # logger.debug("_loc_to_file_path on %s: %s" % (path, abs_path))
         return abs_path
 
@@ -1722,11 +1732,6 @@ def run(configuration):
         RequestResolver  # this must be the last middleware item
     ]
 
-    # NOTE: parent FilesystemProvider changed constructor API slightly in 4
-    mig_fs_provider = MiGFilesystemProvider(daemon_conf['root_dir'],
-                                            readonly=daemon_conf['read_only'])
-    mig_fs_provider.post_init(configuration, dav_conf)
-
     config = DEFAULT_CONFIG.copy()
     config.update(dav_conf)
     config.update(daemon_conf)
@@ -1737,9 +1742,6 @@ def run(configuration):
         # "port": 8080,
         # "mount_path": None,  # Application root, e.g. <mount_path>/<share_name>/<res_path>
         # "provider_mapping": {},
-        "provider_mapping": {
-            dav_domain: mig_fs_provider,
-        },
         # "add_header_MS_Author_Via": True,
         # "hotfixes": {
         #    "emulate_win32_lastmod": False,  # True: support Win32LastModifiedTime
@@ -1791,7 +1793,6 @@ def run(configuration):
             "hash_cache": {},
             "digest_cache": {},
         },
-        # TODO: figure out why the use of verbose and debug broke with 3.x
         #: Verbose Output
         #: 0 - no output
         #: 1 - no output (excepting application exceptions)
@@ -1801,7 +1802,7 @@ def run(configuration):
         #: 5 - show full request/response header info (HTTP Logging)
         #:     request body and GET response bodies not shown
         # "verbose": DEFAULT_VERBOSE,
-        "verbose": 5,
+        "verbose": 3,
         #: Log options
         "logging": {
             # "logger_date_format": DEFAULT_LOGGER_DATE_FORMAT,
@@ -1809,15 +1810,16 @@ def run(configuration):
             # "enable_loggers": ["lock_manager", "property_manager",
             #                   "http_authenticator", ...],
             # "enable_loggers": [],
-            "enable_loggers": ["lock_manager", "property_manager",
-                               "http_authenticator"],
+            # "enable_loggers": ["lock_manager", "property_manager",
+            #                   "http_authenticator"],
+            "enable_loggers": ["http_authenticator"],
             # "debug_methods": ["COPY", "DELETE", "GET", "HEAD", "LOCK", "MOVE",
             #                  "OPTIONS", "PROPFIND", "PROPPATCH", "PUT",
             #                  "UNLOCK"],
-            # "debug_methods": [],
-            "debug_methods": ["COPY", "DELETE", "GET", "HEAD", "LOCK", "MOVE",
-                              "OPTIONS", "PROPFIND", "PROPPATCH", "PUT",
-                              "UNLOCK"],
+            "debug_methods": [],
+            # "debug_methods": ["COPY", "DELETE", "GET", "HEAD", "LOCK", "MOVE",
+            #                  "OPTIONS", "PROPFIND", "PROPPATCH", "PUT",
+            #                  "UNLOCK"],
         },
         #: Options for `WsgiDavDirBrowser`
         "dir_browser": {
@@ -1847,6 +1849,29 @@ def run(configuration):
         "enable_stats": False
     })
 
+    # NOTE: native wsgidav logging is initialized with NullHandler so we adjust
+    #       to propagate to our main logger.
+    # https://wsgidav.readthedocs.io/en/latest/user_guide_lib.html#logging
+    enable_loggers = config.get("logging", {}).get("enable_loggers", [])
+    verbose = config.get("verbose", 0)
+    if enable_loggers and verbose > 0:
+        logger.info('init wsgidav logging for %s' % enable_loggers)
+        # NOTE: lookup wsgidav core logger from util and set it to propagate
+        native_logger = logging.getLogger(util.BASE_LOGGER_NAME)
+        native_logger.propagate = True
+        # native_logger.setLevel(logging.DEBUG)
+        native_logger.setLevel(logger.getEffectiveLevel())
+
+    # NOTE: parent FilesystemProvider changed constructor API slightly in 4
+    mig_fs_provider = MiGFilesystemProvider(daemon_conf['root_dir'],
+                                            readonly=daemon_conf['read_only'])
+    mig_fs_provider.post_init(configuration, dav_conf)
+    config.update({
+        "provider_mapping": {
+            dav_domain: mig_fs_provider,
+        }
+    })
+
     nossl = config.get('nossl', False)
     adapter = None
     if not nossl:
@@ -1871,6 +1896,8 @@ def run(configuration):
 
     # Use cheroot  WSGI Server to support SSL
     version = "%s WebDAV" % configuration.short_title
+    if not nossl:
+        version += 'S'
     # TODO: tune server for performance with numthreads, queue size, keep-alive?
     # https://cheroot.cherrypy.dev/en/latest/pkg/cheroot.wsgi/#cheroot.wsgi.Server
     server = Server((config["host"], config["port"]), app,
@@ -1881,6 +1908,7 @@ def run(configuration):
         # logger.debug("init ssl_adapter for Server")
         try:
             # TODO: verify hardening after wsgidav upgrade
+            # TODO: add HSTS etc
             # ssl_adapter = server.ssl_adapter = BuiltinSSLAdapter(
             #    cert, key, chain, ciphers)
             ssl_adapter = server.ssl_adapter = HardenedSSLAdapter(
@@ -1892,17 +1920,6 @@ def run(configuration):
         # logger.debug("created ssl_adapter for Server")
 
     server.stats['Enabled'] = config['enable_stats']
-
-    # NOTE: native wsgidav logging gets overridden by our logger init
-    #       enable next lines to override
-    # TODO: figure out how to avoid such logging interference
-    # https://wsgidav.readthedocs.io/en/latest/user_guide_lib.html#logging
-    enable_loggers = config.get("logging", {}).get("enable_loggers", [])
-    verbose = config.get("verbose", 0)
-    if enable_loggers and verbose > 0:
-        logger.info('init wsgidav logging for %s' % enable_loggers)
-        util.init_logging(config)
-
     sessionexpiretracker = SessionExpire()
     logstats = LogStats(config, server, interval=60,
                         idle_only=False, change_only=True)
@@ -1933,8 +1950,10 @@ if __name__ == "__main__":
     if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
         log_level = configuration.loglevel = sys.argv[1]
 
-    # Use separate logger
-    logger = daemon_logger("webdavs",
+    # IMPORTANT: use root-logger (empty str) to catch both wsgidav and own logs
+    # root_logger = "webdavs"
+    root_logger = ""
+    logger = daemon_logger(root_logger,
                            level=log_level,
                            path=configuration.user_davs_log)
     configuration.logger = logger
