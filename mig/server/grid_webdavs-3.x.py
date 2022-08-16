@@ -41,6 +41,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import base64
+import logging
 import os
 import socket
 import sys
@@ -68,14 +69,18 @@ try:
         _loopback_for_cert_thread as orig_loopback_for_cert_thread
     # For hot-patching _loopback_for_cert_thread function
     import cheroot.ssl.builtin
-    # NOTE: middleware components moved to 'mw' and cors was added in wsgidav 4
+    # NOTE: in wsgidav 4 middleware components moved to 'mw', cors was added
+    #       and compat module was dropped along with python 2 support.
     if wsgidav_major >= 4:
         if sys.version_info[0] < 3:
             raise ValueError("wsgidav 3.x is required for python 2: found %s"
                              % wsgidav_version)
         from wsgidav.mw.debug_filter import WsgiDavDebugFilter
         from wsgidav.mw.cors import Cors
+
+        def is_native(x): return True
     elif wsgidav_major >= 3:
+        from wsgidav.compat import is_native
         from wsgidav.debug_filter import WsgiDavDebugFilter
         # No Cors middelware here
         Cors = None
@@ -83,6 +88,7 @@ try:
         raise ValueError("Only wsgidav 3.x and later is supported: found %s"
                          % wsgidav_version)
     from wsgidav import util
+    # TODO: should we switch to force_unicode to avoid obsolete compat module?
     # NOTE: we use built-in wsgidav unicode helper rather than force_unicode
     from wsgidav import compat
     # NOTE: SimpleDomainController was introduced with wsgidav 2.x and later
@@ -98,7 +104,7 @@ except ImportError as ierr:
 
 
 from mig.shared.accountstate import check_account_accessible
-from mig.shared.base import invisible_path
+from mig.shared.base import invisible_path, force_unicode, force_utf8
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import dav_domain, litmus_id, io_session_timeout, \
     STRONG_TLS_CIPHERS, STRONG_TLS_LEGACY_CIPHERS
@@ -160,21 +166,21 @@ def _handle_allowed(request, abs_path, path):
         raise DAVError(HTTP_FORBIDDEN)
 
 
-def _username_from_env(environ):
+def _user_name_from_env(environ):
     """Extract authenticated user credentials from environ dictionary.
 
     The HTTPAuthenticator will put the following authenticated information in the
     environ dictionary::
 
-    environ["wsgidav.auth.realm"] = realm name
-    environ["wsgidav.auth.user_name"] = user_name
-    environ["wsgidav.auth.roles"] = <tuple> (optional)
-    environ["wsgidav.auth.permissions"] = <tuple> (optional)
+    environ['wsgidav.auth.realm'] = realm name
+    environ['wsgidav.auth.user_name'] = user_name
+    environ['wsgidav.auth.roles'] = <tuple> (optional)
+    environ['wsgidav.auth.permissions'] = <tuple> (optional)
     """
-    username = environ.get("wsgidav.auth.user_name", None)
-    if username is None:
-        raise Exception("No authenticated username!")
-    return username
+    user_name = environ.get("wsgidav.auth.user_name", None)
+    if user_name is None:
+        raise Exception("No authenticated user name!")
+    return user_name
 
 
 def _get_addr(environ):
@@ -222,14 +228,14 @@ def _find_authenticator(application):
         return _find_authenticator(application._application)
 
 
-def _open_session(username, ip_addr, tcp_port, session_id):
+def _open_session(user_name, ip_addr, tcp_port, session_id):
     """Keep track of new session"""
     # logger.debug("auth succeeded for %s from %s:%s with session: %s" %
-    #             (username, ip_addr, tcp_port, session_id))
+    #             (user_name, ip_addr, tcp_port, session_id))
 
     status = track_open_session(configuration,
                                 'davs',
-                                username,
+                                user_name,
                                 ip_addr,
                                 tcp_port,
                                 session_id=session_id,
@@ -239,29 +245,29 @@ def _open_session(username, ip_addr, tcp_port, session_id):
         (status, msg) = project_open(configuration,
                                      'davs',
                                      ip_addr,
-                                     username)
+                                     user_name)
         if not status:
             track_close_session(configuration,
                                 'davs',
-                                username,
+                                user_name,
                                 ip_addr,
                                 tcp_port,
                                 session_id=session_id)
 
-            send_system_notification(username, ['DAVS', 'ERROR'],
+            send_system_notification(user_name, ['DAVS', 'ERROR'],
                                      msg, configuration)
 
     return status
 
 
-def _close_session(username, ip_addr, tcp_port, session_id):
+def _close_session(user_name, ip_addr, tcp_port, session_id):
     """Mark session as closed"""
     # logger.debug("_close_session for %s from %s:%s with session: %s" %
-    #              (username, ip_addr, tcp_port, session_id))
+    #              (user_name, ip_addr, tcp_port, session_id))
 
     track_close_session(configuration,
                         'davs',
-                        username,
+                        user_name,
                         ip_addr,
                         tcp_port,
                         session_id=session_id)
@@ -271,7 +277,7 @@ def _close_session(username, ip_addr, tcp_port, session_id):
             configuration,
             'davs',
             ip_addr,
-            user_id=username)
+            user_id=user_name)
 
 
 # NOTE: socket.socketpair in cheroot/ssl/builtin.py returns socket objs
@@ -293,9 +299,11 @@ def wrap_socketpair_sock(s):
     return s
 
 
-# NOTE: now override built-in function with patched version
-cheroot.ssl.builtin._loopback_for_cert_thread = lambda c, s: orig_loopback_for_cert_thread(
-    c, wrap_socketpair_sock(s))
+# NOTE: wrapping is only needed in python 2.x
+if sys.version_info[0] < 3:
+    # NOTE: override built-in function with patched version
+    cheroot.ssl.builtin._loopback_for_cert_thread = lambda c, s: \
+        orig_loopback_for_cert_thread(c, wrap_socketpair_sock(s))
 
 
 class HardenedSSLAdapter(BuiltinSSLAdapter):
@@ -416,7 +424,8 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                 elif exc.args[1].find('wrong version number') != -1 or \
                         exc.args[1].find('no shared cipher') != -1 or \
                         exc.args[1].find('inappropriate fallback') != -1 or \
-                        exc.args[1].find('ccs received early') != -1:
+                        exc.args[1].find('ccs received early') != -1 or \
+                        exc.args[1].find('parse tlsext') != -1:
                     # Drop clients trying banned protocol, cipher or operation
                     logger.debug("SSL/TLS got invalid request: %s" % exc)
                     return None, {}
@@ -785,11 +794,11 @@ class MiGDomainController(SimpleDomainController):
 
     NOTE: The username arguments are already on utf8 here so no need to force.
 
-    # TODO: verify user mapping for all kinds of users after login_map switch
     NOTE: we generally ignore the parent class user_map and rely on login_map
     from daemon_conf directly.
 
     IMPORTANT: this class is instantiated for each session by HTTPAuthenticator!
+    Any global or cross-session state must be kept e.g. in shared config.
     """
 
     # NOTE: the API changed significantly between 1.x, 2.x and 3.x+
@@ -813,16 +822,54 @@ class MiGDomainController(SimpleDomainController):
             self.config['mig_dc']['last_expire'] = time.time()
             self._expire_caches()
 
-    def _get_user_digests(self, realm, username):
-        """Find the allowed digest values for supplied username - this is for
+    def _get_user_digests(self, realm, user_name):
+        """Find the allowed digest values for supplied user_name - this is for
         use in the actual digest authorization.
         """
-        user_list = login_map_lookup(daemon_conf, username)
+        user_list = login_map_lookup(daemon_conf, user_name)
         return [i for i in user_list if i.digest is not None]
 
-    def basic_auth_user(self, realmname, username, password, environ):
-        """Returns True if username / password pair is valid for the realm,
-        False otherwise.
+    def is_share_anonymous(self, share):
+        """Do NOT allow anonymous access at all"""
+        return False
+
+    def require_authentication(self, realm, environ):
+        """Do NOT allow anonymous access at all"""
+        return True
+
+    def supports_http_digest_auth(self):
+        """Signal if this DC instance supports the HTTP digest authentication theme.
+
+        If true, `HTTPAuthenticator` will call `dc.digest_auth_user()`,
+        so this method must be implemented as well.
+
+        Returns:
+            bool
+
+        NOTE: simply lookup digest support in daemon conf.
+        """
+        return daemon_conf['allow_digest']
+
+    def basic_auth_user(self, realmname, user_name, password, environ):
+        """Check request access permissions for realm/user_name/password.
+
+        Called by http_authenticator for basic authentication requests.
+
+        Optionally set environment variables:
+
+        environ['wsgidav.auth.roles'] = (<role>, ...)
+        environ['wsgidav.auth.permissions'] = (<perm>, ...)
+
+        Args:
+            realm (str):
+            user_name (str):
+            password (str):
+            environ (dict):
+        Returns:
+            False if user is not known or not authorized
+            True if user is authorized
+
+
         This method is only used for the 'basic' auth method, while
         'digest' auth takes another code path.
 
@@ -832,42 +879,42 @@ class MiGDomainController(SimpleDomainController):
               MiGHTTPAuthenticator._auth_request
         """
 
-        # logger.debug("auth:basic_auth_user: " \
-        #     + "realmname: %s, username: %s, password: %s" \
-        #     % (realmname, username, password))
+        # logger.debug("auth:basic_auth_user: "
+        #             + "realmname: %s, user_name: %s, password: %s"
+        #             % (realmname, user_name, password))
         success = False
         password_auth = False
-        # logger.debug("update user %s auth" % username)
-        update_users(configuration, None, username)
+        # logger.debug("update user %s auth" % user_name)
+        update_users(configuration, None, user_name)
         # logger.debug("lookup user %s in login map %s" %
-        #             (username, daemon_conf['login_map']))
-        user_list = login_map_lookup(daemon_conf, username)
+        #             (user_name, daemon_conf['login_map']))
+        user_list = login_map_lookup(daemon_conf, user_name)
         # logger.debug("checking user list %s and user dir %s in %s" %
-        #             (user_list, username, self.config['mig_dc']['root_dir']))
+        #             (user_list, user_name, self.config['mig_dc']['root_dir']))
         if not user_list and not os.path.islink(
-                os.path.join(self.config['mig_dc']['root_dir'], username)):
+                os.path.join(self.config['mig_dc']['root_dir'], user_name)):
             environ['http_authenticator.valid_user'] = False
         else:
             environ['http_authenticator.valid_user'] = True
         # logger.debug("set valid user %s: %s (%s)" %
-        #             (username, environ['http_authenticator.valid_user'],
+        #             (user_name, environ['http_authenticator.valid_user'],
         #              user_list))
 
         # Only sharelinks should be excluded from strict password policy
-        if possible_sharelink_id(configuration, username):
+        if possible_sharelink_id(configuration, user_name):
             strict_policy = False
         else:
             strict_policy = True
         # Support password legacy policy during log in for transition periods
         allow_legacy = True
         for user_obj in user_list:
-            # list of User login objects for username
+            # list of User login objects for user_name
             offered = password
             allowed = user_obj.password
             if allowed is not None:
                 password_auth = True
-                # logger.debug("Password check for %s" % username)
-                if check_password_hash(configuration, 'webdavs', username,
+                # logger.debug("Password check for %s" % user_name)
+                if check_password_hash(configuration, 'webdavs', user_name,
                                        offered, allowed,
                                        self.config['mig_dc']['hash_cache'],
                                        strict_policy, allow_legacy):
@@ -880,53 +927,69 @@ class MiGDomainController(SimpleDomainController):
 
         return success
 
-    def is_realm_user(self, realmname, username, environ):
-        """Returns True if this username is valid for the realm,
-        False otherwise.
+    def digest_auth_user(self, realm, user_name, environ):
+        """Check access permissions for realm/user_name.
 
-        Please note that this is always called for digest auth so we use it to
-        update creds and reject users without digest password set.
+        Called by http_authenticator for basic authentication requests.
 
-        NOTE: Set environ['http_authenticator.valid_user'] for use in
-              MiGHTTPAuthenticator._auth_request
-        """
-        # logger.debug("auth:is_realm_user: realmname: %s, username: %s" \
-        #     % (realmname, username))
-        success = False
-        # logger.debug("refresh user %s" % username)
-        update_users(configuration, None, username)
-        if not self._get_user_digests(realmname, username) \
-            and not os.path.islink(
-                os.path.join(self.config['mig_dc']['root_dir'], username)):
-            success = environ['http_authenticator.valid_user'] = False
-        else:
-            success = environ['http_authenticator.valid_user'] = True
+        Compute the HTTP digest hash A1 part.
 
-        return success
+        Any domain controller that returns true for `supports_http_digest_auth()`
+        MUST implement this method.
 
-    def digest_auth_user(self, realmname, username, environ):
-        """Return the password for the given username for the realm.
+        Optionally set environment variables:
 
-        Used only for 'digest' auth and always called after is_realm_user, so
-        update creds is already applied.
+        environ['wsgidav.auth.roles'] = (<role>, ...)
+        environ['wsgidav.auth.permissions'] = (<perm>, ...)
+
+        Note that in order to calculate A1, we need either
+
+        - Access the plain text password of the user.
+          In this case the method `self._compute_http_digest_a1()` can be used
+          for convenience.
+          Or
+
+        - Return a stored hash value that is associated with the user name
+          (for example from Apache's htdigest files).
+
+        Args:
+            realm (str):
+            user_name (str):
+            environ (dict):
+
+        Returns:
+            str: MD5('{usern_name}:{realm}:{password}')
+            or false if user is unknown or rejected
+
+        Used only for 'digest' auth and is_realm_user is no longer used here.
         """
         # TODO: consider digest caching here!
-        #       we should really use something like check_password_digest,
-        #       but we need to return password to caller here.
+        #       we would really prefer to use e.g. check_password_digest, but
+        #       we need to return password hash to caller here.
 
         # print("DEBUG: env in digest_auth_user: %s" % environ)
         # traceback.print_stack()
-        # logger.debug("auth:digest_auth_user: " \
-        #      + "realmname: %s, username: %s" \
-        #     % (realmname, username))
-        # Only sharelinks should be excluded from strict password policy
+        # logger.debug("auth:digest_auth_user: "
+        #             + "realm: %s, user_name: %s"
+        #             % (realm, user_name))
+        # Per-user digest enabled status
         digest_enabled = False
-        if possible_sharelink_id(configuration, username):
+        # Only sharelinks should be excluded from strict password policy
+        if possible_sharelink_id(configuration, user_name):
             strict_policy = False
         else:
             strict_policy = True
-        digest_users = self._get_user_digests(realmname, username)
-        # logger.debug("found digest_users %s" % digest_users)
+        #logger.debug("refresh user %s" % user_name)
+        update_users(configuration, None, user_name)
+        digest_users = self._get_user_digests(realm, user_name)
+        #logger.debug("found digest_users %s" % digest_users)
+        if not digest_users and not os.path.islink(
+                os.path.join(self.config['mig_dc']['root_dir'], user_name)):
+            success = environ['http_authenticator.valid_user'] = False
+            return False
+        else:
+            success = environ['http_authenticator.valid_user'] = True
+
         try:
             # We expect only one - pick last
             digest = digest_users[-1].digest
@@ -939,7 +1002,7 @@ class MiGDomainController(SimpleDomainController):
             # Support password legacy policy during log in
             if strict_policy and not valid_login_password(configuration,
                                                           password):
-                msg = "%s password for %s" % ('webdavs', username) \
+                msg = "%s password for %s" % ('webdavs', user_name) \
                     + "does not satisfy local policy: %s" % exc
                 logger.warning(msg)
                 password = ''
@@ -953,7 +1016,7 @@ class MiGDomainController(SimpleDomainController):
             environ['http_authenticator.digest_enabled'] = True
         else:
             environ['http_authenticator.digest_enabled'] = False
-        return password
+        return self._compute_http_digest_a1(realm, user_name, password)
 
 
 class MiGFileResource(FileResource):
@@ -964,7 +1027,7 @@ class MiGFileResource(FileResource):
     """
 
     def __init__(self, path, environ, file_path):
-        self.username = _username_from_env(environ)
+        self.user_name = _user_name_from_env(environ)
         self.ip_addr = _get_addr(environ)
         FileResource.__init__(self, path, environ, file_path)
         if invisible_path(path):
@@ -1021,7 +1084,7 @@ class MiGFileResource(FileResource):
                 raise DAVError(HTTP_FORBIDDEN)
             if not project_log(configuration,
                                'davs',
-                               self.username,
+                               self.user_name,
                                self.ip_addr,
                                log_action,
                                path=log_src_path,
@@ -1039,7 +1102,7 @@ class MiGFileResource(FileResource):
                 logger.error(logger_msg)
                 project_log(configuration,
                             'davs',
-                            self.username,
+                            self.user_name,
                             self.ip_addr,
                             log_action,
                             failed=True,
@@ -1076,7 +1139,7 @@ class MiGFileResource(FileResource):
         return super(MiGFileResource, self).get_content()
 
     @__gdp_log
-    def begin_write(self, contentType=None):
+    def begin_write(self, content_type=None):
         """Handle a PUT request natively and log for GDP"""
         return super(MiGFileResource, self).begin_write()
 
@@ -1091,7 +1154,7 @@ class MiGFolderResource(FolderResource):
     """
 
     def __init__(self, path, environ, file_path):
-        self.username = _username_from_env(environ)
+        self.user_name = _user_name_from_env(environ)
         self.ip_addr = _get_addr(environ)
         FolderResource.__init__(self, path, environ, file_path)
         if invisible_path(path):
@@ -1157,7 +1220,7 @@ class MiGFolderResource(FolderResource):
                 log_src_path = '.'
             if not project_log(configuration,
                                'davs',
-                               self.username,
+                               self.user_name,
                                self.ip_addr,
                                log_action,
                                path=log_src_path,
@@ -1175,7 +1238,7 @@ class MiGFolderResource(FolderResource):
                 logger.error(logger_msg)
                 project_log(configuration,
                             'davs',
-                            self.username,
+                            self.user_name,
                             self.ip_addr,
                             log_action,
                             failed=True,
@@ -1277,8 +1340,11 @@ class MiGFolderResource(FolderResource):
         Call parent version just with debug logging added.
         """
         # logger.debug("in get_descendants wrap for %s" % self)
-        res = FolderResource.get_descendants(self, collections, resources,
-                                             depth_first, depth, add_self)
+        # NOTE: wsgidav 4 API changed to variable length args so use named args
+        res = FolderResource.get_descendants(self, collections=collections,
+                                             resources=resources,
+                                             depth_first=depth_first,
+                                             depth=depth, add_self=add_self)
         # logger.debug("get_descendants wrap returning %s" % res)
         return res
 
@@ -1339,18 +1405,18 @@ class MiGFilesystemProvider(FilesystemProvider):
         # NOTE: copied from parent method
         root_path = self.root_folder_path
         assert root_path is not None
-        assert compat.is_native(root_path)
-        assert compat.is_native(path)
+        assert is_native(root_path)
+        assert is_native(path)
 
         if environ is None:
             raise RuntimeError("A modern wsgidav version is needed, see code")
         if path is None:
             raise RuntimeError("Invalid path: %s" % path)
         # logger.debug("_loc_to_file_path: %s" % path)
-        username = _username_from_env(environ)
+        user_name = _user_name_from_env(environ)
         # logger.debug("_loc_to_file_path %s: find chroot for %s" %
-        #             (path, username))
-        entries = login_map_lookup(self.daemon_conf, username)
+        #             (path, user_name))
+        entries = login_map_lookup(self.daemon_conf, user_name)
         for entry in entries:
             if entry.chroot:
                 user_chroot = os.path.join(configuration.user_home,
@@ -1365,8 +1431,9 @@ class MiGFilesystemProvider(FilesystemProvider):
                 break
 
         # TODO: verify chrooting after wsgidav updates
+        #       Testing with /../ IS rejected for user, litmus and sharelink.
         assert user_chroot
-        assert compat.is_native(user_chroot)
+        assert is_native(user_chroot)
 
         # NOTE: copied from parent method
         path_parts = path.strip("/").split("/")
@@ -1374,7 +1441,7 @@ class MiGFilesystemProvider(FilesystemProvider):
         # file_path = os.path.abspath(os.path.join(root_path, *path_parts))
         # if not file_path.startswith(root_path):
         #    logger.error("illegal access attempt for %s with %s outside %s" %
-        #                 (username, path, root_path))
+        #                 (user_name, path, root_path))
         #    raise RuntimeError(
         #        "Security exception: tried to access file outside root: {}".format(
         #            file_path
@@ -1386,7 +1453,7 @@ class MiGFilesystemProvider(FilesystemProvider):
                                    self.chroot_exceptions)
         except ValueError as vae:
             logger.error("illegal access attempt for %s with %s: %s" %
-                         (username, path, vae))
+                         (user_name, path, vae))
             raise RuntimeError("Access out of bounds: %s in %s : %s"
                                % (path, user_chroot, vae))
         except Exception as exc:
@@ -1397,6 +1464,8 @@ class MiGFilesystemProvider(FilesystemProvider):
         # file_path = util.to_unicode_safe(file_path)
         # logger.debug("_loc_to_file_path on %s: %s" % (path, file_path))
         abs_path = util.to_unicode_safe(abs_path)
+        # abs_path = force_unicode(abs_path)
+        # abs_path = force_utf8(abs_path)
         # logger.debug("_loc_to_file_path on %s: %s" % (path, abs_path))
         return abs_path
 
@@ -1424,7 +1493,7 @@ class MiGFilesystemProvider(FilesystemProvider):
         return MiGFileResource(path, environ, abs_path)
 
 
-def is_authorized_session(configuration, username, session_id):
+def is_authorized_session(configuration, user_name, session_id):
     """Returns True if user session is open
     and authorized and within expire timestamp"""
 
@@ -1437,7 +1506,7 @@ def is_authorized_session(configuration, username, session_id):
     session_timeout = io_session_timeout.get('davs', 0)
     session = get_active_session(configuration,
                                  'davs',
-                                 client_id=username,
+                                 client_id=user_name,
                                  session_id=session_id)
     if session:
         authorized = session.get('authorized', False)
@@ -1450,22 +1519,22 @@ def is_authorized_session(configuration, username, session_id):
     return result
 
 
-def update_users(configuration, login_map, username):
-    """Update creds dict for username and aliases"""
+def update_users(configuration, login_map, user_name):
+    """Update creds dict for user_name and aliases"""
     # Only need to update users and shares here, since jobs only use sftp
     changed_users, changed_shares = [], []
     daemon_conf = configuration.daemon_conf
-    if possible_user_id(configuration, username) \
+    if possible_user_id(configuration, user_name) \
             or (configuration.site_enable_gdp
-                and possible_gdp_user_id(configuration, username)):
+                and possible_gdp_user_id(configuration, user_name)):
         daemon_conf, changed_users = refresh_user_creds(configuration, 'davs',
-                                                        username)
-    if possible_sharelink_id(configuration, username):
+                                                        user_name)
+    if possible_sharelink_id(configuration, user_name):
         daemon_conf, changed_shares = refresh_share_creds(configuration,
-                                                          'davs', username)
+                                                          'davs', user_name)
     # Add dummy user for litmus test if enabled in conf
     litmus_pw = daemon_conf.get('litmus_password', None)
-    if username == litmus_id and litmus_pw and \
+    if user_name == litmus_id and litmus_pw and \
             not login_map_lookup(daemon_conf, litmus_id):
         litmus_home = os.path.join(configuration.user_home, litmus_id)
         try:
@@ -1475,7 +1544,7 @@ def update_users(configuration, login_map, username):
         for (auth_type, conf_name) in (('basic', 'password'),
                                        ('digest', 'digest')):
             if not daemon_conf.get('allow_%s' % conf_name, False):
-                # logger.debug("skip %s auth for %s" % (auth_type, username))
+                # logger.debug("skip %s auth for %s" % (auth_type, user_name))
                 continue
             logger.info("enabling litmus %s test accounts" % auth_type)
             changed_users.append(litmus_id)
@@ -1495,11 +1564,11 @@ def update_users(configuration, login_map, username):
     # else:
     #    logger.debug("no litmus: %s && %s && %s" % (
     #        litmus_id, litmus_pw, login_map_lookup(daemon_conf, litmus_id)))
-    # logger.debug("changed users for %s: %s" % (username, changed_users))
+    # logger.debug("changed users for %s: %s" % (user_name, changed_users))
     update_login_map(daemon_conf, changed_users, changed_jobs=[],
                      changed_shares=changed_shares)
     # logger.debug("done updating users for %s with map %s" %
-    #             (username, login_map))
+    #             (user_name, login_map))
 
 
 class SessionExpire(threading.Thread):
@@ -1517,7 +1586,7 @@ class SessionExpire(threading.Thread):
 
         logger = configuration.logger
         closed_sessions = track_close_expired_sessions(configuration, 'davs')
-        for (_, session) in closed_sessions.iteritems():
+        for (_, session) in closed_sessions.items():
             msg = "closed expired session for: %s from %s:%s:%s" \
                 % (session['client_id'],
                    session['ip_addr'],
@@ -1702,6 +1771,8 @@ def run(configuration):
         middleware_stack.append(WsgiDavDebugFilter)
     if Cors:
         logger.debug("adding Cors middleware")
+        # TODO: add HSTS etc. for example through Cors add_always conf
+        # https://wsgidav.readthedocs.io/en/latest/_modules/wsgidav/mw/cors.html
         middleware_stack.append(Cors)
     middleware_stack += [
         ErrorPrinter,
@@ -1713,10 +1784,6 @@ def run(configuration):
         RequestResolver  # this must be the last middleware item
     ]
 
-    mig_fs_provider = MiGFilesystemProvider(daemon_conf['root_dir'],
-                                            daemon_conf['read_only'])
-    mig_fs_provider.post_init(configuration, dav_conf)
-
     config = DEFAULT_CONFIG.copy()
     config.update(dav_conf)
     config.update(daemon_conf)
@@ -1727,9 +1794,6 @@ def run(configuration):
         # "port": 8080,
         # "mount_path": None,  # Application root, e.g. <mount_path>/<share_name>/<res_path>
         # "provider_mapping": {},
-        "provider_mapping": {
-            dav_domain: mig_fs_provider,
-        },
         # "add_header_MS_Author_Via": True,
         # "hotfixes": {
         #    "emulate_win32_lastmod": False,  # True: support Win32LastModifiedTime
@@ -1781,7 +1845,6 @@ def run(configuration):
             "hash_cache": {},
             "digest_cache": {},
         },
-        # TODO: figure out why the use of verbose and debug broke with 3.x
         #: Verbose Output
         #: 0 - no output
         #: 1 - no output (excepting application exceptions)
@@ -1791,7 +1854,7 @@ def run(configuration):
         #: 5 - show full request/response header info (HTTP Logging)
         #:     request body and GET response bodies not shown
         # "verbose": DEFAULT_VERBOSE,
-        "verbose": 5,
+        "verbose": 3,
         #: Log options
         "logging": {
             # "logger_date_format": DEFAULT_LOGGER_DATE_FORMAT,
@@ -1799,15 +1862,16 @@ def run(configuration):
             # "enable_loggers": ["lock_manager", "property_manager",
             #                   "http_authenticator", ...],
             # "enable_loggers": [],
-            "enable_loggers": ["lock_manager", "property_manager",
-                               "http_authenticator"],
+            # "enable_loggers": ["lock_manager", "property_manager",
+            #                   "http_authenticator"],
+            "enable_loggers": ["http_authenticator"],
             # "debug_methods": ["COPY", "DELETE", "GET", "HEAD", "LOCK", "MOVE",
             #                  "OPTIONS", "PROPFIND", "PROPPATCH", "PUT",
             #                  "UNLOCK"],
-            # "debug_methods": [],
-            "debug_methods": ["COPY", "DELETE", "GET", "HEAD", "LOCK", "MOVE",
-                              "OPTIONS", "PROPFIND", "PROPPATCH", "PUT",
-                              "UNLOCK"],
+            "debug_methods": [],
+            # "debug_methods": ["COPY", "DELETE", "GET", "HEAD", "LOCK", "MOVE",
+            #                  "OPTIONS", "PROPFIND", "PROPPATCH", "PUT",
+            #                  "UNLOCK"],
         },
         #: Options for `WsgiDavDirBrowser`
         "dir_browser": {
@@ -1837,6 +1901,29 @@ def run(configuration):
         "enable_stats": False
     })
 
+    # NOTE: native wsgidav logging is initialized with NullHandler so we adjust
+    #       to propagate to our main logger.
+    # https://wsgidav.readthedocs.io/en/latest/user_guide_lib.html#logging
+    enable_loggers = config.get("logging", {}).get("enable_loggers", [])
+    verbose = config.get("verbose", 0)
+    if enable_loggers and verbose > 0:
+        logger.info('init wsgidav logging for %s' % enable_loggers)
+        # NOTE: lookup wsgidav core logger from util and set it to propagate
+        native_logger = logging.getLogger(util.BASE_LOGGER_NAME)
+        native_logger.propagate = True
+        # native_logger.setLevel(logging.DEBUG)
+        native_logger.setLevel(logger.getEffectiveLevel())
+
+    # NOTE: parent FilesystemProvider changed constructor API slightly in 4
+    mig_fs_provider = MiGFilesystemProvider(daemon_conf['root_dir'],
+                                            readonly=daemon_conf['read_only'])
+    mig_fs_provider.post_init(configuration, dav_conf)
+    config.update({
+        "provider_mapping": {
+            dav_domain: mig_fs_provider,
+        }
+    })
+
     nossl = config.get('nossl', False)
     adapter = None
     if not nossl:
@@ -1861,6 +1948,8 @@ def run(configuration):
 
     # Use cheroot  WSGI Server to support SSL
     version = "%s WebDAV" % configuration.short_title
+    if not nossl:
+        version += 'S'
     # TODO: tune server for performance with numthreads, queue size, keep-alive?
     # https://cheroot.cherrypy.dev/en/latest/pkg/cheroot.wsgi/#cheroot.wsgi.Server
     server = Server((config["host"], config["port"]), app,
@@ -1870,7 +1959,6 @@ def run(configuration):
     if not nossl:
         # logger.debug("init ssl_adapter for Server")
         try:
-            # TODO: verify hardening after wsgidav upgrade
             # ssl_adapter = server.ssl_adapter = BuiltinSSLAdapter(
             #    cert, key, chain, ciphers)
             ssl_adapter = server.ssl_adapter = HardenedSSLAdapter(
@@ -1882,17 +1970,6 @@ def run(configuration):
         # logger.debug("created ssl_adapter for Server")
 
     server.stats['Enabled'] = config['enable_stats']
-
-    # NOTE: native wsgidav logging gets overridden by our logger init
-    #       enable next lines to override
-    # TODO: figure out how to avoid such logging interference
-    # https://wsgidav.readthedocs.io/en/latest/user_guide_lib.html#logging
-    enable_loggers = config.get("logging", {}).get("enable_loggers", [])
-    verbose = config.get("verbose", 0)
-    if enable_loggers and verbose > 0:
-        logger.info('init wsgidav logging for %s' % enable_loggers)
-        util.init_logging(config)
-
     sessionexpiretracker = SessionExpire()
     logstats = LogStats(config, server, interval=60,
                         idle_only=False, change_only=True)
@@ -1923,8 +2000,10 @@ if __name__ == "__main__":
     if sys.argv[1:] and sys.argv[1] in ['debug', 'info', 'warning', 'error']:
         log_level = configuration.loglevel = sys.argv[1]
 
-    # Use separate logger
-    logger = daemon_logger("webdavs",
+    # IMPORTANT: use root-logger (empty str) to catch both wsgidav and own logs
+    # root_logger = "webdavs"
+    root_logger = ""
+    logger = daemon_logger(root_logger,
                            level=log_level,
                            path=configuration.user_davs_log)
     configuration.logger = logger

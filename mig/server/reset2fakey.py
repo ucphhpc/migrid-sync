@@ -44,6 +44,7 @@ from mig.shared.defaults import twofactor_filename, twofactor_key_name, \
     twofactor_interval_name
 from mig.shared.conf import get_configuration_object
 from mig.shared.fileio import delete_file
+from mig.shared.gdp.all import project_close
 from mig.shared.settings import load_twofactor, parse_and_save_twofactor
 from mig.shared.twofactorkeywords import get_keywords_dict as twofactor_keywords
 
@@ -200,6 +201,14 @@ if '__main__' == __name__:
         print('Error: Existing user ID is required')
         usage()
         sys.exit(1)
+
+    if configuration.site_enable_gdp:
+        status = project_close(configuration,
+                            'https',
+                            '127.0.0.1',
+                            user_id=user_id)
+        if not status:
+            print('Warning: Project close failed, user probably not logged in to any projects')
 
     if remove:
         status = remove2fa(configuration, user_id, verbose, force)
