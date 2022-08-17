@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sslsession - Shared functions for SSL session information
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,8 @@
 # -- END_HEADER ---
 #
 
-"""Functions for extracting SSL session information"""
+"""Functions for extracting SSL session information using custom c-extension"""
+
 from __future__ import absolute_import
 
 import binascii
