@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # setup.py - Setup for SSL session information
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,9 +31,9 @@ setup(name='sslsession',
       description='Module for extracting SSL session information',
       long_description='Module for extracting SSL session information',
       author='The MiG Project lead by Brian Vinter',
-      author_email='NA',
+      author_email='info@migrid.org',
       license='GPLv2',
-      platforms=['Python 2.7'],
+      platforms=['Python 2.7', 'Python 3'],
       url='https://sourceforge.net/projects/migrid/',
       ext_modules=[Extension('_sslsession',
                              ['_sslsession.c'],
