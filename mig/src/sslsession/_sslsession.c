@@ -25,6 +25,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "openssl/ssl.h"
 
+/* TODO: can we *include* these defs instead to eliminate the versioning ? */
+
 /******************************************************** 
 Copied from 'Python-2.7.5/Modules/socketmodule.h' 
 ********************************************************/
@@ -87,9 +89,16 @@ static PyObject *PySSLSESSION_session_id(PyObject * self, PyObject * args)
 	   pyssl->ssl->session->session_id);
 	 */
 
+/* For python 2 and 3 support */
+#if PY_MAJOR_VERSION >= 3
+	session_id = PyBytes_FromStringAndSize((const char *)pyssl->ssl->
+					       session->session_id,
+					       SSL_MAX_SSL_SESSION_ID_LENGTH);
+#else
 	session_id = PyString_FromStringAndSize((const char *)pyssl->ssl->
 						session->session_id,
 						SSL_MAX_SSL_SESSION_ID_LENGTH);
+#endif
 
 	return session_id;
 }
@@ -113,9 +122,16 @@ static PyObject *PySSLSESSION_master_key(PyObject * self, PyObject * args)
 	   pyssl->ssl->session->master_key);
 	 */
 
+/* For python 2 and 3 support */
+#if PY_MAJOR_VERSION >= 3
+	master_key = PyBytes_FromStringAndSize((const char *)pyssl->ssl->
+					       session->master_key,
+					       SSL_MAX_MASTER_KEY_LENGTH);
+#else
 	master_key = PyString_FromStringAndSize((const char *)pyssl->ssl->
 						session->master_key,
 						SSL_MAX_MASTER_KEY_LENGTH);
+#endif
 
 	return master_key;
 }
@@ -134,6 +150,22 @@ static PyMethodDef PySSLSESSIONMethods[] = {
 
 void init_sslsession(void)
 {
+/* For python 2 and 3 support */
+#if PY_MAJOR_VERSION >= 3
+        static struct PyModuleDef moduledef = {
+            PyModuleDef_HEAD_INIT,
+            "_sslsession",     /* m_name */
+            "SSL session module",  /* m_doc */
+            -1,                  /* m_size */
+            PySSLSESSIONMethods,    /* m_methods */
+            NULL,                /* m_reload */
+            NULL,                /* m_traverse */
+            NULL,                /* m_clear */
+            NULL,                /* m_free */
+        };
+        PyModule_Create(&moduledef);
+#else
 	Py_InitModule3("_sslsession", PySSLSESSIONMethods,
 		       "SSL session module");
+#endif
 }
