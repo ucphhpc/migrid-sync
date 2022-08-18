@@ -204,7 +204,6 @@ def _get_ssl_session_token(environ):
     token = environ.get('HTTP_X_SSL_SESSION_TOKEN', '')
     if not token:
         token = environ.get('SSL_SESSION_TOKEN', '')
-
     return token
 
 
@@ -335,13 +334,13 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
 
         If the optional legacy_tls arg is set the STRONG_TLS_LEGACY_CIPHERS
         are used instead of the STRONG_TLS_CIPHERS, and the limitation to
-        TSLv1.2+ is left out to allow legacy TLSv1.0 and TLSv1.1 connections.
+        TLSv1.2+ is left out to allow legacy TLSv1.0 and TLSv1.1 connections.
         This is required to support e.g. native Windows 7 WebDAVS access with
         the weak ECDHE-RSA-AES128-SHA cipher.
         """
-        # logger.debug("calling BuiltinSSLAdapter constructor")
-        BuiltinSSLAdapter.__init__(self, certificate, private_key,
-                                   certificate_chain, ciphers)
+        # logger.debug("calling parent constructor")
+        super(HardenedSSLAdapter, self).__init__(certificate, private_key,
+                                                 certificate_chain, ciphers)
         # logger.debug("proceed with hardening of ssl contetx")
         # Set up hardened SSL context once and for all
         dhparams = configuration.user_shared_dhparams
@@ -371,13 +370,13 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         """Update SSL environ with SSL session token used for internal
         WebDAVS session tracing
         """
-        ssl_environ = BuiltinSSLAdapter.get_environ(self, ssl_sock)
+        # Use parent method to extract environment
+        ssl_environ = super(HardenedSSLAdapter, self).get_environ(ssl_sock)
         token = ssl_session_token(configuration,
                                   ssl_sock,
                                   'davs')
         if token is not None:
             ssl_environ['SSL_SESSION_TOKEN'] = token
-
         return ssl_environ
 
     def wrap(self, sock):
@@ -445,7 +444,7 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
     1) Auth logging
     2) Auth statistics
     3) SSL session based auth
-    4) Rate limit auth throtteling
+    4) Rate limit auth throttling
     """
     __wsgidav_app = None
     min_expire_delay = 0

@@ -159,7 +159,6 @@ def _get_ssl_session_token(environ):
     token = environ.get('HTTP_X_SSL_SESSION_TOKEN', '')
     if not token:
         token = environ.get('SSL_SESSION_TOKEN', '')
-
     return token
 
 
@@ -264,12 +263,15 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
 
         If the optional legacy_tls arg is set the STRONG_TLS_LEGACY_CIPHERS
         are used instead of the STRONG_TLS_CIPHERS, and the limitation to
-        TSLv1.2+ is left out to allow legacy TLSv1.0 and TLSv1.1 connections.
+        TLSv1.2+ is left out to allow legacy TLSv1.0 and TLSv1.1 connections.
         This is required to support e.g. native Windows 7 WebDAVS access with
         the weak ECDHE-RSA-AES128-SHA cipher.
         """
-        BuiltinSSLAdapter.__init__(self, certificate, private_key,
-                                   certificate_chain)
+        # logger.debug("calling parent constructor")
+        # BuiltinSSLAdapter.__init__(self, certificate, private_key,
+        #                            certificate_chain)
+        super(HardenedSSLAdapter, self).__init__(certificate, private_key,
+                                                 certificate_chain)
         # Set up hardened SSL context once and for all
         dhparams = configuration.user_shared_dhparams
         if legacy_tls:
@@ -295,13 +297,14 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         """Update SSL environ with SSL session token used for internal
         WebDAVS session tracing
         """
-        ssl_environ = BuiltinSSLAdapter.get_environ(self, ssl_sock)
+        # Use parent method to extract environment
+        # ssl_environ = BuiltinSSLAdapter.get_environ(self, ssl_sock)
+        ssl_environ = super(HardenedSSLAdapter, self).get_environ(ssl_sock)
         token = ssl_session_token(configuration,
                                   ssl_sock,
                                   'davs')
         if token is not None:
             ssl_environ['SSL_SESSION_TOKEN'] = token
-
         return ssl_environ
 
     def wrap(self, sock):
@@ -333,20 +336,25 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                 # This is almost certainly due to the cherrypy engine
                 # 'pinging' the socket to assert it's connectable;
                 # the 'ping' isn't SSL.
+                # logger.debug("SSL/TLS received EOF: %s" % exc)
                 return None, {}
             elif exc.errno == ssl.SSL_ERROR_SSL:
                 logger.warning("SSL/TLS wrap failed: %s" % exc)
                 if exc.args[1].find('http request') != -1:
                     # The client is speaking HTTP to an HTTPS server.
+                    logger.debug("SSL/TLS got unexpected plain HTTP: %s" % exc)
                     raise wsgiserver.NoSSLError
                 elif exc.args[1].find('unknown protocol') != -1:
                     # Drop clients speaking some non-HTTP protocol.
+                    logger.debug("SSL/TLS got unexpected protocol: %s" % exc)
                     return None, {}
                 elif exc.args[1].find('wrong version number') != -1 or \
                         exc.args[1].find('no shared cipher') != -1 or \
                         exc.args[1].find('inappropriate fallback') != -1 or \
-                        exc.args[1].find('ccs received early') != -1:
+                        exc.args[1].find('ccs received early') != -1 or \
+                        exc.args[1].find('parse tlsext') != -1:
                     # Drop clients trying banned protocol, cipher or operation
+                    logger.debug("SSL/TLS got invalid request: %s" % exc)
                     return None, {}
                 else:
                     # Make sure we clean up before we forward
@@ -364,7 +372,7 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
     1) Auth logging
     2) Auth statistics
     3) SSL session based auth
-    4) Rate limit auth throtteling
+    4) Rate limit auth throttling
     """
     __application = None
     min_expire_delay = 0
@@ -595,8 +603,8 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
                 if check_twofactor_session(configuration, username,
                                            enforce_address, 'davs'):
                     valid_twofa = True
-                    valid_session = \
-                        _open_session(username, ip_addr, tcp_port, session_id)
+                    valid_session = _open_session(
+                        username, ip_addr, tcp_port, session_id)
             elif not environ.get('http_authenticator.valid_user', False):
                 invalid_user = True
         else:
@@ -1424,8 +1432,8 @@ class LogStats(threading.Thread):
         self.last_http_requests = 0
         self.stats = {'server': server.stats}
         try:
-            self.stats['auth'] = \
-                (_find_authenticator(self.server.wsgi_app)).stats
+            self.stats['auth'] = (_find_authenticator(
+                self.server.wsgi_app)).stats
         except Exception:
             self.stats['auth'] = None
             logger.warning("Failed to retreive auth stats")
@@ -1444,22 +1452,18 @@ class LogStats(threading.Thread):
                          or self.last_http_requests != http_requests)
                         and (not self.idle_only or threads_idle == threads)):
                 socket_connections = int(server_stats['Accepts'])
-                bytes_read = \
-                    float(server_stats['Bytes Read'](server_stats))
-                bytes_written = \
-                    float(server_stats['Bytes Written'](server_stats))
-                socket_connections_sec = \
-                    float(server_stats['Accepts/sec'](server_stats))
-                read_throughput = \
-                    float(server_stats['Read Throughput'](server_stats))
-                write_throughput = \
-                    float(server_stats['Write Throughput'](server_stats))
-                runtime = \
-                    float(server_stats['Run time'](server_stats))
-                worktime = \
-                    float(server_stats['Work Time'](server_stats))
-                socket_errors = \
-                    int(server_stats['Socket Errors'])
+                bytes_read = float(server_stats['Bytes Read'](server_stats))
+                bytes_written = float(
+                    server_stats['Bytes Written'](server_stats))
+                socket_connections_sec = float(
+                    server_stats['Accepts/sec'](server_stats))
+                read_throughput = float(
+                    server_stats['Read Throughput'](server_stats))
+                write_throughput = float(
+                    server_stats['Write Throughput'](server_stats))
+                runtime = float(server_stats['Run time'](server_stats))
+                worktime = float(server_stats['Work Time'](server_stats))
+                socket_errors = int(server_stats['Socket Errors'])
                 msg = "\n------------------------------------------------\n" \
                     + "\t\tServer\n" \
                     + "------------------------------------------------\n" \
