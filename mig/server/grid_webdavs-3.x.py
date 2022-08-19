@@ -87,9 +87,8 @@ try:
     else:
         raise ValueError("Only wsgidav 3.x and later is supported: found %s"
                          % wsgidav_version)
+    # NOTE: we use wsgidav util unicode helper rather than force_unicode
     from wsgidav import util
-    # TODO: should we switch to force_unicode to avoid obsolete compat module?
-    # NOTE: we use built-in wsgidav unicode helper rather than force_unicode
     from wsgidav import compat
     # NOTE: SimpleDomainController was introduced with wsgidav 2.x and later
     #       changed API completely.
@@ -116,7 +115,7 @@ from mig.shared.griddaemons.davs import get_fs_path, acceptable_chmod, \
     default_username_validator, refresh_user_creds, refresh_share_creds, \
     update_login_map, login_map_lookup, hit_rate_limit, expire_rate_limit, \
     add_user_object, track_open_session, clear_sessions, track_close_session, \
-    track_close_expired_sessions, get_active_session, \
+    track_close_expired_sessions, get_active_session, get_open_sessions, \
     check_twofactor_session, validate_auth_attempt
 from mig.shared.logger import daemon_logger, daemon_gdp_logger, \
     register_hangup_handler
@@ -204,7 +203,7 @@ def _get_ssl_session_token(environ):
     token = environ.get('HTTP_X_SSL_SESSION_TOKEN', '')
     if not token:
         token = environ.get('SSL_SESSION_TOKEN', '')
-
+    # logger.debug("found saved ssl token: %s" % token)
     return token
 
 
@@ -335,13 +334,13 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
 
         If the optional legacy_tls arg is set the STRONG_TLS_LEGACY_CIPHERS
         are used instead of the STRONG_TLS_CIPHERS, and the limitation to
-        TSLv1.2+ is left out to allow legacy TLSv1.0 and TLSv1.1 connections.
+        TLSv1.2+ is left out to allow legacy TLSv1.0 and TLSv1.1 connections.
         This is required to support e.g. native Windows 7 WebDAVS access with
         the weak ECDHE-RSA-AES128-SHA cipher.
         """
-        # logger.debug("calling BuiltinSSLAdapter constructor")
-        BuiltinSSLAdapter.__init__(self, certificate, private_key,
-                                   certificate_chain, ciphers)
+        # logger.debug("calling parent constructor")
+        super(HardenedSSLAdapter, self).__init__(certificate, private_key,
+                                                 certificate_chain, ciphers)
         # logger.debug("proceed with hardening of ssl contetx")
         # Set up hardened SSL context once and for all
         dhparams = configuration.user_shared_dhparams
@@ -371,13 +370,12 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         """Update SSL environ with SSL session token used for internal
         WebDAVS session tracing
         """
-        ssl_environ = BuiltinSSLAdapter.get_environ(self, ssl_sock)
-        token = ssl_session_token(configuration,
-                                  ssl_sock,
-                                  'davs')
+        # logger.debug("HardenedSSLAdapter get_environ called")
+        # Use parent method to extract environment
+        ssl_environ = super(HardenedSSLAdapter, self).get_environ(ssl_sock)
+        token = ssl_session_token(configuration, ssl_sock, 'davs')
         if token is not None:
             ssl_environ['SSL_SESSION_TOKEN'] = token
-
         return ssl_environ
 
     def wrap(self, sock):
@@ -415,11 +413,12 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                 logger.warning("SSL/TLS wrap failed: %s" % exc)
                 if exc.args[1].find('http request') != -1:
                     # The client is speaking HTTP to an HTTPS server.
-                    logger.debug("SSL/TLS got unexpected plain HTTP: %s" % exc)
+                    logger.warning(
+                        "SSL/TLS got unexpected plain HTTP: %s" % exc)
                     raise NoSSLError
                 elif exc.args[1].find('unknown protocol') != -1:
                     # Drop clients speaking some non-HTTP protocol.
-                    logger.debug("SSL/TLS got unexpected protocol: %s" % exc)
+                    logger.warning("SSL/TLS got unexpected protocol: %s" % exc)
                     return None, {}
                 elif exc.args[1].find('wrong version number') != -1 or \
                         exc.args[1].find('no shared cipher') != -1 or \
@@ -427,7 +426,7 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                         exc.args[1].find('ccs received early') != -1 or \
                         exc.args[1].find('parse tlsext') != -1:
                     # Drop clients trying banned protocol, cipher or operation
-                    logger.debug("SSL/TLS got invalid request: %s" % exc)
+                    logger.warning("SSL/TLS got invalid request: %s" % exc)
                     return None, {}
                 else:
                     # Make sure we clean up before we forward
@@ -439,67 +438,33 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         return ssl_sock, ssl_env
 
 
-class MiGHTTPAuthenticator(HTTPAuthenticator):
-    """
-    Override the default HTTPAuthenticator to include support for:
+class MiGDomainController(SimpleDomainController):
+    """Override auth database lookups to use username and password hash for
+    basic auth and digest otherwise.
+
+    NOTE: The username arguments are already on utf8 here so no need to force.
+
+    NOTE: we generally ignore the parent class user_map and rely on login_map
+    from daemon_conf directly.
+
+    IMPORTANT: this class is instantiated for each session by HTTPAuthenticator!
+    Any global or cross-session state must be kept e.g. in shared config.
+
+    Extends the default SimpleDomainController to include support for:
     1) Auth logging
     2) Auth statistics
     3) SSL session based auth
-    4) Rate limit auth throtteling
+    4) Rate limit auth throttling
+    as we used to do in our custom MiGHTTPAuthenticator.
     """
-    __wsgidav_app = None
-    min_expire_delay = 0
-    last_expire = 0
 
-    def __init__(self, wsgidav_app, next_app, config):
-        self.min_expire_delay = 300
-        self.last_expire = time.time()
-        self.__wsgidav_app = wsgidav_app
-        self._init_stats(config['enable_stats'])
-        super(MiGHTTPAuthenticator, self).__init__(
-            self._wsgidav_app_wrapper, next_app, config)
-
-    def _wsgidav_app_wrapper(self, environ, start_response):
-        """Prevent HTTPAuthenticator (parent) from sending response
-        to client while auth is being processed
-        by  MiGHTTPAuthenticator._auth_request
-        """
-        result = None
-        # If _NOT_ in authorization mode then allow
-        # HTTPAuthenticator to call _wsgidav_app
-        if not "HTTP_AUTHORIZATION" in environ:
-            result = self.__wsgidav_app(environ, start_response)
-
-        return result
-
-    def _init_stats(self, enabled):
-        """Init statistics cache"""
-        self.stats = {
-            'enabled': enabled,
-            'total': lambda s:
-            s['total_accepted'](s)
-            + s['total_rejected'](s),
-            'total_accepted': lambda s:
-            s['session']
-            + s['password_accepted']
-            + s['digest_accepted'],
-            'total_rejected': lambda s:
-            s['invalid_twofa']
-            + s['invalid_user']
-            + s['invalid_username']
-            + s['hit_rate_limit']
-            + s['digest_failed']
-            + s['password_failed'],
-            'session': 0,
-            'invalid_twofa': 0,
-            'invalid_user': 0,
-            'invalid_username': 0,
-            'hit_rate_limit': 0,
-            'digest_accepted': 0,
-            'digest_failed': 0,
-            'password_accepted': 0,
-            'password_failed': 0,
-        }
+    # NOTE: the API changed significantly between 1.x, 2.x and 3.x+
+    #       We use the default constructor here and instead do the init
+    #       in our custom configure_dc method.
+    # def __init__(self, *args):
+    #    WSGIDavDomainController.__init__(self, userMap)
+    #    SimpleDomainController.__init__(self, users, realm)
+    #    SimpleDomainController.__init__(self, wsgi_app, config)
 
     def _update_stats(self,
                       valid_session,
@@ -512,8 +477,37 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
                       valid_password,
                       exceeded_rate_limit):
         """Update statistics cache"""
-        if self.stats['enabled']:
-            stats = self.stats
+        if self.config['enable_stats']:
+            # Lazy init to fit implicit middleware stack init
+            stats = self.config['mig_dc'].get('stats', None)
+            if stats is None:
+                stats = self.config['mig_dc']['stats'] = {
+                    'enabled': True,
+                    'total': lambda s:
+                    s['total_accepted'](s)
+                    + s['total_rejected'](s),
+                    'total_accepted': lambda s:
+                    s['session']
+                    + s['password_accepted']
+                    + s['digest_accepted'],
+                    'total_rejected': lambda s:
+                    s['invalid_twofa']
+                    + s['invalid_user']
+                    + s['invalid_username']
+                    + s['hit_rate_limit']
+                    + s['digest_failed']
+                    + s['password_failed'],
+                    'session': 0,
+                    'invalid_twofa': 0,
+                    'invalid_user': 0,
+                    'invalid_username': 0,
+                    'hit_rate_limit': 0,
+                    'digest_accepted': 0,
+                    'digest_failed': 0,
+                    'password_accepted': 0,
+                    'password_failed': 0,
+                }
+
             if valid_session:
                 stats['session'] += 1
             elif exceeded_rate_limit:
@@ -537,65 +531,108 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
                 else:
                     stats['password_failed'] += 1
 
-    def _expire_rate_limit(self):
-        """Expire old entries in the rate limit dictionary"""
-        if self.last_expire + self.min_expire_delay < time.time():
-            self.last_expire = time.time()
-            expire_rate_limit(configuration, "davs",
-                              expire_delay=self.min_expire_delay)
-
-    def _authheader(self, environ):
-        """Returns dict with HTTP AUTH REQUEST header
-        This code is blended/modified version of
-        HTTPAuthenticator.handle_basic_auth_request and
-        HTTPAuthenticator.handle_digest_auth_request"""
-        authheaderdict = dict([])
-        authheaders = environ.get("HTTP_AUTHORIZATION", '')
-
-        if authheaders.startswith("Basic "):
-            authvalue = authheaders[len("Basic "):]
-            authvalue = authvalue.strip().decode("base64")
-            authheaderdict['username'], password = authvalue.split(":", 1)
-            if password:
-                password = make_scramble(password, None)
-            authheaderdict['password'] = password
+    def _expire_caches(self, flush=False, max_cache_age=12):
+        """Expire old entries in the hash and digest caches. The optional flush
+        argument is used to completely clear all entries. Otherwise only stale
+        entries will be removed, and typically entries are considered stale
+        after max_cache_age * min_expire_delay seconds (1h with the defaults).
+        """
+        # logger.debug("run expire caches")
+        if flush:
+            logger.debug("flushing password hash and digest caches")
+            self.config['mig_dc']['hash_cache'].clear()
+            self.config['mig_dc']['hash_cache_age'].clear()
+            self.config['mig_dc']['digest_cache'].clear()
+            self.config['mig_dc']['digest_cache_age'].clear()
         else:
-            authheaders += ","
-            # TODO: is this hotfix still needed here?
-            # Hotfix for Windows file manager and OSX Finder:
-            # Some clients don't urlencode paths in auth header, so uri value may
-            # contain commas, which break the usual regex headerparser. Example:
-            # Digest username="user",realm="/",uri="a,b.txt",nc=00000001, ...
-            # -> [..., ('uri', '"a'), ('nc', '00000001'), ...]
-            # Override any such values with carefully extracted ones.
-            authheaderlist = self._headerparser.findall(authheaders)
-            authheaderfixlist = self._headerfixparser.findall(authheaders)
-            if authheaderfixlist:
-                # _logger.debug("Fixing authheader comma-parsing: extend %s with %s" \
-                #              % (authheaderlist, authheaderfixlist))
-                authheaderlist += authheaderfixlist
-            for authheader in authheaderlist:
-                authheaderkey = authheader[0]
-                authheadervalue = authheader[1].strip().strip("\"")
-                authheaderdict[authheaderkey] = authheadervalue
+            logger.debug("expire stale entries in hash and digest caches")
 
-        return authheaderdict
+            # Expire password hashes after N expire runs
+            # logger.debug("expire hash caches")
+            expired = 0
+            for cache_id in list(self.config['mig_dc']['hash_cache']):
+                if self.config['mig_dc']['hash_cache_age'].get(cache_id, -1) > \
+                        max_cache_age:
+                    # logger.debug("expire aging hash cache entry for %s" %
+                    #             cache_id)
+                    del self.config['mig_dc']['hash_cache'][cache_id]
+                    expired += 1
+                    if self.config['mig_dc']['hash_cache_age'].get(cache_id,
+                                                                   False):
+                        del self.config['mig_dc']['hash_cache_age'][cache_id]
+            logger.debug("expired %d hash cache entries (%d left)" %
+                         (expired, len(self.config['mig_dc']['hash_cache'])))
 
-    def handle_basic_auth_request(self, environ, start_response):
-        """Overrides HTTPAuthenticator.handle_basic_auth_request"""
-        return self._auth_request(environ, start_response, password_auth=True)
+            # Update age counters with lazy init
+            for cache_id in list(self.config['mig_dc']['hash_cache']):
+                cache_age = self.config['mig_dc']['hash_cache_age'].get(
+                    cache_id, 0)
+                self.config['mig_dc']['hash_cache_age'][cache_id] = cache_age + 1
 
-    def handle_digest_auth_request(self, environ, start_response):
-        """Overrides HTTPAuthenticator.handle_digest_auth_request"""
-        return self._auth_request(environ, start_response, digest_auth=True)
+            # Expire digests after N expire runs and for inactive sessions
+            # logger.debug("expire digest caches")
+            if self.supports_http_digest_auth():
+                active_sessions = get_open_sessions(configuration, 'davs')
+            else:
+                active_sessions = {}
+            expired = 0
+            for cache_id in list(self.config['mig_dc']['digest_cache']):
+                if not cache_id in active_sessions:
+                    # logger.debug("expire digest cache entry for inactive %s" %
+                    #             cache_id)
+                    del self.config['mig_dc']['digest_cache'][cache_id]
+                    expired += 1
+                    if self.config['mig_dc']['digest_cache_age'].get(cache_id,
+                                                                     False):
+                        del self.config['mig_dc']['digest_cache_age'][cache_id]
+                elif self.config['mig_dc']['digest_cache_age'].get(
+                        cache_id, -1) > max_cache_age:
+                    # logger.debug("expire aging digest cache entry for %s" %
+                    #             cache_id)
+                    del self.config['mig_dc']['digest_cache'][cache_id]
+                    expired += 1
+                    if self.config['mig_dc']['digest_cache_age'].get(cache_id,
+                                                                     False):
+                        del self.config['mig_dc']['digest_cache_age'][cache_id]
+            logger.debug("expired %d digest cache entries (%d left)" %
+                         (expired, len(self.config['mig_dc']['digest_cache'])))
 
-    def _auth_request(self, environ, start_response,
-                      password_auth=False, digest_auth=False):
-        """Shared backend to handle all auth requests from  HTTPAuthenticator.
-        Authorize users and log auth attempts.
-        When auth is granted the session is tracked
-        based on the SSL-session-id for reuse in future requests
-        from the same client on the same socket.
+            # Update age counters with lazy init
+            for cache_id in list(self.config['mig_dc']['digest_cache']):
+                cache_age = self.config['mig_dc']['digest_cache_age'].get(
+                    cache_id, 0)
+                self.config['mig_dc']['digest_cache_age'][cache_id] = cache_age + 1
+
+        # logger.debug("Expired hash and digest caches")
+
+    def _expire_volatile(self):
+        """Expire old entries in the volatile helper rate limit and cache
+        dictionaries.
+        """
+        # logger.debug("check for expire volatile at %d" % time.time())
+        if self.config['mig_dc']['last_expire'] + \
+                self.config['mig_dc']['min_expire_delay'] < time.time():
+            self.config['mig_dc']['last_expire'] = time.time()
+
+            expire_rate_limit(
+                configuration, "davs",
+                expire_delay=self.config['mig_dc']['min_expire_delay'])
+            # logger.debug("Expired rate limits")
+
+            # NOTE: we might see racy cache cleaning errors here
+            try:
+                self._expire_caches()
+                # logger.debug("Expired caches")
+            except Exception as exc:
+                logger.warning("failed to expire caches: %s" % exc)
+
+    def _validate_authentication(self, configuration, environ, realm, username,
+                                 password=None):
+        """Authorize users and log auth attempts.
+        Depending on conf it digest and password auth against usermap.
+
+        When auth is granted the session is tracked based on the SSL-session-id
+        for reuse in future requests from the same client on the same socket.
 
         The following is checked before granting auth:
         1) Valid username
@@ -606,12 +643,19 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
         6) Valid pre-authorized SSL session
         7) Valid password (if password enabled)
         8) Valid digest (if digest enabled)
+
+        NOTE: the return value is dynamically typed.
+         * In case an password string is given a boolean indicating login
+           success is returned.
+         * Otherwise digest auth extraction is tried using environ auth info
+           and any errors result in a boolean False value, whereas success
+           results in a digest hash of the auth info for further use in the
+           calling compute_digest_response of the HTTPAuthenticator.
         """
         result = None
-        response_ok = False
         pre_authorized = False
         hashed_secret = None
-        authorized = False
+        accepted = False
         disconnect = False
         valid_session = False
         valid_password = False
@@ -628,11 +672,18 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
         user_abuse_hits = daemon_conf['auth_limits']['user_abuse_hits']
         proto_abuse_hits = daemon_conf['auth_limits']['proto_abuse_hits']
         max_secret_hits = daemon_conf['auth_limits']['max_secret_hits']
-        authtype = ''
-        if password_auth:
-            authtype = 'password'
-        elif digest_auth:
+        authtype = 'UNKNOWN'
+        if password is None:
+            # NOTE: extract saved digest password later
             authtype = 'digest'
+            # Lazy digest cache init - used for pre_authorized session result
+            digest_cache = self.config['mig_dc'].get('digest_cache', {})
+            self.config['mig_dc']['digest_cache'] = digest_cache
+        else:
+            authtype = 'password'
+            # Lazy hash cache init - used for saving repeated hash calculation
+            hash_cache = self.config['mig_dc'].get('hash_cache', {})
+            self.config['mig_dc']['hash_cache'] = hash_cache
 
         # For e.g. GDP we require all logins to match active 2FA session IP,
         # but otherwise user may freely switch net during 2FA lifetime.
@@ -641,47 +692,136 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
         else:
             enforce_address = None
 
+        # NOTE: Extract ssl session token through our sslsession C-extension
         session_id = _get_ssl_session_token(environ)
-        authheader = self._authheader(environ)
-        username = authheader.get('username', None)
+        logger.debug("got session_id in auth helper: %s" % session_id)
         if session_id and is_authorized_session(configuration,
                                                 username,
                                                 session_id):
-            valid_session = authorized = pre_authorized = True
-            environ['wsgidav.auth.user_name'] = username
-            environ['wsgidav.auth.realm'] = '/'
+            logger.debug("found %s pre-authorized in auth helper: %s" %
+                         (username, session_id))
+            valid_session = accepted = pre_authorized = True
+            # NOTE: we must still return the saved hash for digest auth
+            if authtype == 'digest':
+                result = self.config['mig_dc']['digest_cache'].get(
+                    session_id, '')
+                logger.debug("found saved hash for %s session %s: %s" %
+                             (username, session_id, result))
+            else:
+                result = True
         elif hit_rate_limit(configuration, 'davs', ip_addr, username,
                             max_user_hits=max_user_hits):
             exceeded_rate_limit = True
         elif not default_username_validator(configuration, username):
             invalid_username = True
-        elif password_auth or digest_auth:
-            account_accessible = check_account_accessible(configuration,
-                                                          username, 'davs',
-                                                          environ)
-            if password_auth:
-                result = super(MiGHTTPAuthenticator,
-                               self).handle_basic_auth_request(environ,
-                                                               start_response)
-            elif digest_auth:
-                result = super(MiGHTTPAuthenticator,
-                               self).handle_digest_auth_request(environ,
-                                                                start_response)
-            # NOTE: user name and realm is in wsgidav.auth.X env in 3.x+
-            auth_username = environ.get('wsgidav.auth.user_name', None)
-            auth_realm = environ.get('wsgidav.auth.realm', None)
-            # print "DEBUG: auth_username: %s" % auth_username
-            # print "DEBUG: auth_realm: %s" % auth_realm
-            if auth_username and auth_username == username and auth_realm:
-                if password_auth:
-                    valid_password = True
-                elif digest_auth:
-                    valid_digest = True
+        elif authtype in ('password', 'digest'):
+            logger.debug("proceeding with %s auth for %s" % (authtype,
+                                                             username))
+            # Skip account active check for litmus test if enabled in conf
+            litmus_pw = daemon_conf.get('litmus_password', None)
+            if username == litmus_id and litmus_pw:
+                account_accessible = True
+            else:
+                account_accessible = check_account_accessible(configuration,
+                                                              username, 'davs',
+                                                              environ)
+
+            # logger.debug("update user %s auth" % username)
+            update_users(configuration, None, username)
+            # logger.debug("lookup user %s in login map %s" %
+            #             (username, daemon_conf['login_map']))
+            user_list = login_map_lookup(daemon_conf, username)
+            # logger.debug("checking user list %s and user dir %s in %s" %
+            #             (user_list, username, self.config['mig_dc']['root_dir']))
+            if not user_list and not os.path.islink(
+                    os.path.join(self.config['mig_dc']['root_dir'], username)):
+                environ['http_authenticator.valid_user'] = False
+            else:
+                environ['http_authenticator.valid_user'] = True
+
+            # Only sharelinks should be excluded from strict password policy
+            if possible_sharelink_id(configuration, username):
+                strict_policy = False
+            else:
+                strict_policy = True
+
+            if authtype == 'password':
+                # NOTE: handle password auth here
+                # Per-user password enabled status to detect if not set up
+                password_enabled = False
+                password_users = [i for i in user_list
+                                  if i.password is not None]
+
+                # Support password legacy policy during log in for
+                # transition periods
+                allow_legacy = True
+
+                # logger.debug("found password_users %s" % password_users)
+                for user_obj in password_users:
+                    # list of User login objects for username
+                    offered = password
+                    allowed = user_obj.password
+                    if allowed is not None:
+                        password_enabled = True
+                        # logger.debug("Password check for %s" % username)
+                        if check_password_hash(configuration, 'webdavs',
+                                               username, offered, allowed,
+                                               self.config['mig_dc']['hash_cache'],
+                                               strict_policy, allow_legacy):
+                            result = True
+                            valid_password = True
+                            break
+
+                environ['http_authenticator.password_enabled'] = password_enabled
+
+            else:
+                # NOTE: handle digest auth here
+                # Per-user digest enabled status to detect if not set up
+                digest_enabled = False
+                digest_users = [i for i in user_list if i.digest is not None]
+
+                # logger.debug("found digest_users %s" % digest_users)
+                for user_obj in digest_users:
+                    try:
+                        digest = user_obj.digest
+                        _, _, _, payload = digest.split("$")
+                        # logger.debug("found payload %s" % payload)
+                        unscrambled = unscramble_digest(
+                            configuration.site_digest_salt, payload)
+                        _, _, raw_password = unscrambled.split(":")
+                        # Mimic password policy compliance from
+                        # check_password_digest here
+                        # Support password legacy policy during log in for
+                        # transition periods
+                        if strict_policy and not valid_login_password(
+                                configuration, raw_password):
+                            msg = "%s digest password for %s" % ('webdavs',
+                                                                 username)
+                            msg += "does not satisfy local policy: %s" % exc
+                            logger.warning(msg)
+                            raw_password = ''
+                        else:
+                            result = self._compute_http_digest_a1(
+                                realm, username, raw_password)
+                            valid_digest = True
+                            digest_enabled = True
+                            break
+                    except Exception as exc:
+                        digest_enabled = False
+                        logger.error(
+                            "failed to extract digest password: %s" % exc)
+                        raw_password = ''
+
+                environ['http_authenticator.digest_enabled'] = digest_enabled
+
+            if valid_password or valid_digest:
                 if check_twofactor_session(configuration, username,
                                            enforce_address, 'davs'):
                     valid_twofa = True
                     valid_session = _open_session(
                         username, ip_addr, tcp_port, session_id)
+                    logger.debug("valid session %s in auth helper: %s" %
+                                 (username, valid_session))
             elif not environ.get('http_authenticator.valid_user', False):
                 invalid_user = True
         else:
@@ -690,17 +830,17 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
                 % (username, ip_addr, tcp_port))
 
         if not pre_authorized:
-            self._expire_rate_limit()
+            # Expire any stale rate limit or cache entries
+            self._expire_volatile()
 
-            # For digest auth we use SSL_SESSION_TOKEN as secret
-            # because some clients uses a new digest token for every requerst
-            # and therefore we do not have any other unique identifiers
+            # For digest auth we use ssl session token as secret because some
+            # clients use a new digest token for every request and therefore
+            # we do not have any other unique identifiers
 
-            if password_auth:
-                hashed_secret = make_simple_hash(base64.b64encode(
-                    authheader.get('password', '')))
+            if password:
+                hashed_secret = make_simple_hash(base64.b64encode(password))
             if not hashed_secret:
-                hashed_secret = environ.get('SSL_SESSION_TOKEN', None)
+                hashed_secret = _get_ssl_session_token(environ)
 
             # Update rate limits and write to auth log
 
@@ -708,7 +848,7 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
                 'http_authenticator.password_enabled', False)
             digest_enabled = environ.get(
                 'http_authenticator.digest_enabled', False)
-            (authorized, disconnect) = validate_auth_attempt(
+            (accepted, disconnect) = validate_auth_attempt(
                 configuration,
                 'davs',
                 authtype,
@@ -728,106 +868,43 @@ class MiGHTTPAuthenticator(HTTPAuthenticator):
                 max_secret_hits=max_secret_hits,
             )
 
-        if authorized and valid_session:
-            result = self.__wsgidav_app(environ, start_response)
-            if result:
-                response_ok = True
-            else:
-                _close_session(username, ip_addr, tcp_port, session_id)
-                logger.error(
-                    "MiGHTTPAuthenticator._auth_request failed for %s from %s:%s"
-                    % (username, ip_addr, tcp_port))
-        elif authorized and not valid_session:
-            response_ok = True
-            logger.error("Authorized but no valid session for %s from %s:%s"
+        # NOTE: accepted here may just mean that digest auth can proceed!
+        if accepted and valid_session:
+            # Leave result alone here as it may be boolean or hash string
+            logger.debug("Accepted with result %s for %s from %s:%s"
+                         % (result, username, ip_addr, tcp_port))
+            # NOTE: save computed digest hash for reuse in pre_authorized case
+            if authtype == 'digest' and hashed_secret:
+                self.config['mig_dc']['digest_cache'][hashed_secret] = result
+        elif accepted and not valid_session:
+            logger.error("Accepted but no valid session for %s from %s:%s"
                          % (username, ip_addr, tcp_port))
-            # logger.debug("503 Service Unavailable")
-            start_response("503 Service Unavailable",
-                           [("Content-Length", "0"),
-                            ("Date", util.get_rfc3339_time()),
-                            ])
-            result = ['']
+            result = False
+            _close_session(username, ip_addr, tcp_port, session_id)
+            logger.error("auth failed with missing session for %s from %s:%s"
+                         % (username, ip_addr, tcp_port))
+            # TODO: force disconnect after handling request here
         elif disconnect:
-            response_ok = True
-            # logger.debug("403 Forbidden for %s from %s:%s" % \
-            #    (username, ip_addr, tcp_port))
-            start_response("403 Forbidden",
-                           [("Content-Length", "0"),
-                            ("Date", util.get_rfc3339_time()), ])
-            result = ['']
-        else:
-            result = self.send_digest_auth_response(environ, start_response)
-            if result:
-                response_ok = True
-            else:
-                logger.error(
-                    "MiGHTTPAuthenticator.send_digest_auth_response failed"
-                    + " for %s from %s:%s"
-                    % (username, ip_addr, tcp_port))
-
-        if not response_ok:
-            logger.error("MiGHTTPAuthenticator: 400 Bad Request"
-                         + " for %s from %s:%s"
+            result = False
+            _close_session(username, ip_addr, tcp_port, session_id)
+            logger.error("auth failed with forced disconnect for %s from %s:%s"
                          % (username, ip_addr, tcp_port))
-            start_response("400 Bad Request", [("Content-Length", "0"),
-                                               ("Date", util.get_rfc3339_time()),
-                                               ])
-            result = ['']
+            # TODO: force disconnect after handling request here
+        else:
+            result = False
 
         self._update_stats(
             pre_authorized,
             invalid_username,
             invalid_user,
             valid_twofa,
-            digest_auth,
+            authtype == 'digest',
             valid_digest,
-            password_auth,
+            authtype == 'password',
             valid_password,
             exceeded_rate_limit)
 
         return result
-
-
-class MiGDomainController(SimpleDomainController):
-    """Override auth database lookups to use username and password hash for
-    basic auth and digest otherwise.
-
-    NOTE: The username arguments are already on utf8 here so no need to force.
-
-    NOTE: we generally ignore the parent class user_map and rely on login_map
-    from daemon_conf directly.
-
-    IMPORTANT: this class is instantiated for each session by HTTPAuthenticator!
-    Any global or cross-session state must be kept e.g. in shared config.
-    """
-
-    # NOTE: the API changed significantly between 1.x, 2.x and 3.x+
-    #       We use the default constructor here and instead do the init
-    #       in our custom configure_dc method.
-    # def __init__(self, *args):
-    #    WSGIDavDomainController.__init__(self, userMap)
-    #    SimpleDomainController.__init__(self, users, realm)
-    #    SimpleDomainController.__init__(self, wsgi_app, config)
-
-    def _expire_caches(self):
-        """Expire old entries in the hash and digest caches"""
-        self.config['mig_dc']['hash_cache'].clear()
-        self.config['mig_dc']['digest_cache'].clear()
-        # logger.debug("Expired hash and digest caches")
-
-    def _expire_volatile(self):
-        """Expire old entries in the volatile helper dictionaries"""
-        if self.config['mig_dc']['last_expire'] + \
-                self.config['mig_dc']['min_expire_delay'] < time.time():
-            self.config['mig_dc']['last_expire'] = time.time()
-            self._expire_caches()
-
-    def _get_user_digests(self, realm, user_name):
-        """Find the allowed digest values for supplied user_name - this is for
-        use in the actual digest authorization.
-        """
-        user_list = login_map_lookup(daemon_conf, user_name)
-        return [i for i in user_list if i.digest is not None]
 
     def is_share_anonymous(self, share):
         """Do NOT allow anonymous access at all"""
@@ -850,7 +927,7 @@ class MiGDomainController(SimpleDomainController):
         """
         return daemon_conf['allow_digest']
 
-    def basic_auth_user(self, realmname, user_name, password, environ):
+    def basic_auth_user(self, realm, user_name, password, environ):
         """Check request access permissions for realm/user_name/password.
 
         Called by http_authenticator for basic authentication requests.
@@ -874,58 +951,13 @@ class MiGDomainController(SimpleDomainController):
         'digest' auth takes another code path.
 
         NOTE: We explicitly compare against saved hash rather than password.
-
-        NOTE: Set environ['http_authenticator.valid_user'] for use in
-              MiGHTTPAuthenticator._auth_request
         """
 
         # logger.debug("auth:basic_auth_user: "
-        #             + "realmname: %s, user_name: %s, password: %s"
-        #             % (realmname, user_name, password))
-        success = False
-        password_auth = False
-        # logger.debug("update user %s auth" % user_name)
-        update_users(configuration, None, user_name)
-        # logger.debug("lookup user %s in login map %s" %
-        #             (user_name, daemon_conf['login_map']))
-        user_list = login_map_lookup(daemon_conf, user_name)
-        # logger.debug("checking user list %s and user dir %s in %s" %
-        #             (user_list, user_name, self.config['mig_dc']['root_dir']))
-        if not user_list and not os.path.islink(
-                os.path.join(self.config['mig_dc']['root_dir'], user_name)):
-            environ['http_authenticator.valid_user'] = False
-        else:
-            environ['http_authenticator.valid_user'] = True
-        # logger.debug("set valid user %s: %s (%s)" %
-        #             (user_name, environ['http_authenticator.valid_user'],
-        #              user_list))
-
-        # Only sharelinks should be excluded from strict password policy
-        if possible_sharelink_id(configuration, user_name):
-            strict_policy = False
-        else:
-            strict_policy = True
-        # Support password legacy policy during log in for transition periods
-        allow_legacy = True
-        for user_obj in user_list:
-            # list of User login objects for user_name
-            offered = password
-            allowed = user_obj.password
-            if allowed is not None:
-                password_auth = True
-                # logger.debug("Password check for %s" % user_name)
-                if check_password_hash(configuration, 'webdavs', user_name,
-                                       offered, allowed,
-                                       self.config['mig_dc']['hash_cache'],
-                                       strict_policy, allow_legacy):
-                    success = True
-
-        if password_auth:
-            environ['http_authenticator.password_enabled'] = True
-        else:
-            environ['http_authenticator.password_enabled'] = False
-
-        return success
+        #             + "realm: %s, user_name: %s, password: %s"
+        #             % (realm, user_name, password))
+        return self._validate_authentication(configuration, environ, realm,
+                                             user_name, password=password)
 
     def digest_auth_user(self, realm, user_name, environ):
         """Check access permissions for realm/user_name.
@@ -961,62 +993,18 @@ class MiGDomainController(SimpleDomainController):
             str: MD5('{usern_name}:{realm}:{password}')
             or false if user is unknown or rejected
 
-        Used only for 'digest' auth and is_realm_user is no longer used here.
-        """
-        # TODO: consider digest caching here!
-        #       we would really prefer to use e.g. check_password_digest, but
-        #       we need to return password hash to caller here.
+        Used only for 'digest' auth and since wsgidav 3.x is_realm_user is no
+        longer used here.
 
-        # print("DEBUG: env in digest_auth_user: %s" % environ)
-        # traceback.print_stack()
+        NOTE: we would really prefer to use e.g. check_password_digest
+        underneath, but we need to return password hash to caller here.
+        """
         # logger.debug("auth:digest_auth_user: "
         #             + "realm: %s, user_name: %s"
         #             % (realm, user_name))
-        # Per-user digest enabled status
-        digest_enabled = False
-        # Only sharelinks should be excluded from strict password policy
-        if possible_sharelink_id(configuration, user_name):
-            strict_policy = False
-        else:
-            strict_policy = True
-        #logger.debug("refresh user %s" % user_name)
-        update_users(configuration, None, user_name)
-        digest_users = self._get_user_digests(realm, user_name)
-        #logger.debug("found digest_users %s" % digest_users)
-        if not digest_users and not os.path.islink(
-                os.path.join(self.config['mig_dc']['root_dir'], user_name)):
-            success = environ['http_authenticator.valid_user'] = False
-            return False
-        else:
-            success = environ['http_authenticator.valid_user'] = True
-
-        try:
-            # We expect only one - pick last
-            digest = digest_users[-1].digest
-            _, _, _, payload = digest.split("$")
-            # logger.debug("found payload %s" % payload)
-            unscrambled = unscramble_digest(configuration.site_digest_salt,
-                                            payload)
-            _, _, password = unscrambled.split(":")
-            # Mimic password policy compliance from check_password_digest here
-            # Support password legacy policy during log in
-            if strict_policy and not valid_login_password(configuration,
-                                                          password):
-                msg = "%s password for %s" % ('webdavs', user_name) \
-                    + "does not satisfy local policy: %s" % exc
-                logger.warning(msg)
-                password = ''
-            digest_enabled = True
-        except Exception as exc:
-            digest_enabled = False
-            logger.error("failed to extract digest password: %s" % exc)
-            password = ''
-
-        if digest_enabled:
-            environ['http_authenticator.digest_enabled'] = True
-        else:
-            environ['http_authenticator.digest_enabled'] = False
-        return self._compute_http_digest_a1(realm, user_name, password)
+        # NOTE: digest data is auto-extracted from env when password is None
+        return self._validate_authentication(configuration, environ, realm,
+                                             user_name, password=None)
 
 
 class MiGFileResource(FileResource):
@@ -1079,7 +1067,7 @@ class MiGFileResource(FileResource):
                 log_action = "modified"
                 log_src_path = src_path.strip('/')
             else:
-                logger.warning("GDP log for '%s' _NOT_ implemented"
+                logger.warning("GDP log for '%s' NOT implemented"
                                % operation)
                 raise DAVError(HTTP_FORBIDDEN)
             if not project_log(configuration,
@@ -1213,7 +1201,7 @@ class MiGFolderResource(FolderResource):
                 log_action = "accessed"
                 log_src_path = src_path.strip('/')
             else:
-                logger.warning("GDP log for '%s' _NOT_ implemented"
+                logger.warning("GDP log for '%s' NOT implemented"
                                % operation)
                 raise DAVError(HTTP_FORBIDDEN)
             if not log_src_path:
@@ -1628,7 +1616,7 @@ class LogStats(threading.Thread):
         threading.Thread.__init__(self)
         self.config = config
         if not self.config['enable_stats']:
-            logger.info("stats _NOT_ enabled")
+            logger.info("stats NOT enabled")
             return
         self.server = server
         self.shutdown = threading.Event()
@@ -1638,8 +1626,7 @@ class LogStats(threading.Thread):
         self.last_http_requests = 0
         self.stats = {'server': server.stats}
         try:
-            self.stats['auth'] = (_find_authenticator(
-                self.server.wsgi_app)).stats
+            self.stats['auth'] = config['mig_dc']['stats']
         except Exception:
             self.stats['auth'] = None
             logger.warning("Failed to retreive auth stats")
@@ -1776,9 +1763,7 @@ def run(configuration):
         middleware_stack.append(Cors)
     middleware_stack += [
         ErrorPrinter,
-        # TODO: switch back to our own authenticator or eliminate it for plain
         HTTPAuthenticator,
-        # MiGHTTPAuthenticator,
         # configured under dir_browser option (see below)
         WsgiDavDirBrowser,
         RequestResolver  # this must be the last middleware item
@@ -1843,7 +1828,9 @@ def run(configuration):
             "last_expire": time.time(),
             "min_expire_delay": 300,
             "hash_cache": {},
+            "hash_cache_age": {},
             "digest_cache": {},
+            "digest_cache_age": {},
         },
         #: Verbose Output
         #: 0 - no output

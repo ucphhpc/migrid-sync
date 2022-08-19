@@ -122,6 +122,27 @@ static PyObject *PySSLSESSION_master_key(PyObject * self, PyObject * args)
 	   pyssl->ssl->session->master_key);
 	 */
 
+        /* TODO: support OpenSSL 1.1+ which made many data structures opaque.
+           https://wiki.openssl.org/index.php/OpenSSL_1.1.0_Changes
+
+           These look relevant and the latter has a sslkeylog_get_master_key
+           https://github.com/joernheissler/SslMasterKey
+           https://github.com/segevfiner/sslkeylog/blob/master/_sslkeylog.c
+
+           Something along the lines of this might work
+           #if OPENSSL_VERSION_NUMBER < 0x10100000L 
+             ssl_session = pyssl->ssl->session
+             ssl_master_key = ssl_session->master_key
+           #else
+             SSL_SESSION *ssl_session = NULL;
+             unsigned char ssl_master_key[SSL_MAX_MASTER_KEY_LENGTH];
+             ssl_session = SSL_get_session(pyssl->ssl);
+             ssl_master_key = SSL_SESSION_get_master_key(ssl_session, 
+                                                         &ssl_master_key, 
+                                                         SSL_MAX_MASTER_KEY_LENGTH);
+           #endif
+        */
+
 /* For python 2 and 3 support */
 #if PY_MAJOR_VERSION >= 3
 	master_key = PyBytes_FromStringAndSize((const char *)pyssl->ssl->
