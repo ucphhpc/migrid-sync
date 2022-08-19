@@ -837,7 +837,9 @@ class MiGDomainController(SimpleDomainController):
             # we do not have any other unique identifiers
 
             if password:
-                hashed_secret = make_simple_hash(base64.b64encode(password))
+                # TODO: what's the point of (copy/paste) base64 encoding here??
+                # NOTE: base64 encode requires byte string and returns byte string
+                hashed_secret = make_simple_hash(base64.b64encode(force_utf8(password)))
             if not hashed_secret:
                 hashed_secret = _get_ssl_session_token(environ)
 
