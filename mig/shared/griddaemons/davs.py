@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # davs - Wrapper for davs grid daemon import
-# Copyright (C) 2010-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -38,6 +38,6 @@ from mig.shared.griddaemons.ratelimits import default_max_user_hits, \
     expire_rate_limit
 from mig.shared.griddaemons.sessions import clear_sessions, \
     track_open_session, track_close_session, \
-    track_close_expired_sessions, get_active_session
+    track_close_expired_sessions, get_active_session, get_open_sessions
 from mig.shared.griddaemons.auth import check_twofactor_session, \
     validate_auth_attempt
