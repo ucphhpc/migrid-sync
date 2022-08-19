@@ -194,7 +194,8 @@ def _get_port(environ):
     port = environ.get('HTTP_X_FORWARDED_FOR_PORT', '')
     if not port:
         port = environ['REMOTE_PORT']
-    return port
+    # NOTE: may be a string and we need int later
+    return int(port)
 
 
 def _get_ssl_session_token(environ):
