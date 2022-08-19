@@ -89,7 +89,6 @@ try:
                          % wsgidav_version)
     # NOTE: we use wsgidav util unicode helper rather than force_unicode
     from wsgidav import util
-    from wsgidav import compat
     # NOTE: SimpleDomainController was introduced with wsgidav 2.x and later
     #       changed API completely.
     #       Similar functionality was handled by WsgiDAVDomainController in 1.x
