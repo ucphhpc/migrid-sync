@@ -93,15 +93,6 @@ static PyObject *PySSLSESSION_session_id(PyObject * self, PyObject * args)
 		return NULL;
 	pyssl = (PySSLObject *) pysslobject;
 
-	/*
-	   fprintf(stderr, "\npysslobject: %p\n", pysslobject);
-	   fprintf(stderr, "\npyssl: %p\n", pyssl);
-	   fprintf(stderr, "\npyssl->ssl: %p\n", pyssl->ssl);
-	   fprintf(stderr, "\npyssl->ssl->session: %p\n", pyssl->ssl->session);
-	   fprintf(stderr, "\npyssl->ssl->session->session_id: %s\n", 
-	   pyssl->ssl->session->session_id);
-	 */
-
 	/* TODO: add proper error checking like in 
 	   https://github.com/segevfiner/sslkeylog/blob/master/_sslkeylog.c#L145
 	*/
@@ -115,6 +106,14 @@ static PyObject *PySSLSESSION_session_id(PyObject * self, PyObject * args)
 	ssl_session = SSL_get_session(pyssl->ssl);
 	ssl_session_id = SSL_SESSION_get_id(ssl_session, &id_len);
 #endif
+
+	/*
+	   fprintf(stderr, "\npysslobject: %p\n", pysslobject);
+	   fprintf(stderr, "\npyssl: %p\n", pyssl);
+	   fprintf(stderr, "\npyssl->ssl: %p\n", pyssl->ssl);
+	   fprintf(stderr, "\nssl_session: %p\n", ssl_session);
+	   fprintf(stderr, "\nssl_session_id: %s\n", ssl_session_id);
+	*/
 
 #if PY_MAJOR_VERSION >= 3
 	/* For python 3+ support */
@@ -142,15 +141,6 @@ static PyObject *PySSLSESSION_master_key(PyObject * self, PyObject * args)
 		return NULL;
 	pyssl = (PySSLObject *) pysslobject;
 
-	/*
-	   fprintf(stderr, "\npysslobject: %p\n", pysslobject);
-	   fprintf(stderr, "\npyssl: %p\n", pyssl);
-	   fprintf(stderr, "\npyssl->ssl: %p\n", pyssl->ssl);
-	   fprintf(stderr, "\npyssl->ssl->session: %p\n", pyssl->ssl->session);
-	   fprintf(stderr, "\npyssl->ssl->session->master_key: %s\n", 
-	   pyssl->ssl->session->master_key);
-	 */
-
 	/* TODO: add proper error checking like in 
 	   https://github.com/segevfiner/sslkeylog/blob/master/_sslkeylog.c#L145
 	*/
@@ -167,15 +157,21 @@ static PyObject *PySSLSESSION_master_key(PyObject * self, PyObject * args)
 	                           SSL_MAX_MASTER_KEY_LENGTH);
 #endif
 
+	/*
+	   fprintf(stderr, "\npysslobject: %p\n", pysslobject);
+	   fprintf(stderr, "\npyssl: %p\n", pyssl);
+	   fprintf(stderr, "\npyssl->ssl: %p\n", pyssl->ssl);
+	   fprintf(stderr, "\nssl_session: %p\n", ssl_session);
+	   fprintf(stderr, "\nssl_master_key: %s\n", ssl_master_key);
+	 */
+
 #if PY_MAJOR_VERSION >= 3
 	/* For python 3+ support */
-	master_key = PyBytes_FromStringAndSize((const char *)pyssl->ssl->
-					       session->master_key,
+	master_key = PyBytes_FromStringAndSize((const char *)ssl_master_key,
 					       SSL_MAX_MASTER_KEY_LENGTH);
 #else
 	/* For python 2 support */
-	master_key = PyString_FromStringAndSize((const char *)pyssl->ssl->
-						session->master_key,
+	master_key = PyString_FromStringAndSize((const char *)ssl_master_key,
 						SSL_MAX_MASTER_KEY_LENGTH);
 #endif
 
