@@ -23,7 +23,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <Python.h>
 
-#include "openssl/ssl.h"
+#include <openssl/ssl.h>
+
+/* NOTE: care is needed to support both legacy and modern versions of OpenSSL,
+   as 1.1+ made a number of data structures opaque and thus removed direct
+   access to e.g. session id and master key.
+   https://wiki.openssl.org/index.php/OpenSSL_1.1.0_Changes
+
+   Examples of working with the 1.1+ getter methods can be found e.g. in the
+   sslkeylog_get_master_key function from
+   https://github.com/segevfiner/sslkeylog/blob/master/_sslkeylog.c
+*/
 
 /* TODO: can we *include* these defs instead to eliminate the versioning ? */
 
@@ -75,6 +85,9 @@ static PyObject *PySSLSESSION_session_id(PyObject * self, PyObject * args)
 	PyObject *pysslobject = Py_None;
 	PyObject *session_id = Py_None;
 	PySSLObject *pyssl = NULL;
+	/* For supporting both legacy and 1.1+ versions of OpenSSL */
+	SSL_SESSION *ssl_session = NULL;
+	const unsigned char *ssl_session_id = NULL;
 
 	if (!PyArg_ParseTuple(args, "|O:session_id", &pysslobject))
 		return NULL;
@@ -89,14 +102,27 @@ static PyObject *PySSLSESSION_session_id(PyObject * self, PyObject * args)
 	   pyssl->ssl->session->session_id);
 	 */
 
-/* For python 2 and 3 support */
+	/* TODO: add proper error checking like in 
+	   https://github.com/segevfiner/sslkeylog/blob/master/_sslkeylog.c#L145
+	*/
+#if OPENSSL_VERSION_NUMBER < 0x10100000L 
+	/* For legacy OpenSSL support */
+	ssl_session = pyssl->ssl->session;
+	ssl_session_id = ssl_session->session_id;
+#else
+	/* For OpenSSL-1.1+ support */
+	unsigned int id_len;
+	ssl_session = SSL_get_session(pyssl->ssl);
+	ssl_session_id = SSL_SESSION_get_id(ssl_session, &id_len);
+#endif
+
 #if PY_MAJOR_VERSION >= 3
-	session_id = PyBytes_FromStringAndSize((const char *)pyssl->ssl->
-					       session->session_id,
+	/* For python 3+ support */
+	session_id = PyBytes_FromStringAndSize((const char *)ssl_session_id,
 					       SSL_MAX_SSL_SESSION_ID_LENGTH);
 #else
-	session_id = PyString_FromStringAndSize((const char *)pyssl->ssl->
-						session->session_id,
+	/* For python 2 support */
+	session_id = PyString_FromStringAndSize((const char *)ssl_session_id,
 						SSL_MAX_SSL_SESSION_ID_LENGTH);
 #endif
 
@@ -108,6 +134,9 @@ static PyObject *PySSLSESSION_master_key(PyObject * self, PyObject * args)
 	PyObject *pysslobject = Py_None;
 	PyObject *master_key = Py_None;
 	PySSLObject *pyssl = NULL;
+	/* For supporting both legacy and 1.1+ versions of OpenSSL */
+	SSL_SESSION *ssl_session = NULL;
+	unsigned char *ssl_master_key = NULL;
 
 	if (!PyArg_ParseTuple(args, "|O:master_key", &pysslobject))
 		return NULL;
@@ -122,33 +151,29 @@ static PyObject *PySSLSESSION_master_key(PyObject * self, PyObject * args)
 	   pyssl->ssl->session->master_key);
 	 */
 
-        /* TODO: support OpenSSL 1.1+ which made many data structures opaque.
-           https://wiki.openssl.org/index.php/OpenSSL_1.1.0_Changes
+	/* TODO: add proper error checking like in 
+	   https://github.com/segevfiner/sslkeylog/blob/master/_sslkeylog.c#L145
+	*/
+#if OPENSSL_VERSION_NUMBER < 0x10100000L 
+	/* For legacy OpenSSL support */
+	ssl_session = pyssl->ssl->session;
+	ssl_master_key = ssl_session->master_key;
+#else
+	/* For OpenSSL-1.1+ support */
+	unsigned char tmp_ssl_master_key[SSL_MAX_MASTER_KEY_LENGTH];
+	ssl_master_key = (unsigned char *)&tmp_ssl_master_key;
+	ssl_session = SSL_get_session(pyssl->ssl);
+	SSL_SESSION_get_master_key(ssl_session, ssl_master_key, 
+	                           SSL_MAX_MASTER_KEY_LENGTH);
+#endif
 
-           These look relevant and the latter has a sslkeylog_get_master_key
-           https://github.com/joernheissler/SslMasterKey
-           https://github.com/segevfiner/sslkeylog/blob/master/_sslkeylog.c
-
-           Something along the lines of this might work
-           #if OPENSSL_VERSION_NUMBER < 0x10100000L 
-             ssl_session = pyssl->ssl->session
-             ssl_master_key = ssl_session->master_key
-           #else
-             SSL_SESSION *ssl_session = NULL;
-             unsigned char ssl_master_key[SSL_MAX_MASTER_KEY_LENGTH];
-             ssl_session = SSL_get_session(pyssl->ssl);
-             ssl_master_key = SSL_SESSION_get_master_key(ssl_session, 
-                                                         &ssl_master_key, 
-                                                         SSL_MAX_MASTER_KEY_LENGTH);
-           #endif
-        */
-
-/* For python 2 and 3 support */
 #if PY_MAJOR_VERSION >= 3
+	/* For python 3+ support */
 	master_key = PyBytes_FromStringAndSize((const char *)pyssl->ssl->
 					       session->master_key,
 					       SSL_MAX_MASTER_KEY_LENGTH);
 #else
+	/* For python 2 support */
 	master_key = PyString_FromStringAndSize((const char *)pyssl->ssl->
 						session->master_key,
 						SSL_MAX_MASTER_KEY_LENGTH);
@@ -171,21 +196,22 @@ static PyMethodDef PySSLSESSIONMethods[] = {
 
 void init_sslsession(void)
 {
-/* For python 2 and 3 support */
 #if PY_MAJOR_VERSION >= 3
-        static struct PyModuleDef moduledef = {
-            PyModuleDef_HEAD_INIT,
-            "_sslsession",     /* m_name */
-            "SSL session module",  /* m_doc */
-            -1,                  /* m_size */
-            PySSLSESSIONMethods,    /* m_methods */
-            NULL,                /* m_reload */
-            NULL,                /* m_traverse */
-            NULL,                /* m_clear */
-            NULL,                /* m_free */
-        };
-        PyModule_Create(&moduledef);
+	/* For python 3+ support */
+	static struct PyModuleDef moduledef = {
+		PyModuleDef_HEAD_INIT,
+		"_sslsession",     /* m_name */
+		"SSL session module",  /* m_doc */
+		-1,                  /* m_size */
+		PySSLSESSIONMethods,    /* m_methods */
+		NULL,                /* m_reload */
+		NULL,                /* m_traverse */
+		NULL,                /* m_clear */
+		NULL,                /* m_free */
+	};
+	PyModule_Create(&moduledef);
 #else
+	/* For python 2 support */
 	Py_InitModule3("_sslsession", PySSLSESSIONMethods,
 		       "SSL session module");
 #endif
