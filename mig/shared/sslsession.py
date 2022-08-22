@@ -48,7 +48,7 @@ try:
 except ImportError as ierr:
     _sslsession = None
 
-from mig.shared.base import force_utf8
+from mig.shared.base import force_utf8, force_native_str
 from mig.shared.pwhash import make_digest
 
 SSL_SESSION_ID_LENGTH = 64
@@ -113,7 +113,8 @@ def ssl_session_token(configuration, ssl_sock, realm):
     """Generate SSL session identifier token"""
     session_token = None
     (client_addr, _) = ssl_sock.getpeername()
-    master_key = ssl_master_key(configuration, ssl_sock)
+    # NOTE: expect master key as bytes and we need it as string in make_digest
+    master_key = force_native_str(ssl_master_key(configuration, ssl_sock))
     if master_key is not None:
         session_token = make_digest(realm,
                                     client_addr,
