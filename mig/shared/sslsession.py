@@ -25,7 +25,14 @@
 # -- END_HEADER ---
 #
 
-"""Functions for extracting SSL session information using custom c-extension"""
+"""Functions for extracting SSL session information using either the sslkeylog
+library or our custom _sslsession c-extension. The latter is tested to work
+with python 2.7 and 3, but only with OpenSSL versions prior to 1.1, as 1.1+
+changed a number of core APIs.
+Please note that sslkeylog requires python 2.7.9+ or 3, so it is not supported
+on e.g. RHEL/CentOS 7 with default python 2.7.5. However, it may be the only
+option on modern distributions like Rocky 8 with OpenSSL-1.1+ as default.
+"""
 
 from __future__ import absolute_import
 
@@ -33,10 +40,15 @@ import binascii
 
 # NOTE: We avoid import failure to support modules where SSL is optional
 try:
+    import sslkeylog
+except ImportError as ierr:
+    sslkeylog = None
+try:
     import _sslsession
 except ImportError as ierr:
     _sslsession = None
 
+from mig.shared.base import force_utf8
 from mig.shared.pwhash import make_digest
 
 SSL_SESSION_ID_LENGTH = 64
@@ -47,12 +59,19 @@ def ssl_master_key(configuration, ssl_sock):
     """Extract SSL session master key from SSL socket"""
     logger = configuration.logger
     master_key = None
-    if _sslsession is None:
-        logger.error("The MiG python _sslsession.so library is required!")
+    if sslkeylog is None and _sslsession is None:
+        logger.warning("sslkeylog or our _sslsession module is required!")
         return master_key
     try:
         ssl_obj = ssl_sock._sslobj
-        master_key_bin = _sslsession.master_key(ssl_obj)
+        # NOTE: try modern sslkeylog first with fallback to native _sslsession
+        if sslkeylog:
+            # logger.debug("extracting master key with sslkeylog")
+            # We may or may not get unicode here
+            master_key_bin = force_utf8(sslkeylog.get_master_key(ssl_obj))
+        elif _sslsession:
+            # logger.debug("extracting master key with _sslsession")
+            master_key_bin = _sslsession.master_key(ssl_obj)
         master_key = binascii.hexlify(master_key_bin)
         if len(master_key) != SSL_MASTER_KEY_LENGTH \
                 or master_key.isdigit() and int(master_key) == 0:
@@ -61,6 +80,7 @@ def ssl_master_key(configuration, ssl_sock):
         master_key = None
         logger.error(exc)
 
+    # logger.debug("returning extracted master key: %s" % master_key)
     return master_key
 
 
