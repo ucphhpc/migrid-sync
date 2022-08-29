@@ -67,6 +67,7 @@ the following additional software:
 -Python email-validator (https://pypi.org/project/email-validator/)
 -Python dnspython (https://pypi.org/project/dnspython/)
 -Python future (https://pypi.org/project/future/)
+-Python sslkeylog (https://pypi.org/project/sslkeylog/)
 -LFTP (http://lftp.yar.ru/)
 -RSync (https://rsync.samba.org/)
 -OpenSSH server (https://www.openssh.org/)
@@ -191,6 +192,14 @@ for the implications like potential EPEL conflicts if going with the latter.
 The optional grid_webdavs daemon requires the wsgidav module in a specific
 version (1.3.0+ or 3.x for python 2 and 3.x+ for python 3), so it is easiest
 to install it with pip as mentioned above.
+We also rely on either the sslkeylog library or our own custom _sslsession
+module in grid_webdavs in order to efficiently reuse client sessions rather
+than repeating the auth handshake for every single DAV operation.
+The former requires python 2.7.9+ and can be installed with
+pip install sslkeylog
+and the latter which is supported for older python versions but is limited to
+OpenSSL versions prior to 1.1 can similarly be installed with
+cd mig/src/sslsession && pip install .
 
 The optional grid_openid daemon requires the openid module in a recent
 version, so it is easiest to install it with pip as mentioned above.
