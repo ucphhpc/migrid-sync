@@ -376,13 +376,20 @@ Web interfaces are served with the Apache HTTP Server:"""})
         io_daemons.append('davs')
         password_dep = True
         output_objects.append({'object_type': 'text', 'text':
-                               "WebDAVS access is delivered using wsgidav:"})
+                               "WebDAVS access is delivered using wsgidav and "
+                               "optionally sslkeylog:"})
         output_objects.append({'object_type': 'link',
                                'destination':
                                'https://github.com/mar10/wsgidav',
                                'class': 'urllink iconspace',
                                'title': 'WsgiDAV Home Page',
                                'text': 'WsgiDAV Server Module (MIT license)'})
+        output_objects.append({'object_type': 'link',
+                               'destination':
+                               'https://pypi.org/project/sslkeylog/',
+                               'class': 'urllink iconspace',
+                               'title': 'sslkeylog Home Page',
+                               'text': 'Python SSL/TLS key log Module (MIT license)'})
     if configuration.site_enable_ftps:
         io_daemons.append('ftps')
         password_dep = True
