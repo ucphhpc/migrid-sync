@@ -1,5 +1,27 @@
 [
   {
+    "status": "AUTO",
+    "work_start": "2022-08-15T20:32:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2022-08-15T20:32:00+02:00",
+    "title": {
+      "EN": "Outage in the storage backend: limited or no access",
+      "DK": "Udfald i backend-lageret: begrænset eller ingen adgang"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2022-08-16T07:33:00+02:00",
+    "description": {
+      "EN": "We experienced a serious failure on one of the storage bricks in the ERDA/IDMC backend storage last night and it lead to partial data outages on ERDA/IDMC. This morning we identified the cause to be a hardware error in the memory or CPU of the storage brick. We migrated that part to a different host and got the brick back to service in order to restore full backend storage access on ERDA/IDMC. Everything should thus be back to normal operation now.", 
+      "DK": "Vi oplevede et alvorligt problem med en brick (lagerenhed) i backend lageret i aftes, og det førte til delvise udfald i dataadgangen på ERDA/IDMC. Til morgen fandt vi frem til at problemet skyldtes hardwarefejl i hukommelse eller processor på pågældende brick. Vi migrerede den ramte del til en anden maskine og fik således pågældende brick tilbage i drift og derved hele backendlageret gjort tilgængeligt igen for ERDA/IMC. Alt skulle således være tilbage i normal drift nu."
+    },
+    "announce_end": "2022-08-17T10:00:00+02:00"
+  },
+  {
     "status": "AUTO", 
     "work_start": "2022-07-24T18:00:00+02:00",
     "systems": [
