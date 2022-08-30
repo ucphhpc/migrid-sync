@@ -1,6 +1,29 @@
 [
   {
     "status": "AUTO",
+    "work_start": "2022-09-10T08:00:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2022-08-30T12:00:00+02:00",
+    "title": {
+      "EN": "Important security upgrades will be applied to the Jupyter Notebooks",
+      "DK": "Vigtige sikkerhedsopgraderinger af Jupyter Notebooks vil blive udrullet"
+    },
+    "services": [
+      "DAG",
+      "MODI"
+    ],
+    "work_end": "2022-09-10T12:00:00+02:00",
+    "description": {
+      "EN": "We will apply important security upgrades that will mitigate an issue where XSS can be injected when exporting HTML versions of Jupyter Notebooks as annonced in CVE-2021-32862.", 
+      "DK": "Vi vil udrulle vigtige sikkerhedsopgraderinger, der vil afhjælpe et problem, hvor XSS kan injectes i exporteringen HTML-versioner af Jupyter Notebooks som annonceret i CVE-2021-32862."
+    },
+    "announce_end": "2022-09-12T12:00:00+02:00"
+  },
+  {
+    "status": "AUTO",
     "work_start": "2022-08-15T20:32:00+02:00",
     "systems": [
         "ERDA",
