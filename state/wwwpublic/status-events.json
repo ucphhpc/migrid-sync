@@ -1,6 +1,29 @@
 [
   {
     "status": "AUTO",
+    "work_start": "2022-09-14T21:00:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2022-09-12T12:00:00+02:00",
+    "title": {
+      "EN": "Important security upgrades will be applied to the Jupyter Notebooks",
+      "DK": "Vigtige sikkerhedsopgraderinger af Jupyter Notebooks vil blive udrullet"
+    },
+    "services": [
+      "DAG",
+      "MODI"
+    ],
+    "work_end": "2022-09-14T23:59:00+02:00",
+    "description": {
+      "EN": "We will roll out the previously prepared Jupyter Notebook updates to mitigate CVE-2021-32862.", 
+      "DK": "Vi vil udrulle de tidligere forberedte Jupyter Notebook-opdateringer for at afbøde CVE-2021-32862."
+    },
+    "announce_end": "2022-09-15T15:00:00+02:00"
+  },
+  {
+    "status": "AUTO",
     "work_start": "2022-09-10T08:00:00+02:00",
     "systems": [
         "ERDA",
@@ -17,8 +40,8 @@
     ],
     "work_end": "2022-09-10T12:00:00+02:00",
     "description": {
-      "EN": "We will apply important security upgrades that will mitigate an issue where XSS can be injected when exporting HTML versions of Jupyter Notebooks as annonced in CVE-2021-32862.", 
-      "DK": "Vi vil udrulle vigtige sikkerhedsopgraderinger, der vil afhjælpe et problem, hvor XSS kan injectes i exporteringen HTML-versioner af Jupyter Notebooks som annonceret i CVE-2021-32862."
+      "EN": "We will apply important security upgrades that will mitigate an issue where XSS can be injected when exporting HTML versions of Jupyter Notebooks as annonced in CVE-2021-32862. The preperations for this was completed, but due to unforseen complications in how the new Notebook versions would clash with our un-updated JupyterHub version, the rollout of this was postponed.", 
+      "DK": "Vi vil udrulle vigtige sikkerhedsopgraderinger, der vil afhjælpe et problem, hvor XSS kan injectes i exporteringen HTML-versioner af Jupyter Notebooks som annonceret i CVE-2021-32862. Forberedelserne til dette blev gennemført, men på grund af uforudsete komplikationer i, hvordan de nye Notebook-versioner ville kollidere med vores uopdaterede JupyterHub-version, blev udrulningen af dette udskudt."
     },
     "announce_end": "2022-09-12T12:00:00+02:00"
   },
