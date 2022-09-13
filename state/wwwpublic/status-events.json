@@ -1,6 +1,73 @@
 [
   {
     "status": "AUTO",
+    "work_start": "2022-09-14T21:00:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2022-09-12T12:00:00+02:00",
+    "title": {
+      "EN": "Important security upgrades will be applied to the Jupyter Notebooks",
+      "DK": "Vigtige sikkerhedsopgraderinger af Jupyter Notebooks vil blive udrullet"
+    },
+    "services": [
+      "DAG",
+      "MODI"
+    ],
+    "work_end": "2022-09-14T23:59:00+02:00",
+    "description": {
+      "EN": "We will roll out the previously prepared Jupyter Notebook updates to mitigate CVE-2021-32862.", 
+      "DK": "Vi vil udrulle de tidligere forberedte Jupyter Notebook-opdateringer for at afbøde CVE-2021-32862."
+    },
+    "announce_end": "2022-09-15T15:00:00+02:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2022-09-10T08:00:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2022-08-30T12:00:00+02:00",
+    "title": {
+      "EN": "Important security upgrades will be applied to the Jupyter Notebooks",
+      "DK": "Vigtige sikkerhedsopgraderinger af Jupyter Notebooks vil blive udrullet"
+    },
+    "services": [
+      "DAG",
+      "MODI"
+    ],
+    "work_end": "2022-09-10T12:00:00+02:00",
+    "description": {
+      "EN": "We will apply important security upgrades that will mitigate an issue where XSS can be injected when exporting HTML versions of Jupyter Notebooks as annonced in CVE-2021-32862. The preperations for this was completed, but due to unforseen complications in how the new Notebook versions would clash with our un-updated JupyterHub version, the rollout of this was postponed.", 
+      "DK": "Vi vil udrulle vigtige sikkerhedsopgraderinger, der vil afhjælpe et problem, hvor XSS kan injectes i exporteringen HTML-versioner af Jupyter Notebooks som annonceret i CVE-2021-32862. Forberedelserne til dette blev gennemført, men på grund af uforudsete komplikationer i, hvordan de nye Notebook-versioner ville kollidere med vores uopdaterede JupyterHub-version, blev udrulningen af dette udskudt."
+    },
+    "announce_end": "2022-09-12T12:00:00+02:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2022-08-30T12:54:00+02:00",
+    "systems": [
+        "SIF"
+    ],
+    "announce_start": "2022-08-30T12:54:00+02:00",
+    "title": {
+      "EN": "SFTP overload: limited or no storage access",
+      "DK": "SFTP-overbelastning: begrænset eller ingen lageradgang"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2022-08-30T15:06:00+02:00",
+    "description": {
+      "EN": "The SFTP service at SIF went awry and pulled all system resources (file descriptors) so that no further file system access was allowed. It resulted in full or partial loss of access to the data at SIF. We have restarted the SFTP service to release the resources and now keep an eye on it to see if it happens again and if so why. Full data access should therefore be back.", 
+      "DK": "SFTP-servicen på SIF gik i selvsving og slugte alle tilgængelige resurser (file descriptors) hvorfor yderligere adgang til filsystemet blev afvist. Det førte til hel eller delvis manglende adgang til data på SIF. Vi har genstartet SFTP-servicen for at frigive resurserne og holder øje med om det sker igen og evt hvorfor. Almindelig dataadgang skulle således være tilbage."
+    },
+    "announce_end": "2022-08-31T10:00:00+02:00"
+  },
+  {
+    "status": "AUTO",
     "work_start": "2022-08-15T20:32:00+02:00",
     "systems": [
         "ERDA",
@@ -17,7 +84,7 @@
     "work_end": "2022-08-16T07:33:00+02:00",
     "description": {
       "EN": "We experienced a serious failure on one of the storage bricks in the ERDA/IDMC backend storage last night and it lead to partial data outages on ERDA/IDMC. This morning we identified the cause to be a hardware error in the memory or CPU of the storage brick. We migrated that part to a different host and got the brick back to service in order to restore full backend storage access on ERDA/IDMC. Everything should thus be back to normal operation now.", 
-      "DK": "Vi oplevede et alvorligt problem med en brick (lagerenhed) i backend lageret i aftes, og det førte til delvise udfald i dataadgangen på ERDA/IDMC. Til morgen fandt vi frem til at problemet skyldtes hardwarefejl i hukommelse eller processor på pågældende brick. Vi migrerede den ramte del til en anden maskine og fik således pågældende brick tilbage i drift og derved hele backendlageret gjort tilgængeligt igen for ERDA/IMC. Alt skulle således være tilbage i normal drift nu."
+      "DK": "Vi oplevede et alvorligt problem med en brick (lagerenhed) i backend lageret i aftes, og det førte til delvise udfald i dataadgangen på ERDA/IDMC. Til morgen fandt vi frem til at problemet skyldtes hardwarefejl i hukommelse eller processor på pågældende brick. Vi migrerede den ramte del til en anden maskine og fik således pågældende brick tilbage i drift og derved hele backendlageret gjort tilgængeligt igen for ERDA/IDMC. Alt skulle således være tilbage i normal drift nu."
     },
     "announce_end": "2022-08-17T10:00:00+02:00"
   },

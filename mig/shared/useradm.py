@@ -217,8 +217,10 @@ def sync_gdp_users(configuration,
         if key.startswith(gdp_client_id):
             if user.get('expire', None):
                 user_db[key]['expire'] = user['expire']
+                update_account_expire_cache(configuration, user_db[key])
             if user.get('status', None):
                 user_db[key]['status'] = user['status']
+                update_account_status_cache(configuration, user_db[key])
 
     return user_db
 

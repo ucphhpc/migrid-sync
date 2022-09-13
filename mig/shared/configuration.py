@@ -133,6 +133,8 @@ def fix_missing(config_file, verbose=True):
         'site_password_policy': '',
         'site_password_legacy_policy': '',
         'site_password_cracklib': '',
+        'site_extra_scripts': [],
+        'site_extra_styles': [],
         'hg_path': '/usr/bin/hg',
         'hgweb_scripts': '/usr/share/doc/mercurial-common/examples/',
         'trac_admin_path': '/usr/bin/trac-admin',
@@ -387,6 +389,8 @@ class Configuration:
     site_password_policy = POLICY_MEDIUM
     site_password_legacy_policy = False
     site_password_cracklib = False
+    site_extra_userpage_scripts = ""
+    site_extra_userpage_styles = ""
     hg_path = ''
     hgweb_scripts = ''
     trac_admin_path = ''
@@ -1797,6 +1801,16 @@ location.""" % self.config_file)
                 'SITE', 'password_cracklib')
         else:
             self.site_password_cracklib = False
+        if config.has_option('SITE', 'extra_userpage_scripts'):
+            self.site_extra_userpage_scripts = config.get(
+                'SITE', 'extra_userpage_scripts').split()
+        else:
+            self.site_extra_userpage_scripts = []
+        if config.has_option('SITE', 'extra_userpage_styles'):
+            self.site_extra_userpage_styles = config.get(
+                'SITE', 'extra_userpage_styles').split()
+        else:
+            self.site_extra_userpage_styles = []
         if config.has_option('SITE', 'script_deps'):
             self.site_script_deps = config.get('SITE', 'script_deps').split()
         else:
