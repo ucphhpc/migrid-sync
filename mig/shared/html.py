@@ -569,7 +569,8 @@ def themed_styles(configuration, base=[], advanced=[], skin=[], user_settings={}
 <link rel="stylesheet" type="text/css" href="%(skin_prefix)s/ui-theme.css" media="screen"/>
 <link rel="stylesheet" type="text/css" href="%(skin_prefix)s/ui-theme.custom.css" media="screen"/>
 ''' % css_helpers,
-              'ui_skin': ''
+              'ui_skin': '',
+              'site_extra': ''
               }
     if not legacy_user_interface(configuration, user_settings):
         styles['ui_base'] += '''
@@ -592,6 +593,11 @@ def themed_styles(configuration, base=[], advanced=[], skin=[], user_settings={}
 <link rel="stylesheet" type="text/css" href="%(skin_prefix)s/ui-v2.custom.css" media="screen"/>
         ''' % css_helpers
 
+    link = '''<link rel="stylesheet" type="text/css" href="%s" media="screen"/>
+'''
+    for css_uri in configuration.site_extra_userpage_styles:
+        styles['site_extra'] += link % css_uri
+
     extend_styles(configuration, styles, base, advanced, skin, user_settings)
     return styles
 
@@ -607,7 +613,7 @@ def themed_scripts(configuration, base=[], advanced=[], skin=[], init=[],
     """
     scripts = {'base': [] + base, 'advanced': [] + advanced,
                'skin': [] + skin, 'init': [] + init,
-               'ready': [] + ready}
+               'ready': [] + ready, 'site_extra': []}
     scripts['base'].append('''
 <script type="text/javascript" src="/assets/vendor/jquery/js/jquery.js"></script>
     ''')
@@ -653,11 +659,16 @@ def themed_scripts(configuration, base=[], advanced=[], skin=[], init=[],
         # Call dynamic content scripts on page ready
         scripts['ready'].append(dyn_scripts)
 
+    source = '''<script type="text/javascript" src="%s"></script>'''
+    for js_uri in configuration.site_extra_userpage_scripts:
+        scripts['site_extra'].append(source % js_uri)
+
     wrapped = {'base': '\n'.join(scripts['base']),
                'advanced': '\n'.join(scripts['advanced']),
                'skin': '\n'.join(scripts['skin']),
                'init': '\n'.join(scripts['init']),
-               'ready': '\n'.join(scripts['ready'])
+               'ready': '\n'.join(scripts['ready']),
+               'site_extra': '\n'.join(scripts['site_extra'])
                }
     return wrapped
 
@@ -1740,8 +1751,9 @@ def get_xgi_html_preamble(
 %s
 %s
 
-<!-- override with any site-specific styles -->
+<!-- append any site-specific styles -->
 <link rel="stylesheet" type="text/css" href="%s" media="screen"/>
+%s
 %s
 
 <!-- begin user supplied style dependencies -->
@@ -1774,6 +1786,9 @@ def get_xgi_html_preamble(
     });
 </script>
 
+<!-- append any site-specific scripts -->
+%s
+
 <!-- begin user supplied script dependencies -->
 %s
 <!-- end user supplied script dependencies -->
@@ -1783,12 +1798,13 @@ def get_xgi_html_preamble(
            style_map.get('ui_base', ''), style_map.get('page', ''),
            style_map.get('advanced', ''), style_map.get('skin', ''),
            style_map.get('ui_skin', ''), configuration.site_custom_css,
-           user_styles, style_overrides, configuration.site_fav_icon,
+           user_styles, style_map.get('site_extra', ''), style_overrides,
+           configuration.site_fav_icon,
            script_map.get('base', ''), script_map.get('ui_base', ''),
            script_map.get('skin', ''), script_map.get('ui_skin', ''),
            script_map.get('page', ''), script_map.get('advanced', ''),
            script_map.get('init', ''), script_map.get('ready', ''),
-           user_scripts)
+           script_map.get('site_extra', ''), user_scripts)
 
     out += '''
 <title>

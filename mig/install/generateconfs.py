@@ -143,6 +143,8 @@ if '__main__' == __name__:
         'skin',
         'title',
         'short_title',
+        'extra_userpage_scripts',
+        'extra_userpage_styles',
         'peers_explicit_fields',
         'peers_contact_hint',
         'external_doc',
