@@ -27,6 +27,10 @@
 
 # TODO: allow use of native https instead of curl from python
 
+# TODO: detect and warn about pending/missing OpenID login session
+# TODO: implement support for OpenID Connect as well
+
+
 """Shared helper functions for generating public MiG scripts
 for the supported programming languages.
 """
@@ -35,6 +39,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import os
+import sys
 
 from mig.shared.base import get_xgi_bin
 from mig.shared.defaults import csrf_field
@@ -42,13 +47,48 @@ from mig.shared.defaults import csrf_field
 # Generator version (automagically updated by svn)
 
 __version__ = '$Revision$'
+publicscript_version = __version__
+
+# ##########
+# Defaults #
+# ##########
+
+verbose_mode = False
+shared_lib = True
+test_script = True
+include_license = True
+
+# Script prefix for all user scripts
+
+mig_prefix = 'mig'
+
+# Default commands:
+
+sh_lang = 'sh'
+sh_cmd = '/bin/sh'
+sh_ext = 'sh'
+python_lang = 'python'
+
+# python_cmd is only actually used on un*x so don't worry about path
+
+python_cmd = '/usr/bin/python'
+python_ext = 'py'
+
+# curl_cmd must be generic for cross platform support
+
+curl_cmd = 'curl'
+dest_dir = '.'
 
 # Name of CSRF helper in extoid - probably should be configurable
 extoid_csrf = 'ct'
 
-# ##########################
+# Shared helpers for login / logout / twofactor session handling
+script_login_session = ['login', 'logout', 'twofactor']
+
+
+# #########################
 # Script helper functions #
-# ##########################
+# #########################
 
 
 def doc_string(lang, string, indent=0):
@@ -248,10 +288,73 @@ def basic_usage_options(usage_str, lang):
     return s
 
 
+def lookup_publicscript_function(op, helper):
+    """General wrapper for the specific helper functions.
+    Simply looks up op helper in globals and returns matching function."""
+
+    return globals()['%s_%s' % (op, helper)]
+
+
+def shared_usage_function(op, lang, extension):
+    """General wrapper for the specific usage functions.
+    Simply rewrites first arg to function name."""
+
+    # return eval('%s_usage_function' % op)(lang, extension)
+    return lookup_publicscript_function(op, 'usage_function')(lang, extension)
+
+
+def login_usage_function(lang, extension):
+    """Generate usage help for the corresponding script"""
+
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
+
+    usage_str = 'Usage: %s%s.%s [OPTIONS]' % \
+                (mig_prefix, op, extension)
+    s = ''
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
+    s += basic_usage_options(usage_str, lang)
+    s += end_function(lang, 'usage')
+    return s
+
+
+def logout_usage_function(lang, extension):
+    """Generate usage help for the corresponding script"""
+
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
+
+    usage_str = 'Usage: %s%s.%s [OPTIONS]' % \
+                (mig_prefix, op, extension)
+    s = ''
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
+    s += basic_usage_options(usage_str, lang)
+    s += end_function(lang, 'usage')
+    return s
+
+
+def twofactor_usage_function(lang, extension):
+    """Generate usage help for the corresponding script"""
+
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
+
+    usage_str = 'Usage: %s%s.%s [OPTIONS] ACTION TOKEN [REDIRECT_URL]' % \
+                (mig_prefix, op, extension)
+    s = ''
+    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
+    s += basic_usage_options(usage_str, lang)
+    s += end_function(lang, 'usage')
+
+    return s
+
+
 # ##########################
 # Communication functions #
 # ##########################
-
 # Names of miguser conf variables wrapped in conf container - no credentials
 _conf_pack = ['mig_server', 'auth_cookie_file', 'ca_cert_file', 'auth_redir',
               'max_time', 'connect_timeout']
@@ -1162,6 +1265,117 @@ def curl_chain_logout_steps(
     return s
 
 
+def login_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call helper to setup an OpenID login session possibly with 2FA auth
+    session included if enabled for the chosen OpenID login.
+    """
+
+    # Strip / prefix from landing page get the required url form
+    relative_url = configuration.site_landing_page.strip('/')
+    if lang == 'sh':
+        post_data = '"$default_args&flags=$server_flags"'
+    elif lang == 'python':
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
+    else:
+        print('Error: %s not supported!' % lang)
+        return ''
+
+    # Strip / suffix from openid provider URL to get the required base form
+    extoid_base = os.path.dirname(
+        configuration.user_ext_oid_provider.rstrip('/'))
+    migoid_base = os.path.dirname(
+        configuration.user_mig_oid_provider.rstrip('/'))
+
+    twofactor_url = ''
+    if configuration.site_enable_twofactor:
+        twofactor_url = '%s/twofactor.py' % get_xgi_bin(configuration)
+
+    s = ''
+    s += begin_function(lang, 'login_session', ['user_conf', 'username', 'password'],
+                        'Init active login session')
+    s += curl_chain_login_steps(
+        lang,
+        relative_url,
+        post_data,
+        migoid_base,
+        extoid_base,
+        twofactor_url,
+    )
+    s += end_function(lang, 'login_session')
+    return s
+
+
+def logout_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call a helper to retire an active OpenID login session possibly with
+    2FA auth session included if enabled for the chosen OpenID login.
+    """
+    # Strip / prefix from landing page get the required url form
+    relative_url = configuration.site_landing_page.strip('/')
+    relative_return_url = '"%s/autologout.py?output_format=txt"' \
+        % get_xgi_bin(configuration)
+    if lang == 'sh':
+        post_data = '"$default_args&flags=$server_flags"'
+    elif lang == 'python':
+        post_data = "'%s&flags=%s' % (default_args, server_flags)"
+    else:
+        print('Error: %s not supported!' % lang)
+        return ''
+
+    # Strip / suffix from openid provider URL to get the required base form
+    extoid_base = os.path.dirname(
+        configuration.user_ext_oid_provider.rstrip('/'))
+    migoid_base = os.path.dirname(
+        configuration.user_mig_oid_provider.rstrip('/'))
+
+    s = ''
+    s += begin_function(lang, 'logout_session', ['user_conf'],
+                        'Exit active login session')
+    s += curl_chain_logout_steps(
+        lang,
+        relative_url,
+        relative_return_url,
+        post_data,
+        migoid_base,
+        extoid_base
+    )
+    s += end_function(lang, 'logout_session')
+    return s
+
+
+def twofactor_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
+    """Call the corresponding cgi script with action, queue and msg as
+    arguments."""
+
+    relative_url = '"%s/twofactor.py"' % get_xgi_bin(configuration)
+    query = '""'
+    if lang == 'sh':
+        post_data = '"$default_args&flags=$server_flags&action=$action&token=$token"'
+        urlenc_data = '("redirect_url=$redirect_url")'
+    elif lang == 'python':
+        post_data = "'%s&flags=%s&action=%s&token=%s' % (default_args, server_flags, action, token)"
+        urlenc_data = '["redirect_url=" + redirect_url]'
+    else:
+        print('Error: %s not supported!' % lang)
+        return ''
+
+    s = ''
+    s += begin_function(lang, 'twofactor_auth', ['action', 'token', 'redirect_url'],
+                        'Execute the corresponding server operation')
+    s += auth_check_init(lang)
+    s += timeout_check_init(lang)
+    s += curl_perform(
+        lang,
+        relative_url,
+        post_data,
+        urlenc_data,
+        query,
+        curl_cmd,
+        curl_flags,
+    )
+    s += end_function(lang, 'twofactor_auth')
+    return s
+
+
 # #######################
 # Main part of scripts #
 # #######################
@@ -1452,9 +1666,118 @@ if arg_count > max_count:
     return s
 
 
+def login_main(lang):
+    """
+    Generate main part of corresponding scripts.
+
+    lang specifies which script language to generate in.
+    """
+
+    s = ''
+    s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
+    s += arg_count_check(lang, None, None)
+    s += check_conf_readable(lang)
+    s += configure(lang)
+    s += pack_conf(lang, 'user_conf')
+    if lang == 'sh':
+        s += """
+login_session \"$user_conf\" \"$username\" \"$password\"
+"""
+    elif lang == 'python':
+        s += """
+(status, out) = login_session(user_conf, username, password)
+# All output here is manual messages without newlines
+print('\\n'.join(out))
+sys.exit(status)
+"""
+    else:
+        print('Error: %s not supported!' % lang)
+
+    return s
+
+
+def logout_main(lang):
+    """
+    Generate main part of corresponding scripts.
+
+    lang specifies which script language to generate in.
+    """
+
+    s = ''
+    s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
+    s += arg_count_check(lang, None, None)
+    s += check_conf_readable(lang)
+    s += configure(lang)
+    s += pack_conf(lang, 'user_conf')
+    if lang == 'sh':
+        s += """
+logout_session \"$user_conf\"
+"""
+    elif lang == 'python':
+        s += """
+(status, out) = logout_session(user_conf)
+# All output here is manual messages without newlines
+print('\\n'.join(out))
+sys.exit(status)
+"""
+    else:
+        print('Error: %s not supported!' % lang)
+
+    return s
+
+
+def twofactor_main(lang):
+    """
+    Generate main part of corresponding scripts.
+
+    lang specifies which script language to generate in.
+    """
+
+    s = ''
+    s += basic_main_init(lang)
+    s += parse_options(lang, None, None)
+    s += arg_count_check(lang, 2, 3)
+    s += check_conf_readable(lang)
+    s += configure(lang)
+    if lang == 'sh':
+        s += """
+# optional third argument depending on action - add dummy
+twofactor_auth \"$@\" ''
+"""
+    elif lang == 'python':
+        s += """
+# optional third argument depending on action - add dummy
+sys.argv.append('')
+(status, out) = twofactor_auth(*(sys.argv[1:4]))
+# Trailing comma to prevent double newlines
+print ''.join(out),
+sys.exit(status)
+"""
+    else:
+        print('Error: %s not supported!' % lang)
+
+    return s
+
+
 # ######################
 # Generator functions #
 # ######################
+
+
+def shared_version_function(lang, short_name="MiG", flavor="Core", version=__version__):
+    """Version helper"""
+
+    s = ''
+    s += begin_function(lang, 'version', [], 'Show version details')
+    if lang == 'sh':
+        s += "    echo '%s %s Scripts: %s'" % (short_name, flavor, version)
+    elif lang == 'python':
+        s += "    print '%s %s Scripts: %s'" % (short_name, flavor, version)
+    s += end_function(lang, 'version')
+
+    return s
 
 
 def comment(lang, string):
@@ -1565,3 +1888,96 @@ def write_license(configuration, dst_dir, name='COPYING'):
     except Exception as exc:
         print('Error: failed to write license %s: %s' % (dst_path, exc))
         return False
+
+
+def generate_login(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('generate_', '')
+
+    # Generate op script for each of the languages in scripts_languages
+
+    for (lang, interpreter, extension) in scripts_languages:
+        verbose(verbose_mode, 'Generating %s script for %s' % (op,
+                                                               lang))
+        script_name = '%s%s.%s' % (mig_prefix, op, extension)
+
+        script = ''
+        script += init_script(op, lang, interpreter)
+        script += shared_version_function(lang)
+        script += lookup_publicscript_function(op, 'usage_function')(lang,
+                                                                     extension)
+        script += check_var_function(lang)
+        script += read_conf_function(lang)
+        script += curl_perform_flex(lang, 'user_conf', 'base_val', 'url_val',
+                                    'post_val', 'urlenc_val', 'query_val')
+        script += lookup_publicscript_function(op, 'function')(configuration,
+                                                               lang, curl_cmd)
+        script += lookup_publicscript_function(op, 'main')(lang)
+
+        write_script(script, dest_dir + os.sep + script_name)
+
+    return True
+
+
+def generate_logout(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('generate_', '')
+
+    # Generate op script for each of the languages in scripts_languages
+
+    for (lang, interpreter, extension) in scripts_languages:
+        verbose(verbose_mode, 'Generating %s script for %s' % (op,
+                                                               lang))
+        script_name = '%s%s.%s' % (mig_prefix, op, extension)
+
+        script = ''
+        script += init_script(op, lang, interpreter)
+        script += lookup_publicscript_function(op, 'usage_function')(lang,
+                                                                     extension)
+        script += check_var_function(lang)
+        script += read_conf_function(lang)
+        script += curl_perform_flex(lang, 'user_conf', 'base_val', 'url_val',
+                                    'post_val', 'urlenc_val', 'query_val')
+        script += lookup_publicscript_function(op, 'function')(configuration,
+                                                               lang, curl_cmd)
+        script += lookup_publicscript_function(op, 'main')(lang)
+
+        write_script(script, dest_dir + os.sep + script_name)
+
+    return True
+
+
+def generate_twofactor(configuration, scripts_languages, dest_dir='.'):
+    """Generate the corresponding script"""
+
+    # Extract op from function name
+
+    op = sys._getframe().f_code.co_name.replace('generate_', '')
+
+    # Generate op script for each of the languages in scripts_languages
+
+    for (lang, interpreter, extension) in scripts_languages:
+        verbose(verbose_mode, 'Generating %s script for %s' % (op,
+                                                               lang))
+        script_name = '%s%s.%s' % (mig_prefix, op, extension)
+
+        script = ''
+        script += init_script(op, lang, interpreter)
+        script += shared_version_function(lang)
+        script += lookup_publicscript_function(op, 'usage_function')(lang,
+                                                                     extension)
+        script += check_var_function(lang)
+        script += read_conf_function(lang)
+        script += lookup_publicscript_function(op, 'function')(configuration,
+                                                               lang, curl_cmd)
+        script += lookup_publicscript_function(op, 'main')(lang)
+
+        write_script(script, dest_dir + os.sep + script_name)
+
+    return True
