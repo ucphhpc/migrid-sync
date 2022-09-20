@@ -61,8 +61,8 @@
     ],
     "work_end": "2022-09-14T23:59:00+02:00",
     "description": {
-      "EN": "We will roll out the previously prepared Jupyter Notebook updates to mitigate CVE-2021-32862.", 
-      "DK": "Vi vil udrulle de tidligere forberedte Jupyter Notebook-opdateringer for at afbøde CVE-2021-32862."
+      "EN": "We will roll out the previously prepared Jupyter Notebook updates to mitigate CVE-2021-32862. This work was carried out without issue for the normal CPU based images, we did experience some trouble with the new GPU images due to deprecated NVIDIA packages but these were upgraded the following day.", 
+      "DK": "Vi vil udrulle de tidligere forberedte Jupyter Notebook-opdateringer for at afbøde CVE-2021-32862. Dette arbejde blev udført uden problemer for de normale CPU-baserede images, vi oplevede nogle problemer med de nye GPU images på grund af forældede NVIDIA-pakker, men disse blev opgraderet den følgende dag."
     },
     "announce_end": "2022-09-15T15:00:00+02:00"
   },
