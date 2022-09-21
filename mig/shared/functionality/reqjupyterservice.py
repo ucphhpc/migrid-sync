@@ -465,9 +465,10 @@ def main(client_id, user_arguments_dict):
                      % (mount_dict, user_dict))
 
         auth_header = {'Remote-User': remote_user}
-        json_data = {'data': {'Mount': mount_dict,
-                              'User': user_dict}}
+        json_data = {'mount_data': {'Mount': mount_dict,
+                                    'User': user_dict}}
 
+        # TODO, ask David if this needed in the future?
         if configuration.site_enable_workflows:
             workflows_dict = mig_to_workflows_adapt(active_mount['state'])
             if not workflows_dict:
