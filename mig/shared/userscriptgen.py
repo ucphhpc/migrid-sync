@@ -39,8 +39,8 @@ as arguments, only those languages will be generated.
 from __future__ import print_function
 from __future__ import absolute_import
 
-import sys
 import getopt
+import sys
 
 from mig.shared.base import get_xgi_bin
 from mig.shared.conf import get_configuration_object
@@ -49,14 +49,9 @@ from mig.shared.publicscriptgen import *
 
 # Generator version (automagically updated by svn)
 
-__version__ = '$Revision$'
-
-# Save original __version__ before truncate with wild card import
-
-_userscript_version = __version__
-
-_publicscript_version = __version__
-__version__ = '%s,%s' % (_userscript_version, _publicscript_version)
+userscript_version = '$Revision$'
+__version__ = 'Scripts %s / Core %s' % (userscript_version,
+                                        publicscript_version)
 
 # ######################################
 # Script generator specific functions #
@@ -65,8 +60,7 @@ __version__ = '%s,%s' % (_userscript_version, _publicscript_version)
 
 
 def usage():
-    """ Usage helper"""
-
+    """Usage help"""
     print('Usage: userscriptgen.py OPTIONS [LANGUAGE ... ]')
     print('Where OPTIONS include:')
     print(' -c CURL_CMD\t: Use curl from CURL_CMD')
@@ -80,36 +74,24 @@ def usage():
     print(' -V\t\t: Show version')
 
 
-def version():
+def version(short_name="MiG", flavor="User"):
     """Version info"""
-
-    print('MiG User Script Generator: %s' % __version__)
+    print('%s %s Script Generator: %s' % (short_name, flavor, __version__))
 
 
 def version_function(lang):
-    """Version helper"""
-
-    s = ''
-    s += begin_function(lang, 'version', [], 'Show version details')
-    if lang == 'sh':
-        s += "    echo 'MiG User Scripts: %s'" % __version__
-    elif lang == 'python':
-        s += "    print 'MiG User Scripts: %s'" % __version__
-    s += end_function(lang, 'version')
-
-    return s
+    """Version helper for generated scripts"""
+    return shared_version_function(lang, flavor="User", version=__version__)
 
 
 # ##########################
 # Script helper functions #
 # ##########################
 
+def lookup_userscript_function(op, helper):
+    """Simply looks up op helper in globals and returns matching function"""
 
-def shared_usage_function(op, lang, extension):
-    """General wrapper for the specific usage functions.
-    Simply rewrites first arg to function name."""
-
-    return eval('%s_usage_function' % op)(lang, extension)
+    return globals()['%s_%s' % (op, helper)]
 
 
 def cancel_usage_function(lang, extension):
@@ -468,40 +450,6 @@ def ls_usage_function(lang, extension):
         s += '\n    print "%s"' % long_usage_string
         s += '\n    print "%s"' % recursive_usage_string
 
-    s += end_function(lang, 'usage')
-
-    return s
-
-
-def login_usage_function(lang, extension):
-    """Generate usage help for the corresponding script"""
-
-    # Extract op from function name
-
-    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
-
-    usage_str = 'Usage: %s%s.%s [OPTIONS]' % \
-                (mig_prefix, op, extension)
-    s = ''
-    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
-    s += basic_usage_options(usage_str, lang)
-    s += end_function(lang, 'usage')
-
-    return s
-
-
-def logout_usage_function(lang, extension):
-    """Generate usage help for the corresponding script"""
-
-    # Extract op from function name
-
-    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
-
-    usage_str = 'Usage: %s%s.%s [OPTIONS]' % \
-                (mig_prefix, op, extension)
-    s = ''
-    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
-    s += basic_usage_options(usage_str, lang)
     s += end_function(lang, 'usage')
 
     return s
@@ -932,23 +880,6 @@ def truncate_usage_function(lang, extension):
     return s
 
 
-def twofactor_usage_function(lang, extension):
-    """Generate usage help for the corresponding script"""
-
-    # Extract op from function name
-
-    op = sys._getframe().f_code.co_name.replace('_usage_function', '')
-
-    usage_str = 'Usage: %s%s.%s [OPTIONS] ACTION TOKEN [REDIRECT_URL]' % \
-                (mig_prefix, op, extension)
-    s = ''
-    s += begin_function(lang, 'usage', [], 'Usage help for %s' % op)
-    s += basic_usage_options(usage_str, lang)
-    s += end_function(lang, 'usage')
-
-    return s
-
-
 def unzip_usage_function(lang, extension):
     """Generate usage help for the corresponding script"""
 
@@ -1060,13 +991,6 @@ def zip_usage_function(lang, extension):
 # ##########################
 # Communication functions #
 # ##########################
-
-
-def shared_op_function(configuration, op, lang, curl_cmd):
-    """General wrapper for the specific op functions.
-    Simply rewrites first arg to function name."""
-
-    return eval('%s_function' % op)(configuration, lang, curl_cmd)
 
 
 def cancel_function(configuration, lang, curl_cmd, curl_flags=''):
@@ -1707,83 +1631,6 @@ def ls_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
         curl_flags,
     )
     s += end_function(lang, 'ls_file')
-    return s
-
-
-def login_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
-    """Call helper to setup an OpenID login session possibly with 2FA auth
-    session included if enabled for the chosen OpenID login.
-    """
-
-    # Strip / prefix from landing page get the required url form
-    relative_url = configuration.site_landing_page.strip('/')
-    if lang == 'sh':
-        post_data = '"$default_args&flags=$server_flags"'
-    elif lang == 'python':
-        post_data = "'%s&flags=%s' % (default_args, server_flags)"
-    else:
-        print('Error: %s not supported!' % lang)
-        return ''
-
-    # Strip / suffix from openid provider URL to get the required base form
-    extoid_base = os.path.dirname(
-        configuration.user_ext_oid_provider.rstrip('/'))
-    migoid_base = os.path.dirname(
-        configuration.user_mig_oid_provider.rstrip('/'))
-
-    twofactor_url = ''
-    if configuration.site_enable_twofactor:
-        twofactor_url = '%s/twofactor.py' % get_xgi_bin(configuration)
-
-    s = ''
-    s += begin_function(lang, 'login_session', ['user_conf', 'username', 'password'],
-                        'Init active login session')
-    s += curl_chain_login_steps(
-        lang,
-        relative_url,
-        post_data,
-        migoid_base,
-        extoid_base,
-        twofactor_url,
-    )
-    s += end_function(lang, 'login_session')
-    return s
-
-
-def logout_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
-    """Call a helper to retire an active OpenID login session possibly with
-    2FA auth session included if enabled for the chosen OpenID login.
-    """
-    # Strip / prefix from landing page get the required url form
-    relative_url = configuration.site_landing_page.strip('/')
-    relative_return_url = '"%s/autologout.py?output_format=txt"' \
-        % get_xgi_bin(configuration)
-    if lang == 'sh':
-        post_data = '"$default_args&flags=$server_flags"'
-    elif lang == 'python':
-        post_data = "'%s&flags=%s' % (default_args, server_flags)"
-    else:
-        print('Error: %s not supported!' % lang)
-        return ''
-
-    # Strip / suffix from openid provider URL to get the required base form
-    extoid_base = os.path.dirname(
-        configuration.user_ext_oid_provider.rstrip('/'))
-    migoid_base = os.path.dirname(
-        configuration.user_mig_oid_provider.rstrip('/'))
-
-    s = ''
-    s += begin_function(lang, 'logout_session', ['user_conf'],
-                        'Exit active login session')
-    s += curl_chain_logout_steps(
-        lang,
-        relative_url,
-        relative_return_url,
-        post_data,
-        migoid_base,
-        extoid_base
-    )
-    s += end_function(lang, 'logout_session')
     return s
 
 
@@ -2993,40 +2840,6 @@ def truncate_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     return s
 
 
-def twofactor_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
-    """Call the corresponding cgi script with action, queue and msg as
-    arguments."""
-
-    relative_url = '"%s/twofactor.py"' % get_xgi_bin(configuration)
-    query = '""'
-    if lang == 'sh':
-        post_data = '"$default_args&flags=$server_flags&action=$action&token=$token"'
-        urlenc_data = '("redirect_url=$redirect_url")'
-    elif lang == 'python':
-        post_data = "'%s&flags=%s&action=%s&token=%s' % (default_args, server_flags, action, token)"
-        urlenc_data = '["redirect_url=" + redirect_url]'
-    else:
-        print('Error: %s not supported!' % lang)
-        return ''
-
-    s = ''
-    s += begin_function(lang, 'twofactor_auth', ['action', 'token', 'redirect_url'],
-                        'Execute the corresponding server operation')
-    s += auth_check_init(lang)
-    s += timeout_check_init(lang)
-    s += curl_perform(
-        lang,
-        relative_url,
-        post_data,
-        urlenc_data,
-        query,
-        curl_cmd,
-        curl_flags,
-    )
-    s += end_function(lang, 'twofactor_auth')
-    return s
-
-
 def unzip_function(configuration, lang, curl_cmd, curl_flags='--compressed'):
     """Call the corresponding cgi script with the 'src_list' and dst as
     argument.
@@ -3389,13 +3202,6 @@ for pattern in %s:
         return ''
 
     return s
-
-
-def shared_main(op, lang):
-    """General wrapper for the specific main functions.
-    Simply rewrites first arg to function name."""
-
-    return eval('%s_main' % op)(lang)
 
 
 def cancel_main(lang):
@@ -4128,68 +3934,6 @@ if not sys.argv[1:]:
 (status, out) = ls_file(path_list)
 # Trailing comma to prevent double newlines
 print ''.join(out),
-sys.exit(status)
-"""
-    else:
-        print('Error: %s not supported!' % lang)
-
-    return s
-
-
-def login_main(lang):
-    """
-    Generate main part of corresponding scripts.
-
-    lang specifies which script language to generate in.
-    """
-
-    s = ''
-    s += basic_main_init(lang)
-    s += parse_options(lang, None, None)
-    s += arg_count_check(lang, None, None)
-    s += check_conf_readable(lang)
-    s += configure(lang)
-    s += pack_conf(lang, 'user_conf')
-    if lang == 'sh':
-        s += """
-login_session \"$user_conf\" \"$username\" \"$password\"
-"""
-    elif lang == 'python':
-        s += """
-(status, out) = login_session(user_conf, username, password)
-# All output here is manual messages without newlines
-print('\\n'.join(out))
-sys.exit(status)
-"""
-    else:
-        print('Error: %s not supported!' % lang)
-
-    return s
-
-
-def logout_main(lang):
-    """
-    Generate main part of corresponding scripts.
-
-    lang specifies which script language to generate in.
-    """
-
-    s = ''
-    s += basic_main_init(lang)
-    s += parse_options(lang, None, None)
-    s += arg_count_check(lang, None, None)
-    s += check_conf_readable(lang)
-    s += configure(lang)
-    s += pack_conf(lang, 'user_conf')
-    if lang == 'sh':
-        s += """
-logout_session \"$user_conf\"
-"""
-    elif lang == 'python':
-        s += """
-(status, out) = logout_session(user_conf)
-# All output here is manual messages without newlines
-print('\\n'.join(out))
 sys.exit(status)
 """
     else:
@@ -4955,9 +4699,7 @@ else:
 
 
 def tail_main(lang):
-    """
-    Generate main part of corresponding scripts.
-
+    """Generate main part of corresponding scripts.
     lang specifies which script language to generate in.
     """
 
@@ -5201,39 +4943,6 @@ truncate_file \"$size\" ${path_list[@]}
         s += """
 path_list = \"path=%s\" % \"&path=\".join(sys.argv[1:])
 (status, out) = truncate_file(size, path_list)
-# Trailing comma to prevent double newlines
-print ''.join(out),
-sys.exit(status)
-"""
-    else:
-        print('Error: %s not supported!' % lang)
-
-    return s
-
-
-def twofactor_main(lang):
-    """
-    Generate main part of corresponding scripts.
-
-    lang specifies which script language to generate in.
-    """
-
-    s = ''
-    s += basic_main_init(lang)
-    s += parse_options(lang, None, None)
-    s += arg_count_check(lang, 2, 3)
-    s += check_conf_readable(lang)
-    s += configure(lang)
-    if lang == 'sh':
-        s += """
-# optional third argument depending on action - add dummy
-twofactor_auth \"$@\" ''
-"""
-    elif lang == 'python':
-        s += """
-# optional third argument depending on action - add dummy
-sys.argv.append('')
-(status, out) = twofactor_auth(*(sys.argv[1:4]))
 # Trailing comma to prevent double newlines
 print ''.join(out),
 sys.exit(status)
@@ -5617,11 +5326,13 @@ def generate_cancel(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(
+            lang, extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -5645,11 +5356,13 @@ def generate_cat(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -5666,18 +5379,19 @@ def generate_cp(configuration, scripts_languages, dest_dir='.'):
     # Generate op script for each of the languages in scripts_languages
 
     for (lang, interpreter, extension) in scripts_languages:
-        verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                                                               lang))
+        verbose(verbose_mode, 'Generating %s script for %s' % (op, lang))
         script_name = '%s%s.%s' % (mig_prefix, op, extension)
 
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -5701,11 +5415,13 @@ def generate_createbackup(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -5729,11 +5445,13 @@ def generate_createfreeze(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -5757,11 +5475,13 @@ def generate_datatransfer(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -5785,11 +5505,13 @@ def generate_deletebackup(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -5813,11 +5535,13 @@ def generate_deletefreeze(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -5841,11 +5565,13 @@ def generate_doc(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -5869,11 +5595,13 @@ def generate_freezedb(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -5897,11 +5625,13 @@ def generate_imagepreview(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -5923,12 +5653,14 @@ def generate_get(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
         script += expand_function(configuration, lang, curl_cmd)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -5952,11 +5684,13 @@ def generate_grep(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -5980,11 +5714,13 @@ def generate_head(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6008,18 +5744,20 @@ def generate_jobaction(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
     return True
 
 
-def generate_lib(configuration, script_ops, scripts_languages, dest_dir='.'):
+def generate_lib(configuration, scripts_languages, script_ops, dest_dir='.'):
     """Generate the corresponding script"""
 
     # Extract op from function name
@@ -6040,9 +5778,9 @@ def generate_lib(configuration, script_ops, scripts_languages, dest_dir='.'):
         script += curl_perform_flex(lang, 'user_conf', 'base_val', 'url_val',
                                     'post_val', 'urlenc_val', 'query_val')
         script += expand_function(configuration, lang, curl_cmd)
-        for function in script_ops:
-            script += shared_op_function(configuration, function, lang,
-                                         curl_cmd)
+        for lib_op in script_ops:
+            script += lookup_userscript_function(lib_op, 'function')(
+                configuration, lang, curl_cmd)
         script += basic_main_init(lang)
         script += check_conf_readable(lang)
         script += configure(lang)
@@ -6069,11 +5807,13 @@ def generate_liveio(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6097,71 +5837,13 @@ def generate_ls(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
-
-        write_script(script, dest_dir + os.sep + script_name)
-
-    return True
-
-
-def generate_login(configuration, scripts_languages, dest_dir='.'):
-    """Generate the corresponding script"""
-
-    # Extract op from function name
-
-    op = sys._getframe().f_code.co_name.replace('generate_', '')
-
-    # Generate op script for each of the languages in scripts_languages
-
-    for (lang, interpreter, extension) in scripts_languages:
-        verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                                                               lang))
-        script_name = '%s%s.%s' % (mig_prefix, op, extension)
-
-        script = ''
-        script += init_script(op, lang, interpreter)
-        script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
-        script += check_var_function(lang)
-        script += read_conf_function(lang)
-        script += curl_perform_flex(lang, 'user_conf', 'base_val', 'url_val',
-                                    'post_val', 'urlenc_val', 'query_val')
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
-
-        write_script(script, dest_dir + os.sep + script_name)
-
-    return True
-
-
-def generate_logout(configuration, scripts_languages, dest_dir='.'):
-    """Generate the corresponding script"""
-
-    # Extract op from function name
-
-    op = sys._getframe().f_code.co_name.replace('generate_', '')
-
-    # Generate op script for each of the languages in scripts_languages
-
-    for (lang, interpreter, extension) in scripts_languages:
-        verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                                                               lang))
-        script_name = '%s%s.%s' % (mig_prefix, op, extension)
-
-        script = ''
-        script += init_script(op, lang, interpreter)
-        script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
-        script += check_var_function(lang)
-        script += read_conf_function(lang)
-        script += curl_perform_flex(lang, 'user_conf', 'base_val', 'url_val',
-                                    'post_val', 'urlenc_val', 'query_val')
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6185,11 +5867,13 @@ def generate_md5sum(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6213,11 +5897,13 @@ def generate_mkdir(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6241,11 +5927,13 @@ def generate_mqueue(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6269,11 +5957,13 @@ def generate_mv(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6297,15 +5987,17 @@ def generate_put(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
 
         # Recursive put requires mkdir
 
         script += mkdir_function(configuration, lang, curl_cmd)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6329,11 +6021,13 @@ def generate_read(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6357,11 +6051,13 @@ def generate_resubmit(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6385,11 +6081,13 @@ def generate_rm(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6413,11 +6111,13 @@ def generate_rmdir(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6441,11 +6141,13 @@ def generate_scripts(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6469,11 +6171,13 @@ def generate_sha1sum(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6497,11 +6201,13 @@ def generate_sharelink(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6525,11 +6231,13 @@ def generate_showbackup(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6553,11 +6261,13 @@ def generate_showfreeze(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6581,11 +6291,13 @@ def generate_stat(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6609,11 +6321,13 @@ def generate_status(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6637,11 +6351,13 @@ def generate_submit(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6665,11 +6381,13 @@ def generate_tail(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6693,16 +6411,19 @@ def generate_test(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
 
         # use put function for preparation and rm function for clean up
 
-        script += shared_op_function(configuration, 'put', lang, curl_cmd)
-        script += shared_op_function(configuration, 'rm', lang, curl_cmd)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        for helper_op in ('put', 'rm'):
+            script += lookup_userscript_function(helper_op, 'function')(
+                configuration, lang, curl_cmd)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6726,11 +6447,13 @@ def generate_touch(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6754,39 +6477,13 @@ def generate_truncate(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
-
-        write_script(script, dest_dir + os.sep + script_name)
-
-    return True
-
-
-def generate_twofactor(configuration, scripts_languages, dest_dir='.'):
-    """Generate the corresponding script"""
-
-    # Extract op from function name
-
-    op = sys._getframe().f_code.co_name.replace('generate_', '')
-
-    # Generate op script for each of the languages in scripts_languages
-
-    for (lang, interpreter, extension) in scripts_languages:
-        verbose(verbose_mode, 'Generating %s script for %s' % (op,
-                                                               lang))
-        script_name = '%s%s.%s' % (mig_prefix, op, extension)
-
-        script = ''
-        script += init_script(op, lang, interpreter)
-        script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
-        script += check_var_function(lang)
-        script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6810,11 +6507,13 @@ def generate_unzip(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6838,15 +6537,17 @@ def generate_uploadchunked(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
 
         # Recursive upload requires mkdir
 
         script += mkdir_function(configuration, lang, curl_cmd)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6870,11 +6571,13 @@ def generate_wc(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6898,11 +6601,13 @@ def generate_write(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
@@ -6926,25 +6631,22 @@ def generate_zip(configuration, scripts_languages, dest_dir='.'):
         script = ''
         script += init_script(op, lang, interpreter)
         script += version_function(lang)
-        script += shared_usage_function(op, lang, extension)
+        script += lookup_userscript_function(op, 'usage_function')(lang,
+                                                                   extension)
         script += check_var_function(lang)
         script += read_conf_function(lang)
-        script += shared_op_function(configuration, op, lang, curl_cmd)
-        script += shared_main(op, lang)
+        script += lookup_userscript_function(op, 'function')(configuration,
+                                                             lang, curl_cmd)
+        script += lookup_userscript_function(op, 'main')(lang)
 
         write_script(script, dest_dir + os.sep + script_name)
 
     return True
 
 
-# Defaults
+# Defaults to extend the values from publicscriptgen
 
-verbose_mode = False
-shared_lib = True
-test_script = True
-include_license = True
-
-# Supported MiG operations (don't add 'test' as it is optional)
+# Supported MiG user operations (don't add 'test' as it is optional)
 
 # TODO: add find, *re, jobfeasible, jobschedule, mrslview, people,
 #           settings, vm*,
@@ -6963,8 +6665,6 @@ script_ops = [
     'jobaction',
     'liveio',
     'ls',
-    'login',
-    'logout',
     'md5sum',
     'mkdir',
     'mqueue',
@@ -6983,7 +6683,6 @@ script_ops = [
     'tail',
     'touch',
     'truncate',
-    'twofactor',
     'unzip',
     'uploadchunked',
     'wc',
@@ -6998,26 +6697,6 @@ script_ops = [
     'deletefreeze',
 ]
 
-# Script prefix for all user scripts
-
-mig_prefix = 'mig'
-
-# Default commands:
-
-sh_lang = 'sh'
-sh_cmd = '/bin/sh'
-sh_ext = 'sh'
-python_lang = 'python'
-
-# python_cmd is only actually used on un*x so don't worry about path
-
-python_cmd = '/usr/bin/python'
-python_ext = 'py'
-
-# curl_cmd must be generic for cross platform support
-
-curl_cmd = 'curl'
-dest_dir = '.'
 
 # ###########
 # ## Main ###
@@ -7103,12 +6782,16 @@ if __name__ == '__main__':
 
     # Generate all scripts
 
+    for op in script_login_session:
+        lookup_publicscript_function('generate', op)(configuration, languages,
+                                                     dest_dir)
+
     for op in script_ops:
-        generator = 'generate_%s' % op
-        eval(generator)(configuration, languages, dest_dir)
+        lookup_userscript_function('generate', op)(configuration, languages,
+                                                   dest_dir)
 
     if shared_lib:
-        generate_lib(configuration, script_ops, languages, dest_dir)
+        generate_lib(configuration, languages, script_ops, dest_dir)
 
     if test_script:
         generate_test(configuration, languages, dest_dir)

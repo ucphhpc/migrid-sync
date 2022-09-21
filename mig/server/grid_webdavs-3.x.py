@@ -1447,7 +1447,7 @@ class MiGFilesystemProvider(FilesystemProvider):
         except Exception as exc:
             logger.error("_loc_to_file_path crash for %s: %s" % (path, exc))
 
-        # TODO: investigate crash when user dir has file with accented chars!
+        # TODO: investigate py2 crash when user dir has file with accented chars!
         # Convert to unicode
         # file_path = util.to_unicode_safe(file_path)
         # logger.debug("_loc_to_file_path on %s: %s" % (path, file_path))

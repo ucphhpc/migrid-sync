@@ -38,6 +38,8 @@ import zipfile
 from mig.shared import returnvalues
 from mig.shared import userscriptgen
 from mig.shared import vgridscriptgen
+from mig.shared.publicscriptgen import script_login_session, \
+    lookup_publicscript_function
 from mig.shared.base import client_id_dir
 from mig.shared.defaults import keyword_all, keyword_auto
 from mig.shared.functional import validate_input_and_cert
@@ -237,35 +239,50 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         if flavor == 'user':
             for op in userscriptgen.script_ops:
-                generator = 'userscriptgen.generate_%s' % op
-                eval(generator)(configuration, languages, abs_dir)
+                generator = userscriptgen.lookup_userscript_function(
+                    'generate', op)
+                generator(configuration, languages, dest_dir=abs_dir)
 
             if userscriptgen.shared_lib:
-                userscriptgen.generate_lib(configuration, userscriptgen.script_ops,
-                                           languages, abs_dir)
+                userscriptgen.generate_lib(configuration, languages,
+                                           userscriptgen.script_ops,
+                                           dest_dir=abs_dir)
 
             if userscriptgen.test_script:
                 userscriptgen.generate_test(configuration, languages, abs_dir)
-        elif flavor == 'resource':
+        elif flavor in ('resource', 'vgrid'):
+            # TODO: use concatenated script_ops in one loop when upload is gone
             for op in vgridscriptgen.script_ops_single_arg:
-                vgridscriptgen.generate_single_argument(configuration, op[0], op[1],
-                                                        languages, abs_dir)
+                vgridscriptgen.generate_any_arguments(configuration, languages,
+                                                      *op, dest_dir=abs_dir)
             for op in vgridscriptgen.script_ops_single_upload_arg:
-                vgridscriptgen.generate_single_argument_upload(configuration, op[0],
-                                                               op[1], op[2],
-                                                               languages, abs_dir)
+                # TODO: port to use 'any' version
+                vgridscriptgen.generate_single_argument_upload(configuration,
+                                                               languages, *op,
+                                                               dest_dir=abs_dir)
             for op in vgridscriptgen.script_ops_two_args:
-                vgridscriptgen.generate_two_arguments(configuration, op[0], op[1],
-                                                      op[2], languages, abs_dir)
+                vgridscriptgen.generate_any_arguments(configuration, languages,
+                                                      *op, dest_dir=abs_dir)
             for op in vgridscriptgen.script_ops_ten_args:
-                vgridscriptgen.generate_ten_arguments(configuration, op[0], op[1],
-                                                      op[2], op[3], op[4], op[5],
-                                                      op[6], op[7], op[8], op[9],
-                                                      op[10], languages, abs_dir)
+                vgridscriptgen.generate_any_arguments(configuration, languages,
+                                                      *op, dest_dir=abs_dir)
+
+            if vgridscriptgen.shared_lib:
+                vgridscriptgen.generate_lib(configuration, languages,
+                                            vgridscriptgen.script_ops,
+                                            dest_dir=abs_dir)
+
+            if vgridscriptgen.test_script:
+                vgridscriptgen.generate_test(configuration, languages, abs_dir)
         else:
             output_objects.append(
                 {'object_type': 'warning_text', 'text': 'Unknown flavor: %s' % flavor})
             continue
+
+        # Shared login/logout/twofactor session helpers
+        for op in script_login_session:
+            generator = lookup_publicscript_function('generate', op)
+            generator(configuration, languages, dest_dir=abs_dir)
 
         # Always include license conditions file
 
