@@ -142,6 +142,7 @@ def txt_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in txt format"""
 
     lines = []
+    binary_output = False
     timing_info = 'no timing information'
     status_line = 'Exit code: %s Description %s (TIMING_INFO)\n' % (ret_val,
                                                                     ret_msg)
@@ -170,6 +171,7 @@ ___%s___
         elif i['object_type'] == 'verbatim':
             lines.append('%s\n' % i['text'])
         elif i['object_type'] == 'binary':
+            binary_output = True
             lines.append(i['data'])
         elif i['object_type'] == 'link':
 
@@ -597,7 +599,11 @@ ctime\t%(ctime)s
     if status_line:
         status_line = status_line.replace('TIMING_INFO', timing_info)
         lines = [status_line] + lines
-    return ''.join(lines)
+
+    if binary_output:
+        return b''.join(lines)
+    else:
+        return ''.join(lines)
 
 
 def html_link(obj):
@@ -667,6 +673,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in html format"""
 
     lines = []
+    binary_output = False
     user_settings = {}
     include_widgets = True
     user_widgets = {}
@@ -766,6 +773,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
         elif i['object_type'] == 'verbatim':
             lines.append('%s' % html_escape(i['text']))
         elif i['object_type'] == 'binary':
+            binary_output = True
             lines.append(i['data'])
         elif i['object_type'] == 'link':
             lines.append(html_link(i))
@@ -2502,7 +2510,11 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
         lines.append(get_xgi_html_footer(configuration, timing_footer, True,
                                          user_settings, include_widgets,
                                          user_widgets))
-    return '\n'.join(lines)
+
+    if binary_output:
+        return b''.join(lines)
+    else:
+        return '\n'.join(lines)
 
 
 # def xml_format(configuration, ret_val, ret_msg, out_obj):
