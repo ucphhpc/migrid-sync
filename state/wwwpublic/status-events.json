@@ -14,10 +14,10 @@
     "services": [
       "ALL"
     ],
-    "work_end": "2022-09-27T08:30:00+02:00",
+    "work_end": "2022-09-27T09:35:00+02:00",
     "description": {
-      "EN": "We will install an important bugfix relating to hot-swap disk detection on the backend storage bricks. It requires a reboot of the bricks in question and therefore will require downtime for all services. We expect the work to complete within an hour. More status info will follow here.", 
-      "DK": "Vi installerer en vigtig fejlrettelse relateret til hot-swap diskgenkendelse på backend-lagerets bricks. Det kræver genstart af de berørte bricks og vil derfor føre til nedetid for alle services. Vi regner med at arbejdet er overstået indenfor en times tid. Nærmere statusinformation følger her."
+      "EN": "We will install an important bugfix relating to hot-swap disk detection on the backend storage bricks. It requires a reboot of the bricks in question and therefore will require downtime for all services. We expect the work to complete within an hour. It took somewhat longer than expected, but we finished the work a bit after 9:30 and everything is back online.", 
+      "DK": "Vi installerer en vigtig fejlrettelse relateret til hot-swap diskgenkendelse på backend-lagerets bricks. Det kræver genstart af de berørte bricks og vil derfor føre til nedetid for alle services. Vi regner med at arbejdet er overstået indenfor en times tid. Det trak ud med opdateringen, men vi blev færdige lidt efter 9:30 og alt er tilbage i almindelig drift."
     },
     "announce_end": "2022-09-28T12:00:00+02:00"
   },
@@ -36,10 +36,10 @@
     "services": [
       "ALL"
     ],
-    "work_end": "2022-09-26T07:59:00+02:00",
+    "work_end": "2022-09-25T17:17:00+02:00",
     "description": {
-      "EN": "It's time for a thorough update of the ERDA/IDMC systems. The work will involve frontend down-time for low-level system updates. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect a longer downtime of approximately one hour for the main upgrades if everything runs smoothly. That downtime will likely start about half an hour into the window and should therefore finish well before standard working hours, but we conservatively set the maintenance window until next morning.",
-      "DK": "Det er tid til en gennemgående opdatering af ERDA/IDMC systemerne. Arbejdet kræver nedetid på frontend til grundlæggende systemopdateringer og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi forventer en længere nedetid på en times tid til hovedopgraderingerne hvis alting forløber planmæssigt. Den del vil formodentlig begynde omkring en halv time inde i arbejdet og skulle derfor være overstået længe inden almindelig arbejdstid, men for en sikkerheds skyld er vedligeholdelsesvinduet sat indtil næste morgen."
+      "EN": "It's time for a thorough update of the ERDA/IDMC systems. The work will involve frontend down-time for low-level system updates. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect a longer downtime of approximately one hour for the main upgrades if everything runs smoothly. That downtime will likely start about half an hour into the window and should therefore finish well before standard working hours. All ERDA and IDMC upgrades are complete and everything is back in normal production.",
+      "DK": "Det er tid til en gennemgående opdatering af ERDA/IDMC systemerne. Arbejdet kræver nedetid på frontend til grundlæggende systemopdateringer og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi forventer en længere nedetid på en times tid til hovedopgraderingerne hvis alting forløber planmæssigt. Den del vil formodentlig begynde omkring en halv time inde i arbejdet og skulle derfor være overstået længe inden almindelig arbejdstid. Alle opgraderingerne på ERDA og IDMC er overstået og alting er tilbage i almindelig drift."
     },
     "announce_end": "2022-09-26T10:00:00+02:00"
   }, 
