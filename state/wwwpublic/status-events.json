@@ -14,10 +14,10 @@
     "services": [
       "ALL"
     ],
-    "work_end": "2022-09-27T08:30:00+02:00",
+    "work_end": "2022-09-27T09:35:00+02:00",
     "description": {
-      "EN": "We will install an important bugfix relating to hot-swap disk detection on the backend storage bricks. It requires a reboot of the bricks in question and therefore will require downtime for all services. We expect the work to complete within an hour. More status info will follow here.", 
-      "DK": "Vi installerer en vigtig fejlrettelse relateret til hot-swap diskgenkendelse på backend-lagerets bricks. Det kræver genstart af de berørte bricks og vil derfor føre til nedetid for alle services. Vi regner med at arbejdet er overstået indenfor en times tid. Nærmere statusinformation følger her."
+      "EN": "We will install an important bugfix relating to hot-swap disk detection on the backend storage bricks. It requires a reboot of the bricks in question and therefore will require downtime for all services. We expect the work to complete within an hour. It took somewhat longer than expected, but we finished the work a bit after 9:30 and everything is back online.", 
+      "DK": "Vi installerer en vigtig fejlrettelse relateret til hot-swap diskgenkendelse på backend-lagerets bricks. Det kræver genstart af de berørte bricks og vil derfor føre til nedetid for alle services. Vi regner med at arbejdet er overstået indenfor en times tid. Det trak ud med opdateringen, men vi blev færdige lidt efter 9:30 og alt er tilbage i almindelig drift."
     },
     "announce_end": "2022-09-28T12:00:00+02:00"
   },
