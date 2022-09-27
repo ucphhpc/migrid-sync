@@ -506,7 +506,7 @@ def account_request_template(configuration, password=True, default_values={}):
       <!-- NOTE: this simple form control just looks for one or more full names.
       -->
       <label for='validationCustom11'>Peer contact full name(s)</label>
-      <input type='text' class='form-control' id='peers_full_name_field' type=text name='peers_full_name' value='%(peers_full_name)s' placeholder='First Contact Name, Second Contact Name, ...' required %(readonly_peers_full_name)s pattern='(\w\w+(\s+\w+)+)(\s*(,| & | and )\s*(\w\w+(\s+\w+)+))*' title='One or more full names of your %(site)s peer contacts %(peers_contact_hint)s' />
+      <input type='text' class='form-control' id='peers_full_name_field' type=text name='peers_full_name' value='%(peers_full_name)s' placeholder='First Contact Name, Second Contact Name, ...' required %(readonly_peers_full_name)s pattern='(\D\D+(\s+\D+)+)(\s*(,| & | and )\s*(\D\D+(\s+\D+)+))*' title='One or more full names of your %(site)s peer contacts %(peers_contact_hint)s' />
       <div class='valid-feedback'>
         Looks good!
       </div>
@@ -524,7 +524,7 @@ def account_request_template(configuration, password=True, default_values={}):
            Using 'multiple' renders 'required' useless so we set minlength.
       -->
       <label for='validationCustom12'>Peer contact email(s)</label>
-      <input type='text' class='form-control' id='peers_email_field' type=email name='peers_email' value='%(peers_email)s' placeholder='your.1st.contact@here.org, your.2nd.contact@here.org, ...' multiple minlength=5 required %(readonly_peers_email)s pattern='^(\w+@\w+(\.\w+)+)(\s*,?\s*(\w+@\w+(\.\w+)+))*$' title='One or more email address of your %(site)s peer contacts %(peers_contact_hint)s' />
+      <input type='text' class='form-control' id='peers_email_field' type=email name='peers_email' value='%(peers_email)s' placeholder='your.1st.contact@here.org, your.2nd.contact@here.org, ...' multiple minlength=5 required %(readonly_peers_email)s pattern='^([^@\s]+@[^@\s]+(\.[^@\s]+)+)(\s*,?\s*([^@\s]+@[^@\s]+(\.[^@\s]+)+))*$' title='One or more email address of your %(site)s peer contacts %(peers_contact_hint)s' />
       <div class='valid-feedback'>
         Looks good!
       </div>
