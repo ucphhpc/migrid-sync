@@ -84,7 +84,15 @@ def main(client_id, user_arguments_dict, environ=None):
     (auth_type, auth_flavor) = detect_client_auth(configuration, environ)
     identity = extract_client_id(configuration, environ, lookup_dn=False)
     logger.info("%s from %s with identity %s" % (op_name, client_id, identity))
-    if client_id and auth_type == AUTH_CERTIFICATE:
+    if not client_id:
+        output_objects.append(
+            {'object_type': 'warning', 'text':
+             """You're accessing %s on the address without authentication info,
+so there's no session to logout. If you are in fact logged in you need to use
+logout from the corresponding authenticated web pages.
+""" % configuration.short_title})
+        return (output_objects, status)
+    elif auth_type == AUTH_CERTIFICATE:
         output_objects.append(
             {'object_type': 'warning', 'text':
              """You're accessing %s with a user certificate so to completely
