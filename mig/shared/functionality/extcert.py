@@ -159,12 +159,13 @@ def main(client_id, user_arguments_dict):
     # Write-protect ID and peers helper fields if requested
     peers_fields = ['peers_%s' % field for field in
                     configuration.site_peers_explicit_fields]
+    given_peers = [i for i in peers_fields if user_fields.get(i, None)]
     for field in list(cert_field_map) + peers_fields:
         fill_helpers['readonly_%s' % field] = ''
     ro_fields = [i for i in accepted['ro_fields'] if i in
-                 list(cert_field_map) + peers_fields]
+                 list(cert_field_map) + given_peers]
     if keyword_auto in accepted['ro_fields']:
-        ro_fields += [i for i in list(cert_field_map) + peers_fields
+        ro_fields += [i for i in list(cert_field_map) + given_peers
                       if not i in ro_fields]
     # NOTE: lock all ID fields to current certificate here
     ro_fields += [i for i in id_fields if not i in ro_fields]
