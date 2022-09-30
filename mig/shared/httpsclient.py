@@ -38,6 +38,7 @@ from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_V2, \
     AUTH_MIG_OIDC, AUTH_EXT_OIDC, AUTH_MIG_CERT, AUTH_EXT_CERT, \
     AUTH_SID_GENERIC, AUTH_UNKNOWN, auth_openid_mig_db, auth_openid_ext_db, \
     keyword_all
+from mig.shared.base import is_gdp_user
 from mig.shared.gdp.all import get_project_user_dn
 from mig.shared.settings import load_twofactor
 from mig.shared.url import urlencode, parse_qsl
@@ -346,9 +347,13 @@ def extract_client_id(configuration, environ, lookup_dn=True):
 
 def require_twofactor_setup(configuration, script_name, client_id, environ):
     """Check if site requires twofactor for this web access and if so return
-    the corresponding functionality backedn main function.
+    the corresponding functionality backend main function.
     """
     _logger = configuration.logger
+    if configuration.site_enable_gdp \
+            and is_gdp_user(configuration, client_id):
+        _logger.debug("not forcing twofactor setup for GDP user: %setup" % client_id)
+        return False
     # Helper to detect twofactor required and protected settings
     twofactor_short_flavors = {AUTH_EXT_OID: 'extoid', AUTH_EXT_OIDC: 'extoidc',
                                AUTH_MIG_OID: 'migoid', AUTH_MIG_OIDC: 'migoidc',
@@ -425,7 +430,9 @@ def missing_twofactor_settings(configuration, client_id, settings_dict):
     _logger = configuration.logger
     twofactor_protos = configuration.site_twofactor_mandatory_protos
     missing = {}
-    if not twofactor_protos:
+    if not twofactor_protos \
+            or (configuration.site_enable_gdp
+            and is_gdp_user(configuration, client_id)):
         return missing
     else:
         if keyword_all in twofactor_protos:
