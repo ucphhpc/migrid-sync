@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # crontab - user task scheduling back end
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,6 +29,7 @@
 do interactively. Restricted to the same backends that are otherwise exposed
 and basically just runs those on behalf of the user.
 """
+
 from __future__ import absolute_import
 
 import datetime
@@ -124,6 +125,11 @@ def main(client_id, user_arguments_dict):
     (add_import, add_init, add_ready) = man_base_js(configuration,
                                                     [],
                                                     {'width': 600})
+    # Extract site timezone offset from UTC in seconds for displaying site clock
+    site_time = time.time()
+    site_utcoffset = (datetime.datetime.fromtimestamp(site_time) -
+                      datetime.datetime.utcfromtimestamp(site_time))
+    utcoffset_secs = site_utcoffset.total_seconds()
     add_ready += '''
               /* Init variables helper as foldable but closed and with individual
               heights */
@@ -138,7 +144,24 @@ def main(client_id, user_arguments_dict):
               /* NOTE: requires managers CSS fix for proper tab bar height */
               $(".crontab-tabs").tabs();
               $("#logarea").scrollTop($("#logarea")[0].scrollHeight);
-        '''
+
+              function show_site_time() {
+                var site_utcoffset_secs = %d;
+                /* NOTE: constructor returns UTC time */
+                var site_now = new Date();
+                site_now.setTime(site_now.getTime() + site_utcoffset_secs);
+                var site_secs = site_now.getSeconds();
+                var site_mins = site_now.getMinutes();
+                var site_hours = site_now.getHours();
+                var site_date = site_now.getDate();
+                /* NOTE: compensate for zero-indexing */
+                var site_month = site_now.getMonth() + 1;
+                var site_year = site_now.getFullYear();
+                /* dynamic zero-padding of values where needed */
+                $(".site_clock_datetime").html(site_year+"-" + ("0" + site_month).substr(-2) + "-"  + ("0" + site_date).substr(-2) + " " + ("0" + site_hours).substr(-2) + ":" + ("0" + site_mins).substr(-2) + ":" + ("0" + site_secs).substr(-2));
+              }
+              setInterval(show_site_time, 1000);
+        ''' % utcoffset_secs
     title_entry['style']['advanced'] += '''
 %s
 ''' % cm_css
@@ -271,6 +294,12 @@ useful actions you would be able to interactively run.
 <p>
 The fold-outs at the bottom contain additional help on the available commands
 and the format in use.
+</p>
+<p id="site_clock_area">
+All timestamps implicitly use the site timezone where the date and time is
+currently <span class="site_clock_datetime">
+<!-- automatically updated by javascript --> ____-__-__ __:__:__
+</span>.
 </p>
 <h3>Cron Jobs: Repeating Command Schedule</h3>
 Each line here follows the standard UN*X crontab format with five time fields
