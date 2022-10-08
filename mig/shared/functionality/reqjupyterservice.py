@@ -111,11 +111,11 @@ def mig_to_mount_adapt(mig):
     :return: returns a dictionary
     """
     mount = {
-        'HOST': mig['MOUNT_HOST'],
-        'USERNAME': mig['SESSIONID'],
-        'PRIVATEKEY': mig['MOUNTSSHPRIVATEKEY'],
-        'PATH': mig['TARGET_MOUNT_ADDR'],
-        'PORT': "%s" % mig.get('PORT', 22)
+        'targetHost': mig['MOUNT_HOST'],
+        'username': mig['SESSIONID'],
+        'privateKey': mig['MOUNTSSHPRIVATEKEY'],
+        'targetPath': mig['TARGET_MOUNT_ADDR'],
+        'port': "%s" % mig.get('PORT', 22)
     }
     return mount
 
@@ -580,8 +580,8 @@ def main(client_id, user_arguments_dict):
 
     # Auth and pass a new set of valid mount keys
     auth_header = {'Remote-User': remote_user}
-    json_data = {'data': {'Mount': mount_dict,
-                          'User': user_dict}}
+    json_data = {'mount_data': {'Mount': mount_dict,
+                                'User': user_dict}}
     if workflows_dict:
         json_data['workflows_data'] = {'Session': workflows_dict}
 
