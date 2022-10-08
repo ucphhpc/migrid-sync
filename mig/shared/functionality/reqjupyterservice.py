@@ -465,9 +465,10 @@ def main(client_id, user_arguments_dict):
                      % (mount_dict, user_dict))
 
         auth_header = {'Remote-User': remote_user}
-        json_data = {'mount_data': {'Mount': mount_dict,
-                                    'User': user_dict}}
-
+        user_post_data = {
+            'mount_data': mount_dict,
+            'user_data': user_dict
+        }
         # TODO, ask David if this needed in the future?
         if configuration.site_enable_workflows:
             workflows_dict = mig_to_workflows_adapt(active_mount['state'])
@@ -488,17 +489,18 @@ def main(client_id, user_arguments_dict):
 
             logger.debug("Existing header values, Workflows: %s"
                          % workflows_dict)
-            json_data['workflows_data'] = {'Session': workflows_dict}
+            user_post_data['workflows_data'] = {'Session': workflows_dict}
 
         with requests.session() as session:
             # Authenticate and submit data
             response = session.post(url_auth, headers=auth_header)
             if response.status_code == 200:
-                response = session.post(url_data, json=json_data)
-                if response.status_code != 200:
-                    logger.error(
-                        "Jupyter: User %s failed to submit data %s to %s"
-                        % (client_id, json_data, url_data))
+                for user_data_type, user_data in user_post_data.items():
+                    response = session.post(url_data, json={user_data_type: user_data})
+                    if response.status_code != 200:
+                        logger.error(
+                            "Jupyter: User %s failed to submit data %s to %s"
+                            % (client_id, user_data, url_data))
             else:
                 logger.error(
                     "Jupyter: User %s failed to authenticate against %s"
@@ -581,20 +583,24 @@ def main(client_id, user_arguments_dict):
 
     # Auth and pass a new set of valid mount keys
     auth_header = {'Remote-User': remote_user}
-    json_data = {'mount_data': {'Mount': mount_dict,
-                                'User': user_dict}}
+    user_post_data = {
+        'mount_data': mount_dict,
+        'user_data': user_dict
+    }
+
     if workflows_dict:
-        json_data['workflows_data'] = {'Session': workflows_dict}
+        user_post_data['workflows_data'] = {'Session': workflows_dict}
 
     # First login
     with requests.session() as session:
         # Authenticate
         response = session.post(url_auth, headers=auth_header)
         if response.status_code == 200:
-            response = session.post(url_data, json=json_data)
-            if response.status_code != 200:
-                logger.error("Jupyter: User %s failed to submit data %s to %s"
-                             % (client_id, json_data, url_data))
+            for user_data_type, user_data in user_post_data.items():
+                response = session.post(url_data, json={user_data_type: user_data})
+                if response.status_code != 200:
+                    logger.error("Jupyter: User %s failed to submit data %s to %s"
+                                % (client_id, user_data, url_data))
         else:
             logger.error("Jupyter: User %s failed to authenticate against %s"
                          % (client_id, url_auth))
