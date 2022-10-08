@@ -15,7 +15,7 @@
       "DAG",
       "MODI"
     ],
-    "work_end": "2022-10-08T15:00:00+02:00",
+    "work_end": "2022-10-08T22:00:00+02:00",
     "description": {
       "EN": "We will rollout updates to the DAG and MODI services that will upgrade our underlying Spawner and Authenticator libraries to the latest releases.", 
       "DK": "Vi vil udrulle opdateringer til DAG og MODI-tjenesterne, der vil opgradere vores underliggende Spawner og Authenticator-biblioteker til de seneste udgivelser."
