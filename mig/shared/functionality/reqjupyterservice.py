@@ -420,7 +420,7 @@ def main(client_id, user_arguments_dict):
     url_base = '/' + service['service_name']
     url_home = url_base + '/home'
     url_auth = host + url_base + '/hub/login'
-    url_data = host + url_base + '/hub/user-data'
+    url_data = host + url_base + '/hub/set-user-data'
 
     # Does the client home dir contain an active mount key
     # If so just keep on using it.
