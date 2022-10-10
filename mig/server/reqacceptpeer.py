@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqacceptpeer - Forward account request from peer to existing user(s)
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -189,8 +189,13 @@ if '__main__' == __name__:
     peer_id = peer_dict['distinguished_name']
 
     if search_filter['email'] == keyword_auto:
-        peer_emails = valid_email_addresses(
-            configuration, peer_dict['comment'])
+        peer_email_list = []
+        # Extract email of peers contact from explicit peers field or comment
+        # We don't try peers full name here as it is far too tricky to match
+        peers_email = peer_dict.get('peers_email', '')
+        comment = peer_dict.get('comment', '')
+        peers_source = "%s\n%s" % (peers_email, comment)
+        peer_emails = valid_email_addresses(configuration, peers_source)
         if peer_emails[1:]:
             regex_keys.append('email')
             search_filter['email'] = '(' + '|'.join(peer_emails) + ')'
