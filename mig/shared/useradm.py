@@ -35,7 +35,6 @@ import datetime
 import fnmatch
 import os
 import re
-import shutil
 import sqlite3
 import sys
 import time
@@ -54,7 +53,7 @@ from mig.shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
     authpasswords_filename, authdigests_filename, cert_field_order, \
     twofactor_filename, peers_filename, gdp_distinguished_field
 from mig.shared.fileio import filter_pickled_list, filter_pickled_dict, \
-    make_symlink, delete_symlink
+    make_symlink, delete_symlink, remove_dir, remove_rec, listdir, move
 from mig.shared.modified import mark_user_modified
 from mig.shared.refunctions import list_runtime_environments, \
     update_runtimeenv_owner
@@ -109,24 +108,6 @@ def init_user_adm(dynamic_db_path=True):
     else:
         db_path = os.path.join(app_dir, user_db_filename)
     return (args, app_dir, db_path)
-
-
-def delete_dir(path, verbose=False):
-    """Recursively remove path:
-    first remove all files and subdirs, then remove dir tree.
-    """
-
-    if verbose:
-        print('removing: %s' % path)
-    shutil.rmtree(path)
-
-
-def rename_dir(src, dst, verbose=False):
-    """Rename src to dst"""
-
-    if verbose:
-        print('renaming: %s -> %s ' % (src, dst))
-    shutil.move(src, dst)
 
 
 def remove_alias_link(username, user_home):
@@ -236,6 +217,7 @@ def create_user(
     do_lock=True,
     verify_peer=None,
     peer_expire_slack=0,
+    from_edit_user=False,
 ):
     """Add user"""
     flock = None
@@ -483,6 +465,9 @@ def create_user(
         elif account_status == 'temporal' and accepted_peer_list:
             _logger.debug("proceed with %s account and accepted peers %s" %
                           (account_status, accepted_peer_list))
+        elif from_edit_user:
+            _logger.debug("proceed with %s account during edit user" %
+                          account_status)
         else:
             raise Exception('refusing to renew %s account! (%s)' %
                             (account_status, accepted_peer_list))
@@ -1013,9 +998,10 @@ def edit_user(
                 if do_lock:
                     unlock_user_db(flock)
                 raise Exception("Edit aborted: new user already exists!")
-            _logger.info("Force old user renew to fix missing files")
+            _logger.info("Force old user renew to fix any missing files")
             create_user(old_user, conf_path, db_path, force, verbose,
-                        ask_renew=False, default_renew=True, do_lock=False)
+                        ask_renew=False, default_renew=True, do_lock=False,
+                        from_edit_user=True)
             del user_db[client_id]
         elif new_id != client_id:
             if do_lock:
@@ -1063,7 +1049,26 @@ def edit_user(
         os.makedirs(old_arch_home)
     except Exception as exc:
         pass
-    delete_symlink(new_arch_home, _logger, allow_missing=True)
+
+    # Make sure new_arch_home doesn't exist already as it'd interfere with move
+    if os.path.exists(new_arch_home):
+        if os.path.islink(new_arch_home):
+            # A previous edit_user created a new_arch_home symlink - clean it
+            _logger.info("remove %s link from previous edit" % new_arch_home)
+            delete_symlink(new_arch_home, _logger)
+        elif os.path.isdir(new_arch_home):
+            # A previous sign up probably created a conflicting new_arch_home
+            # Merge contents of new_arch_home into old_arch_home before rename
+            _logger.info("merging existing %s and %s to avoid conflicts" %
+                         (old_arch_home, new_arch_home))
+            for name in listdir(new_arch_home):
+                sub_src = os.path.join(new_arch_home, name)
+                sub_dst = os.path.join(old_arch_home, name)
+                move(sub_src, sub_dst)
+            # Now remove new_arch_home to avoid old_arch_home ending up inside
+            remove_dir(new_arch_home, configuration)
+    else:
+        _logger.debug("no pending clean up for %s" % new_arch_home)
 
     # Rename user dirs recursively
 
@@ -1089,7 +1094,7 @@ def edit_user(
                       (old_path, new_path))
             continue
         try:
-            rename_dir(old_path, new_path)
+            move(old_path, new_path)
         except Exception as exc:
             if not force:
                 raise Exception('could not rename %s to %s: %s'
@@ -1237,7 +1242,7 @@ def edit_user(
     mark_user_modified(configuration, new_id)
     _logger.info("Force new user renew to fix access")
     create_user(user_dict, conf_path, db_path, force, verbose,
-                ask_renew=False, default_renew=True)
+                ask_renew=False, default_renew=True, from_edit_user=True)
     _logger.info("Force access map updates to avoid web stall")
     _logger.info("Force update user map")
     force_update_user_map(configuration)
@@ -1347,7 +1352,7 @@ def delete_user(
 
         user_path = os.path.join(base_dir, client_dir)
         try:
-            delete_dir(user_path)
+            remove_rec(user_path, configuration)
         except Exception as exc:
             _logger.error("could not delete %s: %s" % (user_path, exc))
             if not force:
@@ -1692,7 +1697,7 @@ def migrate_users(
             try:
                 old_path = os.path.join(base_dir, old_name)
                 new_path = os.path.join(base_dir, new_name)
-                shutil.move(old_path, new_path)
+                move(old_path, new_path)
             except Exception as exc:
 
                 # os.symlink(new_path, old_path)
