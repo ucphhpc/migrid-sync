@@ -111,11 +111,21 @@ def mig_to_mount_adapt(mig):
     MOUNT_HOST, SESSIONID, MOUNTSSHPRIVATEKEY, TARGET_MOUNT_ADDR and PORT
     :return: returns a dictionary
     """
+    mount_string = mig["TARGET_MOUNT_ADDR"]
+    target_host = ""
+    target_path = ""
+
+    if "@" in mount_string and ":" in mount_string:
+        # Expects that the mount_string is in the format
+        # @mount_url:mount_path
+        target_host = mount_string[mount_string.index("@")+1:mount_string.index(":")]
+        target_path = mount_string[mount_string.index(":")+1:]        
+
     mount = {
-        'targetHost': mig['MOUNT_HOST'],
+        'targetHost': target_host,
         'username': mig['SESSIONID'],
         'privateKey': mig['MOUNTSSHPRIVATEKEY'],
-        'targetPath': mig['TARGET_MOUNT_ADDR'],
+        'targetPath': target_path,
         'port': "%s" % mig.get('PORT', 22)
     }
     return mount
