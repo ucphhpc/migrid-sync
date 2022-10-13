@@ -1632,10 +1632,16 @@ div.twofactorbg {
     width: 120px;
     height: 120px;
 }
-div.twofactorstatus {
+div.twofactorresult {
     position: absolute;
     left: 50%;
     top: 100px;
+    margin-left: -140px;
+}
+div.twofactorsupport {
+    position: absolute;
+    left: 50%;
+    top: 500px;
     margin-left: -140px;
 }
 span.fakelink {

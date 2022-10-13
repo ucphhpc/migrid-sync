@@ -45,7 +45,7 @@ from mig.shared import returnvalues
 from mig.shared.auth import twofactor_available, load_twofactor_key, \
     get_twofactor_token, verify_twofactor_token, generate_session_key, \
     save_twofactor_session, expire_twofactor_session
-from mig.shared.base import requested_page
+from mig.shared.base import requested_page, extract_field
 from mig.shared.defaults import twofactor_cookie_ttl, AUTH_MIG_OID, \
     AUTH_EXT_OID, AUTH_MIG_OIDC, AUTH_EXT_OIDC
 from mig.shared.functional import validate_input
@@ -223,7 +223,7 @@ function update_reload_counter(cnt, delay) {
 
     pending_setup = False
     if check_missing_setup:
-        #logger.debug("checking for pending 2FA setup")
+        # logger.debug("checking for pending 2FA setup")
         #  No twofactor requirement detected - mandatory setup may be pending
         pending_setup = require_twofactor_setup(configuration, script_name,
                                                 client_id, environ)
@@ -304,7 +304,7 @@ function update_reload_counter(cnt, delay) {
             # NOTE: we keep actual result in plain text for json extract
             output_objects.append({'object_type': 'html_form', 'text': '''
 <div class="vertical-spacer"></div>
-<div class="twofactorstatus">
+<div class="twofactorresult">
 <div class="error leftpad errortext">
 '''})
             output_objects.append({'object_type': 'text', 'text': """
@@ -328,8 +328,20 @@ Page will reload automatically in <span id="reload_counter">%d</span> seconds.
             logger.info('Accepted valid auth token from %s at %s' %
                         (client_id, client_addr))
         else:
+            if not client_id:
+                client_short = "unspecified user"
+            else:
+                client_short = extract_field(client_id, 'email')
+            support_html = '''
+<p class="info leftpad">Twofactor authentication problems?</p>
+<p>
+Please
+<a href="mailto:%s?subject=%s twofactor report from %s">contact admins</a>
+with details.
+</p>
+''' % (configuration.admin_email, configuration.short_title, client_short)
             output_objects.append({'object_type': 'html_form', 'text':
-                                   twofactor_token_html(configuration)})
+                                   twofactor_token_html(configuration, support_html)})
             if token:
                 logger.warning('Invalid token for %s (%s vs %s) - try again' %
                                (client_id, token,
@@ -337,7 +349,7 @@ Page will reload automatically in <span id="reload_counter">%d</span> seconds.
                                                     b32_secret)))
                 # NOTE: we keep actual result in plain text for json extract
                 output_objects.append({'object_type': 'html_form', 'text': '''
-<div class="twofactorstatus">
+<div class="twofactorresult">
 <div class="error leftpad errortext">
 '''})
                 output_objects.append({'object_type': 'text', 'text':
@@ -419,7 +431,7 @@ Page will reload automatically in <span id="reload_counter">%d</span> seconds.
         output_objects.append({'object_type': 'html_form', 'text': '''
 <!-- Keep similar spacing -->
 <div class="twofactorbg">
-<div id="twofactorstatus" class="twofactorstatus">
+<div id="twofactorstatus" class="twofactorresult">
 <div class="%s leftpad">
 ''' % reply_status})
         # NOTE: we keep actual result in plain text for json extract
