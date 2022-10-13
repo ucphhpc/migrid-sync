@@ -1656,7 +1656,7 @@ it installed or otherwise suspect someone may have gained access to it.
     return html
 
 
-def twofactor_token_html(configuration):
+def twofactor_token_html(configuration, support_content=""):
     """Render html for 2FA token input - similar to the template used in the
     apache_2fa example but with a few custumizations to include our own logo
     and force input focus on load.
@@ -1676,8 +1676,11 @@ def twofactor_token_html(configuration):
         <input id="otp_token_submit" class="submit" type="submit" value="Submit">
     </form>
 </div>
+<div class="twofactorsupport">
+%(support_content)s
 </div>
-''' % {'skin_base': configuration.site_skin_base}
+</div>
+''' % {'skin_base': configuration.site_skin_base, 'support_content': support_content}
     return html
 
 
