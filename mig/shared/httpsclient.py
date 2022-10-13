@@ -350,9 +350,13 @@ def require_twofactor_setup(configuration, script_name, client_id, environ):
     the corresponding functionality backend main function.
     """
     _logger = configuration.logger
+    if not client_id:
+        _logger.debug("not forcing twofactor setup for anonymous user")
+        return False
     if configuration.site_enable_gdp \
             and is_gdp_user(configuration, client_id):
-        _logger.debug("not forcing twofactor setup for GDP user: %setup" % client_id)
+        _logger.debug("not forcing twofactor setup for GDP user: %s" %
+                      client_id)
         return False
     # Helper to detect twofactor required and protected settings
     twofactor_short_flavors = {AUTH_EXT_OID: 'extoid', AUTH_EXT_OIDC: 'extoidc',
@@ -432,7 +436,7 @@ def missing_twofactor_settings(configuration, client_id, settings_dict):
     missing = {}
     if not twofactor_protos \
             or (configuration.site_enable_gdp
-            and is_gdp_user(configuration, client_id)):
+                and is_gdp_user(configuration, client_id)):
         return missing
     else:
         if keyword_all in twofactor_protos:
