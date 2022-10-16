@@ -188,12 +188,13 @@ jobs and privileges.</p>''' % configuration.short_title})
     # Write-protect ID and peers helper fields if requested
     peers_fields = ['peers_%s' % field for field in
                     configuration.site_peers_explicit_fields]
+    given_peers = [i for i in peers_fields if user_fields.get(i, None)]
     for field in list(cert_field_map) + peers_fields:
         fill_helpers['readonly_%s' % field] = ''
     ro_fields = [i for i in accepted['ro_fields'] if i in
-                 list(cert_field_map) + peers_fields]
+                 list(cert_field_map) + given_peers]
     if keyword_auto in accepted['ro_fields']:
-        ro_fields += [i for i in list(cert_field_map) + peers_fields
+        ro_fields += [i for i in list(cert_field_map) + given_peers
                       if not i in ro_fields]
     for field in ro_fields:
         fill_helpers['readonly_%s' % field] = 'readonly'
@@ -211,6 +212,7 @@ working Email address clearly affiliated with your Organization!
 %(site_signup_hint)s
 
 <hr />
+
     """
 
     html += account_request_template(configuration,
@@ -224,12 +226,15 @@ working Email address clearly affiliated with your Organization!
 <!-- use post here to avoid field contents in URL -->
 <form method='%(form_method)s' action='%(target_op)s.py' onSubmit='return validate_form();'>
 <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
+
+
 <table>
 <!-- NOTE: javascript support for unicode pattern matching is lacking so we
            only restrict e.g. Full Name to words separated by space here. The
            full check takes place in the backend, but users are better of with
            sane early warnings than the cryptic backend errors.
 -->
+
 <tr><td class='mandatory label'>Full name</td><td><input id='full_name_field' type=text name=cert_name value='%(full_name)s' required pattern='[^ ]+([ ][^ ]+)+' title='Your full name, i.e. two or more names separated by space' /></td><td class=fill_space><br /></td></tr>
 <tr><td class='mandatory label'>Email address</td><td><input id='email_field' type=email name=email value='%(email)s' required title='A valid email address that you read' /> </td><td class=fill_space><br /></td></tr>
 <tr><td class='mandatory label'>Organization</td><td><input id='organization_field' type=text name=org value='%(organization)s' required pattern='[^ ]+([ ][^ ]+)*' title='Name of your organisation: one or more abbreviations or words separated by space' /></td><td class=fill_space><br /></td></tr>
@@ -261,5 +266,4 @@ working Email address clearly affiliated with your Organization!
 """
     output_objects.append(
         {'object_type': 'html_form', 'text': html % fill_helpers})
-
     return (output_objects, returnvalues.OK)

@@ -110,12 +110,22 @@ def mig_to_mount_adapt(mig):
     MOUNT_HOST, SESSIONID, MOUNTSSHPRIVATEKEY, TARGET_MOUNT_ADDR and PORT
     :return: returns a dictionary
     """
+    mount_string = mig["TARGET_MOUNT_ADDR"]
+    target_host = ""
+    target_path = ""
+
+    if "@" in mount_string and ":" in mount_string:
+        # Expects that the mount_string is in the format
+        # @mount_url:mount_path
+        target_host = mount_string[mount_string.index("@")+1:mount_string.index(":")]
+        target_path = mount_string[mount_string.index(":")+1:]        
+
     mount = {
-        'HOST': mig['MOUNT_HOST'],
-        'USERNAME': mig['SESSIONID'],
-        'PRIVATEKEY': mig['MOUNTSSHPRIVATEKEY'],
-        'PATH': mig['TARGET_MOUNT_ADDR'],
-        'PORT': "%s" % mig.get('PORT', 22)
+        'targetHost': target_host,
+        'username': mig['SESSIONID'],
+        'privateKey': mig['MOUNTSSHPRIVATEKEY'],
+        'targetPath': target_path,
+        'port': "%s" % mig.get('PORT', 22)
     }
     return mount
 
@@ -420,7 +430,7 @@ def main(client_id, user_arguments_dict):
     url_base = '/' + service['service_name']
     url_home = url_base + '/home'
     url_auth = host + url_base + '/hub/login'
-    url_data = host + url_base + '/hub/user-data'
+    url_data = host + url_base + '/hub/set-user-data'
 
     # Does the client home dir contain an active mount key
     # If so just keep on using it.
@@ -464,9 +474,10 @@ def main(client_id, user_arguments_dict):
                      % (mount_dict, user_dict))
 
         auth_header = {'Remote-User': remote_user}
-        json_data = {'mount_data': {'Mount': mount_dict,
-                                    'User': user_dict}}
-
+        user_post_data = {
+            'mount_data': mount_dict,
+            'user_data': user_dict
+        }
         # TODO, ask David if this needed in the future?
         if configuration.site_enable_workflows:
             workflows_dict = mig_to_workflows_adapt(active_mount['state'])
@@ -487,17 +498,18 @@ def main(client_id, user_arguments_dict):
 
             logger.debug("Existing header values, Workflows: %s"
                          % workflows_dict)
-            json_data['workflows_data'] = {'Session': workflows_dict}
+            user_post_data['workflows_data'] = {'Session': workflows_dict}
 
         with requests.session() as session:
             # Authenticate and submit data
             response = session.post(url_auth, headers=auth_header)
             if response.status_code == 200:
-                response = session.post(url_data, json=json_data)
-                if response.status_code != 200:
-                    logger.error(
-                        "Jupyter: User %s failed to submit data %s to %s"
-                        % (client_id, json_data, url_data))
+                for user_data_type, user_data in user_post_data.items():
+                    response = session.post(url_data, json={user_data_type: user_data})
+                    if response.status_code != 200:
+                        logger.error(
+                            "Jupyter: User %s failed to submit data %s to %s"
+                            % (client_id, user_data, url_data))
             else:
                 logger.error(
                     "Jupyter: User %s failed to authenticate against %s"
@@ -580,20 +592,24 @@ def main(client_id, user_arguments_dict):
 
     # Auth and pass a new set of valid mount keys
     auth_header = {'Remote-User': remote_user}
-    json_data = {'data': {'Mount': mount_dict,
-                          'User': user_dict}}
+    user_post_data = {
+        'mount_data': mount_dict,
+        'user_data': user_dict
+    }
+
     if workflows_dict:
-        json_data['workflows_data'] = {'Session': workflows_dict}
+        user_post_data['workflows_data'] = {'Session': workflows_dict}
 
     # First login
     with requests.session() as session:
         # Authenticate
         response = session.post(url_auth, headers=auth_header)
         if response.status_code == 200:
-            response = session.post(url_data, json=json_data)
-            if response.status_code != 200:
-                logger.error("Jupyter: User %s failed to submit data %s to %s"
-                             % (client_id, json_data, url_data))
+            for user_data_type, user_data in user_post_data.items():
+                response = session.post(url_data, json={user_data_type: user_data})
+                if response.status_code != 200:
+                    logger.error("Jupyter: User %s failed to submit data %s to %s"
+                                % (client_id, user_data, url_data))
         else:
             logger.error("Jupyter: User %s failed to authenticate against %s"
                          % (client_id, url_auth))
