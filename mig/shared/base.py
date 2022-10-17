@@ -234,6 +234,23 @@ def canonical_user(configuration, user_dict, limit_fields):
     return canonical
 
 
+def canonical_user_with_peers(configuration, user_dict, limit_fields):
+    """Extended version of canonical_user to additionally extract any saved
+    peers fields in user_dict on a canonical form.
+    """
+    canonical = canonical_user(configuration, user_dict, limit_fields)
+    legacy_peers = user_dict.get('peers', [])
+    for explicit_field in configuration.site_peers_explicit_fields:
+        peers_field = "peers_%s" % explicit_field
+        current_val = user_dict.get(peers_field, '')
+        if not current_val and legacy_peers:
+            current_val = ', '.join([extract_field(i, explicit_field) for i
+                                     in legacy_peers])
+        if current_val:
+            canonical[peers_field] = current_val
+    return canonical
+
+
 def sandbox_resource(unique_resource_name):
     """Returns boolean indicating if the resource is a sandbox"""
     fqdn = unique_resource_name.rsplit('.', 1)[0]
