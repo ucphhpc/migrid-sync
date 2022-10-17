@@ -50,8 +50,8 @@ try:
 except ImportError as ierr:
     gnupg = None
 
-from mig.shared.base import force_utf8, generate_https_urls, canonical_user, \
-    cert_field_map, extract_field, get_site_base_url
+from mig.shared.base import force_utf8, generate_https_urls, extract_field, \
+    canonical_user_with_peers, cert_field_map, get_site_base_url
 from mig.shared.defaults import email_keyword_list, job_output_dir, \
     transfer_output_dir, keyword_auto, cert_auto_extend_days, \
     oid_auto_extend_days
@@ -333,7 +333,8 @@ The full status and output files are available at:
         anon_migoid_url = configuration.migserver_https_sid_url
         # Only include actual values in query
         req_fields = [i for i in cert_field_map if user_dict.get(i, '')]
-        user_req = canonical_user(configuration, user_dict, req_fields)
+        user_req = canonical_user_with_peers(configuration, user_dict,
+                                             req_fields)
         # Mark ID fields as readonly in the form to limit errors
         user_req['ro_fields'] = keyword_auto
         id_query = '%s' % urlencode(user_req)
@@ -418,7 +419,9 @@ The %s Admins
         expire = datetime.datetime.fromtimestamp(user_dict['expire'])
         # Only include actual values in query
         req_fields = [i for i in cert_field_map if user_dict.get(i, '')]
-        user_req = canonical_user(configuration, user_dict, req_fields)
+        # Add any saved peers to help during renew
+        user_req = canonical_user_with_peers(configuration, user_dict,
+                                             req_fields)
         # Mark ID fields as readonly in the form to limit errors
         user_req['ro_fields'] = keyword_auto
         id_query = '%s' % urlencode(user_req)

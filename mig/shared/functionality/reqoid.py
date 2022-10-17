@@ -187,7 +187,7 @@ to your old files, jobs and privileges. </p>''' %
                                  client_id, csrf_limit)
     fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token})
     fill_helpers.update({'site_signup_hint': configuration.site_signup_hint})
-    # Write-protect ID and peers helper fields if requested
+    # Write-protect ID and peers helper fields if specifically requested
     peers_fields = ['peers_%s' % field for field in
                     configuration.site_peers_explicit_fields]
     given_peers = [i for i in peers_fields if user_fields.get(i, None)]
@@ -195,9 +195,9 @@ to your old files, jobs and privileges. </p>''' %
         fill_helpers['readonly_%s' % field] = ''
     ro_fields = [i for i in accepted['ro_fields'] if i in
                  list(cert_field_map) + given_peers]
+    # Only write-protect ID fields in auto-mode
     if keyword_auto in accepted['ro_fields']:
-        ro_fields += [i for i in list(cert_field_map) + given_peers
-                      if not i in ro_fields]
+        ro_fields += [i for i in list(cert_field_map) if not i in ro_fields]
     for field in ro_fields:
         fill_helpers['readonly_%s' % field] = 'readonly'
     fill_helpers.update(user_fields)
