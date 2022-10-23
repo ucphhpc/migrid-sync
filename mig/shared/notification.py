@@ -422,6 +422,11 @@ The %s Admins
                                              req_fields)
         # Mark ID fields as readonly in the form to limit errors
         user_req['ro_fields'] = keyword_auto
+        # Extract and pass saved peer fields even in the signed-in case
+        peers_fields = ['peers_%s' % i
+                        for i in configuration.site_peers_explicit_fields]
+        peers_req = dict([i for i in user_req.items() if i[0] in peers_fields])
+        peers_query = '%s' % urlencode(peers_req)
         id_query = '%s' % urlencode(user_req)
         user_dict.update(user_req)
         id_lines = """Full name: %(full_name)s
@@ -447,7 +452,7 @@ preserve full account access. """ % (short_title, expire)
 your %s
 and request semi-automatic renewal, only filling the password and comment
 fields at
-%s/cgi-bin/%s.py
+%s/cgi-bin/%s.py?%s
 In that way you can also choose a new password if you like.
 
 After account access expiry you will temporarily lose ALL access and can only
@@ -476,8 +481,9 @@ hold of your login.
 
 Regards,
 The %s Admins
-""" % (user_credentials, auth_migreq_url, req_name, anon_migreq_url, req_name,
-                id_query, anon_migreq_url, req_name, id_lines, short_title, short_title)
+""" % (user_credentials, auth_migreq_url, req_name, peers_query,
+                anon_migreq_url, req_name, id_query, anon_migreq_url, req_name,
+                id_lines, short_title, short_title)
         else:
             if "extoid" in affected:
                 extend_days = oid_auto_extend_days
