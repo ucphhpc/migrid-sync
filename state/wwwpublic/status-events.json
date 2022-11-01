@@ -1,4 +1,26 @@
 [
+  {
+    "status": "AUTO",
+    "work_start": "2022-11-01T03:00:00+01:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2022-11-01T08:35:00+01:00",
+    "title": {
+      "EN": "Partial data access and short outage in the backend storage",
+      "DK": "Delvis dataadgang og kortvarigt udfald i backend-lageret"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2022-11-01T08:32:00+01:00",
+    "description": {
+      "EN": "We had a hardware issue with one of the bricks in the backend storage early this morning and had to take it down briefly for repairs. The issue likely led to partial access to files on said brick since the early morning hours and active users may additionally have experienced about ten minutes of missing access or data stalls at about 8 o'clock. Things should be back to normal now, so please report any problems to ERDA/IDMC support as usual.", 
+      "DK": "Vi blev ramt af et hardwareproblem i en af backend-lagerets bricks tidligt i morges og var nødt til kortvarigt at lukke den ned til reparation. Førstnævnte resulterede sandsynligvis i delvis adgang til filer på den berørte brick siden tidligt i morges og aktive brugere kan have oplevet nedlukningen i form af manglende adgang eller lange svartider lidt efter klokken 8. Problemet skulle være løst nu og alting tilbage i almindelig drift, så rapportér som altid gerne evt fejl til ERDA/IDMC support."
+    },
+    "announce_end": "2022-11-02T10:00:00+01:00"
+  },
     {
     "status": "AUTO",
     "work_start": "2022-10-08T10:00:00+02:00",
@@ -21,28 +43,6 @@
       "DK": "Vi vil udrulle opdateringer til DAG og MODI-tjenesterne, der vil opgradere vores underliggende Spawner og Authenticator-biblioteker til de seneste udgivelser."
     },
     "announce_end": "2022-10-10T15:00:00+02:00"
-  },
-  {
-    "status": "AUTO",
-    "work_start": "2022-11-01T03:00:00+01:00",
-    "systems": [
-        "ERDA",
-        "IDMC"
-    ],
-    "announce_start": "2022-11-01T08:35:00+01:00",
-    "title": {
-      "EN": "Partial data access and short outage in the backend storage",
-      "DK": "Delvis dataadgang og kortvarigt udfald i backend-lageret"
-    },
-    "services": [
-      "ALL"
-    ],
-    "work_end": "2022-11-01T08:32:00+01:00",
-    "description": {
-      "EN": "We had a hardware issue with one of the bricks in the backend storage early this morning and had to take it down briefly for repairs. The issue likely led to partial access to files on said brick since the early morning hours and active users may additionally have experienced about ten minutes of missing access or data stalls at about 8 o'clock. Things should be back to normal now, so please report any problems to ERDA/IDMC support as usual.", 
-      "DK": "Vi blev ramt af et hardwareproblem i en af backend-lagerets bricks tidligt i morges og var nødt til kortvarigt at lukke den ned til reparation. Førstnævnte resulterede sandsynligvis i delvis adgang til filer på den berørte brick siden tidligt i morges og aktive brugere kan have oplevet nedlukningen i form af manglende adgang eller lange svartider lidt efter klokken 8. Problemet skulle være løst nu og alting tilbage i almindelig drift, så rapportér som altid gerne evt fejl til ERDA/IDMC support."
-    },
-    "announce_end": "2022-11-02T10:00:00+01:00"
   },
   {
     "status": "AUTO",
