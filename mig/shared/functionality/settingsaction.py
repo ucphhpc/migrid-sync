@@ -203,7 +203,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             real_user = client_id
             if configuration.site_enable_gdp:
                 real_user = get_base_client_id(configuration, client_id,
-                                               expand_openid_alias=False)
+                                               expand_oid_alias=False)
             # NOTE: refuse to toggle any mandatory 2FA settings already enabled
             current_dict = load_twofactor(real_user, configuration)
             if not current_dict:
