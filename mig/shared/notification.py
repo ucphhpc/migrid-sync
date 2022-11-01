@@ -50,8 +50,8 @@ try:
 except ImportError as ierr:
     gnupg = None
 
-from mig.shared.base import force_utf8, generate_https_urls, canonical_user, \
-    cert_field_map, extract_field, get_site_base_url
+from mig.shared.base import force_utf8, generate_https_urls, extract_field, \
+    canonical_user_with_peers, cert_field_map, get_site_base_url
 from mig.shared.defaults import email_keyword_list, job_output_dir, \
     transfer_output_dir, keyword_auto, cert_auto_extend_days, \
     oid_auto_extend_days
@@ -333,7 +333,8 @@ The full status and output files are available at:
         anon_migoid_url = configuration.migserver_https_sid_url
         # Only include actual values in query
         req_fields = [i for i in cert_field_map if user_dict.get(i, '')]
-        user_req = canonical_user(configuration, user_dict, req_fields)
+        user_req = canonical_user_with_peers(configuration, user_dict,
+                                             req_fields)
         # Mark ID fields as readonly in the form to limit errors
         user_req['ro_fields'] = keyword_auto
         id_query = '%s' % urlencode(user_req)
@@ -416,9 +417,16 @@ The %s Admins
         expire = datetime.datetime.fromtimestamp(user_dict['expire'])
         # Only include actual values in query
         req_fields = [i for i in cert_field_map if user_dict.get(i, '')]
-        user_req = canonical_user(configuration, user_dict, req_fields)
+        # Add any saved peers to help during renew
+        user_req = canonical_user_with_peers(configuration, user_dict,
+                                             req_fields)
         # Mark ID fields as readonly in the form to limit errors
         user_req['ro_fields'] = keyword_auto
+        # Extract and pass saved peer fields even in the signed-in case
+        peers_fields = ['peers_%s' % i
+                        for i in configuration.site_peers_explicit_fields]
+        peers_req = dict([i for i in user_req.items() if i[0] in peers_fields])
+        peers_query = '%s' % urlencode(peers_req)
         id_query = '%s' % urlencode(user_req)
         user_dict.update(user_req)
         id_lines = """Full name: %(full_name)s
@@ -444,7 +452,7 @@ preserve full account access. """ % (short_title, expire)
 your %s
 and request semi-automatic renewal, only filling the password and comment
 fields at
-%s/cgi-bin/%s.py
+%s/cgi-bin/%s.py?%s
 In that way you can also choose a new password if you like.
 
 After account access expiry you will temporarily lose ALL access and can only
@@ -473,8 +481,9 @@ hold of your login.
 
 Regards,
 The %s Admins
-""" % (user_credentials, auth_migreq_url, req_name, anon_migreq_url, req_name,
-                id_query, anon_migreq_url, req_name, id_lines, short_title, short_title)
+""" % (user_credentials, auth_migreq_url, req_name, peers_query,
+                anon_migreq_url, req_name, id_query, anon_migreq_url, req_name,
+                id_lines, short_title, short_title)
         else:
             if "extoid" in affected:
                 extend_days = oid_auto_extend_days
