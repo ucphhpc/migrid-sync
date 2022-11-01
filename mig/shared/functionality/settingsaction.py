@@ -37,7 +37,7 @@ from mig.shared.accountstate import check_update_account_expire, \
     account_expire_info
 from mig.shared.duplicatikeywords import get_keywords_dict as duplicati_keywords
 from mig.shared.functional import validate_input_and_cert
-from mig.shared.gdp.all import get_client_id_from_project_client_id
+from mig.shared.gdp.all import get_base_client_id
 from mig.shared.handlers import get_csrf_limit, safe_handler
 from mig.shared.httpsclient import protected_twofactor_settings
 from mig.shared.init import initialize_main_variables
@@ -198,19 +198,20 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 parse_and_save_duplicati(tmptopicfile, client_id,
                                          configuration)
         elif topic == 'twofactor':
-            # GDP shares twofactor for all projects of user
+            # GDP shares twofactor for all projects of user and may end up here
+            # from twofactor either as main user or as logged in project user.
             real_user = client_id
             if configuration.site_enable_gdp:
-                real_user = get_client_id_from_project_client_id(configuration,
-                                                                 client_id)
+                real_user = get_base_client_id(configuration, client_id,
+                                               expand_openid_alias=False)
             # NOTE: refuse to toggle any mandatory 2FA settings already enabled
-            current_dict = load_twofactor(client_id, configuration)
+            current_dict = load_twofactor(real_user, configuration)
             if not current_dict:
                 current_dict = {}
-            overrides = protected_twofactor_settings(configuration, client_id,
+            overrides = protected_twofactor_settings(configuration, real_user,
                                                      current_dict)
-            logger.debug("preserving twofactor values during update: %s" %
-                         overrides)
+            logger.info("preserving twofactor values for %s during update: %s"
+                        % (real_user, overrides))
             (parse_status, parse_msg) = \
                 parse_and_save_twofactor(tmptopicfile, real_user,
                                          configuration, overrides)
