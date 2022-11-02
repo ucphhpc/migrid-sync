@@ -997,6 +997,7 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --daemon_keycert=~/certs/combined.pem \
                    --daemon_pubkey=~/certs/combined.pub \
                    --daemon_pubkey_from_dns=True \
+                   --daemon_show_address=sif-io.erda.dk \
                    --signup_methods="extoid migoid" \
                    --login_methods="extoid migoid" \
                    --password_policy=MODERN:12 --password_legacy_policy=HIGH \
