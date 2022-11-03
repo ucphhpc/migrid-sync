@@ -236,7 +236,10 @@ function update_reload_counter(cnt, delay) {
                                "Internal error: invalid site 2FA requirement!"})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    if pending_setup:
+    # NOTE: GDP: gdpman handles pending setup until GDP V3 is in place
+    # TODO: Remove 'and not configuration.site_enable_gdp' 
+    #       when GDP V3 is in place
+    if pending_setup and not configuration.site_enable_gdp:
         if redirect_url:
             logger.info("send %s through required 2FA setup wizard" %
                         client_id)
