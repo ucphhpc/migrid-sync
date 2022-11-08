@@ -13,10 +13,10 @@
     "services": [
       "ALL"
     ],
-    "work_end": "2022-11-08T17:45:00+01:00",
+    "work_end": "2022-11-08T17:35:00+01:00",
     "description": {
-      "EN": "We have a bit of maintenance to do in order to get rid of a hiccup from the recent brick outage. Namely, we need to briefly stop all services at ERDA while we reconnect between frontend and backend storage. It will result in no access but we expect it to last only a few minutes.", 
-      "DK": "Vi har en smule udestående vedligehold mhp at slippe af med en bøvs fra det nylige udfald i en af backendlagerets bricks. Nærmere bestemt er vi nødt til kortvarigt at stoppe alle services på ERDA mens vi genforbinder mellem frontend og backendlageret. Det vil resultere i manglende adgang men vi forventer at det kun tager nogle få minutter."
+      "EN": "We have a bit of maintenance to do in order to get rid of a hiccup from the recent brick outage. Namely, we need to briefly stop all services at ERDA while we reconnect between frontend and backend storage. The work is complete with five minutes of downtime, and everything is back in normal production now.", 
+      "DK": "Vi har en smule udestående vedligehold mhp at slippe af med en bøvs fra det nylige udfald i en af backendlagerets bricks. Nærmere bestemt er vi nødt til kortvarigt at stoppe alle services på ERDA mens vi genforbinder mellem frontend og backendlageret. Arbejdet er overstået med fem minutters nedetid, og alt er nu tilbage i normal drift."
     },
     "announce_end": "2022-11-09T12:00:00+01:00"
   },
