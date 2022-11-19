@@ -66,13 +66,24 @@ def parse_pub_key(public_key):
         raise Exception("You need paramiko to use ssh with public keys")
     public_key_elms = public_key.split(' ')
 
-    # Either we have 'from' or 'ssh-' as first element
+    # Either we have 'from' or ssh *key type* as first element
+
+    type_map = {}
+    if hasattr(paramiko, 'RSAKey'):
+        type_map['ssh-rsa'] = paramiko.RSAKey
+    if hasattr(paramiko, 'DSSKey'):
+        type_map['ssh-dss'] = paramiko.DSSKey
+    if hasattr(paramiko, 'ECDSAKey'):
+        for name in paramiko.ECDSAKey.supported_key_format_identifiers():
+            type_map[name] = paramiko.ECDSAKey
+    if hasattr(paramiko, 'Ed25519Key'):
+        type_map['ssh-ed25519'] = paramiko.Ed25519Key
 
     if len(public_key_elms) > 0 and \
-            public_key_elms[0].startswith('ssh-'):
+            public_key_elms[0] in type_map:
         ssh_type_idx = 0
     elif len(public_key_elms) > 1 and \
-            public_key_elms[1].startwith('ssh-'):
+            public_key_elms[1] in type_map:
         ssh_type_idx = 1
     else:
         msg = 'Invalid ssh public key: (%s)' % public_key
@@ -81,18 +92,7 @@ def parse_pub_key(public_key):
     head, tail = public_key.split(' ')[ssh_type_idx:2+ssh_type_idx]
     bits = base64.b64decode(tail)
     msg = paramiko.Message(bits)
-    if head == 'ssh-rsa':
-        parse_key = paramiko.RSAKey
-    elif head == 'ssh-dss':
-        parse_key = paramiko.DSSKey
-    elif head == 'ssh-ecdsa':
-        parse_key = paramiko.ECDSAKey
-    elif head == 'ssh-ed25519':
-        # NOTE: this may or may not be supported depending on paramiko stack
-        parse_key = getattr(paramiko, 'Ed25519Key', paramiko.RSAKey)
-    else:
-        # Try RSA for unknown key types
-        parse_key = paramiko.RSAKey
+    parse_key = type_map[head]
     return parse_key(msg)
 
 
