@@ -1,4 +1,48 @@
 [
+ {
+    "status": "AUTO",
+    "work_start": "2022-12-03T12:00:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2022-11-16T12:00:00+02:00",
+    "title": {
+      "EN": "Planned DAG and MODI Maintenance",
+      "DK": "Planlagt vedligehold af DAG og MODI-tjenesterne"
+    },
+    "services": [
+      "DAG",
+      "MODI"
+    ],
+    "work_end": "2022-12-03T20:00:00+02:00",
+    "description": {
+      "EN": "It's time for a thorough update of the DAG/MODI services. The work will involve down-time for low-level system updates. Thus these services will be temporarily unavailable for shorter or longer periods during the maintenance window.", 
+      "DK": "Det er tid til en gennemgående opdatering af DAG/MODI-tjenesterne. Arbejdet vil involvere nedetid for grundliggende systemopdateringer. Disse tjenester vil derfor være midlertidigt utilgængelige i kortere eller længere perioder under vedligeholdelsesvinduet."
+    },
+    "announce_end": "2022-12-05T15:00:00+02:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2022-11-08T17:30:00+01:00",
+    "systems": [
+        "ERDA"
+    ],
+    "announce_start": "2022-11-08T12:55:00+01:00",
+    "title": {
+      "EN": "Planned maintenance with brief outage",
+      "DK": "Planlagt vedligehold med kortvarigt udfald"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2022-11-08T17:35:00+01:00",
+    "description": {
+      "EN": "We have a bit of maintenance to do in order to get rid of a hiccup from the recent brick outage. Namely, we need to briefly stop all services at ERDA while we reconnect between frontend and backend storage. The work is complete with five minutes of downtime, and everything is back in normal production now.", 
+      "DK": "Vi har en smule udestående vedligehold mhp at slippe af med en bøvs fra det nylige udfald i en af backendlagerets bricks. Nærmere bestemt er vi nødt til kortvarigt at stoppe alle services på ERDA mens vi genforbinder mellem frontend og backendlageret. Arbejdet er overstået med fem minutters nedetid, og alt er nu tilbage i normal drift."
+    },
+    "announce_end": "2022-11-09T12:00:00+01:00"
+  },
   {
     "status": "AUTO",
     "work_start": "2022-11-01T03:00:00+01:00",
