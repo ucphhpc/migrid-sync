@@ -307,6 +307,7 @@ def generate_confs(
     ext_oidc_client_id='',
     ext_oidc_scope='profile email',
     ext_oidc_remote_user_claim='sub',
+    ext_oidc_pass_claim_as='both',
     dhparams_path='',
     daemon_keycert='',
     daemon_pubkey='',
@@ -512,6 +513,7 @@ def generate_confs(
     user_dict['__EXT_OIDC_PROVIDER_META_URL__'] = ext_oidc_provider_meta_url
     user_dict['__EXT_OIDC_SCOPE__'] = ext_oidc_scope
     user_dict['__EXT_OIDC_REMOTE_USER_CLAIM__'] = ext_oidc_remote_user_claim
+    user_dict['__EXT_OIDC_PASS_CLAIM_AS__'] = ext_oidc_pass_claim_as
     user_dict['__PUBLIC_URL__'] = ''
     user_dict['__PUBLIC_HTTP_URL__'] = ''
     user_dict['__PUBLIC_HTTPS_URL__'] = ''
@@ -2030,6 +2032,7 @@ def create_user(
     ext_oidc_client_id = ''
     ext_oidc_scope = ''
     ext_oidc_remote_user_claim = ''
+    ext_oidc_pass_claim_as = ''
     dhparams_path = ''
     daemon_keycert = ''
     daemon_pubkey = ''
@@ -2169,6 +2172,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         ext_oidc_client_id,
         ext_oidc_scope,
         ext_oidc_remote_user_claim,
+        ext_oidc_pass_claim_as,
         dhparams_path,
         daemon_keycert,
         daemon_pubkey,

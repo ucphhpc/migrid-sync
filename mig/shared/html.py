@@ -1594,6 +1594,8 @@ Okay, let's go!</button>
 Google Authenticator</a>,
 <a href='https://freeotp.github.io/' class='urllink iconleftpad'
   target='_blank'>FreeOTP</a>,
+<a href='https://bitwarden.com/download/' class='urllink iconleftpad'
+  target='_blank'>Bitwarden</a>,
 <a href='https://www.microfocus.com/en-us/products/netiq-advanced-authentication/overview'
   class='urllink iconleftpad' target='_blank'>NetIQ Advanced Authentication</a>
 or <a href='https://authy.com/download/' class='urllink iconleftpad'
