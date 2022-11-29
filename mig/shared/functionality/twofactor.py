@@ -252,7 +252,10 @@ function update_reload_counter(cnt, delay) {
             from mig.shared.functionality.settingsaction import main as save
             # Inform save operation that it's called from here for CSRF check
             return save(client_id, user_arguments_dict, called_as=op_name)
-    elif require_twofactor:
+    # NOTE: GDP: gdpman handles pending setup until GDP V3 is in place
+    # TODO: Remove 'not pending_setup and' 
+    #       when GDP V3 is in place
+    elif not pending_setup and require_twofactor:
         logger.info("detected 2FA requirement for %s on %s" % (client_id,
                                                                request_url))
 
