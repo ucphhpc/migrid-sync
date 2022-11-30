@@ -900,6 +900,7 @@ session state.
         hashed_secret = None
         exceeded_rate_limit = False
         invalid_username = False
+        invalid_user = False
         account_accessible = False
         valid_password = False
         daemon_conf = configuration.daemon_conf
