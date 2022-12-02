@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # updatevgrid - update or repair vgrid components
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Update a VGrid with missing components"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -40,7 +41,8 @@ from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.vgrid import vgrid_is_owner, vgrid_list, vgrid_set_entities
 from mig.shared.functionality.createvgrid import create_scm, create_tracker, \
-     create_forum
+    create_forum
+
 
 def signature():
     """Signature of the main function"""
@@ -59,8 +61,8 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     label = "%s" % configuration.site_vgrid_label
     title_entry['text'] = "Update %s Components" % label
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Update %s Components' % label})
+    output_objects.append({'object_type': 'header', 'text':
+                           'Update %s Components' % label})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -68,7 +70,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -76,24 +78,25 @@ def main(client_id, user_arguments_dict):
 
     if not safe_handler(configuration, 'post', op_name, client_id,
                         get_csrf_limit(configuration), accepted):
-        output_objects.append(
-            {'object_type': 'error_text', 'text': '''Only accepting
+        output_objects.append({'object_type': 'error_text', 'text':
+                               '''Only accepting
 CSRF-filtered POST requests to prevent unintended updates'''
-             })
+                               })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not vgrid_is_owner(vgrid_name, client_id, configuration):
 
-        output_objects.append({'object_type': 'error_text', 'text': 
-                    'Only owners of %s can administrate it.' % vgrid_name })
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Only owners of %s can administrate it.' %
+                               vgrid_name})
 
         form_method = 'post'
         csrf_limit = get_csrf_limit(configuration)
-        fill_helpers =  {'vgrid_label': label,
-                         'vgrid_name': vgrid_name,
-                         'form_method': form_method,
-                         'csrf_field': csrf_field,
-                         'csrf_limit': csrf_limit}
+        fill_helpers = {'vgrid_label': label,
+                        'vgrid_name': vgrid_name,
+                        'form_method': form_method,
+                        'csrf_field': csrf_field,
+                        'csrf_limit': csrf_limit}
         target_op = 'sendrequestaction'
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
@@ -115,47 +118,47 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.vgrid_home,
-                               vgrid_name)) + os.sep
+                                            vgrid_name)) + os.sep
     public_files_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_public_base,
-                        vgrid_name)) + os.sep
+                                     vgrid_name)) + os.sep
     public_scm_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_public_base,
-                        vgrid_name, '.vgridscm')) + os.sep
+                                     vgrid_name, '.vgridscm')) + os.sep
     public_tracker_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_public_base,
-                        vgrid_name, '.vgridtracker')) + os.sep
+                                     vgrid_name, '.vgridtracker')) + os.sep
     private_files_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_private_base,
-                        vgrid_name)) + os.sep
+                                     vgrid_name)) + os.sep
     private_files_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_private_base,
-                        vgrid_name)) + os.sep
+                                     vgrid_name)) + os.sep
     private_scm_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_private_base,
-                        vgrid_name, '.vgridscm')) + os.sep
+                                     vgrid_name, '.vgridscm')) + os.sep
     private_tracker_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_private_base,
-                        vgrid_name, '.vgridtracker')) + os.sep
+                                     vgrid_name, '.vgridtracker')) + os.sep
     private_forum_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_private_base,
-                        vgrid_name, '.vgridforum')) + os.sep
+                                     vgrid_name, '.vgridforum')) + os.sep
     vgrid_files_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_files_home,
-                        vgrid_name)) + os.sep
+                                     vgrid_name)) + os.sep
     vgrid_scm_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_files_home,
-                        vgrid_name, '.vgridscm')) + os.sep
+                                     vgrid_name, '.vgridscm')) + os.sep
     vgrid_tracker_dir = \
         os.path.abspath(os.path.join(configuration.vgrid_files_home,
-                        vgrid_name, '.vgridtracker')) + os.sep
+                                     vgrid_name, '.vgridtracker')) + os.sep
     vgrid_files_link = os.path.join(configuration.user_home, client_dir,
                                     vgrid_name)
 
     output_objects.append({'object_type': 'text', 'text':
-                           'Updating %s %s components ...' % \
+                           'Updating %s %s components ...' %
                            (label, vgrid_name)})
-    
+
     # Try to create all base directories used for vgrid files
 
     for path in (base_dir, public_files_dir, private_files_dir, vgrid_files_dir):
@@ -166,11 +169,12 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     # Try entity creation or repair
 
-    output_objects.append({'object_type': 'text', 'text'
-                           : 'Participant update warnings:'})
+    output_objects.append({'object_type': 'text', 'text':
+                           'Participant update warnings:'})
     for kind in ['owners', 'members', 'resources', 'triggers']:
         (list_status, id_list) = vgrid_list(vgrid_name, kind, configuration,
-                                      recursive=False, allow_missing = False)
+                                            recursive=False,
+                                            allow_missing=False)
         logger.info("vgrid_list returned %s : %s" % (list_status, id_list))
         if not list_status:
             if kind == 'owners':
@@ -193,36 +197,44 @@ CSRF-filtered POST requests to prevent unintended updates'''
         src = vgrid_files_dir
         if not make_symlink(src, vgrid_files_link, logger):
             output_objects.append({'object_type': 'error_text', 'text':
-                                   'Could not create link to %s files!' % \
+                                   'Could not create link to %s files!' %
                                    label
                                    })
 
     user_public_base = os.path.join(configuration.user_home,
                                     client_dir, 'public_base')
+    user_private_base = os.path.join(configuration.user_home,
+                                     client_dir, 'private_base')
+
+    # Try to create all base directories used for vgrid web dirs
+
+    for path in (user_public_base, user_private_base):
+        try:
+            os.mkdir(path)
+        except Exception as exc:
+            pass
+
     public_base_dst = os.path.join(user_public_base, vgrid_name)
     if not os.path.exists(public_base_dst):
         if not make_symlink(public_files_dir, public_base_dst, logger):
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Could not create link to public_base dir!'
-                                  })
-    user_private_base = os.path.join(configuration.user_home,
-                                     client_dir, 'private_base')
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Could not create link to public_base dir!'
+                                   })
     private_base_dst = os.path.join(user_private_base, vgrid_name)
     if not os.path.exists(private_base_dst):
         if not make_symlink(private_files_dir, private_base_dst, logger):
-            output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : 'Could not create link to private_base dir!'
-                 })
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Could not create link to private_base dir!'
+                                   })
 
     wwwpublic_vgrid_link = os.path.join(configuration.wwwpublic, 'vgrid',
                                         vgrid_name)
     if not os.path.exists(wwwpublic_vgrid_link):
         if not make_symlink(public_files_dir, wwwpublic_vgrid_link, logger,
                             force=True):
-            output_objects.append(
-                {'object_type': 'error_text', 'text':
-                 'Could not create public web alias %s' % vgrid_name})
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Could not create public web alias %s' %
+                                   vgrid_name})
 
     # Try component creation or repair
 
@@ -231,8 +243,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         # create participant scm repo in the vgrid shared dir
 
-        output_objects.append({'object_type': 'text', 'text'
-                               : 'SCM update warnings:'})
+        output_objects.append({'object_type': 'text', 'text':
+                               'SCM update warnings:'})
         all_scm_dirs = [public_scm_dir, private_scm_dir, vgrid_scm_dir]
         for scm_dir in all_scm_dirs:
             tmp_output = []
@@ -245,8 +257,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         # create participant tracker in the vgrid shared dir
 
-        output_objects.append({'object_type': 'text', 'text'
-                               : 'Tracker update warnings:'})
+        output_objects.append({'object_type': 'text', 'text':
+                               'Tracker update warnings:'})
         all_tracker_dirs = [public_tracker_dir, private_tracker_dir,
                             vgrid_tracker_dir]
         for (tracker_dir, scm_dir) in zip(all_tracker_dirs, all_scm_dirs):
@@ -256,19 +268,19 @@ CSRF-filtered POST requests to prevent unintended updates'''
             output_objects += tmp_output
 
     # create participant forum in the vgrid shared dir
-        
-    output_objects.append({'object_type': 'text', 'text'
-                           : 'Forum update warnings:'})
+
+    output_objects.append({'object_type': 'text', 'text':
+                           'Forum update warnings:'})
     for forum_dir in [private_forum_dir]:
         tmp_output = []
         create_forum(configuration, client_id, vgrid_name, forum_dir,
                      tmp_output, repair=True)
         output_objects += tmp_output
 
-    output_objects.append({'object_type': 'text', 'text'
-                          : '%s %s updated!' % (label, vgrid_name)})
+    output_objects.append({'object_type': 'text', 'text':
+                           '%s %s updated!' % (label, vgrid_name)})
     output_objects.append({'object_type': 'link',
-                           'destination': 'adminvgrid.py?vgrid_name=%s' % \
+                           'destination': 'adminvgrid.py?vgrid_name=%s' %
                            vgrid_name,
                            'class': 'adminlink iconspace',
                            'title': 'Administrate your %s' % label,
@@ -292,7 +304,7 @@ if __name__ == "__main__":
     from mig.shared.defaults import default_vgrid
     from mig.shared.output import txt_format
     from mig.shared.vgridaccess import get_vgrid_map_vgrids
-    
+
     # use dummy owner check
     vgrid_is_owner = dummy_owner_check
     try:
@@ -314,8 +326,8 @@ if __name__ == "__main__":
         'SSL_CLIENT_S_DN': client_id,
         'SERVER_PROTOCOL': 'HTTP/1.1',
         'PATH': '/bin:/usr/bin:/usr/local/bin',
-        }
-    
+    }
+
     extra_environment['SCRIPT_FILENAME'] = script
     extra_environment['QUERY_STRING'] = query
     extra_environment['REQUEST_URI'] = '%s%s' % (script, query)
@@ -332,5 +344,6 @@ if __name__ == "__main__":
             continue
         print("update %s" % vgrid_name)
         ret_msg = ''
-        (output_objects, ret_val) = main(client_id, {'vgrid_name': [vgrid_name]})
+        (output_objects, ret_val) = main(client_id, {'vgrid_name':
+                                                     [vgrid_name]})
         print(txt_format(configuration, ret_val, ret_msg, output_objects))

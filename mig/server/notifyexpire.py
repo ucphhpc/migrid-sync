@@ -221,6 +221,13 @@ if '__main__' == __name__:
                     print('Skip handling of user %s without auth info' %
                           user_id)
                 continue
+        elif "migoid" in known_auth and not user_dict.get('password_hash', ''):
+            # Users switching between internal and external auth may end up here
+            if verbose:
+                print('Skip migoid expire warn for user %s without password' \
+                      % user_id)
+            known_auth = [i for i in known_auth if i != "migoid"]
+            continue
 
         auth_services = [i for i in known_auth if i in services]
         if auth_services:
