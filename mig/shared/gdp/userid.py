@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userid - gdp userid helper functions related to GDP actions
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -226,15 +226,15 @@ def __project_short_id_from_user_id(configuration, user_id):
     return result
 
 
-def __scamble_user_id(configuration, user_id):
-    """Scamble user_id"""
+def __scramble_user_id(configuration, user_id):
+    """Scramble user_id"""
     _logger = configuration.logger
 
     result = None
     try:
         result = hashlib.sha256(user_id).hexdigest()
     except Exception as exc:
-        _logger.error("GDP: __scamble_user_id failed for user: %r: %s"
+        _logger.error("GDP: __scramble_user_id failed for user: %r: %s"
                       % (user_id, exc))
         result = None
 

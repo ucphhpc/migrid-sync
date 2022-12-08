@@ -569,8 +569,8 @@ creation relies on the iso3166 module from:"""})
                            'destination':
                            'https://pypi.org/project/iso3166/',
                            'class': 'urllink iconspace',
-                           'title': 'iso3166 at Python Package Index',
-                           'text': 'iso3166 Module (MIT license)'})
+                           'title': 'Python ISO3166 Module at Python Package Index',
+                           'text': 'Python ISO3166 Module (MIT license)'})
 
     if configuration.site_enable_workflows:
         output_objects.append({'object_type': 'text', 'text': """

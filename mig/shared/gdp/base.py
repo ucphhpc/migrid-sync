@@ -55,7 +55,7 @@ from mig.shared.gdp.userid import __validate_user_id, \
     __project_name_from_project_client_id, \
     __short_id_from_client_id, __project_short_id_from_project_client_id, \
     __client_id_from_user_id, __project_client_id_from_user_id, \
-    __project_short_id_from_user_id, __scamble_user_id, \
+    __project_short_id_from_user_id, __scramble_user_id, \
     get_project_from_user_id, get_project_client_id
 from mig.shared.notification import send_email
 from mig.shared.serial import load, dump
@@ -800,7 +800,7 @@ def __get_gdp_user_log_entry(configuration,
 
     result = None
     (log_filepath, log_lock_filepath) = __gdp_user_log_filepath(configuration)
-    hashed_client_id = __scamble_user_id(configuration, client_id)
+    hashed_client_id = __scramble_user_id(configuration, client_id)
     if hashed_client_id is None:
         return result
     if do_lock:
@@ -850,7 +850,7 @@ def __update_gdp_user_log(configuration, client_id, do_lock=True):
             timestamp = time.time()
             current_datetime = datetime.datetime.fromtimestamp(timestamp)
             date = current_datetime.strftime('%d-%m-%Y_%H-%M-%S')
-            client_id_hash = __scamble_user_id(configuration, client_id)
+            client_id_hash = __scramble_user_id(configuration, client_id)
             msg = "%s : %s : %s :\n" \
                 % (date, client_id, client_id_hash)
             fh.write(msg)
@@ -1046,7 +1046,7 @@ def project_log(
     # Generate user hash for log
 
     if status:
-        user_hash = __scamble_user_id(configuration, client_id)
+        user_hash = __scramble_user_id(configuration, client_id)
 
     # Get project name
 
@@ -1089,19 +1089,19 @@ def project_log(
                 # _logger.debug("project_client_id: %s" % project_client_id)
                 if project_client_id:
                     project_client_id_hash = \
-                        __scamble_user_id(configuration, project_client_id)
+                        __scramble_user_id(configuration, project_client_id)
                     details = details.replace(
                         project_client_id, project_client_id_hash)
                     project_dir = client_id_dir(project_client_id)
                     # _logger.debug("project_dir: %s" % project_dir)
-                    project_dir_hash = __scamble_user_id(
+                    project_dir_hash = __scramble_user_id(
                         configuration, project_client_id)
                     details = details.replace(
                         project_dir, project_dir_hash)
                     project_short_id = __short_id_from_client_id(configuration,
                                                                  client_id)
                     # _logger.debug("project_short_id: %s" % project_short_id)
-                    project_short_id_hash = __scamble_user_id(
+                    project_short_id_hash = __scramble_user_id(
                         configuration, project_short_id)
                     details = details.replace(
                         project_short_id, project_short_id_hash)
@@ -1112,18 +1112,18 @@ def project_log(
                     configuration, user_id)
                 # _logger.debug("client_id: %s" % client_id)
                 if client_id:
-                    client_id_hash = __scamble_user_id(
+                    client_id_hash = __scramble_user_id(
                         configuration, client_id)
                     details = details.replace(client_id, client_id_hash)
                     client_dir = client_id_dir(client_id)
                     # _logger.debug("client_dir: %s" % client_dir)
-                    client_dir_hash = __scamble_user_id(
+                    client_dir_hash = __scramble_user_id(
                         configuration, client_dir)
                     details = details.replace(client_dir, client_dir_hash)
                     short_id = __short_id_from_client_id(configuration,
                                                          client_id)
                     # _logger.debug("short_id: %s" % short_id)
-                    short_id_hash = __scamble_user_id(
+                    short_id_hash = __scramble_user_id(
                         configuration, short_id)
                     details = details.replace(short_id, short_id_hash)
                 else:
@@ -1650,7 +1650,7 @@ def project_remove_user(
 
     if status:
         project_log_msg = "User id: %s" \
-            % __scamble_user_id(configuration, client_id)
+            % __scramble_user_id(configuration, client_id)
 
         status = project_log(
             configuration,
@@ -1854,7 +1854,7 @@ def project_invite_user(
             # Log invitation details to project log
 
             log_msg = "User id: %s" \
-                % __scamble_user_id(configuration, client_id)
+                % __scramble_user_id(configuration, client_id)
             if ref_pairs:
                 log_parts = ["%s: %r" % pair for pair in ref_pairs]
                 log_msg += " with references: " + ', '.join(log_parts)
@@ -2770,7 +2770,7 @@ def project_promote_to_owner(
         # Write change to GDP log
 
         log_msg = "User id: %s" \
-            % __scamble_user_id(configuration, promotee_client_id)
+            % __scramble_user_id(configuration, promotee_client_id)
 
         log_status = project_log(
             configuration,
@@ -3018,7 +3018,7 @@ def project_demote_owner(
         # Write change to GDP log
 
         log_msg = "User id: %s" \
-            % __scamble_user_id(configuration, demotee_client_id)
+            % __scramble_user_id(configuration, demotee_client_id)
 
         log_status = project_log(
             configuration,
@@ -3498,7 +3498,7 @@ def project_login(
         project_client_id = get_project_client_id(client_id,
                                                   project_name)
         log_msg = "Project user id: %s" \
-            % __scamble_user_id(configuration, project_client_id)
+            % __scramble_user_id(configuration, project_client_id)
         status = project_log(
             configuration,
             protocol,
@@ -3621,7 +3621,7 @@ def project_logout(
         # Generate log message and log to project log
 
         log_msg = "Project user id: %s" \
-            % __scamble_user_id(configuration, project_client_id)
+            % __scramble_user_id(configuration, project_client_id)
         status = project_log(
             configuration,
             protocol,

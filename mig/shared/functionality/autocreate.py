@@ -71,7 +71,7 @@ except Exception as exc:
     pass
 
 
-def signature(auth_type):
+def signature(configuration, auth_type):
     """Signature of the main function"""
 
     if auth_type == AUTH_OPENID_V2:
@@ -106,6 +106,7 @@ def signature(auth_type):
             'authsig': ['']
         }
     elif auth_type == AUTH_CERTIFICATE:
+        # We end up here from extcert if conf allows auto creation
         # TODO: switch to add fields from cert_field_order in shared.defaults
         defaults = {
             'cert_id': REJECT_UNSET,
@@ -122,6 +123,13 @@ def signature(auth_type):
             'proxy_upload': [''],
             'proxy_uploadfilename': [''],
         }
+        if configuration.site_enable_peers:
+            if configuration.site_peers_mandatory:
+                peers_default = REJECT_UNSET
+            else:
+                peers_default = ['']
+            for field_name in configuration.site_peers_explicit_fields:
+                defaults['peers_%s' % field_name] = peers_default
     elif auth_type == AUTH_OPENID_CONNECT:
         # IMPORTANT: consistently lowercase to avoid case sensitive validation
         # NOTE: at least one of sub, oid or upn should be set - check later
@@ -260,7 +268,7 @@ def main(client_id, user_arguments_dict, environ=None):
             output_objects.append({'object_type': 'error_text', 'text':
                                    '%s sign up not supported' % auth_flavor})
             return (output_objects, returnvalues.SYSTEM_ERROR)
-        oidc_keys = list(signature(AUTH_OPENID_CONNECT)[1])
+        oidc_keys = list(signature(configuration, AUTH_OPENID_CONNECT)[1])
         # NOTE: again we lowercase to avoid case sensitivity in validation
         for key in environ:
             low_key = key.replace('OIDC_CLAIM_', 'oidc.claim.').lower()
@@ -271,7 +279,7 @@ def main(client_id, user_arguments_dict, environ=None):
         output_objects.append({'object_type': 'error_text',
                                'text': 'Missing user credentials'})
         return (output_objects, returnvalues.CLIENT_ERROR)
-    defaults = signature(auth_type)[1]
+    defaults = signature(configuration, auth_type)[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
                                                  defaults, output_objects,
                                                  allow_rejects=False,
@@ -500,12 +508,15 @@ Auto log out first to avoid sign up problems ...
     # TODO: extend redirector check to match the full signup request?
     #       may not work with recent browser policy changes to limit referrer
     #       details on cross site requests.
-    # NOTE: redirector check breaks for FF default policy so disabled again!
-    if auth_flavor == AUTH_EXT_OID and redirector and \
-            not redirector.startswith(extoid_prefix) and \
-            not redirector.startswith(configuration.migserver_https_sid_url) \
-            and not redirector.startswith(configuration.migserver_http_url) \
-            and not redirector.startswith(get_site_base_url(configuration)):
+    # NOTE: FF now defaults to a no-referrer policy so disable if empty!
+    if auth_flavor == AUTH_EXT_OID and redirector and not \
+        (redirector.startswith(extoid_prefix) or
+         redirector.startswith(configuration.migserver_https_sid_url) or
+         redirector.startswith(configuration.migserver_http_url) or
+         redirector.startswith(configuration.migserver_https_url) or
+         redirector.startswith(configuration.migserver_public_url) or
+         redirector.startswith(configuration.migserver_public_alias_url) or
+         redirector.startswith(get_site_base_url(configuration))):
         logger.error('stray %s autocreate rejected for %r (ref: %r)' %
                      (auth_flavor, client_id, redirector))
         output_objects.append({'object_type': 'error_text', 'text': '''Only

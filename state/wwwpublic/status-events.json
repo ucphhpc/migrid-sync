@@ -8,19 +8,19 @@
     ],
     "announce_start": "2022-11-16T12:00:00+02:00",
     "title": {
-      "EN": "Planned DAG and MODI Maintenance",
-      "DK": "Planlagt vedligehold af DAG og MODI-tjenesterne"
+      "EN": "Planned DAG and MODI Maintenance. With unplanned downtime for MODI after update fallout.",
+      "DK": "Planlagt vedligehold af DAG og MODI-tjenesterne. Med nedetid for MODI efter update udfald"
     },
     "services": [
       "DAG",
       "MODI"
     ],
-    "work_end": "2022-12-03T20:00:00+02:00",
+    "work_end": "2022-12-07T20:00:00+02:00",
     "description": {
-      "EN": "It's time for a thorough update of the DAG/MODI services. The work will involve down-time for low-level system updates. Thus these services will be temporarily unavailable for shorter or longer periods during the maintenance window.", 
-      "DK": "Det er tid til en gennemgående opdatering af DAG/MODI-tjenesterne. Arbejdet vil involvere nedetid for grundliggende systemopdateringer. Disse tjenester vil derfor være midlertidigt utilgængelige i kortere eller længere perioder under vedligeholdelsesvinduet."
+      "EN": "It's time for a thorough update of the DAG/MODI services. The work will involve down-time for low-level system updates. Thus these services will be temporarily unavailable for shorter or longer periods during the maintenance window. We updated both services as expected, with the DAG service returning as expected. We did however experience a power outage that resulted in AI Centre GPU 1 machine not coming back online, updates on this will follow as soon as we have the machine back online. In addition, all MODI hosts were updated succesfully, except for the JupyterHub service host which was rendered unavailable after the update, we have started re-establishing the service with a supplementary host which is still ongoing.", 
+      "DK": "Det er tid til en gennemgående opdatering af DAG/MODI-tjenesterne. Arbejdet vil involvere nedetid for grundliggende systemopdateringer. Disse tjenester vil derfor være midlertidigt utilgængelige i kortere eller længere perioder under vedligeholdelsesvinduet. Vi opdaterede begge tjenester, hvor DAG-tjenesten vendte tilbage som forventet. Vi oplevede dog et strømafbrydelse, der resulterede i, at AI Center GPU 1-maskine ikke kom online igen, opdateringer om dette vil følge så snart vi har maskinen op at køre igen. Derudover blev alle MODI-værter opdateret med succes, bortset fra JupyterHub maskinen, som blev gjort utilgængelig efter opdateringen. Vi har påbegryndt at genetablere tjenesten med en supplerende host, som stadig er i gang blive konfigureret."
     },
-    "announce_end": "2022-12-05T15:00:00+02:00"
+    "announce_end": "2022-12-10T15:00:00+02:00"
   },
   {
     "status": "AUTO",
