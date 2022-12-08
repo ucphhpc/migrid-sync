@@ -500,12 +500,15 @@ Auto log out first to avoid sign up problems ...
     # TODO: extend redirector check to match the full signup request?
     #       may not work with recent browser policy changes to limit referrer
     #       details on cross site requests.
-    # NOTE: redirector check breaks for FF default policy so disabled again!
-    if auth_flavor == AUTH_EXT_OID and redirector and \
-            not redirector.startswith(extoid_prefix) and \
-            not redirector.startswith(configuration.migserver_https_sid_url) \
-            and not redirector.startswith(configuration.migserver_http_url) \
-            and not redirector.startswith(get_site_base_url(configuration)):
+    # NOTE: FF now defaults to a no-referrer policy so disable if empty!
+    if auth_flavor == AUTH_EXT_OID and redirector and not \
+        (redirector.startswith(extoid_prefix) or
+         redirector.startswith(configuration.migserver_https_sid_url) or
+         redirector.startswith(configuration.migserver_http_url) or
+         redirector.startswith(configuration.migserver_https_url) or
+         redirector.startswith(configuration.migserver_public_url) or
+         redirector.startswith(configuration.migserver_public_alias_url) or
+         redirector.startswith(get_site_base_url(configuration))):
         logger.error('stray %s autocreate rejected for %r (ref: %r)' %
                      (auth_flavor, client_id, redirector))
         output_objects.append({'object_type': 'error_text', 'text': '''Only
