@@ -536,6 +536,8 @@ class Configuration(object):
     empty_job_name = ''
     migserver_http_url = ''
     migserver_https_url = ''
+    migserver_public_url = ''
+    migserver_public_alias_url = ''
     migserver_https_mig_cert_url = ''
     migserver_https_ext_cert_url = ''
     migserver_https_mig_oid_url = ''
@@ -837,6 +839,12 @@ location.""" % self.config_file)
         if config.has_option('GLOBAL', 'ca_user'):
             self.ca_user = config.get('GLOBAL', 'ca_user')
 
+        if config.has_option('GLOBAL', 'migserver_public_url'):
+            self.migserver_public_url = config.get(
+                'GLOBAL', 'migserver_public_url')
+        if config.has_option('GLOBAL', 'migserver_public_alias_url'):
+            self.migserver_public_alias_url = config.get(
+                'GLOBAL', 'migserver_public_alias_url')
         if config.has_option('GLOBAL', 'migserver_https_mig_cert_url'):
             self.migserver_https_mig_cert_url = config.get(
                 'GLOBAL', 'migserver_https_mig_cert_url')

@@ -519,6 +519,7 @@ def generate_confs(
     user_dict['__EXT_OIDC_REMOTE_USER_CLAIM__'] = ext_oidc_remote_user_claim
     user_dict['__EXT_OIDC_PASS_CLAIM_AS__'] = ext_oidc_pass_claim_as
     user_dict['__PUBLIC_URL__'] = ''
+    user_dict['__PUBLIC_ALIAS_URL__'] = ''
     user_dict['__PUBLIC_HTTP_URL__'] = ''
     user_dict['__PUBLIC_HTTPS_URL__'] = ''
     user_dict['__PUBLIC_ALIAS_HTTP_URL__'] = ''
@@ -1504,6 +1505,10 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
                   [public_https_port, default_https_port])
             user_dict['__PUBLIC_ALIAS_HTTPS_URL__'] += ':%(__PUBLIC_HTTPS_PORT__)s' \
                 % user_dict
+        if public_use_https:
+            user_dict['__PUBLIC_ALIAS_URL__'] = user_dict['__PUBLIC_ALIAS_HTTPS_URL__']
+        else:
+            user_dict['__PUBLIC_ALIAS_URL__'] = user_dict['__PUBLIC_ALIAS_HTTP_URL__']
         # Apache fails on duplicate listen clauses
         if public_use_https and public_alias_fqdn == public_fqdn:
             user_dict['__PUBLIC_ALIAS_HTTPS_LISTEN__'] = "# %s" % listen_clause
