@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # url - url helper functions
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -58,6 +58,7 @@ else:
     from urlparse import parse_qs, parse_qsl, urlsplit, urlparse
 
 try:
+    from mig.shared.base import force_utf8, force_native_str
     from mig.shared.defaults import csrf_field
     from mig.shared.handlers import get_csrf_limit
     from mig.shared.pwhash import make_csrf_token, make_csrf_trust_token
@@ -88,7 +89,8 @@ def base32urlencode(
     # base32 encode and remove padding '='
     # Receiver is expected to pad before decode
 
-    result = base64.b32encode(src_url)
+    # NOTE: base64 encoders require bytes and we want native string back
+    result = force_native_str(base64.b32encode(force_utf8(src_url)))
 
     if remove_padding:
         result = result.replace('=', '')
@@ -113,7 +115,9 @@ def base32urldecode(configuration, encoded_url,
     if encoded_url_len % 8 != 0:
         padlen = 8 - encoded_url_len % 8
         padding = ''.join('=' for i in range(padlen))
-    decoded_url = base64.b32decode('%s%s' % (encoded_url, padding))
+    # NOTE: base64 encoders require bytes and we want native string back
+    decoded_url = force_native_str(base64.b32decode(force_utf8(
+        '%s%s' % (encoded_url, padding))))
     if strip_query_arguments:
         result_url = decoded_url.split('?')[0]
     else:
