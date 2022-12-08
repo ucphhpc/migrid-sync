@@ -49,7 +49,7 @@ from mig.shared.base import client_id_dir, canonical_user, \
     get_site_base_url
 from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_V2, \
     AUTH_OPENID_CONNECT, AUTH_MIG_CERT, AUTH_EXT_CERT, AUTH_MIG_OID, \
-    AUTH_EXT_OID, AUTH_MIG_OIDC, AUTH_EXT_OIDC
+    AUTH_EXT_OID, AUTH_MIG_OIDC, AUTH_EXT_OIDC, keyword_auto
 from mig.shared.fileio import write_file
 from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
@@ -294,7 +294,8 @@ def main(client_id, user_arguments_dict, environ=None):
 
     admin_email = configuration.admin_email
     smtp_server = configuration.smtp_server
-    (openid_names, oid_extras) = ([], {})
+    (openid_names, oid_extras, peers_extras) = ([], {}, {})
+    peer_pattern = None
     tmp_id = 'tmp%s' % time.time()
 
     logger.info('Received autocreate from %s with ID %s' % (client_id, tmp_id))
@@ -316,6 +317,20 @@ def main(client_id, user_arguments_dict, environ=None):
         locality = ''
         timezone = ''
         email = accepted['email'][-1].strip()
+        if configuration.site_enable_peers:
+            # Peers are passed as multiple strings of comma or space separated emails
+            # so we reformat to a consistently comma+space separated string.
+            peers_full_name_list = []
+            for entry in accepted.get('peers_full_name', ['']):
+                peers_full_name_list += [i.strip() for i in entry.split(',')]
+            peers_full_name = ', '.join(peers_full_name_list)
+            peers_email_list = []
+            for entry in accepted.get('peers_email', ['']):
+                peers_email_list += [i.strip() for i in entry.split(',')]
+            peers_email = ', '.join(peers_email_list)
+            peers_extras['peers_full_name'] = peers_full_name
+            peers_extras['peers_email'] = peers_email
+            peer_pattern = keyword_auto
     elif auth_type == AUTH_OPENID_V2:
         # No guaranteed unique ID from OpenID 2.0 - mirror main and short
         main_id = accepted['openid.sreg.nickname'][-1].strip() \
@@ -468,6 +483,7 @@ def main(client_id, user_arguments_dict, environ=None):
         'openid_names': openid_names,
     }
     raw_user.update(oid_extras)
+    raw_user.update(peers_extras)
     # Force user ID fields to canonical form for consistency
     # Title name, lowercase email, uppercase country and state, etc.
     user_dict = canonical_user(configuration, raw_user, raw_user.keys())
@@ -636,7 +652,8 @@ accepting create matching supplied ID!'''})
         db_path = default_db_path(configuration)
         try:
             create_user(user_dict, configuration.config_file, db_path,
-                        ask_renew=False, default_renew=True)
+                        ask_renew=False, default_renew=True,
+                        verify_peer=peer_pattern)
             if configuration.site_enable_griddk \
                     and accepted['proxy_upload'] != ['']:
 
