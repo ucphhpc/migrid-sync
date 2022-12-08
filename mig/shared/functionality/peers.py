@@ -39,7 +39,7 @@ import os
 from mig.shared import returnvalues
 from mig.shared.accountreq import peers_permit_allowed, list_country_codes
 from mig.shared.base import pretty_format_user, fill_distinguished_name, \
-    client_id_dir
+    client_id_dir, force_native_str_rec
 from mig.shared.defaults import csrf_field, peers_filename, \
     pending_peers_filename, peers_fields, peer_kinds, default_pager_entries
 from mig.shared.functional import validate_input_and_cert
@@ -393,7 +393,7 @@ MUST be filled for the row to be treated.
 </div>
 '''
 
-    sorted_countries = list_country_codes(configuration)
+    sorted_countries = force_native_str_rec(list_country_codes(configuration))
     # TODO: switch to JS rows with automagic addition to always keep spare row?
     for index in range(edit_entries):
         # NOTE: we arrange each entry into a field_group_N div with a hidden
