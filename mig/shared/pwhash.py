@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 #
-# pwhash - helpers for passwords and hashing
+# pwhash - helpers for password handling including for encryption and hashing
 # Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -27,7 +27,7 @@
 # --- END_HEADER ---
 #
 
-"""Helpers for various password policy and hashing activities"""
+"""Helpers for various password policy, crypt and hashing activities"""
 
 from __future__ import print_function
 from __future__ import absolute_import
@@ -35,17 +35,26 @@ from __future__ import absolute_import
 from builtins import zip, range
 from base64 import b64encode, b64decode, b16encode, b16decode, binascii
 import hashlib
+from base64 import b64encode, b64decode, b16encode, b16decode, urlsafe_b64encode
 from os import urandom
 from random import SystemRandom
 from string import ascii_lowercase, ascii_uppercase, digits
 
 from mig.shared.base import force_utf8, force_native_str
+from mig.shared.defaults import keyword_auto
 
 try:
     import cracklib
 except ImportError:
     # Optional cracklib not available - fail gracefully and check before use
     cracklib = None
+try:
+    import cryptography
+    # NOTE: explicit submodule import is needed for Fernet use
+    import cryptography.fernet
+except ImportError:
+    # Optional cryptography not available - fail gracefully and check before use
+    cryptography = None
 
 from mig.shared.defaults import POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, \
     POLICY_HIGH, POLICY_MODERN, POLICY_CUSTOM, PASSWORD_POLICIES
@@ -271,6 +280,109 @@ def check_scramble(configuration, service, username, password, scrambled,
     if isinstance(scramble_cache, dict) and match:
         scramble_cache[password] = scrambled
         # print("cached digest: %s" % scramble_cache.get(password, None))
+    return match
+
+
+def prepare_fernet_key(configuration, secret=keyword_auto):
+    """Helper to extract and prepare a site-specific secret used for all
+    Fernet symmetric encryption and decryption operations.
+    """
+    _logger = configuration.logger
+    # NOTE: Fernet key must be 32 url-safe base64-encoded bytes
+    fernet_key_bytes = 32
+    if not secret:
+        _logger.error('encrypt/decrypt requested without a secret')
+        raise Exception('cannot encrypt/decrypt without a secret')
+    if secret == keyword_auto:
+        # NOTE: generate a static secret key based on configuration.
+        # Use previously generated 'entropy' each time from a call to
+        # cryptography.fernet.Fernet.generate_key()
+        entropy = 'HyrqUFwxagFNcHANnDzVO-kMoU0ebo03pNaKHXce6xw='
+        # yet salt it with hash of a site-specific and non-public salt
+        # to avoid disclosing salt or final key.
+        if configuration.site_password_salt:
+            #_logger.debug('making crypto key from pw salt and entropy')
+            salt_data = configuration.site_password_salt
+        elif configuration.site_digest_salt:
+            #_logger.debug('making crypto key from digest salt and entropy')
+            salt_data = configuration.site_digest_salt
+        else:
+            raise Exception('cannot encrypt/decrypt without a salt in conf')
+        salt_hash = hashlib.sha256(salt_data).hexdigest()
+        key_data = scramble_password(salt_hash, entropy)
+    else:
+        #_logger.debug('making crypto key from provided secret')
+        key_data = secret
+    key = urlsafe_b64encode(key_data[:fernet_key_bytes])
+    return key
+
+
+def encrypt_password(configuration, password, secret=keyword_auto):
+    """Encrypt password for saving"""
+    _logger = configuration.logger
+    _logger.debug('in encrypt_password')
+    if cryptography:
+        key = prepare_fernet_key(configuration, secret)
+        password = force_utf8(password)
+        fernet_helper = cryptography.fernet.Fernet(key)
+        encrypted = fernet_helper.encrypt(password)
+    else:
+        _logger.error('encrypt requested without cryptography installed')
+        raise Exception('cryptography requested in conf but not available')
+    return encrypted
+
+
+def decrypt_password(configuration, encrypted, secret=keyword_auto):
+    """Decrypt encrypted password"""
+    _logger = configuration.logger
+    _logger.debug('in decrypt_password')
+    if cryptography:
+        key = prepare_fernet_key(configuration)
+        fernet_helper = cryptography.fernet.Fernet(key)
+        password = fernet_helper.decrypt(encrypted)
+    else:
+        _logger.error('decrypt requested without cryptography installed')
+        raise Exception('cryptography requested in conf but not available')
+    return password
+
+
+def make_encrypt(configuration, password, secret=keyword_auto):
+    """Generate an encrypted password"""
+    return encrypt_password(configuration, password, secret)
+
+
+def check_encrypt(configuration, service, username, password, encrypted,
+                  secret=keyword_auto, encrypt_cache=None, strict_policy=True,
+                  allow_legacy=False):
+    """Make sure provided password satisfies local password policy and check
+    match against existing encrypted password. The optional encrypt_cache
+    dictionary argument can be used to cache recent lookups to save time in
+    repeated use cases.
+
+    NOTE: we force strict password policy here since we may find weak legacy
+    passwords in the user DB and they would easily give full account access.
+    The optional boolean allow_legacy argument extends the strict_policy check
+    so that passwords matching any configured password legacy policy are also
+    accepted. Use only during active log in checks.
+    """
+    _logger = configuration.logger
+    password = force_utf8(password)
+    if isinstance(encrypt_cache, dict) and \
+            encrypt_cache.get(password, None) == encrypted:
+        # print("got cached encrypt: %s" % encrypt_cache.get(password, None))
+        return True
+    # We check policy AFTER cache lookup since it is already verified for those
+    try:
+        assure_password_strength(configuration, password, allow_legacy)
+    except Exception as exc:
+        _logger.warning('%s password for %s does not satisfy local policy: %s'
+                        % (service, username, exc))
+        if strict_policy:
+            return False
+    match = (make_encrypt(configuration, password, secret) == encrypted)
+    if isinstance(encrypt_cache, dict) and match:
+        encrypt_cache[password] = encrypted
+        # print("cached digest: %s" % encrypt_cache.get(password, None))
     return match
 
 
@@ -553,3 +665,19 @@ if __name__ == "__main__":
                 res = "False (%s)" % exc
             print("Password %r follows %s password policy: %s" %
                   (pw, policy, res))
+
+            try:
+                # print("Encrypt password %r" % pw)
+                encrypted = encrypt_password(configuration, pw)
+                # print("Decrypt encrypted password %r" % encrypted)
+                decrypted = decrypt_password(configuration, encrypted)
+                # print("Password %r encrypted to %s and decrypted to %s ." %
+                #      (pw, encrypted, decrypted))
+                if pw != decrypted:
+                    raise ValueError("Password enc+dec corruption: %r vs %r" %
+                                     (pw, decrypted))
+                print("Password %r encrypted and decrypted correctly" % pw)
+            except Exception as exc:
+                print("Failed to handle encrypt/decrypt %s : %s" % (pw, exc))
+                # import traceback
+                # print(traceback.format_exc())
