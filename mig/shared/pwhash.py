@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 #
-# pwhash - helpers for passwords and hashing
+# pwhash - helpers for password handling including for encryption and hashing
 # Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -28,8 +28,13 @@
 # --- END_HEADER ---
 #
 
-"""
+"""Helpers for various password policy, crypt and hashing activities.
 
+Includes some parts for pbkdf2 handling from
+https://github.com/mitsuhiko/python-pbkdf2
+
+Relevant info and rights inlined below:
+    ---
     Securely hash and check passwords using PBKDF2.
 
     Use random salts to protect againt rainbow tables, many iterations against
@@ -42,7 +47,7 @@
 
     Author: Simon Sapin
     License: BSD
-
+    ---
 """
 
 from __future__ import print_function
@@ -50,13 +55,13 @@ from __future__ import absolute_import
 
 from builtins import zip, range
 import hashlib
-from base64 import b64encode, b64decode, b16encode, b16decode
+from base64 import b64encode, b64decode, b16encode, b16decode, urlsafe_b64encode
 from os import urandom
 from random import SystemRandom
 from string import ascii_lowercase, ascii_uppercase, digits
 
-# From https://github.com/mitsuhiko/python-pbkdf2
 from mig.shared.base import force_utf8
+from mig.shared.defaults import keyword_auto
 from mig.shared.pbkdf2 import pbkdf2_bin
 
 try:
@@ -64,6 +69,13 @@ try:
 except ImportError:
     # Optional cracklib not available - fail gracefully and check before use
     cracklib = None
+try:
+    import cryptography
+    # NOTE: explicit submodule import is needed for Fernet use
+    import cryptography.fernet
+except ImportError:
+    # Optional cryptography not available - fail gracefully and check before use
+    cryptography = None
 
 from mig.shared.defaults import POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, \
     POLICY_HIGH, POLICY_MODERN, POLICY_CUSTOM, PASSWORD_POLICIES
@@ -110,7 +122,7 @@ def check_hash(configuration, service, username, password, hashed,
     pw_hash = hashlib.md5(password).hexdigest()
     if isinstance(hash_cache, dict) and \
             hash_cache.get(pw_hash, None) == hashed:
-        # print "found cached hash: %s" % hash_cache.get(pw_hash, None)
+        # print("got cached hash: %s" % hash_cache.get(pw_hash, None))
         return True
     # We check policy AFTER cache lookup since it is already verified for those
     if strict_policy:
@@ -137,7 +149,7 @@ def check_hash(configuration, service, username, password, hashed,
     match = (diff == 0)
     if isinstance(hash_cache, dict) and match:
         hash_cache[pw_hash] = hashed
-        # print "cached hash: %s" % hash_cache.get(pw_hash, None)
+        # print("cached hash: %s" % hash_cache.get(pw_hash, None))
     return match
 
 
@@ -188,7 +200,7 @@ def check_digest(configuration, service, realm, username, password, digest,
     creds_hash = hashlib.md5(merged_creds).hexdigest()
     if isinstance(digest_cache, dict) and \
             digest_cache.get(creds_hash, None) == digest:
-        # print "found cached digest: %s" % digest_cache.get(creds_hash, None)
+        # print("got cached digest: %s" % digest_cache.get(creds_hash, None))
         return True
     # We check policy AFTER cache lookup since it is already verified for those
     try:
@@ -201,31 +213,29 @@ def check_digest(configuration, service, realm, username, password, digest,
     match = (make_digest(realm, username, password, salt) == digest)
     if isinstance(digest_cache, dict) and match:
         digest_cache[creds_hash] = digest
-        # print "cached digest: %s" % digest_cache.get(creds_hash, None)
+        # print("cached digest: %s" % digest_cache.get(creds_hash, None))
     return match
 
 
 def scramble_password(salt, password):
-    """Scramble password for saving"""
-    b64_password = b64encode(password)
+    """Scramble password for saving with fallback to base64 encoding if no salt
+    is provided.
+    """
     if not salt:
-        return b64_password
-    xor_int = int(salt, 64) ^ int(b64_password, 64)
-    # Python 2.6 fails to parse implicit positional args (-Jonas)
-    # return '{:X}'.format(xor_int)
+        return b64encode(password)
+    xor_int = int(salt, 16) ^ int(b16encode(password), 16)
     return '{0:X}'.format(xor_int)
 
 
 def unscramble_password(salt, password):
-    """Unscramble loaded password"""
-    if salt:
-        xor_int = int(salt, 64) ^ int(password, 64)
-        # Python 2.6 fails to parse implicit positional args (-Jonas)
-        # b64_digest = '{:X}'.format(xor_int)
-        b64_password = '{0:X}'.format(xor_int)
-    else:
-        b64_password = password
-    return b64decode(b64_password)
+    """Unscramble loaded password with fallback to base64 decoding if no salt
+    is provided.
+    """
+    if not salt:
+        return b64decode(password)
+    xor_int = int(salt, 16) ^ int(password, 16)
+    b16_password = '{0:X}'.format(xor_int)
+    return b16decode(b16_password)
 
 
 def make_scramble(password, salt):
@@ -241,7 +251,7 @@ def check_scramble(configuration, service, username, password, scrambled,
     dictionary argument can be used to cache recent lookups to save time in
     e.g. openid where each operation triggers check.
 
-    NOTE: we force strict password policy here since we expect weak legacy
+    NOTE: we force strict password policy here since we may find weak legacy
     passwords in the user DB and they would easily give full account access.
     The optional boolean allow_legacy argument extends the strict_policy check
     so that passwords matching any configured password legacy policy are also
@@ -251,8 +261,7 @@ def check_scramble(configuration, service, username, password, scrambled,
     password = force_utf8(password)
     if isinstance(scramble_cache, dict) and \
             scramble_cache.get(password, None) == scrambled:
-        # print "found cached scramble: %s" % scramble_cache.get(password,
-        # None)
+        # print("got cached scramble: %s" % scramble_cache.get(password, None))
         return True
     # We check policy AFTER cache lookup since it is already verified for those
     try:
@@ -265,7 +274,110 @@ def check_scramble(configuration, service, username, password, scrambled,
     match = (make_scramble(password, salt) == scrambled)
     if isinstance(scramble_cache, dict) and match:
         scramble_cache[password] = scrambled
-        # print "cached digest: %s" % scramble_cache.get(password, None)
+        # print("cached digest: %s" % scramble_cache.get(password, None))
+    return match
+
+
+def prepare_fernet_key(configuration, secret=keyword_auto):
+    """Helper to extract and prepare a site-specific secret used for all
+    Fernet symmetric encryption and decryption operations.
+    """
+    _logger = configuration.logger
+    # NOTE: Fernet key must be 32 url-safe base64-encoded bytes
+    fernet_key_bytes = 32
+    if not secret:
+        _logger.error('encrypt/decrypt requested without a secret')
+        raise Exception('cannot encrypt/decrypt without a secret')
+    if secret == keyword_auto:
+        # NOTE: generate a static secret key based on configuration.
+        # Use previously generated 'entropy' each time from a call to
+        # cryptography.fernet.Fernet.generate_key()
+        entropy = 'HyrqUFwxagFNcHANnDzVO-kMoU0ebo03pNaKHXce6xw='
+        # yet salt it with hash of a site-specific and non-public salt
+        # to avoid disclosing salt or final key.
+        if configuration.site_password_salt:
+            #_logger.debug('making crypto key from pw salt and entropy')
+            salt_data = configuration.site_password_salt
+        elif configuration.site_digest_salt:
+            #_logger.debug('making crypto key from digest salt and entropy')
+            salt_data = configuration.site_digest_salt
+        else:
+            raise Exception('cannot encrypt/decrypt without a salt in conf')
+        salt_hash = hashlib.sha256(salt_data).hexdigest()
+        key_data = scramble_password(salt_hash, entropy)
+    else:
+        #_logger.debug('making crypto key from provided secret')
+        key_data = secret
+    key = urlsafe_b64encode(key_data[:fernet_key_bytes])
+    return key
+
+
+def encrypt_password(configuration, password, secret=keyword_auto):
+    """Encrypt password for saving"""
+    _logger = configuration.logger
+    _logger.debug('in encrypt_password')
+    if cryptography:
+        key = prepare_fernet_key(configuration, secret)
+        password = force_utf8(password)
+        fernet_helper = cryptography.fernet.Fernet(key)
+        encrypted = fernet_helper.encrypt(password)
+    else:
+        _logger.error('encrypt requested without cryptography installed')
+        raise Exception('cryptography requested in conf but not available')
+    return encrypted
+
+
+def decrypt_password(configuration, encrypted, secret=keyword_auto):
+    """Decrypt encrypted password"""
+    _logger = configuration.logger
+    _logger.debug('in decrypt_password')
+    if cryptography:
+        key = prepare_fernet_key(configuration)
+        fernet_helper = cryptography.fernet.Fernet(key)
+        password = fernet_helper.decrypt(encrypted)
+    else:
+        _logger.error('decrypt requested without cryptography installed')
+        raise Exception('cryptography requested in conf but not available')
+    return password
+
+
+def make_encrypt(configuration, password, secret=keyword_auto):
+    """Generate an encrypted password"""
+    return encrypt_password(configuration, password, secret)
+
+
+def check_encrypt(configuration, service, username, password, encrypted,
+                  secret=keyword_auto, encrypt_cache=None, strict_policy=True,
+                  allow_legacy=False):
+    """Make sure provided password satisfies local password policy and check
+    match against existing encrypted password. The optional encrypt_cache
+    dictionary argument can be used to cache recent lookups to save time in
+    repeated use cases.
+
+    NOTE: we force strict password policy here since we may find weak legacy
+    passwords in the user DB and they would easily give full account access.
+    The optional boolean allow_legacy argument extends the strict_policy check
+    so that passwords matching any configured password legacy policy are also
+    accepted. Use only during active log in checks.
+    """
+    _logger = configuration.logger
+    password = force_utf8(password)
+    if isinstance(encrypt_cache, dict) and \
+            encrypt_cache.get(password, None) == encrypted:
+        # print("got cached encrypt: %s" % encrypt_cache.get(password, None))
+        return True
+    # We check policy AFTER cache lookup since it is already verified for those
+    try:
+        assure_password_strength(configuration, password, allow_legacy)
+    except Exception as exc:
+        _logger.warning('%s password for %s does not satisfy local policy: %s'
+                        % (service, username, exc))
+        if strict_policy:
+            return False
+    match = (make_encrypt(configuration, password, secret) == encrypted)
+    if isinstance(encrypt_cache, dict) and match:
+        encrypt_cache[password] = encrypted
+        # print("cached digest: %s" % encrypt_cache.get(password, None))
     return match
 
 
@@ -540,3 +652,19 @@ if __name__ == "__main__":
                 res = "False (%s)" % exc
             print("Password %r follows %s password policy: %s" %
                   (pw, policy, res))
+
+            try:
+                # print("Encrypt password %r" % pw)
+                encrypted = encrypt_password(configuration, pw)
+                # print("Decrypt encrypted password %r" % encrypted)
+                decrypted = decrypt_password(configuration, encrypted)
+                # print("Password %r encrypted to %s and decrypted to %s ." %
+                #      (pw, encrypted, decrypted))
+                if pw != decrypted:
+                    raise ValueError("Password enc+dec corruption: %r vs %r" %
+                                     (pw, decrypted))
+                print("Password %r encrypted and decrypted correctly" % pw)
+            except Exception as exc:
+                print("Failed to handle encrypt/decrypt %s : %s" % (pw, exc))
+                # import traceback
+                # print(traceback.format_exc())
