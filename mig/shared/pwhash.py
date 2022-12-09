@@ -28,8 +28,13 @@
 # --- END_HEADER ---
 #
 
-"""
+"""Helpers for various password policy and hashing activities.
 
+Includes some parts for pbkdf2 handling from
+https://github.com/mitsuhiko/python-pbkdf2
+
+Relevant info and rights inlined below:
+    ---
     Securely hash and check passwords using PBKDF2.
 
     Use random salts to protect againt rainbow tables, many iterations against
@@ -42,7 +47,7 @@
 
     Author: Simon Sapin
     License: BSD
-
+    ---
 """
 
 from __future__ import print_function
@@ -55,7 +60,6 @@ from os import urandom
 from random import SystemRandom
 from string import ascii_lowercase, ascii_uppercase, digits
 
-# From https://github.com/mitsuhiko/python-pbkdf2
 from mig.shared.base import force_utf8
 from mig.shared.pbkdf2 import pbkdf2_bin
 
@@ -110,7 +114,7 @@ def check_hash(configuration, service, username, password, hashed,
     pw_hash = hashlib.md5(password).hexdigest()
     if isinstance(hash_cache, dict) and \
             hash_cache.get(pw_hash, None) == hashed:
-        # print "found cached hash: %s" % hash_cache.get(pw_hash, None)
+        # print("got cached hash: %s" % hash_cache.get(pw_hash, None))
         return True
     # We check policy AFTER cache lookup since it is already verified for those
     if strict_policy:
@@ -137,7 +141,7 @@ def check_hash(configuration, service, username, password, hashed,
     match = (diff == 0)
     if isinstance(hash_cache, dict) and match:
         hash_cache[pw_hash] = hashed
-        # print "cached hash: %s" % hash_cache.get(pw_hash, None)
+        # print("cached hash: %s" % hash_cache.get(pw_hash, None))
     return match
 
 
@@ -188,7 +192,7 @@ def check_digest(configuration, service, realm, username, password, digest,
     creds_hash = hashlib.md5(merged_creds).hexdigest()
     if isinstance(digest_cache, dict) and \
             digest_cache.get(creds_hash, None) == digest:
-        # print "found cached digest: %s" % digest_cache.get(creds_hash, None)
+        # print("got cached digest: %s" % digest_cache.get(creds_hash, None))
         return True
     # We check policy AFTER cache lookup since it is already verified for those
     try:
@@ -201,31 +205,29 @@ def check_digest(configuration, service, realm, username, password, digest,
     match = (make_digest(realm, username, password, salt) == digest)
     if isinstance(digest_cache, dict) and match:
         digest_cache[creds_hash] = digest
-        # print "cached digest: %s" % digest_cache.get(creds_hash, None)
+        # print("cached digest: %s" % digest_cache.get(creds_hash, None))
     return match
 
 
 def scramble_password(salt, password):
-    """Scramble password for saving"""
-    b64_password = b64encode(password)
+    """Scramble password for saving with fallback to base64 encoding if no salt
+    is provided.
+    """
     if not salt:
-        return b64_password
-    xor_int = int(salt, 64) ^ int(b64_password, 64)
-    # Python 2.6 fails to parse implicit positional args (-Jonas)
-    # return '{:X}'.format(xor_int)
+        return b64encode(password)
+    xor_int = int(salt, 16) ^ int(b16encode(password), 16)
     return '{0:X}'.format(xor_int)
 
 
 def unscramble_password(salt, password):
-    """Unscramble loaded password"""
-    if salt:
-        xor_int = int(salt, 64) ^ int(password, 64)
-        # Python 2.6 fails to parse implicit positional args (-Jonas)
-        # b64_digest = '{:X}'.format(xor_int)
-        b64_password = '{0:X}'.format(xor_int)
-    else:
-        b64_password = password
-    return b64decode(b64_password)
+    """Unscramble loaded password with fallback to base64 decoding if no salt
+    is provided.
+    """
+    if not salt:
+        return b64decode(password)
+    xor_int = int(salt, 16) ^ int(password, 16)
+    b16_password = '{0:X}'.format(xor_int)
+    return b16decode(b16_password)
 
 
 def make_scramble(password, salt):
@@ -241,7 +243,7 @@ def check_scramble(configuration, service, username, password, scrambled,
     dictionary argument can be used to cache recent lookups to save time in
     e.g. openid where each operation triggers check.
 
-    NOTE: we force strict password policy here since we expect weak legacy
+    NOTE: we force strict password policy here since we may find weak legacy
     passwords in the user DB and they would easily give full account access.
     The optional boolean allow_legacy argument extends the strict_policy check
     so that passwords matching any configured password legacy policy are also
@@ -251,8 +253,7 @@ def check_scramble(configuration, service, username, password, scrambled,
     password = force_utf8(password)
     if isinstance(scramble_cache, dict) and \
             scramble_cache.get(password, None) == scrambled:
-        # print "found cached scramble: %s" % scramble_cache.get(password,
-        # None)
+        # print("got cached scramble: %s" % scramble_cache.get(password, None))
         return True
     # We check policy AFTER cache lookup since it is already verified for those
     try:
@@ -265,7 +266,7 @@ def check_scramble(configuration, service, username, password, scrambled,
     match = (make_scramble(password, salt) == scrambled)
     if isinstance(scramble_cache, dict) and match:
         scramble_cache[password] = scrambled
-        # print "cached digest: %s" % scramble_cache.get(password, None)
+        # print("cached digest: %s" % scramble_cache.get(password, None))
     return match
 
 
