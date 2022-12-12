@@ -58,6 +58,7 @@ from mig.shared.gdp.userid import __validate_user_id, \
     __project_short_id_from_user_id, __scramble_user_id, \
     get_project_from_user_id, get_project_client_id
 from mig.shared.notification import send_email
+from mig.shared.pwhash import encrypt_password
 from mig.shared.serial import load, dump
 from mig.shared.useradm import create_user, delete_user, edit_user, \
     get_full_user_map, lock_user_db
@@ -376,7 +377,7 @@ def __load_user_db(configuration,
     _logger = configuration.logger
 
     (db_filepath, db_lock_filepath) = __gdp_db_filepath(configuration,
-                                                         db_path=db_path)
+                                                        db_path=db_path)
     if do_lock:
         flock = acquire_file_lock(db_lock_filepath, exclusive=False)
     result = {}
@@ -405,7 +406,7 @@ def __save_user_db(configuration, user_db, do_lock=True, db_path=None):
     _logger = configuration.logger
 
     (db_filepath, db_lock_filepath) = __gdp_db_filepath(configuration,
-                                                         db_path=db_path)
+                                                        db_path=db_path)
 
     if do_lock:
         flock = acquire_file_lock(db_lock_filepath)
@@ -791,10 +792,10 @@ def __delete_mig_user(configuration,
 
 
 def __get_gdp_user_log_entry(configuration,
-                         client_id,
-                         match_client_id=True,
-                         match_hashed_client_id=True,
-                         do_lock=True):
+                             client_id,
+                             match_client_id=True,
+                             match_hashed_client_id=True,
+                             do_lock=True):
     """Returns (client_id, client_id_hash) user log entry for *client_id*"""
     _logger = configuration.logger
 
@@ -836,9 +837,9 @@ def __update_gdp_user_log(configuration, client_id, do_lock=True):
         flock = acquire_file_lock(log_lock_filepath)
 
     gdp_user_log_entry = __get_gdp_user_log_entry(configuration,
-                                          client_id,
-                                          match_client_id=True,
-                                          do_lock=False)
+                                                  client_id,
+                                                  match_client_id=True,
+                                                  do_lock=False)
     if gdp_user_log_entry:
         result = True
         _logger.info("User: %r already exists in GDP user log" % client_id)
@@ -1007,6 +1008,8 @@ def project_log(
     _logger = configuration.logger
     _gdp_logger = configuration.gdp_logger
     status = True
+    enc_path = '-'
+    enc_dst_path = '-'
     log_err_msg = "GDP: project_log: user_id: %r, protocol: %r" \
         % (user_id, protocol) \
         + ", action: %r, project_name: %r, ip: %r" \
@@ -1133,11 +1136,13 @@ def project_log(
                 status = False
                 _logger.error(log_err_msg + ": %s" % exc)
 
-    if status and path is None:
-        path = '-'
-
-    if status and dst_path is None:
-        dst_path = '-'
+    if status:
+        if path is not None:
+            enc_path = encrypt_password(configuration, path)
+            details = details.replace(path, enc_path)
+        if dst_path is not None:
+            enc_dst_path = encrypt_password(configuration, dst_path)
+            details = details.replace(dst_path, enc_dst_path)
 
     if status:
         if not failed:
@@ -1153,8 +1158,8 @@ def project_log(
             protocol,
             action,
             status_msg,
-            path,
-            dst_path,
+            enc_path,
+            enc_dst_path,
             details
         )
         _gdp_logger.info(msg)
@@ -1490,9 +1495,9 @@ def ensure_gdp_user(configuration, client_addr, client_id):
         (_, log_lock_filepath) = __gdp_user_log_filepath(configuration)
         log_flock = acquire_file_lock(log_lock_filepath)
         gdp_user_log_entry = __get_gdp_user_log_entry(configuration,
-                                              client_id,
-                                              match_client_id=False,
-                                              do_lock=False)
+                                                      client_id,
+                                                      match_client_id=False,
+                                                      do_lock=False)
         if gdp_user_log_entry and gdp_user_log_entry[0] != client_id:
             err_msg += ": User-hash already exists in user log"
             _logger.error(log_err_msg + ": User-hash: %r"
@@ -1969,7 +1974,7 @@ def reset_account_roles(
 
     if status:
         (_, db_lock_filepath) = __gdp_db_filepath(configuration,
-                                                   db_path=gdp_db_path)
+                                                  db_path=gdp_db_path)
         flock = acquire_file_lock(db_lock_filepath)
         gdp_db = __load_user_db(
             configuration, do_lock=False, db_path=gdp_db_path)
@@ -2047,7 +2052,7 @@ def set_account_state(
 
     if status:
         (_, db_lock_filepath) = __gdp_db_filepath(configuration,
-                                                   db_path=gdp_db_path)
+                                                  db_path=gdp_db_path)
         flock = acquire_file_lock(db_lock_filepath)
         gdp_db = __load_user_db(
             configuration, do_lock=False, db_path=gdp_db_path)
@@ -2113,7 +2118,7 @@ def edit_gdp_user(
     new_user_id = None
     new_user_ids = []
     (db_filepath, db_lock_filepath) = __gdp_db_filepath(configuration,
-                                                         db_path=gdp_db_path)
+                                                        db_path=gdp_db_path)
     (log_filepath, log_lock_filepath) = __gdp_user_log_filepath(configuration)
 
     # NOTE: we need explicit mig_db_path lookup here for direct calls
@@ -3118,8 +3123,8 @@ def create_project_user(
         + ", failed to create project_user: %r" % project_client_id
 
     gdp_user_log_entry = __get_gdp_user_log_entry(configuration,
-                                          project_client_id,
-                                          match_client_id=False)
+                                                  project_client_id,
+                                                  match_client_id=False)
     if gdp_user_log_entry and gdp_user_log_entry[0] != project_client_id:
         status = False
         _logger.error("GDP: Project user hash: %r" % gdp_user_log_entry[1]
