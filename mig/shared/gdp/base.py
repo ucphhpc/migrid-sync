@@ -58,6 +58,7 @@ from mig.shared.gdp.userid import __validate_user_id, \
     __project_short_id_from_user_id, __scramble_user_id, \
     get_project_from_user_id, get_project_client_id
 from mig.shared.notification import send_email
+from mig.shared.pwhash import encrypt_password
 from mig.shared.serial import load, dump
 from mig.shared.useradm import create_user, delete_user, edit_user, \
     get_full_user_map, lock_user_db
@@ -1007,6 +1008,8 @@ def project_log(
     _logger = configuration.logger
     _gdp_logger = configuration.gdp_logger
     status = True
+    enc_path = '-'
+    enc_dst_path = '-'
     log_err_msg = "GDP: project_log: user_id: %r, protocol: %r" \
         % (user_id, protocol) \
         + ", action: %r, project_name: %r, ip: %r" \
@@ -1133,11 +1136,13 @@ def project_log(
                 status = False
                 _logger.error(log_err_msg + ": %s" % exc)
 
-    if status and path is None:
-        path = '-'
-
-    if status and dst_path is None:
-        dst_path = '-'
+    if status:
+        if path is not None:
+            enc_path = encrypt_password(configuration, path)
+            details = details.replace(path, enc_path)
+        if dst_path is not None:
+            enc_dst_path = encrypt_password(configuration, dst_path)
+            details = details.replace(dst_path, enc_dst_path)
 
     if status:
         if not failed:
@@ -1153,8 +1158,8 @@ def project_log(
             protocol,
             action,
             status_msg,
-            path,
-            dst_path,
+            enc_path,
+            enc_dst_path,
             details
         )
         _gdp_logger.info(msg)
