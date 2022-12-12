@@ -33,12 +33,11 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 from builtins import zip, range
-from base64 import b64encode, b64decode, b16encode, b16decode, binascii
-import hashlib
-from base64 import b64encode, b64decode, b16encode, b16decode, urlsafe_b64encode
+from base64 import b64encode, b64decode, b16encode, b16decode, binascii, urlsafe_b64encode
 from os import urandom
 from random import SystemRandom
 from string import ascii_lowercase, ascii_uppercase, digits
+import hashlib
 
 from mig.shared.base import force_utf8, force_native_str
 from mig.shared.defaults import keyword_auto
@@ -297,7 +296,7 @@ def prepare_fernet_key(configuration, secret=keyword_auto):
         # NOTE: generate a static secret key based on configuration.
         # Use previously generated 'entropy' each time from a call to
         # cryptography.fernet.Fernet.generate_key()
-        entropy = 'HyrqUFwxagFNcHANnDzVO-kMoU0ebo03pNaKHXce6xw='
+        entropy = force_utf8('HyrqUFwxagFNcHANnDzVO-kMoU0ebo03pNaKHXce6xw=')
         # yet salt it with hash of a site-specific and non-public salt
         # to avoid disclosing salt or final key.
         if configuration.site_password_salt:
@@ -308,12 +307,14 @@ def prepare_fernet_key(configuration, secret=keyword_auto):
             salt_data = configuration.site_digest_salt
         else:
             raise Exception('cannot encrypt/decrypt without a salt in conf')
-        salt_hash = hashlib.sha256(salt_data).hexdigest()
+        # NOTE: hashlib requires bytes
+        salt_hash = hashlib.sha256(force_utf8(salt_data)).hexdigest()
         key_data = scramble_password(salt_hash, entropy)
     else:
         #_logger.debug('making crypto key from provided secret')
         key_data = secret
-    key = urlsafe_b64encode(key_data[:fernet_key_bytes])
+    key = force_native_str(urlsafe_b64encode(force_utf8(
+        key_data[:fernet_key_bytes])))
     return key
 
 
@@ -338,8 +339,10 @@ def decrypt_password(configuration, encrypted, secret=keyword_auto):
     _logger.debug('in decrypt_password')
     if cryptography:
         key = prepare_fernet_key(configuration)
+        encrypted = force_utf8(encrypted)
         fernet_helper = cryptography.fernet.Fernet(key)
-        password = fernet_helper.decrypt(encrypted)
+        # Fernet takes byte token and returns bytes - force to native string
+        password = force_native_str(fernet_helper.decrypt(encrypted))
     else:
         _logger.error('decrypt requested without cryptography installed')
         raise Exception('cryptography requested in conf but not available')
