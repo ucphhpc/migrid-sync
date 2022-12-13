@@ -61,6 +61,8 @@ keyword_pending = 'PENDING'
 keyword_updating = 'UPDATING'
 keyword_owners = 'OWNERS'
 keyword_members = 'MEMBERS'
+keyword_env = 'ENV'
+keyword_file = 'FILE'
 
 default_vgrid = 'Generic'
 any_vgrid = keyword_any
