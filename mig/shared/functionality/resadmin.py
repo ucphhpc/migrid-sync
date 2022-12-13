@@ -530,9 +530,9 @@ def main(client_id, user_arguments_dict):
     add_ready += '''
     /* init add owners form with dynamic input fields */
     onOwnerInputChange();
-    $("#dynownerspares").on("blur", "input[name=cert_id]", 
+    $("#dynownerspares").on("focus", "input[name=cert_id]", 
         function(event) {
-            //console.debug("in add owner blur handler");
+            //console.debug("in add owner focus handler");
             onOwnerInputChange();
         }
     );
