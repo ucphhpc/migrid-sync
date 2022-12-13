@@ -128,25 +128,25 @@ def main(client_id, user_arguments_dict):
     add_ready += '''
     /* init add owners/member/resource forms with dynamic input fields */
     onOwnerInputChange();
-    $("#dynownerspares").on("blur", "input[name=cert_id]",
+    $("#dynownerspares").on("focus", "input[name=cert_id]",
         function(event) {
-            //console.debug("in add owner blur handler");
+            //console.debug("in add owner focus handler");
             onOwnerInputChange();
         }
     );
     onMemberInputChange();
-    $("#dynmemberspares").on("blur", "input[name=cert_id]",
+    $("#dynmemberspares").on("focus", "input[name=cert_id]",
         function(event) {
-            //console.debug("in add member blur handler");
+            //console.debug("in add member focus handler");
             onMemberInputChange();
         }
     );'''
     if configuration.site_enable_resources:
         add_ready += '''
     onResourceInputChange();
-    $("#dynresourcespares").on("blur", "input[name=unique_resource_name]",
+    $("#dynresourcespares").on("focus", "input[name=unique_resource_name]",
         function(event) {
-            console.debug("in resource blur handler");
+            console.debug("in resource focus handler");
             onResourceInputChange();
         }
     );
