@@ -295,7 +295,10 @@ def prepare_fernet_key(configuration, secret=keyword_auto):
         entropy = 'HyrqUFwxagFNcHANnDzVO-kMoU0ebo03pNaKHXce6xw='
         # yet salt it with hash of a site-specific and non-public salt
         # to avoid disclosing salt or final key.
-        if configuration.site_password_salt:
+        if configuration.site_crypto_salt:
+            #_logger.debug('making crypto key from crypto salt and entropy')
+            salt_data = configuration.site_crypto_salt
+        elif configuration.site_password_salt:
             #_logger.debug('making crypto key from pw salt and entropy')
             salt_data = configuration.site_password_salt
         elif configuration.site_digest_salt:

@@ -34,6 +34,7 @@ import base64
 import datetime
 import os
 import pwd
+import re
 import socket
 import sys
 import time
@@ -43,10 +44,72 @@ from mig.shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
     CSRF_FULL, POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, \
     POLICY_MODERN, POLICY_CUSTOM, freeze_flavors, duplicati_protocol_choices, \
     default_css_filename, keyword_any, cert_valid_days, oid_valid_days, \
-    generic_valid_days, keyword_all
+    generic_valid_days, keyword_all, keyword_file, keyword_env
 from mig.shared.logger import Logger, SYSLOG_GDP
 from mig.shared.html import menu_items, vgrid_items
-from mig.shared.fileio import read_file, load_json
+from mig.shared.fileio import read_file, load_json, write_file
+
+
+def expand_external_sources(logger, val):
+    """Expand a string containing ENV::NAME, FILE::PATH or FILE::PATH$$CACHE
+    references to fill in the content of the corresponding environment, file or
+    cache backed file. If cache is given a value will be attempted loaded from
+    there if available with fall back to read value from file and write it in
+    cache for use next time otherwise. Thus, cache can be used to speed up
+    access to a value on a faster temporary location like tmpfs to avoid the
+    disk overhead in each process.
+    """
+    if val.find('::') == -1:
+        # logger.debug("nothing to expand in %r" % val)
+        return val
+    logger.debug("expand any ENV and FILE content in %r" % val)
+    env_pattern = "[a-zA-Z][a-zA-Z0-9_]+"
+    cache_pattern = file_pattern = "[^ ]+"
+    expanded = val
+    expand_pairs = [(keyword_env, env_pattern), (keyword_file, file_pattern)]
+    for (key, pattern) in expand_pairs:
+        key_pattern = "%s::(%s)" % (key, pattern)
+        # logger.debug("looking for key_pattern %r in %r" % (key_pattern,
+        #                                                    expanded))
+        for match in re.findall(key_pattern, expanded):
+            # logger.debug("found match %r for key_pattern %r" % (match,
+            #                                                     key_pattern))
+            # logger.debug("looking up value in %s %r" % (key, match))
+            if key == keyword_env:
+                content = os.environ.get(match, '').strip()
+            elif key == keyword_file:
+                parts = match.split('$$')
+                path, cache = parts[0], ''
+                if parts[1:]:
+                    cache = parts[1].strip()
+                content = None
+                if cache and os.path.exists(cache):
+                    logger.debug("loading conf content from cache in %r" %
+                                 cache)
+                    content = read_file(cache, logger)
+                if not content:
+                    logger.debug(
+                        "reading conf content from file in %r" % cache)
+                    content = read_file(path, logger)
+                    if cache:
+                        logger.debug("caching conf content salt in %r" % cache)
+                        write_file(content, cache, logger)
+                if content is None:
+                    logger.warning("salt file not found or empty: %s" % path)
+                    content = ''
+                else:
+                    content = content.strip()
+            else:
+                logger.error("unexpected key encountered: %r" % key)
+            if not content:
+                logger.warning("no %r content found for expansion of %r" %
+                               (key, match))
+            target = "%s::%s" % (key, match)
+            logger.debug("expanded %r in conf to actual content" % val)
+            expanded = expanded.replace(target, content)
+    # NOTE: do NOT log expanded in production as it may disclose secrets
+    # logger.debug("returning expanded %r value: %r" % (val, expanded))
+    return expanded
 
 
 def fix_missing(config_file, verbose=True):
@@ -716,9 +779,8 @@ location.""" % self.config_file)
                                                  'migserver_http_url')
             self.sleep_period_for_empty_jobs = config.get(
                 'GLOBAL', 'sleep_period_for_empty_jobs')
-            self.min_seconds_between_live_update_requests = \
-                config.get('GLOBAL',
-                           'min_seconds_between_live_update_requests')
+            self.min_seconds_between_live_update_requests = config.get(
+                'GLOBAL', 'min_seconds_between_live_update_requests')
             self.cputime_for_empty_jobs = config.get('GLOBAL',
                                                      'cputime_for_empty_jobs')
             self.sleep_secs = config.get('MONITOR', 'sleep_secs')
@@ -1258,8 +1320,8 @@ location.""" % self.config_file)
             self.user_imnotify_username = config.get('GLOBAL',
                                                      'user_imnotify_username')
         if config.has_option('GLOBAL', 'user_imnotify_password'):
-            self.user_imnotify_password = config.get('GLOBAL',
-                                                     'user_imnotify_password')
+            self.user_imnotify_password = expand_external_sources(
+                logger, config.get('GLOBAL', 'user_imnotify_password'))
         if config.has_option('GLOBAL', 'user_imnotify_log'):
             self.user_imnotify_log = config.get('GLOBAL', 'user_imnotify_log')
         if config.has_option('SITE', 'enable_user_messages'):
@@ -1409,9 +1471,8 @@ location.""" % self.config_file)
             self.smtp_sender = config.get('GLOBAL', 'smtp_sender')
         else:
             self.smtp_sender = '%s Server <%s@%s>' % \
-                               (self.short_title,
-                                os.environ.get('USER', 'mig'),
-                                self.server_fqdn)
+                (self.short_title, os.environ.get('USER', 'mig'),
+                 self.server_fqdn)
         if config.has_option('GLOBAL', 'smtp_send_as_user'):
             self.smtp_send_as_user = config.getboolean('GLOBAL',
                                                        'smtp_send_as_user')
@@ -1421,7 +1482,7 @@ location.""" % self.config_file)
             self.smtp_reply_to = config.get('GLOBAL', 'smtp_reply_to')
         else:
             self.smtp_reply_to = 'Do NOT reply <no-reply@%s>' % \
-                                 self.server_fqdn
+                self.server_fqdn
         if config.has_option('GLOBAL', 'notify_protocols'):
             self.notify_protocols = config.get(
                 'GLOBAL', 'notify_protocols').split()
@@ -1939,8 +2000,8 @@ location.""" % self.config_file)
 
         self.gdp_email_notify = True
         if config.has_option('GLOBAL', 'gdp_email_notify'):
-            self.gdp_email_notify \
-                = config.getboolean('GLOBAL', 'gdp_email_notify')
+            self.gdp_email_notify = config.getboolean('GLOBAL',
+                                                      'gdp_email_notify')
 
         self.gdp_data_categories = []
         if self.site_enable_gdp and \
@@ -2019,7 +2080,8 @@ location.""" % self.config_file)
         self.site_digest_salt = base64.b16encode(static_rand)
         if config.has_option('SITE', 'digest_salt'):
             # Salt must be upper case hex
-            salt = config.get('SITE', 'digest_salt').upper()
+            salt = expand_external_sources(
+                self.logger, config.get('SITE', 'digest_salt')).upper()
             try:
                 _ = base64.b16decode(salt)
                 self.site_digest_salt = salt
@@ -2031,12 +2093,26 @@ location.""" % self.config_file)
         self.site_password_salt = ''
         if config.has_option('SITE', 'password_salt'):
             # Salt must be upper case hex
-            salt = config.get('SITE', 'password_salt').upper()
+            salt = expand_external_sources(
+                self.logger, config.get('SITE', 'password_salt')).upper()
             try:
                 _ = base64.b16decode(salt)
                 self.site_password_salt = salt
             except:
                 raise ValueError("Invalid password_salt value: %s" % salt)
+        # Fall back to a static 'random' salt string since we need it to
+        # remain constant
+        static_rand = b'a\xff\xcft\xaf/\x089 B\x1eG\x84i\x97a'
+        self.site_crypto_salt = base64.b16encode(static_rand)
+        if config.has_option('SITE', 'crypto_salt'):
+            # Salt must be upper case hex
+            salt = expand_external_sources(
+                self.logger, config.get('SITE', 'crypto_salt')).upper()
+            try:
+                _ = base64.b16decode(salt)
+                self.site_crypto_salt = salt
+            except:
+                raise ValueError("Invalid crypto_salt value: %s" % salt)
 
         if config.has_option('SITE', 'gpg_passphrase'):
             self.site_gpg_passphrase = config.get('SITE', 'gpg_passphrase')
@@ -2088,7 +2164,7 @@ location.""" % self.config_file)
             self.site_support_text = config.get('SITE', 'support_text')
         else:
             self.site_support_text = '<a href="%s">Support & Questions</a>' % \
-                                     self.migserver_http_url
+                self.migserver_http_url
         if config.has_option('SITE', 'support_image'):
             self.site_support_image = config.get('SITE', 'support_image')
         else:
@@ -2106,7 +2182,7 @@ location.""" % self.config_file)
             self.site_credits_text = config.get('SITE', 'credits_text')
         else:
             creds_text = '2003-%d, <a href="http://%s">The MiG Project</a>' % \
-                         (datetime.datetime.now().year, "www.migrid.org")
+                (datetime.datetime.now().year, "www.migrid.org")
             self.site_credits_text = creds_text
         if config.has_option('SITE', 'credits_image'):
             self.site_credits_image = config.get('SITE', 'credits_image')
@@ -2335,8 +2411,8 @@ location.""" % self.config_file)
             self.cert_valid_days = cert_valid_days
         if config.has_option('GLOBAL', 'oid_valid_days'):
             # NOTE: openid 2.0 and connect share value for now
-            self.oid_valid_days = self.oidc_valid_days = \
-                config.getint('GLOBAL', 'oid_valid_days')
+            self.oid_valid_days = self.oidc_valid_days = config.getint(
+                'GLOBAL', 'oid_valid_days')
         else:
             self.oid_valid_days = self.oidc_valid_days = oid_valid_days
         # NOTE: custom_valid_days is legacy name
@@ -2408,6 +2484,5 @@ location.""" % self.config_file)
 
 
 if '__main__' == __name__:
-    conf = \
-        Configuration(os.path.expanduser('~/mig/server/MiGserver.conf'
-                                         ), True)
+    conf = Configuration(os.path.expanduser('~/mig/server/MiGserver.conf'),
+                         True)
