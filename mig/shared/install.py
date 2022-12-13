@@ -1568,6 +1568,9 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
     # NOTE: b16encode takes bytes and returns bytes
     digest_salt = force_native_str(base64.b16encode(os.urandom(16)))
     user_dict['__DIGEST_SALT__'] = digest_salt
+    # Generate random hex salt for various crypto helpers
+    crypto_salt = base64.b16encode(os.urandom(16))
+    user_dict['__CRYPTO_SALT__'] = crypto_salt
 
     # Greedy match trailing space for all the values to uncomment stuff
     strip_trailing_space = ['__IF_SEPARATE_PORTS__', '__APACHE_PRE2.4__',
