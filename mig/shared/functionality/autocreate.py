@@ -53,13 +53,13 @@ from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_V2, \
 from mig.shared.fileio import write_file
 from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
-from mig.shared.httpsclient import extract_client_id, detect_client_auth
+from mig.shared.httpsclient import extract_client_id, detect_client_auth, \
+    find_entry, build_autologout_url
 from mig.shared.init import initialize_main_variables
 from mig.shared.notification import send_email
 from mig.shared.safeinput import filter_commonname
 from mig.shared.useradm import create_user
 from mig.shared.userdb import default_db_path
-from mig.shared.url import openid_autologout_url
 from mig.shared.validstring import is_valid_email_address
 
 try:
@@ -499,17 +499,14 @@ def main(client_id, user_arguments_dict, environ=None):
                                    'text': '''<p class="spinner iconleftpad">
 Auto log out first to avoid sign up problems ...
 </p>'''})
-            req_url = environ['SCRIPT_URI']
-            html = \
-                """
-            <a id='autologout' href='%s'></a>
-            <script type='text/javascript'>
-                document.getElementById('autologout').click();
-            </script>""" \
-                % openid_autologout_url(configuration, identity,
-                                        client_id, req_url, user_arguments_dict)
-            output_objects.append({'object_type': 'html_form',
-                                   'text': html})
+            autologout_url = build_autologout_url(configuration,
+                                                environ,
+                                                client_id,
+                                                environ['SCRIPT_URI'],
+                                                user_arguments_dict)
+            title_entry = find_entry(output_objects, 'title')
+            itle_entry['meta'] = """<meta http-equiv = "refresh" content = "0; url=%s" />""" \
+                    % autologout_url
         else:
             logger.warning('%s autocreate without ID refused for %s' %
                            (auth_type, client_id))

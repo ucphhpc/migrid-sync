@@ -37,11 +37,14 @@ from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_V2, \
     AUTH_OPENID_CONNECT, AUTH_GENERIC, AUTH_NONE, AUTH_MIG_OID, AUTH_EXT_OID, \
     AUTH_MIG_OIDC, AUTH_EXT_OIDC, AUTH_MIG_CERT, AUTH_EXT_CERT, \
     AUTH_SID_GENERIC, AUTH_UNKNOWN, auth_openid_mig_db, auth_openid_ext_db, \
-    keyword_all
-from mig.shared.base import is_gdp_user
+    keyword_all, csrf_field
+from mig.shared.base import is_gdp_user, get_xgi_bin
 from mig.shared.gdp.all import get_project_user_dn
+from mig.shared.handlers import get_csrf_limit
+from mig.shared.pwhash import make_csrf_token, make_csrf_trust_token
 from mig.shared.settings import load_twofactor
-from mig.shared.url import urlencode, parse_qsl
+from mig.shared.url import urlencode, parse_qsl, \
+    base32urlencode
 from mig.shared.useradm import get_oidc_user_dn, get_openid_user_dn
 
 # Generic login clients will have their REMOTE_USER env set to some ID provided
@@ -263,6 +266,75 @@ def build_logout_url(configuration, environ):
         logout_url = local_logout
     _logger.debug("chain logout url: %s" % logout_url)
     return logout_url
+
+
+def build_autologout_url(configuration,
+                         environ,
+                         client_id,
+                         return_url,
+                         return_query_dict=None,
+                         ):
+    """Find associated auth provider autologout url and build url to completely
+    logout using whatever chaining required.
+
+    OpenID 2.0 logout requires local session database scrubbing.
+    That is achieved by first logging out of provider and then
+    returning to local logout page.
+
+    OpenID Connect module handles chained logout through vanity url and do not
+    have a local session database.
+    We still need to cleanup eg. 2FA sessions therefore OpenID Connect
+    redirects to local cleanup before logging out of provider
+    """
+    _logger = configuration.logger
+    login = extract_plain_login(configuration, environ)
+    logout_base = os.path.dirname(os.path.dirname(login))
+    autologout_base = "%s/autologout.py" \
+        % os.path.dirname(environ.get('SCRIPT_URI', ''))
+    csrf_limit = get_csrf_limit(configuration)
+    (auth_type, auth_flavor) = detect_client_auth(configuration, environ)
+    if auth_type == AUTH_OPENID_V2:
+        # NOTE: OpenID 2.0 goes through provider logout before local cleanup
+        # through autologout.
+        # Add CSRF trust token to query_dict, needed at autologout.py for URL and
+        # query args validation
+        if return_query_dict is None:
+            csrf_query_dict = {}
+        else:
+            csrf_query_dict = return_query_dict.copy()
+        trust_token = make_csrf_trust_token(configuration, 'get', return_url,
+                                            csrf_query_dict, client_id,
+                                            csrf_limit)
+        csrf_query_dict[csrf_field] = ['%s' % trust_token]
+        encoded_redirect_to = base32urlencode(configuration, return_url,
+                                              csrf_query_dict)
+        local_autologout = '%s?redirect_to=%s' \
+            % (autologout_base, encoded_redirect_to)
+        autologout_url = os.path.join(logout_base, 'logout?return_to=%s' %
+                                      local_autologout)
+    elif auth_type == AUTH_OPENID_CONNECT:
+        # NOTE: OpenID Connect goes through autologout before provider logout
+        logout_url = "%s/dynamic/redirect_uri" % logout_base
+        logout_return_url = return_url
+        if return_query_dict:
+            logout_return_url += "?%s" % urlencode(return_query_dict)
+        csrf_query_dict = {}
+        csrf_query_dict['logout'] = [logout_return_url]
+        trust_token = make_csrf_trust_token(configuration, 'get', logout_url,
+                                            csrf_query_dict, client_id,
+                                            csrf_limit)
+        csrf_query_dict[csrf_field] = [trust_token]
+        encoded_redirect_to = base32urlencode(configuration, logout_url,
+                                              csrf_query_dict)
+        autologout_url = "%s/%s/autologout.py?redirect_to=%s" \
+            % (logout_base,
+               get_xgi_bin(configuration),
+               encoded_redirect_to)
+    else:
+        _logger.warning("unknown autologout chaining for %s" % auth_type)
+        autologout_url = "%s?logout=true" % logout_base
+    _logger.debug("chain autologout url: %s" % autologout_url)
+    return autologout_url
 
 
 def detect_client_auth(configuration, environ):

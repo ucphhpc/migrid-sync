@@ -33,11 +33,13 @@ import os
 
 from mig.shared.auth import expire_twofactor_session
 from mig.shared import returnvalues
-from mig.shared.defaults import csrf_field
+from mig.shared.defaults import csrf_field, AUTH_OPENID_V2, \
+    AUTH_OPENID_CONNECT
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import trust_handler, get_csrf_limit
-from mig.shared.httpsclient import extract_client_openid
-from mig.shared.init import initialize_main_variables
+from mig.shared.httpsclient import detect_client_auth, \
+    extract_client_openid, extract_client_oidc
+from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.pwhash import make_csrf_token
 from mig.shared.useradm import expire_oid_sessions, find_oid_sessions
 from mig.shared.url import base32urldecode
@@ -103,19 +105,25 @@ accepting fully signed GET requests to prevent unintended redirects'''})
 
     output_objects.append({'object_type': 'header',
                            'text': 'Auto logout'})
-    (oid_db, identity) = extract_client_openid(configuration, environ,
+
+    (auth_type, auth_flavor) = detect_client_auth(configuration, environ)
+    if auth_type == AUTH_OPENID_V2:
+        (oid_db, identity) = extract_client_openid(configuration, environ,
                                                lookup_dn=False)
-    logger.info('%s from %s with identity %s' % (op_name, client_id,
-                                                 identity))
-    if client_id and client_id == identity:
+    elif auth_type == AUTH_OPENID_CONNECT:
+        (_, identity) = extract_client_oidc(configuration, environ,
+                                            lookup_dn=False)
+    else:
         output_objects.append({'object_type': 'warning',
                                'text':
-                               """You're accessing %s with a user certificate and should never
+                               """You're not accessing %s with OpenID and should never
             end up at this auto logout page.
             Please refer to your browser and system documentation for details."""
                                % configuration.short_title})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    logger.info('%s from %s with identity %s' % (op_name, client_id,
+                                                 identity))
     if redirect_url:
         msg = 'Auto log out first to avoid '
         if redirect_url.find('autocreate') != -1:
@@ -128,45 +136,55 @@ accepting fully signed GET requests to prevent unintended redirects'''})
     # OpenID requires logout on provider and in local mod-auth-openid database.
     # IMPORTANT: some browsers like Firefox may inadvertently renew the local
     # OpenID session while loading the resources for this page (in parallel).
+    if auth_type == AUTH_OPENID_V2:
+        logger.info('expiring active OIDv2 sessions for %s in %s'
+                    % (identity, oid_db))
+        (success, _) = expire_oid_sessions(configuration, oid_db, identity)
+        logger.info(
+            'verifying no active OpenIDv2 sessions left for %s' % identity)
+        (found, remaining) = find_oid_sessions(configuration, oid_db,
+                                               identity)
+    else:
+        success = found = True
+        remaining = False
+        logger.info('expiring active OIDC sessions for %s' % identity)
 
-    logger.info('expiring active sessions for %s in %s' % (identity,
-                                                           oid_db))
-    (success, _) = expire_oid_sessions(configuration, oid_db, identity)
-    logger.info('verifying no active sessions left for %s' % identity)
-    (found, remaining) = find_oid_sessions(configuration, oid_db,
-                                           identity)
     if success and found and not remaining:
 
         # Expire twofactor session
 
         expire_twofactor_session(
             configuration, client_id, environ, allow_missing=True)
-
         if redirect_url:
             # Generate HTML and submit redirect form
 
             csrf_limit = get_csrf_limit(configuration, environ)
             csrf_token = make_csrf_token(configuration, 'post',
                                          op_name, client_id, csrf_limit)
-            html = \
-                """
-            <form id='return_to_form' method='post' action='%s'>
-                <input type='hidden' name='%s' value='%s'>""" % \
-                (redirect_url, csrf_field, csrf_token)
-            for key in redirect_query_dict:
-                for value in redirect_query_dict[key]:
-                    html += \
-                        """
+            if auth_type == AUTH_OPENID_V2:
+                html = """
+                <form id='return_to_form' method='post' action='%s'>
+                    <input type='hidden' name='%s' value='%s'>""" % \
+                    (redirect_url, csrf_field, csrf_token)
+                for key in redirect_query_dict:
+                    for value in redirect_query_dict[key]:
+                        if key != csrf_field:
+                            html += \
+                                """
                     <input type='hidden' name='%s' value='%s'>""" \
                         % (key, value)
-            html += \
-                """
-            </form>
-            <script type='text/javascript'>
-                document.getElementById('return_to_form').submit();
-            </script>"""
-            output_objects.append({'object_type': 'html_form',
-                                   'text': html})
+                    html += \
+                        """
+                </form>
+                <script type='text/javascript'>
+                    document.getElementById('return_to_form').submit();
+                </script>"""
+                output_objects.append({'object_type': 'html_form', 'text': html})
+            else:
+                title_entry = find_entry(output_objects, 'title')
+                title_entry['meta'] = """<meta http-equiv = "refresh" content = "0; url=%s?logout=%s" />""" \
+                    % (unpacked_url, "".join(unpacked_query.get('logout', [])))
+                logger.debug("meta checkpount: %s" % title_entry['meta'])
         else:
             text = """You are now logged out of %s""" \
                 % configuration.short_title
