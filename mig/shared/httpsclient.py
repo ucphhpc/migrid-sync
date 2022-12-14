@@ -234,26 +234,29 @@ def build_logout_url(configuration, environ):
         #       Logout at provider and return to local logout page for that.
         login = extract_plain_login(configuration, environ)
         logout_base = os.path.dirname(os.path.dirname(login))
-        logout_url = os.path.join(logout_base, 'logout?return_to=%s' %
-                                  local_logout)
+        logout_query = urlencode({'return_to': local_logout})
+        logout_url = logout_base + '/logout?%s' % logout_query
     elif auth_type == AUTH_OPENID_CONNECT:
-        # NOTE: OpenID Connect module handles chained logout through vanity url
+        # NOTE: OpenID Connect module handles chained logout on vanity url.
+        #       Use it to first log out at provider if supported and then
+        #       return for local logout with 2fa session clean up.
+        # TODO: test RP-initiated logout on provider with end_session endpoint!
         logout_base = '/dynamic/redirect_uri'
-        if auth_flavor == AUTH_MIG_OIDC:
-            #logout_base = configuration.user_mig_oidc_issuer
-            post_logout_url = configuration.migserver_https_mig_oidc_url
-        elif auth_flavor == AUTH_EXT_OIDC:
-            #logout_base = configuration.user_ext_oidc_issuer
-            post_logout_url = configuration.migserver_https_ext_oidc_url
+        logout_query = urlencode({'logout': local_logout})
+        logout_url = logout_base + '?%s' % logout_query
 
-        logout_url = logout_base + '?logout=%s' % post_logout_url
-
-        # TODO: do we need to mimic the openid 2.0 chained logout?
-        # If so something like this might be a qualified guess based on
+        # NOTE: the MicroFocus provider we know does not offer end_session
+        #       so the user currently needs to close browser upon logout.
+        # TODO: can we implement an alterntive explicit logout?
+        # Something like this might be a qualified guess based on
         # https://www.microfocus.com/documentation/access-manager/developer-documentation-5.0/oauth-application-developer-guide/logout-endpoint.html
-        # combined_url = os.path.join(
-        #    logout_base, 'end_session?post_logout_redirect_uri=%s' %
-        #    local_logout)
+        # if auth_flavor == AUTH_MIG_OIDC:
+        #     logout_base = configuration.migserver_https_mig_oidc_url
+        # elif auth_flavor == AUTH_EXT_OIDC:
+        #     logout_base = configuration.migserver_https_ext_oidc_url
+        # logout_query = urlencode({'post_logout_redirect_uri': local_logout})
+        # logout_url = os.path.join(logout_base, 'nidp/oauth/v1/nam',
+        #                           'end_session?%s' % logout_query)
 
     else:
         _logger.warning("unknown logout chaining for %s" % auth_type)
