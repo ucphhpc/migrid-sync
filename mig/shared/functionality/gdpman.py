@@ -47,11 +47,10 @@ from mig.shared.gdp.all import ensure_gdp_user, get_projects, get_users, \
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from mig.shared.html import twofactor_wizard_html, twofactor_wizard_js, \
     twofactor_token_html
-from mig.shared.httpsclient import extract_client_openid
+from mig.shared.httpsclient import extract_client_id, build_autologout_url
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.settings import load_twofactor, parse_and_save_twofactor
 from mig.shared.twofactorkeywords import get_keywords_dict as twofactor_keywords
-from mig.shared.url import openid_autologout_url
 from mig.shared.useradm import get_full_user_map
 from mig.shared.vgrid import vgrid_create_allowed, vgrid_manage_allowed
 
@@ -1514,8 +1513,8 @@ def main(client_id, user_arguments_dict, environ=None):
     )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
-    (_, identity) = extract_client_openid(configuration, environ,
-                                          lookup_dn=False)
+    identity = extract_client_id(configuration, environ,
+                                lookup_dn=False)
     output_format = accepted['output_format'][-1].strip()
     _csrf = accepted['_csrf'][-1].strip()
     action = accepted['action'][-1].strip()
@@ -1645,11 +1644,11 @@ Please contact the site admins %s if you think it should be enabled.
                                autologout=True)
             return_url = req_url
             return_query_dict = None
-            redirect_url = openid_autologout_url(configuration,
-                                                 identity,
-                                                 client_id,
-                                                 return_url,
-                                                 return_query_dict)
+            redirect_url = build_autologout_url(configuration,
+                                                environ,
+                                                client_id,
+                                                return_url,
+                                                return_query_dict=return_query_dict)
         elif active_project_client_id:
             dest_op_name = 'fileman'
             redirect_url = environ.get('REQUEST_URI', '').split('?')[

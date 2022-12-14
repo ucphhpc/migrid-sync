@@ -137,53 +137,6 @@ def base32urldecode(configuration, encoded_url,
     return (result_url, query_dict)
 
 
-def openid_autologout_url(
-    configuration,
-    openid_identity,
-    client_id,
-    return_url,
-    return_query_dict=None,
-):
-    """Generates OpenID logout URL.
-    OpenID logout consists of two steps:
-    1) OpenID server: expire session
-    2) OpenID server: redirect after session expire
-    The OpenID server always returns to autologout.py which then redirects
-    to *return_url*.
-    """
-
-    _logger = configuration.logger
-
-    # Add CSRF trust token to query_dict, needed at autologout.py for URL and
-    # query args validation
-
-    if return_query_dict is None:
-        csrf_query_dict = {}
-    else:
-        csrf_query_dict = return_query_dict.copy()
-
-    csrf_limit = get_csrf_limit(configuration)
-    trust_token = make_csrf_trust_token(configuration, 'get', return_url,
-                                        csrf_query_dict, client_id,
-                                        csrf_limit)
-    csrf_query_dict[csrf_field] = ['%s' % trust_token]
-    encoded_redirect_to = base32urlencode(configuration, return_url,
-                                          csrf_query_dict)
-
-    # OpenID server always returns to autologout.py which then redirects
-    # to return_url
-
-    oid_return_to = '%s/%s?redirect_to=%s' \
-        % (return_url[:return_url.rfind('/')], 'autologout.py',
-           encoded_redirect_to)
-
-    oid_logout_url = \
-        os.path.join(os.path.dirname(os.path.dirname(openid_identity)),
-                     'logout?return_to=%s' % oid_return_to)
-
-    return oid_logout_url
-
-
 def openid_basic_logout_url(
     configuration,
     openid_identity,
