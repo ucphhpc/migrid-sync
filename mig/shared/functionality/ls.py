@@ -455,7 +455,7 @@ def main(client_id, user_arguments_dict, environ=None):
         base_dir = configuration.sharelink_home
         redirect_name = 'share_redirect'
         redirect_path = os.path.join(redirect_name, share_id)
-        id_args = 'share_id=%s;' % share_id
+        id_args = 'share_id=%s&' % share_id
         root_link_name = '%s' % share_id
         main_class = "sharelink_ls"
         page_title = 'Shared Files'

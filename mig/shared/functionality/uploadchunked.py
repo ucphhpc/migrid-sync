@@ -247,7 +247,7 @@ def main(client_id, user_arguments_dict, environ=None):
         base_dir = configuration.sharelink_home
         redirect_name = 'share_redirect'
         redirect_path = os.path.join(redirect_name, share_id)
-        id_args = 'share_id=%s;' % share_id
+        id_args = 'share_id=%s&' % share_id
         page_title = 'Upload to Shared Directory: %s' % action
         userstyle = False
         widgets = False
