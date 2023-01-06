@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # updatevgrid - update or repair vgrid components
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -40,6 +40,7 @@ from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.vgrid import vgrid_is_owner, vgrid_list, vgrid_set_entities
+from mig.shared.vgridaccess import get_vgrid_map, VGRIDS, OWNERS
 from mig.shared.functionality.createvgrid import create_scm, create_tracker, \
     create_forum
 
@@ -47,7 +48,7 @@ from mig.shared.functionality.createvgrid import create_scm, create_tracker, \
 def signature():
     """Signature of the main function"""
 
-    defaults = {'vgrid_name': REJECT_UNSET}
+    defaults = {'vgrid_name': REJECT_UNSET, 'caching': ['true']}
     return ['text', defaults]
 
 
@@ -75,6 +76,7 @@ def main(client_id, user_arguments_dict):
         return (accepted, returnvalues.CLIENT_ERROR)
 
     vgrid_name = accepted['vgrid_name'][-1]
+    caching = (accepted['caching'][-1].lower() in ('true', 'yes'))
 
     if not safe_handler(configuration, 'post', op_name, client_id,
                         get_csrf_limit(configuration), accepted):
@@ -167,6 +169,11 @@ CSRF-filtered POST requests to prevent unintended updates'''
         except Exception as exc:
             pass
 
+    # Prepare for vgrid map consistency check as well
+
+    logger.info("check vgrid map with caching %s" % caching)
+    vgrid_map = get_vgrid_map(configuration, caching=caching)
+
     # Try entity creation or repair
 
     output_objects.append({'object_type': 'text', 'text':
@@ -176,18 +183,36 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                             recursive=False,
                                             allow_missing=False)
         logger.info("vgrid_list returned %s : %s" % (list_status, id_list))
+        dirty = False
         if not list_status:
+            dirty = True
             if kind == 'owners':
                 id_list = [client_id]
             else:
                 id_list = []
+        elif kind == 'owners':
+            # NOTE: under heavy load vgrid cache update can miss owners
+            # TODO: investigate where the probable underlying race lies
+            vgrid_dict = vgrid_map[VGRIDS].get(vgrid_name, {})
+            cached_entries = vgrid_dict[OWNERS]
+            missing_entries = [i for i in id_list if not i in cached_entries]
+            if kind == 'owners' and missing_entries:
+                logger.info("add missing owner(s) for %s in cache: %s" %
+                            (vgrid_name, missing_entries))
+                dirty = True
+                id_list = vgrid_dict[OWNERS] + missing_entries
+            else:
+                logger.debug("all owner(s) %s already in cache: %s" %
+                             (id_list, cached_entries))
+
+        if dirty:
             (set_status, set_msg) = vgrid_set_entities(configuration,
                                                        vgrid_name, kind,
                                                        id_list,
                                                        (kind != 'owners'))
             if not set_status:
                 output_objects.append({'object_type': 'error_text', 'text':
-                                       'Could not create missing %s list: %s'
+                                       'Could not create/fix %s list: %s'
                                        % (kind, set_msg)})
 
     # TODO: add any missing public/private web links, too
@@ -334,8 +359,7 @@ if __name__ == "__main__":
     extra_environment['REQUEST_METHOD'] = 'POST'
     extra_environment['SCRIPT_URL'] = script
     extra_environment['SCRIPT_NAME'] = script
-    extra_environment['SCRIPT_URI'] = 'https://localhost/cgi-bin/%s'\
-                                      % script
+    extra_environment['SCRIPT_URI'] = 'https://localhost/cgi-bin/%s' % script
     os.environ.update(extra_environment)
 
     all_vgrids = get_vgrid_map_vgrids(configuration)
