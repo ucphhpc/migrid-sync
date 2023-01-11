@@ -4,12 +4,14 @@ SourceForge:
 
 https://sourceforge.net/projects/migrid/
 
-We previously used Google Code so history is avilable at:
- 
-http://code.google.com/p/migrid/
+and in the process of moving to github
 
-MiG is Free Software and it is developed by the MiG Project lead by
-Brian Vinter (brian DOT vinter AT nbi DOT ku DOT dk).
+https://github.com/ucphhpc/migrid-sync
+
+MiG is Free Software originally designed and developed by the MiG Project lead
+by Brian Vinter (currently brian DOT vinter AT au DOT dk). Development and
+maintenance continues with the Science HPC Center at University of Copenhagen
+taking over since Brian left.
 
 Please refer to the COPYING file in this directory for further information
 about the GPL v2 license under which MiG is distributed.
@@ -30,10 +32,15 @@ tools and a Python interpreter with a few external modules.
 -Apache proxy module (http://httpd.apache.org/docs/current/mod/mod_proxy.html)
 -Apache Rewrite module (http://httpd.apache.org/docs/current/mod/mod_rewrite.html)
 -OpenSSH clients (https://www.openssh.org/)
--Python 2.7 or later but not 3.x (https://www.python.org/)
+-Python 2.7 or later (https://www.python.org/)
 
-Optional file synchronization, WSGI interface, OpenID login, instant
-messaging service, efficient file access services, event handler
+As of early 2023 the Python 3.x support still has some rough edges, so the
+trunk / master branch for the time being concentrates on the old stable 2.x
+version, while the edge and experimental branches are used to polish 3.x
+support. At some point we will make the switch to 3.x completely.
+
+Optional file synchronization, WSGI interface, OpenID 2.0 / Connect login,
+instant messaging service, efficient file access services, event handler
 service, JSONRPC access, background data transfer service, efficient
 sftp, spell checking, interactive computing, VGrid Wiki / SCM / tracker, 
 Jupyter, password strength testing and PDF generation features rely on
@@ -126,8 +133,8 @@ the old and thoroughly tested legacy 1.3.x version for production setups on
 python 2.x and it can easily be installed with pip:
 sudo pip install 'wsgidav<2'
 
-On python 2 setups one can try out the more recent 3.x series of wsgidav still
-maintained as stable and supported there. It can be installed with pip:
+On python 2 setups one can also try out the more recent 3.x series of wsgidav
+still maintained as stable and supported there. It can be installed with pip:
 sudo pip install 'more-itertools<6' 'jaraco.functools<3' 'jinja2<3' \
          'markupsafe<2' 'pyyaml<6' cheroot 'wsgidav<4'
 
@@ -268,8 +275,8 @@ sudo pip install iso3166
 The optional pygdb module used for debugging is available with pip:
 sudo pip install pygdb
 
-The optional but recommended email-validator module used for verification of
- e.g. user email addresses during sign up is available with pip. It relies on
+The optional but recommended email-validator module used for verification e.g.
+of user email addresses during sign up is available with pip. It relies on
 the similarly pip installable dnspython library, which migrated to python 3 in
 the 2.x versions. Thus, for it to work with older python versions the pip
 installation command requires an explicit 1.x version as in:
@@ -280,8 +287,8 @@ sudo pip3 install email-validator
 The optional workflows module relies on the python special modules 
 nbformat, nbconvert to validate and produce correct Jupyter Notebook formatted files.
 Nbformat specifically requires that the more_itertools module is both installed beforehand
-and that it is pinned to version 5.0.0 to ensure Python2.7 support. Other versioned
-dependencies were needed, too, on CentOS 7:
+and that it is pinned to version 5.0.0 to ensure Python 2.7 support. Other
+versioned dependencies were needed, too, on CentOS 7:
 sudo pip install more_itertools==5.0.0
 sudo pip install zipp==0.6.0
 sudo pip install nbformat==4.4.0
@@ -295,8 +302,8 @@ and the sshfs command via the SSHFS_MOUNT environment variable.
 
 = Installing MiG =
 If you want to run your own MiG server for your own grid or to develop
-MiG you should download and unpack the source code (including this
-file) on a UNIX compatible computer as described below.
+MiG you should checkout / clone or download and unpack the source code
+(including this file) on a UNIX compatible computer as described below.
 
 The MiG core services are provided by the MiG daemons from the mig/server
 directory and they can simply be run directly from the unpacked source
@@ -309,7 +316,7 @@ MiG does not include the actual Apache web server or OpenSSH clients, so
 you will need to install those using either packages provided by your
 distribution or install it from source.
 
-MiG is tested on Debian/Ubuntu and Redhat Linux using Apache 1.3 or 2.X
+MiG is tested on Debian/Ubuntu and Redhat/CentOS Linux using Apache 1.3 or 2.X
 with mod-ssl respectively but other distribution and apache combinations
 should also work.
 MiG relies on apache's mod-ssl for automatic certificate validation and
@@ -321,12 +328,12 @@ You can read more about the apache configuration in
 the provided mig/install/README.Debian file.
 
 This server documentation expects the MiG code to run as a separate 'mig'
-user on the UNIX system, but this is not a requirement. Just modify your
+user on the UNIX system, but this naming is not a requirement. Just modify your
 apache and MiG configurations appropriately if you want to run MiG as a
 different user or with other paths. 
 It is important to configure apache so that the MiG web interfaces can
 read and write the files created by the MiG daemons and vice versa.
-This may require extra care if the MiG installation and apache runs as
+This may require extra care if the MiG installation and apache run as
 different system users. If you use the default setup you do not need to
 worry about this.
 
@@ -345,9 +352,13 @@ the MiG server files.
 If you run MiG with different apache and mig users, you will most likely
 need to provide both users write access to the mig user home, though.
 
-Download and unpack the MiG source or make a checkout from svn as described on:
+Download and unpack the MiG source or make a checkout from svn at
 
 https://sourceforge.net/p/migrid/code/HEAD/tree/trunk/
+
+or a clone from github at
+
+https://github.com/ucphhpc/migrid-sync
 
 At this point it may be comfortable to copy some of the basic
 account configuration files from mig/install/mig-user to ~/ but this is
@@ -1013,6 +1024,8 @@ certificates are available along with optional MiG x509 server
 certificates (used for MiG server to server communication).
 The actual keys and certificates can be added later, so you can just
 choose a suitable directory path at first.
+In practice one can purchase server certificates or generate them with
+LetsEncrypt.
 
 The hg and trac path pairs are optional and can be set to the 
 empty string if mercurial/trac is not available or if VGrid wikis,
@@ -1024,8 +1037,8 @@ section. The same procedure applies for visibility of the other VGrid
 components.
 
 Similarly the mercurial package provides all required components for 
-VGrid SCMs on Debian/Ubuntu. The same applies for the trac + trac-mercurial
-packages.
+VGrid SCMs on Debian/Ubuntu or RedHat/CentOS. The same applies for the trac
+and trac-mercurial packages.
 Paramiko is required for the optional grid_sftp daemon to work and the
 python-paramiko package provides all required components for it on
 recent Debian/Ubuntu. You want to use 1.15+ because it added significant
@@ -1034,10 +1047,10 @@ only provides an older version.
 In case you want to run a high-performance SFTP frontend you can combine
 OpenSSH with the same paramiko SFTP backend through the use of the
 sftp_subsys.py module. You need to compile and configure the PAM and NSS
-modules in mig/pam-mig and mig/libnss-mig as described in the README
+modules in mig/src/libpam-mig and mig/src/libnss-mig as described in the README
 files there. Benchmarks show that it performs and scales far better to
 multiple clients.
-Python FTP server library (pyftpdlib) in a recent version (1.x) is required
+Python FTP server library (pyftpdlib) in a recent version (1.x+) is required
 for the optional grid_ftps daemon to work and the python-pyftpdlib
 package provides all required components for it on recent
 Debian/Ubuntu. If no recent version is available, it can still easily be
@@ -1072,34 +1085,35 @@ checkconf.py script in the same directory.
 Once set up you can use the provided init script to manage all services.
 It is also possible to run the services individually as explained below.
 
-The central daemon is grid_script.py which takes care of all job
-management on the server. If you want to include grid monitor web pages you
-should additionally run the grid_monitor.py daemon. The optional job
-notifications and ssh multiplexing daemons are available as grid_imnotify.py
-/ grid_imnotify_stdout.py and grid_sshmux.py in the same location. In case
-you don't know what they do, you can most likely safely ignore them and
-just run the grid_script.py daemon.
+In full grid compute setups the central daemon is grid_script.py, which takes
+care of all job management on the server. If you want to include grid monitor
+web pages you should additionally run the grid_monitor.py daemon. The optional
+job notifications and ssh multiplexing daemons are available as
+grid_imnotify.py / grid_imnotify_stdout.py and grid_sshmux.py in the same
+location. In case you don't know what they do, you can most likely safely
+ignore them and just run the grid_script.py daemon.
+In storage-centric setups the job handling can be completely disabled and
+grid_script left not running.
 
-All the daemons can be launched from inside the mig/server directory:
-cd /path/to/unpacked/mig/source/mig/server
-python grid_script.py
+All the daemons and scripts can be launched from their unpacked location as
+long as python knows where the package is hosted e.g. as in:
+export PYTHONPATH=/path/to/unpacked/mig/source
+python /path/to/unpacked/mig/source/mig/server/grid_script.py
 
-Alternatively they can be launched from other locations as long as the
-configuration path is provided in the environment: 
+They rely on the conf file in the mig/server subdir but can be told to look
+for it in another locations provided in the environment: 
 export MIG_CONF="/path/to/MiGserver.conf"
 python /path/to/unpacked/mig/source/mig/server/grid_script.py
 
-Each daemon will keep running until you actively stop it, so you need
+Each daemon will keep running until you actively stop it, so you probably need
 individual shell sessions for each daemon.
 
 For testing purposes this interactive execution is fine, but in more
 permanent setups you will probably want to run the MiG daemons as true
 daemons so that you can disconnect from the server and leave them
-running. The easiest solution to that problem is to run the daemons
-inside a GNU Screen session:
+running. One solution is to run the daemons inside a GNU Screen session:
 screen -S MiG
-cd /path/to/unpacked/mig/source/mig/server
-python grid_script.py
+python /path/to/unpacked/mig/source/mig/server/grid_script.py
 [ctrl-a d to disconnect]
 
 Then you can disconnect from the server and resume the session any time
@@ -1109,22 +1123,33 @@ screen -S MiG -R
 Please refer to 'man screen' or other screen documentation for further
 details.
 
+For production use we also provide a classic init script, useful for managing
+the services completely as background daemons. It is included as a part of the
+configuration generator output and can be copied/moved into place from there.
+When located in /etc/init.d it's easy to manage all enabled services as one or
+each individual one as described below:
+/etc/init.d/migrid
+Usage: migrid {start|stop|status|restart|reload}[daemon DAEMON]
+where daemon is left out for all or given along with DAEMON as one of the following
+(script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|all)
+
 
 == Adding users ==
-You need a either an OpenID login or a MiG certificate+key to fully
-interact with any MiG server as a user. 
+You need a either an OpenID 2.0, OpenID Connect login or a MiG certificate+key
+to fully interact with any MiG server as a user. 
 
-For local username+password logins you can run the built-in OpenID service and
+For local username+password logins you can run the built-in OpenID 2.0 service and
 have users register there (https://SERVER/cgi-sid/reqoid.py) to combine login
 and account creation.
-You can also configure login with any similar remote OpenID-2.0 service as long
-as it offers the required information for sign up and login. We do that to ease
-user management on a number of sites with the automatic signup backend
+You can also configure login with any similar remote OpenID 2.0 or Connect
+service as long as it offers the required information for sign up and login. We
+do that to ease user management on a number of sites with the automatic signup
+backend
 (https://SERVER/wsgi-bin/autocreate.py).
 
 If you want certificate login but don't want to set up your own Certificate
 Authority (CA) you might be able to use e.g. our certificates.
-Please use the certificate request link from http://www.migrid.org if
+Please use the certificate request link from https://www.migrid.org if
 you haven't got a certificate yet.
 
 If you run your own CA you can simply use the certificate request
@@ -1167,7 +1192,7 @@ Comment: This is my own MiG user
 Password: 
 using user dict: {'comment': 'This is my own MiG user', 'country': 'DK',
 'state': '', 'full_name': 'Jonas Bardino', 'organization': 'NBI',
-'password': '*****==', 'email': 'bardino@nbi.ku.dk'}
+'password': '*********************', 'email': 'bardino@nbi.ku.dk'}
 logging to: server.log ; level: info
 Creating dirs and files for new user: Jonas Bardino
 User name without spaces: Jonas_Bardino
