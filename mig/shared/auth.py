@@ -130,8 +130,7 @@ def reset_twofactor_key(client_id, configuration, seed=None, interval=None):
             b32_key = pyotp.random_base32(length=twofactor_key_bytes)
         else:
             b32_key = seed
-        # NOTE: pyotp.random_base32 returns unicode
-        #       which causes trouble with WSGI
+        # NOTE: pyotp.random_base32 returns unicode but we always need byte key
         b32_key = force_utf8(b32_key)
         scrambled = scramble_password(configuration.site_password_salt,
                                       b32_key)
@@ -255,11 +254,9 @@ def get_twofactor_token(configuration, client_id, b32_key):
     if configuration.site_enable_gdp:
         client_id = get_base_client_id(
             configuration, client_id, expand_oid_alias=False)
-    # IMPORTANT: pyotp unicode breaks when used in our strings - force utf8!
-    totp = get_totp(client_id,
-                    b32_key,
-                    configuration)
+    totp = get_totp(client_id, b32_key, configuration)
     token = totp.now()
+    # IMPORTANT: pyotp unicode breaks when used in our strings - force utf8!
     token = force_utf8(token)
     return token
 
