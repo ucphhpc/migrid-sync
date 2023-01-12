@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # auth - shared helpers for authentication in init functionality backends
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -47,7 +47,7 @@ from mig.shared.base import client_id_dir, extract_field, force_utf8
 from mig.shared.defaults import twofactor_key_name, twofactor_interval_name, \
     twofactor_key_bytes, twofactor_cookie_bytes, twofactor_cookie_ttl
 from mig.shared.fileio import read_file, delete_file, delete_symlink, \
-    pickle, unpickle, make_symlink
+    write_file, pickle, unpickle, make_symlink
 from mig.shared.gdp.all import get_base_client_id
 from mig.shared.pwhash import scramble_password, unscramble_password
 from mig.shared.url import quote
@@ -102,11 +102,9 @@ def load_twofactor_interval(client_id, configuration):
                                  twofactor_interval_name)
     result = None
     if os.path.isfile(interval_path):
-        i_fd = open(interval_path)
-        interval = i_fd.read().strip()
-        i_fd.close()
+        interval = read_file(interval_path, _logger)
         try:
-            result = int(interval)
+            result = int(interval.strip())
         except Exception as exc:
             result = None
             _logger.error("Failed to read twofactor interval: %s" % exc)
@@ -137,9 +135,7 @@ def reset_twofactor_key(client_id, configuration, seed=None, interval=None):
         b32_key = force_utf8(b32_key)
         scrambled = scramble_password(configuration.site_password_salt,
                                       b32_key)
-        key_fd = open(key_path, 'w')
-        key_fd.write(scrambled)
-        key_fd.close()
+        write_file(scrambled, key_path, _logger)
 
         # Reset interval
 
@@ -148,9 +144,7 @@ def reset_twofactor_key(client_id, configuration, seed=None, interval=None):
                                      twofactor_interval_name)
         delete_file(interval_path, _logger, allow_missing=True)
         if interval:
-            i_fd = open(interval_path, 'w')
-            i_fd.write("%d" % interval)
-            i_fd.close()
+            write_file("%d" % interval, interval_path, _logger)
     except Exception as exc:
         _logger.error("failed in reset 2FA key: %s" % exc)
         return False
@@ -171,9 +165,7 @@ def load_twofactor_key(client_id, configuration, allow_missing=True):
                             twofactor_key_name)
     b32_key = None
     try:
-        pw_fd = open(key_path)
-        scrambled = pw_fd.read().strip()
-        pw_fd.close()
+        scrambled = read_file(key_path, _logger).strip()
         b32_key = unscramble_password(configuration.site_password_salt,
                                       scrambled)
     except Exception as exc:
