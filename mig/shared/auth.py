@@ -51,7 +51,8 @@ try:
 except ImportError:
     pyotp = None
 
-from mig.shared.base import client_id_dir, extract_field, force_native_str
+from mig.shared.base import client_id_dir, extract_field, force_native_str, \
+    force_utf8
 from mig.shared.defaults import twofactor_key_name, twofactor_interval_name, \
     twofactor_key_bytes, twofactor_cookie_bytes, twofactor_cookie_ttl
 from mig.shared.fileio import read_file, delete_file, delete_symlink, \
@@ -136,8 +137,8 @@ def reset_twofactor_key(client_id, configuration, seed=None, interval=None):
             b32_key = pyotp.random_base32(length=twofactor_key_bytes)
         else:
             b32_key = seed
-        # NOTE: pyotp.random_base32 returns unicode, causing trouble with Xgi
-        b32_key = force_native_str(b32_key)
+        # NOTE: pyotp.random_base32 returns unicode but we always need byte key
+        b32_key = force_utf8(b32_key)
         scrambled = scramble_password(configuration.site_password_salt,
                                       b32_key)
         write_file(scrambled, key_path, _logger)
@@ -263,7 +264,7 @@ def get_twofactor_token(configuration, client_id, b32_key):
             configuration, client_id, expand_oid_alias=False)
     totp = get_totp(client_id, b32_key, configuration)
     token = totp.now()
-    # IMPORTANT: unicode breaks when used in python2 strings - force native
+    # IMPORTANT: pyotp unicode breaks when used in py2 strings - force native
     token = force_native_str(token)
     return token
 
