@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqcertaction - handle certificate account requests and send email to admins
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -161,12 +161,10 @@ CSRF-filtered POST requests to prevent unintended updates'''})
         assure_password_strength(configuration, password)
     except Exception as exc:
         logger.warning(
-            "%s invalid password for '%s' (policy %s): %s" %
+            "%s invalid password for %r (policy %s): %s" %
             (op_name, cert_name, configuration.site_password_policy, exc))
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Invalid password requested: %s.'
-                               % exc
-                               })
+                               'Invalid password requested: %s.' % exc})
         output_objects.append(
             {'object_type': 'link', 'destination': 'javascript:history.back();',
              'class': 'genericbutton', 'text': "Try again"})
@@ -265,8 +263,9 @@ contact them manually on %s if this error persists.""" % admin_email})
     user_dict['vgrid_label'] = configuration.site_vgrid_label
     user_dict['vgridman_links'] = generate_https_urls(
         configuration, '%(auto_base)s/%(auto_bin)s/vgridman.py', {})
-    email_header = '%s certificate request for %s' % \
-                   (configuration.short_title, cert_name)
+    email_header = '%s certificate request for %s (%s)' % \
+                   (configuration.short_title, user_dict['full_name'],
+                    user_dict['email'])
     email_msg = \
         """
 Received a certificate request with account data

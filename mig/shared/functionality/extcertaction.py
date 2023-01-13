@@ -261,8 +261,9 @@ contact them manually on %s if this error persists.""" %
     user_dict['vgrid_label'] = configuration.site_vgrid_label
     user_dict['vgridman_links'] = generate_https_urls(
         configuration, '%(auto_base)s/%(auto_bin)s/vgridman.py', {})
-    email_header = '%s sign up request for %s' % \
-                   (configuration.short_title, cert_id)
+    email_header = '%s certificate sign up request for %s (%s)' % \
+                   (configuration.short_title, user_dict['full_name'],
+                    user_dict['email'])
     email_msg = \
         """
 Received an existing certificate sign up request with certificate data
