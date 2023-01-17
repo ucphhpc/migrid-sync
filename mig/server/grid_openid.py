@@ -1192,9 +1192,10 @@ session state.
                 'alias_hint': alias_hint,
                 'forced_type': forced_type,
                 'err_msg': err_msg,
+                'sid_url': configuration.migserver_https_sid_url,
             }
             form = '''\
-            <div class="openidlogin">
+            <div id="oidallowdialog" class="openidlogin">
             <form method="POST" action="/%(server_base)s/allow">
             <fieldset>
             <label for="identifier">Username %(alias_hint)s:</label>
@@ -1211,8 +1212,12 @@ session state.
             <input class="" type="submit" name="no" value="no" />
             </fieldset>
             </form>
+            <p>
+            <a href="%(sid_url)s/cgi-sid/reqpwreset.py?show=migoid">Forgot your password?
+            </a>
+            </p>
             </div>
-            <div class="openidlogin">
+            <div id="oidallowdetails" class="openidlogin">
             <p>The site %(trust_root)s has requested verification of your
             OpenID.
             </p>

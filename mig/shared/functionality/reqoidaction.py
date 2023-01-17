@@ -64,6 +64,7 @@ def signature(configuration):
         'passwordrecovery': ['false'],
         'comment': [''],
         'accept_terms': [''],
+        'reset_token': [''],
     }
     if configuration.site_enable_peers:
         if configuration.site_peers_mandatory:
@@ -122,6 +123,7 @@ def main(client_id, user_arguments_dict):
     # The checkbox typically returns value 'on' if selected
     passwordrecovery = (accepted['passwordrecovery'][-1].strip().lower() in
                         ('1', 'o', 'y', 't', 'on', 'yes', 'true'))
+    reset_token = accepted['reset_token'][-1]
 
     if configuration.site_enable_peers:
         # Peers are passed as multiple strings of comma or space separated emails
@@ -232,6 +234,8 @@ resources anyway.
         'expire': default_account_expire(configuration, 'oid'),
         'openid_names': [],
         'auth': ['migoid'],
+        'accepted_terms': time.time(),
+        'reset_token': reset_token,
     }
     if configuration.site_enable_peers:
         raw_user['peers_full_name'] = peers_full_name

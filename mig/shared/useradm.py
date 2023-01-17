@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # useradm - user administration functions
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -65,7 +65,7 @@ from mig.shared.refunctions import list_runtime_environments, \
     update_runtimeenv_owner
 from mig.shared.pwhash import make_hash, check_hash, make_digest, check_digest, \
     make_scramble, check_scramble, unscramble_password, unscramble_digest, \
-    assure_password_strength
+    verify_reset_token, assure_password_strength
 from mig.shared.resource import resource_add_owners, resource_remove_owners
 from mig.shared.serial import load, dump
 from mig.shared.settings import update_settings, update_profile, update_widgets
@@ -226,6 +226,7 @@ def create_user(
     verify_peer=None,
     peer_expire_slack=0,
     from_edit_user=False,
+    ask_change_pw=False,
 ):
     """Add user"""
     flock = None
@@ -251,12 +252,17 @@ def create_user(
     renew = default_renew
     # Requested with existing valid certificate?
     # Used in order to authorize password change
+    authorized = False
     if 'authorized' in user:
         authorized = user['authorized']
         # Always remove any authorized fields before DB insert
         del user['authorized']
-    else:
-        authorized = False
+    if 'reset_token' in user:
+        reset_token = user['reset_token']
+        # NOTE: reqX backend saves auth_type in auth list of user dict
+        reset_auth_type = user.get('auth', ['UNKNOWN'])[-1]
+        # Always remove any reset_token fields before DB insert
+        del user['reset_token']
 
     _logger.info('trying to create or renew user %r' % client_id)
     now = time.time()
@@ -487,6 +493,8 @@ def create_user(
             renew = default_renew
         if renew:
             user['old_password'] = user_db[client_id]['password']
+            user['old_password_hash'] = user_db[client_id].get('password_hash',
+                                                               '')
             # MiG OpenID users without password recovery have empty
             # password value and on renew we then leave any saved cert
             # password alone.
@@ -494,18 +502,41 @@ def create_user(
             # existing password should be left alone on renewal.
             if not user['password']:
                 user['password'] = user['old_password']
-            password_changed = (user['old_password'] != user['password'])
+            if not user['password_hash']:
+                user['password_hash'] = user['old_password_hash']
+            password_changed = (user['old_password'] != user['password'] or
+                                user['old_password_hash'] != user['password_hash'])
             if password_changed:
+                # Allow password change if it's directly authorized with login
+                # or authorized through a simple reset challenge (reset_token).
+                if not authorized and reset_token:
+                    # TODO: use timestamp from saved request file here instead of now?
+                    valid_reset = verify_reset_token(configuration,
+                                                     user_db[client_id],
+                                                     reset_token,
+                                                     reset_auth_type)
+                    if valid_reset:
+                        print("User requested and authorized password reset")
+                        authorized = True
+                    else:
+                        print("User requested password reset with bad token")
+
                 if authorized:
                     print("User authorized password update")
-                elif not user['old_password']:
+                elif not user['old_password'] and not user['old_password_hash']:
                     print("User requested password - previously disabled")
                 else:
                     print("""User '%s' exists with *different* password!
 Generally users with an existing account should sign up again through Xgi-bin
-using their existing credentials to authorize password changes.""" % client_id)
-                    accept_answer = input(
-                        'Accept password change? [y/N] ')
+using their existing credentials to authorize password changes or use the reset
+password mechanism to confirm their ownership of the registered account email.
+""" % client_id)
+                    if ask_change_pw:
+                        accept_answer = raw_input(
+                            'Accept password change? [y/N] ')
+                    else:
+                        accept_answer = 'no'
+
                     authorized = accept_answer.lower().startswith('y')
                     if not authorized:
                         if do_lock:
@@ -514,8 +545,9 @@ using their existing credentials to authorize password changes.""" % client_id)
                             print("""Renewal request supplied a different
 password and you didn't accept change anyway - nothing more to do""")
                         err = """Cannot renew account using a new password!
-Please tell user to use the original password or request renewal using Xgi-bin
-with certificate or OpenID authentication to authorize the change."""
+Please tell user to use the original password, request password reset or go
+through renewal using Xgi-bin with proper authentication to authorize the
+change."""
                         raise Exception(err)
             if verbose:
                 print('Renewing existing user')

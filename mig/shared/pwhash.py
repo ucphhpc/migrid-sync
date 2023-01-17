@@ -5,7 +5,7 @@
 #
 #
 # pwhash - helpers for password handling including for encryption and hashing
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,14 +33,18 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 from builtins import zip, range
-from base64 import b64encode, b64decode, b16encode, b16decode, binascii, urlsafe_b64encode
+from base64 import b64encode, b64decode, b16encode, b16decode, binascii, \
+    urlsafe_b64encode
+
 from os import urandom
 from random import SystemRandom
 from string import ascii_lowercase, ascii_uppercase, digits
 import hashlib
+import time
 
 from mig.shared.base import force_utf8, force_native_str
-from mig.shared.defaults import keyword_auto
+from mig.shared.defaults import keyword_auto, RESET_TOKEN_TTL
+
 
 try:
     import cracklib
@@ -301,13 +305,13 @@ def prepare_fernet_key(configuration, secret=keyword_auto):
         # yet salt it with hash of a site-specific and non-public salt
         # to avoid disclosing salt or final key.
         if configuration.site_crypto_salt:
-            #_logger.debug('making crypto key from crypto salt and entropy')
+            # _logger.debug('making crypto key from crypto salt and entropy')
             salt_data = configuration.site_crypto_salt
         elif configuration.site_password_salt:
-            #_logger.debug('making crypto key from pw salt and entropy')
+            # _logger.debug('making crypto key from pw salt and entropy')
             salt_data = configuration.site_password_salt
         elif configuration.site_digest_salt:
-            #_logger.debug('making crypto key from digest salt and entropy')
+            # _logger.debug('making crypto key from digest salt and entropy')
             salt_data = configuration.site_digest_salt
         else:
             raise Exception('cannot encrypt/decrypt without a salt in conf')
@@ -315,7 +319,7 @@ def prepare_fernet_key(configuration, secret=keyword_auto):
         salt_hash = hashlib.sha256(force_utf8(salt_data)).hexdigest()
         key_data = scramble_password(salt_hash, entropy)
     else:
-        #_logger.debug('making crypto key from provided secret')
+        # _logger.debug('making crypto key from provided secret')
         key_data = secret
     key = force_native_str(urlsafe_b64encode(force_utf8(
         key_data[:fernet_key_bytes])))
@@ -391,6 +395,120 @@ def check_encrypt(configuration, service, username, password, encrypted,
         encrypt_cache[password] = encrypted
         # print("cached digest: %s" % encrypt_cache.get(password, None))
     return match
+
+
+def assure_reset_supported(configuration, user_dict, auth_type):
+    """Make sure auth_type is enabled and configured with a password (hash)
+    for user_dict. Raises ValueError if not.
+    """
+    _logger = configuration.logger
+    if not 'password_hash' in user_dict and not 'password' in user_dict:
+        _logger.error("cannot generate %s reset token for %s without password"
+                      % (auth_type, user_dict['email']))
+        raise ValueError("No saved password info for %r !" %
+                         user_dict['email'])
+    elif auth_type not in configuration.site_login_methods:
+        _logger.error("refuse %s reset token not enabled on site: %s" %
+                      (auth_type, ', '.join(configuration.site_login_methods)))
+        raise ValueError("No %s auth enabled on this site!" % auth_type)
+    # NOTE: we only use modern auth field if actually set
+    elif auth_type not in user_dict.get('auth', [auth_type]):
+        _logger.error("refuse %s reset token without previous auth: %s" %
+                      (auth_type, user_dict))
+        raise ValueError("No %s auth setup for %r!" % (auth_type,
+                                                       user_dict['email']))
+    return True
+
+
+def generate_reset_token(configuration, user_dict, auth_type,
+                         timestamp=time.time()):
+    """Generate a password reset token for user_dict and auth_type. Importantly
+    the token must be time limited and encode enough information about the
+    current password to help verify that the intended recipient of the token
+    should actually be allowed to change the password. This is done by
+    embedding a timestamp plus the saved password_hash where applicable and a
+    manual hash of the masked password for the user certificate case. The token
+    should only be sent to the registered email of the account holder or inlined
+    in web forms where the user already authenticated.
+    The optional timestamp argument can be used to override the used timestamp
+    in cases where operators handle the reset with delay. It defaults to the
+    current epoch value if not provided.
+    """
+    _logger = configuration.logger
+    # NOTE: this call may raise ValueError for caller to handle
+    assure_reset_supported(configuration, user_dict, auth_type)
+
+    pw_hash = None
+    if auth_type in ("migoid", "migoidc"):
+        pw_hash = user_dict.get('password_hash', None)
+    # Fall back to masked password for cert or no saved hash case
+    if auth_type == "migcert" or pw_hash is None:
+        pw_hash = make_hash(user_dict.get('password', ''))
+    # NOTE: use integer timestamp for simplicity
+    token = encrypt_password(configuration, "%d::%s" % (timestamp, pw_hash))
+    _logger.debug("generated %s reset token %r at %r" % (auth_type, token,
+                                                         timestamp))
+    return token
+
+
+def parse_reset_token(configuration, token, auth_type):
+    """Reverse of generate_reset_token used to decode a previously generated
+    token into a timestamp and a password hash to match auth_type.
+    """
+    _logger = configuration.logger
+    _logger.debug("parse %s reset token %r" % (auth_type, token))
+    raw = decrypt_password(configuration, token)
+    parts = raw.split('::', 1)
+    # NOTE: the expected decrypted token format is 'int(EPOCH)::PWHASH'
+    if not parts[1:] or not parts[0].isdigit():
+        _logger.error("cannot parse %s reset token on invalid format: %s" %
+                      (auth_type, token))
+        raise ValueError("Invalid reset token %r can't be parsed!" % token)
+    timestamp, pw_hash = int(parts[0]), parts[1]
+    return (timestamp, pw_hash)
+
+
+def verify_reset_token(configuration, user_dict, token, auth_type,
+                       timestamp=int(time.time())):
+    """Check that reset token generated from user_dict matches provided token
+    from a previous generation. Namely that the parsed password hash matches
+    the saved password (hash) and that parsed timestamp is reasonably recent.
+    The optional timestamp argument can be used to override the expected
+    timestamp in cases where operators handle the reset with delay. It defaults
+    to now if not provided.
+    """
+    _logger = configuration.logger
+    _logger.debug("verify %s reset token %r at %d against %s" %
+                  (auth_type, token, timestamp, user_dict))
+    try:
+        assure_reset_supported(configuration, user_dict, auth_type)
+    except ValueError as vae:
+        _logger.warn("verify %s reset token %s failed: %s" % (auth_type, token,
+                                                              vae))
+        return False
+
+    token_stamp, token_hash = parse_reset_token(configuration, token,
+                                                auth_type)
+    if token_stamp > timestamp or timestamp - token_stamp > RESET_TOKEN_TTL:
+        _logger.debug("reject reset token %r with timestamp %d" % (token,
+                                                                   token_stamp))
+        return False
+
+    pw_hash = None
+    if auth_type in ("migoid", "migoidc"):
+        pw_hash = user_dict.get('password_hash', None)
+    # Fall back to masked password for cert or no saved hash case
+    if auth_type == "migcert" or pw_hash is None:
+        pw_hash = make_hash(user_dict.get('password', ''))
+
+    if token_hash != pw_hash:
+        _logger.debug("reject reset token %r with wrong hash: %s vs %s" %
+                      (token, token_hash, pw_hash))
+        return False
+
+    _logger.debug("accept reset token %r with timestamp %d and hash %s" %
+                  (token, token_stamp, token_hash))
+    return True
 
 
 def make_csrf_token(configuration, method, operation, client_id, limit=None):
