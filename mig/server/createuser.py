@@ -223,6 +223,8 @@ if '__main__' == __name__:
             raw_user['email'] = args[4]
             raw_user['comment'] = args[5]
             raw_user['password'] = args[6]
+            # Always allow explicit password update on command line
+            raw_user['authorized'] = True
         except IndexError:
             print('Error: too few arguments given (expected 7 got %d)'
                   % len(args))
