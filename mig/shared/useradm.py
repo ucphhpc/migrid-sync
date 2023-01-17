@@ -257,6 +257,7 @@ def create_user(
         authorized = user['authorized']
         # Always remove any authorized fields before DB insert
         del user['authorized']
+    reset_token, reset_auth_type = '', 'UNKNOWN'
     if 'reset_token' in user:
         reset_token = user['reset_token']
         # NOTE: reqX backend saves auth_type in auth list of user dict
