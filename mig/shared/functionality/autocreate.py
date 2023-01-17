@@ -55,8 +55,8 @@ from mig.shared.fileio import write_file
 from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.httpsclient import extract_client_id, detect_client_auth, \
-    find_entry, build_autologout_url
-from mig.shared.init import initialize_main_variables
+    build_autologout_url
+from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.notification import send_email
 from mig.shared.safeinput import filter_commonname
 from mig.shared.useradm import create_user
@@ -501,13 +501,13 @@ def main(client_id, user_arguments_dict, environ=None):
 Auto log out first to avoid sign up problems ...
 </p>'''})
             autologout_url = build_autologout_url(configuration,
-                                                environ,
-                                                client_id,
-                                                environ['SCRIPT_URI'],
-                                                user_arguments_dict)
+                                                  environ,
+                                                  client_id,
+                                                  environ['SCRIPT_URI'],
+                                                  user_arguments_dict)
             title_entry = find_entry(output_objects, 'title')
-            itle_entry['meta'] = """<meta http-equiv = "refresh" content = "0; url=%s" />""" \
-                    % autologout_url
+            title_entry['meta'] = """<meta http-equiv = "refresh" content = "0; url=%s" />""" \
+                % autologout_url
         else:
             logger.warning('%s autocreate without ID refused for %s' %
                            (auth_type, client_id))
