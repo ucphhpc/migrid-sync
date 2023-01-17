@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # base - shared base helper functions
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,9 +35,10 @@ import os
 
 # IMPORTANT: do not import any other MiG modules here - to avoid import loops
 from mig.shared.defaults import default_str_coding, default_fs_coding, \
-    sandbox_names, _user_invisible_files, _user_invisible_dirs, \
+    keyword_all, sandbox_names, _user_invisible_files, _user_invisible_dirs, \
     _vgrid_xgi_scripts, cert_field_order, gdp_distinguished_field, \
-    valid_gdp_auth_scripts, valid_gdp_anon_scripts, STR_KIND, FS_KIND
+    valid_gdp_auth_scripts, valid_gdp_anon_scripts, STR_KIND, FS_KIND, \
+    AUTH_OPENID_V2, AUTH_OPENID_CONNECT, AUTH_CERTIFICATE
 
 _id_sep, _dir_sep, _id_space, _dir_space = '/', '+', ' ', '_'
 _key_val_sep = '='
@@ -615,6 +616,30 @@ def brief_list(full_list, max_entries=10):
         return full_list
     half_entries = max_entries // 2
     return full_list[:half_entries] + [' ... shortened ... '] + full_list[-half_entries:]
+
+
+def auth_type_description(configuration, auth_type=keyword_all):
+    """Shared helper for auth_type description lookup. Returns the description
+    for auth_type if one is provided and otherwise the dictionary of known
+    auth_types and their descriptions.
+    """
+    auth_map = {'migoid': '%s %s' %
+                (configuration.user_mig_oid_title, AUTH_OPENID_V2),
+                'migoidc': '%s %s' %
+                (configuration.user_mig_oid_title, AUTH_OPENID_CONNECT),
+                'migcert': '%s %s' %
+                (configuration.user_mig_cert_title, AUTH_CERTIFICATE),
+                'extoid': '%s %s' %
+                (configuration.user_ext_oid_title, AUTH_OPENID_V2),
+                'extoidc': '%s %s' %
+                (configuration.user_ext_oid_title, AUTH_OPENID_CONNECT),
+                'extcert': '%s %s' %
+                (configuration.user_ext_cert_title, AUTH_CERTIFICATE),
+                }
+    if auth_type == keyword_all:
+        return auth_map
+    else:
+        return auth_map.get(auth_type, 'UNKNOWN')
 
 
 if __name__ == '__main__':

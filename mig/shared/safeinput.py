@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # safeinput - user input validation functions
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -1748,6 +1748,7 @@ def guess_type(name):
             'key_id',
             'share_id',
             'miguser',
+            'reset_token',
             'oidc.claim.sub',
             'oidc.claim.oid',
         ):

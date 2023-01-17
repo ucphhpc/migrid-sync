@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # extoidaction - handle account sign up with external OpenID credentials
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -176,6 +176,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         'expire': default_account_expire(configuration, 'oid'),
         'openid_names': [raw_login],
         'auth': ['extoid'],
+        'accepted_terms': time.time(),
     }
     if configuration.site_enable_peers:
         raw_user['peers_full_name'] = peers_full_name
@@ -218,8 +219,9 @@ contact them manually on %s if this error persists.''' % admin_email})
     user_dict['vgrid_label'] = configuration.site_vgrid_label
     user_dict['vgridman_links'] = generate_https_urls(
         configuration, '%(auto_base)s/%(auto_bin)s/vgridman.py', {})
-    email_header = '%s OpenID request for %s' % \
-                   (configuration.short_title, full_name)
+    email_header = '%s OpenID sign up request for %s (%s)' % \
+                   (configuration.short_title, user_dict['full_name'],
+                    user_dict['email'])
     email_msg = """
 Received an OpenID account sign up with user data
  * Full Name: %(full_name)s

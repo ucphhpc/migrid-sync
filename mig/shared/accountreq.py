@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # accountreq - helpers for certificate/OpenID account requests
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -42,7 +42,8 @@ except ImportError:
 
 from mig.shared.accountstate import default_account_expire
 from mig.shared.base import force_utf8, canonical_user, client_id_dir, \
-    distinguished_name_to_user, fill_distinguished_name, fill_user
+    distinguished_name_to_user, fill_distinguished_name, fill_user, \
+    auth_type_description
 from mig.shared.defaults import peers_fields, peers_filename, \
     pending_peers_filename, keyword_auto, user_db_filename, \
     gdp_distinguished_field
@@ -107,7 +108,7 @@ def account_js_helpers(configuration, fields):
   }
   function valid_email(value) {
       /* TODO: use regexp test instead? */
-      /* Just test for @ and domain part with dot for now */  
+      /* Just test for @ and domain part with dot for now */
       var parts = value.trim().split('@');
       if (parts.length < 2 || parts[1].indexOf('.') < 1) {
           return false;
@@ -122,7 +123,7 @@ def account_js_helpers(configuration, fields):
           return false;
       }
   }
-  
+
   function check_account_id() {
       //alert('#account_id_help');
       if (!valid_distinguished_name($('#cert_id_field').val())) {
@@ -220,7 +221,8 @@ def account_js_helpers(configuration, fields):
       }
       for (var i = 0; i < all_parts.length; i++) {
           if (!valid_full_name(all_parts[i])) {
-              rtfm_error('Peers full name is invalid: '+all_parts[i] + '\\n' + base_err);
+              rtfm_error('Peers full name is invalid: '+ \
+                         all_parts[i] + '\\n' + base_err);
               return false;
           }
       }
@@ -242,10 +244,12 @@ def account_js_helpers(configuration, fields):
       for (var i = 0; i < all_parts.length; i++) {
           if (!valid_email(all_parts[i])) {
               /* Bail if peers email on invalid format */
-              rtfm_error('Peer contact email is invalid: '+all_parts[i] + '\\n' + base_err);
+              rtfm_error('Peer contact email is invalid: '+ \
+                         all_parts[i] + '\\n' + base_err);
               return false;
           } else if (all_parts[i].trim().toLowerCase() === $('#email_field').val().trim().toLowerCase()) {
-              rtfm_error('Peer contact email cannot be your own, '+all_parts[i]);
+              rtfm_error(
+                  'Peer contact email cannot be your own, '+all_parts[i]);
               $('#peers_email_field')[0].setCustomValidity(base_err);
               return false;
           }
@@ -366,6 +370,16 @@ def account_js_helpers(configuration, fields):
 
 def account_request_template(configuration, password=True, default_values={}):
     """A general form template used for various account requests"""
+
+    # Require user to explicitly accept terms of use unless overriden
+    default_values['accepted_terms'] = default_values.get('accepted_terms', '')
+    if default_values['accepted_terms'].lower() in ('checked', 'true', 'yes'):
+        default_values['accepted_terms'] = 'checked'
+    # Hide certain fields if used from password reset
+    for show_field in ('show_comment', 'show_peers_full_name',
+                       'show_peers_email'):
+        default_values[show_field] = default_values.get(show_field, '')
+
     html = """
 <div id='account-request-grid' class='form_container'>
 
@@ -379,6 +393,13 @@ def account_request_template(configuration, password=True, default_values={}):
         html += """
 <input type='hidden' name='cert_id' value='%(cert_id)s' />
 """
+    # Password reset requests include a reset token to forward
+    reset_token = default_values.get('reset_token', '')
+    if reset_token:
+        html += """
+<input type='hidden' name='reset_token' value='%(reset_token)s' />
+"""
+
     html += """
 <div class='form-row'>
     <div class='col-md-4 mb-3 form-cell'>
@@ -504,7 +525,7 @@ def account_request_template(configuration, password=True, default_values={}):
 
     if 'full_name' in configuration.site_peers_explicit_fields:
         html += """
-  <div class='form-row single-entry'>
+  <div class='form-row single-entry %(show_peers_full_name)s'>
     <div class='col-md-12 mb-3 form-cell'>
       <!-- NOTE: this simple form control just looks for one or more full names.
       -->
@@ -521,7 +542,7 @@ def account_request_template(configuration, password=True, default_values={}):
         """
     if 'email' in configuration.site_peers_explicit_fields:
         html += """
-  <div class='form-row single-entry'>
+  <div class='form-row single-entry %(show_peers_email)s'>
     <div class='col-md-12 mb-3 form-cell'>
       <!-- NOTE: this simple form control just looks for one or more emails.
            Using 'multiple' renders 'required' useless so we set minlength.
@@ -539,7 +560,7 @@ def account_request_template(configuration, password=True, default_values={}):
         """
 
     html += """
-  <div class='form-row single-entry'>
+  <div class='form-row single-entry %(show_comment)s'>
     <div class='col-md-12 mb-3 form-cell'>
       <!-- IMPORTANT: textarea does not generally support the pattern attribute
                       so for HTML5 validation we have to mimic it with explicit
@@ -577,6 +598,62 @@ def account_request_template(configuration, password=True, default_values={}):
 
 </div>
 """.replace('__COMMENT_ADD__', comment_add).replace('__COMMENT_REQUIRED__', comment_required).replace('__COMMENT_PATTERN__', comment_pattern)
+    return html
+
+
+def account_pw_reset_template(configuration, default_values={}):
+    """A general form template used for various password reset requests"""
+
+    html = """
+<div id='account-pw-reset-grid' class='form_container'>
+"""
+
+    _logger = configuration.logger
+    auth_map = auth_type_description(configuration)
+    show_auth_types = [(key, auth_map[key]) for key in
+                       default_values.get('show', auth_map.keys())]
+    filtered_auth_types = [i for i in show_auth_types if i[0] in
+                           configuration.site_signup_methods]
+    _logger.debug("show_auth_types %s filtered_auth_types %s" %
+                  (show_auth_types, filtered_auth_types))
+    if not filtered_auth_types:
+        html += """<p class='warningtext'>
+No matching local authentication methods enabled on this site, so no passwords
+to reset here. In case you rely on a central or external identity provider you
+can probably also change your password with the corresponding ID provider.
+</p>
+"""
+    else:
+        html += """
+<p>
+Please enter the full ID or email address for your %(short_title)s account
+and select which authentication method you want to change password for.
+</p>
+<!-- use post here to avoid field contents in URL -->
+<form method='%(form_method)s' action='%(target_op)s.py'>
+    <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
+    <!-- NOTE: cert_id field to allow either full DN or email -->
+    <input type='text' name='cert_id' required />
+    <select class='form-control themed-select html-select' id='reset_auth_type'
+        name='auth_type' minlength=3 maxlength=4
+        placeholder='The kind of authentication for which to reset password'
+        required pattern='[a-z]{3,4}' title='Please select type from the list'>
+"""
+        for (auth_type, name) in filtered_auth_types:
+            selected = ''
+            if default_values.get('auth_type', '') == auth_type:
+                selected = 'selected'
+            html += "        <option value='%s' %s>%s</option>\n" % \
+                    (auth_type, selected, name)
+        html += """
+    </select>
+    <input id='submit_button' type=submit value='Request Password Reset'/>
+</form>
+"""
+
+    html += """
+</div>
+"""
     return html
 
 

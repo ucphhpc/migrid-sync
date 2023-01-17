@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # extcertaction - handle external certificate sign up and send email to admins
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -190,6 +190,7 @@ multiple "key=val" fields separated by "/".
         'expire': default_account_expire(configuration, 'cert'),
         'openid_names': [],
         'auth': ['extcert'],
+        'accepted_terms': time.time(),
     }
     if configuration.site_enable_peers:
         raw_user['peers_full_name'] = peers_full_name
@@ -261,8 +262,9 @@ contact them manually on %s if this error persists.""" %
     user_dict['vgrid_label'] = configuration.site_vgrid_label
     user_dict['vgridman_links'] = generate_https_urls(
         configuration, '%(auto_base)s/%(auto_bin)s/vgridman.py', {})
-    email_header = '%s sign up request for %s' % \
-                   (configuration.short_title, cert_id)
+    email_header = '%s certificate sign up request for %s (%s)' % \
+                   (configuration.short_title, user_dict['full_name'],
+                    user_dict['email'])
     email_msg = \
         """
 Received an existing certificate sign up request with certificate data
