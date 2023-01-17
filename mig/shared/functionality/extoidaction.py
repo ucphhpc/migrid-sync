@@ -176,6 +176,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         'expire': default_account_expire(configuration, 'oid'),
         'openid_names': [raw_login],
         'auth': ['extoid'],
+        'accepted_terms': time.time(),
     }
     if configuration.site_enable_peers:
         raw_user['peers_full_name'] = peers_full_name

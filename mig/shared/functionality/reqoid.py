@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqoid - OpenID account request backend
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -59,6 +59,7 @@ def signature(configuration):
                 'state': [''],
                 'comment': [''],
                 'ro_fields': [''],
+                'reset_token': [''],
                 }
     if configuration.site_enable_peers:
         for field_name in configuration.site_peers_explicit_fields:
@@ -85,6 +86,8 @@ def main(client_id, user_arguments_dict):
             {'object_type': 'error_text', 'text':
              '''Local OpenID login is not enabled on this site'''})
         return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    reset_token = accepted['reset_token'][-1].strip()
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s OpenID account request' % \
@@ -198,6 +201,12 @@ to your old files, jobs and privileges. </p>''' %
     # Only write-protect ID fields in auto-mode
     if keyword_auto in accepted['ro_fields']:
         ro_fields += [i for i in list(cert_field_map) if not i in ro_fields]
+    if reset_token:
+        user_fields['reset_token'] = reset_token
+        lock_fields = given_peers + ['comment']
+        ro_fields += lock_fields
+        for hide_field in lock_fields:
+            user_fields['show_%s' % hide_field] = 'hidden'
     for field in ro_fields:
         fill_helpers['readonly_%s' % field] = 'readonly'
     fill_helpers.update(user_fields)

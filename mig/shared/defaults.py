@@ -86,6 +86,9 @@ AUTH_SID_GENERIC = "Session ID %s" % AUTH_GENERIC
 
 AUTH_UNKNOWN = "Unknown"
 
+# Password reset tokens expire after this number of seconds (one hour)
+RESET_TOKEN_TTL = 3600
+
 cert_field_order = [
     ('country', 'C'),
     ('state', 'ST'),

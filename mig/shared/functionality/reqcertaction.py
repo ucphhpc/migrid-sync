@@ -62,6 +62,7 @@ def signature(configuration):
         'verifypassword': REJECT_UNSET,
         'comment': [''],
         'accept_terms': [''],
+        'reset_token': [''],
     }
     if configuration.site_enable_peers:
         if configuration.site_peers_mandatory:
@@ -112,6 +113,7 @@ def main(client_id, user_arguments_dict):
     email = accepted['email'][-1].strip()
     password = accepted['password'][-1]
     verifypassword = accepted['verifypassword'][-1]
+    reset_token = accepted['reset_token'][-1]
 
     if configuration.site_enable_peers:
         # Peers are passed as multiple strings of comma or space separated emails
@@ -209,6 +211,8 @@ resources anyway.
         'expire': default_account_expire(configuration, 'cert'),
         'openid_names': [],
         'auth': ['migcert'],
+        'accepted_terms': time.time(),
+        'reset_token': reset_token,
     }
     if configuration.site_enable_peers:
         raw_user['peers_full_name'] = peers_full_name

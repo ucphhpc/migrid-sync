@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # extcertaction - handle external certificate sign up and send email to admins
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -190,6 +190,7 @@ multiple "key=val" fields separated by "/".
         'expire': default_account_expire(configuration, 'cert'),
         'openid_names': [],
         'auth': ['extcert'],
+        'accepted_terms': time.time(),
     }
     if configuration.site_enable_peers:
         raw_user['peers_full_name'] = peers_full_name
