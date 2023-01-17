@@ -219,9 +219,10 @@ def scramble_password(salt, password):
     """Scramble password for saving with fallback to base64 encoding if no salt
     is provided.
     """
+    # NOTE: base64 encoders require bytes
     if not salt:
-        return force_native_str(b64encode(password))
-    xor_int = int(salt, 16) ^ int(b16encode(password), 16)
+        return force_native_str(b64encode(force_utf8(password)))
+    xor_int = int(salt, 16) ^ int(b16encode(force_utf8(password)), 16)
     return force_native_str('{0:X}'.format(xor_int))
 
 
