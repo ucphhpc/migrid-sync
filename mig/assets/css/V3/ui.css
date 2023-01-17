@@ -620,22 +620,13 @@ span.fileinput-button:active {
     background: #EEE;
 }
 
-table.frozenarchives {
-    border: none;
-}
-
-.frozenarchives tbody tr td {
-    font-size: 14px;
-    padding: 20px 0;
-}
-
 table.columnsort {
     border: none;
 }
 
 table.columnsort td {
     font-size: 14px;
-    padding: 20px 0;
+    padding: 20px 4px;
 }
 
 
