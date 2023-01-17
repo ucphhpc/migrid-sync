@@ -532,7 +532,7 @@ using their existing credentials to authorize password changes or use the reset
 password mechanism to confirm their ownership of the registered account email.
 """ % client_id)
                     if ask_change_pw:
-                        accept_answer = raw_input(
+                        accept_answer = input(
                             'Accept password change? [y/N] ')
                     else:
                         accept_answer = 'no'
