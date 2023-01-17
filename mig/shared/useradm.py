@@ -501,9 +501,10 @@ def create_user(
             # password alone.
             # External OpenID users do not provide a password so again any
             # existing password should be left alone on renewal.
+            # The password_hash field is not guaranteed to exist.
             if not user['password']:
                 user['password'] = user['old_password']
-            if not user['password_hash']:
+            if not user.get('password_hash', ''):
                 user['password_hash'] = user['old_password_hash']
             password_changed = (user['old_password'] != user['password'] or
                                 user['old_password_hash'] != user['password_hash'])
