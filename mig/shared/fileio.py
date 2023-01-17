@@ -63,6 +63,7 @@ else:
 try:
     from mig.shared.base import force_utf8_rec
     from mig.shared.defaults import default_chunk_size, default_max_chunks
+    from mig.shared.logger import null_logger
     from mig.shared.serial import dump, load
 except ImportError as ioe:
     print("could not import migrid modules!")
@@ -81,6 +82,8 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
     """Wrapper to handle writing of chunks with offset to path.
     Creates file first if it doesn't already exist.
     """
+    if not logger:
+        logger = null_logger("dummy")
     logger.info('writing chunk to %s at offset %d' % (path, offset))
 
     # create dir and file if it does not exists
@@ -120,6 +123,8 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
 
 def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
     """Wrapper to handle writing of contents to path"""
+    if not logger:
+        logger = null_logger("dummy")
     logger.debug('writing file: %s' % path)
 
     # create dir if it does not exists
@@ -149,6 +154,8 @@ def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
 
 def read_file(path, logger):
     """Wrapper to handle reading of contents from path"""
+    if not logger:
+        logger = null_logger("dummy")
     #logger.debug('reading file: %s' % path)
     content = None
     try:
@@ -163,6 +170,8 @@ def read_file(path, logger):
 
 def read_tail(path, lines, logger):
     """Read last lines from path"""
+    if not logger:
+        logger = null_logger("dummy")
     out_lines = []
     try:
         #logger.debug("loading %d lines from %s" % (lines, path))
@@ -190,6 +199,8 @@ def read_tail(path, lines, logger):
 
 def get_file_size(path, logger):
     """Wrapper to handle getsize of path"""
+    if not logger:
+        logger = null_logger("dummy")
     logger.debug('getsize on file: %s' % path)
     try:
         return os.path.getsize(path)
@@ -202,6 +213,8 @@ def delete_file(path, logger, allow_broken_symlink=False, allow_missing=False):
     """Wrapper to handle deletion of path. The optional allow_broken_symlink is
     used to accept delete even if path is a broken symlink.
     """
+    if not logger:
+        logger = null_logger("dummy")
     logger.debug('deleting file: %s' % path)
     if os.path.exists(path) or allow_broken_symlink and os.path.islink(path):
         try:
@@ -221,6 +234,8 @@ def delete_file(path, logger, allow_broken_symlink=False, allow_missing=False):
 
 def make_symlink(dest, src, logger, force=False):
     """Wrapper to make src a symlink to dest path"""
+    if not logger:
+        logger = null_logger("dummy")
 
     # NOTE: we use islink instead of exists here to handle broken symlinks
     if os.path.islink(src) and force and delete_symlink(src, logger):
@@ -238,6 +253,8 @@ def make_symlink(dest, src, logger, force=False):
 def delete_symlink(path, logger, allow_broken_symlink=True,
                    allow_missing=False):
     """Wrapper to handle deletion of symlinks"""
+    if not logger:
+        logger = null_logger("dummy")
     logger.debug('deleting symlinks: %s' % path)
     return delete_file(path, logger, allow_broken_symlink, allow_missing)
 
@@ -279,6 +296,8 @@ def update_pickled_dict(path, changes):
 def unpickle_and_change_status(path, newstatus, logger):
     """change status in the MiG server mRSL file"""
 
+    if not logger:
+        logger = null_logger("dummy")
     changes = {}
     changes['STATUS'] = newstatus
     changes[newstatus + '_TIMESTAMP'] = time.gmtime()
@@ -295,6 +314,8 @@ def unpickle_and_change_status(path, newstatus, logger):
 
 def unpickle(path, logger, allow_missing=False):
     """Unpack pickled object in path"""
+    if not logger:
+        logger = null_logger("dummy")
     try:
         data_object = load(path)
         logger.debug('%s was unpickled successfully' % path)
@@ -309,6 +330,8 @@ def unpickle(path, logger, allow_missing=False):
 
 def pickle(data_object, path, logger):
     """Pack data_object as pickled object in path"""
+    if not logger:
+        logger = null_logger("dummy")
     try:
         dump(data_object, path)
         logger.debug('pickle success: %s' % path)
@@ -320,6 +343,8 @@ def pickle(data_object, path, logger):
 
 def load_json(path, logger, allow_missing=False, convert_utf8=True):
     """Unpack json object in path"""
+    if not logger:
+        logger = null_logger("dummy")
     try:
         data_object = load(path, serializer='json')
         logger.debug('%s was loaded successfully' % path)
