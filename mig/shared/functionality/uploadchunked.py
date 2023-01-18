@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # uploadchunked - chunked and efficient file upload back end
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -104,7 +104,7 @@ def parse_form_upload(user_args, user_id, configuration, base_dir, dst_dir,
     rel_dst_dir = dst_dir.replace(base_dir, '')
 
     # TODO: we only support single filename and chunk for now; extend?
-    # for name_index in xrange(max_upload_files):
+    # for name_index in range(max_upload_files):
     #    if user_args.has_key(filename_field) and \
     #           len(user_args[filename_field]) > name_index:
     for name_index in [0]:
@@ -140,7 +140,7 @@ def parse_form_upload(user_args, user_id, configuration, base_dir, dst_dir,
                             % filename)
             continue
 
-        # for chunk_index in xrange(max_upload_chunks):
+        # for chunk_index in range(max_upload_chunks):
         #    if user_args.has_key(files_field) and \
         #           len(user_args[files_field]) > chunk_index:
         for chunk_index in [0]:

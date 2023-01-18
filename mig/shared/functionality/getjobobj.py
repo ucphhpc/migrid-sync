@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # getjobobj - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -46,7 +46,7 @@ def signature():
 
     configuration = get_configuration_object()
     external_dict = mrslkeywords.get_keywords_dict(configuration)
-    for (key, value_dict) in external_dict.iteritems():
+    for (key, value_dict) in external_dict.items():
         if key not in defaults:
 
             # do not overwrite
@@ -69,7 +69,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     job_id_list = accepted['job_id']

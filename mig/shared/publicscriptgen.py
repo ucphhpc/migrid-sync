@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # publicscriptgen - Basic script generator functions
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -38,6 +38,7 @@ for the supported programming languages.
 from __future__ import print_function
 from __future__ import absolute_import
 
+from past.builtins import basestring
 import os
 import sys
 
@@ -1017,7 +1018,7 @@ def curl_chain_login_steps(
             msg.append('Could not extract extoid CSRF token value')
             return (1, msg)
         while not username:
-            username = raw_input('Username: ').strip()
+            username = input('Username: ').strip()
         while not password:
             password = getpass.getpass()
         # Post login and password credentials, redirects to actual site URL
@@ -1035,7 +1036,7 @@ def curl_chain_login_steps(
     elif [line for line in out if os.path.dirname(migoid_base) in line]:
         # No CSRF token here
         while not username:
-            username = raw_input('Username: ').strip()
+            username = input('Username: ').strip()
         while not password:
             password = getpass.getpass()
         base_val = migoid_base + '/'
@@ -1082,7 +1083,7 @@ def curl_chain_login_steps(
                     if 'div id=\"twofactorstatus\"' in line]:
                 token = ''
                 while not token:
-                    token = raw_input('2-Factor Auth token: ')
+                    token = input('2-Factor Auth token: ')
                 base_val = mig_server + '/'
                 url_val = twofactor_url
                 post_val = \\

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userscriptgen - Generator backend for user scripts
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -5113,7 +5113,7 @@ def upload_file_chunks(path, current_dir):
     # NOTE: split distributes evenly on chunk_count with remainder on last one
     chunk_size = file_size / chunk_count
     action = \"put\"
-    for chunk_no in xrange(chunk_count):
+    for chunk_no in range(chunk_count):
         (cur, tmp) = uploadchunked_put(path, current_dir, chunk_no, chunk_size,
                                        chunk_count, file_size)
         status &= cur
