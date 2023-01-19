@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createfreeze - back end for freezing archives
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -44,7 +44,7 @@ from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from mig.shared.html import man_base_js, man_base_html, html_post_helper
 from mig.shared.init import initialize_main_variables, find_entry
-from mig.shared.safeinput import valid_path
+from mig.shared.safeinput import valid_path, html_escape
 from mig.shared.validstring import valid_user_path
 from mig.shared.vgrid import in_vgrid_share
 from mig.shared.vgridaccess import is_vgrid_parent_placeholder
@@ -284,7 +284,8 @@ You must provide author and department for the thesis!"""})
         if freeze_author:
             changes['AUTHOR'] = freeze_author
         if freeze_description:
-            changes['DESCRIPTION'] = freeze_description
+            # We cannot trust free text description used on landing page etc.
+            changes['DESCRIPTION'] = html_escape(freeze_description)
         if freeze_publish:
             changes['PUBLISH'] = do_publish
         logger.debug("updating existing %s archive for %s with: %s" %
