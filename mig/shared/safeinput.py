@@ -1842,11 +1842,13 @@ def guess_type(name):
             __type_map[key] = lambda x: valid_fqdn(x, min_length=0)
         for key in ('execution_user', 'storage_user'):
             __type_map[key] = lambda x: valid_job_id(x, min_length=0)
-        # dept org and author may be empty or a comma-separated list
-        for key in ('freeze_department', 'freeze_organization',
-                    'freeze_author',
-                    ):
+        # dept and org may be empty or a comma-separated list
+        for key in ('freeze_department', 'freeze_organization'):
             __type_map[key] = lambda x: valid_organization(x, min_length=0)
+        # author may be empty or a comma-separated and extremely long list
+        for key in ('freeze_author', ):
+            __type_map[key] = lambda x: valid_organization(x, min_length=0,
+                                                           max_length=2048)
         # EXECONFIG vgrid field which may be empty or a comma-separated list
         for key in ('vgrid', ):
             __type_map[key] = lambda x: valid_vgrid_name(x, min_length=0,
