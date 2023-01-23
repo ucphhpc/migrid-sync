@@ -224,6 +224,7 @@ def get_host_from_service(configuration, service):
     _logger = configuration.logger
     hosts = service['service_hosts'].split(" ")
     _logger.info("hosts %s" % hosts)
+    _logger.info("retrieving service %s" % service['service_name'])
     while hosts:
         if len(hosts) == 1:
             rng = 0
