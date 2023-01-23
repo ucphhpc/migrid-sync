@@ -1,4 +1,26 @@
 [
+   {
+    "status": "AUTO",
+    "work_start": "2023-01-23T10:00:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2023-01-23T10:00:00+02:00",
+    "title": {
+      "EN": "Unplanned crashes/downtime for MODI due to system and potential hardware failures.",
+      "DK": "Uplanlagt nedbrud af MODI-tjenesten pga. af system og potentiel hardware fejl."
+    },
+    "services": [
+      "MODI"
+    ],
+    "work_end": "2023-01-24T12:00:00+02:00",
+    "description": {
+      "EN": "We had been getting reports about fallouts on the MODI service, this was initially solved by restarting the service, but subsequent crashes indicates that something fundamentally is wrong with either the underlying host system or the hardware that runs the service. We are currently investigating this issue and will try to keep the service up while we are investigating this.", 
+      "DK": "Vi havde fået rapporter om nedfald på MODI-tjenesten, dette blev i første omgang løst ved at genstarte tjenesten, men efterfølgende nedbrud indikerer at der noget grundlæggende er galt med enten det underliggende hostsystem eller hardwaren der kører tjenesten. Vi er i øjeblikket ved at undersøge dette problem og vil forsøge at holde tjenesten oppe i mellemtiden mens vi undersøger sagen nærmere."
+    },
+    "announce_end": "2023-01-24T12:00:00+02:00"
+  },
  {
     "status": "AUTO",
     "work_start": "2022-12-03T12:00:00+02:00",
