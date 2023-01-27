@@ -1,4 +1,27 @@
-[   
+[     
+  {
+    "status": "AUTO",
+    "work_start": "2023-02-03T16:00:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2023-01-27T09:00:00+02:00",
+    "title": {
+      "EN": "Planned DAG and MODI Maintenance.",
+      "DK": "Planlagt vedligehold af DAG og MODI-tjenesterne."
+    },
+    "services": [
+      "DAG",
+      "MODI"
+    ],
+    "work_end": "2023-02-03T20:00:00+02:00",
+    "description": {
+      "EN": "We will apply general maintenance to the DAG and MODI services. Interruptions to these services will occur.", 
+      "DK": "Vi udruller den månedelige opdatering og vedligeholdelse af DAG og MODI tjenesterne. Afbrydelser af disse tjenester vil forekomme."
+    },
+    "announce_end": "2023-03-06T12:00:00+02:00"
+   },  
     {
     "status": "AUTO",
     "work_start": "2023-02-15T17:00:00+02:00",
@@ -37,8 +60,8 @@
     ],
     "work_end": "2023-01-25T12:00:00+02:00",
     "description": {
-      "EN": "We had been getting reports about fallouts on the MODI service, this was initially solved by restarting the service, but subsequent crashes indicates that something fundamentally is wrong with either the underlying host system or the hardware that runs the service. We are currently investigating this issue and will try to keep the service up while we are investigating this.", 
-      "DK": "Vi havde fået rapporter om nedfald på MODI-tjenesten, dette blev i første omgang løst ved at genstarte tjenesten, men efterfølgende nedbrud indikerer at der noget grundlæggende er galt med enten det underliggende hostsystem eller hardwaren der kører tjenesten. Vi er i øjeblikket ved at undersøge dette problem og vil forsøge at holde tjenesten oppe i mellemtiden mens vi undersøger sagen nærmere."
+      "EN": "We had been getting reports about fallouts on the MODI service, this was initially solved by restarting the service, but subsequent crashes indicates that something fundamentally is wrong with either the underlying host system or the hardware that runs the service. We are currently investigating this issue and will try to keep the service up while we are investigating this. The issue seemed to be a combination of slow calls to the underlying external filesystem, which in turn crashed service when it was not responding within the expect time frame. For now we have increase the time limit for the service, such that it should be more resilient to filesystem slow downs.",
+      "DK": "Vi havde fået rapporter om nedfald på MODI-tjenesten, dette blev i første omgang løst ved at genstarte tjenesten, men efterfølgende nedbrud indikerer at der noget grundlæggende er galt med enten det underliggende hostsystem eller hardwaren der kører tjenesten. Vi er i øjeblikket ved at undersøge dette problem og vil forsøge at holde tjenesten oppe i mellemtiden mens vi undersøger sagen nærmere. Problemet virkede til at være en kombination af langsomme kald til det underliggende eksterne filsystem, som fik tjenesten til at vælte, når det ikke svarede inden for den forventede tidsramme. For nu har vi øget tidsgrænsen for tjenesten, så den skulle være mere modstandsdygtig over for filsystemets langsommere perioder."
     },
     "announce_end": "2023-01-25T12:00:00+02:00"
   },
