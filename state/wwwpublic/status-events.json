@@ -7,8 +7,8 @@
     ],
     "announce_start": "2023-01-25T09:00:00+02:00",
     "title": {
-      "EN": "SIF system update", 
-      "DK": "Udskiftning af SIF backendlager"
+      "EN": "Planned SIF Maintenance", 
+      "DK": "Planlagt SIF systemvedligehold"
     },
     "services": [
       "ALL"
@@ -20,6 +20,49 @@
     },
     "announce_end": "2023-02-16T10:00:00+02:00"
    },
+  {
+    "status": "AUTO",
+    "work_start": "2023-02-13T06:31:00+01:00",
+    "systems": [
+        "SIF",
+        "MiGrid"
+    ],
+    "announce_start": "2023-02-13T06:31:00+01:00",
+    "title": {
+      "EN": "Partial data access and outage in the backend storage",
+      "DK": "Delvis dataadgang og udfald i backend-lageret"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2023-02-13T12:00:00+01:00",
+    "description": {
+      "EN": "We have an issue with the Lustre backend storage used on SIF and MiGrid and it leads to long response times and time outs when connecting to the associated user services. We are investigating the cause and trying to address it ASAP. More info will follow here.", 
+      "DK": "Vi har et problem med det Lustre backend-lager som benyttes til SIF og MiGrid og det resulterer aktuelt i lange svartider og timeouts på alle bruger-services. Vi undersøger sagen og forsøger at afhjælpe problemet hurtigst muligt. Mere info følger her."
+    },
+    "announce_end": "2023-02-14T12:00:00+01:00"
+  },
+  {
+    "status": "AUTO", 
+    "work_start": "2023-02-09T18:10:00+01:00", 
+    "systems": [
+        "SIF"
+    ], 
+    "announce_start": "2023-02-09T18:10:00+01:00", 
+    "title": {
+      "EN": "SIF Outage", 
+      "DK": "SIF nede"
+    }, 
+    "services": [
+      "ALL"
+    ], 
+    "work_end": "2023-02-09T23:50:00+01:00",
+    "description": {
+      "EN": "A central log partition ran full on SIF, and since we are not allowed to miss important log entries it automatically shut off the entire frontend system. After cleaning up space for logs the system is back online. Sorry for the inconvenience from the lack of access.", 
+      "DK": "En central log-partition på SIF løb tør for plads, og eftersom vi skal logge vigtige beskeder, lukkede den automatisk hele frontend systemet ned. Efter en oprydning fandt vi plads til logs og systemet er atter tilbage online. Vi Beklager generne fra den manglende adgang."
+    }, 
+    "announce_end": "2023-02-10T12:00:00+01:00"
+  },
   {
     "status": "AUTO",
     "work_start": "2023-02-03T16:00:00+02:00",
