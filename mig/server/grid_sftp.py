@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_sftp - SFTP server providing access to MiG user homes
-# Copyright (C) 2010-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -89,7 +89,8 @@ from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import keyword_auto, STRONG_SSH_KEXALGOS, \
     STRONG_SSH_CIPHERS, STRONG_SSH_MACS, STRONG_SSH_LEGACY_KEXALGOS, \
     STRONG_SSH_LEGACY_MACS
-from mig.shared.fileio import check_write_access, user_chroot_exceptions
+from mig.shared.fileio import check_write_access, user_chroot_exceptions, \
+    read_file
 from mig.shared.gdp.all import project_open, project_close, project_log
 from mig.shared.griddaemons.sftp import default_username_validator, \
     default_max_user_hits, default_user_abuse_hits, \
@@ -1734,9 +1735,15 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
 -----END RSA PRIVATE KEY-----
 """
     try:
-        host_key_fd = open(configuration.user_sftp_key, 'r')
-        host_rsa_key = host_key_fd.read()
-        host_key_fd.close()
+        # NOTE: read possibly combined key/cert and strip any non-key content
+        host_rsa_key = read_file(configuration.user_sftp_key, logger)
+        start_mark = "-----BEGIN RSA PRIVATE KEY-----"
+        end_mark = "-----END RSA PRIVATE KEY-----"
+        host_rsa_key = host_rsa_key.split(start_mark, 1)[-1]
+        host_rsa_key = host_rsa_key.split(end_mark, 1)[0]
+        if host_rsa_key:
+            host_rsa_key = "%s%s%s" % (start_mark, host_rsa_key, end_mark)
+            logger.debug("Using host key: %s" % configuration.user_sftp_key)
     except IOError:
         logger.info("No valid host key provided - using default")
         host_rsa_key = default_host_key
