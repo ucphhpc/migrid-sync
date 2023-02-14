@@ -930,7 +930,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             if invisible_path(filename):
                 continue
             #full_name = ("%s/%s" % (real_path, filename)).replace("//", "/")
-            full_name = os.path.join(real_path, filename.lstrip(os.sep)).replace("//", "/")
+            full_name = os.path.join(real_path,
+                                     filename.lstrip(os.sep)).replace("//", "/")
             self.logger.debug("list_folder stat %s" % [full_name])
             # stat may fail e.g. if filename is a stale storage mount point
             try:
@@ -1483,7 +1484,7 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
 
     window_size = conf.get('window_size', DEFAULT_WINDOW_SIZE)
     max_packet_size = conf.get('max_packet_size', DEFAULT_MAX_PACKET_SIZE)
-    # NOTE: felxible native string StringIO supported on both python 2 and 3
+    # NOTE: flexible native string StringIO supported on both python 2 and 3
     host_key_file = NativeStringIO(force_native_str(host_rsa_key))
     host_key = paramiko.RSAKey(file_obj=host_key_file)
     transport = paramiko.Transport(client, default_window_size=window_size,
