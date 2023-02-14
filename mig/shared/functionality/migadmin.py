@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migadmin - admin control panel with daemon status monitor
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,7 +37,7 @@ from mig.shared import returnvalues
 from mig.shared.accountreq import build_accountreqitem_object, \
     list_account_reqs, get_account_req, accept_account_req, \
     peer_account_req, reject_account_req
-from mig.shared.base import force_utf8_rec
+from mig.shared.base import force_utf8_rec, force_native_str
 from mig.shared.defaults import default_pager_entries, csrf_field, \
     keyword_any, keyword_auto, AUTH_CERTIFICATE, AUTH_OPENID_V2, \
     AUTH_OPENID_CONNECT
@@ -362,7 +362,8 @@ provide access to e.g. managing the grid job queues.
                                       stdout=subprocess_pipe,
                                       stderr=subprocess_stdout)
         pgrep_proc.wait()
-        ps_out = pgrep_proc.stdout.read().strip()
+        # NOTE: output is system native encoding and we need native string
+        ps_out = force_native_str(pgrep_proc.stdout.read().strip())
         if pgrep_proc.returncode == 0:
             daemons += "<div class='status_online'>%s running (pid %s)</div>" \
                        % (proc, ps_out)
