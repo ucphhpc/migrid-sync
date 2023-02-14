@@ -21,6 +21,27 @@
     "announce_end": "2023-02-16T10:00:00+02:00"
    },
   {
+    "status": "AUTO", 
+    "work_start": "2023-02-14T05:00:00+01:00", 
+    "systems": [
+        "SIF"
+    ], 
+    "announce_start": "2023-02-14T05:00:00+01:00", 
+    "title": {
+      "EN": "SIF Outage", 
+      "DK": "SIF nede"
+    }, 
+    "services": [
+      "ALL"
+    ], 
+    "work_end": "2023-02-14T14:00:00+01:00",
+    "description": {
+      "EN": "A central log partition ran full on SIF, and since we are not allowed to miss important log entries it automatically shut off the entire frontend system. We are currently cleaning up space for logs.", 
+      "DK": "En central log-partition på SIF løb tør for plads, og eftersom vi skal logge vigtige beskeder, lukkede den automatisk hele frontend systemet ned. Vi arbejder på at finde plads til logs."
+    }, 
+    "announce_end": "2023-02-14T14:00:00+01:00"
+  },
+  {
     "status": "AUTO",
     "work_start": "2023-02-13T06:31:00+01:00",
     "systems": [
