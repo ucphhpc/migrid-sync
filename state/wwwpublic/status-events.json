@@ -34,12 +34,12 @@
     "services": [
       "ALL"
     ], 
-    "work_end": "2023-02-14T14:00:00+01:00",
+    "work_end": "2023-02-14T13:00:00+01:00",
     "description": {
-      "EN": "A central log partition ran full on SIF, and since we are not allowed to miss important log entries it automatically shut off the entire frontend system. We are currently cleaning up space for logs.", 
-      "DK": "En central log-partition på SIF løb tør for plads, og eftersom vi skal logge vigtige beskeder, lukkede den automatisk hele frontend systemet ned. Vi arbejder på at finde plads til logs."
+      "EN": "A central log partition ran full on SIF, and since we are not allowed to miss important log entries it automatically shut off the entire frontend system. After cleaning up space for logs the system is back online. Sorry for the inconvenience from the lack of access.", 
+      "DK": "En central log-partition på SIF løb tør for plads, og eftersom vi skal logge vigtige beskeder, lukkede den automatisk hele frontend systemet ned. Efter en oprydning fandt vi plads til logs og systemet er atter tilbage online. Vi Beklager generne fra den manglende adgang."
     }, 
-    "announce_end": "2023-02-14T14:00:00+01:00"
+    "announce_end": "2023-02-14T13:00:00+01:00"
   },
   {
     "status": "AUTO",
