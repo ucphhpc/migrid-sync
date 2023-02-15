@@ -1,11 +1,11 @@
 [
   {
     "status": "AUTO",
-    "work_start": "2023-02-15T17:00:00+02:00",
+    "work_start": "2023-02-15T17:00:00+01:00",
     "systems": [
         "SIF"
     ],
-    "announce_start": "2023-01-25T09:00:00+02:00",
+    "announce_start": "2023-01-25T09:00:00+01:00",
     "title": {
       "EN": "Planned SIF Maintenance", 
       "DK": "Planlagt SIF systemvedligehold"
@@ -13,12 +13,11 @@
     "services": [
       "ALL"
     ],
-    "work_end": "2023-02-16T10:00:00+02:00",
+    "work_end": "2023-02-15T20:30:00+01:00",
     "description": {
-      "EN": "It's time for a thorough update of the SIF service. The work will involve down-time for low-level system updates. Thus the service will be temporarily unavailable for shorter or longer periods during the maintenance window.", 
-      "DK": "Det er tid til en grundig opdatering af SIF tjenesten. Arbejdet vil involvere nedetid for systemopdateringer på lavt niveau. Denne tjeneste vil derfor være midlertidigt utilgængelig i kortere eller længere perioder under vedligeholdelsesvinduet."
-    },
-    "announce_end": "2023-02-16T10:00:00+02:00"
+      "EN": "It's time for a thorough update of the SIF service. The work will involve down-time for low-level system updates. Thus the service will be temporarily unavailable for shorter or longer periods during the maintenance window. We completed the work and SIF is back online.", 
+      "DK": "Det er tid til en grundig opdatering af SIF tjenesten. Arbejdet vil involvere nedetid for systemopdateringer på lavt niveau. Denne tjeneste vil derfor være midlertidigt utilgængelig i kortere eller længere perioder under vedligeholdelsesvinduet. Dette arbejde er afsluttet og SIF er tilbage online."    },
+    "announce_end": "2023-02-16T10:00:00+01:00"
    },
   {
     "status": "AUTO", 
