@@ -51,9 +51,10 @@ from mig.shared.validstring import possible_sharelink_id, possible_job_id, \
     possible_jupyter_mount_id
 
 # NOTE: auth keys file may easily contain only blank lines, so we decide to
-#       consider any such file of less than a 100 bytes invalid.
+#       consider any such file of less than a 64 bytes invalid. ED25519 pub
+#       keys are typically around 80 bytes be careful not to go there.
 
-min_pub_key_bytes = 100
+min_pub_key_bytes = 64
 
 
 class Login(object):
