@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # auth - grid daemon auth helper functions
-# Copyright (C) 2010-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -277,6 +277,10 @@ def validate_auth_attempt(configuration,
 
     # Log auth attempt and set (authorized, disconnect) return values
 
+    proto_names = {'sftp': 'SFTP', 'sftp-subsys': 'SFTP', 'ftps': 'FTPS',
+                   'webdavs': 'WebDAVS', 'davs': 'WebDAVS',
+                   'openid': 'OpenID 2.0', 'openidc': 'OpenID Connect'}
+    proto_alias = proto_names.get(protocol, protocol.upper())
     if exceeded_rate_limit:
         disconnect = True
         auth_msg = "Exceeded rate limit"
@@ -290,12 +294,17 @@ def validate_auth_attempt(configuration,
         disconnect = True
         active_count = active_sessions(configuration, protocol, username)
         auth_msg = "Too many open sessions"
+        session_hint = """
+HINT: due to load and scalability concerns %s only allows a fixed number
+of concurrent active %s sessions at any time, and any additional connection
+attempts will simply be rejected. Please adjust your concurrent use settings
+to avoid exceeding this limit.""" % (configuration.short_title, proto_alias)
         log_msg = auth_msg + " %d for %s" \
             % (active_count, username)
         # Only warn since it can get rather noise and it's intermittent
         logger.warning(log_msg)
         authlog(configuration, 'WARNING', protocol, authtype,
-                username, ip_addr, auth_msg, notify=notify)
+                username, ip_addr, auth_msg + session_hint, notify=notify)
     elif invalid_username:
         disconnect = True
         if re.match(CRACK_USERNAME_REGEX, username) is not None:
@@ -335,10 +344,11 @@ sign up. """ % configuration.short_title
         logger.error(log_msg)
         if protocol in ["openid"]:
             expire_hint += """
-%s OpenID users need to renew their account every %d days for continued
+%s %s users need to renew their account every %d days for continued
 access by repeat sign up with the same ID values at
 %s/cgi-sid/reqoid.py""" % \
-                (configuration.user_mig_oid_title, configuration.oid_valid_days,
+                (configuration.user_mig_oid_title, proto_alias,
+                 configuration.oid_valid_days,
                  configuration.migserver_https_sid_url)
         authlog(configuration, 'ERROR', protocol, authtype,
                 username, ip_addr,
@@ -346,30 +356,44 @@ access by repeat sign up with the same ID values at
     elif not authtype_enabled:
         disconnect = True
         auth_msg = "%s auth disabled or %s not set" % (authtype, authtype)
+        enable_hint = """
+HINT: %s login access to the %s service is not enabled by default. You
+need to open your %s Setup page and set credentials for the services you
+want enabled.""" % (authtype, proto_alias, configuration.short_title)
         log_msg = auth_msg + " for %s from %s" % (username, ip_addr)
         if tcp_port > 0:
             log_msg += ":%s" % tcp_port
         logger.error(log_msg)
         authlog(configuration, 'ERROR', protocol, authtype,
-                username, ip_addr, auth_msg, notify=notify)
+                username, ip_addr, auth_msg + enable_hint, notify=notify)
     elif valid_auth and not twofa_passed:
         disconnect = True
         auth_msg = "No valid two factor session"
+        mount_hint = """
+HINT: if you keep receiving these messages it may be because you have %s
+%s configured as a network drive with automatic reconnect somewhere and your
+mandatory two factor session was closed or expired.
+""" % (configuration.short_title, proto_alias)
         log_msg = auth_msg + " for %s from %s" % (username, ip_addr)
         if tcp_port > 0:
             log_msg += ":%s" % tcp_port
         # Only warn since it can get rather noise and it's intermittent
         logger.warning(log_msg)
         authlog(configuration, 'WARNING', protocol, authtype,
-                username, ip_addr, auth_msg, notify=notify)
+                username, ip_addr, auth_msg + mount_hint, notify=notify)
     elif authtype_enabled and not valid_auth:
         auth_msg = "Failed %s" % authtype
+        mount_hint = """
+HINT: if you keep receiving these messages it may be because you have %s
+%s configured as a network drive with automatic reconnect somewhere and it
+fails to provide the correct credentials.
+""" % (configuration.short_title, proto_alias)
         log_msg = auth_msg + " login for %s from %s" % (username, ip_addr)
         if tcp_port > 0:
             log_msg += ":%s" % tcp_port
         logger.error(log_msg)
         authlog(configuration, 'ERROR', protocol, authtype,
-                username, ip_addr, auth_msg, notify=notify)
+                username, ip_addr, auth_msg + mount_hint, notify=notify)
     elif valid_auth and twofa_passed:
         authorized = True
         notify = False

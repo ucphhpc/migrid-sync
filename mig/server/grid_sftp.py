@@ -472,11 +472,18 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                 if self.ip_addr in configuration.site_security_scanners:
                     notify = False
                 auth_msg = "Too many open sessions"
+                # NOTE: duplicate griddaemons.auth hint for now
+                session_hint = """
+HINT: due to load and scalability concerns %s only allows a fixed number
+of concurrent active %s sessions at any time, and any additional connection
+attempts will simply be rejected. Please adjust your concurrent use settings
+to avoid exceeding this limit.""" % (configuration.short_title, "SFTP")
                 log_msg = auth_msg + " %d for %s" \
                     % (active_count, username)
                 logger.warning(log_msg)
                 authlog(configuration, 'WARNING', 'sftp', 'unknown',
-                        self.user_name, self.ip_addr, auth_msg, notify=notify)
+                        self.user_name, self.ip_addr, auth_msg + session_hint,
+                        notify=notify)
 
                 raise Exception("reject further sessions for %s" % username)
 
