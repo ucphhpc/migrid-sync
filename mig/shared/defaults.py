@@ -476,6 +476,8 @@ valid_gdp_anon_scripts = [
     'oidresponse.py',
     'login.py',
     'signup.py',
+    'reqpwreset.py',
+    'reqpwresetaction.py',
 ]
 
 # Maximum allowed workflow parameter sweep size

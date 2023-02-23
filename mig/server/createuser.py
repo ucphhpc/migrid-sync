@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createuser - Create or renew a MiG user with all the necessary directories
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -100,6 +100,7 @@ if '__main__' == __name__:
     verbose = False
     ask_renew = True
     default_renew = False
+    ask_change_pw = True
     user_file = None
     user_id = None
     short_id = None
@@ -306,7 +307,7 @@ if '__main__' == __name__:
     try:
         create_user(user_dict, conf_path, db_path, force, verbose, ask_renew,
                     default_renew, verify_peer=peer_pattern,
-                    peer_expire_slack=slack_secs)
+                    peer_expire_slack=slack_secs, ask_change_pw=ask_change_pw)
         if configuration.site_enable_gdp:
             (success_here, msg) = ensure_gdp_user(configuration,
                                                   "127.0.0.1",
