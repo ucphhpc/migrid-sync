@@ -1,6 +1,28 @@
 [
   {
     "status": "AUTO",
+    "work_start": "2023-02-27T20:00:00+01:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2023-01-27T10:00:00+01:00",
+    "title": {
+      "EN": "Update MODI to fix UCX issues.",
+      "DK": "Update MODI for at fixe en UCX fejl."
+    },
+    "services": [
+      "MODI"
+    ],
+    "work_end": "2023-02-27T22:00:00+01:00",
+    "description": {
+      "EN": "We need to update and restart the MODI service to fix an issue with UCX where it can't create a worker succesfully in MPI applications.", 
+      "DK": "Vi skal opdatere og genstarte MODI-tjenesten for at løse et problem med UCX, hvor den ikke kan oprette en UCX-worker i MPI-applikationer."
+    },
+    "announce_end": "2023-02-28T12:00:00+01:00"
+  },
+  {
+    "status": "AUTO",
     "work_start": "2023-02-15T17:00:00+01:00",
     "systems": [
         "SIF"
