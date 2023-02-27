@@ -173,7 +173,7 @@ accepting fully signed GET requests to prevent unintended redirects'''})
                                 """
                     <input type='hidden' name='%s' value='%s'>""" \
                         % (key, value)
-                    html += \
+                html += \
                         """
                 </form>
                 <script type='text/javascript'>

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_notify - Notify users about relevant system events
-# Copyright (C) 2010-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -120,7 +120,8 @@ def send_notifications(configuration):
             for (message, events) in value.iteritems():
                 notify_message += "#%s : %s\n" % (events, message)
                 total_events += events
-        subject = "System notification: %s new events" % total_events
+        subject = "%s system notification: %s new events" % \
+                  (configuration.short_title, total_events)
         notify_message = "Found %s new events since: %s\n\n" \
             % (total_events, timestr) \
             + notify_message

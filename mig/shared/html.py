@@ -1594,13 +1594,13 @@ Okay, let's go!</button>
 Google Authenticator</a>,
 <a href='https://freeotp.github.io/' class='urllink iconleftpad'
   target='_blank'>FreeOTP</a>,
+<a href='https://www.yubico.com/products/yubico-authenticator/#h-download-yubico-authenticator' class='urllink iconleftpad'
+  target='_blank'>Yubico Authenticator</a>,
 <a href='https://bitwarden.com/download/' class='urllink iconleftpad'
-  target='_blank'>Bitwarden</a>,
+  target='_blank'>Bitwarden</a> or
 <a href='https://www.microfocus.com/en-us/products/netiq-advanced-authentication/overview'
-  class='urllink iconleftpad' target='_blank'>NetIQ Advanced Authentication</a>
-or <a href='https://authy.com/download/' class='urllink iconleftpad'
-  target='_blank'>Authy</a> on your phone
-or tablet. You can find and install either of them on your device through your
+  class='urllink iconleftpad' target='_blank'>NetIQ Advanced Authentication</a> on your phone
+or tablet. You can find and install either of them on your device(s) through your
 usual app store.</p>
 </td></tr>
 <tr class='otp_wizard otp_install switch_button hidden'><td>
@@ -1609,8 +1609,8 @@ usual app store.</p>
 I've got it installed!</button>
 </td></tr>
 <tr class='otp_wizard otp_import hidden'><td>
-<h3>2. Import Secret in Authenticator App</h3>
-<p>Open the chosen authenticator app and import your personal 2-factor secret in one of two ways:</p>
+<h3>2. Import Secret in Authenticator App(s)</h3>
+<p>Open the chosen authenticator app(s) and import your personal 2-factor secret in one of two ways:</p>
 <ul class='dbllineheight' type='A'>
 <li>Scan your personal <button id='otp_qr_link' class='twofactor-qr-code ui-button inline-button'
     onClick='showQRCodeOTPDialog(\"otp_secret_dialog\", \"%(otp_uri)s\"); return false;'>
@@ -1620,7 +1620,8 @@ QR code</button></li>
 </ul>
 <p><br/>The latter is usually more cumbersome but may be needed if your app or smart
 device doesn't support scanning QR codes. Most apps automatically add service
-and account info on QR code scanning, but otherwise you can manually enter it.</p>
+and account info on QR code scanning, but otherwise you can manually enter it.
+</p>
 </td></tr>
 <tr class='otp_wizard otp_import switch_button hidden'><td>
 <!-- NOTE: we ignore missing explicit import here as it might not be 1st run -->
@@ -1634,7 +1635,10 @@ Yes, I've imported it!</button>
     onClick='verifyClientToken(\"otp_verify_dialog\", \"otp_verified_button\", \"%(check_url)s\");  return false;'>
 verify</button> that your authenticator app displays correct new tokens every 30
 seconds before you actually enable 2-factor authentication. Otherwise you could
-end up locking yourself out once you enable 2-factor authentication!<p/>
+end up locking yourself out once you enable 2-factor authentication!<br/>
+<span class='info iconspace'/>Optionally repeat the above steps on another device / app for
+protection against lost %(site)s access in case of device breakage, loss or wipe.
+<p/>
 </td></tr>
 <tr class='otp_wizard otp_verify switch_button hidden'><td>
 <button type=button id='otp_verified_button' class='ui-button'
