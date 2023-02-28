@@ -21,6 +21,30 @@
   },
   {
     "status": "AUTO",
+    "work_start": "2023-02-28T16:00:00+01:00",
+    "systems": [
+        "ERDA",
+        "IDMC",
+        "SIF",
+        "MiGrid"
+    ],
+    "announce_start": "2023-02-28T15:40:00+01:00",
+    "title": {
+      "EN": "Possible emergency downtime due to fire safety.",
+      "DK": "Mulig nødslukning af hensyn til brandsikkerhed."
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2023-03-02T10:00:00+01:00",
+    "description": {
+      "EN": "Two fire alarms triggered this afternoon in our data center at HCØ. Apparently due to serious smoke development from a server in one of the rooms there. The automatic INERGEN fire suppression system even fired in that room. We are investigating and evaluating the situation and due to fire safety concerns we MAY have to take down even important systems on short notice until the cause has been removed and the fire suppression system has been recharged. We apologize for any inconvenience that will cause if so, but must value staff and data safety over maximum uptime in such emergency situations. For now the mentioned systems do stay online and further information will follow here.", 
+      "DK": "To brandalarmer gik til eftermiddag i vores datacenter på HCØ. Tilsyneladende på grund af kraftig røgudvikling fra en server i et af rummene der. Det automatiske INERGEN-brandslukningssystem gik sågar igang i det pågældende rum. Vi undersøger og evaluerer situationen og af hensyn til brandsikkerheden KAN vi blive nødt til at slukke selv vigtige systemer med kort varsel indtil årsagen er fjernet og brandslukningssystemet er genfyldt. Vi beklager de gener dette i så fald medfører, men er nødt til at prioritere personale- og data-sikkerhed over maksimal oppetid i sådanne nødsituationer. For nu kører de nævnte systemer videre og yderligere information vil følge her."
+    },
+    "announce_end": "2023-03-02T12:00:00+01:00"
+  },
+  {
+    "status": "AUTO",
     "work_start": "2023-02-27T20:00:00+01:00",
     "systems": [
         "ERDA",
