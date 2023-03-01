@@ -1,4 +1,27 @@
-[ {
+[
+  {
+    "status": "AUTO",
+    "work_start": "2023-03-03T17:00:00+01:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2023-03-01T12:00:00+01:00",
+    "title": {
+      "EN": "Planned DAG Maintenance", 
+      "DK": "Planlagt DAG systemvedligehold"
+    },
+    "services": [
+      "DAG"
+    ],
+    "work_end": "2023-03-03T20:00:00+01:00",
+    "description": {
+      "EN": "We need to update the DAG configuration to the latest SSHFS mount plugin version and will therefore have to take down the service for this.", 
+      "DK": "Vi skal have opdateret DAG-konfigurationen til den seneste SSHFS mount plugin version, og bliver derfor nødt til at tage tjenesten ned for at gøre dette."
+    },
+    "announce_end": "2023-03-06T12:00:00+01:00"
+  },
+  {
     "status": "AUTO",
     "work_start": "2023-03-01T17:00:00+01:00",
     "systems": [
