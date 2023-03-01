@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # functional - functionality backend helpers
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -263,7 +263,15 @@ and just need to sign up for a local %s account on the''' %
                             signup_query = '?show=extoid'
                         else:
                             logger.error("unknown migoid client_id %s on %s"
-                                         % ([client_id], base_url))
+                                         % (client_id, base_url))
+                elif base_url in (configuration.migserver_https_ext_oidc_url,
+                                  configuration.migserver_https_mig_oidc_url):
+                    # No obvious logout/expire session cookie here prior to signup
+                    logger.warning("possibly missing logout for client_id %s on %s" %
+                                   (client_id, base_url))
+                    if base_url == configuration.migserver_https_ext_oidc_url \
+                            and 'extoidc' in configuration.site_signup_methods:
+                        signup_query = '?show=extoidc'
                 else:
                     logger.warning("unexpected client_id %s on %s" %
                                    (client_id, base_url))

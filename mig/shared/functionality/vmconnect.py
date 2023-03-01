@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # vmconnect - connect to virtual machine
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -61,7 +61,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -84,7 +84,7 @@ Please contact the site admins %s if you think they should be enabled.
         (vnc_display_width, vnc_display_height) = settings_dict['VNCDISPLAY']
 
     # Make room for vnc control menu
-    
+
     vnc_menu_height = 24
     vnc_display_height += vnc_menu_height
     password = vms.vnc_jobid(accepted['job_id'][0])
@@ -92,6 +92,8 @@ Please contact the site admins %s if you think they should be enabled.
     ext_cert_base = configuration.migserver_https_ext_cert_url
     mig_oid_base = configuration.migserver_https_mig_oid_url
     ext_oid_base = configuration.migserver_https_ext_oid_url
+    mig_oidc_base = configuration.migserver_https_mig_oidc_url
+    ext_oidc_base = configuration.migserver_https_ext_oidc_url
     if os.environ['REQUEST_URI'].startswith(mig_cert_base):
         https_base = mig_cert_base
     elif os.environ['REQUEST_URI'].startswith(ext_cert_base):
@@ -100,22 +102,25 @@ Please contact the site admins %s if you think they should be enabled.
         https_base = mig_oid_base
     elif os.environ['REQUEST_URI'].startswith(ext_oid_base):
         https_base = ext_oid_base
+    elif os.environ['REQUEST_URI'].startswith(mig_oidc_base):
+        https_base = mig_oidc_base
+    elif os.environ['REQUEST_URI'].startswith(ext_oidc_base):
+        https_base = ext_oidc_base
     else:
         logger.warning("unexpected REQUEST_URI: %(REQUEST_URI)s" % os.environ)
         https_base = mig_cert_base
-        
+
     # Do an "intoN" then map to acsii
 
-    output_objects.append({'object_type': 'html_form', 'text'
-                          : vms.popup_snippet() + vms.vnc_applet(
-                               configuration,
-                               vnc_display_width,
-                               vnc_display_height,
-                               password,
-                               https_base,
-                               )})
+    output_objects.append({'object_type': 'html_form', 'text': vms.popup_snippet() + vms.vnc_applet(
+        configuration,
+        vnc_display_width,
+        vnc_display_height,
+        password,
+        https_base,
+    )})
     output_objects.append({'object_type': 'html_form', 'text':
-        """<p>You can access your virtual machine with the Java applet above if
+                           """<p>You can access your virtual machine with the Java applet above if
 your browser supports it, or by using a stand-alone VNC client and the following
 connection details:<br />
 VNC server: %s<br />
@@ -134,7 +139,7 @@ this site over the Internet.<br/>
 Please refer to the documentation on the <em>-via</em> VNC option for details.
 </p>
 """ % (configuration.server_fqdn, configuration.vm_client_port, password,
-       configuration.server_fqdn, configuration.vm_client_port)
-                           })
+                               configuration.server_fqdn, configuration.vm_client_port)
+    })
 
     return (output_objects, status)

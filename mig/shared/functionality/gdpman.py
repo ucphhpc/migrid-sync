@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # gdpman - entry point with project access and management for GDP-enabled sites
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -1497,7 +1497,6 @@ def main(client_id, user_arguments_dict, environ=None):
                                   op_menu=False)
     _logger = configuration.logger
     client_addr = environ.get('REMOTE_ADDR', None)
-    base_url = configuration.migserver_https_ext_oid_url
     req_url = environ.get('SCRIPT_URI', None)
     csrf_limit = get_csrf_limit(configuration)
     csrf_token = make_csrf_token(configuration, 'post', op_name,
@@ -1514,7 +1513,7 @@ def main(client_id, user_arguments_dict, environ=None):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     identity = extract_client_id(configuration, environ,
-                                lookup_dn=False)
+                                 lookup_dn=False)
     output_format = accepted['output_format'][-1].strip()
     _csrf = accepted['_csrf'][-1].strip()
     action = accepted['action'][-1].strip()
@@ -1629,7 +1628,8 @@ Please contact the site admins %s if you think it should be enabled.
 
     # Make sure user exists in GDP user db
 
-    (status, ensure_msg) = ensure_gdp_user(configuration, client_addr, client_id)
+    (status, ensure_msg) = ensure_gdp_user(
+        configuration, client_addr, client_id)
 
     if status and not action or action == 'logout':
         redirect_url = ""

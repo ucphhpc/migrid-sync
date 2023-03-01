@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settings - back end for the settings page
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -2085,8 +2085,13 @@ value="%(default_authpassword)s" />
         </td></tr>
         '''
         cur_url = requested_url_base()
-        is_mig = cur_url.startswith(configuration.migserver_https_mig_oid_url)
-        is_ext = cur_url.startswith(configuration.migserver_https_ext_oid_url)
+        is_mig, is_ext = False, False
+        if cur_url.startswith(configuration.migserver_https_mig_oid_url) or \
+                cur_url.startswith(configuration.migserver_https_mig_oidc_url):
+            is_mig = True
+        if cur_url.startswith(configuration.migserver_https_ext_oid_url) or \
+                cur_url.startswith(configuration.migserver_https_ext_oidc_url):
+            is_ext = True
         # NOTE: re-order to show active access method openid first
         if is_ext and twofactor_entries[0][0] == 'MIG_OID_TWOFACTOR' and \
                 twofactor_entries[1][0] == 'EXT_OID_TWOFACTOR' or \
