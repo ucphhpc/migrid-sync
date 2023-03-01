@@ -60,8 +60,8 @@
     ],
     "work_end": "2023-02-27T22:00:00+01:00",
     "description": {
-      "EN": "We need to update and restart the MODI service to fix an issue with UCX where it can't create a worker succesfully in MPI applications.", 
-      "DK": "Vi skal opdatere og genstarte MODI-tjenesten for at løse et problem med UCX, hvor den ikke kan oprette en UCX-worker i MPI-applikationer."
+      "EN": "We need to update and restart the MODI service to fix an issue with UCX where it can't create a worker succesfully in MPI applications. We updated the underlying RoCE network interface configuration and adjusted the MODI service configuration to the new interface setup underneath. We completed the work and MODI is back online.", 
+      "DK": "Vi skal opdatere og genstarte MODI-tjenesten for at løse et problem med UCX, hvor den ikke kan oprette en UCX-worker i MPI-applikationer. Vi opdaterede den underliggende RoCE-netværks konfiguration og justerede MODI's konfiguration så den stemmede overens med den underliggende interface struktur. Dette arbejde er afsluttet, og MODI er online igen."
     },
     "announce_end": "2023-02-28T12:00:00+01:00"
   },
