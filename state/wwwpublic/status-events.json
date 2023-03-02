@@ -1,6 +1,73 @@
 [
   {
     "status": "AUTO",
+    "work_start": "2023-03-03T17:00:00+01:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2023-03-01T12:00:00+01:00",
+    "title": {
+      "EN": "Planned DAG Maintenance", 
+      "DK": "Planlagt DAG systemvedligehold"
+    },
+    "services": [
+      "DAG"
+    ],
+    "work_end": "2023-03-03T20:00:00+01:00",
+    "description": {
+      "EN": "We need to update the DAG configuration to the latest SSHFS mount plugin version and will therefore have to take down the service for this.", 
+      "DK": "Vi skal have opdateret DAG-konfigurationen til den seneste SSHFS mount plugin version, og bliver derfor nødt til at tage tjenesten ned for at gøre dette."
+    },
+    "announce_end": "2023-03-06T12:00:00+01:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2023-03-01T17:00:00+01:00",
+    "systems": [
+        "SIF"
+    ],
+    "announce_start": "2023-02-27T15:00:00+01:00",
+    "title": {
+      "EN": "Planned SIF Maintenance", 
+      "DK": "Planlagt SIF systemvedligehold"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2023-03-01T18:00:00+01:00",
+    "description": {
+      "EN": "It's time to extend the central log partition that keeps running out of logspace. The work will involve down-time for low-level system updates. Thus the service will be temporarily unavailable for shorter or longer periods during the maintenance window.  We completed the work and SIF is back online.", 
+      "DK": "Det er tid til at udvide den centrale log-partition som gentagende gange er løbet tør for plads. Arbejdet vil involvere nedetid for systemopdateringer på lavt niveau. Denne tjeneste vil derfor være midlertidigt utilgængelig i kortere eller længere perioder under vedligeholdelsesvinduet. Dette arbejde er afsluttet og SIF er tilbage online."
+    },
+    "announce_end": "2023-02-16T10:00:00+01:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2023-02-28T16:00:00+01:00",
+    "systems": [
+        "ERDA",
+        "IDMC",
+        "SIF",
+        "MiGrid"
+    ],
+    "announce_start": "2023-02-28T15:40:00+01:00",
+    "title": {
+      "EN": "Possible emergency downtime due to fire safety.",
+      "DK": "Mulig nødslukning af hensyn til brandsikkerhed."
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2023-03-02T10:00:00+01:00",
+    "description": {
+      "EN": "Two fire alarms triggered this afternoon in our data center at HCØ. Apparently due to serious smoke development from a server in one of the rooms there. The automatic INERGEN fire suppression system even fired in that room. We are investigating and evaluating the situation and due to fire safety concerns we MAY have to take down even important systems on short notice until the cause has been removed and the fire suppression system has been recharged. We apologize for any inconvenience that will cause if so, but must value staff and data safety over maximum uptime in such emergency situations. For now the mentioned systems do stay online and further information will follow here.", 
+      "DK": "To brandalarmer gik til eftermiddag i vores datacenter på HCØ. Tilsyneladende på grund af kraftig røgudvikling fra en server i et af rummene der. Det automatiske INERGEN-brandslukningssystem gik sågar igang i det pågældende rum. Vi undersøger og evaluerer situationen og af hensyn til brandsikkerheden KAN vi blive nødt til at slukke selv vigtige systemer med kort varsel indtil årsagen er fjernet og brandslukningssystemet er genfyldt. Vi beklager de gener dette i så fald medfører, men er nødt til at prioritere personale- og data-sikkerhed over maksimal oppetid i sådanne nødsituationer. For nu kører de nævnte systemer videre og yderligere information vil følge her."
+    },
+    "announce_end": "2023-03-02T12:00:00+01:00"
+  },
+  {
+    "status": "AUTO",
     "work_start": "2023-02-27T20:00:00+01:00",
     "systems": [
         "ERDA",
@@ -16,8 +83,8 @@
     ],
     "work_end": "2023-02-27T22:00:00+01:00",
     "description": {
-      "EN": "We need to update and restart the MODI service to fix an issue with UCX where it can't create a worker succesfully in MPI applications.", 
-      "DK": "Vi skal opdatere og genstarte MODI-tjenesten for at løse et problem med UCX, hvor den ikke kan oprette en UCX-worker i MPI-applikationer."
+      "EN": "We need to update and restart the MODI service to fix an issue with UCX where it can't create a worker succesfully in MPI applications. We updated the underlying RoCE network interface configuration and adjusted the MODI service configuration to the new interface setup underneath. We completed the work and MODI is back online.", 
+      "DK": "Vi skal opdatere og genstarte MODI-tjenesten for at løse et problem med UCX, hvor den ikke kan oprette en UCX-worker i MPI-applikationer. Vi opdaterede den underliggende RoCE-netværks konfiguration og justerede MODI's konfiguration så den stemmede overens med den underliggende interface struktur. Dette arbejde er afsluttet, og MODI er online igen."
     },
     "announce_end": "2023-02-28T12:00:00+01:00"
   },
@@ -38,7 +105,8 @@
     "work_end": "2023-02-15T20:30:00+01:00",
     "description": {
       "EN": "It's time for a thorough update of the SIF service. The work will involve down-time for low-level system updates. Thus the service will be temporarily unavailable for shorter or longer periods during the maintenance window. We completed the work and SIF is back online.", 
-      "DK": "Det er tid til en grundig opdatering af SIF tjenesten. Arbejdet vil involvere nedetid for systemopdateringer på lavt niveau. Denne tjeneste vil derfor være midlertidigt utilgængelig i kortere eller længere perioder under vedligeholdelsesvinduet. Dette arbejde er afsluttet og SIF er tilbage online."    },
+      "DK": "Det er tid til en grundig opdatering af SIF tjenesten. Arbejdet vil involvere nedetid for systemopdateringer på lavt niveau. Denne tjeneste vil derfor være midlertidigt utilgængelig i kortere eller længere perioder under vedligeholdelsesvinduet. Dette arbejde er afsluttet og SIF er tilbage online."
+    },
     "announce_end": "2023-02-16T10:00:00+01:00"
    },
   {

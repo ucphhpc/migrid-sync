@@ -95,12 +95,20 @@ def main(client_id, user_arguments_dict, environ=None):
         oid_url = "%s";
         tag_prefix = "extoid_";
         check_oid_available(action, oid_title, oid_url, tag_prefix);
+        oidc_url = "%s";
+        tag_prefix = "extoidc_";
+        check_oid_available(action, oid_title, oidc_url, tag_prefix);
         oid_title = "%s";
         var oid_url = "%s";
         tag_prefix = "migoid_";
         check_oid_available(action, oid_title, oid_url, tag_prefix);
+        var oidc_url = "%s";
+        tag_prefix = "migoidc_";
+        check_oid_available(action, oid_title, oidc_url, tag_prefix);
 ''' % (configuration.user_ext_oid_title, configuration.user_ext_oid_provider,
-       configuration.user_mig_oid_title, configuration.user_mig_oid_provider)
+       configuration.user_ext_oidc_provider, configuration.user_mig_oid_title,
+       configuration.user_mig_oid_provider,
+       configuration.user_mig_oidc_provider)
     title_entry['script']['advanced'] += add_import
     title_entry['script']['init'] += add_init
     title_entry['script']['ready'] += add_ready
@@ -158,6 +166,16 @@ already logged in to the OpenID service.
                             configuration.migserver_https_ext_oid_url):
                     identity = configuration.user_ext_oid_provider
                     identity = os.path.join(identity, client_id)
+                elif configuration.user_mig_oidc_provider and \
+                        openid_referrer.startswith(
+                            configuration.migserver_https_mig_oidc_url):
+                    # TODO: is this right for openid connect?
+                    identity = client_id
+                elif configuration.user_ext_oidc_provider and \
+                        openid_referrer.startswith(
+                            configuration.migserver_https_ext_oidc_url):
+                    # TODO: is this right for openid connect?
+                    identity = client_id
                 else:
                     logger.error(
                         'oidresponse from unexpected ref: %s' % client_refer)
@@ -198,8 +216,10 @@ OpenID authentication service""" + report_fail
 </div>
 """ % (err_txt, openid_error, report_txt)
     var_map = {'migoid_url': configuration.migserver_https_mig_oid_url,
+               'migoidc_url': configuration.migserver_https_mig_oidc_url,
                'migoid_title': configuration.user_mig_oid_title,
                'extoid_url': configuration.migserver_https_ext_oid_url,
+               'extoidc_url': configuration.migserver_https_ext_oidc_url,
                'extoid_title': configuration.user_ext_oid_title,
                'migcert_url': configuration.migserver_https_mig_cert_url,
                'migcert_title': configuration.user_mig_cert_title,

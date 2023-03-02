@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # accountstate - various user account state helpers
-# Copyright (C) 2020-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2020-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -261,10 +261,11 @@ def check_update_account_expire(configuration, client_id, environ=None,
         update_expire = False
         auth_type = None
         extend_days = 0
-        # External certificate/openid users should auto-renew if conf allows
+        # External certificate/openid(c) users should auto-renew if conf allows
         # them to sign up without admin acceptance. Local users always need to
         # explicitly renew access since it may require certificate renew, etc.
-        if vhost_url == configuration.migserver_https_ext_oid_url and \
+        if vhost_url in (configuration.migserver_https_ext_oid_url,
+                         configuration.migserver_https_ext_oidc_url) and \
                 configuration.auto_add_oid_user:
             update_expire = True
             extend_days = oid_auto_extend_days
