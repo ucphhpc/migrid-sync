@@ -16,8 +16,8 @@
     ],
     "work_end": "2023-03-03T20:00:00+01:00",
     "description": {
-      "EN": "We need to update the DAG configuration to the latest SSHFS mount plugin version and will therefore have to take down the service for this.", 
-      "DK": "Vi skal have opdateret DAG-konfigurationen til den seneste SSHFS mount plugin version, og bliver derfor nødt til at tage tjenesten ned for at gøre dette."
+      "EN": "We need to update the DAG configuration to the latest SSHFS mount plugin version and will therefore have to take down the service for this. We completed the work and DAG is back online.", 
+      "DK": "Vi skal have opdateret DAG-konfigurationen til den seneste SSHFS mount plugin version, og bliver derfor nødt til at tage tjenesten ned for at gøre dette. Dette arbejde er afsluttet, og MODI er online igen."
     },
     "announce_end": "2023-03-06T12:00:00+01:00"
   },
