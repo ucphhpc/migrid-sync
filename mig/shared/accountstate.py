@@ -37,9 +37,9 @@ import time
 
 from mig.shared.base import client_id_dir, client_dir_id, requested_url_base
 from mig.shared.defaults import expire_marks_dir, status_marks_dir, \
-    valid_account_status, oid_auto_extend_days, cert_auto_extend_days, \
-    attempt_auto_extend_days, AUTH_GENERIC, AUTH_CERTIFICATE, AUTH_OPENID_V2, \
-    AUTH_OPENID_CONNECT
+    valid_account_status, oid_auto_extend_days, oidc_auto_extend_days, \
+    cert_auto_extend_days, attempt_auto_extend_days, AUTH_GENERIC, \
+    AUTH_CERTIFICATE, AUTH_OPENID_V2, AUTH_OPENID_CONNECT
 from mig.shared.filemarks import get_filemark, update_filemark, reset_filemark
 from mig.shared.gdp.userid import get_base_client_id
 from mig.shared.userdb import load_user_dict, default_db_path, update_user_dict
@@ -264,11 +264,14 @@ def check_update_account_expire(configuration, client_id, environ=None,
         # External certificate/openid(c) users should auto-renew if conf allows
         # them to sign up without admin acceptance. Local users always need to
         # explicitly renew access since it may require certificate renew, etc.
-        if vhost_url in (configuration.migserver_https_ext_oid_url,
-                         configuration.migserver_https_ext_oidc_url) and \
+        if vhost_url == configuration.migserver_https_ext_oid_url and \
                 configuration.auto_add_oid_user:
             update_expire = True
             extend_days = oid_auto_extend_days
+        elif vhost_url == configuration.migserver_https_ext_oidc_url and \
+                configuration.auto_add_oidc_user:
+            update_expire = True
+            extend_days = oidc_auto_extend_days
         elif vhost_url == configuration.migserver_https_ext_cert_url and \
                 configuration.auto_add_cert_user:
             update_expire = True
@@ -338,8 +341,8 @@ def account_expire_info(configuration, username, environ=None,
         elif vhost_url == configuration.migserver_https_ext_oidc_url:
             renew_days = default_account_valid_days(configuration,
                                                     AUTH_OPENID_CONNECT)
-            if account_status == 'active' and configuration.auto_add_oid_user:
-                extend_days = oid_auto_extend_days
+            if account_status == 'active' and configuration.auto_add_oidc_user:
+                extend_days = oidc_auto_extend_days
         elif vhost_url == configuration.migserver_https_ext_cert_url:
             renew_days = default_account_valid_days(configuration,
                                                     AUTH_CERTIFICATE)

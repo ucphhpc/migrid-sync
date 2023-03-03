@@ -1505,8 +1505,8 @@ def get_any_oid_user_dn(configuration, raw_login,
         native_path = os.path.realpath(link_path)
         native_dir = os.path.basename(native_path)
         distinguished_name = client_dir_id(native_dir)
-        _logger.info('found full ID %s from %s link'
-                     % (distinguished_name, raw_login))
+        _logger.debug('found full ID %s from %s link'
+                      % (distinguished_name, raw_login))
         return distinguished_name
     elif configuration.user_openid_alias:
         db_path = default_db_path(configuration)
@@ -1515,24 +1515,24 @@ def get_any_oid_user_dn(configuration, raw_login,
         _logger.debug('user_map')
         for (distinguished_name, user) in user_map.items():
             if user[user_alias] in (raw_login, client_alias(raw_login)):
-                _logger.info('found full ID %s from %s alias'
-                             % (distinguished_name, raw_login))
+                _logger.debug('found full ID %s from %s alias'
+                              % (distinguished_name, raw_login))
                 return distinguished_name
 
     # Fall back to try direct DN (possibly on cert dir form)
-    _logger.info('fall back to direct ID %s from %s'
-                 % (raw_login, raw_login))
+    _logger.debug('fall back to direct ID %s from %s'
+                  % (raw_login, raw_login))
     # Force to dir format and check if user home exists
     cert_dir = client_id_dir(raw_login)
     base_path = os.path.join(configuration.user_home, cert_dir)
     if os.path.isdir(base_path):
         distinguished_name = client_dir_id(cert_dir)
-        _logger.info('accepting direct user %s from %s'
-                     % (distinguished_name, raw_login))
+        _logger.debug('accepting direct user %s from %s'
+                      % (distinguished_name, raw_login))
         return distinguished_name
     elif not user_check:
-        _logger.info('accepting raw user %s from %s'
-                     % (raw_login, raw_login))
+        _logger.debug('accepting raw user %s from %s'
+                      % (raw_login, raw_login))
         return raw_login
     else:
         _logger.error('no such openid user %s: %s'

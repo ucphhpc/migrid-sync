@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # install - MiG server install helpers
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -251,6 +251,7 @@ def generate_confs(
     auto_add_oidc_user=False,
     cert_valid_days=365,
     oid_valid_days=365,
+    oidc_valid_days=365,
     generic_valid_days=365,
     enable_migadmin=False,
     enable_sftp=True,
@@ -453,6 +454,7 @@ def generate_confs(
     user_dict['__AUTO_ADD_OIDC_USER__'] = "%s" % auto_add_oidc_user
     user_dict['__CERT_VALID_DAYS__'] = "%s" % cert_valid_days
     user_dict['__OID_VALID_DAYS__'] = "%s" % oid_valid_days
+    user_dict['__OIDC_VALID_DAYS__'] = "%s" % oidc_valid_days
     user_dict['__GENERIC_VALID_DAYS__'] = "%s" % generic_valid_days
     user_dict['__ENABLE_MIGADMIN__'] = "%s" % enable_migadmin
     user_dict['__ENABLE_SFTP__'] = "%s" % enable_sftp
@@ -509,7 +511,10 @@ def generate_confs(
     user_dict['__EXT_OID_PROVIDER_BASE__'] = ext_oid_provider
     user_dict['__EXT_OID_PROVIDER_ID__'] = ext_oid_provider
     user_dict['__EXT_OID_AUTH_DB__'] = auth_openid_ext_db
+    # Fall-back to oid titles if not provided
+    user_dict['__MIG_OIDC_TITLE__'] = mig_oidc_title or mig_oid_title
     user_dict['__MIG_OIDC_PROVIDER_META_URL__'] = mig_oidc_provider_meta_url
+    user_dict['__EXT_OIDC_TITLE__'] = ext_oidc_title or ext_oid_title
     user_dict['__EXT_OIDC_PROVIDER_META_URL__'] = ext_oidc_provider_meta_url
     user_dict['__EXT_OIDC_SCOPE__'] = ext_oidc_scope
     user_dict['__EXT_OIDC_REMOTE_USER_CLAIM__'] = ext_oidc_remote_user_claim
@@ -1987,6 +1992,7 @@ def create_user(
     auto_add_oidc_user = False
     cert_valid_days = 365
     oid_valid_days = 365
+    oidc_valid_days = 365
     generic_valid_days = 365
     enable_migadmin = False
     # We don't necessarily have free ports for daemons
@@ -2128,6 +2134,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         auto_add_oidc_user,
         cert_valid_days,
         oid_valid_days,
+        oidc_valid_days,
         generic_valid_days,
         enable_migadmin,
         enable_sftp,
