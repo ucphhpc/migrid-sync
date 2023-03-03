@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # defaults - default constant values used in many locations
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -161,9 +161,11 @@ default_https_port = 443
 valid_auth_types = ('cert', 'oid', 'custom')
 cert_valid_days = 365
 oid_valid_days = 365
+oidc_valid_days = 365
 generic_valid_days = custom_valid_days = 365
 cert_auto_extend_days = 30
 oid_auto_extend_days = 30
+oidc_auto_extend_days = 30
 generic_auto_extend_days = custom_auto_extend_days = 30
 # Number of days before expire that auto extend attempts kick in
 # NOTE: must be lower than all X_auto_extend_days values to avoid hammering

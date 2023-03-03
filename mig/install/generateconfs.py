@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # generateconfs - create custom MiG server configuration files
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -110,7 +110,9 @@ if '__main__' == __name__:
         'mig_oid_provider',
         'ext_oid_title',
         'ext_oid_provider',
+        'mig_oidc_title',
         'mig_oidc_provider_meta_url',
+        'ext_oidc_title',
         'ext_oidc_provider_meta_url',
         'ext_oidc_client_name',
         'ext_oidc_client_id',
@@ -169,6 +171,7 @@ if '__main__' == __name__:
     int_names = [
         'cert_valid_days',
         'oid_valid_days',
+        'oidc_valid_days',
         'generic_valid_days',
         'apache_worker_procs',
         'sftp_subsys_auth_procs',

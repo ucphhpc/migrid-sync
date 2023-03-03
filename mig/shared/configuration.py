@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # configuration - configuration wrapper
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -143,6 +143,7 @@ def fix_missing(config_file, verbose=True):
         'enable_server_dist': False,
         'auto_add_cert_user': False,
         'auto_add_oid_user': False,
+        'auto_add_oidc_user': False,
         'auto_add_resource': False,
         'server_fqdn': fqdn,
         'admin_email': '%s@%s' % (user, fqdn),
@@ -289,6 +290,8 @@ def fix_missing(config_file, verbose=True):
         'user_mig_oid_provider_alias': '',
         'user_ext_oid_provider': '',
         'user_openid_providers': [],
+        'user_mig_oidc_title': '',
+        'user_ext_oidc_title': '',
         'user_mig_oidc_provider': '',
         'user_ext_oidc_provider': '',
         'user_openidconnect_providers': [],
@@ -564,6 +567,8 @@ class Configuration(object):
     user_mig_oid_provider_alias = ''
     user_ext_oid_provider = ''
     user_openid_providers = []
+    user_mig_oidc_title = ''
+    user_ext_oidc_title = ''
     user_mig_oidc_provider = ''
     user_ext_oidc_provider = ''
     user_openidconnect_providers = []
@@ -1440,6 +1445,22 @@ location.""" % self.config_file)
                                      self.user_mig_oid_provider_alias,
                                      self.user_ext_oid_provider] if i]
             self.user_openid_providers = providers
+        if config.has_option('GLOBAL', 'user_mig_oidc_title'):
+            self.user_mig_oidc_title = config.get('GLOBAL',
+                                                  'user_migc_oid_title')
+        elif self.user_mig_oid_title:
+            # Fall back to oid title
+            self.user_mig_oidc_title = self.user_mig_oid_title
+        else:
+            self.user_mig_oidc_title = self.short_title
+        if config.has_option('GLOBAL', 'user_ext_oidc_title'):
+            self.user_ext_oidc_title = config.get('GLOBAL',
+                                                  'user_ext_oidc_title')
+        elif self.user_ext_oid_title:
+            # Fall back to oid title
+            self.user_ext_oidc_title = self.user_ext_oid_title
+        else:
+            self.user_ext_oidc_title = 'External'
         if config.has_option('GLOBAL', 'user_mig_oidc_provider'):
             self.user_mig_oidc_provider = config.get('GLOBAL',
                                                      'user_mig_oidc_provider')
