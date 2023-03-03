@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # html - html helper functions
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -1905,7 +1905,7 @@ def get_xgi_html_header(
 
         menu_helpers = {'short_title': configuration.short_title,
                         'icon_lines': '', 'text_lines': '', 'menu_lines': '',
-                        'home_url': ''}
+                        'home_url': '/'}
         if menu:
             menu_helpers['home_url'] = 'home.py'
 
