@@ -1058,7 +1058,7 @@ cert, oid and sid based https!
             jupyter_openids.append(openid_template)
 
             # Setup apache rewrite template
-            rewrite_template = gen_rewrite_template(url, def_name)
+            rewrite_template = gen_rewrite_template(url, def_name, name)
             jupyter_rewrites.append(rewrite_template)
 
             hosts, ws_hosts = [], []

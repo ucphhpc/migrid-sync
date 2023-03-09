@@ -56,6 +56,7 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
         'url': url,
         'define': define,
         'name': name,
+        'name_uppercase': name.upper(),
         'route_cookie': name.upper() + "_ROUTE_ID",
         'balancer_worker_env': '.%{BALANCER_WORKER_ROUTE}e',
         'remote_user_env': '%{PROXY_USER}e',
@@ -73,6 +74,8 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
     template = """
 <IfDefine %(define)s>
     Header add Set-Cookie "%(route_cookie)s=%(balancer_worker_env)s; path=%(url)s" env=BALANCER_ROUTE_CHANGED
+    SetEnvIf Host (.*) %(name_uppercase)s_PROXY_FQDN=$1
+
     ProxyTimeout %(timeout)s
     <Proxy balancer://%(name)s_hosts>
 %(hosts)s
@@ -88,6 +91,7 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
         ProxyPass balancer://%(name)s_hosts%(url)s
         ProxyPassReverse balancer://%(name)s_hosts%(url)s
         RequestHeader set Remote-User %(remote_user_env)s
+        RequestHeader set Referer "%{%(name_uppercase)s_PROXY_PROTOCOL}e://%{%(name_uppercase)s_PROXY_FQDN}e/%(name)s/hub"
     </Location>
     <LocationMatch "%(url)s/(user/[^/]+)/(api/kernels/[^/]+/channels|terminals/websocket)/?">
         ProxyPass   balancer://ws_%(name)s_hosts
@@ -124,19 +128,22 @@ def gen_openid_template(url, define):
     return template
 
 
-def gen_rewrite_template(url, define):
+def gen_rewrite_template(url, define, name):
     """ Generates an rewrite apache configuration section template
      for a particular jupyter service.
     url: Setting the url_path to where the jupyter service is to be located.
     define: The name of the apache variable containing the 'url' value.
+    name: The name of the jupyter service in question.
     """
 
     assert isinstance(url, basestring)
     assert isinstance(define, basestring)
+    assert isinstance(name, basestring)
 
     fill_helpers = {
         'url': url,
         'define': define,
+        'name_uppercase': name.upper(),
         'auth_phase_user': '%{LA-U:REMOTE_USER}',
         'uri': '%{REQUEST_URI}'
     }
@@ -146,6 +153,9 @@ def gen_rewrite_template(url, define):
     <Location %(url)s>
         RewriteCond %(auth_phase_user)s !^$
         RewriteRule .* - [E=PROXY_USER:%(auth_phase_user)s,NS]
+
+        RewriteCond %{REQUEST_SCHEME} !^$
+        RewriteRule .* - [E=%(name_uppercase)s_PROXY_PROTOCOL:%{name_uppercase},NS]
     </Location>
     RewriteCond %(uri)s ^%(url)s
     RewriteRule ^ - [L]
