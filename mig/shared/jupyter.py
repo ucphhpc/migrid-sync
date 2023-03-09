@@ -154,7 +154,7 @@ def gen_rewrite_template(url, define, name):
         RewriteRule .* - [E=PROXY_USER:%(auth_phase_user)s,NS]
 
         RewriteCond %{REQUEST_SCHEME} !^$
-        RewriteRule .* - [E=%(name_uppercase)s_PROXY_PROTOCOL:%{name_uppercase},NS]
+        RewriteRule .* - [E=%(name_uppercase)s_PROXY_PROTOCOL:%{REQUEST_SCHEME},NS]
     </Location>
     RewriteCond %(uri)s ^%(url)s
     RewriteRule ^ - [L]
