@@ -1530,7 +1530,8 @@ location.""" % self.config_file)
             self.public_key_file = config.get('GLOBAL', 'public_key_file')
         if config.has_option('GLOBAL', 'smtp_sender'):
             self.smtp_sender = config.get('GLOBAL', 'smtp_sender')
-        else:
+        # Default to mig-user at server FQDN if unset or empty (default)
+        if not self.smtp_sender:
             self.smtp_sender = '%s Server <%s@%s>' % \
                 (self.short_title, os.environ.get('USER', 'mig'),
                  self.server_fqdn)
