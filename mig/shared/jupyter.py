@@ -144,7 +144,8 @@ def gen_rewrite_template(url, define, name):
         'define': define,
         'name_uppercase': name.upper(),
         'auth_phase_user': '%{LA-U:REMOTE_USER}',
-        'uri': '%{REQUEST_URI}'
+        'uri': '%{REQUEST_URI}',
+        'scheme': '%{REQUEST_SCHEME}'
     }
 
     template = """
@@ -153,8 +154,8 @@ def gen_rewrite_template(url, define, name):
         RewriteCond %(auth_phase_user)s !^$
         RewriteRule .* - [E=PROXY_USER:%(auth_phase_user)s,NS]
 
-        RewriteCond %{REQUEST_SCHEME} !^$
-        RewriteRule .* - [E=%(name_uppercase)s_PROXY_PROTOCOL:%{REQUEST_SCHEME},NS]
+        RewriteCond %(scheme)s !^$
+        RewriteRule .* - [E=%(name_uppercase)s_PROXY_PROTOCOL:%(scheme)s,NS]
     </Location>
     RewriteCond %(uri)s ^%(url)s
     RewriteRule ^ - [L]
