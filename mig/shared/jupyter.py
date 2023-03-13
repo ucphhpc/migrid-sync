@@ -70,6 +70,7 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
 
     for ws_host in ws_member_hosts:
         fill_helpers['ws_hosts'] += ''.join(['        ', ws_host])
+    print("filling in jupyter gen_balancer_proxy_template with helper: (%s)" % fill_helpers)
 
     template = """
 <IfDefine %(define)s>
@@ -114,6 +115,7 @@ def gen_openid_template(url, define):
         'url': url,
         'define': define
     }
+    print("filling in jupyter gen_openid_template with helper: (%s)" % fill_helpers)
 
     template = """
 <IfDefine %(define)s>
@@ -148,6 +150,7 @@ def gen_rewrite_template(url, define, name):
         'uri': '%{REQUEST_URI}',
         'scheme': '%{REQUEST_SCHEME}'
     }
+    print("filling in jupyter gen_rewrite_template with helper: (%s)" % fill_helpers)
 
     template = """
 <IfDefine %(define)s>
