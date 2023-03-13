@@ -56,13 +56,14 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
         'url': url,
         'define': define,
         'name': name,
-        'name_uppercase': name.upper(),
         'route_cookie': name.upper() + "_ROUTE_ID",
         'balancer_worker_env': '.%{BALANCER_WORKER_ROUTE}e',
         'remote_user_env': '%{PROXY_USER}e',
         'hosts': '',
         'ws_hosts': '',
-        'timeout': timeout
+        'timeout': timeout,
+        'referer_fqdn': name.upper() + "_PROXY_FQDN=$1",
+        'referer_url': '%{' + name.upper() + "_PROXY_PROTOCOL}e://%{" + name.upper() + "_PROXY_FQDN}e/" + name + "/hub"
     }
 
     for host in member_hosts:
@@ -75,7 +76,7 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
     template = """
 <IfDefine %(define)s>
     Header add Set-Cookie "%(route_cookie)s=%(balancer_worker_env)s; path=%(url)s" env=BALANCER_ROUTE_CHANGED
-    SetEnvIf Host (.*) %(name_uppercase)s_PROXY_FQDN=$1
+    SetEnvIf Host (.*) %(referer_fqdn)s
 
     ProxyTimeout %(timeout)s
     <Proxy balancer://%(name)s_hosts>
@@ -92,7 +93,7 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
         ProxyPass balancer://%(name)s_hosts%(url)s
         ProxyPassReverse balancer://%(name)s_hosts%(url)s
         RequestHeader set Remote-User %(remote_user_env)s
-        RequestHeader set Referer "%{%(name_uppercase)s_PROXY_PROTOCOL}e://%{%(name_uppercase)s_PROXY_FQDN}e/%(name)s/hub"
+        RequestHeader set Referer %(referer_url)s
     </Location>
     <LocationMatch "%(url)s/(user/[^/]+)/(api/kernels/[^/]+/channels|terminals/websocket)/?">
         ProxyPass   balancer://ws_%(name)s_hosts
@@ -145,8 +146,8 @@ def gen_rewrite_template(url, define, name):
     fill_helpers = {
         'url': url,
         'define': define,
-        'name_uppercase': name.upper(),
         'auth_phase_user': '%{LA-U:REMOTE_USER}',
+        'referer_protocol_env_variable': name.upper() + "_PROXY_PROTOCOL",
         'uri': '%{REQUEST_URI}',
         'scheme': '%{REQUEST_SCHEME}'
     }
@@ -159,7 +160,7 @@ def gen_rewrite_template(url, define, name):
         RewriteRule .* - [E=PROXY_USER:%(auth_phase_user)s,NS]
 
         RewriteCond %(scheme)s !^$
-        RewriteRule .* - [E=%(name_uppercase)s_PROXY_PROTOCOL:%(scheme)s,NS]
+        RewriteRule .* - [E=%(referer_protocol_env_variable)s:%(scheme)s,NS]
     </Location>
     RewriteCond %(uri)s ^%(url)s
     RewriteRule ^ - [L]
