@@ -213,12 +213,14 @@ def get_newest_mount(jupyter_mounts):
     return latest, old_mounts
 
 
-def get_host_from_service(configuration, service):
+def get_host_from_service(configuration, service, base_url=None):
     """
     Returns a URL from one of the services available hosts,
     if no active host is found None is returned.
     :param configuration: The MiG Configuration object
     :param service: A service object that an active hosts should be found from
+    :param base_url: An optional postfix URL path that will be appended to the selected service host
+    when trying to connect to the service.
     :return: url string or None
     """
     _logger = configuration.logger
@@ -231,7 +233,11 @@ def get_host_from_service(configuration, service):
             rng = random.randrange(0, len(hosts) - 1)
         try:
             with requests.session() as session:
-                session.get(hosts[rng])
+                _logger.info("requsting url: %s%s" % (hosts[rng], base_url))
+                if base_url:
+                    session.get(hosts[rng] + base_url)
+                else:
+                    session.get(hosts[rng])
                 return hosts[rng]
         except requests.ConnectionError as err:
             _logger.error("Failed to establish connection to %s error %s" %
@@ -375,9 +381,9 @@ def main(client_id, user_arguments_dict):
         )
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    host = get_host_from_service(configuration, service)
+    host = get_host_from_service(configuration, service, base_url="/%s" % service["service_name"])
     # Get an active jupyterhost
-    if host is None:
+    if not host:
         logger.error("No active jupyterhub host could be found")
         output_objects.append(
             {'object_type': 'error_text', 'text':
