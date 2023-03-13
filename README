@@ -706,6 +706,7 @@ or the same on centos
                    --collaboration_links="default advanced" \
                    --default_vgrid_links="files web" \
                    --advanced_vgrid_links="files web scm tracker workflows monitor" \
+                   --smtp_sender="Do Not Reply <no-reply@migrid.org>" \
                    --admin_email="MiGrid Info <info@migrid.org>" --log_level=info \
                    --title="Minimum intrusion Grid" \
                    --short_title="MiG" \
@@ -853,6 +854,7 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --collaboration_links="default advanced" \
                    --default_vgrid_links="files web" \
                    --advanced_vgrid_links="files web scm workflows monitor" \
+                   --smtp_sender="Do Not Reply <no-reply@erda.dk>" \
                    --admin_email="ERDA Info <info@erda.dk>" --log_level=info \
                    --title="University of Copenhagen - Electronic Research Data Archive" \
                    --short_title="UCPH ERDA" \
@@ -936,6 +938,7 @@ with optional 2-FA support and legacy sftp clients:
                    --collaboration_links="default advanced" \
                    --default_vgrid_links="files web" \
                    --advanced_vgrid_links="files web scm workflows monitor" \
+                   --smtp_sender="Do Not Reply <no-reply@idmc.dk>" \
                    --admin_email="IDMC Info <info@idmc.dk>" --log_level=info \
                    --title="Imaging Data Management Center" \
                    --short_title="IDMC" \

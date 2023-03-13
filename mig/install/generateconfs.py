@@ -160,6 +160,7 @@ if '__main__' == __name__:
         'advanced_vgrid_links',
         'admin_email',
         'admin_list',
+        'smtp_sender',
         'log_level',
         'twofactor_mandatory_protos',
         'freeze_to_tape',

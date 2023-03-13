@@ -377,6 +377,7 @@ def generate_confs(
     advanced_vgrid_links='files web scm tracker workflows monitor',
     admin_email='mig',
     admin_list='',
+    smtp_sender='',
     log_level='info',
     freeze_to_tape='',
     status_system_match=keyword_any,
@@ -591,6 +592,7 @@ def generate_confs(
     user_dict['__ADVANCED_VGRID_LINKS__'] = advanced_vgrid_links
     user_dict['__ADMIN_EMAIL__'] = admin_email
     user_dict['__ADMIN_LIST__'] = admin_list
+    user_dict['__SMTP_SENDER__'] = smtp_sender
     user_dict['__LOG_LEVEL__'] = log_level
     user_dict['__FREEZE_TO_TAPE__'] = freeze_to_tape
     user_dict['__STATUS_SYSTEM_MATCH__'] = status_system_match
