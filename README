@@ -706,6 +706,7 @@ or the same on centos
                    --collaboration_links="default advanced" \
                    --default_vgrid_links="files web" \
                    --advanced_vgrid_links="files web scm tracker workflows monitor" \
+                   --smtp_sender="Do Not Reply <no-reply@migrid.org>" \
                    --admin_email="MiGrid Info <info@migrid.org>" --log_level=info \
                    --title="Minimum intrusion Grid" \
                    --short_title="MiG" \
@@ -828,7 +829,7 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --enable_cracklib=True --enable_hsts=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
                    --enable_notify=True --enable_jupyter=True \
-                   --jupyter_services='DAG.http://dag002.science DAG.http://dag003.science DAG.http://dag004.science DAG.http://dag005.science DAG.http://dag006.science DAG.http://dag007.science DAG.http://dag200.science DAG.http://dag201.science DAG.http://dag202.science DAG.http://dag203.science DAG.http://dag204.science MODI.http://ext.login.modi' \
+                   --jupyter_services='DAG.http://dag002.science DAG.http://dag003.science DAG.http://dag004.science DAG.http://dag005.science DAG.http://dag006.science DAG.http://dag007.science DAG.http://dag008.science DAG.http://dag009.science DAG.http://dag010.science DAG.http://dag200.science DAG.http://dag201.science DAG.http://dag203.science DAG.http://dag204.science MODI.http://ext.login.modi' \
                    --jupyter_services_desc="{'DAG': '/home/mig/state/wwwpublic/dag_desc.html', 'MODI': '/home/mig/state/wwwpublic/modi_desc.html'}" \
                    --enable_cloud=True \
                    --enable_migadmin=True \
@@ -853,6 +854,7 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --collaboration_links="default advanced" \
                    --default_vgrid_links="files web" \
                    --advanced_vgrid_links="files web scm workflows monitor" \
+                   --smtp_sender="Do Not Reply <no-reply@erda.dk>" \
                    --admin_email="ERDA Info <info@erda.dk>" --log_level=info \
                    --title="University of Copenhagen - Electronic Research Data Archive" \
                    --short_title="UCPH ERDA" \
@@ -912,7 +914,7 @@ with optional 2-FA support and legacy sftp clients:
                    --enable_workflows=True --enable_hsts=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
                    --enable_jupyter=True --enable_migadmin=True \
-                   --jupyter_services='DAG.http://dag002.science DAG.http://dag003.science DAG.http://dag004.science DAG.http://dag005.science DAG.http://dag006.science DAG.http://dag007.science DAG.http://dag200.science DAG.http://dag201.science DAG.http://dag202.science DAG.http://dag203.science DAG.http://dag204.science MODI.http://ext.login.modi' \
+                   --jupyter_services='DAG.http://dag002.science DAG.http://dag003.science DAG.http://dag004.science DAG.http://dag005.science DAG.http://dag006.science DAG.http://dag007.science DAG.http://dag008.science DAG.http://dag009.science DAG.http://dag010.science DAG.http://dag200.science DAG.http://dag201.science DAG.http://dag203.science DAG.http://dag204.science MODI.http://ext.login.modi' \
                    --jupyter_services_desc="{'DAG': '/home/mig/state/wwwpublic/dag_desc.html', 'MODI': '/home/mig/state/wwwpublic/modi_desc.html'}" \
                    --enable_peers=True --peers_mandatory=True \
                    --peers_explicit_fields='full_name email' \
@@ -936,6 +938,7 @@ with optional 2-FA support and legacy sftp clients:
                    --collaboration_links="default advanced" \
                    --default_vgrid_links="files web" \
                    --advanced_vgrid_links="files web scm workflows monitor" \
+                   --smtp_sender="Do Not Reply <no-reply@idmc.dk>" \
                    --admin_email="IDMC Info <info@idmc.dk>" --log_level=info \
                    --title="Imaging Data Management Center" \
                    --short_title="IDMC" \

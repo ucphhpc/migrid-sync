@@ -60,7 +60,9 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
         'remote_user_env': '%{PROXY_USER}e',
         'hosts': '',
         'ws_hosts': '',
-        'timeout': timeout
+        'timeout': timeout,
+        'referer_fqdn': name.upper() + "_PROXY_FQDN=$1",
+        'referer_url': '%{' + name.upper() + "_PROXY_PROTOCOL}e://%{" + name.upper() + "_PROXY_FQDN}e/" + name + "/hub"
     }
 
     for host in member_hosts:
@@ -68,10 +70,13 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
 
     for ws_host in ws_member_hosts:
         fill_helpers['ws_hosts'] += ''.join(['        ', ws_host])
+    print("filling in jupyter gen_balancer_proxy_template with helper: (%s)" % fill_helpers)
 
     template = """
 <IfDefine %(define)s>
     Header add Set-Cookie "%(route_cookie)s=%(balancer_worker_env)s; path=%(url)s" env=BALANCER_ROUTE_CHANGED
+    SetEnvIf Host (.*) %(referer_fqdn)s
+
     ProxyTimeout %(timeout)s
     <Proxy balancer://%(name)s_hosts>
 %(hosts)s
@@ -87,6 +92,7 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
         ProxyPass balancer://%(name)s_hosts%(url)s
         ProxyPassReverse balancer://%(name)s_hosts%(url)s
         RequestHeader set Remote-User %(remote_user_env)s
+        RequestHeader set Referer %(referer_url)s
     </Location>
     <LocationMatch "%(url)s/(user/[^/]+)/(api/kernels/[^/]+/channels|terminals/websocket)/?">
         ProxyPass   balancer://ws_%(name)s_hosts
@@ -109,6 +115,7 @@ def gen_openid_template(url, define):
         'url': url,
         'define': define
     }
+    print("filling in jupyter gen_openid_template with helper: (%s)" % fill_helpers)
 
     template = """
 <IfDefine %(define)s>
@@ -123,28 +130,36 @@ def gen_openid_template(url, define):
     return template
 
 
-def gen_rewrite_template(url, define):
+def gen_rewrite_template(url, define, name):
     """ Generates an rewrite apache configuration section template
      for a particular jupyter service.
     url: Setting the url_path to where the jupyter service is to be located.
     define: The name of the apache variable containing the 'url' value.
+    name: The name of the jupyter service in question.
     """
 
     assert isinstance(url, basestring)
     assert isinstance(define, basestring)
+    assert isinstance(name, basestring)
 
     fill_helpers = {
         'url': url,
         'define': define,
         'auth_phase_user': '%{LA-U:REMOTE_USER}',
-        'uri': '%{REQUEST_URI}'
+        'referer_protocol_env_variable': name.upper() + "_PROXY_PROTOCOL",
+        'uri': '%{REQUEST_URI}',
+        'scheme': '%{REQUEST_SCHEME}'
     }
+    print("filling in jupyter gen_rewrite_template with helper: (%s)" % fill_helpers)
 
     template = """
 <IfDefine %(define)s>
     <Location %(url)s>
         RewriteCond %(auth_phase_user)s !^$
         RewriteRule .* - [E=PROXY_USER:%(auth_phase_user)s,NS]
+
+        RewriteCond %(scheme)s !^$
+        RewriteRule .* - [E=%(referer_protocol_env_variable)s:%(scheme)s,NS]
     </Location>
     RewriteCond %(uri)s ^%(url)s
     RewriteRule ^ - [L]

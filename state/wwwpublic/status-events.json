@@ -16,8 +16,8 @@
     ],
     "work_end": "2023-03-03T20:00:00+01:00",
     "description": {
-      "EN": "We need to update the DAG configuration to the latest SSHFS mount plugin version and will therefore have to take down the service for this.", 
-      "DK": "Vi skal have opdateret DAG-konfigurationen til den seneste SSHFS mount plugin version, og bliver derfor nødt til at tage tjenesten ned for at gøre dette."
+      "EN": "We need to update the DAG configuration to the latest SSHFS mount plugin version and will therefore have to take down the service for this. We completed the work and DAG is back online.", 
+      "DK": "Vi skal have opdateret DAG-konfigurationen til den seneste SSHFS mount plugin version, og bliver derfor nødt til at tage tjenesten ned for at gøre dette. Dette arbejde er afsluttet, og MODI er online igen."
     },
     "announce_end": "2023-03-06T12:00:00+01:00"
   },
@@ -40,7 +40,7 @@
       "EN": "It's time to extend the central log partition that keeps running out of logspace. The work will involve down-time for low-level system updates. Thus the service will be temporarily unavailable for shorter or longer periods during the maintenance window.  We completed the work and SIF is back online.", 
       "DK": "Det er tid til at udvide den centrale log-partition som gentagende gange er løbet tør for plads. Arbejdet vil involvere nedetid for systemopdateringer på lavt niveau. Denne tjeneste vil derfor være midlertidigt utilgængelig i kortere eller længere perioder under vedligeholdelsesvinduet. Dette arbejde er afsluttet og SIF er tilbage online."
     },
-    "announce_end": "2023-02-16T10:00:00+01:00"
+    "announce_end": "2023-03-02T12:00:00+01:00"
   },
   {
     "status": "AUTO",
@@ -59,12 +59,12 @@
     "services": [
       "ALL"
     ],
-    "work_end": "2023-03-02T10:00:00+01:00",
+    "work_end": "2023-03-09T10:00:00+01:00",
     "description": {
-      "EN": "Two fire alarms triggered this afternoon in our data center at HCØ. Apparently due to serious smoke development from a server in one of the rooms there. The automatic INERGEN fire suppression system even fired in that room. We are investigating and evaluating the situation and due to fire safety concerns we MAY have to take down even important systems on short notice until the cause has been removed and the fire suppression system has been recharged. We apologize for any inconvenience that will cause if so, but must value staff and data safety over maximum uptime in such emergency situations. For now the mentioned systems do stay online and further information will follow here.", 
-      "DK": "To brandalarmer gik til eftermiddag i vores datacenter på HCØ. Tilsyneladende på grund af kraftig røgudvikling fra en server i et af rummene der. Det automatiske INERGEN-brandslukningssystem gik sågar igang i det pågældende rum. Vi undersøger og evaluerer situationen og af hensyn til brandsikkerheden KAN vi blive nødt til at slukke selv vigtige systemer med kort varsel indtil årsagen er fjernet og brandslukningssystemet er genfyldt. Vi beklager de gener dette i så fald medfører, men er nødt til at prioritere personale- og data-sikkerhed over maksimal oppetid i sådanne nødsituationer. For nu kører de nævnte systemer videre og yderligere information vil følge her."
+      "EN": "Two fire alarms triggered this afternoon in our data center at HCØ. Apparently due to serious smoke development from a server in one of the rooms there. The automatic INERGEN fire suppression system even fired in that room. We are investigating and evaluating the situation and due to fire safety concerns we MAY have to take down even important systems on short notice until the cause has been removed and the fire suppression system has been recharged. We apologize for any inconvenience that will cause if so, but must value staff and data safety over maximum uptime in such emergency situations. For now the mentioned systems do stay online and we are quite confident that we can keep it that way. Further information will follow here.", 
+      "DK": "To brandalarmer gik til eftermiddag i vores datacenter på HCØ. Tilsyneladende på grund af kraftig røgudvikling fra en server i et af rummene der. Det automatiske INERGEN-brandslukningssystem gik sågar igang i det pågældende rum. Vi undersøger og evaluerer situationen og af hensyn til brandsikkerheden KAN vi blive nødt til at slukke selv vigtige systemer med kort varsel indtil årsagen er fjernet og brandslukningssystemet er genfyldt. Vi beklager de gener dette i så fald medfører, men er nødt til at prioritere personale- og data-sikkerhed over maksimal oppetid i sådanne nødsituationer. For nu kører de nævnte systemer videre og vi regner med at det kan fortsætte sådan. Yderligere information vil følge her."
     },
-    "announce_end": "2023-03-02T12:00:00+01:00"
+    "announce_end": "2023-03-10T12:00:00+01:00"
   },
   {
     "status": "AUTO",
