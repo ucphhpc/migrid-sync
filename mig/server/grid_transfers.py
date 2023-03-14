@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_transfers - transfer handler to run background data transfers
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -395,6 +395,9 @@ def get_cmd_map():
                 'rsyncssh': ['rsync', '-e', rsyncssh_transport_str] +
                 rsync_core_opts + ['%(rsync_args)s', RSYNC_EXCLUDES_LIST,
                                    '%(rsync_src)s', '%(rsync_dst)s'],
+                'rsyncd': ['rsync'] + rsync_core_opts +
+                ['%(rsync_args)s', RSYNC_EXCLUDES_LIST,
+                 '%(rsync_src)s', '%(rsync_dst)s'],
                 },
                'export':
                {'sftp': ['lftp', '-c',
@@ -443,6 +446,9 @@ def get_cmd_map():
                 'rsyncssh': ['rsync', '-e', rsyncssh_transport_str] +
                 rsync_core_opts + ['%(rsync_args)s', RSYNC_EXCLUDES_LIST,
                                    '%(rsync_src)s', '%(rsync_dst)s'],
+                'rsyncd': ['rsync'] + rsync_core_opts +
+                ['%(rsync_args)s', RSYNC_EXCLUDES_LIST,
+                 '%(rsync_src)s', '%(rsync_dst)s'],
                 }
                }
     return cmd_map
