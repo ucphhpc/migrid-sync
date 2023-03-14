@@ -193,7 +193,6 @@ def read_tail(path, lines, logger):
             logger.debug("seek to offset %d from end of %s" % (offset, path))
             tail_fd.seek(-offset, os.SEEK_END)
             pos = tail_fd.tell()
-            out_lines = tail_fd.readlines()
             # NOTE: with bytes we need to be more careful with line splitting
             #out_lines = tail_fd.readlines()
             out_lines = force_native_str(tail_fd.read()).splitlines(True)
