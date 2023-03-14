@@ -396,6 +396,9 @@ def get_cmd_map():
                 'rsyncssh': ['rsync', '-e', rsyncssh_transport_str] +
                 rsync_core_opts + ['%(rsync_args)s', RSYNC_EXCLUDES_LIST,
                                    '%(rsync_src)s', '%(rsync_dst)s'],
+                'rsyncd': ['rsync'] + rsync_core_opts +
+                ['%(rsync_args)s', RSYNC_EXCLUDES_LIST,
+                 '%(rsync_src)s', '%(rsync_dst)s'],
                 },
                'export':
                {'sftp': ['lftp', '-c',
@@ -444,6 +447,9 @@ def get_cmd_map():
                 'rsyncssh': ['rsync', '-e', rsyncssh_transport_str] +
                 rsync_core_opts + ['%(rsync_args)s', RSYNC_EXCLUDES_LIST,
                                    '%(rsync_src)s', '%(rsync_dst)s'],
+                'rsyncd': ['rsync'] + rsync_core_opts +
+                ['%(rsync_args)s', RSYNC_EXCLUDES_LIST,
+                 '%(rsync_src)s', '%(rsync_dst)s'],
                 }
                }
     return cmd_map
