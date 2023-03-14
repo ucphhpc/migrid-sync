@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_transfers - transfer handler to run background data transfers
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -47,7 +47,7 @@ import sys
 import time
 import traceback
 
-from mig.shared.base import client_dir_id, client_id_dir
+from mig.shared.base import client_dir_id, client_id_dir, force_native_str
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import datatransfers_filename, transfers_log_size, \
     transfers_log_cnt, user_keys_dir, _user_invisible_paths
@@ -645,6 +645,8 @@ def run_transfer(configuration, client_id, transfer_dict):
         add_sub_pid(configuration, sub_pid_map, client_id, transfer_id,
                     sub_pid)
         out, err = transfer_proc.communicate()
+        # NOTE: process output is on system bytecode format and we need string
+        out, err = force_native_str(out), force_native_str(err)
         exit_code = transfer_proc.wait()
         status |= exit_code
         del_sub_pid(configuration, sub_pid_map, client_id, transfer_id,
@@ -708,7 +710,7 @@ def wrap_run_transfer(configuration, client_id, transfer_dict):
         run_transfer(configuration, client_id, transfer_dict)
     except Exception as exc:
         logger.error("run transfer failed: %s" % exc)
-        logger.error(traceback.format_exc(exc))
+        logger.error(traceback.format_exc())
         transfer_dict['status'] = "FAILED"
         if not transfer_result(configuration, client_id, transfer_dict,
                                transfer_dict['exit_code'], '',

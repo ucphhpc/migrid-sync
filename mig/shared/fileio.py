@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # fileio - wrappers to keep file I/O in a single replaceable module
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -181,7 +181,8 @@ def read_tail(path, lines, logger):
         #logger.debug("loading %d lines from %s" % (lines, path))
         if not os.path.exists(path):
             return out_lines
-        tail_fd = open(path, 'r')
+        # NOTE: python3 dropped end-relative seeks for text files - use binary
+        tail_fd = open(path, 'rb')
         tail_fd.seek(0, os.SEEK_END)
         size = tail_fd.tell()
         pos = tail_fd.tell()
@@ -193,6 +194,9 @@ def read_tail(path, lines, logger):
             tail_fd.seek(-offset, os.SEEK_END)
             pos = tail_fd.tell()
             out_lines = tail_fd.readlines()
+            # NOTE: with bytes we need to be more careful with line splitting
+            #out_lines = tail_fd.readlines()
+            out_lines = force_native_str(tail_fd.read()).splitlines(True)
             step_size *= 2
             #logger.debug("reading %d lines from %s" % (lines, path))
         tail_fd.close()
