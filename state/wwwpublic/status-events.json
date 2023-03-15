@@ -1,4 +1,26 @@
 [
+ {
+    "status": "AUTO", 
+    "work_start": "2023-03-27T17:00:00+01:00", 
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2023-03-14T14:00:00+01:00",
+    "title": {
+      "EN": "Planned ERDA/IDMC Maintenance",
+      "DK": "Planlagt ERDA/IDMC vedligehold"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2023-03-28T07:00:00+01:00",
+    "description": {
+      "EN": "It's time for a thorough update of the ERDA/IDMC systems and migration of front ends to newer hardware. The work will involve frontend down-time for a number of low-level system tasks. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect a longer downtime of approximately two hours for the migration and main upgrades if everything runs smoothly. That downtime will likely start about half an hour into the window and should therefore finish well before standard working hours. Further information will follow here.",
+      "DK": "Det er tid til en gennemgående opdatering af ERDA/IDMC systemerne og migrering af front-ends til nyere hardware. Arbejdet kræver nedetid på frontends til grundlæggende systemopgaver, og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi forventer en længere nedetid på et par timers tid til migrering samt hovedopgraderingerne, hvis alting forløber planmæssigt. Den del vil formodentlig begynde omkring en halv time inde i servicevinduet og skulle derfor være overstået længe inden almindelig arbejdstid. Nærmere informationer følger her."
+    },
+    "announce_end": "2023-03-29T12:00:00+01:00"
+  }, 
   {
     "status": "AUTO",
     "work_start": "2023-03-03T17:00:00+01:00",
@@ -59,12 +81,12 @@
     "services": [
       "ALL"
     ],
-    "work_end": "2023-03-09T10:00:00+01:00",
+    "work_end": "2023-03-13T16:00:00+01:00",
     "description": {
-      "EN": "Two fire alarms triggered this afternoon in our data center at HCØ. Apparently due to serious smoke development from a server in one of the rooms there. The automatic INERGEN fire suppression system even fired in that room. We are investigating and evaluating the situation and due to fire safety concerns we MAY have to take down even important systems on short notice until the cause has been removed and the fire suppression system has been recharged. We apologize for any inconvenience that will cause if so, but must value staff and data safety over maximum uptime in such emergency situations. For now the mentioned systems do stay online and we are quite confident that we can keep it that way. Further information will follow here.", 
-      "DK": "To brandalarmer gik til eftermiddag i vores datacenter på HCØ. Tilsyneladende på grund af kraftig røgudvikling fra en server i et af rummene der. Det automatiske INERGEN-brandslukningssystem gik sågar igang i det pågældende rum. Vi undersøger og evaluerer situationen og af hensyn til brandsikkerheden KAN vi blive nødt til at slukke selv vigtige systemer med kort varsel indtil årsagen er fjernet og brandslukningssystemet er genfyldt. Vi beklager de gener dette i så fald medfører, men er nødt til at prioritere personale- og data-sikkerhed over maksimal oppetid i sådanne nødsituationer. For nu kører de nævnte systemer videre og vi regner med at det kan fortsætte sådan. Yderligere information vil følge her."
+      "EN": "Two fire alarms triggered this afternoon in our data center at HCØ. Apparently due to serious smoke development from a server in one of the rooms there. The automatic INERGEN fire suppression system even fired in that room. We are investigating and evaluating the situation and due to fire safety concerns we MAY have to take down even important systems on short notice until the cause has been removed and the fire suppression system has been recharged. We apologize for any inconvenience that will cause if so, but must value staff and data safety over maximum uptime in such emergency situations. For now the mentioned systems do stay online and we are quite confident that we can keep it that way. Facility management have replaced the gas cylinders in the fire suppression system on March 13th and everything is back to normal.", 
+      "DK": "To brandalarmer gik til eftermiddag i vores datacenter på HCØ. Tilsyneladende på grund af kraftig røgudvikling fra en server i et af rummene der. Det automatiske INERGEN-brandslukningssystem gik sågar igang i det pågældende rum. Vi undersøger og evaluerer situationen og af hensyn til brandsikkerheden KAN vi blive nødt til at slukke selv vigtige systemer med kort varsel indtil årsagen er fjernet og brandslukningssystemet er genfyldt. Vi beklager de gener dette i så fald medfører, men er nødt til at prioritere personale- og data-sikkerhed over maksimal oppetid i sådanne nødsituationer. For nu kører de nævnte systemer videre og vi regner med at det kan fortsætte sådan. Bygningsservice skiftede gascylinderne i brandslukningssystemet den 13. marts og vi er tilbage i almindelig drift."
     },
-    "announce_end": "2023-03-10T12:00:00+01:00"
+    "announce_end": "2023-03-14T12:00:00+01:00"
   },
   {
     "status": "AUTO",
