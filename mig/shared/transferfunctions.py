@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # transferfunctions - data transfer helper functions
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,6 +31,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import datetime
+import re
 import os
 import time
 
@@ -58,11 +59,16 @@ def get_status_dir(configuration, client_id, transfer_id=''):
 
 def blind_pw(transfer_dict):
     """Returns a copy of transfer_dict with password blinded out"""
+    hide_pw = '**HIDDEN**'
     blinded = transfer_dict.copy()
-    if blinded.get('password', ''):
-        blinded['password'] = '*' * len(transfer_dict['password'])
-    elif blinded.get('password_digest', ''):
-        blinded['password'] = '*' * 8
+    if blinded.get('password', '') or blinded.get('password_encrypted', '') \
+            or blinded.get('password_digest', ''):
+        blinded['password'] = hide_pw
+    # NOTE: lftp commands inline credentials for various reasons (see S3 note)
+    for target in ('lftp_src', 'lftp_dst'):
+        if blinded.get(target, ''):
+            blinded[target] = re.sub(r'(.*://[^:]*):[^@]+@(.*)',
+                                     r'\1:%s@\2' % hide_pw, blinded[target])
     return blinded
 
 
