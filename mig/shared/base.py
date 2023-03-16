@@ -139,9 +139,10 @@ def hexlify(strval):
 
 # TODO: migrate all uses of binascii unhexlify to use this helper instead
 def unhexlify(hexval):
-    """Convert hexlified hexval back to str"""
+    """Convert possibly lowercase hexlified hexval back to str"""
     # NOTE: base64 encoders require bytes and we want native string back
-    return force_native_str(base64.b16decode(force_utf8(hexval.lower())))
+    # IMPORTANT: base16decode requires uppercase string
+    return force_native_str(base64.b16decode(force_utf8(hexval.upper())))
 
 
 def is_gdp_user(configuration, client_id):
