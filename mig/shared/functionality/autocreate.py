@@ -689,8 +689,9 @@ All the best,
 The %(short_title)s Admins
 """ % fill_helper
 
-        logger.info('Send email: to: %s, header: %s, msg: %s, smtp_server: %s'
-                    % (email, email_header, email_msg, smtp_server))
+        logger.info('Send email: to: %s, header: %s, smtp_server: %s'
+                    % (email, email_header, smtp_server))
+        logger.debug('email body:  %s' % email_msg)
         if not send_email(email, email_header, email_msg, logger,
                           configuration):
             output_objects.append({
