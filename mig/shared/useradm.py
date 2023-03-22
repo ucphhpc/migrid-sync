@@ -51,15 +51,17 @@ from mig.shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
     settings_filename, profile_filename, default_css_filename, \
     widgets_filename, seafile_ro_dirname, authkeys_filename, \
     authpasswords_filename, authdigests_filename, cert_field_order, \
-    twofactor_filename, peers_filename, gdp_distinguished_field
+    twofactor_filename, peers_filename, gdp_distinguished_field, \
+    unique_id_length
 from mig.shared.fileio import filter_pickled_list, filter_pickled_dict, \
     make_symlink, delete_symlink, remove_dir, remove_rec, listdir, move
 from mig.shared.modified import mark_user_modified
 from mig.shared.refunctions import list_runtime_environments, \
     update_runtimeenv_owner
-from mig.shared.pwhash import make_hash, check_hash, make_digest, check_digest, \
-    make_scramble, check_scramble, unscramble_password, unscramble_digest, \
-    verify_reset_token, assure_password_strength
+from mig.shared.pwhash import make_safe_hash, make_hash, check_hash, \
+    make_digest, check_digest, make_scramble, check_scramble, \
+    unscramble_password, unscramble_digest, verify_reset_token, \
+    assure_password_strength, generate_random_ascii
 from mig.shared.resource import resource_add_owners, resource_remove_owners
 from mig.shared.serial import load, dump
 from mig.shared.settings import update_settings, update_profile, update_widgets
@@ -219,6 +221,7 @@ def create_user(
     peer_expire_slack=0,
     from_edit_user=False,
     ask_change_pw=False,
+    auto_create_db=True,
 ):
     """Add user"""
     flock = None
@@ -412,12 +415,19 @@ def create_user(
         flock = lock_user_db(db_path)
 
     if not os.path.exists(db_path):
-        print('User DB in %s does not exist - okay if first user' % db_path)
-        create_answer = raw_input('Create new user DB? [Y/n] ')
+        # Auto-create missing user DB if either auto_create_db or force is set
+        if auto_create_db or force:
+            create_answer = 'y'
+        else:
+            print('User DB in %s does not exist - okay if first user' % db_path)
+            create_answer = raw_input('Create new user DB? [Y/n] ')
         if create_answer.lower().startswith('n'):
             if do_lock:
                 unlock_user_db(flock)
             raise Exception("Missing user DB: '%s'" % db_path)
+
+        if verbose:
+            print('Creating missing user DB in: %s' % db_path)
         # Dump empty DB
         save_user_db(user_db, db_path, do_lock=False)
 
@@ -463,6 +473,8 @@ def create_user(
     if client_id not in user_db:
         default_ui = configuration.new_user_default_ui
         user['created'] = now
+        user['unique_id'] = generate_random_ascii(unique_id_length,
+                                                  '0123456789abcdef')
     else:
         default_ui = None
         account_status = user_db[client_id].get('status', 'active')
@@ -560,6 +572,9 @@ change."""
             user.clear()
             user.update(updated_user)
             user['renewed'] = now
+            # Init existing users with a safe hash of client_id as unique_id
+            if not user.get('unique_id', None):
+                user['unique_id'] = make_safe_hash(client_id)
         elif not force:
             if do_lock:
                 unlock_user_db(flock)
@@ -588,6 +603,24 @@ change."""
     user['openid_names'] = list(dict([(name, 0) for name in add_names +
                                       openid_names]))
 
+    # Make sure unique_id is really unique in user DB
+    all_unique = [i['unique_id'] for (_, i) in user_db.items() if
+                  i.get('unique_id', None)]
+    found_unique = False
+    for _ in range(4):
+        if user['unique_id'] not in all_unique:
+            found_unique = True
+            break
+        user['unique_id'] = generate_random_ascii(unique_id_length,
+                                                  '0123456789abcdef')
+
+    if not found_unique:
+        if verbose:
+            print('Failed to generate a unique id for %s - bailing out!' %
+                  client_id)
+        raise Exception('Failed to generate a unique id for %s - bailing out!'
+                        % client_id)
+
     try:
         user_db[client_id] = user
         sync_gdp_users(configuration, user_db, user, client_id)
@@ -609,6 +642,9 @@ change."""
     update_account_expire_cache(configuration, user)
     update_account_status_cache(configuration, user)
 
+    # TODO: migrate to use unique_id as client_dir everywhere
+    #       Symlink old client_dir to unique_id for new users
+    #       Symlink unique_id to old client_dir for existing users
     home_dir = os.path.join(configuration.user_home, client_dir)
     settings_dir = os.path.join(configuration.user_settings, client_dir)
     cache_dir = os.path.join(configuration.user_cache, client_dir)

@@ -699,6 +699,11 @@ def make_simple_hash(val):
     return hashlib.md5(val).hexdigest()
 
 
+def make_safe_hash(val):
+    """Generate a safe sha256 hash for val and return the 64-char hexdigest"""
+    return hashlib.sha256(val).hexdigest()
+
+
 def make_path_hash(configuration, path):
     """Generate a 128-bit md5 hash for path and return the 32 char hexdigest.
     Used to compress long paths into a fixed length string ID without
