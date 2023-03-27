@@ -155,6 +155,11 @@ def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
     return retval
 
 
+def write_file_lines(lines, path, logger, mode='w', make_parent=True, umask=None):
+    """Wrapper to handle writing of lines of content to path"""
+    return write_file(''.join(lines), path, logger, mode, make_parent, umask)
+
+
 def read_file(path, logger, allow_missing=False):
     """Wrapper to handle reading of contents from path"""
     if not logger:
@@ -170,6 +175,14 @@ def read_file(path, logger, allow_missing=False):
         if not allow_missing:
             logger.error('could not read %s: %s' % (path, err))
     return content
+
+
+def read_file_lines(path, logger):
+    """Wrapper to handle reading lines of content from path"""
+    contents = read_file(path, logger)
+    if contents is None:
+        return contents
+    return contents.split('\n')
 
 
 def read_tail(path, lines, logger):

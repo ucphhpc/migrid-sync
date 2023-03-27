@@ -129,6 +129,8 @@ if '__main__' == __name__:
         'vgrid_managers',
         'signup_methods',
         'login_methods',
+        'digest_salt',
+        'crypto_salt',
         'csrf_protection',
         'password_policy',
         'password_legacy_policy',

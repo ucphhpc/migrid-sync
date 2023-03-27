@@ -57,7 +57,10 @@ from mig.shared.defaults import default_http_port, default_https_port, \
     auth_openid_mig_db, auth_openid_ext_db, STRONG_TLS_CIPHERS, \
     STRONG_TLS_CURVES, STRONG_SSH_KEXALGOS, STRONG_SSH_LEGACY_KEXALGOS, \
     STRONG_SSH_CIPHERS, STRONG_SSH_LEGACY_CIPHERS, STRONG_SSH_MACS, \
-    STRONG_SSH_LEGACY_MACS, CRACK_USERNAME_REGEX, CRACK_WEB_REGEX, keyword_any
+    STRONG_SSH_LEGACY_MACS, CRACK_USERNAME_REGEX, CRACK_WEB_REGEX, \
+    keyword_any, keyword_auto
+from mig.shared.fileio import read_file, read_file_lines, write_file, \
+    write_file_lines
 from mig.shared.html import menu_items
 from mig.shared.jupyter import gen_balancer_proxy_template, gen_openid_template, \
     gen_rewrite_template
@@ -70,13 +73,9 @@ from mig.shared.url import urlparse
 def fill_template(template_file, output_file, settings, eat_trailing_space=[],
                   additional=None):
     """Fill a configuration template using provided settings dictionary"""
-    try:
-        template = open(template_file, 'r')
-        contents = template.read()
-        template.close()
-    except Exception as err:
-        print('Error: reading template file %s: %s' % (template_file,
-                                                       err))
+    contents = read_file(template_file, None)
+    if contents is None:
+        print('Error: reading template file %s' % template_file)
         return False
 
     # print "template read:\n", output
@@ -94,12 +93,8 @@ def fill_template(template_file, output_file, settings, eat_trailing_space=[],
 
     # print "writing specific contents to %s" % (output_file)
 
-    try:
-        output = open(output_file, 'w')
-        output.write(contents)
-        output.close()
-    except Exception as err:
-        print('Error: writing output file %s: %s' % (output_file, err))
+    if not write_file(contents, output_file, None):
+        print('Error: writing output file %s' % output_file)
         return False
     return True
 
@@ -115,12 +110,10 @@ def template_insert(template_file, insert_identifiers, unique=False):
     already present in the template_file, if so it won't insert it
     :return: True/False based on whether an insert took place
     """
-    try:
-        template = open(template_file, 'r')
-        contents = template.readlines()
-        template.close()
-    except Exception as err:
-        print('Error: reading template file %s: %s' % (template_file, err))
+
+    contents = read_file_lines(template_file, None)
+    if contents is None:
+        print('Error: reading template file %s' % template_file)
         return False
 
     # print "template read:\n", output
@@ -155,12 +148,8 @@ def template_insert(template_file, insert_identifiers, unique=False):
             print("A non-valid insert identifer dictionary value was supplied, "
                   "supports string and list")
             return False
-    try:
-        output = open(template_file, 'w')
-        output.writelines(contents)
-        output.close()
-    except Exception as err:
-        print('Error: writing output file %s: %s' % (template_file, err))
+    if not write_file_lines(contents, template_file, None):
+        print('Error: writing output file %s' % template_file)
         return False
     return True
 
@@ -173,12 +162,9 @@ def template_remove(template_file, remove_pattern):
     :param remove_pattern: Expects a type that supports an "in" statement condition check
     :return: True/False based on whether the removal was successful.
     """
-    try:
-        template = open(template_file, 'r')
-        contents = template.readlines()
-        template.close()
-    except Exception as err:
-        print('Error: reading template file %s: %s' % (template_file, err))
+    contents = read_file_lines(template_file, None)
+    if contents is None:
+        print('Error: reading template file %s' % template_file)
         return False
 
     try:
@@ -195,12 +181,8 @@ def template_remove(template_file, remove_pattern):
     for f_i in sorted(f_indexes, reverse=True):
         del contents[f_i]
 
-    try:
-        output = open(template_file, 'w')
-        output.writelines(contents)
-        output.close()
-    except Exception as err:
-        print('Error: writing output file %s: %s' % (template_file, err))
+    if not write_file_lines(contents, template_file, None):
+        print('Error: writing output file %s' % template_file)
         return False
 
     return True
@@ -326,6 +308,8 @@ def generate_confs(
     vgrid_managers='distinguished_name:.*',
     signup_methods='extcert',
     login_methods='extcert',
+    digest_salt=keyword_auto,
+    crypto_salt=keyword_auto,
     csrf_protection='MEDIUM',
     password_policy='MEDIUM',
     password_legacy_policy='',
@@ -569,6 +553,8 @@ def generate_confs(
     user_dict['__VGRID_MANAGERS__'] = vgrid_managers
     user_dict['__SIGNUP_METHODS__'] = signup_methods
     user_dict['__LOGIN_METHODS__'] = login_methods
+    user_dict['__DIGEST_SALT__'] = digest_salt
+    user_dict['__CRYPTO_SALT__'] = crypto_salt
     user_dict['__CSRF_PROTECTION__'] = csrf_protection
     user_dict['__PASSWORD_POLICY__'] = password_policy
     user_dict['__PASSWORD_LEGACY_POLICY__'] = password_legacy_policy
@@ -624,10 +610,6 @@ def generate_confs(
     user_dict['__IF_SEPARATE_PORTS__'] = '#'
     if not same_port:
         user_dict['__IF_SEPARATE_PORTS__'] = ''
-
-    user_dict['__IF_REQUIRE_CA__'] = '#'
-    if mig_cert_fqdn or ext_cert_fqdn:
-        user_dict['__IF_REQUIRE_CA__'] = ''
 
     if same_fqdn and same_port:
         print("""
@@ -1415,12 +1397,9 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
             sys.exit(1)
 
         pubkey_path = os.path.expanduser(user_dict['__DAEMON_PUBKEY__'])
-        try:
-            pubkey_fd = open(pubkey_path)
-            pubkey = pubkey_fd.read()
-            pubkey_fd.close()
-        except Exception as exc:
-            print("Failed to read provided daemon key: %s" % exc)
+        pubkey = read_file(pubkey_path, None)
+        if pubkey is None:
+            print("Failed to read provided daemon key: %s" % pubkey_path)
         # The desired values are hashes of the base64 encoded actual key
         try:
             # NOTE: b64decode takes bytes or string and returns bytes
@@ -1577,12 +1556,16 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
                                                      default_https_port])
             user_dict['__SID_URL__'] += ':%(__SID_PORT__)s' % user_dict
 
-    # Generate random hex salt for scrambling saved digest credentials
-    # NOTE: b16encode takes bytes and returns bytes
-    digest_salt = force_native_str(base64.b16encode(os.urandom(16)))
+    if digest_salt == keyword_auto:
+        # Generate random hex salt for scrambling saved digest credentials
+        # NOTE: b16encode takes bytes and returns bytes
+        digest_salt = force_native_str(base64.b16encode(os.urandom(16)))
+    if crypto_salt == keyword_auto:
+        # Generate random hex salt for various crypto helpers
+        # NOTE: b16encode takes bytes and returns bytes
+        crypto_salt = force_native_str(base64.b16encode(os.urandom(16)))
+
     user_dict['__DIGEST_SALT__'] = digest_salt
-    # Generate random hex salt for various crypto helpers
-    crypto_salt = force_native_str(base64.b16encode(os.urandom(16)))
     user_dict['__CRYPTO_SALT__'] = crypto_salt
 
     # Greedy match trailing space for all the values to uncomment stuff
@@ -1873,12 +1856,8 @@ sudo cp %(destination)s/migacctexpire /etc/cron.monthly/
 
 ''' % expanded
     instructions_path = "%s/instructions.txt" % destination
-    try:
-        filehandle = open(instructions_path, "w")
-        filehandle.write(instructions)
-        filehandle.close()
-    except Exception as err:
-        print("could not write %s %s" % (instructions_path, err))
+    if not write_file(instructions, instructions_path, None):
+        print("could not write instructions ot %s" % instructions_path)
     return expanded
 
 
