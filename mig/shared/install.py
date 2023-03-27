@@ -611,6 +611,10 @@ def generate_confs(
     if not same_port:
         user_dict['__IF_SEPARATE_PORTS__'] = ''
 
+    user_dict['__IF_REQUIRE_CA__'] = '#'
+    if mig_cert_fqdn or ext_cert_fqdn:
+        user_dict['__IF_REQUIRE_CA__'] = ''
+
     if same_fqdn and same_port:
         print("""
 WARNING: you probably have to use either different fqdn or port settings for
