@@ -1,4 +1,556 @@
 [
+ {
+    "status": "AUTO", 
+    "work_start": "2023-03-27T18:00:00+02:00", 
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2023-03-14T14:00:00+01:00",
+    "title": {
+      "EN": "Planned ERDA/IDMC Maintenance",
+      "DK": "Planlagt ERDA/IDMC vedligehold"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2023-03-29T12:00:00+02:00",
+    "description": {
+      "EN": "It's time for a thorough update of the ERDA/IDMC systems and migration of front ends to newer hardware. The work will involve frontend down-time for a number of low-level system tasks. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect a longer downtime of approximately two hours for the migration and main upgrades if everything runs smoothly. That downtime will likely start about half an hour into the window and should therefore finish well before standard working hours. We finished the main part of the maintenance upgrading and migrating to new hardware at about 21 o'clock. Getting Jupyter resources to play nicely with the new hardware proves surprisingly difficult due to some low-level networking issues. So we're still working hard on that and can't give a time frame yet. We're sorry for the inconvenience. For what it's worth it looks like the read/write perfomance significantly increased due to the upgrades. Further information will follow here.",
+      "DK": "Det er tid til en gennemgående opdatering af ERDA/IDMC systemerne og migrering af front-ends til nyere hardware. Arbejdet kræver nedetid på frontends til grundlæggende systemopgaver, og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi forventer en længere nedetid på et par timers tid til migrering samt hovedopgraderingerne, hvis alting forløber planmæssigt. Den del vil formodentlig begynde omkring en halv time inde i servicevinduet og skulle derfor være overstået længe inden almindelig arbejdstid. Vi blev færdige med kerneopgaven med at opgradere og migrere til nyt hardware omkring kl 21. Det har vist sig overordentligt svært at få den nye hardware til at tale sammen med Jupyter ressourcerne pga en underliggende netværksopsætning. Vi arbejder stadig hårdt på sagen og kan endnu ikke give en nærmere tidsramme. Vi beklager meget de gener det medfører. Om ikke andet ser det ud til at opgraderingen har forbedret læse/skrivehastigheden på ERDA-lageret markant. Nærmere informationer følger her."
+    },
+    "announce_end": "2023-03-30T12:00:00+02:00"
+  }, 
+  {
+    "status": "AUTO",
+    "work_start": "2023-03-03T17:00:00+01:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2023-03-01T12:00:00+01:00",
+    "title": {
+      "EN": "Planned DAG Maintenance", 
+      "DK": "Planlagt DAG systemvedligehold"
+    },
+    "services": [
+      "DAG"
+    ],
+    "work_end": "2023-03-03T20:00:00+01:00",
+    "description": {
+      "EN": "We need to update the DAG configuration to the latest SSHFS mount plugin version and will therefore have to take down the service for this. We completed the work and DAG is back online.", 
+      "DK": "Vi skal have opdateret DAG-konfigurationen til den seneste SSHFS mount plugin version, og bliver derfor nødt til at tage tjenesten ned for at gøre dette. Dette arbejde er afsluttet, og MODI er online igen."
+    },
+    "announce_end": "2023-03-06T12:00:00+01:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2023-03-01T17:00:00+01:00",
+    "systems": [
+        "SIF"
+    ],
+    "announce_start": "2023-02-27T15:00:00+01:00",
+    "title": {
+      "EN": "Planned SIF Maintenance", 
+      "DK": "Planlagt SIF systemvedligehold"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2023-03-01T18:00:00+01:00",
+    "description": {
+      "EN": "It's time to extend the central log partition that keeps running out of logspace. The work will involve down-time for low-level system updates. Thus the service will be temporarily unavailable for shorter or longer periods during the maintenance window.  We completed the work and SIF is back online.", 
+      "DK": "Det er tid til at udvide den centrale log-partition som gentagende gange er løbet tør for plads. Arbejdet vil involvere nedetid for systemopdateringer på lavt niveau. Denne tjeneste vil derfor være midlertidigt utilgængelig i kortere eller længere perioder under vedligeholdelsesvinduet. Dette arbejde er afsluttet og SIF er tilbage online."
+    },
+    "announce_end": "2023-03-02T12:00:00+01:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2023-02-28T16:00:00+01:00",
+    "systems": [
+        "ERDA",
+        "IDMC",
+        "SIF",
+        "MiGrid"
+    ],
+    "announce_start": "2023-02-28T15:40:00+01:00",
+    "title": {
+      "EN": "Possible emergency downtime due to fire safety.",
+      "DK": "Mulig nødslukning af hensyn til brandsikkerhed."
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2023-03-13T16:00:00+01:00",
+    "description": {
+      "EN": "Two fire alarms triggered this afternoon in our data center at HCØ. Apparently due to serious smoke development from a server in one of the rooms there. The automatic INERGEN fire suppression system even fired in that room. We are investigating and evaluating the situation and due to fire safety concerns we MAY have to take down even important systems on short notice until the cause has been removed and the fire suppression system has been recharged. We apologize for any inconvenience that will cause if so, but must value staff and data safety over maximum uptime in such emergency situations. For now the mentioned systems do stay online and we are quite confident that we can keep it that way. Facility management have replaced the gas cylinders in the fire suppression system on March 13th and everything is back to normal.", 
+      "DK": "To brandalarmer gik til eftermiddag i vores datacenter på HCØ. Tilsyneladende på grund af kraftig røgudvikling fra en server i et af rummene der. Det automatiske INERGEN-brandslukningssystem gik sågar igang i det pågældende rum. Vi undersøger og evaluerer situationen og af hensyn til brandsikkerheden KAN vi blive nødt til at slukke selv vigtige systemer med kort varsel indtil årsagen er fjernet og brandslukningssystemet er genfyldt. Vi beklager de gener dette i så fald medfører, men er nødt til at prioritere personale- og data-sikkerhed over maksimal oppetid i sådanne nødsituationer. For nu kører de nævnte systemer videre og vi regner med at det kan fortsætte sådan. Bygningsservice skiftede gascylinderne i brandslukningssystemet den 13. marts og vi er tilbage i almindelig drift."
+    },
+    "announce_end": "2023-03-14T12:00:00+01:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2023-02-27T20:00:00+01:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2023-01-27T10:00:00+01:00",
+    "title": {
+      "EN": "Update MODI to fix UCX issues.",
+      "DK": "Update MODI for at fixe en UCX fejl."
+    },
+    "services": [
+      "MODI"
+    ],
+    "work_end": "2023-02-27T22:00:00+01:00",
+    "description": {
+      "EN": "We need to update and restart the MODI service to fix an issue with UCX where it can't create a worker succesfully in MPI applications. We updated the underlying RoCE network interface configuration and adjusted the MODI service configuration to the new interface setup underneath. We completed the work and MODI is back online.", 
+      "DK": "Vi skal opdatere og genstarte MODI-tjenesten for at løse et problem med UCX, hvor den ikke kan oprette en UCX-worker i MPI-applikationer. Vi opdaterede den underliggende RoCE-netværks konfiguration og justerede MODI's konfiguration så den stemmede overens med den underliggende interface struktur. Dette arbejde er afsluttet, og MODI er online igen."
+    },
+    "announce_end": "2023-02-28T12:00:00+01:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2023-02-15T17:00:00+01:00",
+    "systems": [
+        "SIF"
+    ],
+    "announce_start": "2023-01-25T09:00:00+01:00",
+    "title": {
+      "EN": "Planned SIF Maintenance", 
+      "DK": "Planlagt SIF systemvedligehold"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2023-02-15T20:30:00+01:00",
+    "description": {
+      "EN": "It's time for a thorough update of the SIF service. The work will involve down-time for low-level system updates. Thus the service will be temporarily unavailable for shorter or longer periods during the maintenance window. We completed the work and SIF is back online.", 
+      "DK": "Det er tid til en grundig opdatering af SIF tjenesten. Arbejdet vil involvere nedetid for systemopdateringer på lavt niveau. Denne tjeneste vil derfor være midlertidigt utilgængelig i kortere eller længere perioder under vedligeholdelsesvinduet. Dette arbejde er afsluttet og SIF er tilbage online."
+    },
+    "announce_end": "2023-02-16T10:00:00+01:00"
+   },
+  {
+    "status": "AUTO", 
+    "work_start": "2023-02-14T05:00:00+01:00", 
+    "systems": [
+        "SIF"
+    ], 
+    "announce_start": "2023-02-14T05:00:00+01:00", 
+    "title": {
+      "EN": "SIF Outage", 
+      "DK": "SIF nede"
+    }, 
+    "services": [
+      "ALL"
+    ], 
+    "work_end": "2023-02-14T13:00:00+01:00",
+    "description": {
+      "EN": "A central log partition ran full on SIF, and since we are not allowed to miss important log entries it automatically shut off the entire frontend system. After cleaning up space for logs the system is back online. Sorry for the inconvenience from the lack of access.", 
+      "DK": "En central log-partition på SIF løb tør for plads, og eftersom vi skal logge vigtige beskeder, lukkede den automatisk hele frontend systemet ned. Efter en oprydning fandt vi plads til logs og systemet er atter tilbage online. Vi Beklager generne fra den manglende adgang."
+    }, 
+    "announce_end": "2023-02-14T13:00:00+01:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2023-02-13T06:31:00+01:00",
+    "systems": [
+        "SIF",
+        "MiGrid"
+    ],
+    "announce_start": "2023-02-13T06:31:00+01:00",
+    "title": {
+      "EN": "Partial data access and outage in the backend storage",
+      "DK": "Delvis dataadgang og udfald i backend-lageret"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2023-02-13T12:00:00+01:00",
+    "description": {
+      "EN": "We have an issue with the Lustre backend storage used on SIF and MiGrid and it leads to long response times and time outs when connecting to the associated user services. We are investigating the cause and trying to address it ASAP. More info will follow here.", 
+      "DK": "Vi har et problem med det Lustre backend-lager som benyttes til SIF og MiGrid og det resulterer aktuelt i lange svartider og timeouts på alle bruger-services. Vi undersøger sagen og forsøger at afhjælpe problemet hurtigst muligt. Mere info følger her."
+    },
+    "announce_end": "2023-02-14T12:00:00+01:00"
+  },
+  {
+    "status": "AUTO", 
+    "work_start": "2023-02-09T18:10:00+01:00", 
+    "systems": [
+        "SIF"
+    ], 
+    "announce_start": "2023-02-09T18:10:00+01:00", 
+    "title": {
+      "EN": "SIF Outage", 
+      "DK": "SIF nede"
+    }, 
+    "services": [
+      "ALL"
+    ], 
+    "work_end": "2023-02-09T23:50:00+01:00",
+    "description": {
+      "EN": "A central log partition ran full on SIF, and since we are not allowed to miss important log entries it automatically shut off the entire frontend system. After cleaning up space for logs the system is back online. Sorry for the inconvenience from the lack of access.", 
+      "DK": "En central log-partition på SIF løb tør for plads, og eftersom vi skal logge vigtige beskeder, lukkede den automatisk hele frontend systemet ned. Efter en oprydning fandt vi plads til logs og systemet er atter tilbage online. Vi Beklager generne fra den manglende adgang."
+    }, 
+    "announce_end": "2023-02-10T12:00:00+01:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2023-02-03T16:00:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2023-01-27T09:00:00+02:00",
+    "title": {
+      "EN": "Planned DAG and MODI Maintenance.",
+      "DK": "Planlagt vedligehold af DAG og MODI-tjenesterne."
+    },
+    "services": [
+      "DAG",
+      "MODI"
+    ],
+    "work_end": "2023-02-03T16:30:00+02:00",
+    "description": {
+      "EN": "We will apply general maintenance to the DAG and MODI services. Interruptions to these services will occur. All DAG and MODI upgrades are complete and everything is back in normal production.", 
+      "DK": "Vi udruller den månedelige opdatering og vedligeholdelse af DAG og MODI tjenesterne. Afbrydelser af disse tjenester vil forekomme. Alle DAG og MODI opgraderinger er færdige, og alt er tilbage i normal drift."
+    },
+    "announce_end": "2023-02-06T12:00:00+02:00"
+   },
+   {
+    "status": "AUTO",
+    "work_start": "2023-01-23T10:00:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2023-01-23T10:00:00+02:00",
+    "title": {
+      "EN": "Unplanned crashes/downtime for MODI due to system and potential hardware failures.",
+      "DK": "Uplanlagt nedbrud af MODI-tjenesten pga. af system og potentiel hardware fejl."
+    },
+    "services": [
+      "MODI"
+    ],
+    "work_end": "2023-01-25T12:00:00+02:00",
+    "description": {
+      "EN": "We had been getting reports about fallouts on the MODI service, this was initially solved by restarting the service, but subsequent crashes indicates that something fundamentally is wrong with either the underlying host system or the hardware that runs the service. We are currently investigating this issue and will try to keep the service up while we are investigating this. The issue seemed to be a combination of slow calls to the underlying external filesystem, which in turn crashed service when it was not responding within the expect time frame. For now we have increase the time limit for the service, such that it should be more resilient to filesystem slow downs.",
+      "DK": "Vi havde fået rapporter om nedfald på MODI-tjenesten, dette blev i første omgang løst ved at genstarte tjenesten, men efterfølgende nedbrud indikerer at der noget grundlæggende er galt med enten det underliggende hostsystem eller hardwaren der kører tjenesten. Vi er i øjeblikket ved at undersøge dette problem og vil forsøge at holde tjenesten oppe i mellemtiden mens vi undersøger sagen nærmere. Problemet virkede til at være en kombination af langsomme kald til det underliggende eksterne filsystem, som fik tjenesten til at vælte, når det ikke svarede inden for den forventede tidsramme. For nu har vi øget tidsgrænsen for tjenesten, så den skulle være mere modstandsdygtig over for filsystemets langsommere perioder."
+    },
+    "announce_end": "2023-01-25T12:00:00+02:00"
+  },
+ {
+    "status": "AUTO",
+    "work_start": "2022-12-03T12:00:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2022-11-16T12:00:00+02:00",
+    "title": {
+      "EN": "Planned DAG and MODI Maintenance. With unplanned downtime for MODI after update fallout.",
+      "DK": "Planlagt vedligehold af DAG og MODI-tjenesterne. Med nedetid for MODI efter update udfald."
+    },
+    "services": [
+      "DAG",
+      "MODI"
+    ],
+    "work_end": "2022-12-07T20:00:00+02:00",
+    "description": {
+      "EN": "It's time for a thorough update of the DAG/MODI services. The work will involve down-time for low-level system updates. Thus these services will be temporarily unavailable for shorter or longer periods during the maintenance window. We updated both services as expected, with the DAG service returning as expected. We did however experience a power outage that resulted in AI Centre GPU 1 machine not coming back online, and is currently awaiting new hardware from HP. In addition, all MODI hosts were updated succesfully. However the login node running the JupyterHub service host was rendered unavailable after the update due to a failure in the backend OpenStack system. This host has now been reestablish on a newer Rocky 8.5 OS and attached to a network interface that allows for increased bandwidth for large files that should decrease the time it takes to transfer files from the MODI stage file system to any external drive, including ERDA.", 
+      "DK": "Det er tid til en grundig opdatering af DAG/MODI-tjenesterne. Arbejdet vil involvere nedetid for systemopdateringer på lavt niveau. Disse tjenester vil derfor være midlertidigt utilgængelige i kortere eller længere perioder under vedligeholdelsesvinduet. Vi opdaterede begge tjenester efter planen, hvor DAG-tjenesten vendte tilbage som forventet. Vi oplevede dog et strømafbrydelse, der resulterede i, at AI Center GPU 1-maskine ikke kom online igen og afventer i øjeblikket ny hardware fra HP. Derudover blev alle MODI-værter opdateret med succes. Dog blev login noden, der kører JupyterHub-tjenesteværten, gjort utilgængelig efter opdateringen på grund af en fejl i backend OpenStack-systemet. Denne vært er nu blevet genetableret på et nyere Rocky 8.5 OS og knyttet til en netværks interface, der giver mulighed for øget båndbredde for store filer, hvilket skulle reducere den tid, det tager at overføre filer fra MODI-scenefilsystemet til ethvert eksternt drev, inklusiv ERDA."
+    },
+    "announce_end": "2022-12-10T15:00:00+02:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2022-11-08T17:30:00+01:00",
+    "systems": [
+        "ERDA"
+    ],
+    "announce_start": "2022-11-08T12:55:00+01:00",
+    "title": {
+      "EN": "Planned maintenance with brief outage",
+      "DK": "Planlagt vedligehold med kortvarigt udfald"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2022-11-08T17:35:00+01:00",
+    "description": {
+      "EN": "We have a bit of maintenance to do in order to get rid of a hiccup from the recent brick outage. Namely, we need to briefly stop all services at ERDA while we reconnect between frontend and backend storage. The work is complete with five minutes of downtime, and everything is back in normal production now.", 
+      "DK": "Vi har en smule udestående vedligehold mhp at slippe af med en bøvs fra det nylige udfald i en af backendlagerets bricks. Nærmere bestemt er vi nødt til kortvarigt at stoppe alle services på ERDA mens vi genforbinder mellem frontend og backendlageret. Arbejdet er overstået med fem minutters nedetid, og alt er nu tilbage i normal drift."
+    },
+    "announce_end": "2022-11-09T12:00:00+01:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2022-11-01T03:00:00+01:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2022-11-01T12:18:00+01:00",
+    "title": {
+      "EN": "Partial data access and short outage in the backend storage",
+      "DK": "Delvis dataadgang og kortvarigt udfald i backend-lageret"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2022-11-01T12:18:00+01:00",
+    "description": {
+      "EN": "We had a hardware issue with one of the bricks in the backend storage early this morning and had to take it down briefly for repairs. The issue likely led to partial access to files on said brick since the early morning hours and active users may additionally have experienced one or two brief periods of missing access or data stalls. Things should be back to normal now, so please report any problems to ERDA/IDMC support as usual.", 
+      "DK": "Vi blev ramt af et hardwareproblem i en af backend-lagerets bricks tidligt i morges og var nødt til kortvarigt at lukke den ned til reparation. Førstnævnte resulterede sandsynligvis i delvis adgang til filer på den berørte brick siden tidligt i morges og aktive brugere kan desuden have oplevet en eller to kortere perioder med manglende adgang eller lange svartider. Problemet skulle være løst nu og alting tilbage i almindelig drift, så rapportér som altid gerne evt fejl til ERDA/IDMC support."
+    },
+    "announce_end": "2022-11-02T13:00:00+01:00"
+  },
+    {
+    "status": "AUTO",
+    "work_start": "2022-10-08T10:00:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2022-10-04T10:00:00+02:00",
+    "title": {
+      "EN": "We will update the DAG and MODI services",
+      "DK": "Vi vil opdatere DAG og MODI-tjenesterne"
+    },
+    "services": [
+      "DAG",
+      "MODI"
+    ],
+    "work_end": "2022-10-08T22:00:00+02:00",
+    "description": {
+      "EN": "We will rollout updates to the DAG and MODI services that will upgrade our underlying Spawner and Authenticator libraries to the latest releases.", 
+      "DK": "Vi vil udrulle opdateringer til DAG og MODI-tjenesterne, der vil opgradere vores underliggende Spawner og Authenticator-biblioteker til de seneste udgivelser."
+    },
+    "announce_end": "2022-10-10T15:00:00+02:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2022-09-27T07:30:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2022-09-14T16:00:00+02:00",
+    "title": {
+      "EN": "Important bugfix at the backend storage",
+      "DK": "Vigtig fejlrettelse på backend-lageret"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2022-09-27T09:35:00+02:00",
+    "description": {
+      "EN": "We will install an important bugfix relating to hot-swap disk detection on the backend storage bricks. It requires a reboot of the bricks in question and therefore will require downtime for all services. We expect the work to complete within an hour. It took somewhat longer than expected, but we finished the work a bit after 9:30 and everything is back online.", 
+      "DK": "Vi installerer en vigtig fejlrettelse relateret til hot-swap diskgenkendelse på backend-lagerets bricks. Det kræver genstart af de berørte bricks og vil derfor føre til nedetid for alle services. Vi regner med at arbejdet er overstået indenfor en times tid. Det trak ud med opdateringen, men vi blev færdige lidt efter 9:30 og alt er tilbage i almindelig drift."
+    },
+    "announce_end": "2022-09-28T12:00:00+02:00"
+  },
+ {
+    "status": "AUTO", 
+    "work_start": "2022-09-25T15:00:00+02:00", 
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2022-09-14T16:40:00+02:00",
+    "title": {
+      "EN": "Planned ERDA/IDMC Maintenance",
+      "DK": "Planlagt ERDA/IDMC vedligehold"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2022-09-25T17:17:00+02:00",
+    "description": {
+      "EN": "It's time for a thorough update of the ERDA/IDMC systems. The work will involve frontend down-time for low-level system updates. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect a longer downtime of approximately one hour for the main upgrades if everything runs smoothly. That downtime will likely start about half an hour into the window and should therefore finish well before standard working hours. All ERDA and IDMC upgrades are complete and everything is back in normal production.",
+      "DK": "Det er tid til en gennemgående opdatering af ERDA/IDMC systemerne. Arbejdet kræver nedetid på frontend til grundlæggende systemopdateringer og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi forventer en længere nedetid på en times tid til hovedopgraderingerne hvis alting forløber planmæssigt. Den del vil formodentlig begynde omkring en halv time inde i arbejdet og skulle derfor være overstået længe inden almindelig arbejdstid. Alle opgraderingerne på ERDA og IDMC er overstået og alting er tilbage i almindelig drift."
+    },
+    "announce_end": "2022-09-26T10:00:00+02:00"
+  }, 
+  {
+    "status": "AUTO",
+    "work_start": "2022-09-14T21:00:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2022-09-12T12:00:00+02:00",
+    "title": {
+      "EN": "Important security upgrades will be applied to the Jupyter Notebooks",
+      "DK": "Vigtige sikkerhedsopgraderinger af Jupyter Notebooks vil blive udrullet"
+    },
+    "services": [
+      "DAG",
+      "MODI"
+    ],
+    "work_end": "2022-09-14T23:59:00+02:00",
+    "description": {
+      "EN": "We will roll out the previously prepared Jupyter Notebook updates to mitigate CVE-2021-32862. This work was carried out without issue for the normal CPU based images, we did experience some trouble with the new GPU images due to deprecated NVIDIA packages but these were upgraded the following day.", 
+      "DK": "Vi vil udrulle de tidligere forberedte Jupyter Notebook-opdateringer for at afbøde CVE-2021-32862. Dette arbejde blev udført uden problemer for de normale CPU-baserede images, vi oplevede nogle problemer med de nye GPU images på grund af forældede NVIDIA-pakker, men disse blev opgraderet den følgende dag."
+    },
+    "announce_end": "2022-09-15T15:00:00+02:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2022-09-10T08:00:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2022-08-30T12:00:00+02:00",
+    "title": {
+      "EN": "Important security upgrades will be applied to the Jupyter Notebooks",
+      "DK": "Vigtige sikkerhedsopgraderinger af Jupyter Notebooks vil blive udrullet"
+    },
+    "services": [
+      "DAG",
+      "MODI"
+    ],
+    "work_end": "2022-09-10T12:00:00+02:00",
+    "description": {
+      "EN": "We will apply important security upgrades that will mitigate an issue where XSS can be injected when exporting HTML versions of Jupyter Notebooks as annonced in CVE-2021-32862. The preperations for this was completed, but due to unforseen complications in how the new Notebook versions would clash with our un-updated JupyterHub version, the rollout of this was postponed.", 
+      "DK": "Vi vil udrulle vigtige sikkerhedsopgraderinger, der vil afhjælpe et problem, hvor XSS kan injectes i exporteringen HTML-versioner af Jupyter Notebooks som annonceret i CVE-2021-32862. Forberedelserne til dette blev gennemført, men på grund af uforudsete komplikationer i, hvordan de nye Notebook-versioner ville kollidere med vores uopdaterede JupyterHub-version, blev udrulningen af dette udskudt."
+    },
+    "announce_end": "2022-09-12T12:00:00+02:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2022-08-30T12:54:00+02:00",
+    "systems": [
+        "SIF"
+    ],
+    "announce_start": "2022-08-30T12:54:00+02:00",
+    "title": {
+      "EN": "SFTP overload: limited or no storage access",
+      "DK": "SFTP-overbelastning: begrænset eller ingen lageradgang"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2022-08-30T15:06:00+02:00",
+    "description": {
+      "EN": "The SFTP service at SIF went awry and pulled all system resources (file descriptors) so that no further file system access was allowed. It resulted in full or partial loss of access to the data at SIF. We have restarted the SFTP service to release the resources and now keep an eye on it to see if it happens again and if so why. Full data access should therefore be back.", 
+      "DK": "SFTP-servicen på SIF gik i selvsving og slugte alle tilgængelige resurser (file descriptors) hvorfor yderligere adgang til filsystemet blev afvist. Det førte til hel eller delvis manglende adgang til data på SIF. Vi har genstartet SFTP-servicen for at frigive resurserne og holder øje med om det sker igen og evt hvorfor. Almindelig dataadgang skulle således være tilbage."
+    },
+    "announce_end": "2022-08-31T10:00:00+02:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2022-08-15T20:32:00+02:00",
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2022-08-15T20:32:00+02:00",
+    "title": {
+      "EN": "Outage in the storage backend: limited or no access",
+      "DK": "Udfald i backend-lageret: begrænset eller ingen adgang"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2022-08-16T07:33:00+02:00",
+    "description": {
+      "EN": "We experienced a serious failure on one of the storage bricks in the ERDA/IDMC backend storage last night and it lead to partial data outages on ERDA/IDMC. This morning we identified the cause to be a hardware error in the memory or CPU of the storage brick. We migrated that part to a different host and got the brick back to service in order to restore full backend storage access on ERDA/IDMC. Everything should thus be back to normal operation now.", 
+      "DK": "Vi oplevede et alvorligt problem med en brick (lagerenhed) i backend lageret i aftes, og det førte til delvise udfald i dataadgangen på ERDA/IDMC. Til morgen fandt vi frem til at problemet skyldtes hardwarefejl i hukommelse eller processor på pågældende brick. Vi migrerede den ramte del til en anden maskine og fik således pågældende brick tilbage i drift og derved hele backendlageret gjort tilgængeligt igen for ERDA/IDMC. Alt skulle således være tilbage i normal drift nu."
+    },
+    "announce_end": "2022-08-17T10:00:00+02:00"
+  },
+  {
+    "status": "AUTO", 
+    "work_start": "2022-07-24T18:00:00+02:00",
+    "systems": [
+      "ERDA", "IDMC"
+    ],
+    "announce_start": "2022-07-21T12:00:00+02:00",
+    "title": {
+      "EN": "Monthly maintenance of DAG and MODI",
+      "DK": "Månedlig vedligeholdelse af DAG og MODI"
+    },
+    "services": [
+      "DAG", "MODI"
+    ],
+    "work_end": "2022-07-24T23:00:00+02:00",
+    "description": {
+      "EN": "We will apply general maintenance to the DAG and MODI services. Interruptions to these services will occur. We carried this work out in the specified timeframe and the services came back as expected afterwards.", 
+      "DK": "Vi udruller den månedelige opdatering og vedligeholdelse af DAG og MODI tjenesterne. Afbrydelser af disse tjenester vil forekomme. Vi udførte dette arbejde inden for den angivne tidsramme, og tjenesterne kom tilbage som forventet bagefter."
+    },
+    "announce_end": "2022-07-25T12:00:00+02:00"
+  },
+ {
+    "status": "AUTO", 
+    "work_start": "2022-06-23T07:00:00+02:00", 
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2022-06-01T09:00:00+02:00",
+    "title": {
+      "EN": "Planned ERDA/IDMC Maintenance - with delays",
+      "DK": "Planlagt ERDA/IDMC vedligehold - med forsinkelser"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2022-06-23T13:00:00+02:00",
+    "description": {
+      "EN": "It's time for a thorough update of the ERDA/IDMC and addition of more physical storage space. The work will involve both frontend and backend down-time for low-level system updates. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect a longer downtime of approximately one hour for the main upgrades if everything runs smoothly. That downtime will start about half an hour into the window and should therefore not extend far into standard working hours, but we conservatively set the maintenance window somewhat longer. We started the maintenance tasks requiring downtime and completed the planned system updates as planned. The storage space extension work unfortunately acted up, so we had to extend the maintenace window until after noon. We finished a few hours late and everything should be back in normal production now. We're sorry for the inconvenience it caused.",
+      "DK": "Det er tid til en gennemgribende opdatering af ERDA/IDMC systemerne og tilføjelse af mere fysisk lagerplads. Arbejdet kræver nedetid på både frontend og backend til grundlæggende systemopdateringer og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi forventer en længere nedetid på en times tid til hovedopgraderingerne hvis alting forløber planmæssigt. Den del vil begynde omkring en halv time inde i arbejdet og skulle derfor ikke strække sig langt ind i standard arbejdstid, men for en sikkerheds skyld er vedligeholdelsesvinduet sat noget længere. Vi er gik igang med den del af arbejdet med nedetid og fik overstået de planlagte systemopdateringer efter planen. Lagertilføjelsen ville desværre ikke makke ret, så vi blev nødt til at forlænge vedligeholdelsesvinduet yderligere til over middag. Vi nåede i mål med nogle timers forsinkelse og alt skulle være tilbage i normal drift nu. Vi beklager de gener arbejdet og forsinkelsen medførte."
+    },
+    "announce_end": "2022-06-24T13:00:00+02:00"
+  }, 
+  {
+    "status": "AUTO", 
+    "work_start": "2022-06-13T08:00:00+02:00", 
+    "references": {
+      "EN": [], 
+      "DK": []
+    }, 
+    "systems": [
+        "ERDA", "IDMC"
+    ], 
+    "announce_start": "2022-06-14T08:00:00+02:00", 
+    "title": {
+      "EN": "DAG instability and General Slow Storage Access", 
+      "DK": "Ustabilitet på DAG og langsom adgang til datalageret generelt"
+    }, 
+    "services": [
+      "ALL"
+    ], 
+    "work_end": "2022-06-14T15:08:00+02:00", 
+    "description": {
+      "EN": "We have received reports of unstable DAG sessions and general slow ERDA/IDMC storage access at least today and perhaps somewhat further back. We pin-pointed it to be an issue with the backend storage and after further investigation we found a storage brick in the backend storage acting up, effectively eating up massive amounts of memory. Restarting the brick in question seems to have brought back the normal performance and response times. Please contact us at ERDA support if you still experience instability or slowdowns.",
+      "DK": "Vi har modtaget flere rapporter om ustabile DAG-sessioner og generel langsom adgang til datalageret på ERDA/IDMC mindst idag og måske længere bagud. Vi lokaliserede det til at være et problem med backend-lageret og efter yderligere undersøgelser fandt vi en storage brick som var gået i selvsving med et enormt hukommelsesforbrug. En genstart af pågældende brick ser ud til at have bragt backend-lageret tilbage til normalen mht ydelse og svartider. Kontakt os gerne på ERDA support såfremt der fortsat er problemer med ustabilitet og sløvhed."
+    }, 
+    "announce_end": "2022-06-15T12:00:00+02:00"
+  }, 
+  {
+    "status": "AUTO", 
+    "work_start": "2022-05-31T09:30:00+02:00", 
+    "systems": [
+        "ERDA", "IDMC"
+    ], 
+    "announce_start": "2022-05-31T09:30:00+02:00", 
+    "title": {
+      "EN": "DAG/HEL Unstable or Unavailable", 
+      "DK": "DAG/HEL ustabil eller utilgængelig"
+    }, 
+    "services": [
+        "DAG", "HEL"
+    ], 
+    "work_end": "2022-05-31T15:00:00+02:00", 
+    "description": {
+      "EN": "We've experienced performance issues on DAG/HEL Jupyter sessions since this morning and while we were investigating the cause and trying to address it the problem got worse with new sessions just hanging. The original issue appears to be related to one or more misbehaving SFTP clients constantly hammering our SFTP service, which is also used for transparent data access in DAG/HEL sessions. Unfortunately our initial attempts to take evasive action against the misbehaving SFTP clients inadvertently blocked valid DAG/HEL session access as well. We have adjusted the filtering so that the valid sessions are allowed through again now and the service should be back in normal production. We're sorry for the inconvenience it caused both for course and individual use of DAG/HEL.",
+      "DK": "Vi har oplevet langsom adgang til DAG/HEL Jupyter-sessioner siden i morges og ifm at vi ledte efter årsagen og forsøgte at afhjælpe problemet blev det kun værre så nye sessioner bare hang. Det ser ud til at det oprindelige problem skyltes en eller flere vildfarne SFTP-klienter, der konstant hamrede løs på vores SFTP service, som også bruges til transparent dataadgang fra DAG/HEL-sessioner. Desværre fik vi i vores forsøg på at frasortere disse vildfarne SFTP-klienter, ved en fejl også spærret adgang fra gyldige DAG/HEL-sessioner. Vi har justeret på filteret så de gyldige sessioner nu igen har adgang og alting skulle være tilbage i normal drift. Vi beklager de gener det medførte både for kursus - og individuel brug af DAG/HEL."
+    }, 
+    "announce_end": "2022-06-01T12:00:00+02:00"
+  },
   {
     "status": "AUTO",
     "work_start": "2022-05-18T18:00:00+02:00",
