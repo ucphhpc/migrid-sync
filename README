@@ -867,6 +867,8 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --peers_permit="role:.*(vip|tap)" \
                    --vgrid_creators="role:.*(vip|tap)" \
                    --status_system_match="ERDA IDMC SIF ALL" \
+                   --digest_salt="FILE::/home/mig/state/secrets/digest_salt.hex" \
+                   --crypto_salt="FILE::/home/mig/state/secrets/crypto_salt.hex" \
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
 
 and a similar setup with CentOS 7.x, apache 2.4, WSGI (default web), 
@@ -951,6 +953,8 @@ with optional 2-FA support and legacy sftp clients:
                    --peers_permit="role:.*(vip|tap)" \
                    --vgrid_creators="role:.*(vip|tap)" \
                    --status_system_match="IDMC ERDA ALL" \
+                   --digest_salt="FILE::/home/mig/state/secrets/digest_salt.hex" \
+                   --crypto_salt="FILE::/home/mig/state/secrets/crypto_salt.hex" \
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
 
 Finally a storage-only with CentOS 7.x, apache 2.4, WSGI (default web), 
