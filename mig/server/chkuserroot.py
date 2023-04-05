@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # chkuserroot - Simple Apache httpd user chroot helper daemon
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,6 +33,7 @@ chroot locations. Reads a path from stdin and prints either invalid marker or
 actual real path to stdout so that apache can use the daemon from RewriteMap
 and rewrite to fail or success depending on output.
 """
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -41,17 +42,21 @@ import re
 import sys
 import time
 
-# IMPORTANT: sshd sftp subsys calls this script directly without user env so
-#            we cannot rely on PYTHONPATH and instead explictly set load path
-#            to include user home to allow from mig.X import Y
-# NOTE: __file__ is /MIG_BASE/mig/server/sftp_subsys.py and we need MIG_BASE
+# IMPORTANT: apache calls this script directly without user env so we cannot
+#            rely on PYTHONPATH and instead explictly set load path to include
+#            user home to allow from mig.X import Y
+# NOTE: __file__ is /MIG_BASE/mig/server/chkuserroot.py and we need MIG_BASE
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from mig.shared.accountstate import check_account_accessible
-from mig.shared.base import client_dir_id
-from mig.shared.conf import get_configuration_object
-from mig.shared.logger import daemon_logger, register_hangup_handler
-from mig.shared.validstring import valid_user_path
+try:
+    from mig.shared.accountstate import check_account_accessible
+    from mig.shared.base import client_dir_id
+    from mig.shared.conf import get_configuration_object
+    from mig.shared.logger import daemon_logger, register_hangup_handler
+    from mig.shared.validstring import valid_user_path
+except Exception as exc:
+    print("Could not load migrid code from chkuserroot helper!")
+    sys.exit(1)
 
 configuration, logger = None, None
 
