@@ -151,12 +151,14 @@ Please contact the %s providers if you want to reset your associated password.
         user_req = canonical_user_with_peers(
             configuration, user_dict, req_fields)
         user_req['reset_token'] = reset_token
+        user_req['comment'] = 'Password update with token\n%s ... %s' % \
+                              (reset_token[:32], reset_token[-32:])
         # Mark ID fields as readonly in the form to limit errors
         user_req['ro_fields'] = keyword_auto
         id_query = '%s' % urlencode(user_req)
         req_script = 'req%s.py' % auth_type.replace('mig', '')
-        change_pw_url = '%s/cgi-sid/%s?%s' % (anon_migoid_url, req_script,
-                                              id_query)
+        change_pw_url = '%s/cgi-sid/%s?%s' % \
+                        (anon_migoid_url, req_script, id_query)
         user_dict['change_pw_url'] = change_pw_url
         user_dict['short_title'] = configuration.short_title
         user_dict['auth_type_name'] = auth_type_name
