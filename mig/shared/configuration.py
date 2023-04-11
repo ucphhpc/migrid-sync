@@ -110,11 +110,12 @@ def expand_external_sources(logger, val):
                     logger.debug(
                         "reading conf content from file in %r" % cache)
                     content = read_file(path, logger)
-                    if cache:
+                    if cache and content:
                         logger.debug("caching conf content salt in %r" % cache)
                         write_file(content, cache, logger)
-                if content is None:
+                if not content:
                     logger.warning("salt file not found or empty: %s" % path)
+                    # NOTE: may be None at this point - force string
                     content = ''
                 else:
                     content = content.strip()
