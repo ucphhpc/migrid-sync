@@ -530,24 +530,36 @@ def create_user(
                                                      reset_token,
                                                      reset_auth_type)
                     if valid_reset:
-                        print("User requested and authorized password reset")
+                        _logger.info("%r requested and authorized password reset"
+                                     % client_id)
+                        if verbose:
+                            print("User requested and authorized password reset")
                         authorized = True
                     else:
-                        print("User requested password reset with bad token")
+                        _logger.error("%r requested password reset with bad token"
+                                      % client_id)
+                        if verbose:
+                            print("User requested password reset with bad token")
 
                 if authorized:
-                    print("User authorized password update")
+                    _logger.info("%r authorized password update" % client_id)
+                    if verbose:
+                        print("User authorized password update")
                 elif not user['old_password'] and not user['old_password_hash']:
-                    print("User requested password - previously disabled")
+                    _logger.info("%r requested password - previously disabled"
+                                 % client_id)
+                    if verbose:
+                        print("User requested password - previously disabled")
                 else:
-                    print("""User '%s' exists with *different* password!
+                    _logger.warning("%r exists with *different* password!" %
+                                    client_id)
+                    if ask_change_pw:
+                        print("""User %r exists with *different* password!
 Generally users with an existing account should sign up again through Xgi-bin
 using their existing credentials to authorize password changes or use the reset
 password mechanism to confirm their ownership of the registered account email.
 """ % client_id)
-                    if ask_change_pw:
-                        accept_answer = input(
-                            'Accept password change? [y/N] ')
+                        accept_answer = input('Accept password change? [y/N] ')
                     else:
                         accept_answer = 'no'
 
