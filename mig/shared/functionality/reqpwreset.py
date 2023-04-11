@@ -78,7 +78,22 @@ def main(client_id, user_arguments_dict, environ=None):
              '''No local login to reset password for on this site'''})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    unsupported = [i for i in show if not i in local_auth]
+    if unsupported:
+        output_objects.append(
+            {'object_type': 'html_form', 'text':
+             '''<span class="warningtext">
+             Warning: ignored requested but unsupported show value(s): %s
+             </span>'''
+             % ', '.join(unsupported)})
+
     show_local = [i for i in show if i in local_auth]
+    if not show_local:
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             '''Please provide a supported value (%s) for the show argument'''
+             % ', '.join(local_auth)})
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s account password reset request' % \
@@ -132,12 +147,12 @@ def main(client_id, user_arguments_dict, environ=None):
         csrf_limit = get_csrf_limit(configuration)
         fill_helpers = {'form_method': form_method, 'csrf_field': csrf_field,
                         'csrf_limit': csrf_limit,
-                        'short_title': configuration.short_title, 'show': show}
+                        'short_title': configuration.short_title}
         target_op = "reqpwresetaction"
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)
         fill_helpers.update({'target_op': target_op, 'csrf_token': csrf_token,
-                             'show_local': show_local})
+                             'show': show_local})
         html = account_pw_reset_template(configuration,
                                          default_values=fill_helpers)
         output_objects.append({'object_type': 'html_form', 'text': html %
