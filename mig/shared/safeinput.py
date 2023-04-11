@@ -396,7 +396,7 @@ def valid_label_text(
     """Verify that supplied text only contains characters that we consider
     valid"""
 
-    valid_chars = VALID_PATH_CHARACTERS + extra_chars
+    valid_chars = ascii_letters + digits + extra_chars
     __valid_contents(text, valid_chars, min_length, max_length,
                      COMMON_ACCENTED)
 
@@ -1720,6 +1720,7 @@ def guess_type(name):
             'storage_dir',
             'cmd',
             'site_script_deps',
+            'modauthopenid.error',
         ):
             __type_map[key] = valid_safe_path
         # We include vgrid_name and a few more here to enforce sane name policy
@@ -1977,11 +1978,11 @@ def guess_type(name):
             'peers_content',
         ):
             __type_map[key] = valid_free_text
-        for key in ('show', 'modauthopenid.error', ):
+        for key in ('show', ):
             __type_map[key] = valid_label_text
         for key in ('password', 'verifypassword', 'transfer_pw', ):
             __type_map[key] = valid_password
-        for key in ('hostidentifier'):
+        for key in ('hostidentifier', ):
             __type_map[key] = valid_alphanumeric
         for key in ('proxy_upload', ):
             __type_map[key] = valid_printable
