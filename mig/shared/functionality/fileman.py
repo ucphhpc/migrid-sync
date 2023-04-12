@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # fileman - File manager UI for browsing and manipulating files and folders
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,6 +30,8 @@ their home directories.
 """
 
 from __future__ import absolute_import
+
+import sys
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir
@@ -566,8 +568,14 @@ def js_tmpl_parts(configuration,
         'enable_datatransfers':
             ('%s' % (configuration.site_enable_transfers and legacy_buttons)).lower(),
         'enable_gdp':
-            ('%s' % configuration.site_enable_gdp).lower()
+            ('%s' % configuration.site_enable_gdp).lower(),
+        'max_stream_size': 64*1024*1024
     }
+
+    # TODO: disable this workaround for cat.py encoding bug on py3 once fixed
+    if sys.version_info[0] >= 3:
+        fill_entries['max_stream_size'] = -1
+
     js_import = '''
 <!-- Filemanager and dependencies -->
 <script type="text/javascript" src="/images/js/jquery.form.js"></script>
@@ -728,7 +736,8 @@ csrf_map["%s"] = "%s";
                                              sharelinksbutton: %(enable_sharelinks)s,
                                              datatransfersbutton: %(enable_datatransfers)s,
                                              datasafetypopup: %(datasafety_popup)s,
-                                             enableGDP: %(enable_gdp)s
+                                             enableGDP: %(enable_gdp)s,
+                                             maxStreamSize: %(max_stream_size)d
                                              }
             );
 
