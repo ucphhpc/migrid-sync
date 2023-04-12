@@ -106,8 +106,7 @@ def load_twofactor_interval(client_id, configuration):
         try:
             result = int(interval.strip())
         except Exception as exc:
-            result = None
-            _logger.error("Failed to read twofactor interval: %s" % exc)
+            _logger.error("Failed to extract twofactor interval: %s" % exc)
 
     return result
 
@@ -163,13 +162,17 @@ def load_twofactor_key(client_id, configuration, allow_missing=True):
     key_path = os.path.join(configuration.user_settings, client_dir,
                             twofactor_key_name)
     b32_key = None
-    try:
+    if os.path.isfile(key_path):
         scrambled = read_file(key_path, _logger).strip()
-        b32_key = unscramble_password(configuration.site_password_salt,
-                                      scrambled)
-    except Exception as exc:
-        if not allow_missing:
-            _logger.error("load 2FA key failed: %s" % exc)
+        try:
+            b32_key = unscramble_password(configuration.site_password_salt,
+                                          scrambled)
+        except Exception as exc:
+            _logger.error("Failed to extract twofactor key: %s" % exc)
+
+    if not b32_key and not allow_missing:
+        _logger.error("load 2FA key failed: %s" % exc)
+
     return b32_key
 
 

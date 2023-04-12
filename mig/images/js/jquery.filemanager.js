@@ -4,7 +4,7 @@
   # --- BEGIN_HEADER ---
   #
   # jquery.filemanager - jquery based file manager
-  # Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+  # Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
   #
   # This file is part of MiG.
   #
@@ -1044,9 +1044,10 @@ if (jQuery) (function($){
                     max_stream_size = Number.MAX_SAFE_INTEGER;
                 }
                 else {
-                    max_stream_size = 64*1024*1024;
+                    max_stream_size = options.maxStreamSize;
                 }
                 var file_size = $("div.bytes", el).text();
+                //console.info("File size "+file_size+" vs stream size "+max_stream_size);
                 
                 var path = chroot($(el).attr(pathAttribute), options);
 
@@ -1675,6 +1676,7 @@ if (jQuery) (function($){
             selectOnly: false,
             imagesettings: false,
             enableGDP: false,
+            maxStreamSize: 64*1024*1024
         };
 
         var options = $.extend(defaults, user_options);

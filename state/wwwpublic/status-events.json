@@ -1,4 +1,27 @@
 [
+   {
+    "status": "AUTO", 
+    "work_start": "2023-05-01T17:00:00+02:00", 
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2023-04-20T12:00:00+02:00",
+    "title": {
+      "EN": "Planned DAG/MODI Maintenance",
+      "DK": "Planlagt DAG/MODI vedligehold"
+    },
+    "services": [
+      "DAG",
+      "MODI"
+    ],
+    "work_end": "2023-05-01T22:00:00+02:00",
+    "description": {
+      "EN": "It's time for a thorough update of the DAG/MODI services and release of the newest software edition. The work will involve down-time for a number of low-level system tasks. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect a longer downtime of approximately two hours for the migration and main upgrades if everything runs smoothly. That downtime will likely start about half an hour into the window and should therefore finish well before standard working hours.",
+      "DK": "Det er tid til en gennemgående opdatering af DAG/MODI servicene. Arbejdet kræver nedetid til grundlæggende systemopgaver, og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi forventer en længere nedetid på et par timers tid til migrering samt hovedopgraderingerne, hvis alting forløber planmæssigt. Den del vil formodentlig begynde omkring en halv time inde i servicevinduet og skulle derfor være overstået længe inden almindelig arbejdstid."
+    },
+    "announce_end": "2023-05-02T12:00:00+02:00"
+  },
  {
     "status": "AUTO", 
     "work_start": "2023-03-27T18:00:00+02:00", 
