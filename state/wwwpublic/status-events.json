@@ -22,6 +22,27 @@
     },
     "announce_end": "2023-05-02T12:00:00+02:00"
   },
+   {
+    "status": "AUTO", 
+    "work_start": "2023-04-14T13:22:00+02:00", 
+    "systems": [
+        "ERDA"
+    ],
+    "announce_start": "2023-04-14T13:22:00+02:00",
+    "title": {
+      "EN": "Login Errors for a number of users",
+      "DK": "Loginproblemer for nogle brugere"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2023-04-14T14:36:00+02:00",
+    "description": {
+      "EN": "Due to a human error the ERDA user database got damaged during a standard user maintenance task this afternoon. As a result about 465 user accounts temporarily lost login access to ERDA. No actual user data was affected. We have restored the latest backup copy of the user database from last night and merged missing users from there into a repaired copy of the active user database. In effect this should have restored access for all users signed up before last night. Users signed up since last night may have to repeat the sign up process to repair their ERDA user database entry. Please try that first if you can't log in to ERDA web and don't hesitate to contact us at support@erda.dk if it doesn't help. Then we'll look into any remaining problems and try to fix them as soon as possible. We're sorry about the inconvenience for those of you affected.",
+      "DK": "Pga en menneskelig fejl blev ERDAs brugerdatabase beskadiget ifm almindelig brugervedligehold her til eftermiddag. Resultatet var at omkring 465 brugere midlertidigt mistede login-adgangen til deres ERDA-konto. Ingen faktiske brugerdata var berørt. Vi har genskabt den seneste backup af brugerdatabasen fra i aftes og flettet manglende brugere fra backup ind i en repareret kopi af den aktive brugerdatabase. Det skulle gerne have genetableret adgang for alle brugere tilmeldt før i aftes. Brugere tilmeldt siden i aftes er muligvis nødt til at tilmelde sig igen for at de igen optræder korrekt i ERDA brugerdatabasen. Prøv venligst gentaget tilmelding først hvis ikke du kan logge på ERDA web, og tøv ikke med at kontakte os på support@erda.dk hvis ikke det hjælper. Så skal vi nok grave i evt resterende problemer og forsøge at få det løst hurtigst muligt. Vi beklager de gener det medførte før jer der blev ramt."
+    },
+    "announce_end": "2023-04-15T12:00:00+02:00"
+  },
  {
     "status": "AUTO", 
     "work_start": "2023-03-27T18:00:00+02:00", 
