@@ -81,7 +81,7 @@ def expand_external_sources(logger, val):
     if val.find('::') == -1:
         # logger.debug("nothing to expand in %r" % val)
         return val
-    logger.debug("expand any ENV and FILE content in %r" % val)
+    #logger.debug("expand any ENV and FILE content in %r" % val)
     env_pattern = "[a-zA-Z][a-zA-Z0-9_]+"
     cache_pattern = file_pattern = "[^ ]+"
     expanded = val
@@ -103,15 +103,15 @@ def expand_external_sources(logger, val):
                     cache = parts[1].strip()
                 content = None
                 if cache and os.path.exists(cache):
-                    logger.debug("loading conf content from cache in %r" %
-                                 cache)
+                    # logger.debug("loading conf content from cache in %r" %
+                    #             cache)
                     content = read_file(cache, logger)
                 if not content:
-                    logger.debug(
-                        "reading conf content from file in %r" % cache)
+                    # logger.debug(
+                    #    "reading conf content from file in %r" % cache)
                     content = read_file(path, logger)
                     if cache and content:
-                        logger.debug("caching conf content salt in %r" % cache)
+                        #logger.debug("caching conf content salt in %r" % cache)
                         write_file(content, cache, logger)
                 if not content:
                     logger.warning("salt file not found or empty: %s" % path)
