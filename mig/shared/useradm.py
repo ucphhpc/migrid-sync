@@ -567,6 +567,7 @@ Please tell user to use the original password, request password reset or go
 through renewal using Xgi-bin with proper authentication to authorize the
 change."""
                         raise Exception(err)
+            _logger.debug('Renewing existing user %s' % client_id)
             if verbose:
                 print('Renewing existing user')
             # Take old user details and override fields with new ones but
@@ -587,6 +588,7 @@ change."""
             user['renewed'] = now
             # Init existing users with a safe hash of client_id as unique_id
             if not user.get('unique_id', None):
+                _logger.debug('Adding missing unique_id to user %s' % user)
                 user['unique_id'] = make_safe_hash(client_id)
         elif not force:
             if do_lock:
@@ -618,12 +620,16 @@ change."""
 
     # Make sure unique_id is really unique in user DB
     all_unique = [i['unique_id'] for (_, i) in user_db.items() if
-                  i.get('unique_id', None)]
+                  i.get('unique_id', None) and i['distinguished_name'] != client_id]
     found_unique = False
     for _ in range(4):
         if user['unique_id'] not in all_unique:
+            _logger.debug("validated unique_id %(unique_id)s" % user)
             found_unique = True
             break
+        # TODO: bail out here on edit/renewal if existing should be unique?
+        _logger.warning("regenerate unique ID for %s as %r has a collission" %
+                        (client_id, user['unique_id']))
         user['unique_id'] = generate_random_ascii(unique_id_length,
                                                   '0123456789abcdef')
 
@@ -1555,7 +1561,7 @@ def get_any_oid_user_dn(configuration, raw_login,
         db_path = default_db_path(configuration)
         user_map = load_user_db(db_path, do_lock=do_lock)
         user_alias = configuration.user_openid_alias
-        _logger.debug('user_map')
+        # _logger.debug('user_map')
         for (distinguished_name, user) in user_map.items():
             if user[user_alias] in (raw_login, client_alias(raw_login)):
                 _logger.debug('found full ID %s from %s alias'
