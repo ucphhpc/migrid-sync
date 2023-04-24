@@ -932,7 +932,7 @@ def peer_account_req(req_id, configuration, target_id, user_copy=False,
         _logger.debug("request peer acceptance from users: %s" %
                       '\n'.join([i[0] for i in hits]))
 
-    all_sent, all_errors = True, []
+    notify_count, all_sent, all_errors = 0, True, []
     for (user_id, user_dict) in hits:
         _logger.debug('request peer - check for %s' % user_id)
         if configuration.site_enable_gdp and \
@@ -975,6 +975,7 @@ def peer_account_req(req_id, configuration, target_id, user_copy=False,
             continue
         _logger.info("send request accept peer message for '%s' to:\n%s"
                      % (peer_id, '\n'.join(notify_dict['NOTIFY'])))
+        notify_count += 1
         peers_details = ''
         for peers_field in configuration.site_peers_explicit_fields:
             field_name = 'peers_%s' % peers_field
@@ -996,8 +997,13 @@ def peer_account_req(req_id, configuration, target_id, user_copy=False,
             all_sent = False
             all_errors += send_errors
 
-    if all_sent:
-        _logger.info('sent accept peer requests for %s' % req_path)
+    if notify_count < 1:
+        err_msg = 'no valid actual peers found for %s' % req_path
+        _logger.warning(err_msg)
+        return (False, err_msg)
+    elif all_sent:
+        _logger.info('sent %d accept peer requests for %s' % (notify_count,
+                                                              req_path))
         return (True, '')
     else:
         err_msg = 'one or more accept peer requests failed for %s' % \
