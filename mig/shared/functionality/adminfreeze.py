@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # adminfreeze - back end to request freeze files in write-once fashion
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -96,7 +96,7 @@ Please contact the site admins %s if you think it should be enabled.
                                                         checksum_list=[])
         if not load_status:
             logger.error("%s: load failed for '%s': %s" %
-                         (op_name, freeze_id, brief_freeze(freeze_dict)))
+                         (op_name, freeze_id, freeze_dict))
             output_objects.append({'object_type': 'error_text', 'text':
                                    'Could not read details for "%s"' %
                                    freeze_id})
