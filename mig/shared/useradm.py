@@ -222,6 +222,7 @@ def create_user(
     from_edit_user=False,
     ask_change_pw=False,
     auto_create_db=True,
+    create_backup=True,
 ):
     """Add user"""
     flock = None
@@ -641,6 +642,11 @@ change."""
                         % client_id)
 
     try:
+        if create_backup:
+            # Backup user db before applying any changes to allow roll-back
+            db_backup_path = default_db_path(configuration) + '.bck'
+            save_user_db(user_db, db_backup_path, do_lock=False)
+
         user_db[client_id] = user
         sync_gdp_users(configuration, user_db, user, client_id)
         save_user_db(user_db, db_path, do_lock=False)
@@ -1095,7 +1101,7 @@ def edit_user(
             _logger.info("Force old user renew to fix any missing files")
             create_user(old_user, conf_path, db_path, force, verbose,
                         ask_renew=False, default_renew=True, do_lock=False,
-                        from_edit_user=True)
+                        from_edit_user=True, create_backup=True)
             del user_db[client_id]
         elif new_id != client_id:
             if do_lock:
@@ -1335,8 +1341,10 @@ def edit_user(
     _logger.info("Renamed user %s to %s" % (client_id, new_id))
     mark_user_modified(configuration, new_id)
     _logger.info("Force new user renew to fix access")
+    # NOTE: only backup user DB here if we didn't already do so in call above
     create_user(user_dict, conf_path, db_path, force, verbose,
-                ask_renew=False, default_renew=True, from_edit_user=True)
+                ask_renew=False, default_renew=True, from_edit_user=True,
+                create_backup=meta_only)
     _logger.info("Force access map updates to avoid web stall")
     _logger.info("Force update user map")
     force_update_user_map(configuration)
@@ -1354,7 +1362,8 @@ def delete_user(
     db_path,
     force=False,
     verbose=False,
-    do_lock=True
+    do_lock=True,
+    create_backup=True,
 ):
     """Delete user"""
 
@@ -1413,6 +1422,11 @@ def delete_user(
                                 % client_id)
 
     try:
+        if create_backup:
+            # Backup user db before applying any changes to allow roll-back
+            db_backup_path = default_db_path(configuration) + '.bck'
+            save_user_db(user_db, db_backup_path, do_lock=False)
+
         user_dict = user_db.get(client_id, user)
         del user_db[client_id]
         save_user_db(user_db, db_path, do_lock=False)
