@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # bailout - emergency backend output helpers
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -129,7 +129,7 @@ def crash_helper(configuration, backend, out_obj, error_id=None):
     out_obj = bailout_helper(configuration, backend, out_obj)
     out_obj.append(
         {'object_type': 'error_text', 'text':
-         """A critical internal error occured in the %s backend. It has been
+         """A critical internal error occurred in the %s backend. It has been
 logged internally with error ID %s
          """ % (backend, error_id)})
     out_obj.append(

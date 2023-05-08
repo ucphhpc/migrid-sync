@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # peersaction - handle management of peers
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -306,7 +306,7 @@ site administrators (%s).
                 if failed:
                     output_objects.append(
                         {'object_type': 'error_text', 'text':
-                         """An error occured trying to email the peer
+                         """An error occurred trying to email the peer
 invitation to %s . Please inform the site admins (%s) if the problem persists.
 """ % (', '.join(failed), admin_email)})
                 if succeeded:
@@ -361,7 +361,7 @@ Kind: %(kind)s , Expire: %(expire)s, Label: %(label)s , Peers:
     if not send_email(admin_email, email_header, email_msg, logger,
                       configuration):
         output_objects.append({'object_type': 'error_text', 'text': '''
-An error occured trying to send the email about your %s peers to the site
+An error occurred trying to send the email about your %s peers to the site
 administrators. Please manually inform them (%s) if the problem persists.
 ''' % (action, admin_email)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
