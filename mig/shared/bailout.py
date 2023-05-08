@@ -58,6 +58,18 @@ def bailout_title(configuration=None, title_text=""):
     return title
 
 
+def compact_string(raw_string, truncate_max_chars):
+    """Returns a compacted copy of raw_string without touching the original"""
+    limit_string = ''
+    keep_chars = truncate_max_chars // 2
+    if len(raw_string) > truncate_max_chars:
+        limit_string += raw_string[0:keep_chars] + ' ... ' + \
+            raw_string[-keep_chars:]
+    else:
+        limit_string += raw_string
+    return limit_string
+
+
 def compact_lines(raw_lines, truncate_max_lines, truncate_max_chars):
     """Returns a compacted copy of raw_lines without touching the original"""
     limit_lines = []
@@ -82,9 +94,10 @@ def compact_lines(raw_lines, truncate_max_lines, truncate_max_chars):
 def filter_output_objects(configuration, out_obj, truncate_out_len=78,
                           truncate_max_lines=4):
     """Helper to remove noise from out_obj before logging. Strip style and
-    script noise from title entry in log and shorten any file_output to max
-    truncate_out_len chars showing only prefix and suffix. Entries with many
-    lines are pruned from the middle to truncate_max_lines of total output.
+    script noise from title entry in log and shorten any file_output and binary
+    data to max truncate_out_len chars showing only prefix and suffix. Entries
+    with many lines are pruned from the middle to truncate_max_lines of total
+    output.
     """
     out_filtered = []
     for entry in out_obj:
@@ -100,6 +113,13 @@ def filter_output_objects(configuration, out_obj, truncate_out_len=78,
             stripped_lines = stripped_output.get('lines', [])
             stripped_output['lines'] = compact_lines(stripped_lines,
                                                      truncate_max_lines,
+                                                     truncate_out_len)
+            out_filtered.append(stripped_output)
+        elif entry.get('object_type', 'UNKNOWN') == 'binary':
+            # NOTE: shallow copy so we must be careful not to edit original
+            stripped_output = entry.copy()
+            stripped_data = stripped_output.get('data', '')
+            stripped_output['data'] = compact_string(stripped_data,
                                                      truncate_out_len)
             out_filtered.append(stripped_output)
         else:

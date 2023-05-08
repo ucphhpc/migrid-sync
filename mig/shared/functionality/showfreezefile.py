@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showfreezefile - View own frozen archive files
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -129,7 +129,8 @@ archive dir.'''})
         private_fd.close()
     except Exception as exc:
         logger.error('Error reading archive private file %s' % exc)
-        output_objects.append({'object_type': 'error_text', 'text': 'Error reading archive private file %s'
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Error reading archive private file %s'
                                % rel_path})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
