@@ -15,12 +15,12 @@
       "DAG",
       "MODI"
     ],
-    "work_end": "2023-05-01T22:00:00+02:00",
+    "work_end": "2023-05-02T15:00:00+02:00",
     "description": {
-      "EN": "It's time for a thorough update of the DAG/MODI services and release of the newest software edition. The work will involve down-time for a number of low-level system tasks. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect a longer downtime of approximately two hours for the migration and main upgrades if everything runs smoothly. That downtime will likely start about half an hour into the window and should therefore finish well before standard working hours.",
-      "DK": "Det er tid til en gennemgående opdatering af DAG/MODI servicene. Arbejdet kræver nedetid til grundlæggende systemopgaver, og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi forventer en længere nedetid på et par timers tid til migrering samt hovedopgraderingerne, hvis alting forløber planmæssigt. Den del vil formodentlig begynde omkring en halv time inde i servicevinduet og skulle derfor være overstået længe inden almindelig arbejdstid."
+      "EN": "It's time for a thorough update of the DAG/MODI services and release of the newest software edition. The work will involve down-time for a number of low-level system tasks. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect a longer downtime of approximately two hours for the migration and main upgrades if everything runs smoothly. That downtime will likely start about half an hour into the window and should therefore finish well before standard working hours. We ran into some new issues surrounding the new SSL setup with the backend DAG and MODI service and how the updated JupyterHub configuration handle mounting credentials across user session, which was fixed during the afternoon. Both MODI and DAG are now running as expected.",
+      "DK": "Det er tid til en gennemgående opdatering af DAG/MODI servicene. Arbejdet kræver nedetid til grundlæggende systemopgaver, og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi forventer en længere nedetid på et par timers tid til migrering samt hovedopgraderingerne, hvis alting forløber planmæssigt. Den del vil formodentlig begynde omkring en halv time inde i servicevinduet og skulle derfor være overstået længe inden almindelig arbejdstid. Vi stødte på nogle problemer omkring den nye SSL-opsætning mod vores backend DAG og MODI tjenester, samt at den opdaterede JupyterHub version, havde problemer med at håndtere mount autentificering korrekt på tværs af bruger sessioner. Vi udbedrede disse fejl i løbet af eftermidagen og både DAG og MODI kører nu som forventet."
     },
-    "announce_end": "2023-05-02T12:00:00+02:00"
+    "announce_end": "2023-05-02T20:00:00+02:00"
   },
    {
     "status": "AUTO", 

@@ -187,9 +187,9 @@ mind about it you can safely just ignore this message.
         if not send_email(email_to, email_header, email_msg, logger,
                           configuration):
             output_objects.append({'object_type': 'error_text', 'text':
-                                   '''An error occured trying to send the email
-for an account %s password reset request. Please contact the %s site admins if this
-problem persists.''' % (auth_type_name, configuration.short_title)})
+                                   '''An error occurred trying to send the email
+for an account %s password reset request. Please contact the %s site admins if
+this problem persists.''' % (auth_type_name, configuration.short_title)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append(

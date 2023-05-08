@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # autocreate - auto create user from signed certificate or openid login
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -695,7 +695,7 @@ The %(short_title)s Admins
         if not send_email(email, email_header, email_msg, logger,
                           configuration):
             output_objects.append({
-                'object_type': 'error_text', 'text': """An error occured trying
+                'object_type': 'error_text', 'text': """An error occurred trying
 to send your account welcome email. Please inform the site admins (%s) manually
 and include the session ID: %s""" % (admin_email, tmp_id)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
