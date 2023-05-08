@@ -325,7 +325,7 @@ Command to delete user again on %(site)s server:
                       configuration):
         output_objects.append(
             {'object_type': 'error_text', 'text':
-             """An error occured trying to send the email requesting the site
+             """An error occurred trying to send the email requesting the site
 administrators to create a new certificate and account. Please email them (%s)
 manually and include the session ID: %s""" % (admin_email, tmp_id)})
         return (output_objects, returnvalues.SYSTEM_ERROR)

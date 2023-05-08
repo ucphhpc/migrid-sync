@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # getrespgid - Get PGID of process on resource for kill in clean up
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -150,7 +150,7 @@ exe %s, client_id %s''' % (unique_resource_name, exe_name, client_id))
         elif 'EXE' == res_type:
             msg = ("Error reading PGID for resource: '%s' EXE: '%s'\n"
                    'Either resource has never been started or a server '
-                   'error occured.'
+                   'error occurred.'
                    ) % (unique_resource_name, exe_name)
         status = returnvalues.CLIENT_ERROR
 

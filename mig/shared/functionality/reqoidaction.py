@@ -345,7 +345,7 @@ Command to delete user again on %(site)s server:
     if not send_email(admin_email, email_header, email_msg, logger,
                       configuration):
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''An error occured trying to send the email
+                               '''An error occurred trying to send the email
 requesting the site administrators to create a new OpenID and account. Please
 email them (%s) manually and include the session ID: %s''' % (admin_email,
                                                               tmp_id)})
