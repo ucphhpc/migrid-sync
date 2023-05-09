@@ -290,7 +290,7 @@ def main(client_id, user_arguments_dict, environ=None):
                        (op_name, client_id, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    logger.debug('Accepted arguments: %s' % accepted)
+    # logger.debug('Accepted arguments: %s' % accepted)
     # logger.debug('with environ: %s' % environ)
 
     admin_email = configuration.admin_email

@@ -80,7 +80,6 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False, op_menu=False)
     defaults = signature(configuration)[1]
-    logger.debug('in extoidaction: %s' % user_arguments_dict)
     (validate_status, accepted) = validate_input(user_arguments_dict,
                                                  defaults, output_objects,
                                                  allow_rejects=False)

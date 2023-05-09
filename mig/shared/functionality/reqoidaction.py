@@ -109,9 +109,6 @@ def main(client_id, user_arguments_dict):
     smtp_server = configuration.smtp_server
     user_pending = os.path.abspath(configuration.user_pending)
 
-    logger.info("request oid account for %s" %
-                [force_native_str_rec(force_utf8_rec(accepted))])
-
     cert_name = accepted['cert_name'][-1].strip()
     country = accepted['country'][-1].strip()
     state = accepted['state'][-1].strip()
