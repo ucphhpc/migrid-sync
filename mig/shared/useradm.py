@@ -47,8 +47,9 @@ from mig.shared.accountstate import update_account_expire_cache, \
     update_account_status_cache
 from mig.shared.base import client_id_dir, client_dir_id, client_alias, \
     sandbox_resource, fill_user, fill_distinguished_name, extract_field, \
-    is_gdp_user, mask_creds, force_native_str, force_native_str_rec, native_str_escape, \
-    from mig.shared.conf import get_configuration_object
+    is_gdp_user, mask_creds, force_native_str, force_native_str_rec, \
+    native_str_escape, native_args
+from mig.shared.conf import get_configuration_object
 from mig.shared.configuration import Configuration
 from mig.shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
     davs_conf_dir, ftps_conf_dir, htaccess_filename, welcome_filename, \
@@ -428,7 +429,7 @@ def create_user(
             create_answer = 'y'
         else:
             print('User DB in %s does not exist - okay if first user' % db_path)
-            create_answer = raw_input('Create new user DB? [Y/n] ')
+            create_answer = input('Create new user DB? [Y/n] ')
         if create_answer.lower().startswith('n'):
             if do_lock:
                 unlock_user_db(flock)
