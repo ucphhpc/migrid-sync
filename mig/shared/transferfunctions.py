@@ -36,7 +36,7 @@ import re
 import os
 import time
 
-from mig.shared.base import client_id_dir
+from mig.shared.base import client_id_dir, mask_creds
 from mig.shared.defaults import datatransfers_filename, user_keys_dir, \
     transfer_output_dir
 from mig.shared.fileio import makedirs_rec, delete_file
@@ -61,15 +61,14 @@ def get_status_dir(configuration, client_id, transfer_id=''):
 def blind_pw(transfer_dict):
     """Returns a copy of transfer_dict with password blinded out"""
     hide_pw = '**HIDDEN**'
-    blinded = transfer_dict.copy()
-    if blinded.get('password', '') or blinded.get('password_encrypted', '') \
-            or blinded.get('password_digest', ''):
-        blinded['password'] = hide_pw
+    replace_map = {}
     # NOTE: lftp commands inline credentials for various reasons (see S3 note)
     for target in ('lftp_src', 'lftp_dst'):
-        if blinded.get(target, ''):
-            blinded[target] = re.sub(r'(.*://[^:]*):[^@]+@(.*)',
-                                     r'\1:%s@\2' % hide_pw, blinded[target])
+        if transfer_dict.get(target, ''):
+            replace_map[target] = (
+                r'(.*://[^:]*):[^@]+@(.*)',  r'\1:%s@\2' % hide_pw)
+    blinded = mask_creds(
+        transfer_dict, masked_value=hide_pw, subst_map=replace_map)
     return blinded
 
 
@@ -478,3 +477,13 @@ if __name__ == "__main__":
         print("verify transfer worker is no longer found: %s" % verify_worker)
     transfer_workers = all_worker_transfers(conf, workers_map)
     print("final transfer workers: %s" % transfer_workers)
+    transfer_dict = {}
+    dummypw = 'NotSoSecretDummy'
+    transfer_dict.update(
+        {'password': dummypw,
+         'lftp_src': 'sftp://john.doe:%s@nowhere.org/README' % dummypw,
+         'lftp_dst': 'https://john.doe:%s@outerspace.org/' % dummypw,
+         })
+
+    print("raw transfer dict:\n%s\nis blinded into:\n%s" %
+          (transfer_dict, blind_pw(transfer_dict)))

@@ -45,7 +45,7 @@ import time
 
 from mig.shared import returnvalues
 from mig.shared.accountstate import default_account_expire
-from mig.shared.base import client_id_dir, canonical_user, \
+from mig.shared.base import client_id_dir, canonical_user, mask_creds, \
     fill_user, distinguished_name_to_user, fill_distinguished_name, \
     get_site_base_url
 from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_V2, \
@@ -228,7 +228,6 @@ def main(client_id, user_arguments_dict, environ=None):
         initialize_main_variables(client_id, op_header=False,
                                   op_menu=False)
     logger = configuration.logger
-    logger.info('%s: args: %s' % (op_name, user_arguments_dict))
     prefilter_map = {}
 
     output_objects.append({'object_type': 'header',
@@ -290,7 +289,8 @@ def main(client_id, user_arguments_dict, environ=None):
                        (op_name, client_id, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    # logger.debug('Accepted arguments: %s' % accepted)
+    # IMPORTANT: do NOT log credentials
+    logger.debug('Accepted arguments: %s' % mask_creds(accepted))
     # logger.debug('with environ: %s' % environ)
 
     admin_email = configuration.admin_email
@@ -603,8 +603,9 @@ sign up wrappers or go through the dedicated web form for %s.''' %
 
     # IMPORTANT: do NOT let a user create with ID different from client_id
     if auth_type == AUTH_CERTIFICATE and client_id != user_id:
+        # IMPORTANT: do NOT log credentials
         logger.error('refusing autocreate invalid user for %s: %s' %
-                     (client_id, user_dict))
+                     (client_id, mask_creds(user_dict)))
         output_objects.append({'object_type': 'error_text', 'text': '''Only
 accepting create matching supplied ID!'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -643,7 +644,8 @@ accepting create matching supplied ID!'''})
             configuration.auto_add_oid_user:
         fill_user(user_dict)
 
-        logger.info('create user: %s' % user_dict)
+        # IMPORTANT: do NOT log credentials
+        logger.info('create user: %s' % mask_creds(user_dict))
 
         # Now all user fields are set and we can begin adding the user
 

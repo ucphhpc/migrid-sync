@@ -36,12 +36,13 @@ from past.builtins import basestring
 import base64
 import io
 import os
+import re
 import sys
 
 # IMPORTANT: do not import any other MiG modules here - to avoid import loops
 from mig.shared.defaults import default_str_coding, default_fs_coding, \
     keyword_all, sandbox_names, _user_invisible_files, _user_invisible_dirs, \
-    _vgrid_xgi_scripts, cert_field_order, gdp_distinguished_field, \
+    _vgrid_xgi_scripts, cert_field_order, csrf_field, gdp_distinguished_field, \
     valid_gdp_auth_scripts, valid_gdp_anon_scripts, STR_KIND, FS_KIND, \
     AUTH_OPENID_V2, AUTH_OPENID_CONNECT, AUTH_CERTIFICATE
 
@@ -101,6 +102,29 @@ def client_alias(client_id):
     # NOTE: base64 encode requires+returns bytes but we want a native string
     return force_native_str(base64.urlsafe_b64encode(force_utf8(
         client_id.replace('=', '_'))))
+
+
+def mask_creds(user_dict, mask_fields=[csrf_field, 'reset_token', 'password',
+                                       'old_password', 'password_hash',
+                                       'old_password_hash', 'password_digest',
+                                       'password_encrypted', 'verifypassword',
+                                       'transfer_pw'],
+               masked_value='**HIDDEN**', subst_map={}):
+    """Returns a copy of user_dict with any password fields from mask_fields
+    list replaced by masked_value string. The optional subst_map dictionary
+    maps field names to substitution patterns for the re.sub() function to
+    transform the existing value in user_dict into a filtered one. E.g. to mask
+    out inlined credentials.
+    """
+    masked = user_dict.copy()
+    for mask_field in mask_fields:
+        if masked.get(mask_field, ''):
+            masked[mask_field] = masked_value
+    for (target, pattern_pair) in subst_map.items():
+        if masked.get(target, ''):
+            masked[target] = re.sub(pattern_pair[0], pattern_pair[1],
+                                    masked[target])
+    return masked
 
 
 def expand_openid_alias(alias_id, configuration):
@@ -529,7 +553,7 @@ def force_default_str_coding_rec(input_obj, highlight='', stringify=False):
 
 
 def force_default_fs_coding_rec(input_obj, highlight='', stringify=False):
-    """A helper to force input_obj to the default filesystem coding recursively. 
+    """A helper to force input_obj to the default filesystem coding recursively.
     Use the active interpreter and the shared.defaults helpers to force the
     current default.
     Please note that the default here is to NOT stringify non-string values
@@ -732,9 +756,9 @@ def allow_script(configuration, script_name, client_id):
     configuration. I.e. GDP-mode disables a number of functionalities.
     """
     _logger = configuration.logger
-    #_logger.debug("in allow_script for %s from %s" % (script_name, client_id))
+    # _logger.debug("in allow_script for %s from %s" % (script_name, client_id))
     if configuration.site_enable_gdp:
-        #_logger.debug("in allow_script gdp for %s" % script_name)
+        # _logger.debug("in allow_script gdp for %s" % script_name)
         reject_append = " functionality disabled by site configuration!"
         if not client_id:
             if script_name in valid_gdp_anon_scripts:
@@ -752,7 +776,7 @@ def allow_script(configuration, script_name, client_id):
                 msg = "all access to" + reject_append
     else:
         allow, msg = True, ''
-    #_logger.debug("allow_script returns %s for %s" % (allow, script_name))
+    # _logger.debug("allow_script returns %s for %s" % (allow, script_name))
     return (allow, msg)
 
 
@@ -792,7 +816,7 @@ def auth_type_description(configuration, auth_type=keyword_all):
 
 
 if __name__ == '__main__':
-    orig_id = '/X=ab/Y=cdef ghi/Z=klmn'
+    orig_id = '/C=DK/ST=NA/L=NA/O=Ajax Inc/OU=NA/CN=John Doe/emailAddress=john.doe@ajaxinc.org'
     client_dir = client_id_dir(orig_id)
     client_id = client_dir_id(client_dir)
     test_paths = ['simple.txt', 'somedir/somefile.txt']
@@ -834,6 +858,21 @@ if __name__ == '__main__':
         (allow, msg) = allow_script(configuration, script_name, client_id)
         print("check %s with client id '%s': %s %s" % (script_name, client_id,
                                                        allow, msg))
-    print("brief format of short list: %s" % brief_list(list(range(5))))
-    print("brief format of long list: %s" % brief_list(list(range(30))))
-    print("brief format of huge list: %s" % brief_list(list(range(200))))
+<< << << < HEAD
+print("brief format of short list: %s" % brief_list(list(range(5))))
+print("brief format of long list: %s" % brief_list(list(range(30))))
+print("brief format of huge list: %s" % brief_list(list(range(200))))
+== == == =
+print("brief format of short list: %s" % brief_list(range(5)))
+print("brief format of long list: %s" % brief_list(range(30)))
+print("brief format of huge list: %s" % brief_list(range(200)))
+
+user_dict = distinguished_name_to_user(client_id)
+user_dict.update({'password': 'NotSoSecretDummy',
+                  'password_encrypted': '0123456789abcdef',
+                  'password_hash': '0123456789abcdef',
+                  'password_digest': '0123456789abcdef'})
+user_dict = canonical_user(configuration, user_dict, user_dict.keys())
+print("Apply mask creds on bogus user dict:\n%s\nresults in:\n%s" %
+      (user_dict, mask_creds(user_dict)))
+>>>>>> > 91b29aa0(more masking of potentially sensitive values in logs. Additionally masks out password hashes, digests and crypts plus a few session tokens. Switched transferfunction helper over to use same mask_creds helper.)
