@@ -43,7 +43,7 @@ from mig.shared.accountstate import update_account_expire_cache, \
     update_account_status_cache
 from mig.shared.base import client_id_dir, client_dir_id, client_alias, \
     sandbox_resource, fill_user, fill_distinguished_name, extract_field, \
-    is_gdp_user
+    is_gdp_user, mask_creds
 from mig.shared.conf import get_configuration_object
 from mig.shared.configuration import Configuration
 from mig.shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
@@ -589,7 +589,8 @@ change."""
             user['renewed'] = now
             # Init existing users with a safe hash of client_id as unique_id
             if not user.get('unique_id', None):
-                _logger.debug('Adding missing unique_id to user %s' % user)
+                _logger.debug('Adding missing unique_id to user %s' %
+                              mask_creds(user))
                 user['unique_id'] = make_safe_hash(client_id)
         elif not force:
             if do_lock:
@@ -625,7 +626,8 @@ change."""
     found_unique = False
     for _ in range(4):
         if user['unique_id'] not in all_unique:
-            _logger.debug("validated unique_id %(unique_id)s" % user)
+            _logger.debug("validated unique_id %(unique_id)s" %
+                          mask_creds(user))
             found_unique = True
             break
         # TODO: bail out here on edit/renewal if existing should be unique?
@@ -1103,8 +1105,8 @@ def edit_user(
             raise Exception("Edit aborted: illegal meta_only ID change! %s %s"
                             % (client_id, new_id))
         else:
-            _logger.info("Only updating metadata for %s: %s" % (client_id,
-                                                                changes))
+            _logger.info("Only updating metadata for %s: %s" %
+                         (client_id, mask_creds(changes)))
 
         user_db[new_id] = user_dict
         save_user_db(user_db, db_path, do_lock=False)

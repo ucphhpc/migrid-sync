@@ -39,7 +39,7 @@ from mig.shared import returnvalues
 from mig.shared.accountreq import existing_country_code, forced_org_email_match, \
     user_manage_commands
 from mig.shared.accountstate import default_account_expire
-from mig.shared.base import client_id_dir, canonical_user, \
+from mig.shared.base import client_id_dir, canonical_user, mask_creds, \
     generate_https_urls, fill_distinguished_name
 from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
@@ -227,7 +227,8 @@ resources anyway.
     if configuration.user_openid_providers and configuration.user_openid_alias:
         user_dict['openid_names'] += \
             [user_dict[configuration.user_openid_alias]]
-    logger.info('got account request from reqcert: %s' % user_dict)
+    # IMPORTANT: do NOT log credentials
+    logger.info('got account request from reqcert: %s' % mask_creds(user_dict))
 
     # For testing only
 
