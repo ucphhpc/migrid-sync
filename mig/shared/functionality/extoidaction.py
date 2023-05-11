@@ -38,7 +38,7 @@ import re
 from mig.shared import returnvalues
 from mig.shared.accountreq import user_manage_commands
 from mig.shared.accountstate import default_account_expire
-from mig.shared.base import client_id_dir, canonical_user, \
+from mig.shared.base import client_id_dir, canonical_user, mask_creds, \
     generate_https_urls, fill_distinguished_name
 from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
@@ -80,11 +80,12 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False, op_menu=False)
     defaults = signature(configuration)[1]
-    logger.debug('in extoidaction: %s' % user_arguments_dict)
     (validate_status, accepted) = validate_input(user_arguments_dict,
                                                  defaults, output_objects,
                                                  allow_rejects=False)
     if not validate_status:
+        # NOTE: 'accepted' is a non-sensitive error string here
+        logger.warning('%s invalid input: %s' % (op_name, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
 
     # Unfortunately OpenID does not use POST
@@ -191,6 +192,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
     if configuration.user_openid_providers and configuration.user_openid_alias:
         user_dict['openid_names'].append(
             user_dict[configuration.user_openid_alias])
+    # IMPORTANT: do NOT log credentials
+    logger.info('got account request from extoid: %s' % mask_creds(user_dict))
 
     req_path = None
     try:

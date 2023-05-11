@@ -39,7 +39,7 @@ from mig.shared import returnvalues
 from mig.shared.accountreq import existing_country_code, forced_org_email_match, \
     user_manage_commands
 from mig.shared.accountstate import default_account_expire
-from mig.shared.base import client_id_dir, canonical_user, \
+from mig.shared.base import client_id_dir, canonical_user, mask_creds, \
     generate_https_urls, fill_distinguished_name
 from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
@@ -86,6 +86,7 @@ def main(client_id, user_arguments_dict):
                                                  defaults, output_objects,
                                                  allow_rejects=False)
     if not validate_status:
+        # NOTE: 'accepted' is a non-sensitive error string here
         logger.warning('%s invalid input: %s' % (op_name, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -247,7 +248,8 @@ resources anyway.
     if configuration.user_openid_providers and configuration.user_openid_alias:
         user_dict['openid_names'] += \
             [user_dict[configuration.user_openid_alias]]
-    logger.info('got account request from reqoid: %s' % user_dict)
+    # IMPORTANT: do NOT log credentials
+    logger.info('got account request from reqoid: %s' % mask_creds(user_dict))
 
     # For testing only
 

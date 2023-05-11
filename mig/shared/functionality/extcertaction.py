@@ -38,7 +38,7 @@ import tempfile
 from mig.shared import returnvalues
 from mig.shared.accountreq import user_manage_commands
 from mig.shared.accountstate import default_account_expire
-from mig.shared.base import canonical_user, generate_https_urls, \
+from mig.shared.base import canonical_user, mask_creds, generate_https_urls, \
     distinguished_name_to_user, fill_distinguished_name, fill_user
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
@@ -92,6 +92,7 @@ def main(client_id, user_arguments_dict):
         require_user=False
     )
     if not validate_status:
+        # NOTE: 'accepted' is a non-sensitive error string here
         logger.warning('%s invalid input: %s' % (op_name, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -204,7 +205,8 @@ multiple "key=val" fields separated by "/".
     if configuration.user_openid_providers and configuration.user_openid_alias:
         user_dict['openid_names'] += \
             [user_dict[configuration.user_openid_alias]]
-    logger.info('got extcert request: %s' % user_dict)
+    # IMPORTANT: do NOT log credentials
+    logger.info('got account request from extcert: %s' % mask_creds(user_dict))
 
     # If server allows automatic addition of users with a CA validated cert
     # we create the user immediately and skip mail

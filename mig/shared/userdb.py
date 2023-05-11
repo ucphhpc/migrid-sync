@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userdb - core user database handling functions
-# Copyright (C) 2020-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2020-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,6 +32,7 @@ from __future__ import absolute_import
 
 import os
 
+from mig.shared.base import mask_creds
 from mig.shared.defaults import user_db_filename
 from mig.shared.fileio import acquire_file_lock, release_file_lock
 from mig.shared.serial import load, dump
@@ -152,11 +153,14 @@ def update_user_dict(logger, user_id, changes, db_path, verbose=False, do_lock=T
             raise ValueError("no such user in user DB: %s" % user_id)
         if not changes:
             raise ValueError("no changes for %s: %s" % (user_id, changes))
-        logger.debug("updating user %s with %s" % (user_id, changes))
+        logger.debug("updating user %s with %s" %
+                     (user_id, mask_creds(changes)))
         user_dict.update(changes)
         user_db[user_id] = user_dict
         save_user_db(user_db, db_path, do_lock=False)
-        logger.debug("updated user %s to %s" % (user_id, user_dict))
+        # IMPORTANT: do NOT log credentials
+        logger.debug("updated user %s to %s" %
+                     (user_id, mask_creds(user_dict)))
     except Exception as err:
         err_msg = 'Failed to update user %s in DB: %s' % (user_id, err)
         logger.error(err_msg)
