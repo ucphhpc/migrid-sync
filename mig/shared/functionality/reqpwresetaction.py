@@ -35,7 +35,7 @@ import tempfile
 
 from mig.shared import returnvalues
 from mig.shared.base import canonical_user_with_peers, generate_https_urls, \
-    fill_distinguished_name, cert_field_map, auth_type_description
+    fill_distinguished_name, cert_field_map, auth_type_description, mask_creds
 from mig.shared.defaults import keyword_auto, RESET_TOKEN_TTL
 from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
@@ -66,6 +66,7 @@ def main(client_id, user_arguments_dict):
                                                  defaults, output_objects,
                                                  allow_rejects=False)
     if not validate_status:
+        # NOTE: 'accepted' is a non-sensitive error string here
         logger.warning('%s invalid input: %s' % (op_name, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -144,7 +145,7 @@ Please contact the %s providers if you want to reset your associated password.
         user_id = user_dict['distinguished_name']
         user_dict['authorized'] = (user_id == client_id)
         logger.info('got account %s password reset request from: %s' %
-                    (auth_type_name, user_dict))
+                    (auth_type_name, mask_creds(user_dict)))
 
         # Only include actual values in query
         req_fields = [i for i in cert_field_map if user_dict.get(i, '')]
