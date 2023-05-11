@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settingsaction - handle user settings updates
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,6 +34,7 @@ import os
 from mig.shared import returnvalues
 from mig.shared.accountstate import check_update_account_expire, \
     account_expire_info
+from mig.shared.base import mask_creds
 from mig.shared.duplicatikeywords import get_keywords_dict as duplicati_keywords
 from mig.shared.fileio import write_named_tempfile
 from mig.shared.functional import validate_input_and_cert
@@ -119,6 +120,7 @@ def main(client_id, user_arguments_dict, called_as=None):
         typecheck_overrides={'EMAIL': valid_email_addresses},
     )
     if not validate_status:
+        # NOTE: 'accepted' is a non-sensitive error string here
         logger.warning("failed validation: %s %s" % (accepted, defaults))
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -126,8 +128,8 @@ def main(client_id, user_arguments_dict, called_as=None):
         called_as = op_name
     if not safe_handler(configuration, 'post', called_as, client_id,
                         get_csrf_limit(configuration), accepted):
-        logger.warning("failed safe handler: %s (%s) %s" % (called_as, op_name,
-                                                            accepted))
+        logger.warning("failed safe handler: %s (%s) %s" %
+                       (called_as, op_name, mask_creds(accepted)))
         output_objects.append(
             {'object_type': 'error_text', 'text': '''Only accepting
 CSRF-filtered POST requests to prevent unintended updates'''

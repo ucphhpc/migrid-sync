@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # datatransfer - import and export data in the backgroud
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,7 +36,7 @@ import socket
 import time
 
 from mig.shared import returnvalues
-from mig.shared.base import client_id_dir, hexlify
+from mig.shared.base import client_id_dir, mask_creds, hexlify
 from mig.shared.conf import get_resource_exe
 from mig.shared.defaults import all_jobs, job_output_dir, default_pager_entries, \
     csrf_field
@@ -108,6 +108,8 @@ def main(client_id, user_arguments_dict):
         allow_rejects=False,
     )
     if not validate_status:
+        # NOTE: 'accepted' is a non-sensitive error string here
+        logger.warning("failed validation: %s %s" % (accepted, defaults))
         return (accepted, returnvalues.CLIENT_ERROR)
 
     action = accepted['action'][-1]
@@ -358,8 +360,9 @@ else, so the public key can be inserted in your authorized_keys file as:
                                                       transfer_dict)
             transfer_item['status'] = transfer_item.get('status', 'NEW')
             if not 'src' in transfer_item or not 'dst' in transfer_item:
+                # IMPORTANT: do NOT log credentials
                 logger.warning("skip invalid transfer missing src or dst: %s"
-                               % transfer_item)
+                               % mask_creds(transfer_item))
                 continue
             data_url = ''
             # NOTE: we need to urlencode any exotic chars in paths here
@@ -426,7 +429,6 @@ else, so the public key can be inserted in your authorized_keys file as:
                 'class': 'refreshlink iconspace', 'title': 'Reschedule %s' %
                 saved_id, 'text': ''}
             datatransfers.append(transfer_item)
-        #logger.debug("found datatransfers: %s" % datatransfers)
         log_path = os.path.join(configuration.user_home, client_id_dir(client_id),
                                 "transfer_output",
                                 configuration.site_transfer_log)
@@ -849,8 +851,9 @@ fail if it really requires login.''' % valid_proto_map[protocol]})
 Please note that the status files only appear after the transfer starts, so it
 may be empty now.
 '''})
+        # IMPORTANT: do NOT log credentials
         logger.debug('datatransfer %s from %s done: %s' % (action, client_id,
-                                                           transfer_dict))
+                                                           mask_creds(transfer_dict)))
     elif action in key_actions:
         if action == 'generatekey':
             (gen_status, pub) = generate_user_key(

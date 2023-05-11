@@ -84,6 +84,8 @@ def main(client_id, user_arguments_dict):
                                                  defaults, output_objects,
                                                  allow_rejects=False)
     if not validate_status:
+        # NOTE: 'accepted' is a non-sensitive error string here
+        logger.warning('%s invalid input: %s' % (op_name, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
 
     # Unfortunately OpenID does not use POST

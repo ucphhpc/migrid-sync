@@ -285,6 +285,7 @@ def main(client_id, user_arguments_dict, environ=None):
                                                  allow_rejects=False,
                                                  prefilter_map=prefilter_map)
     if not validate_status:
+        # NOTE: 'accepted' is a non-sensitive error string here
         logger.warning('%s from %s got invalid input: %s' %
                        (op_name, client_id, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
