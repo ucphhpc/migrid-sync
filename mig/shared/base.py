@@ -858,15 +858,15 @@ if __name__ == '__main__':
         (allow, msg) = allow_script(configuration, script_name, client_id)
         print("check %s with client id '%s': %s %s" % (script_name, client_id,
                                                        allow, msg))
-print("brief format of short list: %s" % brief_list(range(5)))
-print("brief format of long list: %s" % brief_list(range(30)))
-print("brief format of huge list: %s" % brief_list(range(200)))
+    print("brief format of short list: %s" % brief_list(range(5)))
+    print("brief format of long list: %s" % brief_list(range(30)))
+    print("brief format of huge list: %s" % brief_list(range(200)))
 
-user_dict = distinguished_name_to_user(client_id)
-user_dict.update({'password': 'NotSoSecretDummy',
-                  'password_encrypted': '0123456789abcdef',
-                  'password_hash': '0123456789abcdef',
-                  'password_digest': '0123456789abcdef'})
-user_dict = canonical_user(configuration, user_dict, user_dict.keys())
-print("Apply mask creds on bogus user dict:\n%s\nresults in:\n%s" %
-      (user_dict, mask_creds(user_dict)))
+    user_dict = distinguished_name_to_user(client_id)
+    user_dict.update({'password': 'NotSoSecretDummy',
+                      'password_encrypted': '0123456789abcdef',
+                      'password_hash': '0123456789abcdef',
+                      'password_digest': '0123456789abcdef'})
+    user_dict = canonical_user(configuration, user_dict, user_dict.keys())
+    print("Apply mask creds on bogus user dict:\n%s\nresults in:\n%s" %
+          (user_dict, mask_creds(user_dict)))
