@@ -858,11 +858,6 @@ if __name__ == '__main__':
         (allow, msg) = allow_script(configuration, script_name, client_id)
         print("check %s with client id '%s': %s %s" % (script_name, client_id,
                                                        allow, msg))
-<< << << < HEAD
-print("brief format of short list: %s" % brief_list(list(range(5))))
-print("brief format of long list: %s" % brief_list(list(range(30))))
-print("brief format of huge list: %s" % brief_list(list(range(200))))
-== == == =
 print("brief format of short list: %s" % brief_list(range(5)))
 print("brief format of long list: %s" % brief_list(range(30)))
 print("brief format of huge list: %s" % brief_list(range(200)))
@@ -875,4 +870,3 @@ user_dict.update({'password': 'NotSoSecretDummy',
 user_dict = canonical_user(configuration, user_dict, user_dict.keys())
 print("Apply mask creds on bogus user dict:\n%s\nresults in:\n%s" %
       (user_dict, mask_creds(user_dict)))
->>>>>> > 91b29aa0(more masking of potentially sensitive values in logs. Additionally masks out password hashes, digests and crypts plus a few session tokens. Switched transferfunction helper over to use same mask_creds helper.)
