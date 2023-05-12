@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # setup - back end for the client access setup page
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -491,6 +491,22 @@ ssh %(cloud_host_pattern)s
         return html
 
 
+def key_auth_intro_snippet(configuration, topic):
+    """Shared helper to provide intro for private/public key authentication"""
+    snippet = '''
+
+<h3>Public Keys</h3>
+<p>You can use any existing private key you may have, or create a new one. If
+you signed up with a x509 user certificate, you should also have received such
+an RSA key (id_rsa) along with your user certificate. In any case you need to
+save the contents of the corresponding public key (KEY.pub) in the text area
+below, to be able to connect with username and key as described in the Login
+Details.
+</p>
+'''
+    return snippet
+
+
 def main(client_id, user_arguments_dict, target_op='settingsaction'):
     """Main function used by front end"""
 
@@ -753,16 +769,7 @@ Windows, Mac OS X and Linux/UN*X computer.
 
         keyword_keys = "authkeys"
         if 'publickey' in configuration.user_sftp_auth:
-            html += '''
-
-<h3>Public Keys</h3>
-<p>You can use any existing RSA key, or create a new one. If you signed up with a
-x509 user certificate, you should also have received such an id_rsa key along with
-your user certificate. In any case you need to save the contents of the
-corresponding public key (id_rsa.pub) in the text area below, to be able to connect
-with username and key as described in the Login Details.
-</p>
-'''
+            html += key_auth_intro_snippet(configuration, 'sftp')
             area = '''
 <textarea id="%(keyword_keys)s" cols=82 rows=5 name="publickeys">
 %(default_authkeys)s
@@ -902,15 +909,7 @@ Mac OS X and Linux/UN*X computer.
 
         keyword_keys = "authkeys"
         if 'publickey' in configuration.user_davs_auth:
-            html += '''
-
-<h3>Public Keys</h3>
-<p>You can use any existing RSA key, or create a new one. If you signed up with a
-x509 user certificate, you should also have received such an id_rsa key along with
-your user certificate. In any case you need to save the contents of the
-corresponding public key (id_rsa.pub) in the text area below, to be able to connect
-with username and key as described in the Login Details.
-<br/>'''
+            html += key_auth_intro_snippet(configuration, 'davs')
             area = '''
 <textarea id="%(keyword_keys)s" cols=82 rows=5 name="publickeys">
 %(default_authkeys)s
@@ -918,8 +917,7 @@ with username and key as described in the Login Details.
 '''
             html += wrap_edit_area(keyword_keys, area, davs_edit, 'BASIC')
             html += '''
-(leave empty to disable davs access with public keys)
-</p>
+<p>(leave empty to disable davs access with public keys)</p>
 '''
 
         keyword_password = "authpassword"
@@ -1041,16 +1039,7 @@ file and folder upload/download.</p>
 
         keyword_keys = "authkeys"
         if 'publickey' in configuration.user_ftps_auth:
-            html += '''
-
-<h3>Public Keys</h3>
-<p>You can use any existing RSA key, or create a new one. If you signed up with a
-x509 user certificate, you should also have received such an id_rsa key along with
-your user certificate. In any case you need to save the contents of the
-corresponding public key (id_rsa.pub) in the text area below, to be able to connect
-with username and key as described in the Login Details.
-</p>
-'''
+            html += key_auth_intro_snippet(configuration, 'ftps')
             area = '''
 <textarea id="%(keyword_keys)s" cols=82 rows=5 name="publickeys">
 %(default_authkeys)s
@@ -1058,7 +1047,7 @@ with username and key as described in the Login Details.
 '''
             html += wrap_edit_area(keyword_keys, area, ftps_edit, 'BASIC')
             html += '''
-(leave empty to disable ftps access with public keys)
+<p>(leave empty to disable ftps access with public keys)</p>
 
 '''
 
@@ -1600,16 +1589,7 @@ However, in general login requires the following:</p>
 
         keyword_keys = "authkeys"
         if 'publickey' in configuration.user_cloud_ssh_auth:
-            html += '''
-
-<h3>Public Keys</h3>
-<p>You can use any existing RSA key, or create a new one. If you signed up with a
-x509 user certificate, you should also have received such an id_rsa key along with
-your user certificate. In any case you need to save the contents of the
-corresponding public key (id_rsa.pub) in the text area below, to be able to connect
-with username and key as described in the Login Details.
-</p>
-'''
+            html += key_auth_intro_snippet(configuration, 'cloud')
             area = '''
 <textarea id="%(keyword_keys)s" cols=82 rows=5 name="publickeys">
 %(default_authkeys)s
