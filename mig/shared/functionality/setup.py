@@ -55,6 +55,7 @@ from mig.shared.safeinput import html_escape, password_min_len, password_max_len
     valid_password_chars
 from mig.shared.settings import load_settings, load_ssh, load_davs, load_ftps, \
     load_seafile, load_duplicati, load_cloud, load_twofactor
+from mig.shared.ssh import supported_pub_key_parsers
 from mig.shared.twofactorkeywords import get_twofactor_specs
 from mig.shared.useradm import create_alias_link
 
@@ -493,17 +494,29 @@ ssh %(cloud_host_pattern)s
 
 def key_auth_intro_snippet(configuration, topic):
     """Shared helper to provide intro for private/public key authentication"""
+    supported_keys = ''
+    if topic in ('ssh', 'sftp', 'cloud'):
+        supported_keys = '%s supports the following key types: %s' % \
+                         (configuration.short_title,
+                          ', '.join(supported_pub_key_parsers().keys()))
+    cert_key = ''
+    if 'migcert' in configuration.site_signup_methods:
+        cert_key = '''If you signed up with an x509 user certificate, you
+should also have received such an RSA key (id_rsa) along with your user
+certificate.
+'''
     snippet = '''
 
 <h3>Public Keys</h3>
-<p>You can use any existing private key you may have, or create a new one. If
-you signed up with a x509 user certificate, you should also have received such
-an RSA key (id_rsa) along with your user certificate. In any case you need to
-save the contents of the corresponding public key (KEY.pub) in the text area
-below, to be able to connect with username and key as described in the Login
-Details.
+<p>You can use any suitable private keys you may have, or create a new
+one.
+%s
+%s
+In any case you need to save the contents of the corresponding public key
+(e.g. id_rsa.pub) in the text area below, to be able to connect with username
+and key as described in the Login Details.
 </p>
-'''
+''' % (supported_keys, cert_key)
     return snippet
 
 
