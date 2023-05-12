@@ -43,7 +43,7 @@ except ImportError:
 from mig.shared.accountstate import default_account_expire
 from mig.shared.base import force_utf8, canonical_user, client_id_dir, \
     distinguished_name_to_user, fill_distinguished_name, fill_user, \
-    auth_type_description
+    auth_type_description, mask_creds
 from mig.shared.defaults import peers_fields, peers_filename, \
     pending_peers_filename, keyword_auto, user_db_filename, \
     gdp_distinguished_field
@@ -765,8 +765,8 @@ def accept_account_req(req_id, configuration, peer_id, user_copy=True,
                   (req_id, err)
         _logger.error(err_msg)
         return (False, err_msg)
-
-    _logger.debug('accept request: %s' % req_dict)
+    # IMPORTANT: do NOT log credentials
+    _logger.debug('accept request: %s' % mask_creds(req_dict))
     if 'distinguished_name' not in req_dict:
         fill_distinguished_name(req_dict)
     fill_user(req_dict)
@@ -876,7 +876,8 @@ def peer_account_req(req_id, configuration, target_id, user_copy=False,
             (req_id, err)
         _logger.error(err_msg)
         return (False, err_msg)
-    _logger.debug('peer account request: %s' % req_dict)
+    # IMPORTANT: do NOT log credentials
+    _logger.debug('peer account request: %s' % mask_creds(req_dict))
     if 'distinguished_name' not in req_dict:
         fill_distinguished_name(req_dict)
     fill_user(req_dict)
@@ -920,12 +921,14 @@ def peer_account_req(req_id, configuration, target_id, user_copy=False,
                              db_path, False, regex_match=regex_keys)
     gdp_prefix = "%s=" % gdp_distinguished_field
     if len(hits) < 1:
+        # IMPORTANT: do NOT log credentials
         _logger.error("no target users to request peer acceptance from: %s" %
-                      req_dict)
+                      mask_creds(req_dict))
         return (False, "no valid target peer acceptance users")
     elif len(hits) > 3:
+        # IMPORTANT: do NOT log credentials
         _logger.error("refuse to request peer acceptance from %d users for %s"
-                      % (len(hits), req_dict))
+                      % (len(hits), mask_creds(req_dict)))
         return (False, "too many requested peer acceptance users")
     else:
         _logger.debug("request peer acceptance from users: %s" %
@@ -1028,7 +1031,8 @@ def reject_account_req(req_id, configuration, reject_reason,
                   (req_id, err)
         _logger.error(err_msg)
         return (False, err_msg)
-    _logger.debug('reject request: %s' % req_dict)
+    # IMPORTANT: do NOT log credentials
+    _logger.debug('reject request: %s' % mask_creds(req_dict))
     if 'distinguished_name' not in req_dict:
         fill_distinguished_name(req_dict)
     fill_user(req_dict)

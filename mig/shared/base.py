@@ -637,6 +637,26 @@ def allow_script(configuration, script_name, client_id):
     return (allow, msg)
 
 
+def string_snippet(full_string, max_size=32):
+    """Returns a shortened version of full_string with the middle part cut out.
+    Removes the central half or more to make sure the resulting string is at
+    most max_size characters long. Useful to e.g. prevent disclosing actual
+    contents of password hashes in logs while maintaining debugging hints.
+    NOTE: an even max_size value of at least 8 is expected for simpler math.
+    """
+    snip_mark = ' .. '
+    if max_size % 2 != 0 or max_size < 2 * len(snip_mark):
+        raise ValueError("max_size must be an even number >= %d (got %s)" %
+                         (2 * len(snip_mark), max_size))
+    if len(full_string) <= len(snip_mark):
+        return snip_mark
+    elif len(full_string) / 2 + len(snip_mark) <= max_size:
+        chunk_size = len(full_string) / 4
+    else:
+        chunk_size = (max_size - len(snip_mark)) / 2
+    return full_string[:chunk_size] + snip_mark + full_string[-chunk_size:]
+
+
 def brief_list(full_list, max_entries=10):
     """Takes full_list and returns a potentially shortened representation with
     at most max_entries elements where any excess elements are pruned from the
@@ -718,6 +738,12 @@ if __name__ == '__main__':
     print("brief format of short list: %s" % brief_list(range(5)))
     print("brief format of long list: %s" % brief_list(range(30)))
     print("brief format of huge list: %s" % brief_list(range(200)))
+
+    for str_len in [1, 4, 8, 12, 16, 24, 32, 60, 61, 62, 63, 64, 65, 66, 67, 68, 72, 128]:
+        orig = ''.join(['%d' % (i % 10) for i in range(str_len)])
+        snippet = string_snippet(orig)
+        print("string snippet of %r (%d) is %r (%d)" % (orig, len(orig),
+                                                        snippet, len(snippet)))
 
     user_dict = distinguished_name_to_user(client_id)
     user_dict.update({'password': 'NotSoSecretDummy',
