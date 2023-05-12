@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sendrequestaction - send request for e.g. member or ownership action handler
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -42,7 +42,7 @@ from mig.shared.notification import notify_user_thread
 from mig.shared.resource import anon_to_real_res_map, resource_owners
 from mig.shared.user import anon_to_real_user_map
 from mig.shared.vgrid import vgrid_owners, vgrid_settings, vgrid_is_owner, \
-    vgrid_is_member, vgrid_is_owner_or_member, vgrid_is_resource
+    vgrid_is_member, vgrid_is_owner_or_member, vgrid_is_resource, vgrid_exists
 from mig.shared.vgridaccess import get_user_map, get_resource_map, \
     user_vgrid_access, CONF, OWNERS, USERID
 
@@ -330,6 +330,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 'object_type': 'error_text', 'text':
                 'No requests for %s are not allowed!' %
                 default_vgrid
+            })
+            return (output_objects, returnvalues.CLIENT_ERROR)
+
+        if not vgrid_exists(configuration, vgrid_name):
+            output_objects.append({
+                'object_type': 'error_text', 'text': 'No %s %s found!'
+                % (vgrid_name, label)
             })
             return (output_objects, returnvalues.CLIENT_ERROR)
 
