@@ -793,10 +793,10 @@ def string_snippet(full_string, max_size=32):
                          (2 * len(snip_mark), max_size))
     if len(full_string) <= len(snip_mark):
         return snip_mark
-    elif len(full_string) / 2 + len(snip_mark) <= max_size:
-        chunk_size = len(full_string) / 4
+    elif len(full_string) // 2 + len(snip_mark) <= max_size:
+        chunk_size = len(full_string) // 4
     else:
-        chunk_size = (max_size - len(snip_mark)) / 2
+        chunk_size = (max_size - len(snip_mark)) // 2
     return full_string[:chunk_size] + snip_mark + full_string[-chunk_size:]
 
 
