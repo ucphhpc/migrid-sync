@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # handlers - back end handler helpers
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,7 +33,7 @@ from __future__ import absolute_import
 
 import os
 
-from mig.shared.base import client_id_dir
+from mig.shared.base import client_id_dir, string_snippet
 from mig.shared.defaults import csrf_field, CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
     CSRF_FULL
 from mig.shared.findtype import is_user, is_server
@@ -128,9 +128,12 @@ def safe_handler(configuration, method, operation, client_id, limit,
     #              (method, operation, client_id, limit))
     csrf_required = make_csrf_token(configuration, method, operation,
                                     client_id, limit)
-    _logger.debug("CSRF check: %s vs %s" % (csrf_required, csrf_token))
+    # IMPORTANT: do NOT log complete CSRF tokens
+    _logger.debug("CSRF check: %s vs %s" % (string_snippet(csrf_required),
+                                            string_snippet(csrf_token)))
     if csrf_required != csrf_token:
-        msg = "CSRF check failed: %s vs %s" % (csrf_required, csrf_token)
+        msg = "CSRF check failed: %s vs %s" % (string_snippet(csrf_required),
+                                               string_snippet(csrf_token))
         # In the transitional warn-mode we log CSRF errors, but let them pass.
         if configuration.site_csrf_protection != CSRF_WARN:
             _logger.error(msg)
@@ -139,8 +142,9 @@ def safe_handler(configuration, method, operation, client_id, limit,
             _logger.warning(msg)
             return True
     else:
-        _logger.debug("CSRF check succeeded: %s vs %s" % (csrf_required,
-                                                          csrf_token))
+        _logger.debug("CSRF check succeeded: %s vs %s" %
+                      (string_snippet(csrf_required),
+                       string_snippet(csrf_token)))
         return True
 
 
@@ -159,13 +163,17 @@ def trust_handler(configuration, method, operation, unpacked_args, client_id,
     csrf_required = make_csrf_trust_token(configuration, method, operation,
                                           unpacked_args, client_id, limit,
                                           skip_fields=[csrf_field])
-    _logger.debug("CSRF trust check: %s vs %s" % (csrf_required, csrf_token))
+    # IMPORTANT: do NOT log complete CSRF tokens
+    _logger.debug("CSRF trust check: %s vs %s" % (string_snippet(csrf_required),
+                                                  string_snippet(csrf_token)))
     if csrf_required != csrf_token:
-        _logger.error("CSRF trust check failed: %s vs %s" % (csrf_required,
-                                                             csrf_token))
+        _logger.error("CSRF trust check failed: %s vs %s" %
+                      (string_snippet(csrf_required),
+                       string_snippet(csrf_token)))
         return False
-    _logger.debug("CSRF trust check succeeded: %s vs %s" % (csrf_required,
-                                                            csrf_token))
+    _logger.debug("CSRF trust check succeeded: %s vs %s" %
+                  (string_snippet(csrf_required),
+                   string_snippet(csrf_token)))
     return True
 
 

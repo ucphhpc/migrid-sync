@@ -42,7 +42,7 @@ from string import ascii_lowercase, ascii_uppercase, digits
 import hashlib
 import time
 
-from mig.shared.base import force_utf8, force_native_str
+from mig.shared.base import force_utf8, force_native_str, mask_creds, string_snippet
 from mig.shared.defaults import keyword_auto, RESET_TOKEN_TTL
 
 
@@ -329,7 +329,6 @@ def prepare_fernet_key(configuration, secret=keyword_auto):
 def encrypt_password(configuration, password, secret=keyword_auto):
     """Encrypt password for saving"""
     _logger = configuration.logger
-    _logger.debug('in encrypt_password')
     if cryptography:
         key = prepare_fernet_key(configuration, secret)
         password = force_utf8(password)
@@ -344,7 +343,6 @@ def encrypt_password(configuration, password, secret=keyword_auto):
 def decrypt_password(configuration, encrypted, secret=keyword_auto):
     """Decrypt encrypted password"""
     _logger = configuration.logger
-    _logger.debug('in decrypt_password')
     if cryptography:
         key = prepare_fernet_key(configuration)
         encrypted = force_utf8(encrypted)
@@ -413,8 +411,9 @@ def assure_reset_supported(configuration, user_dict, auth_type):
         raise ValueError("No %s auth enabled on this site!" % auth_type)
     # NOTE: we only use modern auth field if actually set
     elif auth_type not in user_dict.get('auth', [auth_type]):
+        # IMPORTANT: do NOT log credentials
         _logger.error("refuse %s reset token without previous auth: %s" %
-                      (auth_type, user_dict))
+                      (auth_type, mask_creds(user_dict)))
         raise ValueError("No %s auth setup for %r!" % (auth_type,
                                                        user_dict['email']))
     return True
@@ -446,7 +445,9 @@ def generate_reset_token(configuration, user_dict, auth_type,
         pw_hash = make_hash(user_dict.get('password', ''))
     # NOTE: use integer timestamp for simplicity
     token = encrypt_password(configuration, "%d::%s" % (timestamp, pw_hash))
-    _logger.debug("generated %s reset token %r at %r" % (auth_type, token,
+    # IMPORTANT: do NOT log complete token
+    _logger.debug("generated %s reset token %r at %r" % (auth_type,
+                                                         string_snippet(token),
                                                          timestamp))
     return token
 
@@ -456,7 +457,9 @@ def parse_reset_token(configuration, token, auth_type):
     token into a timestamp and a password hash to match auth_type.
     """
     _logger = configuration.logger
-    _logger.debug("parse %s reset token %r" % (auth_type, token))
+    # IMPORTANT: do NOT log complete token unless invalid
+    _logger.debug("parse %s reset token %r" % (auth_type,
+                                               string_snippet(token)))
     raw = decrypt_password(configuration, token)
     parts = raw.split('::', 1)
     # NOTE: the expected decrypted token format is 'int(EPOCH)::PWHASH'
@@ -478,8 +481,10 @@ def verify_reset_token(configuration, user_dict, token, auth_type,
     to now if not provided.
     """
     _logger = configuration.logger
-    _logger.debug("verify %s reset token %r at %d against %s" %
-                  (auth_type, token, timestamp, user_dict))
+    # IMPORTANT: do NOT log complete token unless invalid
+    _logger.debug("verify %s reset token %r for %r at %d" %
+                  (auth_type, string_snippet(token),
+                   user_dict['distinguished_name'], timestamp))
     try:
         assure_reset_supported(configuration, user_dict, auth_type)
     except ValueError as vae:
@@ -490,8 +495,8 @@ def verify_reset_token(configuration, user_dict, token, auth_type,
     token_stamp, token_hash = parse_reset_token(configuration, token,
                                                 auth_type)
     if token_stamp > timestamp or timestamp - token_stamp > RESET_TOKEN_TTL:
-        _logger.debug("reject reset token %r with timestamp %d" % (token,
-                                                                   token_stamp))
+        _logger.debug("reject reset token %r with timestamp %d (%d)" %
+                      (token, token_stamp, timestamp))
         return False
 
     pw_hash = None
@@ -502,12 +507,16 @@ def verify_reset_token(configuration, user_dict, token, auth_type,
         pw_hash = make_hash(user_dict.get('password', ''))
 
     if token_hash != pw_hash:
+        # IMPORTANT: do NOT log actual hash but just a snippet hint
         _logger.debug("reject reset token %r with wrong hash: %s vs %s" %
-                      (token, token_hash, pw_hash))
+                      (token, string_snippet(token_hash),
+                       string_snippet(pw_hash)))
         return False
 
+        # IMPORTANT: do NOT log actual hash but just a snippet hint
     _logger.debug("accept reset token %r with timestamp %d and hash %s" %
-                  (token, token_stamp, token_hash))
+                  (string_snippet(token), token_stamp,
+                   string_snippet(token_hash)))
     return True
 
 
@@ -796,6 +805,10 @@ if __name__ == "__main__":
             print("Password %r follows %s password policy: %s" %
                   (pw, policy, res))
 
+            hashed = make_hash(pw)
+            snippet = string_snippet(hashed)
+            print("Password %r gives hash %r and snippet %r" % (pw, hashed,
+                                                                snippet))
             try:
                 # print("Encrypt password %r" % pw)
                 encrypted = encrypt_password(configuration, pw)
