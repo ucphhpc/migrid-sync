@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgrid - helper functions related to VGrid actions
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -82,16 +82,17 @@ def get_vgrid_workflow_jobs(
     jobs run as part of a MEOW workflow and is not limited to one users
     submissions. """
 
+    _logger = configuration.logger
     status, job_queue = vgrid_workflow_jobs(vgrid_name, configuration)
 
     if not status:
         msg = "Could not retreive job queue for vgrid '%s'" % vgrid_name
-        configuration.logger.error(msg)
+        _logger.error(msg)
         return (False, msg)
 
     jobs = []
     for queue_entry in job_queue:
-        configuration.logger.info("Inspecting %s" % queue_entry)
+        _logger.info("Inspecting %s" % queue_entry)
 
         entry_client = queue_entry[JOB_CLIENT]
         entry_id = queue_entry[JOB_ID]
@@ -100,7 +101,7 @@ def get_vgrid_workflow_jobs(
                          client_id_dir(entry_client), entry_id) + '.mRSL'
         )
 
-        job_dict = unpickle(path, configuration.logger)
+        job_dict = unpickle(path, _logger)
         if not job_dict:
             msg = "Could not load job queue file '%s'" % path
             return (False, msg)
@@ -143,7 +144,7 @@ def vgrid_add_remove_table(client_id,
 
     Returns: (Bool, list of output_objects)
     """
-
+    _logger = configuration.logger
     out = []
 
     if not item_string in ['owner', 'member', 'resource', 'trigger']:
@@ -254,7 +255,7 @@ doubt, just let the user request access and accept it with the
             else:
                 # We can encounter empty string elements here, because creation
                 # of subvgrids have historically set owners to [''].
-                configuration.logger.warning(
+                _logger.warning(
                     'unexpected elem %s in vgrid_add_remove_table extras %s'
                     % (elem, vgrid_name))
                 continue
@@ -314,7 +315,7 @@ doubt, just let the user request access and accept it with the
             else:
                 # We can encounter empty string elements here, because creation
                 # of subvgrids have historically set owners to [''] .
-                configuration.logger.warning(
+                _logger.warning(
                     'unexpected elem %s in vgrid_add_remove_table %s direct'
                     % (elem, direct))
                 continue
@@ -486,6 +487,19 @@ def vgrid_is_default(vgrid):
         return False
 
 
+def vgrid_exists(configuration, vgrid_name):
+    """Check if supplied vgrid exists"""
+
+    if vgrid_is_default(vgrid_name):
+        return True
+    (status, entries) = vgrid_list(vgrid_name, 'owners', configuration,
+                                   recursive=False, allow_missing=True)
+
+    if not status or not entries:
+        return False
+    return True
+
+
 def vgrid_is_owner_or_member(vgrid_name, client_id, configuration):
     """Combines owner and member check"""
 
@@ -527,15 +541,15 @@ def vgrid_is_entity_in_list(
     The allow_missing flag can be used to let the listing proceed even if one
     or more parent vgrids don't have the particular entity group file.
     """
-
+    _logger = configuration.logger
     # Get the list of entities of specified type (group) in vgrid (vgrid_name)
 
     (status, entries) = vgrid_list(vgrid_name, group, configuration, recursive,
                                    allow_missing)
 
     if not status:
-        configuration.logger.error(
-            'unexpected status in vgrid_is_entity_in_list: %s' % entries)
+        _logger.error('unexpected status in vgrid_is_entity_in_list: %s' %
+                      entries)
         return False
 
     if dict_field:
@@ -596,13 +610,13 @@ def vgrid_is_trigger_owner(vgrid_name, rule_id, client_id, configuration,
     owner. We allow missing parent pickle to support autonomous multi-frontend
     systems.
     """
-
+    _logger = configuration.logger
     (status, entries) = vgrid_list(vgrid_name, 'triggers', configuration,
                                    recursive, allow_missing)
 
     if not status:
-        configuration.logger.error(
-            'unexpected status in vgrid_is_trigger_owner: %s' % entries)
+        _logger.error('unexpected status in vgrid_is_trigger_owner: %s' %
+                      entries)
         return False
 
     for rule_dict in entries:
@@ -1274,6 +1288,7 @@ def vgrid_access_match(configuration, job_owner, job, res_id, res):
     so it is important that res_id is on the private (not anonymized)
     form.
     """
+    _logger = configuration.logger
     # Keep trying with job_fits_res_vgrid until a valid vgrid is found
     # or it gives up. In the common case with many correctly configured
     # vgrids, this lazy strategy is far more efficient than checking all
@@ -1284,17 +1299,17 @@ def vgrid_access_match(configuration, job_owner, job, res_id, res):
         answer = (found, best_job, best_res) = job_fits_res_vgrid(job_req,
                                                                   res_req)
         if not found:
-            configuration.logger.info('no valid vgrid found!')
+            _logger.info('no valid vgrid found!')
             break
-        configuration.logger.info('test if best vgrids %s , %s are valid' %
-                                  (best_job, best_res))
+        _logger.info('test if best vgrids %s , %s are valid' %
+                     (best_job, best_res))
         if not vgrid_is_owner_or_member(best_job, job_owner, configuration):
-            configuration.logger.info('del invalid vgrid %s from job (%s)' %
-                                      (best_job, job_owner))
+            _logger.info('del invalid vgrid %s from job (%s)' %
+                         (best_job, job_owner))
             job_req = [i for i in job_req if i != best_job]
         if not vgrid_is_resource(best_res, res_id, configuration):
-            configuration.logger.info('del invalid vgrid %s from res (%s)'
-                                      % (best_res, res_id))
+            _logger.info('del invalid vgrid %s from res (%s)'
+                         % (best_res, res_id))
             res_req = [i for i in res_req if i != best_res]
         else:
             break
@@ -1564,13 +1579,13 @@ def vgrid_add_settings(configuration, vgrid_name, id_list, update_id=None,
 
 def vgrid_add_workflow_jobs(configuration, vgrid_name, id_list, rank=None):
     """Append id_list to pickled list of jobs for vgrid_name"""
-
+    _logger = configuration.logger
     status, jobs = vgrid_workflow_jobs(vgrid_name, configuration)
 
     if not status:
         # Note this is not currently stopping the addition to the queue.
         msg = "Could not load jobqueue for vgrid '%s'" % vgrid_name
-        configuration.logger.error(msg)
+        _logger.error(msg)
     else:
         if len(jobs) > JOB_QUEUE_COUNT + len(id_list):
             first_jobs = jobs[:len(jobs)-JOB_QUEUE_COUNT+len(id_list)]
