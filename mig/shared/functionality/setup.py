@@ -229,7 +229,13 @@ sftp -B 258048 %(sftp_server)s
 lftp -e "set net:connection-limit %(max_sessions)d" -p %(sftp_port)s \\
   sftp://%(sftp_server)s
 </pre>
-<p>Other command-line SFTP clients like PuTTY (psftp) also work.</p>
+<p>Other command-line SFTP clients like PuTTY (psftp) also work, and if you
+prefer the good old scp command over plain sftp you can even tell the scp
+client to transparently use the SFTP protocol underneath with something like:
+<pre class="codeblock">
+scp -s SRC DST
+</pre>
+</p>
 
 <h4>Rclone on Windows, Mac OSX and Linux/UN*X</h4>
 <p>Last but not least you can install and use
