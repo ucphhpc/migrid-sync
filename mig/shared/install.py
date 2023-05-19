@@ -366,6 +366,10 @@ def generate_confs(
     freeze_to_tape='',
     status_system_match=keyword_any,
     duplicati_protocols='',
+    imnotify_address='',
+    imnotify_channel='',
+    imnotify_username='',
+    imnotify_password='',
     gdp_data_categories='data_categories.json'
 ):
     """Generate Apache and MiG server confs with specified variables"""
@@ -582,6 +586,10 @@ def generate_confs(
     user_dict['__LOG_LEVEL__'] = log_level
     user_dict['__FREEZE_TO_TAPE__'] = freeze_to_tape
     user_dict['__STATUS_SYSTEM_MATCH__'] = status_system_match
+    user_dict['__IMNOTIFY_ADDRESS__'] = imnotify_address
+    user_dict['__IMNOTIFY_CHANNEL__'] = imnotify_channel
+    user_dict['__IMNOTIFY_USERNAME__'] = imnotify_username
+    user_dict['__IMNOTIFY_PASSWORD__'] = imnotify_password
     user_dict['__GDP_DATA_CATEGORIES__'] = gdp_data_categories
     user_dict['__PUBLIC_HTTPS_LISTEN__'] = listen_clause
     user_dict['__PUBLIC_ALIAS_HTTPS_LISTEN__'] = listen_clause

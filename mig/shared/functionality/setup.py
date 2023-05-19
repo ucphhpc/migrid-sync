@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # setup - back end for the client access setup page
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -55,6 +55,7 @@ from mig.shared.safeinput import html_escape, password_min_len, password_max_len
     valid_password_chars
 from mig.shared.settings import load_settings, load_ssh, load_davs, load_ftps, \
     load_seafile, load_duplicati, load_cloud, load_twofactor
+from mig.shared.ssh import supported_pub_key_parsers
 from mig.shared.twofactorkeywords import get_twofactor_specs
 from mig.shared.useradm import create_alias_link
 
@@ -228,7 +229,13 @@ sftp -B 258048 %(sftp_server)s
 lftp -e "set net:connection-limit %(max_sessions)d" -p %(sftp_port)s \\
   sftp://%(sftp_server)s
 </pre>
-<p>Other command-line SFTP clients like PuTTY (psftp) also work.</p>
+<p>Other command-line SFTP clients like PuTTY (psftp) also work, and if you
+prefer the good old scp command over plain sftp you can even tell the scp
+client to transparently use the SFTP protocol underneath with something like:
+<pre class="codeblock">
+scp -s SRC DST
+</pre>
+</p>
 
 <h4>Rclone on Windows, Mac OSX and Linux/UN*X</h4>
 <p>Last but not least you can install and use
@@ -489,6 +496,34 @@ ssh %(cloud_host_pattern)s
         return html % fill_vars
     else:
         return html
+
+
+def key_auth_intro_snippet(configuration, topic):
+    """Shared helper to provide intro for private/public key authentication"""
+    supported_keys = ''
+    if topic in ('ssh', 'sftp', 'cloud'):
+        supported_keys = '%s supports the following key types: %s' % \
+                         (configuration.short_title,
+                          ', '.join(supported_pub_key_parsers().keys()))
+    cert_key = ''
+    if 'migcert' in configuration.site_signup_methods:
+        cert_key = '''If you signed up with an x509 user certificate, you
+should also have received such an RSA key (id_rsa) along with your user
+certificate.
+'''
+    snippet = '''
+
+<h3>Public Keys</h3>
+<p>You can use any suitable private keys you may have, or create a new
+one.
+%s
+%s
+In any case you need to save the contents of the corresponding public key
+(e.g. id_rsa.pub) in the text area below, to be able to connect with username
+and key as described in the Login Details.
+</p>
+''' % (supported_keys, cert_key)
+    return snippet
 
 
 def main(client_id, user_arguments_dict, target_op='settingsaction'):
@@ -753,16 +788,7 @@ Windows, Mac OS X and Linux/UN*X computer.
 
         keyword_keys = "authkeys"
         if 'publickey' in configuration.user_sftp_auth:
-            html += '''
-
-<h3>Public Keys</h3>
-<p>You can use any existing RSA key, or create a new one. If you signed up with a
-x509 user certificate, you should also have received such an id_rsa key along with
-your user certificate. In any case you need to save the contents of the
-corresponding public key (id_rsa.pub) in the text area below, to be able to connect
-with username and key as described in the Login Details.
-</p>
-'''
+            html += key_auth_intro_snippet(configuration, 'sftp')
             area = '''
 <textarea id="%(keyword_keys)s" cols=82 rows=5 name="publickeys">
 %(default_authkeys)s
@@ -902,15 +928,7 @@ Mac OS X and Linux/UN*X computer.
 
         keyword_keys = "authkeys"
         if 'publickey' in configuration.user_davs_auth:
-            html += '''
-
-<h3>Public Keys</h3>
-<p>You can use any existing RSA key, or create a new one. If you signed up with a
-x509 user certificate, you should also have received such an id_rsa key along with
-your user certificate. In any case you need to save the contents of the
-corresponding public key (id_rsa.pub) in the text area below, to be able to connect
-with username and key as described in the Login Details.
-<br/>'''
+            html += key_auth_intro_snippet(configuration, 'davs')
             area = '''
 <textarea id="%(keyword_keys)s" cols=82 rows=5 name="publickeys">
 %(default_authkeys)s
@@ -918,8 +936,7 @@ with username and key as described in the Login Details.
 '''
             html += wrap_edit_area(keyword_keys, area, davs_edit, 'BASIC')
             html += '''
-(leave empty to disable davs access with public keys)
-</p>
+<p>(leave empty to disable davs access with public keys)</p>
 '''
 
         keyword_password = "authpassword"
@@ -1041,16 +1058,7 @@ file and folder upload/download.</p>
 
         keyword_keys = "authkeys"
         if 'publickey' in configuration.user_ftps_auth:
-            html += '''
-
-<h3>Public Keys</h3>
-<p>You can use any existing RSA key, or create a new one. If you signed up with a
-x509 user certificate, you should also have received such an id_rsa key along with
-your user certificate. In any case you need to save the contents of the
-corresponding public key (id_rsa.pub) in the text area below, to be able to connect
-with username and key as described in the Login Details.
-</p>
-'''
+            html += key_auth_intro_snippet(configuration, 'ftps')
             area = '''
 <textarea id="%(keyword_keys)s" cols=82 rows=5 name="publickeys">
 %(default_authkeys)s
@@ -1058,7 +1066,7 @@ with username and key as described in the Login Details.
 '''
             html += wrap_edit_area(keyword_keys, area, ftps_edit, 'BASIC')
             html += '''
-(leave empty to disable ftps access with public keys)
+<p>(leave empty to disable ftps access with public keys)</p>
 
 '''
 
@@ -1600,16 +1608,7 @@ However, in general login requires the following:</p>
 
         keyword_keys = "authkeys"
         if 'publickey' in configuration.user_cloud_ssh_auth:
-            html += '''
-
-<h3>Public Keys</h3>
-<p>You can use any existing RSA key, or create a new one. If you signed up with a
-x509 user certificate, you should also have received such an id_rsa key along with
-your user certificate. In any case you need to save the contents of the
-corresponding public key (id_rsa.pub) in the text area below, to be able to connect
-with username and key as described in the Login Details.
-</p>
-'''
+            html += key_auth_intro_snippet(configuration, 'cloud')
             area = '''
 <textarea id="%(keyword_keys)s" cols=82 rows=5 name="publickeys">
 %(default_authkeys)s

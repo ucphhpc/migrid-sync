@@ -39,6 +39,14 @@
 """IM daemon actually passing requested messages to a suitable
 notification handler: At the moment this is an IRC server with
 multiprotocol transports.
+
+NOTE: this daemon relies on the old irclib python module from:
+https://sourceforge.net/projects/python-irclib/
+bundled in the same folder.
+
+It should really be rewritten to use the modern pypi irc module, which
+is a fork of the original and still actively maintained by one of the original
+authors.
 """
 
 from __future__ import print_function

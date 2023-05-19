@@ -55,13 +55,13 @@ from mig.shared.defaults import ssh_conf_dir
 from mig.shared.safeeval import subprocess_popen, subprocess_pipe
 
 
-def parse_pub_key(public_key):
-    """Parse public_key string to paramiko key.
-    Throws exception if key is broken.
+def supported_pub_key_parsers():
+    """Lookup available pub key formats depending on the local Paramiko
+    version. Returns a dictionary mapping the key type prefix to actual
+    callable parsers.
     """
     if paramiko is None:
         raise Exception("You need paramiko to use ssh with public keys")
-    public_key_elms = public_key.split(' ')
 
     # Either we have 'from' or ssh *key type* as first element
 
@@ -76,6 +76,15 @@ def parse_pub_key(public_key):
     if hasattr(paramiko, 'Ed25519Key'):
         type_map['ssh-ed25519'] = paramiko.Ed25519Key
 
+    return type_map
+
+
+def parse_pub_key(public_key):
+    """Parse public_key string to paramiko key.
+    Throws exception if key is broken or paramiko is unavailable.
+    """
+    type_map = supported_pub_key_parsers()
+    public_key_elms = public_key.split(' ')
     if len(public_key_elms) > 0 and \
             public_key_elms[0] in type_map:
         ssh_type_idx = 0

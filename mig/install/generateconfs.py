@@ -168,6 +168,10 @@ if '__main__' == __name__:
         'freeze_to_tape',
         'status_system_match',
         'duplicati_protocols',
+        'imnotify_address',
+        'imnotify_channel',
+        'imnotify_username',
+        'imnotify_password',
         'gdp_data_categories'
     ]
     int_names = [
