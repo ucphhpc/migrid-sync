@@ -1354,17 +1354,17 @@ location.""" % self.config_file)
         else:
             self.site_enable_imnotify = False
         if config.has_option('GLOBAL', 'user_imnotify_address'):
-            self.user_imnotify_address = config.get('GLOBAL',
-                                                    'user_imnotify_address')
+            self.user_imnotify_address = expand_external_sources(
+                logger, config.get('GLOBAL', 'user_imnotify_address'))
         if config.has_option('GLOBAL', 'user_imnotify_port'):
             self.user_imnotify_port = config.getint('GLOBAL',
                                                     'user_imnotify_port')
         if config.has_option('GLOBAL', 'user_imnotify_channel'):
-            self.user_imnotify_channel = config.get('GLOBAL',
-                                                    'user_imnotify_channel')
+            self.user_imnotify_channel = expand_external_sources(
+                logger, config.get('GLOBAL', 'user_imnotify_channel'))
         if config.has_option('GLOBAL', 'user_imnotify_username'):
-            self.user_imnotify_username = config.get('GLOBAL',
-                                                     'user_imnotify_username')
+            self.user_imnotify_username = expand_external_sources(
+                logger, config.get('GLOBAL', 'user_imnotify_username'))
         if config.has_option('GLOBAL', 'user_imnotify_password'):
             self.user_imnotify_password = expand_external_sources(
                 logger, config.get('GLOBAL', 'user_imnotify_password'))

@@ -721,6 +721,12 @@ or the same on centos
                    --password_legacy_policy=MEDIUM \
                    --peers_permit="role:.*(vip|tap)" \
                    --status_system_match="MiGrid ALL" \
+                   --digest_salt="FILE::/home/mig/state/secrets/digest_salt.hex" \
+                   --crypto_salt="FILE::/home/mig/state/secrets/crypto_salt.hex" \
+                   --imnotify_address="FILE::/home/mig/state/secrets/imnotify_address.txt" \
+                   --imnotify_channel="FILE::/home/mig/state/secrets/imnotify_channel.txt" \
+                   --imnotify_username="FILE::/home/mig/state/secrets/imnotify_username.txt" \
+                   --imnotify_password="FILE::/home/mig/state/secrets/imnotify_password.txt" \
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
 
 and a storage-only setup with CentOS 7.x, apache 2.4, WSGI (default web), 
