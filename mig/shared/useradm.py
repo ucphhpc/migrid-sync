@@ -283,8 +283,8 @@ def create_user(
             peer_email_list.append(peer_email)
 
         if not peer_email_list:
-            _logger.error("requested peer auto-detect failed for %s" %
-                          client_id)
+            _logger.warning("requested peer auto-detect failed for %s" %
+                            client_id)
             raise Exception("Failed auto-detect peers in request for %s: %r"
                             % (client_id, peers_source))
         verify_pattern = '|'.join(['.*emailAddress=%s' %
@@ -390,12 +390,12 @@ def create_user(
                           (contact_id, client_id))
             accepted_peer_list.append(contact_id)
         if not accepted_peer_list:
-            _logger.error("requested peer validation with %r for %s failed" %
-                          (verify_pattern, client_id))
+            _logger.warning("requested peer validation with %r for %s failed" %
+                            (verify_pattern, client_id))
             raise Exception("Failed verify peers for %s using pattern %r: %s" %
                             (client_id, verify_pattern, '\n'.join(peer_notes)))
 
-        # Encorce effective_expire_dt as highest actual account expire value
+        # Enforce effective_expire_dt as highest actual account expire value
         effective_expire = int(time.mktime(effective_expire_dt.timetuple()))
         user['expire'] = effective_expire
         # Save peers in user DB for updates etc. but ignore peer search pattern
@@ -407,7 +407,7 @@ def create_user(
                       ', '.join(accepted_peer_list)))
 
     else:
-        _logger.info('Skip peer verification for %s' % client_id)
+        _logger.info('skip peer verification for %s' % client_id)
 
     if verbose:
         print('User ID: %s\n' % client_id)
@@ -427,6 +427,7 @@ def create_user(
                 unlock_user_db(flock)
             raise Exception("Missing user DB: '%s'" % db_path)
 
+        _logger.info('create missing user DB in: %s' % db_path)
         if verbose:
             print('Creating missing user DB in: %s' % db_path)
         # Dump empty DB
@@ -472,11 +473,13 @@ def create_user(
                 'A conflicting user with alias %s already exists' % alias)
 
     if client_id not in user_db:
+        _logger.debug('add new user %r in user DB' % client_id)
         default_ui = configuration.new_user_default_ui
         user['created'] = now
         user['unique_id'] = generate_random_ascii(unique_id_length,
                                                   '0123456789abcdef')
     else:
+        _logger.debug('update existing user %r in user DB' % client_id)
         default_ui = None
         account_status = user_db[client_id].get('status', 'active')
         # Only allow renew if account is active or if temporal with peer list
@@ -529,8 +532,8 @@ def create_user(
                             print("User requested and authorized password reset")
                         authorized = True
                     else:
-                        _logger.error("%r requested password reset with bad token"
-                                      % client_id)
+                        _logger.warning("%r requested password reset with bad token"
+                                        % client_id)
                         if verbose:
                             print("User requested password reset with bad token")
 
@@ -568,7 +571,7 @@ Please tell user to use the original password, request password reset or go
 through renewal using Xgi-bin with proper authentication to authorize the
 change."""
                         raise Exception(err)
-            _logger.debug('Renewing existing user %s' % client_id)
+            _logger.debug('renew existing user %s' % client_id)
             if verbose:
                 print('Renewing existing user')
             # Take old user details and override fields with new ones but
