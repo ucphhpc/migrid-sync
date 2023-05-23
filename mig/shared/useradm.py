@@ -520,11 +520,13 @@ def create_user(
                 # Allow password change if it's directly authorized with login
                 # or authorized through a simple reset challenge (reset_token).
                 if not authorized and reset_token:
-                    # TODO: use timestamp from saved request file here instead of now?
+                    # NOTE: use timestamp from saved request file if available
+                    req_timestamp = user.get('accepted_terms', time.time())
                     valid_reset = verify_reset_token(configuration,
                                                      user_db[client_id],
                                                      reset_token,
-                                                     reset_auth_type)
+                                                     reset_auth_type,
+                                                     req_timestamp)
                     if valid_reset:
                         _logger.info("%r requested and authorized password reset"
                                      % client_id)
