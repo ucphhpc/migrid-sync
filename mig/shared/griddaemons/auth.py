@@ -294,11 +294,15 @@ def validate_auth_attempt(configuration,
         disconnect = True
         active_count = active_sessions(configuration, protocol, username)
         auth_msg = "Too many open sessions"
+        max_sessions = ''
+        if protocol in ('sftp', 'sftp-subsys'):
+            max_sessions = ' (%d)' % configuration.user_sftp_max_sessions
         session_hint = """
-HINT: due to load and scalability concerns %s only allows a fixed number
+HINT: due to load and scalability concerns %s only allows a fixed number%s
 of concurrent active %s sessions at any time, and any additional connection
 attempts will simply be rejected. Please adjust your concurrent use settings
-to avoid exceeding this limit.""" % (configuration.short_title, proto_alias)
+to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
+                                     proto_alias)
         log_msg = auth_msg + " %d for %s" \
             % (active_count, username)
         # Only warn since it can get rather noise and it's intermittent
