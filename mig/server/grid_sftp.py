@@ -498,7 +498,8 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
                     % (active_count, username)
                 logger.warning(log_msg)
                 authlog(configuration, 'WARNING', 'sftp', 'unknown',
-                        self.user_name, self.ip_addr, auth_msg, notify=notify)
+                        self.user_name, self.ip_addr, auth_msg + session_hint,
+                        notify=notify)
 
                 raise Exception("reject further sessions for %s" % username)
 

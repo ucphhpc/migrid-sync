@@ -304,7 +304,7 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
         # Only warn since it can get rather noise and it's intermittent
         logger.warning(log_msg)
         authlog(configuration, 'WARNING', protocol, authtype,
-                username, ip_addr, auth_msg, notify=notify)
+                username, ip_addr, auth_msg + session_hint, notify=notify)
     elif invalid_username:
         disconnect = True
         if re.match(CRACK_USERNAME_REGEX, username) is not None:
