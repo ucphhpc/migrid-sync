@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_webdavs - secure WebDAV server providing access to MiG user homes
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -317,15 +317,21 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         """
         _socket_list = [sock]
         try:
+            client_addr = sock.getpeername()
+        except Exception as exc:
+            logger.warning("could not lookup client address for %s: %s" %
+                           (sock, exc))
+            client_addr = 'UNKNOWN'
+        try:
             # logger.debug("Wrapping socket in SSL/TLS: 0x%x : %s" %
-            #             (id(sock), sock.getpeername()))
+            #             (id(sock), client_addr))
             # logger.debug("SSL/TLS session stats: %s" %
             #             self.ssl_ctx.session_stats())
             ssl_sock = self.ssl_ctx.wrap_socket(sock, server_side=True)
             _socket_list.append(ssl_sock)
             ssl_env = self.get_environ(ssl_sock)
             # logger.debug("wrapped sock from %s with ciphers %s" %
-            #             (ssl_sock.getpeername(), ssl_sock.cipher()))
+            #             (client_addr, ssl_sock.cipher()))
             # logger.debug("system ssl_sock timeout: %s" % ssl_sock.gettimeout())
             session_timeout = io_session_timeout.get('davs', 0)
             if session_timeout > 0:
@@ -340,7 +346,8 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                 # logger.debug("SSL/TLS received EOF: %s" % exc)
                 return None, {}
             elif exc.errno == ssl.SSL_ERROR_SSL:
-                logger.warning("SSL/TLS wrap failed: %s" % exc)
+                logger.warning("SSL/TLS wrap of %s failed: %s" %
+                               (client_addr, exc))
                 if exc.args[1].find('http request') != -1:
                     # The client is speaking HTTP to an HTTPS server.
                     logger.debug("SSL/TLS got unexpected plain HTTP: %s" % exc)
@@ -361,7 +368,8 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                     # Make sure we clean up before we forward
                     # unexpected SSL errors
                     self.__force_close(_socket_list)
-            logger.error("unexpected SSL/TLS wrap failure: %s" % exc)
+            logger.error("SSL/TLS wrap of %s failed unexpectedly: %s" %
+                         (client_addr, exc))
             raise exc
 
         return ssl_sock, ssl_env
