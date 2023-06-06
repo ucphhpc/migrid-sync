@@ -22,6 +22,27 @@
     },
     "announce_end": "2023-07-04T20:00:00+02:00"
   },
+  {
+    "status": "AUTO", 
+    "work_start": "2022-06-19T15:00:00+02:00", 
+    "systems": [
+      "ERDA"
+    ], 
+    "announce_start": "2022-06-06T13:00:00+02:00", 
+    "title": {
+      "EN": "Planned ERDA Seafile Migration and Maintenance", 
+      "DK": "Planlagt migrering og vedligehold på ERDA Seafile"
+    }, 
+    "services": [
+      "Seafile"
+    ], 
+    "work_end": "2022-06-20T08:00:00+02:00", 
+    "description": {
+      "EN": "We need to migrate the ERDA Seafile service onto new and faster hardware and do a bit of maintenance while at it. We already started the background transfer of user data to the new system, but the migration will include a service stop while re-syncing the most recent changes. ERDA Seafile will therefore be down for shorter or longer periods during the work, but all other ERDA services should remain fully available. We expect the work to last a few hours, but reserve until next morning in case of unforeseen problems. ", 
+      "DK": "Vi skal have ERDA Seafile servicen migreret til nyere hurtigere hardware og have lavet lidt vedligehold. Vi har allerede sat en overførsel af brugerdata til det nye system igang i baggrunden, men migreringen kommer til at kræve et service-stop mens vi resynkroniserer de nyeste ændringer. ERDA Seafile vil derfor være utilgængelig i kortere eller længere perioder under arbejdet, men det skulle ikke berøre øvrige ERDA services. Arbejdet forventes at tage nogle få timer, men vi afsætter indtil næste morgen i tilfælde af uforudsete problemer."
+    }, 
+    "announce_end": "2022-06-20T12:00:00+02:00"
+  }, 
    {
     "status": "AUTO", 
     "work_start": "2023-05-01T17:00:00+02:00", 
