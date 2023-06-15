@@ -730,7 +730,7 @@ def make_simple_hash(val, algo='md5'):
 
 def make_safe_hash(val):
     """Generate a safe sha256 hash for val and return the 64-char hexdigest"""
-    return hashlib.sha256(val).hexdigest()
+    return make_simple_hash(val, algo='sha256')
 
 
 def make_path_hash(configuration, path):
