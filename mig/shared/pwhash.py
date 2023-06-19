@@ -824,3 +824,11 @@ if __name__ == "__main__":
                 print("Failed to handle encrypt/decrypt %s : %s" % (pw, exc))
                 # import traceback
                 # print(traceback.format_exc())
+
+    pw = 'd3kk3md.KLkkded'
+    hashed = make_hash(pw)
+    dummy_user = {'distinguished_name': 'Test User', 'password_hash': hashed}
+    snippet = string_snippet(hashed)
+    token = generate_reset_token(configuration, dummy_user, 'migoid')
+    print("Password %r gives hash %r, snippet %r and reset token %r" %
+          (pw, hashed, snippet, token))

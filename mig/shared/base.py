@@ -780,14 +780,17 @@ def allow_script(configuration, script_name, client_id):
     return (allow, msg)
 
 
-def string_snippet(full_string, max_size=32):
-    """Returns a shortened version of full_string with the middle part cut out.
+def string_snippet(raw_string, max_size=32):
+    """Returns a shortened version of raw_string with the middle part cut out.
     Removes the central half or more to make sure the resulting string is at
     most max_size characters long. Useful to e.g. prevent disclosing actual
     contents of password hashes in logs while maintaining debugging hints.
     NOTE: an even max_size value of at least 8 is expected for simpler math.
+    NOTE: the output is always a native string here even if input is bytes.
     """
     snip_mark = ' .. '
+    # NOTE: avoid byte vs str issues by forcing native from the start
+    full_string = force_native_str(raw_string)
     if max_size % 2 != 0 or max_size < 2 * len(snip_mark):
         raise ValueError("max_size must be an even number >= %d (got %s)" %
                          (2 * len(snip_mark), max_size))
