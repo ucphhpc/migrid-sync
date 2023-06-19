@@ -552,6 +552,10 @@ settings:
 --io_account_expire=IO_ACCOUNT_EXPIRE
 --gdp_email_notify=GDP_EMAIL_NOTIFY
 
+All those values can also be set via environment variable, by using the options name in upper case.
+Eg. --enable_hsts=true would become $ENABLE_HSTS=true
+If the same option is set both as environment variable and CLI parameter, then the CLI parameter take precedence.
+
 For one of our servers running MiG as the 'mig' user with the code
 checked out directly in the home directory and Debian apache 2.4 without OpenID:
 ./generateconfs.py --source=. --destination=generated-confs \

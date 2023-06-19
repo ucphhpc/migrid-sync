@@ -271,6 +271,13 @@ if '__main__' == __name__:
         usage(names)
         sys.exit(1)
 
+    # apply values from environment
+    for name in names:
+        value = os.getenv(name.upper())
+        if value:
+            settings[name] = value
+
+    # apply values from CLI parameters
     for (opt, val) in opts:
         opt_name = opt.lstrip('-')
         if opt in ('-h', '--help'):
