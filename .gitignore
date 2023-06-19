@@ -1,0 +1,5 @@
+# Binaries
+*.pyc
+
+# macOS
+*.DS_Store
