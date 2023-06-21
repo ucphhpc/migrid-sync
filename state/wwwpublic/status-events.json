@@ -41,7 +41,29 @@
       "EN": "We need to migrate the ERDA Seafile service onto new and faster hardware and do a bit of maintenance while at it. We already started the background transfer of user data to the new system, but the migration will include a service stop while re-syncing the most recent changes. ERDA Seafile will therefore be down for shorter or longer periods during the work, but all other ERDA services should remain fully available. We expect the work to last a few hours, but reserve until next morning in case of unforeseen problems. ", 
       "DK": "Vi skal have ERDA Seafile servicen migreret til nyere hurtigere hardware og have lavet lidt vedligehold. Vi har allerede sat en overførsel af brugerdata til det nye system igang i baggrunden, men migreringen kommer til at kræve et service-stop mens vi resynkroniserer de nyeste ændringer. ERDA Seafile vil derfor være utilgængelig i kortere eller længere perioder under arbejdet, men det skulle ikke berøre øvrige ERDA services. Arbejdet forventes at tage nogle få timer, men vi afsætter indtil næste morgen i tilfælde af uforudsete problemer."
     }, 
-    "announce_end": "2023-06-20T12:00:00+02:00"
+    "announce_end": "2023-06-30T12:00:00+02:00"
+  },
+ {
+    "status": "AUTO", 
+    "work_start": "2023-06-28T08:00:00+02:00", 
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2023-06-21T11:00:00+02:00",
+    "title": {
+      "EN": "Planned ERDA/IDMC Maintenance with Backend Storage Expansion",
+      "DK": "Planlagt ERDA/IDMC vedligehold med udvidelse af backendlageret"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2023-06-28T11:00:00+02:00",
+    "description": {
+      "EN": "It's high time for an expansion of the ERDA/IDMC backend storage before we run out of space and we will apply pending system and software stack updates while at it. The work will involve frontend down-time for a number of low-level system tasks. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect the expansion to be relatively fast and we will try to run the additional upgrades with the shortest possible downtime. We expect the work to complete within a couple of hours if everything runs smoothly. Further status updates will follow here.",
+      "DK": "Det er på høje tid at få udvidet backendlageret på ERDA/IDMC før vi løber tør for plads, og vi lægger diverse system- og software-rettelser ind ved samme lejlighed. Arbejdet kræver nedetid på frontends til grundlæggende systemopgaver, og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Selve lagerudvidelsen burde ikke tage lang tid, og vi bestræber os på at minimere nedetiden ved de øvrige opdateringer. Vi forventer at arbejdet kan overstås indenfor et par timer, hvis alting forløber planmæssigt. Yderligere statusopdateringer følger her."
+    },
+    "announce_end": "2023-06-29T12:00:00+02:00"
   }, 
  {
     "status": "AUTO", 
@@ -52,16 +74,16 @@
     ],
     "announce_start": "2023-06-13T11:00:00+02:00",
     "title": {
-      "EN": "Planned ERDA/IDMC Maintenance with Backend Storage Expansion",
-      "DK": "Planlagt ERDA/IDMC vedligehold med udvidelse af backendlageret"
+      "EN": "POSTPONED: Planned ERDA/IDMC Maintenance with Backend Storage Expansion",
+      "DK": "UDSAT: Planlagt ERDA/IDMC vedligehold med udvidelse af backendlageret"
     },
     "services": [
       "ALL"
     ],
-    "work_end": "2023-06-22T11:00:00+02:00",
+    "work_end": "2023-06-22T08:01:00+02:00",
     "description": {
-      "EN": "It's high time for an expansion of the ERDA/IDMC backend storage before we run out of space and we will apply pending system and software stack updates while at it. The work will involve frontend down-time for a number of low-level system tasks. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect the expansion to be relatively fast and we will try to run the additional upgrades with the shortest possible downtime. We expect the work to complete within a couple of hours if everything runs smoothly. Further status updates will follow here.",
-      "DK": "Det er på høje tid at få udvidet backendlageret på ERDA/IDMC før vi løber tør for plads, og vi lægger diverse system- og software-rettelser ind ved samme lejlighed. Arbejdet kræver nedetid på frontends til grundlæggende systemopgaver, og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Selve lagerudvidelsen burde ikke tage lang tid, og vi bestræber os på at minimere nedetiden ved de øvrige opdateringer. Vi forventer at arbejdet kan overstås indenfor et par timer, hvis alting forløber planmæssigt. Yderligere statusopdateringer følger her."
+      "EN": "It's high time for an expansion of the ERDA/IDMC backend storage before we run out of space and we will apply pending system and software stack updates while at it. The work will involve frontend down-time for a number of low-level system tasks. Thus all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect the expansion to be relatively fast and we will try to run the additional upgrades with the shortest possible downtime. We expect the work to complete within a couple of hours if everything runs smoothly. We need a bit more preparation for the expansion due to some required storage brick shuffling in the process, so we will postpone the work until Wednesday next week.",
+      "DK": "Det er på høje tid at få udvidet backendlageret på ERDA/IDMC før vi løber tør for plads, og vi lægger diverse system- og software-rettelser ind ved samme lejlighed. Arbejdet kræver nedetid på frontends til grundlæggende systemopgaver, og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Selve lagerudvidelsen burde ikke tage lang tid, og vi bestræber os på at minimere nedetiden ved de øvrige opdateringer. Vi forventer at arbejdet kan overstås indenfor et par timer, hvis alting forløber planmæssigt. Vi har brug for lidt mere forberedelse til udvidelsen pga en krævet ændring i backendlagerets bricks ved samme lejlighed, så vi udsætter arbejdet til onsdag i næste uge."
     },
     "announce_end": "2023-06-23T12:00:00+02:00"
   }, 
