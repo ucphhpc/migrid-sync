@@ -132,3 +132,6 @@ state/mig_system_files/*.interactivejob
 mig/install/generated-confs*
 
 .vscode/
+
+# Mac OSX noise
+*.DS_Store
