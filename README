@@ -1026,8 +1026,8 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --login_methods="extoid migoid" \
                    --password_policy=MODERN:12 --password_legacy_policy=HIGH \
                    --distro=centos --skin=erda-ucph-science \
-                   --title=Sensitive Information Facility \
-                   --short_title=SIF \
+                   --title="Sensitive Information Facility" \
+                   --short_title="SIF" \
                    --external_doc=https://sif.ku.dk \
                    --wsgi_procs=25 --user_interface='V2' \
                    --auto_add_oid_user=True --oid_valid_days=180 \
