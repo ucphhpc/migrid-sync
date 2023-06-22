@@ -264,6 +264,26 @@ if '__main__' == __name__:
     for key in names:
         settings[key] = default_val
 
+    # Apply values from environment - require prefix to avoid intereference
+    # with certain common environments like USER.
+    env_prefix = 'MIG_'
+    for opt_name in names:
+        val = os.getenv("%s%s" % (env_prefix, opt_name.upper()))
+        if not val:
+            # NOTE: Empty text values are not supported in env
+            continue
+        if opt_name in str_names:
+            settings[opt_name] = val
+        elif opt_name in int_names and val:
+            settings[opt_name] = int(val)
+        elif opt_name in bool_names and val:
+            settings[opt_name] = (val.strip().lower() in ['1', 'true', 'yes'])
+        else:
+            print('Error: environment options %r not supported!' % opt_name)
+            usage(names)
+            sys.exit(1)
+
+    # apply values from CLI parameters
     flag_str = 'h'
     opts_str = ["%s=" % key for key in names] + ["help"]
     try:
@@ -285,7 +305,7 @@ if '__main__' == __name__:
         elif opt_name in bool_names:
             settings[opt_name] = (val.strip().lower() in ['1', 'true', 'yes'])
         else:
-            print('Error: %s not supported!' % opt)
+            print('Error: command line option %r not supported!' % opt_name)
             usage(names)
             sys.exit(1)
 
