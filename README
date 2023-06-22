@@ -136,7 +136,7 @@ sudo pip install 'wsgidav<2'
 On python 2 setups one can also try out the more recent 3.x series of wsgidav
 still maintained as stable and supported there. It can be installed with pip:
 sudo pip install 'more-itertools<6' 'jaraco.functools<3' 'jinja2<3' \
-         'markupsafe<2' 'pyyaml<6' cheroot 'wsgidav<4'
+         'markupsafe<2' 'pyyaml<6' 'importlib-metadata<3' cheroot 'wsgidav<4'
 
 On python 3 setups a more recent wsgidav 3.x or later is required. It
 can easily be installed with pip:
@@ -551,6 +551,13 @@ settings:
 --prefer_python3=PREFER_PYTHON3
 --io_account_expire=IO_ACCOUNT_EXPIRE
 --gdp_email_notify=GDP_EMAIL_NOTIFY
+
+All those values can also be set via environment variable, by setting the
+corresponding MIG_X environment variable where X is the option name in upper
+case. That is, instead of passing --enable_hsts=True as argument one could set
+MIG_ENABLE_HSTS=True in the environment.
+If the same option is set both as environment variable and CLI parameter, then
+the CLI parameter takes precedence.
 
 For one of our servers running MiG as the 'mig' user with the code
 checked out directly in the home directory and Debian apache 2.4 without OpenID:
