@@ -65,6 +65,28 @@
     },
     "announce_end": "2023-06-29T12:00:00+02:00"
   }, 
+  {
+    "status": "AUTO",
+    "work_start": "2023-06-22T09:00:00+02:00", 
+    "systems": [
+        "ERDA",
+        "IDMC"
+    ],
+    "announce_start": "2023-06-22T09:00:00+02:00",
+    "title": {
+      "EN": "Partial data access and outage in the backend storage",
+      "DK": "Delvis dataadgang og udfald i backend-lageret"
+    },
+    "services": [
+        "ALL"
+    ],
+    "work_end": "2023-06-23T09:58:00+02:00",
+    "description": {
+      "EN": "We have an issue with the Gluster backend storage used on ERDA/IDMC and it leads to occassional errors when using the associated user services. We have identified the problem to be related to the backend storage bricks running out of space and have issued a temporary workaround until we get the planned expansion next week done. It should run as usual again now.", 
+      "DK": "Vi har et problem med det Gluster backend-lager som benyttes til ERDA/IDMC og det resulterer i sporadiske fejl ved brug af de tilknyttede bruger-services. Vi har identificeret problemet til at være et udslag af at backend-lagerets bricks er ved at løbe tør for plads og har lavet en midlertidig justering indtil vi får næste uges planlagte lagerudvidelse overstået. Alt skulle gerne køre normalt igen nu."
+    },
+    "announce_end": "2023-06-24T12:00:00+02:00"
+  },
  {
     "status": "AUTO", 
     "work_start": "2023-06-22T08:00:00+02:00", 
