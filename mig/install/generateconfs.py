@@ -263,9 +263,9 @@ if '__main__' == __name__:
     for key in names:
         settings[key] = default_val
 
-    # Apply values from environment - require prefix to avoid intereference
-    # with certain common environments like USER.
-    env_prefix = 'MIG_'
+    # Apply values from environment - use custom prefix to avoid
+    # interference with certain native environments like USER.
+    env_prefix = os.getenv("MIG_GENCONF_ENV_PREFIX", 'MIG_')
     for opt_name in names:
         val = os.getenv("%s%s" % (env_prefix, opt_name.upper()))
         if not val:
