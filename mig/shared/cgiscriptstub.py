@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cgiscriptstub - cgi wrapper functions for functionality backends
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,6 +33,7 @@ from __future__ import absolute_import
 import cgi
 import cgitb
 import os
+import sys
 import time
 
 # DUMMY try/except to avoid autopep8 from mangling import order
@@ -77,6 +78,8 @@ def finish_cgi_script(configuration, backend, output_format, ret_code, ret_msg,
     default_content = 'text/html'
     if 'json' == output_format:
         default_content = 'application/json'
+    elif 'file' == output_format:
+        default_content = 'application/octet-stream'
     elif 'html' != output_format:
         default_content = 'text/plain'
     default_headers = [('Content-Type', default_content)]
@@ -101,7 +104,7 @@ def finish_cgi_script(configuration, backend, output_format, ret_code, ret_msg,
         logger.error("CGI %s output formatting failed!" % output_format)
         output = 'Error: output could not be correctly delivered!'
 
-    if not is_default_str_coding(output):
+    if output_format != 'file' and not is_default_str_coding(output):
         logger.error(
             "Formatted output is NOT on default str coding: %s" % [output[:100]])
         err_mark = '__****__'
@@ -114,14 +117,24 @@ def finish_cgi_script(configuration, backend, output_format, ret_code, ret_msg,
 
     header_out = '\n'.join(["%s: %s" % (key, val) for (key, val) in headers])
 
-    # configuration.logger.debug("raw output:\n%s\n%s" % (header_out, output))
+    # NOTE: we need to carefully handle byte output here as well
+    # https://stackoverflow.com/questions/40450791/python-cgi-print-image-to-html
 
-    print(header_out)
-    print('')
-
-    # Print without adding newline
-
-    print(output, end=' ')
+    try:
+        #logger.debug("write headers: %s" % header_out)
+        sys.stdout.write(header_out)
+        sys.stdout.write("\n\n")
+        #logger.debug("flush stdout")
+        sys.stdout.flush()
+        #logger.debug("write content: %s" % [output])
+        # NOTE: py2 does not have buffer but py3 needs binary output there
+        if sys.version_info[0] < 3:
+            sys.stdout.write(output)
+        else:
+            sys.stdout.buffer.write(output)
+        # logger.debug("complete")
+    except Exception as exc:
+        logger.error("CGI output delivery crashed: %s" % exc)
 
 
 def run_cgi_script_possibly_with_cert(main, delayed_input=None,
@@ -144,6 +157,9 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None,
     environ = os.environ
     (configuration, logger, client_id, user_arguments_dict) = \
         init_cgi_script(environ, delayed_input)
+
+    logger.debug("handling cgi request with python %s from %s  (%s)" %
+                 (sys.version_info, client_id, environ))
 
     # default to html output
 

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migwsgi.py - Provides the entire WSGI interface
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -211,6 +211,8 @@ def application(environ, start_response):
 
     if 'json' == output_format:
         default_content = 'application/json'
+    elif 'file' == output_format:
+        default_content = 'application/octet-stream'
     elif 'html' != output_format:
         default_content = 'text/plain'
     default_headers = [('Content-Type', default_content)]
@@ -230,7 +232,7 @@ def application(environ, start_response):
     output = format_output(configuration, backend, ret_code, ret_msg,
                            output_objs, output_format)
 
-    if not is_default_str_coding(output):
+    if output_format != 'file' and not is_default_str_coding(output):
         _logger.error(
             "Formatted output is NOT on default str coding: %s" % [output[:100]])
         err_mark = '__****__'
@@ -245,11 +247,11 @@ def application(environ, start_response):
     # An empty string on the other hand is quite okay.
 
     if output is None:
-        _logger.error("WSGI %s output formatting failed: %s" % output_format)
+        _logger.error("WSGI %s output formatting failed" % output_format)
         output = 'Error: output could not be correctly delivered!'
 
     content_length = len(output)
-    if not [i for i in response_headers if 'Content-Length' == i[0]]:
+    if not 'Content-Length' in dict(response_headers):
         # _logger.debug("WSGI adding explicit content length %s" % content_length)
         response_headers.append(('Content-Length', "%d" % content_length))
 
@@ -278,6 +280,8 @@ def application(environ, start_response):
         if chunk_parts > 1:
             _logger.info("WSGI %s finished yielding all %d output parts" %
                          (backend, chunk_parts))
+        _logger.debug("done sending %d chunk(s) of %r response to client" %
+                      (chunk_parts, backend))
     except IOError as ioe:
         _logger.warning("WSGI %s for %s could not deliver output: %s" %
                         (backend, client_id, ioe))
