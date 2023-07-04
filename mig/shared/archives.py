@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # archives - zip/tar packing and unpacking helpers
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -130,6 +130,7 @@ def handle_package_upload(
                 continue
 
             try:
+                # NOTE: ZipFile.read returns bytes
                 zip_data = zip_object.read(zip_entry.filename)
             except Exception as exc:
                 logger.error("read data in %s failed: %s" %
@@ -148,7 +149,8 @@ def handle_package_upload(
             # write file - symbolic links are written as files! (good for
             # security).
 
-            # NB: Needs to use undecoded filename here
+            # NOTE: we need to use undecoded filename here and keep binary data
+            #       unchanged when writing.
 
             if not write_file(zip_data, local_zip_entry_name, logger) and \
                     not os.path.exists(local_zip_entry_name):

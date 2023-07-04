@@ -123,7 +123,7 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
         return False
 
 
-def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
+def write_file(content, path, logger, mode='r+b', make_parent=True, umask=None):
     """Wrapper to handle writing of contents to path"""
     if not logger:
         logger = null_logger("dummy")
@@ -140,10 +140,15 @@ def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
             os.mkdir(head)
         except Exception as err:
             logger.error('could not create dir: %s' % err)
+    if not os.path.isfile(path):
+        try:
+            open(path, "w").close()
+        except Exception as err:
+            logger.error('could not create file %s' % err)
     try:
         filehandle = open(path, mode)
-        # NOTE: we need to force native str here as file is opened in text mode
-        filehandle.write(force_native_str(content))
+        # NOTE: we may need to force bytes here since opened in binary mode
+        filehandle.write(force_utf8(content))
         filehandle.close()
         # logger.debug('file written: %s' % path)
         retval = True
@@ -155,19 +160,19 @@ def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
     return retval
 
 
-def write_file_lines(lines, path, logger, mode='w', make_parent=True, umask=None):
+def write_file_lines(lines, path, logger, mode='r+b', make_parent=True, umask=None):
     """Wrapper to handle writing of lines of content to path"""
     return write_file(''.join(lines), path, logger, mode, make_parent, umask)
 
 
-def read_file(path, logger, allow_missing=False):
+def read_file(path, logger, mode='rb', allow_missing=False):
     """Wrapper to handle reading of contents from path"""
     if not logger:
         logger = null_logger("dummy")
     #logger.debug('reading file: %s' % path)
     content = None
     try:
-        filehandle = open(path)
+        filehandle = open(path, mode)
         content = filehandle.read()
         filehandle.close()
         #logger.debug('read %db from: %s' % (len(content), path))
@@ -182,7 +187,7 @@ def read_file_lines(path, logger):
     contents = read_file(path, logger)
     if contents is None:
         return contents
-    return contents.split('\n')
+    return force_native_str(contents).split('\n')
 
 
 def read_tail(path, lines, logger):
