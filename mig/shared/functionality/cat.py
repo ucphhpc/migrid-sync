@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cat - show lines of one or more files
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,6 +34,7 @@ import glob
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir
+from mig.shared.fileio import read_file, read_file_lines
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables
@@ -110,6 +111,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                    % dst})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
+    if binary(flags):
+        force_file = True
+    elif user_arguments_dict.get('output_format', ['txt'])[0] == 'file':
+        force_file = True
+    else:
+        force_file = False
+
     for pattern in patterns:
 
         # Check directory traversal attempts before actual handling to avoid
@@ -149,13 +157,11 @@ CSRF-filtered POST requests to prevent unintended updates'''
                           environ['REMOTE_ADDR'],
                           'accessed',
                           [relative_path])
-                fd = open(abs_path, 'r')
 
-                # use file directly as iterator for efficiency
-
-                for line in fd:
-                    output_lines.append(line)
-                fd.close()
+                if force_file:
+                    output_lines = [read_file(abs_path, logger)]
+                else:
+                    output_lines += read_file_lines(abs_path, logger)
             except Exception as exc:
                 if not isinstance(exc, GDPIOLogError):
                     gdp_iolog(configuration,
@@ -215,17 +221,15 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 output_objects.append(entry)
 
                 # TODO: rip this hack out into real download handler?
-                # Force download of files when output_format == 'file_format'
+                # Force download of files when output_format == 'file'
                 # This will only work for the first file matching a glob when
-                # using file_format.
+                # using file format.
                 # And it is supposed to only work for one file.
-                if 'output_format' in user_arguments_dict:
-                    output_format = user_arguments_dict['output_format'][0]
-                    if output_format == 'file':
-                        output_objects.append(
-                            {'object_type': 'start', 'headers':
-                             [('Content-Disposition',
-                               'attachment; filename="%s";'
-                               % os.path.basename(abs_path))]})
+                if force_file:
+                    output_objects.append(
+                        {'object_type': 'start', 'headers':
+                         [('Content-Disposition',
+                           'attachment; filename="%s";'
+                           % os.path.basename(abs_path))]})
 
     return (output_objects, status)
