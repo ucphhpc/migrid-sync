@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migwsgi.py - Provides the entire WSGI interface
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -250,6 +250,8 @@ def application(environ, start_response):
 
     if 'json' == output_format:
         default_content = 'application/json'
+    elif 'file' == output_format:
+        default_content = 'application/octet-stream'
     elif 'html' != output_format:
         default_content = 'text/plain'
     default_headers = [('Content-Type', default_content)]
@@ -272,7 +274,7 @@ def application(environ, start_response):
     #_logger.debug("formatted %s output to %s" % (backend, output_format))
     #_logger.debug("output:\n%s" % [output])
 
-    if not is_default_str_coding(output):
+    if output_format != 'file' and not is_default_str_coding(output):
         _logger.error(
             "Formatted output is NOT on default str coding: %s" % [output[:100]])
         err_mark = '__****__'
@@ -291,7 +293,7 @@ def application(environ, start_response):
         output = 'Error: output could not be correctly delivered!'
 
     content_length = len(output)
-    if not [i for i in response_headers if 'Content-Length' == i[0]]:
+    if not 'Content-Length' in dict(response_headers):
         # _logger.debug("WSGI adding explicit content length %s" % content_length)
         response_headers.append(('Content-Length', "%d" % content_length))
 
