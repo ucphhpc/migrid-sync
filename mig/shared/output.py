@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # output - general formatting of backend output objects
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -2600,6 +2600,8 @@ def file_format(configuration, ret_val, ret_msg, out_obj):
         if entry['object_type'] == 'file_output':
             for line in entry['lines']:
                 file_content += line
+        elif entry['object_type'] == 'binary':
+            file_content = entry['data']
 
     return file_content
 
