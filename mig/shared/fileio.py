@@ -157,14 +157,14 @@ def write_file_lines(lines, path, logger, mode='w', make_parent=True, umask=None
     return write_file(''.join(lines), path, logger, mode, make_parent, umask)
 
 
-def read_file(path, logger):
+def read_file(path, logger, mode='r'):
     """Wrapper to handle reading of contents from path"""
     if not logger:
         logger = null_logger("dummy")
     #logger.debug('reading file: %s' % path)
     content = None
     try:
-        filehandle = open(path)
+        filehandle = open(path, mode)
         content = filehandle.read()
         filehandle.close()
         #logger.debug('read %db from: %s' % (len(content), path))
@@ -173,12 +173,12 @@ def read_file(path, logger):
     return content
 
 
-def read_file_lines(path, logger):
+def read_file_lines(path, logger, mode='r'):
     """Wrapper to handle reading lines of content from path"""
-    contents = read_file(path, logger)
+    contents = read_file(path, logger, mode)
     if contents is None:
         return contents
-    return contents.split('\n')
+    return contents.splitlines(True)
 
 
 def read_tail(path, lines, logger):

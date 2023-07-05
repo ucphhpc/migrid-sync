@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # archives - zip/tar packing and unpacking helpers
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -149,7 +149,8 @@ def handle_package_upload(
 
             # NB: Needs to use undecoded filename here
 
-            if not write_file(zip_data, local_zip_entry_name, logger) and \
+            if not write_file(zip_data, local_zip_entry_name, logger,
+                              mode='wb') and \
                     not os.path.exists(local_zip_entry_name):
                 msg += 'Error unpacking %s to disk! ' % entry_filename
                 status = False
@@ -274,7 +275,7 @@ def handle_package_upload(
 
             if not write_file(tar_file_content.extractfile(tar_entry).read(),
                               local_tar_entry_name,
-                              logger):
+                              logger, mode='wb'):
                 msg += 'Error unpacking file %s to disk! ' % entry_filename
                 status = False
                 continue
