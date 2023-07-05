@@ -112,8 +112,11 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
                 filehandle.write('\0')
         logger.info('write %s chunk of size %d at position %d' %
                     (path, len(chunk), filehandle.tell()))
-        # NOTE: we need to force bytes here in binary mode
-        filehandle.write(force_utf8(chunk))
+        # NOTE: we may need to force str or bytes here depending on mode
+        if 'b' in mode:
+            filehandle.write(force_utf8(chunk))
+        else:
+            filehandle.write(force_native_str(chunk))
         filehandle.close()
         logger.debug('file chunk written: %s' % path)
         return True
@@ -123,7 +126,7 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
         return False
 
 
-def write_file(content, path, logger, mode='r+b', make_parent=True, umask=None):
+def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
     """Wrapper to handle writing of contents to path"""
     if not logger:
         logger = null_logger("dummy")
@@ -140,15 +143,13 @@ def write_file(content, path, logger, mode='r+b', make_parent=True, umask=None):
             os.mkdir(head)
         except Exception as err:
             logger.error('could not create dir: %s' % err)
-    if not os.path.isfile(path):
-        try:
-            open(path, "w").close()
-        except Exception as err:
-            logger.error('could not create file %s' % err)
     try:
         filehandle = open(path, mode)
-        # NOTE: we may need to force bytes here since opened in binary mode
-        filehandle.write(force_utf8(content))
+        # NOTE: we may need to force str or bytes here depending on mode
+        if 'b' in mode:
+            filehandle.write(force_utf8(content))
+        else:
+            filehandle.write(force_native_str(content))
         filehandle.close()
         # logger.debug('file written: %s' % path)
         retval = True
@@ -160,12 +161,12 @@ def write_file(content, path, logger, mode='r+b', make_parent=True, umask=None):
     return retval
 
 
-def write_file_lines(lines, path, logger, mode='r+b', make_parent=True, umask=None):
+def write_file_lines(lines, path, logger, mode='w', make_parent=True, umask=None):
     """Wrapper to handle writing of lines of content to path"""
     return write_file(''.join(lines), path, logger, mode, make_parent, umask)
 
 
-def read_file(path, logger, mode='rb', allow_missing=False):
+def read_file(path, logger, mode='r', allow_missing=False):
     """Wrapper to handle reading of contents from path"""
     if not logger:
         logger = null_logger("dummy")
@@ -182,12 +183,18 @@ def read_file(path, logger, mode='rb', allow_missing=False):
     return content
 
 
-def read_file_lines(path, logger):
+def read_file_lines(path, logger, mode='r'):
     """Wrapper to handle reading lines of content from path"""
-    contents = read_file(path, logger)
+    contents = read_file(path, logger, mode)
     if contents is None:
         return contents
-    return force_native_str(contents).split('\n')
+
+    # NOTE: we may need to force str here depending on mode
+    if 'b' in mode:
+        lines = force_native_str(contents).splitlines(True)
+    else:
+        lines = contents.splitlines(True)
+    return lines
 
 
 def read_tail(path, lines, logger):

@@ -2594,8 +2594,8 @@ def resource_format(configuration, ret_val, ret_msg, out_obj):
 def file_format(configuration, ret_val, ret_msg, out_obj):
     """Dump raw file contents"""
 
-    file_content = ''
-
+    # NOTE: we expect binay data here and must use it consistently
+    file_content = b''
     for entry in out_obj:
         if entry['object_type'] == 'file_output':
             for line in entry['lines']:
@@ -2693,7 +2693,9 @@ def format_output(
         #            outputformat)
         format_helper = get_outputformat_helper(outputformat, 'txt')
         formatted = format_helper(configuration, ret_val, ret_msg, out_obj)
-        return force_native_str(formatted)
+        # NOTE: we may get binary file data here - do not force to native str
+        #return force_native_str(formatted)
+        return formatted
     except Exception as err:
         logger.error("%s formatting failed: %s\n%s" %
                      (outputformat, err, traceback.format_exc()))
