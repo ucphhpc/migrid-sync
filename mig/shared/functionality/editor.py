@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # editor - Online editor back end
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -42,6 +42,7 @@ from mig.shared.defaults import csrf_field
 from mig.shared.editing import acquire_edit_lock, edit_lock_suffix, cm_css, \
     cm_javascript, cm_options, miu_css, miu_javascript, miu_options, \
     init_editor_js, run_editor_js, change_editor_mode_js, kill_editor_js
+from mig.shared.fileio import read_file
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.init import initialize_main_variables, find_entry
@@ -359,9 +360,7 @@ def edit_file(configuration, client_id, path, abs_path, output_format='html',
     text = ''
     if os.path.isfile(abs_path):
         try:
-            src_fd = open(abs_path, 'rb')
-            text = src_fd.read()
-            src_fd.close()
+            text = read_file(abs_path, configuration.logger, mode='rb')
         except Exception as exc:
             return 'Failed to open file %s: %s' % (path, exc)
 

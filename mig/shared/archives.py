@@ -152,7 +152,8 @@ def handle_package_upload(
             # NOTE: we need to use undecoded filename here and keep binary data
             #       unchanged when writing.
 
-            if not write_file(zip_data, local_zip_entry_name, logger) and \
+            if not write_file(zip_data, local_zip_entry_name, logger,
+                              mode='wb') and \
                     not os.path.exists(local_zip_entry_name):
                 msg += 'Error unpacking %s to disk! ' % entry_filename
                 status = False
@@ -278,7 +279,7 @@ def handle_package_upload(
 
             if not write_file(tar_file_content.extractfile(tar_entry).read(),
                               local_tar_entry_name,
-                              logger):
+                              logger, mode='wb'):
                 msg += 'Error unpacking file %s to disk! ' % entry_filename
                 status = False
                 continue
