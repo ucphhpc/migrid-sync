@@ -123,12 +123,13 @@ archive dir.'''})
         # NOTE: override normal delivery if download was requested
         if force_file:
             logger.info('return %db from archive private file %s of size %db' %
-                        (len(output_lines[0]), abs_path, os.path.getsize(abs_path)))
+                        (len(output_lines[0]), abs_path,
+                         os.path.getsize(abs_path)))
             # Cut away all the usual web page formatting to show only contents
-            # Insert explicit content type to make sure clients don't break download
-            # early because they think it is plain text and find a bogus EOF in
-            # binary data.
-            (content_type, content_encoding) = mimetypes.guess_type(abs_path)
+            # Insert explicit content type for a better client experience and
+            # to make sure clients don't break download early because they
+            # think it is plain text and find a bogus EOF in binary data.
+            (content_type, _) = mimetypes.guess_type(abs_path)
             if not content_type:
                 content_type = 'application/octet-stream'
             # NOTE: we need to set content length to fit binary data
