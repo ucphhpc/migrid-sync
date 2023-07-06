@@ -29,12 +29,14 @@
 
 from __future__ import absolute_import
 
-import os
 import glob
+import mimetypes
+import os
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir
-from mig.shared.fileio import read_file, read_file_lines
+from mig.shared.fileio import read_file, read_file_lines, write_file, \
+    write_file_lines
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables
@@ -99,7 +101,6 @@ CSRF-filtered POST requests to prevent unintended updates'''
                  })
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-        dst_mode = "wb"
         # IMPORTANT: path must be expanded to abs for proper chrooting
         abs_dest = os.path.abspath(os.path.join(base_dir, dst))
         relative_dst = abs_dest.replace(base_dir, '')
@@ -111,12 +112,16 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                    % dst})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
+    src_mode = "rb"
+    dst_mode = "wb"
     if binary(flags):
         force_file = True
     elif user_arguments_dict.get('output_format', ['txt'])[0] == 'file':
         force_file = True
     else:
         force_file = False
+        src_mode = "r"
+        dst_mode = "w"
 
     for pattern in patterns:
 
@@ -159,9 +164,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
                           [relative_path])
 
                 if force_file:
-                    output_lines = [read_file(abs_path, logger)]
+                    output_lines = [read_file(abs_path, logger, mode=src_mode)]
                 else:
-                    output_lines += read_file_lines(abs_path, logger)
+                    output_lines += read_file_lines(abs_path,
+                                                    logger, mode=src_mode)
             except Exception as exc:
                 if not isinstance(exc, GDPIOLogError):
                     gdp_iolog(configuration,
@@ -186,9 +192,12 @@ CSRF-filtered POST requests to prevent unintended updates'''
                               environ['REMOTE_ADDR'],
                               'modified',
                               [dst])
-                    out_fd = open(abs_dest, dst_mode)
-                    out_fd.writelines(output_lines)
-                    out_fd.close()
+                    if force_file:
+                        write_file(output_lines, abs_dest,
+                                   logger, mode=dst_mode)
+                    else:
+                        write_file_lines(output_lines, abs_dest,
+                                         logger, mode=dst_mode)
                     logger.info('%s %s %s done'
                                 % (op_name, abs_path, abs_dest))
                 except Exception as exc:
@@ -210,7 +219,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                        'text': "wrote %s to %s"
                                        % (relative_path, relative_dst)})
                 # Prevent truncate after first write
-                dst_mode = "ab+"
+                if force_file:
+                    dst_mode = "ab+"
+                else:
+                    dst_mode = "a+"
             else:
                 entry = {'object_type': 'file_output',
                          'lines': output_lines,
@@ -223,13 +235,23 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 # TODO: rip this hack out into real download handler?
                 # Force download of files when output_format == 'file'
                 # This will only work for the first file matching a glob when
-                # using file format.
-                # And it is supposed to only work for one file.
+                # using file format - and that is on purpose.
                 if force_file:
+                    # Insert explicit content type for a better client
+                    # experience and to make sure clients don't break download
+                    # early because they think it is plain text and find a
+                    # bogus EOF in binary data.
+                    (content_type, _) = mimetypes.guess_type(abs_path)
+                    if not content_type:
+                        content_type = 'application/octet-stream'
+                    # NOTE: we need to set content length to fit binary data
                     output_objects.append(
                         {'object_type': 'start', 'headers':
-                         [('Content-Disposition',
+                         [('Content-Length', "%d" % len(output_lines[0])),
+                          ('Content-Type', content_type),
+                          ('Content-Disposition',
                            'attachment; filename="%s";'
                            % os.path.basename(abs_path))]})
+                    break
 
     return (output_objects, status)
