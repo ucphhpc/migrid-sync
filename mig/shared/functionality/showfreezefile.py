@@ -36,10 +36,11 @@ import os
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir
+from mig.shared.fileio import read_file, read_file_lines
+from mig.shared.freezefunctions import is_frozen_archive
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.init import initialize_main_variables
 from mig.shared.validstring import valid_user_path
-from mig.shared.freezefunctions import is_frozen_archive
 
 
 def signature():
@@ -101,32 +102,49 @@ def main(client_id, user_arguments_dict):
 archive dir.'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    if user_arguments_dict.get('output_format', ['txt'])[0] == 'file':
+        force_file = True
+    else:
+        force_file = False
+
     logger.debug('reading archive private file %s' % abs_path)
+    output_lines = []
     try:
-        private_fd = open(abs_path, 'rb')
-        entry = {'object_type': 'binary',
-                 'data': private_fd.read()}
-        logger.info('return %db from archive private file %s of size %db' %
-                    (len(entry['data']), abs_path, os.path.getsize(abs_path)))
-        # Cut away all the usual web page formatting to show only contents
-        # Insert explicit content type to make sure clients don't break download
-        # early because they think it is plain text and find a bogus EOF in
-        # binary data.
-        (content_type, content_encoding) = mimetypes.guess_type(abs_path)
-        if not content_type:
-            content_type = 'application/octet-stream'
-        output_objects = [{'object_type': 'start',
-                           'headers': [
-                               ('Content-Type', content_type),
-                               ('Content-Disposition',
-                                'attachment; filename="%s";' %
-                                os.path.basename(abs_path))
-                           ]
-                           },
-                          entry,
-                          {'object_type': 'script_status'},
-                          {'object_type': 'end'}]
-        private_fd.close()
+        if force_file:
+            # NOTE: we need to preserve binary data
+            output_lines = [read_file(abs_path, logger, mode='rb')]
+        else:
+            output_lines += read_file_lines(abs_path, logger, mode='r')
+        entry = {'object_type': 'file_output',
+                 'lines': output_lines,
+                 'wrap_binary': True,
+                 'wrap_targets': ['lines']}
+
+        # NOTE: override normal delivery if download was requested
+        if force_file:
+            logger.info('return %db from archive private file %s of size %db' %
+                        (len(output_lines[0]), abs_path, os.path.getsize(abs_path)))
+            # Cut away all the usual web page formatting to show only contents
+            # Insert explicit content type to make sure clients don't break download
+            # early because they think it is plain text and find a bogus EOF in
+            # binary data.
+            (content_type, content_encoding) = mimetypes.guess_type(abs_path)
+            if not content_type:
+                content_type = 'application/octet-stream'
+            # NOTE: we need to set content length to fit binary data
+            output_objects = [{'object_type': 'start',
+                               'headers': [
+                                   ('Content-Type', content_type),
+                                   ('Content-Length', "%d" %
+                                    len(output_lines[0])),
+                                   ('Content-Disposition',
+                                    'attachment; filename="%s";' %
+                                    os.path.basename(abs_path))
+                               ]
+                               }]
+
+        # Always insert entry
+        output_objects.append(entry)
     except Exception as exc:
         logger.error('Error reading archive private file %s' % exc)
         output_objects.append({'object_type': 'error_text', 'text':
