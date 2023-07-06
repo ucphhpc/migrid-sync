@@ -126,13 +126,14 @@ def finish_cgi_script(configuration, backend, output_format, ret_code, ret_msg,
         sys.stdout.write("\n\n")
         #logger.debug("flush stdout")
         sys.stdout.flush()
-        #logger.debug("write content: %s" % [output])
-        # NOTE: py2 does not have buffer but py3 needs binary output there
-        if sys.version_info[0] < 3:
+        #logger.debug("write content: %s" % [output[:64], '..', output[-64:]])
+        # NOTE: always output native strings to stdout but use raw buffer
+        #       for byte output on py3 as explained above.
+        if sys.version_info[0] < 3 or is_default_str_coding(output):
             sys.stdout.write(output)
         else:
             sys.stdout.buffer.write(output)
-        # logger.debug("complete")
+        #logger.debug("complete")
     except Exception as exc:
         logger.error("CGI output delivery crashed: %s" % exc)
 
