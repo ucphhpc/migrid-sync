@@ -599,7 +599,7 @@ login with key
 <tr id="login_fields" style="display: none;"><td>
 <label for="username">Username</label>
 <input id="username" type=text size=60 name=username value="%(username)s"
-    pattern="[a-zA-Z0-9._-]*"
+    pattern="[a-zA-Z0-9.@_-]*"
     title="Optional username used to login on the remote site, if required" />
 <br/>
 <span id="password_entry">
