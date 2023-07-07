@@ -846,7 +846,9 @@ value="%(default_authpassword)s" />
         sshfs_netloc = '\\\\sshfs\\%s@%s' % (username, sftp_server)
         if sftp_port != 22:
             sftp_uri += ':%d' % sftp_port
-            sshfs_netloc += ':%d' % sftp_port
+            # NOTE: winsshfs uses '!' as port separator according to docs
+            #       https://github.com/winfsp/sshfs-win#unc-syntax
+            sshfs_netloc += '!%d' % sftp_port
         fill_helpers.update({
             'default_authkeys': default_authkeys,
             'default_authpassword': default_authpassword,
