@@ -55,7 +55,8 @@ from mig.shared.fileio import makedirs_rec, pickle
 from mig.shared.logger import daemon_logger, register_hangup_handler
 from mig.shared.notification import notify_user_thread
 from mig.shared.pwhash import unscramble_digest, decrypt_password
-from mig.shared.safeeval import subprocess_popen, subprocess_pipe
+from mig.shared.safeeval import subprocess_popen, subprocess_pipe, \
+    subprocess_list2cmdline
 from mig.shared.transferfunctions import blind_pw, load_data_transfers, \
     update_data_transfer, get_status_dir, sub_pid_list, add_sub_pid, \
     del_sub_pid, kill_sub_pid, add_worker_transfer, del_worker_transfer, \
@@ -303,13 +304,18 @@ def get_rsync_target(is_import, is_file, user_excludes=[], compress=False):
         rsync_args[0] += 'r'
     if compress:
         rsync_args[0] += 'z'
+    # NOTE: enable argument protection in protocol instead of quoting src/dst
+    rsync_args[0] += 's'
     # NOTE: we actively filter illegal paths from all rsync transfers
     exclude_list = get_exclude_list('--exclude', '=', False, user_excludes)
-    # Make sure to protect exotic chars from interpretation by remote shell
+    # NOTE: rsync fails with explicit quotes in the path on remote side if we
+    #       use the same quoting here as with lftp. We leave them out and rely
+    #       on subprocess without shell locally and protect args flag remotely.
+    #       Not that we care too much about what the remote shell does anyway.
     if is_import:
-        transfer_target = ["%(fqdn)s:'%(src)s'", "%(dst)s/"]
+        transfer_target = ["%(fqdn)s:%(src)s", "%(dst)s/"]
     else:
-        transfer_target = ["%(src)s", "%(fqdn)s:'%(dst)s/'"]
+        transfer_target = ["%(src)s", "%(fqdn)s:%(dst)s/"]
     return (rsync_args, exclude_list, transfer_target)
 
 
@@ -641,7 +647,8 @@ def run_transfer(configuration, client_id, transfer_dict):
                 command_list.append(i % run_dict)
                 blind_list.append(i % blind_dict)
         command_str = ' '.join(command_list)
-        blind_str = ' '.join(blind_list)
+        # NOTE: we wrap list entries in quotes for usable log line
+        blind_str = subprocess_list2cmdline(blind_list)
         logger.info('run %s on behalf of %s' % (blind_str, client_id))
         transfer_proc = subprocess_popen(command_list,
                                          stdout=subprocess_pipe,

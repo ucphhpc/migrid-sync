@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # safeeval - Safe evaluation of expressions and commands
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -328,3 +328,10 @@ def subprocess_popen(command, stdin=None, stdout=None, stderr=None, env=None,
     """
     return subprocess.Popen(command, stdin=stdin, stdout=stdout, stderr=stderr,
                             env=env, cwd=cwd, shell=only_sanitized_variables)
+
+
+def subprocess_list2cmdline(command):
+    """A helper to merge command list into an actual command line with proper
+    quoting etc. Just exposes the subprocess list2cmdline helper.
+    """
+    return subprocess.list2cmdline(command)
