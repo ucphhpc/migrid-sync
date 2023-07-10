@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ui - general UI V3 specific but skin-independent styling
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -840,8 +840,21 @@ span.fakelink:hover {
 .vgridprivateweb { background: url(/images/icons/folder_key.svg) left top no-repeat; background-size: 16px 16px;}
 .expanded.vgridprivateweb {background: url(/images/icons/folder_open_key.svg) left top no-repeat;}
 
-.ext_jpg, .ext_jpeg, .ext_gif, .ext_png, .ext_bmp, .ext_pcx, .ext_tif, .ext_tiff  { 
-    background: url(/images/icons/picture.svg) left center no-repeat; background-size: 16px 16px; }
+.ext_jpg, .ext_jpeg, .ext_gif, .ext_png, .ext_bmp, .ext_pcx, .ext_tif, .ext_tiff  {
+    background: url(/images/icons/picture.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+.ext_tar, .ext_gz, .ext_tgz, .ext_gzip, .ext_bz, .ext_bzip, .ext_bz2, .ext_tbz, .ext_tbz2, .ext_xz, .ext_txz, .ext_arj,   {
+    background: url(/images/icons/box-archive.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+.ext_txt, .ext_log, .ext_out, .ext_diff, .ext_conf, .ext_cfg, .ext_cnf, .ext_stdout, .ext_stderr, .ext_status, .ext_io-status { 
+    background: url(/images/icons/file-lines.svg) left center no-repeat; 
+}
+
+.ext_sh, .ext_csh, .ext_bash, .ext_py, .ext_pyx, .ext_pl, .ext_c, .ext_cxx, .ext_cpp, .ext_java, .ext_js, .ext_rb, .ext_rbx, .ext_rhtml, .ext_ruby, .ext_lisp, .ext_lasso, .ext_hs, .ext_cmake { 
+    background: url(/images/icons/file-code.svg) left center no-repeat; 
+}
 
 .upload.icon { background: url(/images/icons/page_white_get.svg) left center no-repeat; background-size: 16px 16px; }
 .rm.icon { background: url(/images/icons/page_white_delete.svg) left center no-repeat; background-size: 16px 16px; }
@@ -931,13 +944,6 @@ background: url(/images/icons/flash.png) left center no-repeat;
 .ext_jar, .ext_class, .ext_jnlp { 
 background: url(/images/icons/java.png) left center no-repeat; 
 }
-.ext_java { background: url(/images/icons/code.png) left center no-repeat; }
-
-.ext_js { background: url(/images/icons/script.png) left center no-repeat; }
-.ext_lasso { background: url(/images/icons/code.png) left center no-repeat; }
-.ext_log, .ext_out, .ext_diff, .ext_conf, .ext_cfg, .ext_cnf { 
-background: url(/images/icons/txt.png) left center no-repeat; 
-}
 .ext_m4p { background: url(/images/icons/music.png) left center no-repeat; }
 .ext_mov { background: url(/images/icons/film.png) left center no-repeat; }
 .ext_mp3 { background: url(/images/icons/music.png) left center no-repeat; }
@@ -955,33 +961,11 @@ background: url(/images/icons/film.png) left center no-repeat;
 
 .ext_ppt { background: url(/images/icons/ppt.png) left center no-repeat; }
 .ext_psd { background: url(/images/icons/psd.png) left center no-repeat; }
-.ext_pl { background: url(/images/icons/script.png) left center no-repeat; }
-.ext_py, .ext_pyx { 
-background: url(/images/icons/script.png) left center no-repeat; 
-}
-.ext_rb { background: url(/images/icons/ruby.png) left center no-repeat; }
-.ext_rbx { background: url(/images/icons/ruby.png) left center no-repeat; }
-.ext_rhtml { background: url(/images/icons/ruby.png) left center no-repeat; }
 .ext_rpm { background: url(/images/icons/linux.png) left center no-repeat; }
-.ext_ruby { background: url(/images/icons/ruby.png) left center no-repeat; }
-.ext_sh { background: url(/images/icons/script.png) left center no-repeat; }
 .ext_sql { background: url(/images/icons/db.png) left center no-repeat; }
-.ext_stdout, .ext_stderr, .ext_status, .ext_io-status { 
-background: url(/images/icons/txt.png) left center no-repeat; 
-}
-.ext_swf { background: url(/images/icons/flash.png) left center no-repeat; }
-.ext_tar { background: url(/images/icons/compress.png) left center no-repeat; }
-.ext_tbz, .ext_tbz2, .ext_bz2, .ext_bz { 
-background: url(/images/icons/compress.png) left center no-repeat; 
-}
-.ext_tgz, .ext_gz { 
-background: url(/images/icons/compress.png) left center no-repeat; 
-}
-.ext_txz, .ext_xz { 
-background: url(/images/icons/compress.png) left center no-repeat; 
-}
 
-.ext_txt { background: url(/images/icons/txt.png) left center no-repeat; }
+.ext_swf { background: url(/images/icons/flash.png) left center no-repeat; }
+
 .ext_vb { background: url(/images/icons/code.png) left center no-repeat; }
 .ext_wav { background: url(/images/icons/music.png) left center no-repeat; }
 .ext_wmv { background: url(/images/icons/film.png) left center no-repeat; }
