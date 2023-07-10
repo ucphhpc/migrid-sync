@@ -643,8 +643,15 @@ a {
     padding: 1pxs;
 }
 
+/* NOTE: we replaced this custom square plain file icon with the fontawesome 'regular'
+         one for consistency
+*/
+/*
 .file.icon { background: url(/images/icons/file_46743c.svg) left center no-repeat; }
 .fileicon { background: url(/images/icons/file_46743c.svg) left center no-repeat; background-size: 16px 16px;}
+*/
+.file.icon { background: url(/images/icons/file-plain_46743c.svg) left center no-repeat; }
+.fileicon { background: url(/images/icons/file-plain_46743c.svg) left center no-repeat; background-size: 16px 16px;}
 
 
 
