@@ -677,7 +677,7 @@ a {
 }
 
 .ext_tar, .ext_gz, .ext_tgz, .ext_gzip, .ext_bz, .ext_bzip, .ext_bz2, .ext_tbz, .ext_tbz2, .ext_xz, .ext_txz, .ext_arj,   {
-    background: url(/images/icons/box-archive_46743C.svg) left center no-repeat; background-size: 16px 16px;
+    background: url(/images/icons/box-archive-solid_46743C.svg) left center no-repeat; background-size: 16px 16px;
 }
 
 .ext_txt, .ext_log, .ext_out, .ext_diff, .ext_conf, .ext_cfg, .ext_cnf, .ext_stdout, .ext_stderr, .ext_status, .ext_io-status { 

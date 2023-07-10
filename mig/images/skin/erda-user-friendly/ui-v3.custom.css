@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ui-v3.custom - global skin overrides for UI V3 only
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -672,8 +672,22 @@ a {
 .vgridprivateweb { background: url(/images/icons/folder_key_46743c.svg) left top no-repeat; background-size: 16px 16px;}
 .expanded.vgridprivateweb {background: url(/images/icons/folder_open_key_46743c.svg) left top no-repeat;}
 
-.ext_jpg, .ext_jpeg, .ext_gif, .ext_png, .ext_bmp, .ext_pcx, .ext_tif, .ext_tiff  { 
-    background: url(/images/icons/picture_46743c.svg) left center no-repeat; background-size: 16px 16px; }
+.ext_jpg, .ext_jpeg, .ext_gif, .ext_png, .ext_bmp, .ext_pcx, .ext_tif, .ext_tiff  {
+    background: url(/images/icons/picture_46743c.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+.ext_tar, .ext_gz, .ext_tgz, .ext_gzip, .ext_bz, .ext_bzip, .ext_bz2, .ext_tbz, .ext_tbz2, .ext_xz, .ext_txz, .ext_arj,   {
+    background: url(/images/icons/box-archive-solid_46743C.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+.ext_txt, .ext_log, .ext_out, .ext_diff, .ext_conf, .ext_cfg, .ext_cnf, .ext_stdout, .ext_stderr, .ext_status, .ext_io-status { 
+    background: url(/images/icons/file-lines_46743C.svg) left center no-repeat; 
+}
+
+.ext_sh, .ext_csh, .ext_bash, .ext_py, .ext_pyx, .ext_pl, .ext_c, .ext_cxx, .ext_cpp, .ext_java, .ext_js, .ext_rb, .ext_rbx, .ext_rhtml, .ext_ruby, .ext_lisp, .ext_lasso, .ext_hs, .ext_cmake { 
+    background: url(/images/icons/file-code_46743C.svg) left center no-repeat; 
+}
+
 
 .upload.icon { background: url(/images/icons/page_white_get_46743c.svg) left center no-repeat; background-size: 16px 16px; }
 .rm.icon { background: url(/images/icons/page_white_delete_46743c.svg) left center no-repeat; background-size: 16px 16px; }
