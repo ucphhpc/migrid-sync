@@ -855,7 +855,7 @@ FontAwesome file icons from the "regular" flavor.
 .expanded.vgridprivateweb {background: url(/images/icons/folder_open_key.svg) left top no-repeat;}
 
 .ext_pdf {
-    background: url(/images/icons/file-pdf.svg) left center no-repeat; background-size: 16px 16px;
+    background: url(/images/icons/svgrepo-file-pdf.svg) left center no-repeat; background-size: 16px 16px;
 }
 
 .ext_doc, .ext_docx, .ext_odt {

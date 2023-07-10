@@ -676,7 +676,7 @@ a {
 .expanded.vgridprivateweb {background: url(/images/icons/folder_open_key_46743c.svg) left top no-repeat;}
 
 .ext_pdf {
-    background: url(/images/icons/file-pdf_46743c.svg) left center no-repeat; background-size: 16px 16px;
+    background: url(/images/icons/svgrepo-file-pdf_46743c.svg) left center no-repeat; background-size: 16px 16px;
 }
 
 .ext_doc, .ext_docx, .ext_odt {
