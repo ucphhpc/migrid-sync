@@ -330,6 +330,7 @@ def generate_confs(
     sftp_port=2222,
     sftp_subsys_port=22,
     sftp_show_port=22,
+    sftp_max_sessions=-1,
     davs_port=4443,
     davs_show_port=443,
     ftps_ctrl_port=8021,
@@ -539,6 +540,7 @@ def generate_confs(
     user_dict['__SFTP_PORT__'] = "%s" % sftp_port
     user_dict['__SFTP_SUBSYS_PORT__'] = "%s" % sftp_subsys_port
     user_dict['__SFTP_SHOW_PORT__'] = "%s" % sftp_show_port
+    user_dict['__SFTP_MAX_SESSIONS__'] = "%s" % sftp_max_sessions
     user_dict['__DAVS_PORT__'] = "%s" % davs_port
     user_dict['__DAVS_SHOW_PORT__'] = "%s" % davs_show_port
     user_dict['__FTPS_CTRL_PORT__'] = "%s" % ftps_ctrl_port
