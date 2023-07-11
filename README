@@ -722,6 +722,7 @@ or the same on centos
                    --default_menu="home files submitjob jobs vgrids settings setup logout" \
                    --user_menu="sharelinks people cloud crontab transfers runtimeenvs resources peers downloads docs dashboard migadmin" \
                    --wsgi_procs=25 --sftp_subsys_auth_procs=20 \
+                   --sftp_max_sessions=16 \
                    --auto_add_oid_user=True --auto_add_cert_user=True \
                    --io_account_expire=True \
                    --password_policy="MODERN:12" \
@@ -862,6 +863,7 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --vgrid_label=Workgroup --apache_worker_procs=2048 \
                    --davs_port=8020 --openid_port=8001 \
                    --wsgi_procs=100 --sftp_subsys_auth_procs=50 \
+                   --sftp_max_sessions=16 \
                    --default_menu="home files vgrids archives jupyter settings setup logout" \
                    --user_menu="sharelinks seafile crontab transfers cloud people downloads peers docs migadmin" \
                    --collaboration_links="default advanced" \
@@ -947,6 +949,7 @@ with optional 2-FA support and legacy sftp clients:
                    --distro=centos --skin=idmc-basic \
                    --vgrid_label=Workgroup --apache_worker_procs=512 \
                    --wsgi_procs=25 --sftp_subsys_auth_procs=25 \
+                   --sftp_max_sessions=16 \
                    --davs_port=8020 --openid_port=8001 \
                    --default_menu="home files submitjob jobs vgrids jupyter settings setup logout" \
                    --user_menu="sharelinks people cloud crontab transfers runtimeenvs resources downloads peers docs migadmin" \

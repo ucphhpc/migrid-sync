@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ui - general UI V3 specific but skin-independent styling
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -809,16 +809,30 @@ span.fakelink:hover {
     background-color: #444;
 }
 
+/* NOTE: we replaced this custom square plain file icon with the fontawesome 'regular'
+         one for consistency
+*/
+/*
+.file.icon { background: url(/images/icons/file.svg) left center no-repeat; }
+.fileicon { background: url(/images/icons/file.svg) left center no-repeat; background-size: 16px 16px;}
+*/
 .file.icon { background: url(/images/icons/file.svg) left center no-repeat; }
 .fileicon { background: url(/images/icons/file.svg) left center no-repeat; background-size: 16px 16px;}
 
 
+/* NOTE: disabled these nice but custom icons, because it doesn't scale with new
+icons for every single file type. Unfortunately no matching free icons are
+available from FontAwesome or similar either. We replaced with the free
+FontAwesome file icons from the "regular" flavor.
+*/
 /*files icons png, zip, etc.*/
+/*
 .ext_zip { background: url(/images/icons/zip.svg) left center no-repeat; background-size: 16px 16px;}
 
 .ext_htm, .ext_html { background: url(/images/icons/html.svg) left center no-repeat; background-size: 16px 16px;}
 .ext_pdf { background: url(/images/icons/pdf.svg) left center no-repeat; }
 .ext_psd { background: url(/images/icons/psd.svg) left center no-repeat; }
+*/
 
 /* override folder icon for user home and vgrid folders */
 .directoryicon { background: url(/images/icons/folder.svg) left top no-repeat; background-size: 16px 16px; }
@@ -840,8 +854,46 @@ span.fakelink:hover {
 .vgridprivateweb { background: url(/images/icons/folder_key.svg) left top no-repeat; background-size: 16px 16px;}
 .expanded.vgridprivateweb {background: url(/images/icons/folder_open_key.svg) left top no-repeat;}
 
-.ext_jpg, .ext_jpeg, .ext_gif, .ext_png, .ext_bmp, .ext_pcx, .ext_tif, .ext_tiff  { 
-    background: url(/images/icons/picture.svg) left center no-repeat; background-size: 16px 16px; }
+.ext_pdf {
+    background: url(/images/icons/svgrepo-file-pdf.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+.ext_doc, .ext_docx, .ext_odt {
+    background: url(/images/icons/svgrepo-file-text-edit.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+.ext_xls, .ext_xlsx, .ext_ods {
+    background: url(/images/icons/svgrepo-file-spreadsheet.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+.ext_ppt, .ext_pptx, .ext_odp {
+    background: url(/images/icons/svgrepo-file-presentation.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+
+.ext_jpg, .ext_jpeg, .ext_gif, .ext_png, .ext_bmp, .ext_pcx, .ext_tif, .ext_tiff, .ext_svg, .ext_eps, .ext_xcf, .ext_psd, .ext_raw, .ext_webp, .ext_heic {
+    background: url(/images/icons/file-image.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+.ext_zip, .ext_tar, .ext_gz, .ext_tgz, .ext_gzip, .ext_bz, .ext_bzip, .ext_bz2, .ext_tbz, .ext_tbz2, .ext_xz, .ext_txz, .ext_arj {
+    background: url(/images/icons/file-zipper.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+.ext_txt, .ext_log, .ext_out, .ext_diff, .ext_conf, .ext_cfg, .ext_cnf, .ext_stdout, .ext_stderr, .ext_status, .ext_io-status { 
+    background: url(/images/icons/file-lines.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+.ext_sh, .ext_csh, .ext_bash, .ext_py, .ext_pyx, .ext_pl, .ext_c, .ext_cxx, .ext_cpp, .ext_h, .ext_java, .ext_js, .ext_rb, .ext_rbx, .ext_rhtml, .ext_ruby, .ext_lisp, .ext_lasso, .ext_hs, .ext_afp, .ext_afpa, .ext_asp, .ext_aspx, .ext_html, .ext_htm, .ext_make, .ext_cmake { 
+    background: url(/images/icons/file-code.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+.ext_mp3, .ext_m4a, .ext_wav, .ext_flac, .ext_ogg { 
+    background: url(/images/icons/file-audio.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+.ext_mpg, .ext_mpeg, .ext_mp4, .ext_m4v, .ext_avi, .ext_mov, .ext_3gp { 
+    background: url(/images/icons/file-video.svg) left center no-repeat; background-size: 16px 16px;
+}
 
 .upload.icon { background: url(/images/icons/page_white_get.svg) left center no-repeat; background-size: 16px 16px; }
 .rm.icon { background: url(/images/icons/page_white_delete.svg) left center no-repeat; background-size: 16px 16px; }
@@ -900,14 +952,6 @@ background: url(/images/icons/other/folder_open_database-blue.png) left top no-r
 background: url(/images/icons/bin.png) left top no-repeat;
 }
 
-.ext_3gp { background: url(/images/icons/film.png) left center no-repeat; }
-.ext_afp, .ext_afpa { 
-background: url(/images/icons/code.png) left center no-repeat; 
-}
-.ext_asp, .ext_aspx { 
-background: url(/images/icons/code.png) left center no-repeat; 
-}
-.ext_avi { background: url(/images/icons/film.png) left center no-repeat; }
 .ext_bat { background: url(/images/icons/application.png) left center no-repeat; }
 
 .ext_c, .ext_h { background: url(/images/icons/code.png) left center no-repeat; }
@@ -931,22 +975,8 @@ background: url(/images/icons/flash.png) left center no-repeat;
 .ext_jar, .ext_class, .ext_jnlp { 
 background: url(/images/icons/java.png) left center no-repeat; 
 }
-.ext_java { background: url(/images/icons/code.png) left center no-repeat; }
-
-.ext_js { background: url(/images/icons/script.png) left center no-repeat; }
-.ext_lasso { background: url(/images/icons/code.png) left center no-repeat; }
-.ext_log, .ext_out, .ext_diff, .ext_conf, .ext_cfg, .ext_cnf { 
-background: url(/images/icons/txt.png) left center no-repeat; 
-}
 .ext_m4p { background: url(/images/icons/music.png) left center no-repeat; }
-.ext_mov { background: url(/images/icons/film.png) left center no-repeat; }
 .ext_mp3 { background: url(/images/icons/music.png) left center no-repeat; }
-.ext_mp4, .ext_m4v { 
-background: url(/images/icons/film.png) left center no-repeat;
-}
-.ext_mpg, .ext_mpeg { 
-background: url(/images/icons/film.png) left center no-repeat; 
-}
 .ext_mrsl { background: url(/images/icons/server_lightning.png) left center no-repeat; }
 .ext_ogg { background: url(/images/icons/music.png) left center no-repeat; }
 
@@ -955,33 +985,11 @@ background: url(/images/icons/film.png) left center no-repeat;
 
 .ext_ppt { background: url(/images/icons/ppt.png) left center no-repeat; }
 .ext_psd { background: url(/images/icons/psd.png) left center no-repeat; }
-.ext_pl { background: url(/images/icons/script.png) left center no-repeat; }
-.ext_py, .ext_pyx { 
-background: url(/images/icons/script.png) left center no-repeat; 
-}
-.ext_rb { background: url(/images/icons/ruby.png) left center no-repeat; }
-.ext_rbx { background: url(/images/icons/ruby.png) left center no-repeat; }
-.ext_rhtml { background: url(/images/icons/ruby.png) left center no-repeat; }
 .ext_rpm { background: url(/images/icons/linux.png) left center no-repeat; }
-.ext_ruby { background: url(/images/icons/ruby.png) left center no-repeat; }
-.ext_sh { background: url(/images/icons/script.png) left center no-repeat; }
 .ext_sql { background: url(/images/icons/db.png) left center no-repeat; }
-.ext_stdout, .ext_stderr, .ext_status, .ext_io-status { 
-background: url(/images/icons/txt.png) left center no-repeat; 
-}
-.ext_swf { background: url(/images/icons/flash.png) left center no-repeat; }
-.ext_tar { background: url(/images/icons/compress.png) left center no-repeat; }
-.ext_tbz, .ext_tbz2, .ext_bz2, .ext_bz { 
-background: url(/images/icons/compress.png) left center no-repeat; 
-}
-.ext_tgz, .ext_gz { 
-background: url(/images/icons/compress.png) left center no-repeat; 
-}
-.ext_txz, .ext_xz { 
-background: url(/images/icons/compress.png) left center no-repeat; 
-}
 
-.ext_txt { background: url(/images/icons/txt.png) left center no-repeat; }
+.ext_swf { background: url(/images/icons/flash.png) left center no-repeat; }
+
 .ext_vb { background: url(/images/icons/code.png) left center no-repeat; }
 .ext_wav { background: url(/images/icons/music.png) left center no-repeat; }
 .ext_wmv { background: url(/images/icons/film.png) left center no-repeat; }

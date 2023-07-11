@@ -197,6 +197,7 @@ if '__main__' == __name__:
         'sftp_show_port',
         'sftp_subsys_port',
         'sftp_subsys_show_port',
+        'sftp_max_sessions',
         'davs_port',
         'davs_show_port',
         'ftps_ctrl_port',
