@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # events - shared event trigger and cron/at helper functions
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -107,7 +107,8 @@ def load_crontab(client_id, configuration, allow_missing=True):
     client_dir = client_id_dir(client_id)
     crontab_path = os.path.join(configuration.user_settings, client_dir,
                                 crontab_name)
-    crontab_contents = read_file(crontab_path, _logger, allow_missing)
+    crontab_contents = read_file(crontab_path, _logger,
+                                 allow_missing=allow_missing)
     if crontab_contents is None:
         if not allow_missing:
             _logger.error('failed reading %s crontab file' % client_id)
@@ -121,7 +122,8 @@ def load_atjobs(client_id, configuration, allow_missing=True):
     client_dir = client_id_dir(client_id)
     atjobs_path = os.path.join(configuration.user_settings, client_dir,
                                atjobs_name)
-    atjobs_contents = read_file(atjobs_path, _logger, allow_missing)
+    atjobs_contents = read_file(atjobs_path, _logger,
+                                allow_missing=allow_missing)
     if atjobs_contents is None:
         if not allow_missing:
             _logger.error('failed reading %s atjobs file' % client_id)

@@ -2406,7 +2406,8 @@ def user_twofactor_status(user_id, conf_path, db_path, fields,
 def get_default_mrsl(template_path, logger, allow_missing=True):
     """Return the default mRSL template from template_path"""
 
-    default_mrsl = read_file(template_path, logger, allow_missing)
+    default_mrsl = read_file(template_path, logger,
+                             allow_missing=allow_missing)
     if default_mrsl is None:
         # Use default hello grid example
         default_mrsl = """::EXECUTE::
@@ -2441,7 +2442,7 @@ jabber: SETTINGS
 def get_default_css(template_path, logger, allow_missing=True):
     """Return the default css template from template_path"""
 
-    default_css = read_file(template_path, logger, allow_missing)
+    default_css = read_file(template_path, logger, allow_missing=allow_missing)
     if default_css is None:
         # Use default style - i.e. do not override anything
 
