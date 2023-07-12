@@ -186,7 +186,7 @@ def application(environ, start_response):
         if 'output_format' in user_arguments_dict:
             output_format = user_arguments_dict['output_format'][0]
 
-        module_path = 'shared.functionality.%s' % backend
+        module_path = 'mig.shared.functionality.%s' % backend
         (allow, msg) = allow_script(configuration, script_name, client_id)
         if allow:
             (output_objs, ret_val) = stub(configuration, client_id,
