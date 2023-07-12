@@ -205,12 +205,6 @@ def application(environ, start_response):
             _logger.error("WSGI interface is disabled in configuration")
             raise Exception("WSGI interface not enabled for this site")
 
-        fieldstorage = cgi.FieldStorage(fp=environ['wsgi.input'],
-                                        environ=environ)
-        user_arguments_dict = fieldstorage_to_dict(fieldstorage)
-        if 'output_format' in user_arguments_dict:
-            output_format = user_arguments_dict['output_format'][0]
-
         # Environment contains python script _somewhere_ , try in turn
         # and fall back to landing page if all fails
         script_name = requested_page(environ, configuration.site_landing_page,
@@ -218,6 +212,13 @@ def application(environ, start_response):
         backend = os.path.splitext(script_name)[0]
         # _logger.debug("handling wsgi %r request from %s" %
         #              (backend, client_id))
+
+        fieldstorage = cgi.FieldStorage(fp=environ['wsgi.input'],
+                                        environ=environ)
+        user_arguments_dict = fieldstorage_to_dict(fieldstorage)
+        if 'output_format' in user_arguments_dict:
+            output_format = user_arguments_dict['output_format'][0]
+
         module_path = 'mig.shared.functionality.%s' % backend
         (allow, msg) = allow_script(configuration, script_name, client_id)
         if allow:
