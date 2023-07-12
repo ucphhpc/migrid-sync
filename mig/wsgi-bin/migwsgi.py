@@ -66,8 +66,6 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
 
     _logger.debug("stub for backend %r" % backend)
 
-    _logger.debug("stub for backend %r" % backend)
-
     # IMPORTANT: we cannot trust potentially user-provided backend value.
     #            NEVER print/output it verbatim before it is validated below.
 
@@ -104,8 +102,6 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
              'destination': configuration.site_landing_page}
         ])
         return (output_objects, returnvalues.SYSTEM_ERROR)
-
-    #_logger.debug("imported main %s" % main)
 
     #_logger.debug("imported main %s" % main)
 
