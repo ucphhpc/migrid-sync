@@ -270,7 +270,9 @@ action="%(target_op)s.py">
     try:
         all_peers = load(peers_path)
     except Exception as exc:
-        logger.warning("could not load peers from %s: %s" % (peers_path, exc))
+        if os.path.exists(peers_path):
+            logger.warning("could not load peers from %s: %s" %
+                           (peers_path, exc))
         all_peers = {}
 
     pending_peers_path = os.path.join(configuration.user_settings, client_dir,
@@ -278,8 +280,9 @@ action="%(target_op)s.py">
     try:
         pending_peers = load(pending_peers_path)
     except Exception as exc:
-        logger.warning("could not load pending peers from %s: %s" %
-                       (pending_peers_path, exc))
+        if os.path.exists(pending_peers_path):
+            logger.warning("could not load pending peers from %s: %s" %
+                           (pending_peers_path, exc))
         pending_peers = []
 
     tabs_html = '''
