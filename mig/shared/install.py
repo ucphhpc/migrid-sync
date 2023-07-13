@@ -206,6 +206,7 @@ def generate_confs(
     ext_oidc_fqdn='',
     sid_fqdn='',
     io_fqdn='',
+    cert_fqdn_extras='',
     cloud_fqdn='',
     seafile_fqdn='',
     seafile_base='/seafile',
@@ -292,11 +293,28 @@ def generate_confs(
     mig_oidc_provider_meta_url='',
     ext_oidc_title='External',
     ext_oidc_provider_meta_url='',
-    ext_oidc_client_name='',
-    ext_oidc_client_id='',
+    ext_oidc_provider_issuer='',
+    ext_oidc_provider_authorization_endpoint='',
+    ext_oidc_provider_verify_cert_files='',
+    ext_oidc_provider_token_endpoint='',
+    ext_oidc_provider_token_endpoint_auth='',
+    ext_oidc_provider_user_info_endpoint='',
     ext_oidc_scope='profile email',
+    ext_oidc_user_info_token_method='',
+    ext_oidc_public_key_files='',
+    ext_oidc_private_key_files='',
+    ext_oidc_response_type='id_token',
+    ext_oidc_response_mode='',
+    ext_oidc_client_id='',
+    ext_oidc_client_name='',
+    ext_oidc_pkce_method='',
+    ext_oidc_id_token_encrypted_response_alg='',
+    ext_oidc_id_token_encrypted_response_enc='',
+    ext_oidc_user_info_signed_response_alg='',
+    ext_oidc_pass_cookies='',
     ext_oidc_remote_user_claim='sub',
     ext_oidc_pass_claim_as='both',
+    ext_oidc_rewrite_cookie='',
     dhparams_path='',
     daemon_keycert='',
     daemon_pubkey='',
@@ -406,6 +424,7 @@ def generate_confs(
     user_dict['__EXT_OIDC_FQDN__'] = ext_oidc_fqdn
     user_dict['__SID_FQDN__'] = sid_fqdn
     user_dict['__IO_FQDN__'] = io_fqdn
+    user_dict['__CERT_FQDN_EXTRAS__'] = cert_fqdn_extras
     user_dict['__CLOUD_FQDN__'] = cloud_fqdn
     user_dict['__SEAFILE_FQDN__'] = seafile_fqdn
     user_dict['__SEAFILE_BASE__'] = seafile_base
@@ -513,9 +532,28 @@ def generate_confs(
     user_dict['__MIG_OIDC_PROVIDER_META_URL__'] = mig_oidc_provider_meta_url
     user_dict['__EXT_OIDC_TITLE__'] = ext_oidc_title or ext_oid_title
     user_dict['__EXT_OIDC_PROVIDER_META_URL__'] = ext_oidc_provider_meta_url
+    user_dict['__EXT_OIDC_PROVIDER_ISSUER__'] = ext_oidc_provider_issuer
+    user_dict['__EXT_OIDC_PROVIDER_AUTHORIZATION_ENDPOINT__'] = ext_oidc_provider_authorization_endpoint
+    user_dict['__EXT_OIDC_PROVIDER_VERIFY_CERT_FILES__'] = ext_oidc_provider_verify_cert_files
+    user_dict['__EXT_OIDC_PROVIDER_TOKEN_ENDPOINT__'] = ext_oidc_provider_token_endpoint
+    user_dict['__EXT_OIDC_PROVIDER_TOKEN_ENDPOINT_AUTH__'] = ext_oidc_provider_token_endpoint_auth
+    user_dict['__EXT_OIDC_PROVIDER_USER_INFO_ENDPOINT__'] = ext_oidc_provider_user_info_endpoint
     user_dict['__EXT_OIDC_SCOPE__'] = ext_oidc_scope
+    user_dict['__EXT_OIDC_USER_INFO_TOKEN_METHOD__'] = ext_oidc_user_info_token_method
+    user_dict['__EXT_OIDC_PUBLIC_KEY_FILES__'] = ext_oidc_public_key_files
+    user_dict['__EXT_OIDC_PRIVATE_KEY_FILES__'] = ext_oidc_private_key_files
+    user_dict['__EXT_OIDC_RESPONSE_TYPE__'] = ext_oidc_response_type
+    user_dict['__EXT_OIDC_RESPONSE_MODE__'] = ext_oidc_response_mode
+    user_dict['__EXT_OIDC_CLIENT_ID__'] = ext_oidc_client_id
+    user_dict['__EXT_OIDC_CLIENT_NAME__'] = ext_oidc_client_name
+    user_dict['__EXT_OIDC_PKCE_METHOD__'] = ext_oidc_pkce_method
+    user_dict['__EXT_OIDC_ID_TOKEN_ENCRYPTED_RESPONSE_ALG__'] = ext_oidc_id_token_encrypted_response_alg
+    user_dict['__EXT_OIDC_ID_TOKEN_ENCRYPTED_RESPONSE_ENC__'] = ext_oidc_id_token_encrypted_response_enc
+    user_dict['__EXT_OIDC_USER_INFO_SIGNED_RESPONSE_ALG__'] = ext_oidc_user_info_signed_response_alg
+    user_dict['__EXT_OIDC_PASS_COOKIES__'] = ext_oidc_pass_cookies
     user_dict['__EXT_OIDC_REMOTE_USER_CLAIM__'] = ext_oidc_remote_user_claim
     user_dict['__EXT_OIDC_PASS_CLAIM_AS__'] = ext_oidc_pass_claim_as
+    user_dict['__EXT_OIDC_REWRITE_COOKIE__'] = ext_oidc_rewrite_cookie
     user_dict['__PUBLIC_URL__'] = ''
     user_dict['__PUBLIC_ALIAS_URL__'] = ''
     user_dict['__PUBLIC_HTTP_URL__'] = ''
@@ -1323,8 +1361,10 @@ cert, oid and sid based https!
         user_dict['__OPENID_COMMENTED__'] = '#'
     mig_issuer_url, ext_issuer_url = '', ''
     issuer_split_mark = '/.well-known/'
-    # Enable OpenID Connect auth module only if openidconnect_providers is given
+    # Enable OpenID Connect auth module only if OpenID Connect providers are
+    # given with meta service interface or explicitly.
     if user_dict['__EXT_OIDC_PROVIDER_META_URL__'].strip() or \
+       user_dict['__EXT_OIDC_PROVIDER_ISSUER__'].strip() or \
             user_dict['__MIG_OIDC_PROVIDER_META_URL__'].strip():
         user_dict['__OPENIDCONNECT_COMMENTED__'] = ''
         if user_dict['__MIG_OIDC_PROVIDER_META_URL__'].strip():
@@ -1341,6 +1381,8 @@ cert, oid and sid based https!
             else:
                 parsed = urlparse(meta_url)
                 ext_issuer_url = "%s://%s" % (parsed.scheme, parsed.netloc)
+        elif user_dict['__EXT_OIDC_PROVIDER_ISSUER__'].strip():
+            ext_issuer_url = user_dict['__EXT_OIDC_PROVIDER_ISSUER__']
 
         # TODO: enable next lines if openid connect requires proxy for
         #       cert_redirect support
@@ -1354,14 +1396,44 @@ cert, oid and sid based https!
 
     user_dict['__MIG_OIDC_ISSUER_URL__'] = mig_issuer_url
     user_dict['__EXT_OIDC_ISSUER_URL__'] = ext_issuer_url
-    if ext_oidc_client_name:
-        user_dict['__EXT_OIDC_CLIENT_NAME__'] = ext_oidc_client_name
-    else:
-        user_dict['__EXT_OIDC_CLIENT_NAME__'] = 'INSERT OIDC CLIENT NAME'
-    if ext_oidc_client_id:
-        user_dict['__EXT_OIDC_CLIENT_ID__'] = ext_oidc_client_id
-    else:
-        user_dict['__EXT_OIDC_CLIENT_ID__'] = 'INSERT OIDC CLIENT ID'
+
+    optional_oidc_args = [
+        ('__EXT_OIDC_PROVIDER_META_URL__', ext_oidc_provider_meta_url),
+        ('__EXT_OIDC_PROVIDER_ISSUER__', ext_oidc_provider_issuer),
+        ('__EXT_OIDC_PROVIDER_AUTHORIZATION_ENDPOINT__',
+         ext_oidc_provider_authorization_endpoint),
+        ('__EXT_OIDC_PROVIDER_VERIFY_CERT_FILES__',
+         ext_oidc_provider_verify_cert_files),
+        ('__EXT_OIDC_PROVIDER_TOKEN_ENDPOINT__', ext_oidc_provider_token_endpoint),
+        ('__EXT_OIDC_PROVIDER_TOKEN_ENDPOINT_AUTH__',
+         ext_oidc_provider_token_endpoint_auth),
+        ('__EXT_OIDC_PROVIDER_USER_INFO_ENDPOINT__',
+         ext_oidc_provider_user_info_endpoint),
+        ('__EXT_OIDC_SCOPE__', ext_oidc_scope),
+        ('__EXT_OIDC_USER_INFO_TOKEN_METHOD__', ext_oidc_user_info_token_method),
+        ('__EXT_OIDC_PUBLIC_KEY_FILES__', ext_oidc_public_key_files),
+        ('__EXT_OIDC_PRIVATE_KEY_FILES__', ext_oidc_private_key_files),
+        ('__EXT_OIDC_RESPONSE_TYPE__', ext_oidc_response_type),
+        ('__EXT_OIDC_RESPONSE_MODE__', ext_oidc_response_mode),
+        ('__EXT_OIDC_CLIENT_ID__', ext_oidc_client_id),
+        ('__EXT_OIDC_CLIENT_NAME__', ext_oidc_client_name),
+        ('__EXT_OIDC_PKCE_METHOD__', ext_oidc_pkce_method),
+        ('__EXT_OIDC_ID_TOKEN_ENCRYPTED_RESPONSE_ALG__',
+         ext_oidc_id_token_encrypted_response_alg),
+        ('__EXT_OIDC_ID_TOKEN_ENCRYPTED_RESPONSE_ENC__',
+         ext_oidc_id_token_encrypted_response_enc),
+        ('__EXT_OIDC_USER_INFO_SIGNED_RESPONSE_ALG__',
+         ext_oidc_user_info_signed_response_alg),
+        ('__EXT_OIDC_PASS_COOKIES__', ext_oidc_pass_cookies),
+        ('__EXT_OIDC_REMOTE_USER_CLAIM__', ext_oidc_remote_user_claim),
+        ('__EXT_OIDC_PASS_CLAIM_AS__', ext_oidc_pass_claim_as),
+        ('__EXT_OIDC_REWRITE_COOKIE__', ext_oidc_rewrite_cookie),
+    ]
+    for (arg_name, arg_value) in optional_oidc_args:
+        commented_tag = '%s_COMMENTED__' % arg_name.rstrip('_')
+        user_dict[commented_tag] = '#'
+        if arg_value:
+            user_dict[commented_tag] = ''
 
     # Enable alternative daemon show address only if explicitly requested
     if user_dict['__DAEMON_SHOW_ADDRESS__']:
