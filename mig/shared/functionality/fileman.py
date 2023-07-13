@@ -572,10 +572,6 @@ def js_tmpl_parts(configuration,
         'max_stream_size': 64*1024*1024
     }
 
-    # TODO: disable this workaround for cat.py encoding bug on py3 once fixed
-    if sys.version_info[0] >= 3:
-        fill_entries['max_stream_size'] = -1
-
     js_import = '''
 <!-- Filemanager and dependencies -->
 <script type="text/javascript" src="/images/js/jquery.form.js"></script>
