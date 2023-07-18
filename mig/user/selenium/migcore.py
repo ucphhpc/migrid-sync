@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migcore - a library of core selenium-based web helpers
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -38,14 +38,23 @@ mig_login(driver, url, login, passwd)
 from __future__ import print_function
 
 # Robust import - only fail if used without being available
+from builtins import range
 try:
     import pyotp
 except ImportError:
     pyotp = None
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
+try:
+    from selenium.webdriver.firefox.service import Service as FirefoxService
+    from webdriver_manager.firefox import GeckoDriverManager
+except ImportError:
+    FirefoxService = None
+    GeckoDriverManager = None
+
 
 AUTH_UNKNOWN = "Unknown"
 AUTH_OPENID_V2 = "OpenID 2.0"
@@ -58,10 +67,23 @@ USERMENUBUTTON_ID = "userMenuButton"
 
 def init_driver(browser):
     """Init the requested browser driver"""
-    if browser.lower() == 'chrome':
+    if browser.lower() in ['chrome', 'chromium']:
         driver = webdriver.Chrome()
     elif browser.lower() == 'firefox':
         driver = webdriver.Firefox()
+    elif browser.lower() == 'firefox-auto':
+        if FirefoxService is None or GeckoDriverManager is None:
+            print("""FATAL: FirefoxService and GeckoDriverManager are required
+for the automatic firefox installer mode.
+""")
+            exit(1)
+        webdriver_service = FirefoxService(GeckoDriverManager().install())
+        webdriver_service.start()
+        options = webdriver.FirefoxOptions()
+        profile = webdriver.FirefoxProfile()
+        driver = webdriver.Remote(webdriver_service.service_url,
+                                  options=options,
+                                  browser_profile=profile)
     elif browser.lower() == 'safari':
         driver = webdriver.Safari()
     elif browser.lower() == 'ie':
@@ -77,6 +99,11 @@ def init_driver(browser):
     if driver:
         driver.implicitly_wait(5)
     return driver
+
+
+def by_what(name):
+    """Helper to expose the new By.X helper without the mechanics"""
+    return getattr(By, name.upper())
 
 
 def scroll_to_elem(driver, elem):
@@ -114,7 +141,7 @@ def ucph_login(driver, url, login, passwd, callbacks={}):
     do_login = False
     auth_flavor = AUTH_UNKNOWN
     try:
-        elem = driver.find_element_by_class_name('form-signin')
+        elem = driver.find_element(by_what('class_name'), 'form-signin')
         action = elem.get_property('action')
         if action in ["https://openid.ku.dk/processTrustResult",
                       "https://t-openid.ku.dk/processTrustResult"]:
@@ -136,22 +163,24 @@ def ucph_login(driver, url, login, passwd, callbacks={}):
     if do_login:
         print("Starting UCPH %s login" % auth_flavor)
         if auth_flavor == AUTH_OPENID_V2:
-            login_elem = driver.find_element_by_name("user")
-            pass_elem = driver.find_element_by_name("pwd")
+            login_elem = driver.find_element(by_what('name'), "user")
+            pass_elem = driver.find_element(by_what('name'), "pwd")
         elif auth_flavor == AUTH_OPENID_CONNECT:
-            login_elem = driver.find_element_by_id("inputUsername")
-            pass_elem = driver.find_element_by_id("inputPassword")
+            login_elem = driver.find_element(
+                by_what('id'), "inputUsername")
+            pass_elem = driver.find_element(
+                by_what('id'), "inputPassword")
         else:
             # Fall back to sane defaults
-            login_elem = driver.find_element_by_name("username")
-            pass_elem = driver.find_element_by_name("password")
+            login_elem = driver.find_element(by_what('name'), "username")
+            pass_elem = driver.find_element(by_what('name'), "password")
         login_elem.send_keys(login)
         pass_elem.send_keys(passwd)
         state = 'login-filled'
         if callbacks.get(state, None):
             callbacks[state](driver, state)
         if auth_flavor == AUTH_OPENID_V2:
-            driver.find_element_by_name("allow").click()
+            driver.find_element(by_what('name'), "allow").click()
         else:
             # Just mimic Enter key on password field to submit
             pass_elem.submit()
@@ -159,7 +188,8 @@ def ucph_login(driver, url, login, passwd, callbacks={}):
         # NOTE: the standard request source footer is also of class alert
         #       so be specific here to avoid slow page load confusion
         try:
-            error_elem = driver.find_element_by_class_name("alert-warning")
+            error_elem = driver.find_element(
+                by_what('class_name'), "alert-warning")
             if error_elem:
                 print("UCPH %s login error: %s" %
                       (auth_flavor, error_elem.text))
@@ -184,8 +214,8 @@ def mig_login(driver, url, login, passwd, callbacks={}):
     do_login = False
     auth_flavor = AUTH_UNKNOWN
     try:
-        elem = driver.find_element_by_class_name('openidlogin')
-        form = elem.find_element_by_xpath("//form")
+        elem = driver.find_element(by_what('class_name'), 'openidlogin')
+        form = elem.find_element(by_what('xpath'), "//form")
         action = form.get_property('action')
         if action == "%s/openid/allow" % url:
             do_login = True
@@ -199,24 +229,26 @@ def mig_login(driver, url, login, passwd, callbacks={}):
     if do_login:
         print("Starting MiG %s login" % auth_flavor)
         if auth_flavor == AUTH_OPENID_V2:
-            login_elem = driver.find_element_by_name("identifier")
-            pass_elem = driver.find_element_by_name("password")
+            login_elem = driver.find_element(
+                by_what('name'), "identifier")
+            pass_elem = driver.find_element(by_what('name'), "password")
         else:
-            login_elem = driver.find_element_by_name("username")
-            pass_elem = driver.find_element_by_name("password")
+            login_elem = driver.find_element(by_what('name'), "username")
+            pass_elem = driver.find_element(by_what('name'), "password")
         login_elem.send_keys(login)
         pass_elem.send_keys(passwd)
         state = 'login-filled'
         if callbacks.get(state, None):
             callbacks[state](driver, state)
         if auth_flavor == AUTH_OPENID_V2:
-            driver.find_element_by_name("yes").click()
+            driver.find_element(by_what('name'), "yes").click()
         else:
             # Just mimic Enter key on password field to submit
             pass_elem.submit()
         # Check for login error msg to return proper status
         try:
-            error_elem = driver.find_element_by_class_name("errortext")
+            error_elem = driver.find_element(
+                by_what('class_name'), "errortext")
             if error_elem:
                 print("MiG %s login error: %s" %
                       (auth_flavor, error_elem.text))
@@ -248,7 +280,8 @@ def shared_twofactor(driver, url, twofactor_key, callbacks={},
     past_twofactor = False
     if past_twofactor_class:
         try:
-            driver.find_element_by_class_name(past_twofactor_class)
+            driver.find_element(by_what(
+                'class_name'), past_twofactor_class)
             # print("DEBUG: found %s element - past twofactor login" %
             #      past_twofactor_class)
             past_twofactor = True
@@ -258,7 +291,8 @@ def shared_twofactor(driver, url, twofactor_key, callbacks={},
 
     if not past_twofactor:
         try:
-            token_elem = driver.find_element_by_class_name('tokeninput')
+            token_elem = driver.find_element(
+                by_what('class_name'), 'tokeninput')
             if token_elem:
                 state = 'twofactor-ready'
                 if callbacks.get(state, None):
@@ -276,7 +310,7 @@ def shared_twofactor(driver, url, twofactor_key, callbacks={},
             state = 'twofactor-filled'
             if callbacks.get(state, None):
                 callbacks[state](driver, state)
-            driver.find_element_by_class_name("submit").click()
+            driver.find_element(by_what('class_name'), "submit").click()
         else:
             status = False
             print("Post-OpenID 2FA NOT found")
@@ -290,8 +324,8 @@ def get_nav_link(driver, url, nav_class):
     link, menu = None, None
     for i in range(3):
         try:
-            menu = driver.find_element_by_id(NAVMENU_ID)
-            link = menu.find_element_by_class_name(nav_class)
+            menu = driver.find_element(by_what('id'), NAVMENU_ID)
+            link = menu.find_element(by_what('class_name'), nav_class)
             break
         except:
             link = None
@@ -300,9 +334,10 @@ def get_nav_link(driver, url, nav_class):
         return link
 
     try:
-        menu = driver.find_element_by_id(USERMENU_ID)
-        link = menu.find_element_by_class_name(nav_class)
-        menubutton = driver.find_element_by_id(USERMENUBUTTON_ID)
+        menu = driver.find_element(by_what('id'), USERMENU_ID)
+        link = menu.find_element(by_what('class_name'), nav_class)
+        menubutton = driver.find_element(
+            by_what('id'), USERMENUBUTTON_ID)
         # Make sure menu link item is visible for callee
         if menu and link and menubutton:
             menubutton.click()
@@ -339,7 +374,7 @@ def shared_logout(driver, url, login, passwd, callbacks={}):
 
     if do_logout:
         print("Confirm logout")
-        confirm_elem = driver.find_element_by_link_text("Yes")
+        confirm_elem = driver.find_element(by_what('link_text'), "Yes")
         # print "DEBUG: found confirm elem: %s" % confirm_elem
         state = 'logout-confirm'
         if callbacks.get(state, None):

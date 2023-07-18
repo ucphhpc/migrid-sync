@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migoidlogin - sample selenium-based web client for basic mig openid login
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,8 @@
 #
 
 """Example MiG OpenID login using selenium and a webdriver of choice"""
+
+from __future__ import absolute_import
 from __future__ import print_function
 
 import getpass
@@ -33,7 +35,7 @@ import sys
 import time
 import traceback
 
-from migcore import init_driver, mig_login, shared_twofactor
+from mig.user.selenium.migcore import init_driver, mig_login, shared_twofactor
 
 
 def main():
@@ -77,6 +79,7 @@ def main():
     except Exception as exc:
         print("Unexpected exception:")
         print(traceback.format_exc())
+
 
 if __name__ == "__main__":
     main()

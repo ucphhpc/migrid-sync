@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userguidescreens - selenium-based web client to grab user guide screenshots
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,16 +33,31 @@ corresponding screenshots.
 
 from __future__ import print_function
 
+from builtins import input
+from builtins import range
+
+try:
+    from future import standard_library
+    standard_library.install_aliases()
+except:
+    print("Failed to import future module - missing install?")
+    exit(1)
+
+from urllib.parse import urlparse
 import getpass
 import os
 import sys
 import time
 import traceback
-from urlparse import urlparse
 
-from mig.user.selenium.migcore import init_driver, ucph_login, mig_login, shared_twofactor, \
-    shared_logout, save_screen, scroll_to_elem, doubleclick_elem, \
-    select_item_by_index, get_nav_link
+try:
+    from mig.user.selenium.migcore import init_driver, ucph_login, mig_login, \
+        shared_twofactor, shared_logout, save_screen, scroll_to_elem, \
+        doubleclick_elem, select_item_by_index, get_nav_link, by_what
+except ImportError:
+    print("Failed to import migrid modules - missing PYTHONPATH=$MIG_ROOT?")
+    exit(1)
+
 
 # Which Setup sections to include on SIF (where 2FA is moved to gdpman)
 setup_sections = [('sftp', 'SFTP'), ('webdavs', 'WebDAVS')]
@@ -60,7 +75,7 @@ def ajax_wait(driver, name, class_name="spinner"):
     ajax_started, ajax_done = False, False
     while not ajax_done:
         try:
-            driver.find_element_by_class_name(class_name)
+            driver.find_element(by_what('class_name'), class_name)
             if not ajax_started:
                 # print "DEBUG: detected ajax started"
                 ajax_started = True
@@ -93,10 +108,10 @@ def management_actions(driver, url, login, passwd, callbacks):
     sample_int_part = "vinter@nbi.ku.dk"
     sample_ext_part = "bardino@migrid.org"
     for nav_name in manage_tabs:
-        navmenu = driver.find_element_by_id('project-tabs')
+        navmenu = driver.find_element(by_what('id'), 'project-tabs')
         # Try to find manage tab (availability depends on state and role)
         try:
-            link = navmenu.find_element_by_link_text(nav_name)
+            link = navmenu.find_element(by_what('link_text'), nav_name)
         except Exception as exc:
             print("WARNING: no %r tab found - might be okay" % nav_name)
             continue
@@ -113,27 +128,28 @@ def management_actions(driver, url, login, passwd, callbacks):
         # Go to Create project tab and create a project
         nav_name = "Create Project"
         try:
-            navmenu = driver.find_element_by_id('project-tabs')
-            link = navmenu.find_element_by_link_text(nav_name)
+            navmenu = driver.find_element(by_what('id'), 'project-tabs')
+            link = navmenu.find_element(by_what('link_text'), nav_name)
             # print "DEBUG: found %s link: %s" % (nav_name, link)
             link.click()
             # ajax_wait(driver, nav_name, "ui-progressbar")
             # NOTE: locate the relevant workzone in category ref section
-            active_tab = driver.find_element_by_id('create_project_tab')
+            active_tab = driver.find_element(
+                by_what('id'), 'create_project_tab')
             # NOTE: project name field is shared for all categories
-            workzone_entry = active_tab.find_element_by_id(
-                'create_project_%s_workzone_id' % sample_category)
+            workzone_entry = active_tab.find_element(by_what('id'),
+                                                     'create_project_%s_workzone_id' % sample_category)
             workzone_entry.send_keys(sample_workzone)
-            proj_entry = active_tab.find_element_by_name(
-                'create_project_base_vgrid_name')
+            proj_entry = active_tab.find_element(by_what('name'),
+                                                 'create_project_base_vgrid_name')
             proj_entry.send_keys(sample_project)
             state = '%s-filled' % nav_name.lower().replace(' ', '-')
             if callbacks.get(state, None):
                 print("INFO: callback for: %s" % state)
                 callbacks[state](driver, state)
 
-            create_button = active_tab.find_element_by_id(
-                'create_project_button')
+            create_button = active_tab.find_element(by_what('id'),
+                                                    'create_project_button')
             # TODO: actually submit form to create project?
             # create_button.click()
         except Exception as exc:
@@ -142,28 +158,30 @@ def management_actions(driver, url, login, passwd, callbacks):
         # Go to Invite project tab and invite a colleague to project
         nav_name = "Invite Participant"
         try:
-            navmenu = driver.find_element_by_id('project-tabs')
-            link = navmenu.find_element_by_link_text(nav_name)
+            navmenu = driver.find_element(by_what('id'), 'project-tabs')
+            link = navmenu.find_element(by_what('link_text'), nav_name)
             # print "DEBUG: found %s link: %s" % (nav_name, link)
             link.click()
             # ajax_wait(driver, nav_name, "ui-progressbar")
-            active_tab = driver.find_element_by_id('invite_user_tab')
-            dropdown_container = active_tab.find_element_by_class_name(
-                'gm_select')
-            proj_dropdown = navmenu.find_element_by_name(
-                'invite_user_base_vgrid_name')
+            active_tab = driver.find_element(
+                by_what('id'), 'invite_user_tab')
+            dropdown_container = active_tab.find_element(by_what('class_name'),
+                                                         'gm_select')
+            proj_dropdown = navmenu.find_element(by_what('name'),
+                                                 'invite_user_base_vgrid_name')
             # NOTE: we expect first real project to match sample category
             select_item_by_index(driver, proj_dropdown, 2)
             # ajax_wait(driver, nav_name, "ui-progressbar")
-            active_tab = driver.find_element_by_id('invite_user_tab')
-            terms_checkbox = active_tab.find_element_by_id(
-                'invite_user_%s_user_terms' % sample_category)
+            active_tab = driver.find_element(
+                by_what('id'), 'invite_user_tab')
+            terms_checkbox = active_tab.find_element(by_what('id'),
+                                                     'invite_user_%s_user_terms' % sample_category)
             terms_checkbox.click()
-            workzone_entry = active_tab.find_element_by_id(
-                'invite_user_%s_workzone_id' % sample_category)
+            workzone_entry = active_tab.find_element(by_what('id'),
+                                                     'invite_user_%s_workzone_id' % sample_category)
             # NOTE: user id field is shared for all categories
-            invite_entry = active_tab.find_element_by_name(
-                'invite_user_short_id')
+            invite_entry = active_tab.find_element(by_what('name'),
+                                                   'invite_user_short_id')
             for (label, email) in [('int', sample_int_part),
                                    ('ext', sample_ext_part)]:
                 invite_entry.clear()
@@ -176,8 +194,8 @@ def management_actions(driver, url, login, passwd, callbacks):
                     print("INFO: callback for: %s" % state)
                     callbacks[state](driver, state)
 
-                invite_button = active_tab.find_element_by_id(
-                    'invite_user_button')
+                invite_button = active_tab.find_element(by_what('id'),
+                                                        'invite_user_button')
                 # TODO: actually submit form to invite to project?
                 # invite_button.click()
         except Exception as exc:
@@ -188,16 +206,17 @@ def open_project_actions(driver, url, login, passwd, callbacks):
     """Run user actions for section of same name"""
     # Go to open project tab and open first project
     nav_name = "Open Project"
-    navmenu = driver.find_element_by_id('project-tabs')
-    link = navmenu.find_element_by_link_text(nav_name)
+    navmenu = driver.find_element(by_what('id'), 'project-tabs')
+    link = navmenu.find_element(by_what('link_text'), nav_name)
     # print "DEBUG: found %s link: %s" % (nav_name, link)
     link.click()
     # ajax_wait(driver, nav_name, "ui-progressbar")
-    dropdown_container = navmenu.find_element_by_class_name('gm_select')
-    proj_dropdown = navmenu.find_element_by_name(
-        'access_project_base_vgrid_name')
+    dropdown_container = navmenu.find_element(
+        by_what('class_name'), 'gm_select')
+    proj_dropdown = navmenu.find_element(by_what('name'),
+                                         'access_project_base_vgrid_name')
     select_item_by_index(driver, proj_dropdown, 2)
-    link = driver.find_element_by_link_text('Open')
+    link = driver.find_element(by_what('link_text'), 'Open')
     link.click()
     ajax_wait(driver, nav_name, "ui-progressbar")
 
@@ -269,8 +288,8 @@ def archives_actions(driver, url, login, passwd, callbacks):
         print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
 
-    create_link = driver.find_element_by_link_text(
-        'Create a new freeze archive')
+    create_link = driver.find_element(by_what('link_text'),
+                                      'Create a new freeze archive')
     # print "DEBUG: found create archives link: %s" % create_link
     create_link.click()
 
@@ -280,10 +299,11 @@ def archives_actions(driver, url, login, passwd, callbacks):
         callbacks[state](driver, state)
 
     archive_name = "Article Data %s" % time.ctime().replace(':', '.')
-    name_field = driver.find_element_by_name("freeze_name")
+    name_field = driver.find_element(by_what('name'), "freeze_name")
     name_field.send_keys(archive_name)
 
-    meta_field = driver.find_element_by_name("freeze_description")
+    meta_field = driver.find_element(
+        by_what('name'), "freeze_description")
     meta_field.send_keys("""Article Data Archive
 
 This is my sample freeze archive with some metadata describing the archive
@@ -294,7 +314,7 @@ and owner automatically assigned.
 """)
 
     # Open fileman popup
-    add_button = driver.find_element_by_id("addfilebutton")
+    add_button = driver.find_element(by_what('id'), "addfilebutton")
     add_button.click()
     # TODO: figure out why this ajax_wait fails with V3
     # Wait for fileman popup to accept click handlers
@@ -305,9 +325,9 @@ and owner automatically assigned.
         callbacks[state](driver, state)
 
     # Select first file (at least welcome.txt is always there)
-    files_area = driver.find_element_by_class_name("fm_files")
+    files_area = driver.find_element(by_what('class_name'), "fm_files")
     selected = False
-    for select_file in files_area.find_elements_by_class_name("ext_txt"):
+    for select_file in files_area.find_elements(by_what('class_name'), "ext_txt"):
         try:
             #print("DEBUG: scroll to file elem: %s" % select_file)
             scroll_to_elem(driver, select_file)
@@ -327,17 +347,18 @@ and owner automatically assigned.
         file_path = select_file.text
         #print("DEBUG: found file path: %s" % file_path)
         # Use parent of unique filechooser to find the right dialog among many
-        filechooser_elem = driver.find_element_by_id("fm_filechooser")
+        filechooser_elem = driver.find_element(
+            by_what('id'), "fm_filechooser")
         filechooser_dialog = filechooser_elem.parent
         # print("DEBUG: found filechooser %s and parent dialog: %s" %
         #      (filechooser_elem, filechooser_dialog))
-        close_button = filechooser_dialog.find_element_by_class_name(
-            "ui-dialog-titlebar-close")
+        close_button = filechooser_dialog.find_element(by_what('class_name'),
+                                                       "ui-dialog-titlebar-close")
         #print("DEBUG: found close button: %s" % close_button)
         close_button.click()
-        # dialog_buttons = filechooser_dialog.find_element_by_class_name(
+        # dialog_buttons = filechooser_dialog.find_element(by_what('class_name'),
         #    "ui-dialog-buttonset")
-        # action_buttons = dialog_buttons.find_elements_by_class_name(
+        # action_buttons = dialog_buttons.find_elements(by_what('class_name'),
         #    "ui-button")
         #print("DEBUG: found action buttons: %s" % action_buttons)
         # for button in action_buttons:
@@ -347,13 +368,13 @@ and owner automatically assigned.
         #        button.click()
         #    else:
         #        print("DEBUG: ignore action button: %s" % button.text)
-        add_field = driver.find_element_by_id("freeze_copy_0")
+        add_field = driver.find_element(by_what('id'), "freeze_copy_0")
         add_field.send_keys(file_path)
     else:
         print("INFO: select worked properly - skip workaround")
 
     # Choose publish
-    publish_yes = driver.find_element_by_name("freeze_publish")
+    publish_yes = driver.find_element(by_what('name'), "freeze_publish")
     publish_yes.click()
 
     time.sleep(1)
@@ -363,8 +384,8 @@ and owner automatically assigned.
         print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
 
-    submit_button = driver.find_element_by_xpath(
-        "//input[@type='submit' and @value='Save and Preview']")
+    submit_button = driver.find_element(by_what('xpath'),
+                                        "//input[@type='submit' and @value='Save and Preview']")
     #print("DEBUG: click submit: %s" % submit_button)
     submit_button.click()
 
@@ -374,12 +395,12 @@ and owner automatically assigned.
         callbacks[state](driver, state)
 
     # TODO: open preview (in new tab) like this
-    # preview_button = driver.find_element_by_class_name("previewarchivelink")
+    # preview_button = driver.find_element(by_what('class_name'), "previewarchivelink")
     # print "DEBUG: found preview button: %s" % preview_button
     # preview_button.click()
 
-    finalize_button = driver.find_element_by_class_name(
-        "finalizearchivelink")
+    finalize_button = driver.find_element(by_what('class_name'),
+                                          "finalizearchivelink")
     #print("DEBUG: click finalize button: %s" % finalize_button)
     finalize_button.click()
 
@@ -387,13 +408,14 @@ and owner automatically assigned.
     #do_finalize = True
     do_finalize = False
     finalized = False
-    confirm_elem = driver.find_element_by_id("confirm_dialog")
+    confirm_elem = driver.find_element(by_what('id'), "confirm_dialog")
     confirm_dialog = confirm_elem.parent
     # print("DEBUG: found confirm content %s and parent dialog: %s" %
     #      (confirm_elem, confirm_dialog))
-    dialog_buttons = confirm_dialog.find_element_by_class_name(
-        "ui-dialog-buttonset")
-    confirm_buttons = dialog_buttons.find_elements_by_class_name("ui-button")
+    dialog_buttons = confirm_dialog.find_element(by_what('class_name'),
+                                                 "ui-dialog-buttonset")
+    confirm_buttons = dialog_buttons.find_elements(
+        by_what('class_name'), "ui-button")
     for button in confirm_buttons:
         if do_finalize and button.text == 'Yes':
             #print("DEBUG: click confirm button: %s" % button.text)
@@ -407,8 +429,8 @@ and owner automatically assigned.
     # Workaround if no buttons found
     if not confirm_buttons:
         print("WARNING: failed to confirm finalize - force close dialog")
-        close_button = confirm_dialog.find_element_by_class_name(
-            "ui-dialog-titlebar-close")
+        close_button = confirm_dialog.find_element(by_what('class_name'),
+                                                   "ui-dialog-titlebar-close")
         #print("DEBUG: found close button: %s" % close_button)
         close_button.click()
 
@@ -417,8 +439,8 @@ and owner automatically assigned.
         print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
 
-    view_button = driver.find_element_by_class_name(
-        "viewarchivelink")
+    view_button = driver.find_element(by_what('class_name'),
+                                      "viewarchivelink")
     #print("DEBUG: click view button: %s" % view_button)
     view_button.click()
     ajax_wait(driver, nav_name)
@@ -428,14 +450,15 @@ and owner automatically assigned.
         callbacks[state](driver, state)
 
     if finalized:
-        register_button = driver.find_element_by_class_name(
-            "registerarchivelink")
+        register_button = driver.find_element(by_what('class_name'),
+                                              "registerarchivelink")
         #print("DEBUG: click register button: %s" % register_button)
         register_button.click()
 
-        dialog_buttons = driver.find_element_by_class_name(
-            "ui-dialog-buttonset")
-        confirm_buttons = driver.find_elements_by_class_name("ui-button")
+        dialog_buttons = driver.find_element(by_what('class_name'),
+                                             "ui-dialog-buttonset")
+        confirm_buttons = driver.find_elements(
+            by_what('class_name'), "ui-button")
         run_register = False
         for button in confirm_buttons:
             if button.text == 'Yes':
@@ -447,8 +470,8 @@ and owner automatically assigned.
         # Workaround if no buttons found
         if not confirm_buttons:
             print("WARNING: failed to confirm register doi - force close dialog")
-            close_button = confirm_dialog.find_element_by_class_name(
-                "ui-dialog-titlebar-close")
+            close_button = confirm_dialog.find_element(by_what('class_name'),
+                                                       "ui-dialog-titlebar-close")
             #print("DEBUG: found close button: %s" % close_button)
             close_button.click()
 
@@ -458,18 +481,22 @@ and owner automatically assigned.
 
             # Maybe need KU-IT DOI service login if requested
             try:
-                logon_button = driver.find_element_by_id("cmdLogon")
+                logon_button = driver.find_element(
+                    by_what('id'), "cmdLogon")
                 #print("DEBUG: click logon: %s" % logon_button)
                 logon_button.click()
             except Exception as exc:
                 pass
 
             try:
-                user_field = driver.find_element_by_id("userNameInput")
+                user_field = driver.find_element(
+                    by_what('id'), "userNameInput")
                 user_field.send_keys(login)
-                password_field = driver.find_element_by_id("passwordInput")
+                password_field = driver.find_element(
+                    by_what('id'), "passwordInput")
                 password_field.send_keys(passwd)
-                submit_button = driver.find_element_by_id("submitButton")
+                submit_button = driver.find_element(
+                    by_what('id'), "submitButton")
                 #print("DEBUG: click submit: %s" % submit_button)
                 time.sleep(1)
                 submit_button.click()
@@ -482,8 +509,8 @@ and owner automatically assigned.
 
             # Then detect and confirm DOI usage dialog
             try:
-                popup_dialog = driver.find_element_by_class_name(
-                    "popupcontent")
+                popup_dialog = driver.find_element(by_what('class_name'),
+                                                   "popupcontent")
                 # print "DEBUG: found popup dialog: %s" % popup_dialog
                 # Wait for display popup
                 for _ in range(10):
@@ -499,8 +526,8 @@ and owner automatically assigned.
                 if popup_dialog.is_displayed():
                     #print("DEBUG: found visible popup dialog")
                     popup_found = True
-                    popup_buttons = popup_dialog.find_elements_by_class_name(
-                        "btn")
+                    popup_buttons = popup_dialog.find_elements(by_what('class_name'),
+                                                               "btn")
                     for button in popup_buttons:
                         # print "DEBUG: inspect popup button: %s" % button.text
                         if button.text.upper() == 'UNDERSTOOD':
@@ -522,7 +549,8 @@ and owner automatically assigned.
 
             # Check if DOI form is there and ready
             try:
-                doi_idenfier = driver.find_element_by_id("IdentifierType")
+                doi_idenfier = driver.find_element(
+                    by_what('id'), "IdentifierType")
                 # print "DEBUG: found DOI identifier: %s" % doi_idenfier
                 break
             except Exception as exc:
@@ -585,10 +613,11 @@ def setup_actions(driver, url, login, passwd, callbacks):
     for (key, name) in active_setup_sections:
         # print("DEBUG: open setup section: %s" % name)
         # Search inside page content to avoid Seafile nav menu interference
-        content_anchor = driver.find_element_by_id("content")
-        sub_link = content_anchor.find_element_by_link_text(name)
-        sub_link = driver.find_element_by_id(
-            "content").find_element_by_link_text(name)
+        content_anchor = driver.find_element(by_what('id'), "content")
+        sub_link = content_anchor.find_element(
+            by_what('link_text'), name)
+        sub_link = driver.find_element(by_what('id'),
+                                       "content").find_element(by_what('link_text'), name)
         sub_link.click()
         # Wait for Seafile server status lookup
         if key == 'seafile':
@@ -621,10 +650,11 @@ def jupyter_actions(driver, url, login, passwd, callbacks):
 
     for (key, name) in jupyter_sections:
         # Search inside page content to avoid Peers nav menu interference
-        content_anchor = driver.find_element_by_id("content")
-        sub_link = content_anchor.find_element_by_link_text(name)
-        sub_link = driver.find_element_by_id(
-            "content").find_element_by_link_text(name)
+        content_anchor = driver.find_element(by_what('id'), "content")
+        sub_link = content_anchor.find_element(
+            by_what('link_text'), name)
+        sub_link = driver.find_element(by_what('id'),
+                                       "content").find_element(by_what('link_text'), name)
         sub_link.click()
 
         state = 'jupyter-%s-tab-ready' % key
@@ -694,10 +724,11 @@ def peers_actions(driver, url, login, passwd, callbacks):
 
     for (key, name) in peers_sections:
         # Search inside page content to avoid Peers nav menu interference
-        content_anchor = driver.find_element_by_id("content")
-        sub_link = content_anchor.find_element_by_link_text(name)
-        sub_link = driver.find_element_by_id(
-            "content").find_element_by_link_text(name)
+        content_anchor = driver.find_element(by_what('id'), "content")
+        sub_link = content_anchor.find_element(
+            by_what('link_text'), name)
+        sub_link = driver.find_element(by_what('id'),
+                                       "content").find_element(by_what('link_text'), name)
         sub_link.click()
 
         state = 'peers-%s-tab-ready' % key
@@ -948,7 +979,7 @@ def main():
         action = None
         stop_actions = ['quit', 'exit', 'stop']
         while action not in stop_actions:
-            action = raw_input('action: ')
+            action = input('action: ')
             # Prevent IndexError
             action_args = action.split()[1:]
             if action.startswith('save'):
