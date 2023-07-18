@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migcore - a library of core selenium-based web helpers
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -40,6 +40,7 @@ from __future__ import print_function
 from builtins import range
 
 # Robust import - only fail if used without being available
+from builtins import range
 try:
     import pyotp
 except ImportError:
@@ -48,6 +49,13 @@ from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
+try:
+    from selenium.webdriver.firefox.service import Service as FirefoxService
+    from webdriver_manager.firefox import GeckoDriverManager
+except ImportError:
+    FirefoxService = None
+    GeckoDriverManager = None
+
 
 AUTH_UNKNOWN = "Unknown"
 AUTH_OPENID_V2 = "OpenID 2.0"
@@ -60,10 +68,23 @@ USERMENUBUTTON_ID = "userMenuButton"
 
 def init_driver(browser):
     """Init the requested browser driver"""
-    if browser.lower() == 'chrome':
+    if browser.lower() in ['chrome', 'chromium']:
         driver = webdriver.Chrome()
     elif browser.lower() == 'firefox':
         driver = webdriver.Firefox()
+    elif browser.lower() == 'firefox-auto':
+        if FirefoxService is None or GeckoDriverManager is None:
+            print("""FATAL: FirefoxService and GeckoDriverManager are required
+for the automatic firefox installer mode.
+""")
+            exit(1)
+        webdriver_service = FirefoxService(GeckoDriverManager().install())
+        webdriver_service.start()
+        options = webdriver.FirefoxOptions()
+        profile = webdriver.FirefoxProfile()
+        driver = webdriver.Remote(webdriver_service.service_url,
+                                  options=options,
+                                  browser_profile=profile)
     elif browser.lower() == 'safari':
         driver = webdriver.Safari()
     elif browser.lower() == 'ie':
