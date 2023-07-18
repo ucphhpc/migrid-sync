@@ -27,6 +27,7 @@
 
 """Example UCPH OpenID login using selenium and a webdriver of choice"""
 
+from __future__ import absolute_import
 from __future__ import print_function
 
 import getpass
@@ -34,7 +35,7 @@ import sys
 import time
 import traceback
 
-from migcore import init_driver, ucph_login, shared_twofactor
+from mig.user.selenium.migcore import init_driver, ucph_login, shared_twofactor
 
 
 def main():
