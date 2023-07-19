@@ -29,6 +29,7 @@
 
 from __future__ import absolute_import
 
+import mimetypes
 import os
 import time
 
@@ -77,6 +78,26 @@ def find_entry(output_objects, kind):
         if kind == entry['object_type']:
             return entry
     return None
+
+
+def start_download(configuration, path, output):
+    """Helper to set the headers required to force a file download instead of
+    plain output delivery. Automatically detects mimetype of path and sets
+    content size to size of output.
+    """
+    _logger = configuration.logger
+    (content_type, _) = mimetypes.guess_type(path)
+    if not content_type:
+        content_type = 'application/octet-stream'
+    # NOTE: we need to set content length to fit binary data
+    size = sum([len(line) for line in output])
+    _logger.debug('force %s output for %s of size %d' % (content_type, path,
+                                                         size))
+    return make_start_entry([('Content-Length', "%d" % size),
+                             ('Content-Type', content_type),
+                             ('Content-Disposition',
+                              'attachment; filename="%s";'
+                              % os.path.basename(path))])
 
 
 def initialize_main_variables(client_id, op_title=True, op_header=True,
