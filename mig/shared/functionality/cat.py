@@ -39,7 +39,7 @@ from mig.shared.fileio import read_file, read_file_lines, write_file, \
     write_file_lines
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
-from mig.shared.init import initialize_main_variables
+from mig.shared.init import initialize_main_variables, start_download
 from mig.shared.parseflags import verbose, binary
 from mig.shared.userio import GDPIOLogError, gdp_iolog
 from mig.shared.safeinput import valid_path_pattern
@@ -164,10 +164,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
                           [relative_path])
 
                 if force_file:
-                    output_lines = [read_file(abs_path, logger, mode=src_mode)]
+                    content = read_file(abs_path, logger, mode=src_mode)
+                    lines = [content]
                 else:
-                    output_lines += read_file_lines(abs_path,
-                                                    logger, mode=src_mode)
+                    content = lines = read_file_lines(abs_path, logger,
+                                                      mode=src_mode)
+                if content is None:
+                    raise Exception("could not read file")
+                output_lines += lines
             except Exception as exc:
                 if not isinstance(exc, GDPIOLogError):
                     gdp_iolog(configuration,
@@ -230,28 +234,11 @@ CSRF-filtered POST requests to prevent unintended updates'''
                          'wrap_targets': ['lines']}
                 if verbose(flags):
                     entry['path'] = relative_path
-                output_objects.append(entry)
-
-                # TODO: rip this hack out into real download handler?
                 # Force download of files when output_format == 'file'
-                # This will only work for the first file matching a glob when
-                # using file format - and that is on purpose.
                 if force_file:
-                    # Insert explicit content type for a better client
-                    # experience and to make sure clients don't break download
-                    # early because they think it is plain text and find a
-                    # bogus EOF in binary data.
-                    (content_type, _) = mimetypes.guess_type(abs_path)
-                    if not content_type:
-                        content_type = 'application/octet-stream'
-                    # NOTE: we need to set content length to fit binary data
-                    output_objects.append(
-                        {'object_type': 'start', 'headers':
-                         [('Content-Length', "%d" % len(output_lines[0])),
-                          ('Content-Type', content_type),
-                          ('Content-Disposition',
-                           'attachment; filename="%s";'
-                           % os.path.basename(abs_path))]})
-                    break
+                    download_marker = start_download(configuration, abs_path,
+                                                     output_lines)
+                    output_objects.append(download_marker)
+                output_objects.append(entry)
 
     return (output_objects, status)

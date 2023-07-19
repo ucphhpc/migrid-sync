@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # head - show initial lines of one or more files
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,15 +29,17 @@
 
 from __future__ import absolute_import
 
-import os
 import glob
+import os
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir
+from mig.shared.fileio import read_head_lines
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
-from mig.shared.init import initialize_main_variables
+from mig.shared.init import initialize_main_variables, start_download
 from mig.shared.parseflags import verbose, binary
 from mig.shared.safeinput import valid_path_pattern
+from mig.shared.userio import GDPIOLogError, gdp_iolog
 from mig.shared.validstring import valid_user_path
 
 
@@ -48,8 +50,11 @@ def signature():
     return ['file_output', defaults]
 
 
-def main(client_id, user_arguments_dict):
+def main(client_id, user_arguments_dict, environ=None):
     """Main function used by front end"""
+
+    if environ is None:
+        environ = os.environ
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id)
@@ -85,6 +90,15 @@ def main(client_id, user_arguments_dict):
             output_objects.append({'object_type': 'text', 'text':
                                    '%s using flag: %s' % (op_name, flag)})
 
+    src_mode = "rb"
+    if binary(flags):
+        force_file = True
+    elif user_arguments_dict.get('output_format', ['txt'])[0] == 'file':
+        force_file = True
+    else:
+        force_file = False
+        src_mode = "r"
+
     for pattern in pattern_list:
 
         # Check directory traversal attempts before actual handling to avoid
@@ -119,20 +133,29 @@ def main(client_id, user_arguments_dict):
             relative_path = abs_path.replace(base_dir, '')
             output_lines = []
             try:
-                filedes = open(abs_path, 'r')
-                i = 0
-                for line in filedes:
-                    if i >= lines:
-                        break
-                    output_lines.append(line)
-                    i += 1
-                filedes.close()
+                gdp_iolog(configuration,
+                          client_id,
+                          environ['REMOTE_ADDR'],
+                          'accessed',
+                          [relative_path])
+
+                output_lines += read_head_lines(abs_path, lines, logger,
+                                                mode=src_mode)
             except Exception as exc:
-                output_objects.append({'object_type': 'error_text', 'text':
-                                       "%s: '%s': %s" % (op_name,
-                                                         relative_path, exc)})
-                logger.error("%s: failed on '%s': %s" % (op_name,
-                                                         relative_path, exc))
+                if not isinstance(exc, GDPIOLogError):
+                    gdp_iolog(configuration,
+                              client_id,
+                              environ['REMOTE_ADDR'],
+                              'accessed',
+                              [relative_path],
+                              failed=True,
+                              details=exc)
+                output_objects.append({'object_type': 'error_text',
+                                       'text': "%s: '%s': %s"
+                                       % (op_name, relative_path, exc)})
+                logger.error("%s: failed on '%s': %s"
+                             % (op_name, relative_path, exc))
+
                 status = returnvalues.SYSTEM_ERROR
                 continue
             entry = {'object_type': 'file_output',
@@ -141,6 +164,11 @@ def main(client_id, user_arguments_dict):
                      'wrap_targets': ['lines']}
             if verbose(flags):
                 entry['path'] = relative_path
+            # Force download of files when output_format == 'file'
+            if force_file:
+                download_marker = start_download(configuration, abs_path,
+                                                 output_lines)
+                output_objects.append(download_marker)
             output_objects.append(entry)
 
     return (output_objects, status)

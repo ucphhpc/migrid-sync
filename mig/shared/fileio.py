@@ -84,7 +84,7 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
     """
     if not logger:
         logger = null_logger("dummy")
-    logger.info('writing chunk to %s at offset %d' % (path, offset))
+    logger.debug('writing chunk to %s at offset %d' % (path, offset))
 
     # create dir and file if it does not exists
 
@@ -109,8 +109,8 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
             file_size = filehandle.tell()
             for _ in xrange(offset - file_size):
                 filehandle.write('\0')
-        logger.info('write %s chunk of size %d at position %d' %
-                    (path, len(chunk), filehandle.tell()))
+        logger.debug('write %s chunk of size %d at position %d' %
+                     (path, len(chunk), filehandle.tell()))
         filehandle.write(chunk)
         filehandle.close()
         logger.debug('file chunk written: %s' % path)
@@ -134,7 +134,7 @@ def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
         old_umask = os.umask(umask)
     if not os.path.isdir(head) and make_parent:
         try:
-            logger.debug('making directory: %s' % head)
+            # logger.debug('making directory: %s' % head)
             os.mkdir(head)
         except Exception as err:
             logger.error('could not create dir: %s' % err)
@@ -161,7 +161,7 @@ def read_file(path, logger, mode='r'):
     """Wrapper to handle reading of contents from path"""
     if not logger:
         logger = null_logger("dummy")
-    #logger.debug('reading file: %s' % path)
+    logger.debug('reading file: %s' % path)
     content = None
     try:
         filehandle = open(path, mode)
@@ -181,24 +181,54 @@ def read_file_lines(path, logger, mode='r'):
     return contents.splitlines(True)
 
 
-def read_tail(path, lines, logger):
+def read_head_lines(path, lines, logger, mode='r'):
+    """Read first lines from path"""
+    if not logger:
+        logger = null_logger("dummy")
+    logger.debug("loading %d first lines from %s" % (lines, path))
+    out_lines = []
+    out_buffer = ''
+    try:
+        if not os.path.exists(path):
+            return out_lines
+        head_fd = open(path, mode)
+        head_fd.seek(0, os.SEEK_END)
+        size = head_fd.tell()
+        head_fd.seek(0, os.SEEK_SET)
+        pos = head_fd.tell()
+        step_size = 128 * lines
+        # Keep reading in growing chunks until we have enough lines
+        # NOTE: last line is likely truncated when read like this
+        while pos < size and out_buffer.count('\n') < lines:
+            pos = head_fd.tell()
+            #logger.debug("read %db at pos %d from %s" % (step_size, pos, path))
+            out_buffer += head_fd.read(step_size)
+            step_size *= 2
+        head_fd.close()
+        out_lines = out_buffer.splitlines(True)
+    except Exception as exc:
+        logger.error("reading %d lines from %s: %s" % (lines, path, exc))
+    return out_lines[:lines]
+
+
+def read_tail_lines(path, lines, logger, mode='r'):
     """Read last lines from path"""
     if not logger:
         logger = null_logger("dummy")
+    logger.debug("loading %d last lines from %s" % (lines, path))
     out_lines = []
     try:
-        #logger.debug("loading %d lines from %s" % (lines, path))
         if not os.path.exists(path):
             return out_lines
-        tail_fd = open(path, 'r')
+        tail_fd = open(path, mode)
         tail_fd.seek(0, os.SEEK_END)
         size = tail_fd.tell()
         pos = tail_fd.tell()
-        step_size = 100
+        step_size = 128 * lines
         # locate last X lines
         while pos > 0 and len(out_lines) < lines:
             offset = min(lines * step_size, size)
-            logger.debug("seek to offset %d from end of %s" % (offset, path))
+            #logger.debug("seek to offset %d from end of %s" % (offset, path))
             tail_fd.seek(-offset, os.SEEK_END)
             pos = tail_fd.tell()
             out_lines = tail_fd.readlines()
