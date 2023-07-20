@@ -35,10 +35,10 @@
     "services": [
       "ALL"
     ],
-    "work_end": "2023-07-20T16:30:00+02:00",
+    "work_end": "2023-07-20T23:20:00+02:00",
     "description": {
-      "EN": "IDMC has served us well for several years, but it is aging and no longer runs active projects. Thus, we will retire it and migrate any remaining users onto ERDA, where the same data basically is available through the shared backend storage. Please contact us at support if you have any questions or comments in that relation.",
-      "DK": "IDMC har tjent os vel i efterhånden mange år, men den er ved at være gammel og bruges ikke længere i aktive projekter. Derfor vil vi pensionere den og migrere eventuelle tilbageværende brugere til ERDA, hvor de samme data grundlæggende er tilgængelige via det delte backendlager. Kontakt os venligst på support, hvis du har spørgsmål eller kommentarer i den forbindelse."
+      "EN": "IDMC has served us well for several years, but it is aging and no longer runs active projects. Thus, we retire it and migrate any remaining users onto ERDA, where the same data basically is available through the shared backend storage. Please contact us at support if you have any questions or comments in that relation.",
+      "DK": "IDMC har tjent os vel i efterhånden mange år, men den er ved at være gammel og bruges ikke længere i aktive projekter. Derfor pensionerer vi den og migrerer eventuelle tilbageværende brugere til ERDA, hvor de samme data grundlæggende er tilgængelige via det delte backendlager. Kontakt os venligst på support, hvis du har spørgsmål eller kommentarer i den forbindelse."
     },
     "announce_end": "2023-08-01T12:00:00+02:00"
   }, 
