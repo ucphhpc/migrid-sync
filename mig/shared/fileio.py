@@ -202,8 +202,8 @@ def read_head_lines(path, lines, logger, mode='r'):
     if not logger:
         logger = null_logger("dummy")
     logger.debug("loading %d first lines from %s" % (lines, path))
+    contents = ''
     out_lines = []
-    out_buffer = ''
     try:
         if not os.path.exists(path):
             return out_lines
@@ -215,13 +215,13 @@ def read_head_lines(path, lines, logger, mode='r'):
         step_size = 128 * lines
         # Keep reading in growing chunks until we have enough lines
         # NOTE: last line is likely truncated when read like this
-        while pos < size and out_buffer.count('\n') < lines:
+        while pos < size and contents.count('\n') < lines:
             pos = head_fd.tell()
             #logger.debug("read %db at pos %d from %s" % (step_size, pos, path))
-            out_buffer += head_fd.read(step_size)
+            contents += head_fd.read(step_size)
             step_size *= 2
         head_fd.close()
-        out_lines = out_buffer.splitlines(True)
+        out_lines = contents.splitlines(True)
     except Exception as exc:
         logger.error("reading %d lines from %s: %s" % (lines, path, exc))
     return out_lines[:lines]
