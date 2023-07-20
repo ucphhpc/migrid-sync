@@ -202,12 +202,17 @@ def read_head_lines(path, lines, logger, mode='r'):
     if not logger:
         logger = null_logger("dummy")
     logger.debug("loading %d first lines from %s" % (lines, path))
-    contents = ''
+    # NOTE: python3 dropped end-relative seeks for text files - force binary
+    if 'b' in mode:
+        bin_mode = mode
+    else:
+        bin_mode = mode + 'b'
+    contents = b''
     out_lines = []
     try:
         if not os.path.exists(path):
             return out_lines
-        head_fd = open(path, mode)
+        head_fd = open(path, bin_mode)
         head_fd.seek(0, os.SEEK_END)
         size = head_fd.tell()
         head_fd.seek(0, os.SEEK_SET)
@@ -215,13 +220,14 @@ def read_head_lines(path, lines, logger, mode='r'):
         step_size = 128 * lines
         # Keep reading in growing chunks until we have enough lines
         # NOTE: last line is likely truncated when read like this
-        while pos < size and contents.count('\n') < lines:
+        while pos < size and contents.count(b'\n') < lines:
             pos = head_fd.tell()
             #logger.debug("read %db at pos %d from %s" % (step_size, pos, path))
             contents += head_fd.read(step_size)
             step_size *= 2
         head_fd.close()
-        out_lines = contents.splitlines(True)
+        # NOTE: with bytes we need to be more careful with line splitting
+        out_lines = force_native_str(contents).splitlines(True)
     except Exception as exc:
         logger.error("reading %d lines from %s: %s" % (lines, path, exc))
     return out_lines[:lines]
@@ -232,14 +238,16 @@ def read_tail_lines(path, lines, logger, mode='r'):
     if not logger:
         logger = null_logger("dummy")
     logger.debug("loading %d last lines from %s" % (lines, path))
+    # NOTE: python3 dropped end-relative seeks for text files - force binary
+    if 'b' in mode:
+        bin_mode = mode
+    else:
+        bin_mode = mode + 'b'
     out_lines = []
     try:
         if not os.path.exists(path):
             return out_lines
-        # NOTE: python3 dropped end-relative seeks for text files - force binary
-        if not 'b' in mode:
-            mode += 'b'
-        tail_fd = open(path, mode)
+        tail_fd = open(path, bin_mode)
         tail_fd.seek(0, os.SEEK_END)
         size = tail_fd.tell()
         pos = tail_fd.tell()
@@ -251,7 +259,6 @@ def read_tail_lines(path, lines, logger, mode='r'):
             tail_fd.seek(-offset, os.SEEK_END)
             pos = tail_fd.tell()
             # NOTE: with bytes we need to be more careful with line splitting
-            #out_lines = tail_fd.readlines()
             out_lines = force_native_str(tail_fd.read()).splitlines(True)
             step_size *= 2
             #logger.debug("reading %d lines from %s" % (lines, path))
