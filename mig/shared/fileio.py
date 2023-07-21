@@ -227,7 +227,10 @@ def read_head_lines(path, lines, logger, mode='r'):
             step_size *= 2
         head_fd.close()
         # NOTE: with bytes we need to be more careful with line splitting
-        out_lines = force_native_str(contents).splitlines(True)
+        if 'b' in mode:
+            out_lines = contents.splitlines(True)
+        else:
+            out_lines = force_native_str(contents).splitlines(True)
     except Exception as exc:
         logger.error("reading %d lines from %s: %s" % (lines, path, exc))
     return out_lines[:lines]
@@ -259,7 +262,10 @@ def read_tail_lines(path, lines, logger, mode='r'):
             tail_fd.seek(-offset, os.SEEK_END)
             pos = tail_fd.tell()
             # NOTE: with bytes we need to be more careful with line splitting
-            out_lines = force_native_str(tail_fd.read()).splitlines(True)
+            if 'b' in mode:
+                out_lines = tail_fd.read().splitlines(True)
+            else:
+                out_lines = force_native_str(tail_fd.read()).splitlines(True)
             step_size *= 2
             #logger.debug("reading %d lines from %s" % (lines, path))
         tail_fd.close()
