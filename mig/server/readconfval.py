@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # readconfval - Helper to easily lookup specific configuration values
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -53,10 +53,8 @@ Where OPTIONS may be one or more of:
 """ % {'name': name})
 
 
-# ## Main ###
-
 if '__main__' == __name__:
-    args = sys.argv
+    args = sys.argv[1:]
     conf_path = None
     force = False
     verbose = False
@@ -92,8 +90,8 @@ if '__main__' == __name__:
         else:
             print('using configuration from MIG_CONF (or default)')
 
-    if len(args) == 2:
-        name = args[1]
+    if len(args) == 1:
+        name = args[0]
     else:
         usage()
         sys.exit(1)
