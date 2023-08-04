@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cgishared - cgi helper function
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,12 +26,13 @@
 #
 
 """Common cgi functions"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
 import os
 
-from mig.shared.base import requested_page
+from mig.shared.base import requested_backend
 from mig.shared.cgioutput import CGIOutput
 from mig.shared.conf import get_configuration_object
 from mig.shared.httpsclient import extract_client_id
@@ -80,5 +81,6 @@ def init_cgiscript_possibly_with_cert(print_header=True,
     if not client_id:
         logger.debug('(No client ID available in SSL session)')
 
-    logger.info('script: %s cert: %s' % (requested_page(), client_id))
+    logger.info('script: %s cert: %s' %
+                (requested_backend(environ, strip_ext=False), client_id))
     return (logger, configuration, client_id, out)

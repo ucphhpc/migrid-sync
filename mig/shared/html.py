@@ -33,7 +33,7 @@ from __future__ import absolute_import
 import os
 import sys
 
-from mig.shared.base import requested_page, client_id_dir
+from mig.shared.base import requested_backend, client_id_dir
 from mig.shared.defaults import default_pager_entries, trash_linkname, \
     csrf_field, keyword_all
 
@@ -1901,7 +1901,7 @@ def get_xgi_html_header(
         maximize += 'nomenu '
 
     if frame:
-        current_page = os.path.splitext(os.path.basename(requested_page()))[0]
+        current_page = requested_backend()
 
         menu_helpers = {'short_title': configuration.short_title,
                         'icon_lines': '', 'text_lines': '', 'menu_lines': '',

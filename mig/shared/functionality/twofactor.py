@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # twofactor - handle two-factor authentication with per-user shared key
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -45,7 +45,7 @@ from mig.shared import returnvalues
 from mig.shared.auth import twofactor_available, load_twofactor_key, \
     get_twofactor_token, verify_twofactor_token, generate_session_key, \
     save_twofactor_session, expire_twofactor_session
-from mig.shared.base import requested_page, extract_field
+from mig.shared.base import requested_backend, extract_field
 from mig.shared.defaults import twofactor_cookie_ttl, AUTH_MIG_OID, \
     AUTH_EXT_OID, AUTH_MIG_OIDC, AUTH_EXT_OIDC
 from mig.shared.functional import validate_input
@@ -122,7 +122,8 @@ def main(client_id, user_arguments_dict, environ=None):
     client_addr = environ.get('REMOTE_ADDR', None)
     tcp_port = int(environ.get('REMOTE_PORT', '0'))
 
-    script_name = requested_page(environ, "%s.py" % op_name, name_only=True)
+    script_name = requested_backend(environ, "%s.py" % op_name,
+                                    strip_ext=False)
 
     logger.debug("User: %s executing %s with redirect url %r" %
                  (client_id, op_name, redirect_url))
@@ -239,7 +240,7 @@ function update_reload_counter(cnt, delay) {
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # NOTE: GDP: gdpman handles pending setup until GDP V3 is in place
-    # TODO: Remove 'and not configuration.site_enable_gdp' 
+    # TODO: Remove 'and not configuration.site_enable_gdp'
     #       when GDP V3 is in place
     if pending_setup and not configuration.site_enable_gdp:
         if redirect_url:
@@ -255,7 +256,7 @@ function update_reload_counter(cnt, delay) {
             # Inform save operation that it's called from here for CSRF check
             return save(client_id, user_arguments_dict, called_as=op_name)
     # NOTE: GDP: gdpman handles pending setup until GDP V3 is in place
-    # TODO: Remove 'not pending_setup and' 
+    # TODO: Remove 'not pending_setup and'
     #       when GDP V3 is in place
     elif not pending_setup and require_twofactor:
         logger.info("detected 2FA requirement for %s on %s" % (client_id,

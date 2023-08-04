@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # logout - force-expire local login session(s)
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,7 +33,7 @@ import os
 
 from mig.shared import returnvalues
 from mig.shared.auth import expire_twofactor_session
-from mig.shared.base import requested_page
+from mig.shared.base import requested_backend
 from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_V2, \
     AUTH_OPENID_CONNECT, AUTH_MIG_OID, AUTH_EXT_OID, AUTH_MIG_OIDC, \
     AUTH_EXT_OIDC
@@ -105,7 +105,7 @@ browser. Please refer to your browser and system documentation for details.
 
     # Always rely on os.environ here as that's what we have
     environ = os.environ
-    script_name = requested_page(name_only=True)
+    script_name = requested_backend(environ, strip_ext=False)
     # Check if twofactor is mandatory and not yet set up
     forced_twofactor = require_twofactor_setup(configuration, script_name,
                                                client_id, environ)
