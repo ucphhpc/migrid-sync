@@ -40,7 +40,7 @@ from mig.shared.base import client_id_dir, mask_creds, hexlify
 from mig.shared.conf import get_resource_exe
 from mig.shared.defaults import all_jobs, job_output_dir, default_pager_entries, \
     csrf_field
-from mig.shared.fileio import read_tail
+from mig.shared.fileio import read_tail_lines
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from mig.shared.html import man_base_js, man_base_html, html_post_helper
@@ -433,7 +433,7 @@ else, so the public key can be inserted in your authorized_keys file as:
                                 "transfer_output",
                                 configuration.site_transfer_log)
         show_lines = 40
-        log_lines = read_tail(log_path, show_lines, logger)
+        log_lines = read_tail_lines(log_path, show_lines, logger)
         available_keys = load_user_keys(configuration, client_id)
         if available_keys:
             key_note = ''
