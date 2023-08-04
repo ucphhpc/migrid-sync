@@ -334,33 +334,82 @@ def invisible_path(path, allow_vgrid_scripts=False):
     return False
 
 
-def requested_page(environ=None, fallback='home.py', name_only=False):
-    """Lookup requested page from environ or os.environ if not provided.
-    Return fallback if no page was found in environ.
+def requested_backend(environ=None, fallback='UNKNOWN', strip_ext=True):
+    """Lookup requested backend name from environ or os.environ if not provided.
+    Return backend without any filename exension unless strip_ext is disabled
+    and use fallback value if no backend was found in environ.
+
+    IMPORTANT: this version assures that the value is safe for page output,
+    too, so use it whenever the actual (potentially unsafe) URL is not a strict
+    requirement.
     """
     if not environ:
         environ = os.environ
     # NOTE: RPC wrappers inject name of actual backend as BACKEND_NAME
+    # NOTE: wsgi sets SCRIPT_X to wsgi-bin but PATH_TRANSLATED contains backend
+    # IMPORTANT: use only filtered values like SCRIPT_NAME and SCRIPT_FILENAME
+    #            as Apache strips e.g. unsafe injected URL values like
+    #            cgi-sid/BACKEND.py/UNSAFECONTENT?VALIDQUERY
+
+    script_path = environ.get('BACKEND_NAME', False) or \
+        environ.get('PATH_TRANSLATED', False) or \
+        environ.get('SCRIPT_NAME', False) or \
+        environ.get('SCRIPT_FILENAME', fallback)
+    backend_name = os.path.basename(script_path)
+    if strip_ext:
+        backend_name = os.path.splitext(backend_name)[0]
+    # NOTE: for extra safety we always filter all but simple chars
+    return re.sub(r'[^a-zA-Z0-9._-]+', '', backend_name)
+
+
+def requested_page(environ=None, fallback='home.py', name_only=False,
+                   strip_ext=False, include_unsafe=False):
+    """Lookup requested page from environ or os.environ if not provided.
+    Return fallback if no page was found in environ. Return only the script_name
+    If the include_unsafe arg is set the lookup includes potentially unsafe
+    environment values without proper filtering and then MUST be used very
+    carefully, because printing may otherwise result in XSS vulnerabilities.
+    """
+    if not environ:
+        environ = os.environ
+    if name_only:
+        return requested_backend(environ, fallback, strip_ext)
+    # NOTE: RPC wrappers inject name of actual backend as BACKEND_NAME
+    # IMPORTANT: the remaining vars MAY contain raw user-provided content like
+    #            cgi-sid/BACKEND.py/UNSAFECONTENT?VALIDQUERY
+    #            Please use the result with maximum care!
     page_path = environ.get('BACKEND_NAME', False) or \
         environ.get('SCRIPT_URL', False) or \
         environ.get('SCRIPT_URI', False) or \
         environ.get('PATH_INFO', False) or \
-        environ.get('REQUEST_URI', fallback).split('?', 1)[0]
-    if name_only:
-        return os.path.basename(page_path)
-    else:
+        environ.get('REQUEST_URI', fallback)
+    # Strip any query args
+    page_path = page_path.split('?', 1)[0]
+    if strip_ext:
+        page_path = os.path.splitext(page_path)[0]
+    if include_unsafe:
         return page_path
+    else:
+        # NOTE: for safety we filter all but simple URL chars
+        return re.sub(r'[^a-zA-Z0-9:/._-]+', '', page_path)
 
 
-def requested_url_base(environ=None):
+def requested_url_base(environ=None, include_unsafe=False):
     """Lookup requested url base from environ or os.environ if not provided.
+    If the include_unsafe arg is set the result includes potentially unsafe
+    values without proper filtering and thus MUST be used very carefully,
+    because printing may otherwise result in XSS vulnerabilities.
     """
     if not environ:
         environ = os.environ
     full_url = environ.get('SCRIPT_URI', None)
     parts = full_url.split('/', 3)
     url_base = '/'.join(parts[:3])
-    return url_base
+    if include_unsafe:
+        return url_base
+    else:
+        # NOTE: for safety we filter all but simple URL chars
+        return re.sub(r'[^a-zA-Z0-9/:._-]+', '', url_base)
 
 
 def is_unicode(val):
@@ -753,3 +802,23 @@ if __name__ == '__main__':
     user_dict = canonical_user(configuration, user_dict, user_dict.keys())
     print("Apply mask creds on bogus user dict:\n%s\nresults in:\n%s" %
           (user_dict, mask_creds(user_dict)))
+
+    check_uris = [
+        'https://localhost',
+        'https://localhost/cgi-sid/BACKEND.py',
+        'https://localhost/cgi-sid/BACKEND.py/UNSAFECONTENT?VALIDQUERY',
+        'https://localhost/cgi-sid/BACKEND.py/><img src=dummy onerror="alert(\'RXSS\')%22%3E?show=ALL',
+    ]
+    for script_uri in check_uris:
+        os.environ['SCRIPT_URI'] = script_uri
+        os.environ['SCRIPT_NAME'] = script_uri.replace('https://localhost', '')
+        if script_uri.find('.py') != -1:
+            os.environ['SCRIPT_NAME'] = script_uri.split('.py', 1)[0] + '.py'
+        print("Found backend for %r : %s" % (script_uri, requested_backend()))
+        print("Found page for %r : %s" % (script_uri, requested_page()))
+        print("Found page name for %r : %s" %
+              (script_uri, requested_page(name_only=True)))
+        print("Found url base for %r : %s" %
+              (script_uri, requested_url_base()))
+        print("Found unsafe page for %r : %s" %
+              (script_uri, requested_page(include_unsafe=True)))
