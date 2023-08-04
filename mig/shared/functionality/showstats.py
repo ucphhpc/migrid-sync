@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showstats - read statistics from couchdb and display them
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -45,7 +45,7 @@ from functools import reduce
 
 from mig.shared import returnvalues
 from mig.shared import vgrid
-from mig.shared.base import requested_page
+from mig.shared.base import requested_backend
 from mig.shared.functional import validate_input
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.url import urlencode, urlopen
@@ -125,8 +125,8 @@ Please contact the site admins %s if you think they should be enabled.
         reject = True
 
     # always include a form to re-display with different values:
-    updateform = '           <form action="%s" >' %  \
-                 os.path.basename(requested_page())
+    updateform = '           <form action="%s" >' % \
+                 requested_backend(strip_ext=False)
     updateform += '''
                 <table class="runtimeenventry">
                   <thead>

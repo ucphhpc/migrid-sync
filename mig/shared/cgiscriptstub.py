@@ -43,7 +43,7 @@ except:
     pass
 
 from mig.shared.bailout import crash_helper
-from mig.shared.base import requested_page, allow_script, \
+from mig.shared.base import requested_backend, allow_script, \
     is_default_str_coding, force_default_str_coding_rec
 from mig.shared.conf import get_configuration_object
 from mig.shared.httpsclient import extract_client_id
@@ -60,8 +60,8 @@ def init_cgi_script(environ, delayed_input=None):
     # get and log ID of user currently logged in
 
     client_id = extract_client_id(configuration, environ)
-    script_name = requested_page(environ, name_only=True)
-    logger.info('script: %s cert: %s' % (script_name, client_id))
+    logger.info('script: %s cert: %s' %
+                (requested_backend(environ, strip_ext=False), client_id))
     if not delayed_input:
         fieldstorage = cgi.FieldStorage()
         user_arguments_dict = fieldstorage_to_dict(fieldstorage)
@@ -167,8 +167,8 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None,
 
     # TODO: add environ arg support to all main backends and use here
 
-    script_name = requested_page(environ, name_only=True)
-    backend = os.path.splitext(script_name)[0]
+    script_name = requested_backend(environ, strip_ext=False)
+    backend = requested_backend(environ)
     logger.debug("check allow script %s from %s" % (script_name, client_id))
     (allow, msg) = allow_script(configuration, script_name, client_id)
     out_obj, ret_code, ret_msg = [], 0, ''

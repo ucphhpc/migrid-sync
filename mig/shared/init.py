@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # init - shared helpers to init functionality backends
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,7 +33,7 @@ import mimetypes
 import os
 import time
 
-from mig.shared.base import requested_page, extract_field
+from mig.shared.base import requested_backend, extract_field
 from mig.shared.conf import get_configuration_object
 from mig.shared.html import themed_styles, themed_scripts
 from mig.shared.settings import load_settings, load_widgets, load_profile
@@ -111,9 +111,7 @@ def initialize_main_variables(client_id, op_title=True, op_header=True,
     output_objects = []
     start_entry = make_start_entry()
     output_objects.append(start_entry)
-    req_page = requested_page()
-    op_name = os.path.splitext(os.path.basename(req_page))[0]
-    req_vhost = req_page
+    op_name = requested_backend()
 
     if op_title:
         skipwidgets = not configuration.site_enable_widgets or not client_id

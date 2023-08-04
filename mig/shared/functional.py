@@ -38,7 +38,7 @@ import time
 
 from mig.shared.accountstate import check_account_status, \
     check_update_account_expire
-from mig.shared.base import requested_page, force_utf8, get_site_base_url
+from mig.shared.base import requested_backend, force_utf8, get_site_base_url
 from mig.shared.defaults import csrf_field, auth_openid_ext_db
 from mig.shared.findtype import is_user
 from mig.shared.httpsclient import extract_client_cert, extract_client_openid, \
@@ -175,9 +175,8 @@ def validate_input_and_cert(
     #       Expired users can still log out or use their login to access the
     #       (unprivileged) account request pages to renew their account with
     #       auto-fill of fields.
-    if creds_error and not os.path.basename(requested_page()) in \
-            ['logout.py', 'autologout.py', 'reqoid.py', 'reqcert.py',
-             'extcert.py']:
+    if creds_error and not requested_backend(environ) in \
+            ['logout', 'autologout', 'reqoid', 'reqcert', 'extcert']:
         # Simple init to get page preamble even where initialize_main_variables
         # was called with most things disabled because no or limited direct
         # output was expected.

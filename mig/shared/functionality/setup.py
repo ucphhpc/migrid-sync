@@ -36,7 +36,7 @@ from mig.shared import returnvalues
 from mig.shared.accountstate import account_expire_info
 from mig.shared.auth import get_twofactor_secrets
 from mig.shared.base import client_alias, client_id_dir, extract_field, get_xgi_bin, \
-    get_short_id, requested_url_base, requested_page
+    get_short_id, requested_url_base, requested_backend
 from mig.shared.defaults import seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
     duplicati_protocol_choices, duplicati_schedule_choices, keyword_all, \
     AUTH_MIG_OID, AUTH_EXT_OID, AUTH_MIG_OIDC, AUTH_EXT_OIDC
@@ -631,7 +631,7 @@ def main(client_id, user_arguments_dict, target_op='settingsaction'):
         valid_topics.append('twofactor')
     # Always rely on os.environ here as that's what we have
     environ = os.environ
-    script_name = requested_page(name_only=True)
+    script_name = requested_backend(environ, strip_ext=False)
     # Check if twofactor is mandatory and not yet set up
     forced_twofactor = require_twofactor_setup(configuration, script_name,
                                                client_id, environ)
