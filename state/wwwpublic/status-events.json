@@ -1,4 +1,26 @@
-[
+[ 
+  {
+    "status": "AUTO", 
+    "work_start": "2023-08-12T18:00:00+02:00", 
+    "systems": [
+        "ERDA"
+    ],
+    "announce_start": "2023-08-01T12:00:00+02:00",
+    "title": {
+      "EN": "DAG and MODI Upgrade",
+      "DK": "DAG og MODI opgradering"
+    },
+    "services": [
+      "DAG",
+      "MODI"
+    ],
+    "work_end": "2023-08-12T23:00:00+02:00",
+    "description": {
+      "EN": "We will upgrade JupyterHub, JupyterLab and every Notebook on DAG and MODI to the most recent version. This might conflict with local versions installed in your ~/work/__{dag,modi}_config__ directories. Therefore any package errors after this upgrade should attempt to remove and reinstall the local version to start with.",
+      "DK": "Vi vil opgradere JupyterHub, JupyterLab og alle Notebooks på DAG og MODI til den nyeste version. Dette kan skabe konflikt med lokale versioner installeret i dine ~/work/__{dag,modi}_config__ biblioteker. Derfor bør eventuelle pakkefejl efter denne opgradering løses ved at forsøge at fjerne og geninstallere den lokale version først."
+    },
+    "announce_end": "2023-08-15T23:59:59+02:00"
+  },
   {
     "status": "AUTO", 
     "work_start": "2023-09-01T15:00:00+02:00", 
