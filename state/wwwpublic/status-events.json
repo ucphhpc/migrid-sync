@@ -1,28 +1,6 @@
 [ 
   {
     "status": "AUTO", 
-    "work_start": "2023-08-12T18:00:00+02:00", 
-    "systems": [
-        "ERDA"
-    ],
-    "announce_start": "2023-08-01T12:00:00+02:00",
-    "title": {
-      "EN": "DAG and MODI Upgrade",
-      "DK": "DAG og MODI opgradering"
-    },
-    "services": [
-      "DAG",
-      "MODI"
-    ],
-    "work_end": "2023-08-12T23:00:00+02:00",
-    "description": {
-      "EN": "We will upgrade JupyterHub, JupyterLab and every Notebook on DAG and MODI to the most recent version. This might conflict with local versions installed in your ~/work/__{dag,modi}_config__ directories. Therefore any package errors after this upgrade should attempt to remove and reinstall the local version to start with.",
-      "DK": "Vi vil opgradere JupyterHub, JupyterLab og alle Notebooks på DAG og MODI til den nyeste version. Dette kan skabe konflikt med lokale versioner installeret i dine ~/work/__{dag,modi}_config__ biblioteker. Derfor bør eventuelle pakkefejl efter denne opgradering løses ved at forsøge at fjerne og geninstallere den lokale version først."
-    },
-    "announce_end": "2023-08-15T23:59:59+02:00"
-  },
-  {
-    "status": "AUTO", 
     "work_start": "2023-09-01T15:00:00+02:00", 
     "systems": [
         "ERDA"
@@ -63,12 +41,54 @@
     },
     "announce_end": "2023-09-05T23:59:59+02:00"
   },
+ {
+    "status": "AUTO", 
+    "work_start": "2023-08-23T08:00:00+02:00", 
+    "systems": [
+        "ERDA"
+    ],
+    "announce_start": "2023-08-14T11:00:00+02:00",
+    "title": {
+      "EN": "Planned ERDA Backend Storage Maintenance",
+      "DK": "Planlagt ERDA vedligehold af backendlageret"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2023-08-23T11:00:00+02:00",
+    "description": {
+      "EN": "We need to do some ERDA backend storage maintenance and will probbaly apply a few pending system and software stack updates while at it. The work will involve frontend down-time for a number of low-level system tasks. Thus, all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect the maintenance to be relatively fast and we will try to run the additional upgrades with the shortest possible downtime - so we expect to finish within a couple of hours if everything runs smoothly. More information will follow here.",
+      "DK": "Vi skal have lavet noget vedligehold af backendlageret på ERDA, og vi lægger sandsynligvis nogle udestående system- og software-rettelser ind ved samme lejlighed. Arbejdet kræver nedetid på frontends til de grundlæggende systemopgaver, og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi forventer ikke at vedligeholdet tager lang tid, og vi bestræber os på at minimere nedetiden ved de øvrige opdateringer, så vi forhåbentlig er færdige indenfor et par timer, hvis alting forløber planmæssigt. Yderligere information følger her."
+    },
+    "announce_end": "2023-08-24T12:00:00+02:00"
+  }, 
+  {
+    "status": "AUTO", 
+    "work_start": "2023-08-12T18:00:00+02:00", 
+    "systems": [
+        "ERDA"
+    ],
+    "announce_start": "2023-08-01T12:00:00+02:00",
+    "title": {
+      "EN": "DAG and MODI Upgrade",
+      "DK": "DAG og MODI opgradering"
+    },
+    "services": [
+      "DAG",
+      "MODI"
+    ],
+    "work_end": "2023-08-12T23:00:00+02:00",
+    "description": {
+      "EN": "We will upgrade JupyterHub, JupyterLab and every Notebook on DAG and MODI to the most recent version. This might introduce conflicts with local package versions installed in your ~/work/__{dag,modi}_config__ directories. Therefore, we recommend removing and possibly reinstalling the local version of packages if you experience any package errors after the upgrade.",
+      "DK": "Vi vil opgradere JupyterHub, JupyterLab og alle Notebooks på DAG og MODI til den nyeste version. Dette kan skabe konflikt med lokale pakkeversioner installeret i dine ~/work/__{dag,modi}_config__ biblioteker. Derfor anbefaler vi at fjerne og evt geninstallere den lokale version af pakker, hvis man oplever pakkefejl efter opgraderingen."
+    },
+    "announce_end": "2023-08-15T23:59:59+02:00"
+  },
   {
     "status": "AUTO", 
     "work_start": "2023-07-04T17:00:00+02:00", 
     "systems": [
-        "ERDA",
-        "IDMC"
+        "ERDA"
     ],
     "announce_start": "2023-06-20T20:00:00+02:00",
     "title": {
