@@ -508,11 +508,14 @@ def main(client_id, user_arguments_dict):
             user_post_data['workflows_data'] = {'Session': workflows_dict}
 
         with requests.session() as session:
+            # Refresh cookies
+            session.get(url_auth)
+            csrf_token = {"_xsrf": session.cookies['_xsrf']}
             # Authenticate and submit data
-            response = session.post(url_auth, headers=auth_header)
+            response = session.post(url_auth, headers=auth_header, params=csrf_token)
             if response.status_code == 200:
                 for user_data_type, user_data in user_post_data.items():
-                    response = session.post(url_data, json={user_data_type: user_data})
+                    response = session.post(url_data, json={user_data_type: user_data}, params=csrf_token)
                     if response.status_code != 200:
                         logger.error(
                             "Jupyter: User %s failed to submit data %s to %s"
@@ -609,11 +612,14 @@ def main(client_id, user_arguments_dict):
 
     # First login
     with requests.session() as session:
+        # Refresh cookies
+        session.get(url_auth)
+        csrf_token = {"_xsrf": session.cookies['_xsrf']}
         # Authenticate
-        response = session.post(url_auth, headers=auth_header)
+        response = session.post(url_auth, headers=auth_header, params=csrf_token)
         if response.status_code == 200:
             for user_data_type, user_data in user_post_data.items():
-                response = session.post(url_data, json={user_data_type: user_data})
+                response = session.post(url_data, json={user_data_type: user_data}, params=csrf_token)
                 if response.status_code != 200:
                     logger.error("Jupyter: User %s failed to submit data %s to %s"
                                 % (client_id, user_data, url_data))
