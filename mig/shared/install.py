@@ -353,6 +353,7 @@ def generate_confs(
     davs_show_port=443,
     ftps_ctrl_port=8021,
     ftps_ctrl_show_port=21,
+    ftps_pasv_ports='8100:8400',
     openid_port=8443,
     openid_show_port=443,
     openid_session_lifetime=43200,
@@ -583,6 +584,7 @@ def generate_confs(
     user_dict['__DAVS_SHOW_PORT__'] = "%s" % davs_show_port
     user_dict['__FTPS_CTRL_PORT__'] = "%s" % ftps_ctrl_port
     user_dict['__FTPS_CTRL_SHOW_PORT__'] = "%s" % ftps_ctrl_show_port
+    user_dict['__FTPS_PASV_PORTS__'] = ftps_pasv_ports
     user_dict['__OPENID_PORT__'] = "%s" % openid_port
     user_dict['__OPENID_SHOW_PORT__'] = "%s" % openid_show_port
     user_dict['__OPENID_SESSION_LIFETIME__'] = "%s" % openid_session_lifetime

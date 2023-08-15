@@ -90,6 +90,7 @@ if '__main__' == __name__:
         'sftp_address',
         'sftp_subsys_address',
         'ftps_address',
+        'ftps_pasv_ports',
         'davs_address',
         'jupyter_services',
         'jupyter_services_desc',
