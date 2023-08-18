@@ -830,20 +830,12 @@ def main():
     url = sys.argv[2]
     openid = sys.argv[3]
     login = sys.argv[4]
-    if argc > 4:
-        if sys.argv[5] == '-':
-            passwd = sys.stdin.readline().strip()
-            reopen_stdin = True
-        else:
-            passwd = sys.argv[5]
+    if argc > 4 and sys.argv[5] != '-':
+        passwd = sys.argv[5]
     else:
         passwd = getpass.getpass()
-    if argc > 5:
-        if sys.argv[6] == '-':
-            twofactor_key = sys.stdin.readline().strip()
-            reopen_stdin = True
-        else:
-            twofactor_key = sys.argv[6]
+    if argc > 5 and sys.argv[6] != '-':
+        twofactor_key = sys.argv[6]
     else:
         twofactor_key = getpass.getpass("2FA *key*: ")
 
