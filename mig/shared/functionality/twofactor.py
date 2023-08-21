@@ -43,7 +43,7 @@ from mig.shared import returnvalues
 from mig.shared.auth import twofactor_available, load_twofactor_key, \
     get_twofactor_token, verify_twofactor_token, generate_session_key, \
     save_twofactor_session, expire_twofactor_session
-from mig.shared.base import requested_backend, extract_field
+from mig.shared.base import requested_backend, extract_field, verify_local_url
 from mig.shared.defaults import twofactor_cookie_ttl, AUTH_MIG_OID, \
     AUTH_EXT_OID, AUTH_MIG_OIDC, AUTH_EXT_OIDC
 from mig.shared.functional import validate_input
@@ -146,6 +146,13 @@ function update_reload_counter(cnt, delay) {
         output_objects.append({'object_type': 'error_text', 'text':
                                '''2FA is not enabled on the system'''})
         return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    if not verify_local_url(configuration, redirect_url):
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             '''The requested redirect_url is not a valid local destination'''
+             })
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     if configuration.site_twofactor_strict_address \
             and not expire_twofactor_session(configuration,
