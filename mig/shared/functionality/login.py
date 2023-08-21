@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # login - general login method selection backend
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,6 +34,7 @@ from __future__ import absolute_import
 import os
 
 from mig.shared import returnvalues
+from mig.shared.base import verify_local_url
 from mig.shared.defaults import keyword_all
 from mig.shared.functional import validate_input
 from mig.shared.init import initialize_main_variables, find_entry
@@ -85,6 +86,13 @@ def main(client_id, user_arguments_dict):
     openid_error = ', '.join(accepted['modauthopenid.error'])
     # OpenID server errors may return here with redirect url set
     redirect_url = accepted['redirect_url'][-1]
+
+    if not verify_local_url(configuration, redirect_url):
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             '''The requested redirect_url is not a valid local destination'''
+             })
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = '%s login selector' % configuration.short_title

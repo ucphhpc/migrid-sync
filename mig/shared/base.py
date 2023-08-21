@@ -394,7 +394,7 @@ def requested_page(environ=None, fallback='home.py', name_only=False,
         return re.sub(r'[^a-zA-Z0-9:/._-]+', '', page_path)
 
 
-def requested_url_base(environ=None, include_unsafe=False):
+def requested_url_base(environ=None, include_unsafe=False, uri_field='SCRIPT_URI'):
     """Lookup requested url base from environ or os.environ if not provided.
     If the include_unsafe arg is set the result includes potentially unsafe
     values without proper filtering and thus MUST be used very carefully,
@@ -402,7 +402,7 @@ def requested_url_base(environ=None, include_unsafe=False):
     """
     if not environ:
         environ = os.environ
-    full_url = environ.get('SCRIPT_URI', None)
+    full_url = environ.get(uri_field, None)
     parts = full_url.split('/', 3)
     url_base = '/'.join(parts[:3])
     if include_unsafe:
@@ -410,6 +410,36 @@ def requested_url_base(environ=None, include_unsafe=False):
     else:
         # NOTE: for safety we filter all but simple URL chars
         return re.sub(r'[^a-zA-Z0-9/:._-]+', '', url_base)
+
+
+def verify_local_url(configuration, req_url):
+    """Check that provided req_url is really hosted locally at this site to
+    e.g. prevent unvalidated redirects or forwards from crafted URLs. Extracts
+    the requested URL base and checks it is among the configured local site
+    addresses.
+    """
+    _logger = configuration.logger
+    # NOTE: we use a custom field to extract base with requested_url_base
+    uri_field = 'VERIFY_URL'
+    fake_env = {uri_field: req_url}
+    base_url = requested_url_base(fake_env, True, uri_field)
+    local_url_anchors = (configuration.migserver_http_url,
+                         configuration.migserver_https_url,
+                         configuration.migserver_public_url,
+                         configuration.migserver_public_alias_url,
+                         configuration.migserver_https_mig_cert_url,
+                         configuration.migserver_https_ext_cert_url,
+                         configuration.migserver_https_mig_oid_url,
+                         configuration.migserver_https_ext_oid_url,
+                         configuration.migserver_https_mig_oidc_url,
+                         configuration.migserver_https_ext_oidc_url,
+                         configuration.migserver_https_sid_url)
+    for site_url in local_url_anchors:
+        if base_url == site_url or base_url.startswith('/') or \
+                base_url.startswith('%s/' % site_url):
+            return True
+    _logger.error("local site request verification failed: %r" % req_url)
+    return False
 
 
 def is_unicode(val):

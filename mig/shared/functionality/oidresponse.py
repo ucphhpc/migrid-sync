@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # oidresponse - general openid response handler backend
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,6 +37,7 @@ from __future__ import absolute_import
 import os
 
 from mig.shared import returnvalues
+from mig.shared.base import verify_local_url
 from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.url import openid_basic_logout_url
@@ -68,6 +69,13 @@ def main(client_id, user_arguments_dict, environ=None):
     openid_referrer = accepted['modauthopenid.referrer'][-1]
     # OpenID server errors may return here with redirect url set
     redirect_url = accepted['redirect_url'][-1]
+
+    if not verify_local_url(configuration, redirect_url):
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             '''The requested redirect_url is not a valid local destination'''
+             })
+        return (output_objects, returnvalues.CLIENT_ERROR)
 
     main_url = os.path.join(configuration.migserver_https_sid_url, 'public/')
 
