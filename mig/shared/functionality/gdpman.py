@@ -34,7 +34,7 @@ import tempfile
 
 from mig.shared import returnvalues
 from mig.shared.auth import get_twofactor_secrets
-from mig.shared.base import get_xgi_bin
+from mig.shared.base import get_xgi_bin, requested_page
 from mig.shared.defaults import csrf_field
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.gdp.all import ensure_gdp_user, get_projects, get_users, \
@@ -1650,8 +1650,8 @@ Please contact the site admins %s if you think it should be enabled.
                                                 return_query_dict=return_query_dict)
         elif active_project_client_id:
             dest_op_name = 'fileman'
-            redirect_url = environ.get('REQUEST_URI', '').split('?')[
-                0].replace(op_name, dest_op_name)
+            redirect_url = requested_page(environ).replace(op_name,
+                                                           dest_op_name)
         if redirect_url:
             html = """
             <a id='redirect' href='%s'></a>
@@ -1708,9 +1708,8 @@ Please contact the site admins %s if you think it should be enabled.
                                               base_vgrid_name)
             if project_client_id:
                 dest_op_name = 'fileman'
-                base_url = environ.get('REQUEST_URI',
-                                       '').split('?')[0].replace(op_name,
-                                                                 dest_op_name)
+                base_url = requested_page(environ).replace(op_name,
+                                                           dest_op_name)
                 html = """
                 <a id='gdp_login' href='%s'></a>
                 <script type='text/javascript'>
