@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridforum - Access VGrid private forum for owners and members
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,6 +36,7 @@ from __future__ import absolute_import
 import os
 
 from mig.shared import returnvalues
+from mig.shared.base import requested_page
 from mig.shared.forum import list_single_thread, list_threads, reply, new_subject, \
     search_threads, toggle_subscribe, list_subscribers
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
@@ -237,7 +238,7 @@ function toggle_new(form_elem_id, link_elem_id) {
                                                  msg_subject, msg_body)
                 query = 'vgrid_name=%s&action=show_thread&thread=%s'\
                         % (vgrid_name, thread_hash)
-                url = "%s?%s" % (os.environ['SCRIPT_URI'], query)
+                url = "%s?%s" % (requested_page(os.environ), query)
                 notify_subscribers(configuration, forum_base, vgrid_name, '',
                                    client_id, url)
                 thread = thread_hash
@@ -249,7 +250,7 @@ function toggle_new(form_elem_id, link_elem_id) {
                                            thread)
                 query = 'vgrid_name=%s&action=show_thread&thread=%s'\
                         % (vgrid_name, thread_hash)
-                url = "%s?%s" % (os.environ['SCRIPT_URI'], query)
+                url = "%s?%s" % (requested_page(os.environ), query)
                 notify_subscribers(configuration, forum_base, vgrid_name, '',
                                    client_id, url)
                 notify_subscribers(configuration, forum_base, vgrid_name,

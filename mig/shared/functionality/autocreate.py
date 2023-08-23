@@ -47,7 +47,7 @@ from mig.shared import returnvalues
 from mig.shared.accountstate import default_account_expire
 from mig.shared.base import client_id_dir, canonical_user, mask_creds, \
     fill_user, distinguished_name_to_user, fill_distinguished_name, \
-    get_site_base_url
+    get_site_base_url, requested_page
 from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_V2, \
     AUTH_OPENID_CONNECT, AUTH_MIG_CERT, AUTH_EXT_CERT, AUTH_MIG_OID, \
     AUTH_EXT_OID, AUTH_MIG_OIDC, AUTH_EXT_OIDC, keyword_auto
@@ -422,7 +422,7 @@ def main(client_id, user_arguments_dict, environ=None):
 
         # Stay on virtual host - extra useful while we test dual OpenID
 
-        base_url = environ.get('REQUEST_URI', base_url).split('?')[0]
+        base_url = requested_page(environ, fallback='/')
         backend = 'home.py'
         if configuration.site_enable_gdp:
             backend = 'gdpman.py'
@@ -504,7 +504,7 @@ Auto log out first to avoid sign up problems ...
             autologout_url = build_autologout_url(configuration,
                                                   environ,
                                                   client_id,
-                                                  environ['SCRIPT_URI'],
+                                                  requested_page(environ),
                                                   user_arguments_dict)
             title_entry = find_entry(output_objects, 'title')
             title_entry['meta'] = """<meta http-equiv = "refresh" content = "0; url=%s" />""" \

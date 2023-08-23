@@ -45,7 +45,8 @@ from mig.shared import returnvalues
 from mig.shared.auth import twofactor_available, load_twofactor_key, \
     get_twofactor_token, verify_twofactor_token, generate_session_key, \
     save_twofactor_session, expire_twofactor_session
-from mig.shared.base import requested_backend, extract_field, verify_local_url
+from mig.shared.base import requested_backend, requested_page, extract_field, \
+    verify_local_url
 from mig.shared.defaults import twofactor_cookie_ttl, AUTH_MIG_OID, \
     AUTH_EXT_OID, AUTH_MIG_OIDC, AUTH_EXT_OIDC
 from mig.shared.functional import validate_input
@@ -98,7 +99,7 @@ def main(client_id, user_arguments_dict, environ=None):
     # Extract raw data first
     if environ is None:
         environ = os.environ
-    request_url = environ.get('REQUEST_URI', '/')
+    request_url = requested_page(environ, fallback='/')
     user_agent = environ.get('HTTP_USER_AGENT', '')
     user_addr = environ.get('REMOTE_ADDR', '')
     auth_type, auth_flavor = detect_client_auth(configuration, environ)
