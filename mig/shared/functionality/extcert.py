@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # extcert - External certificate account sign up backend
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -114,14 +114,9 @@ def main(client_id, user_arguments_dict):
     for field_name in configuration.site_peers_explicit_fields:
         user_fields['peers_%s' % field_name] = ''
 
-    # Redirect to reqcert page without certificate requirement but without
-    # changing access method (CGI vs. WSGI).
+    # No fallback page without certificate requirement to redirect to here
+    # because page delivery fails if certificate is missing or invalid.
 
-    certreq_url = os.environ['REQUEST_URI'].replace('-bin', '-sid')
-    certreq_url = os.path.join(os.path.dirname(certreq_url), 'reqcert.py')
-    certreq_link = {'object_type': 'link', 'destination': certreq_url,
-                    'text': 'Request a new %s certificate account' %
-                            configuration.short_title}
     id_fields = distinguished_name_to_user(client_id)
     user_fields.update(id_fields)
 

@@ -33,7 +33,7 @@ import os
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir, distinguished_name_to_user, \
-    canonical_user, cert_field_map
+    canonical_user, cert_field_map, requested_page
 from mig.shared.accountreq import valid_password_chars, valid_name_chars, \
     password_min_len, password_max_len, account_request_template, \
     account_css_helpers, account_js_helpers, list_country_codes
@@ -131,7 +131,7 @@ def main(client_id, user_arguments_dict):
         # Redirect to extcert page with certificate requirement but without
         # changing access method (CGI vs. WSGI).
 
-        extcert_url = os.environ['REQUEST_URI'].replace('-sid', '-bin')
+        extcert_url = requested_page(os.environ).replace('-sid', '-bin')
         extcert_url = os.path.join(os.path.dirname(extcert_url), 'extcert.py')
         extcert_link = {'object_type': 'link', 'destination': extcert_url,
                         'text': 'Sign up with existing certificate (%s)' %

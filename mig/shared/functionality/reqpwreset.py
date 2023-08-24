@@ -33,7 +33,7 @@ import os
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir, distinguished_name_to_user, \
-    canonical_user, cert_field_map
+    canonical_user, cert_field_map, requested_page
 from mig.shared.accountreq import valid_password_chars, valid_name_chars, \
     password_min_len, password_max_len, account_pw_reset_template, \
     account_css_helpers
@@ -119,25 +119,21 @@ def main(client_id, user_arguments_dict, environ=None):
     # based on client_id and without changing access method (CGI vs. WSGI).
     if client_id:
         (auth_type, auth_flavor) = detect_client_auth(configuration, environ)
+        bin_url = requested_page(os.environ).replace('-sid', '-bin')
         if auth_flavor == AUTH_MIG_OID:
-            migoid_url = os.environ['REQUEST_URI'].replace('-sid', '-bin')
-            migoid_url = os.path.join(os.path.dirname(migoid_url), 'reqoid.py')
+            migoid_url = os.path.join(os.path.dirname(bin_url), 'reqoid.py')
             migoid_link = {'object_type': 'link', 'destination': migoid_url,
                            'text': 'Change %s %s password' %
                            (configuration.user_mig_oid_title, auth_type)}
             output_objects.append(migoid_link)
         elif auth_flavor == AUTH_MIG_OIDC:
-            migoidc_url = os.environ['REQUEST_URI'].replace('-sid', '-bin')
-            migoidc_url = os.path.join(
-                os.path.dirname(migoid_url), 'reqoidc.py')
+            migoidc_url = os.path.join(os.path.dirname(bin_url), 'reqoidc.py')
             migoidc_link = {'object_type': 'link', 'destination': migoidc_url,
                             'text': 'Change %s %s password' %
                             (configuration.user_mig_oid_title, auth_type)}
             output_objects.append(migoidc_link)
         elif auth_flavor == AUTH_MIG_CERT:
-            extcert_url = os.environ['REQUEST_URI'].replace('-sid', '-bin')
-            extcert_url = os.path.join(
-                os.path.dirname(extcert_url), 'extcert.py')
+            extcert_url = os.path.join(os.path.dirname(bin_url), 'extcert.py')
             extcert_link = {'object_type': 'link', 'destination': extcert_url,
                             'text': 'Change %s %s password' %
                             (configuration.user_mig_cert_title, auth_type)}
