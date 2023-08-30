@@ -775,7 +775,50 @@ def datatransfer_actions(driver, url, login, passwd, callbacks):
     if callbacks.get(state, None):
         print("INFO: callback for: %s" % state)
         callbacks[state](driver, state)
+    form_field = driver.find_element(by_what('id'), "createtransfer")
+    id_field = form_field.find_element(by_what('name'), "transfer_id")
+    id_field.send_keys("get-erda-frontpage")
+    host_field = form_field.find_element(by_what('name'), "fqdn")
+    host_field.send_keys("erda.ku.dk")
+    srcpath_field = form_field.find_element(by_what('name'), "transfer_src")
+    srcpath_field.send_keys("index.html")
+    dstpath_field = form_field.find_element(by_what('name'), "transfer_dst")
+    dstpath_field.send_keys(".")
+    protocol_dropdown = form_field.find_element(by_what('id'),
+                                         'protocol_select')
+    select_item_by_index(form_field, protocol_dropdown, 1)
+    # screenshot of datatransfer page filled with example to get erda frontpage
+    state = 'datatransfer-filled'
+    if callbacks.get(state, None):
+        print("INFO: callback for: %s" % state)
+        callbacks[state](driver, state)
+        
+    request_button = form_field.find_element(by_what('id'), "submit-request-transfer")
+    request_button.click()
+    # screenshot of result page for the submitted example
+    state = 'datatransfer-requested'
+    if callbacks.get(state, None):
+        print("INFO: callback for: %s" % state)
+        callbacks[state](driver, state)
 
+    # Transfer status and output folder screenshot
+    # Name of link is used due to a lack of find-able ID
+    status_button = driver.find_element(by_what('link_text'), "Transfer status and output folder")
+    status_button.click()
+    ajax_wait(driver, nav_name, "ui-progressbar")
+    state = 'datatransfer-statusfiles'
+    if callbacks.get(state, None):
+        print("INFO: callback for: %s" % state)
+        callbacks[state](driver, state)
+
+    # Go back to previous page
+    driver.back()
+    return_button = driver.find_element(by_what('link_text'), "Return to data transfers overview")
+    return_button.click()
+    state = 'datatransfer-overview'
+    if callbacks.get(state, None):
+        print("INFO: callback for: %s" % state)
+        callbacks[state](driver, state)
 
 def sharelink_actions(driver, url, login, passwd, callbacks):
     """Run user actions for section of same name"""
@@ -919,6 +962,8 @@ def main():
                          sub for (sub, _) in jupyter_sections]
     callback_targets += ['jupyter-ready', 'cloud-ready', 'people-ready',
                          'peers-ready', 'crontab-ready', 'datatransfer-ready',
+                         'datatransfer-filled', 'datatransfer-requested',
+                         'datatransfer-statusfiles', 'datatransfer-overview',
                          'sharelink-ready']
     callback_targets += ['open-project-ready', 'project-info-ready',
                          'create-project-ready', 'create-project-filled',
