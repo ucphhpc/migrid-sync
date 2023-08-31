@@ -34,10 +34,10 @@
     "services": [
       "MODI"
     ],
-    "work_end": "2023-08-31T20:00:00+02:00",
+    "work_end": "2023-08-31T15:30:00+02:00",
     "description": {
-      "EN": "We will apply a regular monthly maintenance of MODI, which includes updating the software stack and rebooting the system.",
-      "DK": "Vi vil udføre en almindelig månedlig vedligeholdelse af MODI, som inkluderer opdatering af softwarestakken og genstart af systemet."
+      "EN": "We will apply a regular monthly maintenance of MODI, which includes updating the software stack and rebooting the system. We completed this update and relaunched the service which came online again as expected.",
+      "DK": "Vi vil udføre en almindelig månedlig vedligeholdelse af MODI, som inkluderer opdatering af softwarestakken og genstart af systemet. Vi fuldførte denne opdatering og genstartede servicen, som kom online igen som forventet."
     },
     "announce_end": "2023-09-05T23:59:59+02:00"
   },
