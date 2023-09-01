@@ -1,4 +1,25 @@
-[ 
+[
+   {
+    "status": "AUTO",
+    "work_start": "2023-09-01T08:00:00+02:00",
+    "systems": [
+        "ALL"
+    ],
+    "announce_start": "2023-09-01T12:00:00+02:00",
+    "title": {
+      "EN": "All systems are unavailable due to fallout of the central OpenID login service",
+      "DK": "Alle systemer er utilgængelige pga. udfald i den centrale OpenID login service"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2023-09-01T20:00:00+02:00",
+    "description": {
+      "EN": "We trying to solve the problem",
+      "DK": "Vi arbejder på at løse problemet"
+    },
+    "announce_end": "2023-09-01T20:00:00+02:00"
+  }, 
   {
     "status": "AUTO", 
     "work_start": "2023-09-01T15:00:00+02:00", 
