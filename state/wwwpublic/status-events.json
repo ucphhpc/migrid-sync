@@ -1,24 +1,24 @@
 [
    {
     "status": "AUTO",
-    "work_start": "2023-09-01T08:00:00+02:00",
+    "work_start": "2023-09-01T08:50:00+02:00",
     "systems": [
         "ALL"
     ],
-    "announce_start": "2023-09-01T12:00:00+02:00",
+    "announce_start": "2023-09-01T09:00:00+02:00",
     "title": {
-      "EN": "All systems are unavailable due to fallout of the central OpenID login service",
-      "DK": "Alle systemer er utilgængelige pga. udfald i den centrale OpenID login service"
+      "EN": "Web access unavailable due to fallout of the central KU OpenID login service",
+      "DK": "Webadgang utilgængelig p.g.a. udfald i den centrale KU OpenID login service"
     },
     "services": [
-      "ALL"
+        "Web"
     ],
-    "work_end": "2023-09-01T20:00:00+02:00",
+    "work_end": "2023-09-01T11:00:00+02:00",
     "description": {
-      "EN": "We are working on solving the issue",
-      "DK": "Vi arbejder på at løse problemet"
+      "EN": "The OpenID service at KU-IT went down this morning and prevented KU-user login to ERDA, SIF and MiGrid. We reported the problem and at about 11 it came back online. Everything should be back to normal now, so please report any remaining issues to our support as usual.",
+      "DK": "KU-ITs OpenID-service gik ned til morgen og forhindrede KU-brugere i at logge in på ERDA, SIF og MiGrid. Vi fejlmeldte den og omkring kl 11 kom den tilbage online. Alting skulle virke igen, så  meld gerne evt tilbageværende problemer ind på vores support som vanligt."
     },
-    "announce_end": "2023-09-01T20:00:00+02:00"
+    "announce_end": "2023-09-02T12:00:00+02:00"
   }, 
   {
     "status": "AUTO", 
