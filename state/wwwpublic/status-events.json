@@ -22,7 +22,7 @@
   }, 
   {
     "status": "AUTO", 
-    "work_start": "2023-09-01T15:00:00+02:00", 
+    "work_start": "2023-09-01T10:00:00+02:00", 
     "systems": [
         "ERDA"
     ],
@@ -34,10 +34,10 @@
     "services": [
       "DAG"
     ],
-    "work_end": "2023-09-01T20:00:00+02:00",
+    "work_end": "2023-09-01T11:00:00+02:00",
     "description": {
-      "EN": "We will apply a regular monthly maintenance of DAG, which includes updating the software stack and rebooting the system.",
-      "DK": "Vi vil udføre en almindelig månedlig vedligeholdelse af DAG, som inkluderer opdatering af softwarestakken og genstart af systemet."
+      "EN": "We will apply a regular monthly maintenance of DAG, which includes updating the software stack and rebooting the system. We used the KUIT OpenID service fallout to apply this update to mitigate the amount of downtime the UCPH users would experience during working hours. The DAG update was finished in time before the OpenID service had been fixed by KUIT.",
+      "DK": "Vi vil udføre en almindelig månedlig vedligeholdelse af DAG, som inkluderer opdatering af softwarestakken og genstart af systemet. Vi brugte KUIT OpenID service udfaldet til at udføre denne opdatering for at minimere nedetiden for KU brugere i arbejdstiden. DAG opdateringen var færdig i tide inden KUIT havde fået fixet OpenID servicen."
     },
     "announce_end": "2023-09-05T23:59:59+02:00"
   },
