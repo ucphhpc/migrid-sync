@@ -1,4 +1,24 @@
-[
+[   {
+    "status": "AUTO",
+    "work_start": "2023-09-13T17:00:00+02:00",
+    "systems": [
+        "SIF"
+    ],
+    "announce_start": "2023-09-04T17:00:00+02:00",
+    "title": {
+      "EN": "Planned SIF Maintenance", 
+      "DK": "Planlagt SIF systemvedligehold"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2023-09-13T23:00:00+02:00",
+    "description": {
+      "EN": "It's time for a thorough update of the SIF service. The work will involve down-time for low-level system updates. Thus the service will be temporarily unavailable for shorter or longer periods during the maintenance window.", 
+      "DK": "Det er tid til en grundig opdatering af SIF tjenesten. Arbejdet vil involvere nedetid for systemopdateringer på lavt niveau. Denne tjeneste vil derfor være midlertidigt utilgængelig i kortere eller længere perioder under vedligeholdelsesvinduet."
+    },
+    "announce_end": "2023-09-13T23:00:00+02:00"
+   },
    {
     "status": "AUTO",
     "work_start": "2023-09-01T08:50:00+02:00",
