@@ -484,11 +484,11 @@
     -webkit-transition: 2s; /* For Safari 3.1 to 6.0 */
     transition: 2s;
     z-index: 110;
-    display: none;
+    display: none !important;
 }
 
 .popup-active {
-    display: block;
+    display: block !important;
     bottom: 60px;
     left: 30px;
     -webkit-transition: 2s; /* For Safari 3.1 to 6.0 */
