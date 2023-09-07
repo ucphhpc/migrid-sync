@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # userid - gdp userid helper functions related to GDP actions
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,7 +32,7 @@ import os
 
 from mig.shared.base import expand_openid_alias, get_short_id
 from mig.shared.defaults import gdp_distinguished_field
-from mig.shared.pwhash import make_simple_hash
+from mig.shared.pwhash import make_simple_hash, make_safe_hash, make_encrypt
 
 client_id_project_postfix = '/%s=' % gdp_distinguished_field
 
@@ -227,12 +227,26 @@ def __project_short_id_from_user_id(configuration, user_id):
 
 
 def __scramble_user_id(configuration, user_id):
-    """Scramble user_id"""
+    """Scramble user_id as specified in configuration"""
     _logger = configuration.logger
 
     result = None
     try:
-        result = make_simple_hash(user_id, 'sha256')
+        if configuration.gdp_id_scramble in ['', 'false']:
+            result = user_id
+        elif configuration.gdp_id_scramble in ['simple_hash', 'simple']:
+            result = make_simple_hash(user_id)
+        elif configuration.gdp_id_scramble in ['safe_hash', 'safe']:
+            result = make_safe_hash(user_id)
+        elif configuration.gdp_id_scramble in ['encrypt', 'fernet']:
+            # NOTE: emulate same None-handling as for hash scramblers
+            if user_id is None:
+                result = None
+            else:
+                result = make_encrypt(configuration, user_id)
+        else:
+            raise ValueError("unsupported gdp_id_scramble conf value: %s" %
+                             configuration.gdp_id_scramble)
     except Exception as exc:
         _logger.error("GDP: __scramble_user_id failed for user: %r: %s"
                       % (user_id, exc))
@@ -321,3 +335,18 @@ def get_short_id_from_user_id(configuration, user_id):
         result = __short_id_from_client_id(configuration, client_id)
 
     return result
+
+
+if __name__ == "__main__":
+    from mig.shared.conf import get_configuration_object
+    configuration = get_configuration_object()
+    id_list = (None, '', 'none', 'johndoe', 'john@doe.org',
+               '/C=DK/ST=NA/O=Doe/OU=NA/CN=John Doe/emailAddress=john@doe.org'
+               )
+    scramble_list = ['', 'false', 'simple_hash', 'safe_hash', 'encrypt']
+    for user_id in id_list:
+        for scramble in scramble_list:
+            configuration.gdp_id_scramble = scramble
+            scrambled_id = __scramble_user_id(configuration, user_id)
+            print("scrambled gdp user %r to %r with %r-helper" %
+                  (user_id, scrambled_id, scramble))

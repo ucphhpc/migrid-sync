@@ -395,7 +395,8 @@ def generate_confs(
     imnotify_channel='',
     imnotify_username='',
     imnotify_password='',
-    gdp_data_categories='data_categories.json'
+    gdp_data_categories='data_categories.json',
+    gdp_id_scramble='safe_hash'
 ):
     """Generate Apache and MiG server confs with specified variables"""
 
@@ -639,6 +640,7 @@ def generate_confs(
     user_dict['__IMNOTIFY_USERNAME__'] = imnotify_username
     user_dict['__IMNOTIFY_PASSWORD__'] = imnotify_password
     user_dict['__GDP_DATA_CATEGORIES__'] = gdp_data_categories
+    user_dict['__GDP_ID_SCRAMBLE'] = gdp_id_scramble
     user_dict['__PUBLIC_HTTPS_LISTEN__'] = listen_clause
     user_dict['__PUBLIC_ALIAS_HTTPS_LISTEN__'] = listen_clause
 

@@ -2061,6 +2061,21 @@ location.""" % self.config_file)
                 self.loglevel, syslog=syslog_gdp, app='main-gdp')
         self.gdp_logger = self.gdp_logger_obj.logger
 
+        # NOTE: default to safe_hash (sha256) in order to pseudonymize IDs
+        #       in gdp logs and make it easy to 'forget' a user by simply
+        #       discarding the original ID (in line with the right to be
+        #       forgotten in GDPR terms).
+        __default_id_scramble = 'safe_hash'
+        __valid_id_scramble = ['', 'false', 'encrypt', 'fernet', 'simple',
+                               'simple_hash', 'safe', 'safe_hash']
+        self.gdp_id_scramble = __default_id_scramble
+        if config.has_option('GLOBAL', 'gdp_id_scramble'):
+            self.gdp_id_scramble = config.get('GLOBAL',
+                                              'gdp_id_scramble').lower()
+            if not self.gdp_id_scramble in __valid_id_scramble:
+                # Fall back to default
+                self.gdp_id_scramble = __default_id_scramble
+
         self.gdp_email_notify = True
         if config.has_option('GLOBAL', 'gdp_email_notify'):
             self.gdp_email_notify = config.getboolean('GLOBAL',
