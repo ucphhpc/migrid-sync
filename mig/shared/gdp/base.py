@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # base - gdp base helper functions related to GDP actions
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -794,15 +794,15 @@ def __delete_mig_user(configuration,
 def __get_gdp_user_log_entry(configuration,
                              client_id,
                              match_client_id=True,
-                             match_hashed_client_id=True,
+                             match_scrambled_client_id=True,
                              do_lock=True):
     """Returns (client_id, client_id_hash) user log entry for *client_id*"""
     _logger = configuration.logger
 
     result = None
     (log_filepath, log_lock_filepath) = __gdp_user_log_filepath(configuration)
-    hashed_client_id = __scramble_user_id(configuration, client_id)
-    if hashed_client_id is None:
+    scrambled_client_id = __scramble_user_id(configuration, client_id)
+    if scrambled_client_id is None:
         return result
     if do_lock:
         flock = acquire_file_lock(log_lock_filepath)
@@ -813,8 +813,8 @@ def __get_gdp_user_log_entry(configuration,
         for line in fh:
             line_arr = [i.strip() for i in line.split(':')]
             if (match_client_id and client_id == line_arr[1]) \
-                    or (match_hashed_client_id
-                        and hashed_client_id == line_arr[2]):
+                    or (match_scrambled_client_id
+                        and scrambled_client_id == line_arr[2]):
                 result = (line_arr[1], line_arr[2])
         fh.close()
     except Exception as exc:
