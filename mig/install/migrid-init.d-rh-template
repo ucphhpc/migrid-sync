@@ -121,7 +121,7 @@ start_script() {
     PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
     echo -n "Starting MiG server daemon: $SHORT_NAME"
     daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
-	   "${DAEMON_PATH} >> ${MIG_LOG}/mig.out 2>&1 &"
+	   "${DAEMON_PATH} >> ${MIG_LOG}/script.out 2>&1 &"
     RET=$?
     if [ $RET -ne 0 ]; then 
 	failure

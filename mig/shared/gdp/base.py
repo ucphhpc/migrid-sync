@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # base - gdp base helper functions related to GDP actions
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -794,15 +794,16 @@ def __delete_mig_user(configuration,
 def __get_gdp_user_log_entry(configuration,
                              client_id,
                              match_client_id=True,
-                             match_hashed_client_id=True,
+                             match_scrambled_client_id=True,
                              do_lock=True):
-    """Returns (client_id, client_id_hash) user log entry for *client_id*"""
+    """Returns (client_id, scrambled_client_id) user log entry for *client_id*
+    """
     _logger = configuration.logger
 
     result = None
     (log_filepath, log_lock_filepath) = __gdp_user_log_filepath(configuration)
-    hashed_client_id = __scramble_user_id(configuration, client_id)
-    if hashed_client_id is None:
+    scrambled_client_id = __scramble_user_id(configuration, client_id)
+    if scrambled_client_id is None:
         return result
     if do_lock:
         flock = acquire_file_lock(log_lock_filepath)
@@ -813,8 +814,8 @@ def __get_gdp_user_log_entry(configuration,
         for line in fh:
             line_arr = [i.strip() for i in line.split(':')]
             if (match_client_id and client_id == line_arr[1]) \
-                    or (match_hashed_client_id
-                        and hashed_client_id == line_arr[2]):
+                    or (match_scrambled_client_id
+                        and scrambled_client_id == line_arr[2]):
                 result = (line_arr[1], line_arr[2])
         fh.close()
     except Exception as exc:
@@ -827,7 +828,7 @@ def __get_gdp_user_log_entry(configuration,
 
 
 def __update_gdp_user_log(configuration, client_id, do_lock=True):
-    """Add *client_id* and it's hash to GDP users log"""
+    """Add *client_id* and it's scrambled version to GDP users log"""
     _logger = configuration.logger
 
     result = False
@@ -851,9 +852,9 @@ def __update_gdp_user_log(configuration, client_id, do_lock=True):
             timestamp = time.time()
             current_datetime = datetime.datetime.fromtimestamp(timestamp)
             date = current_datetime.strftime('%d-%m-%Y_%H-%M-%S')
-            client_id_hash = __scramble_user_id(configuration, client_id)
+            scrambled_client_id = __scramble_user_id(configuration, client_id)
             msg = "%s : %s : %s :\n" \
-                % (date, client_id, client_id_hash)
+                % (date, client_id, scrambled_client_id)
             fh.write(msg)
             fh.close()
             result = True
@@ -1046,10 +1047,10 @@ def project_log(
             client_id = possible_project_client_id
             project_client_id = None
 
-    # Generate user hash for log
+    # Generate scrambled user id for log
 
     if status:
-        user_hash = __scramble_user_id(configuration, client_id)
+        scrambled_user = __scramble_user_id(configuration, client_id)
 
     # Get project name
 
@@ -1082,7 +1083,7 @@ def project_log(
             try:
                 details = "%s" % details
                 # _logger.debug("user_id: %s" % user_id)
-                details = details.replace(user_id, user_hash)
+                details = details.replace(user_id, scrambled_user)
 
                 # Scramble project_client_id and associated short_id and dirs
 
@@ -1091,23 +1092,23 @@ def project_log(
                         configuration, user_id)
                 # _logger.debug("project_client_id: %s" % project_client_id)
                 if project_client_id:
-                    project_client_id_hash = \
+                    scrambled_project_client_id = \
                         __scramble_user_id(configuration, project_client_id)
                     details = details.replace(
-                        project_client_id, project_client_id_hash)
+                        project_client_id, scrambled_project_client_id)
                     project_dir = client_id_dir(project_client_id)
                     # _logger.debug("project_dir: %s" % project_dir)
-                    project_dir_hash = __scramble_user_id(
+                    scrambled_project_dir = __scramble_user_id(
                         configuration, project_client_id)
                     details = details.replace(
-                        project_dir, project_dir_hash)
+                        project_dir, scrambled_project_dir)
                     project_short_id = __short_id_from_client_id(configuration,
                                                                  client_id)
                     # _logger.debug("project_short_id: %s" % project_short_id)
-                    project_short_id_hash = __scramble_user_id(
+                    scrambled_project_short_id = __scramble_user_id(
                         configuration, project_short_id)
                     details = details.replace(
-                        project_short_id, project_short_id_hash)
+                        project_short_id, scrambled_project_short_id)
 
                 # Scramble client_id and associated short_id and dirs
 
@@ -1115,20 +1116,20 @@ def project_log(
                     configuration, user_id)
                 # _logger.debug("client_id: %s" % client_id)
                 if client_id:
-                    client_id_hash = __scramble_user_id(
+                    scrambled_client_id = __scramble_user_id(
                         configuration, client_id)
-                    details = details.replace(client_id, client_id_hash)
+                    details = details.replace(client_id, scrambled_client_id)
                     client_dir = client_id_dir(client_id)
                     # _logger.debug("client_dir: %s" % client_dir)
-                    client_dir_hash = __scramble_user_id(
+                    scrambled_client_dir = __scramble_user_id(
                         configuration, client_dir)
-                    details = details.replace(client_dir, client_dir_hash)
+                    details = details.replace(client_dir, scrambled_client_dir)
                     short_id = __short_id_from_client_id(configuration,
                                                          client_id)
                     # _logger.debug("short_id: %s" % short_id)
-                    short_id_hash = __scramble_user_id(
+                    scrambled_short_id = __scramble_user_id(
                         configuration, short_id)
-                    details = details.replace(short_id, short_id_hash)
+                    details = details.replace(short_id, scrambled_short_id)
                 else:
                     raise ValueError(
                         "Missing client_id for user_id: %s" % user_id)
@@ -1153,7 +1154,7 @@ def project_log(
     if status:
         msg = ": %s : %s : %s : %s : %s : %s : %s : %s : %s :" % (
             project_name,
-            user_hash,
+            scrambled_user,
             user_addr,
             protocol,
             action,
@@ -1499,8 +1500,8 @@ def ensure_gdp_user(configuration, client_addr, client_id):
                                                       match_client_id=False,
                                                       do_lock=False)
         if gdp_user_log_entry and gdp_user_log_entry[0] != client_id:
-            err_msg += ": User-hash already exists in user log"
-            _logger.error(log_err_msg + ": User-hash: %r"
+            err_msg += ": Scrambled user already exists in user log"
+            _logger.error(log_err_msg + ": Scrambled user: %r"
                           % gdp_user_log_entry[1]
                           + " already exists in user log for user: %r"
                           % gdp_user_log_entry[0])
@@ -3127,7 +3128,7 @@ def create_project_user(
                                                   match_client_id=False)
     if gdp_user_log_entry and gdp_user_log_entry[0] != project_client_id:
         status = False
-        _logger.error("GDP: Project user hash: %r" % gdp_user_log_entry[1]
+        _logger.error("GDP: Scrambled project user: %r" % gdp_user_log_entry[1]
                       + " is already used for user: %r" % gdp_user_log_entry[0])
 
     if status:

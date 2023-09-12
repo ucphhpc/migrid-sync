@@ -1,7 +1,48 @@
-[ 
+[   {
+    "status": "AUTO",
+    "work_start": "2023-09-13T17:00:00+02:00",
+    "systems": [
+        "SIF"
+    ],
+    "announce_start": "2023-09-04T17:00:00+02:00",
+    "title": {
+      "EN": "Planned SIF Maintenance", 
+      "DK": "Planlagt SIF systemvedligehold"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2023-09-13T23:00:00+02:00",
+    "description": {
+      "EN": "It's time for a thorough update of the SIF service. The work will involve down-time for low-level system updates. Thus the service will be temporarily unavailable for shorter or longer periods during the maintenance window.", 
+      "DK": "Det er tid til en grundig opdatering af SIF tjenesten. Arbejdet vil involvere nedetid for systemopdateringer på lavt niveau. Denne tjeneste vil derfor være midlertidigt utilgængelig i kortere eller længere perioder under vedligeholdelsesvinduet."
+    },
+    "announce_end": "2023-09-13T23:00:00+02:00"
+   },
+   {
+    "status": "AUTO",
+    "work_start": "2023-09-01T08:50:00+02:00",
+    "systems": [
+        "ALL"
+    ],
+    "announce_start": "2023-09-01T09:00:00+02:00",
+    "title": {
+      "EN": "Web access unavailable due to fallout of the central KU OpenID login service",
+      "DK": "Webadgang utilgængelig p.g.a. udfald i den centrale KU OpenID login service"
+    },
+    "services": [
+        "Web"
+    ],
+    "work_end": "2023-09-01T11:00:00+02:00",
+    "description": {
+      "EN": "The OpenID service at KU-IT went down this morning and prevented KU-user login to ERDA, SIF and MiGrid. We reported the problem and at about 11 it came back online. Everything should be back to normal now, so please report any remaining issues to our support as usual.",
+      "DK": "KU-ITs OpenID-service gik ned til morgen og forhindrede KU-brugere i at logge in på ERDA, SIF og MiGrid. Vi fejlmeldte den og omkring kl 11 kom den tilbage online. Alting skulle virke igen, så  meld gerne evt tilbageværende problemer ind på vores support som vanligt."
+    },
+    "announce_end": "2023-09-02T12:00:00+02:00"
+  }, 
   {
     "status": "AUTO", 
-    "work_start": "2023-09-01T15:00:00+02:00", 
+    "work_start": "2023-09-01T10:00:00+02:00", 
     "systems": [
         "ERDA"
     ],
@@ -13,10 +54,10 @@
     "services": [
       "DAG"
     ],
-    "work_end": "2023-09-01T20:00:00+02:00",
+    "work_end": "2023-09-01T11:00:00+02:00",
     "description": {
-      "EN": "We will apply a regular monthly maintenance of DAG, which includes updating the software stack and rebooting the system.",
-      "DK": "Vi vil udføre en almindelig månedlig vedligeholdelse af DAG, som inkluderer opdatering af softwarestakken og genstart af systemet."
+      "EN": "We will apply a regular monthly maintenance of DAG, which includes updating the software stack and rebooting the system. We used the KUIT OpenID service fallout to apply this update to mitigate the amount of downtime the UCPH users would experience during working hours. The DAG update was finished in time before the OpenID service had been fixed by KUIT.",
+      "DK": "Vi vil udføre en almindelig månedlig vedligeholdelse af DAG, som inkluderer opdatering af softwarestakken og genstart af systemet. Vi brugte KUIT OpenID service udfaldet til at udføre denne opdatering for at minimere nedetiden for KU brugere i arbejdstiden. DAG opdateringen var færdig i tide inden KUIT havde fået fixet OpenID servicen."
     },
     "announce_end": "2023-09-05T23:59:59+02:00"
   },
@@ -34,10 +75,10 @@
     "services": [
       "MODI"
     ],
-    "work_end": "2023-08-31T20:00:00+02:00",
+    "work_end": "2023-08-31T15:30:00+02:00",
     "description": {
-      "EN": "We will apply a regular monthly maintenance of MODI, which includes updating the software stack and rebooting the system.",
-      "DK": "Vi vil udføre en almindelig månedlig vedligeholdelse af MODI, som inkluderer opdatering af softwarestakken og genstart af systemet."
+      "EN": "We will apply a regular monthly maintenance of MODI, which includes updating the software stack and rebooting the system. We completed this update and relaunched the service which came online again as expected.",
+      "DK": "Vi vil udføre en almindelig månedlig vedligeholdelse af MODI, som inkluderer opdatering af softwarestakken og genstart af systemet. Vi fuldførte denne opdatering og genstartede servicen, som kom online igen som forventet."
     },
     "announce_end": "2023-09-05T23:59:59+02:00"
   },
