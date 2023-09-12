@@ -1,0 +1,13 @@
+--- /usr/lib/python2.7/site-packages/paramiko/transport.py	2023-09-11 14:12:00.801675759 +0200
++++ /usr/lib/python2.7/site-packages/paramiko/transport.py.orig	2023-09-11 14:10:06.584651532 +0200
+@@ -2187,9 +2187,7 @@
+                         "server" if self.server_mode else "client", e
+                     ),
+                 )
+-                # NOTE: we degraded this noisy traceback from ERROR to INFO
+-                #       It is usually just ssh vulnerability scans failing.
+-                self._log(INFO, util.tb_strings())
++                self._log(ERROR, util.tb_strings())
+                 self.saved_exception = e
+             except EOFError as e:
+                 self._log(DEBUG, "EOF in transport thread")
