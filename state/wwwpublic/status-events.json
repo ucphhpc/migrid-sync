@@ -1,4 +1,26 @@
-[   {
+[
+ {
+    "status": "AUTO", 
+    "work_start": "2023-09-15T22:00:00+02:00", 
+    "systems": [
+        "ALL"
+    ],
+    "announce_start": "2023-09-13T11:00:00+02:00",
+    "title": {
+      "EN": "Planned Maintenance on General UCPH-Infrastructure - possible side effects",
+      "DK": "Planlagt vedligehold på generel KU-infrastruktur - mulige sideeffekter"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2023-08-17T10:00:00+02:00",
+    "description": {
+      "EN": "UCPH central has announced general power and ventilation maintenance work at HCØ all weekend. Our data centers are not directly connected to the same switchboards and in any case we have emergency power for most of our equipment. So we don't expect any outages or downtimes, but just a heads-up in case of unforeseen side effects of the work.",
+      "DK": "KU har fra centralt hold meldt om generelt strøm- og ventilationsarbejde henover weekenden. Vores datacentre er ikke direkte på de berørte hovedtavler og vi har uanset også det meste af vores udstyr på nødstrøm. Så vi forventer ikke nogen nedetider eller udfald, men nævner det alligevel for en sikkerheds skyld i tilfælde af uventede følger af arbejdet."
+    },
+    "announce_end": "2023-09-18T12:00:00+02:00"
+  }, 
+   {
     "status": "AUTO",
     "work_start": "2023-09-13T17:00:00+02:00",
     "systems": [
