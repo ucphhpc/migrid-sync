@@ -186,7 +186,8 @@ class SFTPHandle(paramiko.SFTPHandle):
         Upon 'close' the clustered log entry is written to the log"""
         @wraps(method)
         def _impl(self, *method_args, **method_kwargs):
-            if not configuration.site_enable_gdp:
+            if not configuration.site_enable_gdp \
+                    or configuration.loglevel != 'debug':
                 return method(self, *method_args, **method_kwargs)
             logger = configuration.logger
             result = None
@@ -572,8 +573,11 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
             elif flags & (os.O_WRONLY |
                           os.O_TRUNC):
                 log_action = 'truncated'
+            elif flags == os.O_RDONLY:
+                # NOTE: os.O_RDONLY == 0
+                log_action = 'accessed'
             else:
-                skiplog = True
+                log_action = 'modified'
 
         # list_folder
 
