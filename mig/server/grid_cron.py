@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_cron - daemon to monitor user crontabs and trigger actions
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -37,15 +37,16 @@ from __future__ import absolute_import
 import datetime
 import fnmatch
 import glob
+import importlib
 import logging
 import logging.handlers
+import multiprocessing
 import os
 import signal
 import sys
 import tempfile
 import time
 import threading
-import multiprocessing
 
 try:
     from watchdog.observers import Observer
@@ -83,6 +84,7 @@ from mig.shared.fileio import makedirs_rec
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.job import fill_mrsl_template, new_job
 from mig.shared.logger import daemon_logger, register_hangup_handler
+from mig.shared.output import txt_format
 
 # Global cron entry dictionaries with crontabs for all users
 
@@ -141,11 +143,10 @@ def run_command(
 
     # logger.debug('(%s) import main from %s' % (pid, function))
 
-    main = id
-    txt_format = id
+    main = None
     try:
-        exec('from mig.shared.functionality.%s import main' % function)
-        exec('from mig.shared.output import txt_format')
+        main = importlib.import_module('mig.shared.functionality.%s' %
+                                       function).main
 
         # logger.debug('(%s) run %s on %s for %s' % \
         #              (pid, function, user_arguments_dict, client_id))
@@ -153,6 +154,7 @@ def run_command(
         # Fake HTTP POST manually setting fields required for CSRF check
 
         os.environ['HTTP_USER_AGENT'] = 'grid cron daemon'
+        os.environ['BACKEND_NAME'] = '%s' % function
         os.environ['PATH_INFO'] = '%s.py' % function
         os.environ['REQUEST_METHOD'] = form_method.upper()
         # We may need a REMOTE_ADDR for gdplog call even if not really enabled
