@@ -1,4 +1,26 @@
 [
+  {
+    "status": "AUTO",
+    "work_start": "2023-10-02T17:00:00+02:00",
+    "systems": [
+        "ERDA"
+    ],
+    "announce_start": "2023-09-18T09:00:00+02:00",
+    "title": {
+      "EN": "Planned DAG and MODI Maintenance.",
+      "DK": "Planlagt vedligehold af DAG og MODI-tjenesterne."
+    },
+    "services": [
+      "DAG",
+      "MODI"
+    ],
+    "work_end": "2023-10-02T22:00:00+02:00",
+    "description": {
+      "EN": "We will apply general maintenance to the DAG and MODI services. Interruptions to these services will occur. All DAG and MODI upgrades are complete and everything is back in normal production.",
+      "DK": "Vi udruller den månedelige opdatering og vedligeholdelse af DAG og MODI tjenesterne. Afbrydelser af disse tjenester vil forekomme. Alle DAG og MODI opgraderinger er færdige, og alt er tilbage i normal drift."
+    },
+    "announce_end": "2023-10-03T12:00:00+02:00"
+   },
  {
     "status": "AUTO", 
     "work_start": "2023-09-15T22:00:00+02:00", 
@@ -34,10 +56,10 @@
     "services": [
       "ALL"
     ],
-    "work_end": "2023-09-13T23:00:00+02:00",
+    "work_end": "2023-09-13T20:00:00+02:00",
     "description": {
-      "EN": "It's time for a thorough update of the SIF service. The work will involve down-time for low-level system updates. Thus the service will be temporarily unavailable for shorter or longer periods during the maintenance window.", 
-      "DK": "Det er tid til en grundig opdatering af SIF tjenesten. Arbejdet vil involvere nedetid for systemopdateringer på lavt niveau. Denne tjeneste vil derfor være midlertidigt utilgængelig i kortere eller længere perioder under vedligeholdelsesvinduet."
+      "EN": "It's time for a thorough update of the SIF service. The work will involve down-time for low-level system updates. Thus the service will be temporarily unavailable for shorter or longer periods during the maintenance window. We completed the work and SIF is back online.", 
+      "DK": "Det er tid til en grundig opdatering af SIF tjenesten. Arbejdet vil involvere nedetid for systemopdateringer på lavt niveau. Denne tjeneste vil derfor være midlertidigt utilgængelig i kortere eller længere perioder under vedligeholdelsesvinduet. Dette arbejde er afsluttet og SIF er tilbage online."
     },
     "announce_end": "2023-09-13T23:00:00+02:00"
    },
