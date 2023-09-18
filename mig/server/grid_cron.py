@@ -538,7 +538,8 @@ def monitor(configuration):
                         logger.info('run matching cron entry: %s' % entry)
                         run_handler(configuration, client_id, loop_minute,
                                     entry)
-            for (atjobs_path, user_atjobs) in all_atjobs.items():
+            # NOTE: we need a copy of all_atjobs to avoid errors on inline edit
+            for (atjobs_path, user_atjobs) in list(all_atjobs.items()):
                 client_dir = os.path.basename(os.path.dirname(atjobs_path))
                 client_id = client_dir_id(client_dir)
                 remaining = []

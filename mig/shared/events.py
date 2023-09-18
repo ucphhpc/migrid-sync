@@ -38,7 +38,7 @@ import shlex
 
 from mig.shared.base import client_id_dir
 from mig.shared.defaults import crontab_name, atjobs_name
-from mig.shared.fileio import read_file, write_file
+from mig.shared.fileio import read_file, read_file_lines, write_file
 
 # Init global crontab regexp once and for all
 # Format: minute hour dayofmonth month dayofweek command
@@ -200,12 +200,10 @@ def parse_crontab(configuration, client_id, path):
     entries.
     """
     _logger = configuration.logger
-    crontab = read_file(path, _logger)
-    if crontab is None:
+    crontab_lines = read_file_lines(path, _logger)
+    if crontab_lines is None:
         _logger.error("Failed to read crontab in %s" % path)
         return []
-    else:
-        crontab_lines = crontab.split('\r\n')
     return parse_crontab_contents(configuration, client_id, crontab_lines)
 
 
@@ -214,12 +212,10 @@ def parse_atjobs(configuration, client_id, path):
     entries.
     """
     _logger = configuration.logger
-    atjobs = read_file(path, _logger)
-    if atjobs is None:
+    atjobs_lines = read_file_lines(path, _logger)
+    if atjobs_lines is None:
         _logger.error("Failed to read atjobs in %s" % path)
         return []
-    else:
-        atjobs_lines = atjobs.split('\r\n')
     return parse_atjobs_contents(configuration, client_id, atjobs_lines)
 
 
