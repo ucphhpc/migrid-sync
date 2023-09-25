@@ -194,7 +194,8 @@ if '__main__' == __name__:
         'imnotify_username',
         'imnotify_password',
         'gdp_data_categories',
-        'gdp_id_scramble'
+        'gdp_id_scramble',
+        'gdp_path_scramble'
     ]
     int_names = [
         'cert_valid_days',

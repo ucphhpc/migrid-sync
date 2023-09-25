@@ -234,11 +234,11 @@ def __scramble_user_id(configuration, user_id):
     try:
         if configuration.gdp_id_scramble in ['', 'false']:
             result = user_id
-        elif configuration.gdp_id_scramble in ['simple_hash', 'simple']:
+        elif configuration.gdp_id_scramble in ['simple_hash', 'md5']:
             result = make_simple_hash(user_id)
-        elif configuration.gdp_id_scramble in ['safe_hash', 'safe']:
+        elif configuration.gdp_id_scramble in ['safe_hash', 'sha256']:
             result = make_safe_hash(user_id)
-        elif configuration.gdp_id_scramble in ['encrypt', 'fernet']:
+        elif configuration.gdp_id_scramble in ['safe_encrypt', 'fernet']:
             # NOTE: emulate same None-handling as for hash scramblers
             if user_id is None:
                 result = None
@@ -343,7 +343,8 @@ if __name__ == "__main__":
     id_list = (None, '', 'none', 'johndoe', 'john@doe.org',
                '/C=DK/ST=NA/O=Doe/OU=NA/CN=John Doe/emailAddress=john@doe.org'
                )
-    scramble_list = ['', 'false', 'simple_hash', 'safe_hash', 'encrypt']
+    scramble_list = ['', 'false', 'simple_hash', 'md5', 'safe_hash', 'sha256',
+                     'safe_encrypt', 'fernet']
     for user_id in id_list:
         for scramble in scramble_list:
             configuration.gdp_id_scramble = scramble
