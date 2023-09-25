@@ -567,12 +567,12 @@ def account_request_template(configuration, password=True, default_values={}):
                       javascript checking.
       -->
       <label for='validationCustom03'>Comment with reason why you should be granted a %(site)s account:</label>
-      <textarea class='form-control' id='comment_field' rows=4 name='comment' placeholder='Typically which collaboration, project or course you need the account for__COMMENT_ADD__' __COMMENT_REQUIRED__ pattern='__COMMENT_PATTERN__' title='A free-form comment to justify your account needs'>%(comment)s</textarea>
+      <textarea class='form-control' id='comment_field' rows=4 name='comment' placeholder='Will your account primarily be used for a collaboration, project or course?__COMMENT_ADD__' __COMMENT_REQUIRED__ pattern='__COMMENT_PATTERN__' title='A free-form comment to justify your account needs'>%(comment)s</textarea>
       <div class='valid-feedback'>
         Looks good!
       </div>
       <div class='invalid-feedback'>
-        Please mention collaboration, project or course you need the account for__COMMENT_ADD__.
+        Please mention the collaboration, project or course you need the account for__COMMENT_ADD__.
       </div>
     </div>
   </div>
