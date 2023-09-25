@@ -2021,20 +2021,40 @@ location.""" % self.config_file)
                 self.loglevel, syslog=syslog_gdp, app='main-gdp')
         self.gdp_logger = self.gdp_logger_obj.logger
 
-        # NOTE: default to safe_hash (sha256) in order to pseudonymize IDs
-        #       in gdp logs and make it easy to 'forget' a user by simply
-        #       discarding the original ID (in line with the right to be
-        #       forgotten in GDPR terms).
-        __default_id_scramble = 'safe_hash'
-        __valid_id_scramble = ['', 'false', 'encrypt', 'fernet', 'simple',
-                               'simple_hash', 'safe', 'safe_hash']
-        self.gdp_id_scramble = __default_id_scramble
+        # GDP log scrambling support - algorithm name or alias
+        __valid_scramblers = ['false', 'fernet', 'safe_encrypt', 'md5',
+                              'simple_hash', 'sha256', 'safe_hash']
+
+        # NOTE: default to sha256 hashing IDs in order to pseudonymize them in
+        #       gdp logs and make it easy to 'forget' a user by simply
+        #       discarding the original ID (in line with the GDPR concept of
+        #       the 'right to be forgotten' if necessary).
+        __default_id_scramble = 'sha256'
         if config.has_option('GLOBAL', 'gdp_id_scramble'):
-            self.gdp_id_scramble = config.get('GLOBAL',
-                                              'gdp_id_scramble').lower()
-            if not self.gdp_id_scramble in __valid_id_scramble:
-                # Fall back to default
-                self.gdp_id_scramble = __default_id_scramble
+            _id_scramble = config.get('GLOBAL', 'gdp_id_scramble').lower()
+            if not _id_scramble in __valid_scramblers:
+                raise ValueError("Invalid gdp_id_scramble value: %s" %
+                                 _id_scramble)
+            self.gdp_id_scramble = _id_scramble
+        else:
+            # Fall back to default
+            self.gdp_id_scramble = __default_id_scramble
+
+        # NOTE: default to Fernet encrypt in order to completely hide any
+        #       sensitive path metadata in gdp logs for anyone without the
+        #       secret key stored on the site server. This is particularly
+        #       convenient if gdp logs are broadcast to remote log servers
+        #       with less restrictive operator access control policies.
+        __default_path_scramble = 'fernet'
+        if config.has_option('GLOBAL', 'gdp_path_scramble'):
+            _path_scramble = config.get('GLOBAL', 'gdp_path_scramble').lower()
+            if not _path_scramble in __valid_scramblers:
+                raise ValueError("Invalid gdp_path_scramble value: %s" %
+                                 _path_scramble)
+            self.gdp_path_scramble = _path_scramble
+        else:
+            # Fall back to default
+            self.gdp_path_scramble = __default_path_scramble
 
         self.gdp_email_notify = True
         if config.has_option('GLOBAL', 'gdp_email_notify'):
