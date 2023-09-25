@@ -127,7 +127,7 @@ def __scramble_path(configuration, path):
 
     result = None
     try:
-        if configuration.gdp_path_scramble in ['', 'false']:
+        if configuration.gdp_path_scramble in ['false']:
             result = path
         elif configuration.gdp_path_scramble in ['simple_hash', 'md5']:
             result = make_simple_hash(path)
