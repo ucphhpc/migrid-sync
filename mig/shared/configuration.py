@@ -2022,7 +2022,7 @@ location.""" % self.config_file)
         self.gdp_logger = self.gdp_logger_obj.logger
 
         # GDP log scrambling support - algorithm name or alias
-        __valid_scramblers = ['', 'false', 'fernet', 'safe_encrypt', 'md5',
+        __valid_scramblers = ['false', 'fernet', 'safe_encrypt', 'md5',
                               'simple_hash', 'sha256', 'safe_hash']
 
         # NOTE: default to sha256 hashing IDs in order to pseudonymize them in
@@ -2030,13 +2030,15 @@ location.""" % self.config_file)
         #       discarding the original ID (in line with the GDPR concept of
         #       the 'right to be forgotten' if necessary).
         __default_id_scramble = 'sha256'
-        self.gdp_id_scramble = __default_id_scramble
         if config.has_option('GLOBAL', 'gdp_id_scramble'):
-            self.gdp_id_scramble = config.get('GLOBAL',
-                                              'gdp_id_scramble').lower()
-            if not self.gdp_id_scramble in __valid_scramblers:
-                # Fall back to default
-                self.gdp_id_scramble = __default_id_scramble
+            _id_scramble = config.get('GLOBAL', 'gdp_id_scramble').lower()
+            if not _id_scramble in __valid_scramblers:
+                raise ValueError("Invalid gdp_id_scramble value: %s" %
+                                 _id_scramble)
+            self.gdp_id_scramble = _id_scramble
+        else:
+            # Fall back to default
+            self.gdp_id_scramble = __default_id_scramble
 
         # NOTE: default to Fernet encrypt in order to completely hide any
         #       sensitive path metadata in gdp logs for anyone without the
@@ -2044,13 +2046,15 @@ location.""" % self.config_file)
         #       convenient if gdp logs are broadcast to remote log servers
         #       with less restrictive operator access control policies.
         __default_path_scramble = 'fernet'
-        self.gdp_path_scramble = __default_path_scramble
         if config.has_option('GLOBAL', 'gdp_path_scramble'):
-            self.gdp_path_scramble = config.get('GLOBAL',
-                                                'gdp_path_scramble').lower()
-            if not self.gdp_path_scramble in __valid_scramblers:
-                # Fall back to default
-                self.gdp_path_scramble = __default_path_scramble
+            _path_scramble = config.get('GLOBAL', 'gdp_path_scramble').lower()
+            if not _path_scramble in __valid_scramblers:
+                raise ValueError("Invalid gdp_path_scramble value: %s" %
+                                 _path_scramble)
+            self.gdp_path_scramble = _path_scramble
+        else:
+            # Fall back to default
+            self.gdp_path_scramble = __default_path_scramble
 
         self.gdp_email_notify = True
         if config.has_option('GLOBAL', 'gdp_email_notify'):
