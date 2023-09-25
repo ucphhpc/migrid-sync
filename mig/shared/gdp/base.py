@@ -58,7 +58,7 @@ from mig.shared.gdp.userid import __validate_user_id, \
     __project_short_id_from_user_id, __scramble_user_id, \
     get_project_from_user_id, get_project_client_id
 from mig.shared.notification import send_email
-from mig.shared.pwhash import encrypt_password
+from mig.shared.pwhash import make_simple_hash, make_safe_hash, make_encrypt
 from mig.shared.serial import load, dump
 from mig.shared.useradm import create_user, delete_user, edit_user, \
     get_full_user_map, lock_user_db
@@ -117,6 +117,37 @@ valid_project_states = ['invited', 'accepted', 'removed']
 valid_account_states = ['active', 'suspended', 'removed']
 
 valid_protocols = ['https', 'davs', 'sftp']
+
+
+def __scramble_path(configuration, path):
+    """A simple helper to optionally scramble paths e.g. in gdp logs as
+    specified in configuration.
+    """
+    _logger = configuration.logger
+
+    result = None
+    try:
+        if configuration.gdp_path_scramble in ['', 'false']:
+            result = path
+        elif configuration.gdp_path_scramble in ['simple_hash', 'md5']:
+            result = make_simple_hash(path)
+        elif configuration.gdp_path_scramble in ['safe_hash', 'sha256']:
+            result = make_safe_hash(path)
+        elif configuration.gdp_path_scramble in ['safe_encrypt', 'fernet']:
+            # NOTE: emulate same None-handling as for hash scramblers
+            if path is None:
+                result = None
+            else:
+                result = make_encrypt(configuration, path)
+        else:
+            raise ValueError("unsupported gdp_path_scramble conf value: %s" %
+                             configuration.gdp_path_scramble)
+    except Exception as exc:
+        _logger.error("GDP: __scramble_path failed for path: %r: %s"
+                      % (path, exc))
+        result = None
+
+    return result
 
 
 def __gdp_db_filepath(configuration, db_path=None):
@@ -1139,11 +1170,11 @@ def project_log(
 
     if status:
         if path is not None:
-            enc_path = encrypt_password(configuration, path)
-            details = details.replace(path, enc_path)
+            scrambled_path = __scramble_path(configuration, path)
+            details = details.replace(path, scrambled_path)
         if dst_path is not None:
-            enc_dst_path = encrypt_password(configuration, dst_path)
-            details = details.replace(dst_path, enc_dst_path)
+            scrambled_dst_path = __scramble_path(configuration, dst_path)
+            details = details.replace(dst_path, scrambled_dst_path)
 
     if status:
         if not failed:
