@@ -979,10 +979,17 @@ General Data Protection Regulation (GDPR) imposed by EU:
 https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
 ./generateconfs.py --source=. --destination=generated-confs \
                    --destination_suffix="_svn$(svnversion -n ~/)" \
+                   --admin_email="SIF admin <info@sif.erda.dk>"
+                   --admin_list="/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk , C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Martin Rehr/emailAddress=rehr@nbi.ku.dk" \
+                   --auto_add_cert_user=False \
+                   --auto_add_oid_user=True \
+                   --auto_add_oidc_user=False \ 
+                   --oid_valid_days=180 \
                    --base_fqdn=sif.erda.dk \
                    --public_fqdn=sif-www.erda.dk \
                    --public_alias_fqdn=sif.ku.dk \
                    --public_sec_fqdn=sif.ku.dk \
+                   --public_use_https=True \
                    --mig_cert_fqdn= \
                    --ext_cert_fqdn= \
                    --mig_oid_fqdn=sif-ext.erda.dk \
@@ -1035,12 +1042,20 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --signup_methods="extoid migoid" \
                    --login_methods="extoid migoid" \
                    --password_policy=MODERN:12 --password_legacy_policy=HIGH \
-                   --distro=centos --skin=erda-ucph-science \
+                   --distro=centos --skin=sif-ucph-science \
                    --title="Sensitive Information Facility" \
                    --short_title="SIF" \
                    --external_doc=https://sif.ku.dk \
+                   --mig_oid_title="External" \
+                   --ext_oid_title="KU/UCPH" \
+                   --vgrid_label="Project" \
+                   --vgrid_creators="role:.*(vip|tap)" \
+                   --csrf_protection="FULL" \
+                   --io_account_expire=True \
+                   --digest_salt="FILE::/home/mig/state/secrets/digest_salt.hex" \
+                   --crypto_salt="FILE::/home/mig/state/secrets/crypto_salt.hex" \
                    --wsgi_procs=25 --user_interface='V2' \
-                   --auto_add_oid_user=True --oid_valid_days=180 \
+                   --default_menu="files setup close logout" \
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
 
 Most of the arguments should be relatively straight forward, but you
