@@ -1,4 +1,25 @@
 [
+ {
+    "status": "AUTO", 
+    "work_start": "2023-10-04T08:00:00+02:00", 
+    "systems": [
+        "ERDA"
+    ],
+    "announce_start": "2023-09-26T15:00:00+02:00",
+    "title": {
+      "EN": "Planned ERDA Backend Storage Maintenance",
+      "DK": "Planlagt ERDA vedligehold af backendlageret"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2023-10-04T09:00:00+02:00",
+    "description": {
+      "EN": "We need to do some ERDA backend storage maintenance. The work will involve frontend down-time for the low-level system task. Thus, all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect the maintenance to be relatively fast - so we expect to finish within half an hour if everything runs smoothly. More information will follow.",
+      "DK": "Vi skal have lavet noget vedligehold af backendlageret på ERDA. Arbejdet kræver nedetid på frontends til den grundlæggende systemopgaver, og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi forventer ikke at vedligeholdet tager lang tid, så vi forhåbentlig er færdige indenfor en halv time, hvis alting forløber planmæssigt. Yderligere information følger."
+    },
+    "announce_end": "2023-10-05T12:00:00+02:00"
+  }, 
   {
     "status": "AUTO",
     "work_start": "2023-10-02T17:00:00+02:00",
