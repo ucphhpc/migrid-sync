@@ -1040,8 +1040,8 @@ def project_log(
     _logger = configuration.logger
     _gdp_logger = configuration.gdp_logger
     status = True
-    enc_path = '-'
-    enc_dst_path = '-'
+    scrambled_path = '-'
+    scrambled_dst_path = '-'
     log_err_msg = "GDP: project_log: user_id: %r, protocol: %r" \
         % (user_id, protocol) \
         + ", action: %r, project_name: %r, ip: %r" \
@@ -1190,8 +1190,8 @@ def project_log(
             protocol,
             action,
             status_msg,
-            enc_path,
-            enc_dst_path,
+            scrambled_path,
+            scrambled_dst_path,
             details
         )
         _gdp_logger.info(msg)
