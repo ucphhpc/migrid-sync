@@ -125,7 +125,8 @@ def authlog(configuration,
             user_id,
             user_addr,
             log_msg,
-            notify=True):
+            notify=True,
+            hint=None):
     """Log auth messages to auth logger.
     Notify user when log_lvl != 'DEBUG'"""
     logger = configuration.logger
@@ -161,6 +162,8 @@ def authlog(configuration,
         if client_id and extract_field(client_id, 'email'):
             user_msg = "IP: %s, User: %s, Message: %s" % \
                 (user_addr, user_id, log_msg)
+            if hint:
+                user_msg += hint
             status = send_system_notification(user_id, category,
                                               user_msg, configuration)
         # else:
@@ -304,7 +307,8 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
         # Only warn since it can get rather noise and it's intermittent
         logger.warning(log_msg)
         authlog(configuration, 'WARNING', protocol, authtype,
-                username, ip_addr, auth_msg + session_hint, notify=notify)
+                username, ip_addr, auth_msg,
+                notify=notify, hint=session_hint)
     elif invalid_username:
         disconnect = True
         if re.match(CRACK_USERNAME_REGEX, username) is not None:
@@ -350,8 +354,8 @@ access by repeat sign up with the same ID values at
                 (configuration.user_mig_oid_title, configuration.oid_valid_days,
                  configuration.migserver_https_sid_url)
         authlog(configuration, 'ERROR', protocol, authtype,
-                username, ip_addr,
-                auth_msg + expire_hint, notify=notify)
+                username, ip_addr, auth_msg,
+                notify=notify, hint=expire_hint)
     elif not authtype_enabled:
         disconnect = True
         auth_msg = "%s auth disabled or %s not set" % (authtype, authtype)
@@ -360,7 +364,8 @@ access by repeat sign up with the same ID values at
             log_msg += ":%s" % tcp_port
         logger.error(log_msg)
         authlog(configuration, 'ERROR', protocol, authtype,
-                username, ip_addr, auth_msg, notify=notify)
+                username, ip_addr, auth_msg,
+                notify=notify, hint=enable_hint)
     elif valid_auth and not twofa_passed:
         disconnect = True
         auth_msg = "No valid two factor session"
@@ -370,7 +375,8 @@ access by repeat sign up with the same ID values at
         # Only warn since it can get rather noise and it's intermittent
         logger.warning(log_msg)
         authlog(configuration, 'WARNING', protocol, authtype,
-                username, ip_addr, auth_msg, notify=notify)
+                username, ip_addr, auth_msg,
+                notify=notify, hint=mount_hint)
     elif authtype_enabled and not valid_auth:
         auth_msg = "Failed %s" % authtype
         log_msg = auth_msg + " login for %s from %s" % (username, ip_addr)
@@ -378,7 +384,8 @@ access by repeat sign up with the same ID values at
             log_msg += ":%s" % tcp_port
         logger.error(log_msg)
         authlog(configuration, 'ERROR', protocol, authtype,
-                username, ip_addr, auth_msg, notify=notify)
+                username, ip_addr, auth_msg,
+                notify=notify, hint=mount_hint)
     elif valid_auth and twofa_passed:
         authorized = True
         notify = False
