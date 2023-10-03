@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # testresupport - run test job to verify support for a runtime env
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -159,8 +159,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
                         configuration.resource_home, logger):
             output_objects.append(
                 {'object_type': 'error_text', 'text':
-                 'You must be an owner of the resource to validate runtime '
-                 'environment support. (resource %s)' % visible_res_name})
+                 'Only owners of %s can validate runtime environment support!' %
+                 visible_res_name})
             status = returnvalues.CLIENT_ERROR
             continue
 
@@ -194,10 +194,11 @@ CSRF-filtered POST requests to prevent unintended updates'''
             create_verify_files(['status', 'stdout', 'stderr'], re_name,
                                 re_dict, base_dir, logger)
         except Exception as exc:
+            logger.error("write test job for %s failed: %s" %
+                         (visible_res_name, exc))
             output_objects.append(
                 {'object_type': 'error_text', 'text':
-                 'Could not write test job for %s: %s' % (visible_res_name,
-                                                          exc)})
+                 'Could not write test job for %s' % visible_res_name})
             status = returnvalues.SYSTEM_ERROR
             continue
 

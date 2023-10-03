@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rmvgridowner - remove a vgrid owner
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -191,8 +191,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
                            % (owners, owners_direct))
             output_objects.append({'object_type': 'error_text', 'text':
                                    '''%s is owner of a parent %s.
-Owner removal has to be performed at the topmost vgrid''' %
-                                   (cert_id, label)})
+Owner removal has to be performed at the topmost %s''' %
+                                   (cert_id, label, label)})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         else:

@@ -5,7 +5,7 @@
 #
 
 # deletere - delete a runtime environment
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,6 +27,7 @@
 #
 
 """Deletion of runtime environments"""
+
 from __future__ import absolute_import
 
 from mig.shared import returnvalues
@@ -35,7 +36,7 @@ from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.refunctions import is_runtime_environment, \
-     get_re_dict, delete_runtimeenv
+    get_re_dict, delete_runtimeenv
 from mig.shared.vgridaccess import resources_using_re
 
 
@@ -53,8 +54,8 @@ def main(client_id, user_arguments_dict):
         initialize_main_variables(client_id, op_header=False)
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Delete runtime environment'
-    output_objects.append({'object_type': 'header', 'text'
-                           : 'Delete runtime environment'})
+    output_objects.append(
+        {'object_type': 'header', 'text': 'Delete runtime environment'})
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -63,10 +64,10 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
-    
+
     re_name = accepted['re_name'][-1]
 
     if not safe_handler(configuration, 'post', op_name, client_id,
@@ -81,30 +82,30 @@ CSRF-filtered POST requests to prevent unintended updates'''
         logger.warning(
             "possible illegal directory traversal attempt re_name '%s'"
             % re_name)
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Illegal runtime environment name: "%s"'
-                               % re_name})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Illegal runtime environment name: "%s"' %
+                               re_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Check whether re_name represents a runtime environment
     if not is_runtime_environment(re_name, configuration):
-        output_objects.append({'object_type': 'error_text',
-                               'text': "No such runtime environment: '%s'"
-                               % re_name})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               "No such runtime environment: %r" % re_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
-    
+
     (re_dict, load_msg) = get_re_dict(re_name, configuration)
     if not re_dict:
         output_objects.append(
-            {'object_type': 'error_text',
-             'text': 'Could not read runtime environment details for %s: %s'
-             % (re_name, load_msg)})
+            {'object_type': 'error_text', 'text':
+             'Could not read runtime environment details for %s: %s' %
+             (re_name, load_msg)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Make sure the runtime environment belongs to the user trying to delete it
     if client_id != re_dict['CREATOR']:
-        output_objects.append({'object_type': 'error_text', 'text': \
-        'You are not the owner of runtime environment "%s"' % re_name})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               "You don't own runtime environment %r" % re_name
+                               })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Prevent delete if the runtime environment is used by any resources
@@ -117,8 +118,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             {'object_type': 'error_text', 'text':
              "Can't delete runtime environment '%s' in use by resources:"
              % re_name})
-        output_objects.append({'object_type': 'list', 'list'
-                               : actives})
+        output_objects.append({'object_type': 'list', 'list': actives})
         output_objects.append({'object_type': 'link', 'destination': 'redb.py',
                                'class': 'infolink iconspace', 'title':
                                'Show runtime environments',
@@ -127,23 +127,23 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     # Delete the runtime environment
     (del_status, msg) = delete_runtimeenv(re_name, configuration)
-    
+
     # If something goes wrong when trying to delete runtime environment
     # re_name, an error is displayed.
     if not del_status:
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Could not remove %s runtime environment: %s'
-                               % (re_name, msg)})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Could not remove %s runtime environment: %s' %
+                               (re_name, msg)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # If deletion of runtime environment re_name is successful, we just
     # return OK
     else:
         output_objects.append(
-            {'object_type': 'text', 'text'
-             : 'Successfully deleted runtime environment: "%s"' % re_name})
+            {'object_type': 'text', 'text':
+             'Successfully deleted runtime environment: "%s"' % re_name})
         output_objects.append({'object_type': 'link', 'destination': 'redb.py',
                                'class': 'infolink iconspace',
                                'title': 'Show runtime environments',
                                'text': 'Show runtime environments'})
-        return (output_objects, returnvalues.OK) 
+        return (output_objects, returnvalues.OK)

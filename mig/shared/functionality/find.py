@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # find - find backend
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -206,16 +206,17 @@ def main(client_id, user_arguments_dict):
                             file_obj['file_info'] = fileinfo_stat(abs_path)
                         entries.append(file_obj)
             except Exception as exc:
+                logger.error("%s: failed on %r: %s" % (op_name, relative_path,
+                                                       exc))
                 output_objects.append({'object_type': 'error_text',
-                                       'text': "%s: '%s': %s" % (op_name,
-                                                                 relative_path, exc)})
-                logger.error("%s: failed on '%s': %s" % (op_name,
-                                                         relative_path, exc))
+                                       'text': "%s: %r" % (op_name,
+                                                           relative_path)})
                 status = returnvalues.SYSTEM_ERROR
                 continue
             if verbose(flags):
                 output_objects.append({'object_type': 'file_output',
-                                       'path': relative_path, 'lines': output_lines})
+                                       'path': relative_path, 'lines':
+                                       output_lines})
             else:
                 output_objects.append({'object_type': 'file_output',
                                        'lines': output_lines})

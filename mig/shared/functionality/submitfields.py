@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # submitfields - Submit a job through the fields interface
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Takes job fields and submits it with the usual submit status"""
+
 from __future__ import absolute_import
 
 import os
@@ -74,7 +75,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -94,14 +95,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not configuration.site_enable_jobs:
         output_objects.append({'object_type': 'error_text', 'text':
-            '''Job execution is not enabled on this system'''})
+                               'Job execution is not enabled on this system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
-    
+
     # Please note that base_dir must end in slash to avoid access to other
     # user dirs when own name is a prefix of another user name
 
     base_dir = os.path.abspath(os.path.join(configuration.user_home,
-                               client_dir)) + os.sep
+                                            client_dir)) + os.sep
 
     # save to temporary file
 
@@ -111,20 +112,19 @@ CSRF-filtered POST requests to prevent unintended updates'''
         os.write(filehandle, mrsl)
         os.close(filehandle)
     except Exception as err:
-        output_objects.append({'object_type': 'error_text',
-                               'text':
-                               'Failed to write temporary mRSL file: %s' % \
-                               err})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Failed to write temporary mRSL file!'})
+        logger.error("could not write temp mRSL file: %s" % err)
         return (output_objects, returnvalues.SYSTEM_ERROR)
-        
+
     # submit it
 
     submitstatuslist = []
     submitstatus = {'object_type': 'submitstatus',
                     'name': relative_path}
     try:
-        (job_status, newmsg, job_id) = new_job(real_path,
-                                               client_id, configuration, False, True)
+        (job_status, newmsg, job_id) = new_job(real_path, client_id,
+                                               configuration, False, True)
     except Exception as exc:
         logger.error("%s: failed on '%s': %s" % (op_name,
                                                  relative_path, exc))
@@ -135,7 +135,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not job_status:
 
-        # output_objects.append({"object_type":"error_text", "text":"%s" % newmsg})
+        # output_objects.append({"object_type":"error_text", "text":
+        #                        "%s" % newmsg})
 
         submitstatus['status'] = False
         submitstatus['message'] = newmsg
@@ -159,14 +160,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
     if save_as_default:
         template_path = os.path.join(base_dir, default_mrsl_filename)
         try:
+            # TODO: port to write_file
             template_fd = open(template_path, 'wb')
             template_fd.write(mrsl)
             template_fd.close()
         except Exception as err:
-            output_objects.append({'object_type': 'error_text',
-                                   'text':
-                                   'Failed to write default job template: %s' % \
-                                   err})
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Failed to write default job template!'})
+            logger.error("could not write job template: %s" % err)
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
     return (output_objects, status)

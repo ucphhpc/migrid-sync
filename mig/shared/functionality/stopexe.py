@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # stopexe - Back end to stop one or more resource exe units
-# Copyright (C) 2003-2106 The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023 The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Stop exe unit"""
+
 from __future__ import absolute_import
 
 from mig.shared import returnvalues
@@ -46,7 +47,7 @@ def signature():
         'exe_name': [],
         'all': [''],
         'parallel': [''],
-        }
+    }
     return ['text', defaults]
 
 
@@ -55,8 +56,8 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id)
-    output_objects.append({'object_type': 'text', 'text'
-                          : '--------- Trying to STOP exe ----------'})
+    output_objects.append(
+        {'object_type': 'text', 'text': '--------- Trying to STOP exe ----------'})
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
@@ -66,7 +67,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -85,10 +86,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Failure: You must be an owner of '
-                               + unique_resource_name
-                               + ' to stop the exe!'})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Only owners of %s can stop the associated exe units!' %
+             unique_resource_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     exit_status = returnvalues.OK
@@ -99,16 +100,16 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # take action based on supplied list of exes
 
     if len(exe_name_list) == 0:
-        output_objects.append({'object_type': 'text', 'text'
-                              : "No exes specified and 'all' argument not set to true: Nothing to do!"
-                              })
+        output_objects.append(
+            {'object_type': 'text', 'text':
+             "No exes specified and 'all' arg not set: nothing to do!"})
 
     workers = []
     task_list = []
     for exe_name in exe_name_list:
         task = Worker(target=stop_resource_exe,
                       args=(unique_resource_name, exe_name,
-                      configuration.resource_home, logger))
+                            configuration.resource_home, logger))
         workers.append((exe_name, [task]))
         task_list.append(task)
         throttle_max_concurrent(task_list)
@@ -118,15 +119,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     for (exe_name, task_list) in workers:
         (status, msg) = task_list[0].finish()
-        output_objects.append({'object_type': 'header', 'text'
-                              : 'Stop exe'})
+        output_objects.append({'object_type': 'header', 'text': 'Stop exe'})
         if not status:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Problems stopping exe: %s' % msg})
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Problems stopping exe: %s' % msg})
             exit_status = returnvalues.SYSTEM_ERROR
         else:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : 'Stop exe success: %s' % msg})
+            output_objects.append(
+                {'object_type': 'text', 'text': 'Stop exe success: %s' % msg})
     return (output_objects, exit_status)
-
-

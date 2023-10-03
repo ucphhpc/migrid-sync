@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rmvgridtrigger - remove vgrid trigger
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Remove a trigger from a given vgrid"""
+
 from __future__ import absolute_import
 
 from mig.shared import returnvalues
@@ -33,7 +34,7 @@ from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.vgrid import init_vgrid_script_add_rem, vgrid_is_owner, \
-     vgrid_is_trigger, vgrid_remove_triggers
+    vgrid_is_trigger, vgrid_remove_triggers
 
 
 def signature():
@@ -53,8 +54,8 @@ def main(client_id, user_arguments_dict):
     title_entry = find_entry(output_objects, 'title')
     label = "%s" % configuration.site_vgrid_label
     title_entry['text'] = "Remove %s Trigger" % label
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Remove %s Trigger' % label})
+    output_objects.append(
+        {'object_type': 'header', 'text': 'Remove %s Trigger' % label})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -62,7 +63,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -101,14 +102,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not vgrid_is_trigger(vgrid_name, rule_id, configuration, recursive=False):
         output_objects.append({'object_type': 'error_text', 'text':
-                               '%s is not a trigger in %s %s.' % \
+                               '%s is not a trigger in %s %s.' %
                                (rule_id, vgrid_name, label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # remove
 
     (rm_status, rm_msg) = vgrid_remove_triggers(configuration, vgrid_name,
-                                                 [rule_id])
+                                                [rule_id])
     if not rm_status:
         logger.error('%s failed to remove trigger: %s' % (client_id, rm_msg))
         output_objects.append({'object_type': 'error_text', 'text': rm_msg})
@@ -127,5 +128,3 @@ possible.''' % {'rule_id': rule_id, 'vgrid_label': label}})
                            'vgridworkflows.py?vgrid_name=%s' % vgrid_name,
                            'text': 'Back to workflows for %s' % vgrid_name})
     return (output_objects, returnvalues.OK)
-
-

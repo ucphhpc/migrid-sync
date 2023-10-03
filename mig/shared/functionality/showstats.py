@@ -102,25 +102,29 @@ Please contact the site admins %s if you think they should be enabled.
     # make sure: grouping in ['user','machine', 'vgrid']
     if not display in displays:
         output_objects.append(
-            {'object_type': 'error_text', 'text': 'invalid display grouping specified: %s' % display})
+            {'object_type': 'error_text', 'text':
+             'invalid display grouping specified: %s' % display})
         display = displays[0]
         reject = True
     # make sure: group_in_time in ['all', 'month', 'day', 'week']
     if not group_in_time in time_groups:
         output_objects.append(
-            {'object_type': 'error_text', 'text': 'invalid time grouping specified: %s' % group_in_time})
+            {'object_type': 'error_text', 'text':
+             'invalid time grouping specified: %s' % group_in_time})
         group_in_time = time_groups[0]
         reject = True
     # make sure: start and end match "20[0-9]{2}-[01][0-9]"
     if not re.match('20\d\d-[01]\d', time_start):
         output_objects.append(
-            {'object_type': 'error_text', 'text': 'invalid start time specified: %s' % time_start})
+            {'object_type': 'error_text', 'text':
+             'invalid start time specified: %s' % time_start})
         time_start = '2009-09'
         reject = True
 
     if not re.match('20\d\d-[01]\d', time_end):
         output_objects.append(
-            {'object_type': 'error_text', 'text': 'invalid end time specified: %s' % time_end})
+            {'object_type': 'error_text', 'text':
+             'invalid end time specified: %s' % time_end})
         time_end = time.strftime('%Y-%m')
         reject = True
 
@@ -261,7 +265,8 @@ Please contact the site admins %s if you think they should be enabled.
     except Exception as err:
         logger.error('Could not get data from database: %s' % err)
         output_objects.append(
-            {'object_type': 'error_text', 'text': 'Error accessing the database.'})
+            {'object_type': 'error_text', 'text':
+             'Error accessing the database.'})
         jsonreply = '{"rows":[]}'
 
     logger.debug('Reply data\n %s' % jsonreply)

@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# mrslview - [insert a few words of module description on this line]
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# mrslview - show user-friendly job info
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -73,7 +73,7 @@ def main(client_id, user_arguments_dict):
 
     if not configuration.site_enable_jobs:
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''Job execution is not enabled on this system'''})
+                               'Job execution is not enabled on this system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -148,10 +148,9 @@ def main(client_id, user_arguments_dict):
                     output_lines.append('\n')
             except Exception as exc:
                 output_objects.append({'object_type': 'error_text', 'text':
-                                       "%s: '%s': %s" % (op_name, relative_path,
-                                                         exc)})
-                logger.error("%s: failed on '%s': %s" % (op_name,
-                                                         relative_path, exc))
+                                       "%s: can't show %r" % (op_name,
+                                                              relative_path)})
+                logger.error("%s: failed on %r: %s" % (op_name, abs_path, exc))
                 status = returnvalues.SYSTEM_ERROR
                 continue
             if verbose(flags):

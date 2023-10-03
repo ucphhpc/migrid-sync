@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridsettings - save vgrid settings
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Save settings for a given vgrid"""
+
 from __future__ import absolute_import
 
 import os

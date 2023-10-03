@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobstatus - Display status of jobs
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Job status back end functionality"""
+
 from __future__ import absolute_import
 
 import glob
@@ -117,7 +118,7 @@ def main(client_id, user_arguments_dict):
 
     if not configuration.site_enable_jobs:
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''Job execution is not enabled on this system'''})
+                               'Job execution is not enabled on this system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -142,9 +143,9 @@ def main(client_id, user_arguments_dict):
 
     if not os.path.isdir(base_dir):
         output_objects.append(
-            {'object_type': 'error_text', 'text': ('You have not been created as a user on the %s server! '
-                                                   'Please contact the %s team.') %
-             (configuration.short_title, configuration.short_title)})
+            {'object_type': 'error_text', 'text':
+             '''You have not been created as a user on the %s server! Please
+contact the site admins.''' % configuration.short_title})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     filelist = []
@@ -184,7 +185,8 @@ def main(client_id, user_arguments_dict):
 
         if not match:
             output_objects.append(
-                {'object_type': 'error_text', 'text': '%s: You do not have any matching job IDs!' % pattern})
+                {'object_type': 'error_text', 'text':
+                 '%s: You do not have any matching job IDs!' % pattern})
             status = returnvalues.CLIENT_ERROR
         else:
             filelist += match
@@ -194,7 +196,8 @@ def main(client_id, user_arguments_dict):
 
     if max_jobs > 0 and max_jobs < len(filelist):
         output_objects.append(
-            {'object_type': 'text', 'text': 'Only showing first %d of the %d matching jobs as requested'
+            {'object_type': 'text', 'text':
+             'Only showing first %d of the %d matching jobs as requested'
              % (max_jobs, len(filelist))})
         filelist = filelist[:max_jobs]
 
@@ -213,8 +216,9 @@ def main(client_id, user_arguments_dict):
             status = returnvalues.CLIENT_ERROR
 
             output_objects.append(
-                {'object_type': 'error_text', 'text': 'No such job: %s (could not load mRSL file %s)' %
-                 (job_id, filepath)})
+                {'object_type': 'error_text', 'text':
+                 'No such job: %s (could not load mRSL file %s)' %
+                 (job_id, mrsl_file)})
             continue
 
         # Expand any job variables before use

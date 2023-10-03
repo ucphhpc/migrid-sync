@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # lsresowners - simple list of resource owners for a resource with access
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,6 +28,7 @@
 """List all CNs in the list of administrators for a given resource if user is
 an owner.
 """
+
 from __future__ import absolute_import
 
 import os
@@ -60,7 +61,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -68,23 +69,24 @@ def main(client_id, user_arguments_dict):
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'You must be an owner of %s to get the list of owners!'
-                               % unique_resource_name})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Only owners of %s can get the list of owners!''' %
+             unique_resource_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # is_owner incorporates unique_resource_name verification - no need to
     # specifically check for illegal directory traversal
 
-    base_dir = os.path.abspath(os.path.join(configuration.resource_home, 
+    base_dir = os.path.abspath(os.path.join(configuration.resource_home,
                                             unique_resource_name)) + os.sep
     owners_file = os.path.join(base_dir, 'owners')
 
     (list_status, msg) = list_items_in_pickled_list(owners_file, logger)
     if not list_status:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Could not get list of owners, reason: %s'
-                               % msg})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Could not get list of owners, reason: %s' % msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'list', 'list': msg})

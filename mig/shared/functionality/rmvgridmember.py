@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rmvgridmember - remove vgrid member
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Remove a member from a vgrid"""
+
 from __future__ import absolute_import
 
 import os
@@ -224,15 +225,15 @@ sub-%(vgrid_label)ss first and then try this operation again.""" %
                 current_path = base_dir + current_vgrid_path
                 if not os.path.isdir(current_path):
                     output_objects.append(
-                        {'object_type': 'error_text',
-                         'text': '''Error removing %s placeholder dirs:
+                        {'object_type': 'error_text', 'text':
+                         '''Error removing %s placeholder dirs:
 %s is not a directory, not going to remove.''' % (label, current_vgrid_path)})
                     continue
 
                 if os.listdir(current_path):
                     output_objects.append(
-                        {'object_type': 'error_text',
-                         'text': '''Could not remove %s placeholder dirs:
+                        {'object_type': 'error_text', 'text':
+                         '''Could not remove %s placeholder dirs:
 %s is not an empty directory (not critical)''' % (label, current_vgrid_path)})
                 else:
 
@@ -241,10 +242,12 @@ sub-%(vgrid_label)ss first and then try this operation again.""" %
                     try:
                         os.rmdir(current_path)
                     except Exception as exc:
+                        logger.error("could not remove %s: %s" % (current_path,
+                                                                  exc))
                         output_objects.append(
-                            {'object_type': 'error_text',
-                             'text': '''Error removing %s placeholder dirs:
-exception removing empty directory %s''' % (label, exc)})
+                            {'object_type': 'error_text', 'text':
+                             'Error removing %s empty(?) placeholder dirs' %
+                             label})
                         return (output_objects,
                                 returnvalues.SYSTEM_ERROR)
 

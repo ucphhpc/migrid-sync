@@ -55,8 +55,8 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Reject Resource Request'})
+    output_objects.append(
+        {'object_type': 'header', 'text': 'Reject Resource Request'})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -64,7 +64,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -81,9 +81,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
-        output_objects.append({'object_type': 'error_text', 'text':
-                               'You must be an owner of %s to reject requests!'
-                               % unique_resource_name})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Only owners of %s can reject associated requests!''' %
+             unique_resource_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -91,38 +92,38 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     base_dir = \
         os.path.abspath(os.path.join(configuration.resource_home,
-                        unique_resource_name)) + os.sep
+                                     unique_resource_name)) + os.sep
 
     # IMPORTANT: path must be expanded to abs for proper chrooting
     abs_path = os.path.abspath(os.path.join(base_dir, request_name))
     if not valid_user_path(configuration, abs_path, base_dir, allow_equal=False):
-        logger.warning('%s tried to access restricted path %s ! (%s)' % \
+        logger.warning('%s tried to access restricted path %s ! (%s)' %
                        (client_id, abs_path, request_name))
         output_objects.append(
             {'object_type': 'error_text', 'text': '''Illegal request name "%s":
 you can only reject requests to your own resources.''' % request_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
-            
+
     if request_name:
         request_dir = os.path.join(configuration.resource_home,
                                    unique_resource_name)
         req = load_access_request(configuration, request_dir, request_name)
     if not req or not delete_access_request(configuration, request_dir,
                                             request_name):
-            logger.error("failed to delete owner request for %s in %s" % \
-                         (unique_resource_name, request_name))
-            output_objects.append({
-                'object_type': 'error_text', 'text':
-                'Failed to remove saved resource request for %s in %s!'\
-                % (unique_resource_name, request_name)})
-            return (output_objects, returnvalues.CLIENT_ERROR)
+        logger.error("failed to delete owner request for %s in %s" %
+                     (unique_resource_name, request_name))
+        output_objects.append({
+            'object_type': 'error_text', 'text':
+            'Failed to remove saved resource request for %s in %s!'
+            % (unique_resource_name, request_name)})
+        return (output_objects, returnvalues.CLIENT_ERROR)
     output_objects.append({'object_type': 'text', 'text': '''
 Deleted %(request_type)s access request to %(target)s for %(entity)s .
 ''' % req})
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
     fill_helpers = {'protocol': any_protocol,
-                    'unique_resource_name': unique_resource_name, 
+                    'unique_resource_name': unique_resource_name,
                     'form_method': form_method, 'csrf_field': csrf_field,
                     'csrf_limit': csrf_limit}
     fill_helpers.update(req)

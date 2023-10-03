@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rmresowner - remove resource owner
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -81,9 +81,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
-        output_objects.append({'object_type': 'error_text', 'text':
-                               'You must be an owner of %s to remove another owner!'
-                               % unique_resource_name})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Only owners of %s can remove another owner!' %
+             unique_resource_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # is_owner incorporates unique_resource_name verification - no need to
@@ -99,8 +100,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not resource_is_owner(unique_resource_name, cert_id, configuration):
         output_objects.append({'object_type': 'error_text', 'text':
-                               '%s is not an owner of %s.'
-                               % (cert_id, unique_resource_name)})
+                               '%s is not an owner of %s.' %
+                               (cert_id, unique_resource_name)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Remove owner
@@ -109,14 +110,15 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                                  unique_resource_name,
                                                  [cert_id])
     if not rm_status:
-        output_objects.append({'object_type': 'error_text', 'text':
-                               'Could not remove owner, reason: %s'
-                               % rm_msg})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Could not remove owner, reason: %s' % rm_msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    output_objects.append({'object_type': 'text', 'text':
-                           '%s was successfully removed and is no longer an owner of %s!'
-                           % (cert_id, unique_resource_name)})
+    output_objects.append(
+        {'object_type': 'text', 'text':
+         '%s was successfully removed and is no longer an owner of %s!' %
+         (cert_id, unique_resource_name)})
     output_objects.append({'object_type': 'link', 'destination':
                            'resadmin.py?unique_resource_name=%s' %
                            unique_resource_name, 'class': 'adminlink iconspace',

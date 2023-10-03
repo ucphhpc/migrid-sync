@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # restartstore - Back end to restart one or more resource store units
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,8 @@
 # -- END_HEADER ---
 #
 
-"""Restart store unit"""
+"""Restart one or more resource store units"""
+
 from __future__ import absolute_import
 
 from mig.shared import returnvalues
@@ -78,7 +79,7 @@ def main(client_id, user_arguments_dict):
 
     if not configuration.site_enable_resources:
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''Resources are not enabled on this system'''})
+                               'Resources are not enabled on this system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if not safe_handler(configuration, 'post', op_name, client_id,
@@ -91,10 +92,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
-        output_objects.append({'object_type': 'error_text', 'text':
-                               'Failure: You must be an owner of '
-                               + unique_resource_name
-                               + ' to restart the store!'})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Only owners of %s can restart the associated store units!' %
+             unique_resource_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     exit_status = returnvalues.OK
@@ -107,8 +108,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     if len(store_name_list) == 0:
         output_objects.append(
             {'object_type': 'text', 'text':
-             "No stores specified and 'all' argument not set to true: Nothing to do!"
-             })
+             "No stores specified and 'all' arg not set: nothing to do!"})
 
     workers = []
     for store_name in store_name_list:
@@ -142,15 +142,15 @@ CSRF-filtered POST requests to prevent unintended updates'''
         output_objects.append(
             {'object_type': 'header', 'text': 'Restart store output:'})
         if not status:
-            output_objects.append({'object_type': 'error_text', 'text':
-                                   'Problems stopping store during restart: %s'
-                                   % msg})
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Problems stopping store during restart: %s' % msg})
 
         (status2, msg2) = task_list[1].finish()
         if not status2:
-            output_objects.append({'object_type': 'error_text', 'text':
-                                   'Problems starting store during restart: %s'
-                                   % msg2})
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Problems starting store during restart: %s' % msg2})
             exit_status = returnvalues.SYSTEM_ERROR
         if status and status2:
             output_objects.append(

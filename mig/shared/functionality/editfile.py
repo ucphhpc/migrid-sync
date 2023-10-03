@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # editfile - inline editor back end
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -91,7 +91,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not configuration.site_enable_jobs and submitjob:
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''Job execution is not enabled on this system'''})
+                               'Job execution is not enabled on this system'
+                               })
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -110,7 +111,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not chosen_newline in allowed_newline:
         output_objects.append(
-            {'object_type': 'error_text', 'text': 'Unsupported newline style supplied: %s (must be one of %s)'
+            {'object_type': 'error_text', 'text':
+             'Unsupported newline style supplied: %s (must be one of %s)'
              % (chosen_newline, ', '.join(list(allowed_newline)))})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -129,7 +131,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
             logger.warning('%s tried to %s restricted path %s ! (%s)'
                            % (client_id, op_name, abs_path, path))
             output_objects.append(
-                {'object_type': 'error_text', 'text': "Invalid path! (%s expands to an illegal path)" % path})
+                {'object_type': 'error_text', 'text':
+                 "Invalid path! (%s expands to an illegal path)" % path})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     if abs_path == '':
@@ -139,7 +142,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
             logger.warning('%s tried to %s restricted path %s ! (%s)'
                            % (client_id, op_name, abs_path, path))
             output_objects.append(
-                {'object_type': 'error_text', 'text': "Invalid path! (%s expands to an illegal path)" % path})
+                {'object_type': 'error_text', 'text':
+                 "Invalid path! (%s expands to an illegal path)" % path})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not check_write_access(abs_path, parent_dir=True):
@@ -154,11 +158,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     (owner, time_left) = acquire_edit_lock(abs_path, client_id)
     if owner != client_id:
-        output_objects.append({'object_type': 'error_text', 'text': "You don't have the lock for %s!"
+        output_objects.append({'object_type': 'error_text', 'text':
+                               "You don't have the lock for %s!"
                                % path})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     try:
+        # TODO: port to write_file
         fh = open(abs_path, 'w+')
         fh.write(user_arguments_dict['editarea'
                                      ][0].replace(form_newline, saved_newline))
@@ -175,8 +181,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # Don't give away information about actual fs layout
 
         output_objects.append({'object_type': 'error_text', 'text':
-                               '%s could not be written! (%s)' %
-                               (path, ("%s" % exc).replace(base_dir, ''))})
+                               '%s could not be written!' % path})
+        logger.error("write %s failed: %s" % (abs_path, exc))
         return (output_objects, returnvalues.SYSTEM_ERROR)
     if submitjob:
         output_objects.append(

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rmcrontab - remove scheduled cron/at user tasks back end
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,6 +30,7 @@ convenient alternative to the full crontab back end, which expects a complete
 crontab or atjobs textarea and therefore is a bit cumbersome to use from e.g.
 xmlrpc/jsonrpc.
 """
+
 from __future__ import absolute_import
 
 from mig.shared import returnvalues
@@ -95,8 +96,7 @@ Please contact the site admins %s if you think they should be enabled.
                         get_csrf_limit(configuration), accepted):
         output_objects.append(
             {'object_type': 'error_text', 'text': '''Only accepting
-            CSRF-filtered POST requests to prevent unintended updates'''
-             })
+CSRF-filtered POST requests to prevent unintended updates'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if cronjobs:

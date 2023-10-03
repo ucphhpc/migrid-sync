@@ -66,6 +66,53 @@ def dummy_main(client_id, user_arguments_dict):
     return (output_objs, returnvalues.SYSTEM_ERROR)
 
 
+def filter_exc(configuration, exc):
+    """Helper to strip any private file system details from exception"""
+    _logger = configuration.logger
+    filtered = '%s' % exc
+    for prefix in (configuration.user_home,
+                   configuration.user_pending,
+                   configuration.user_cache,
+                   configuration.user_messages,
+                   configuration.user_settings,
+                   configuration.mrsl_files_dir,
+                   configuration.gridstat_files_dir,
+                   configuration.vgrid_files_home,
+                   configuration.vgrid_files_writable,
+                   configuration.vgrid_files_readonly,
+                   configuration.vgrid_public_base,
+                   configuration.vgrid_private_base,
+                   configuration.vgrid_home,
+                   configuration.re_files_dir,
+                   configuration.re_pending_dir,
+                   configuration.re_home,
+                   configuration.log_dir,
+                   configuration.mig_server_home,
+                   configuration.resource_pending,
+                   configuration.resource_home,
+                   configuration.webserver_home,
+                   configuration.user_db_home,
+                   configuration.sss_home,
+                   configuration.sandbox_home,
+                   configuration.freeze_home,
+                   configuration.freeze_tape,
+                   configuration.sharelink_home,
+                   configuration.twofactor_home,
+                   configuration.gdp_home,
+                   configuration.workflows_home,
+                   configuration.workflows_db_home,
+                   configuration.notify_home,
+                   # Fallbacks
+                   configuration.state_path,
+                   configuration.mig_path,
+                   configuration.certs_path,
+                   ):
+        if prefix and prefix in filtered:
+            _logger.debug("strip %s from %s" % (prefix, filtered))
+            filtered = filtered.replace(prefix, '')
+    return filtered
+
+
 def txt_table_if_have_keys(header, input_dict, keywordlist):
     """create txt table contents based on keys in a dictionary"""
 
@@ -136,7 +183,10 @@ def txt_format(configuration, ret_val, ret_msg, out_obj):
 
     for i in out_obj:
         if i['object_type'] == 'error_text':
-            lines.append('** %s **\n' % i['text'])
+            msg = "%(text)s" % i
+            if i.get('exc', False):
+                msg += filter_exc(configuration, ': %(exc)s' % i)
+            lines.append('** %s **\n' % msg)
         elif i['object_type'] == 'warning':
             lines.append('! %s !\n' % i['text'])
         elif i['object_type'] == 'start':
@@ -671,8 +721,10 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
         if i['object_type'] == 'start':
             pass
         elif i['object_type'] == 'error_text':
-            lines.append('<p class="errortext">%s</p>' %
-                         html_escape(i['text']))
+            msg = "%(text)s" % i
+            if i.get('exc', False):
+                msg += filter_exc(configuration, ': %(exc)s' % i)
+            lines.append('<p class="errortext">%s</p>' % html_escape(msg))
         elif i['object_type'] == 'warning':
             lines.append('<p class="warningtext">%s</p>' %
                          html_escape(i['text']))

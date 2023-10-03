@@ -167,7 +167,7 @@ CSRF-filtered POST requests to prevent unintended updates'''})
             "%s invalid password for %r (policy %s): %s" %
             (op_name, cert_name, configuration.site_password_policy, exc))
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Invalid password requested: %s.' % exc})
+                               'Invalid password requested', 'exc': exc})
         output_objects.append(
             {'object_type': 'link', 'destination': 'javascript:history.back();',
              'class': 'genericbutton', 'text': "Try again"})

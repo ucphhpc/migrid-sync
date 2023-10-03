@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # stopstore - Back end to stop one or more resource store units
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,8 @@
 # -- END_HEADER ---
 #
 
-"""Stop store unit"""
+"""Stop resource store unit"""
+
 from __future__ import absolute_import
 
 from mig.shared import returnvalues
@@ -46,7 +47,7 @@ def signature():
         'store_name': [],
         'all': [''],
         'parallel': [''],
-        }
+    }
     return ['text', defaults]
 
 
@@ -55,8 +56,8 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id)
-    output_objects.append({'object_type': 'text', 'text'
-                          : '--------- Trying to STOP store ----------'})
+    output_objects.append(
+        {'object_type': 'text', 'text': '--------- Trying to STOP store ----------'})
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
@@ -66,7 +67,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -85,10 +86,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Failure: You must be an owner of '
-                               + unique_resource_name
-                               + ' to stop the store!'})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Only owners of %s can stop the associated store units!' %
+             unique_resource_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     exit_status = returnvalues.OK
@@ -99,15 +100,15 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # take action based on supplied list of stores
 
     if len(store_name_list) == 0:
-        output_objects.append({'object_type': 'text', 'text'
-                              : "No stores specified and 'all' argument not set to true: Nothing to do!"
-                              })
+        output_objects.append(
+            {'object_type': 'text', 'text':
+             "No stores specified and 'all' arg not set: nothing to do!"})
 
     workers = []
     for store_name in store_name_list:
         task = Worker(target=stop_resource_store,
                       args=(unique_resource_name, store_name,
-                      configuration.resource_home, logger))
+                            configuration.resource_home, logger))
         workers.append((store_name, [task]))
         task.start()
         if not parallel:
@@ -115,15 +116,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     for (store_name, task_list) in workers:
         (status, msg) = task_list[0].finish()
-        output_objects.append({'object_type': 'header', 'text'
-                              : 'Stop store'})
+        output_objects.append({'object_type': 'header', 'text': 'Stop store'})
         if not status:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Problems stopping store: %s' % msg})
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Problems stopping store: %s' % msg})
             exit_status = returnvalues.SYSTEM_ERROR
         else:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : 'Stop store success: %s' % msg})
+            output_objects.append(
+                {'object_type': 'text', 'text':
+                 'Stop store success: %s' % msg})
     return (output_objects, exit_status)
-
-

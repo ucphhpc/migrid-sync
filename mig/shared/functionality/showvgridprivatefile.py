@@ -98,6 +98,7 @@ private files dir.''' % label})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     try:
+        # TODO: port to read_file
         private_fd = open(abs_path, 'rb')
         entry = {'object_type': 'binary',
                  'data': private_fd.read()}
@@ -113,8 +114,10 @@ private files dir.''' % label})
                           {'object_type': 'end'}]
         private_fd.close()
     except Exception as exc:
-        output_objects.append({'object_type': 'error_text', 'text': 'Error reading %s private file (%s)'
-                               % (label, exc)})
+        logger.error("reading private file %s failed: %s" % (abs_path, exc))
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Error reading %s private file %s' % (label,
+                                                                     path)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     return (output_objects, returnvalues.OK)

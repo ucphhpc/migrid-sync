@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # liveio - communication with running jobs
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -113,7 +113,7 @@ def main(client_id, user_arguments_dict):
 
     if not configuration.site_enable_jobs:
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''Job execution is not enabled on this system'''})
+                               'Job execution is not enabled on this system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if not action in valid_actions:
@@ -127,7 +127,7 @@ def main(client_id, user_arguments_dict):
                             get_csrf_limit(configuration), accepted):
             output_objects.append(
                 {'object_type': 'error_text', 'text': '''Only accepting
-                CSRF-filtered POST requests to prevent unintended updates'''
+CSRF-filtered POST requests to prevent unintended updates'''
                  })
             return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -227,8 +227,8 @@ jobs before and during execution.
 
     if action == 'get' and (not src or not dst):
         output_objects.append(
-            {'object_type': 'error_text',
-             'text': 'src and dst parameters required for live input'})
+            {'object_type': 'error_text', 'text':
+             'src and dst parameters required for live input'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Automatic fall back to stdio files if output with no path provided
@@ -306,10 +306,9 @@ jobs before and during execution.
             status = returnvalues.CLIENT_ERROR
             output_objects.append(
                 {'object_type': 'error_text', 'text':
-                 ('You can only list status of your own jobs. '
-                  'Please verify that you submitted the mRSL file '
-                  'with job id "%s" (Could not unpickle mRSL file %s)'
-                  ) % (job_id, filepath)})
+                 '''You can only list status of your own jobs. Please verify
+that you submitted the mRSL file with job id %r (Could not unpickle mRSL file
+%s)''' % (job_id, mrsl_file)})
             continue
 
         if job_dict['STATUS'] != 'EXECUTING':
@@ -333,16 +332,17 @@ jobs before and during execution.
             last_live_update_dict_unpickled = \
                 unpickle(last_live_update_file, logger)
             if not last_live_update_dict_unpickled:
-                output_objects.append({'object_type': 'error_text',
-                                       'text': 'Could not unpickle %s - skipping request!'
-                                       % last_live_update_file})
+                output_objects.append(
+                    {'object_type': 'error_text', 'text':
+                     'Could not unpickle %s - skipping request!'
+                     % last_live_update_file})
                 continue
 
             if 'LAST_LIVE_UPDATE_REQUEST_TIMESTAMP' not in last_live_update_dict_unpickled:
                 output_objects.append(
-                    {'object_type': 'error_text',
-                     'text': 'Could not find needed key in %s.'
-                     % last_live_update_file})
+                    {'object_type': 'error_text', 'text':
+                     'Could not find needed key in %s.' % last_live_update_file
+                     })
                 continue
 
             last_live_update_request = \
@@ -358,10 +358,9 @@ jobs before and during execution.
 
             if difference.seconds < min_delay:
                 output_objects.append(
-                    {'object_type': 'error_text',
-                     'text': ('Request not allowed, you must wait at least '
-                              '%s seconds between live update requests!'
-                              ) % min_delay})
+                    {'object_type': 'error_text', 'text':
+                     '''Request not allowed, you must wait at least %d seconds
+between live update requests!''' % min_delay})
                 continue
 
         # save this request to file to avoid DoS from a client request loop.
@@ -373,8 +372,8 @@ jobs before and during execution.
         if not pickle_ret:
             output_objects.append(
                 {'object_type': 'error_text', 'text':
-                 'Error saving live io request timestamp to last_live_update '
-                 'file, request not sent!'})
+                 '''Error saving live io request timestamp to last_live_update
+file, request not sent!'''})
             continue
 
         # #
@@ -400,6 +399,7 @@ jobs before and during execution.
             # create
 
             try:
+                # TODO: port to write_file
                 filehandle = open(local_file, 'w')
                 filehandle.write('job_id '
                                  + job_dict['JOB_ID'] + '\n')

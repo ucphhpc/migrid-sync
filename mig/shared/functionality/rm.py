@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rm - backend to remove files/directories in user home
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -121,7 +121,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
             logger.error('%s called with invalid share_id %s: %s' %
                          (op_name, share_id, err))
             output_objects.append(
-                {'object_type': 'error_text', 'text': 'Invalid sharelink ID: %s' % share_id})
+                {'object_type': 'error_text', 'text':
+                 'Invalid sharelink ID: %s' % share_id})
             return (output_objects, returnvalues.CLIENT_ERROR)
         # TODO: load and check sharelink pickle (currently requires client_id)
         user_id = 'anonymous user through share ID %s' % share_id
@@ -280,9 +281,10 @@ remove parent placeholders for %s shared folders!""" %
                         == trash_base:
                     logger.warning("%s: already in trash: '%s'" % (op_name,
                                                                    real_path))
-                    output_objects.append({'object_type': 'error_text', 'text': """
-'%s' is already in trash - no action: use force flag to permanently delete"""
-                                           % relative_path})
+                    output_objects.append(
+                        {'object_type': 'error_text', 'text':
+                         """%r is already in trash - no action: use force flag
+to permanently delete""" % relative_path})
                     status = returnvalues.CLIENT_ERROR
                     continue
             except Exception as err:

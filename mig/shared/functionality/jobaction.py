@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobaction - Request status change (freeze, cancel, ...) for one or more jobs
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -88,7 +88,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not configuration.site_enable_jobs:
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''Job execution is not enabled on this system'''})
+                               'Job execution is not enabled on this system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if not action in valid_actions:
@@ -155,7 +155,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if len(filelist) > 500:
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Too many matching jobs (%s)!'
+                               'Too many matching jobs (%d)!'
                                % len(filelist)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 

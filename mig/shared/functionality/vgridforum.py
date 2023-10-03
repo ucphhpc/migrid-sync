@@ -122,7 +122,8 @@ access the forum.''' % (vgrid_name, label)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not action in valid_actions:
-        output_objects.append({'object_type': 'error_text', 'text': 'Invalid action "%s" (supported: %s)' %
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Invalid action "%s" (supported: %s)' %
                                (action, ', '.join(valid_actions))})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -131,8 +132,7 @@ access the forum.''' % (vgrid_name, label)})
                             get_csrf_limit(configuration), accepted):
             output_objects.append(
                 {'object_type': 'error_text', 'text': '''Only accepting
-                CSRF-filtered POST requests to prevent unintended updates'''
-                 })
+CSRF-filtered POST requests to prevent unintended updates'''})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other

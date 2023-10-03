@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ssscreateimg - Back end to SSS zip generator
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -116,8 +116,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # check that requested image format is valid
 
     if not image_format in ['raw', 'qcow', 'cow', 'qcow2', 'vmdk']:
-        output_objects.append({'object_type': 'error_text', 'text': 'Unsupported image format: %s'
-                               % image_format})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Unsupported image format: %s' % image_format})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # check that requested vgrids are valid - anybody can offer their sandbox
@@ -127,7 +127,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
     all_vgrids = get_vgrid_map_vgrids(configuration)
     for vgrid in vgrid_list:
         if not vgrid in all_vgrids:
-            output_objects.append({'object_type': 'error_text', 'text': 'Failed to validate %s %s: %s'
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Failed to validate %s %s: %s'
                                    % (configuration.site_vgrid_label, vgrid,
                                       all_vgrids)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
@@ -137,15 +138,19 @@ CSRF-filtered POST requests to prevent unintended updates'''
     try:
         userdb = load_sandbox_db(configuration)
     except Exception as exc:
-        output_objects.append({'object_type': 'error_text', 'text': 'Failed to read login info: %s'
-                               % exc})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Failed to read login info!'})
+        logger.error("loading sandbox db failed: %s" % exc)
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if username not in userdb or userdb[username][PW] != password:
-        output_objects.append({'object_type': 'error_text', 'text': 'Wrong username or password - please go back and try again...'
-                               })
-        output_objects.append({'object_type': 'link', 'destination': 'ssslogin.py', 'text': 'Retry login'
-                               })
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Wrong username or password - please try again...'
+             })
+        output_objects.append(
+            {'object_type': 'link', 'destination': 'ssslogin.py', 'text':
+             'Retry login'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # provide a resource name
@@ -177,8 +182,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
         save_sandbox_db(userdb, configuration)
     except Exception as exc:
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Could not update sandbox database: %s' % exc
-                               })
+                               'Could not update sandbox database!'})
+        logger.error('save sandbox db for %s update failed: %s' % (username,
+                                                                   exc))
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     logger.debug('building resource specific files for %s'
@@ -207,7 +213,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     logger.debug('got resource conf %s' % resource_config)
     if not resource_config:
         output_objects.append({'object_type': 'error_text', 'text':
-                               "No resouce_config for: '%s'" % unique_host_name})
+                               "No resouce_config for: %r" % unique_host_name})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # read pickled exe conf file (needed to create master_node_script.sh)
@@ -215,7 +221,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     (status, exe) = get_resource_exe(resource_config, 'localhost', logger)
     if not exe:
         output_objects.append({'object_type': 'error_text', 'text':
-                               "No 'localhost' EXE config for: '%s'" %
+                               "No 'localhost' EXE config for: %r" %
                                unique_host_name})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
@@ -278,7 +284,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
             touch_lockfile.close()
         except Exception as exc:
             output_objects.append({'object_type': 'error_text', 'text':
-                                   'Could not create lock file: %s' % exc})
+                                   'Could not create lock file!'})
+            logger.error("failed to make sandbox lockfile: %s" % exc)
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # ## Enter critical region ###
@@ -309,6 +316,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     except Exception as err:
         output_objects.append({'object_type': 'error_text', 'text':
                                'Creating script failed: %s' % msg})
+        logger.error("saving key files failed: %s" % exc)
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # use a disk of the requested size
@@ -359,8 +367,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
                         server_dst)
     except Exception as err:
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Failed to customize image: %s'
-                               % err})
+                               'Failed to customize image!'})
+        logger.error("could not customize image: %s" % err)
         failed = True
 
     # unmount disk image

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cleanstore - Back end to clean one or more resource store units
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,10 @@
 # -- END_HEADER ---
 #
 
+"""Back end to clean one or more resource store units"""
+
 from __future__ import absolute_import
+
 from mig.shared import returnvalues
 from mig.shared.conf import get_all_store_names
 from mig.shared.findtype import is_owner
@@ -44,7 +47,7 @@ def signature():
         'store_name': [],
         'all': [''],
         'parallel': [''],
-        }
+    }
     return ['text', defaults]
 
 
@@ -53,8 +56,8 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id)
-    output_objects.append({'object_type': 'text', 'text'
-                          : '--------- Trying to Clean store ----------'})
+    output_objects.append(
+        {'object_type': 'text', 'text': '--------- Trying to Clean store ----------'})
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -63,7 +66,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -82,10 +85,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Failure: You must be an owner of '
-                               + unique_resource_name
-                               + ' to clean the store!'})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Only owners of %s can clean associated store units!' %
+             unique_resource_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     exit_status = returnvalues.OK
@@ -96,15 +99,15 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # take action based on supplied list of stores
 
     if len(store_name_list) == 0:
-        output_objects.append({'object_type': 'text', 'text'
-                              : "No stores specified and 'all' argument not set to true: Nothing to do!"
-                              })
+        output_objects.append(
+            {'object_type': 'text', 'text':
+             "No stores specified and 'all' arg not set: nothing to do!"})
 
     workers = []
     for store_name in store_name_list:
         task = Worker(target=stop_resource_store,
                       args=(unique_resource_name, store_name,
-                      configuration.resource_home, logger))
+                            configuration.resource_home, logger))
         workers.append((store_name, [task]))
         task.start()
         if not parallel:
@@ -120,7 +123,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         task_list[0].join()
         task = Worker(target=clean_resource_store,
                       args=(unique_resource_name, store_name,
-                      configuration.resource_home, logger))
+                            configuration.resource_home, logger))
         task_list.append(task)
         task.start()
         if not parallel:
@@ -128,24 +131,23 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     for (store_name, task_list) in workers:
         (status, msg) = task_list[0].finish()
-        output_objects.append({'object_type': 'header', 'text'
-                              : 'Clean store output:'})
+        output_objects.append(
+            {'object_type': 'header', 'text': 'Clean store output:'})
         if not status:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Problems stopping store during clean: %s'
-                                   % msg})
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Problems stopping store during clean: %s' % msg})
 
         (status2, msg2) = task_list[1].finish()
         if not status2:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Problems cleaning store during clean: %s'
-                                   % msg2})
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Problems cleaning store during clean: %s' % msg2})
             exit_status = returnvalues.SYSTEM_ERROR
         if status and status2:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : 'Clean store success: Stop output: %s ; Clean output: %s'
-                                   % (msg, msg2)})
+            output_objects.append(
+                {'object_type': 'text', 'text':
+                 'Clean store success: Stop output: %s ; Clean output: %s'
+                 % (msg, msg2)})
 
     return (output_objects, exit_status)
-
-

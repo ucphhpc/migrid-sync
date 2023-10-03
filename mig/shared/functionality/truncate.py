@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # truncate - truncate a file to given size
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -91,8 +91,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if verbose(flags):
         for flag in flags:
-            output_objects.append({'object_type': 'text', 'text': '%s using flag: %s' % (op_name,
-                                                                                         flag)})
+            output_objects.append({'object_type': 'text', 'text':
+                                   '%s using flag: %s' % (op_name, flag)})
 
     if size < 0:
         output_objects.append(
@@ -145,16 +145,17 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 continue
 
             try:
+                # TODO: port to truncate_file
                 fd = open(abs_path, 'r+')
                 fd.truncate(size)
                 fd.close()
                 logger.info('%s %s %s done' % (op_name, abs_path, size))
             except Exception as exc:
-                output_objects.append({'object_type': 'error_text',
-                                       'text': "%s: '%s': %s" % (op_name,
-                                                                 relative_path, exc)})
-                logger.error("%s: failed on '%s': %s" % (op_name,
-                                                         relative_path, exc))
+                logger.error("%s: failed on %r: %s" % (op_name, relative_path,
+                                                       exc))
+                output_objects.append({
+                    'object_type': 'error_text',
+                    'text': "%s: %r" % (op_name, relative_path)})
                 status = returnvalues.SYSTEM_ERROR
                 continue
     return (output_objects, status)
