@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobobjsubmit - Submit a job object/dictionary directly
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,9 +25,8 @@
 # -- END_HEADER ---
 #
 
-# Minimum Intrusion Grid
-
 """Takes a job object/dictionary, writes the mRSL file and submits it"""
+
 from __future__ import absolute_import
 
 import os
@@ -76,7 +75,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -90,7 +89,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not configuration.site_enable_jobs:
         output_objects.append({'object_type': 'error_text', 'text':
-            '''Job execution is not enabled on this system'''})
+                               'Job execution is not enabled on this system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     external_dict = get_keywords_dict(configuration)
@@ -106,17 +105,18 @@ CSRF-filtered POST requests to prevent unintended updates'''
         os.write(filehandle, mrsl)
         os.close(filehandle)
     except Exception as err:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Failed to write temporary mRSL file: %s' % err})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Failed to write temporary mRSL file!'})
+        logger.error("could not write temp mRSL: %s" % err)
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # submit it
 
     (submit_status, newmsg, job_id) = new_job(real_path, client_id,
-            configuration, False, True)
+                                              configuration, False, True)
     if not submit_status:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : newmsg})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               newmsg})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -124,7 +124,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     base_dir = \
         os.path.abspath(os.path.join(configuration.mrsl_files_dir,
-                        client_dir)) + os.sep
+                                     client_dir)) + os.sep
 
     # job = Job()
 
@@ -133,17 +133,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     (new_job_obj_status, new_job_obj) = \
         create_job_object_from_pickled_mrsl(filepath, logger,
-            external_dict)
+                                            external_dict)
     if not new_job_obj_status:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : new_job_obj})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               new_job_obj})
         status = returnvalues.CLIENT_ERROR
     else:
 
         # return new_job_obj
 
-        output_objects.append({'object_type': 'jobobj', 'jobobj'
-                              : new_job_obj})
+        output_objects.append({'object_type': 'jobobj', 'jobobj': new_job_obj})
     return (output_objects, status)
-
-

@@ -47,7 +47,7 @@ sectionheader = {'object_type': 'sectionheader', 'required': ['text'],
 link = {'object_type': 'link', 'required': ['destination', 'text'],
         'optional': []}
 error_text = {'object_type': 'error_text', 'required': ['text'],
-              'optional': []}
+              'optional': ['exc']}
 job = {'object_type': 'job', 'required': ['job_id',
                                           'execution_histories'], 'optional': []}
 trigger_job = {'object_type': 'trigger_job', 'required': ['job_id',

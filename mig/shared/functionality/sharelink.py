@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sharelink - backend to create and manage share links
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -140,8 +140,7 @@ Please contact the site admins %s if you think they should be enabled.
                             get_csrf_limit(configuration), accepted):
             output_objects.append(
                 {'object_type': 'error_text', 'text': '''Only accepting
-                CSRF-filtered POST requests to prevent unintended updates'''
-                 })
+CSRF-filtered POST requests to prevent unintended updates'''})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     (load_status, share_map) = load_share_links(configuration, client_id)
@@ -384,20 +383,20 @@ comma-separated recipients.
                 logger.warning('%s tried to %s restricted path %s ! (%s)' %
                                (client_id, action, abs_path, path))
                 output_objects.append(
-                    {'object_type': 'error_text', 'text': '''Illegal path "%s":
+                    {'object_type': 'error_text', 'text': '''Illegal path %r:
 you can only share your own data, and not your entire home direcory.''' % path
                      })
                 return (output_objects, returnvalues.CLIENT_ERROR)
             elif not os.path.exists(abs_path):
                 output_objects.append(
                     {'object_type': 'error_text', 'text':
-                     'Provided path "%s" does not exist!' % path})
+                     'Provided path %r does not exist!' % path})
                 return (output_objects, returnvalues.CLIENT_ERROR)
             # Refuse sharing of (mainly auth) dot dirs in root of user home
             elif real_path.startswith(os.path.join(base_dir, '.')):
                 output_objects.append(
                     {'object_type': 'error_text', 'text':
-                     'Provided path "%s" cannot be shared for security reasons'
+                     'Provided path %r cannot be shared for security reasons'
                      % path})
                 return (output_objects, returnvalues.CLIENT_ERROR)
             elif single_file and write_access:
@@ -437,7 +436,7 @@ think you should be allowed to do that.
             # circumvention of any sub-vgrid sharing controls.
             if vgrid_parent is not None:
                 output_objects.append(
-                    {'object_type': 'error_text', 'text': '''Illegal path "%s":
+                    {'object_type': 'error_text', 'text': '''Illegal path %r:
 you can only share your own data, and not folders with e.g. %s shared folders
 nested in them.''' % (path, configuration.site_vgrid_label)
                      })

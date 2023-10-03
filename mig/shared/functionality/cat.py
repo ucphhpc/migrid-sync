@@ -181,9 +181,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
                               [relative_path],
                               failed=True,
                               details=exc)
-                output_objects.append({'object_type': 'error_text',
-                                       'text': "%s: '%s': %s"
-                                       % (op_name, relative_path, exc)})
+                output_objects.append({'object_type': 'error_text', 'text':
+                                       "%s failed on %r" % (op_name,
+                                                            relative_path)})
                 logger.error("%s: failed on '%s': %s"
                              % (op_name, relative_path, exc))
 
@@ -214,7 +214,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                   failed=True,
                                   details=exc)
                     output_objects.append({'object_type': 'error_text',
-                                           'text': "write failed: '%s'" % exc})
+                                           'text': "write %r failed" % dst})
                     logger.error("%s: write failed on '%s': %s"
                                  % (op_name, abs_dest, exc))
                     status = returnvalues.SYSTEM_ERROR

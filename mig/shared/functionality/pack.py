@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # pack - pack one or more files/dirs into a zip/tar archive
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -147,11 +147,11 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         # out of bounds
 
-        output_objects.append({'object_type': 'error_text', 'text':
-                               "You're not allowed to work in %s!"
-                               % current_dir})
         logger.warning('%s tried to %s restricted path %s ! (%s)'
                        % (client_id, op_name, abs_dir, current_dir))
+        output_objects.append({'object_type': 'error_text', 'text':
+                               "You're not allowed to work in %s!" %
+                               current_dir})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     output_objects.append(
@@ -170,11 +170,11 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         # out of bounds
 
+        logger.warning('%s tried to %s restricted path %s !(%s)'
+                       % (client_id, op_name, abs_dest, dst))
         output_objects.append(
             {'object_type': 'error_text', 'text':
              "Invalid path! (%s expands to an illegal path)" % dst})
-        logger.warning('%s tried to %s restricted path %s !(%s)'
-                       % (client_id, op_name, abs_dest, dst))
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not os.path.isdir(os.path.dirname(abs_dest)):
@@ -223,8 +223,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         if not match:
             output_objects.append({'object_type': 'error_text', 'text':
-                                   "%s: cannot pack '%s': no valid src paths"
-                                   % (op_name, pattern)})
+                                   "%s: cannot pack '%s': no valid src paths" %
+                                   (op_name, pattern)})
             status = returnvalues.CLIENT_ERROR
             continue
 
@@ -267,8 +267,8 @@ pack entire %s shared folders!""" % configuration.site_vgrid_label})
             (pack_status, msg) = pack_archive(configuration, client_id,
                                               relative_path, relative_dest)
             if not pack_status:
-                output_objects.append({'object_type': 'error_text',
-                                       'text': 'Error: %s' % msg})
+                output_objects.append({'object_type': 'error_text', 'text':
+                                       'Error: %s' % msg})
                 status = returnvalues.CLIENT_ERROR
                 continue
             output_objects.append({'object_type': 'text', 'text':

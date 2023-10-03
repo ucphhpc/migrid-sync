@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# getjobobj - [insert a few words of module description on this line]
+# getjobobj - load a job on object format
 # Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,9 +25,8 @@
 # -- END_HEADER ---
 #
 
-# Minimum Intrusion Grid
-
 """Get job on object format"""
+
 from __future__ import absolute_import
 
 import os
@@ -77,7 +76,7 @@ def main(client_id, user_arguments_dict):
 
     if not configuration.site_enable_jobs:
         output_objects.append({'object_type': 'error_text', 'text':
-            '''Job execution is not enabled on this system'''})
+                               'Job execution is not enabled on this system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -85,7 +84,7 @@ def main(client_id, user_arguments_dict):
 
     base_dir = \
         os.path.abspath(os.path.join(configuration.mrsl_files_dir,
-                        client_dir)) + os.sep
+                                     client_dir)) + os.sep
 
     status = returnvalues.OK
     for job_id in job_id_list:
@@ -97,17 +96,15 @@ def main(client_id, user_arguments_dict):
 
         (new_job_obj_status, new_job_obj) = \
             create_job_object_from_pickled_mrsl(filepath, logger,
-                external_dict)
+                                                external_dict)
         if not new_job_obj_status:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : new_job_obj})
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   new_job_obj})
             status = returnvalues.CLIENT_ERROR
         else:
 
             # return new_job_obj
 
-            output_objects.append({'object_type': 'jobobj', 'jobobj'
-                                  : new_job_obj})
+            output_objects.append(
+                {'object_type': 'jobobj', 'jobobj': new_job_obj})
     return (output_objects, status)
-
-

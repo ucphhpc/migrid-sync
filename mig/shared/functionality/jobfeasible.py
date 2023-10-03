@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobfeasible - Request job feasibility status for a waiting job
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Run feasibility check for waiting job"""
+
 from __future__ import absolute_import
 
 import os
@@ -63,7 +64,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -79,7 +80,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not configuration.site_enable_jobs:
         output_objects.append({'object_type': 'error_text', 'text':
-            '''Job execution is not enabled on this system'''})
+                               'Job execution is not enabled on this system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -87,7 +88,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     base_dir = \
         os.path.abspath(os.path.join(configuration.mrsl_files_dir,
-                        client_dir)) + os.sep
+                                     client_dir)) + os.sep
 
     status = returnvalues.OK
     filelist = []
@@ -126,8 +127,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
         # (allowed) match^I
 
         if not match:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : '%s: You do not have any matching job IDs!'
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   '%s: You do not have any matching job IDs!'
                                    % pattern})
             status = returnvalues.CLIENT_ERROR
         else:
@@ -136,8 +137,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # job feasibility is hard on the server, limit
 
     if len(filelist) > 100:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Too many matching jobs (%s)!'
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Too many matching jobs (%d)!'
                                % len(filelist)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -151,16 +152,16 @@ CSRF-filtered POST requests to prevent unintended updates'''
         job_id = mrsl_file.replace('.mRSL', '')
 
         checkcondjob = {'object_type': 'checkcondjob',
-                           'job_id': job_id}
+                        'job_id': job_id}
 
         dict = unpickle(filepath, logger)
         if not dict:
             checkcondjob['message'] = \
-                                    ('The file containing the information ' \
-                                     'for job id %s could not be opened! ' \
-                                     'You can only check feasibility of ' \
-                                     'your own jobs!'
-                                     ) % job_id
+                ('The file containing the information '
+                 'for job id %s could not be opened! '
+                 'You can only check feasibility of '
+                 'your own jobs!'
+                 ) % job_id
             checkcondjobs.append(checkcondjob)
             status = returnvalues.CLIENT_ERROR
             continue
@@ -171,7 +172,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         if not dict['STATUS'] in possible_check_states:
             checkcondjob['message'] = \
                 'You can only check feasibility of jobs with status: %s.'\
-                 % ' or '.join(possible_check_states)
+                % ' or '.join(possible_check_states)
             checkcondjobs.append(checkcondjob)
             continue
 
@@ -181,5 +182,5 @@ CSRF-filtered POST requests to prevent unintended updates'''
         checkcondjobs.append(checkcondjob)
 
     output_objects.append({'object_type': 'checkcondjobs',
-                          'checkcondjobs': checkcondjobs})
+                           'checkcondjobs': checkcondjobs})
     return (output_objects, status)

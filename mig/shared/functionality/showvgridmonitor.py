@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showvgridmonitor - show private vgrid monitor to vgrid participants
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -121,6 +121,7 @@ to access the monitor.''' % (vgrid_name, label)})
         monitor_file = os.path.join(configuration.vgrid_home, vgrid_name,
                                     '%s.html' % configuration.vgrid_monitor)
         try:
+            # TODO: port yo read_file
             monitor_fd = open(monitor_file, 'r')
             past_header = False
             for line in monitor_fd:
@@ -134,9 +135,9 @@ to access the monitor.''' % (vgrid_name, label)})
                 html += "%s" % line
             monitor_fd.close()
         except Exception as exc:
+            logger.error("parsing %s failed: %s" % (monitor_file, exc))
             output_objects.append({'object_type': 'error_text', 'text':
-                                   'Error reading %s monitor page (%s)' %
-                                   (label, exc)})
+                                   'Error reading %s monitor page' % label})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({'object_type': 'html_form', 'text': html})

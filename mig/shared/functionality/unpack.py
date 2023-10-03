@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # unpack - unpack a zip/tar archive
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,6 +28,7 @@
 """Archive unpacker used to unpack one or more zip/tar files in the home
 directory of a user into a given destination directory also there.
 """
+
 from __future__ import absolute_import
 
 import os

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rmvgridres - remove vgrid resource
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Remove a resource from a given vgrid"""
+
 from __future__ import absolute_import
 
 from mig.shared import returnvalues
@@ -115,9 +116,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
         output_objects.append({'object_type': 'warning', 'text': msg})
 
     if not vgrid_is_owner(vgrid_name, client_id, configuration):
-        output_objects.append({'object_type': 'error_text', 'text':
-                               '''You must be an owner of the %s to
-remove a resource!''' % label})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             '''You must be an owner of the %s to remove a resource!''' %
+             label})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # don't remove if not a participant

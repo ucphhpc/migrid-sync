@@ -96,8 +96,7 @@ def main(client_id, user_arguments_dict):
                     configuration.resource_home, logger):
         output_objects.append(
             {'object_type': 'error_text', 'text':
-             "Failure: You must be an owner of '%s' to get the PGID!" %
-             unique_resource_name})
+             'Only owners of %s can get the PGID!''' % unique_resource_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # is_owner incorporates unique_resource_name verification - no need to
@@ -119,9 +118,9 @@ exe %s, client_id %s''' % (unique_resource_name, exe_name, client_id))
     try:
         check_source_ip(remote_ip, unique_resource_name)
     except ValueError as vae:
+        logger.error("Invalid get pgid: %s" % vae)
         output_objects.append({'object_type': 'error_text', 'text':
-                               'invalid request: %s' % vae})
-        logger.error("Invalid put pgid: %s" % vae)
+                               'invalid get pgid request source'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # TODO: add full session ID check here

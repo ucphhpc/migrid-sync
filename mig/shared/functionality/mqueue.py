@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mqueue - POSIX like message queue job inter-communication
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,6 +28,7 @@
 """POSIX like mqueue implementation using MiG user home for job inter-
 communication.
 """
+
 from __future__ import absolute_import
 
 import os
@@ -92,7 +93,7 @@ def main(client_id, user_arguments_dict):
 
     if not action in valid_actions:
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Invalid action "%s" (supported: %s)' %
+                               'Invalid action %r (supported: %s)' %
                                (action, ', '.join(valid_actions))})
         output_objects.append(file_entry)
         return (output_objects, returnvalues.CLIENT_ERROR)
@@ -102,8 +103,7 @@ def main(client_id, user_arguments_dict):
                             get_csrf_limit(configuration), accepted):
             output_objects.append(
                 {'object_type': 'error_text', 'text': '''Only accepting
-                CSRF-filtered POST requests to prevent unintended updates'''
-                 })
+CSRF-filtered POST requests to prevent unintended updates'''})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Find user home from session or certificate
@@ -116,8 +116,7 @@ def main(client_id, user_arguments_dict):
         client_dir = client_id_dir(client_id)
     else:
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Either certificate or session ID is required'
-                               })
+                               'Either certificate or session ID is required'})
         output_objects.append(file_entry)
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -149,9 +148,8 @@ def main(client_id, user_arguments_dict):
     # IMPORTANT: path must be expanded to abs for proper chrooting
     queue_path = os.path.abspath(os.path.join(mqueue_base, queue))
     if not valid_user_path(configuration, queue_path, mqueue_base):
-        output_objects.append(
-            {'object_type': 'error_text', 'text': 'Invalid queue name: "%s"'
-             % queue})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Invalid queue name: %r' % queue})
         output_objects.append(file_entry)
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -226,11 +224,11 @@ for active jobs.
         try:
             os.mkdir(queue_path)
             output_objects.append({'object_type': 'text', 'text':
-                                   'New "%s" queue created' % queue})
+                                   'New %r queue created' % queue})
         except Exception as err:
+            logger.error("create mqueue %s failed: %s" % (queue_path, err))
             output_objects.append({'object_type': 'error_text', 'text':
-                                   'Could not create "%s" queue: "%s"' %
-                                   (queue, err)})
+                                   'Could not create %r queue' % queue})
             status = returnvalues.CLIENT_ERROR
     elif action == 'remove':
         try:
@@ -238,26 +236,27 @@ for active jobs.
                 os.remove(os.path.join(queue_path, entry))
             os.rmdir(queue_path)
             output_objects.append({'object_type': 'text', 'text':
-                                   'Existing "%s" queue removed' % queue})
+                                   'Existing %r queue removed' % queue})
         except Exception as err:
+            logger.error("remove mqueue %s failed: %s" % (queue_path, err))
             output_objects.append({'object_type': 'error_text', 'text':
-                                   'Could not remove "%s" queue: "%s"' %
-                                   (queue, err)})
+                                   'Could not remove %r queue' % queue})
             status = returnvalues.CLIENT_ERROR
     elif action == 'send':
         try:
             if not msg_id:
                 msg_id = "%.0f" % time.time()
             msg_path = os.path.join(queue_path, msg_id)
+            # TODO: port to write_file
             msg_fd = open(msg_path, 'w')
             msg_fd.write(msg)
             msg_fd.close()
             output_objects.append({'object_type': 'text', 'text':
-                                   'Message sent to "%s" queue' % queue})
+                                   'Message sent to %r queue' % queue})
         except Exception as err:
+            logger.error("write to mqueue %s failed: %s" % (queue_path, err))
             output_objects.append({'object_type': 'error_text', 'text':
-                                   'Could not send to "%s" queue: "%s"' %
-                                   (queue, err)})
+                                   'Could not send to %r queue' % queue})
             status = returnvalues.CLIENT_ERROR
     elif action == 'receive':
         try:
@@ -267,20 +266,21 @@ for active jobs.
                 if messages:
                     msg_id = messages[0]
             if msg_id:
-                message_path = os.path.join(queue_path, msg_id)
-                message_fd = open(message_path, 'r')
-                message = message_fd.readlines()
-                message_fd.close()
-                os.remove(message_path)
-                file_entry['path'] = os.path.basename(message_path)
+                msg_path = os.path.join(queue_path, msg_id)
+                # TODO: port to read_file_lines
+                msg_fd = open(msg_path, 'r')
+                message = msg_fd.readlines()
+                msg_fd.close()
+                os.remove(msg_path)
+                file_entry['path'] = os.path.basename(msg_path)
             else:
                 message = [mqueue_empty]
             # Update file_output entry for raw data with output_format=file
             file_entry['lines'] = message
         except Exception as err:
+            logger.error("read from mqueue %s failed: %s" % (queue_path, err))
             output_objects.append({'object_type': 'error_text', 'text':
-                                   'Could not receive from "%s" queue: "%s"'
-                                   % (queue, err)})
+                                   'Could not receive from %r queue' % queue})
             status = returnvalues.CLIENT_ERROR
     elif action == 'show':
         try:
@@ -290,19 +290,22 @@ for active jobs.
                 if messages:
                     msg_id = messages[0]
             if msg_id:
-                message_path = os.path.join(queue_path, msg_id)
-                message_fd = open(message_path, 'r')
-                message = message_fd.readlines()
-                message_fd.close()
-                file_entry['path'] = os.path.basename(message_path)
+                msg_path = os.path.join(queue_path, msg_id)
+                msg_fd = open(msg_path, 'r')
+                message = msg_fd.readlines()
+                msg_fd.close()
+                file_entry['path'] = os.path.basename(msg_path)
             else:
                 message = [mqueue_empty]
             # Update file_output entry for raw data with output_format=file
             file_entry['lines'] = message
         except Exception as err:
+            logger.error("show %s from mqueue %s failed: %s" % (msg_id,
+                                                                queue_path,
+                                                                err))
             output_objects.append({'object_type': 'error_text', 'text':
-                                   'Could not show %s from "%s" queue: "%s"'
-                                   % (msg_id, queue, err)})
+                                   'Could not show %s from %r queue' %
+                                   (msg_id, queue)})
             status = returnvalues.CLIENT_ERROR
     elif action == 'listmessages':
         try:
@@ -310,9 +313,9 @@ for active jobs.
             messages.sort()
             output_objects.append({'object_type': 'list', 'list': messages})
         except Exception as err:
+            logger.error("list on mqueue %s failed: %s" % (queue_path, err))
             output_objects.append({'object_type': 'error_text', 'text':
-                                   'Could not list "%s" queue: "%s"' %
-                                   (queue, err)})
+                                   'Could not list %r queue messages' % queue})
             status = returnvalues.CLIENT_ERROR
     elif action == 'listqueues':
         try:
@@ -321,14 +324,14 @@ for active jobs.
             queues.sort()
             output_objects.append({'object_type': 'list', 'list': queues})
         except Exception as err:
+            logger.error("list mqueues failed: %s" % err)
             output_objects.append(
-                {'object_type': 'error_text', 'text':
-                 'Could not list queues: "%s"' % err})
+                {'object_type': 'error_text', 'text': 'Could not list queues'})
             status = returnvalues.CLIENT_ERROR
     else:
         output_objects.append(
             {'object_type': 'error_text', 'text':
-             'Unexpected mqueue action: "%s"' % action})
+             'Unexpected mqueue action: %r' % action})
         status = returnvalues.SYSTEM_ERROR
 
     lock_handle.close()

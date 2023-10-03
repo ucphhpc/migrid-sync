@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vmachines - virtual machine management
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -192,7 +192,7 @@ Please contact the site admins %s if you think they should be enabled.
         elif machine_name in [vm["name"] for vm in user_vms]:
             output_objects.append(
                 {'object_type': 'error_text', 'text':
-                 "requested machine name '%s' already exists!" % machine_name})
+                 "requested machine name %r already exists!" % machine_name})
             status = returnvalues.CLIENT_ERROR
             return (output_objects, status)
         elif not flavor in vms.available_flavor_list(configuration):

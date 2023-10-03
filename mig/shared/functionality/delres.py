@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# delres - Deletes a resource
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# delres - Delete a resource
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,12 +25,12 @@
 # -- END_HEADER ---
 #
 
-"""Dele a resource"""
+"""Delete a resource"""
 
 from __future__ import absolute_import
 
-import os
 import fcntl
+import os
 
 from mig.shared import returnvalues
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
@@ -72,8 +72,7 @@ def main(client_id, user_arguments_dict):
                         get_csrf_limit(configuration), accepted):
         output_objects.append(
             {'object_type': 'error_text', 'text': '''Only accepting
-CSRF-filtered POST requests to prevent unintended updates'''
-             })
+CSRF-filtered POST requests to prevent unintended updates'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     res_dir = os.path.join(configuration.resource_home, resource_id)
@@ -83,13 +82,15 @@ CSRF-filtered POST requests to prevent unintended updates'''
     (owner_status, owner_list) = resource_owners(configuration, resource_id)
     if not owner_status:
         output_objects.append(
-            {'object_type': 'error_text', 'text': "Could not look up '%s' owners - no such resource?" % resource_id
+            {'object_type': 'error_text', 'text':
+             "Could not look up '%s' owners - no such resource?" % resource_id
              })
         return (output_objects, returnvalues.CLIENT_ERROR)
     elif client_id not in owner_list:
         logger.warning('user %s tried to delete resource "%s" not owned' %
                        (client_id, resource_id))
-        output_objects.append({'object_type': 'error_text', 'text': "You can't delete '%s' - you don't own it!"
+        output_objects.append({'object_type': 'error_text', 'text':
+                               "You can't delete %r as you don't own it!"
                                % resource_id})
         output_objects.append({'object_type': 'link', 'destination':
                                'resman.py', 'class': 'infolink iconspace', 'title':
@@ -128,8 +129,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
         fe_running = False
 
     if fe_running:
-        output_objects.append({'object_type': 'error_text', 'text': "Can't delete the running resource %s!"
-                               % resource_id})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               "Can't delete the running resource %s!" %
+                               resource_id})
         output_objects.append({'object_type': 'link', 'destination':
                                'resman.py', 'class': 'infolink iconspace',
                                'title': 'Show resources', 'text':
@@ -147,8 +149,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
             if os.path.isfile(file_path):
                 os.unlink(file_path)
     except Exception as err:
+        logger.error("delete resource %s failed: %s" % (resource_id, err))
         output_objects.append(
-            {'object_type': 'error_text', 'text': 'Deletion exception: %s' % err})
+            {'object_type': 'error_text', 'text': 'Delete resource failed!'})
         output_objects.append({'object_type': 'link', 'destination':
                                'resman.py', 'class': 'infolink iconspace',
                                'title': 'Show resources', 'text':

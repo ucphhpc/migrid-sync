@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rejectvgridreq - reject a vgrid access request
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #

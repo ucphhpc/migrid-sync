@@ -34,7 +34,7 @@ import time
 
 from mig.shared import returnvalues
 from mig.shared.bailout import bailout_helper, crash_helper
-from mig.shared.base import requested_page, allow_script, \
+from mig.shared.base import requested_backend, allow_script, \
     is_default_str_coding, force_native_str_rec, force_utf8, force_utf8_rec
 from mig.shared.defaults import download_block_size, default_fs_coding
 from mig.shared.conf import get_configuration_object
@@ -205,14 +205,15 @@ def application(environ, start_response):
             _logger.error("WSGI interface is disabled in configuration")
             raise Exception("WSGI interface not enabled for this site")
 
+        #_logger.debug('DEBUG: wsgi env: %s' % environ)
         # Environment contains python script _somewhere_ , try in turn
         # and fall back to landing page if all fails
-        script_name = requested_page(environ, configuration.site_landing_page,
-                                     name_only=True)
-        backend = os.path.splitext(script_name)[0]
-        # _logger.debug("handling wsgi %r request from %s" %
-        #              (backend, client_id))
-
+        default_page = configuration.site_landing_page
+        script_name = requested_backend(environ, fallback=default_page,
+                                        strip_ext=False)
+        backend = requested_backend(environ, fallback=default_page)
+        # _logger.debug('DEBUG: wsgi found backend %s and script %s' %
+        #              (backend, script_name))
         fieldstorage = cgi.FieldStorage(fp=environ['wsgi.input'],
                                         environ=environ)
         user_arguments_dict = fieldstorage_to_dict(fieldstorage)

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # restartfe - restart resource frontend
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,8 @@
 # -- END_HEADER ---
 #
 
-"""Restart frontend"""
+"""Restart resource frontend"""
+
 from __future__ import absolute_import
 
 from mig.shared import returnvalues
@@ -69,7 +70,7 @@ def main(client_id, user_arguments_dict):
 
     if not configuration.site_enable_resources:
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''Resources are not enabled on this system'''})
+                               'Resources are not enabled on this system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if not safe_handler(configuration, 'post', op_name, client_id,
@@ -85,10 +86,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
-        output_objects.append({'object_type': 'error_text', 'text':
-                               'You must be an owner of ' +
-                               unique_resource_name
-                               + ' to restart the resource frontend!'})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Only owners of %s can restart the resource frontend!' %
+             unique_resource_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     (status, msg) = stop_resource(unique_resource_name,
@@ -111,7 +112,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     # everything ok
 
-    output_objects.append({'object_type': 'text', 'text':
-                           'Stop output: %s ; Start output: %s' % (msg,
-                                                                   msg2)})
+    output_objects.append(
+        {'object_type': 'text', 'text':
+         'Stop output: %s ; Start output: %s' % (msg, msg2)})
     return (output_objects, returnvalues.OK)

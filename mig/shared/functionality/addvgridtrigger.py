@@ -153,8 +153,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                   rule_id, 'trigger',
                                   configuration)
     if not ret_val:
-        output_objects.append(
-            {'object_type': 'error_text', 'text': msg})
+        output_objects.append({'object_type': 'error_text', 'text': msg})
         return (output_objects, returnvalues.CLIENT_ERROR)
     elif msg:
 
@@ -236,8 +235,8 @@ sub-%(vgrid_label)s and try again''' % {'rule_id': rule_id,
     elif not path:
         # New trigger with missing path
         output_objects.append(
-            {'object_type': 'error_text', 'text': '''Either path or rank must
-be set.'''})
+            {'object_type': 'error_text', 'text':
+             'Either path or rank must be set.'})
         return (output_objects, returnvalues.CLIENT_ERROR)
     elif action == "submit" and not arguments:
         # New submit trigger with missing mrsl arguments
@@ -298,7 +297,8 @@ a job description file path as argument.'''})
                     templates.append(temp_fd.read())
                     temp_fd.close()
                 except Exception as err:
-                    logger.error("read submit argument file failed: %s" % err)
+                    logger.error("read submit argument file %s failed: %s" %
+                                 (abs_path, err))
                     output_objects.append(
                         {'object_type': 'error_text', 'text':
                          'failed to read submit argument file "%s"' % rel_path
@@ -315,8 +315,8 @@ a job description file path as argument.'''})
     if not add_status:
         logger.error('%s failed to add/update trigger: %s' % (client_id,
                                                               add_msg))
-        output_objects.append({'object_type': 'error_text', 'text': '%s'
-                               % add_msg})
+        output_objects.append({'object_type': 'error_text', 'text': '%s' %
+                               add_msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if rank is not None:

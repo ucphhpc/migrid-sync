@@ -139,8 +139,11 @@ def main(client_id, user_arguments_dict, environ=None):
                           'accessed',
                           [relative_path])
 
-                output_lines += read_tail_lines(abs_path, lines, logger,
-                                                mode=src_mode)
+                content = read_tail_lines(abs_path, lines, logger,
+                                          mode=src_mode)
+                if content is None:
+                    raise Exception("could not read file")
+                output_lines += content
             except Exception as exc:
                 if not isinstance(exc, GDPIOLogError):
                     gdp_iolog(configuration,
@@ -150,12 +153,11 @@ def main(client_id, user_arguments_dict, environ=None):
                               [relative_path],
                               failed=True,
                               details=exc)
-                output_objects.append({'object_type': 'error_text',
-                                       'text': "%s: '%s': %s"
-                                       % (op_name, relative_path, exc)})
-                logger.error("%s: failed on '%s': %s"
-                             % (op_name, relative_path, exc))
-
+                logger.error("%s: failed on '%s': %s" % (op_name,
+                                                         relative_path, exc))
+                output_objects.append({'object_type': 'error_text', 'text':
+                                       "%s failed on %r" % (op_name,
+                                                            relative_path)})
                 status = returnvalues.SYSTEM_ERROR
                 continue
             entry = {'object_type': 'file_output',

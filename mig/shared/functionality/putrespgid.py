@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # putrespgid - Put PGID of process on resource for kill in clean up
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -135,7 +135,7 @@ def main(client_id, user_arguments_dict):
     except ValueError as vae:
         logger.error("Invalid put pgid: %s" % vae)
         output_objects.append({'object_type': 'error_text', 'text':
-                               'invalid request: %s' % vae})
+                               'invalid put pgid request source'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # TODO: add full session ID check here

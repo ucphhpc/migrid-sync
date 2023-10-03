@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vncsession - Start a new VNC session
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Start a new vnc session"""
+
 from __future__ import absolute_import
 
 from builtins import range
@@ -156,8 +157,9 @@ def main(client_id, user_arguments_dict):
     (stat, msg) = get_users_display_dict(client_id, configuration,
                                          logger)
     if stat == False:
-        output_objects.append({'object_type': 'error_text', 'text': 'Error getting dictionary of live displays %s'
-                               % msg})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Error getting dictionary of live displays %s' %
+                               msg})
         status = returnvalues.CLIENT_ERROR
         return (output_objects, status)
     if stat == -1:
@@ -188,9 +190,10 @@ def main(client_id, user_arguments_dict):
                     get_dict_from_display_number(i, configuration,
                                                  logger)
                 if disp_numb_stat == False:
-                    output_objects.append({'object_type': 'error_text',
-                                           'text': 'Error getting dictionary for display %s'
-                                           % disp_numb_ret})
+                    output_objects.append(
+                        {'object_type': 'error_text', 'text':
+                         'Error getting dictionary for display %s' %
+                         disp_numb_ret})
                     status = returnvalues.CLIENT_ERROR
                     return (output_objects, status)
                 if disp_numb_ret != -1:
@@ -222,8 +225,9 @@ def main(client_id, user_arguments_dict):
                         logger,
                     )
                     if not stat:
-                        output_objects.append({'object_type': 'error_text', 'text': 'could not set user display active: %s'
-                                               % msg})
+                        output_objects.append(
+                            {'object_type': 'error_text', 'text':
+                             'could not set user display active: %s' % msg})
                         status = returnvalues.CLIENT_ERROR
                         return (output_objects, status)
                     break
@@ -237,8 +241,9 @@ def main(client_id, user_arguments_dict):
                                                 display_number))
 
     if not valid_display_found:
-        output_objects.append({'object_type': 'error_text', 'text': 'Display unavailable. Click back and try again later.'
-                               })
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Display unavailable. Please click back and try again later.'})
         status = returnvalues.CLIENT_ERROR
         logger.error('No available ports for vnc: %s' % error)
         return (output_objects, status)
@@ -285,7 +290,8 @@ def main(client_id, user_arguments_dict):
 
     if not os.path.exists(pidfile):
         output_objects.append(
-            {'object_type': 'error_text', 'text': 'PID file of VNC server not found!'})
+            {'object_type': 'error_text', 'text':
+             'PID file of VNC server not found!'})
         status = returnvalues.CLIENT_ERROR
         (stat, ret) = set_user_display_inactive(client_id,
                                                 display_number, configuration, logger)

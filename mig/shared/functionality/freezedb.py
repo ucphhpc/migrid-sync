@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # freezedb - manage frozen archives
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -185,7 +185,8 @@ from the management.
             if not load_status:
                 logger.error("%s: load failed for '%s': %s" %
                              (op_name, freeze_id, freeze_dict))
-                output_objects.append({'object_type': 'error_text', 'text': 'Could not read details for "%s"' %
+                output_objects.append({'object_type': 'error_text', 'text':
+                                       'Could not read details for %r' %
                                        freeze_id})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
             freeze_item = build_freezeitem_object(configuration, freeze_dict,

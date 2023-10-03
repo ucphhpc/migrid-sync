@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # adminvgrid - administrate a vgrid
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -170,7 +170,8 @@ def main(client_id, user_arguments_dict):
 
     if not vgrid_is_owner(vgrid_name, client_id, configuration):
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Only owners of %s can administrate it.' % vgrid_name})
+                               'Only owners of %s can administrate it.' %
+                               vgrid_name})
         target_op = "sendrequestaction"
         csrf_token = make_csrf_token(configuration, form_method, target_op,
                                      client_id, csrf_limit)

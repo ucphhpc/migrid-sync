@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sssadmin - SSS sandbox generator and monitor for individual users
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -319,7 +319,8 @@ Please contact the site admins %s if you think they should be enabled.
         userdb = {}
     except Exception as exc:
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Could not read sandbox database! %s' % exc})
+                               'Could not read sandbox database!'})
+        logger.error("failed reading sandbox database: %s" % exc)
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     grid_stat = GridStat(configuration, logger)
@@ -331,14 +332,13 @@ Please contact the site admins %s if you think they should be enabled.
                             get_csrf_limit(configuration), accepted):
             output_objects.append(
                 {'object_type': 'error_text', 'text': '''Only accepting
-                CSRF-filtered POST requests to prevent unintended updates'''
-                 })
+CSRF-filtered POST requests to prevent unintended updates'''})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         if username in userdb:
             output_objects.append(
                 {'object_type': 'error_text', 'text':
-                 'Username is already taken - please go back and choose another one...'
+                 'Username is already taken - please try again with another...'
                  })
             output_objects.append({'object_type': 'link', 'destination':
                                    'ssslogin.py', 'text': 'Retry login'
@@ -366,9 +366,11 @@ Please contact the site admins %s if you think they should be enabled.
                 userdb.update(newuser)
                 save_sandbox_db(userdb, configuration)
             except Exception as exc:
-                output_objects.append({'object_type': 'error_text', 'text':
-                                       'Could not save you in the user database! %s'
-                                       % exc})
+                output_objects.append(
+                    {'object_type': 'error_text', 'text':
+                     'Could not save your user in the user database!'})
+                logger.error('failed to save %r in database: %s' % (username,
+                                                                    exc))
                 return (output_objects, returnvalues.SYSTEM_ERROR)
             output_objects.append(
                 {'object_type': 'text', 'text': 'User created!'})
@@ -377,7 +379,7 @@ Please contact the site admins %s if you think they should be enabled.
 
     if username not in userdb:
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Wrong username - please go back and try again...'
+                               'Wrong username - please try again...'
                                })
         output_objects.append({'object_type': 'link', 'destination':
                                'ssslogin.py', 'text': 'Retry login'
@@ -385,7 +387,7 @@ Please contact the site admins %s if you think they should be enabled.
         return (output_objects, returnvalues.CLIENT_ERROR)
     elif userdb[username][PW] != password:
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Wrong password - please go back and try again...'
+                               'Wrong password - please try again...'
                                })
         output_objects.append({'object_type': 'link', 'destination':
                                'ssslogin.py', 'text': 'Retry login'

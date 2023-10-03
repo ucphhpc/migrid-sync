@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # submit - submit a job file
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -96,7 +96,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not configuration.site_enable_jobs:
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''Job execution is not enabled on this system'''})
+                               'Job execution is not enabled on this system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -107,8 +107,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if verbose(flags):
         for flag in flags:
-            output_objects.append({'object_type': 'text', 'text': '%s using flag: %s' % (op_name,
-                                                                                         flag)})
+            output_objects.append({'object_type': 'text', 'text':
+                                   '%s using flag: %s' % (op_name, flag)})
 
     for pattern in patterns:
 
@@ -148,8 +148,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
                             'name': relative_path}
 
             try:
-                (job_status, newmsg, job_id) = new_job(abs_path,
-                                                       client_id, configuration, False, True)
+                (job_status, newmsg, job_id) = new_job(abs_path, client_id,
+                                                       configuration, False,
+                                                       True)
             except Exception as exc:
                 logger.error("%s: failed on '%s': %s" % (op_name,
                                                          relative_path, exc))

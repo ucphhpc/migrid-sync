@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createre - create a new runtime environment
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Creation of runtime environments"""
+
 from __future__ import absolute_import
 
 import os
@@ -35,7 +36,7 @@ import tempfile
 from mig.shared import returnvalues
 from mig.shared.base import valid_dir_input
 from mig.shared.defaults import max_software_entries, max_environment_entries, \
-     csrf_field
+    csrf_field
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables
@@ -54,7 +55,7 @@ def signature():
         'verifystdout': [''],
         'verifystderr': [''],
         'verifystatus': [''],
-        }
+    }
     return ['text', defaults]
 
 
@@ -64,8 +65,8 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     defaults = signature()[1]
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Create runtime environment'})
+    output_objects.append(
+        {'object_type': 'header', 'text': 'Create runtime environment'})
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
         defaults,
@@ -73,7 +74,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -98,25 +99,23 @@ CSRF-filtered POST requests to prevent unintended updates'''
         logger.warning(
             "possible illegal directory traversal attempt re_name '%s'"
             % re_name)
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Illegal runtime environment name: "%s"'
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Illegal runtime environment name: "%s"'
                                % re_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     software_entries = len(software)
     if software_entries > max_software_entries:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Too many software entries (%s), max %s'
-                               % (software_entries,
-                              max_software_entries)})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Too many software entries (%s), max %s' %
+                               (software_entries, max_software_entries)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     environment_entries = len(environment)
     if environment_entries > max_environment_entries:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Too many environment entries (%s), max %s'
-                               % (environment_entries,
-                              max_environment_entries)})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Too many environment entries (%s), max %s' %
+                               (environment_entries, max_environment_entries)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # create file to be parsed - force single line description
@@ -128,7 +127,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 %s
 
 """ % (re_name,
-            redescription.replace('\n', '<br />'))
+       redescription.replace('\n', '<br />'))
 
     if testprocedure:
         verify_specified = []
@@ -138,17 +137,17 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
 ''' % verifystdout
             verify_specified.append('verify_runtime_env_%s.stdout'
-                                     % re_name)
+                                    % re_name)
         if verifystderr:
             content += '''::VERIFYSTDERR::
 %s
 
 ''' % verifystderr
             verify_specified.append('verify_runtime_env_%s.stderr'
-                                     % re_name)
+                                    % re_name)
         if verifystatus:
             verify_specified.append('verify_runtime_env_%s.status'
-                                     % re_name)
+                                    % re_name)
             content += '''::VERIFYSTATUS::
 %s
 
@@ -172,7 +171,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 '''\
              % base64.encodestring(testprocedure).strip()
 
-        #print "testprocedure %s decoded %s" % \
+        # print "testprocedure %s decoded %s" % \
         #      (testprocedure,
         #      base64.decodestring(base64.encodestring(testprocedure).strip()))
 
@@ -194,17 +193,17 @@ CSRF-filtered POST requests to prevent unintended updates'''
         os.write(filehandle, content)
         os.close(filehandle)
     except Exception as err:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error preparing new runtime environment! %s'
-                               % err})
+        logger.error("write runtime env tempfile failed: %s" % err)
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Error preparing new runtime environment!'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     (retval, retmsg) = create_runtimeenv(tmpfile, client_id,
-            configuration)
+                                         configuration)
     if not retval:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Error creating new runtime environment: %s'
-                               % retmsg})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Error creating new runtime environment: %s' %
+                               retmsg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     try:
@@ -212,16 +211,13 @@ CSRF-filtered POST requests to prevent unintended updates'''
     except Exception:
         pass
 
-    output_objects.append({'object_type': 'text', 'text'
-                          : 'New runtime environment %s successfuly created!'
-                           % re_name})
+    output_objects.append({'object_type': 'text', 'text':
+                           'New runtime environment %s successfuly created!' %
+                           re_name})
     output_objects.append({'object_type': 'link',
                            'destination': 'showre.py?re_name=%s' % re_name,
                            'class': 'viewlink iconspace',
                            'title': 'View your new runtime environment',
-                           'text': 'View new %s runtime environment'
-                           % re_name,
+                           'text': 'View new %s runtime environment' % re_name,
                            })
     return (output_objects, returnvalues.OK)
-
-

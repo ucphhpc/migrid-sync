@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resubmit - resubmit a job
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -88,7 +88,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not configuration.site_enable_jobs:
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''Job execution is not enabled on this system'''})
+                               'Job execution is not enabled on this system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if not patterns:
@@ -141,7 +141,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         if not match:
             output_objects.append(
-                {'object_type': 'error_text', 'text': '%s: You do not have any matching job IDs!' % pattern})
+                {'object_type': 'error_text', 'text':
+                 '%s: You do not have any matching job IDs!' % pattern})
             status = returnvalues.CLIENT_ERROR
         else:
             filelist += match
@@ -149,7 +150,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # resubmit is hard on the server
 
     if len(filelist) > 100:
-        output_objects.append({'object_type': 'error_text', 'text': 'Too many matching jobs (%s)!'
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Too many matching jobs (%d)!'
                                % len(filelist)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # upload - Plain and efficient file upload back end
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -60,6 +60,7 @@ def write_chunks(path, file_obj, restrict):
     is set. Removes file if upload fails for some reason.
     """
     try:
+        # TODO: port to write_file
         upload_fd = open(path, 'wb')
         while True:
             chunk = file_obj.read(block_size)
@@ -213,9 +214,10 @@ Please contact the site admins %s if you think they should be enabled.
             else:
                 os._exit(0)
     except OSError as ose:
+        logger.error("could not upload to %s in the background: %s" %
+                     (real_path, ose))
         output_objects.append({'object_type': 'error_text', 'text':
-                               '%s upload could not background! (%s)'
-                               % (path, ("%s" % ose).replace(base_dir, ''))})
+                               '%s upload could not background!' % path})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # The detached grand child takes care of writing and the original process

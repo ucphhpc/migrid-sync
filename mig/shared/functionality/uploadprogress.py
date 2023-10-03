@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # uploadprogress - Plain file upload progress monitor back end
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -122,7 +122,8 @@ Please contact the site admins %s if you think they should be enabled.
             continue
         if not os.path.isfile(abs_path):
             output_objects.append(
-                {'object_type': 'error_text', 'text': "no such upload: %s" % path})
+                {'object_type': 'error_text', 'text':
+                 "no such upload: %s" % path})
             status = returnvalues.CLIENT_ERROR
             continue
 
@@ -143,9 +144,9 @@ Please contact the site admins %s if you think they should be enabled.
 
             # Don't give away information about actual fs layout
 
+            logger.error("could not check %s upload: %s" % (abs_path, exc))
             output_objects.append({'object_type': 'error_text', 'text':
-                                   '%s upload could not be checked! (%s)' %
-                                   (path, ("%s" % exc).replace(base_dir, ''))})
+                                   '%s upload could not be checked!' % path})
             status = returnvalues.SYSTEM_ERROR
             continue
 

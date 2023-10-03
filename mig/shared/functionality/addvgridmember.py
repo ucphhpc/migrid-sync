@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addvgridmember - add one or more vgrid members
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Add one or more VGrid member"""
+"""Add one or more VGrid members"""
 
 from __future__ import absolute_import
 
@@ -233,7 +233,7 @@ remove the person first and then try this operation again.""" %
             output_objects.append(
                 {'object_type': 'error_text', 'text':
                  '''Could not add member, a file or directory in the home
-directory called %s exists! (%s)''' % (vgrid_name, user_dir + vgrid_name)})
+directory called %r exists!''' % vgrid_name})
             status = returnvalues.CLIENT_ERROR
             continue
 
@@ -275,11 +275,11 @@ directory called %s exists! (%s)''' % (vgrid_name, user_dir + vgrid_name)})
 
                 # out of range? should not be possible due to is_subvgrid check
 
+                logger.error('failed looking up %s dir: %s' % (dir1, exc))
                 output_objects.append(
                     {'object_type': 'error_text', 'text':
-                     ('Could not create needed dirs on %s server! %s'
-                      % (configuration.short_title, exc))})
-                logger.error('%s when looking for dir %s.' % (exc, dir1))
+                     'Could not create needed dirs on %s server!' %
+                     configuration.short_title})
                 status = returnvalues.SYSTEM_ERROR
                 continue
 
@@ -292,12 +292,11 @@ directory called %s exists! (%s)''' % (vgrid_name, user_dir + vgrid_name)})
         # create symlink to vgrid files
 
         if not make_symlink(link_src, link_dst, logger):
-            output_objects.append({'object_type': 'error_text', 'text':
-                                   'Could not create link to %s files!' %
-                                   label
-                                   })
             logger.error('Could not create link to %s files! (%s -> %s)' %
                          (label, link_src, link_dst))
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Could not create link to %s files!' %
+                                   label})
             status = returnvalues.SYSTEM_ERROR
             continue
         cert_id_added.append(cert_id)

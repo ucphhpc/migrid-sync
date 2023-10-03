@@ -82,9 +82,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
-        output_objects.append({'object_type': 'error_text', 'text':
-                               'You must be an owner of %s to reject requests!'
-                               % unique_resource_name})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Only owners of %s can reject associated requests!''' %
+             unique_resource_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -92,7 +93,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     base_dir = \
         os.path.abspath(os.path.join(configuration.resource_home,
-                        unique_resource_name)) + os.sep
+                                     unique_resource_name)) + os.sep
 
     # IMPORTANT: path must be expanded to abs for proper chrooting
     abs_path = os.path.abspath(os.path.join(base_dir, request_name))

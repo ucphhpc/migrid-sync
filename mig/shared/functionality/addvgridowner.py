@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addvgridowner - add one or more vgrid owners
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -61,6 +61,7 @@ def signature():
 def add_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir,
                       output_objects):
     """Add new Trac issue tracker owner"""
+    _logger = configuration.logger
     cgi_tracker_var = os.path.join(tracker_dir, 'var')
     if not os.path.isdir(cgi_tracker_var):
         output_objects.append(
@@ -87,8 +88,7 @@ def add_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir,
         # trac-admin tracker_dir deploy cgi_tracker_bin
         perms_cmd = [configuration.trac_admin_path, cgi_tracker_var,
                      'permission', 'add', admin_id, 'TRAC_ADMIN']
-        configuration.logger.info('provide admin rights to owner: %s' %
-                                  perms_cmd)
+        _logger.info('provide admin rights to owner: %s' % perms_cmd)
         # NOTE: We already verified command variables to be shell-safe
         proc = subprocess_popen(perms_cmd, stdout=subprocess_pipe,
                                 stderr=subprocess_stdout, env=admin_env)
@@ -99,10 +99,11 @@ def add_tracker_admin(configuration, cert_id, vgrid_name, tracker_dir,
                              proc.returncode))
         return True
     except Exception as exc:
+        _logger.error("failed to give %s tracker admin rights: %s" % (cert_id,
+                                                                      exc))
         output_objects.append(
             {'object_type': 'error_text', 'text':
-             'Could not give %s tracker admin rights: %s' % (cert_id, exc)
-             })
+             'Could not give %s tracker admin rights!' % cert_id})
         return False
 
 
@@ -302,7 +303,7 @@ remove the person first and then try this operation again.""" %
             output_objects.append(
                 {'object_type': 'error_text', 'text':
                  '''Could not add owner, a file or directory in public_base
-    exists with the same name! %s''' % user_dir + vgrid_name})
+exists with the same name! %s''' % vgrid_name})
             status = returnvalues.CLIENT_ERROR
             continue
 
@@ -310,7 +311,7 @@ remove the person first and then try this operation again.""" %
             output_objects.append(
                 {'object_type': 'error_text', 'text':
                  '''Could not add owner, a file or directory in private_base
-exists with the same name!'''})
+exists with the same name! %s''' % vgrid_name})
             status = returnvalues.CLIENT_ERROR
             continue
 
@@ -320,7 +321,7 @@ exists with the same name!'''})
             output_objects.append(
                 {'object_type': 'error_text', 'text':
                  '''Could not add owner, a file or directory in the home
-directory exists with the same name!'''})
+directory exists with the same name! %s''' % vgrid_name})
             status = returnvalues.CLIENT_ERROR
             continue
 
@@ -382,11 +383,11 @@ directory exists with the same name!'''})
 
                 # out of range? should not be possible due to is_subvgrid check
 
+                logger.error('failed looking up %s dir: %s' % (share_dir, exc))
                 output_objects.append(
                     {'object_type': 'error_text', 'text':
-                     ('Could not create needed dirs on %s server! %s'
-                      % (configuration.short_title, exc))})
-                logger.error('%s when looking for dir %s.' % (exc, share_dir))
+                     ('Could not create needed dirs on %s server!'
+                      % configuration.short_title)})
                 status = returnvalues.SYSTEM_ERROR
                 continue
 
@@ -399,11 +400,11 @@ directory exists with the same name!'''})
 
         if not inherit_vgrid_member and \
                 not make_symlink(link_src, link_dst, logger):
+            logger.error('Could not create link to %s files (%s -> %s)' %
+                         (label, link_src, link_dst))
             output_objects.append({'object_type': 'error_text', 'text':
                                    'Could not create link to %s share!' %
                                    label})
-            logger.error('Could not create link to %s files (%s -> %s)' %
-                         (label, link_src, link_dst))
             status = returnvalues.SYSTEM_ERROR
             continue
 
@@ -412,11 +413,11 @@ directory exists with the same name!'''})
         # create symlink for public_base files
 
         if not make_symlink(public_base_dir, public_base_dst, logger):
+            logger.error('Could not create link to public_base dir (%s -> %s)'
+                         % (public_base_dir, public_base_dst))
             output_objects.append({'object_type': 'error_text', 'text':
                                    'Could not create link to public_base dir!'
                                    })
-            logger.error('Could not create link to public_base dir (%s -> %s)'
-                         % (public_base_dir, public_base_dst))
             status = returnvalues.SYSTEM_ERROR
             continue
 
@@ -425,6 +426,8 @@ directory exists with the same name!'''})
         # create symlink for private_base files
 
         if not make_symlink(private_base_dir, private_base_dst, logger):
+            logger.error('Could not create link to private_base dir (%s -> %s)'
+                         % (public_base_dir, public_base_dst))
             output_objects.append({'object_type': 'error_text', 'text':
                                    'Could not create link to private_base dir!'
                                    })

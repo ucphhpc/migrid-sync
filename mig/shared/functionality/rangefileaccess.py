@@ -324,9 +324,8 @@ def main(client_id, user_arguments_dict, environ=None):
         userstyle = False
     else:
         logger.error('%s called without proper auth: %s' % (op_name, accepted))
-        output_objects.append({'object_type': 'error_text',
-                               'text': 'Authentication is missing!'
-                               })
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Authentication is missing!'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -342,8 +341,8 @@ def main(client_id, user_arguments_dict, environ=None):
 
     # Input validation assures target_dir can't escape base_dir
     if not os.path.isdir(base_dir):
-        output_objects.append({'object_type': 'error_text',
-                               'text': 'Invalid client/iosession id!'})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Invalid client/iosession id!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     for pattern in patterns:
@@ -374,9 +373,9 @@ def main(client_id, user_arguments_dict, environ=None):
 
         if not match:
             output_objects.append(
-                {'object_type': 'error_text',
-                 'text': "%s: cannot access file '%s': Permission denied"
-                 % (op_name, pattern)})
+                {'object_type': 'error_text', 'text':
+                 "%s: cannot access file %r: Permission denied" % (op_name,
+                                                                   pattern)})
             status = returnvalues.CLIENT_ERROR
 
         for abs_path in match:

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # jobschedule - Request schedule for a job
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,6 +27,7 @@
 
 """Forward valid schedule requests to grid_script for consistent job
 scheduling data"""
+
 from __future__ import absolute_import
 
 import os
@@ -63,7 +64,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -79,7 +80,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not configuration.site_enable_jobs:
         output_objects.append({'object_type': 'error_text', 'text':
-            '''Job execution is not enabled on this system'''})
+                               'Job execution is not enabled on this system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Please note that base_dir must end in slash to avoid access to other
@@ -87,7 +88,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     base_dir = \
         os.path.abspath(os.path.join(configuration.mrsl_files_dir,
-                        client_dir)) + os.sep
+                                     client_dir)) + os.sep
 
     status = returnvalues.OK
     filelist = []
@@ -127,8 +128,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         if not match:
             output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : '%s: You do not have any matching job IDs!' % pattern})
+                {'object_type': 'error_text', 'text':
+                 '%s: You do not have any matching job IDs!' % pattern})
             status = returnvalues.CLIENT_ERROR
         else:
             filelist += match
@@ -136,8 +137,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # job schedule is hard on the server, limit
 
     if len(filelist) > 100:
-        output_objects.append({'object_type': 'error_text', 'text'
-                               : 'Too many matching jobs (%s)!'
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Too many matching jobs (%d)!'
                                % len(filelist)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -155,11 +156,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         dict = unpickle(filepath, logger)
         if not dict:
-            saveschedulejob['message'] = \
-                                       ('The file containing the information' \
-                                        ' for job id %s could not be opened!' \
-                                        ' You can only read schedule for ' \
-                                        'your own jobs!') % job_id
+            saveschedulejob['message'] = '''The file containing the information
+for job id %s could not be opened! You can only read schedule for your own
+jobs!''' % job_id
             saveschedulejobs.append(saveschedulejob)
             status = returnvalues.CLIENT_ERROR
             continue
@@ -172,18 +171,17 @@ CSRF-filtered POST requests to prevent unintended updates'''
         if not dict['STATUS'] in possible_schedule_states:
             saveschedulejob['message'] = \
                 'You can only read schedule for jobs with status: %s.'\
-                 % ' or '.join(possible_schedule_states)
+                % ' or '.join(possible_schedule_states)
             saveschedulejobs.append(saveschedulejob)
             continue
 
         # notify queue
 
         if not send_message_to_grid_script('JOBSCHEDULE ' + job_id
-                 + '\n', logger, configuration):
+                                           + '\n', logger, configuration):
             output_objects.append(
-                {'object_type': 'error_text', 'text'
-                 : 'Error sending message to grid_script, update may fail.'
-                 })
+                {'object_type': 'error_text', 'text':
+                 'Error sending message to grid_script, update may fail.'})
             status = returnvalues.SYSTEM_ERROR
             continue
 
@@ -192,8 +190,6 @@ CSRF-filtered POST requests to prevent unintended updates'''
     savescheduleinfo = """Please find any available job schedule status in
 verbose job status output."""
     output_objects.append({'object_type': 'saveschedulejobs',
-                          'saveschedulejobs': saveschedulejobs,
+                           'saveschedulejobs': saveschedulejobs,
                            'savescheduleinfo': savescheduleinfo})
     return (output_objects, status)
-
-

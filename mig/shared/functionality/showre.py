@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showre - Display a runtime environment
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Get info about a runtime environtment"""
+
 from __future__ import absolute_import
 
 from mig.shared import returnvalues
@@ -68,15 +69,16 @@ def main(client_id, user_arguments_dict):
         {'object_type': 'header', 'text': 'Show runtime environment details'})
 
     if not valid_dir_input(configuration.re_home, re_name):
-        logger.warning(
-            "possible illegal directory traversal attempt re_name '%s'"
-            % re_name)
-        output_objects.append({'object_type': 'error_text', 'text': 'Illegal runtime environment name: "%s"'
-                               % re_name})
+        logger.warning("possible illegal directory traversal attempt re_name %r"
+                       % re_name)
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Illegal runtime environment name: %r' % re_name
+                               })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not is_runtime_environment(re_name, configuration):
-        output_objects.append({'object_type': 'error_text', 'text': "'%s' is not an existing runtime environment!"
+        output_objects.append({'object_type': 'error_text', 'text':
+                               "%r is not an existing runtime environment!"
                                % re_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -86,7 +88,8 @@ def main(client_id, user_arguments_dict):
     (re_dict, msg) = get_re_dict(re_name, configuration)
     if not re_dict:
         output_objects.append(
-            {'object_type': 'error_text', 'text': 'Could not read details for "%s"' % msg})
+            {'object_type': 'error_text', 'text':
+             'Could not read details for "%s"' % msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Set providers explicitly after build_reitem_object to avoid import loop

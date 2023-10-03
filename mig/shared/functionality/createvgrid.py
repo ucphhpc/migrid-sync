@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createvgrid - create a vgrid with all the collaboration components
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -188,6 +188,7 @@ the commands and work flows of this distributed SCM.
                 continue
             target_dir = os.path.dirname(target_path)
             os.mkdir(target_dir)
+            # TODO: port to read_file
             template_fd = open(template_path, 'r')
             template_script = template_fd.readlines()
             template_fd.close()
@@ -199,6 +200,7 @@ the commands and work flows of this distributed SCM.
                 line = line.replace(script_template_repo_alt, target_scm_repo)
                 line = line.replace(script_template_repo, target_scm_repo)
                 script_lines.append(line)
+            # TODO: port to write_file
             target_fd = open(target_path, 'w')
             target_fd.writelines(script_lines)
             target_fd.close()
@@ -213,6 +215,7 @@ the commands and work flows of this distributed SCM.
         if not repair or not os.path.isdir(target_scm_repo):
             os.mkdir(target_scm_repo)
             os.chmod(target_scm_repo, 0o755)
+            # TODO: port to write_file
             readme_fd = open(repo_readme, 'w')
             readme_fd.write(readme_text)
             readme_fd.close()
@@ -226,8 +229,10 @@ the commands and work flows of this distributed SCM.
             subprocess_call([configuration.hg_path, 'commit', '-m"init"',
                              '-u"%s"' % commit_email, repo_readme])
         if not os.path.exists(repo_rc):
+            # TODO: port to touch_file
             open(repo_rc, 'w').close()
         os.chmod(repo_rc, 0o644)
+        # TODO: port to write_file
         rc_fd = open(repo_rc, 'r+')
         rc_fd.seek(0, 2)
         rc_fd.write(rc_text)
@@ -239,8 +244,8 @@ the commands and work flows of this distributed SCM.
     except Exception as exc:
         logger.error('Could not create vgrid public_base directory: %s' % exc)
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Could not create %s scm: %s' %
-                               (configuration.site_vgrid_label, exc)})
+                               'Could not create %s public web dir!' %
+                               configuration.site_vgrid_label})
         return False
 
 
@@ -384,6 +389,7 @@ def create_tracker(
                 for (key, val) in options.items():
                     conf.set(section, key, "%s" % val)
 
+            # TODO: port to write_file
             project_conf = open(target_tracker_conf_file, "w")
             project_conf.write("# -*- coding: utf-8 -*-\n")
             # dump entire conf file
@@ -442,6 +448,7 @@ def create_tracker(
             os.mkdir(target_tracker_attachments)
         if not repair or not os.path.isfile(target_tracker_log_file):
             os.chmod(target_tracker_log, 0o755)
+            # TODO: port to touch_file
             open(target_tracker_log_file, 'w').close()
 
         if not repair or create_cmd:
@@ -614,8 +621,7 @@ body {
         logger.error("creation env:\n%s" % admin_env)
         logger.error("creation trace:\n%s" % traceback.format_exc())
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Could not create %s tracker: %s' % (label, exc)
-                               })
+                               'Could not create %s tracker!' % label})
 
     try:
         # IMPORTANT NOTE:
@@ -652,8 +658,7 @@ body {
         create_status = False
         logger.error('fix permissions on %s tracker failed: %s' % (label, exc))
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Could not finish %s tracker: %s' % (label, exc)
-                               })
+                               'Could not finish %s tracker' % label})
         os.chmod(tracker_dir, 0000)
     return create_status
 
@@ -675,8 +680,8 @@ def create_forum(
     except Exception as exc:
         logger.error('Could not create forum directory: %s' % exc)
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Could not create %s forum: %s'
-                               % (configuration.site_vgrid_label, exc)})
+                               'Could not create %s forum' %
+                               configuration.site_vgrid_label})
         return False
 
 
@@ -1210,8 +1215,7 @@ for job input and output.
                                          'vgrid', vgrid_name), logger, force=True):
             output_objects.append(
                 {'object_type': 'error_text', 'text':
-                 'Could not create link in wwwpublic/vgrid/%s'
-                 % vgrid_name})
+                 'Could not create public web link for %s' % vgrid_name})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append(

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # requestnewjob - Request a new job to execute on resource
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -104,8 +104,7 @@ def main(client_id, user_arguments_dict):
     if not is_resource(unique_resource_name, configuration):
         output_objects.append(
             {'object_type': 'error_text', 'text':
-             "Failure: You must be an owner of '%s' to get the PGID!" %
-             unique_resource_name})
+             'Only properly registered resources can request new jobs!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # is_resource incorporates unique_resource_name verification - no need to
@@ -128,15 +127,16 @@ def main(client_id, user_arguments_dict):
     except ValueError as vae:
         logger.error("Invalid requestnewjob: %s (%s)" % (vae, accepted))
         output_objects.append({'object_type': 'error_text', 'text':
-                               'invalid request: %s' % vae})
+                               'invalid request new job source'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if resource_conf.get('SANDBOX', False):
         if sandboxkey == '':
             logger.error("Missing sandboxkey for sandbox resource: %s" %
                          unique_resource_name)
-            output_objects.append({'object_type': 'error_text', 'text':
-                                   'sandbox must set sandboxkey in job requests!'})
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'sandbox must set sandboxkey in job requests!'})
             return (output_objects, returnvalues.CLIENT_ERROR)
         # resource is a sandbox and a sandboxkey was received
         if resource_conf['SANDBOXKEY'] != sandboxkey:

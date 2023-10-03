@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # lsvgrids - simple list of vgrids optionally filtered to ones with access
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -77,8 +77,8 @@ def main(client_id, user_arguments_dict):
                                                root_vgrid=root_vgrid)
 
     if not list_status:
-        output_objects.append({'object_type': 'error_text', 'text': '%s'
-                               % msg})
+        output_objects.append(
+            {'object_type': 'error_text', 'text': '%s' % msg})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'list', 'list': msg})
