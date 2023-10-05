@@ -13,12 +13,12 @@
     "services": [
       "ALL"
     ],
-    "work_end": "2023-10-05T10:00:00+02:00",
+    "work_end": "2023-10-04T18:51:00+02:00",
     "description": {
-      "EN": "We have hit some problems with the SIF backend storage and it is currently offline while we investigate. We are sorry for the inconvenience but data safety is always the primary concern.",
-      "DK": "Vi oplever nogle problemer med SIFs backendlager og den er derfor midlertidigt taget ud af drift mens vi undersøger sagen. Vi beklager de gener det måtte medføre, men datasikkerheden har altid første prioritet."
+      "EN": "We hit some problems with the SIF backend storage and it was offline while we investigated. We finished the investigation in the evening and everything is back online. We are sorry for the inconvenience but data safety is always the primary concern.",
+      "DK": "Vi oplevede nogle problemer med SIFs backendlager og den var derfor midlertidigt taget ud af drift mens vi undersøgte sagen. Vi blev færdige ud på aftenen og alt tilbage i normal drift. Vi beklager de gener det måtte medføre, men datasikkerheden har altid første prioritet."
     },
-    "announce_end": "2023-10-06T12:00:00+02:00"
+    "announce_end": "2023-10-06T10:00:00+02:00"
   }, 
  {
     "status": "AUTO", 
