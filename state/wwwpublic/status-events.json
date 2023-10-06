@@ -58,8 +58,8 @@
     ],
     "work_end": "2023-10-03T22:00:00+02:00",
     "description": {
-      "EN": "We will apply general maintenance to the DAG and MODI services. Interruptions to these services will occur. These updates were applied and the service was up and running again by evening. Although we encountered small configuration issues on some of the Jupyter Notebook images which required further fixes that will be released on the following evening.",
-      "DK": "Vi udruller den månedelige opdatering og vedligeholdelse af DAG og MODI tjenesterne. Afbrydelser af disse tjenester vil forekomme. Disse opdateringer blev udført, og tjenesten var oppe at køre igen om aftenen. Dog stødte vi på små konfigurationsproblemer i nogle af vores Jupyter Notebook images, som krævede yderligere rettelser, som vil blive frigivet den følgende aften"
+      "EN": "We will apply general maintenance to the DAG and MODI services. Interruptions to these services will occur. These updates were applied and the service was up and running again by evening. Although we encountered small configuration issues on some of the Jupyter Notebook images which required further fixes that will be released on the following evening. Everything should be back to normal now.",
+      "DK": "Vi udruller den månedelige opdatering og vedligeholdelse af DAG og MODI tjenesterne. Afbrydelser af disse tjenester vil forekomme. Disse opdateringer blev udført, og tjenesten var oppe at køre igen om aftenen. Dog stødte vi på små konfigurationsproblemer i nogle af vores Jupyter Notebook images, som krævede yderligere rettelser, som vil blive frigivet den følgende aften. Alt skulle være tilbage i almindelig drift igen."
     },
     "announce_end": "2023-10-04T12:00:00+02:00"
    },
