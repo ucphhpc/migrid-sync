@@ -54,10 +54,12 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 from builtins import zip, range
-from base64 import b64encode, b64decode, b16encode, b16decode, urlsafe_b64encode
+from base64 import b64encode, b64decode, b16encode, b16decode, \
+    urlsafe_b64encode, urlsafe_b64decode
 from os import urandom
 from random import SystemRandom
 from string import ascii_lowercase, ascii_uppercase, digits
+import datetime
 import hashlib
 import time
 
@@ -72,8 +74,8 @@ except ImportError:
     cracklib = None
 try:
     import cryptography
-    # NOTE: explicit submodule import is needed for Fernet use
-    import cryptography.fernet
+    from cryptography.fernet import Fernet
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 except ImportError:
     # Optional cryptography not available - fail gracefully and check before use
     cryptography = None
@@ -89,6 +91,31 @@ HASH_FUNCTION = 'sha256'  # Must be in hashlib.
 # amount of time on your server. Measure with:
 # python -m timeit -s 'import passwords as p' 'p.make_hash("something")'
 COST_FACTOR = 10000
+
+# AESGCM helpers to build the Additional Authenticated Data (AAD) values.
+# Please note that the values increase on a daily basis by default so the
+# encryption values will always change at least with that rate even for the
+# same input and Initialization Vector (IV). Please refer to the encrypt and
+# decrypt functions for further details.
+AAD_PREFIX = 'migrid authenticated'
+AAD_DEFAULT_STAMP = '%Y%m%d'
+
+
+def best_crypt_salt(configuration):
+    """Look up configured salts in turn and pick first suitable"""
+    _logger = configuration.logger
+    if configuration.site_crypto_salt:
+        # _logger.debug('making crypto key from crypto salt and entropy')
+        salt_data = configuration.site_crypto_salt
+    elif configuration.site_password_salt:
+        # _logger.debug('making crypto key from pw salt and entropy')
+        salt_data = configuration.site_password_salt
+    elif configuration.site_digest_salt:
+        # _logger.debug('making crypto key from digest salt and entropy')
+        salt_data = configuration.site_digest_salt
+    else:
+        raise Exception('cannot find a suitbale crypt salt in conf')
+    return salt_data
 
 
 def make_hash(password):
@@ -222,7 +249,7 @@ def scramble_password(salt, password):
     """Scramble password for saving with fallback to base64 encoding if no salt
     is provided.
     """
-    if not salt:
+    if not salt or not password:
         return b64encode(password)
     xor_int = int(salt, 16) ^ int(b16encode(password), 16)
     return '{0:X}'.format(xor_int)
@@ -279,50 +306,58 @@ def check_scramble(configuration, service, username, password, scrambled,
     return match
 
 
-def prepare_fernet_key(configuration, secret=keyword_auto):
+def _prepare_encryption_key(configuration, secret=keyword_auto,
+                            entropy=keyword_auto, key_bytes=32,
+                            urlsafe=True):
     """Helper to extract and prepare a site-specific secret used for all
-    Fernet symmetric encryption and decryption operations.
+    encryption and decryption operations.
     """
     _logger = configuration.logger
-    # NOTE: Fernet key must be 32 url-safe base64-encoded bytes
-    fernet_key_bytes = 32
     if not secret:
         _logger.error('encrypt/decrypt requested without a secret')
         raise Exception('cannot encrypt/decrypt without a secret')
     if secret == keyword_auto:
         # NOTE: generate a static secret key based on configuration.
-        # Use previously generated 'entropy' each time from a call to
-        # cryptography.fernet.Fernet.generate_key()
-        entropy = 'HyrqUFwxagFNcHANnDzVO-kMoU0ebo03pNaKHXce6xw='
+        if entropy == keyword_auto:
+            # Use previously generated 'entropy' each time from a call to
+            # Fernet.generate_key() or AESGCM.generate_key()
+            entropy = 'HyrqUFwxagFNcHANnDzVO-kMoU0ebo03pNaKHXce6xw='
         # yet salt it with hash of a site-specific and non-public salt
         # to avoid disclosing salt or final key.
-        if configuration.site_crypto_salt:
-            # _logger.debug('making crypto key from crypto salt and entropy')
-            salt_data = configuration.site_crypto_salt
-        elif configuration.site_password_salt:
-            # _logger.debug('making crypto key from pw salt and entropy')
-            salt_data = configuration.site_password_salt
-        elif configuration.site_digest_salt:
-            # _logger.debug('making crypto key from digest salt and entropy')
-            salt_data = configuration.site_digest_salt
-        else:
-            raise Exception('cannot encrypt/decrypt without a salt in conf')
+        salt_data = best_crypt_salt(configuration)
         salt_hash = hashlib.sha256(salt_data).hexdigest()
         key_data = scramble_password(salt_hash, entropy)
     else:
         # _logger.debug('making crypto key from provided secret')
         key_data = secret
-    key = urlsafe_b64encode(key_data[:fernet_key_bytes])
+    if urlsafe:
+        key = urlsafe_b64encode(key_data[:key_bytes])
+    else:
+        key = key_data[:key_bytes]
     return key
 
 
-def encrypt_password(configuration, password, secret=keyword_auto):
-    """Encrypt password for saving"""
+def prepare_fernet_key(configuration, secret=keyword_auto):
+    """Helper to extract and prepare a site-specific secret used for all
+    Fernet encryption and decryption operations.
+    """
+    # NOTE: Fernet key must be 32 url-safe base64-encoded bytes
+    return _prepare_encryption_key(configuration, secret, key_bytes=32)
+
+
+def fernet_encrypt_password(configuration, password, secret=keyword_auto):
+    """Encrypt password with strong Fernet algorithm for saving passwords and
+    the like. Encryption implicitly relies on a random initialization vector
+    for added security and the output for the same input therefore changes with
+    every invocation. Please have a look at aes_encrypt_password with explicit
+    init vectors if you need a strong but less secure static output for every
+    invocation.
+    """
     _logger = configuration.logger
     if cryptography:
         key = prepare_fernet_key(configuration, secret)
         password = force_utf8(password)
-        fernet_helper = cryptography.fernet.Fernet(key)
+        fernet_helper = Fernet(key)
         encrypted = fernet_helper.encrypt(password)
     else:
         _logger.error('encrypt requested without cryptography installed')
@@ -330,12 +365,12 @@ def encrypt_password(configuration, password, secret=keyword_auto):
     return encrypted
 
 
-def decrypt_password(configuration, encrypted, secret=keyword_auto):
-    """Decrypt encrypted password"""
+def fernet_decrypt_password(configuration, encrypted, secret=keyword_auto):
+    """Decrypt Fernet encrypted password"""
     _logger = configuration.logger
     if cryptography:
-        key = prepare_fernet_key(configuration)
-        fernet_helper = cryptography.fernet.Fernet(key)
+        key = prepare_fernet_key(configuration, secret)
+        fernet_helper = Fernet(key)
         password = fernet_helper.decrypt(encrypted)
     else:
         _logger.error('decrypt requested without cryptography installed')
@@ -343,14 +378,197 @@ def decrypt_password(configuration, encrypted, secret=keyword_auto):
     return password
 
 
-def make_encrypt(configuration, password, secret=keyword_auto):
-    """Generate an encrypted password"""
-    return encrypt_password(configuration, password, secret)
+def __aesgcm_pack_tuple(init_vector, encrypted, auth_data, base64_enc=True,
+                        field_sep='.'):
+    """A simple helper to pack the three-tuple of values from an aesgcm
+    encryption.
+    The packed string is simply values concatenated with field_sep as a
+    separator. E.g. iv.crypt.aad with the default field_sep.
+    By default the packed values are urlsafe base64 encoded, however, to avoid
+    packing/unpacking interference with said separator.
+    """
+    parts = [init_vector, encrypted, auth_data]
+    if base64_enc:
+        parts = [urlsafe_b64encode(i) for i in parts]
+    return field_sep.join(parts)
+
+
+def __aesgcm_unpack_tuple(packed, base64_enc=True, field_sep='.'):
+    """A simple helper to unpack a previously packed three-tuple of values from
+    an aesgcm encryption.
+    The packed string is simply values concatenated with field_sep as a
+    separator. E.g. iv.crypt.aad with the default field_sep.
+    By default the packed values are urlsafe-base64 encoded, however, to avoid
+    packing/unpacking interference with said separator.
+    """
+    parts = packed.split(field_sep)
+    if len(parts) != 3:
+        raise ValueError("malformed packed values - expected 3 parts got %d" %
+                         len(parts))
+    if base64_enc:
+        parts = [urlsafe_b64decode(i) for i in parts]
+    return tuple(parts)
+
+
+def _aesgcm_aad_helper(prefix, date_format=AAD_DEFAULT_STAMP, size=32):
+    """Use a simple date as counter to keep AES authentication static for a while.
+    The given date_format fields decide for how long by e.g. adding or removing
+    the highest resolution fields. By default the output for a single input
+    value remains constant for the rest of the day. One can adjust it to remain
+    constant for an entire month by using '%Y%m' or for every single hour by
+    using '%Y%m%d%H'.
+    """
+    crypt_counter = datetime.datetime.now().strftime(date_format)
+    val = b' '*size + b'%s' % prefix
+    val += b'%s' % crypt_counter
+    return val[-size:]
+
+
+def prepare_aesgcm_key(configuration, secret=keyword_auto):
+    """Helper to extract and prepare a site-specific secret used for all
+    AESGCM encryption and decryption operations.
+    """
+    # NOTE: AESGCM key must be 32 raw bytes
+    return _prepare_encryption_key(configuration, secret, key_bytes=32,
+                                   urlsafe=False)
+
+
+def prepare_aesgcm_iv(configuration, iv_entropy=keyword_auto):
+    """Helper to format a suitable Init Vector (IV) used for AESGCM encryption
+    and decryption operations. If one provides a custom iv_entropy string the
+    output will remain constant. Reusing the same IV for different messages
+    breaks security so ONLY do something like that if repeatedly encrypting the
+    same message and then e.g. with a strong hash of the value to encrypt.
+    """
+    # recommended IV of at least 96 bits (12 bytes) - use 128 (16 bytes)
+    iv_bytes = 16
+    if iv_entropy == keyword_auto:
+        return urandom(iv_bytes)
+    else:
+        return iv_entropy[-iv_bytes:]
+
+
+def prepare_aesgcm_aad(configuration, aad_prefix, aad_stamp=AAD_DEFAULT_STAMP):
+    """Helper to make a suitable string of Additional Authenticated Data (AAD)
+    used for authentication during AESGCM encryption and decryption operations.
+    One can provide a custom aad_stamp string to have it evolve with time. The
+    usual datetime string expansion variables are supported and the default
+    uses the current YYYYMMDD date string.
+    """
+    aad_bytes = 32
+    aad = _aesgcm_aad_helper(aad_prefix, aad_stamp, aad_bytes)
+    return aad[-aad_bytes:]
+
+
+def aesgcm_encrypt_password(configuration, password, secret=keyword_auto,
+                            init_vector=keyword_auto,
+                            aad_stamp=AAD_DEFAULT_STAMP,
+                            base64_enc=True):
+    """Encrypt password with strong AESGCM algorithm for saving passwords and
+    the like. Encryption relies on a unique Initialization Vector (IV) for
+    added security and the output for the same input changes with each such
+    init_vector value. By default one is generated randomly each time and saved
+    as part of the encrypted output. This will obviously make even repeated
+    encryption calls for the same value differ. In case you need a strong but
+    less secure STATIC output for every such repeated invocation, you can
+    pick a fixed IV for each unique input. E.g. some safe hash of the input or
+    similar. Just beware of the security implications if you do so.
+    Similarly the aad_stamp defaults to be somewhat date dependent so aad will
+    slowly but gradually change. You can tweak it to reduce or remove the flux
+    but again please beware of the security implications if you do so.
+    The output is the encryption three-tuple on packed string format, namely,
+    the actual initialization vector used, the crypt string and the additional
+    authentication data used. The latter two are NOT secret and will be needed
+    for decrypting and verifying integrity.
+    """
+    _logger = configuration.logger
+    # Based on complete example of securely encrypting with AES GCM from
+    # https://cryptography.io/en/latest/hazmat/primitives/symmetric-encryption
+    if cryptography:
+        init_vector = prepare_aesgcm_iv(configuration, init_vector)
+        auth_data = prepare_aesgcm_aad(configuration, AAD_PREFIX, aad_stamp)
+        password = force_utf8(password)
+        key = prepare_aesgcm_key(configuration, secret)
+        aesgcm_helper = AESGCM(key)
+        crypt = aesgcm_helper.encrypt(init_vector, password, auth_data)
+        encrypted = __aesgcm_pack_tuple(init_vector, crypt, auth_data,
+                                        base64_enc)
+    else:
+        _logger.error('encrypt requested without cryptography installed')
+        raise Exception('cryptography requested in conf but not available')
+    return encrypted
+
+
+def aesgcm_decrypt_password(configuration, encrypted, secret=keyword_auto,
+                            init_vector=keyword_auto, aad_stamp=keyword_auto,
+                            base64_enc=True):
+    """Decrypt AESGCM encrypted password.
+    By default the encrypted value includes the Initialization Vector (IV) and
+    the Additional Authentication Data (AAD) on a packed base64 encoded form.
+    You should not need to override with custom values but it can be done.
+    """
+    _logger = configuration.logger
+    # Based on complete example of securely decrypting with AES GCM from
+    # https://cryptography.io/en/latest/hazmat/primitives/symmetric-encryption
+    if cryptography:
+        (iv, crypt, aad) = __aesgcm_unpack_tuple(encrypted, base64_enc)
+        if init_vector == keyword_auto:
+            init_vector = iv
+        if aad_stamp == keyword_auto:
+            auth_data = aad
+        else:
+            auth_data = prepare_aesgcm_aad(configuration, AAD_PREFIX,
+                                           aad_stamp)
+        key = prepare_aesgcm_key(configuration, secret)
+        aesgcm_helper = AESGCM(key)
+        password = aesgcm_helper.decrypt(init_vector, crypt, auth_data)
+    else:
+        _logger.error('decrypt requested without cryptography installed')
+        raise Exception('cryptography requested in conf but not available')
+    return password
+
+
+def make_encrypt(configuration, password, secret=keyword_auto, algo="fernet"):
+    """Generate an encrypted password. The optional algo argument decides which
+    encryption is used.
+    """
+    if algo.lower() in ("false", ):
+        return password
+    elif algo.lower() in ("fernet", "safe_encrypt"):
+        return fernet_encrypt_password(configuration, password, secret)
+    elif algo in ("aesgcm", "aes256_encrypt"):
+        return aesgcm_encrypt_password(configuration, password, secret)
+    elif algo in ("aesgcm_static", "simple_encrypt"):
+        # NOTE: a constant output version of AESGCM relying on a fixed init
+        #       vector for each value. Please beware of the potentially reduced
+        #       security of this method.
+        scrambled_pw = make_scramble(pw, best_crypt_salt(configuration))
+        pw_iv = hashlib.sha256(scrambled_pw).digest()
+        return aesgcm_encrypt_password(configuration, password, secret,
+                                       init_vector=pw_iv)
+    else:
+        raise ValueError("Unknown encryption algo: %r" % algo)
+
+
+def make_decrypt(configuration, encrypted, secret=keyword_auto, algo="fernet"):
+    """Decrypt password. The optional algo argument decides which
+    encryption is used.
+    """
+    if algo.lower() in ("false",):
+        return encrypted
+    elif algo.lower() in ("fernet", "safe_encrypt"):
+        return fernet_decrypt_password(configuration, encrypted, secret)
+    elif algo in ("aesgcm", "aes256_encrypt", "aesgcm_static",
+                  "simple_encrypt"):
+        # NOTE: iv and aad are integrated in encrypted value here
+        return aesgcm_decrypt_password(configuration, encrypted, secret)
+    else:
+        raise ValueError("Unknown encryption algo: %r" % algo)
 
 
 def check_encrypt(configuration, service, username, password, encrypted,
                   secret=keyword_auto, encrypt_cache=None, strict_policy=True,
-                  allow_legacy=False):
+                  allow_legacy=False, algo="fernet"):
     """Make sure provided password satisfies local password policy and check
     match against existing encrypted password. The optional encrypt_cache
     dictionary argument can be used to cache recent lookups to save time in
@@ -376,7 +594,7 @@ def check_encrypt(configuration, service, username, password, encrypted,
                         % (service, username, exc))
         if strict_policy:
             return False
-    match = (make_encrypt(configuration, password, secret) == encrypted)
+    match = (make_encrypt(configuration, password, secret, algo) == encrypted)
     if isinstance(encrypt_cache, dict) and match:
         encrypt_cache[password] = encrypted
         # print("cached digest: %s" % encrypt_cache.get(password, None))
@@ -432,7 +650,8 @@ def generate_reset_token(configuration, user_dict, auth_type,
     if auth_type == "migcert" or pw_hash is None:
         pw_hash = make_hash(user_dict.get('password', ''))
     # NOTE: use integer timestamp for simplicity
-    token = encrypt_password(configuration, "%d::%s" % (timestamp, pw_hash))
+    token = fernet_encrypt_password(configuration, "%d::%s" % (timestamp,
+                                                               pw_hash))
     # IMPORTANT: do NOT log complete token
     _logger.debug("generated %s reset token %r at %r" % (auth_type,
                                                          string_snippet(token),
@@ -448,7 +667,7 @@ def parse_reset_token(configuration, token, auth_type):
     # IMPORTANT: do NOT log complete token unless invalid
     _logger.debug("parse %s reset token %r" % (auth_type,
                                                string_snippet(token)))
-    raw = decrypt_password(configuration, token)
+    raw = fernet_decrypt_password(configuration, token)
     parts = raw.split('::', 1)
     # NOTE: the expected decrypted token format is 'int(EPOCH)::PWHASH'
     if not parts[1:] or not parts[0].isdigit():
@@ -767,17 +986,21 @@ def generate_random_password(configuration, tries=42):
 if __name__ == "__main__":
     from mig.shared.conf import get_configuration_object
     configuration = get_configuration_object()
-    for policy in PASSWORD_POLICIES:
-        if policy == POLICY_MODERN:
-            policy += ':12'
-        elif policy == POLICY_CUSTOM:
-            policy += ':12:4'
-        configuration.site_password_policy = policy
-        for pw in ('', 'abc', 'dbey3h', 'abcdefgh', '12345678', 'test1234',
-                   'password', 'djeudmdj', 'Password12', 'P4s5W0rd',
-                   'GoofBall', 'b43kdn22', 'Dr3Ab3_2', 'kasd#D2s',
-                   'fsk34dsa-.32d', 'd3kk3mdkkded', 'Loh/p4iv,ahk',
-                   'MinimumIntrusionGrid', 'correcthorsebatterystaple'):
+    pw_tests = (
+        '', 'abc', 'dbey3h', 'abcdefgh', '12345678', 'test1234',
+        'password', 'djeudmdj', 'Password12', 'P4s5W0rd',
+        'GoofBall', 'b43kdn22', 'Dr3Ab3_2', 'kasd#D2s',
+        'fsk34dsa-.32d', 'd3kk3mdkkded', 'Loh/p4iv,ahk',
+        'MinimumIntrusionGrid', 'correcthorsebatterystaple'
+    )
+    for pw in pw_tests:
+        for policy in PASSWORD_POLICIES:
+            if policy == POLICY_MODERN:
+                policy += ':12'
+            elif policy == POLICY_CUSTOM:
+                policy += ':12:4'
+
+            configuration.site_password_policy = policy
             try:
                 res = assure_password_strength(configuration, pw)
             except Exception as exc:
@@ -785,22 +1008,60 @@ if __name__ == "__main__":
             print("Password %r follows %s password policy: %s" %
                   (pw, policy, res))
 
-            hashed = make_hash(pw)
-            snippet = string_snippet(hashed)
-            print("Password %r gives hash %r and snippet %r" % (pw, hashed,
-                                                                snippet))
-            try:
-                # print("Encrypt password %r" % pw)
-                encrypted = encrypt_password(configuration, pw)
-                # print("Decrypt encrypted password %r" % encrypted)
-                decrypted = decrypt_password(configuration, encrypted)
-                # print("Password %r encrypted to %s and decrypted to %s ." %
-                #      (pw, encrypted, decrypted))
-                if pw != decrypted:
-                    raise ValueError("Password enc+dec corruption: %r vs %r" %
-                                     (pw, decrypted))
-                print("Password %r encrypted and decrypted correctly" % pw)
-            except Exception as exc:
-                print("Failed to handle encrypt/decrypt %s : %s" % (pw, exc))
-                # import traceback
-                # print(traceback.format_exc())
+        decrypted = None
+        hashed = make_hash(pw)
+        snippet = string_snippet(hashed)
+        print("Password %r gives hash %r and snippet %r" % (pw, hashed,
+                                                            snippet))
+        try:
+            # print("Fernet encrypt password %r" % pw)
+            encrypted = fernet_encrypt_password(configuration, pw)
+            #print("Decrypt Fernet encrypted password %r" % encrypted)
+            decrypted = fernet_decrypt_password(configuration, encrypted)
+            # print("Password %r encrypted to %s and decrypted to %s ." %
+            #      (pw, encrypted, decrypted))
+            if pw != decrypted:
+                raise ValueError("Password enc+dec corruption: %r vs %r" %
+                                 (pw, decrypted))
+            print("Password %r fernet encrypted and decrypted correctly (%r)" %
+                  (pw, encrypted))
+        except Exception as exc:
+            print("Failed to handle fernet encrypt/decrypt %s : %s" %
+                  (pw, exc))
+
+        try:
+            # print("AESGCM encrypt password %r" % pw)
+            encrypted = aesgcm_encrypt_password(configuration, pw)
+            #print("Decrypt AESGCM encrypted password %r" % encrypted)
+            decrypted = aesgcm_decrypt_password(configuration, encrypted)
+            # print("Password %r encrypted to %s and decrypted to %r" %
+            #      (pw, encrypted, decrypted))
+            if pw != decrypted:
+                raise ValueError("Password enc+dec corruption: %r vs %r" %
+                                 (pw, decrypted))
+            print("Password %r aesgcm encrypted and decrypted correctly (%r)" %
+                  (pw, encrypted))
+        except Exception as exc:
+            print("Failed to handle aesgcm encrypt/decrypt %s : %s" %
+                  (pw, exc))
+
+        try:
+            static_iv = prepare_aesgcm_iv(
+                configuration, iv_entropy=hashlib.sha256(pw).digest())
+            # print("AESGCM static encrypt password %r with iv %r" %
+            #      (pw, pw_iv))
+            encrypted = aesgcm_encrypt_password(configuration, pw,
+                                                init_vector=static_iv)
+            # print("Decrypt AESGCM static encrypted password %r" % encrypted)
+            decrypted = aesgcm_decrypt_password(configuration, encrypted,
+                                                init_vector=static_iv)
+            # print("Password %r static encrypted to %s and decrypted to %r" %
+            #      (pw, encrypted, decrypted))
+            if pw != decrypted:
+                raise ValueError("Password static enc+dec corruption: %r vs %r" %
+                                 (pw, decrypted))
+            print("Password %r aesgcm-static encrypted and decrypted correctly (%r)" %
+                  (pw, encrypted))
+        except Exception as exc:
+            print(
+                "Failed to handle aesgcm static encrypt/decrypt %s : %s" % (pw, exc))

@@ -53,7 +53,7 @@ from mig.shared.defaults import datatransfers_filename, transfers_log_size, \
 from mig.shared.fileio import makedirs_rec, pickle
 from mig.shared.logger import daemon_logger, register_hangup_handler
 from mig.shared.notification import notify_user_thread
-from mig.shared.pwhash import unscramble_digest, decrypt_password
+from mig.shared.pwhash import unscramble_digest, fernet_decrypt_password
 from mig.shared.safeeval import subprocess_popen, subprocess_pipe, \
     subprocess_list2cmdline
 from mig.shared.transferfunctions import blind_pw, load_data_transfers, \
@@ -593,8 +593,8 @@ def run_transfer(configuration, client_id, transfer_dict):
         password_encrypted = run_dict.get('password_encrypted', '')
         password_digest = run_dict.get('password_digest', '')
         if password_encrypted:
-            run_dict['password'] = decrypt_password(configuration,
-                                                    password_encrypted)
+            run_dict['password'] = fernet_decrypt_password(configuration,
+                                                           password_encrypted)
         elif password_digest:
             _, _, _, payload = password_digest.split("$")
             unscrambled = unscramble_digest(configuration.site_digest_salt,
