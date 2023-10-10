@@ -2062,8 +2062,10 @@ location.""" % self.config_file)
         self.gdp_logger = self.gdp_logger_obj.logger
 
         # GDP log scrambling support - algorithm name or alias
-        __valid_scramblers = ['false', 'fernet', 'safe_encrypt', 'md5',
-                              'simple_hash', 'sha256', 'safe_hash']
+        __valid_scramblers = ['false', 'fernet', 'safe_encrypt', 'aesgcm',
+                              'aes256_encrypt', 'aesgcm_static',
+                              'simple_encrypt', 'md5', 'simple_hash', 'sha256',
+                              'safe_hash']
 
         # NOTE: default to sha256 hashing IDs in order to pseudonymize them in
         #       gdp logs and make it easy to 'forget' a user by simply
