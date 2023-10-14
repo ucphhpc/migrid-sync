@@ -41,7 +41,7 @@ from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.notification import send_email
-from mig.shared.pwhash import generate_reset_token
+from mig.shared.pwcrypto import generate_reset_token
 from mig.shared.url import urlencode
 from mig.shared.useradm import default_search, search_users
 

@@ -64,7 +64,7 @@ from mig.shared.fileio import read_file, read_file_lines, write_file, \
 from mig.shared.html import menu_items
 from mig.shared.jupyter import gen_balancer_proxy_template, gen_openid_template, \
     gen_rewrite_template
-from mig.shared.pwhash import password_requirements
+from mig.shared.pwcrypto import password_requirements
 from mig.shared.safeeval import subprocess_call, subprocess_popen, subprocess_pipe
 from mig.shared.safeinput import valid_alphanumeric, InputException
 from mig.shared.url import urlparse

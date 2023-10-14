@@ -58,7 +58,7 @@ from mig.shared.gdp.userid import __validate_user_id, \
     __project_short_id_from_user_id, __scramble_user_id, \
     get_project_from_user_id, get_project_client_id
 from mig.shared.notification import send_email
-from mig.shared.pwhash import make_simple_hash, make_safe_hash, make_encrypt
+from mig.shared.pwcrypto import make_simple_hash, make_safe_hash, make_encrypt
 from mig.shared.serial import load, dump
 from mig.shared.useradm import create_user, delete_user, edit_user, \
     get_full_user_map, lock_user_db

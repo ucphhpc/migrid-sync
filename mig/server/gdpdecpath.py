@@ -37,7 +37,7 @@ import os
 import sys
 
 from mig.shared.conf import get_configuration_object
-from mig.shared.pwhash import make_decrypt
+from mig.shared.pwcrypto import make_decrypt
 
 
 def usage(name='gdpdecpath.py'):

@@ -44,7 +44,7 @@ from mig.shared.base import fill_distinguished_name, fill_user, canonical_user, 
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import valid_auth_types, keyword_auto
 from mig.shared.gdp.all import ensure_gdp_user
-from mig.shared.pwhash import unscramble_password, scramble_password, \
+from mig.shared.pwcrypto import unscramble_password, scramble_password, \
     make_hash
 from mig.shared.serial import load
 from mig.shared.useradm import init_user_adm, create_user, load_user_dict

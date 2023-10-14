@@ -50,7 +50,7 @@ from mig.shared.html import man_base_js, man_base_html, console_log_javascript, 
 from mig.shared.httpsclient import detect_client_auth, require_twofactor_setup, \
     protected_twofactor_settings, missing_twofactor_settings
 from mig.shared.init import initialize_main_variables, find_entry, extract_menu
-from mig.shared.pwhash import parse_password_policy
+from mig.shared.pwcrypto import parse_password_policy
 from mig.shared.safeinput import html_escape, password_min_len, password_max_len, \
     valid_password_chars
 from mig.shared.settings import load_settings, load_ssh, load_davs, load_ftps, \

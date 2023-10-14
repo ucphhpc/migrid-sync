@@ -51,7 +51,7 @@ from mig.shared.html import man_base_js, man_base_html, console_log_javascript, 
     legacy_user_interface, save_settings_js, save_settings_html, menu_items
 from mig.shared.init import initialize_main_variables, find_entry, extract_menu
 from mig.shared.profilekeywords import get_profile_specs
-from mig.shared.pwhash import parse_password_policy
+from mig.shared.pwcrypto import parse_password_policy
 from mig.shared.safeinput import html_escape, password_min_len, password_max_len, \
     valid_password_chars
 from mig.shared.settings import load_settings, load_widgets, load_profile, \

@@ -55,7 +55,7 @@ from mig.shared.modified import check_workflow_p_modified, \
     check_workflow_r_modified, reset_workflow_p_modified, \
     reset_workflow_r_modified, mark_workflow_p_modified, \
     mark_workflow_r_modified
-from mig.shared.pwhash import generate_random_ascii
+from mig.shared.pwcrypto import generate_random_ascii
 from mig.shared.refunctions import is_runtime_environment
 from mig.shared.safeinput import valid_numeric, InputException, \
     valid_email_address

@@ -62,7 +62,7 @@ from mig.shared.fileio import make_symlink, pickle, unpickle, write_file, \
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.httpsclient import unescape
 from mig.shared.init import initialize_main_variables
-from mig.shared.pwhash import generate_random_ascii
+from mig.shared.pwcrypto import generate_random_ascii
 from mig.shared.ssh import generate_ssh_rsa_key_pair, tighten_key_perms
 from mig.shared.workflows import create_workflow_session_id, \
     get_workflow_session_id

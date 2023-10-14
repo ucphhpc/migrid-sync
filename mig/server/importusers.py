@@ -44,7 +44,7 @@ from mig.shared.defaults import csrf_field, keyword_auto, valid_auth_types
 from mig.shared.functionality.sendrequestaction import main
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.output import format_output
-from mig.shared.pwhash import generate_random_password, unscramble_password, \
+from mig.shared.pwcrypto import generate_random_password, unscramble_password, \
     scramble_password
 from mig.shared.safeinput import valid_password_chars
 from mig.shared.url import FancyURLopener

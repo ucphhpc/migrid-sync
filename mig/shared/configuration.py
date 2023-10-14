@@ -2187,7 +2187,7 @@ location.""" % self.config_file)
                 self.site_digest_salt = salt
             except:
                 raise ValueError("Invalid digest_salt value: %s" % salt)
-        # TODO: use pwhash scramble/unscramble functions with salt everywhere
+        # TODO: use pwcrypto scramble/unscramble functions with salt everywhere
         # Fall back to a static 'empty' salt string since that is the legacy
         # behaviour and we need it to remain constant
         self.site_password_salt = ''
