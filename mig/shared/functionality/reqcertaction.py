@@ -45,7 +45,7 @@ from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.notification import send_email
-from mig.shared.pwhash import scramble_password, assure_password_strength
+from mig.shared.pwcrypto import scramble_password, assure_password_strength
 from mig.shared.serial import dumps
 
 

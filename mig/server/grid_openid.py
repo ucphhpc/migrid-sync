@@ -94,7 +94,7 @@ from mig.shared.griddaemons.openid import default_max_user_hits, \
     validate_auth_attempt
 from mig.shared.html import openid_page_template
 from mig.shared.logger import daemon_logger, register_hangup_handler
-from mig.shared.pwhash import make_simple_hash
+from mig.shared.pwcrypto import make_simple_hash
 from mig.shared.safeinput import valid_distinguished_name, valid_password, \
     valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url, \
     valid_complex_url, InputException

@@ -58,7 +58,7 @@ from mig.shared.fileio import filter_pickled_list, filter_pickled_dict, \
 from mig.shared.modified import mark_user_modified
 from mig.shared.refunctions import list_runtime_environments, \
     update_runtimeenv_owner
-from mig.shared.pwhash import make_safe_hash, make_hash, check_hash, \
+from mig.shared.pwcrypto import make_safe_hash, make_hash, check_hash, \
     make_digest, check_digest, make_scramble, check_scramble, \
     unscramble_password, unscramble_digest, verify_reset_token, \
     assure_password_strength, generate_random_ascii

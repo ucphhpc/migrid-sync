@@ -104,7 +104,7 @@ from mig.shared.griddaemons.sftp import default_username_validator, \
 from mig.shared.logger import daemon_logger, daemon_gdp_logger, \
     register_hangup_handler
 from mig.shared.notification import send_system_notification
-from mig.shared.pwhash import make_simple_hash
+from mig.shared.pwcrypto import make_simple_hash
 from mig.shared.useradm import check_password_hash
 from mig.shared.validstring import possible_user_id, possible_gdp_user_id, \
     possible_job_id, possible_sharelink_id, possible_jupyter_mount_id

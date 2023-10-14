@@ -119,7 +119,7 @@ from mig.shared.griddaemons.davs import get_fs_path, acceptable_chmod, \
 from mig.shared.logger import daemon_logger, daemon_gdp_logger, \
     register_hangup_handler
 from mig.shared.notification import send_system_notification
-from mig.shared.pwhash import make_scramble, unscramble_digest, \
+from mig.shared.pwcrypto import make_scramble, unscramble_digest, \
     make_simple_hash, valid_login_password
 from mig.shared.sslsession import ssl_session_token
 from mig.shared.tlsserver import hardened_ssl_context

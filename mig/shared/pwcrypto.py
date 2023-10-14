@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 #
-# pwhash - helpers for password handling including for encryption and hashing
+# pwcrypto - helpers for password and crypto including for encryption and hashing
 # Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.

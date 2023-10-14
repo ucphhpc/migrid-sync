@@ -47,7 +47,7 @@ from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from mig.shared.html import man_base_js, man_base_html, html_post_helper
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.parseflags import quiet
-from mig.shared.pwhash import make_digest, make_encrypt
+from mig.shared.pwcrypto import make_digest, make_encrypt
 from mig.shared.transferfunctions import build_transferitem_object, \
     build_keyitem_object, load_data_transfers, create_data_transfer, \
     update_data_transfer, delete_data_transfer, load_user_keys, \

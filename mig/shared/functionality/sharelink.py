@@ -42,7 +42,7 @@ from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from mig.shared.html import man_base_js, man_base_html, html_post_helper
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.notification import notify_user_thread
-from mig.shared.pwhash import make_hash
+from mig.shared.pwcrypto import make_hash
 from mig.shared.sharelinks import build_sharelinkitem_object, load_share_links, \
     create_share_link, update_share_link, delete_share_link, \
     create_share_link_form, invite_share_link_form, \

@@ -52,7 +52,7 @@ else:
 try:
     from mig.shared.defaults import csrf_field
     from mig.shared.handlers import get_csrf_limit
-    from mig.shared.pwhash import make_csrf_token, make_csrf_trust_token
+    from mig.shared.pwcrypto import make_csrf_token, make_csrf_trust_token
 except ImportError as ioe:
     print("Could not import mig modules!")
     exit(1)

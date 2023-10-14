@@ -43,7 +43,7 @@ from mig.shared.fileio import pickle, unpickle
 from mig.shared.modified import mark_user_modified
 from mig.shared.parser import parse, check_types
 from mig.shared.profilekeywords import get_keywords_dict as get_profile_fields
-from mig.shared.pwhash import make_hash, make_digest, assure_password_strength
+from mig.shared.pwcrypto import make_hash, make_digest, assure_password_strength
 from mig.shared.safeinput import valid_password
 from mig.shared.settingskeywords import get_keywords_dict as get_settings_fields
 from mig.shared.ssh import parse_pub_key, tighten_key_perms

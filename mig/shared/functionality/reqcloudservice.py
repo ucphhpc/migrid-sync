@@ -47,7 +47,7 @@ from mig.shared.defaults import session_id_bytes, keyword_all
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import find_entry, initialize_main_variables
-from mig.shared.pwhash import generate_random_ascii
+from mig.shared.pwcrypto import generate_random_ascii
 from mig.shared.settings import load_cloud
 from mig.shared.ssh import generate_ssh_rsa_key_pair
 from mig.shared.useradm import get_full_user_map

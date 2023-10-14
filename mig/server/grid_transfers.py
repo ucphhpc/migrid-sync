@@ -53,7 +53,7 @@ from mig.shared.defaults import datatransfers_filename, transfers_log_size, \
 from mig.shared.fileio import makedirs_rec, pickle
 from mig.shared.logger import daemon_logger, register_hangup_handler
 from mig.shared.notification import notify_user_thread
-from mig.shared.pwhash import unscramble_digest, fernet_decrypt_password
+from mig.shared.pwcrypto import unscramble_digest, fernet_decrypt_password
 from mig.shared.safeeval import subprocess_popen, subprocess_pipe, \
     subprocess_list2cmdline
 from mig.shared.transferfunctions import blind_pw, load_data_transfers, \

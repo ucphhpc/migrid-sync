@@ -40,7 +40,7 @@ from mig.shared.handlers import trust_handler, get_csrf_limit
 from mig.shared.httpsclient import detect_client_auth, \
     extract_client_openid, extract_client_oidc
 from mig.shared.init import initialize_main_variables, find_entry
-from mig.shared.pwhash import make_csrf_token
+from mig.shared.pwcrypto import make_csrf_token
 from mig.shared.useradm import expire_oid_sessions, find_oid_sessions
 from mig.shared.url import base32urldecode
 

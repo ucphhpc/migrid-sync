@@ -41,7 +41,7 @@ from mig.shared.defaults import csrf_field, keyword_auto
 from mig.shared.functional import validate_input
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.init import initialize_main_variables, find_entry
-from mig.shared.pwhash import parse_password_policy
+from mig.shared.pwcrypto import parse_password_policy
 from mig.shared.safeinput import html_escape
 
 
