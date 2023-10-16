@@ -1,4 +1,25 @@
 [
+   {
+    "status": "AUTO", 
+    "work_start": "2023-11-06T17:00:00+02:00", 
+    "systems": [
+        "ERDA"
+    ],
+    "announce_start": "2023-10-16T12:00:00+02:00",
+    "title": {
+      "EN": "Planned MODI Backend Migration",
+      "DK": "Planlagt MODI Backend Migration"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2023-11-06T22:00:00+02:00",
+    "description": {
+      "EN": "We need to migrate the MODI service out of our MIST infrastructure and over to our HPC infrastructure. This will cause extended downtime for the MODI service.",
+      "DK": "Vi er nødt til at migrere MODI servicen ud af vores MIST infrastruktur og over til vores HPC infrastruktur. Dette vil medføre forlænget nedetid for MODI servicen."
+    },
+    "announce_end": "2023-10-05T12:00:00+02:00"
+  },
  {
     "status": "AUTO", 
     "work_start": "2023-10-04T14:23:00+02:00", 
