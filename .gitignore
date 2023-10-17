@@ -128,9 +128,52 @@ state/mig_system_files/*.getoutputfiles
 state/mig_system_files/*.sendoutputfiles
 state/mig_system_files/*.job
 state/mig_system_files/*.interactivejob
+state/mig_system_run/*
 
 mig/install/generated-confs*
 
+# LetsEncrypt domain verification
+state/wwwpublic/.well-known/acme-challenge/*
+
+# User data
+state/user_db_home/*
+state/user_home/*
+state/user_settings/*
+state/user_pending/*
+state/vgrid_home/*
+state/vgrid_files_home/*
+state/vgrid_files_writable/*
+state/vgrid_files_readonly/*
+state/vgrid_public_base/*
+state/vgrid_private_base/*
+state/wwwpublic/vgrid/*
+state/wwwpublic/vnc/*
+state/sharelink_home/*
+state/freeze_home/*
+state/events_home/*
+state/re_home/*
+state/resource_home/*
+state/vm_home/*
+state/server_home/*
+state/twofactor_home/*
+state/openid_store/*
+state/log/*
+state/secrets/*
+
+# Known site-specific symlinks
+state/gdp_home/notifyemails.txt
+state/wwwpublic/index.html
+state/wwwpublic/cookie-policy.pdf
+state/wwwpublic/site-privacy-policy.pdf
+state/wwwpublic/status.html
+state/wwwpublic/about-snippet.html
+state/wwwpublic/support-snippet.html
+state/wwwpublic/terms.html
+state/wwwpublic/tips-snippet.html
+state/wwwpublic/.well-known/security.txt
+mig/images/site-conf.js
+
+# VS Code
 .vscode/
 
 # Mac OSX noise
