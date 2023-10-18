@@ -38,7 +38,10 @@ import re
 import socket
 import sys
 import time
-from configparser import ConfigParser
+try:
+    from configparser import ConfigParser
+except ImportError as ioe:
+    from ConfigParser import ConfigParser
 
 from mig.shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
     CSRF_FULL, POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, \
