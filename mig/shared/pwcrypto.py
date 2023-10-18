@@ -986,6 +986,7 @@ def generate_random_password(configuration, tries=42):
 if __name__ == "__main__":
     from mig.shared.conf import get_configuration_object
     configuration = get_configuration_object()
+    dummy_user = {'distinguished_name': 'Test User', 'password_hash': ''}
     pw_tests = (
         '', 'abc', 'dbey3h', 'abcdefgh', '12345678', 'test1234',
         'password', 'djeudmdj', 'Password12', 'P4s5W0rd',
@@ -1011,8 +1012,10 @@ if __name__ == "__main__":
         decrypted = None
         hashed = make_hash(pw)
         snippet = string_snippet(hashed)
-        print("Password %r gives hash %r and snippet %r" % (pw, hashed,
-                                                            snippet))
+        dummy_user['password_hash'] = hashed
+        token = generate_reset_token(configuration, dummy_user, 'migoid')
+        print("Password %r gives hash %r, snippet %r and reset token %r" %
+              (pw, hashed, snippet, token))
         try:
             # print("Fernet encrypt password %r" % pw)
             encrypted = fernet_encrypt_password(configuration, pw)

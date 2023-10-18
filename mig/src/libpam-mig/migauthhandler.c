@@ -1,6 +1,6 @@
 /*
  * migauthhandler.c - C <-> Python wrappers for MiG user authentication
- * Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+ * Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
  *
  * This file is part of MiG
  *
@@ -124,7 +124,7 @@ static bool mig_pyinit()
             ("from mig.shared.logger import daemon_logger, register_hangup_handler");
         pyrun("from mig.shared.conf import get_configuration_object");
         pyrun("from mig.shared.accountstate import check_account_accessible");
-        pyrun("from mig.shared.pwhash import make_simple_hash, valid_login_password");
+        pyrun("from mig.shared.pwcrypto import make_simple_hash, valid_login_password");
         pyrun("configuration = get_configuration_object(skip_log=True)");
         pyrun("log_level = configuration.loglevel");
         pyrun
