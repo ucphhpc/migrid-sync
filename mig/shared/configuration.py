@@ -49,10 +49,11 @@ standard_library.install_aliases()
 
 
 # NOTE: should be handled by future aliases but fails in PAM C extension
-try:
-    from configparser import ConfigParser
-except ImportError as ioe:
+if sys.version_info[0] < 3:
+    # NOTE: always use native py2 version here - new one causes unicode mess
     from ConfigParser import ConfigParser
+else:
+    from configparser import ConfigParser
 
 # NOTE: protect migrid import from autopep8 reordering
 try:
