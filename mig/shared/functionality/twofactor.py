@@ -108,9 +108,19 @@ def main(client_id, user_arguments_dict, environ=None):
     # TODO: detect save settings and differentiate here
     defaults = signature(configuration, setup_mode=True)[1]
     all_args.update(defaults)
+    var_filters = {}
+    # NOTE: args get URL-encoded which e.g. translates '@' to %40' and breaks
+    #       email address verification for authenticated renew links in expire
+    #       warning emails. Manually unquote any such values here.
+    # TODO: integrate extend account access and change pw buttons on user pages
+    #       e.g. in a Profile tab at Settings and link to that in expire mails.
+    for name in ('email', 'peers_email', ):
+        if name in all_args:
+            var_filters[name] = unquote
     (validate_status, accepted) = validate_input(user_arguments_dict,
                                                  all_args, output_objects,
-                                                 allow_rejects=False)
+                                                 allow_rejects=False,
+                                                 prefilter_map=var_filters)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
