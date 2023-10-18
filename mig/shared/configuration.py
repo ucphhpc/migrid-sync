@@ -38,10 +38,11 @@ import re
 import socket
 import sys
 import time
-try:
-    from configparser import ConfigParser
-except ImportError as ioe:
+if sys.version_info[0] < 3:
+    # NOTE: always use native py2 version here - new one causes unicode mess
     from ConfigParser import ConfigParser
+else:
+    from configparser import ConfigParser
 
 from mig.shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
     CSRF_FULL, POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, \
