@@ -31,7 +31,6 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 from builtins import range
-from hashlib import md5, sha1, sha256, sha512
 import errno
 import fcntl
 import os
@@ -65,18 +64,16 @@ try:
     from mig.shared.base import force_utf8, force_utf8_rec, force_native_str
     from mig.shared.defaults import default_chunk_size, default_max_chunks
     from mig.shared.logger import null_logger
+    from mig.shared.pwcrypto import valid_hash_algos
     from mig.shared.serial import dump, load
 except ImportError as ioe:
     print("could not import migrid modules!")
     exit(1)
 
-__valid_hash_algos = {'md5': md5, 'sha1': sha1, 'sha256': sha256,
-                      'sha512': sha512}
-
 
 def supported_hash_algos():
     """A list of supported hash algorithm names"""
-    return list(__valid_hash_algos)
+    return list(valid_hash_algos)
 
 
 def write_chunk(path, chunk, offset, logger, mode='r+b'):
@@ -764,7 +761,7 @@ def __checksum_file(path, hash_algo, chunk_size=default_chunk_size,
     files a partial checksum of the first chunk_size * max_chunks bytes will
     be returned.
     """
-    checksum = __valid_hash_algos.get(hash_algo, __valid_hash_algos['md5'])()
+    checksum = valid_hash_algos.get(hash_algo, valid_hash_algos['md5'])()
     chunks_read = 0
     msg = ''
     try:

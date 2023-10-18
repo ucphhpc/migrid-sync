@@ -936,7 +936,7 @@ def valid_login_password(configuration, password):
         return False
 
 
-def make_generic_hash(val, algo='md5', hex_format=True):
+def make_generic_hash(val, algo, hex_format=True):
     """Generate a hash for val using requested algo and return the 2*N-char
     hexdigest if hex_format is set (default) or the corresponding raw N bytes
     otherwise. 
