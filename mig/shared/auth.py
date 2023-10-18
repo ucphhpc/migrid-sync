@@ -32,7 +32,6 @@ from __future__ import absolute_import
 import Cookie
 import base64
 import glob
-import hashlib
 import os
 import re
 import time
@@ -49,7 +48,8 @@ from mig.shared.defaults import twofactor_key_name, twofactor_interval_name, \
 from mig.shared.fileio import read_file, delete_file, delete_symlink, \
     write_file, pickle, unpickle, make_symlink
 from mig.shared.gdp.all import get_base_client_id
-from mig.shared.pwcrypto import scramble_password, unscramble_password
+from mig.shared.pwcrypto import scramble_password, unscramble_password, \
+    make_safe_hash
 from mig.shared.url import quote
 
 # Set OTP windows range (+/-) to compensate for offset
@@ -233,7 +233,7 @@ def generate_session_prefix(configuration, client_id):
     if configuration.site_enable_gdp:
         client_id = get_base_client_id(
             configuration, client_id, expand_oid_alias=False)
-    return hashlib.sha256(client_id).hexdigest()
+    return make_safe_hash(client_id)
 
 
 def generate_session_key(configuration, client_id):

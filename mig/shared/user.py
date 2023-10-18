@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # user - helper functions for user related tasks
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,7 +31,6 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import base64
-import hashlib
 import os
 
 # TODO: move to os.scandir with py3
@@ -49,6 +48,7 @@ except ImportError:
 
 from mig.shared.base import client_dir_id, client_id_dir, get_site_base_url
 from mig.shared.defaults import litmus_id
+from mig.shared.pwcrypto import make_simple_hash
 from mig.shared.settings import load_settings, load_profile
 from mig.shared.url import urlencode
 
@@ -58,7 +58,7 @@ def anon_user_id(user_id):
     provided unique user_id. The anonymous ID is just a md5 hash of the
     user_id to keep ID relatively short.
     """
-    anon_id = hashlib.md5(user_id).hexdigest()
+    anon_id = make_simple_hash(user_id)
     return anon_id
 
 
@@ -130,7 +130,7 @@ def user_gravatar_url(configuration, email, size, anon_img="/images/anonymous.pn
     anon_png_url = '%s/%s' % (prefer_url_base, anon_img)
     gravatar_query = {'s': size, 'd': anon_png_url}
     gravatar_url = 'https://www.gravatar.com/avatar/'
-    gravatar_url += hashlib.md5(email.strip().lower()).hexdigest()
+    gravatar_url += make_simple_hash(email.strip().lower())
     gravatar_url += '?%s' % urlencode(gravatar_query)
     return gravatar_url
 
