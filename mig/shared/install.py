@@ -43,9 +43,8 @@ import ast
 import base64
 import crypt
 import datetime
-import hashlib
-import pwd
 import os
+import pwd
 import random
 import re
 import socket
@@ -64,7 +63,8 @@ from mig.shared.fileio import read_file, read_file_lines, write_file, \
 from mig.shared.html import menu_items
 from mig.shared.jupyter import gen_balancer_proxy_template, gen_openid_template, \
     gen_rewrite_template
-from mig.shared.pwcrypto import password_requirements
+from mig.shared.pwcrypto import password_requirements, make_simple_hash, \
+    make_safe_hash
 from mig.shared.safeeval import subprocess_call, subprocess_popen, subprocess_pipe
 from mig.shared.safeinput import valid_alphanumeric, InputException
 from mig.shared.url import urlparse
@@ -1498,11 +1498,11 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
         try:
             # NOTE: b64decode takes bytes or string and returns bytes
             b64_key = base64.b64decode(pubkey.strip().split()[1])
-            raw_md5 = hashlib.md5(b64_key).hexdigest()
+            raw_md5 = make_simple_hash(b64_key)
             # reformat into colon-spearated octets
             daemon_pubkey_md5 = ':'.join(a + b for a, b in zip(raw_md5[::2],
                                                                raw_md5[1::2]))
-            raw_sha256 = hashlib.sha256(b64_key).digest()
+            raw_sha256 = make_safe_hash(b64_key, False)
             # NOTE: b64encode takes bytes and returns bytes
             daemon_pubkey_sha256 = force_native_str(
                 base64.b64encode(raw_sha256)).rstrip('=')

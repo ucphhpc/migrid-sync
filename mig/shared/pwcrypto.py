@@ -136,8 +136,7 @@ def check_hash(configuration, service, username, password, hashed,
     accepted. Use only during active log in checks.
     """
     _logger = configuration.logger
-    # NOTE: hashlib requires bytes
-    pw_bytes = force_utf8(password)
+    # NOTE: hashlib works with bytes
     hash_bytes = force_utf8(hashed)
     pw_hash = make_simple_hash(password)
     if isinstance(hash_cache, dict) and \
@@ -162,6 +161,7 @@ def check_hash(configuration, service, username, password, hashed,
     assert algorithm == 'PBKDF2'
     hash_a = b64decode(hash_a)
     # NOTE: pbkdf2_hmac requires bytes for password and salt
+    pw_bytes = force_utf8(password)
     hash_b = hashlib.pbkdf2_hmac(hash_function, pw_bytes, force_utf8(salt),
                                  int(cost_factor), len(hash_a))
     assert len(hash_a) == len(hash_b)  # we requested this from pbkdf2_hmac()
@@ -335,8 +335,7 @@ def _prepare_encryption_key(configuration, secret=keyword_auto,
         # yet salt it with hash of a site-specific and non-public salt
         # to avoid disclosing salt or final key.
         salt_data = best_crypt_salt(configuration)
-        # NOTE: hashlib requires bytes
-        salt_hash = hashlib.sha256(force_utf8(salt_data)).hexdigest()
+        salt_hash = make_safe_hash(salt_data)
         key_data = scramble_password(salt_hash, entropy)
     else:
         # _logger.debug('making crypto key from provided secret')
@@ -557,7 +556,7 @@ def make_encrypt(configuration, password, secret=keyword_auto, algo="fernet"):
         #       vector for each value. Please beware of the potentially reduced
         #       security of this method.
         scrambled_pw = make_scramble(pw, best_crypt_salt(configuration))
-        pw_iv = hashlib.sha256(scrambled_pw).digest()
+        pw_iv = make_safe_hash(scrambled_pw, False)
         return aesgcm_encrypt_password(configuration, password, secret,
                                        init_vector=pw_iv)
     else:
@@ -749,9 +748,9 @@ def make_csrf_token(configuration, method, operation, client_id, limit=None):
     salt = configuration.site_digest_salt
     merged = "%s:%s:%s:%s" % (method, operation, client_id, limit)
     # configuration.logger.debug("CSRF for %s" % merged)
-    # NOTE: base64 enc and hashlib hash require bytes and return native string
+    # NOTE: base64 enc requires bytes and returns native string
     xor_id = "%s" % (int(salt, 16) ^ int(b16encode(force_utf8(merged)), 16))
-    token = make_simple_hash(xor_id, 'sha256')
+    token = make_safe_hash(xor_id)
     return token
 
 
@@ -937,21 +936,33 @@ def valid_login_password(configuration, password):
         return False
 
 
-def make_simple_hash(val, algo='md5'):
-    """Generate a simple hash for val and return the N character hexdigest.
-    By default the hash algorithm is md5 with 32-char hash, but other hashlib
-    algorithms are supported as well.
+def make_generic_hash(val, algo='md5', hex_format=True):
+    """Generate a hash for val using requested algo and return the 2*N-char
+    hexdigest if hex_format is set (default) or the corresponding raw N bytes
+    otherwise. 
     """
     # NOTE: hashlib functions require bytes and hexdigest returns native string
     if not algo in valid_hash_algos:
         algo = 'md5'
     hash_helper = valid_hash_algos[algo]
-    return hash_helper(force_utf8(val)).hexdigest()
+    if hex_format:
+        return hash_helper(force_utf8(val)).hexdigest()
+    else:
+        return hash_helper(force_utf8(val)).digest()
 
 
-def make_safe_hash(val):
-    """Generate a safe sha256 hash for val and return the 64-char hexdigest"""
-    return make_simple_hash(val, algo='sha256')
+def make_simple_hash(val, hex_format=True):
+    """Generate a simple md5 hash for val and return the 32-char hexdigest if
+    the default hex_format is set or the corresponding raw 16 bytes otherwise.
+    """
+    return make_generic_hash(val, 'md5', hex_format)
+
+
+def make_safe_hash(val, hex_format=True):
+    """Generate a safe sha256 hash for val and return the 64-char hexdigest if
+    the default hex_format is set or the corresponding raw 32 bytes otherwise.
+    """
+    return make_generic_hash(val, 'sha256', hex_format)
 
 
 def make_path_hash(configuration, path):
@@ -1072,7 +1083,7 @@ if __name__ == "__main__":
 
         try:
             static_iv = prepare_aesgcm_iv(
-                configuration, iv_entropy=hashlib.sha256(pw).digest())
+                configuration, iv_entropy=make_safe_hash(pw, False))
             # print("AESGCM static encrypt password %r with iv %r" %
             #      (pw, pw_iv))
             encrypted = aesgcm_encrypt_password(configuration, pw,

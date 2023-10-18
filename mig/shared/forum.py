@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # forum - helper functions related to VGrid forums
-# Copyright (C) 2003-2011  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -69,12 +69,10 @@ from future import standard_library
 standard_library.install_aliases()
 from builtins import range
 import fcntl
-try:
-    from hashlib import md5 as md5_hash
-except ImportError:
-    from md5 import new as md5_hash
 import os
 import time
+
+from mig.shared.pwcrypto import make_simple_hash
 
 # TODO: enable search in message bodies too
 # TODO: enable search in dates too
@@ -104,7 +102,7 @@ DATE_FORMAT = '%d %b %Y %H:%M:%S'
 MAX_SUBJECT_LEN = 100
 MAX_BODY_LEN = 10000
 
-HASH_LENGTH = len(md5_hash('dummy').hexdigest())
+HASH_LENGTH = len(make_simple_hash('dummy'))
 
 ERR_INVALID_THREAD = 'Invalid Thread Specified'
 ERR_NO_SUBJECT = 'No Subject Given'
@@ -193,7 +191,7 @@ def read_common(path):
 
 def read_visited(data_dir, author):
     """Load list of thread visits for author"""
-    path = get_visited_path(data_dir, md5_hash(author).hexdigest())
+    path = get_visited_path(data_dir, make_simple_hash(author))
     return read_common(path)
 
 
@@ -223,7 +221,7 @@ def write_common(path, lines):
 
 def write_visited(data_dir, author, visited):
     """Write list of thread visits to for author"""
-    path = get_visited_path(data_dir, md5_hash(author).hexdigest())
+    path = get_visited_path(data_dir, make_simple_hash(author))
     return write_common(path, visited)
 
 
@@ -317,7 +315,7 @@ def update_thread(data_dir, author, subject=None, key=None):
     if key:
         row_hash = key
     else:
-        row_hash = md5_hash('%s%s%s' % (now, author, subject)).hexdigest()
+        row_hash = make_simple_hash('%s%s%s' % (now, author, subject))
 
     # Read the index of threads in.
     threads = read_threads(data_dir)

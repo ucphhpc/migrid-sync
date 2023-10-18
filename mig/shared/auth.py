@@ -59,7 +59,7 @@ from mig.shared.fileio import read_file, delete_file, delete_symlink, \
     write_file, pickle, unpickle, make_symlink
 from mig.shared.gdp.all import get_base_client_id
 from mig.shared.pwcrypto import scramble_password, unscramble_password, \
-    make_simple_hash
+    make_safe_hash
 from mig.shared.url import quote
 
 # Set OTP windows range (+/-) to compensate for offset
@@ -239,7 +239,7 @@ def generate_session_prefix(configuration, client_id):
     if configuration.site_enable_gdp:
         client_id = get_base_client_id(
             configuration, client_id, expand_oid_alias=False)
-    return make_simple_hash(client_id, 'sha256')
+    return make_safe_hash(client_id)
 
 
 def generate_session_key(configuration, client_id):
