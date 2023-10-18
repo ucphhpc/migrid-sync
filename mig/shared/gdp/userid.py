@@ -32,7 +32,7 @@ import os
 
 from mig.shared.base import expand_openid_alias, get_short_id
 from mig.shared.defaults import gdp_distinguished_field
-from mig.shared.pwhash import make_simple_hash, make_safe_hash, make_encrypt
+from mig.shared.pwcrypto import make_simple_hash, make_safe_hash, make_encrypt
 
 client_id_project_postfix = '/%s=' % gdp_distinguished_field
 
@@ -232,21 +232,23 @@ def __scramble_user_id(configuration, user_id):
 
     result = None
     try:
-        if configuration.gdp_id_scramble in ['false']:
+        algo = configuration.gdp_id_scramble
+        if algo in ['false']:
             result = user_id
-        elif configuration.gdp_id_scramble in ['simple_hash', 'md5']:
+        elif algo in ['simple_hash', 'md5']:
             result = make_simple_hash(user_id)
-        elif configuration.gdp_id_scramble in ['safe_hash', 'sha256']:
+        elif algo in ['safe_hash', 'sha256']:
             result = make_safe_hash(user_id)
-        elif configuration.gdp_id_scramble in ['safe_encrypt', 'fernet']:
+        elif algo in ['safe_encrypt', 'fernet', 'aes256_encrypt', 'aesgcm',
+                      'simple_encrypt', 'aesgcm_static']:
             # NOTE: emulate same None-handling as for hash scramblers
             if user_id is None:
                 result = None
             else:
-                result = make_encrypt(configuration, user_id)
+                result = make_encrypt(configuration, user_id, algo=algo)
         else:
             raise ValueError("unsupported gdp_id_scramble conf value: %s" %
-                             configuration.gdp_id_scramble)
+                             algo)
     except Exception as exc:
         _logger.error("GDP: __scramble_user_id failed for user: %r: %s"
                       % (user_id, exc))
@@ -344,7 +346,8 @@ if __name__ == "__main__":
                '/C=DK/ST=NA/O=Doe/OU=NA/CN=John Doe/emailAddress=john@doe.org'
                )
     scramble_list = ['false', 'simple_hash', 'md5', 'safe_hash', 'sha256',
-                     'safe_encrypt', 'fernet']
+                     'safe_encrypt', 'fernet', 'aes256_encrypt', 'aesgcm',
+                     'simple_encrypt', 'aesgcm_static']
     for user_id in id_list:
         for scramble in scramble_list:
             configuration.gdp_id_scramble = scramble

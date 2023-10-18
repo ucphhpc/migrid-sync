@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # spell - spell check files
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -172,14 +172,14 @@ def main(client_id, user_arguments_dict):
 
     if not mode in allowed_modes:
         output_objects.append(
-            {'object_type': 'error_text', 'text':
-             'Unsupported mode: %s' % mode})
+            {'object_type': 'error_text', 'text': 'Unsupported mode: %s' %
+             mode})
         status = returnvalues.CLIENT_ERROR
 
     if not lang in allowed_langs:
         output_objects.append(
-            {'object_type': 'error_text', 'text':
-             'Unsupported lang: %s' % mode})
+            {'object_type': 'error_text', 'text': 'Unsupported lang: %s' %
+             lang})
         status = returnvalues.CLIENT_ERROR
 
     # Show all if no flags given
@@ -230,9 +230,9 @@ def main(client_id, user_arguments_dict):
                 for line in out:
                     output_lines.append(line + '\n')
             except Exception as err:
+                logger.error("spellcheck on %s failed: %s" % (abs_path, err))
                 output_objects.append({'object_type': 'error_text', 'text':
-                                       "%s: '%s': %s" % (op_name,
-                                                         relative_path, err)})
+                                       "%s: %r" % (op_name, relative_path)})
                 status = returnvalues.SYSTEM_ERROR
                 continue
 

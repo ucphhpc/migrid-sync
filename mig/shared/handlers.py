@@ -37,7 +37,7 @@ from mig.shared.base import client_id_dir, string_snippet
 from mig.shared.defaults import csrf_field, CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
     CSRF_FULL
 from mig.shared.findtype import is_user, is_server
-from mig.shared.pwhash import make_csrf_token, make_csrf_trust_token
+from mig.shared.pwcrypto import make_csrf_token, make_csrf_trust_token
 
 
 def correct_handler(name, environ=None):

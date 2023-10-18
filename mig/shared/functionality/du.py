@@ -222,10 +222,9 @@ def main(client_id, user_arguments_dict):
                                     'name': relative_path,
                                     'bytes': size})
             except Exception as exc:
-                output_objects.append({'object_type': 'error_text',
-                                       'text': "%s: '%s': %s" % (op_name,
-                                                                 relative_path,
-                                                                 exc)})
+                output_objects.append({'object_type': 'error_text', 'text':
+                                       "%s failed on %r" % (op_name,
+                                                            relative_path)})
                 logger.error("%s: failed on '%s': %s" % (op_name,
                                                          relative_path, exc))
                 status = returnvalues.SYSTEM_ERROR

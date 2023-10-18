@@ -539,7 +539,8 @@ def main(client_id, user_arguments_dict):
         logger.warning('%s tried to %s restricted path %s ! (%s)'
                        % (client_id, op_name, abs_path, rel_path))
         output_objects.append(
-            {'object_type': 'error_text', 'text': "Invalid path! (%s expands to an illegal path)" % path})
+            {'object_type': 'error_text', 'text':
+             "Invalid path! (%s expands to an illegal path)" % path})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     (owner, time_left) = acquire_edit_lock(abs_path, client_id)
@@ -556,7 +557,8 @@ setTimeout("newcountdown('%s', %d)", 1)
         output_objects.append({'object_type': 'html_form', 'text': html})
     else:
         output_objects.append(
-            {'object_type': 'error_text', 'text': '%s acquired the editing lock for %s! (timeout in %d seconds)'
+            {'object_type': 'error_text', 'text':
+             '%s acquired the editing lock for %s! (timeout in %d seconds)'
              % (owner, path, time_left)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 

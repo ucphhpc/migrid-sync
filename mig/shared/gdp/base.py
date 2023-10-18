@@ -58,7 +58,7 @@ from mig.shared.gdp.userid import __validate_user_id, \
     __project_short_id_from_user_id, __scramble_user_id, \
     get_project_from_user_id, get_project_client_id
 from mig.shared.notification import send_email
-from mig.shared.pwhash import make_simple_hash, make_safe_hash, make_encrypt
+from mig.shared.pwcrypto import make_simple_hash, make_safe_hash, make_encrypt
 from mig.shared.serial import load, dump
 from mig.shared.useradm import create_user, delete_user, edit_user, \
     get_full_user_map, lock_user_db
@@ -127,21 +127,23 @@ def __scramble_path(configuration, path):
 
     result = None
     try:
-        if configuration.gdp_path_scramble in ['false']:
+        algo = configuration.gdp_path_scramble
+        if algo in ['false']:
             result = path
-        elif configuration.gdp_path_scramble in ['simple_hash', 'md5']:
+        elif algo in ['simple_hash', 'md5']:
             result = make_simple_hash(path)
-        elif configuration.gdp_path_scramble in ['safe_hash', 'sha256']:
+        elif algo in ['safe_hash', 'sha256']:
             result = make_safe_hash(path)
-        elif configuration.gdp_path_scramble in ['safe_encrypt', 'fernet']:
+        elif algo in ['safe_encrypt', 'fernet', 'aes256_encrypt', 'aesgcm',
+                      'simple_encrypt', 'aesgcm_static']:
             # NOTE: emulate same None-handling as for hash scramblers
             if path is None:
                 result = None
             else:
-                result = make_encrypt(configuration, path)
+                result = make_encrypt(configuration, path, algo=algo)
         else:
             raise ValueError("unsupported gdp_path_scramble conf value: %s" %
-                             configuration.gdp_path_scramble)
+                             algo)
     except Exception as exc:
         _logger.error("GDP: __scramble_path failed for path: %r: %s"
                       % (path, exc))

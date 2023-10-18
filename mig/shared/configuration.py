@@ -2022,8 +2022,10 @@ location.""" % self.config_file)
         self.gdp_logger = self.gdp_logger_obj.logger
 
         # GDP log scrambling support - algorithm name or alias
-        __valid_scramblers = ['false', 'fernet', 'safe_encrypt', 'md5',
-                              'simple_hash', 'sha256', 'safe_hash']
+        __valid_scramblers = ['false', 'fernet', 'safe_encrypt', 'aesgcm',
+                              'aes256_encrypt', 'aesgcm_static',
+                              'simple_encrypt', 'md5', 'simple_hash', 'sha256',
+                              'safe_hash']
 
         # NOTE: default to sha256 hashing IDs in order to pseudonymize them in
         #       gdp logs and make it easy to 'forget' a user by simply
@@ -2145,7 +2147,7 @@ location.""" % self.config_file)
                 self.site_digest_salt = salt
             except:
                 raise ValueError("Invalid digest_salt value: %s" % salt)
-        # TODO: use pwhash scramble/unscramble functions with salt everywhere
+        # TODO: use pwcrypto scramble/unscramble functions with salt everywhere
         # Fall back to a static 'empty' salt string since that is the legacy
         # behaviour and we need it to remain constant
         self.site_password_salt = ''

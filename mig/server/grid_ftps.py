@@ -103,7 +103,7 @@ from mig.shared.griddaemons.ftps import default_max_user_hits, \
     update_login_map, login_map_lookup, hit_rate_limit, expire_rate_limit, \
     check_twofactor_session, validate_auth_attempt
 from mig.shared.logger import daemon_logger, register_hangup_handler
-from mig.shared.pwhash import make_simple_hash
+from mig.shared.pwcrypto import make_simple_hash
 from mig.shared.tlsserver import hardened_openssl_context
 from mig.shared.useradm import check_password_hash
 from mig.shared.validstring import possible_user_id, possible_sharelink_id

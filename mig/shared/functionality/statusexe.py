@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # statusexe - Back end to get status for one or more resource exe units
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,10 @@
 # -- END_HEADER ---
 #
 
+"""Back end to get status for one or more resource exe units"""
+
 from __future__ import absolute_import
+
 from mig.shared import returnvalues
 from mig.shared.conf import get_all_exe_names
 from mig.shared.findtype import is_owner
@@ -43,7 +46,7 @@ def signature():
         'exe_name': [],
         'all': [''],
         'parallel': [''],
-        }
+    }
     return ['text', defaults]
 
 
@@ -52,9 +55,8 @@ def main(client_id, user_arguments_dict):
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id)
-    output_objects.append({'object_type': 'text', 'text'
-                          : '--------- Trying to STATUS exe ----------'
-                          })
+    output_objects.append({'object_type': 'text', 'text': '--------- Trying to STATUS exe ----------'
+                           })
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
@@ -64,7 +66,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     unique_resource_name = accepted['unique_resource_name'][-1]
@@ -74,10 +76,10 @@ def main(client_id, user_arguments_dict):
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'Failure: You must be an owner of '
-                               + unique_resource_name
-                               + ' to get status for the exe!'})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Only owners of %s can get status for associated exe units!' %
+             unique_resource_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     exit_status = returnvalues.OK
@@ -88,16 +90,16 @@ def main(client_id, user_arguments_dict):
     # take action based on supplied list of exes
 
     if len(exe_name_list) == 0:
-        output_objects.append({'object_type': 'text', 'text'
-                              : "No exes specified and 'all' argument not set to true: Nothing to do!"
-                              })
+        output_objects.append(
+            {'object_type': 'text', 'text':
+             "No exes specified and 'all' arg not set: nothing to do!"})
 
     workers = []
     task_list = []
     for exe_name in exe_name_list:
         task = Worker(target=status_resource_exe,
                       args=(unique_resource_name, exe_name,
-                      configuration.resource_home, logger))
+                            configuration.resource_home, logger))
         workers.append((exe_name, [task]))
         task_list.append(task)
         throttle_max_concurrent(task_list)
@@ -107,15 +109,13 @@ def main(client_id, user_arguments_dict):
 
     for (exe_name, task_list) in workers:
         (status, msg) = task_list[0].finish()
-        output_objects.append({'object_type': 'header', 'text'
-                              : 'Status exe'})
+        output_objects.append({'object_type': 'header', 'text': 'Status exe'})
         if not status:
-            output_objects.append({'object_type': 'error_text', 'text'
-                                  : 'Problems getting exe status: %s'
-                                   % msg})
+            output_objects.append(
+                {'object_type': 'error_text', 'text':
+                 'Problems getting exe status: %s' % msg})
             exit_status = returnvalues.SYSTEM_ERROR
         else:
-            output_objects.append({'object_type': 'text', 'text'
-                                  : 'Status command run, output: %s'
-                                   % msg})
+            output_objects.append({'object_type': 'text', 'text':
+                                   'Status command run, output: %s' % msg})
     return (output_objects, exit_status)

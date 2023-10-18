@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # mv - backend to move files/directories in user home
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -249,9 +249,10 @@ move parent placeholders for %s shared folders!""" %
                               [relative_path, relative_dest],
                               failed=True,
                               details=exc)
-                output_objects.append({'object_type': 'error_text',
-                                       'text': "%s: '%s': %s"
-                                       % (op_name, relative_path, exc)})
+                output_objects.append({'object_type': 'error_text', 'text':
+                                       "%s failed %r to %r" % (op_name,
+                                                               relative_path,
+                                                               relative_dest)})
                 logger.error("%s: failed on '%s': %s" % (op_name,
                                                          relative_path, exc))
 

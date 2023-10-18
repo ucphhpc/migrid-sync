@@ -1,4 +1,46 @@
 [
+   {
+    "status": "AUTO", 
+    "work_start": "2023-11-06T17:00:00+02:00", 
+    "systems": [
+        "ERDA"
+    ],
+    "announce_start": "2023-10-16T12:00:00+02:00",
+    "title": {
+      "EN": "Planned MODI Backend Migration",
+      "DK": "Planlagt MODI Backend Migration"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2023-11-06T22:00:00+02:00",
+    "description": {
+      "EN": "We need to migrate the MODI service out of our MIST infrastructure and over to our HPC infrastructure. This will cause extended downtime for the MODI service.",
+      "DK": "Vi er nødt til at migrere MODI servicen ud af vores MIST infrastruktur og over til vores HPC infrastruktur. Dette vil medføre forlænget nedetid for MODI servicen."
+    },
+    "announce_end": "2023-10-05T12:00:00+02:00"
+  },
+ {
+    "status": "AUTO", 
+    "work_start": "2023-10-04T14:23:00+02:00", 
+    "systems": [
+        "SIF"
+    ],
+    "announce_start": "2023-10-04T15:00:00+02:00",
+    "title": {
+      "EN": "SIF Storage Issues - Temporarily Down",
+      "DK": "SIF lagerproblemer - midlertidigt nede"
+    },
+    "services": [
+      "ALL"
+    ],
+    "work_end": "2023-10-04T18:51:00+02:00",
+    "description": {
+      "EN": "We hit some problems with the SIF backend storage and it was offline while we investigated. We finished the investigation in the evening and everything is back online. We are sorry for the inconvenience but data safety is always the primary concern.",
+      "DK": "Vi oplevede nogle problemer med SIFs backendlager og den var derfor midlertidigt taget ud af drift mens vi undersøgte sagen. Vi blev færdige ud på aftenen og alt tilbage i normal drift. Vi beklager de gener det måtte medføre, men datasikkerheden har altid første prioritet."
+    },
+    "announce_end": "2023-10-06T10:00:00+02:00"
+  }, 
  {
     "status": "AUTO", 
     "work_start": "2023-10-04T08:00:00+02:00", 
@@ -13,10 +55,10 @@
     "services": [
       "ALL"
     ],
-    "work_end": "2023-10-04T09:00:00+02:00",
+    "work_end": "2023-10-04T08:55:00+02:00",
     "description": {
-      "EN": "We need to do some ERDA backend storage maintenance. The work will involve frontend down-time for the low-level system task. Thus, all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We expect the maintenance to be relatively fast - so we expect to finish within half an hour if everything runs smoothly. More information will follow.",
-      "DK": "Vi skal have lavet noget vedligehold af backendlageret på ERDA. Arbejdet kræver nedetid på frontends til den grundlæggende systemopgaver, og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi forventer ikke at vedligeholdet tager lang tid, så vi forhåbentlig er færdige indenfor en halv time, hvis alting forløber planmæssigt. Yderligere information følger."
+      "EN": "We need to do some ERDA backend storage maintenance. The work will involve frontend down-time for the low-level system task. Thus, all services will be temporarily unavailable for shorter or longer periods during the maintenance window. We have completed the maintenance with both backend work and some pending low-level frontend updates, which required downtime. Everything should be back to normal again.",
+      "DK": "Vi skal have lavet noget vedligehold af backendlageret på ERDA. Arbejdet kræver nedetid på frontends til den grundlæggende systemopgaver, og der vil derfor forekomme kortere eller længere nedetid på alle services undervejs. Vi har overstået vedligehold med både backend-arbejde og nogle udestående kerneopdateringer af frontend, som krævede nedetid. Alt skulle være tilbage i almindelig drift igen."
     },
     "announce_end": "2023-10-05T12:00:00+02:00"
   }, 
@@ -35,12 +77,12 @@
       "DAG",
       "MODI"
     ],
-    "work_end": "2023-10-02T22:00:00+02:00",
+    "work_end": "2023-10-03T22:00:00+02:00",
     "description": {
-      "EN": "We will apply general maintenance to the DAG and MODI services. Interruptions to these services will occur. All DAG and MODI upgrades are complete and everything is back in normal production.",
-      "DK": "Vi udruller den månedelige opdatering og vedligeholdelse af DAG og MODI tjenesterne. Afbrydelser af disse tjenester vil forekomme. Alle DAG og MODI opgraderinger er færdige, og alt er tilbage i normal drift."
+      "EN": "We will apply general maintenance to the DAG and MODI services. Interruptions to these services will occur. These updates were applied and the service was up and running again by evening. Although we encountered small configuration issues on some of the Jupyter Notebook images which required further fixes that will be released on the following evening. Everything should be back to normal now.",
+      "DK": "Vi udruller den månedelige opdatering og vedligeholdelse af DAG og MODI tjenesterne. Afbrydelser af disse tjenester vil forekomme. Disse opdateringer blev udført, og tjenesten var oppe at køre igen om aftenen. Dog stødte vi på små konfigurationsproblemer i nogle af vores Jupyter Notebook images, som krævede yderligere rettelser, som vil blive frigivet den følgende aften. Alt skulle være tilbage i almindelig drift igen."
     },
-    "announce_end": "2023-10-03T12:00:00+02:00"
+    "announce_end": "2023-10-04T12:00:00+02:00"
    },
  {
     "status": "AUTO", 

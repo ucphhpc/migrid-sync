@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # expand - emulate shell wild card expansion
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -107,11 +107,16 @@ def handle_expand(
     doesn't really matter to the clients.
     """
 
+    _logger = configuration.logger
+    op_name = 'expand'
+
     # Sanity check
 
     if depth > 255:
-        output_objects.append({'object_type': 'error_text', 'text': 'Error: file recursion maximum exceeded!'
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Error: file recursion maximum exceeded!'
                                })
+        _logger.error('%s hit max recursion on %r' % (op_name, real_path))
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # references to '.' or similar are stripped by abspath
@@ -134,8 +139,10 @@ def handle_expand(
         try:
             contents = os.listdir(real_path)
         except Exception as exc:
-            output_objects.append({'object_type': 'error_text', 'text': 'Failed to list contents of %s: %s'
-                                   % (base_name, exc)})
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Failed to list contents of %r' % base_name
+                                   })
+            _logger.error('%s failed on %r: %s' % (op_name, real_path, exc))
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         # Filter out dot files unless '-a' is used
@@ -240,7 +247,8 @@ def main(client_id, user_arguments_dict):
             logger.error('%s called with invalid share_id %s: %s' %
                          (op_name, share_id, err))
             output_objects.append(
-                {'object_type': 'error_text', 'text': 'Invalid sharelink ID: %s' % share_id})
+                {'object_type': 'error_text', 'text':
+                 'Invalid sharelink ID: %s' % share_id})
             return (output_objects, returnvalues.CLIENT_ERROR)
         # TODO: load and check sharelink pickle (currently requires client_id)
         # then include shared by %(owner)s on page header
@@ -257,7 +265,8 @@ def main(client_id, user_arguments_dict):
         widgets = False
     else:
         logger.error('%s called without proper auth: %s' % (op_name, accepted))
-        output_objects.append({'object_type': 'error_text', 'text': 'Authentication is missing!'
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Authentication is missing!'
                                })
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
@@ -274,7 +283,8 @@ def main(client_id, user_arguments_dict):
 
     if not os.path.isdir(base_dir):
         logger.error('%s called on missing base_dir: %s' % (op_name, base_dir))
-        output_objects.append({'object_type': 'error_text', 'text': 'No such %s!' % page_title.lower()
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'No such %s!' % page_title.lower()
                                })
         return (output_objects, returnvalues.CLIENT_ERROR)
 

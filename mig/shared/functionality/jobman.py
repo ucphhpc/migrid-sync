@@ -5,7 +5,7 @@
 #
 # jobman - Job manager UI for browsing and manipulating jobs
 #
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,6 +27,7 @@
 #
 
 """Script to provide users with a means of listing and managing jobs"""
+
 from __future__ import absolute_import
 
 import datetime
@@ -184,7 +185,7 @@ def main(client_id, user_arguments_dict):
 
     if not configuration.site_enable_jobs:
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''Job execution is not enabled on this system'''})
+                               'Job execution is not enabled on this system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     status = returnvalues.OK

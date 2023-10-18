@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grep - text search
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -150,11 +150,11 @@ def main(client_id, user_arguments_dict):
                 for line in matching:
                     output_lines.append(line)
             except Exception as exc:
+                logger.error("%s: failed on %r: %s" % (op_name, relative_path,
+                                                       exc))
                 output_objects.append({'object_type': 'error_text',
-                                       'text': "%s: '%s': %s" % (op_name,
-                                                                 relative_path, exc)})
-                logger.error("%s: failed on '%s': %s" % (op_name,
-                                                         relative_path, exc))
+                                       'text': "%s: %r" % (op_name,
+                                                           relative_path)})
                 status = returnvalues.SYSTEM_ERROR
                 continue
             entry = {'object_type': 'file_output',

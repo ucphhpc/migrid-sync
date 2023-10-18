@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migadmin - admin control panel with daemon status monitor
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -452,7 +452,8 @@ provide access to e.g. managing the grid job queues.
         if not load_status:
             logger.error("%s: load failed for '%s': %s" %
                          (op_name, req_id, req_dict))
-            output_objects.append({'object_type': 'error_text', 'text': 'Could not read details for "%s"' %
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Could not read details for "%s"' %
                                    req_id})
             return (output_objects, returnvalues.SYSTEM_ERROR)
         req_item = build_accountreqitem_object(configuration, req_dict)

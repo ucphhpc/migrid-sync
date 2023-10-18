@@ -37,7 +37,7 @@ import os
 import sys
 
 from mig.shared.conf import get_configuration_object
-from mig.shared.pwhash import decrypt_password
+from mig.shared.pwcrypto import make_decrypt
 
 
 def usage(name='gdpdecpath.py'):
@@ -45,7 +45,7 @@ def usage(name='gdpdecpath.py'):
 
     print("""Decode a gdp scrambled path to an actual path using salt in MiGserver.conf.
 Usage:
-%(name)s [OPTIONS] FEATURE
+%(name)s [OPTIONS] ENCPATH
 Where OPTIONS may be one or more of:
    -c CONF_FILE        Use CONF_FILE as server configuration
    -f                  Force operations to continue past errors
@@ -59,8 +59,9 @@ if '__main__' == __name__:
     conf_path = None
     force = False
     verbose = False
+    algo = None
     scrambled_list = []
-    opt_args = 'c:fhv'
+    opt_args = 'a:c:fhv'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
@@ -69,7 +70,9 @@ if '__main__' == __name__:
         sys.exit(1)
 
     for (opt, val) in opts:
-        if opt == '-c':
+        if opt == '-a':
+            algo = val
+        elif opt == '-c':
             conf_path = val
         elif opt == '-f':
             force = True
@@ -98,11 +101,14 @@ if '__main__' == __name__:
         sys.exit(1)
 
     configuration = get_configuration_object(skip_log=True)
+    if not algo:
+        algo = configuration.gdp_path_scramble
     for scrambled in scrambled_list:
         if verbose:
             print('scrambled path %s' % scrambled)
         try:
-            plain = decrypt_password(configuration, scrambled)
+            plain = make_decrypt(configuration, scrambled,
+                                 algo=algo)
             if verbose:
                 print('unscrambled path:')
             print(plain)

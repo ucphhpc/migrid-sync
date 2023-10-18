@@ -45,7 +45,7 @@ from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.notification import send_email
-from mig.shared.pwhash import scramble_password, assure_password_strength, \
+from mig.shared.pwcrypto import scramble_password, assure_password_strength, \
     make_hash
 from mig.shared.serial import dumps
 
@@ -177,7 +177,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             "%s invalid password for %r (policy %s): %s" %
             (op_name, cert_name, configuration.site_password_policy, exc))
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Invalid password requested: %s.' % exc})
+                               'Invalid password requested', 'exc': exc})
         output_objects.append(
             {'object_type': 'link', 'destination': 'javascript:history.back();',
              'class': 'genericbutton', 'text': "Try again"})

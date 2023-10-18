@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # textarea - combined text/mrsl writer and file upload
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -257,8 +257,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
             if not write_file(content, local_filename, logger):
                 logger.error("%s failed to write plain file %s" %
                              (op_name, local_filename))
-                output_objects.append({'object_type': 'error_text',
-                                       'text': 'Could not write: %s' % local_filename})
+                output_objects.append({'object_type': 'error_text', 'text':
+                                       'Could not write: %s' % filename_val})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
             logger.info("%s wrote plain file %s" % (op_name, local_filename))
             fileuploadobj['saved'] = True
@@ -353,9 +353,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
                     os.makedirs(os.path.dirname(local_filename), 0o775)
                 except Exception:
                     fileuploadobj['message'] = \
-                        {'object_type': 'error_text',
-                         'text': 'Exception creating dirs %s'
-                         % os.path.dirname(local_filename)}
+                        {'object_type': 'error_text', 'text':
+                         'failed to create parent dir for %r' % remote_filename
+                         }
             fileuploadobj['name'] = remote_filename
 
             # reads uploaded file into memory
@@ -435,23 +435,18 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 # output_objects.append({"object_type":"text", "text":msg})
                 # a "normal" (non-package) file was uploaded
 
-                try:
-                    output_objects.append(
-                        {'object_type': 'text', 'text': 'File saved: %s' %
-                         remote_filename})
-                except Exception as err:
-                    output_objects.append({
-                        'object_type': 'error_text', 'text':
-                        'File seems to be saved, but could not get file size %s'
-                        % err})
-                    return (output_objects, returnvalues.SYSTEM_ERROR)
+                output_objects.append(
+                    {'object_type': 'text', 'text': 'File saved: %s' %
+                     remote_filename})
 
             try:
                 fileuploadobj['size'] = os.path.getsize(local_filename)
             except Exception as err:
+                logger.error("%s failed to stat uploaded file %r : %s" %
+                             (op_name, local_filename, err))
                 output_objects.append({
                     'object_type': 'error_text', 'text':
-                    'File seems to be saved, but could not get file size %s' % err
+                    'File seems to be saved, but could not get file size'
                 })
                 return (output_objects, returnvalues.SYSTEM_ERROR)
 
@@ -496,21 +491,22 @@ CSRF-filtered POST requests to prevent unintended updates'''
                     time_c[4],
                     time_c[5],
                 )
-                local_filename = html_generated_mrsl_dir\
-                    + '/TextAreaAt_' + timestamp + '.mRSL'
+                rel_local_filename = 'TextAreaAt_' + timestamp + '.mRSL'
+                local_filename = os.path.join(html_generated_mrsl_dir,
+                                              rel_local_filename)
                 if not os.path.isfile(local_filename):
                     break
-
             # A new filename was created, write content to file
 
             if not write_file(content, local_filename, logger):
+                logger.error("%s failed to write job file %r" %
+                             (op_name, local_filename))
                 output_objects.append(
                     {'object_type': 'error_text',
-                     'text': 'Could not write: %s' % local_filename})
+                     'text': 'Could not write: %s' % rel_local_filename})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
-            fileuploadobj['name'] = os.sep\
-                + 'html_generated_mrsl/TextAreaAt_' + timestamp\
-                + '.mRSL'
+            fileuploadobj['name'] = os.path.join('', 'html_generated_mrsl',
+                                                 rel_local_filename)
             fileuploadobj['size'] = os.path.getsize(local_filename)
             mrslfiles_to_parse.append(local_filename)
         fileuploadobjs.append(fileuploadobj)
@@ -566,14 +562,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if save_as_default:
         template_path = os.path.join(base_dir, default_mrsl_filename)
-        try:
-            template_fd = open(template_path, 'wb')
-            template_fd.write(mrsl)
-            template_fd.close()
-        except Exception as err:
+        if not write_file(mrsl, template_path, logger, mode='wb'):
             output_objects.append(
                 {'object_type': 'error_text', 'text':
-                 'Failed to write default job template: %s' % err})
+                 'Failed to write default job template'})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
     return (output_objects, returnvalues.OK)

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # stopfe -  stop resource frontend
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,8 @@
 # -- END_HEADER ---
 #
 
-"""Stop frontend"""
+"""Stop resource frontend"""
+
 from __future__ import absolute_import
 
 from mig.shared import returnvalues
@@ -49,9 +50,8 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id)
 
-    output_objects.append({'object_type': 'text', 'text'
-                          : '--------- Trying to STOP frontend ----------'
-                          })
+    output_objects.append({'object_type': 'text', 'text': '--------- Trying to STOP frontend ----------'
+                           })
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -60,7 +60,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -79,22 +79,21 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'You must be an owner of '
-                               + unique_resource_name
-                               + ' to stop the resource frontend!'})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Only owners of %s can stop the resource frontend!' %
+             unique_resource_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     (status, msg) = stop_resource(unique_resource_name,
                                   configuration.resource_home, logger)
     if not status:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s. Error stopping resource' % msg})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             '%s. Error stopping resource' % msg})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # everything ok
 
     output_objects.append({'object_type': 'text', 'text': '%s' % msg})
     return (output_objects, returnvalues.OK)
-
-

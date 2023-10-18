@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # touch - touch backend
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -131,8 +131,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         if not match:
             output_objects.append({'object_type': 'error_text', 'text':
-                                   "%s: '%s': Permission denied" % (op_name,
-                                                                    pattern)})
+                                   "%s: %r: Permission denied" % (op_name,
+                                                                  pattern)})
             status = returnvalues.CLIENT_ERROR
 
         for abs_path in match:
@@ -145,7 +145,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                (op_name, abs_path))
                 output_objects.append(
                     {'object_type': 'error_text', 'text':
-                     'cannot touch "%s": inside a read-only location!' %
+                     'cannot touch %r: inside a read-only location!' %
                      pattern})
                 status = returnvalues.CLIENT_ERROR
                 continue
@@ -157,12 +157,10 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 os.utime(abs_path, None)
                 logger.info('%s %s done' % (op_name, abs_path))
             except Exception as exc:
+                logger.error("%s: failed on %r: %s" % (op_name, relative_path,
+                                                       exc))
                 output_objects.append({'object_type': 'error_text', 'text':
-                                       "%s: '%s': %s" % (op_name,
-                                                         relative_path, exc)})
-                logger.error("%s: failed on '%s': %s" % (op_name,
-                                                         relative_path, exc))
-
+                                       "%s: %r" % (op_name, relative_path)})
                 status = returnvalues.SYSTEM_ERROR
                 continue
 

@@ -47,7 +47,7 @@ from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from mig.shared.html import man_base_js, man_base_html, html_post_helper
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.parseflags import quiet
-from mig.shared.pwhash import make_digest, encrypt_password
+from mig.shared.pwcrypto import make_digest, make_encrypt
 from mig.shared.transferfunctions import build_transferitem_object, \
     build_keyitem_object, load_data_transfers, create_data_transfer, \
     update_data_transfer, delete_data_transfer, load_user_keys, \
@@ -316,7 +316,8 @@ Please contact the site admins %s if you think they should be enabled.
     logger.info('datatransfer %s from %s' % (action, client_id))
 
     if not action in valid_actions:
-        output_objects.append({'object_type': 'error_text', 'text': 'Invalid action "%s" (supported: %s)' %
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Invalid action "%s" (supported: %s)' %
                                (action, ', '.join(valid_actions))})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -783,7 +784,8 @@ Key name:<br/>
                 return (output_objects, returnvalues.CLIENT_ERROR)
             if protocol == "rsyncssh" and not key_id:
                 output_objects.append(
-                    {'object_type': 'error_text', 'text': 'RSYNC over SSH is only supported with key!'})
+                    {'object_type': 'error_text', 'text':
+                     'RSYNC over SSH is only supported with key!'})
                 return (output_objects, returnvalues.CLIENT_ERROR)
             if not password and not key_id and protocol in warn_anon:
                 output_objects.append(
@@ -810,8 +812,7 @@ fail if it really requires login.''' % valid_proto_map[protocol]})
                 # We don't want to store password in plain text on disk
                 # Use proper encryption if available with fall-back to digest
                 try:
-                    password_encrypted = encrypt_password(configuration,
-                                                          password)
+                    password_encrypted = make_encrypt(configuration, password)
                     password_digest = ''
                 except:
                     password_encrypted = ''
@@ -835,12 +836,14 @@ fail if it really requires login.''' % valid_proto_map[protocol]})
                                                     transfer_map)
         if not save_status:
             output_objects.append(
-                {'object_type': 'error_text', 'text': 'Error in %s data transfer %s: ' % (desc, transfer_id) +
+                {'object_type': 'error_text', 'text':
+                 'Error in %s data transfer %s: ' % (desc, transfer_id) +
                  'save updated transfers failed!'})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
-        output_objects.append({'object_type': 'text', 'text': '%sd transfer request %s.' % (desc.title(),
-                                                                                            transfer_id)
+        output_objects.append({'object_type': 'text', 'text':
+                               '%sd transfer request %s.' % (desc.title(),
+                                                             transfer_id)
                                })
         if action != 'deltransfer':
             output_objects.append({
@@ -900,7 +903,8 @@ Key removal for name %s failed with error: %s''' % (key_id, msg)})
                 return (output_objects, returnvalues.CLIENT_ERROR)
     else:
         output_objects.append(
-            {'object_type': 'error_text', 'text': 'Invalid data transfer action: %s' % action})
+            {'object_type': 'error_text', 'text':
+             'Invalid data transfer action: %s' % action})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     output_objects.append({'object_type': 'link',

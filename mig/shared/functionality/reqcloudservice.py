@@ -47,7 +47,7 @@ from mig.shared.defaults import session_id_bytes, keyword_all
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import find_entry, initialize_main_variables
-from mig.shared.pwhash import generate_random_ascii
+from mig.shared.pwcrypto import generate_random_ascii
 from mig.shared.settings import load_cloud
 from mig.shared.ssh import generate_ssh_rsa_key_pair
 from mig.shared.useradm import get_full_user_map
@@ -207,8 +207,7 @@ def main(client_id, user_arguments_dict):
                             get_csrf_limit(configuration), accepted):
             output_objects.append(
                 {'object_type': 'error_text', 'text': '''Only accepting
-                CSRF-filtered POST requests to prevent unintended updates'''
-                 })
+CSRF-filtered POST requests to prevent unintended updates'''})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
     cloud_flavor = service.get("service_flavor", "openstack")
@@ -249,7 +248,7 @@ def main(client_id, user_arguments_dict):
                              (client_id, cloud_id, instance_label))
                 output_objects.append({
                     'object_type': 'error_text', 'text':
-                    "You already have an instance with the label '%s'!" %
+                    "You already have an instance with the label %r!" %
                     instance_label})
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -459,7 +458,7 @@ is stricly required for all use. Please do so before you try again.
                     instance_id)
                 if not console_status:
                     logger.error(
-                        "%s cloud instance %s console for %s failed: %s" % \
+                        "%s cloud instance %s console for %s failed: %s" %
                         (cloud_id, instance_id, client_id, console_msg))
                     output_objects.append({
                         'object_type': 'error_text',

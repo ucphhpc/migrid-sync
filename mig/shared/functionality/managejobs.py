@@ -26,6 +26,7 @@
 #
 
 """Simple front end to job management"""
+
 from __future__ import absolute_import
 
 from mig.shared import returnvalues
@@ -57,21 +58,20 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
     if not configuration.site_enable_jobs:
         output_objects.append({'object_type': 'error_text', 'text':
-            '''Job execution is not enabled on this system'''})
+                               'Job execution is not enabled on this system'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     title_entry = find_entry(output_objects, 'title')
     title_entry['text'] = 'Manage jobs'
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Manage Jobs'})
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'View status of all submitted jobs'})
+    output_objects.append({'object_type': 'header', 'text': 'Manage Jobs'})
+    output_objects.append(
+        {'object_type': 'sectionheader', 'text': 'View status of all submitted jobs'})
     output_objects.append({'object_type': 'html_form', 'text': '''
 <form method="get" action="jobstatus.py">
 Sort by modification time: <input type="radio" name="flags" value="sv" />yes
@@ -81,8 +81,8 @@ Sort by modification time: <input type="radio" name="flags" value="sv" />yes
 <input type="submit" value="Show All" />
 </form>
     '''})
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'View status of individual jobs'})
+    output_objects.append(
+        {'object_type': 'sectionheader', 'text': 'View status of individual jobs'})
     output_objects.append({'object_type': 'html_form', 'text': '''
 Filter job IDs (* and ? wildcards are supported)<br />
 <form method="get" action="jobstatus.py">
@@ -98,10 +98,10 @@ Sort by modification time: <input type="radio" name="flags" checked="checked" va
                            'Resubmit job'})
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
-    fill_helpers =  {'short_title': configuration.short_title,
-                     'form_method': form_method,
-                     'csrf_field': csrf_field,
-                     'csrf_limit': csrf_limit}
+    fill_helpers = {'short_title': configuration.short_title,
+                    'form_method': form_method,
+                    'csrf_field': csrf_field,
+                    'csrf_limit': csrf_limit}
     target_op = 'resubmit'
     csrf_token = make_csrf_token(configuration, form_method, target_op,
                                  client_id, csrf_limit)
@@ -114,8 +114,8 @@ Job ID: <input type="text" name="job_id" size="30" /><br />
 <input type="submit" value="Submit" />
 </form>
     ''' % fill_helpers})
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Freeze pending job'})
+    output_objects.append(
+        {'object_type': 'sectionheader', 'text': 'Freeze pending job'})
     target_op = 'jobaction'
     csrf_token = make_csrf_token(configuration, form_method, target_op,
                                  client_id, csrf_limit)
@@ -129,8 +129,8 @@ Job ID: <input type="text" name="job_id" size="30" /><br />
 <input type="submit" value="Freeze job" />
 </form>
     ''' % fill_helpers})
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Thaw frozen job'})
+    output_objects.append(
+        {'object_type': 'sectionheader', 'text': 'Thaw frozen job'})
     output_objects.append({'object_type': 'html_form', 'text': '''
 <form method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
@@ -140,8 +140,8 @@ Job ID: <input type="text" name="job_id" size="30" /><br />
 <input type="submit" value="Thaw job" />
 </form>
     ''' % fill_helpers})
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Cancel pending or executing job'})
+    output_objects.append(
+        {'object_type': 'sectionheader', 'text': 'Cancel pending or executing job'})
     output_objects.append({'object_type': 'html_form', 'text': '''
 <form method="%(form_method)s" action="%(target_op)s.py">
 <input type="hidden" name="%(csrf_field)s" value="%(csrf_token)s" />
@@ -151,8 +151,8 @@ Job ID: <input type="text" name="job_id" size="30" /><br />
 <input type="submit" value="Cancel job" />
 </form>
     ''' % fill_helpers})
-    output_objects.append({'object_type': 'sectionheader', 'text'
-                          : 'Request live I/O'})
+    output_objects.append(
+        {'object_type': 'sectionheader', 'text': 'Request live I/O'})
     output_objects.append({'object_type': 'html_form', 'text': '''
 <form method="get" action="liveio.py">
 Job ID: <input type="text" name="job_id" size="30" /><br />
@@ -162,5 +162,3 @@ Job ID: <input type="text" name="job_id" size="30" /><br />
 <br />
     '''})
     return (output_objects, status)
-
-

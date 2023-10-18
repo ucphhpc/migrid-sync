@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addvgridres - add one or more vgrid resources
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """Add one or more resources to a given vgrid"""
+
 from __future__ import absolute_import
 
 from binascii import unhexlify

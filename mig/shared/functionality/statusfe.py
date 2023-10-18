@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# statusfe - [insert a few words of module description on this line]
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# statusfe - Back end to get status for resource frontends
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,8 @@
 # -- END_HEADER ---
 #
 
-""" Get frontend status """
+"""Get frontend status"""
+
 from __future__ import absolute_import
 
 from mig.shared import returnvalues
@@ -48,9 +49,9 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id)
 
-    output_objects.append({'object_type': 'text', 'text'
-                          : '--------- Trying to get STATUS for frontend ----------'
-                          })
+    output_objects.append(
+        {'object_type': 'text', 'text':
+         '--------- Trying to get STATUS for frontend ----------'})
 
     defaults = signature()[1]
     (validate_status, accepted) = validate_input_and_cert(
@@ -60,7 +61,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
     unique_resource_name = accepted['unique_resource_name'][-1]
@@ -70,24 +71,21 @@ def main(client_id, user_arguments_dict):
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'You must be an owner of '
-                               + unique_resource_name
-                               + ' to get status for the resource frontend!'
-                              })
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Only owners of %s can get status for the resource frontend!' %
+             unique_resource_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     (status, msg) = status_resource(unique_resource_name,
                                     configuration.resource_home, logger)
     if not status:
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : '%s. Error getting resource status.'
-                               % msg})
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             '%s. Error getting resource status.' % msg})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # everything ok
 
     output_objects.append({'object_type': 'text', 'text': '%s' % msg})
     return (output_objects, returnvalues.OK)
-
-

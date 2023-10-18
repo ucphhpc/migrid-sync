@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # chksum - Calculate a checksum for one or more files
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -197,8 +197,8 @@ def main(client_id, user_arguments_dict):
                     output_lines.append(line)
                 except Exception as exc:
                     output_objects.append(
-                        {'object_type': 'error_text', 'text': "%s: '%s': %s" %
-                         (op_name, relative_path, exc)})
+                        {'object_type': 'error_text', 'text':
+                         "%s failed on %r" % (op_name, relative_path)})
                     logger.error("%s: failed on '%s': %s" % (op_name,
                                                              relative_path, exc))
                     status = returnvalues.SYSTEM_ERROR

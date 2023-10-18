@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # viewres - Display public details about a resource
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -54,9 +54,9 @@ def build_resitem_object_from_res_dict(configuration, unique_resource_name,
     res_keywords = get_resource_keywords(configuration)
     exe_keywords = get_exenode_keywords(configuration)
     store_keywords = get_storenode_keywords(configuration)
-    res_fields = ['PUBLICNAME', 'PUBLICINFO', 'CPUCOUNT', 'NODECOUNT', 'MEMORY', 'DISK',
-                  'ARCHITECTURE', 'JOBTYPE', 'MAXUPLOADBANDWIDTH',
-                  'MAXDOWNLOADBANDWIDTH', 'SANDBOX']
+    res_fields = ['PUBLICNAME', 'PUBLICINFO', 'CPUCOUNT', 'NODECOUNT',
+                  'MEMORY', 'DISK', 'ARCHITECTURE', 'JOBTYPE',
+                  'MAXUPLOADBANDWIDTH', 'MAXDOWNLOADBANDWIDTH', 'SANDBOX']
     exe_fields = ['cputime', 'nodecount']
     store_fields = ['storage_disk', 'storage_protocol']
     res_item = {
@@ -157,13 +157,14 @@ def main(client_id, user_arguments_dict):
         if client_id in res_map[unique_resource_name][OWNERS]:
             output_objects.append({'object_type': 'sectionheader',
                                    'text': 'Administrate'})
-            output_objects.append({'object_type': 'link',
-                                   'destination':
-                                   'resadmin.py?unique_resource_name=%s'
-                                   % unique_resource_name,
-                                   'class': 'adminlink iconspace',
-                                   'title': 'Administrate %s' % unique_resource_name,
-                                   'text': 'Administrate %s' % unique_resource_name,
-                                   })
+            output_objects.append(
+                {'object_type': 'link',
+                 'destination':
+                 'resadmin.py?unique_resource_name=%s'
+                 % unique_resource_name,
+                 'class': 'adminlink iconspace',
+                 'title': 'Administrate %s' % unique_resource_name,
+                 'text': 'Administrate %s' % unique_resource_name,
+                 })
 
     return (output_objects, status)

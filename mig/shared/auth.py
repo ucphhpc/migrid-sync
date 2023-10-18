@@ -49,7 +49,7 @@ from mig.shared.defaults import twofactor_key_name, twofactor_interval_name, \
 from mig.shared.fileio import read_file, delete_file, delete_symlink, \
     write_file, pickle, unpickle, make_symlink
 from mig.shared.gdp.all import get_base_client_id
-from mig.shared.pwhash import scramble_password, unscramble_password
+from mig.shared.pwcrypto import scramble_password, unscramble_password
 from mig.shared.url import quote
 
 # Set OTP windows range (+/-) to compensate for offset

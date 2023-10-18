@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # updateresconfig - save updated resource configuration
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,10 @@
 # -- END_HEADER ---
 #
 
+"""Update resource configuration"""
+
 from __future__ import absolute_import
+
 import os
 
 from mig.shared import confparser
@@ -61,7 +64,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -72,41 +75,33 @@ def main(client_id, user_arguments_dict):
                         get_csrf_limit(configuration), accepted):
         output_objects.append(
             {'object_type': 'error_text', 'text': '''Only accepting
-CSRF-filtered POST requests to prevent unintended updates'''
-             })
+CSRF-filtered POST requests to prevent unintended updates'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
-    output_objects.append({'object_type': 'header', 'text'
-                          : 'Trying to Update resource configuration'})
+    output_objects.append({'object_type': 'header', 'text':
+                           'Trying to Update resource configuration'})
 
     if not is_owner(client_id, unique_resource_name,
                     configuration.resource_home, logger):
-        logger.error(client_id + ' is not an owner of '
-                      + unique_resource_name + ': update rejected!')
-        output_objects.append({'object_type': 'error_text', 'text'
-                              : 'You must be an owner of '
-                               + unique_resource_name
-                               + ' to update the configuration!'})
+        logger.error('%s is not an owner of %s: update rejected!' %
+                     (client_id, unique_resource_name))
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'Only owners of %s can update the configuration!' %
+             unique_resource_name})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     # TODO: race if two confs are uploaded concurrently!
 
     host_url, host_identifier = unique_resource_name.rsplit('.', 1)
     pending_file = os.path.join(configuration.resource_home,
-                            unique_resource_name, 'config.tmp')
+                                unique_resource_name, 'config.tmp')
 
     # write new proposed config file to disk
-    try:
-        logger.info('write to file: %s' % pending_file)
-        if not write_file(resconfig, pending_file, logger):
-                output_objects.append({'object_type': 'error_text',
-                        'text': 'Could not write: %s' % pending_file})
-                return (output_objects, returnvalues.SYSTEM_ERROR)
-    except Exception as err:
-        logger.error('Resource conf %s could not be written: %s' % \
-                     (pending_file, err))
+    logger.info('write res conf to file: %s' % pending_file)
+    if not write_file(resconfig, pending_file, logger):
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Could not write configuration!'})
+                               'Could not write resource configuration!'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     (update_status, msg) = update_resource(configuration, client_id,
@@ -119,11 +114,11 @@ CSRF-filtered POST requests to prevent unintended updates'''
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     output_objects.append({'object_type': 'text', 'text':
-                           'Updated %s resource configuration!' % \
+                           'Updated %s resource configuration!' %
                            unique_resource_name})
     output_objects.append({'object_type': 'link', 'text':
                            'Manage resource', 'destination':
-                           'resadmin.py?unique_resource_name=%s' % \
+                           'resadmin.py?unique_resource_name=%s' %
                            unique_resource_name
                            })
     return (output_objects, returnvalues.OK)

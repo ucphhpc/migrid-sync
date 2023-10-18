@@ -304,9 +304,13 @@ def handle_ls(
 ):
     """Recursive function to emulate GNU ls (-R)"""
 
+    _logger = configuration.logger
+    op_name = 'ls'
+
     # Sanity check
 
     if depth > 255:
+        _logger.error('%s hit max recursion on %r' % (op_name, real_path))
         output_objects.append({'object_type': 'error_text', 'text':
                                'Error: file recursion maximum exceeded!'
                                })
@@ -332,9 +336,10 @@ def handle_ls(
         try:
             contents = os.listdir(real_path)
         except Exception as exc:
+            _logger.error('%s failed on %r: %s' % (op_name, real_path, exc))
             output_objects.append({'object_type': 'error_text', 'text':
-                                   'Failed to list contents of %s: %s'
-                                   % (base_name, exc)})
+                                   'Failed to list contents of %r' % base_name
+                                   })
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         # Filter out dot files unless '-a' is used
@@ -714,11 +719,11 @@ Action on paths selected below
                           'accessed',
                           [relative_path])
             except GDPIOLogError as exc:
-                output_objects.append({'object_type': 'error_text',
-                                       'text': "%s: '%s': %s"
-                                       % (op_name, relative_path, exc)})
-                logger.error("%s: failed on '%s': %s"
-                             % (op_name, relative_path, exc))
+                logger.error("%s: failed on %r: %s" % (op_name, relative_path,
+                                                       exc))
+                output_objects.append({'object_type': 'error_text', 'text':
+                                       "%s failed on %r" % (op_name,
+                                                            relative_path)})
                 continue
             handle_ls(configuration, output_objects, entries, base_dir,
                       abs_path, flags, 0)

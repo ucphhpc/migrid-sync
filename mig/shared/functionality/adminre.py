@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # adminre - set up a runtime environment
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -82,15 +82,15 @@ def main(client_id, user_arguments_dict):
         if not is_runtime_environment(re_template, configuration):
             output_objects.append(
                 {'object_type': 'error_text', 'text':
-                 "re_template ('%s') is not a valid existing runtime env!"
-                 % re_template})
+                 "re_template ('%s') is not a valid existing runtime env!" %
+                 re_template})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         (template, msg) = get_re_dict(re_template, configuration)
         if not template:
             output_objects.append({'object_type': 'error_text', 'text':
-                                   'Could not read re_template %s. %s'
-                                   % (re_template, msg)})
+                                   'Could not read re_template %s. %s' %
+                                   (re_template, msg)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # Override template fields if user loaded a template and modified the
@@ -197,8 +197,8 @@ information.'''
     else:
         output_objects.append(
             {'object_type': 'error_text', 'text':
-             'testprocedure_entry should be 0 or 1, you specified %s'
-             % testprocedure_entry})
+             'testprocedure_entry should be 0 or 1, you specified %s' %
+             testprocedure_entry})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     html_form = """

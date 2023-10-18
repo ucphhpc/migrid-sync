@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rmdir - remove directory in user home
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -100,7 +100,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
             logger.error('%s called with invalid share_id %s: %s' %
                          (op_name, share_id, err))
             output_objects.append(
-                {'object_type': 'error_text', 'text': 'Invalid sharelink ID: %s' % share_id})
+                {'object_type': 'error_text', 'text':
+                 'Invalid sharelink ID: %s' % share_id})
             return (output_objects, returnvalues.CLIENT_ERROR)
         # TODO: load and check sharelink pickle (currently requires client_id)
         user_id = 'anonymous user through share ID %s' % share_id
@@ -118,7 +119,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
         widgets = False
     else:
         logger.error('%s called without proper auth: %s' % (op_name, accepted))
-        output_objects.append({'object_type': 'error_text', 'text': 'Authentication is missing!'
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Authentication is missing!'
                                })
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
@@ -136,13 +138,14 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # Input validation assures target_dir can't escape base_dir
     if not os.path.isdir(base_dir):
         output_objects.append(
-            {'object_type': 'error_text', 'text': 'Invalid client/sharelink id!'})
+            {'object_type': 'error_text', 'text':
+             'Invalid client/sharelink id!'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if verbose(flags):
         for flag in flags:
-            output_objects.append({'object_type': 'text', 'text': '%s using flag: %s' % (op_name,
-                                                                                         flag)})
+            output_objects.append({'object_type': 'text', 'text':
+                                   '%s using flag: %s' % (op_name, flag)})
 
     for pattern in patterns:
 
@@ -172,7 +175,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
         if not match:
             output_objects.append(
-                {'object_type': 'error_text', 'text': "%s: cannot remove directory '%s': Permission denied"
+                {'object_type': 'error_text', 'text':
+                 "%s: cannot remove directory %r: Permission denied"
                  % (op_name, pattern)})
             status = returnvalues.CLIENT_ERROR
 
@@ -190,7 +194,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
                                (op_name, abs_path))
                 output_objects.append(
                     {'object_type': 'error_text', 'text':
-                     'cannot remove "%s": inside a read-only location!' %
+                     'cannot remove %r: inside a read-only location!' %
                      pattern})
                 status = returnvalues.CLIENT_ERROR
                 continue
@@ -206,11 +210,11 @@ CSRF-filtered POST requests to prevent unintended updates'''
                     os.rmdir(abs_path)
                 logger.info('%s %s done' % (op_name, abs_path))
             except Exception as exc:
-                output_objects.append({'object_type': 'error_text',
-                                       'text': "%s '%s' failed!" % (op_name,
-                                                                    relative_path)})
-                logger.error("%s: failed on '%s': %s" % (op_name,
-                                                         relative_path, exc))
+                output_objects.append({'object_type': 'error_text', 'text':
+                                       "%s %r failed!" % (op_name,
+                                                          relative_path)})
+                logger.error("%s: failed on %r: %s" % (op_name, relative_path,
+                                                       exc))
                 status = returnvalues.SYSTEM_ERROR
                 continue
             output_objects.append({'object_type': 'text',

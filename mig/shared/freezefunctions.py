@@ -54,7 +54,7 @@ from mig.shared.filemarks import get_filemark, update_filemark
 from mig.shared.html import get_xgi_html_header, get_xgi_html_footer, \
     man_base_js, themed_styles, themed_scripts, \
     tablesorter_pager
-from mig.shared.pwhash import make_path_hash
+from mig.shared.pwcrypto import make_path_hash
 from mig.shared.serial import load, dump
 from mig.shared.url import quote
 

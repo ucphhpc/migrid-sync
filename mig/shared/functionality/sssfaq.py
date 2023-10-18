@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sssfaq - SSS frequently asked questions
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -172,7 +172,8 @@ Please contact the site admins %s if you think they should be enabled.
         return (output_objects, returnvalues.OK)
 
     if not language in html:
-        output_objects.append({'object_type': 'error_text', 'text': 'Unsupported language: %s, defaulting to %s'
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Unsupported language: %s, defaulting to %s'
                                % (language, default_language)})
         language = default_language
 

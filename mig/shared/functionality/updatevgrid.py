@@ -223,8 +223,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         if not make_symlink(src, vgrid_files_link, logger):
             output_objects.append({'object_type': 'error_text', 'text':
                                    'Could not create link to %s files!' %
-                                   label
-                                   })
+                                   label})
 
     user_public_base = os.path.join(configuration.user_home,
                                     client_dir, 'public_base')

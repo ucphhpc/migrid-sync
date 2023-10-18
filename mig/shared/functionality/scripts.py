@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # scripts - backend to generate user and resource scripts
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -153,8 +153,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not flavors:
         if flavor_list:
-            output_objects.append({'object_type': 'text', 'text': 'No valid flavors specified - falling back to user scripts'
-                                   })
+            output_objects.append(
+                {'object_type': 'text', 'text':
+                 'No valid flavors specified - falling back to user scripts'})
         flavors = ['user']
 
     if not langs or keyword_all in langs:
@@ -177,15 +178,17 @@ CSRF-filtered POST requests to prevent unintended updates'''
                 interpreter = python_cmd
                 extension = userscriptgen.python_ext
             else:
-                output_objects.append({'object_type': 'warning', 'text': 'Unknown script language: %s - ignoring!'
+                output_objects.append({'object_type': 'warning', 'text':
+                                       'Unknown script language: %s - ignoring!'
                                        % lang})
                 continue
 
             languages.append((lang, interpreter, extension))
 
     if not languages:
-        output_objects.append({'object_type': 'error_text', 'text': 'No valid languages specified - aborting script generation'
-                               })
+        output_objects.append(
+            {'object_type': 'error_text', 'text':
+             'No valid languages specified - aborting script generation'})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     for flavor in flavors:
@@ -214,25 +217,30 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
             # out of bounds
 
-            output_objects.append({'object_type': 'error_text', 'text': "You're not allowed to work in %s!"
-                                   % script_dir})
             logger.warning('%s tried to %s restricted path %s ! (%s)'
                            % (client_id, op_name, abs_dir, script_dir))
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   "You're not allowed to work in %s!"
+                                   % script_dir})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         if not os.path.isdir(abs_dir):
             try:
                 os.mkdir(abs_dir)
             except Exception as exc:
-                output_objects.append({'object_type': 'error_text',
-                                       'text': 'Failed to create destination directory (%s) - aborting script generation'
-                                       % exc})
+                logger.error("create script dest %s failed: %s" % (abs_dir,
+                                                                   exc))
+                output_objects.append(
+                    {'object_type': 'error_text', 'text':
+                     '''Failed to create destination dir (%s) - aborting script
+generation''' % script_dir})
                 return (output_objects, returnvalues.SYSTEM_ERROR)
 
         for (lang, _, _) in languages:
-            output_objects.append({'object_type': 'text', 'text': 'Generating %s %s scripts in the %s subdirectory of your %s home directory'
-                                   % (lang, flavor, script_dir, configuration.short_title)})
-
+            output_objects.append({'object_type': 'text', 'text':
+                                   '''Generating %s %s scripts in the %s
+subdirectory of your %s home directory''' % (lang, flavor, script_dir,
+                                             configuration.short_title)})
         logger.debug('generate %s scripts in %s' % (flavor, abs_dir))
 
         # Generate all scripts
@@ -328,22 +336,29 @@ CSRF-filtered POST requests to prevent unintended updates'''
         err = zip_file.testzip()
         zip_file.close()
         if err:
-            output_objects.append({'object_type': 'error_text', 'text': 'Zip file integrity check failed! (%s)'
-                                   % err})
+            logger.error("zip file integrity check on %s failed: %s" %
+                         (dest_zip, err))
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   'Zip file integrity check failed!'})
             status = returnvalues.SYSTEM_ERROR
             continue
 
         output_objects.append({'object_type': 'text', 'text': '... Done'
                                })
-        output_objects.append({'object_type': 'text', 'text': 'Zip archive of the %s %s scripts are now available in your %s home directory'
-                               % (configuration.short_title, flavor, configuration.short_title)})
-        output_objects.append({'object_type': 'link', 'text': 'Download zip archive %s' % script_zip, 'destination': os.path.join('..', client_dir,
-                                                                                                                                  script_zip)})
-        output_objects.append({'object_type': 'upgrade_info', 'text': '''
+        output_objects.append(
+            {'object_type': 'text', 'text':
+             '''Zip archive of the %s %s scripts are now available in your %s
+home directory''' % (configuration.short_title, flavor,
+                     configuration.short_title)})
+        output_objects.append(
+            {'object_type': 'link', 'text':
+             'Download zip archive %s' % script_zip,
+             'destination': os.path.join('..', client_dir, script_zip)})
+        output_objects.append(
+            {'object_type': 'upgrade_info', 'text': '''
 You can upgrade from an existing user scripts folder with the commands:''',
-                               'commands': ["./migget.sh '%s' ../" % script_zip,
-                                            "cd ..", "unzip '%s'" % script_zip,
-                                            "cd '%s'" % script_dir]
-                               })
+             'commands': ["./migget.sh '%s' ../" % script_zip,
+                          "cd ..", "unzip '%s'" % script_zip,
+                          "cd '%s'" % script_dir]})
 
     return (output_objects, status)

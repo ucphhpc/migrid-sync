@@ -403,7 +403,7 @@ def main(client_id, user_arguments_dict, environ=None):
                 output_objects.append(
                     {'object_type': 'error_text',
                      'text': "Invalid destination "
-                     "(%s expands to an illegal path)"
+                     "(%r expands to an illegal path)"
                      % current_dir})
                 moved = False
             elif not check_write_access(dest_path, parent_dir=True):
@@ -411,7 +411,7 @@ def main(client_id, user_arguments_dict, environ=None):
                                % (op_name, dest_path))
                 output_objects.append(
                     {'object_type': 'error_text', 'text':
-                     'cannot move "%s": inside a read-only location!'
+                     'cannot move %r: inside a read-only location!'
                      % rel_dst})
                 moved = False
             else:
