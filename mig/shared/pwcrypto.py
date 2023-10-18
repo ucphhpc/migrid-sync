@@ -100,6 +100,11 @@ COST_FACTOR = 10000
 AAD_PREFIX = 'migrid authenticated'
 AAD_DEFAULT_STAMP = '%Y%m%d'
 
+# NOTE hook up available hashing algorithms once and for all
+valid_hash_algos = {'md5': hashlib.md5}
+for algo in hashlib.algorithms_guaranteed:
+    valid_hash_algos[algo] = getattr(hashlib, algo)
+
 
 def best_crypt_salt(configuration):
     """Look up configured salts in turn and pick first suitable"""
@@ -922,24 +927,32 @@ def valid_login_password(configuration, password):
         return False
 
 
+def make_generic_hash(val, algo, hex_format=True):
+    """Generate a hash for val using requested algo and return the 2*N-char
+    hexdigest if hex_format is set (default) or the corresponding raw N bytes
+    otherwise.
+    """
+    if not algo in valid_hash_algos:
+        algo = 'md5'
+    hash_helper = valid_hash_algos[algo]
+    if hex_format:
+        return hash_helper(val).hexdigest()
+    else:
+        return hash_helper(val).digest()
+
+
 def make_simple_hash(val, hex_format=True):
     """Generate a simple md5 hash for val and return the 32-char hexdigest if
     the default hex_format is set or the corresponding raw 16 bytes otherwise.
     """
-    if hex_format:
-        return hashlib.md5(val).hexdigest()
-    else:
-        return hashlib.md5(val).digest()
+    return make_generic_hash(val, 'md5', hex_format)
 
 
 def make_safe_hash(val, hex_format=True):
     """Generate a safe sha256 hash for val and return the 64-char hexdigest if
     the default hex_format is set or the corresponding raw 32 bytes otherwise.
     """
-    if hex_format:
-        return hashlib.sha256(val).hexdigest()
-    else:
-        return hashlib.sha256(val).digest()
+    return make_generic_hash(val, 'sha256', hex_format)
 
 
 def make_path_hash(configuration, path):
