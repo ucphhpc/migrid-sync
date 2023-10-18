@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # testjsoninterface.py - Set of unittests for jsoninterface.py
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,7 +32,7 @@ from mig.shared.fileio import makedirs_rec, remove_rec
 from mig.shared.functionality.jsoninterface import pattern_create, \
     pattern_read, pattern_update, pattern_delete, recipe_create, recipe_read, \
     recipe_update, recipe_delete, any_read
-from mig.shared.pwhash import generate_random_ascii
+from mig.shared.pwcrypto import generate_random_ascii
 from mig.shared.validstring import possible_workflow_session_id
 from mig.shared.workflows import touch_workflow_sessions_db, \
     load_workflow_sessions_db, create_workflow_session_id, \
@@ -158,7 +158,8 @@ class WorkflowJSONInterfaceAPIFunctionsTest(unittest.TestCase):
         self.assertIsNotNone(self.workflow_session)
 
     def tearDown(self):
-        self.logger.info("========================= TEARING IT ALL DOWN ==========================")
+        self.logger.info(
+            "========================= TEARING IT ALL DOWN ==========================")
         if not os.environ.get('MIG_CONF', False):
             os.environ['MIG_CONF'] = '/home/mig/mig/server/MiGserver.conf'
         configuration = get_configuration_object()
