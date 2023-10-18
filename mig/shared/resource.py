@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resource - resource configuration functions
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -52,7 +52,7 @@ from mig.shared.confparser import get_resource_config_dict, run
 from mig.shared.defaults import exe_leader_name, keyword_auto
 from mig.shared.fileio import pickle, move, walk
 from mig.shared.modified import mark_resource_modified, mark_vgrid_modified
-from mig.shared.pwhash import make_simple_hash
+from mig.shared.pwcrypto import make_simple_hash
 from mig.shared.resconfkeywords import get_resource_specs, get_exenode_specs, \
     get_storenode_specs, get_resource_keywords, get_exenode_keywords, \
     get_storenode_keywords

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # user - helper functions for user related tasks
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -48,7 +48,7 @@ except ImportError:
 
 from mig.shared.base import client_dir_id, client_id_dir, get_site_base_url
 from mig.shared.defaults import litmus_id
-from mig.shared.pwhash import make_simple_hash
+from mig.shared.pwcrypto import make_simple_hash
 from mig.shared.settings import load_settings, load_profile
 from mig.shared.url import urlencode
 
