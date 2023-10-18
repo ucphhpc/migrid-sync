@@ -328,7 +328,8 @@ def _prepare_encryption_key(configuration, secret=keyword_auto,
         if entropy == keyword_auto:
             # Use previously generated 'entropy' each time from a call to
             # Fernet.generate_key() or AESGCM.generate_key()
-            entropy = force_utf8('HyrqUFwxagFNcHANnDzVO-kMoU0ebo03pNaKHXce6xw=')
+            entropy = force_utf8(
+                'HyrqUFwxagFNcHANnDzVO-kMoU0ebo03pNaKHXce6xw=')
         # yet salt it with hash of a site-specific and non-public salt
         # to avoid disclosing salt or final key.
         salt_data = best_crypt_salt(configuration)
@@ -339,9 +340,10 @@ def _prepare_encryption_key(configuration, secret=keyword_auto,
         key_data = secret
     if urlsafe:
         key = urlsafe_b64encode(force_utf8(key_data[:key_bytes]))
+        key = force_native_str(key)
     else:
         key = key_data[:key_bytes]
-    key = force_native_str(key)
+        key = force_utf8(key)
     return key
 
 
@@ -397,10 +399,11 @@ def __aesgcm_pack_tuple(init_vector, encrypted, auth_data, base64_enc=True,
     By default the packed values are urlsafe base64 encoded, however, to avoid
     packing/unpacking interference with said separator.
     """
-    parts = [init_vector, encrypted, auth_data]
+    # NOTE: keep all parts on byte-form here
+    parts = [force_utf8(i) for i in [init_vector, encrypted, auth_data]]
     if base64_enc:
         parts = [urlsafe_b64encode(i) for i in parts]
-    return field_sep.join(parts)
+    return force_utf8(field_sep).join(parts)
 
 
 def __aesgcm_unpack_tuple(packed, base64_enc=True, field_sep='.'):
@@ -411,7 +414,8 @@ def __aesgcm_unpack_tuple(packed, base64_enc=True, field_sep='.'):
     By default the packed values are urlsafe-base64 encoded, however, to avoid
     packing/unpacking interference with said separator.
     """
-    parts = packed.split(field_sep)
+    # NOTE: packed is on byte-form
+    parts = packed.split(force_utf8(field_sep))
     if len(parts) != 3:
         raise ValueError("malformed packed values - expected 3 parts got %d" %
                          len(parts))
@@ -429,8 +433,9 @@ def _aesgcm_aad_helper(prefix, date_format=AAD_DEFAULT_STAMP, size=32):
     using '%Y%m%d%H'.
     """
     crypt_counter = datetime.datetime.now().strftime(date_format)
-    val = b' '*size + b'%s' % prefix
-    val += b'%s' % crypt_counter
+    # NOTE: keep all parts on byte-form here
+    val = b' '*size + b'%s' % force_utf8(prefix)
+    val += b'%s' % force_utf8(crypt_counter)
     return val[-size:]
 
 
@@ -531,7 +536,9 @@ def aesgcm_decrypt_password(configuration, encrypted, secret=keyword_auto,
                                            aad_stamp)
         key = prepare_aesgcm_key(configuration, secret)
         aesgcm_helper = AESGCM(key)
-        password = aesgcm_helper.decrypt(init_vector, crypt, auth_data)
+        # AESGCM takes byte values and returns bytes - force to native string
+        password = force_native_str(aesgcm_helper.decrypt(init_vector, crypt,
+                                                          auth_data))
     else:
         _logger.error('decrypt requested without cryptography installed')
         raise Exception('cryptography requested in conf but not available')
@@ -1049,7 +1056,7 @@ if __name__ == "__main__":
         try:
             # print("Fernet encrypt password %r" % pw)
             encrypted = fernet_encrypt_password(configuration, pw)
-            #print("Decrypt Fernet encrypted password %r" % encrypted)
+            # print("Decrypt Fernet encrypted password %r" % encrypted)
             decrypted = fernet_decrypt_password(configuration, encrypted)
             # print("Password %r encrypted to %s and decrypted to %s ." %
             #      (pw, encrypted, decrypted))
@@ -1065,7 +1072,7 @@ if __name__ == "__main__":
         try:
             # print("AESGCM encrypt password %r" % pw)
             encrypted = aesgcm_encrypt_password(configuration, pw)
-            #print("Decrypt AESGCM encrypted password %r" % encrypted)
+            # print("Decrypt AESGCM encrypted password %r" % encrypted)
             decrypted = aesgcm_decrypt_password(configuration, encrypted)
             # print("Password %r encrypted to %s and decrypted to %r" %
             #      (pw, encrypted, decrypted))
