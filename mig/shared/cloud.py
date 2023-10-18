@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cloud - Helper functions for the cloud service
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -31,7 +31,6 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import base64
-import hashlib
 import json
 import os
 import re
@@ -52,6 +51,7 @@ from mig.shared.base import force_utf8, force_utf8_rec, client_id_dir
 from mig.shared.defaults import keyword_all
 from mig.shared.fileio import pickle, unpickle, acquire_file_lock, \
     release_file_lock
+from mig.shared.pwcrypto import make_safe_hash
 from mig.shared.safeeval import subprocess_call
 
 # Internal helper to map individual operations to flavored cloud functions
@@ -536,7 +536,7 @@ def openstack_register_cloud_keys(configuration, client_id, cloud_id,
                 continue
             # Build a unique ID to identify this key
             user_key = "%s : %s" % (client_id, pub_key)
-            key_id = hashlib.sha256(user_key).hexdigest()
+            key_id = make_safe_hash(user_key)
 
             # TODO: more carefully clean up old keys?
             if not conn.search_keypairs(key_id):
@@ -585,7 +585,7 @@ def openstack_update_cloud_instance_keys(configuration, client_id, cloud_id,
                 continue
             # Build a unique ID to identify this key
             user_key = "%s : %s" % (client_id, pub_key)
-            key_id = hashlib.sha256(user_key).hexdigest()
+            key_id = make_safe_hash(user_key)
             _logger.info("update %s cloud ssh key for %s: %s" %
                          (cloud_id, client_id, key_id))
 
@@ -655,7 +655,7 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
                                       auth_keys)
         # Build a unique ID to identify the first key
         user_key = "%s : %s" % (client_id, auth_keys[0])
-        key_id = hashlib.sha256(user_key).hexdigest()
+        key_id = make_safe_hash(user_key)
         _logger.info("%s registering key %s for %s instance %s" %
                      (client_id, key_id, cloud_id, instance_id))
 

@@ -147,7 +147,7 @@ def check_hash(configuration, service, username, password, hashed,
     """
     _logger = configuration.logger
     password = force_utf8(password)
-    pw_hash = hashlib.md5(password).hexdigest()
+    pw_hash = make_simple_hash(password)
     if isinstance(hash_cache, dict) and \
             hash_cache.get(pw_hash, None) == hashed:
         # print("got cached hash: %s" % hash_cache.get(pw_hash, None))
@@ -225,7 +225,7 @@ def check_digest(configuration, service, realm, username, password, digest,
     username = force_utf8(username)
     password = force_utf8(password)
     merged_creds = ':'.join([realm, username, password])
-    creds_hash = hashlib.md5(merged_creds).hexdigest()
+    creds_hash = make_simple_hash(merged_creds)
     if isinstance(digest_cache, dict) and \
             digest_cache.get(creds_hash, None) == digest:
         # print("got cached digest: %s" % digest_cache.get(creds_hash, None))
@@ -325,7 +325,7 @@ def _prepare_encryption_key(configuration, secret=keyword_auto,
         # yet salt it with hash of a site-specific and non-public salt
         # to avoid disclosing salt or final key.
         salt_data = best_crypt_salt(configuration)
-        salt_hash = hashlib.sha256(salt_data).hexdigest()
+        salt_hash = make_safe_hash(salt_data)
         key_data = scramble_password(salt_hash, entropy)
     else:
         # _logger.debug('making crypto key from provided secret')
@@ -543,7 +543,7 @@ def make_encrypt(configuration, password, secret=keyword_auto, algo="fernet"):
         #       vector for each value. Please beware of the potentially reduced
         #       security of this method.
         scrambled_pw = make_scramble(pw, best_crypt_salt(configuration))
-        pw_iv = hashlib.sha256(scrambled_pw).digest()
+        pw_iv = make_safe_hash(scrambled_pw, False)
         return aesgcm_encrypt_password(configuration, password, secret,
                                        init_vector=pw_iv)
     else:
@@ -736,7 +736,7 @@ def make_csrf_token(configuration, method, operation, client_id, limit=None):
     merged = "%s:%s:%s:%s" % (method, operation, client_id, limit)
     # configuration.logger.debug("CSRF for %s" % merged)
     xor_id = "%s" % (int(salt, 16) ^ int(b16encode(merged), 16))
-    token = hashlib.sha256(xor_id).hexdigest()
+    token = make_safe_hash(xor_id)
     return token
 
 
@@ -922,14 +922,24 @@ def valid_login_password(configuration, password):
         return False
 
 
-def make_simple_hash(val):
-    """Generate a simple md5 hash for val and return the 32-char hexdigest"""
-    return hashlib.md5(val).hexdigest()
+def make_simple_hash(val, hex_format=True):
+    """Generate a simple md5 hash for val and return the 32-char hexdigest if
+    the default hex_format is set or the corresponding raw 16 bytes otherwise.
+    """
+    if hex_format:
+        return hashlib.md5(val).hexdigest()
+    else:
+        return hashlib.md5(val).digest()
 
 
-def make_safe_hash(val):
-    """Generate a safe sha256 hash for val and return the 64-char hexdigest"""
-    return hashlib.sha256(val).hexdigest()
+def make_safe_hash(val, hex_format=True):
+    """Generate a safe sha256 hash for val and return the 64-char hexdigest if
+    the default hex_format is set or the corresponding raw 32 bytes otherwise.
+    """
+    if hex_format:
+        return hashlib.sha256(val).hexdigest()
+    else:
+        return hashlib.sha256(val).digest()
 
 
 def make_path_hash(configuration, path):
@@ -1050,7 +1060,7 @@ if __name__ == "__main__":
 
         try:
             static_iv = prepare_aesgcm_iv(
-                configuration, iv_entropy=hashlib.sha256(pw).digest())
+                configuration, iv_entropy=make_safe_hash(pw, False))
             # print("AESGCM static encrypt password %r with iv %r" %
             #      (pw, pw_iv))
             encrypted = aesgcm_encrypt_password(configuration, pw,

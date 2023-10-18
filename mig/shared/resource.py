@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resource - resource configuration functions
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -32,10 +32,6 @@ from __future__ import absolute_import
 import os
 import re
 import socket
-try:
-    from hashlib import md5 as hash_algo
-except ImportError:
-    from md5 import new as hash_algo
 
 # TODO: move to os.scandir with py3
 # NOTE: Use faster scandir if available
@@ -55,6 +51,7 @@ from mig.shared.confparser import get_resource_config_dict, run
 from mig.shared.defaults import exe_leader_name, keyword_auto
 from mig.shared.fileio import pickle, move, walk
 from mig.shared.modified import mark_resource_modified, mark_vgrid_modified
+from mig.shared.pwcrypto import make_simple_hash
 from mig.shared.resconfkeywords import get_resource_specs, get_exenode_specs, \
     get_storenode_specs, get_resource_keywords, get_exenode_keywords, \
     get_storenode_keywords
@@ -78,7 +75,7 @@ def anon_resource_id(res_id, keep_exe=True):
     if keep_exe:
         parts = res_id.rsplit('_', 1) + ['']
         res_part, exe_part = parts[0], parts[1]
-    anon_id = hash_algo(res_part).hexdigest()
+    anon_id = make_simple_hash(res_part)
     if exe_part:
         anon_id += "_%s" % exe_part
     return anon_id
