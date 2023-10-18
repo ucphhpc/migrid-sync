@@ -103,9 +103,6 @@ def best_crypt_salt(configuration):
     return salt_data
 
 
->>>>>> > 89f0165f(Implement AESGCM encryption support and expose in standard and static version where the encrypted output for a given input remains unchanged for a while if repeatedly encrypted. This may be useful if encrypting file path in logs and wanting to monitor changes to the same file without knowing the actual file name or contents. Expose algo argument in gdpdecpath with configuration lookup as default fallback. Switch old generic encrypt and decrypt calls to use either explicit algo versions or the make_X version.)
-
-
 def make_hash(password):
     """Generate a random salt and return a new hash for the password."""
     # NOTE: urandom already returns bytes as required for base64 encode
@@ -380,7 +377,7 @@ def fernet_decrypt_password(configuration, encrypted, secret=keyword_auto):
     """Decrypt Fernet encrypted password"""
     _logger = configuration.logger
     if cryptography:
-        key = prepare_fernet_key(configuration)
+        key = prepare_fernet_key(configuration, secret)
         encrypted = force_utf8(encrypted)
         fernet_helper = Fernet(key)
         # Fernet takes byte token and returns bytes - force to native string
@@ -863,7 +860,7 @@ def __assure_password_strength_helper(configuration, password, use_legacy=False)
         if i not in base_chars and 'other' not in pw_classes:
             pw_classes.append('other')
             continue
-        for (char_class, values) in char_class_map.items():
+        for (char_class, values) in list(char_class_map.items()):
             if i in "%s" % values and not char_class in pw_classes:
                 pw_classes.append(char_class)
                 break
@@ -939,7 +936,7 @@ def valid_login_password(configuration, password):
 def make_generic_hash(val, algo, hex_format=True):
     """Generate a hash for val using requested algo and return the 2*N-char
     hexdigest if hex_format is set (default) or the corresponding raw N bytes
-    otherwise. 
+    otherwise.
     """
     # NOTE: hashlib functions require bytes and hexdigest returns native string
     if not algo in valid_hash_algos:
