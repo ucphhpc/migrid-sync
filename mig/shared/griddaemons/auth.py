@@ -283,6 +283,7 @@ def validate_auth_attempt(configuration,
     proto_names = {'sftp': 'SFTP', 'sftp-subsys': 'SFTP', 'ftps': 'FTPS',
                    'webdavs': 'WebDAVS', 'davs': 'WebDAVS',
                    'openid': 'OpenID 2.0', 'openidc': 'OpenID Connect'}
+    mountable_protos = ['sftp', 'sftp-subsys', 'ftps', 'webdavs', 'davs']
     proto_alias = proto_names.get(protocol, protocol.upper())
     if exceeded_rate_limit:
         disconnect = True
@@ -378,7 +379,9 @@ want enabled.""" % (authtype, proto_alias, configuration.short_title)
     elif valid_auth and not twofa_passed:
         disconnect = True
         auth_msg = "No valid two factor session"
-        mount_hint = """
+        mount_hint = ''
+        if protocol in mountable_protos:
+            mount_hint = """
 HINT: if you keep receiving these messages it may be because you have %s
 %s configured as a network drive with automatic reconnect somewhere and your
 mandatory two factor session was closed or expired.
@@ -393,7 +396,9 @@ mandatory two factor session was closed or expired.
                 notify=notify, hint=mount_hint)
     elif authtype_enabled and not valid_auth:
         auth_msg = "Failed %s" % authtype
-        mount_hint = """
+        mount_hint = ''
+        if protocol in mountable_protos:
+            mount_hint = """
 HINT: if you keep receiving these messages it may be because you have %s
 %s configured as a network drive with automatic reconnect somewhere and it
 fails to provide the correct credentials.
