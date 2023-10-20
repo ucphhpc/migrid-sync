@@ -1165,7 +1165,7 @@ def vgrid_settings(vgrid_name, configuration, recursive=True, allow_missing=True
         # directly or forced to list of tuples depending on as_dict argument.
         output = merge_vgrid_settings(vgrid_name, configuration, output)
         if not as_dict:
-            output = output.items()
+            output = list(output.items())
     return (status, output)
 
 
@@ -1614,7 +1614,7 @@ def vgrid_remove_entities(configuration, vgrid_name, kind, id_list,
     Use the dict_field if the entries are dictionaries and the id_list should
     be matched against dict_field in each of them.
     """
-
+    _logger = configuration.logger
     if kind == 'owners':
         entity_filename = configuration.vgrid_owners
     elif kind == 'members':
@@ -1734,7 +1734,7 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
     """Set kind list to provided id_list for given vgrid. The allow_empty
     argument cam be used to e.g. prevent empty owners lists.
     """
-
+    _logger = configuration.logger
     if kind == 'owners':
         entity_filename = configuration.vgrid_owners
     elif kind == 'members':
@@ -1769,6 +1769,9 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
     except Exception as exc:
         status = False
         msg = "could not set %s for %s: %s" % (kind, vgrid_name, exc)
+        #import traceback
+        #_logger.error("failed in set %s for %s: %s\n%s" %
+        #              (kind, vgrid_name, exc, traceback.format_exc()))
     finally:
         if lock_handle:
             release_file_lock(lock_handle)
@@ -2456,7 +2459,8 @@ if __name__ == "__main__":
         print("check settings: %(description)s" % check_list)
         try:
             # We save settings as a list of tuples
-            vgrid_validate_entities(conf, vgrid, kind, check_list.items())
+            vgrid_validate_entities(
+                conf, vgrid, kind, list(check_list.items()))
             print("settings check succeeded")
         except Exception as exc:
             print("settings check failed: %s" % exc)

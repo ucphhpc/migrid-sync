@@ -63,10 +63,7 @@ from mig.shared.url import quote
 valid_otp_window = 2
 
 
-def get_totp(client_id,
-             b32_key,
-             configuration,
-             force_default_interval=False):
+def get_totp(client_id, b32_key, configuration, force_default_interval=False):
     """Initialize and return pyotp object"""
     if pyotp is None:
         raise Exception("The pyotp module is missing and required for 2FA")
@@ -195,9 +192,7 @@ def get_twofactor_secrets(configuration, client_id):
     if not b32_key:
         b32_key = reset_twofactor_key(client_id, configuration)
 
-    totp = get_totp(client_id,
-                    b32_key,
-                    configuration)
+    totp = get_totp(client_id, b32_key, configuration)
 
     # URI-format for otp auth is
     # otpauth://<otptype>/(<issuer>:)<accountnospaces>?
@@ -273,9 +268,7 @@ def verify_twofactor_token(configuration, client_id, b32_key, token):
     if configuration.site_enable_gdp:
         client_id = get_base_client_id(
             configuration, client_id, expand_oid_alias=False)
-    totp = get_totp(client_id,
-                    b32_key,
-                    configuration)
+    totp = get_totp(client_id, b32_key, configuration)
     valid_token = totp.verify(token, valid_window=valid_otp_window)
     if not valid_token \
             and hasattr(totp, 'custom_interval') \
@@ -283,9 +276,7 @@ def verify_twofactor_token(configuration, client_id, b32_key, token):
         # Fall back to default interval,
         # some App's like Android Google Authenticator
         # does not support non-default intervals
-        totp = get_totp(client_id,
-                        b32_key,
-                        configuration,
+        totp = get_totp(client_id, b32_key, configuration,
                         force_default_interval=True)
         valid_token = totp.verify(token, valid_window=valid_otp_window)
 
@@ -298,8 +289,8 @@ def client_twofactor_session(configuration,
     """Extract any active twofactor session ID from client cookie"""
     _logger = configuration.logger
     if configuration.site_enable_gdp:
-        client_id = get_base_client_id(
-            configuration, client_id, expand_oid_alias=False)
+        client_id = get_base_client_id(configuration, client_id,
+                                       expand_oid_alias=False)
     session_cookie = Cookie.SimpleCookie()
     session_cookie.load(environ.get('HTTP_COOKIE', ""))
     session_cookie = session_cookie.get('2FA_Auth', None)

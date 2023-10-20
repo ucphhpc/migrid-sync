@@ -199,7 +199,7 @@ def new_job(
     New: function can now be called with returnjobid argument so new output
     model can get job_id seperately (instead of the return message string)
     """
-
+    _logger = configuration.logger
     mig_server_id = configuration.mig_server_id
 
     counter = get_job_id(configuration)
@@ -212,6 +212,7 @@ def new_job(
 
     filename_spaces = filename.replace('\\ ', '\\\\\\ ')
 
+    _logger.debug("parse job in %s" % filename)
     (parseresult, parsemsg) = parse(filename_spaces, job_id, client_id,
                                     forceddestination, workflow_job=workflow_job)
 

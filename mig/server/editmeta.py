@@ -48,6 +48,7 @@ Where OPTIONS may be one or more of:
    -c CONF_FILE        Use CONF_FILE as server configuration
    -d DB_FILE          Use DB_FILE as user data base file
    -f                  Force operations to continue past errors
+   -r                  Remove provided FIELD(S) from USER_ID
    -h                  Show this help
    -v                  Verbose output
 """ % {'name': name})
@@ -59,10 +60,12 @@ if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()
     conf_path = None
     force = False
+    remove = False
+    remove_fields = []
     verbose = False
     user_id = None
     user_dict = {}
-    opt_args = 'c:d:fhv'
+    opt_args = 'c:d:frhv'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
@@ -77,6 +80,8 @@ if '__main__' == __name__:
             db_path = val
         elif opt == '-f':
             force = True
+        elif opt == '-r':
+            remove = True
         elif opt == '-h':
             usage()
             sys.exit(0)
@@ -95,7 +100,10 @@ if '__main__' == __name__:
         else:
             print('using configuration from MIG_CONF (or default)')
 
-    if len(args) == 3:
+    if remove and len(args) > 1:
+        user_id = user_dict['distinguished_name'] = args[0]
+        remove_fields += args[1:]
+    elif len(args) == 3:
         user_id = user_dict['distinguished_name'] = args[0]
         user_dict[args[1]] = args[2]
     else:
@@ -105,8 +113,8 @@ if '__main__' == __name__:
     if verbose:
         print('Update DB entry for %s: %s' % (user_id, user_dict))
     try:
-        user = edit_user(user_id, user_dict, conf_path, db_path, force,
-                         verbose, True)
+        user = edit_user(user_id, user_dict, remove_fields, conf_path, db_path,
+                         force, verbose, True)
     except Exception as err:
         print(err)
         sys.exit(1)

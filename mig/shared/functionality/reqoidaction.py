@@ -37,7 +37,7 @@ import tempfile
 
 from mig.shared import returnvalues
 from mig.shared.accountreq import existing_country_code, forced_org_email_match, \
-    user_manage_commands
+    user_manage_commands, save_account_request
 from mig.shared.accountstate import default_account_expire
 from mig.shared.base import client_id_dir, canonical_user, mask_creds, \
     generate_https_urls, fill_distinguished_name
@@ -47,7 +47,6 @@ from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.notification import send_email
 from mig.shared.pwcrypto import scramble_password, assure_password_strength, \
     make_hash
-from mig.shared.serial import dumps
 
 
 def signature(configuration):
@@ -258,20 +257,16 @@ resources anyway.
             {'object_type': 'text', 'text': "Test request ignored!"})
         return (output_objects, returnvalues.OK)
 
-    req_path = None
-    try:
-        (os_fd, req_path) = tempfile.mkstemp(dir=user_pending)
-        os.write(os_fd, dumps(user_dict))
-        os.close(os_fd)
-    except Exception as err:
-        logger.error('Failed to write OpenID account request to %s: %s'
-                     % (req_path, err))
+    (save_status, save_out) = save_account_request(configuration, user_dict)
+    if not save_status:
+        logger.error('Failed to write OpenID account request: %s' % save_out)
         output_objects.append({'object_type': 'error_text', 'text':
                                '''Request could not be sent to site
 administrators. Please contact them manually on %s if this error persists.'''
                                % admin_email})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    req_path = save_out
     logger.info('Wrote OpenID account request to %s' % req_path)
     tmp_id = os.path.basename(req_path)
     user_dict['tmp_id'] = tmp_id

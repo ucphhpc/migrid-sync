@@ -126,7 +126,7 @@ def finish_cgi_script(configuration, backend, output_format, ret_code, ret_msg,
         sys.stdout.write("\n\n")
         #logger.debug("flush stdout")
         sys.stdout.flush()
-        #logger.debug("write content: %s" % [output])
+        #logger.debug("write content: %s" % [output[:64], '..', output[-64:]])
         # NOTE: py2 does not have buffer but py3 needs binary output there
         if sys.version_info[0] < 3:
             sys.stdout.write(output)

@@ -147,6 +147,19 @@ def get_short_id(configuration, user_id, user_alias):
     return short_id
 
 
+# TODO: migrate all uses of binascii hexlify to use this helper instead
+def hexlify(strval):
+    """Convert strval to hexadecimal with only lower case letters"""
+    return base64.b16encode(strval).lower()
+
+
+# TODO: migrate all uses of binascii unhexlify to use this helper instead
+def unhexlify(hexval):
+    """Convert possibly lowercase hexlified hexval back to str"""
+    # IMPORTANT: base16decode requires uppercase string
+    return base64.b16decode(hexval.upper())
+
+
 def is_gdp_user(configuration, client_id):
     """Helper to distinguish GDP project users from top-level users"""
     if client_id.split(_id_sep)[-1].startswith(gdp_distinguished_field):

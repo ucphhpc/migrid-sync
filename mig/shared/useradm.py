@@ -54,7 +54,8 @@ from mig.shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
     twofactor_filename, peers_filename, gdp_distinguished_field, \
     unique_id_length
 from mig.shared.fileio import filter_pickled_list, filter_pickled_dict, \
-    make_symlink, delete_symlink, remove_dir, remove_rec, listdir, move
+    make_symlink, delete_symlink, read_file, write_file, remove_dir, \
+    remove_rec, listdir, move
 from mig.shared.modified import mark_user_modified
 from mig.shared.refunctions import list_runtime_environments, \
     update_runtimeenv_owner
@@ -561,6 +562,7 @@ password mechanism to confirm their ownership of the registered account email.
                             'Accept password change? [y/N] ')
                     else:
                         accept_answer = 'no'
+
                     authorized = accept_answer.lower().startswith('y')
                     if not authorized:
                         if do_lock:
@@ -736,7 +738,6 @@ change."""
     # Always write htaccess to catch any updates
 
     try:
-        filehandle = open(htaccess_path, 'w')
 
         # Match certificate or OpenID distinguished name
 
@@ -809,13 +810,16 @@ require user "%(distinguished_name)s"
 </IfVersion>
 '''
 
-        filehandle.write(access % info)
-        filehandle.close()
+        if not write_file(access % info, htaccess_path, _logger, umask=0o033):
+            _logger.error("failed to write %s in %s" %
+                          (access % info, htaccess_path))
+            raise Exception("write htaccess failed!")
 
         # try to prevent further user modification
 
         os.chmod(htaccess_path, 0o444)
-    except:
+    except Exception as exc:
+        _logger.error("createuser failed to write htaccess: %s" % exc)
         if not force:
             raise Exception('could not create htaccess file: %s'
                             % htaccess_path)
@@ -895,16 +899,11 @@ The %(short_title)s admins
 
     # Write missing default css to avoid apache error log entries
 
-    if not os.path.exists(css_path):
-        try:
-            filehandle = open(css_path, 'w')
-            filehandle.write(get_default_css(css_path))
-            filehandle.close()
-        except:
-            _logger.error("could not write %s" % css_path)
-            if not force:
-                raise Exception('could not create custom css file: %s'
-                                % css_path)
+    if not os.path.exists(css_path) and not \
+            write_file(get_default_css(css_path, _logger, True), css_path, _logger):
+        _logger.error("could not write %s" % css_path)
+        if not force:
+            raise Exception('could not create custom css file: %s' % css_path)
 
     _logger.info("created/renewed user %s" % client_id)
     mark_user_modified(configuration, client_id)
@@ -1031,6 +1030,7 @@ def fix_vgrid_sharelinks(conf_path, db_path, verbose=False, force=False):
 def edit_user(
     client_id,
     changes,
+    removes,
     conf_path,
     db_path,
     force=False,
@@ -1038,7 +1038,9 @@ def edit_user(
     meta_only=False,
     do_lock=True,
 ):
-    """Edit user"""
+    """Edit user: updates client_id in user DB and on disk with key/val pairs
+    from changes dict and deletes any existing dict keys in removes list.
+    """
 
     flock = None
     user_db = {}
@@ -1089,6 +1091,9 @@ def edit_user(
         old_user = user_db[client_id]
         user_dict.update(old_user)
         user_dict.update(changes)
+        for del_field in removes:
+            if del_field in user_dict:
+                del user_dict[del_field]
         fill_user(user_dict)
         # Force distinguished_name update
         del user_dict["distinguished_name"]
@@ -1478,6 +1483,7 @@ def get_openid_user_map(configuration, do_lock=True):
     """Translate user DB to OpenID mapping between a verified login URL and a
     pseudo certificate DN.
     """
+    _logger = configuration.logger
     id_map = {}
     db_path = default_db_path(configuration)
     user_map = load_user_db(db_path, do_lock=do_lock)
@@ -2379,19 +2385,14 @@ def user_twofactor_status(user_id, conf_path, db_path, fields,
     return (configuration, errors)
 
 
-def get_default_mrsl(template_path):
+def get_default_mrsl(template_path, logger, allow_missing=True):
     """Return the default mRSL template from template_path"""
 
-    try:
-        template_fd = open(template_path, 'rb')
-        default_mrsl = template_fd.read()
-        template_fd.close()
-    except:
-
+    default_mrsl = read_file(template_path, logger,
+                             allow_missing=allow_missing)
+    if default_mrsl is None:
         # Use default hello grid example
-
-        default_mrsl = \
-            """::EXECUTE::
+        default_mrsl = """::EXECUTE::
 echo 'hello grid!'
 echo '...each line here is executed'
 
@@ -2406,7 +2407,7 @@ jabber: SETTINGS
 ::EXECUTABLES::
 
 ::MEMORY::
-1
+64
 
 ::DISK::
 1
@@ -2420,15 +2421,11 @@ jabber: SETTINGS
     return default_mrsl
 
 
-def get_default_css(template_path):
-    """Return the default css template template_path"""
+def get_default_css(template_path, logger, allow_missing=True):
+    """Return the default css template from template_path"""
 
-    try:
-        template_fd = open(template_path, 'rb')
-        default_css = template_fd.read()
-        template_fd.close()
-    except:
-
+    default_css = read_file(template_path, logger, allow_missing=allow_missing)
+    if default_css is None:
         # Use default style - i.e. do not override anything
 
         default_css = '/* No changes - use default */'
@@ -2439,6 +2436,7 @@ def get_default_css(template_path):
 def get_authkeys(authkeys_path):
     """Return the authorized keys from authkeys_path"""
 
+    # TODO: use read_file instead
     try:
         authkeys_fd = open(authkeys_path, 'rb')
         authorized_keys = authkeys_fd.readlines()
@@ -2454,6 +2452,7 @@ def get_authkeys(authkeys_path):
 def get_authpasswords(authpasswords_path):
     """Return the non-empty authorized passwords from authpasswords_path"""
 
+    # TODO: use read_file instead
     try:
         authpasswords_fd = open(authpasswords_path, 'rb')
         authorized_passwords = authpasswords_fd.readlines()

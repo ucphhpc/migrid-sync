@@ -29,12 +29,11 @@
 
 from __future__ import absolute_import
 
-from binascii import hexlify
-import os
 import datetime
+import os
 
 from mig.shared import returnvalues
-from mig.shared.base import client_id_dir, extract_field
+from mig.shared.base import client_id_dir, extract_field, hexlify
 from mig.shared.defaults import default_pager_entries, keyword_owners, \
     keyword_members, csrf_field
 from mig.shared.functional import validate_input_and_cert

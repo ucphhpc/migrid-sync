@@ -30,10 +30,15 @@
 from __future__ import absolute_import
 
 import os
+import sys
 import traceback
-import ConfigParser
 from email.utils import parseaddr
 from tempfile import NamedTemporaryFile
+# Prefer native ConfigParser on python2 to avoid string encoding mess
+if sys.version_info[0] < 3:
+    from ConfigParser import SafeConfigParser
+else:
+    from configparser import SafeConfigParser
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir, generate_https_urls, valid_dir_input, \
@@ -338,7 +343,7 @@ def create_tracker(
 
             # We want to customize generated project trac.ini with project info
 
-            conf = ConfigParser.SafeConfigParser()
+            conf = SafeConfigParser()
             conf.read(target_tracker_conf_file)
 
             conf_overrides = {
@@ -1105,9 +1110,10 @@ for job input and output.
         if spec['Required']:
             init_settings[key] = spec['Value']
     init_settings['vgrid_name'] = vgrid_name
+    # NOTE: the actual list-form of init_settings items is expected in helper
     (settings_status, settings_msg) = vgrid_set_settings(configuration,
                                                          vgrid_name,
-                                                         init_settings.items())
+                                                         list(init_settings.items()))
     if not settings_status:
         output_objects.append({'object_type': 'error_text', 'text':
                                'Could not save settings list: %s' %

@@ -29,7 +29,7 @@
 
 from __future__ import absolute_import
 
-import os.path
+import os
 import re
 
 # NOTE: we rely on email-validator if available but fall-back to home-brew

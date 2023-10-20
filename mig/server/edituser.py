@@ -55,6 +55,7 @@ Where OPTIONS may be one or more of:
    -h                  Show this help
    -i CERT_DN          CERT_DN of user to edit
    -o SHORT_ID         Change OpenID alias of user to SHORT_ID
+   -r FIELDS           Remove FIELDS for user in user DB
    -R ROLES            Change user affiliation to ROLES
    -v                  Verbose output
 """
@@ -71,8 +72,9 @@ if '__main__' == __name__:
     user_id = None
     short_id = None
     role = None
+    remove_fields = []
     user_dict = {}
-    opt_args = 'c:d:fhi:o:R:v'
+    opt_args = 'c:d:fhi:o:r:R:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
@@ -94,6 +96,8 @@ if '__main__' == __name__:
             user_id = val
         elif opt == '-o':
             short_id = val
+        elif opt == '-r':
+            remove_fields += val.split()
         elif opt == '-R':
             role = val
         elif opt == '-v':
@@ -171,7 +175,7 @@ if '__main__' == __name__:
     if verbose:
         print('Update DB entry and dirs for %s: %s' % (user_id, user_dict))
     try:
-        user = edit_user(user_id, user_dict, conf_path, db_path, force,
+        user = edit_user(user_id, user_dict, remove_fields, conf_path, db_path, force,
                          verbose)
     except Exception as err:
         print(err)

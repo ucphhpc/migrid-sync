@@ -30,12 +30,12 @@
 from __future__ import absolute_import
 
 import os
-import tempfile
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import default_mrsl_filename
+from mig.shared.fileio import write_named_tempfile, write_file
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables
@@ -106,22 +106,23 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     # save to temporary file
 
-    try:
-        (filehandle, real_path) = tempfile.mkstemp(text=True)
-        relative_path = os.path.basename(real_path)
-        os.write(filehandle, mrsl)
-        os.close(filehandle)
-    except Exception as err:
+    logger.debug("write temporary mrsl file: %s" % mrsl)
+    real_path = write_named_tempfile(configuration, mrsl)
+    if real_path is None:
+        logger.error("failed to write temporary mrsl file")
         output_objects.append({'object_type': 'error_text', 'text':
-                               'Failed to write temporary mRSL file!'})
-        logger.error("could not write temp mRSL file: %s" % err)
+                               'Failed to write temporary mRSL file'})
         return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    relative_path = os.path.basename(real_path)
 
     # submit it
 
     submitstatuslist = []
     submitstatus = {'object_type': 'submitstatus',
                     'name': relative_path}
+
+    logger.debug("submit job in tmp file: %s" % real_path)
     try:
         (job_status, newmsg, job_id) = new_job(real_path, client_id,
                                                configuration, False, True)
@@ -132,6 +133,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
         newmsg = "%s failed on '%s' (invalid mRSL?)"\
                  % (op_name, relative_path)
         job_id = None
+
+    logger.debug("submit job returned: %s" % job_status)
 
     if not job_status:
 
@@ -159,15 +162,12 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if save_as_default:
         template_path = os.path.join(base_dir, default_mrsl_filename)
-        try:
-            # TODO: port to write_file
-            template_fd = open(template_path, 'wb')
-            template_fd.write(mrsl)
-            template_fd.close()
-        except Exception as err:
+
+        if not write_file(mrsl, template_path, logger):
+            logger.error("failed to write default mrsl template: %s" %
+                         template_path)
             output_objects.append({'object_type': 'error_text', 'text':
-                                   'Failed to write default job template!'})
-            logger.error("could not write job template: %s" % err)
+                                   'Failed to write default job template'})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
     return (output_objects, status)
