@@ -316,7 +316,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
     except Exception as err:
         output_objects.append({'object_type': 'error_text', 'text':
                                'Creating script failed: %s' % msg})
-        logger.error("saving key files failed: %s" % exc)
+        logger.error("saving key files failed: %s" % err)
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     # use a disk of the requested size
