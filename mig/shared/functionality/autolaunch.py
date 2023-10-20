@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # autolaunch - auto launch configured user default page or site landing page
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,7 +29,6 @@
 """Redirector for saved user default page or site lading page"""
 
 from __future__ import absolute_import
-
 
 from mig.shared import returnvalues
 from mig.shared.functional import validate_input_and_cert

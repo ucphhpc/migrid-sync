@@ -163,8 +163,6 @@ def validate_input_and_cert(
     else:
         (account_accessible, account_status, _) = check_account_status(
             configuration, client_id)
-        # logger.debug("account status said %s , %s" %
-        #             (account_accessible, account_status))
         if not account_accessible:
             creds_error = "User account is %s!" % account_status
         else:

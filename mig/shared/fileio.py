@@ -734,7 +734,7 @@ def make_temp_dir(suffix='', prefix='tmp', dir=None):
 
 
 def write_named_tempfile(configuration, contents):
-    """Create a named tempfile and write contents to its.
+    """Create a named tempfile and write contents to it.
     Returns the name of the file for further use and manual delete later.
     """
     _logger = configuration.logger

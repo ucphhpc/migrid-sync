@@ -66,6 +66,7 @@ def is_valid_email_address(addr, logger, with_dns=False):
     if not validate_email is None:
         logger.debug("relying on email-validator library")
         try:
+            # NOTE: python3 has an issue with email-validator handling here
             _valid = validate_email(addr, check_deliverability=with_dns)
             if not _valid or _valid['email'] != addr:
                 raise Exception("address %r is not properly sanitized" % addr)

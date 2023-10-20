@@ -40,11 +40,16 @@ except Exception as exc:
     print("ERROR: failed to init py 2/3 compatibility")
     exit(1)
 
+import os
+import sys
+import traceback
 from email.utils import parseaddr
 from tempfile import NamedTemporaryFile
-import configparser
-import os
-import traceback
+# Prefer native ConfigParser on python2 to avoid string encoding mess
+if sys.version_info[0] < 3:
+    from ConfigParser import SafeConfigParser
+else:
+    from configparser import SafeConfigParser
 
 try:
     from mig.shared import returnvalues
@@ -353,7 +358,7 @@ def create_tracker(
 
             # We want to customize generated project trac.ini with project info
 
-            conf = configparser.SafeConfigParser()
+            conf = SafeConfigParser()
             conf.read(target_tracker_conf_file)
 
             conf_overrides = {

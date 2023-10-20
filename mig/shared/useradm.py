@@ -1588,16 +1588,11 @@ def get_any_oid_user_dn(configuration, raw_login,
     link_path = os.path.join(configuration.user_home, raw_login)
     _logger.debug('found link %s from %s user base' %
                   ([link_path], [configuration.user_home]))
-    _logger.debug('list user base: %s' % os.listdir(configuration.user_home))
     _logger.debug('default %s and fs %s encoding' % (sys.getdefaultencoding(),
                                                      sys.getfilesystemencoding()))
     if os.path.islink(link_path):
         native_path = os.path.realpath(link_path)
-        _logger.debug('found path %s from %s link' %
-                      ([native_path], [link_path]))
         native_dir = os.path.basename(native_path)
-        _logger.debug('found dir %s from %s link' %
-                      ([native_dir], [link_path]))
         distinguished_name = client_dir_id(native_dir)
         _logger.debug('found full ID %s from %s link'
                       % (distinguished_name, raw_login))
@@ -2519,9 +2514,7 @@ def check_password_hash(configuration, service, username, password,
         return check_hash(configuration, service, username, password,
                           stored_hash, hash_cache, strict_policy, allow_legacy)
     except Exception as exc:
-        import traceback
         _logger.warning("in check_password_hash: %s" % exc)
-        _logger.debug("in check_password_hash: %s" % traceback.format_exc())
         return False
 
 
@@ -2559,8 +2552,6 @@ def check_password_scramble(configuration, service, username, password,
                               strict_policy, allow_legacy)
     except Exception as exc:
         _logger.warning("in check_password_scramble: %s" % exc)
-        import traceback
-        _logger.info("traceback: %s" % traceback.format_exc())
         return False
 
 

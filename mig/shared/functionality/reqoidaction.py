@@ -243,7 +243,6 @@ resources anyway.
     # Title name, lowercase email, uppercase country and state, etc.
     user_dict = canonical_user(configuration, raw_user, raw_user.keys())
     fill_distinguished_name(user_dict)
-    logger.debug("request oid account for %s" % user_dict)
     user_id = user_dict['distinguished_name']
     user_dict['authorized'] = (user_id == client_id)
     if configuration.user_openid_providers and configuration.user_openid_alias:

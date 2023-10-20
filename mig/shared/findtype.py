@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # findtype - Detect client entity type
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -45,7 +45,7 @@ MIG_SERVER_ID = 'MiG-Server'
 
 def is_user(entity_id, configuration):
     """Check if user exists in database. """
-
+    _logger = configuration.logger
     result = False
 
     db_path = default_db_path(configuration)
@@ -54,7 +54,7 @@ def is_user(entity_id, configuration):
         if entity_id in user_db:
             result = True
     except Exception as exc:
-        pass
+        _logger.warning("user look up in user db failed: %s" % exc)
     return result
 
 

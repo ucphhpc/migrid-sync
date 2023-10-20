@@ -1772,9 +1772,9 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
     except Exception as exc:
         status = False
         msg = "could not set %s for %s: %s" % (kind, vgrid_name, exc)
-        import traceback
-        _logger.error("failed in set %s for %s: %s\n%s" %
-                      (kind, vgrid_name, exc, traceback.format_exc()))
+        #import traceback
+        #_logger.error("failed in set %s for %s: %s\n%s" %
+        #              (kind, vgrid_name, exc, traceback.format_exc()))
     finally:
         if lock_handle:
             release_file_lock(lock_handle)

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # serial - object serialization operations using pickle or json
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -67,7 +67,7 @@ def dumps(data, protocol=0, serializer='pickle', **kwargs):
 
 
 def dump(data, path, protocol=0, serializer='pickle', mode='wb', **kwargs):
-    """Dump data to file given by path.
+    """Dump data to file given by path. Pass most handling through to dumps.
     IMPORTANT: we always force data onto UTF-8 bytes for consistency and
     backwards compatibility with data from legacy Python versions.
     """
@@ -96,7 +96,7 @@ def loads(data, serializer='pickle', **kwargs):
 
 
 def load(path, serializer='pickle', mode='rb', **kwargs):
-    """Load serialized data from file given by path.
+    """Load data from file given by path. Pass most handling through to loads.
     IMPORTANT: we force data into native string format for consistency and
     backwards compatibility with data from legacy Python versions.
     """

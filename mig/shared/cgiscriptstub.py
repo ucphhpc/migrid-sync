@@ -133,7 +133,7 @@ def finish_cgi_script(configuration, backend, output_format, ret_code, ret_msg,
             sys.stdout.write(output)
         else:
             sys.stdout.buffer.write(output)
-        #logger.debug("complete")
+        # logger.debug("complete")
     except Exception as exc:
         logger.error("CGI output delivery crashed: %s" % exc)
 
@@ -158,9 +158,6 @@ def run_cgi_script_possibly_with_cert(main, delayed_input=None,
     environ = os.environ
     (configuration, logger, client_id, user_arguments_dict) = \
         init_cgi_script(environ, delayed_input)
-
-    logger.debug("handling cgi request with python %s from %s  (%s)" %
-                 (sys.version_info, client_id, environ))
 
     logger.debug("handling cgi request with python %s from %s  (%s)" %
                  (sys.version_info, client_id, environ))

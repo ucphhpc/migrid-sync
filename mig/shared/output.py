@@ -2750,7 +2750,6 @@ def format_output(
         format_helper = get_outputformat_helper(outputformat, 'txt')
         formatted = format_helper(configuration, ret_val, ret_msg, out_obj)
         # NOTE: we may get binary file data here - do not force to native str
-        #return force_native_str(formatted)
         return formatted
     except Exception as err:
         logger.error("%s formatting failed: %s\n%s" %

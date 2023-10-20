@@ -407,13 +407,15 @@ def openstack_status_all_cloud_instances(configuration, client_id, cloud_id,
                     #   {..., 'addr': EXT_IP, 'OS-EXT-IPS:type': 'floating'}
                     # ]}
                     if name == 'public_ip':
-                        for entry in field_val.values():
+                        address_entries = field_val.values()
+                        for entry in address_entries:
                             if entry and entry[-1] and \
                                     'floating' in entry[-1].values():
                                 field_val = entry[-1].get('addr', 'UNKNOWN')
                                 break
                     elif name == 'public_fqdn':
-                        for entry in field_val.values():
+                        address_entries = field_val.values()
+                        for entry in address_entries:
                             if entry and entry[-1] and \
                                     'floating' in entry[-1].values():
                                 addr = entry[-1].get('addr', '')

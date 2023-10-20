@@ -64,7 +64,7 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
     output_objects = []
     main = dummy_main
 
-    _logger.debug("stub for backend %r" % backend)
+    # _logger.debug("stub for backend %r" % backend)
 
     # IMPORTANT: we cannot trust potentially user-provided backend value.
     #            NEVER print/output it verbatim before it is validated below.
