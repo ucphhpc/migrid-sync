@@ -969,7 +969,7 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
             self.logger.warning('stat %s: %s' % (path, err))
             return paramiko.SFTP_PERMISSION_DENIED
         except Exception as exc:
-            self.logger.warning('stat %s: %s' % ([path], [err]))
+            self.logger.warning('stat %s: %s' % ([path], [exc]))
             return paramiko.SFTP_PERMISSION_DENIED
         # self.logger.debug("stat %s :: %s" % (path, real_path))
         # for consistency with lstat
