@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # worker - Background worker threads
-# Copyright (C) 2003-2009  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,6 +35,7 @@ from threading import Thread
 
 __max_concurrent = 8
 
+
 def dummy_test(delay):
     """Dummy function for testing: sleep for delay seconds and return True"""
 
@@ -42,6 +43,7 @@ def dummy_test(delay):
     return True
 
 # TODO: allow user supplied concurrent arg from resadmin page
+
 
 def throttle_max_concurrent(workers, concurrent=__max_concurrent):
     """Wait until at most max_concurrent workers are active"""
@@ -61,7 +63,7 @@ class Worker(Thread):
         name=None,
         args=(),
         kwargs={},
-        ):
+    ):
 
         self.__target = target
         self.__args = args
@@ -83,9 +85,9 @@ class Worker(Thread):
         """Wait for the worker thread and return result"""
 
         self.join()
-        if self.__exception != None:
+        if self.__exception is not None:
             # Disable bogus pylint warning about raise None here
-            raise self.__exception # pylint: disable-msg=E0702
+            raise self.__exception  # pylint: disable-msg=E0702
         return self.__result
 
 

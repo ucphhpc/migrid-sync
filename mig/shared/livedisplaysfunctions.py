@@ -25,10 +25,11 @@
 # -- END_HEADER ---
 #
 
-# TODO: lock access to dict since multiple threads can access this lib simultaniously
+# TODO: lock access to dict since multiple threads can access this lib simultaneously
 
 from __future__ import print_function
 from __future__ import absolute_import
+
 import os
 
 from mig.shared.fileio import pickle, unpickle
@@ -46,7 +47,7 @@ def initialize_and_get_display_dict_filename(configuration, logger):
     pickle_status = pickle(dict, filename, logger)
     if not pickle_status:
         return (False, 'could not pickle %s when initializing'
-                 % filename)
+                % filename)
     return (True, filename)
 
 
@@ -57,7 +58,7 @@ def get_users_display_number(client_id, configuration, logger):
         return (False, 'could not initialize')
 
     (key, value) = get_users_display_dict(client_id, configuration,
-            logger)
+                                          logger)
 
     if not key:
         logger.error(value)
@@ -72,7 +73,7 @@ def get_users_display_dict(client_id, configuration, logger):
         return (False, 'could not initialize')
 
     dict = unpickle(filename, logger)
-    if dict == False:
+    if dict is False:
         return (False, 'could not unpickle %s' % filename)
 
     for (key, value) in dict.items():
@@ -89,7 +90,7 @@ def set_user_display_inactive(
     display_number,
     configuration,
     logger,
-    ):
+):
 
     (init_ret, filename) = \
         initialize_and_get_display_dict_filename(configuration, logger)
@@ -116,7 +117,7 @@ def set_user_display_inactive(
     # remove entry from dict and pickle it
 
     dict = unpickle(filename, logger)
-    if dict == False:
+    if dict is False:
         return (False, 'could not unpickle %s' % filename)
 
     if display_number not in dict:
@@ -143,7 +144,7 @@ def get_dict_from_display_number(display_number, configuration, logger):
         return (False, 'could not initialize')
 
     dict = unpickle(filename, logger)
-    if dict == False:
+    if dict is False:
         print('dict is %s false' % dict)
         return (False, 'could not unpickle %s' % filename)
 
@@ -182,7 +183,7 @@ def set_user_display_active(
     # getting here means display is free or used by client_id
 
     dict = unpickle(filename, logger)
-    if dict == False:
+    if dict is False:
         return (False, 'could not unpickle %s' % filename)
 
     current_display = get_users_display_number(client_id,
