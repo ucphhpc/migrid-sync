@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # resadm - Resource administration functions mostly for remote command execution
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -730,7 +730,7 @@ def start_resource_exe(
                                          exe, cputime, exe_kind)
         if not rv:
             logger.error('fill %s node script failed: %s' % (exe_kind,
-                                                             err))
+                                                             msg))
             return (False, msg)
         os.close(filehandle)
 

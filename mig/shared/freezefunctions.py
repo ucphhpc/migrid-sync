@@ -765,7 +765,7 @@ def init_frozen_archive(freeze_meta, client_id, configuration):
     if not save_status:
         _logger.error(save_res)
         remove_rec(arch_dir, configuration)
-        return (False, 'Error in init frozen archive info: %s' % err)
+        return (False, 'Error saving frozen archive info')
     return (True, freeze_dict)
 
 

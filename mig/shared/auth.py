@@ -171,7 +171,8 @@ def load_twofactor_key(client_id, configuration, allow_missing=True):
             _logger.error("Failed to extract twofactor key: %s" % exc)
 
     if not b32_key and not allow_missing:
-        _logger.error("load 2FA key failed: %s" % exc)
+        _logger.error("load 2FA key failed with missing or broken key %s" %
+                      key_path)
 
     return b32_key
 

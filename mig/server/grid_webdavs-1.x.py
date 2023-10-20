@@ -873,7 +873,8 @@ class MiGWsgiDAVDomainController(WsgiDAVDomainController):
             if strict_policy and not valid_login_password(configuration,
                                                           password):
                 msg = "%s password for %s" % ('webdavs', username) \
-                    + "does not satisfy local policy: %s" % exc
+                    + "does not satisfy local policy: %s" % \
+                    configuration.site_password_policy
                 logger.warning(msg)
                 password = ''
             digest_enabled = True
