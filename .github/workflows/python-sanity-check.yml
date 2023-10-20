@@ -15,19 +15,24 @@ permissions:
 jobs:
   build:
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python 2.7
-      uses: actions/setup-python@v3
-      with:
-        python-version: "2.7"
+    # NOTE: python-2 is no longer supported here - try with apt
+    #- name: Set up Python 3.10
+    #  uses: actions/setup-python@v3
+    #  with:
+    #    python-version: "3.10"
+    - name: Set up Python 2.7 with APT and link to default
+      run: |
+        sudo apt install -y python2 python-pip
+        ln -s python2 /usr/bin/python
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install flake8 pytest
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        python2 -m pip install --upgrade pip
+        pip2 install flake8 pytest
+        if [ -f requirements.txt ]; then pip2 install -r requirements.txt; fi
     - name: Lint with flake8
       run: |
         # TODO: fix unittest dir and remove from excludes
