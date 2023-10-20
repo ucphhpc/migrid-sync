@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# serial - object serialization operations using pickle or json
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# serial - object serialization operations using pickle, json or yaml
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -25,7 +25,8 @@
 # -- END_HEADER ---
 #
 
-"""Pickle based serializing"""
+"""Pickle/JSON/YAML based serializing"""
+
 from __future__ import print_function
 
 # Python 2 requires explicit cPickle where as python 3 defaults to it
@@ -38,7 +39,8 @@ import yaml
 
 
 def dumps(data, protocol=0, serializer='pickle', **kwargs):
-    """Dump data to serialized string using given serializer."""
+    """Dump data to serialized string using given serializer using native lib.
+    """
     if serializer == 'pickle':
         serial_helper = pickle.dumps
         if 'protocol' not in kwargs:
@@ -51,21 +53,15 @@ def dumps(data, protocol=0, serializer='pickle', **kwargs):
 
 
 def dump(data, path, protocol=0, serializer='pickle', mode='wb', **kwargs):
-    """Dump data to file given by path"""
-    if serializer == 'pickle':
-        serial_helper = pickle.dump
-        if 'protocol' not in kwargs:
-            kwargs['protocol'] = protocol
-    if serializer == 'json':
-        serial_helper = json.dump
-    if serializer == 'yaml':
-        serial_helper = yaml.dump
+    """Dump data to file given by path. Pass most handling through to dumps.
+    """
     with open(path, mode) as fh:
-        serial_helper(data, fh, **kwargs)
+        fh.write(dumps(data, protocol, serializer, **kwargs))
 
 
 def loads(data, serializer='pickle', **kwargs):
-    """Load data from serialized string"""
+    """Load data from serialized string with serializer using native lib.
+    """
     serial_helper = pickle.loads
     if serializer == 'json':
         serial_helper = json.loads
@@ -77,21 +73,16 @@ def loads(data, serializer='pickle', **kwargs):
 
 
 def load(path, serializer='pickle', mode='rb', **kwargs):
-    """Load serialized data from file given by path"""
-    serial_helper = pickle.load
-    if serializer == 'json':
-        serial_helper = json.load
-    if serializer == 'yaml':
-        serial_helper = yaml.load
-        kwargs['Loader'] = yaml.SafeLoader
+    """Load data from file given by path. Pass most handling through to loads.
+    """
     with open(path, mode) as fh:
-        return serial_helper(fh, **kwargs)
+        return loads(fh.read(), serializer, **kwargs)
 
 
 if "__main__" == __name__:
     print("Testing serializer")
     tmp_path = "dummyserial.tmp"
-    orig = {'abc': 123, 'def': 'def', 'ghi': 42.0}
+    orig = {'abc': 123, 'def': 'def', 'ghi': 42.0, 'accented': 'TéstÆøå'}
     print("testing serializing to string and back")
     data = loads(dumps(orig))
     print("original\n%s\nloaded\n%s\nMatch: %s" % (orig, data, orig == data))

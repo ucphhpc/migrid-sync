@@ -208,7 +208,8 @@ def is_runtime_environment(re_name, configuration):
 
 def get_re_dict(name, configuration):
     """Helper to extract a saved runtime environment"""
-    re_dict = load(os.path.join(configuration.re_home, name))
+    spec_path = os.path.join(configuration.re_home, name)
+    re_dict = load(spec_path)
     if not re_dict:
         return (False, 'Could not open runtime environment %s' % name)
     else:

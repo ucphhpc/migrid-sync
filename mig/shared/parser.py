@@ -175,7 +175,9 @@ def parse(mrsl_file, strip_space=True, strip_comments=True):
     if hasattr(mrsl_file, 'readline'):
         input_file = mrsl_file
     else:
-        input_file = open(mrsl_file, 'rb', 0)
+        # TODO: does this change to buffered text reader break anything
+        #input_file = open(mrsl_file, 'rb', 0)
+        input_file = open(mrsl_file)
 
     while True:
 
@@ -183,23 +185,23 @@ def parse(mrsl_file, strip_space=True, strip_comments=True):
         # readline returns "" string when EOF, to separate EOF and
         # blank lines .strip must be added later
 
-        word = input_file.readline()
-        if not word:
+        line = input_file.readline()
+        if not line:
 
             # end of file reached
 
             break
-        word = word.strip()
-        if len(word) == 0:
+        line = line.strip()
+        if not line:
 
             # blank line
 
             continue
 
-        # a word (hopefully a keyword) was read, append and read block
+        # a line (hopefully a keyword) was read, append and read block
 
         target = []
-        target.append(word.upper())
+        target.append(line.upper())
         target.append(read_block(input_file, strip_space, strip_comments))
         data.append(target)
 

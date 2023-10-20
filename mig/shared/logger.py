@@ -199,6 +199,13 @@ class Logger:
         logging.shutdown()
 
 
+def dummy_logger():
+    """Dummy logger for locations where API needs a logger but we don't care """
+    logger_obj = Logger('critical', logfile='/dev/null', app='dummy')
+
+    return logger_obj.logger
+
+
 def daemon_logger(name, path=None, level="INFO", log_format=None):
     """Simple logger for daemons to get separate logging in standard format"""
     logger_obj = Logger(level, logformat=log_format, logfile=path, app=name)

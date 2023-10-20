@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 #
 # --- BEGIN_HEADER ---
 #
@@ -28,27 +27,7 @@
 # --- END_HEADER ---
 #
 
-"""Helpers for various password policy, crypt and hashing activities.
-
-Includes some parts for pbkdf2 handling from
-https://github.com/mitsuhiko/python-pbkdf2
-
-Relevant info and rights inlined below:
-    ---
-    Securely hash and check passwords using PBKDF2.
-
-    Use random salts to protect againt rainbow tables, many iterations against
-    brute-force, and constant-time comparaison againt timing attacks.
-
-    Keep parameters to the algorithm together with the hash so that we can
-    change the parameters and keep older hashes working.
-
-    See more details at http://exyr.org/2011/hashing-passwords/
-
-    Author: Simon Sapin
-    License: BSD
-    ---
-"""
+"""Helpers for various password policy, crypt and hashing activities"""
 
 from __future__ import print_function
 from __future__ import absolute_import
@@ -65,7 +44,7 @@ import time
 
 from mig.shared.base import force_utf8, mask_creds, string_snippet
 from mig.shared.defaults import keyword_auto, RESET_TOKEN_TTL
-from mig.shared.pbkdf2 import pbkdf2_bin
+
 
 try:
     import cracklib
@@ -125,16 +104,12 @@ def best_crypt_salt(configuration):
 
 def make_hash(password):
     """Generate a random salt and return a new hash for the password."""
-    password = force_utf8(password)
     salt = b64encode(urandom(SALT_LENGTH))
-    # Python 2.6 fails to parse implicit positional args (-Jonas)
-    # return 'PBKDF2${}${}${}${}'.format(
-    return 'PBKDF2${0}${1}${2}${3}'.format(
-        HASH_FUNCTION,
-        COST_FACTOR,
-        salt,
-        b64encode(pbkdf2_bin(password, salt, COST_FACTOR, KEY_LENGTH,
-                             getattr(hashlib, HASH_FUNCTION))))
+    derived = b64encode(hashlib.pbkdf2_hmac(HASH_FUNCTION, 
+                                            force_utf8(password), salt, 
+                                            COST_FACTOR, KEY_LENGTH))
+    return 'PBKDF2${}${}${}${}'.format(HASH_FUNCTION, COST_FACTOR,
+                                       salt, derived)
 
 
 def check_hash(configuration, service, username, password, hashed,
@@ -151,11 +126,13 @@ def check_hash(configuration, service, username, password, hashed,
     accepted. Use only during active log in checks.
     """
     _logger = configuration.logger
-    password = force_utf8(password)
+    # NOTE: hashlib works with bytes
+    hash_bytes = force_utf8(hashed)
     pw_hash = make_simple_hash(password)
     if isinstance(hash_cache, dict) and \
-            hash_cache.get(pw_hash, None) == hashed:
-        # print("got cached hash: %s" % hash_cache.get(pw_hash, None))
+            hash_cache.get(pw_hash, None) == hash_bytes:
+
+        # _logger.debug("got cached hash: %s" % [hash_cache.get(pw_hash, None)])
         return True
     # We check policy AFTER cache lookup since it is already verified for those
     if strict_policy:
@@ -171,9 +148,11 @@ def check_hash(configuration, service, username, password, hashed,
     algorithm, hash_function, cost_factor, salt, hash_a = hashed.split('$')
     assert algorithm == 'PBKDF2'
     hash_a = b64decode(hash_a)
-    hash_b = pbkdf2_bin(password, salt, int(cost_factor), len(hash_a),
-                        getattr(hashlib, hash_function))
-    assert len(hash_a) == len(hash_b)  # we requested this from pbkdf2_bin()
+    # NOTE: pbkdf2_hmac requires bytes for password and salt
+    pw_bytes = force_utf8(password)
+    hash_b = hashlib.pbkdf2_hmac(hash_function, pw_bytes, force_utf8(salt),
+                                 int(cost_factor), len(hash_a))
+    assert len(hash_a) == len(hash_b)  # we requested this from pbkdf2_hmac()
     # Same as "return hash_a == hash_b" but takes a constant time.
     # See http://carlos.bueno.org/2011/10/timing.html
     diff = 0
@@ -181,7 +160,7 @@ def check_hash(configuration, service, username, password, hashed,
         diff |= ord(char_a) ^ ord(char_b)
     match = (diff == 0)
     if isinstance(hash_cache, dict) and match:
-        hash_cache[pw_hash] = hashed
+        hash_cache[pw_hash] = hash_bytes
         # print("cached hash: %s" % hash_cache.get(pw_hash, None))
     return match
 
@@ -226,9 +205,6 @@ def check_digest(configuration, service, realm, username, password, digest,
     accepted. Use only during active log in checks.
     """
     _logger = configuration.logger
-    realm = force_utf8(realm)
-    username = force_utf8(username)
-    password = force_utf8(password)
     merged_creds = ':'.join([realm, username, password])
     creds_hash = make_simple_hash(merged_creds)
     if isinstance(digest_cache, dict) and \
@@ -243,7 +219,8 @@ def check_digest(configuration, service, realm, username, password, digest,
                         % (service, username, exc))
         if strict_policy:
             return False
-    match = (make_digest(realm, username, password, salt) == digest)
+    computed = make_digest(realm, username, password, salt)
+    match = (computed == digest)
     if isinstance(digest_cache, dict) and match:
         digest_cache[creds_hash] = digest
         # print("cached digest: %s" % digest_cache.get(creds_hash, None))
@@ -265,7 +242,8 @@ def unscramble_password(salt, password):
     is provided.
     """
     if not salt:
-        return b64decode(password)
+        unscrambled = b64decode(password)
+        return unscrambled
     xor_int = int(salt, 16) ^ int(password, 16)
     b16_password = '{0:X}'.format(xor_int)
     return b16decode(b16_password)
@@ -291,7 +269,6 @@ def check_scramble(configuration, service, username, password, scrambled,
     accepted. Use only during active log in checks.
     """
     _logger = configuration.logger
-    password = force_utf8(password)
     if isinstance(scramble_cache, dict) and \
             scramble_cache.get(password, None) == scrambled:
         # print("got cached scramble: %s" % scramble_cache.get(password, None))
@@ -304,7 +281,8 @@ def check_scramble(configuration, service, username, password, scrambled,
                         % (service, username, exc))
         if strict_policy:
             return False
-    match = (make_scramble(password, salt) == scrambled)
+    computed = make_scramble(password, salt)
+    match = (computed == scrambled)
     if isinstance(scramble_cache, dict) and match:
         scramble_cache[password] = scrambled
         # print("cached digest: %s" % scramble_cache.get(password, None))
@@ -855,7 +833,7 @@ def __assure_password_strength_helper(configuration, password, use_legacy=False)
             pw_classes.append('other')
             continue
         for (char_class, values) in list(char_class_map.items()):
-            if i in values and not char_class in pw_classes:
+            if i in "%s" % values and not char_class in pw_classes:
                 pw_classes.append(char_class)
                 break
     if len(pw_classes) < min_classes:
@@ -1042,7 +1020,7 @@ if __name__ == "__main__":
         try:
             # print("Fernet encrypt password %r" % pw)
             encrypted = fernet_encrypt_password(configuration, pw)
-            #print("Decrypt Fernet encrypted password %r" % encrypted)
+            # print("Decrypt Fernet encrypted password %r" % encrypted)
             decrypted = fernet_decrypt_password(configuration, encrypted)
             # print("Password %r encrypted to %s and decrypted to %s ." %
             #      (pw, encrypted, decrypted))
@@ -1058,7 +1036,7 @@ if __name__ == "__main__":
         try:
             # print("AESGCM encrypt password %r" % pw)
             encrypted = aesgcm_encrypt_password(configuration, pw)
-            #print("Decrypt AESGCM encrypted password %r" % encrypted)
+            # print("Decrypt AESGCM encrypted password %r" % encrypted)
             decrypted = aesgcm_decrypt_password(configuration, encrypted)
             # print("Password %r encrypted to %s and decrypted to %r" %
             #      (pw, encrypted, decrypted))

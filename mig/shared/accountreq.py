@@ -47,13 +47,13 @@ from mig.shared.base import force_utf8, canonical_user, client_id_dir, \
 from mig.shared.defaults import peers_fields, peers_filename, \
     pending_peers_filename, keyword_auto, user_db_filename, \
     gdp_distinguished_field
-from mig.shared.fileio import delete_file
+from mig.shared.fileio import delete_file, make_temp_file
 from mig.shared.notification import notify_user
 # Expose some helper variables for functionality backends
 from mig.shared.safeinput import name_extras, password_extras, \
     password_min_len, password_max_len, valid_password_chars, \
     valid_name_chars, dn_max_len, html_escape, validated_input, REJECT_UNSET
-from mig.shared.serial import load, dump
+from mig.shared.serial import load, dump, dumps
 from mig.shared.useradm import user_request_reject, user_account_notify, \
     default_search, search_users, create_user, load_user_dict
 from mig.shared.userdb import default_db_path
@@ -1172,6 +1172,23 @@ def forced_org_email_match(org, email, configuration):
         return False
     else:
         return True
+
+
+def save_account_request(configuration, req_dict):
+    """Save req_dict account request as pickle in configured user_pending
+    location.
+    Returns a tuple of save status and output, where the latter is the request
+    path on success or the error message otherwise. 
+    """
+    req_path = None
+    try:
+        # NOTE: mkstemp opens in binary mode and dumps forces req to utf8
+        (os_fd, req_path) = make_temp_file(dir=configuration.user_pending)
+        os.write(os_fd, dumps(req_dict))
+        os.close(os_fd)
+    except Exception as err:
+        return (False, "save account req failed: %s" % err)
+    return (True, req_path)
 
 
 def user_manage_commands(configuration, mig_user, req_path, user_id, user_dict,

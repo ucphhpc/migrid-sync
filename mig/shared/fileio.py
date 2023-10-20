@@ -154,7 +154,7 @@ def write_file_lines(lines, path, logger, mode='w', make_parent=True, umask=None
     return write_file(''.join(lines), path, logger, mode, make_parent, umask)
 
 
-def read_file(path, logger, mode='r'):
+def read_file(path, logger, mode='r', allow_missing=False):
     """Wrapper to handle reading of contents from path"""
     if not logger:
         logger = null_logger("dummy")
@@ -166,7 +166,8 @@ def read_file(path, logger, mode='r'):
         filehandle.close()
         #logger.debug('read %db from: %s' % (len(content), path))
     except Exception as err:
-        logger.error('could not read %s: %s' % (path, err))
+        if not allow_missing:
+            logger.error('could not read %s: %s' % (path, err))
     return content
 
 
@@ -276,7 +277,6 @@ def make_symlink(dest, src, logger, force=False):
     """Wrapper to make src a symlink to dest path"""
     if not logger:
         logger = null_logger("dummy")
-
     # NOTE: we use islink instead of exists here to handle broken symlinks
     if os.path.islink(src) and force and delete_symlink(src, logger):
         logger.debug('deleted existing symlink: %s' % src)
@@ -401,6 +401,10 @@ def load_json(path, logger, allow_missing=False, convert_utf8=True):
 
 def send_message_to_grid_script(message, logger, configuration):
     """Write an instruction to the grid_script name pipe input"""
+    if not logger:
+        logger = null_logger("dummy")
+    logger.debug('write %r to grid_stdin: %s' %
+                 (message, configuration.grid_stdin))
     try:
         filehandle = open(configuration.grid_stdin, 'a')
         fcntl.flock(filehandle.fileno(), fcntl.LOCK_EX)
@@ -408,14 +412,16 @@ def send_message_to_grid_script(message, logger, configuration):
         filehandle.close()
         return True
     except Exception as err:
-        print('could not get exclusive access or write to grid_stdin!')
-        logger.error('could not write "%s" to grid_stdin: %s' %
+        logger.error('could not write %r to grid_stdin: %s' %
                      (message, err))
+        #print('could not get exclusive access or write to grid_stdin!')
         return False
 
 
 def send_message_to_grid_notify(message, logger, configuration):
     """Write message to notify home"""
+    if not logger:
+        logger = null_logger("dummy")
     try:
         (filedescriptor, filepath) = make_temp_file(
             suffix='.%s' % time.time(),
@@ -691,6 +697,21 @@ def make_temp_dir(suffix='', prefix='tmp', dir=None):
     return tempfile.mkdtemp(suffix, prefix, dir)
 
 
+def write_named_tempfile(configuration, contents):
+    """Create a named tempfile and write contents to it.
+    Returns the name of the file for further use and manual delete later.
+    """
+    _logger = configuration.logger
+    try:
+        (filehandle, tmpname) = make_temp_file(text=True)
+        os.write(filehandle, contents)
+        os.close(filehandle)
+    except Exception as exc:
+        _logger.error("failed to write settings tempfile: %s" % exc)
+        tmpname = None
+    return tmpname
+
+
 def __checksum_file(path, hash_algo, chunk_size=default_chunk_size,
                     max_chunks=default_max_chunks):
     """Simple block hashing for checksumming of files inspired by  
@@ -836,6 +857,7 @@ def check_writable(configuration, path):
     """Check and return boolean to indicate if path is a non-empty string and
     a writable location.
     """
+    _logger = configuration.logger
     if not path:
         return False
     elif not check_write_access(path):

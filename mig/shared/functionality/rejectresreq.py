@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rejectresreq - reject a resource access request
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,12 +26,13 @@
 #
 
 """Reject access request to a given resource"""
+
 from __future__ import absolute_import
 
-from binascii import unhexlify
 import os
 
 from mig.shared.accessrequests import load_access_request, delete_access_request
+from mig.shared.base import unhexlify
 from mig.shared.defaults import any_protocol, csrf_field
 from mig.shared.findtype import is_owner
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET

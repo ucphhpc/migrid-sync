@@ -97,8 +97,10 @@ def list_users(configuration):
 
 def anon_to_real_user_map(configuration):
     """Return a mapping from anonymous user names to real names"""
+    _logger = configuration.logger
     anon_map = {}
     for name in list_users(configuration):
+        _logger.debug("de-mask anon user: %s" % [name])
         anon_map[anon_user_id(name)] = name
     return anon_map
 

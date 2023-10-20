@@ -29,12 +29,11 @@
 
 from __future__ import absolute_import
 
-from binascii import unhexlify
 import os
 
 from mig.shared.accessrequests import delete_access_request
 from mig.shared.base import client_id_dir, distinguished_name_to_user, \
-    expand_openid_alias
+    expand_openid_alias, unhexlify
 from mig.shared.defaults import any_protocol, csrf_field
 from mig.shared.fileio import make_symlink
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET

@@ -202,7 +202,7 @@ sub-%(vgrid_label)ss first and then try this operation again.""" %
 
         # reverse list to remove files and directories of subdirs first
 
-        list_range = range(len(vgrid_name_parts))
+        list_range = list(range(len(vgrid_name_parts)))
         list_range.reverse()
         reverse_list = list_range
 
