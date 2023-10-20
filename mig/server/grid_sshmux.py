@@ -99,8 +99,9 @@ def persistent_connection(resource_config, logger):
 
 
 def graceful_shutdown(signum, frame):
-    """ This function is responsible for shutting down the 
-    system in a graceful way """
+    """This function is responsible for shutting down the system in a graceful
+    way.
+    """
 
     msg = '%s: graceful_shutdown called' % sys.argv[0]
     print(msg)

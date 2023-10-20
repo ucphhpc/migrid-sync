@@ -764,7 +764,7 @@ class Ui(object):
             ftp.Download(arclib.URL(jobInfoDir + '/output'), tmpname)
             lines = open(tmpname, 'rb').readlines()
             os.remove(tmpname)
-            files = [l.strip().strip('/') for l in lines]
+            files = [cur.strip().strip('/') for cur in lines]
 
             # also get the entire directory listing from the server
             dir = ftp.ListDir(arclib.URL(jobDir), True)

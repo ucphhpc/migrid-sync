@@ -26,7 +26,7 @@
 #
 
 """Test native python SSL sockets against MiG server:
-This test is based on the example at 
+This test is based on the example at
 http://docs.python.org/lib/socket-example.html
 """
 from __future__ import print_function
