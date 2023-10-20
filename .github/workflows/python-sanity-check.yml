@@ -27,7 +27,7 @@ jobs:
     - name: Set up Python 2.7 with APT and link to default
       run: |
         sudo apt install -y python2 python-pip
-        ln -s python2 /usr/bin/python
+        #ln -s python2 /usr/bin/python
     - name: Install dependencies
       run: |
         python2 -m pip install --upgrade pip
