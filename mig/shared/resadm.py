@@ -80,7 +80,8 @@ def put_fe_pgid(
     # A "FE.PGID" file in the resource's home directory means that
     # the FE is running.
 
-    pgid_path = os.path.join(base_dir, 'FE.PGID')
+    rel_pgid_path = os.path.join('FE.PGID')
+    pgid_path = os.path.join(base_dir, rel_pgid_path)
 
     if not os.path.exists(pgid_path):
 
@@ -142,8 +143,8 @@ def put_exe_pgid(
     # This is required to avoid 'races', as it is the FE that sends
     # the PGID to us and not the EXE node.
 
-    pgid_path = os.path.abspath(os.path.join(base_dir, 'EXE_' + exe_name
-                                             + '.PGID'))
+    rel_pgid_path = 'EXE_' + exe_name + '.PGID'
+    pgid_path = os.path.abspath(os.path.join(base_dir, rel_pgid_path))
     status = False
     try:
 
@@ -184,8 +185,8 @@ def put_exe_pgid(
         pgid_file.close()
         status = True
     except Exception as err:
-        msg = 'File: %s could not be read/written: %s' % (pgid_path,
-                                                          err)
+        msg = 'PGID file %r could not be read/written' % rel_pgid_path
+        logger.error("%s: %s" % (msg, err))
         status = False
 
     return (status, msg)
@@ -271,15 +272,18 @@ def atomic_resource_exe_restart(
 
     resource_home = configuration.resource_home
 
-    pgid_path = os.path.join(resource_home, unique_resource_name,
-                             'EXE_%s.PGID' % exe_name)
+    rel_pgid_path = os.path.join(unique_resource_name, 'EXE_%s.PGID' %
+                                 exe_name)
+    pgid_path = os.path.join(resource_home, rel_pgid_path)
 
     # Lock pgid file
 
     if os.path.exists(pgid_path):
         pgid_file = open(pgid_path, 'r')
     else:
-        return (False, 'No pgid_path found! File %s' % pgid_path)
+        msg = 'No PGID file %r found!' % rel_pgid_path
+        logger.warning(msg)
+        return (False, msg)
 
     fcntl.flock(pgid_file, fcntl.LOCK_EX)
     pgid_file.seek(0, 0)
@@ -358,12 +362,9 @@ def fill_frontend_script(
         newhandle.close()
         return (True, '')
     except Exception as err:
-        msg = \
-            'Error: could not write frontend script file for some reason %s'\
-            % err
-
-        # logger.error("could not write frontend script file (%s)" % err)
-
+        msg = 'Error: could not write frontend script file'
+        # NOTE: no logger available here
+        #logger.error("%s: %s" % (msg, err))
         return (False, msg)
 
 
@@ -467,7 +468,10 @@ def fill_exe_node_script(
         newhandle.close()
         return (True, '')
     except Exception as err:
-        return (False, 'could not write exe node script file: %s (%s , %s)' % (err, configuration, os.environ))
+        msg = 'could not write exe node script file'
+        # NOTE: no logger available here
+        #logger.error("%s: %s" % (msg, err))
+        return (False, msg)
 
 
 def fill_master_node_script(
@@ -522,9 +526,8 @@ def get_frontend_script(unique_resource_name, logger):
         logger.debug('got frontend script %s' % local_filename)
         return (True, fe_script)
     except Exception as err:
-
-        msg = 'could not get frontend script (%s)' % err
-        logger.error(msg)
+        msg = 'could not get frontend script'
+        logger.error("%s: %s" % (msg, err))
         return (False, msg)
 
 
@@ -571,9 +574,8 @@ def get_master_node_script(unique_resource_name, exe_name, logger):
         logger.debug('got master node script %s' % local_filename)
         return (True, exe_script)
     except Exception as err:
-
-        msg = 'could not get master node script script (%s)' % err
-        logger.error(msg)
+        msg = 'could not get master node script script'
+        logger.error("%s: %s" % (msg, err))
         return (False, msg)
 
 
@@ -629,8 +631,9 @@ def start_resource_exe(
 
     # write PGID file
 
-    pgid_path = os.path.join(resource_home, unique_resource_name,
-                             'EXE_%s.PGID' % exe_name)
+    rel_pgid_path = os.path.join(unique_resource_name, 'EXE_%s.PGID' %
+                                 exe_name)
+    pgid_path = os.path.join(resource_home, rel_pgid_path)
 
     try:
         if not os.path.exists(pgid_path):
@@ -675,9 +678,8 @@ def start_resource_exe(
             fcntl.flock(pgid_file, fcntl.LOCK_UN)
         pgid_file.close()
     except Exception as err:
-        err_msg = "File: '%s' could not be accessed: %s" % (pgid_path,
-                                                            err)
-        logger.error(err_msg)
+        err_msg = "PGID file %r could not be accessed" % rel_pgid_path
+        logger.error("%s: %s" % (err_msg, err))
         msg += err_msg
         return (False, msg)
 
@@ -738,9 +740,9 @@ def start_resource_exe(
         logger.info('wrote %s script into %s' % (exe_kind,
                                                  local_filename))
     except Exception as err:
-        msg += '\n%s' % err
-        logger.error("couldn't write %s node script file: %s"
-                     % (exe_kind, err))
+        err_msg = "couldn't write %s node script file" % exe_kind
+        logger.error("%s: %s" % (err_msg, err))
+        msg += '\n%s' % err_msg
         return (False, msg)
 
     exe_node_script_name = '%s_node_script_%s.sh' % (exe_kind, exe_name)
@@ -792,7 +794,8 @@ def start_resource_store(
         return (False, msg)
 
     status = True
-    mount_point = os.path.join(resource_home, unique_resource_name, store_name)
+    rel_mount_point = os.path.join(unique_resource_name, store_name)
+    mount_point = os.path.join(resource_home, rel_mount_point)
 
     # create needed dirs on resource frontend and store
 
@@ -836,8 +839,9 @@ def start_resource_store(
         sshfs_options = ['-o', 'reconnect', '-o', 'big_writes',
                          '-o', 'uid=%d' % os.getuid(),
                          '-o', 'gid=%d' % os.getgid()]
-        jump_path = os.path.join(resource_home, unique_resource_name,
-                                 store_name + '-jump.sh')
+        rel_jump_path = os.path.join(unique_resource_name,
+                                     store_name + '-jump.sh')
+        jump_path = os.path.join(resource_home, rel_jump_path)
         setup = {'mount_point': mount_point, 'jump_path': jump_path}
         setup.update(resource_config)
         setup.update(store)
@@ -863,8 +867,10 @@ ssh -o Port=%(SSHPORT)s %(MIGUSER)s@%(HOSTURL)s ssh $*
                 os.chmod(jump_path, 0o700)
             except Exception as exc:
                 status = False
-                msg += ' failed to write jump helper script %s: %s. ' % (
-                    jump_path, exc)
+                err_msg = 'failed to write jump helper script %s' % \
+                    rel_jump_path
+                logger.error("%s: %s" % (err_msg, exc))
+                msg += ' %s. ' % err_msg
 
             sshfs_options += ["-o", "ssh_command=%(jump_path)s" % setup,
                               "-o", "Port=%(storage_port)s" % setup]
@@ -899,16 +905,18 @@ ssh -o Port=%(SSHPORT)s %(MIGUSER)s@%(HOSTURL)s ssh $*
         if resource_config.get('ANONYMOUS', True):
             link_name = anon_resource_id(link_name)
         for vgrid in store['vgrid']:
-            vgrid_link = os.path.join(configuration.vgrid_files_home, vgrid,
-                                      link_name)
+            rel_vgrid_link = os.path.join(vgrid, link_name)
+            vgrid_link = os.path.join(configuration.vgrid_files_home,
+                                      rel_vgrid_link)
             try:
                 if not os.path.exists(vgrid_link):
                     os.symlink(mount_point, vgrid_link)
             except Exception as exc:
                 status = False
-                msg += ' failed to link %s into %s: %s. ' % (
-                    mount_point, vgrid_link, exc)
-                logger.error('failed to link %s: %s' % (mount_point, exc))
+                err_msg += 'failed to link %s into %s' % (rel_mount_point,
+                                                          rel_vgrid_link)
+                logger.error('%s: %s' % (err_msg, exc))
+                msg += ' %s. ' % err_msg
 
     # save monitor_last_status files
     # for vgrid_monitor in all vgrids where this resource is providing storage
@@ -961,7 +969,8 @@ def start_resource(
         msg += "No resouce_config for: '" + unique_resource_name + "'\n"
         return (False, msg)
 
-    pgid_path = os.path.join(resource_home, unique_resource_name, 'FE.PGID')
+    rel_pgid_path = os.path.join(unique_resource_name, 'FE.PGID')
+    pgid_path = os.path.join(resource_home, rel_pgid_path)
     if os.path.exists(pgid_path):
         try:
 
@@ -975,7 +984,9 @@ def start_resource(
             if pgid.isdigit():
                 raise Exception('FE already started')
         except Exception as exc:
-            msg += "%s" % exc
+            err_msg = "failed to read PGID file %r" % rel_pgid_path
+            logger.error("%s: %s" % (err_msg, exc))
+            msg += err_msg
             return (False, msg)
 
     # make sure newest version of frontend_script.sh is on the
@@ -1062,8 +1073,8 @@ def resource_fe_action(
         msg = "No configfile for: '" + unique_resource_name + "'"
         return (False, msg)
 
-    pgid_path = os.path.join(resource_home, unique_resource_name,
-                             'FE.PGID')
+    rel_pgid_path = os.path.join(unique_resource_name, 'FE.PGID')
+    pgid_path = os.path.join(resource_home, rel_pgid_path)
     user = resource_config['MIGUSER']
 
     if action == 'clean':
@@ -1149,8 +1160,8 @@ def resource_fe_action(
                     fcntl.flock(pgid_file, fcntl.LOCK_UN)
                     pgid_file.close()
                 except Exception as err:
-                    logger.error("Could not update pgid file: '"
-                                 + pgid_path + "'")
+                    err_msg = "Could not update pgid file %r" % rel_pgid_path
+                    logger.error("%s: %s" % (err_msg, err))
 
                 msg += ssh_status_msg
                 return (True, msg)
@@ -1197,8 +1208,9 @@ def resource_exe_action(
             + exe_name + "'"
         return (False, msg)
 
-    pgid_path = os.path.join(resource_home, unique_resource_name,
-                             'EXE_%s.PGID' % exe_name)
+    rel_pgid_path = os.path.join(unique_resource_name, 'EXE_%s.PGID' %
+                                 exe_name)
+    pgid_path = os.path.join(resource_home, rel_pgid_path)
     try:
         pgid_file = open(pgid_path, 'r+')
     except IOError:
@@ -1615,8 +1627,8 @@ def get_sandbox_exe_stop_command(
 
     # Lock pgid file
 
-    pgid_path = os.path.join(sandbox_home, sandboxkey, 'EXE_' + exe_name
-                             + '.PGID')
+    rel_pgid_path = os.path.join(sandboxkey, 'EXE_' + exe_name + '.PGID')
+    pgid_path = os.path.join(sandbox_home, rel_pgid_path)
     if os.path.exists(pgid_path):
         pgid_file = open(pgid_path, 'r')
         fcntl.flock(pgid_file, fcntl.LOCK_EX)
@@ -1627,7 +1639,8 @@ def get_sandbox_exe_stop_command(
         stop_command = stop_command.replace('$mig_exe_pgid', pgid)
         return (True, stop_command)
     else:
-        msg = 'No pgid_path found! File %s' % pgid_path
+        msg = 'No PGID file %r found!' % rel_pgid_path
+        logger.warning(msg)
         return (False, msg)
 
 
