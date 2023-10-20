@@ -14,7 +14,7 @@ import subprocess
 import os
 from threading import Thread
 import time
-import constants 
+import constants
 from output import *
 
 
@@ -45,8 +45,8 @@ def run_tests(options):
     output_console(results)
 
 class Usage(Exception):
-	def __init__(self, msg):
-		self.msg = msg
+    def __init__(self, msg):
+        self.msg = msg
 
 
         def main():

@@ -804,7 +804,8 @@ class MiGDomainController(SimpleDomainController):
                                 configuration, raw_password):
                             msg = "%s digest password for %s" % ('webdavs',
                                                                  username)
-                            msg += "does not satisfy local policy: %s" % exc
+                            msg += "does not satisfy local policy: %s" % \
+                                configuration.site_password_policy
                             logger.warning(msg)
                             raw_password = ''
                         else:
