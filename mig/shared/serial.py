@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# serial - object serialization operations using pickle or json
+# serial - object serialization operations using pickle, json or yaml
 # Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
@@ -25,7 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Pickle based serializing"""
+"""Pickle/JSON/YAML based serializing"""
 
 from __future__ import print_function
 
@@ -50,7 +50,7 @@ from mig.shared.base import force_native_str_rec, force_utf8_rec
 
 
 def dumps(data, protocol=0, serializer='pickle', **kwargs):
-    """Dump data to serialized string using given serializer.
+    """Dump data to serialized string using given serializer using native lib.
     IMPORTANT: we always force data onto UTF-8 bytes for consistency and
     backwards compliance with data from legacy Python versions.
     """
@@ -76,7 +76,7 @@ def dump(data, path, protocol=0, serializer='pickle', mode='wb', **kwargs):
 
 
 def loads(data, serializer='pickle', **kwargs):
-    """Load data from serialized string.
+    """Load data from serialized string with serializer using native lib.
     IMPORTANT: we force data into native string format for consistency and
     backwards compatibility with data from legacy Python versions.
     """

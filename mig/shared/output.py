@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
@@ -40,6 +40,7 @@ except Exception as exc:
 
 from past.builtins import basestring
 import os
+import sys
 import time
 import traceback
 
@@ -650,7 +651,8 @@ ctime\t%(ctime)s
         status_line = status_line.replace('TIMING_INFO', timing_info)
         lines = [status_line] + lines
 
-    if binary_output:
+    # NOTE: careful handling required for binary on python3+
+    if sys.version_info[0] > 2 and binary_output:
         return b''.join(lines)
     else:
         return ''.join(lines)
@@ -2565,7 +2567,8 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
                                          user_settings, include_widgets,
                                          user_widgets))
 
-    if binary_output:
+    # NOTE: careful handling required for binary on python3+
+    if sys.version_info[0] > 2 and binary_output:
         return b''.join(lines)
     else:
         return '\n'.join(lines)
@@ -2642,6 +2645,7 @@ def json_format(configuration, ret_val, ret_msg, out_obj):
 def resource_format(configuration, ret_val, ret_msg, out_obj):
     """Generate output in resource format"""
     # TODO: is this right? not sure where it is used if ever!
+    #       Function is needed as long as it's listed in _valid_output_formats
     return txt_format(configuration, ret_val, ret_msg, out_obj)
 
 
