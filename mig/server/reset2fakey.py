@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reset2fakey - (Re)set user 2FA key
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """(Re)set user 2FA key"""
+
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -139,8 +140,8 @@ Where OPTIONS may be one or more of:
    -a                  Enable 2fa for all services
    -r                  Remove 2fa for all services
    -v                  Verbose output
-"""\
-         % {'name': name})
+"""
+          % {'name': name})
 
 
 # ## Main ###
@@ -205,11 +206,12 @@ if '__main__' == __name__:
 
     if configuration.site_enable_gdp:
         status = project_close(configuration,
-                            'https',
-                            '127.0.0.1',
-                            user_id=user_id)
+                               'https',
+                               '127.0.0.1',
+                               user_id=user_id)
         if not status:
-            print('Warning: Project close failed, user probably not logged in to any projects')
+            print(
+                'Warning: Project close failed, user probably not logged in to any projects')
 
     if remove:
         status = remove2fa(configuration, user_id, verbose, force)
@@ -229,7 +231,7 @@ if '__main__' == __name__:
             seed_file = args[0]
             interval = args[1]
         except IndexError:
-             # Ignore missing optional arguments
+            # Ignore missing optional arguments
 
             pass
 
@@ -287,19 +289,19 @@ if '__main__' == __name__:
                 totp_custom_totp = pyotp.TOTP(twofa_key, interval=interval)
 
             if valid_otp_window == 0:
-                print("default interval, code: %s" \
-                    % totp_default.at(current_time, 0))
+                print("default interval, code: %s"
+                      % totp_default.at(current_time, 0))
                 if totp_custom_totp:
-                    print("interval: %d, code: %s" \
-                        % (interval, totp_custom_totp.at(current_time, 0)))
+                    print("interval: %d, code: %s"
+                          % (interval, totp_custom_totp.at(current_time, 0)))
             else:
                 for i in range(-valid_otp_window, valid_otp_window + 1):
-                    print("default interval, window: %d, code: %s" \
-                        % (i, totp_default.at(current_time, i)))
+                    print("default interval, window: %d, code: %s"
+                          % (i, totp_default.at(current_time, i)))
                     if totp_custom_totp:
-                        print("interval: %d, window: %d, code: %s" \
-                            % (interval, i,
-                                totp_custom_totp.at(current_time, i)))
+                        print("interval: %d, window: %d, code: %s"
+                              % (interval, i,
+                                 totp_custom_totp.at(current_time, i)))
     else:
         print("Failed to reset two factor key")
         sys.exit(1)

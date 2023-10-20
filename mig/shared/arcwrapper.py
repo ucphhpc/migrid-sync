@@ -417,7 +417,7 @@ class Ui(object):
         currDir = os.getcwd()
         try:
 
-                # Convert XRSL file into a string
+            # Convert XRSL file into a string
 
             f = open(xrslFilename, 'rb')
             xrslString = f.read()

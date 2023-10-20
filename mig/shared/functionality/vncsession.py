@@ -88,7 +88,7 @@ def main(client_id, user_arguments_dict):
     status = returnvalues.OK
 
     add_init = '''
-      function endVNC () {
+    function endVNC () {
       if (!window.XMLHttpRequest)
         var httpRequest = new ActiveXObject("Microsoft.XMLHTTP");
       else
@@ -97,13 +97,13 @@ def main(client_id, user_arguments_dict):
         httpRequest.open("POST", "vncstop.py", "");
         httpRequest.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
         httpRequest.send("");
-	}
-	catch (e) 
-	{
-	  alert(e);
-	  return e;
-        }
       }
+      catch (e) 
+      {
+        alert(e);
+        return e;
+      }
+    }
     '''
 
     # ## TODO: Include something like the following for support for interactive jobrequests!

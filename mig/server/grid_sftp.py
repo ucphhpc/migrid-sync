@@ -1869,7 +1869,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
              },
     }
     if configuration.site_enable_gdp:
-       # Close projects marked as open due to NON-clean exits
+        # Close projects marked as open due to NON-clean exits
         project_close(configuration, 'sftp', address, user_id=None)
     # Start with fresh session tracker
     clear_sessions(configuration, 'sftp')
