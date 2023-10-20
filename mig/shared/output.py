@@ -162,11 +162,11 @@ def txt_cond_summary(job_cond_msg):
         if 'error_desc' in job_cond_msg:
             for (mrsl_attrib, desc) in job_cond_msg['error_desc'].items():
                 lines.append('%s' % mrsl_attrib)
-                if desc.find('[') is not -1 or desc.find(']') is not -1:
+                if desc.find('[') != -1 or desc.find(']') != -1:
                     desc = desc.replace('[', '').replace(']', '')
-                if desc.find("'") is not -1:
+                if desc.find("'") != -1:
                     desc = desc.replace("'", "")
-                if desc.find(', ') is not -1:
+                if desc.find(', ') != -1:
                     for item in desc.split(', '):
                         lines.append('%s' % item)
                 else:
@@ -693,11 +693,11 @@ def html_cond_summary(job_cond_msg):
             lines.append('<tr><td><dl>')
             for (mrsl_attrib, desc) in job_cond_msg['error_desc'].items():
                 lines.append('<dt>%s</dt>' % mrsl_attrib)
-                if desc.find('[') is not -1 or desc.find(']') is not -1:
+                if desc.find('[') != -1 or desc.find(']') != -1:
                     desc = desc.replace('[', '').replace(']', '')
-                if desc.find("'") is not -1:
+                if desc.find("'") != -1:
                     desc = desc.replace("'", "")
-                if desc.find(', ') is not -1:
+                if desc.find(', ') != -1:
                     for item in desc.split(', '):
                         lines.append('<dd>%s</dd>' % item)
                 else:
