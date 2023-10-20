@@ -26,6 +26,7 @@
 #
 
 from __future__ import absolute_import
+
 import cgi
 import cgitb
 cgitb.enable()
@@ -36,3 +37,4 @@ from mig.shared.functionality.startstore import main
 from mig.shared.cgiscriptstub import run_cgi_script
 
 run_cgi_script(main)
+

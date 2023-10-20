@@ -148,13 +148,13 @@ def translate(mrsl_dict, session_id=None):
 
             # this is a list. iterate through all entries (if any)
             for targetstring in mrsl_dict['RESOURCE']:
-                l = targetstring.rsplit(':', 1)
-                if len(l) == 2:
-                    tmp_str += '(&(cluster=%s)(queue=%s))' % (l[1], l[0])
+                cur = targetstring.rsplit(':', 1)
+                if len(cur) == 2:
+                    tmp_str += '(&(cluster=%s)(queue=%s))' % (cur[1], cur[0])
 
                     logger.debug("added to targets: %s" % tmp_str)
                 else:
-                    logger.debug("ignoring malformed target %s" % l)
+                    logger.debug("ignoring malformed target %s" % cur)
 
             # did we add something at all? (might be all malformed)
             if tmp_str != '':
@@ -405,7 +405,7 @@ if __name__ == '__main__':
                 (xrsl, script, name) = translate(mrsl_dict, 'test-name')
                 print('\n'.join(['Job name', name, 'script', script, 'XRSL']))
                 fileio.write_file(script, "test-id.sh", logger)
-                print (format_xrsl(xrsl))
+                print(format_xrsl(xrsl))
                 fileio.write_file("%s" % xrsl, translated, logger)
                 print('done')
         except Exception as err:
