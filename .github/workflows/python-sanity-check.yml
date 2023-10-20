@@ -1,0 +1,49 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Python application
+
+on:
+  push:
+    branches: [ "edge" ]
+  pull_request:
+    branches: [ "edge" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 2.7
+      uses: actions/setup-python@v3
+      with:
+        python-version: "2.7"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pytest
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Lint with flake8
+      run: |
+        # TODO: fix unittest dir and remove from excludes
+        # TODO: fix  or migrate legacy grsfs-fuse dir and remove from excludes
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 mig --exclude=unittest,grsfs-fuse,irclib.py,seafile-seahub_settings-template.py --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 mig --exclude=unittest,grsfs-fuse,vm-proxy,irclib.py,seafile-seahub_settings-template.py --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        # NOTE: for interactive clean up one can use current ignores
+        # E501 Ignore long lines, E402 imports below top, E722 bare except,
+        # F401 unused imports, F502 explicit list in str expand, F841 unused var,
+        # E721 compare type instead of isinstance, W293 blank line with space,
+        # C901 too complex get
+        #flake8 mig --exclude=unittest,grsfs-fuse,vm-proxy,irclib.py,seafile-seahub_settings-template.py --ignore=E501,E402,E722,F401,F502,E713,F841,C901 --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    # TODO: prepare and enable pytest
+    #- name: Test with pytest
+    #  run: |
+    #    pytest
+
