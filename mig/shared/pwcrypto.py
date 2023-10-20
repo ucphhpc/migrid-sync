@@ -35,7 +35,6 @@ from __future__ import absolute_import
 from builtins import zip, range
 from base64 import b64encode, b64decode, b16encode, b16decode, binascii, \
     urlsafe_b64encode, urlsafe_b64decode
-
 from os import urandom
 from random import SystemRandom
 from string import ascii_lowercase, ascii_uppercase, digits
@@ -109,14 +108,12 @@ def make_hash(password):
     salt = b64encode(urandom(SALT_LENGTH))
     # NOTE: hashlib functions require bytes, and post string format needs
     #       native strings to avoid actually inserting string type markers.
-    return 'PBKDF2${}${}${}${}'.format(
-        HASH_FUNCTION,
-        COST_FACTOR,
-        force_native_str(salt),
-        force_native_str(b64encode(hashlib.pbkdf2_hmac(HASH_FUNCTION,
-                                                       force_utf8(password),
-                                                       salt, COST_FACTOR,
-                                                       KEY_LENGTH))))
+    derived = b64encode(hashlib.pbkdf2_hmac(HASH_FUNCTION,
+                                            force_utf8(password), salt,
+                                            COST_FACTOR, KEY_LENGTH))
+    return 'PBKDF2${}${}${}${}'.format(HASH_FUNCTION, COST_FACTOR,
+                                       force_native_str(salt),
+                                       force_native_str(derived))
 
 
 def check_hash(configuration, service, username, password, hashed,
@@ -236,7 +233,7 @@ def check_digest(configuration, service, realm, username, password, digest,
                         % (service, username, exc))
         if strict_policy:
             return False
-    # NOTE: we need to get cimputed bytes back to native format
+    # NOTE: we need to get computed bytes back to native format
     computed = force_native_str(make_digest(realm, username, password, salt))
     match = (computed == digest)
     if isinstance(digest_cache, dict) and match:
