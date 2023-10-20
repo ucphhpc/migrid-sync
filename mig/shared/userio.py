@@ -363,7 +363,7 @@ def touch_path(configuration, path, timestamp=None):
                             False)
             open(path, 'w').close()
 
-        if timestamp == None:
+        if timestamp is None:
             timestamp = time.time()
 
         # set timestamp to supplied value

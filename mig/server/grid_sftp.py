@@ -1716,7 +1716,7 @@ def start_service(configuration):
             #             threading.active_count())
             client_tuple = server_socket.accept()
             # accept may return None or tuple with None part in corner cases
-            if client_tuple == None or None in client_tuple:
+            if client_tuple is None or None in client_tuple:
                 raise Exception('got empty bogus request')
             (client, addr) = client_tuple
         except KeyboardInterrupt:

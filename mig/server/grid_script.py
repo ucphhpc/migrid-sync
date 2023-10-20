@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_script - the core job handling daemon on a MiG server
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -534,7 +534,7 @@ while True:
         file_serverjob = configuration.mrsl_files_dir\
             + strip_line.replace('SERVERJOBFILE ', '') + '.mRSL'
         dict_serverjob = unpickle(file_serverjob, logger)
-        if dict_serverjob == False:
+        if dict_serverjob is False:
             logger.error(
                 'Could not unpickle migrated job - not put into queue!')
             continue
@@ -570,7 +570,7 @@ while True:
         file_serverjob = configuration.mrsl_files_dir + client_dir\
             + os.sep + job_id + '.mRSL'
         dict_serverjob = unpickle(file_serverjob, logger)
-        if dict_serverjob == False:
+        if dict_serverjob is False:
             logger.error('Could not unpickle job - not updating schedule!')
             continue
 
@@ -609,7 +609,7 @@ while True:
         res_file = os.path.join(configuration.resource_home,
                                 unique_resource_name, 'config')
         resource_config = unpickle(res_file, logger)
-        if resource_config == False:
+        if resource_config is False:
             logger.error('error unpickling resource config for %s'
                          % unique_resource_name)
             continue
@@ -646,7 +646,7 @@ while True:
                                      unique_resource_name,
                                      'last_request.%s' % exe)
         last_req = unpickle(last_req_file, logger)
-        if last_req == False:
+        if last_req is False:
 
             # last_req could not be pickled, this is probably
             # because it is the first request from the resource
@@ -941,7 +941,7 @@ while True:
 
                 # The job status should be "QUEUED" at this point
 
-                if dummy_dict == False:
+                if dummy_dict is False:
                     logger.error('error unpickling mrsl in %s'
                                  % mrsl_filename)
                     continue

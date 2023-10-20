@@ -491,7 +491,7 @@ def touch(filepath, configuration, timestamp=None):
             filehandle.close()
         else:
             open(filepath, 'w').close()
-        if timestamp != None:
+        if timestamp is not None:
             # set timestamp to supplied value
             os.utime(filepath, (timestamp, timestamp))
     except Exception as err:

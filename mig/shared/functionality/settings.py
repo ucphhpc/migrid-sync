@@ -436,7 +436,7 @@ NOTE: your %s account access including efficient file service access expires on
                     current_choice = current_settings_dict[keyword]
 
                 checked = ''
-                if current_choice == True:
+                if current_choice is True:
                     checked = 'checked'
                 entry += '<label class="switch">'
                 entry += '<input type="checkbox" name="%s" %s>' % (keyword,
@@ -576,7 +576,7 @@ so you may have to avoid blank lines in your text below.
                 if keyword in current_profile_dict:
                     current_choice = current_profile_dict[keyword]
                 checked = ''
-                if current_choice == True:
+                if current_choice is True:
                     checked = 'checked'
                 html += '<label class="switch">'
                 html += '<input type="checkbox" name="%s" %s>' % (keyword,
@@ -1803,7 +1803,7 @@ for %(site)s backup use.</p>
                 if keyword in current_duplicati_dict:
                     current_choice = current_duplicati_dict[keyword]
                 checked = ''
-                if current_choice == True:
+                if current_choice is True:
                     checked = 'checked'
                 html += '<label class="switch">'
                 html += '<input type="checkbox" name="%s" %s>' % (keyword,
@@ -2184,7 +2184,7 @@ value="%(default_authpassword)s" />
                 if keyword in current_twofactor_dict:
                     current_choice = current_twofactor_dict[keyword]
                 checked = ''
-                if current_choice == True:
+                if current_choice is True:
                     checked = 'checked'
                 entry += '<label class="switch">'
                 entry += '<input type="checkbox" name="%s" %s>' % (keyword,

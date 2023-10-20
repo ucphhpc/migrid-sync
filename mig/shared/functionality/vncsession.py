@@ -156,7 +156,7 @@ def main(client_id, user_arguments_dict):
     valid_display_found = False
     (stat, msg) = get_users_display_dict(client_id, configuration,
                                          logger)
-    if stat == False:
+    if stat is False:
         output_objects.append({'object_type': 'error_text', 'text':
                                'Error getting dictionary of live displays %s' %
                                msg})
@@ -189,7 +189,7 @@ def main(client_id, user_arguments_dict):
                 (disp_numb_stat, disp_numb_ret) = \
                     get_dict_from_display_number(i, configuration,
                                                  logger)
-                if disp_numb_stat == False:
+                if disp_numb_stat is False:
                     output_objects.append(
                         {'object_type': 'error_text', 'text':
                          'Error getting dictionary for display %s' %
@@ -206,7 +206,7 @@ def main(client_id, user_arguments_dict):
                     # display is available
 
                     (passstat, passmsg) = create_vnc_password()
-                    if passstat == False:
+                    if passstat is False:
                         output_objects.append(
                             {'object_type': 'error_text', 'text': passmsg})
                         status = returnvalues.CLIENT_ERROR

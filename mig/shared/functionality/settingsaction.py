@@ -163,7 +163,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
             # Skip keywords for other topics
             if not keyword in keywords_dict:
                 continue
-            if received_arguments != None and received_arguments != ['\r\n']:
+            if received_arguments is not None and received_arguments != ['\r\n']:
                 all_arguments = []
                 for arg in received_arguments:
                     all_arguments += [i for i in arg.split('\n') if i.strip()]

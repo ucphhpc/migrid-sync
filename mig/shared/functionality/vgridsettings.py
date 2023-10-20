@@ -312,7 +312,7 @@ format first.""" % (configuration.short_title, vgrid_name, label)
         logger.debug("write shared status (%s) is unchanged" %
                      old_write_shared)
     # NOTE: legacy vgrids may have setting False to mean full write
-    elif old_write_shared == False and write_shared_files == keyword_members:
+    elif old_write_shared is False and write_shared_files == keyword_members:
         logger.debug("legacy write shared status (%s) updated (%s)" %
                      (old_write_shared, write_shared_files))
     else:

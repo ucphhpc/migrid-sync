@@ -377,7 +377,7 @@ elif action == 'PUT':
 
     status = put(o, fileinfo_dict)
 
-    if status == True:
+    if status is True:
         o.reply_and_exit(o.OK)
     else:
         o.reply_and_exit(o.ERROR)

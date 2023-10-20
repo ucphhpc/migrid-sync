@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # imagepreview - Managing MiG imagepreview meta
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -175,7 +175,7 @@ def main(client_id, user_arguments_dict):
                                    output_objects)
             logger.debug('list exit status: %s' % (status, ))
         elif action == 'remove_setting':
-            if vgrid_owner == False:
+            if vgrid_owner is False:
                 status = returnvalues.ERROR
                 ERROR_MSG = \
                     "Ownership of vgrid: '%s' required to change imagepreview settings" \
@@ -191,7 +191,7 @@ def main(client_id, user_arguments_dict):
                                  extension, output_objects)
             logger.debug('get_setting exit status: %s' % (status, ))
         elif action == 'update_setting':
-            if vgrid_owner == False:
+            if vgrid_owner is False:
                 status = returnvalues.ERROR
                 ERROR_MSG = \
                     "Ownership of vgrid: '%s' required to change imagepreview settings" \
@@ -211,7 +211,7 @@ def main(client_id, user_arguments_dict):
                 logger.debug('update_setting exit status: %s' % (status, ))
         elif action == 'create_setting':
 
-            if vgrid_owner == False:
+            if vgrid_owner is False:
                 status = returnvalues.ERROR
                 ERROR_MSG = \
                     "Ownership of vgrid: '%s' required to change imagepreview settings" \
@@ -232,7 +232,7 @@ def main(client_id, user_arguments_dict):
                 status = returnvalues.OK
             logger.debug('create_setting exit status: %s' % (status, ))
         elif action == 'reset_setting':
-            if vgrid_owner == False:
+            if vgrid_owner is False:
                 status = returnvalues.ERROR
                 ERROR_MSG = \
                     "Ownership of vgrid: '%s' required to change imagepreview settings" \
@@ -247,7 +247,7 @@ def main(client_id, user_arguments_dict):
             status = get(configuration, base_dir, path, output_objects)
             logger.debug('get exit status: %s' % (status, ))
         elif action == 'remove':
-            if vgrid_owner == False:
+            if vgrid_owner is False:
                 status = returnvalues.ERROR
                 ERROR_MSG = \
                     "Ownership of vgrid: '%s' required to change imagepreview settings" \
@@ -259,7 +259,7 @@ def main(client_id, user_arguments_dict):
                                 path, output_objects)
                 logger.debug('remove exit status: %s' % (status, ))
         elif action == 'clean':
-            if vgrid_owner == False:
+            if vgrid_owner is False:
                 status = returnvalues.ERROR
                 ERROR_MSG = \
                     "Ownership of vgrid: '%s' required to change imagepreview settings" \
@@ -272,7 +272,7 @@ def main(client_id, user_arguments_dict):
                 logger.debug('clean exit status: %s' % (status, ))
         elif action == 'cleanrecursive':
 
-            if vgrid_owner == False:
+            if vgrid_owner is False:
                 status = returnvalues.ERROR
                 ERROR_MSG = \
                     "Ownership of vgrid: '%s' required to change imagepreview settings" \
@@ -291,7 +291,7 @@ def main(client_id, user_arguments_dict):
                 logger.debug('cleanrecursive exit status: %s' % (status, ))
         elif action == 'refresh':
 
-            if vgrid_owner == False:
+            if vgrid_owner is False:
                 status = returnvalues.ERROR
                 ERROR_MSG = \
                     "Ownership of vgrid: '%s' required to change imagepreview settings" \
