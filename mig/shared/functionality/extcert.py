@@ -143,7 +143,7 @@ def main(client_id, user_arguments_dict):
     fill_helpers = {'form_method': form_method, 'csrf_field': csrf_field,
                     'csrf_limit': csrf_limit}
     # If cert auto create is on, add user without admin interaction
-    if configuration.auto_add_cert_user == False:
+    if not configuration.auto_add_cert_user:
         target_op = 'extcertaction'
     else:
         target_op = 'autocreate'

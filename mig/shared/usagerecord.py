@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # usagerecord - generating Usage Records from mRSLs, and XSL conversion helpers
-# Copyright (C) 2003-2010  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -72,13 +72,13 @@ from mig.shared.fileio import unpickle, write_file
 def xsl_datetime(timestamp=None):
     """format the given datetime (or \"now\") as xslDatetime"""
 
-    if timestamp == None:
+    if timestamp is None:
         timestamp = datetime.datetime.now()
     iso = timestamp.isoformat()
 
     # add a 'Z' if we do not have a time zone
 
-    if timestamp.tzinfo == None:
+    if timestamp.tzinfo is None:
         iso = iso + 'Z'
     return iso
 
@@ -98,7 +98,7 @@ def xsl_duration(start, end=None):
     """calc. and return difference between start and end 
        (or now) as an xslDuration"""
 
-    if end == None:
+    if end is None:
         end = datetime.datetime.now()
     delta = end - start  # type timedelta
 
@@ -304,7 +304,7 @@ class UsageRecord:
 
         record = self.__doc.documentElement
 
-        if self.record_id == None:
+        if self.record_id is None:
             self.__logger.error('No recordId specified, '
                                 + 'cannot generate usage record')
             return None
@@ -370,7 +370,7 @@ class UsageRecord:
                                     namespace_prefix + 'formula',
                                     self.charge_formula)
 
-        if self.status == None:
+        if self.status is None:
             self.__logger.error('No status specified, '
                                 + 'cannot generate usage record')
             return None

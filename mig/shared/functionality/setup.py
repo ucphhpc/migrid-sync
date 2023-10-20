@@ -1502,7 +1502,7 @@ for %(site)s backup use.</p>
                 if keyword in current_duplicati_dict:
                     current_choice = current_duplicati_dict[keyword]
                 checked = ''
-                if current_choice == True:
+                if current_choice is True:
                     checked = 'checked'
                 html += '<label class="switch">'
                 html += '<input type="checkbox" name="%s" %s>' % (keyword,
@@ -1864,7 +1864,7 @@ value="%(default_authpassword)s" />
                 if keyword in current_twofactor_dict:
                     current_choice = current_twofactor_dict[keyword]
                 checked = ''
-                if current_choice == True or switch_mandatory:
+                if current_choice is True or switch_mandatory:
                     checked = 'checked'
                 entry += '<label class="%s" title="%s">' % (switch_class,
                                                             switch_hint)

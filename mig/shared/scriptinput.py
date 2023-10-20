@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # scriptinput - Handles html form style input from user
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -180,7 +180,7 @@ def fieldstorage_to_dict(fieldstorage, fields=[]):
             filename_key = key + 'filename'
             if filename_key not in params:
                 try:
-                    if fieldstorage[key].filename != None:
+                    if fieldstorage[key].filename is not None:
                         params[filename_key] = \
                             fieldstorage[key].filename
                 except Exception as exc:
