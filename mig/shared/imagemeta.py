@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # imagemeta - Managing MiG image meta data
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -651,7 +651,7 @@ def __add_image_dir_trigger(
 
         if not trigger_exists:
 
-             # Add vgrid create trigger for dir
+            # Add vgrid create trigger for dir
 
             rule_dict = {
                 'rule_id': rule_id,

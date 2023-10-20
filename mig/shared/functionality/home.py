@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # home - home page
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -61,29 +61,29 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     <!-- %(home_label)s - Please do NOT change: used in user scripts -->
 
     <!-- CONTENT -->
-			<div class="container">
-				<div id="app-nav-container" class="row">
-                                <h1>Welcome to %(short_title)s!</h1>
-					<div class="home-page__header col-12">
-						<p class="sub-title">Tools from %(short_title)s helps you with storage, sharing and archiving of data. %(short_title)s delivers centralised storage space for personal and shared files.</p>
-					</div>
+    <div class="container">
+        <div id="app-nav-container" class="row">
+            <h1>Welcome to %(short_title)s!</h1>
+            <div class="home-page__header col-12">
+                <p class="sub-title">Tools from %(short_title)s helps you with storage, sharing and archiving of data. %(short_title)s delivers centralised storage space for personal and shared files.</p>
+            </div>
 
-                                        <div id="tips-container" class="col-12 invert-theme">
-                                            <div id="tips-content" class="tips-placeholder">
-                                                <!-- NOTE: filled by AJAX .. init for space -->
-                                            </div>
-                                        </div>
-                                        <div id="user-msg-container" class="col-12 invert-theme %(show_user_msg)s">
-                                            <div id="user-msg-content" class="user-msg-placeholder">
-                                                %(user_msg)s
-                                            </div>
-                                        </div>
+            <div id="tips-container" class="col-12 invert-theme">
+                <div id="tips-content" class="tips-placeholder">
+                    <!-- NOTE: filled by AJAX .. init for space -->
+                </div>
+            </div>
+            <div id="user-msg-container" class="col-12 invert-theme %(show_user_msg)s">
+                <div id="user-msg-content" class="user-msg-placeholder">
+                    %(user_msg)s
+                </div>
+            </div>
             ''' % fill_helpers
     html += render_apps(configuration, title_entry, active_menu)
     html += '''
-                                <div class="col-lg-12 vertical-spacer"></div>
-				</div>
-			</div>
+            <div class="col-lg-12 vertical-spacer"></div>
+        </div>
+    </div>
 
     '''
 
@@ -120,18 +120,18 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
         mandatory_apps.append(menu_items[app_name]['title'])
     fill_helpers['mandatory_apps'] = ', '.join(mandatory_apps)
     html += '''
-<!-- APP POP-UP -->
-		<div id="add-app__window" class="app-container hidden">
-			<span class="add-app__close far fa-times-circle" onclick="closeAddApp()"></span>
-			<div class="container">
-				<div class="row">
-					<div class="app-page__header col-12">
-						<h1>Your apps & app-setup</h1>
+    <!-- APP POP-UP -->
+    <div id="add-app__window" class="app-container hidden">
+        <span class="add-app__close far fa-times-circle" onclick="closeAddApp()"></span>
+        <div class="container">
+            <div class="row">
+                <div class="app-page__header col-12">
+                    <h1>Your apps & app-setup</h1>
                         <p class="sub-title-white">Here you can select which apps you want to use in your %(short_title)s system. Only %(mandatory_apps)s are mandatory.</p>
-					</div>
-					<div class="app-page__header col-12">
-						<h2>Select your apps</h2>
-                                                %(form_prefix)s
+                </div>
+                <div class="app-page__header col-12">
+                    <h2>Select your apps</h2>
+                    %(form_prefix)s
     ''' % fill_helpers
     # The backend form requires all user settings even if we only want to edit
     # the user apps subset here - just fill as hidden values.
@@ -151,7 +151,8 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
             html += '''        <input type="hidden" name="%s" value="%s">
             ''' % (key, val)
 
-    html += '''						<div class="app-grid row">
+    html += '''
+                    <div class="app-grid row">
     '''
 
     # Only include migadmin for actual admins and when enabled
@@ -187,27 +188,27 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
         <span class="%s"></span>
             ''' % (checked, app_id, checkmark)
         html += '''
-                            <div class="col-lg-2">
-			        <div class="%s">
-                                    <label class="app-content">
+                        <div class="col-lg-2">
+                            <div class="%s">
+                                <label class="app-content">
                                     %s
                                     <div class="background-app">
                                         <span class="%s"></span><h3>%s</h3>
                                     </div>
-                                    </label>
-                                </div>
+                                </label>
                             </div>
+                        </div>
                 ''' % (app_btn_classes, check_field, app_icon_classes, app_name)
 
     html += '''
-						</div>
-                                                <br />
-                                                %(form_suffix)s
-					</div>
-				</div>
-			</div>
-                <div class="col-lg-12 vertical-spacer"></div>
+                    </div>
+                    <br />
+                    %(form_suffix)s
+                </div>
             </div>
+        </div>
+        <div class="col-lg-12 vertical-spacer"></div>
+    </div>
                 ''' % fill_helpers
 
     return html

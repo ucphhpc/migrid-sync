@@ -176,11 +176,6 @@ Please contact the site admins %s if you think they should be enabled.
                                'Unsupported language: %s, defaulting to %s'
                                % (language, default_language)})
         language = default_language
-
-        # print "<a href='ssslogin.py'>Default language</a>"
-        # sys.exit(1)
-   # output_objects.append({"object_type":"html_form", "text":html[language]})
-
     output_objects.append({'object_type': 'html_form', 'text': html[language] %
                            {'site': configuration.short_title}})
     return (output_objects, returnvalues.OK)

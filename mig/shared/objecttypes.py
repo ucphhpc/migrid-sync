@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # objecttypes - output object types and validation
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -541,13 +541,6 @@ def validate(input_object):
     """ validate input_object """
 
     if not type(input_object) == type([]):
-
-        # (ret_val, ret_msg) = out
-        # (ret_val, ret_msg) = validate(input_object[0])
-        # if not ret_val:
-            #  return (ret_val, ret_msg)
-            # except Exception, e:
-
         return (False, 'validate object must be a list' % ())
 
     for obj in input_object:
