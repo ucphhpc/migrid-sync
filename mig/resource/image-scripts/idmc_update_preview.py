@@ -52,23 +52,21 @@ def main():
 
     path = path.replace(base_path, '', 1)
     logger.info('idmc_create_preview: action: %s, base_path: %s, path: %s, filename: %s'
-                 % (action, base_path, path, filename))
+                % (action, base_path, path, filename))
 
     update_status = None
     cleanup_status = None
     if action == 'created' or action == 'modified':
         update_status = update_preview(logger, base_path, path,
-                filename)
+                                       filename)
         if update_status:
             cleanup_status = cleanup_previews(logger, base_path)
-    elif action == 'deleted':
-
     # elif action == 'moved' or action == 'deleted':
-
+    elif action == 'deleted':
         cleanup_status = cleanup_previews(logger, base_path)
     else:
 
-    #    status = update_preview(logger, 'remove', base_path, path, filename)
+        # status = update_preview(logger, 'remove', base_path, path, filename)
 
         logger.error('idmc_create_preview: unsupported action: %s'
                      % action)
@@ -88,4 +86,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

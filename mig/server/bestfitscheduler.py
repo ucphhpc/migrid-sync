@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # bestfitscheduler - best fit job scheduler
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -144,8 +144,8 @@ class BestFitScheduler(Scheduler):
                     best_fitness = job_fitness
             else:
 
-                    # self.logger.info("schedule: new best fit: %s %f" % \
-                    #                 (job['JOB_ID'], job_fitness))
+                # self.logger.info("schedule: new best fit: %s %f" % \
+                #                 (job['JOB_ID'], job_fitness))
                 # self.logger.info("schedule: job %s marked %s" % \
                 #                  (job["JOB_ID"], job["SCHEDULE_HINT"]))
 

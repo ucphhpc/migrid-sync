@@ -51,20 +51,20 @@ def SSS():
         bScreenSaverActive = 0
 
         logger.write("Waiting 60 secs before staring: '"
-                      + G_XSCREENSAVER_COMMAND + "'")
+                     + G_XSCREENSAVER_COMMAND + "'")
         time.sleep(60)
 
         fd = os.popen(G_XSCREENSAVER_COMMAND)
         xscreensaver_output = fd.readline()
         while len(xscreensaver_output) != 0:
 
-        # writeToLog( "xscreensaver-command -watch: " + str )
+            # writeToLog( "xscreensaver-command -watch: " + str )
 
             if (xscreensaver_output[0:5] == 'BLANK'
-                 or xscreensaver_output[0:4] == 'LOCK')\
-                 and bScreenSaverActive == 0:
+                    or xscreensaver_output[0:4] == 'LOCK') \
+                    and bScreenSaverActive == 0:
 
-        # writeToLog( "ACTIVATED")
+                # writeToLog("ACTIVATED")
 
                 bScreenSaverActive = 1
                 tActivatedTime = jobmanager.getTimeTuppel()
@@ -74,16 +74,16 @@ def SSS():
                 if 0 != pid:
                     os._exit(0)
             elif xscreensaver_output[0:7] == 'UNBLANK'\
-                 and bScreenSaverActive == 1:
+                    and bScreenSaverActive == 1:
 
-        # writeToLog( "DEACTIVATED")
+                # writeToLog("DEACTIVATED")
 
                 bScreenSaverActive = 0
                 tDeActivatedTime = jobmanager.getTimeTuppel()
                 jobexecuter.killJob(G_PGIDFILE)
 
                 jobmanager.logTimeActive(tActivatedTime,
-                        tDeActivatedTime, G_EXPECTED_TIME_FACTOR)
+                                         tDeActivatedTime, G_EXPECTED_TIME_FACTOR)
 
             xscreensaver_output = fd.readline()
 
@@ -100,9 +100,9 @@ def main():
     iPID = os.fork()
     if iPID == 0:
 
-    # We want to get our own processgroup,
-    # such that it is possible to kill us by GID,
-    # without killing others in our original group.....
+        # We want to get our own processgroup,
+        # such that it is possible to kill us by GID,
+        # without killing others in our original group.....
 
         os.setpgrp()
 

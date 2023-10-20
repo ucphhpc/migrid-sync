@@ -40,7 +40,7 @@ def initialize_and_get_display_dict_filename(configuration, logger):
     if os.path.isfile(filename):
         return (True, filename)
     logger.info('display dict file %s not found, pickling a new with {} as only content'
-                 % filename)
+                % filename)
 
     dict = {}
     pickle_status = pickle(dict, filename, logger)
@@ -174,7 +174,7 @@ def set_user_display_active(
     if dis_dict != -1:
         if dis_dict['client_id'] != client_id:
 
-        # display occupied by another user!
+            # display occupied by another user!
 
             return (False, 'display %s already in use by another user!'
                      % display_number)
@@ -189,7 +189,7 @@ def set_user_display_active(
             configuration, logger)
     if not current_display:
 
-    # register display
+        # register display
 
         dict[display_number] = {'client_id': client_id,
                                 'vnc_port': vnc_port,
@@ -205,14 +205,14 @@ def set_user_display_active(
 
     if current_display != display_number and current_display != -1:
 
-    # problems..
+        # problems..
 
         return (False,
                 'set_user_display_active met a conflict, can not set display %s when user already has %s registered'
                  % (display_number, current_display))
     else:
 
-    # add display to dict
+        # add display to dict
 
         dict[display_number] = {'client_id': client_id,
                                 'vnc_port': vnc_port,
