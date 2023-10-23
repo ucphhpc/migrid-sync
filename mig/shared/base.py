@@ -890,7 +890,9 @@ def brief_list(full_list, max_entries=10):
     if not full_list[max_entries:]:
         return full_list
     half_entries = max_entries // 2
-    return full_list[:half_entries] + [' ... shortened ... '] + full_list[-half_entries:]
+    # NOTE: full_list may be a range which needs special care in py3
+    return list(full_list[:half_entries]) + [' ... shortened ... '] + \
+        list(full_list[-half_entries:])
 
 
 def auth_type_description(configuration, auth_type=keyword_all):
