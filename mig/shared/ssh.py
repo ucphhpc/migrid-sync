@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ssh - remote command wrappers using ssh/scp
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -573,12 +573,13 @@ if __name__ == "__main__":
     (res_status, resource_config) = \
         get_resource_configuration(configuration.resource_home,
                                    unique_resource_name, logger)
-    (exe_status, exe_config) = get_resource_exe(
-        resource_config, exe_name, logger)
     if not res_status:
         print("Failed to extract resource config for %s: %s" %
               (unique_resource_name, resource_config))
         sys.exit(1)
+
+    (exe_status, exe_config) = get_resource_exe(
+        resource_config, exe_name, logger)
     if not exe_status:
         print("Failed to extract exe config for %s: %s" %
               (exe_name, exe_config))
