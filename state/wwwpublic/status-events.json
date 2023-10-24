@@ -1,4 +1,25 @@
 [
+  {
+    "status": "AUTO", 
+    "work_start": "2023-10-24T02:52:00+02:00", 
+    "systems": [
+        "ERDA"
+    ], 
+    "announce_start": "2023-10-24T08:00:00+02:00", 
+    "title": {
+      "EN": "Power Outage - DAG/MODI Unavailable", 
+      "DK": "Strømudfald - DAG/MODI utilgængelig"
+    }, 
+    "services": [
+        "DAG", "MODI"
+    ], 
+    "work_end": "2023-10-24T12:00:00+02:00", 
+    "description": {
+      "EN": "Apparently we had a major power outage a bit before 3 o'clock this morning. Hosts not on emergency power went down and DAG/MODI Jupyter hosts are still out of reach. We're investigating and working on it - more info will follow.",
+      "DK": "Vi blev tilsyneladende ramt af et større strømudfald lidt før kl 3 i morges. Maskiner som ikke er på nødstrøm gik ned og DAG/MODI Jupyter-maskinerne er stadig udenfor rækkevidde. Vi undersøger og arbejder på sagen - mere info følger."
+    }, 
+    "announce_end": "2023-10-25T12:00:00+02:00"
+  },
    {
     "status": "AUTO", 
     "work_start": "2023-11-06T17:00:00+02:00", 
