@@ -54,7 +54,7 @@ else:
             raise ImportError(
                 "scandir version is too old: fall back to os.walk")
     except ImportError as err:
-        #print("DEBUG: not using scandir: %s" % err)
+        # print("DEBUG: not using scandir: %s" % err)
         slow_walk = slow_listdir = True
         walk = os.walk
         listdir = os.listdir
@@ -66,7 +66,7 @@ try:
     from mig.shared.pwcrypto import valid_hash_algos
     from mig.shared.serial import dump, load
 except ImportError as ioe:
-    print("could not import migrid modules!")
+    print("ERROR: could not import migrid modules!")
     exit(1)
 
 
@@ -81,7 +81,7 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
     """
     if not logger:
         logger = null_logger("dummy")
-    logger.debug('writing chunk to %s at offset %d' % (path, offset))
+    # logger.debug("writing chunk to %r at offset %d" % (path, offset))
 
     # create dir and file if it does not exists
 
@@ -90,12 +90,12 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
         try:
             os.mkdir(head)
         except Exception as err:
-            logger.error('could not create dir %s' % err)
+            logger.error("could not create parent dir %r: %s" % (head, err))
     if not os.path.isfile(path):
         try:
             open(path, "w").close()
         except Exception as err:
-            logger.error('could not create file %s' % err)
+            logger.error("could not create file %r: %s" % (path, err))
     try:
         filehandle = open(path, mode)
         # Make sure we can write at requested position, filling if needed
@@ -106,14 +106,14 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
             file_size = filehandle.tell()
             for _ in xrange(offset - file_size):
                 filehandle.write('\0')
-        logger.debug('write %s chunk of size %d at position %d' %
-                     (path, len(chunk), filehandle.tell()))
+        # logger.debug("write %r chunk of size %d at position %d" %
+        #             (path, len(chunk), filehandle.tell()))
         filehandle.write(chunk)
         filehandle.close()
-        logger.debug('file chunk written: %s' % path)
+        # logger.debug("file %r chunk written at %d" % (path, offset))
         return True
     except Exception as err:
-        logger.error('could not write %s chunk at %d: %s' %
+        logger.error("could not write %r chunk at %d: %s" %
                      (path, offset, err))
         return False
 
@@ -122,7 +122,7 @@ def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
     """Wrapper to handle writing of contents to path"""
     if not logger:
         logger = null_logger("dummy")
-    logger.debug('writing file: %s' % path)
+    # logger.debug("writing %r file" % path)
 
     # create dir if it does not exists
 
@@ -131,18 +131,18 @@ def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
         old_umask = os.umask(umask)
     if not os.path.isdir(head) and make_parent:
         try:
-            # logger.debug('making directory: %s' % head)
+            # logger.debug("making parent directory %r" % head)
             os.mkdir(head)
         except Exception as err:
-            logger.error('could not create dir: %s' % err)
+            logger.error("could not create parent dir %r: %s" % (head, err))
     try:
         filehandle = open(path, mode)
         filehandle.write(content)
         filehandle.close()
-        # logger.debug('file written: %s' % path)
+        # logger.debug("file %r written" % path)
         retval = True
     except Exception as err:
-        logger.error('could not write file: %s, error: %s' % (path, err))
+        logger.error("could not write file %r: %s" % (path, err))
         retval = False
     if umask is not None:
         os.umask(old_umask)
@@ -158,16 +158,16 @@ def read_file(path, logger, mode='r', allow_missing=False):
     """Wrapper to handle reading of contents from path"""
     if not logger:
         logger = null_logger("dummy")
-    logger.debug('reading file: %s' % path)
+    # logger.debug("reading %r file" % path)
     content = None
     try:
         filehandle = open(path, mode)
         content = filehandle.read()
         filehandle.close()
-        #logger.debug('read %db from: %s' % (len(content), path))
+        # logger.debug("read %db from %r" % (len(content), path))
     except Exception as err:
         if not allow_missing:
-            logger.error('could not read %s: %s' % (path, err))
+            logger.error("could not read %r: %s" % (path, err))
     return content
 
 
@@ -183,7 +183,7 @@ def read_head_lines(path, lines, logger, mode='r'):
     """Read first lines from path"""
     if not logger:
         logger = null_logger("dummy")
-    logger.debug("loading %d first lines from %s" % (lines, path))
+    # logger.debug("loading %d first lines from %r" % (lines, path))
     contents = ''
     out_lines = []
     try:
@@ -199,13 +199,13 @@ def read_head_lines(path, lines, logger, mode='r'):
         # NOTE: last line is likely truncated when read like this
         while pos < size and contents.count('\n') < lines:
             pos = head_fd.tell()
-            #logger.debug("read %db at pos %d from %s" % (step_size, pos, path))
+            # logger.debug("read %db at pos %d from %r" % (step_size, pos, path))
             contents += head_fd.read(step_size)
             step_size *= 2
         head_fd.close()
         out_lines = contents.splitlines(True)
     except Exception as exc:
-        logger.error("reading %d lines from %s: %s" % (lines, path, exc))
+        logger.error("reading %d lines from %r: %s" % (lines, path, exc))
     return out_lines[:lines]
 
 
@@ -213,7 +213,7 @@ def read_tail_lines(path, lines, logger, mode='r'):
     """Read last lines from path"""
     if not logger:
         logger = null_logger("dummy")
-    logger.debug("loading %d last lines from %s" % (lines, path))
+    # logger.debug("loading %d last lines from %r" % (lines, path))
     out_lines = []
     try:
         if not os.path.exists(path):
@@ -226,15 +226,16 @@ def read_tail_lines(path, lines, logger, mode='r'):
         # locate last X lines
         while pos > 0 and len(out_lines) < lines:
             offset = min(lines * step_size, size)
-            #logger.debug("seek to offset %d from end of %s" % (offset, path))
+            # logger.debug("seek to offset %d from end of %r" % (offset, path))
             tail_fd.seek(-offset, os.SEEK_END)
             pos = tail_fd.tell()
             out_lines = tail_fd.readlines()
             step_size *= 2
-            #logger.debug("reading %d lines from %s" % (lines, path))
+            # logger.debug("reading %d lines from %r" % (lines, path))
         tail_fd.close()
     except Exception as exc:
-        logger.error("reading %d lines from %s: %s" % (lines, path, exc))
+        logger.error("could not read %d lines from %r: %s" %
+                     (lines, path, exc))
     return out_lines[-lines:]
 
 
@@ -242,11 +243,11 @@ def get_file_size(path, logger):
     """Wrapper to handle getsize of path"""
     if not logger:
         logger = null_logger("dummy")
-    logger.debug('getsize on file: %s' % path)
+    # logger.debug("get file size on %r" % path)
     try:
         return os.path.getsize(path)
     except Exception as err:
-        logger.error('could not get size for %s: %s' % (path, err))
+        logger.error("could not get size for %r: %s" % (path, err))
         result = -1
 
 
@@ -256,18 +257,18 @@ def delete_file(path, logger, allow_broken_symlink=False, allow_missing=False):
     """
     if not logger:
         logger = null_logger("dummy")
-    logger.debug('deleting file: %s' % path)
+    # logger.debug("delete file on %r" % path)
     if os.path.exists(path) or allow_broken_symlink and os.path.islink(path):
         try:
             os.remove(path)
             result = True
         except Exception as err:
-            logger.error('could not delete %s %s' % (path, err))
+            logger.error("could not delete %r: %s" % (path, err))
             result = False
     elif allow_missing:
         result = True
     else:
-        logger.info('delete_file: %s does not exist.' % path)
+        logger.warning("delete %r - file does not exist" % path)
         result = False
 
     return result
@@ -279,13 +280,13 @@ def make_symlink(dest, src, logger, force=False):
         logger = null_logger("dummy")
     # NOTE: we use islink instead of exists here to handle broken symlinks
     if os.path.islink(src) and force and delete_symlink(src, logger):
-        logger.debug('deleted existing symlink: %s' % src)
+        logger.debug("deleted existing symlink %r" % src)
 
     try:
-        logger.debug('creating symlink: %s %s' % (dest, src))
+        logger.debug("create symlink %r %r" % (dest, src))
         os.symlink(dest, src)
     except Exception as err:
-        logger.error('Could not create symlink %s %s: %s' % (dest, src, err))
+        logger.error("could not create symlink %r %r: %s" % (dest, src, err))
         return False
     return True
 
@@ -295,7 +296,7 @@ def delete_symlink(path, logger, allow_broken_symlink=True,
     """Wrapper to handle deletion of symlinks"""
     if not logger:
         logger = null_logger("dummy")
-    logger.debug('deleting symlinks: %s' % path)
+    logger.debug("delete symlink %r" % path)
     return delete_file(path, logger, allow_broken_symlink, allow_missing)
 
 
@@ -343,12 +344,11 @@ def unpickle_and_change_status(path, newstatus, logger):
     changes[newstatus + '_TIMESTAMP'] = time.gmtime()
     try:
         job_dict = update_pickled_dict(path, changes)
-        logger.info('job status changed to %s: %s' % (newstatus,
-                                                      path))
+        logger.info("job status in %r changed to %s" % (path, newstatus))
         return job_dict
     except Exception as err:
-        logger.error('could not change job status to %s: %s %s'
-                     % (newstatus, path, err))
+        logger.error("could not change job status in %r to %s: %s" %
+                     (path, newstatus, err))
         return False
 
 
@@ -358,13 +358,12 @@ def unpickle(path, logger, allow_missing=False):
         logger = null_logger("dummy")
     try:
         data_object = load(path)
-        logger.debug('%s was unpickled successfully' % path)
+        # logger.debug("unpickled %r successfully" % path)
         return data_object
     except Exception as err:
         # NOTE: check that it was in fact due to file does not exist error
         if not allow_missing or getattr(err, 'errno', None) != errno.ENOENT:
-            logger.error('%s could not be opened/unpickled! %s'
-                         % (path, err))
+            logger.error("could not open/unpickle %r: %s" % (path, err))
         return False
 
 
@@ -374,10 +373,10 @@ def pickle(data_object, path, logger):
         logger = null_logger("dummy")
     try:
         dump(data_object, path)
-        logger.debug('pickle success: %s' % path)
+        # logger.debug("pickled %r successfully" % path)
         return True
     except Exception as err:
-        logger.error('could not pickle: %s %s' % (path, err))
+        logger.error("could not pickle/save %r: %s" % (path, err))
         return False
 
 
@@ -387,15 +386,14 @@ def load_json(path, logger, allow_missing=False, convert_utf8=True):
         logger = null_logger("dummy")
     try:
         data_object = load(path, serializer='json')
-        logger.debug('%s was loaded successfully' % path)
+        # logger.debug("%s was loaded successfully" % path)
         if convert_utf8:
             data_object = force_utf8_rec(data_object)
         return data_object
     except Exception as err:
         # NOTE: check that it was in fact due to file does not exist error
         if not allow_missing or getattr(err, 'errno', None) != errno.ENOENT:
-            logger.error('%s could not be opened/loaded! %s'
-                         % (path, err))
+            logger.error("could not open/load %r: %s" % (path, err))
         return False
 
 
@@ -403,7 +401,7 @@ def send_message_to_grid_script(message, logger, configuration):
     """Write an instruction to the grid_script name pipe input"""
     if not logger:
         logger = null_logger("dummy")
-    logger.debug('write %r to grid_stdin: %s' %
+    logger.debug("write %r to grid_stdin: %s" %
                  (message, configuration.grid_stdin))
     try:
         filehandle = open(configuration.grid_stdin, 'a')
@@ -412,9 +410,9 @@ def send_message_to_grid_script(message, logger, configuration):
         filehandle.close()
         return True
     except Exception as err:
-        logger.error('could not write %r to grid_stdin: %s' %
+        logger.error("could not write %r to grid_stdin: %s" %
                      (message, err))
-        #print('could not get exclusive access or write to grid_stdin!')
+        # print("could not get exclusive access or write to grid_stdin")
         return False
 
 
@@ -446,6 +444,7 @@ def send_message_to_grid_notify(message, logger, configuration):
 
 def touch(filepath, configuration, timestamp=None):
     """Create or update timestamp for filepath"""
+    _logger = configuration.logger
     try:
         if os.path.exists(filepath) and os.path.getsize(filepath) > 0:
             filehandle = open(filepath, 'r+w')
@@ -459,8 +458,7 @@ def touch(filepath, configuration, timestamp=None):
             # set timestamp to supplied value
             os.utime(filepath, (timestamp, timestamp))
     except Exception as err:
-        configuration.logger.error("could not touch file: '%s'" % filepath
-                                   + ": %s" % err)
+        _logger.error("could not touch file %r: %s" % (filepath, err))
         return False
 
     return True
@@ -480,7 +478,7 @@ def remove_rec(dir_path, configuration):
         _logger.warning("no optimized walk available - using old os.walk")
     try:
         if not os.path.isdir(dir_path):
-            raise Exception("Directory %s does not exist" % dir_path)
+            raise Exception("Directory %r does not exist" % dir_path)
 
         os.chmod(dir_path, 0o777)
 
@@ -493,7 +491,7 @@ def remove_rec(dir_path, configuration):
         shutil.rmtree(dir_path)
 
     except Exception as err:
-        _logger.error("Could not remove_rec %s: %s" % (dir_path, err))
+        _logger.error("Could not remove %r recursively: %s" % (dir_path, err))
         return False
 
     return True
@@ -505,11 +503,11 @@ def remove_dir(dir_path, configuration):
 
     Returns Boolean to indicate success, writes messages to log.
     """
+    _logger = configuration.logger
     try:
         os.rmdir(dir_path)
     except Exception as err:
-        configuration.logger.error("Could not remove_dir %s: %s" %
-                                   (dir_path, err))
+        _logger.error("Could not remove dir %r: %s" % (dir_path, err))
         return False
 
     return True
@@ -530,12 +528,12 @@ def makedirs_rec(dir_path, configuration, accept_existing=True):
     _logger = configuration.logger
     try:
         if os.path.exists(dir_path) and not os.path.isdir(dir_path):
-            _logger.error("Non-directory in the way: %s" % dir_path)
+            _logger.error("Non-directory %r in the way" % dir_path)
             return False
         os.makedirs(dir_path)
     except OSError as err:
         if not accept_existing or err.errno != errno.EEXIST:
-            _logger.error("Could not makedirs_rec %s: %s" % (dir_path, err))
+            _logger.error("Could not make dir(s) %r: %s" % (dir_path, err))
             return False
     return True
 
@@ -551,7 +549,7 @@ def _move_helper(src, dst, configuration, recursive):
         # Always use the same recursive move
         shutil.move(src, dst)
     except Exception as exc:
-        return (False, "move failed: %s" % exc)
+        return (False, "move %r %r failed: %s" % (src, dst, exc))
     return (True, "")
 
 
@@ -582,7 +580,7 @@ def _copy_helper(src, dst, configuration, recursive):
         else:
             shutil.copy(src, dst)
     except Exception as exc:
-        return (False, "copy failed: %s" % exc)
+        return (False, "copy %r %r failed: %s" % (src, dst, exc))
     return (True, "")
 
 
@@ -707,13 +705,13 @@ def write_named_tempfile(configuration, contents):
         os.write(filehandle, contents)
         os.close(filehandle)
     except Exception as exc:
-        _logger.error("failed to write settings tempfile: %s" % exc)
+        _logger.error("failed to write tempfile %r: %s" % (tmpname, exc))
         tmpname = None
     return tmpname
 
 
-def __checksum_file(path, hash_algo, chunk_size=default_chunk_size,
-                    max_chunks=default_max_chunks):
+def checksum_file(path, hash_algo, chunk_size=default_chunk_size,
+                  max_chunks=default_max_chunks, logger=None):
     """Simple block hashing for checksumming of files inspired by  
     http://stackoverflow.com/questions/16799088/file-checksums-in-python
     Read at most max_chunks blocks of chunk_size (to avoid DoS) and checksum
@@ -724,6 +722,8 @@ def __checksum_file(path, hash_algo, chunk_size=default_chunk_size,
     files a partial checksum of the first chunk_size * max_chunks bytes will
     be returned.
     """
+    if not logger:
+        logger = null_logger("dummy")
     checksum = valid_hash_algos.get(hash_algo, valid_hash_algos['md5'])()
     chunks_read = 0
     msg = ''
@@ -739,31 +739,32 @@ def __checksum_file(path, hash_algo, chunk_size=default_chunk_size,
             msg = ' (of first %d bytes)' % (chunk_size * max_chunks)
         return "%s%s" % (checksum.hexdigest(), msg)
     except Exception as exc:
-        return "checksum failed: %s" % exc
+        logger.error("checksum %r failed: %s" % (path, exc))
+        return "checksum %r failed" % os.path.basename(path)
 
 
 def md5sum_file(path, chunk_size=default_chunk_size,
-                max_chunks=default_max_chunks):
+                max_chunks=default_max_chunks, logger=None):
     """Simple md5 hashing for checksumming of files"""
-    return __checksum_file(path, "md5", chunk_size, max_chunks)
+    return checksum_file(path, "md5", chunk_size, max_chunks, logger)
 
 
 def sha1sum_file(path, chunk_size=default_chunk_size,
-                 max_chunks=default_max_chunks):
+                 max_chunks=default_max_chunks, logger=None):
     """Simple sha1 hashing for checksumming of files"""
-    return __checksum_file(path, "sha1", chunk_size, max_chunks)
+    return checksum_file(path, "sha1", chunk_size, max_chunks, logger)
 
 
 def sha256sum_file(path, chunk_size=default_chunk_size,
-                   max_chunks=default_max_chunks):
+                   max_chunks=default_max_chunks, logger=None):
     """Simple sha256 hashing for checksumming of files"""
-    return __checksum_file(path, "sha256", chunk_size, max_chunks)
+    return checksum_file(path, "sha256", chunk_size, max_chunks, logger)
 
 
 def sha512sum_file(path, chunk_size=default_chunk_size,
-                   max_chunks=default_max_chunks):
+                   max_chunks=default_max_chunks, logger=None):
     """Simple sha512 hashing for checksumming of files"""
-    return __checksum_file(path, "sha512", chunk_size, max_chunks)
+    return checksum_file(path, "sha512", chunk_size, max_chunks, logger)
 
 
 def acquire_file_lock(lock_path, exclusive=True, blocking=True):
@@ -823,7 +824,7 @@ def responsive_acquire_lock(lock_path, exclusive, max_attempts=10,
         else:
             break
     if lock_handle is None:
-        raise Exception("gave up locking %s for update" % lock_path)
+        raise Exception("gave up locking %r for update" % lock_path)
     return lock_handle
 
 
@@ -884,6 +885,7 @@ def untrusted_store_res_symlink(configuration, path):
     restrictions. Thus we only allow symlinks there if they point to somewhere
     inside the same storage resource folder.
     """
+    _logger = configuration.logger
     # If path doesn't expand to a different location we are generally safe
     real_path = os.path.realpath(path)
     if path == real_path:
@@ -904,8 +906,7 @@ def untrusted_store_res_symlink(configuration, path):
             break
     if not found_res_base:
         return False
-    # configuration.logger.debug("check real_path %s inside %s" % \
-    #                            (real_path, res_base))
+    # _logger.debug("check real_path %r inside %r" % (real_path, res_base))
     return not real_path.startswith(real_res_base)
 
 
