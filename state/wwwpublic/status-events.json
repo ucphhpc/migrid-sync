@@ -13,7 +13,7 @@
     "services": [
         "DAG", "MODI",
     ], 
-    "work_end": "2023-10-25T12:00:00+02:00", 
+    "work_end": "2023-10-26T22:00:00+02:00", 
     "description": {
       "EN": "We had a longer serious power outage from about 3 o'clock this morning, which triggered circuit breakers, leaving several systems without power. Hosts with limitied or no emergency power therefore went down and DAG/MODI Jupyter hosts remained unreachable. We had our technicians on-site to sort out the issues and bring several machines and a bit of network equipment back online. So we got the DAG resources up and running at about 16 o'clock. MODI needs some more care and we expect to get it online sometime tomorrow. Hopefully we manage that before noon but time will tell. In any case we're sorry about the inconvenience. More info will follow here.",
       "DK": "Vi blev ramt af et omfattende og længerevarende strømudfald fra lidt før kl 3 i morges. Det fik sikringer til at gå og efterlod adskillige systemer uden strøm. Maskiner uden - eller med begrænset nødstrøm gik derfor ned og DAG/MODI Jupyter-maskinerne forblev udenfor rækkevidde. Vi havde teknikere på stedet for at få styr på problemerne og bringe en række maskiner og lidt netværksudstyr tilbage i drift. Vi fik således DAG-maskinerne op at køre igen omkring kl 16. MODI kræver noget mere arbejde og vi regner med at få den tilbage i drift i løbet af i morgen. Forhåbentlig inden middag, men det må vi se. Uanset beklager vi de medfølgende gener. Mere info følger her."
