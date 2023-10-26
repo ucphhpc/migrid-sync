@@ -302,24 +302,23 @@ def update_cached_meta(configuration, client_id, freeze_id, freeze_meta):
     _logger = configuration.logger
     client_dir = client_id_dir(client_id)
     user_cache = os.path.join(configuration.user_cache, client_dir)
-    archives_cache = os.path.join(user_cache, archives_cache_filename)
-    lock_path = "%s.lock" % archives_cache
-    _logger.debug('update archives cache %s with %s' %
-                  (archives_cache, freeze_id))
+    cache_path = os.path.join(user_cache, archives_cache_filename)
+    lock_path = "%s.lock" % cache_path
+    _logger.debug('update archives cache %s with %s' % (cache_path, freeze_id))
     lock_handle = None
     try:
         lock_handle = acquire_file_lock(lock_path, exclusive=True)
-        if os.path.exists(archives_cache):
-            frozen_cache = load(archives_cache)
+        if os.path.exists(cache_path):
+            frozen_cache = load(cache_path)
         else:
             frozen_cache = {}
         frozen_cache[freeze_id] = freeze_meta
-        dump(frozen_cache, archives_cache)
+        dump(frozen_cache, cache_path)
         update_status = True
     except Exception as err:
         update_status = False
         _logger.warning('could not update %s in freeze cache %s: %s' %
-                        (freeze_id, archives_cache, err))
+                        (freeze_id, cache_path, err))
     if lock_handle:
         release_file_lock(lock_handle)
     return update_status
@@ -333,23 +332,23 @@ def prune_cached_meta(configuration, client_id, freeze_id):
     _logger = configuration.logger
     client_dir = client_id_dir(client_id)
     user_cache = os.path.join(configuration.user_cache, client_dir)
-    archives_cache = os.path.join(user_cache, archives_cache_filename)
+    cache_path = os.path.join(user_cache, archives_cache_filename)
     prune_status = False
-    lock_path = "%s.lock" % archives_cache
-    _logger.debug('load archives cache %s' % archives_cache)
+    lock_path = "%s.lock" % cache_path
+    _logger.debug('prune archives cache %s with %s' % (cache_path, freeze_id))
     lock_handle = None
     try:
         lock_handle = acquire_file_lock(lock_path, exclusive=True)
-        if os.path.exists(archives_cache):
-            frozen_cache = load(archives_cache)
+        if os.path.exists(cache_path):
+            frozen_cache = load(cache_path)
         else:
             frozen_cache = {}
         del frozen_cache[freeze_id]
-        dump(frozen_cache, archives_cache)
+        dump(frozen_cache, cache_path)
         prune_status = True
     except Exception as err:
         _logger.warning('could not prune %s in freeze cache %s: %s' %
-                        (freeze_id, archives_cache, err))
+                        (freeze_id, cache_path, err))
     if lock_handle:
         release_file_lock(lock_handle)
     return prune_status
@@ -375,54 +374,82 @@ def list_frozen_archives(configuration, client_id, strict_owner=False,
         return (True, list(frozen_cache))
 
     frozen_list = []
-    dir_content = []
+    mixed_content, user_content = [], []
 
     # TODO: remove legacy look-up directly in freeze_home when migrated
     client_dir = client_id_dir(client_id)
+    mixed_archives = configuration.freeze_home
     user_archives = os.path.join(configuration.freeze_home, client_dir)
-    for archive_home in (user_archives, configuration.freeze_home):
-        try:
-            dir_content += listdir(archive_home)
-        except Exception:
-            if not makedirs_rec(archive_home, configuration):
-                _logger.error(
-                    'could not able to create directory %s' % archive_home)
-                return (False, "archive setup is broken")
+    # Lazy init - make sure user archive dir and parent is created when needed
+    if not os.path.exists(user_archives) and not makedirs_rec(user_archives,
+                                                              configuration):
+        _logger.error('could not create user archive root %r' % user_archives)
+        return (False, "user archive setup is broken")
 
-    for entry in dir_content:
+    try:
+        mixed_content = listdir(mixed_archives)
+    except Exception:
+        _logger.error('failed to list mixed archives in %r' % mixed_archives)
+        return (False, "base archive setup is broken")
+    try:
+        user_content = listdir(user_archives)
+    except Exception:
+        _logger.error('failed to list user archives in %r' % user_archives)
+        return (False, "user archive setup is broken")
+
+    for entry in mixed_content + user_content + list(frozen_cache):
 
         # Skip dot files/dirs and cache entries
 
         if not entry.startswith(ARCHIVE_PREFIX) or entry.endswith(CACHE_EXT):
             continue
-        #_logger.debug('checking archive %s for %s' % (entry, client_id))
-        if is_frozen_archive(client_id, entry, configuration):
+
+        mixed_arch, user_arch, stale_arch = False, False, False
+        if entry in user_content:
+            user_arch = True
+        elif entry in mixed_content:
+            mixed_arch = True
+        else:
+            stale_arch = True
+
+        _logger.debug('checking archive %s for %s' % (entry, client_id))
+        if stale_arch:
+            _logger.info('pruning stale %s from %s archive cache' %
+                         (entry, client_id))
+            prune_cached_meta(configuration, client_id, entry)
+        elif is_frozen_archive(client_id, entry, configuration):
 
             # entry is a frozen archive - check ownership
 
             freeze_id = entry
-
+            enforce_owner = (strict_owner or mixed_arch)
             (meta_status, meta_out) = get_frozen_meta(client_id, freeze_id,
                                                       configuration, caching)
             if not meta_status:
                 _logger.warning("skip archive %s without metadata" % freeze_id)
                 continue
-            if strict_owner and meta_out['CREATOR'] != client_id:
+
+            # Never hijack mixed space archives with different owner
+            if enforce_owner and meta_out['CREATOR'] != client_id:
                 _logger.warning("skip archive %s with wrong owner (%s)" %
                                 (freeze_id, client_id))
                 continue
-            frozen_list.append(freeze_id)
-            if not freeze_id in frozen_cache:
+            # Add ID if not already in cache
+            if not freeze_id in frozen_list:
+                frozen_list.append(freeze_id)
+            # NOTE: this should no longer be needed with active cache updates
+            #       but just in case suh a cache update failed or something.
+            cached_meta = frozen_cache.get(freeze_id, {})
+            if not cached_meta or meta_out['CREATED_TIMESTAMP'] > \
+                    cached_meta['CREATED_TIMESTAMP'] or \
+                    meta_out['STATE'] != cached_meta['STATE']:
+                _logger.debug("found stale cache for archive %s of %s" %
+                              (freeze_id, client_id))
                 update_cached_meta(configuration, client_id, freeze_id,
                                    meta_out)
         else:
             _logger.warning('%s in %s is not a user directory, move it?' %
                             (entry, configuration.freeze_home))
-            # Remove any bogus or no longer available archives from cache
-            if entry in frozen_cache:
-                _logger.info('pruning stale %s from %s archive cache' %
-                             (entry, client_id))
-                prune_cached_meta(configuration, client_id, entry)
     return (True, frozen_list)
 
 
@@ -460,8 +487,11 @@ def is_frozen_archive(client_id, freeze_id, configuration):
 
 
 def mark_archives_modified(configuration, client_id, freeze_id, when):
-    """Make file markers to tell other callers about changed or new archives.
+    """Make file markers to tell other callers about changed archives.
     Makes a marker for the given freeze_id plus a shared ANY archive.
+    Should only be used in relation to changes in archive file contents, not
+    on create, finalize or delete archive as we want such changes to reflect
+    immediately in user archive cache.
     """
     client_dir = client_id_dir(client_id)
     base_dir = os.path.join(configuration.mig_system_run, archive_marks_dir,
@@ -476,6 +506,8 @@ def pending_archives_update(configuration, client_id, freeze_id=keyword_any):
     """Check if archive with freeze_id for client_id indicates a pending
     update. The default is to check for any archive if no explicit freeze_id
     is provided.
+    Used mainly to keep updating archive details during long background file
+    additions.
     """
     _logger = configuration.logger
     client_dir = client_id_dir(client_id)
@@ -484,10 +516,10 @@ def pending_archives_update(configuration, client_id, freeze_id=keyword_any):
     last_changed = get_filemark(configuration, base_dir, freeze_id)
     user_archives = os.path.join(configuration.freeze_home, client_dir)
     user_cache = os.path.join(configuration.user_cache, client_dir)
-    archives_cache = os.path.join(user_cache, archives_cache_filename)
+    cache_path = os.path.join(user_cache, archives_cache_filename)
     cache_changed = 0
-    if os.path.exists(archives_cache):
-        cache_changed = os.path.getmtime(archives_cache)
+    if os.path.exists(cache_path):
+        cache_changed = os.path.getmtime(cache_path)
     if last_changed is None:
         _logger.debug("missing archive change marker for %s - update" %
                       client_id)
@@ -499,6 +531,11 @@ def pending_archives_update(configuration, client_id, freeze_id=keyword_any):
                       client_id)
         return True
     else:
+        # TODO: check if the specific archive file cache timestamp is newer
+        #       than cache_changed, too?
+        #       Otherwise a parallel fast archive creation may stop further
+        #       updates to an archive with long running file additions.
+        #       This will get really hairy for the keyword_any case, though.
         return False
 
 
@@ -664,8 +701,8 @@ def get_frozen_archive(client_id, freeze_id, configuration,
     the legacy freeze_home location.
     The optional checksum_list argument can be used to switch between
     potentially heavy checksum calculation e.g. when used in freezedb.
-    The optional caching argument specifies whether any cached version should
-    unconditionally be used.
+    The optional caching argument specifies whether any cached version of file
+    details should unconditionally be used.
     """
     _logger = configuration.logger
     if not is_frozen_archive(client_id, freeze_id, configuration):
@@ -676,13 +713,11 @@ def get_frozen_archive(client_id, freeze_id, configuration,
     if not meta_status:
         return (False, 'failed to extract meta data for %s' % freeze_id)
 
-    # Keep refreshing cache while archive operations are in progress
-    if caching:
-        cache_refresh = False
-    elif meta_out.get('STATE', keyword_final) == keyword_updating:
+    # Keep refreshing file cache while archive operations are in progress
+    cache_refresh = False
+    if not caching and \
+            meta_out.get('STATE', keyword_final) == keyword_updating:
         cache_refresh = True
-    else:
-        cache_refresh = False
     _logger.debug("get frozen files for %s with refresh: %s" %
                   (freeze_id, cache_refresh))
     (files_status, files_out) = get_frozen_files(client_id, freeze_id,
@@ -1168,6 +1203,7 @@ def save_frozen_meta(freeze_dict, arch_dir, configuration):
     try:
         meta_lock = acquire_file_lock(lock_path)
         dump(meta_dict, meta_path)
+        _logger.debug("updated meta in %s: %s" % (meta_path, meta_dict))
     except Exception as err:
         _logger.error("update meta failed: %s" % err)
         status = False
@@ -1206,7 +1242,55 @@ def commit_frozen_archive(freeze_dict, arch_dir, configuration):
                                                configuration)
     if not save_status:
         return (save_status, save_res)
+
+    # Update private user archive cache to reflect commit right away
+    client_id, freeze_meta = save_res['CREATOR'], save_res
+    update_cached_meta(configuration, client_id, freeze_id, freeze_meta)
     return (True, freeze_dict)
+
+
+def __set_archive_state(freeze_dict, arch_dir, new_state, configuration,
+                        force=False):
+    """Internal helper to set state of freeze archive defined in freeze_dict
+    to new_state.
+    IMPORTANT: the freeze_dict STATE is not necessarily the current state, but
+    rather the requested end state of an on-going create frozen archive call.
+    Therefore, it is NOT used below and shouldn't be either.
+    The optional force argument is used to differentiate between change state
+    calls where a tuple of save status and save details is returned and the
+    simplified reset state calls where only the save status is returned.
+    """
+    _logger = configuration.logger
+    client_id = freeze_dict.get('CREATOR', 'UNKNOWN')
+    flavor = freeze_dict.get('FLAVOR', 'UNKNOWN')
+    freeze_id = freeze_dict.get('ID', 'UNKNOWN')
+    _logger.debug("change state of %s archive %s for %r to %s" %
+                  (flavor, freeze_id, client_id, new_state))
+    # IMPORTANT: use a copy of freeze_dict to avoid changing anything there.
+    #            Please refer to the STATE details in function docs.
+    updating_dict = {}
+    updating_dict.update(freeze_dict)
+    updating_dict['STATE'] = new_state
+    (save_status, save_res) = save_frozen_meta(updating_dict, arch_dir,
+                                               configuration)
+    if force:
+        return save_status
+    else:
+        return (save_status, save_res)
+
+
+def change_archive_state(freeze_dict, arch_dir, state, configuration):
+    """Change state of freeze archive defined in freeze_dict to new_state"""
+    return __set_archive_state(freeze_dict, arch_dir, state, configuration)
+
+
+def reset_archive_state(freeze_dict, arch_dir, state, configuration):
+    """A simplified form of change_archive_state where we want to set state and
+    don't care about any save error details, but just whether it completed or
+    not. Mainly useful during recovery from other errors.
+    """
+    return __set_archive_state(freeze_dict, arch_dir, state, configuration,
+                               True)
 
 
 def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
@@ -1243,10 +1327,13 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
     if existing_archive:
         # Legacy archives may not have all fields set
         published = freeze_dict.get('PUBLISH', False)
-        state = freeze_dict.get('STATE', keyword_final)
+        # NOTE: if create fails somehow we reset state to fallback_state
+        state = fallback_state = freeze_dict.get('STATE', keyword_final)
         freeze_dict.update(freeze_meta)
     else:
         published = False
+        # NOTE: if create fails somehow we set state to fallback_state
+        fallback_state = keyword_pending
         state = freeze_meta['STATE']
 
     _logger.debug("%s create/update archive with dict: %s" %
@@ -1258,6 +1345,7 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
             _logger.error("changes to persistant archive %s for %s refused" %
                           (freeze_id, client_id))
             return (False, "Error: persistant archives cannot be edited")
+        # TODO: reset UPDATING after a certain time - likely browser timeout?
         elif state == keyword_updating:
             _logger.error("changes to archive %s for %s refused during update"
                           % (freeze_id, client_id))
@@ -1265,24 +1353,30 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
 
     arch_dir = get_frozen_root(client_id, freeze_id, configuration)
 
-    _logger.debug("marking archive %s for update" % freeze_id)
-    updating_dict = {}
-    updating_dict.update(freeze_dict)
-    updating_dict['STATE'] = keyword_updating
-    (save_status, save_res) = save_frozen_meta(updating_dict, arch_dir,
-                                               configuration)
+    # Mark locked for update
+    (save_status, save_res) = change_archive_state(freeze_dict, arch_dir,
+                                                   keyword_updating,
+                                                   configuration)
     if not save_status:
         _logger.error("could not save %s metadata for update: %s" % (freeze_id,
                                                                      save_res))
         return (False, "Error: registering archive for update")
 
+    # File list changes are lazy updated in cache until commit
+    mark_archives_modified(configuration, client_id, freeze_id, time.time())
+
     _logger.debug("marked archive %s for update and proceeding" % freeze_id)
+
     (files_status, files_res) = handle_frozen_files(freeze_id, arch_dir,
                                                     freeze_copy, freeze_move,
                                                     freeze_upload,
                                                     configuration)
     if not files_status:
         _logger.error(files_res)
+        if not reset_archive_state(freeze_dict, arch_dir, fallback_state,
+                                   configuration):
+            _logger.error("could not reset state to %s for %s" %
+                          (fallback_state, freeze_dict))
         return (files_status, files_res)
     # Merge list of existing files from loaded archive with new ones
     frozen_files = [i['name'] for i in freeze_dict.get('FILES', [])
@@ -1294,12 +1388,20 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
     if freeze_entries > max_freeze_files:
         _logger.error("Max file count exceeded in %s for %s: %s" %
                       (freeze_id, client_id, freeze_entries))
+        if not reset_archive_state(freeze_dict, arch_dir, fallback_state,
+                                   configuration):
+            _logger.error("could not reset state to %s for %s" %
+                          (fallback_state, freeze_dict))
         return (False, "Error: Too many archive files (%s), max %s" %
                 (freeze_entries, max_freeze_files))
 
     if state == keyword_final and freeze_entries < 1:
         _logger.error("No files included in %s for %s: %s" %
                       (freeze_id, client_id, freeze_entries))
+        if not reset_archive_state(freeze_dict, arch_dir, fallback_state,
+                                   configuration):
+            _logger.error("could not reset state to %s for %s" %
+                          (fallback_state, freeze_dict))
         return (False, "Error: final archives must have one or more files")
 
     # NOTE: force cache generation without chksums for immediate use everywhere
@@ -1307,7 +1409,14 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
                                               configuration, [],
                                               force_refresh=True)
     if not files_status:
+        _logger.error("Cache update failed for %s freeze %s" %
+                      (client_id, freeze_id))
+        if not reset_archive_state(freeze_dict, arch_dir, fallback_state,
+                                   configuration):
+            _logger.error("could not reset state to %s for %s" %
+                          (fallback_state, freeze_dict))
         return (False, 'failed to build cached files for %s' % freeze_id)
+
     _logger.debug("loaded cached files for '%s': %s" %
                   (freeze_id, brief_list(cached)))
 
@@ -1329,6 +1438,10 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
     # Shared handling of above publish status
     if not web_status:
         _logger.error(web_res)
+        if not reset_archive_state(freeze_dict, arch_dir, fallback_state,
+                                   configuration):
+            _logger.error("could not reset state to %s for %s" %
+                          (fallback_state, freeze_dict))
         return (False, web_res)
     # We received publish updates for published landing page
     freeze_dict.update(web_res)
@@ -1339,10 +1452,14 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
                                                         configuration)
     if not commit_status:
         _logger.error(commit_res)
+        if not reset_archive_state(freeze_dict, arch_dir, fallback_state,
+                                   configuration):
+            _logger.error("could not reset state to %s for %s" %
+                          (fallback_state, freeze_dict))
         return (False, commit_res)
+
     # We received location updates from commit
     freeze_dict = commit_res
-    mark_archives_modified(configuration, client_id, freeze_id, time.time())
     return (True, freeze_dict)
 
 
@@ -1356,15 +1473,16 @@ def delete_archive_files(freeze_dict, client_id, path_list, configuration):
     arch_dir = get_frozen_root(client_id, freeze_id, configuration)
     status, msg_list, deleted = True, [], []
     _logger.debug("marking archive %s for update in file delete" % freeze_id)
-    updating_dict = {}
-    updating_dict.update(freeze_dict)
-    updating_dict['STATE'] = keyword_updating
-    (save_status, save_res) = save_frozen_meta(updating_dict, arch_dir,
-                                               configuration)
+    (save_status, save_res) = change_archive_state(freeze_dict, arch_dir,
+                                                   keyword_updating,
+                                                   configuration)
     if not save_status:
         _logger.error("could not save %s metadata for update: %s" % (freeze_id,
                                                                      save_res))
-        return (False, "Error: marking archive for update")
+        return (False, "Error: registering archive for update")
+
+    # File list changes are lazy updated in the cache until commit
+    mark_archives_modified(configuration, client_id, freeze_id, time.time())
 
     _logger.debug("marked archive %s for update and proceeding" % freeze_id)
 
@@ -1428,7 +1546,6 @@ def delete_archive_files(freeze_dict, client_id, path_list, configuration):
         _logger.error(commit_res)
         return (False, commit_res)
 
-    mark_archives_modified(configuration, client_id, freeze_id, time.time())
     return (status, msg_list)
 
 
@@ -1452,7 +1569,9 @@ def delete_frozen_archive(freeze_dict, client_id, configuration):
         _logger.error("could not remove archive dir for %s" %
                       brief_freeze(freeze_dict))
         return (False, 'Error deleting frozen archive %s' % freeze_id)
-    mark_archives_modified(configuration, client_id, freeze_id, time.time())
+
+    # Update private user archive cache to reflect delete right away
+    prune_cached_meta(configuration, client_id, freeze_id)
     return (True, '')
 
 
