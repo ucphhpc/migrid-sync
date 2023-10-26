@@ -11,7 +11,7 @@
       "DK": "Strømudfald - DAG/MODI utilgængelig"
     }, 
     "services": [
-        "DAG", "MODI",
+        "DAG", "MODI"
     ], 
     "work_end": "2023-10-26T22:00:00+02:00", 
     "description": {
