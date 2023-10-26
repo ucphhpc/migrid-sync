@@ -191,10 +191,14 @@ def application(environ, start_response):
     default_enc, fs_enc = sys.getdefaultencoding(), sys.getfilesystemencoding()
     _logger.debug("using %s default and %s file system encoding" %
                   (default_enc, fs_enc))
-    # IMPORTANT: we want to avoid 'ascii' as file system encoding, which is
-    #            the default here on Python3 unless environment is correctly
-    #            set up. If so it breaks actual utf8 paths and thus client_id
-    #            by rendering them with unicode surrogate codes.
+    # IMPORTANT: we want to avoid 'ascii' as assumed file system encoding.
+    #            On modern Linux/UN*X utf8 is actually used but LANG=C or
+    #            similar in the environment makes python *guess* it is really
+    #            ascii. If so it breaks actual utf8 paths on python3 and thus
+    #            e.g. client_id with non-ascii by rendering them with unicode
+    #            surrogate codes.
+    #            Use generateconfs.py and install the resulting envvars to set
+    #            proper environment values including for locales.
     if fs_enc.lower() != 'utf-8' and default_fs_coding == 'utf8':
         _logger.error("Expected utf-8 filesys encoding but found %r!" % fs_enc)
 
