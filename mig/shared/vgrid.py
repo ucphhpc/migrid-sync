@@ -492,8 +492,10 @@ def vgrid_exists(configuration, vgrid_name):
 
     if vgrid_is_default(vgrid_name):
         return True
+    # NOTE: we need to do recursive owners lookup here. Otherwise existance
+    #       check would fail for sub-vgrids with only inherited owners.
     (status, entries) = vgrid_list(vgrid_name, 'owners', configuration,
-                                   recursive=False, allow_missing=True)
+                                   recursive=True, allow_missing=True)
 
     if not status or not entries:
         return False
@@ -1773,7 +1775,7 @@ def vgrid_set_entities(configuration, vgrid_name, kind, id_list, allow_empty):
         status = False
         msg = "could not set %s for %s: %s" % (kind, vgrid_name, exc)
         #import traceback
-        #_logger.error("failed in set %s for %s: %s\n%s" %
+        # _logger.error("failed in set %s for %s: %s\n%s" %
         #              (kind, vgrid_name, exc, traceback.format_exc()))
     finally:
         if lock_handle:
