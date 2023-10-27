@@ -334,6 +334,8 @@ CSRF-filtered POST requests to prevent unintended updates'''
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         if not vgrid_exists(configuration, vgrid_name):
+            logger.warning("failed to find vgrid %r in %s request from %s" %
+                           (vgrid_name, request_type, client_id))
             output_objects.append({
                 'object_type': 'error_text', 'text': 'No %s %s found!'
                 % (vgrid_name, label)
