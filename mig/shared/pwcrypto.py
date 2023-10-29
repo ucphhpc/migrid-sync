@@ -79,10 +79,13 @@ COST_FACTOR = 10000
 AAD_PREFIX = 'migrid authenticated'
 AAD_DEFAULT_STAMP = '%Y%m%d'
 
-# NOTE hook up available hashing algorithms once and for all
-valid_hash_algos = {'md5': hashlib.md5}
+# NOTE: hook up available hashing algorithms once and for all
+valid_hash_algos = {}
 for algo in hashlib.algorithms_guaranteed:
     valid_hash_algos[algo] = getattr(hashlib, algo)
+sorted_hash_algos = list(valid_hash_algos)
+sorted_hash_algos.sort()
+default_algo = sorted_hash_algos[0]
 
 
 def best_crypt_salt(configuration):
@@ -105,8 +108,8 @@ def best_crypt_salt(configuration):
 def make_hash(password):
     """Generate a random salt and return a new hash for the password."""
     salt = b64encode(urandom(SALT_LENGTH))
-    derived = b64encode(hashlib.pbkdf2_hmac(HASH_FUNCTION, 
-                                            force_utf8(password), salt, 
+    derived = b64encode(hashlib.pbkdf2_hmac(HASH_FUNCTION,
+                                            force_utf8(password), salt,
                                             COST_FACTOR, KEY_LENGTH))
     return 'PBKDF2${}${}${}${}'.format(HASH_FUNCTION, COST_FACTOR,
                                        salt, derived)
@@ -911,7 +914,7 @@ def make_generic_hash(val, algo, hex_format=True):
     otherwise.
     """
     if not algo in valid_hash_algos:
-        algo = 'md5'
+        algo = default_algo
     hash_helper = valid_hash_algos[algo]
     if hex_format:
         return hash_helper(val).hexdigest()

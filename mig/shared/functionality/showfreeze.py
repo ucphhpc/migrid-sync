@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # showfreeze - back end to request freeze files in write-once fashion
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,12 +35,12 @@ from mig.shared import returnvalues
 from mig.shared.defaults import default_pager_entries, freeze_flavors, \
     csrf_field, keyword_updating, keyword_final
 from mig.shared.freezefunctions import is_frozen_archive, get_frozen_archive, \
-    build_freezeitem_object, brief_freeze, supported_hash_algos, \
-    pending_archives_update, TARGET_PATH
+    build_freezeitem_object, brief_freeze, pending_archives_update, TARGET_PATH
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from mig.shared.html import man_base_js, man_base_html, html_post_helper
 from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.pwcrypto import sorted_hash_algos
 
 list_operations = ['showlist', 'list']
 show_operations = ['show', 'showlist']
@@ -93,10 +93,8 @@ def main(client_id, user_arguments_dict):
     title_entry['text'] = title
     output_objects.append({'object_type': 'header', 'text': title})
 
-    sorted_algos = supported_hash_algos()
-    sorted_algos.sort()
     for checksum in checksum_list:
-        if not checksum in sorted_algos:
+        if not checksum in sorted_hash_algos:
             output_objects.append({'object_type': 'error_text', 'text':
                                    'Invalid checksum algo(s): %s' % checksum})
             return (output_objects, returnvalues.CLIENT_ERROR)
@@ -116,7 +114,7 @@ Please contact the site admins %s if you think it should be enabled.
 
     # We don't generally know checksum and edit status until AJAX returns
     hide_elems = {'edit': 'hidden', 'update': 'hidden', 'register': 'hidden'}
-    for algo in sorted_algos:
+    for algo in sorted_hash_algos:
         hide_elems['%ssum' % algo] = 'hidden'
 
     if operation in show_operations:
@@ -125,11 +123,12 @@ Please contact the site admins %s if you think it should be enabled.
         # table initially sorted by col. 0 (filename)
 
         # NOTE: We distinguish between caching on page load and forced refresh
-        refresh_helper = 'ajax_showfreeze("%s", "%s", %s, "%s", "%s", "%s", "%s", %%s)'
+        refresh_helper = 'ajax_showfreeze("%s", "%s", %s, "%s", "%s", "%s", "%s", %%s, %s)'
         refresh_call = refresh_helper % (freeze_id, flavor, checksum_list,
                                          keyword_updating, keyword_final,
                                          configuration.site_freeze_doi_url,
-                                         configuration.site_freeze_doi_url_field)
+                                         configuration.site_freeze_doi_url_field,
+                                         sorted_hash_algos)
         table_spec = {'table_id': 'frozenfilestable', 'sort_order': '[[0,0]]',
                       'refresh_call': refresh_call % 'false'}
         (add_import, add_init, add_ready) = man_base_js(configuration,
@@ -138,15 +137,16 @@ Please contact the site admins %s if you think it should be enabled.
             add_ready += '%s;' % (refresh_call % 'true')
 
         # Only show requested checksums
-        for algo in sorted_algos:
+        for algo in sorted_hash_algos:
+            checksum_field = '%ssum' % algo
             if algo in checksum_list:
                 add_ready += """
-        $('.%ssum').show();
-""" % checksum
+        $('.%s').show();
+""" % checksum_field
             else:
                 add_ready += """
-        $('.%ssum').hide();
-        """ % algo
+        $('.%s').hide();
+""" % checksum_field
 
         title_entry['script']['advanced'] += add_import
         title_entry['script']['init'] += add_init
@@ -244,7 +244,7 @@ Please contact the site admins %s if you think it should be enabled.
         output_objects.append({'object_type': 'html_form', 'text': """<p>
 Show archive with file checksums - might take quite a while to calculate:
 </p>"""})
-        for algo in sorted_algos:
+        for algo in sorted_hash_algos:
             output_objects.append({'object_type': 'html_form', 'text': '<p>'})
             output_objects.append({
                 'object_type': 'link',
