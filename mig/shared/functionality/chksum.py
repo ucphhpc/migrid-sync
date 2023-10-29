@@ -35,23 +35,20 @@ import glob
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir
 from mig.shared.defaults import default_max_chunks
-from mig.shared.fileio import md5sum_file, sha1sum_file, sha256sum_file, \
-    sha512sum_file, write_file, check_write_access
+from mig.shared.fileio import checksum_file, write_file, check_write_access
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.init import initialize_main_variables
 from mig.shared.parseflags import verbose
+from mig.shared.pwcrypto import sorted_hash_algos, default_algo
 from mig.shared.safeinput import valid_path_pattern
 from mig.shared.validstring import valid_user_path
-
-_algo_map = {'md5': md5sum_file, 'sha1': sha1sum_file,
-             'sha256': sha256sum_file, 'sha512': sha512sum_file}
 
 
 def signature():
     """Signature of the main function"""
 
-    defaults = {'flags': [''], 'hash_algo': ['md5'], 'max_chunks':
+    defaults = {'flags': [''], 'hash_algo': [default_algo], 'max_chunks':
                 [default_max_chunks], 'path': REJECT_UNSET, 'dst': [''],
                 'current_dir': ['.']}
     return ['file_output', defaults]
@@ -108,12 +105,21 @@ def main(client_id, user_arguments_dict):
     abs_dir = os.path.abspath(os.path.join(base_dir,
                                            current_dir.lstrip(os.sep)))
     if not valid_user_path(configuration, abs_dir, base_dir, True):
+        logger.warning('%s tried to %s restricted path %s ! (%s)'
+                       % (client_id, op_name, abs_dir, current_dir))
         output_objects.append({'object_type': 'error_text', 'text':
                                "You're not allowed to work in %s!"
                                % current_dir})
-        logger.warning('%s tried to %s restricted path %s ! (%s)'
-                       % (client_id, op_name, abs_dir, current_dir))
         return (output_objects, returnvalues.CLIENT_ERROR)
+
+    for hash_algo in algo_list:
+        if not hash_algo in sorted_hash_algos:
+            logger.error('%s got unsupported hash algo %r from %s' %
+                         (op_name, hash_algo, client_id))
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   "unsupported checksum algorithm %r" %
+                                   hash_algo})
+            return (output_objects, returnvalues.CLIENT_ERROR)
 
     if verbose(flags):
         output_objects.append({'object_type': 'text', 'text':
@@ -189,8 +195,8 @@ def main(client_id, user_arguments_dict):
             output_lines = []
             for hash_algo in algo_list:
                 try:
-                    chksum_helper = _algo_map.get(hash_algo, _algo_map["md5"])
-                    checksum = chksum_helper(abs_path, max_chunks=max_chunks)
+                    checksum = checksum_file(abs_path, hash_algo,
+                                             max_chunks=max_chunks)
                     line = "%s %s\n" % (checksum, relative_path)
                     logger.info("%s %s of %s: %s" % (op_name, hash_algo,
                                                      abs_path, checksum))

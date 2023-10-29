@@ -4,7 +4,7 @@
   # --- BEGIN_HEADER ---
   #
   # jquery.ajaxhelpers - jquery based ajax helpers for managers
-  # Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+  # Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
   #
   # This file is part of MiG.
   #
@@ -292,7 +292,8 @@ function ajax_freezedb(permanent_freeze, keyword_final, caching) {
 }
 
 function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_updating,
-                         keyword_final, freeze_doi_url, freeze_doi_url_field, caching) {
+                         keyword_final, freeze_doi_url, freeze_doi_url_field, caching, 
+                         sorted_hash_algos) {
     console.debug("load archive "+freeze_id+" of flavor "+flavor+" with "+
                   checksum_list.toString()+" checksums with caching "+caching);
     var tbody_elem = $("#frozenfilestable tbody");
@@ -365,7 +366,7 @@ function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_updating,
                       "</tr>"+location;
                   $(arch_tbody).append(entry);
                   var files = arch.frozenfiles;
-                  var show_link, del_link;
+                  var show_link, del_link, checksum_field;
                   for (j=0; j<files.length; j++) {
                       file = files[j];
                       //console.info("found file: "+file.name);
@@ -383,11 +384,14 @@ function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_updating,
                       }
                       entry = "<tr>"+base_td(file.name)+
                           center_td(show_link+" "+del_link)+
-                          center_td(file.date)+center_td(file.size)+
-                          attr_td(file.md5sum, "class='md5sum monospace hidden'")+
-                          attr_td(file.sha1sum, "class='sha1sum monospace hidden'")+ 
-                          attr_td(file.sha256sum, "class='sha256sum monospace hidden'")+ 
-                          attr_td(file.sha512sum, "class='sha512sum monospace hidden'")+"</tr>";
+                          center_td(file.date)+center_td(file.size);
+                      $.each(sorted_hash_algos, function(algo_index, algo) {
+                          //console.info("handling checksum algo: "+algo);
+                          checksum_field = algo + 'sum';
+                          //console.info("add file."+checksum_field);
+                          entry += attr_td(file[checksum_field], "class='"+checksum_field+" monospace hidden'");
+                      });
+                      entry += "</tr>";
                       //console.debug("append entry: "+entry);
                       table_entries += entry;
                       /* chunked updates - append after after every chunk_size entries */
@@ -417,7 +421,8 @@ function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_updating,
               setTimeout(function() {
                   ajax_showfreeze(freeze_id, flavor, checksum_list, 
                                   keyword_updating, keyword_final, 
-                                  freeze_doi_url, freeze_doi_url_field, false);
+                                  freeze_doi_url, freeze_doi_url_field, false,
+                                  sorted_hash_algos);
               }, 3000);
           }
           /* Make sure requested checksum columns are visible */

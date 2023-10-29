@@ -53,6 +53,7 @@ from mig.shared.html import get_xgi_html_header, get_xgi_html_footer, \
     vgrid_items, html_post_helper, tablesorter_pager
 from mig.shared.objecttypes import validate
 from mig.shared.prettyprinttable import pprint_table
+from mig.shared.pwcrypto import sorted_hash_algos
 from mig.shared.safeinput import html_escape
 
 
@@ -1627,11 +1628,12 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
         <th>Name</th>
         <th class="icon">Action<!-- Open, Delete --></th>
         <th>Date</th>
-        <th>Size in bytes</th>
-        <th class="md5sum">MD5 checksum</th>
-        <th class="sha1sum">SHA1 checksum</th>
-        <th class="sha256sum">SHA256 checksum</th>
-        <th class="sha512sum">SHA512 checksum</th>
+        <th>Size in bytes</th>'''
+            for algo in sorted_hash_algos:
+                checksum_field = '%ssum' % algo
+                frozenfile_html += '''
+        <th class="%s hidden">%s checksum</th>''' % (checksum_field, algo.upper())
+            frozenfile_html += '''
     </tr>
 </thead>
 <tbody>
@@ -1649,11 +1651,13 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
     <tr>
         <td>%(name)s</td><td class="centertext">%(show_file)s %(del_file)s</td>
         <td class="centertext">%(date)s</td>
-        <td class="centertext">%(size)s</td>
-        <td class="md5sum monospace">%(md5sum)s</td>
-        <td class="sha1sum monospace">%(sha1sum)s</td>
-        <td class="sha256sum monospace">%(sha256sum)s</td>
-        <td class="sha512sum monospace">%(sha512sum)s</td>
+        <td class="centertext">%(size)s</td>'''
+                for algo in sorted_hash_algos:
+                    checksum_field = '%ssum' % algo
+                    frozenfile_html += '''
+        <td class="%s monospace hidden">%s</td>''' % \
+                        (checksum_field, frozenfile[checksum_field])
+                frozenfile_html += '''
     </tr>
 ''' % frozenfile
             frozenfile_html += '''

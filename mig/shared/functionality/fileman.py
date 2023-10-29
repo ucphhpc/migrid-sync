@@ -45,6 +45,7 @@ from mig.shared.gdp.all import get_project_from_client_id
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.html import themed_styles, legacy_user_interface
 from mig.shared.init import initialize_main_variables, find_entry, extract_menu
+from mig.shared.pwcrypto import sorted_hash_algos, default_algo
 from mig.shared.sharelinks import create_share_link_form, import_share_link_form
 
 
@@ -289,13 +290,24 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
         <input type="hidden" name="%(csrf_field)s" value="%(pack_csrf_token)s" />
         <input type="hidden" name="output_format" value="json" />
         <input type="hidden" name="flags" value="" />
-        <input type="hidden" name="hash_algo" value="" />
         <input type="hidden" name="current_dir" value="" />
 
         <label for="path">Target file name(s):</label>
         <input id="path" class="singlefield" type="text" name="path" size=50  value="" />
         <br/><br/>
         <input type="hidden" name="path" value="" />
+        <label for="hash_algo">Hash algorithm:</label>
+        <select class="styled-select html-select" name="hash_algo">
+'''
+    for algo in sorted_hash_algos:
+        selected = ''
+        if algo == default_algo:
+            selected = 'selected'
+        html += '''<option value="%s" %s>%ssum</option>
+''' % (algo, selected, algo)
+    html += '''
+        </select>
+        <br/><br/>
         <label for="dst">Output file name:</label>
         <input id="dst" class="singlefield" type="text" name="dst" size=50  value="" />
         <br/><br/>

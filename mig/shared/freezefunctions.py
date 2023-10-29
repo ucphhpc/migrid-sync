@@ -45,8 +45,7 @@ from mig.shared.defaults import freeze_meta_filename, freeze_lock_filename, \
     keyword_pending, keyword_updating, keyword_auto, keyword_any, \
     keyword_all, max_freeze_files, archives_cache_filename, \
     freeze_on_tape_filename, archive_marks_dir, csrf_field
-from mig.shared.fileio import md5sum_file, sha1sum_file, sha256sum_file, \
-    sha512sum_file, supported_hash_algos, write_file, copy_file, copy_rec, \
+from mig.shared.fileio import checksum_file, write_file, copy_file, copy_rec, \
     move_file, move_rec, remove_rec, delete_file, delete_symlink, \
     makedirs_rec, make_symlink, make_temp_dir, acquire_file_lock, \
     release_file_lock, walk, listdir
@@ -54,7 +53,7 @@ from mig.shared.filemarks import get_filemark, update_filemark
 from mig.shared.html import get_xgi_html_header, get_xgi_html_footer, \
     man_base_js, themed_styles, themed_scripts, \
     tablesorter_pager
-from mig.shared.pwcrypto import make_path_hash
+from mig.shared.pwcrypto import make_path_hash, sorted_hash_algos, default_algo
 from mig.shared.serial import load, dump
 from mig.shared.url import quote
 
@@ -192,7 +191,7 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False,
                     'text': ''
                 }
                 entry['delfile_link'] = delfile_link
-            for algo in supported_hash_algos():
+            for algo in sorted_hash_algos:
                 chksum_field = '%ssum' % algo
                 entry[chksum_field] = file_item.get(chksum_field,
                                                     __chksum_unset)
@@ -573,7 +572,7 @@ def get_frozen_meta(client_id, freeze_id, configuration, caching=False):
 
 
 def get_frozen_files(client_id, freeze_id, configuration,
-                     checksum_list=['md5'], max_chunks=-1,
+                     checksum_list=[default_algo], max_chunks=-1,
                      force_refresh=False):
     """Helper to list names and stats for files in a frozen archive.
     I.e. lookup the contents of an achive either in the new client_id sub-dir
@@ -659,29 +658,16 @@ def get_frozen_files(client_id, freeze_id, configuration,
                 entry['size'] = file_size
                 updates += 1
 
-            for algo in supported_hash_algos():
+            for algo in sorted_hash_algos:
                 chksum_field = '%ssum' % algo
                 entry[chksum_field] = entry.get(chksum_field, __chksum_unset)
             # Update checksum (entire file) if requested and not there already
-            if 'md5' in checksum_list and entry['md5sum'] == __chksum_unset:
-                entry['md5sum'] = md5sum_file(frozen_path,
-                                              max_chunks=max_chunks)
-                updates += 1
-            elif 'sha1' in checksum_list and \
-                    entry['sha1sum'] == __chksum_unset:
-                entry['sha1sum'] = sha1sum_file(frozen_path,
-                                                max_chunks=max_chunks)
-                updates += 1
-            elif 'sha256' in checksum_list and \
-                    entry['sha256sum'] == __chksum_unset:
-                entry['sha256sum'] = sha256sum_file(frozen_path,
-                                                    max_chunks=max_chunks)
-                updates += 1
-            elif 'sha512' in checksum_list and \
-                    entry['sha512sum'] == __chksum_unset:
-                entry['sha512sum'] = sha512sum_file(frozen_path,
-                                                    max_chunks=max_chunks)
-                updates += 1
+            for algo in checksum_list:
+                chksum_field = '%ssum' % algo
+                if entry[chksum_field] == __chksum_unset:
+                    entry[chksum_field] = checksum_file(frozen_path, algo,
+                                                        max_chunks=max_chunks)
+                    updates += 1
             files.append(entry)
     if updates > 0:
         # Save updated cache
@@ -695,7 +681,7 @@ def get_frozen_files(client_id, freeze_id, configuration,
 
 
 def get_frozen_archive(client_id, freeze_id, configuration,
-                       checksum_list=['md5'], caching=False):
+                       checksum_list=[default_algo], caching=False):
     """Helper to extract all details for a frozen archive. I.e. extract the
     contents of the archive either in the new client_id sub-dir or directly in
     the legacy freeze_home location.
@@ -929,12 +915,13 @@ THIS IS ONLY A DRAFT - EXPLICIT FREEZE IS STILL PENDING!
     # table initially sorted by col. 0 (filename)
 
     refresh_call = 'ajax_showfiles("%s", "%s")' % \
-        (freeze_id, ['md5'])
+        (freeze_id, [default_algo])
     table_spec = {'table_id': 'frozenfilestable', 'sort_order': '[[0,0]]',
                   'refresh_call': refresh_call}
     (add_import, add_init, add_ready) = man_base_js(configuration,
                                                     [table_spec])
     add_init += """
+    var sorted_hash_algos = %s;
     /* NOTE: use a URL lookup helper for all URLs to avoid cross-domain ajax
              requests and the resulting rejects when using alias domains.
     */
@@ -964,16 +951,22 @@ THIS IS ONLY A DRAFT - EXPLICIT FREEZE IS STILL PENDING!
                 var files_data = '';
                 var entry = null;
                 var i, j, name;
-                /* NOTE: only md5sums really fit page width so hide the rest */
-                /* var chksums = ['md5sum', 'sha1sum', 'sha256sum', 'sha512sum']; */
-                var chksums = ['md5sum'];
+                var checksum_field;
+                var chksums = [];
                 for (i=0; i < jsonRes.length; i++) {
                     console.debug('found file: '+ jsonRes[i].name);
                     entry = jsonRes[i];
-                    files_data += '<tr><td><a href=\"'+entry.name+'\">'+entry.name+'</a></td><td><div class=\"sortkey hidden\">'+entry.timestamp+'</div>'+entry.date+'</td><td>'+entry.size+'</td><td class=\"md5sum hidden\"><pre>'+entry.md5sum+ \
-                        '</pre></td><td class=\"sha1sum hidden\"><pre>'+entry.sha1sum+'</pre></td><td class=\"sha256sum hidden\"><pre>'+ \
-                            entry.sha256sum+'</pre></td><td class=\"sha512sum hidden\"><pre>'+ \
-                                entry.sha512sum+'</pre></td></tr>';
+                    files_data += '<tr><td><a href=\"'+entry.name+'\">'+entry.name+'</a></td><td><div class=\"sortkey hidden\">'+entry.timestamp+'</div>'+entry.date+'</td><td>'+entry.size+'</td>';
+                    $.each(sorted_hash_algos, function(index, algo) {
+                          checksum_field = algo + 'sum';
+                          /* NOTE: only one checksum really fits page width so hide the rest */
+                          if (chksums.length < 1) {
+                              chksums.push(checksum_field);
+                          }
+                          files_data +='<td class=\"'+checksum_field+' monospace hidden\">';
+                          files_data += entry[checksum_field]+'</td>';
+                    });                          
+                    files_data += '</tr>';
                     /* chunked updates - append after after every chunk_size entries */
                     if (i > 0 && i %% chunk_size === 0) {
                         console.debug('append chunk of ' + \
@@ -1064,7 +1057,7 @@ THIS IS ONLY A DRAFT - EXPLICIT FREEZE IS STILL PENDING!
             }
         });
     }
-    """ % (files_url, doi_url)
+    """ % (sorted_hash_algos, files_url, doi_url)
     add_ready += """
     ajax_showdoi('%s');
     %s;
@@ -1145,17 +1138,18 @@ on %(created_timestamp)s by %(creator)s.""" % auto_map
     <div class='table-responsive'>
     <table id='frozenfilestable' class='frozenfiles columnsort'>
         <thead class='title'>
-            <tr><th>Name</th><th>Date</th><th>Size</th>
-            <th class='md5sum hidden'>MD5 Checksum</th>
-            <th class='sha1sum hidden'>SHA1 Checksum</th>
-            <th class='sha256sum hidden'>SHA256 Checksum</th>
-            <th class='sha512sum hidden'>SHA512 Checksum</th>
+            <tr><th>Name</th><th>Date</th><th>Size</th>""" % toolbar
+    for algo in sorted_hash_algos:
+        checksum_field = "%ssum" % algo
+        contents += "<th class='%s hidden'>%s Checksum</th>" % (checksum_field,
+                                                                algo.upper())
+    contents += """
             </tr>
         </thead>
         <tbody><!-- rows filled by AJAX call--></tbody>
     </table>
     </div>
-    """ % toolbar
+    """
     contents += """</div>
 %s
     """ % get_xgi_html_footer(configuration, widgets=False, mark_static=True)

@@ -922,20 +922,21 @@ if (jQuery) (function($){
             return base;
         }
 
-        function chksumHelper(el, hash_algo) {
+        function chksumHelper(el) {
             var current_dir = '';
             var target = $(el).attr(pathAttribute);
             var src = '';
             var dst = ''; 
+            var hash_algo = '';
             var max_chunks = default_max_chunks; 
             var pathEl = target.split('/');
             src = pathEl[pathEl.length-1];
             current_dir = target.substring(0, target.lastIndexOf('/'));
 
-            // Initialize the form with default to PATH and PATH.HASH_ALGO
+            // Initialize the form with default to PATH and PATH.chksum
             $("#chksum_form input[name='path']").val(src);
-            $("#chksum_form input[name='dst']").val(src + '.' + hash_algo);
-            $("#chksum_form input[name='hash_algo']").val(hash_algo);
+            $("#chksum_form input[name='dst']").val(src + '.chksum.txt');
+            //$("#chksum_form select[name='hash_algo']").val(hash_algo);
             $("#chksum_form input[name='max_chunks']").val(max_chunks);
             $("#chksum_output").html('');
             $("#chksum_dialog").dialog({
@@ -943,7 +944,7 @@ if (jQuery) (function($){
                     Ok: function() {
                         src = $("#chksum_form input[name='path']").val();
                         dst = $("#chksum_form input[name='dst']").val();
-                        hash_algo = $("#chksum_form input[name='hash_algo']").val();
+                        hash_algo = $("#chksum_form select[name='hash_algo']").val();
                         max_chunks = $("#chksum_form input[name='max_chunks']").val();
                         $(this).dialog('close');
                         console.debug(hash_algo+'sum '+src+" in "+dst);
@@ -1246,11 +1247,8 @@ if (jQuery) (function($){
             },
             spell:   function (action, el, pos) {
                 jsonWrapper(el, '#cmd_dialog', 'spell.py'); },
-            md5sum:   function (action, el, pos) {
-                chksumHelper(el, 'md5');
-            },
-            sha1sum:   function (action, el, pos) {
-                chksumHelper(el, 'sha1');
+            checksum:   function (action, el, pos) {
+                chksumHelper(el);
             },
             pack:    function (action, el, pos) {
                 /* pack file or directory to user specified file */
@@ -2279,8 +2277,7 @@ if (jQuery) (function($){
                         "name": "Advanced",
                         icon: "advanced",
                         "items": {
-                            "md5sum": {name: "MD5 Sum", icon: "md5sum"},
-                            "sha1sum": {name: "SHA1 Sum", icon: "sha1sum"},
+                            "checksum": {name: "Checksum", icon: "checksum"},
                             "spell-sep": "---------",
                             "spell": {name: "Spell Check", icon: "spell"},
                             "search-sep": "---------",

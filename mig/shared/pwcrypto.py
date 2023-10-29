@@ -79,10 +79,13 @@ COST_FACTOR = 10000
 AAD_PREFIX = 'migrid authenticated'
 AAD_DEFAULT_STAMP = '%Y%m%d'
 
-# NOTE hook up available hashing algorithms once and for all
-valid_hash_algos = {'md5': hashlib.md5}
+# NOTE: hook up available hashing algorithms once and for all
+valid_hash_algos = {}
 for algo in hashlib.algorithms_guaranteed:
     valid_hash_algos[algo] = getattr(hashlib, algo)
+sorted_hash_algos = list(valid_hash_algos)
+sorted_hash_algos.sort()
+default_algo = sorted_hash_algos[0]
 
 
 def best_crypt_salt(configuration):
@@ -944,7 +947,7 @@ def make_generic_hash(val, algo, hex_format=True):
     """
     # NOTE: hashlib functions require bytes and hexdigest returns native string
     if not algo in valid_hash_algos:
-        algo = 'md5'
+        algo = default_algo
     hash_helper = valid_hash_algos[algo]
     if hex_format:
         return hash_helper(force_utf8(val)).hexdigest()
