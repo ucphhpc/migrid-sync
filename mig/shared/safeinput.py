@@ -1738,6 +1738,8 @@ def guess_type(name):
             __type_map[key] = valid_archive_name
         for key in ('jobname', ):
             __type_map[key] = valid_job_name
+        for key in ('hash_algo', 'checksum', ):
+            __type_map[key] = valid_backend_name
         for key in ('job_id', 'req_id', 'resource', 'search', ):
             __type_map[key] = valid_job_id_pattern
         for key in (

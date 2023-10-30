@@ -64,16 +64,11 @@ try:
     from mig.shared.base import force_utf8, force_utf8_rec, force_native_str
     from mig.shared.defaults import default_chunk_size, default_max_chunks
     from mig.shared.logger import null_logger
-    from mig.shared.pwcrypto import valid_hash_algos
+    from mig.shared.pwcrypto import valid_hash_algos, default_algo
     from mig.shared.serial import dump, load
 except ImportError as ioe:
     print("ERROR: could not import migrid modules!")
     exit(1)
-
-
-def supported_hash_algos():
-    """A list of supported hash algorithm names"""
-    return list(valid_hash_algos)
 
 
 def write_chunk(path, chunk, offset, logger, mode='r+b'):
@@ -761,7 +756,7 @@ def checksum_file(path, hash_algo, chunk_size=default_chunk_size,
     """
     if not logger:
         logger = null_logger("dummy")
-    checksum = valid_hash_algos.get(hash_algo, valid_hash_algos['md5'])()
+    checksum = valid_hash_algos.get(hash_algo, valid_hash_algos[default_algo])()
     chunks_read = 0
     msg = ''
     try:
@@ -774,7 +769,11 @@ def checksum_file(path, hash_algo, chunk_size=default_chunk_size,
             chunks_read += 1
         if file_fd.read(1):
             msg = ' (of first %d bytes)' % (chunk_size * max_chunks)
-        return "%s%s" % (checksum.hexdigest(), msg)
+        # NOTE: shake_X algos require a length argument and return twice that
+        if hash_algo.startswith('shake_'):
+            return "%s%s" % (checksum.hexdigest(32), msg)
+        else:
+            return "%s%s" % (checksum.hexdigest(), msg)
     except Exception as exc:
         logger.error("checksum %r failed: %s" % (path, exc))
         return "checksum %r failed" % os.path.basename(path)
@@ -969,3 +968,12 @@ def user_chroot_exceptions(configuration):
     # Allow access to mig_system_storage used for merging multiple storage backends
     chroot_exceptions.append(os.path.abspath(configuration.mig_system_storage))
     return chroot_exceptions
+
+
+if __name__ == "__main__":
+    chksum_paths = ["/etc/resolv.conf"]
+    chksum_algos = list(valid_hash_algos)
+    for path in chksum_paths:
+        for algo in chksum_algos:
+            csum = checksum_file(path, algo)
+            print("%s checksum of %r is: %s" % (algo, path, csum))
