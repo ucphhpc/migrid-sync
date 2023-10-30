@@ -769,11 +769,14 @@ def checksum_file(path, hash_algo, chunk_size=default_chunk_size,
             chunks_read += 1
         if file_fd.read(1):
             msg = ' (of first %d bytes)' % (chunk_size * max_chunks)
-        # NOTE: shake_X algos require a length argument and return twice that
-        if hash_algo.startswith('shake_'):
-            return "%s%s" % (checksum.hexdigest(32), msg)
-        else:
+
+        # NOTE: some algos are variable sized and need a length arg to digest.
+        #       They include the shake_X algos and can be identified by a zero
+        #       digest_length value. The hexdigest generally has double length.
+        if checksum.digest_size > 0:
             return "%s%s" % (checksum.hexdigest(), msg)
+        else:
+            return "%s%s" % (checksum.hexdigest(32), msg)
     except Exception as exc:
         logger.error("checksum %r failed: %s" % (path, exc))
         return "checksum %r failed" % os.path.basename(path)
