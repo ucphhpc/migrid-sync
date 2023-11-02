@@ -230,13 +230,21 @@ CSRF-filtered POST requests to prevent unintended updates'''})
         _, _label, _ = cloud_split_instance_id(configuration, client_id,
                                                instance_id)
 
+    back_link = {'object_type': 'link', 'destination': 'cloud.py', 'class':
+                 'backlink iconspace', 'title': 'Go back to cloud management',
+                 'text': 'Back to cloud management'}
+
     if "create" == action:
         if not accept_terms:
             logger.error("refusing create without accepting terms for %s!" %
                          client_id)
             output_objects.append({
                 'object_type': 'error_text', 'text':
-                "You MUST accept the cloud user terms to create instances"})
+                "You MUST accept the cloud user terms to create instances."})
+            output_objects.append({
+                'object_type': 'text', 'text': """You can use the browser back
+button to go back and try again with the same values and the accept box
+checked."""})
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         # Load all instances and make sure none contains label in ID
@@ -250,6 +258,7 @@ CSRF-filtered POST requests to prevent unintended updates'''})
                     'object_type': 'error_text', 'text':
                     "You already have an instance with the label %r!" %
                     instance_label})
+                output_objects.append(back_link)
                 return (output_objects, returnvalues.CLIENT_ERROR)
 
         max_instances = lookup_user_service_value(configuration, client_id,
@@ -265,6 +274,7 @@ CSRF-filtered POST requests to prevent unintended updates'''})
                 'object_type': 'error_text', 'text':
                 "You already have the maximum allowed %s instances (%d)!" %
                 (service_title, max_user_instances)})
+            output_objects.append(back_link)
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         if not instance_label:
@@ -273,6 +283,7 @@ CSRF-filtered POST requests to prevent unintended updates'''})
             output_objects.append({
                 'object_type': 'error_text', 'text':
                 "No instance label provided!"})
+            output_objects.append(back_link)
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         # Lookup user-specific allowed images (colon-separated image names)
@@ -282,6 +293,7 @@ CSRF-filtered POST requests to prevent unintended updates'''})
             output_objects.append({
                 'object_type': 'error_text', 'text':
                 "No valid / allowed cloud images found!"})
+            output_objects.append(back_link)
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         if not instance_image:
@@ -301,6 +313,7 @@ CSRF-filtered POST requests to prevent unintended updates'''})
             output_objects.append({
                 'object_type': 'error_text', 'text':
                 "No such  image found: %s" % instance_image})
+            output_objects.append(back_link)
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         # TODO: remove this direct key injection if we can delay it
@@ -362,6 +375,7 @@ is stricly required for all use. Please do so before you try again.
                 'object_type': 'error_text',
                 'text': 'Your %s instance %s at %s did not succeed: %s' %
                 (action, instance_label, service_title, action_msg)})
+            output_objects.append(back_link)
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         # On success the action_msg contains the assigned floating IP address
@@ -375,6 +389,7 @@ is stricly required for all use. Please do so before you try again.
                 'object_type': 'error_text',
                 'text': 'Error saving your %s cloud instance setup' %
                 service_title})
+            output_objects.append(back_link)
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({
@@ -393,6 +408,7 @@ is stricly required for all use. Please do so before you try again.
             output_objects.append(
                 {'object_type': 'error_text', 'text': instance_missing_msg %
                  (_label, service_title)})
+            output_objects.append(back_link)
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         (action_status, action_msg) = delete_cloud_instance(
@@ -405,6 +421,7 @@ is stricly required for all use. Please do so before you try again.
                 'object_type': 'error_text',
                 'text': 'Your %s instance %s at %s did not succeed: %s' %
                 (action, _label, service_title, action_msg)})
+            output_objects.append(back_link)
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         if not cloud_purge_instance(configuration, client_id, cloud_id,
@@ -416,6 +433,7 @@ is stricly required for all use. Please do so before you try again.
                 'text': 'Error deleting your %s cloud instance setup' %
                 service_title
             })
+            output_objects.append(back_link)
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({
@@ -431,6 +449,7 @@ is stricly required for all use. Please do so before you try again.
             output_objects.append(
                 {'object_type': 'error_text', 'text': instance_missing_msg %
                  (_label, service_title)})
+            output_objects.append(back_link)
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         (action_status, action_msg) = status_of_cloud_instance(
@@ -443,6 +462,7 @@ is stricly required for all use. Please do so before you try again.
                 'object_type': 'error_text',
                 'text': 'Your %s instance %s at %s did not succeed: %s' %
                 (action, _label, service_title, action_msg)})
+            output_objects.append(back_link)
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({
@@ -464,6 +484,7 @@ is stricly required for all use. Please do so before you try again.
                         'object_type': 'error_text',
                         'text': 'Failed to get instance %s at %s console: %s' %
                         (_label, service_title, console_msg)})
+                    output_objects.append(back_link)
                     return (output_objects, returnvalues.SYSTEM_ERROR)
                 logger.info("%s cloud instance %s console for %s: %s" %
                             (cloud_id, instance_id, client_id, console_msg))
@@ -489,6 +510,7 @@ is stricly required for all use. Please do so before you try again.
             output_objects.append(
                 {'object_type': 'error_text', 'text': instance_missing_msg %
                  (_label, service_title)})
+            output_objects.append(back_link)
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         (action_status, action_msg) = start_cloud_instance(
@@ -501,6 +523,7 @@ is stricly required for all use. Please do so before you try again.
                 'object_type': 'error_text',
                 'text': 'Your %s instance %s at %s did not succeed: %s' %
                 (action, _label, service_title, action_msg)})
+            output_objects.append(back_link)
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({
@@ -521,6 +544,7 @@ is stricly required for all use. Please do so before you try again.
             output_objects.append(
                 {'object_type': 'error_text', 'text': instance_missing_msg %
                  (_label, service_title)})
+            output_objects.append(back_link)
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         (action_status, action_msg) = restart_cloud_instance(
@@ -534,6 +558,7 @@ is stricly required for all use. Please do so before you try again.
                 'object_type': 'error_text',
                 'text': 'Your %s instance %s at %s did not succeed: %s' %
                 (action, _label, service_title, action_msg)})
+            output_objects.append(back_link)
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({
@@ -553,6 +578,7 @@ is stricly required for all use. Please do so before you try again.
             output_objects.append(
                 {'object_type': 'error_text', 'text': instance_missing_msg %
                  (_label, service_title)})
+            output_objects.append(back_link)
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         (action_status, action_msg) = stop_cloud_instance(
@@ -565,6 +591,7 @@ is stricly required for all use. Please do so before you try again.
                 'object_type': 'error_text',
                 'text': 'Your %s instance %s at %s did not succeed: %s' %
                 (action, _label, service_title, action_msg)})
+            output_objects.append(back_link)
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({
@@ -580,6 +607,7 @@ is stricly required for all use. Please do so before you try again.
             output_objects.append(
                 {'object_type': 'error_text', 'text': instance_missing_msg %
                  (_label, service_title)})
+            output_objects.append(back_link)
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         if not configuration.user_cloud_console_access:
@@ -587,6 +615,7 @@ is stricly required for all use. Please do so before you try again.
             output_objects.append({
                 'object_type': 'error_text',
                 'text': 'Site does not expose cloud web console!'})
+            output_objects.append(back_link)
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         (action_status, action_msg) = web_access_cloud_instance(
@@ -599,6 +628,7 @@ is stricly required for all use. Please do so before you try again.
                 'object_type': 'error_text',
                 'text': 'Your %s instance %s at %s did not succeed: %s' %
                 (action, _label, service_title, action_msg)})
+            output_objects.append(back_link)
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({
@@ -623,6 +653,7 @@ is stricly required for all use. Please do so before you try again.
             output_objects.append(
                 {'object_type': 'error_text', 'text': instance_missing_msg %
                  (_label, service_title)})
+            output_objects.append(back_link)
             return (output_objects, returnvalues.CLIENT_ERROR)
 
         cloud_settings = load_cloud(client_id, configuration)
@@ -638,6 +669,7 @@ is stricly required for all use. Please do so before you try again.
                 'object_type': 'error_text',
                 'text': 'Your %s instance %s at %s did not succeed: %s' %
                 (action, _label, service_title, action_msg)})
+            output_objects.append(back_link)
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({
@@ -658,11 +690,7 @@ is stricly required for all use. Please do so before you try again.
                                'Unknown action: %s' % action})
         return_status = returnvalues.CLIENT_ERROR
 
-    output_objects.append({'object_type': 'link',
-                           'destination': 'cloud.py',
-                           'class': 'backlink iconspace',
-                           'title': 'Go back to cloud management',
-                           'text': 'Back to cloud management'})
+    output_objects.append(back_link)
     return (output_objects, return_status)
 
 
