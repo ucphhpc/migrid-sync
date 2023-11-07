@@ -28,7 +28,7 @@
     ], 
     "announce_start": "2023-10-24T08:00:00+02:00", 
     "title": {
-      "EN": "Power Outage - MODI Unavailable, MIST partially available", 
+      "EN": "Power Outage - MODI available again, MIST partially available", 
       "DK": "Strømudfald - MODI utilgængelig, MIST delvist tilgængelig"
     }, 
     "services": [
