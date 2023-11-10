@@ -1548,11 +1548,10 @@ def main(client_id, user_arguments_dict, environ=None):
     # Validate Access
 
     if not configuration.site_enable_gdp:
-        output_objects.append({'object_type': 'error_text',
-                               'text': """GDP Project Management disabled on
-this site.
-Please contact the site admins %s if you think it should be enabled.
-""" % configuration.admin_email})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               """GDP Project Management disabled on this site.
+Please contact the %s site support (%s) if you think it should be enabled.
+""" % (configuration.short_title, configuration.support_email)})
         return (output_objects, returnvalues.ERROR)
     if client_id and client_id == identity:
         output_objects.append({'object_type': 'error_text',

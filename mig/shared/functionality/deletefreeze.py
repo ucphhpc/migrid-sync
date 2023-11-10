@@ -5,7 +5,7 @@
 #
 
 # deletefreeze - delete an entire frozen archive or files in one
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -102,9 +102,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not configuration.site_enable_freeze:
         output_objects.append({'object_type': 'text', 'text':
-                               '''Freezing archives is disabled on this site.
-Please contact the site admins %s if you think it should be enabled.
-''' % configuration.admin_email})
+                               """Freezing archives is disabled on this site.
+Please contact the %s site support (%s) if you think it should be enabled.
+""" % (configuration.short_title, configuration.support_email)})
         return (output_objects, returnvalues.OK)
 
     freeze_id = accepted['freeze_id'][-1]

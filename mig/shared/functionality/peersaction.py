@@ -95,7 +95,16 @@ CSRF-filtered POST requests to prevent unintended updates'''
     title_entry['text'] = 'Save Peers'
     output_objects.append({'object_type': 'header', 'text': 'Save Peers'})
 
+    if not configuration.site_enable_peers:
+        output_objects.append({'object_type': 'text', 'text':
+                               """Peers use is disabled on this site.
+Please contact the %s site support (%s) if you think it should be enabled.
+""" % (configuration.short_title, configuration.support_email)})
+        return (output_objects, returnvalues.OK)
+
+    support_email = configuration.support_email
     admin_email = configuration.admin_email
+    short_title = configuration.short_title
     smtp_server = configuration.smtp_server
     user_pending = os.path.abspath(configuration.user_pending)
 
@@ -258,7 +267,7 @@ CSRF-filtered POST requests to prevent unintended updates'''
         if action in ['import', 'add', 'update']:
             if do_invite:
                 succeeded, failed = [], []
-                email_header = '%s Invitation' % configuration.short_title
+                email_header = '%s Invitation' % short_title
                 email_msg_template = """Hi %%s,
 This is an automatic email sent on behalf of %s who vouched for you to get a
 user account on %s. You can accept the invitation by going to
@@ -268,7 +277,7 @@ If you do not want a user account you can safely ignore this email.
 
 We would be grateful if you report any abuse of the invitation system to the
 site administrators (%s).
-""" % (client_name, configuration.short_title, admin_email)
+""" % (client_name, short_title, admin_email)
                 for peer_user in peers:
                     peer_name = peer_user['full_name']
                     peer_email = peer_user['email']
@@ -307,29 +316,29 @@ site administrators (%s).
                     output_objects.append(
                         {'object_type': 'error_text', 'text':
                          """An error occurred trying to email the peer
-invitation to %s . Please inform the site admins (%s) if the problem persists.
-""" % (', '.join(failed), admin_email)})
+invitation to %s . Please contact %s site support at %s or directly inform the
+site admins (%s) if the problem persists.
+""" % (', '.join(failed), short_title, support_email, admin_email)})
                 if succeeded:
                     output_objects.append(
                         {'object_type': 'text', 'text':
                          """Sent invitation to %s with a link to a mostly pre-filled %s account request
 form with the exact ID fields you provided here.""" %
-                         (', '.join(succeeded), configuration.short_title)})
+                         (', '.join(succeeded), short_title)})
             else:
                 output_objects.append(
                     {'object_type': 'text', 'text': """Please tell your peers
 to request an account at %s with the exact ID fields you provided here and
 importantly mentioning the purpose and your email (%s) in the sign up Comment
 field. Alternatively you can use the invite button to send out an email with a
-link to a mostly prefilled request form.""" % (configuration.short_title,
-                                               client_email)})
+link to a mostly prefilled request form.""" % (short_title, client_email)})
     except Exception as exc:
         logger.error('Failed to save %s peers to %s: %s' %
                      (client_id, peers_path, exc))
         output_objects.append({'object_type': 'error_text', 'text': '''
-Could not %s peers %r. Please contact the site admins on %s if this error
-persists.
-''' % (action, label, admin_email)})
+Could not %s peers %r. Please contact %s site support at %s or manually inform
+the admins (%s) if this error persists.
+''' % (action, label, short_title, support_email, admin_email)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     if action in ["accept", "reject"]:
@@ -347,8 +356,7 @@ persists.
     for user in peers:
         user_lines.append(user['distinguished_name'])
     pretty_peers['user_lines'] = '\n'.join(user_lines)
-    email_header = '%s Peers %s from %s' % (
-        configuration.short_title, action, client_name)
+    email_header = '%s Peers %s from %s' % (short_title, action, client_name)
     email_msg = """Received %s peers from %s
 """ % (action, client_id)
     email_msg += """
@@ -362,8 +370,9 @@ Kind: %(kind)s , Expire: %(expire)s, Label: %(label)s , Peers:
                       configuration):
         output_objects.append({'object_type': 'error_text', 'text': '''
 An error occurred trying to send the email about your %s peers to the site
-administrators. Please manually inform them (%s) if the problem persists.
-''' % (action, admin_email)})
+administrators. Please contact %s site support at %s or manually inform the
+admins (%s) if the problem persists.
+''' % (action, short_title, support_email, admin_email)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append({'object_type': 'text', 'text': '''

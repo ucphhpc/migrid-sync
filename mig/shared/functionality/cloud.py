@@ -76,7 +76,9 @@ def main(client_id, user_arguments_dict):
     if not configuration.site_enable_cloud:
         output_objects.append(
             {'object_type': 'error_text', 'text':
-             'The cloud service is not enabled on the system'})
+             """The cloud service is not enabled on this site. Please contact
+%s support (%s) if you think it should be.""" % (configuration.short_title,
+                                                 configuration.support_email)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     status = returnvalues.OK
@@ -86,8 +88,9 @@ def main(client_id, user_arguments_dict):
     if not user_dict or not cloud_access_allowed(configuration, user_dict):
         output_objects.append(
             {'object_type': 'error_text', 'text':
-             "You don't have permission to access the cloud facilities on "
-             "this site"})
+             """You don't have permission to access the cloud facilities on
+this site. Please contact %s support (%s) if you think you should have.""" %
+             (configuration.short_title, configuration.support_email)})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     services = configuration.cloud_services
