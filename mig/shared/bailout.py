@@ -155,8 +155,8 @@ logged internally with error ID %s
          """ % (backend, error_id)})
     out_obj.append(
         {'object_type': 'error_text', 'text':
-         """Please report it to the %s site admins %s if the problem persists.
-         """ % (configuration.short_title, configuration.admin_email)})
+         """Please report it to %s site support (%s) if the problem persists.
+         """ % (configuration.short_title, configuration.support_email)})
     out_filtered = filter_output_objects(configuration, out_obj)
     _logger.info("crash helper for %s returns: %s" % (backend, out_filtered))
     return out_obj

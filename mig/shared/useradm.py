@@ -834,16 +834,16 @@ require user "%(distinguished_name)s"
 
     welcome_msg = '''Welcome to %(short_title)s!
 
-You should have received a user guide to introduce you to the basic use of the
-site.
+You should have received information about documentation and various guides to
+introduce you to the basic use of the site. The integrated support facilities
+link to that material, too.
 
-Feel free to contact us if you have any questions.
+Feel free to contact our support (%(support_email)s) if you have any questions.
 
 Kind regards,
-The %(short_title)s admins
-%(admin_email)s
+The %(short_title)s site operators
 ''' % {'short_title': configuration.short_title,
-       'admin_email': configuration.admin_email}
+       'support_email': configuration.support_email}
     _logger.info("write welcome msg in %s" % welcome_path)
     try:
         filehandle = open(welcome_path, 'w')

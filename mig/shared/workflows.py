@@ -3,7 +3,7 @@
 #
 # workflows.py - Collection of workflows related functions
 #
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -909,8 +909,8 @@ def __check_user_input(
                     return (False, msg)
             else:
                 msg = "key: '%s' is not allowed, but it probably wasn't " \
-                      "your fault. Please contact an admin at %s. " \
-                      % (key, configuration.admin_email)
+                      "your fault. Please contact support at %s. " \
+                      % (key, configuration.support_email)
                 _logger.warning(msg)
                 return (False, msg)
 
@@ -1096,8 +1096,8 @@ def __check_recipe_inputs(configuration, user_inputs, mode, user_request=True):
 
                 else:
                     msg = "No environment check implemented for key '%s'. " \
-                          "Please contact an admin at %s. " \
-                          % (env_key, configuration.admin_email)
+                          "Please contact support at %s. " \
+                          % (env_key, configuration.support_email)
                     _logger.debug("WR: __check_recipe_inputs, " + msg)
                     return (False, msg)
 
@@ -1130,8 +1130,8 @@ def __correct_persistent_wp(configuration, workflow_pattern):
     issue.
     """
     _logger = configuration.logger
-    contact_msg = "please contact support at %s so that we can help resolve " \
-                  "this issue" % configuration.admin_email
+    contact_msg = """please contact support at %s so that we can help resolve
+the issue""" % configuration.support_email
 
     if not workflow_pattern:
         msg = "A workflow pattern was not provided, " + contact_msg
@@ -1176,8 +1176,8 @@ def __correct_persistent_wr(configuration, workflow_recipe):
     """
 
     _logger = configuration.logger
-    contact_msg = "please contact support at %s so that we can help resolve " \
-                  "this issue" % configuration.admin_email
+    contact_msg = """please contact support at %s so that we can help resolve
+the issue""" % configuration.support_email
 
     if not workflow_recipe:
         msg = "A workflow recipe was not provided, " + contact_msg

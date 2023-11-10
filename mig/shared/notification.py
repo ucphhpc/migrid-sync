@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # notification - instant message and email notification helpers
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -360,11 +360,11 @@ detailed instructions.
 To try again with most fields pre-filled please head to:
 %s/cgi-sid/req%s.py?%s
 
-Feel free to contact the site admins (%s) if you are still in doubt.
+Feel free to contact the site support (%s) if you are still in doubt.
 
 Regards,
-The %s Admins.
-""" % (anon_migoid_url, auth_type, id_query, configuration.admin_email,
+The %s site operators.
+""" % (anon_migoid_url, auth_type, id_query, configuration.support_email,
             short_title)
     elif status == 'PASSWORDREMINDER':
         from_id = args_list[0]

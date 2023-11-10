@@ -714,6 +714,7 @@ or the same on centos
                    --default_vgrid_links="files web" \
                    --advanced_vgrid_links="files web scm tracker workflows monitor" \
                    --smtp_sender="Do Not Reply <no-reply@migrid.org>" \
+                   --support_email="MiGrid Support <support@migrid.org>" \
                    --admin_email="MiGrid Info <info@migrid.org>" --log_level=info \
                    --title="Minimum intrusion Grid" \
                    --short_title="MiG" \
@@ -870,6 +871,7 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --default_vgrid_links="files web" \
                    --advanced_vgrid_links="files web scm workflows monitor" \
                    --smtp_sender="Do Not Reply <no-reply@erda.dk>" \
+                   --support_email="ERDA Support <support@erda.dk>" \
                    --admin_email="ERDA Info <info@erda.dk>" --log_level=info \
                    --title="University of Copenhagen - Electronic Research Data Archive" \
                    --short_title="UCPH ERDA" \
@@ -957,6 +959,7 @@ with optional 2-FA support and legacy sftp clients:
                    --default_vgrid_links="files web" \
                    --advanced_vgrid_links="files web scm workflows monitor" \
                    --smtp_sender="Do Not Reply <no-reply@idmc.dk>" \
+                   --support_email="IDMC Support <support@idmc.dk>" \
                    --admin_email="IDMC Info <info@idmc.dk>" --log_level=info \
                    --title="Imaging Data Management Center" \
                    --short_title="IDMC" \
@@ -979,6 +982,7 @@ General Data Protection Regulation (GDPR) imposed by EU:
 https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
 ./generateconfs.py --source=. --destination=generated-confs \
                    --destination_suffix="_svn$(svnversion -n ~/)" \
+                   --support_email="SIF Support <support@sif.erda.dk>" \
                    --admin_email="SIF admin <info@sif.erda.dk>"
                    --admin_list="/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk , C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Martin Rehr/emailAddress=rehr@nbi.ku.dk" \
                    --auto_add_cert_user=False \

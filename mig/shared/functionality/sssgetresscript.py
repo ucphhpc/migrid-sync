@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # sssgetresscript - Load current resource scripts for SSS
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -26,6 +26,7 @@
 #
 
 """This is a script download helper for SSS sandboxes"""
+
 from __future__ import absolute_import
 
 from mig.shared import returnvalues
@@ -51,7 +52,8 @@ def main(client_id, user_arguments_dict):
                                   op_menu=client_id)
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
-            defaults, output_objects, allow_rejects=False)
+                                                 defaults, output_objects,
+                                                 allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -63,18 +65,18 @@ def main(client_id, user_arguments_dict):
 
     # Web format for cert access and no header for SID access
     if client_id:
-        output_objects.append({'object_type': 'title', 'text'
-                               : 'SSS script download'})
-        output_objects.append({'object_type': 'header', 'text'
-                               : 'SSS script download'})
+        output_objects.append(
+            {'object_type': 'title', 'text': 'SSS script download'})
+        output_objects.append(
+            {'object_type': 'header', 'text': 'SSS script download'})
     else:
         output_objects.append({'object_type': 'start'})
 
     if not configuration.site_enable_sandboxes:
         output_objects.append({'object_type': 'text', 'text':
-                               '''Sandbox resources are disabled on this site.
-Please contact the site admins %s if you think they should be enabled.
-''' % configuration.admin_email})
+                               """Sandbox resource use is disabled on this site.
+Please contact the %s site support (%s) if you think it should be enabled.
+""" % (configuration.short_title, configuration.support_email)})
         return (output_objects, returnvalues.OK)
 
     (result, unique_resource_name) = get_resource_name(sandboxkey, logger)
@@ -95,6 +97,7 @@ Please contact the site admins %s if you think they should be enabled.
     # Status code line followed by raw output
     if not client_id:
         output_objects.append({'object_type': 'script_status', 'text': ''})
-        output_objects.append({'object_type': 'binary', 'data': '%s' % status[0]})
+        output_objects.append(
+            {'object_type': 'binary', 'data': '%s' % status[0]})
     output_objects.append({'object_type': 'binary', 'data': msg})
     return (output_objects, status)
