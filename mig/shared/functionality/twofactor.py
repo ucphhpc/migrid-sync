@@ -359,10 +359,10 @@ Page will reload automatically in <span id="reload_counter">%d</span> seconds.
 <p class="info leftpad">Twofactor authentication problems?</p>
 <p>
 Please
-<a href="mailto:%s?subject=%s twofactor report from %s">contact admins</a>
+<a href="mailto:%s?subject=%s twofactor report from %s">contact support</a>
 with details.
 </p>
-''' % (configuration.admin_email, configuration.short_title, client_short)
+''' % (configuration.support_email, configuration.short_title, client_short)
             output_objects.append({'object_type': 'html_form', 'text':
                                    twofactor_token_html(configuration, support_html)})
             if token:

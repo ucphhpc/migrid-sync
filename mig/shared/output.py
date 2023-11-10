@@ -25,8 +25,7 @@
 # -- END_HEADER ---
 #
 
-"""Module with functions to generate output in format
-specified by the client."""
+"""Helper functions to generate output in format specified by the client"""
 
 from __future__ import absolute_import
 

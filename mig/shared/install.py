@@ -379,6 +379,7 @@ def generate_confs(
     collaboration_links='default advanced',
     default_vgrid_links='files web',
     advanced_vgrid_links='files web scm tracker workflows monitor',
+    support_email='',
     admin_email='mig',
     admin_list='',
     smtp_server='localhost',
@@ -625,6 +626,7 @@ def generate_confs(
     user_dict['__COLLABORATION_LINKS__'] = collaboration_links
     user_dict['__DEFAULT_VGRID_LINKS__'] = default_vgrid_links
     user_dict['__ADVANCED_VGRID_LINKS__'] = advanced_vgrid_links
+    user_dict['__SUPPORT_EMAIL__'] = support_email
     user_dict['__ADMIN_EMAIL__'] = admin_email
     user_dict['__ADMIN_LIST__'] = admin_list
     user_dict['__SMTP_SERVER__'] = smtp_server

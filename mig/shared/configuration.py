@@ -132,6 +132,7 @@ def fix_missing(config_file, verbose=True):
         'auto_add_oidc_user': False,
         'auto_add_resource': False,
         'server_fqdn': fqdn,
+        'support_email': '',
         'admin_email': '%s@%s' % (user, fqdn),
         'admin_list': '',
         'ca_fqdn': '',
@@ -386,6 +387,7 @@ class Configuration:
     mig_server_home = ''
     mig_code_base = ''
     server_fqdn = ''
+    support_email = ''
     admin_email = ''
     admin_list = ''
     ca_fqdn = ''
@@ -863,6 +865,11 @@ location.""" % self.config_file)
             except:
                 pass
             self.admin_email = '%s@%s' % (user, fqdn)
+        # Let support_email be optional with fallback to admin_email
+        if config.has_option('GLOBAL', 'support_email'):
+            self.support_email = config.get('GLOBAL', 'support_email')
+        if not self.support_email:
+            self.support_email = self.admin_email
 
         if config.has_option('GLOBAL', 'ca_fqdn'):
             self.ca_fqdn = config.get('GLOBAL', 'ca_fqdn')
