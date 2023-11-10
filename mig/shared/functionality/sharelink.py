@@ -120,10 +120,10 @@ def main(client_id, user_arguments_dict):
     output_objects.append(header_entry)
 
     if not configuration.site_enable_sharelinks:
-        output_objects.append({'object_type': 'text', 'text': '''
-Share links are disabled on this site.
-Please contact the site admins %s if you think they should be enabled.
-''' % configuration.admin_email})
+        output_objects.append({'object_type': 'text', 'text':
+                               """Share linking is disabled on this site.
+Please contact the %s site support (%s) if you think it should be enabled.
+""" % (configuration.short_title, configuration.support_email)})
         return (output_objects, returnvalues.OK)
 
     logger.info('sharelink %s from %s' % (action, client_id))
