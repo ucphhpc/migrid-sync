@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # oneclick - Oneclick resource backend
-# Copyright (C) 2003-2017  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -49,12 +49,13 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False,
                                   op_menu=client_id)
-    output_objects.append({'object_type': 'header', 'text'
-                        : '%s One-click resource' % configuration.short_title
-                          })
+    output_objects.append({'object_type': 'header', 'text':
+                           '%s One-click resource' % configuration.short_title
+                           })
     defaults = signature()[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
-            defaults, output_objects, allow_rejects=False)
+                                                 defaults, output_objects,
+                                                 allow_rejects=False)
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -63,16 +64,14 @@ def main(client_id, user_arguments_dict):
 
     if not configuration.site_enable_sandboxes:
         output_objects.append({'object_type': 'text', 'text':
-                               '''Sandbox resources are disabled on this site.
-Please contact the site admins %s if you think they should be enabled.
-''' % configuration.admin_email})
+                               """Sandbox resources are disabled on this site.
+Please contact the %s site support (%s) if you think it should be enabled.
+""" % (configuration.short_title, configuration.support_email)})
         return (output_objects, returnvalues.OK)
-
 
     (status, result) = get_resource(client_id, configuration, logger)
     if not status:
-        output_objects.append({'object_type': 'html_form', 'text'
-                              : result})
+        output_objects.append({'object_type': 'html_form', 'text': result})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     fields = {
@@ -80,16 +79,16 @@ Please contact the site admins %s if you think they should be enabled.
         'resource_name': result[1],
         'cookie': result[2],
         'cputime': result[3],
-        'codebase': '%s/sid_redirect/%s.oneclick/'\
-             % (configuration.migserver_https_sid_url, result[0]),
+        'codebase': '%s/sid_redirect/%s.oneclick/'
+        % (configuration.migserver_https_sid_url, result[0]),
         'oneclick_code': 'MiG.oneclick.Applet.class',
         'resource_code': 'MiG.oneclick.Resource.class',
         'oneclick_archive': 'MiGOneClickCodebase.jar',
         'info_code': 'JavaInfoApplet.class',
         'info_archive': '',
         'server': configuration.migserver_https_sid_url,
-        'site' : configuration.short_title,
-        }
+        'site': configuration.short_title,
+    }
 
     if debug:
         body = """
@@ -100,7 +99,7 @@ DEBUG input vars:
 
     elif console:
         body = \
-                 """
+            """
 codebase: %(codebase)s
 code: %(resource_code)s
 archive: %(oneclick_archive)s
@@ -109,8 +108,7 @@ sandboxkey: %(sandboxkey)s
 resource_name: %(resource_name)s
 cputime: %(cputime)s
         """ % fields
-        output_objects.append({'object_type': 'text', 'text'
-                                   : body})
+        output_objects.append({'object_type': 'text', 'text': body})
     else:
         body = """
         <object type='application/x-java-applet' height='600' width='800'>
@@ -144,9 +142,6 @@ cputime: %(cputime)s
         Java plugin not installed or disabled.
         </object>
         """ % fields
-        output_objects.append({'object_type': 'html_form', 'text'
-                               : body})
+        output_objects.append({'object_type': 'html_form', 'text': body})
 
     return (output_objects, returnvalues.OK)
-
-

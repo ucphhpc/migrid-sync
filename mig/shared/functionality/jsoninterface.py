@@ -599,10 +599,10 @@ def main(client_id, user_arguments_dict):
         logger.info("Workflow sessions db didn't load, creating new db")
         if not touch_workflow_sessions_db(configuration, force=True):
             output_objects.append(
-                {'object_type': 'error_text',
-                 'text': "Internal sessions db failure, please contact "
-                         "an admin at '%s' to resolve this issue." %
-                         configuration.admin_email})
+                {'object_type': 'error_text', 'text':
+                 """Internal sessions db failure. Please contact the %s site
+support at %s to resolve this issue.""" % (configuration.short_title,
+                                           configuration.support_email)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
         else:
             # Try reload

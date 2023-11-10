@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # lscrontab - list scheduled cron/at user tasks back end
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -74,10 +74,10 @@ def main(client_id, user_arguments_dict):
     output_objects.append(header_entry)
 
     if not configuration.site_enable_crontab:
-        output_objects.append({'object_type': 'text', 'text': '''
-Scheduled tasks are disabled on this site.
-Please contact the site admins %s if you think they should be enabled.
-''' % configuration.admin_email})
+        output_objects.append({'object_type': 'text', 'text':
+                               """Scheduling tasks is disabled on this site.
+Please contact the %s site support (%s) if you think it should be enabled.
+""" % (configuration.short_title, configuration.support_email)})
         return (output_objects, returnvalues.OK)
 
     logger.info('%s from %s' % (op_name, client_id))

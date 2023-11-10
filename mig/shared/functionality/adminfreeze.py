@@ -84,8 +84,8 @@ def main(client_id, user_arguments_dict):
     if not configuration.site_enable_freeze:
         output_objects.append({'object_type': 'text', 'text':
                                '''Freezing archives is disabled on this site.
-Please contact the site admins %s if you think it should be enabled.
-''' % configuration.admin_email})
+Please contact the %s site support (%s) if you think it should be enabled.
+''' % (configuration.short_title, configuration.support_email)})
         return (output_objects, returnvalues.OK)
 
     # Load existing freeze for stepwise construction if requested

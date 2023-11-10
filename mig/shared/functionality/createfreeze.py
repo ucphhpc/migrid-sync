@@ -223,9 +223,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not configuration.site_enable_freeze:
         output_objects.append({'object_type': 'text', 'text':
-                               '''Freezing archives is disabled on this site.
-Please contact the site admins %s if you think it should be enabled.
-''' % configuration.admin_email})
+                               """Freezing archives is disabled on this site.
+Please contact the %s site support (%s) if you think it should be enabled.
+""" % (configuration.short_title, configuration.support_email)})
         return (output_objects, returnvalues.OK)
 
     # jquery support for confirmation on freeze
