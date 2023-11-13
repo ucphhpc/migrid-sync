@@ -5,7 +5,7 @@
 # --- BEGIN_HEADER ---
 #
 # vmrequest - request new virtual machine
-# Copyright (C) 2003-2016  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,6 +27,7 @@
 #
 
 """Virtual machine request back end functionality"""
+
 from __future__ import absolute_import
 
 from mig.shared import returnvalues
@@ -50,7 +51,7 @@ def main(client_id, user_arguments_dict):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id, op_header=False)
     output_objects.append({'object_type': 'header', 'text':
-                           '%s Request Virtual Machine' % \
+                           '%s Request Virtual Machine' %
                            configuration.short_title})
     status = returnvalues.OK
     defaults = signature()[1]
@@ -61,7 +62,7 @@ def main(client_id, user_arguments_dict):
         client_id,
         configuration,
         allow_rejects=False,
-        )
+    )
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
@@ -70,15 +71,15 @@ def main(client_id, user_arguments_dict):
 
     if not configuration.site_enable_vmachines:
         output_objects.append({'object_type': 'text', 'text':
-                               '''Virtual machines are disabled on this site.
-Please contact the site admins %s if you think they should be enabled.
-''' % configuration.admin_email})
+                               """Virtual machine use is disabled on this site.
+Please contact the %s site support (%s) if you think it should be enabled.
+""" % (configuration.short_title, configuration.support_email)})
         return (output_objects, returnvalues.OK)
 
     form_method = 'post'
     csrf_limit = get_csrf_limit(configuration)
-    fill_helpers =  {'form_method': form_method, 'csrf_field': csrf_field,
-                     'csrf_limit': csrf_limit}
+    fill_helpers = {'form_method': form_method, 'csrf_field': csrf_field,
+                    'csrf_limit': csrf_limit}
     target_op = 'vmachines'
     csrf_token = make_csrf_token(configuration, form_method, target_op,
                                  client_id, csrf_limit)
@@ -105,12 +106,12 @@ Please contact the site admins %s if you think they should be enabled.
 <tr>
   <td style="width: 20%;">Choose a OS version</td>
   <td>
-  
+
 <select name="os">
 '''
-    for os in vms.available_os_list(configuration):
+    for val in vms.available_os_list(configuration):
         build_form += '<option value="%s">%s</option>\n' % \
-                      (os, os.capitalize())
+                      (val, val.capitalize())
     build_form += '''
 </select>
 
@@ -119,7 +120,7 @@ Please contact the site admins %s if you think they should be enabled.
 <tr>
   <td>Choose a machine image</td>
   <td>
-  
+
 <select name="flavor">
 '''
     for flavor in vms.available_flavor_list(configuration):
@@ -136,7 +137,7 @@ flavor combination.
 For Ubuntu systems you can typically just use a runtime env from the same year,
 like VBOX3.1-IMAGES-2010-1 for ubuntu-10.* versions.</td>
   <td>
-  
+
 <input type="hidden" name="hypervisor_re" value="%s">
 <select name="sys_re">
 """ % configuration.vm_default_hypervisor_re

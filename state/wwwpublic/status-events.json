@@ -28,18 +28,18 @@
     ], 
     "announce_start": "2023-10-24T08:00:00+02:00", 
     "title": {
-      "EN": "Power Outage - MODI Unavailable", 
-      "DK": "Strømudfald - MODI utilgængelig"
+      "EN": "Power Outage - MODI available again, MIST partially available", 
+      "DK": "Strømudfald - MODI utilgængelig, MIST delvist tilgængelig"
     }, 
     "services": [
-        "MODI"
-    ], 
-    "work_end": "2023-11-02T12:00:00+01:00",
+        "MODI", "MIST"
+    ],
+    "work_end": "2023-11-06T20:30:00+01:00",
     "description": {
-      "EN": "We had a longer serious power outage on during the night between the 23rd and 24th, which triggered circuit breakers, leaving several systems without power. Hosts with limitied or no emergency power therefore went down and MODI Jupyter hosts remained unreachable. We had our technicians on-site to sort out the issues and bring several machines and a bit of network equipment back online. However the power fallout also likely caused an issue in our backend OpenStack environment which has resulted in the MODI manager node to not being reachable, we are attempting a reinstall and reconfiguration while trying to track down the issue with the OpenStack setup. In any case we're sorry about the inconvenience. More info will follow here.",
-      "DK": "Vi blev ramt af et omfattende og længerevarende strømudfald fra lidt før kl 3 i morges. Det fik sikringer til at gå og efterlod adskillige systemer uden strøm. Maskiner uden - eller med begrænset nødstrøm gik derfor ned og MODI Jupyter-maskinerne forblev udenfor rækkevidde. Vi havde teknikere på stedet for at få styr på problemerne og bringe en række maskiner og lidt netværksudstyr tilbage i drift. Dog har strømudfaldet også sandsynligvis forårsaget et problem i vores backend OpenStack miljø, som har resulteret i at MODI manager noden ikke er tilgængelig, vi forsøger en geninstallation og genkonfiguration, mens vi forsøger at finde problemet med OpenStack setupet. I hvert fald beklager vi denne ulejligheden. Mere info følger her."
+      "EN": "We had a longer serious power outage on during the night between the 23rd and 24th, which triggered circuit breakers, leaving several systems without power. Hosts with limitied or no emergency power therefore went down and MODI Jupyter hosts as well as a few components in MIST remained unreachable. We had our technicians on-site to sort out the issues and bring several machines and a bit of network equipment back online. However the power fallout also likely caused an issue in our backend OpenStack environment, which has resulted in the MODI manager node not being reachable and certain other MIST instances failing. We are attempting a reinstall and reconfiguration of MODI while trying to track down the issue with the OpenStack setup. Since we encountered continous problems with getting the MODI specific OpenStack node up and running again, we ended up migrating the MODI service from the OpenStack environment to our HPC infrastructure. We finished the migration and had MODI up and running again by the evening of the 6th of November. Therfore the MODI service should now be functioning as expected again, please contact us if you have any issues beyond this date.",
+      "DK": "Vi blev ramt af et omfattende og længerevarende strømudfald fra lidt før kl 3 i morges. Det fik sikringer til at gå og efterlod adskillige systemer uden strøm. Maskiner uden - eller med begrænset nødstrøm gik derfor ned og MODI Jupyter-maskinerne såvel som nogle komponenter i MIST forblev udenfor rækkevidde. Vi havde teknikere på stedet for at få styr på problemerne og bringe en række maskiner og lidt netværksudstyr tilbage i drift. Dog har strømudfaldet også sandsynligvis forårsaget et problem i vores backend OpenStack-miljø, som har resulteret i at MODI manager noden ikke er tilgængelig og at enkelte MIST instanser fejler. Vi prøver en geninstallation og genkonfiguration af MODI, mens vi forsøger at finde problemet med OpenStack-miljøet. Da vi løb ind i vedvarende problemer med at få den MODI specifikke OpenStack node op at køre igen, endte vi med at migrere MODI servicen fra OpenStack-miljøet til vores HPC infrastruktur. Vi færdiggjorde migreringen og havde MODI oppe at køre igen om aftenen den 6. november. Derfor burde MODI servicen nu fungere som forventet igen, kontakt os venligst, hvis du har problemer ud over denne dato."
     }, 
-    "announce_end": "2023-11-02T12:00:00+01:00"
+    "announce_end": "2023-11-07T12:00:00+01:00"
   },
   {
     "status": "AUTO", 
@@ -78,8 +78,8 @@
     ],
     "work_end": "2023-11-06T22:00:00+02:00",
     "description": {
-      "EN": "We need to migrate the MODI service out of our MIST infrastructure and over to our HPC infrastructure. This will cause extended downtime for the MODI service.",
-      "DK": "Vi er nødt til at migrere MODI servicen ud af vores MIST infrastruktur og over til vores HPC infrastruktur. Dette vil medføre forlænget nedetid for MODI servicen."
+      "EN": "We need to migrate the MODI service out of our MIST infrastructure and over to our HPC infrastructure. This will cause extended downtime for the MODI service. This work was completed within the announced timeframe and the MODI service is back online.",
+      "DK": "Vi er nødt til at migrere MODI servicen ud af vores MIST infrastruktur og over til vores HPC infrastruktur. Dette vil medføre forlænget nedetid for MODI servicen. Dette arbejde blev udført inden for den annoncerede tidsramme, og MODI servicen er tilbage online."
     },
     "announce_end": "2023-10-05T12:00:00+02:00"
   },

@@ -179,6 +179,7 @@ if '__main__' == __name__:
         'collaboration_links',
         'default_vgrid_links',
         'advanced_vgrid_links',
+        'support_email',
         'admin_email',
         'admin_list',
         'smtp_server',

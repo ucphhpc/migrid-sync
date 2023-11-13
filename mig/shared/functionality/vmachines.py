@@ -131,9 +131,9 @@ CSRF-filtered POST requests to prevent unintended updates'''
 
     if not configuration.site_enable_vmachines:
         output_objects.append({'object_type': 'text', 'text':
-                               '''Virtual machines are disabled on this site.
-Please contact the site admins %s if you think they should be enabled.
-''' % configuration.admin_email})
+                               """Virtual machine use is disabled on this site.
+Please contact the %s site support (%s) if you think it should be enabled.
+""" % (configuration.short_title, configuration.support_email)})
         return (output_objects, returnvalues.OK)
 
     machine_req = {'memory': memory, 'disk': disk, 'cpu_count': cpu_count,

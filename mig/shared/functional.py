@@ -224,9 +224,9 @@ def validate_input_and_cert(
                 if not account_accessible:
                     output_objects.append(
                         {'object_type': 'text', 'text':
-                         '''Please contact the %s admins about access: %s''' %
+                         '''Please contact %s support on %s about access''' %
                          (configuration.short_title,
-                          configuration.admin_email)})
+                          configuration.support_email)})
                 elif not pending_expire:
                     output_objects.append(
                         {'object_type': 'text', 'text':

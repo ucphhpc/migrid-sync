@@ -27,6 +27,7 @@
 #
 
 """Virtual machine connection back end functionality"""
+
 from __future__ import absolute_import
 
 import os
@@ -70,9 +71,9 @@ def main(client_id, user_arguments_dict):
 
     if not configuration.site_enable_vmachines:
         output_objects.append({'object_type': 'text', 'text':
-                               '''Virtual machines are disabled on this site.
-Please contact the site admins %s if you think they should be enabled.
-''' % configuration.admin_email})
+                               """Virtual machine use is disabled on this site.
+Please contact the %s site support (%s) if you think it should be enabled.
+""" % (configuration.short_title, configuration.support_email)})
         return (output_objects, returnvalues.OK)
 
     settings_dict = load_settings(client_id, configuration)

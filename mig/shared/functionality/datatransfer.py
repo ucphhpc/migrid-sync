@@ -306,10 +306,9 @@ def main(client_id, user_arguments_dict):
 
     if not configuration.site_enable_transfers:
         output_objects.append({'object_type': 'text', 'text':
-                               '''Backgroung data transfers are disabled on
-this site.
-Please contact the site admins %s if you think they should be enabled.
-''' % configuration.admin_email})
+                               """Data import/export is disabled on this site.
+Please contact the %s site support (%s) if you think it should be enabled.
+""" % (configuration.short_title, configuration.support_email)})
         return (output_objects, returnvalues.OK)
 
     logger.info('datatransfer %s from %s' % (action, client_id))

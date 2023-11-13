@@ -299,13 +299,12 @@ def main(client_id, user_arguments_dict):
     expert = False
     if 'true' == expert_string.lower():
         expert = True
-    admin_email = configuration.admin_email
 
     if not configuration.site_enable_sandboxes:
         output_objects.append({'object_type': 'text', 'text':
-                               '''Sandbox resources are disabled on this site.
-Please contact the site admins %s if you think they should be enabled.
-''' % configuration.admin_email})
+                               """Sandbox resource use is disabled on this site.
+Please contact the %s site support (%s) if you think it should be enabled.
+""" % (configuration.short_title, configuration.support_email)})
         return (output_objects, returnvalues.OK)
 
     # Load the user DB
@@ -421,7 +420,8 @@ CSRF-filtered POST requests to prevent unintended updates'''})
                                show_download(configuration, userdb, username,
                                              password, expert)})
         output_objects.append({'object_type': 'text', 'text': """
-If you run into any problems, please contact the grid administrators (%s)"""
-                               % admin_email})
+If you run into any problems, please contact the %s site support (%s)""" %
+                               (configuration.short_title,
+                                configuration.support_email)})
 
     return (output_objects, returnvalues.OK)

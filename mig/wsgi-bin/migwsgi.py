@@ -150,7 +150,9 @@ def application(environ, start_response):
     # TODO: verify security of this environment exposure or limit to known vars
     # NOTE: pass environment on to sub handlers
 
-    os.environ = environ
+    for key, value in environ.items():
+        if isinstance(value, basestring):
+            os.environ[key] = value
 
     # TODO: we should avoid print calls completely in backends
     # make sure print calls do not interfere with wsgi

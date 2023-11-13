@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # crontab - user task scheduling back end
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -172,10 +172,10 @@ def main(client_id, user_arguments_dict):
     output_objects.append({'object_type': 'html_form',
                            'text': man_base_html(configuration)})
     if not configuration.site_enable_crontab:
-        output_objects.append({'object_type': 'text', 'text': '''
-Scheduled tasks are disabled on this site.
-Please contact the site admins %s if you think they should be enabled.
-''' % configuration.admin_email})
+        output_objects.append({'object_type': 'text', 'text':
+                               """Scheduling tasks is disabled on this site.
+Please contact the %s site support (%s) if you think it should be enabled.
+""" % (configuration.short_title, configuration.support_email)})
         return (output_objects, returnvalues.OK)
 
     logger.info('crontab %s from %s' % (action, client_id))

@@ -714,6 +714,7 @@ or the same on centos
                    --default_vgrid_links="files web" \
                    --advanced_vgrid_links="files web scm tracker workflows monitor" \
                    --smtp_sender="Do Not Reply <no-reply@migrid.org>" \
+                   --support_email="MiGrid Support <support@migrid.org>" \
                    --admin_email="MiGrid Info <info@migrid.org>" --log_level=info \
                    --title="Minimum intrusion Grid" \
                    --short_title="MiG" \
@@ -843,7 +844,7 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --enable_cracklib=True --enable_hsts=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
                    --enable_notify=True --enable_jupyter=True \
-                   --jupyter_services='DAG.https://dag002.science DAG.https://dag003.science DAG.https://dag004.science DAG.https://dag005.science DAG.https://dag006.science DAG.https://dag007.science DAG.https://dag008.science DAG.https://dag009.science DAG.https://dag010.science DAG.https://dag200.science DAG.https://dag201.science DAG.https://dag203.science DAG.https://dag204.science MODI.https://ext.login.modi' \
+                   --jupyter_services='DAG.https://dag002.science DAG.https://dag003.science DAG.https://dag004.science DAG.https://dag005.science DAG.https://dag006.science DAG.https://dag007.science DAG.https://dag008.science DAG.https://dag009.science DAG.https://dag010.science DAG.https://dag201.science DAG.https://dag203.science DAG.https://dag204.science MODI.https://dag100.science' \
                    --jupyter_services_desc="{'DAG': '/home/mig/state/wwwpublic/dag_desc.html', 'MODI': '/home/mig/state/wwwpublic/modi_desc.html'}" \
                    --enable_cloud=True \
                    --enable_migadmin=True \
@@ -870,6 +871,7 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --default_vgrid_links="files web" \
                    --advanced_vgrid_links="files web scm workflows monitor" \
                    --smtp_sender="Do Not Reply <no-reply@erda.dk>" \
+                   --support_email="ERDA Support <support@erda.dk>" \
                    --admin_email="ERDA Info <info@erda.dk>" --log_level=info \
                    --title="University of Copenhagen - Electronic Research Data Archive" \
                    --short_title="UCPH ERDA" \
@@ -931,7 +933,7 @@ with optional 2-FA support and legacy sftp clients:
                    --enable_workflows=True --enable_hsts=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
                    --enable_jupyter=True --enable_migadmin=True \
-                   --jupyter_services='DAG.https://dag002.science DAG.https://dag003.science DAG.https://dag004.science DAG.https://dag005.science DAG.https://dag006.science DAG.https://dag007.science DAG.https://dag008.science DAG.https://dag009.science DAG.https://dag010.science DAG.https://dag200.science DAG.https://dag201.science DAG.https://dag203.science DAG.https://dag204.science MODI.https://ext.login.modi' \
+                   --jupyter_services='DAG.https://dag002.science DAG.https://dag003.science DAG.https://dag004.science DAG.https://dag005.science DAG.https://dag006.science DAG.https://dag007.science DAG.https://dag008.science DAG.https://dag009.science DAG.https://dag010.science DAG.https://dag201.science DAG.https://dag203.science DAG.https://dag204.science MODI.https://dag100.science' \
                    --jupyter_services_desc="{'DAG': '/home/mig/state/wwwpublic/dag_desc.html', 'MODI': '/home/mig/state/wwwpublic/modi_desc.html'}" \
                    --enable_peers=True --peers_mandatory=True \
                    --peers_explicit_fields='full_name email' \
@@ -957,6 +959,7 @@ with optional 2-FA support and legacy sftp clients:
                    --default_vgrid_links="files web" \
                    --advanced_vgrid_links="files web scm workflows monitor" \
                    --smtp_sender="Do Not Reply <no-reply@idmc.dk>" \
+                   --support_email="IDMC Support <support@idmc.dk>" \
                    --admin_email="IDMC Info <info@idmc.dk>" --log_level=info \
                    --title="Imaging Data Management Center" \
                    --short_title="IDMC" \
@@ -979,6 +982,7 @@ General Data Protection Regulation (GDPR) imposed by EU:
 https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
 ./generateconfs.py --source=. --destination=generated-confs \
                    --destination_suffix="_svn$(svnversion -n ~/)" \
+                   --support_email="SIF Support <support@sif.erda.dk>" \
                    --admin_email="SIF admin <info@sif.erda.dk>"
                    --admin_list="/C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Jonas Bardino/emailAddress=bardino@nbi.ku.dk , C=DK/ST=NA/L=NA/O=NBI/OU=NA/CN=Martin Rehr/emailAddress=rehr@nbi.ku.dk" \
                    --auto_add_cert_user=False \

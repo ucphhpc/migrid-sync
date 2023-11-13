@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # arcresources - list arc resources and queues
-# Copyright (C) 2003-2014  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -210,9 +210,9 @@ def main(client_id, user_arguments_dict):
 
     if not configuration.site_enable_griddk:
         output_objects.append({'object_type': 'text', 'text':
-                               '''Grid.dk features are disabled on this site.
-Please contact the site admins %s if you think they should be enabled.
-''' % configuration.admin_email})
+                               """Grid.dk features are disabled on this site.
+Please contact the %s site support (%s) if you think it should be enabled.
+""" % (configuration.short_title, configuration.support_email)})
         return (output_objects, returnvalues.OK)
 
     # could factor out from here, to be usable from outside
@@ -225,14 +225,15 @@ Please contact the site admins %s if you think they should be enabled.
         queues = session.getQueues()
 
     except arcwrapper.NoProxyError as err:
-        output_objects.append({'object_type': 'error_text', 'text': 'Error while retrieving: %s' % err.what()
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Error while retrieving: %s' % err.what()
                                })
         output_objects += arcwrapper.askProxy()
         return (output_objects, returnvalues.ERROR)
     except Exception as err:
         logger.error('Exception while retrieving ARC resources\n%s' % err)
-        output_objects.append(
-            {'object_type': 'warning', 'text': 'Could not retrieve information: %s' % err})
+        output_objects.append({'object_type': 'warning', 'text':
+                               'Could not retrieve information: %s' % err})
         return(output_objects, returnvalues.ERROR)
 
     res_list = {'object_type': 'resource_list', 'resources': []}
