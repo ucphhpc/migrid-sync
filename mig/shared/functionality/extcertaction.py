@@ -36,13 +36,13 @@ import time
 import tempfile
 
 from mig.shared import returnvalues
-from mig.shared.accountreq import user_manage_commands
+from mig.shared.accountreq import user_manage_commands, save_account_request
 from mig.shared.accountstate import default_account_expire
 from mig.shared.base import canonical_user, mask_creds, generate_https_urls, \
     distinguished_name_to_user, fill_distinguished_name, fill_user
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
-from mig.shared.init import initialize_main_variables
+from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.notification import send_email
 from mig.shared.serial import dumps
 from mig.shared.useradm import create_user
@@ -76,11 +76,7 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False)
-    output_objects.append({'object_type': 'header', 'text':
-                           '%s external certificate sign up' %
-                           configuration.short_title})
-
+        initialize_main_variables(client_id, op_header=False, op_menu=False)
     defaults = signature(configuration)[1]
     (validate_status, accepted) = validate_input_and_cert(
         user_arguments_dict,
@@ -96,6 +92,22 @@ def main(client_id, user_arguments_dict):
         logger.warning('%s invalid input: %s' % (op_name, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
 
+    short_title = configuration.short_title
+    if not 'extcert' in configuration.site_signup_methods:
+        output_objects.append({'object_type': 'text', 'text':
+                               """X.509 sign up is disabled on this site.
+Please contact the %s site support (%s) if you think it should be enabled.
+""" % (short_title, configuration.support_email)})
+        return (output_objects, returnvalues.OK)
+
+    title_entry = find_entry(output_objects, 'title')
+    title_entry['text'] = '%s external certificate sign up' % short_title
+    title_entry['skipmenu'] = True
+    output_objects.append({'object_type': 'header', 'text':
+                           '%s external certificate sign up' % short_title
+                           })
+
+    support_email = configuration.support_email
     admin_email = configuration.admin_email
     smtp_server = configuration.smtp_server
     user_pending = os.path.abspath(configuration.user_pending)
@@ -237,23 +249,19 @@ Please use the navigation menu to the left to proceed using it.
         return (output_objects, returnvalues.OK)
 
     # Without auto add we end here and go through the mail-to-admins procedure
-    req_path = None
-    try:
-        (os_fd, req_path) = tempfile.mkstemp(dir=user_pending)
-        os.write(os_fd, dumps(user_dict))
-        os.close(os_fd)
-    except Exception as err:
-        logger.error('Failed to write existing certificate request to %s: %s'
-                     % (req_path, err))
-        output_objects.append(
-            {'object_type': 'error_text', 'text':
-             """Request could not be sent to site administrators. Please
-contact them manually on %s if this error persists.""" %
-             admin_email})
+    (save_status, save_out) = save_account_request(configuration, user_dict)
+    if not save_status:
+        logger.error(
+            'Failed to write existing certificate request %s' % save_out)
+        output_objects.append({'object_type': 'error_text', 'text':
+                               """Request could not be saved. Please contact
+%s site support at %s if this error persists.""" % (short_title,
+                                                    support_email)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    req_path = save_out
     logger.info('Wrote existing certificate sign up request to %s' % req_path)
-    tmp_id = req_path.replace(user_pending, '')
+    tmp_id = os.path.basename(req_path)
     user_dict['tmp_id'] = tmp_id
 
     mig_user = os.environ.get('USER', 'mig')
@@ -265,10 +273,8 @@ contact them manually on %s if this error persists.""" %
     user_dict['vgridman_links'] = generate_https_urls(
         configuration, '%(auto_base)s/%(auto_bin)s/vgridman.py', {})
     email_header = '%s certificate sign up request for %s (%s)' % \
-                   (configuration.short_title, user_dict['full_name'],
-                    user_dict['email'])
-    email_msg = \
-        """
+                   (short_title, user_dict['full_name'], user_dict['email'])
+    email_msg = """
 Received an existing certificate sign up request with certificate data
  * Distinguished Name: %(distinguished_name)s
  * Full Name: %(full_name)s
@@ -291,7 +297,8 @@ Finally add the user
 to any relevant %(vgrid_label)ss using one of the management links:
 %(vgridman_links)s
 
----
+
+--- If user must be denied access or deleted at some point ---
 
 Command to reject user account request on %(site)s server:
 %(command_user_reject)s
@@ -301,6 +308,7 @@ Command to suspend user on %(site)s server:
 
 Command to delete user again on %(site)s server:
 %(command_user_delete)s
+
 ---
 
 """
@@ -310,19 +318,19 @@ Command to delete user again on %(site)s server:
                 % (admin_email, email_header, email_msg, smtp_server))
     if not send_email(admin_email, email_header, email_msg, logger,
                       configuration):
-        output_objects.append(
-            {'object_type': 'error_text', 'text':
-             """An error occurred trying to send the email requesting the
-sign up with an existing certificate. Please email the site administrators (%s)
-manually and include the session ID: %s"""
-             % (admin_email, tmp_id)})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               """An error occurred trying to inform the site
+admins about your request for existing certificate sign up. Please contact %s site
+support at %s and include the session ID: %s""" % (short_title, support_email,
+                                                   tmp_id)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append(
-        {'object_type': 'text', 'text':
-         """Request sent to site administrators: Your request for a %s user
-account with your existing certificate will be verified and handled as soon as
-possible, so please be patient. In case of inquiries about this request,
-please email the site administrators (%s) and include the session ID: %s"""
-         % (configuration.short_title, admin_email, tmp_id)})
+        {'object_type': 'text', 'text': """Request sent to site administrators:
+Your sign up request with your existing certificate will be verified and
+handled as soon as possible, so please be patient.
+Once handled an email will be sent to the address you have specified (%r) with
+further information. In case of inquiries about this request, please contact
+%s site support at %s and include the session ID %r in the message.""" %
+         (email, short_title, support_email, tmp_id)})
     return (output_objects, returnvalues.OK)

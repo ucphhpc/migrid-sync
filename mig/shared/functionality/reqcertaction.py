@@ -87,21 +87,22 @@ def main(client_id, user_arguments_dict):
         logger.warning('%s invalid input: %s' % (op_name, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
 
+    short_title = configuration.short_title
     if not 'migcert' in configuration.site_signup_methods:
-        output_objects.append(
-            {'object_type': 'error_text', 'text':
-             '''X.509 certificate login is not enabled on this site'''})
-        return (output_objects, returnvalues.SYSTEM_ERROR)
+        output_objects.append({'object_type': 'text', 'text':
+                               """X.509 sign up is disabled on this site.
+Please contact the %s site support (%s) if you think it should be enabled.
+""" % (short_title, configuration.support_email)})
+        return (output_objects, returnvalues.OK)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s certificate account request' % \
-                          configuration.short_title
+    title_entry['text'] = '%s certificate account request' % short_title
     title_entry['skipmenu'] = True
     output_objects.append({'object_type': 'header', 'text':
-                           '%s certificate account request' %
-                           configuration.short_title
+                           '%s certificate account request' % short_title
                            })
 
+    support_email = configuration.support_email
     admin_email = configuration.admin_email
     smtp_server = configuration.smtp_server
     user_pending = os.path.abspath(configuration.user_pending)
@@ -141,7 +142,8 @@ def main(client_id, user_arguments_dict):
                         get_csrf_limit(configuration), accepted):
         output_objects.append(
             {'object_type': 'error_text', 'text': '''Only accepting
-CSRF-filtered POST requests to prevent unintended updates'''})
+CSRF-filtered POST requests to prevent unintended updates'''
+             })
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if not accept_terms:
@@ -153,10 +155,12 @@ CSRF-filtered POST requests to prevent unintended updates'''})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     if password != verifypassword:
+        output_objects.append({'object_type': 'error_text', 'text':
+                               'Password and verify password are not identical!'
+                               })
         output_objects.append(
-            {'object_type': 'error_text', 'text':
-             'Password and verify password are not identical!'
-             })
+            {'object_type': 'link', 'destination': 'javascript:history.back();',
+             'class': 'genericbutton', 'text': "Try again"})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     try:
@@ -197,6 +201,10 @@ organization. As long as you state that you want the account for course
 purposes in the comment field, you will be given access to the necessary
 resources anyway.
 '''})
+        output_objects.append(
+            {'object_type': 'link',
+             'destination': 'javascript:history.back();',
+             'class': 'genericbutton', 'text': "Try again"})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     raw_user = {
@@ -247,9 +255,9 @@ User certificate requests are not supported on this site!"""})
         logger.error(
             'Failed to write certificate account request: %s' % save_out)
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''Request could not be sent to site
-administrators. Please contact them manually on %s if this error persists.'''
-                               % admin_email})
+                               """Request could not be saved. Please contact
+%s site support at %s if this error persists.""" % (short_title,
+                                                    support_email)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     req_path = save_out
@@ -266,10 +274,8 @@ administrators. Please contact them manually on %s if this error persists.'''
     user_dict['vgridman_links'] = generate_https_urls(
         configuration, '%(auto_base)s/%(auto_bin)s/vgridman.py', {})
     email_header = '%s certificate request for %s (%s)' % \
-                   (configuration.short_title, user_dict['full_name'],
-                    user_dict['email'])
-    email_msg = \
-        """
+                   (short_title, user_dict['full_name'], user_dict['email'])
+    email_msg = """
 Received a certificate request with account data
  * Full Name: %(full_name)s
  * Organization: %(organization)s
@@ -325,19 +331,19 @@ Command to delete user again on %(site)s server:
                 % (admin_email, email_header, email_msg, smtp_server))
     if not send_email(admin_email, email_header, email_msg, logger,
                       configuration):
-        output_objects.append(
-            {'object_type': 'error_text', 'text':
-             """An error occurred trying to send the email requesting the site
-administrators to create a new certificate and account. Please email them (%s)
-manually and include the session ID: %s""" % (admin_email, tmp_id)})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               """An error occurred trying to inform the site
+admins about your request for certificate sign up. Please contact %s site
+support at %s and include the session ID: %s""" % (short_title, support_email,
+                                                   tmp_id)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append(
         {'object_type': 'text', 'text': """Request sent to site administrators:
 Your certificate account request will be verified and handled as soon as
 possible, so please be patient.
-Once handled an email will be sent to the account you have specified ('%s')
-with further information. In case of inquiries about this request, please email
-the site administrators (%s) and include the session ID: %s"""
-         % (email, configuration.admin_email, tmp_id)})
+Once handled an email will be sent to the address you have specified (%r) with
+further information. In case of inquiries about this request, please contact
+%s site support at %s and include the session ID %r in the message.""" %
+         (email, short_title, support_email, tmp_id)})
     return (output_objects, returnvalues.OK)
