@@ -294,7 +294,7 @@ def main(client_id, user_arguments_dict, environ=None):
     logger.debug('Accepted arguments: %s' % mask_creds(accepted))
     # logger.debug('with environ: %s' % environ)
 
-    admin_email = configuration.admin_email
+    support_email = configuration.support_email
     smtp_server = configuration.smtp_server
     (openid_names, oid_extras, peers_extras) = ([], {}, {})
     peer_pattern = None
@@ -629,7 +629,7 @@ accepting create matching supplied ID!'''})
     user_dict['auth'].append(auth_flavor)
 
     fill_helper = {'short_title': configuration.short_title,
-                   'base_url': base_url, 'admin_email': admin_email,
+                   'base_url': base_url, 'support_email': support_email,
                    'ext_login_title': ext_login_title,
                    'front_page_url': get_site_base_url(configuration),
                    'personal_page_url': personal_page_url}
@@ -665,10 +665,10 @@ accepting create matching supplied ID!'''})
                 output_objects.extend(proxy_out)
         except Exception as err:
             logger.error('create failed for %s: %s' % (user_id, err))
-            output_objects.append({'object_type': 'error_text', 'text': '''
-Could not create the user account for you:
-Please report this problem to the site administrators (%(admin_email)s).'''
-                                   % fill_helper})
+            output_objects.append({'object_type': 'error_text', 'text':
+                                   """Could not create the user account for you:
+Please report this problem to %(short_title)s site support (%(support_email)s).
+""" % fill_helper})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         logger.info('created user account for %s' % user_id)
@@ -680,10 +680,11 @@ Your account sign up succeeded and you can now log in to your account using
 your %(ext_login_title)s from
 %(front_page_url)s
 There you'll also find further information about making the most of
-%(short_title)s, including a user guide and answers to Frequently Asked
-Questions, plus site status and support information.
-You're welcome to contact us with questions or comments using the contact
-details there and in the footer of your personal %(short_title)s pages.
+%(short_title)s, including various guides and answers to Frequently Asked
+Questions, along with site status and support information.
+You're welcome to contact our support on %(support_email)s with
+questions or comments. You may also find further support details on the above
+page or on your personal %(short_title)s pages.
 
 Please note that by signing up and using %(short_title)s you also formally
 accept the site Terms of Use, which you'll always find in the current form at
@@ -700,8 +701,8 @@ The %(short_title)s Admins
                           configuration):
             output_objects.append({
                 'object_type': 'error_text', 'text': """An error occurred trying
-to send your account welcome email. Please inform the site admins (%s) manually
-and include the session ID: %s""" % (admin_email, tmp_id)})
+to send your account welcome email. Please contact support (%s) and include the
+session ID: %s""" % (support_email, tmp_id)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         logger.info('sent welcome email for %s to %s' % (user_id, email))
@@ -721,8 +722,8 @@ moment.
     else:
         logger.warning('autocreate disabled and refused for %s' % client_id)
         output_objects.append({
-            'object_type': 'error_text', 'text': """Automatic user creation
-disabled on this site. Please contact the site admins (%(admin_email)s) if you
-think it should be enabled.
-""" % fill_helper})
+            'object_type': 'error_text', 'text':
+            """Automatic user creation disabled on this site.
+Please contact the %(short_title)s support (%(support_email)s) if you think it
+should be enabled.""" % fill_helper})
         return (output_objects, returnvalues.ERROR)
