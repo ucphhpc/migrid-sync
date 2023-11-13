@@ -90,22 +90,23 @@ def main(client_id, user_arguments_dict):
         logger.warning('%s invalid input: %s' % (op_name, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
 
+    short_title = configuration.short_title
     if not configuration.site_enable_openid or \
             not 'migoid' in configuration.site_signup_methods:
-        output_objects.append(
-            {'object_type': 'error_text', 'text':
-             '''Local OpenID login is not enabled on this site'''})
-        return (output_objects, returnvalues.SYSTEM_ERROR)
+        output_objects.append({'object_type': 'text', 'text':
+                               """OpenID sign up is disabled on this site.
+Please contact the %s site support (%s) if you think it should be enabled.
+""" % (short_title, configuration.support_email)})
+        return (output_objects, returnvalues.OK)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s OpenID account request' % \
-                          configuration.short_title
+    title_entry['text'] = '%s OpenID account request' % short_title
     title_entry['skipmenu'] = True
     output_objects.append({'object_type': 'header', 'text':
-                           '%s OpenID account request' %
-                           configuration.short_title
+                           '%s OpenID account request' % short_title
                            })
 
+    support_email = configuration.support_email
     admin_email = configuration.admin_email
     smtp_server = configuration.smtp_server
     user_pending = os.path.abspath(configuration.user_pending)
@@ -192,7 +193,8 @@ Specifically if you are from the U.K. you need to use GB as country code in
 line with the ISO-3166 standard.
 '''})
         output_objects.append(
-            {'object_type': 'link', 'destination': 'javascript:history.back();',
+            {'object_type': 'link',
+             'destination': 'javascript:history.back();',
              'class': 'genericbutton', 'text': "Try again"})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
@@ -246,8 +248,8 @@ resources anyway.
     user_id = user_dict['distinguished_name']
     user_dict['authorized'] = (user_id == client_id)
     if configuration.user_openid_providers and configuration.user_openid_alias:
-        user_dict['openid_names'] += \
-            [user_dict[configuration.user_openid_alias]]
+        user_dict['openid_names'].append(
+            user_dict[configuration.user_openid_alias])
     # IMPORTANT: do NOT log credentials
     logger.info('got account request from reqoid: %s' % mask_creds(user_dict))
 
@@ -262,9 +264,9 @@ resources anyway.
     if not save_status:
         logger.error('Failed to write OpenID account request: %s' % save_out)
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''Request could not be sent to site
-administrators. Please contact them manually on %s if this error persists.'''
-                               % admin_email})
+                               """Request could not be saved. Please contact
+%s site support at %s if this error persists.""" % (short_title,
+                                                    support_email)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     req_path = save_out
@@ -276,13 +278,12 @@ administrators. Please contact them manually on %s if this error persists.'''
     helper_commands = user_manage_commands(configuration, mig_user, req_path,
                                            user_id, user_dict, 'oid')
     user_dict.update(helper_commands)
-    user_dict['site'] = configuration.short_title
+    user_dict['site'] = short_title
     user_dict['vgrid_label'] = configuration.site_vgrid_label
     user_dict['vgridman_links'] = generate_https_urls(
         configuration, '%(auto_base)s/%(auto_bin)s/vgridman.py', {})
     email_header = '%s OpenID request for %s (%s)' % \
-                   (configuration.short_title, user_dict['full_name'],
-                    user_dict['email'])
+                   (short_title, user_dict['full_name'], user_dict['email'])
     email_msg = """
 Received an OpenID request with account data
  * Full Name: %(full_name)s
@@ -343,18 +344,18 @@ Command to delete user again on %(site)s server:
     if not send_email(admin_email, email_header, email_msg, logger,
                       configuration):
         output_objects.append({'object_type': 'error_text', 'text':
-                               '''An error occurred trying to send the email
-requesting the site administrators to create a new OpenID and account. Please
-email them (%s) manually and include the session ID: %s''' % (admin_email,
-                                                              tmp_id)})
+                               """An error occurred trying to inform the site
+admins about your request for OpenID account access. Please contact %s site
+support at %s and include the session ID: %s""" % (short_title, support_email,
+                                                   tmp_id)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append(
         {'object_type': 'text', 'text': """Request sent to site administrators:
-Your OpenID account request will be verified and handled as soon as possible,
-so please be patient.
-Once handled an email will be sent to the account you have specified ('%s') with
-further information. In case of inquiries about this request, please email
-the site administrators (%s) and include the session ID: %s""" %
-         (email, configuration.admin_email, tmp_id)})
+Your OpenID account access request will be verified and handled as soon as
+possible, so please be patient.
+Once handled an email will be sent to the address you have specified (%r) with
+further information. In case of inquiries about this request, please contact
+%s site support at %s and include the session ID %r in the message.""" %
+         (email, short_title, support_email, tmp_id)})
     return (output_objects, returnvalues.OK)
