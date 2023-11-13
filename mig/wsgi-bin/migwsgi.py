@@ -26,6 +26,8 @@
 #
 
 from builtins import range
+from past.builtins import basestring
+
 import cgi
 import importlib
 import os
