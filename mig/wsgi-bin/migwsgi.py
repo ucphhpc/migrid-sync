@@ -89,7 +89,7 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
     try:
         # Import main from backend module
 
-        #_logger.debug("import main from %r" % import_path)
+        # _logger.debug("import main from %r" % import_path)
         # NOTE: dynamic module loading to find corresponding main function
         module_handle = importlib.import_module(import_path)
         main = module_handle.main
@@ -105,7 +105,7 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
         ])
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
-    #_logger.debug("imported main %s" % main)
+    # _logger.debug("imported main %s" % main)
 
     # Now backend value is validated to be safe for output
 
@@ -121,9 +121,6 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
         return (output_objects, returnvalues.INVALID_ARGUMENT)
 
     try:
-
-        # TODO: add environ arg to all main backends and pass it here?
-
         (output_objects, (ret_code, ret_msg)) = main(client_id,
                                                      user_arguments_dict)
     except Exception as err:
@@ -148,22 +145,38 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
 
 
 def application(environ, start_response):
-    """MiG app called automatically by wsgi"""
+    """MiG app called automatically by WSGI.
 
-    # TODO: verify security of this environment exposure or limit to known vars
-    # NOTE: pass environment on to sub handlers
+    *environ* is a dictionary populated by the server with CGI-like variables
+    at each request from the client. It also contains various WSGI helpers and
+    version information.
+    *start_response* is a helper function used to deliver the client response.
+    """
 
-    for key, value in environ.items():
-        if isinstance(value, basestring):
+    # NOTE: pass app environ including apache and query args on to sub handlers
+    #       through the usual os.environ channel.
+    #       We do NOT truncate existing values for security reasons and only
+    #       transfer string values.
+    #       We don't need or want e.g. the included wsgi-version tuples in
+    #       os.environ. A few variables like MIG_CONF are needed for conf init,
+    #       so we keep this environ transfer as first action.
+    #       Unexpected variables are saved in env_warn for proper logging after
+    #       configuration and log init.
+
+    env_warn = {}
+    for key in environ:
+        value = environ[key]
+        if key in os.environ or key.find('wsgi.') != -1:
+            continue
+        elif isinstance(value, basestring):
             os.environ[key] = value
+        else:
+            env_warn[key] = value
 
     # NOTE: enable to debug runtime environment to apache error log
     # print("DEBUG: python %s" %
     #      (sys.version_info, ), file=environ['wsgi.errors'])
     # print("DEBUG: path %s" % sys.path, file=environ['wsgi.errors'])
-
-    # TODO: we should avoid print calls completely in backends
-    # make sure print calls do not interfere with wsgi
 
     # NOTE: redirect stdout to stderr in python 2 only. It breaks logger in 3
     #       and stdout redirection apparently is already handled there.
@@ -173,7 +186,13 @@ def application(environ, start_response):
     configuration = get_configuration_object()
     _logger = configuration.logger
 
-    # get and log ID of user currently logged in
+    for key in env_warn:
+        # NOTE: we should really handle all values above so changes are likely
+        #       required if we get any warnings here
+        _logger.warning("skipped transfer of unexpected wsgi env %s : %s" %
+                        (key, environ[key]))
+
+    # Now get and log ID of user currently logged in
 
     # We can't import helper before environ is ready because it indirectly
     # tries to use pre-mangled environ for conf loading
@@ -181,7 +200,7 @@ def application(environ, start_response):
     from mig.shared.httpsclient import extract_client_id
     client_id = extract_client_id(configuration, environ)
 
-    # default to html
+    # Default to html output
 
     default_content = 'text/html'
     output_format = 'html'
@@ -213,7 +232,7 @@ def application(environ, start_response):
             _logger.error("WSGI interface is disabled in configuration")
             raise Exception("WSGI interface not enabled for this site")
 
-        #_logger.debug('DEBUG: wsgi env: %s' % environ)
+        # _logger.debug('DEBUG: wsgi env: %s' % environ)
         # Environment contains python script _somewhere_ , try in turn
         # and fall back to landing page if all fails
         default_page = configuration.site_landing_page
@@ -231,7 +250,7 @@ def application(environ, start_response):
         module_path = 'mig.shared.functionality.%s' % backend
         (allow, msg) = allow_script(configuration, script_name, client_id)
         if allow:
-            #_logger.debug("wsgi handling script: %s" % script_name)
+            # _logger.debug("wsgi handling script: %s" % script_name)
             (output_objs, ret_val) = stub(configuration, client_id,
                                           module_path, backend,
                                           user_arguments_dict, environ)
@@ -274,11 +293,20 @@ def application(environ, start_response):
         start_entry['headers'] = default_headers
     response_headers = start_entry['headers']
 
+    # Pass wsgi info and helpers for optional use in output delivery
+    wsgi_env = {}
+    for key in environ:
+        if key.find('wsgi.') != -1:
+            wsgi_env[key] = environ[key]
+    #_logger.debug('passing wsgi env to output handlers: %s' % wsgi_env)
+    wsgi_entry = {'object_type': 'wsgi', 'environ': wsgi_env}
+    output_objs.append(wsgi_entry)
+
     _logger.debug("call format %r output to %s" % (backend, output_format))
     output = format_output(configuration, backend, ret_code, ret_msg,
                            output_objs, output_format)
-    #_logger.debug("formatted %s output to %s" % (backend, output_format))
-    #_logger.debug("output:\n%s" % [output])
+    # _logger.debug("formatted %s output to %s" % (backend, output_format))
+    # _logger.debug("output:\n%s" % [output])
 
     if output_format != 'file' and not is_default_str_coding(output):
         _logger.error(
@@ -325,7 +353,7 @@ def application(environ, start_response):
                 chunk_parts += 1
             _logger.info("WSGI %s yielding %d output parts (%db)" %
                          (backend, chunk_parts, content_length))
-        #_logger.debug("send chunked %r response to client" % backend)
+        # _logger.debug("send chunked %r response to client" % backend)
         for i in range(chunk_parts):
             # _logger.debug("WSGI %s yielding part %d / %d output parts" %
             #              (backend, i+1, chunk_parts))

@@ -44,6 +44,7 @@ script_status = {'object_type': 'script_status', 'required': [],
 header = {'object_type': 'header', 'required': ['text'], 'optional': []}
 sectionheader = {'object_type': 'sectionheader', 'required': ['text'],
                  'optional': []}
+wsgi = {'object_type': 'wsgi', 'required': ['environ'], 'optional': []}
 link = {'object_type': 'link', 'required': ['destination', 'text'],
         'optional': []}
 error_text = {'object_type': 'error_text', 'required': ['text'],
@@ -403,6 +404,7 @@ valid_types_list = [
     script_status,
     header,
     sectionheader,
+    wsgi,
     link,
     error_text,
     job,

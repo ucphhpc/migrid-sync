@@ -644,6 +644,8 @@ ctime\t%(ctime)s
             timing_info = i.get('text')
         elif i['object_type'] == 'end':
             pass
+        elif i['object_type'] == 'wsgi':
+            pass
         else:
             lines.append('unknown object %s\n' % i)
 
@@ -2551,6 +2553,8 @@ Reload thread</a></p>''' % (i['vgrid_name'], i['thread']))
             timing_info = i.get('text')
         elif i['object_type'] == 'end':
             pass
+        elif i['object_type'] == 'wsgi':
+            pass
         else:
             lines.append('unknown object %s' % i)
 
@@ -2655,6 +2659,8 @@ def resource_format(configuration, ret_val, ret_msg, out_obj):
 def file_format(configuration, ret_val, ret_msg, out_obj):
     """Dump raw file contents"""
 
+    # TODO: use wsgi file_wrapper helper here if out_obj has wsgi entry?
+
     # NOTE: we expect binay data here and must use it consistently
     file_content = b''
     for entry in out_obj:
@@ -2749,6 +2755,10 @@ def format_output(
                 'style': {},
                 'script': {},
             }] + out_obj
+
+    # NOTE: strip wsgi helpers and info unless needed for output formatting
+    if not outputformat in ('txt', 'html', 'file'):
+        out_obj = [i for i in out_obj if i['object_type'] != 'wsgi']
 
     #logger.debug("%s formatting output" % outputformat)
     try:
