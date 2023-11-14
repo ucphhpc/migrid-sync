@@ -32,11 +32,9 @@ from __future__ import absolute_import
 import os
 import time
 import tempfile
-import base64
-import re
 
 from mig.shared import returnvalues
-from mig.shared.accountreq import user_manage_commands
+from mig.shared.accountreq import user_manage_commands, save_account_request
 from mig.shared.accountstate import default_account_expire
 from mig.shared.base import client_id_dir, canonical_user, mask_creds, \
     generate_https_urls, fill_distinguished_name
@@ -88,22 +86,22 @@ def main(client_id, user_arguments_dict):
         logger.warning('%s invalid input: %s' % (op_name, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    # Unfortunately OpenID does not use POST
-    # if not safe_handler(configuration, 'post', op_name, client_id,
-    #                    get_csrf_limit(configuration), accepted):
-    #    output_objects.append(
-    #        {'object_type': 'error_text', 'text': '''Only accepting
-# CSRF-filtered POST requests to prevent unintended updates'''
-    #         })
-    #    return (output_objects, returnvalues.CLIENT_ERROR)
+    short_title = configuration.short_title
+    if not 'extoid' in configuration.site_signup_methods:
+        output_objects.append({'object_type': 'text', 'text':
+                               """OpenID sign up is disabled on this site.
+Please contact the %s site support (%s) if you think it should be enabled.
+""" % (short_title, configuration.support_email)})
+        return (output_objects, returnvalues.OK)
 
     title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s OpenID account sign up' % configuration.short_title
+    title_entry['text'] = '%s OpenID account sign up' % short_title
     title_entry['skipmenu'] = True
     output_objects.append({'object_type': 'header', 'text':
-                           '%s OpenID account sign up' %
-                           configuration.short_title})
+                           '%s OpenID account sign up' % short_title
+                           })
 
+    support_email = configuration.support_email
     admin_email = configuration.admin_email
     smtp_server = configuration.smtp_server
     user_pending = os.path.abspath(configuration.user_pending)
@@ -195,22 +193,25 @@ CSRF-filtered POST requests to prevent unintended updates'''
     # IMPORTANT: do NOT log credentials
     logger.info('got account request from extoid: %s' % mask_creds(user_dict))
 
-    req_path = None
-    try:
-        (os_fd, req_path) = tempfile.mkstemp(dir=user_pending)
-        os.write(os_fd, dumps(user_dict))
-        os.close(os_fd)
-    except Exception as err:
-        logger.error('Failed to write OpenID account request to %s: %s'
-                     % (req_path, err))
+    # For testing only
+
+    if full_name.upper().find('DO NOT SEND') != -1:
         output_objects.append(
-            {'object_type': 'error_text', 'text':
-             '''Request could not be sent to site administrators. Please
-contact them manually on %s if this error persists.''' % admin_email})
+            {'object_type': 'text', 'text': "Test request ignored!"})
+        return (output_objects, returnvalues.OK)
+
+    (save_status, save_out) = save_account_request(configuration, user_dict)
+    if not save_status:
+        logger.error('Failed to write OpenID account request: %s' % save_out)
+        output_objects.append({'object_type': 'error_text', 'text':
+                               """Request could not be saved. Please contact
+%s site support at %s if this error persists.""" % (short_title,
+                                                    support_email)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
+    req_path = save_out
     logger.info('Wrote OpenID account request to %s' % req_path)
-    tmp_id = req_path.replace(user_pending, '')
+    tmp_id = os.path.basename(req_path)
     user_dict['tmp_id'] = tmp_id
 
     # TODO: remove cert generation or generate pw for it
@@ -218,13 +219,12 @@ contact them manually on %s if this error persists.''' % admin_email})
     helper_commands = user_manage_commands(configuration, mig_user, req_path,
                                            user_id, user_dict, 'oid')
     user_dict.update(helper_commands)
-    user_dict['site'] = configuration.short_title
+    user_dict['site'] = short_title
     user_dict['vgrid_label'] = configuration.site_vgrid_label
     user_dict['vgridman_links'] = generate_https_urls(
         configuration, '%(auto_base)s/%(auto_bin)s/vgridman.py', {})
     email_header = '%s OpenID sign up request for %s (%s)' % \
-                   (configuration.short_title, user_dict['full_name'],
-                    user_dict['email'])
+                   (short_title, user_dict['full_name'], user_dict['email'])
     email_msg = """
 Received an OpenID account sign up with user data
  * Full Name: %(full_name)s
@@ -241,6 +241,9 @@ Received an OpenID account sign up with user data
 
 Command to create user on %(site)s server:
 %(command_user_create)s
+
+Command to inform user and %(site)s admins:
+%(command_user_notify)s
 
 Optional command to create matching certificate:
 %(command_cert_create)s
@@ -281,19 +284,18 @@ Command to delete user again on %(site)s server:
                 % (admin_email, email_header, email_msg, smtp_server))
     if not send_email(admin_email, email_header, email_msg, logger,
                       configuration):
-        output_objects.append(
-            {'object_type': 'error_text', 'text':
-             '''An error occurred trying to send the email requesting your new
-user account. Please email the site administrators (%s) manually and include
-the session ID: %s''' % (admin_email, tmp_id)})
+        output_objects.append({'object_type': 'error_text', 'text':
+                               """An error occurred trying to inform the site
+admins about your request for OpenID account access. Please contact %s site
+support at %s and include the session ID: %s""" % (short_title, support_email,
+                                                   tmp_id)})
         return (output_objects, returnvalues.SYSTEM_ERROR)
 
     output_objects.append(
-        {'object_type': 'text', 'text':
-         """Request sent to site administrators: Your user account will
-be created as soon as possible, so please be patient. Once handled an email
-will be sent to the account you have specified ('%s') with further information.
-In case of inquiries about this request, please email the site administrators
-(%s) and include the session ID: %s"""
-         % (email, configuration.admin_email, tmp_id)})
+        {'object_type': 'text', 'text': """Request sent to site administrators:
+Your user account will be created as soon as possible, so please be patient. 
+Once handled an email will be sent to the address you have specified (%r) with
+further information. In case of inquiries about this request, please contact
+%s site support at %s and include the session ID %r in the message.""" %
+         (email, short_title, support_email, tmp_id)})
     return (output_objects, returnvalues.OK)
