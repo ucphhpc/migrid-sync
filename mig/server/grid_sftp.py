@@ -1811,20 +1811,45 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
 3stfzMDGtKM9lntAsfFQ8n4yvvEbn/quEWad6srf1yxt9B4t5JA=
 -----END RSA PRIVATE KEY-----
 """
-    try:
-        # NOTE: read possibly combined key/cert and strip any non-key content
-        host_rsa_key = read_file(configuration.user_sftp_key, logger)
-        start_mark = "-----BEGIN RSA PRIVATE KEY-----"
-        end_mark = "-----END RSA PRIVATE KEY-----"
-        host_rsa_key = host_rsa_key.split(start_mark, 1)[-1]
-        host_rsa_key = host_rsa_key.split(end_mark, 1)[0]
-        if host_rsa_key:
-            host_rsa_key = "%s%s%s" % (start_mark, host_rsa_key, end_mark)
-            logger.debug("Using host key: %s" % configuration.user_sftp_key)
-    except IOError:
-        logger.info("No valid host key provided - using default")
+    # NOTE: read possibly combined key/cert and strip any non-key content
+    # NOTE: paramiko.RSAKey expects '-----X RSA PRIVATE KEY-----'
+    #       Newer versions of 'openssl rsa -in X.key -text' generate
+    #       '-----X PRIVATE KEY-----'
+    header_marks = {'genric': '-----BEGIN PRIVATE KEY-----',
+                    'rsa': '-----BEGIN RSA PRIVATE KEY-----',
+                    }
+    footer_marks = {'genric': '-----END PRIVATE KEY-----',
+                    'rsa': '-----END RSA PRIVATE KEY-----',
+                    }
+    possible_rsa_key = read_file(configuration.user_sftp_key, logger)
+    host_key = None
+    for header_type, header_mark in header_marks.items():
+        footer_mark = footer_marks[header_type]
+        if possible_rsa_key.find(header_mark) != -1:
+            host_key = possible_rsa_key.split(header_mark, 1)[-1]
+            host_key = host_key.split(footer_mark, 1)[0]
+    host_rsa_key = None
+    if host_key:
+        host_rsa_key = "%s%s%s" \
+            % (header_marks['rsa'],
+               host_key,
+               footer_marks['rsa'])
+        logger.debug("Using host key: %s" % configuration.user_sftp_key)
+    else:
+        info_msg = "No valid host key provided - using default"
+        logger.info(info_msg)
+        print(info_msg)
         host_rsa_key = default_host_key
-
+    # Validate host rsa key before starting server
+    try:
+        host_key_file = io.StringIO(force_unicode(host_rsa_key))
+        paramiko.RSAKey(file_obj=host_key_file)
+    except Exception:
+        err_msg = "Invalid host RSA key\n%s" \
+            % traceback.format_exc()
+        logger.error(err_msg)
+        print(err_msg)
+        sys.exit(1)
     # Lookup chroot exceptions once and for all
     chroot_exceptions = user_chroot_exceptions(configuration)
     # Any extra chmod exceptions here - we already cover invisible_path check
