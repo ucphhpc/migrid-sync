@@ -152,8 +152,8 @@ def application(environ, start_response):
 
     # NOTE: pass app environ including apache and query args on to sub handlers
     #       through the usual os.environ channel.
-    #       We do NOT truncate existing values for security reasons and only
-    #       transfer string values.
+    #       We only transfer string values and replace existing values to match
+    #       current request.
     #       We don't need or want e.g. the included wsgi-version tuples in
     #       os.environ. A few variables like MIG_CONF are needed for conf init,
     #       so we keep this environ transfer as first action.
@@ -163,7 +163,7 @@ def application(environ, start_response):
     env_warn = {}
     for key in environ:
         value = environ[key]
-        if key in os.environ or key.find('wsgi.') != -1:
+        if key.find('wsgi.') != -1:
             continue
         elif isinstance(value, basestring):
             os.environ[key] = value
