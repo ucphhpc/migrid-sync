@@ -1842,7 +1842,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         host_rsa_key = default_host_key
     # Validate host rsa key before starting server
     try:
-        host_key_file = io.StringIO(force_unicode(host_rsa_key))
+        host_key_file = NativeStringIO(force_native_str(host_rsa_key))
         paramiko.RSAKey(file_obj=host_key_file)
     except Exception:
         err_msg = "Invalid host RSA key\n%s" \
