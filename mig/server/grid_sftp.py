@@ -935,7 +935,7 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
             self.logger.error("list_folder on %s :: %s failed: %s" %
                               ([path], [real_path], [err]))
             return paramiko.SFTP_FAILURE
-        if not self.__gdp_log("list_folder", [path]):
+        if not self.__gdp_log("list_folder", path):
             return paramiko.SFTP_FAILURE
         self.logger.debug("list_folder files :: %s" % files)
         for filename in files:
