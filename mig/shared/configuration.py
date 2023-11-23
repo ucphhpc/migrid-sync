@@ -2117,7 +2117,9 @@ location.""" % self.config_file)
             data_categories = None
             load_path = config.get('GLOBAL', 'gdp_data_categories')
             if os.path.isfile(load_path):
-                data_categories = load_json(load_path, logger)
+                data_categories = load_json(load_path,
+                                            logger,
+                                            convert_utf8=False)
                 if data_categories:
                     self.gdp_data_categories = data_categories
             if not data_categories:
