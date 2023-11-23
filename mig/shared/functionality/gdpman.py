@@ -31,12 +31,12 @@ from __future__ import absolute_import
 
 from builtins import zip
 import os
-import tempfile
 
 from mig.shared import returnvalues
 from mig.shared.auth import get_twofactor_secrets
 from mig.shared.base import get_xgi_bin, requested_page
 from mig.shared.defaults import csrf_field
+from mig.shared.fileio import write_named_tempfile
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.gdp.all import ensure_gdp_user, get_projects, get_users, \
     get_active_project_client_id, get_short_id_from_user_id, \
@@ -999,7 +999,7 @@ def html_tmpl(
     </table>
     </div>
 <!- Tabs and form close tags ->
-</div>    
+</div>
 </form>
 """
     fill_helpers.update({
@@ -1390,7 +1390,7 @@ def js_tmpl_parts(configuration, csrf_token):
                 html += project_info.OK[0].create.references[i].value;
                 html += '</span>';
             }
-            html += '</div>';  
+            html += '</div>';
             for (var i=0; i<project_info.OK[0].users.length; i++) {
                 if (project_info.OK[0].users[i].state === 'accepted') {
                     active_body += '<span>'+project_info.OK[0].users[i].name+' ('+project_info.OK[0].users[i].email+')</span>';
@@ -1549,10 +1549,11 @@ def main(client_id, user_arguments_dict, environ=None):
     # Validate Access
 
     if not configuration.site_enable_gdp:
-        output_objects.append({'object_type': 'error_text', 'text':
-                               """GDP Project Management disabled on this site.
-Please contact the %s site support (%s) if you think it should be enabled.
-""" % (configuration.short_title, configuration.support_email)})
+        output_objects.append({'object_type': 'error_text',
+                               'text': """GDP Project Management disabled on
+this site.
+Please contact the site admins %s if you think it should be enabled.
+""" % configuration.admin_email})
         return (output_objects, returnvalues.ERROR)
     if client_id and client_id == identity:
         output_objects.append({'object_type': 'error_text',
@@ -1596,13 +1597,10 @@ Please contact the %s site support (%s) if you think it should be enabled.
 %s
 
 ''' % (keyword.upper(), value)
-        try:
-            (filehandle, tmptopicfile) = tempfile.mkstemp(text=True)
-            os.write(filehandle, topic_mrsl)
-            os.close(filehandle)
-        except Exception as exc:
+        tmptopicfile = write_named_tempfile(configuration, topic_mrsl)
+        if not tmptopicfile:
             msg = 'Problem writing temporary topic file on server.'
-            logger.error("%s : %s" % (msg, exc))
+            logger.error("%s : %s" % msg)
             output_objects.append(
                 {'object_type': 'error_text', 'text': msg})
             return (output_objects, returnvalues.SYSTEM_ERROR)

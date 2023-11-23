@@ -30,7 +30,8 @@
 import base64
 import os
 
-from mig.shared.base import expand_openid_alias, get_short_id
+from mig.shared.base import expand_openid_alias, get_short_id, \
+    force_native_str
 from mig.shared.defaults import gdp_distinguished_field
 from mig.shared.pwcrypto import make_simple_hash, make_safe_hash, make_encrypt
 
@@ -249,6 +250,7 @@ def __scramble_user_id(configuration, user_id):
         else:
             raise ValueError("unsupported gdp_id_scramble conf value: %s" %
                              algo)
+        result = force_native_str(result)
     except Exception as exc:
         _logger.error("GDP: __scramble_user_id failed for user: %r: %s"
                       % (user_id, exc))
