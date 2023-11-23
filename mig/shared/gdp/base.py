@@ -44,7 +44,8 @@ except:
     Xvfb = None
 
 from mig.shared.base import client_id_dir, valid_dir_input, extract_field, \
-    fill_distinguished_name, expand_openid_alias, get_short_id
+    fill_distinguished_name, expand_openid_alias, get_short_id, \
+    force_native_str
 from mig.shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
     keyword_auto, gdp_distinguished_field, io_session_timeout, \
     valid_gdp_auth_scripts as valid_auth_scripts
@@ -144,6 +145,7 @@ def __scramble_path(configuration, path):
         else:
             raise ValueError("unsupported gdp_path_scramble conf value: %s" %
                              algo)
+        result = force_native_str(result)
     except Exception as exc:
         _logger.error("GDP: __scramble_path failed for path: %r: %s"
                       % (path, exc))
@@ -280,7 +282,7 @@ def __validate_user_db(configuration, client_id, user_db=None):
             _logger.error(log_err_msg + template)
 
     if status:
-        for (key, value) in projects.iteritems():
+        for (key, value) in projects.items():
             if not 'client_id' in value:
                 status = False
                 template = ": Missing 'client_id' entry for project: %r" \
@@ -631,7 +633,11 @@ def __send_project_action_confirmation(configuration,
         if status:
             try:
                 env = os.environ
-                env['DISPLAY'] = ':%s' % vdisplay.vdisplay_num
+                # NOTE: vdisplay_num changed to new_display at some point
+                if 'vdisplay_num' in dir(vdisplay):
+                    env['DISPLAY'] = ':%s' % vdisplay.vdisplay_num
+                else:
+                    env['DISPLAY'] = ':%s' % vdisplay.new_display
                 pdfkit_conf = pdfkit.configuration(environ=env)
                 pdfkit.from_string(template, pdf_filepath,
                                    configuration=pdfkit_conf,
@@ -864,7 +870,7 @@ def __update_gdp_user_log(configuration, client_id, do_lock=True):
     """Add *client_id* and it's scrambled version to GDP users log"""
     _logger = configuration.logger
 
-    result = False
+    retval = False
     flock = None
     (log_filepath, log_lock_filepath) = __gdp_user_log_filepath(configuration)
     if do_lock:
@@ -875,29 +881,23 @@ def __update_gdp_user_log(configuration, client_id, do_lock=True):
                                                   match_client_id=True,
                                                   do_lock=False)
     if gdp_user_log_entry:
-        result = True
+        retval = True
         _logger.info("User: %r already exists in GDP user log" % client_id)
     else:
-        try:
-            if not os.path.exists(log_filepath):
-                touch(log_filepath, configuration)
-            fh = open(log_filepath, 'ab')
-            timestamp = time.time()
-            current_datetime = datetime.datetime.fromtimestamp(timestamp)
-            date = current_datetime.strftime('%d-%m-%Y_%H-%M-%S')
-            scrambled_client_id = __scramble_user_id(configuration, client_id)
-            msg = "%s : %s : %s :\n" \
+        timestamp = time.time()
+        current_datetime = datetime.datetime.fromtimestamp(timestamp)
+        date = current_datetime.strftime('%d-%m-%Y_%H-%M-%S')
+        scrambled_client_id = __scramble_user_id(configuration, client_id)
+        content = "%s : %s : %s :\n" \
                 % (date, client_id, scrambled_client_id)
-            fh.write(msg)
-            fh.close()
-            result = True
-        except Exception as exc:
-            _logger.error("GDP: __update_gdp_user_log failed: %s" % exc)
+        retval = write_file(content, log_filepath, _logger, mode='ab')
+        if not retval:
+            _logger.error("GDP: __update_gdp_user_log failed")
             result = False
     if do_lock:
         release_file_lock(flock)
 
-    return result
+    return retval
 
 
 def __active_project(configuration, user_id, protocol, do_lock=True):
@@ -1337,7 +1337,7 @@ def get_projects(configuration, client_id, state, owner_only=False):
     if status:
         user_projects = user_db.get(client_id, {}).get('projects', {})
         result = {}
-        for (key, value) in user_projects.iteritems():
+        for (key, value) in user_projects.items():
             # Implicit fill once and for all for backwards compatibility
             project_state = value['state'] = value.get('state', '')
             project_category_meta = value['category_meta'] = \
@@ -2287,7 +2287,7 @@ def edit_gdp_user(
     # Change MiG DB and GDP DB for project users
 
     user_projects = gdp_user.get('projects', {})
-    for project_name, project_dict in user_projects.iteritems():
+    for project_name, project_dict in user_projects.items():
         project_user_id = project_dict.get('client_id', {})
         if not project_user_id:
             msg = "missing user_id for project: %r" % project_name
@@ -3821,7 +3821,7 @@ def project_close(
     else:
         autologout = True
         user_db = __load_user_db(configuration)
-        for (_, user_dict) in user_db.iteritems():
+        for (_, user_dict) in user_db.items():
             role = user_dict.get('account', {}).get(
                 protocol, {}).get('role', '')
             if role:
@@ -4004,7 +4004,7 @@ This directory is used for hosting private files for the %r %r.
         init_settings['vgrid_name'] = project_name
         (settings_status, settings_msg) = vgrid_set_settings(
             configuration, project_name,
-            init_settings.items())
+            list(init_settings.items()))
         if not settings_status:
             status = False
             template = ": Could not save settings list"
@@ -4093,7 +4093,7 @@ This directory is used for hosting private files for the %r %r.
 
         # Remove project directories
 
-        for (key, path) in rollback_dirs.iteritems():
+        for (key, path) in rollback_dirs.items():
             _logger.info(
                 "GDP: project_create : roll back :"
                 + " Recursively removing : %r -> %r" % (key, path))

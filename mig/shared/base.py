@@ -550,6 +550,22 @@ def force_default_fs_coding(input_obj, highlight=''):
     return _force_default_coding(input_obj, FS_KIND, highlight)
 
 
+def force_native_str(input_obj, highlight=''):
+    """A helper to force input_obj to the default string coding.
+    Use the active interpreter and the shared.defaults helpers to force the
+    current default.
+    """
+    return _force_default_coding(input_obj, STR_KIND, highlight)
+
+
+def force_native_fs(input_obj, highlight=''):
+    """A helper to force input_obj to the default filesystem coding.
+    Use the active interpreter and the shared.defaults helpers to force the
+    current default.
+    """
+    return _force_default_coding(input_obj, FS_KIND, highlight)
+
+    
 def _force_default_coding_rec(input_obj, kind, highlight=''):
     """A helper to force all strings in input_obj into the python-specific
     default string coding recursively.
