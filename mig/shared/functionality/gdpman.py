@@ -1553,7 +1553,7 @@ def main(client_id, user_arguments_dict, environ=None):
                                'text': """GDP Project Management disabled on
 this site.
 Please contact the site admins %s if you think it should be enabled.
-""" % configuration.admin_email})
+""" % configuration.support_email})
         return (output_objects, returnvalues.ERROR)
     if client_id and client_id == identity:
         output_objects.append({'object_type': 'error_text',
