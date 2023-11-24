@@ -633,11 +633,13 @@ def __send_project_action_confirmation(configuration,
         if status:
             try:
                 env = os.environ
-                # NOTE: vdisplay_num changed to new_display at some point
-                if 'vdisplay_num' in dir(vdisplay):
-                    env['DISPLAY'] = ':%s' % vdisplay.vdisplay_num
-                else:
-                    env['DISPLAY'] = ':%s' % vdisplay.new_display
+                vdisplay_id = getattr(vdisplay, 'new_display', None)
+                if not vdisplay_id:
+                    # NOTE: Old versions of Xvfb use vdisplay_num
+                    vdisplay_id = getattr(vdisplay, 'vdisplay_num', None)
+                if not vdisplay_id:
+                    raise AttributeError('no Xvfb display id found')
+                env['DISPLAY'] = ':%s' % vdisplay_id
                 pdfkit_conf = pdfkit.configuration(environ=env)
                 pdfkit.from_string(template, pdf_filepath,
                                    configuration=pdfkit_conf,
