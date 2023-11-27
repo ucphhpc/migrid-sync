@@ -1,4 +1,25 @@
 [
+  {
+    "status": "AUTO",
+    "work_start": "2023-11-29T20:00:00+01:00",
+    "systems": [
+        "ERDA"
+    ],
+    "announce_start": "2023-11-27T10:00:00+01:00",
+    "title": {
+      "EN": "Planned MODI Maintenance",
+      "DK": "Planlagt MODI vedligehold"
+    },
+    "services": [
+        "MODI"
+    ],
+    "work_end": "2023-11-29T22:00:00+01:00",
+    "description": {
+      "EN": "We have to apply a change to MODI that resolves the issue of the underlying host not having enough memory at times to host the service which results in the unplanned shutdown of the NFS server.",
+      "DK": "Vi er nødt til at udføre en ændring på MODI, der løser problemet med at den underliggende Host til tider ikke har nok hukommelse til at være vært for servicen, hvilket resulterer i at NFS-serveren bliver slukket."
+    },
+    "announce_end": "2023-11-30T10:00:00+01:00"
+  },
    {
     "status": "AUTO",
     "work_start": "2023-10-30T09:18:00+01:00",
