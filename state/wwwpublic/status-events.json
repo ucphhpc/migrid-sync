@@ -11,7 +11,7 @@
       ]
     }, 
     "systems": [
-      "ERDA"
+        "ALL"
     ], 
     "announce_start": "2023-11-29T20:00:00+01:00", 
     "title": {
