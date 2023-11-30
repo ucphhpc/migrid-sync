@@ -1,4 +1,75 @@
 [
+  {
+    "status": "AUTO", 
+    "work_start": "2024-03-01T16:00:00+01:00", 
+    "references": {
+      "EN": [
+        "https://it.ku.dk/driftinfo/"
+      ], 
+      "DK": [
+        "https://it.ku.dk/driftinfo/"
+      ]
+    }, 
+    "systems": [
+        "ALL"
+    ], 
+    "announce_start": "2023-11-29T20:00:00+01:00", 
+    "title": {
+      "EN": "Increased Security with MFA on UCPH Logins", 
+      "DK": "Forøget sikkerhed med MFA på KU-logins"
+    }, 
+    "services": [
+      "ALL"
+    ], 
+    "work_end": "2024-03-04T07:59:59+01:00", 
+    "description": {
+      "EN": "UCPH regularly sees phishing attacks and password guessing attempts on employee and student accounts. After another recent series of such attacks university management has decided to increase login security by enforcing multi-factor authentication (MFA) on several additional UCPH services where the common UCPH credentials are used for authentication starting on November 28th[0]. As always please take proper precautions if you know or suspect your credentials were compromised. E.g. apart from of course changing your UCPH password also remember to change any possibly affected passwords you have set for your associated SFTP, FTPS, WebDAVS and Seafile services. While at it we also strongly recommend enabling the optional 2-factor authentication for your ERDA/MiGrid accounts by following the 2-Factor Auth wizard on your site Setup page. We are currently considering if this MFA should be made mandatory, so a full roll-out may happen within the next few months. For now it's up to you, but you can improve security right away by enabling it yourself.", 
+      "DK": "KU er jævnligt mål for phishing-angreb og forsøg på at gætte kodeord på ansattes og studerendes konti. Efter seneste sådanne serie af angreb har universitetsledelsen besluttet at forøge login-sikkerheden ved at gøre Multi-Faktor Autentifikation (MFA) obligatorisk på yderligere en stribe KU-services, hvor det generelle KU-login benyttes, begyndende fra den 28. november[0]. Tag som altid venligst dine forholdsregler såfremt du ved eller har mistanke om at dit login er blevet kompromitteret. D.v.s. husk udover naturligvis at skifte dit KU-kodeord også at skifte evt berørte koder du måtte have valgt for dine SFTP, FTPS, WebDAVS og Seafile services. Ved samme lejlighed vil vi kraftigt anbefale at tilvælge 2-faktor godkendelse på dine ERDA/MiGrid-logins ved at følge 2-Factor Auth guiden på din site Settings side. Vi overvejer i øjeblikket om den MFA skal gøres obligatorisk på ERDA så en fuld udrulning deraf kan ske indenfor de nærmeste måneder. Indtil videre er det frivilligt, men du kan allerede nu øge sikkerheden ved selv at slå den til."
+    }, 
+    "announce_end": "2024-03-04T23:59:59+01:00"
+  }, 
+  {
+    "status": "AUTO", 
+    "work_start": "2024-01-04T16:00:00+01:00", 
+    "systems": [
+      "ERDA"
+    ], 
+    "announce_start": "2023-11-29T19:00:00+01:00", 
+    "title": {
+      "EN": "Planned ERDA Seafile Upgrade and Maintenance", 
+      "DK": "Planlagt opgradering og vedligehold på ERDA Seafile"
+    }, 
+    "services": [
+      "Seafile"
+    ], 
+    "work_end": "2024-01-04T19:00:00+01:00", 
+    "description": {
+      "EN": "We need to upgrade the ERDA Seafile service and will do some general system maintenance while at it. The upgrades will involve stopping the service and rebooting to apply low-level system upgrades. ERDA Seafile will therefore be down for shorter or longer periods during the maintenance window, but all other ERDA services should remain fully available. Further details will follow here.", 
+      "DK": "Vi skal have ERDA Seafile-servicen opgraderet og vil udføre noget generelt systemvedligehold ved samme lejlighed. Opgraderingerne kræver stop af servicen og system-genstart for at gennemtvinge grundlæggende systemopdateringer. ERDA Seafile vil derfor være utilgængelig i kortere eller længere perioder i vedligeholdelsesvinduet, men det skulle ikke berøre øvrige ERDA services. Yderligere detaljer følger her."
+    }, 
+    "announce_end": "2024-01-05T12:00:00+01:00"
+  },
+  {
+    "status": "AUTO",
+    "work_start": "2023-11-29T20:00:00+01:00",
+    "systems": [
+        "ERDA"
+    ],
+    "announce_start": "2023-11-27T10:00:00+01:00",
+    "title": {
+      "EN": "Planned MODI Maintenance",
+      "DK": "Planlagt MODI vedligehold"
+    },
+    "services": [
+        "MODI"
+    ],
+    "work_end": "2023-11-29T22:00:00+01:00",
+    "description": {
+      "EN": "We have to apply a change to MODI that resolves the issue of the underlying host not having enough memory at times to host the service which results in the unplanned shutdown of the NFS server.",
+      "DK": "Vi er nødt til at udføre en ændring på MODI, der løser problemet med at den underliggende Host til tider ikke har nok hukommelse til at være vært for servicen, hvilket resulterer i at NFS-serveren bliver slukket."
+    },
+    "announce_end": "2023-11-30T10:00:00+01:00"
+  },
    {
     "status": "AUTO",
     "work_start": "2023-10-30T09:18:00+01:00",
