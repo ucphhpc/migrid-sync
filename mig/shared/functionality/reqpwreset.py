@@ -50,7 +50,9 @@ from mig.shared.safeinput import html_escape
 def signature(configuration):
     """Signature of the main function"""
 
-    defaults = {'cert_id': [''], 'show': configuration.site_login_methods}
+    local_login_methods = [i for i in configuration.site_login_methods
+                           if not i.startswith('ext')]
+    defaults = {'cert_id': [''], 'show': local_login_methods}
     return ['html_form', defaults]
 
 
