@@ -35,7 +35,8 @@ import tempfile
 
 from mig.shared import returnvalues
 from mig.shared.base import canonical_user_with_peers, generate_https_urls, \
-    fill_distinguished_name, cert_field_map, auth_type_description, mask_creds
+    fill_distinguished_name, cert_field_map, auth_type_description, \
+    mask_creds, is_gdp_user
 from mig.shared.defaults import keyword_auto, RESET_TOKEN_TTL
 from mig.shared.functional import validate_input, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
@@ -123,10 +124,15 @@ Please contact the %s providers if you want to reset your associated password.
     if '/' in cert_id:
         search_filter['distinguished_name'] = cert_id
     else:
-        search_filter['email'] = cert_id
+        # Registered emails are automatically lowercased
+        search_filter['email'] = cert_id.lower()
     (_, hits) = search_users(search_filter, configuration, keyword_auto, False)
     user_dict, password_hash = None, None
     for (uid, user_dict) in hits:
+        if is_gdp_user(configuration, uid):
+            logger.debug("skip password reset for gdp sub-user %r" % cert_id)
+            continue
+
         # NOTE: we generate a password reset token and send a reset password
         #       link including the token in the query to the registered email.
         #       Then the resulting create_user call can verify the proper owner
@@ -193,6 +199,10 @@ for an account %s password reset request. Please contact %s site support at %s
 if this problem persists.""" % (auth_type_name, configuration.short_title,
                                        configuration.support_email)})
             return (output_objects, returnvalues.SYSTEM_ERROR)
+
+    if not hits:
+        # NOTE: only log failed lookups without user output to prevent probing
+        logger.warning("no local users matched %r" % cert_id)
 
     output_objects.append(
         {'object_type': 'text', 'text': """
