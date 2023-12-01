@@ -53,11 +53,20 @@ except ImportError:
     cracklib = None
 try:
     import cryptography
-    from cryptography.fernet import Fernet
-    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 except ImportError:
     # Optional cryptography not available - fail gracefully and check before use
     cryptography = None
+# IMPORTANT: some cryptography.X packages require a relatively recent version
+try:
+    from cryptography.fernet import Fernet
+except ImportError:
+    # Optional Fernet not available - fail gracefully and check before use
+    Fernet = None
+try:
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+except ImportError:
+    # Optional AESGCM not available - fail gracefully and check before use
+    AESGCM = None
 
 from mig.shared.defaults import POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, \
     POLICY_HIGH, POLICY_MODERN, POLICY_CUSTOM, PASSWORD_POLICIES
@@ -364,29 +373,29 @@ def fernet_encrypt_password(configuration, password, secret=keyword_auto):
     invocation.
     """
     _logger = configuration.logger
-    if cryptography:
+    if cryptography and Fernet:
         key = prepare_fernet_key(configuration, secret)
         password = force_utf8(password)
         fernet_helper = Fernet(key)
         encrypted = fernet_helper.encrypt(password)
     else:
-        _logger.error('encrypt requested without cryptography installed')
-        raise Exception('cryptography requested in conf but not available')
+        _logger.error('fernet encrypt requested without proper cryptography')
+        raise Exception('fernet cryptography requested but not available')
     return encrypted
 
 
 def fernet_decrypt_password(configuration, encrypted, secret=keyword_auto):
     """Decrypt Fernet encrypted password"""
     _logger = configuration.logger
-    if cryptography:
+    if cryptography and Fernet:
         key = prepare_fernet_key(configuration, secret)
         encrypted = force_utf8(encrypted)
         fernet_helper = Fernet(key)
         # Fernet takes byte token and returns bytes - force to native string
         password = force_native_str(fernet_helper.decrypt(encrypted))
     else:
-        _logger.error('decrypt requested without cryptography installed')
-        raise Exception('cryptography requested in conf but not available')
+        _logger.error('fernet decrypt requested without proper cryptography')
+        raise Exception('fernet cryptography requested but not available')
     return password
 
 
@@ -499,7 +508,7 @@ def aesgcm_encrypt_password(configuration, password, secret=keyword_auto,
     _logger = configuration.logger
     # Based on complete example of securely encrypting with AES GCM from
     # https://cryptography.io/en/latest/hazmat/primitives/symmetric-encryption
-    if cryptography:
+    if cryptography and AESGCM:
         init_vector = prepare_aesgcm_iv(configuration, init_vector)
         auth_data = prepare_aesgcm_aad(configuration, AAD_PREFIX, aad_stamp)
         password = force_utf8(password)
@@ -509,8 +518,8 @@ def aesgcm_encrypt_password(configuration, password, secret=keyword_auto,
         encrypted = __aesgcm_pack_tuple(init_vector, crypt, auth_data,
                                         base64_enc)
     else:
-        _logger.error('encrypt requested without cryptography installed')
-        raise Exception('cryptography requested in conf but not available')
+        _logger.error('aesgcm encrypt requested without proper cryptography')
+        raise Exception('aesgcm cryptography requested but not available')
     return encrypted
 
 
@@ -525,7 +534,7 @@ def aesgcm_decrypt_password(configuration, encrypted, secret=keyword_auto,
     _logger = configuration.logger
     # Based on complete example of securely decrypting with AES GCM from
     # https://cryptography.io/en/latest/hazmat/primitives/symmetric-encryption
-    if cryptography:
+    if cryptography and AESGCM:
         (iv, crypt, aad) = __aesgcm_unpack_tuple(encrypted, base64_enc)
         if init_vector == keyword_auto:
             init_vector = iv
@@ -540,8 +549,8 @@ def aesgcm_decrypt_password(configuration, encrypted, secret=keyword_auto,
         password = force_native_str(aesgcm_helper.decrypt(init_vector, crypt,
                                                           auth_data))
     else:
-        _logger.error('decrypt requested without cryptography installed')
-        raise Exception('cryptography requested in conf but not available')
+        _logger.error('aesgcm decrypt requested without proper cryptography')
+        raise Exception('aesgcm cryptography requested but not available')
     return password
 
 
