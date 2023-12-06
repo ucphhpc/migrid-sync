@@ -372,7 +372,7 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
         except Exception:
             # Clean up before handling errors
             self.__force_close(_socket_list)
-            # exc = sys.exc_info()[1]
+            exc = sys.exc_info()[1]
             # logger.debug("wrap of %s failed: %s" %
             #                (client_addr, exc))
             raise exc
