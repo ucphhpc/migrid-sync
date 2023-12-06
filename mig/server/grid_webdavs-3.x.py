@@ -407,9 +407,13 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
             if session_timeout > 0:
                 ssl_sock.settimeout(float(session_timeout))
             # logger.debug("new ssl_sock timeout: %s" % ssl_sock.gettimeout())
-        except ssl.SSLError:
+        except ssl.SSLError as sslerr:
             # Clean up before handling SSL errors
             self.__force_close(_socket_list)
+            # TODO: use sslerr.reason once we drop support for python < 2.7.9
+            # NOTE: we extract error reason from sys here because SSLError
+            #       only started exposing that info in python >=2.7.9
+            #       https://docs.python.org/2.7/library/ssl.html#ssl.SSLError
             exc = sys.exc_info()[1]
             if exc.errno == ssl.SSL_ERROR_EOF:
                 # This is almost certainly due to the cherrypy engine
@@ -439,12 +443,11 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
             logger.error("SSL/TLS wrap of %s failed unexpectedly: %s" %
                          (client_addr, exc))
             raise exc
-        except Exception:
+        except Exception as exc:
             # Clean up before handling errors
             self.__force_close(_socket_list)
-            exc = sys.exc_info()[1]
-            # logger.debug("wrap of %s failed: %s" %
-            #                (client_addr, exc))
+            logger.error("SSL/TLS wrap of %s failed fundamentally: %s" %
+                         (client_addr, exc))
             raise exc
 
         return ssl_sock, ssl_env
