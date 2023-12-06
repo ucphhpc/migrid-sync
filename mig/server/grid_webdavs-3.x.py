@@ -408,6 +408,8 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                 ssl_sock.settimeout(float(session_timeout))
             # logger.debug("new ssl_sock timeout: %s" % ssl_sock.gettimeout())
         except ssl.SSLError:
+            # Clean up before handling SSL errors
+            self.__force_close(_socket_list)
             exc = sys.exc_info()[1]
             if exc.errno == ssl.SSL_ERROR_EOF:
                 # This is almost certainly due to the cherrypy engine
@@ -434,10 +436,7 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                     # Drop clients trying banned protocol, cipher or operation
                     logger.debug("SSL/TLS got invalid request: %s" % exc)
                     return None, {}
-                else:
-                    # Make sure we clean up before we forward
-                    # unexpected SSL errors
-                    self.__force_close(_socket_list)
+
             logger.error("SSL/TLS wrap of %s failed unexpectedly: %s" %
                          (client_addr, exc))
             raise exc
