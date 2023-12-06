@@ -436,9 +436,15 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                     # Drop clients trying banned protocol, cipher or operation
                     logger.debug("SSL/TLS got invalid request: %s" % exc)
                     return None, {}
-
             logger.error("SSL/TLS wrap of %s failed unexpectedly: %s" %
                          (client_addr, exc))
+            raise exc
+        except Exception:
+            # Clean up before handling errors
+            self.__force_close(_socket_list)
+            # exc = sys.exc_info()[1]
+            # logger.debug("wrap of %s failed: %s" %
+            #                (client_addr, exc))
             raise exc
 
         return ssl_sock, ssl_env
