@@ -1652,7 +1652,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
     <tr>
         <td>%(name)s</td><td class="centertext">%(show_file)s %(del_file)s</td>
         <td class="centertext">%(date)s</td>
-        <td class="centertext">%(size)s</td>'''
+        <td class="centertext">%(size)s</td>''' % frozenfile
                 for algo in sorted_hash_algos:
                     checksum_field = '%ssum' % algo
                     frozenfile_html += '''
@@ -1666,7 +1666,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
 </table>
 </div>
 </div>'''
-            lines.append(frozenfile_html % frozenfile)
+            lines.append(frozenfile_html)
             flavor = i.get('flavor', 'freeze')
             lines.append('<div class="archive-metadata">')
             lines.append('<table class="frozenarchivedetails">')
