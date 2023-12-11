@@ -144,6 +144,25 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False,
     client_id = freeze_dict['CREATOR']
     freeze_id = freeze_dict['ID']
     flavor = freeze_dict.get('FLAVOR', 'freeze')
+    freeze_state = freeze_dict.get('STATE', keyword_final)
+    # Users may delete pending or non-permanent archives
+    if freeze_state == keyword_updating:
+        allow_edit = False
+    elif freeze_state != keyword_final or \
+            flavor not in configuration.site_permanent_freeze or \
+            client_id in configuration.site_freeze_admins:
+        allow_edit = True
+    else:
+        allow_edit = False
+    show_finalize = False
+    if freeze_state not in (keyword_updating, keyword_final):
+        show_finalize = True
+    register_doi = False
+    if freeze_state == keyword_final and flavor != 'backup' and \
+            configuration.site_freeze_doi_url and \
+            freeze_dict.get('PUBLISH_URL', ''):
+        register_doi = True
+
     if summary:
         freeze_files = len(freeze_dict.get('FILES', []))
     else:
@@ -177,10 +196,7 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False,
                 'date': str_timestamp,
                 'size': str_size,
             }
-            # Users may delete pending or non permanent archives
-            if freeze_dict.get('STATE', keyword_final) != keyword_final or \
-                    flavor not in configuration.site_permanent_freeze or \
-                    client_id in configuration.site_freeze_admins:
+            if allow_edit:
                 delfile_link = {
                     'object_type': 'link', 'destination':
                     "javascript: confirmDialog(%s, '%s', %s, %s);" %
@@ -224,6 +240,51 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False,
         if not freeze_dict.get(field.upper(), None) is None:
             freeze_obj[field] = [(i, "%s" % j)
                                  for (i, j) in freeze_dict[field.upper()]]
+
+    for algo in sorted_hash_algos:
+        chksum_link = {
+            'object_type': 'link',
+            'destination': "showfreeze.py?freeze_id=%s&flavor=%s&checksum=%s"
+            % (freeze_id, flavor, algo),
+            'class': 'infolink iconspace genericbutton',
+            'title': 'View archive with %s checksums' % algo.upper(),
+            'text': 'Show with %s checksums' % algo.upper()
+        }
+        freeze_obj['%ssum_link' % algo] = chksum_link
+
+    if allow_edit:
+        editarch_link = {
+            'object_type': 'link',
+            'destination': "adminfreeze.py?freeze_id=%s&flavor=%s" %
+            (freeze_id, flavor),
+            'class': 'editarchivelink iconspace genericbutton',
+            'title': 'Further modify your pending %s archive' % flavor,
+            'text': 'Edit archive'
+        }
+        freeze_obj['editarch_link'] = editarch_link
+    if show_finalize:
+        finalizearch_link = {
+            'object_type': 'link',
+            'destination':
+            "javascript: confirmDialog(%s, '%s');" %
+            ('createfreeze', 'Really finalize %s?' % freeze_id),
+            'class': 'finalizearchivelink iconspace genericbutton',
+            'title': 'Finalize %s archive to prevent further changes' % flavor,
+            'text': 'Finalize archive',
+        }
+        freeze_obj['finalizearch_link'] = finalizearch_link
+    if register_doi:
+        registerdoi_link = {
+            'object_type': 'link',
+            'destination':
+            "javascript: confirmDialog(%s, '%s');" %
+            ('registerfreeze', 'Really request DOI for %s?' % freeze_id),
+            'class': 'registerarchivelink iconspace genericbutton',
+            'title': 'Register a DOI for %s archive %s' % (flavor, freeze_id),
+            'text': 'Request archive DOI',
+        }
+        freeze_obj['registerdoi_link'] = registerdoi_link
+
     return freeze_obj
 
 

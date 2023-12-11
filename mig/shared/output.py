@@ -47,7 +47,9 @@ from mig.shared import returnvalues
 from mig.shared.bailout import bailout_title, crash_helper, \
     filter_output_objects
 from mig.shared.base import force_native_str, hexlify
-from mig.shared.defaults import file_dest_sep, keyword_any
+from mig.shared.defaults import file_dest_sep, keyword_any, keyword_updating
+from mig.shared.base import hexlify
+from mig.shared.defaults import file_dest_sep, keyword_any, keyword_updating
 from mig.shared.html import get_xgi_html_header, get_xgi_html_footer, \
     vgrid_items, html_post_helper, tablesorter_pager
 from mig.shared.objecttypes import validate
@@ -1716,8 +1718,74 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
             lines.append('''
 </table>
 </div>
-</div>
 ''')
+
+            checksum_html = ''
+            for algo in sorted_hash_algos:
+                link_name = '%ssum_link' % algo
+                if i.get(link_name, ''):
+                    checksum_html += '''<p>
+%s
+</p>
+''' % html_link(i[link_name])
+
+            lines.append("""<div class='checksumarchive'>
+Show archive with file checksums - might take quite a while to calculate:
+    <div id='checksumbuttons'>
+""")
+            if checksum_html:
+                lines.append(checksum_html)
+            else:
+                lines.append('<!-- Filled by AJAX -->')
+
+            lines.append("""    </div>
+</div>""")
+
+            show_updating, show_edit, show_register = 3 * ['hidden']
+            edit_link, finalize_link, register_link = 3 * \
+                ['<!-- filled by AJAX-->']
+            if i.get('state', '') == keyword_updating:
+                show_updating = ''
+            if i.get('editarch_link', ''):
+                edit_link = html_link(i['editarch_link'])
+                show_edit = ''
+            if i.get('finalizearch_link', ''):
+                finalize_link = html_link(i['finalizearch_link'])
+                # NOTE: edit and finalize share div
+                show_edit = ''
+            if i.get('registerdoi_link', ''):
+                register_link = html_link(i['registerdoi_link'])
+                show_register = ''
+
+            lines.append("""
+<div class='updatearchive %s'>
+<p class='warn_message'>
+Archive is currently in the process of being updated. No further changes can be
+applied until running archive operations are completed.
+</p>
+</div>
+<div class='editarchive %s'>
+<p>
+You can continue inspecting and changing your archive until you're satisfied,
+then finalize it for actual persistent freezing.
+</p>
+<p id='editfreezebutton'>%s</p>
+<p id='finalizefreezebutton'>%s</p>
+</div>
+<div class='registerarchive %s'>
+<p>
+You can register a <a href='http://www.doi.org/index.html'>Digital Object
+Identifier (DOI)</a> for finalized archives. This may be useful in case you
+want to reference the contents in a publication.
+</p>
+%s
+<p id='registerdoibutton'>%s</p>
+</div>
+<div class='vertical-spacer'></div>
+</div>
+""" % (show_updating, show_edit, edit_link, finalize_link, show_register,
+                configuration.site_freeze_doi_text, register_link))
+
         elif i['object_type'] == 'freezestatus':
             # We only use this element for scripted archive creation
             pass
