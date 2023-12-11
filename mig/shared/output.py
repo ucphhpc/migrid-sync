@@ -1651,13 +1651,13 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
                         (checksum_field, frozenfile[checksum_field])
                 frozenfile_html += '''
     </tr>
-''' % frozenfile
+'''
             frozenfile_html += '''
 </tbody>
 </table>
 </div>
 </div>'''
-            lines.append(frozenfile_html)
+            lines.append(frozenfile_html % frozenfile)
             flavor = i.get('flavor', 'freeze')
             lines.append('<div class="archive-metadata">')
             lines.append('<table class="frozenarchivedetails">')
