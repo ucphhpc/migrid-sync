@@ -109,7 +109,9 @@ Please contact the %s site support (%s) if you think it should be enabled.
         flavor = freeze_dict.get('FLAVOR', 'freeze')
 
         freeze_state = freeze_dict.get('STATE', keyword_final)
-        if freeze_state == keyword_final:
+        if freeze_state == keyword_final and \
+                flavor in configuration.site_permanent_freeze and \
+                client_id not in configuration.site_freeze_admins:
             logger.error("%s tried to edit finalized %s archive %s" %
                          (client_id, flavor, freeze_id))
             output_objects.append(
