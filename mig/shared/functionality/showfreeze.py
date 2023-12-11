@@ -112,11 +112,6 @@ Please contact the %s site support (%s) if you think it should be enabled.
                                ', '.join(allowed_operations)})
         return (output_objects, returnvalues.OK)
 
-    # We don't generally know checksum and edit status until AJAX returns
-    hide_elems = {'edit': 'hidden', 'update': 'hidden', 'register': 'hidden'}
-    for algo in sorted_hash_algos:
-        hide_elems['%ssum' % algo] = 'hidden'
-
     if operation in show_operations:
 
         # jquery support for tablesorter and confirmation dialog
@@ -182,6 +177,8 @@ Please contact the %s site support (%s) if you think it should be enabled.
              'text': "'%s' is not an existing frozen archive!" % freeze_id})
         return (output_objects, returnvalues.CLIENT_ERROR)
 
+    freezeitem_obj = None
+
     if operation in list_operations:
         logger.info("show frozen archive with caching %s" % caching)
         (load_status, freeze_dict) = get_frozen_archive(client_id, freeze_id,
@@ -214,22 +211,11 @@ Please contact the %s site support (%s) if you think it should be enabled.
         else:
             logger.debug("no pending cache updates")
 
-        # Allow edit if not in updating/final state and allow request DOI if
-        # finalized and not a backup archive.
-        freeze_state = freeze_dict.get('STATE', keyword_final)
-        if freeze_state == keyword_updating:
-            hide_elems['update'] = ''
-        elif freeze_state != keyword_final:
-            hide_elems['edit'] = ''
-        elif flavor != 'backup' and configuration.site_freeze_doi_url and \
-                freeze_dict.get('PUBLISH_URL', ''):
-            hide_elems['register'] = ''
-
         logger.debug("%s: build obj for '%s': %s" %
                      (op_name, freeze_id, brief_freeze(freeze_dict)))
-        output_objects.append(
-            build_freezeitem_object(configuration, freeze_dict,
-                                    pending_updates=pending_updates))
+        freezeitem_obj = build_freezeitem_object(
+            configuration, freeze_dict, pending_updates=pending_updates)
+        output_objects.append(freezeitem_obj)
 
     if operation == "show":
         # insert dummy placeholder to build table
@@ -241,45 +227,6 @@ Please contact the %s site support (%s) if you think it should be enabled.
                                'created': 'loading ...',
                                'state': 'loading ...'})
     if operation in show_operations:
-        output_objects.append({'object_type': 'html_form', 'text': """<p>
-Show archive with file checksums - might take quite a while to calculate:
-</p>"""})
-        for algo in sorted_hash_algos:
-            output_objects.append({'object_type': 'html_form', 'text': '<p>'})
-            output_objects.append({
-                'object_type': 'link',
-                'destination': "showfreeze.py?freeze_id=%s&flavor=%s&checksum=%s"
-                % (freeze_id, flavor, algo),
-                'class': 'infolink iconspace genericbutton',
-                'title': 'View archive with %s checksums' % algo.upper(),
-                'text': 'Show with %s checksums' % algo.upper()
-            })
-            output_objects.append({'object_type': 'html_form', 'text': '</p>'})
-
-        # We don't know state of archive in this case until AJAX returns
-        # so we hide the section and let AJAX show it if relevant
-        output_objects.append({'object_type': 'html_form', 'text': """
-<div class='updatearchive %(update)s'>
-<p class='warn_message'>
-Archive is currently in the process of being updated. No further changes can be
-applied until running archive operations are completed. 
-</p>
-</div>
-<div class='editarchive %(edit)s'>
-<p>
-You can continue inspecting and changing your archive until you're satisfied,
-then finalize it for actual persistent freezing.
-</p>
-<p>""" % hide_elems})
-        output_objects.append({
-            'object_type': 'link',
-            'destination': "adminfreeze.py?freeze_id=%s&flavor=%s" %
-            (freeze_id, flavor),
-            'class': 'editarchivelink iconspace genericbutton',
-            'title': 'Further modify your pending %s archive' % flavor,
-            'text': 'Edit archive'
-        })
-        output_objects.append({'object_type': 'html_form', 'text': '</p>'})
         form_method = 'post'
         target_op = 'createfreeze'
         csrf_limit = get_csrf_limit(configuration)
@@ -291,24 +238,6 @@ then finalize it for actual persistent freezing.
                                    'freeze_state': keyword_final,
                                    csrf_field: csrf_token})
         output_objects.append({'object_type': 'html_form', 'text': helper})
-        output_objects.append({
-            'object_type': 'link',
-            'destination':
-            "javascript: confirmDialog(%s, '%s');" %
-            ('createfreeze', 'Really finalize %s?' % freeze_id),
-            'class': 'finalizearchivelink iconspace genericbutton',
-            'title': 'Finalize %s archive to prevent further changes' % flavor,
-            'text': 'Finalize archive',
-        })
-        output_objects.append({'object_type': 'html_form', 'text': """
-</div>
-<div class='registerarchive %(register)s'>
-<p>
-You can register a <a href='http://www.doi.org/index.html'>Digital Object
-Identifier (DOI)</a> for finalized archives. This may be useful in case you
-want to reference the contents in a publication.
-</p>
-""" % hide_elems})
         form_method = 'post'
         target_op = 'registerfreeze'
         csrf_limit = get_csrf_limit(configuration)
@@ -323,21 +252,5 @@ want to reference the contents in a publication.
                                    'callback_url': "%s.py" % target_op,
                                    csrf_field: csrf_token})
         output_objects.append({'object_type': 'html_form', 'text': helper})
-        output_objects.append({'object_type': 'html_form', 'text':
-                               configuration.site_freeze_doi_text})
-        output_objects.append({
-            'object_type': 'link',
-            'destination':
-            "javascript: confirmDialog(%s, '%s');" %
-            ('registerfreeze', 'Really request DOI for %s?' % freeze_id),
-            'class': 'registerarchivelink iconspace genericbutton',
-            'title': 'Register a DOI for %s archive %s' % (flavor, freeze_id),
-            'text': 'Request archive DOI',
-        })
-        output_objects.append({'object_type': 'html_form', 'text': """
-</div>"""})
-
-    output_objects.append({'object_type': 'html_form', 'text': """
-    <div class='vertical-spacer'></div>"""})
 
     return (output_objects, returnvalues.OK)
