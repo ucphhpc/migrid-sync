@@ -214,14 +214,17 @@ Please contact the %s site support (%s) if you think it should be enabled.
         else:
             logger.debug("no pending cache updates")
 
-        # Allow edit if not in updating/final state and allow request DOI if
-        # finalized and not a backup archive.
+        # Allow edit if not in updating/final permanent state
         freeze_state = freeze_dict.get('STATE', keyword_final)
         if freeze_state == keyword_updating:
             hide_elems['update'] = ''
-        elif freeze_state != keyword_final:
+        elif freeze_state != keyword_final or \
+                flavor not in configuration.site_permanent_freeze or \
+                client_id in configuration.site_freeze_admins:
             hide_elems['edit'] = ''
-        elif flavor != 'backup' and configuration.site_freeze_doi_url and \
+        # Allow request DOI if finalized and not a backup archive and available
+        if freeze_state == keyword_final and flavor != 'backup' and \
+            configuration.site_freeze_doi_url and \
                 freeze_dict.get('PUBLISH_URL', ''):
             hide_elems['register'] = ''
 

@@ -202,15 +202,18 @@ from the management.
                 'class': 'infolink iconspace',
                 'title': 'View frozen archive %s' % freeze_id,
                 'text': ''}
-            # Users may edit pending archives
-            if freeze_item['state'] != keyword_final:
+            # Users may edit pending or non-permanent archives
+            # Freeze admins may edit all their own archives.
+            if freeze_item['state'] != keyword_final or \
+                    flavor not in configuration.site_permanent_freeze or \
+                    client_id in configuration.site_freeze_admins:
                 freeze_item['editfreezelink'] = {
                     'object_type': 'link',
                     'destination': "adminfreeze.py?freeze_id=%s" % freeze_id,
                     'class': 'adminlink iconspace',
                     'title': 'Edit archive %s' % freeze_id,
                     'text': ''}
-            # Users may delete pending or non permanent archives.
+            # Users may delete pending or non-permanent archives.
             # Freeze admins may delete all their own archives.
             if freeze_item['state'] != keyword_final or \
                     flavor not in configuration.site_permanent_freeze or \
