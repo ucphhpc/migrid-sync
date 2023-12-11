@@ -141,6 +141,7 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False,
     rather than the full dictionary of individual file details.
     The optional pending_updates is simply inserted as-is.
     """
+    client_id = freeze_dict['CREATOR']
     freeze_id = freeze_dict['ID']
     flavor = freeze_dict.get('FLAVOR', 'freeze')
     if summary:
@@ -178,7 +179,8 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False,
             }
             # Users may delete pending or non permanent archives
             if freeze_dict.get('STATE', keyword_final) != keyword_final or \
-                    flavor not in configuration.site_permanent_freeze:
+                    flavor not in configuration.site_permanent_freeze or \
+                    client_id in configuration.site_freeze_admins:
                 delfile_link = {
                     'object_type': 'link', 'destination':
                     "javascript: confirmDialog(%s, '%s', %s, %s);" %
@@ -1318,6 +1320,7 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
     # We received the updated freeze_meta dict from init
     freeze_dict = init_res
     freeze_id = freeze_dict['ID']
+    flavor = freeze_dict['FLAVOR']
     if existing_archive:
         # Legacy archives may not have all fields set
         published = freeze_dict.get('PUBLISH', False)
@@ -1335,7 +1338,9 @@ def create_frozen_archive(freeze_meta, freeze_copy, freeze_move,
 
     # Bail out if user attempts to edit already persistant or changing archive
     if existing_archive:
-        if state == keyword_final:
+        if state == keyword_final and \
+                flavor in configuration.site_permanent_freeze and \
+                client_id not in configuration.site_freeze_admins:
             _logger.error("changes to persistant archive %s for %s refused" %
                           (freeze_id, client_id))
             return (False, "Error: persistant archives cannot be edited")
