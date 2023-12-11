@@ -430,15 +430,36 @@ function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_updating,
           for (var entry_no=0; entry_no < checksum_list.length; entry_no++) {
               $("."+checksum_list[entry_no]+"sum").show();
           }
-          console.debug("show hidden divs if relevant");
+          //console.debug("show optional contents");
+          var checksum_link;
+          $("#checksumbuttons").empty();
+          $.each(sorted_hash_algos, function(algo_index, algo) {
+              //console.debug("handling checksum link for algo: "+algo);
+              checksum_link = algo + 'sum_link';
+              //console.debug("add button for "+checksum_link);
+              $("#checksumbuttons").append('<p>'+format_link(arch[checksum_link])+'</p>');
+          });
+
           if (arch.state === keyword_updating) {
-              console.debug("show update warning");
+              //console.debug("show update warning");
               $("div.updatearchive").show();
-          } else if (arch.state !== keyword_final) {
-              console.debug("show edit and finalize buttons");
+          } else if (arch.editarch_link !== undefined) {
+              //console.debug("show edit button");
+              $("#editfreezebutton").html(format_link(arch.editarch_link));
               $("div.editarchive").show();
-          } else if (arch.flavor !== 'backup' && freeze_doi_url && publish_url) {
-              console.debug("show register DOI button");
+          } else {
+              console.debug("hiding updating and edit button");
+          }
+          if (arch.finalizearch_link !== undefined) {
+              //console.debug("show finalize button");
+              $("#finalizefreezebutton").html(format_link(arch.finalizearch_link));
+              $("div.finalizearchive").show();
+          } else {
+              console.debug("hiding finalize button");
+          }
+          if (arch.registerdoi_link !== undefined) {
+              //console.debug("show register DOI button");
+              $("#registerdoibutton").html(format_link(arch.registerdoi_link));
               $("div.registerarchive").show();
               /* NOTE: we add the landing page URL both in the form field and
                  append it directly in the query string.
@@ -447,9 +468,9 @@ function ajax_showfreeze(freeze_id, flavor, checksum_list, keyword_updating,
               $("#registerfreeze"+freeze_doi_url_field+"field").val(publish_url);
               console.debug("changed publish_url to "+$("#registerfreeze"+freeze_doi_url_field+"field").val());
               $("#registerfreezeform").attr('action', freeze_doi_url+'&'+freeze_doi_url_field+"="+publish_url);
-              console.debug("changed action to "+$("#registerfreezeform").attr('action'));
+              //console.debug("changed action to "+$("#registerfreezeform").attr('action'));
           } else {
-              console.info("not showing edit or register DOI");
+              console.debug("not showing register DOI");
           }
           $("#frozenfilestable").trigger("update");
       },
