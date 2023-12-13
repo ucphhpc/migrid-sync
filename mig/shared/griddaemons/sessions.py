@@ -377,11 +377,13 @@ def expire_dead_sessions(
     current_timestamp = time.time()
     for open_session_id in open_sessions:
         if open_session_id in live_sessions:
-            logger.debug("ignore live session in expire: %s" % open_session_id)
+            logger.debug("%s: ignore live session in expire: %s"
+                         % (proto, open_session_id))
             continue
         timestamp = open_sessions[open_session_id]['timestamp']
         if current_timestamp - timestamp > min_stale_secs:
-            logger.info("expire dead session: %s" % open_session_id)
+            logger.info("%s: expire dead session: %s"
+                        % (proto, open_session_id))
             cur_session = open_sessions[open_session_id]
             cur_session_id = cur_session['session_id']
             closed_session = \
@@ -395,8 +397,8 @@ def expire_dead_sessions(
             if closed_session is not None:
                 result[cur_session_id] = closed_session
         else:
-            logger.debug("ignore recent session in expire: %s" %
-                         open_session_id)
+            logger.debug("%s: ignore recent session in expire: %s"
+                         % (proto, open_session_id))
 
     if do_lock:
         _release_sessions_lock(sessions_lock)
