@@ -19,7 +19,7 @@ REQCLEANUP=__CRON_REQ_CLEANUP__
 JOBCLEANUP=__CRON_JOB_CLEANUP__
 TFCLEANUP=__CRON_TWOFACTOR_CLEANUP__
 EVTCLEANUP=__CRON_EVENT_CLEANUP__
-SESSCLEANUP=__CRON_SESSION_CLEANUP__
+SESSCLEANUP="__CRON_SESSION_CLEANUP__"
 
 logmsg() {
     if [ $VERBOSE -eq 1 ]; then
@@ -79,10 +79,10 @@ if [ $EVTCLEANUP -eq 1 ]; then
     done
 fi
 
-if [ $SESSCLEANUP -eq 1 ]; then
+if [ -n "$SESSCLEANUP" ]; then
     # Run session cleanup script to remove dead login sessions from griddaemon
     # session tracking in case of unclean session shutdowns.
-    logmsg "Cleaning up dead client sessions in griddaemon session tracking"
-    su - mig -c "PYTHONPATH=__MIG_BASE__ mig/server/cleansessions.py"
+    logmsg "Cleaning up dead client sessions in griddaemon session tracking for $SESSCLEANUP"
+    su - mig -c "PYTHONPATH=__MIG_BASE__ mig/server/cleansessions.py $SESSCLEANUP"
 fi
 exit 0
