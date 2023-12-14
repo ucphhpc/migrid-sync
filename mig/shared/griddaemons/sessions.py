@@ -366,12 +366,8 @@ def expire_dead_sessions(
         return result
     # logger.debug("expire dead %s sessions for %s with live_sessions: %s" %
     #             (proto, client_id, live_sessions))
-
-    if do_lock:
-        sessions_lock = _acquire_sessions_lock(
-            configuration, proto, exclusive=True)
     open_sessions = get_open_sessions(
-        configuration, proto, client_id=client_id, do_lock=False)
+        configuration, proto, client_id=client_id, do_lock=do_lock)
     # logger.debug("expire dead %s sessions for %s with open_sessions: %s" %
     #             (proto, client_id, open_sessions))
     current_timestamp = time.time()
@@ -393,14 +389,11 @@ def expire_dead_sessions(
                                     cur_session['ip_addr'],
                                     cur_session['tcp_port'],
                                     session_id=cur_session_id,
-                                    do_lock=False)
+                                    do_lock=do_lock)
             if closed_session is not None:
                 result[cur_session_id] = closed_session
         else:
             logger.debug("%s: ignore recent session in expire: %s"
                          % (proto, open_session_id))
-
-    if do_lock:
-        _release_sessions_lock(sessions_lock)
 
     return result
