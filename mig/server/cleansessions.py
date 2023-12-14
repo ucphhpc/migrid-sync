@@ -45,11 +45,12 @@ def usage(name='cleansessions.py'):
 
     print("""Clean stale sessions from griddaemons.
 Usage:
-%(name)s [OPTIONS] [PROTO] [USERNAME]
+%(name)s [OPTIONS]
 Where OPTIONS may be one or more of:
    -f                  Force operations to continue past errors
    -h                  Show this help
    -v                  Verbose output
+   -u                  Username
 where PROTO is %(all)s or a specific IO protocol and USERNAME is a specific
 user but can be left empty to target all users.
 """ % {'name': name, 'all': keyword_all})
@@ -59,9 +60,8 @@ if __name__ == '__main__':
     args = None
     force = False
     verbose = False
-    proto = keyword_all
     username = None
-    opt_args = 'fhv'
+    opt_args = 'fhvu:'
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], opt_args)
     except getopt.GetoptError as err:
@@ -77,25 +77,21 @@ if __name__ == '__main__':
             sys.exit(0)
         elif opt == '-v':
             verbose = True
+        elif opt == '-u':
+            username = val
         else:
             print('Error: %s not supported!' % opt)
 
+    proto_list = ['davs', 'sftp', 'ftps']
     if args:
-        proto = args[0]
-    if args[1:]:
-        username = args[1]
+        proto_list = [proto for proto in args
+                      if proto in proto_list]
 
     configuration = get_configuration_object()
 
-    all_protos = ['davs', 'sftp', 'ftps']
-    if proto == keyword_all:
-        proto_list = all_protos
-    else:
-        proto_list = [i for i in all_protos if proto == i]
-
     if verbose:
-        print('Clean up stale sessions for protocol %s and user %s' %
-              (proto, username))
+        print('Clean up stale sessions for protocol(s) %r and user %s' %
+              (" ".join(proto_list), username))
     retval = 0
     cleaned = []
     configuration = get_configuration_object(skip_log=True)
@@ -107,6 +103,6 @@ if __name__ == '__main__':
         if verbose:
             print("\n### Session Clean Summary ###")
         print('Cleaned %s stale %s sessions:\n%s' %
-              (len(cleaned), proto, '\n'.join(cleaned)))
+              (len(cleaned), " ".join(proto_list), '\n'.join(cleaned)))
         retval = len(cleaned)
     sys.exit(retval)
