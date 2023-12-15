@@ -20,6 +20,27 @@
     },
     "announce_end": "2023-12-18T12:00:00+01:00"
   },
+    {
+    "status": "AUTO",
+    "work_start": "2023-12-14T22:15:00+01:00",
+    "systems": [
+        "ALL"
+    ],
+    "announce_start": "2023-12-15T07:00:00+01:00",
+    "title": {
+      "EN": "KU/UCPH DNS outage - KU user web login issues?",
+      "DK": "KU DNS udfald - web-login problemer for KU-brugere?"
+    },
+    "services": [
+        "Web"
+    ],
+    "work_end": "2023-12-15T08:35:00+01:00",
+    "description": {
+      "EN": "Apparently KU/UCPH IT had a complete name server outage on ku.dk since Thursday evening, and that likely prevented all new KU/UCPH user web logins on ERDA/SIF/MiGrid, because that login goes through openid.ku.dk. The outage seems to have been resolved now by Friday morning, so everything should be back to normal.",
+      "DK": "KU-IT havde tilsyneladende et komplet udfald på ku.dk navneserverne siden torsdag aften og det førte højest sandsynligt til at KU-brugere ikke kunne logge på ERDA/SIF/MiGrid web, da login går vi openid.ku.dk. Navneserverne ser ud til at være kommet i luften igen nu fredag morgen og alt skulle derfor fungere igen."
+    },
+    "announce_end": "2023-12-16T10:00:00+01:00"
+  },
   {
     "status": "AUTO", 
     "work_start": "2024-03-01T16:00:00+01:00", 
