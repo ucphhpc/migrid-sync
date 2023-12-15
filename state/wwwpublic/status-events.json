@@ -11,7 +11,8 @@
       "DK": "Planlagt DAG og MODI vedligehold"
     },
     "services": [
-        "DAG"
+        "DAG",
+        "MODI"
     ],
     "work_end": "2023-12-17T23:00:00+01:00",
     "description": {
