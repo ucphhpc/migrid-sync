@@ -7,16 +7,16 @@
     ],
     "announce_start": "2023-12-01T10:00:00+01:00",
     "title": {
-      "EN": "Planned DAG Maintenance",
-      "DK": "Planlagt DAG vedligehold"
+      "EN": "Planned DAG and MODI Maintenance",
+      "DK": "Planlagt DAG og MODI vedligehold"
     },
     "services": [
         "DAG"
     ],
     "work_end": "2023-12-17T23:00:00+01:00",
     "description": {
-      "EN": "We will apply a regular monthly maintenance of DAG, which includes updating the software stack and rebooting the system. Interruptions to the service will occur.",
-      "DK": "Vi udruller en månedelige opdatering og vedligeholdelse af DAG, som inkluderer opdatering af softwarestakken og genstart af systemet. Afbrydelser af denne tjeneste vil forekomme."
+      "EN": "We will apply a regular monthly maintenance of DAG and MODI, which includes updating the software stack and rebooting the system. Interruptions to the service will occur.",
+      "DK": "Vi udruller en månedelige opdatering og vedligeholdelse af DAG og MODI, som inkluderer opdatering af softwarestakken og genstart af systemet. Afbrydelser af denne tjeneste vil forekomme."
     },
     "announce_end": "2023-12-18T12:00:00+01:00"
   },
