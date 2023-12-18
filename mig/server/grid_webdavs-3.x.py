@@ -1796,6 +1796,12 @@ def run(configuration):
         # "mount_path": None,  # Application root, e.g. <mount_path>/<share_name>/<res_path>
         # "provider_mapping": {},
         # "add_header_MS_Author_Via": True,
+        # TODO: response headers appear to require wsgidav-4+
+        #       https://github.com/mar10/wsgidav/issues/154
+        # Add custom headers
+        # Response headers must be a list of header-name / header-value
+        # "response_headers": [("Strict-Transport-Security",
+        #                      "max-age=31536000; includeSubDomains")],
         # "hotfixes": {
         #    "emulate_win32_lastmod": False,  # True: support Win32LastModifiedTime
         #    "re_encode_path_info": True,  # (See issue #73)
