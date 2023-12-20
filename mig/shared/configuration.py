@@ -1827,6 +1827,14 @@ location.""" % self.config_file)
                                                          'prefer_python3')
         else:
             self.site_prefer_python3 = False
+        if config.has_option('SITE', 'user_id_format'):
+            self.site_user_id_format = config.get('SITE', 'user_id_format')
+            if not self.site_user_id_format in valid_user_id_formats:
+                logger.warning("invalid user_id_format %r - using default" %
+                               self.site_user_id_format)
+                self.site_user_id_format = DEFAULT_USER_ID_FORMAT
+        else:
+            self.site_user_id_format = DEFAULT_USER_ID_FORMAT
         if config.has_option('SITE', 'autolaunch_page'):
             self.site_autolaunch_page = config.get('SITE', 'autolaunch_page')
         else:
@@ -2069,7 +2077,7 @@ location.""" % self.config_file)
             self.site_sharelink_length = 10
         if config.has_option('SITE', 'enable_quota'):
             self.site_enable_quota = config.getboolean('SITE',
-                                                            'enable_quota')
+                                                       'enable_quota')
         else:
             self.site_enable_quota = False
         if config.has_option('SITE', 'enable_transfers'):
