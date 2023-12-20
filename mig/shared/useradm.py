@@ -52,7 +52,8 @@ from mig.shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
     widgets_filename, seafile_ro_dirname, authkeys_filename, \
     authpasswords_filename, authdigests_filename, cert_field_order, \
     twofactor_filename, peers_filename, gdp_distinguished_field, \
-    unique_id_length
+    unique_id_length, X509_USER_ID_FORMAT, UUID_USER_ID_FORMAT, \
+    valid_user_id_formats
 from mig.shared.fileio import filter_pickled_list, filter_pickled_dict, \
     make_symlink, delete_symlink, read_file, write_file, remove_dir, \
     remove_rec, listdir, move
@@ -209,9 +210,9 @@ def sync_gdp_users(configuration,
     return user_db
 
 
-def create_user(
+def create_x509_user(
     user,
-    conf_path,
+    configuration,
     db_path,
     force=False,
     verbose=False,
@@ -225,22 +226,13 @@ def create_user(
     auto_create_db=True,
     create_backup=True,
 ):
-    """Add user"""
+    """Add user in database and in file system using the original X509 user ID
+    format.
+    """
+
+    _logger = configuration.logger
     flock = None
     user_db = {}
-    if conf_path:
-        if isinstance(conf_path, basestring):
-
-            # has been checked for accessibility above...
-
-            configuration = Configuration(conf_path)
-        else:
-            configuration = conf_path
-    else:
-        configuration = get_configuration_object()
-    _logger = configuration.logger
-    if db_path == keyword_auto:
-        db_path = default_db_path(configuration)
 
     fill_distinguished_name(user)
     client_id = user['distinguished_name']
@@ -300,7 +292,7 @@ def create_user(
             regex_patterns = ['distinguished_name']
         else:
             regex_patterns = []
-        (_, hits) = search_users(search_filter, conf_path, db_path,
+        (_, hits) = search_users(search_filter, configuration, db_path,
                                  verbose, regex_match=regex_patterns)
         peer_notes = []
         if not hits:
@@ -475,13 +467,11 @@ def create_user(
 
     if client_id not in user_db:
         _logger.debug('add new user %r in user DB' % client_id)
-        default_ui = configuration.new_user_default_ui
         user['created'] = now
         user['unique_id'] = generate_random_ascii(unique_id_length,
                                                   '0123456789abcdef')
     else:
         _logger.debug('update existing user %r in user DB' % client_id)
-        default_ui = None
         account_status = user_db[client_id].get('status', 'active')
         # Only allow renew if account is active or if temporal with peer list
         if account_status == 'active':
@@ -839,11 +829,7 @@ The %(short_title)s site operators
 ''' % {'short_title': configuration.short_title,
        'support_email': configuration.support_email}
     _logger.info("write welcome msg in %s" % welcome_path)
-    try:
-        filehandle = open(welcome_path, 'w')
-        filehandle.write(welcome_msg)
-        filehandle.close()
-    except:
+    if not write_file(welcome_msg, welcome_path, _logger):
         _logger.error("could not write %s" % welcome_path)
         if not force:
             raise Exception('could not create welcome file: %s'
@@ -856,8 +842,8 @@ The %(short_title)s site operators
     user_email = user.get('email', '')
     if user_email:
         settings_defaults['EMAIL'] = [user_email]
-    if default_ui:
-        settings_defaults['USER_INTERFACE'] = default_ui
+    if not renew:
+        settings_defaults['USER_INTERFACE'] = configuration.new_user_default_ui
     settings_defaults['CREATOR'] = client_id
     settings_defaults['CREATED_TIMESTAMP'] = datetime.datetime.now()
     try:
@@ -908,6 +894,79 @@ The %(short_title)s site operators
     _logger.info("created/renewed user %s" % client_id)
     mark_user_modified(configuration, client_id)
     return user
+
+
+def create_uuid_user(
+    user,
+    configuration,
+    db_path,
+    force=False,
+    verbose=False,
+    ask_renew=True,
+    default_renew=False,
+    do_lock=True,
+    verify_peer=None,
+    peer_expire_slack=0,
+    from_edit_user=False,
+    ask_change_pw=False,
+    auto_create_db=True,
+    create_backup=True,
+):
+    """Add user in database and in file system using the original X509 user ID
+    format.
+    """
+
+    _logger = configuration.logger
+    raise Exception("UUID user format is still not implemented")
+
+
+def create_user(
+    user,
+    conf_path,
+    db_path,
+    force=False,
+    verbose=False,
+    ask_renew=True,
+    default_renew=False,
+    do_lock=True,
+    verify_peer=None,
+    peer_expire_slack=0,
+    from_edit_user=False,
+    ask_change_pw=False,
+    auto_create_db=True,
+    create_backup=True,
+):
+    """Add user in database and in file system. Distinguishes on the user ID
+    format as a first step.
+    """
+
+    if conf_path:
+        if isinstance(conf_path, basestring):
+
+            # has been checked for accessibility above...
+
+            configuration = Configuration(conf_path)
+        else:
+            configuration = conf_path
+    else:
+        configuration = get_configuration_object()
+    _logger = configuration.logger
+    if db_path == keyword_auto:
+        db_path = default_db_path(configuration)
+
+    if configuration.site_user_id_format == X509_USER_ID_FORMAT:
+        return create_x509_user(user, configuration, db_path, force, verbose,
+                                ask_renew, default_renew, do_lock, verify_peer,
+                                peer_expire_slack, from_edit_user,
+                                ask_change_pw, auto_create_db, create_backup)
+    elif configuration.site_user_id_format == UUID_USER_ID_FORMAT:
+        return create_uuid_user(user, configuration, db_path, force, verbose,
+                                ask_renew, default_renew, do_lock, verify_peer,
+                                peer_expire_slack, from_edit_user,
+                                ask_change_pw, auto_create_db, create_backup)
+    else:
+        raise ValueError("Invalid user ID format %r" %
+                         configuration.site_user_id_format)
 
 
 def fix_user_sharelinks(old_id, client_id, conf_path, db_path,
@@ -1362,29 +1421,20 @@ def edit_user(
     return user_dict
 
 
-def delete_user(
+def delete_x509_user(
     user,
-    conf_path,
+    configuration,
     db_path,
     force=False,
     verbose=False,
     do_lock=True,
     create_backup=True,
 ):
-    """Delete user"""
+    """Delete user on X509 ID format"""
 
+    _logger = configuration.logger
     flock = None
     user_db = {}
-    if conf_path:
-        if isinstance(conf_path, basestring):
-            configuration = Configuration(conf_path)
-        else:
-            configuration = conf_path
-    else:
-        configuration = get_configuration_object()
-    _logger = configuration.logger
-    if db_path == keyword_auto:
-        db_path = default_db_path(configuration)
 
     fill_distinguished_name(user)
     client_id = user['distinguished_name']
@@ -1477,6 +1527,56 @@ def delete_user(
               % client_id)
     mark_user_modified(configuration, client_id)
     _logger.info("deleted user %r including user dirs" % client_id)
+
+
+def delete_uuid_user(
+    user,
+    configuration,
+    db_path,
+    force=False,
+    verbose=False,
+    do_lock=True,
+    create_backup=True,
+):
+    """Delete user on UUID ID format"""
+
+    _logger = configuration.logger
+    raise Exception("UUID user format is still not implemented")
+
+
+def delete_user(
+    user,
+    conf_path,
+    db_path,
+    force=False,
+    verbose=False,
+    do_lock=True,
+    create_backup=True
+):
+    """Remove user in database and in file system. Distinguishes on the user ID
+    format as a first step.
+    """
+
+    if conf_path:
+        if isinstance(conf_path, basestring):
+            configuration = Configuration(conf_path)
+        else:
+            configuration = conf_path
+    else:
+        configuration = get_configuration_object()
+    _logger = configuration.logger
+    if db_path == keyword_auto:
+        db_path = default_db_path(configuration)
+
+    if configuration.site_user_id_format == X509_USER_ID_FORMAT:
+        return delete_x509_user(user, configuration, db_path, force, verbose,
+                                do_lock, create_backup)
+    elif configuration.site_user_id_format == UUID_USER_ID_FORMAT:
+        return delete_uuid_user(user, configuration, db_path, force, verbose,
+                                do_lock, create_backup)
+    else:
+        raise ValueError("Invalid user ID format %r" %
+                         configuration.site_user_id_format)
 
 
 def get_openid_user_map(configuration, do_lock=True):
