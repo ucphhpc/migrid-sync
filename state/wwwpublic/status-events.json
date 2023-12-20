@@ -1,4 +1,25 @@
 [
+  {
+    "status": "AUTO",
+    "work_start": "2023-12-23T12:00:00+01:00",
+    "systems": [
+        "ERDA"
+    ],
+    "announce_start": "2023-12-20T08:00:00+01:00",
+    "title": {
+      "EN": "Extra DAG Maintenance",
+      "DK": "Ekstra DAG vedligehold"
+    },
+    "services": [
+        "DAG"
+    ],
+    "work_end": "2023-12-23T15:00:00+01:00",
+    "description": {
+      "EN": "Due too some slight errors in how the network configuration was on our manager DAG nodes, we will apply an extra maintenance to fix these issues, this also includes updating the software stack and rebooting the system. Interruptions to the service will occur.",
+      "DK": "På grund af nogle små fejl i netværkskonfigurationen på vores manager DAG-noder, vil vi udføre en ekstra vedligeholdelse for at rette disse problemer, dette inkluderer også opdatering af softwarestakken og genstart af systemet. Afbrydelser af denne tjeneste vil forekomme."
+    },
+    "announce_end": "2023-12-25T12:00:00+01:00"
+  },
     {
     "status": "AUTO",
     "work_start": "2023-12-16T20:00:00+01:00",
