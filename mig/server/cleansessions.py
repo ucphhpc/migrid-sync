@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cleansessions - Helper to clean up stale griddaemon session tracking entries
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,7 +36,6 @@ import getopt
 import sys
 
 from mig.shared.conf import get_configuration_object
-from mig.shared.defaults import keyword_all
 from mig.shared.griddaemons.sessions import expire_dead_sessions
 
 
@@ -45,15 +44,15 @@ def usage(name='cleansessions.py'):
 
     print("""Clean stale sessions from griddaemons.
 Usage:
-%(name)s [OPTIONS]
+%(name)s [OPTIONS] [PROTO ...]
 Where OPTIONS may be one or more of:
    -f                  Force operations to continue past errors
    -h                  Show this help
    -v                  Verbose output
-   -u                  Username
-where PROTO is %(all)s or a specific IO protocol and USERNAME is a specific
-user but can be left empty to target all users.
-""" % {'name': name, 'all': keyword_all})
+   -u USERNAME         Username to specifically target in session clean up
+where PROTO is one or more specific IO protocols or all if it is left out.
+Sessions of all users are cleaned unless a specific username is requested.
+""" % {'name': name})
 
 
 if __name__ == '__main__':
