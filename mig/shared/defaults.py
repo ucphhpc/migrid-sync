@@ -394,7 +394,10 @@ duplicati_schedule_choices = [('Daily', '1D'), ('Weekly', '1W'),
 
 # Session timeout in seconds for IO services,
 io_session_timeout = {'davs': 60}
-
+io_session_stale = {'davs': 120,
+                    'sftp': 120,
+                    'ftps': 120,
+                    }
 
 # Strong SSL/TLS ciphers and curves to allow in Apache and other SSL/TLS-based
 # daemons (on Apache/OpenSSL format).
