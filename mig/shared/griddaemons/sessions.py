@@ -36,7 +36,7 @@ try:
 except ImportError:
     psutil = None
 
-from mig.shared.defaults import io_session_timeout
+from mig.shared.defaults import io_session_timeout, io_session_stale
 from mig.shared.fileio import pickle, unpickle, acquire_file_lock, \
     release_file_lock
 
@@ -224,6 +224,7 @@ def track_close_session(configuration,
                         client_address,
                         client_port,
                         session_id=None,
+                        timestamp=None,
                         do_lock=True):
     """Track that proto session for client_id is closed,
     returns closed session dictionary"""
@@ -244,11 +245,22 @@ def track_close_session(configuration,
     if open_sessions and session_id in open_sessions:
         try:
             result = open_sessions[session_id]
-            del open_sessions[session_id]
-            if not _save_sessions(configuration,
-                                  proto, _active_sessions, do_lock=False):
-                raise IOError("%s save sessions failed for %s" %
-                              (proto, client_id))
+            if not timestamp or timestamp == result['timestamp']:
+                del open_sessions[session_id]
+                if not _save_sessions(configuration,
+                                      proto, _active_sessions, do_lock=False):
+                    raise IOError("%s save sessions failed for %s" %
+                                  (proto, client_id))
+            elif timestamp:
+                logger.debug("track close session skipping" \
+                    + " proto: %s, session_id: %s, client_id: %s" \
+                    % (proto,
+                    session_id,
+                    client_id) \
+                    + "requested timestamp: %d" \
+                    % timestamp \
+                    + " differs from actual timestamp: %d" \
+                    % result[timestamp])
         except Exception as exc:
             result = None
             msg = "track close session failed for client: %s" % client_id \
@@ -256,7 +268,7 @@ def track_close_session(configuration,
                 + ", error: %s" % exc
             logger.error(msg)
     else:
-        msg = "track close session: '%s' _NOT_ found for proto: '%s'" \
+        msg = "track close session: %r _NOT_ found for proto: '%s'" \
             % (session_id, proto) \
             + ", client: '%s'" % client_id
         logger.warning(msg)
@@ -358,7 +370,7 @@ def expire_dead_sessions(
     """
     logger = configuration.logger
     result = {}
-    min_stale_secs = 120
+    min_stale_secs = io_session_stale.get(proto, 0)
     #logger.debug("expire dead %s sessions for client %s" % (proto, client_id))
     live_sessions = lookup_live_sessions(configuration)
     if live_sessions is None:
@@ -389,6 +401,7 @@ def expire_dead_sessions(
                                     cur_session['ip_addr'],
                                     cur_session['tcp_port'],
                                     session_id=cur_session_id,
+                                    timestamp=timestamp,
                                     do_lock=do_lock)
             if closed_session is not None:
                 result[cur_session_id] = closed_session
