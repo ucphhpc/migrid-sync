@@ -48,7 +48,8 @@ from mig.shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
     CSRF_FULL, POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, \
     POLICY_MODERN, POLICY_CUSTOM, freeze_flavors, duplicati_protocol_choices, \
     default_css_filename, keyword_any, cert_valid_days, oid_valid_days, \
-    generic_valid_days, keyword_all, keyword_file, keyword_env
+    generic_valid_days, keyword_all, keyword_file, keyword_env, \
+    DEFAULT_USER_ID_FORMAT, valid_user_id_formats
 from mig.shared.logger import Logger, SYSLOG_GDP
 from mig.shared.html import menu_items, vgrid_items
 from mig.shared.fileio import read_file, load_json, write_file
@@ -1764,6 +1765,14 @@ location.""" % self.config_file)
                                                          'prefer_python3')
         else:
             self.site_prefer_python3 = False
+        if config.has_option('SITE', 'user_id_format'):
+            self.site_user_id_format = config.get('SITE', 'user_id_format')
+            if not self.site_user_id_format in valid_user_id_formats:
+                logger.warning("invalid user_id_format %r - using default" %
+                               self.site_user_id_format)
+                self.site_user_id_format = DEFAULT_USER_ID_FORMAT
+        else:
+            self.site_user_id_format = DEFAULT_USER_ID_FORMAT
         if config.has_option('SITE', 'autolaunch_page'):
             self.site_autolaunch_page = config.get('SITE', 'autolaunch_page')
         else:
