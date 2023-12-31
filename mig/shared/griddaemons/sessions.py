@@ -245,22 +245,22 @@ def track_close_session(configuration,
     if open_sessions and session_id in open_sessions:
         try:
             result = open_sessions[session_id]
-            if not timestamp or timestamp == result['timestamp']:
+            if timestamp is None or timestamp == result['timestamp']:
                 del open_sessions[session_id]
                 if not _save_sessions(configuration,
                                       proto, _active_sessions, do_lock=False):
                     raise IOError("%s save sessions failed for %s" %
                                   (proto, client_id))
-            elif timestamp:
-                logger.debug("track close session skipping" \
-                    + " proto: %s, session_id: %s, client_id: %s" \
-                    % (proto,
-                    session_id,
-                    client_id) \
-                    + "requested timestamp: %d" \
-                    % timestamp \
-                    + " differs from actual timestamp: %d" \
-                    % result[timestamp])
+            elif timestamp is not None:
+                logger.debug("track close session skipping"
+                             + " proto: %s, session_id: %s, client_id: %s"
+                             % (proto,
+                                session_id,
+                                client_id)
+                             + ", requested timestamp: %d"
+                             % timestamp
+                             + ", differs from actual timestamp: %d"
+                             % result['timestamp'])
         except Exception as exc:
             result = None
             msg = "track close session failed for client: %s" % client_id \
