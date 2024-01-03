@@ -40,6 +40,7 @@ from __future__ import absolute_import
 
 import base64
 import os
+import socket
 import sys
 import threading
 import time
@@ -290,6 +291,12 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
             if clean_sock is None:
                 continue
             try:
+                # NOTE: clean_sock.close() releases the resource
+                # associated with a connection but does not necessarily
+                # close the connection immediately.
+                # If you want to close the connection in a timely fashion,
+                # call shutdown() before close().
+                clean_sock.shutdown(socket.SHUT_RDWR)
                 clean_sock.close()
             except Exception as exc:
                 pass
