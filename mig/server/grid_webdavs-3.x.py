@@ -409,10 +409,6 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
             # logger.debug("wrapped sock from %s with ciphers %s" %
             #             (ssl_sock.getpeername(), ssl_sock.cipher()))
             # logger.debug("system ssl_sock timeout: %s" % ssl_sock.gettimeout())
-            session_timeout = io_session_timeout.get('davs', 0)
-            if session_timeout > 0:
-                ssl_sock.settimeout(float(session_timeout))
-            # logger.debug("new ssl_sock timeout: %s" % ssl_sock.gettimeout())
         except ssl.SSLError as sslerr:
             # Clean up before handling SSL errors
             self.__force_close(_socket_list)
@@ -1980,6 +1976,10 @@ def run(configuration):
 
         # logger.debug("created ssl_adapter for Server")
 
+    # Align server socket timeout with davs session timeout
+    session_timeout = io_session_timeout.get('davs', 0)
+    if session_timeout > 0:
+        server.timeout = session_timeout
     server.stats['Enabled'] = config['enable_stats']
     sessionexpiretracker = SessionExpire()
     logstats = LogStats(config, server, interval=60,
