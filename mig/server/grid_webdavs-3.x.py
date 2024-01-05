@@ -422,18 +422,16 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                 # 'pinging' the socket to assert it's connectable;
                 # the 'ping' isn't SSL.
                 # logger.debug("SSL/TLS received EOF: %s" % exc)
-                return None, {}
+                pass
             elif exc.errno == ssl.SSL_ERROR_SSL:
                 logger.warning("SSL/TLS wrap of %s failed: %s" %
                                (client_addr, exc))
                 if exc.args[1].find('http request') != -1:
                     # The client is speaking HTTP to an HTTPS server.
                     logger.debug("SSL/TLS got unexpected plain HTTP: %s" % exc)
-                    raise NoSSLError
                 elif exc.args[1].find('unknown protocol') != -1:
                     # Drop clients speaking some non-HTTP protocol.
                     logger.debug("SSL/TLS got unexpected protocol: %s" % exc)
-                    return None, {}
                 elif exc.args[1].find('wrong version number') != -1 or \
                         exc.args[1].find('no shared cipher') != -1 or \
                         exc.args[1].find('inappropriate fallback') != -1 or \
@@ -441,16 +439,15 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                         exc.args[1].find('parse tlsext') != -1:
                     # Drop clients trying banned protocol, cipher or operation
                     logger.debug("SSL/TLS got invalid request: %s" % exc)
-                    return None, {}
             logger.error("SSL/TLS wrap of %s failed unexpectedly: %s" %
                          (client_addr, exc))
-            raise exc
+            return None, {}
         except Exception as exc:
             # Clean up before handling errors
             self.__force_close(_socket_list)
             logger.error("SSL/TLS wrap of %s failed fundamentally: %s" %
                          (client_addr, exc))
-            raise exc
+            return None, {}
 
         return ssl_sock, ssl_env
 
