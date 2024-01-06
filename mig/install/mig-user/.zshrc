@@ -112,6 +112,10 @@ export PATH
 # NOTE: include home in PYTHONPATH to allow general access to mig.X imports
 export PYTHONPATH=$HOME
 
+# NOTE: silence annoying cryptographydeprecationwarnings spewed everywhere.
+#       Yes we must upgrade to py3 but constant nagging won't help.
+export PYTHONWARNINGS='ignore:Python 2 is no longer supported by the Python core team. Support for it is now deprecated in cryptography:UserWarning'
+
 HISTSIZE=4000
 if [ -z "$SILENT" ]; then
 	HISTFILE=~/.zsh_history
