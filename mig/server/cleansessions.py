@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cleansessions - Helper to clean up stale griddaemon session tracking entries
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,7 +36,8 @@ import getopt
 import sys
 
 from mig.shared.conf import get_configuration_object
-from mig.shared.griddaemons.sessions import expire_dead_sessions
+from mig.shared.griddaemons.sessions import expire_dead_sessions, \
+    expire_dead_sessions_chunked
 
 
 def usage(name='cleansessions.py'):
@@ -46,6 +47,7 @@ def usage(name='cleansessions.py'):
 Usage:
 %(name)s [OPTIONS] [PROTO ...]
 Where OPTIONS may be one or more of:
+   -c                  Use chunked clean up for big speed up with many sessions
    -f                  Force operations to continue past errors
    -h                  Show this help
    -v                  Verbose output
@@ -57,10 +59,11 @@ Sessions of all users are cleaned unless a specific username is requested.
 
 if __name__ == '__main__':
     args = None
+    chunked = False
     force = False
     verbose = False
     username = None
-    opt_args = 'fhvu:'
+    opt_args = 'cfhvu:'
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], opt_args)
     except getopt.GetoptError as err:
@@ -69,7 +72,9 @@ if __name__ == '__main__':
         sys.exit(1)
 
     for (opt, val) in opts:
-        if opt == '-f':
+        if opt == '-c':
+            chunked = True
+        elif opt == '-f':
             force = True
         elif opt == '-h':
             usage()
@@ -95,7 +100,11 @@ if __name__ == '__main__':
     cleaned = []
     configuration = get_configuration_object(skip_log=True)
     for cur_proto in proto_list:
-        expired = expire_dead_sessions(configuration, cur_proto, username)
+        if chunked:
+            expired = expire_dead_sessions_chunked(configuration, cur_proto,
+                                                   username)
+        else:
+            expired = expire_dead_sessions(configuration, cur_proto, username)
         cleaned += list(expired)
 
     if cleaned:
