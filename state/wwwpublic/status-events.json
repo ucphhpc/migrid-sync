@@ -50,6 +50,27 @@
     },
     "announce_end": "2024-01-30T12:00:00+01:00"
   },
+    {
+    "status": "AUTO",
+    "work_start": "2024-01-26T10:00:00+01:00",
+    "systems": [
+        "MiGrid"
+    ],
+    "announce_start": "2024-01-08T09:00:00+01:00",
+    "title": {
+      "EN": "Planned MiGrid Maintenance and Re-deployment",
+      "DK": "Planlagt MiGrid vedligehold og gen-udrulning"
+    },
+    "services": [
+        "ALL"
+    ],
+    "work_end": "2024-01-27T10:00:00+01:00",
+    "description": {
+      "EN": "It's time to upgrade migrid.org from host to migrid software stack and we plan on restructuring it as far as we can towards the future setup regarding OS-version and container deployment. The maintenance will include low-level OS upgrades, which include rebooting the system. Therefore shorter or longer interruptions to all services will occur. Further status updates will follow here.",
+      "DK": "Det er tid til at opgradere migrid.org fra værtssystem til software-stak og vi planlægger ar omstrukturere mest muligt imod den fremtidige opsætning hvad OS-version og container-opsætning angår. Arbejdet involverer lavniveau systemopgraderinger, som kræver genstart af hele systemet. Det vil derfor føre til kortere eller længere udfald på alle services undervejs. Yderligere status følger her."
+    },
+    "announce_end": "2024-01-28T12:00:00+01:00"
+  },
   {
     "status": "AUTO", 
     "work_start": "2024-01-04T16:00:00+01:00", 
