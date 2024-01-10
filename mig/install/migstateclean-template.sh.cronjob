@@ -83,6 +83,6 @@ if [ -n "$SESSCLEANUP" ]; then
     # Run session cleanup script to remove dead login sessions from griddaemon
     # session tracking in case of unclean session shutdowns.
     logmsg "Cleaning up dead client sessions in griddaemon session tracking for $SESSCLEANUP"
-    su - mig -c "PYTHONPATH=__MIG_BASE__ mig/server/cleansessions.py $SESSCLEANUP"
+    su - mig -c "PYTHONPATH=__MIG_BASE__ mig/server/cleansessions.py -c $SESSCLEANUP"
 fi
 exit 0
