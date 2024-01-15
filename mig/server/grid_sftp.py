@@ -446,12 +446,12 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             self.user_name = username
 
             # NOTE: we do not yet have session limit in sftp subsys handler
-            #       so we implement it as a workaround here and in __del__
-            #       handler for now.
+            #       so we implement it as a workaround here and in
+            #       session_ended helper for now.
             # TODO: implement session limit in subsys and disable workaround
             # Env holds client info in 'SSH_CLIENT' as 'a.b.c.d rport lport'
             ssh_client = force_utf8(os.environ.get('SSH_CLIENT', 'NONE'))
-            # Pad with zeros to make sure exraction fails gracefully if missing
+            # Zero-pad to make sure extraction fails gracefully if missing
             ssh_client += ' 0 0'
             src_ip, src_port = ssh_client.split()[0:2]
             self.ip_addr = src_ip
@@ -519,12 +519,24 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
                 break
         # logger.debug('auth user chroot is %s' % self.root)
 
-    def __del__(self):
-        """Called on session shutdown. Only really needed to finish session
+    def session_started(self):
+        """Perform any necessary setup before handling callbacks from SFTP
+        operations.
+        """
+        # TODO: move most parts of init here for symmetry with session_ended
+        # TODO: can we migrate all tracking code from accept_client here, too?
+        pass
+
+    def session_ended(self):
+        """The SFTP server session has just ended, either cleanly or via an
+        exception. Perform any necessary cleanup before this object is
+        destroyed.
+
+        Called on session shutdown. Only really needed to finish session
         tracking in sftp subsys mode.
         """
 
-        # TODO: remove this function along with max session workaround above
+        # TODO: can we migrate all tracking code from accept_client here, too?
 
         if self.transport is None and self.active_session is not None:
             logger.debug("session clean up for %s from %s:%s" %
