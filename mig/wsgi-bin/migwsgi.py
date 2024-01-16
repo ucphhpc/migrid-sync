@@ -168,6 +168,8 @@ def application(environ, start_response):
         value = environ[key]
         if key.find('wsgi.') != -1:
             continue
+        elif key.find('apache.version') != -1 and isinstance(value, tuple):
+            os.environ[key] = '.'.join(["%d" % i for i in value])
         elif isinstance(value, basestring):
             os.environ[key] = value
         else:
