@@ -151,26 +151,48 @@ def application(environ, start_response):
     """
 
     # NOTE: pass app environ including apache and query args on to sub handlers
-    #       through the usual os.environ channel.
-    #       We only transfer string values and replace existing values to match
-    #       current request.
-    #       We don't need or want e.g. the included wsgi-version tuples in
-    #       os.environ. A few variables like MIG_CONF are needed for conf init,
-    #       so we keep this environ transfer as first action.
-    #       Unexpected variables are saved in env_warn for proper logging after
-    #       configuration and log init.
+    #       through the usual 'os.environ' channel expected in functionality
+    #       handlers. Special care is needed to avoid various sub-interpreter
+    #       interference and inheritance pitfalls as explained in the
+    #       Application Environment Variables section of the Application Issues
+    #       page in the modwsgi user guide:
+    #       https://modwsgi.readthedocs.io/en/develop/user-guides/application-issues.html
+    #       Namely we should NEVER transfer client session-specific values to
+    #       the partially shared os.environ, but ONLY global shared ones like
+    #       PATH and MIG_CONF.
+    #
+    #       We have all the local request values for the current request in the
+    #       environ dictionary, which we update slightly with real os.environ
+    #       values like PATH before assigning it to the local sub-interpreter
+    #       os.environ for the active backend handler. That assures that the
+    #       environment seen in wsgi and in cgi are similar and that e.g. the
+    #       subprocess calls implicitly using PATH act the same in both.
+    #       Similarly we update os.environ with MIG_CONF from environ dict for
+    #       consistency.
 
-    env_warn = {}
-    for key in environ:
-        value = environ[key]
-        if key.find('wsgi.') != -1:
-            continue
-        elif key.find('apache.version') != -1 and isinstance(value, tuple):
-            os.environ[key] = '.'.join(["%d" % i for i in value])
-        elif isinstance(value, basestring):
-            os.environ[key] = value
+    # IMPORTANT: MIG_CONF is strictly needed in os.environ for conf init, so we
+    #            keep this environ sync as first action.
+
+    # List of global env values to sync between os.environ and environ
+    sync_envs = ['MIG_CONF', 'PATH']
+    env_sync_status = []
+    for key in sync_envs:
+        env_value = environ.get(key, None)
+        os_env_value = os.environ.get(key, None)
+        if os_env_value is not None:
+            environ[key] = os_env_value
+            env_sync_status.append("updated local env %s : %r -> %r" %
+                                   (key, env_value, os_env_value))
+        elif env_value is not None:
+            os.environ[key] = env_value
+            env_sync_status.append("updated os.env %s : %r -> %r" %
+                                   (key, os_env_value, env_value))
         else:
-            env_warn[key] = value
+            env_sync_status.append("ignore %s : %r -> %r" % (key, env_value,
+                                                             os_env_value))
+
+    # Assign updated environ to LOCAL os.environ for the rest of this session
+    os.environ = environ
 
     # NOTE: redirect stdout to stderr in python 2 only. It breaks logger in 3
     #       and stdout redirection apparently is already handled there.
@@ -180,11 +202,8 @@ def application(environ, start_response):
     configuration = get_configuration_object()
     _logger = configuration.logger
 
-    for key in env_warn:
-        # NOTE: we should really handle all values above so changes are likely
-        #       required if we get any warnings here
-        _logger.warning("skipped transfer of unexpected wsgi env %s : %s" %
-                        (key, environ[key]))
+    for line in env_sync_status:
+        _logger.debug(line)
 
     # Now get and log ID of user currently logged in
 
