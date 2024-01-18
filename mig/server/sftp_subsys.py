@@ -89,7 +89,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 # NOTE: moved mig imports into try/except to avoid autopep8 moving to top!
 try:
-    from mig.shared.logger import daemon_logger, register_hangup_handler
+    from mig.shared.logger import daemon_logger, daemon_gdp_logger, \
+        register_hangup_handler
     from mig.shared.fileio import user_chroot_exceptions
     from mig.shared.conf import get_configuration_object
     from mig.server.grid_sftp import SimpleSftpServer as SftpServerImpl
@@ -152,6 +153,13 @@ if __name__ == '__main__':
     logger = daemon_logger('sftp-subsys', configuration.user_sftp_subsys_log,
                            log_level)
     configuration.logger = logger
+    auth_logger = daemon_logger(
+        "sftp-subsys-auth", configuration.user_auth_log, log_level)
+    configuration.auth_logger = auth_logger
+    if configuration.site_enable_gdp:
+        gdp_logger = daemon_gdp_logger("sftp-subsys-gdp",
+                                       level=log_level)
+        configuration.gdp_logger = gdp_logger
     # Allow e.g. logrotate to force log re-open after rotates
     register_hangup_handler(configuration)
     pid = os.getpid()

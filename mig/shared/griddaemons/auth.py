@@ -261,10 +261,11 @@ def validate_auth_attempt(configuration,
             and authtype in configuration.user_sftp_auth:
         pass
     elif protocol == 'sftp-subsys' \
-            and authtype in configuration.user_sftp_auth:
+            and (authtype in configuration.user_sftp_auth \
+            or authtype in ["session"]):
         pass
     elif protocol == 'https' \
-            and authtype in "twofactor":
+            and authtype in ["twofactor"]:
         pass
     elif protocol == 'openid' \
             and authtype in configuration.user_openid_auth:
