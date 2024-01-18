@@ -392,7 +392,6 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
     root = None
     ip_addr = None
     src_port = None
-    active_session = None
 
     def __init__(self, server, *largs, **kwargs):
         """Init"""
@@ -492,16 +491,6 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
 
             logger.info("proceed with session for %s with %d active sessions"
                         % (self.user_name, active_count))
-            active_session = track_open_session(configuration,
-                                                'sftp',
-                                                self.user_name,
-                                                self.ip_addr,
-                                                self.src_port,
-                                                authorized=True)
-            if not active_session:
-                raise Exception("failed to track open session for %s" %
-                                self.user_name)
-            self.active_session = active_session
 
         # logger.debug('auth user is %s' % self.user_name)
 
@@ -523,37 +512,116 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
         """Perform any necessary setup before handling callbacks from SFTP
         operations.
         """
-        # TODO: move most parts of init here for symmetry with session_ended
-        # TODO: can we migrate all tracking code from accept_client here, too?
-        pass
+        global configuration, logger
+        max_sftp_sessions = configuration.user_sftp_max_sessions
+        exceeded_rate_limit = False
+        exceeded_max_sessions = False
+        valid_twofa = False
+        if self.transport is None:
+            proto = 'sftp-subsys'
+        else:
+            proto = 'sftp'
+        if configuration.site_twofactor_strict_address:
+            enforce_address = self.ip_addr
+        else:
+            enforce_address = None
+        # logger.debug("%r session started for %s from %s:%s"
+        #             % (proto, self.user_name, self.ip_addr, self.src_port))
+        if not self.user_name:
+            msg = "session_started: missing self.user_name"
+            logger.error(msg)
+            raise ValueError(msg)
+        if not self.ip_addr:
+            msg = "session_started: missing self.ip_addr"
+            logger.error(msg)
+            raise ValueError(msg)
+        if not self.src_port:
+            msg = "session_started: missing self.src_port"
+            logger.error(msg)
+            raise ValueError(msg)
+        # NOTE: proto == 'sftp' is handled in _validate_authentication
+        if proto == 'sftp-subsys':
+            active_count = active_sessions(configuration, proto,
+                                           self.user_name)
+            # validate rate_limit, max_sessions and twofactor session
+            if hit_rate_limit(configuration, proto,
+                              self.ip_addr, self.user_name,
+                              max_user_hits=default_max_user_hits):
+                exceeded_rate_limit = True
+            if max_sftp_sessions > 0 and active_count >= max_sftp_sessions:
+                exceeded_max_sessions = True
+            if (check_twofactor_session(
+                    configuration, self.user_name, enforce_address, 'sftp-key')) \
+                or check_twofactor_session(
+                    configuration, self.user_name, enforce_address, 'sftp-pw'):
+                valid_twofa = True
+            (authorized, disconnect) = validate_auth_attempt(
+                configuration,
+                proto,
+                'session',
+                self.user_name,
+                self.ip_addr,
+                self.src_port,
+                authtype_enabled=True,
+                valid_auth=True,
+                valid_twofa=valid_twofa,
+                exceeded_rate_limit=exceeded_rate_limit,
+                exceeded_max_sessions=exceeded_max_sessions,
+                user_abuse_hits=default_user_abuse_hits,
+                proto_abuse_hits=default_proto_abuse_hits,
+                max_secret_hits=default_max_secret_hits,
+            )
+            if not authorized or disconnect:
+                # NOTE: validate_auth_attempt will log why
+                raise Exception("session_started: not allowed")
+
+        if configuration.site_enable_gdp:
+            # NOTE: In GDP we do not distinguish
+            # between 'sftp' and 'sftp-subsys'
+            (gdp_project, msg) = project_open(configuration,
+                                              'sftp',
+                                              self.ip_addr,
+                                              self.user_name)
+            if not gdp_project:
+                send_system_notification(self.user_name, ['SFTP', 'ERROR'],
+                                         msg, configuration)
+                logger.error(msg)
+                raise Exception(msg)
 
     def session_ended(self):
         """The SFTP server session has just ended, either cleanly or via an
         exception. Perform any necessary cleanup before this object is
         destroyed.
-
-        Called on session shutdown. Only really needed to finish session
-        tracking in sftp subsys mode.
         """
-
-        # TODO: can we migrate all tracking code from accept_client here, too?
-
-        if self.transport is None and self.active_session is not None:
-            logger.debug("session clean up for %s from %s:%s" %
-                         (self.user_name, self.ip_addr, self.src_port))
-            try:
-                self.active_session = None
-                track_close_session(configuration, 'sftp',
-                                    self.user_name, self.ip_addr, self.src_port)
-                active_count = active_sessions(configuration, 'sftp',
-                                               self.user_name)
-                logger.info("remaining %d active sessions for %s"
-                            % (active_count, self.user_name))
-            except Exception as exc:
-                logger.error("failed in clean up: %s" % exc)
+        global configuration, logger
+        if self.transport is None:
+            proto = 'sftp-subsys'
         else:
-            logger.debug("no session to clean up for %s from %s:%s" %
-                         (self.user_name, self.ip_addr, self.src_port))
+            proto = 'sftp'
+        # logger.debug("%r session ended for %s from %s:%s"
+        #             % (proto, self.user_name, self.ip_addr, self.src_port))
+        if not self.user_name:
+            logger.error("session_ended: missing self.user_name")
+            return
+        if not self.ip_addr:
+            logger.error("session_ended: missing self.ip_addr")
+            return
+        if not self.src_port:
+            logger.error("session_ended: missing self.src_port")
+            return
+        status = track_close_session(configuration, proto,
+                                     self.user_name, self.ip_addr, self.src_port)
+        if not status:
+            logger.error("failed to track close session")
+        active_count = active_sessions(configuration, proto,
+                                       self.user_name)
+        logger.info("remaining %d active sessions for %s"
+                    % (active_count, self.user_name))
+
+        if configuration.site_enable_gdp and active_count == 0:
+            # NOTE: In GDP we do not distinguish
+            #       between 'sftp' and 'sftp-subsys'
+            project_close(configuration, 'sftp', self.ip_addr, self.user_name)
 
     def __gdp_log(self,
                   operation,
@@ -1564,35 +1632,11 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
 
     username = server.get_authenticated_user()
     success = False
-    active_session = None
-    gdp_project = False
     if username is not None:
         success = True
         active_count = active_sessions(configuration, 'sftp', username)
         logger.info("Proceed with login for %s with %d active sessions"
                     % (username, active_count))
-
-    if success:
-        active_session = track_open_session(configuration,
-                                            'sftp',
-                                            username,
-                                            addr[0],
-                                            addr[1],
-                                            authorized=True)
-        if not active_session:
-            success = False
-
-    if success and configuration.site_enable_gdp:
-        (gdp_project, msg) = project_open(configuration,
-                                          'sftp',
-                                          addr[0],
-                                          username)
-        if not gdp_project:
-            success = False
-            send_system_notification(username, ['SFTP', 'ERROR'],
-                                     msg, configuration)
-            logger.error(msg)
-
     if success:
         msg = "Login for %s from %s" % (username, addr, )
         print(msg)
@@ -1620,15 +1664,6 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
             msg = "Logout for %s from %s" % (username, addr, )
             print(msg)
             logger.info(msg)
-        if active_session:
-            track_close_session(configuration, 'sftp',
-                                username, addr[0], addr[1])
-        if gdp_project:
-            active_count = active_sessions(configuration, 'sftp', username)
-            logger.info("Remaining %s active sessions for %s"
-                        % (active_count, username))
-            if active_count == 0:
-                project_close(configuration, 'sftp', addr[0], username)
 
 
 def start_service(configuration):
