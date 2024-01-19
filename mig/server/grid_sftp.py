@@ -445,7 +445,9 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             # untrusted transport.get_username() here
             # logger.debug('extract authenticated user from server')
             self.user_name = server.get_authenticated_user()
-            self.ip_addr, self.src_port = self.transport.getpeername()
+            src_ip, src_port = self.transport.getpeername()
+            self.ip_addr = src_ip
+            self.src_port = int(src_port)
             logger.debug('setting up session for %s from %s:%s' %
                          (self.user_name, self.ip_addr, self.src_port))
         else:
@@ -468,7 +470,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             ssh_client += ' 0 0'
             src_ip, src_port = ssh_client.split()[0:2]
             self.ip_addr = src_ip
-            self.src_port = src_port
+            self.src_port = int(src_port)
             active_count = active_sessions(configuration, 'sftp',
                                            self.user_name)
             # NOTE: we delay dead session cleanup until actually hitting limit
