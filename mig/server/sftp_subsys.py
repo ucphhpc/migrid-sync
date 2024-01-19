@@ -95,7 +95,8 @@ try:
     from mig.server.grid_sftp import SimpleSftpServer as SftpServerImpl
     from mig.shared.conf import get_configuration_object
     from mig.shared.fileio import user_chroot_exceptions
-    from mig.shared.logger import daemon_logger, register_hangup_handler
+    from mig.shared.logger import daemon_logger, daemon_gdp_logger, \
+        register_hangup_handler
 except ImportError:
     print("ERROR: the migrid modules must be in PYTHONPATH")
     sys.exit(1)
