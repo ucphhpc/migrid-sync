@@ -1,6 +1,6 @@
 /*
  * libpam_mig - PAM module for MiG user authentication
- * Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+ * Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
  *
  * This file is part of MiG
  *
@@ -177,6 +177,17 @@ static int validate_password(const char *password)
     WRITELOGMESSAGE(LOG_DEBUG, "Validated length of password: %zd\n",
                     strlen(password));
     int i;
+    /* NOTE: we can safely include a masked password in debug mode */
+    char masked[strlen(password)+1];
+    for (i = 0; i < strlen(password); i++) {
+      masked[i] = '*';
+    }
+    masked[0] = password[0];
+    masked[strlen(password)-1] = password[strlen(password)-1];
+    // null terminate the masked string
+    masked[strlen(password)] = 0;
+    WRITELOGMESSAGE(LOG_DEBUG, "Validate password: %s\n", masked);
+
     int lower = 0, upper = 0, digit = 0, other = 0, classes = 0;
     for (i = 0; i < strlen(password); i++) {
         if (islower(password[i])) {
