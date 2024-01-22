@@ -1,6 +1,6 @@
 /*
  * libpam_mig - PAM module for MiG user authentication
- * Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+ * Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
  *
  * This file is part of MiG
  *
@@ -137,7 +137,6 @@ static int get_password_min_classes()
 /* password input validation using char class and length helpers */
 static int validate_password(const char *password)
 {
-    uint i;
     /* NOTE: always look up and use these to avoid compile warnings */
     const int pw_min_len = get_password_min_length();
     const int pw_min_cls = get_password_min_classes();
@@ -182,7 +181,7 @@ static int validate_password(const char *password)
     }    
     WRITELOGMESSAGE(LOG_DEBUG, "Validated length of password: %zd\n",
                     strlen(password));
-
+    int i;
     /* NOTE: we can safely include a masked password in debug mode */
     char masked[strlen(password)+1];
     for (i = 0; i < strlen(password); i++) {
