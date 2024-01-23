@@ -1,6 +1,6 @@
 /*
  * migauth.h - PAM and NSS helpers for MiG user authentication
- * Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+ * Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
  *
  * This file is part of MiG
  *
@@ -266,6 +266,19 @@ static const int get_runtime_var_int(const char *env_name,
 
 }
 
+static const int get_runtime_var_size_t(const char *env_name,
+                                     const char *conf_name,
+                                     const int define_val)
+{
+  int size = get_runtime_var_int(env_name, conf_name, define_val);
+  if (size < 0) {
+      return 0;
+  } else {
+      return (size_t)size;
+  }
+}
+
+
 /* We take first occurence of USERNAME_REGEX from
  * 1. USERNAME_REGEX environment
  * 2. SITE->username_regex (.ini) configuration file
@@ -302,10 +315,10 @@ static const char *get_sharelink_home()
     return get_runtime_var("SHARELINK_HOME", "sharelink_home", SHARELINK_HOME);
 }
 
-static int get_sharelink_length()
+static size_t get_sharelink_length()
 {
-    return get_runtime_var_int("SHARELINK_LENGTH",
-                               "site->sharelink_length", SHARELINK_LENGTH);
+    return get_runtime_var_size_t("SHARELINK_LENGTH",
+                                  "site->sharelink_length", SHARELINK_LENGTH);
 }
 #endif
 
@@ -322,10 +335,10 @@ static const char *get_jobsidmount_home()
                            JOBSIDMOUNT_HOME);
 }
 
-static int get_jobsidmount_length()
+static size_t get_jobsidmount_length()
 {
-    return get_runtime_var_int("JOBSIDMOUNT_LENGTH",
-                               "site->jobsidmount_length", JOBSIDMOUNT_LENGTH);
+    return get_runtime_var_size_t("JOBSIDMOUNT_LENGTH",
+                                  "site->jobsidmount_length", JOBSIDMOUNT_LENGTH);
 }
 #endif
 
@@ -342,11 +355,11 @@ static const char *get_jupytersidmount_home()
                            JUPYTERSIDMOUNT_HOME);
 }
 
-static int get_jupytersidmount_length()
+static size_t get_jupytersidmount_length()
 {
-    return get_runtime_var_int("JUPYTERSIDMOUNT_LENGTH",
-                               "site->jupytersidmount_length",
-                               JUPYTERSIDMOUNT_LENGTH);
+    return get_runtime_var_size_t("JUPYTERSIDMOUNT_LENGTH",
+                                  "site->jupytersidmount_length",
+                                  JUPYTERSIDMOUNT_LENGTH);
 }
 #endif
 

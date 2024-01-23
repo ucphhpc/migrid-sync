@@ -48,8 +48,7 @@ BUILD_DEFINES =	-D'LIBPYTHON="${LIBPYTHON}"'
 DEFINES=$(DEBUG_DEFINES) \
 		$(MIG_DEFAULTS) \
 		$(BUILD_DEFINES)
-#CFLAGS=${DEBUG_CFLAGS} -Wall -Wpedantic
-CFLAGS=${DEBUG_CFLAGS} $(shell ${PYCONF} --cflags)
+CFLAGS=${DEBUG_CFLAGS} -Wall -Wpedantic $(shell ${PYCONF} --cflags)
 LDFLAGS= -shared ${PYLDFLAGS}
 
 #### End of compiler configuration section ###

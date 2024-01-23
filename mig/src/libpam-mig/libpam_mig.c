@@ -115,11 +115,11 @@ static const char *get_service_dir(const char *service)
     }
 }
 
-static int get_password_min_length()
+static size_t get_password_min_length()
 {
-    return get_runtime_var_int("PASSWORD_MIN_LENGTH",
-                               "site->password_min_length",
-                               PASSWORD_MIN_LENGTH);
+    return get_runtime_var_size_t("PASSWORD_MIN_LENGTH",
+                                  "site->password_min_length",
+                                  PASSWORD_MIN_LENGTH);
 }
 
 static int get_password_min_classes()
@@ -1020,7 +1020,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
         return pam_sm_authenticate_exit(PAM_AUTH_ERR, pwresp);
 
     }
-    if (fread(pbkdf, sizeof(char), st.st_size, fd) != st.st_size) {
+    if (fread(pbkdf, sizeof(char), (size_t)st.st_size, fd) != (size_t)st.st_size) {
         WRITELOGMESSAGE(LOG_WARNING,
                         "Failed to read %zd bytes from filename: %s\n",
                         st.st_size, auth_filename);
