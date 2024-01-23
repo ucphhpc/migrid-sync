@@ -357,7 +357,11 @@ function fill_server_status_accordion(status_events, brief_targets, status_targe
                       "DK": "Alle systemer og services kører planmæssigt",
                       "status_icon": "icon_online"};
     try {
-        $.getJSON(status_events).done(function(response) {
+        /* Use a timestamp stepping every 5 minutes to avoid longer caching */
+        var cache_ttl = 5 * 60 * 1000;
+        var cache_buster = Math.round(new Date().getTime() / cache_ttl);
+        console.info("cache down to: "+cache_buster);
+        $.getJSON(status_events, {_: cache_buster}).done(function(response) {
             //console.debug("Success: "+response);
             var i;
             
