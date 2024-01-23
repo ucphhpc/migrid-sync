@@ -136,11 +136,14 @@ static bool mig_pyinit()
             WRITELOGMESSAGE(LOG_ERR, "Failed to find Python __main__\n");
             return false;
         }
+        pyrun("from __future__ import absolute_import");
+
         pyrun("import os");
-        pyrun("os.environ['MIG_CONF'] = '%s';", MIG_CONF);
+        pyrun("os.environ['MIG_CONF'] = '%s'", MIG_CONF);
         pyrun("import sys");
         /* NOTE: it's essential to add mig code root here to allow imports */
         pyrun("sys.path.append('%s')", MIG_HOME);
+
         pyrun("from mig.shared.griddaemons.sftp import hit_rate_limit");
         pyrun("from mig.shared.griddaemons.sftp import default_username_validator");
         pyrun("from mig.shared.griddaemons.sftp import validate_auth_attempt");
@@ -183,7 +186,25 @@ static char *mig_make_simple_hash(const char *key)
     if (py_hashed == NULL) {
         WRITELOGMESSAGE(LOG_ERR, "Missing python variable: hashed\n");
     } else {
-        hashed = PyString_AsString(py_hashed);
+        #if PY_VERSION_HEX < 0x03000000
+            hashed = PyString_AsString(py_hashed);
+        #else
+            /* Returned value is unicode in python3 but we stay flexible here */
+            if (PyBytes_Check(py_hashed)) {
+                hashed = PyBytes_AsString(py_hashed);
+                WRITELOGMESSAGE(LOG_DEBUG, "python bytes hashed: %s\n", hashed);
+            }
+            else if (PyUnicode_Check(py_hashed)) {
+                PyObject * temp_bytes = PyUnicode_AsEncodedString(py_hashed, "UTF-8", "strict");
+                if (temp_bytes != NULL) {
+                    hashed = PyBytes_AsString(temp_bytes);
+                    WRITELOGMESSAGE(LOG_DEBUG, "python unicode hashed: %s\n", hashed);
+                }
+            }
+            else {
+                WRITELOGMESSAGE(LOG_ERR, "python make simple hash failed: %s\n", hashed);
+            }
+        #endif
         Py_DECREF(py_hashed);
     }
     return hashed;
@@ -199,7 +220,11 @@ static int mig_expire_rate_limit()
     if (py_expired == NULL) {
         WRITELOGMESSAGE(LOG_ERR, "Missing python variable: expired\n");
     } else {
+        #if PY_VERSION_HEX < 0x03000000
         result = PyInt_AsLong(py_expired);
+        #else
+        result = PyLong_AsLong(py_expired);
+        #endif
         Py_DECREF(py_expired);
     }
     return result;
@@ -237,7 +262,11 @@ static bool mig_exceeded_max_sessions(const char *username, const char *address)
     if (py_active_count == NULL) {
         WRITELOGMESSAGE(LOG_ERR, "Missing python variable: py_active_count\n");
     } else {
+        #if PY_VERSION_HEX < 0x03000000
         active_count = PyInt_AsLong(py_active_count);
+        #else
+        active_count = PyLong_AsLong(py_active_count);
+        #endif
         Py_DECREF(py_active_count);
     }
     pyrun("sftp_max_sessions = configuration.user_sftp_max_sessions");
@@ -247,7 +276,11 @@ static bool mig_exceeded_max_sessions(const char *username, const char *address)
         WRITELOGMESSAGE(LOG_ERR,
                         "Missing python variable: py_max_sftp_sessions\n");
     } else {
+        #if PY_VERSION_HEX < 0x03000000
         max_sftp_sessions = PyInt_AsLong(py_max_sftp_sessions);
+        #else
+        max_sftp_sessions = PyLong_AsLong(py_max_sftp_sessions);
+        #endif
         Py_DECREF(py_max_sftp_sessions);
     }
     if (max_sftp_sessions > 0 && active_count >= max_sftp_sessions) {
@@ -403,7 +436,6 @@ static bool mig_check_twofactor_session(const char *username,
 {
     bool result = false;
     bool strict_address = false;
-
     pyrun
         ("twofactor_strict_address = configuration.site_twofactor_strict_address");
     PyObject *py_twofactor_strict_address =
