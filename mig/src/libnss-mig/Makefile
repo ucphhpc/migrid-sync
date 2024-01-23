@@ -57,10 +57,11 @@ binprefix =
 
 # Where the installed library goes.
 # On deb systems NSS modules are stored in /lib/x86_64-linux-gnu/
-# On rpm systems NSS modules go into /lib64/
+# On CentOS / Fedora rpm systems NSS modules go into /lib64/
+# On Rocky rpm systems NSS modules go into /usr/lib64/
 # If on other platforms override nsslibdir with:
 # nsslibdir=/path/to/dir/with/libnss_*.so make -e install
-nsslibdir := $(shell dirname $(firstword $(wildcard /lib*/libnss_*.so /lib/*-linux-gnu/libnss_*.so)))
+nsslibdir := $(shell dirname $(firstword $(wildcard /lib*/libnss_*.so /lib/*-linux-gnu/libnss_*.so /usr/lib*/libnss*)))
 libdir = ${prefix}/${nsslibdir}
 sysconfdir = /etc
 
