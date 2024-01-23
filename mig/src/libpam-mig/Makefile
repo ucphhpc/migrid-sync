@@ -36,17 +36,21 @@ MIG_DEFAULTS=-D'MIG_UID=$(shell id -u mig)' \
 
 DEBUG_DEFINES=
 DEBUG_CFLAGS=
-#DEBUG_DEFINES=-D'DEBUG'
+#DEBUG_DEFINES=-D'DEBUG' -D'DEBUG_LOG_STDERR=1'
 #DEBUG_CFLAGS=-g
 
 CC = gcc
-INCLUDES=-I./ -I/usr/include/python2.7
+PYCONF = $(shell which python3-config || which python2-config)
+PYLDFLAGS = $(shell ${PYCONF} --ldflags --embed  | egrep -v '^Usage: ' || ${PYCONF} --ldflags)
+LIBPYTHON = $(shell echo ${PYLDFLAGS} | sed 's/.*-l\(python[^ ]\+\).*/lib\1.so/g')
+BUILD_DEFINES =	-D'LIBPYTHON="${LIBPYTHON}"'
+#INCLUDES=-I/. -I$(shell ${PYCONF} --includes)
 DEFINES=$(DEBUG_DEFINES) \
-		$(MIG_DEFAULTS)
-CFLAGS=${DEBUG_CFLAGS} \
-	   -Wall \
-	   -Wpedantic
-LDFLAGS= -shared -lpython2.7
+		$(MIG_DEFAULTS) \
+		$(BUILD_DEFINES)
+#CFLAGS=${DEBUG_CFLAGS} -Wall -Wpedantic
+CFLAGS=${DEBUG_CFLAGS} $(shell ${PYCONF} --cflags)
+LDFLAGS= -shared ${PYLDFLAGS}
 
 #### End of compiler configuration section ###
 
