@@ -1,6 +1,6 @@
 /*
  * migauth.h - PAM and NSS helpers for MiG user authentication
- * Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+ * Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
  *
  * This file is part of MiG
  *

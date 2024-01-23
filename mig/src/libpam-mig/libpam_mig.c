@@ -117,14 +117,9 @@ static const char *get_service_dir(const char *service)
 
 static size_t get_password_min_length()
 {
-  int minlen = get_runtime_var_int("PASSWORD_MIN_LENGTH",
-                                   "site->password_min_length",
-                                   PASSWORD_MIN_LENGTH);
-  if (minlen < 0) {
-      return 0;
-  } else {
-      return (size_t)minlen;
-  }
+    return get_runtime_var_size_t("PASSWORD_MIN_LENGTH",
+                                  "site->password_min_length",
+                                  PASSWORD_MIN_LENGTH);
 }
 
 static int get_password_min_classes()
