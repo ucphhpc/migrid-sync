@@ -360,7 +360,7 @@ function fill_server_status_accordion(status_events, brief_targets, status_targe
         /* Use a timestamp stepping every 5 minutes to avoid longer caching */
         var cache_ttl = 5 * 60 * 1000;
         var cache_buster = Math.round(new Date().getTime() / cache_ttl);
-        console.info("cache down to: "+cache_buster);
+        console.debug("cache down to: "+cache_buster);
         $.getJSON(status_events, {_: cache_buster}).done(function(response) {
             //console.debug("Success: "+response);
             var i;
