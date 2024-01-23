@@ -58,6 +58,20 @@
 #define MIG_AUTHTYPE_PASSWORD       (0x004000)
 #define MIG_ACCOUNT_INACCESSIBLE    (0x008000)
 
+#ifndef Py_PYTHON_H
+  #error Python headers needed to compile C extensions, please install development version of Python.
+#elif PY_VERSION_HEX < 0x02070000
+  #error migrid requires Python 2.7 or later, with 2.x going away in 2024
+#elif PY_VERSION_HEX < 0x03000000
+  #warning Using EoL Python 2.x version, which will go away in 2024
+/*
+#elif PY_VERSION_HEX < 0x03700000
+  #warning Using old Python 3 version with dwindling upstream support
+#elif PY_VERSION_HEX < 0x04000000
+  #warning Using fully maintained Python 3.x
+*/
+#endif
+
 #ifndef MIG_HOME
 #define MIG_HOME "/home/mig"
 #endif
@@ -76,10 +90,12 @@ PyObject *py_main = NULL;
 static void pyrun(const char *cmd, ...)
 {
     char pycmd[MAX_PYCMD_LENGTH];
+    memset(pycmd, 0, MAX_PYCMD_LENGTH);
     va_list args;
     va_start(args, cmd);
     vsnprintf(pycmd, MAX_PYCMD_LENGTH, cmd, args);
     va_end(args);
+    //WRITELOGMESSAGE(LOG_DEBUG, "pyrun: %s\n", pycmd);
     int pyres = PyRun_SimpleString(pycmd);
     if (pyres == 0) {
         WRITELOGMESSAGE(LOG_DEBUG, "pyrun OK: %s\n", pycmd);
@@ -96,8 +112,19 @@ static bool mig_pyinit()
     if (libpython_handle != NULL) {
         WRITELOGMESSAGE(LOG_DEBUG, "Python already initialized\n");
     } else {
-        libpython_handle = dlopen("libpython2.7.so", RTLD_LAZY | RTLD_GLOBAL);
-        Py_SetProgramName("pam-mig");
+        // NOTE: use make-detected LIBPYTHON shared library and RTLD_NOW
+        // NOTE: The issue with RTLD_LAZY is that C-extensions do not have dependency on the libpython 
+        // (as can be seen with help of ldd), so once they are loaded and a symbol (e.g. PyFloat_Type)
+        // from libpython which is not yet resolved must be looked up, 
+        // the dynamic linker doesn't know that it has to look into the libpython.
+        // https://stackoverflow.com/questions/67891197/ctypes-cpython-39-x86-64-linux-gnu-so-undefined-symbol-pyfloat-type-in-embedd
+        libpython_handle = dlopen(LIBPYTHON, RTLD_NOW | RTLD_GLOBAL);
+
+        #if PY_VERSION_HEX < 0x03000000
+            Py_SetProgramName("pam-mig");
+        #else
+            Py_SetProgramName(Py_DecodeLocale("pam-mig", NULL));
+        #endif
         Py_Initialize();
         if (!Py_IsInitialized()) {
             WRITELOGMESSAGE(LOG_ERR,
