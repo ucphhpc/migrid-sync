@@ -114,6 +114,7 @@ export PYTHONPATH=$HOME
 
 # NOTE: silence annoying cryptographydeprecationwarnings spewed everywhere.
 #       Yes we must upgrade to py3 but constant nagging won't help.
+# NOTE: copy to /etc/profile/sh.local to also cover e.g. su - mig use
 export PYTHONWARNINGS='ignore:Python 2 is no longer supported by the Python core team. Support for it is now deprecated in cryptography:UserWarning'
 
 HISTSIZE=4000
