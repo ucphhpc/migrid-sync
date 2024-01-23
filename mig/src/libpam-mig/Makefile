@@ -39,21 +39,18 @@ DEBUG_CFLAGS=
 #DEBUG_DEFINES=-D'DEBUG' -D'DEBUG_LOG_STDERR=1'
 #DEBUG_CFLAGS=-g
 
-# NOTE: decide underlying python version to use or use pythonN-config below
-#PYTHON_VERSION = 3.6m
-#PYTHON_VERSION = 2.7
-
 CC = gcc
 PYCONF = $(shell which python3-config || which python2-config)
-#INCLUDES=-I./ -I/usr/include/python${PYTHON_VERSION}
+PYLDFLAGS = $(shell ${PYCONF} --ldflags --embed  | egrep -v '^Usage: ' || ${PYCONF} --ldflags)
+LIBPYTHON = $(shell echo ${PYLDFLAGS} | sed 's/.*-l\(python[^ ]\+\).*/lib\1.so/g')
+BUILD_DEFINES =	-D'LIBPYTHON="${LIBPYTHON}"'
 #INCLUDES=-I/. -I$(shell ${PYCONF} --includes)
 DEFINES=$(DEBUG_DEFINES) \
-		$(MIG_DEFAULTS)
+		$(MIG_DEFAULTS) \
+		$(BUILD_DEFINES)
 #CFLAGS=${DEBUG_CFLAGS} -Wall -Wpedantic
 CFLAGS=${DEBUG_CFLAGS} $(shell ${PYCONF} --cflags)
-#LDFLAGS= -shared -lpython${PYTHON_VERSION}
-#LDFLAGS= -shared $(shell ${PYCONF} --libs)
-LDFLAGS= -shared $(shell ${PYCONF} --ldflags)
+LDFLAGS= -shared ${PYLDFLAGS}
 
 #### End of compiler configuration section ###
 
