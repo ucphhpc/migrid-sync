@@ -40,7 +40,8 @@ DEBUG_CFLAGS=
 #DEBUG_CFLAGS=-g
 
 CC = gcc
-PYCONF = $(shell which python3-config || which python2-config)
+# NOTE: try python-config first: if 2 and 3 are installed default is there
+PYCONF = $(shell which python-config || which python3-config)
 PYLDFLAGS = $(shell ${PYCONF} --ldflags --embed  | egrep -v '^Usage: ' || ${PYCONF} --ldflags)
 LIBPYTHON = $(shell echo ${PYLDFLAGS} | sed 's/.*-l\(python[^ ]\+\).*/lib\1.so/g')
 BUILD_DEFINES =	-D'LIBPYTHON="${LIBPYTHON}"'
