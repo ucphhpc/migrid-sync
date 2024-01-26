@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # refunctions - runtime environment functions
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -385,16 +385,16 @@ def build_reitem_object(configuration, re_dict):
                 'description': environment_item['description'],
             })
 
-    raw_timestamp = re_dict['CREATED_TIMESTAMP']
-    created_timestamp = None
-    if isinstance(raw_timestamp, basestring):
+    created_timestamp = re_dict['CREATED_TIMESTAMP']
+    if isinstance(created_timestamp, basestring):
         # NOTE: fromisoformat was only added in python 3.x
         try:
-            created_timestamp = datetime.datetime.fromisoformat(raw_timestamp)
+            created_timestamp = datetime.datetime.fromisoformat(
+                created_timestamp)
         except:
             # Fall back to old fragile parser
             created_timestamp = datetime.datetime.strptime(
-                raw_timestamp, '%Y-%m-%d %H:%M:%S.%f')
+                created_timestamp, '%Y-%m-%d %H:%M:%S.%f')
 
     created_timetuple = created_timestamp.timetuple()
     created_asctime = time.asctime(created_timetuple)
