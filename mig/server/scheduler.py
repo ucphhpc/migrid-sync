@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # scheduler - base scheduler class used by all schedulers
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -369,8 +369,9 @@ class Scheduler(object):
 
     def expire_entitites(self, entities):
         """Expire entities not seen for a long while"""
-
-        for (entity_id, entity) in entities.items():
+        # IMPORTANT: make a list copy of iterator since we delete items
+        for entity_id in list(entities):
+            entity = entities[entity_id]
             if self.outdated_data(entity, self.cache_ttl):
                 self.logger.info('Dropping stale cache data for %s'
                                  % entity_id)
@@ -667,22 +668,25 @@ class Scheduler(object):
         # and thus has been expired there.
         # In that way information about dead resources propagates.
 
-        for (cur_id, cur_res) in self.resources.items():
+        # IMPORTANT: make a list copy of iterator since we delete items
+        for cur_id in list(self.resources):
+            cur_res = self.resources[cur_id]
             if cur_res['SERVER'] != server_id:
                 continue
             if not cur_id in resources:
 
                 # Remove resource from local list
 
-                self.logger.info('prune_peer_resources: remove %s'
-                                 % cur_id)
+                self.logger.info('prune_peer_resources: remove %s' % cur_id)
                 del self.resources[cur_id]
 
     def prune_peer_users(self, server_id, users):
 
         # Same as function above just for users...
 
-        for (cur_id, cur_user) in self.users.items():
+        # IMPORTANT: make a list copy of iterator since we delete items
+        for cur_id in list(self.users):
+            cur_user = self.users[cur_id]
             if cur_user['SERVER'] != server_id:
                 continue
             if not cur_id in users:
@@ -693,7 +697,9 @@ class Scheduler(object):
                 del self.users[cur_id]
 
     def update_peer_resources(self, server_id, resources):
-        for (res_id, res) in resources.items():
+        # IMPORTANT: make a list copy of iterator since we delete items
+        for res_id in list(self.resources):
+            res = self.resources[res_id]
 
             # Ignore resources connected to other servers.
             # We still get data from non-peers since this
@@ -726,7 +732,9 @@ class Scheduler(object):
             del resources[res_id]
 
     def update_peer_users(self, server_id, users):
-        for (user_id, user) in users.items():
+        # IMPORTANT: make a list copy of iterator since we delete items
+        for user_id in list(self.users):
+            user = self.users[user_id]
 
             # ignore users connected to other servers
 
@@ -749,7 +757,9 @@ class Scheduler(object):
             del users[user_id]
 
     def remove_peer_resources(self, server_id, resources):
-        for (res_id, res) in resources.items():
+        # IMPORTANT: make a list copy of iterator since we delete items
+        for res_id in list(self.resources):
+            res = self.resources[res_id]
 
             # ignore resources connected to other servers
 
@@ -765,7 +775,9 @@ class Scheduler(object):
             del resources[res_id]
 
     def remove_peer_users(self, server_id, users):
-        for (user_id, user) in users.items():
+        # IMPORTANT: make a list copy of iterator since we delete items
+        for user_id in list(self.users):
+            user = self.users[user_id]
 
             # ignore users connected to other servers
 
@@ -792,7 +804,9 @@ class Scheduler(object):
         # cascade the removal of all entities that are marked as
         # connected to that server.
 
-        for (server_id, server) in self.servers.items():
+        # IMPORTANT: make a list copy of iterator since we delete items
+        for server_id in list(self.servers):
+            server = self.servers[server_id]
 
             # self.logger.info("remove_stale_data: checking %s" % server_id)
 
