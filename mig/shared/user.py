@@ -46,7 +46,8 @@ try:
 except ImportError:
     scandir = None
 
-from mig.shared.base import client_dir_id, client_id_dir, get_site_base_url
+from mig.shared.base import client_dir_id, client_id_dir, get_site_base_url, \
+    force_native_str, force_utf8
 from mig.shared.defaults import litmus_id
 from mig.shared.fileio import read_file
 from mig.shared.pwcrypto import make_simple_hash
@@ -147,7 +148,8 @@ def inline_image(configuration, path):
     if img_data is None:
         _logger.error("no such image %r to display inline" % path)
         img_data = ''
-    data += base64.b64encode(img_data)
+    # NOTE: base64 requires and returns bytes
+    data += force_native_str(base64.b64encode(force_utf8(img_data)))
     return data
 
 
