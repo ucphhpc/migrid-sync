@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # oiddiscover - discover valid openid relying party endpoints for this realm
-# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,12 +34,14 @@ http://openid.net/specs/openid-authentication-2_0.html#rp_discovery
 We extract the OpenID setting and reply with a suitable YADIS XRDS document
 here if OpenID is enabled.
 """
+
 from __future__ import absolute_import
 
 import os
 import tempfile
 
 from mig.shared import returnvalues
+from mig.shared.base import force_utf8
 from mig.shared.functional import validate_input
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.httpsclient import generate_openid_discovery_doc
@@ -74,7 +76,8 @@ def main(client_id, user_arguments_dict):
     if not user_arguments_dict.get('output_format', []):
         user_arguments_dict['output_format'] = ['file']
 
-    discovery_doc = generate_openid_discovery_doc(configuration)
+    # NOTE: we need bytes when outputting binary or file
+    discovery_doc = force_utf8(generate_openid_discovery_doc(configuration))
     output_objects.append({'object_type': 'text', 'text':
                            'Advertising valid OpenID endpoints:'})
     # make sure we always have at least one output_format entry

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # output - general formatting of backend output objects
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -2729,7 +2729,7 @@ def file_format(configuration, ret_val, ret_msg, out_obj):
 
     # TODO: use wsgi file_wrapper helper here if out_obj has wsgi entry?
 
-    # NOTE: we expect binay data here and must use it consistently
+    # NOTE: we expect binary data here and must use it consistently
     file_content = b''
     for entry in out_obj:
         if entry['object_type'] == 'file_output':
