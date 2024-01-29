@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # user - helper functions for user related tasks
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -48,6 +48,7 @@ except ImportError:
 
 from mig.shared.base import client_dir_id, client_id_dir, get_site_base_url
 from mig.shared.defaults import litmus_id
+from mig.shared.fileio import read_file
 from mig.shared.pwcrypto import make_simple_hash
 from mig.shared.settings import load_settings, load_profile
 from mig.shared.url import urlencode
@@ -139,14 +140,12 @@ def user_gravatar_url(configuration, email, size, anon_img="/images/anonymous.pn
 
 def inline_image(configuration, path):
     """Create inline image base64 string from file in path"""
+    _logger = configuration.logger
     mime_type = os.path.splitext(path)[1].strip('.')
     data = 'data:image/%s;base64,' % mime_type
-    try:
-        img_fd = open(path)
-        img_data = img_fd.read()
-        img_fd.close()
-    except Exception as exc:
-        configuration.logger.error("viewuser: no such image: %s" % path)
+    img_data = read_file(path, _logger, 'rb')
+    if img_data is None:
+        _logger.error("no such image %r to display inline" % path)
         img_data = ''
     data += base64.b64encode(img_data)
     return data
