@@ -94,7 +94,7 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
         RequestHeader set Remote-User %(remote_user_env)s
         RequestHeader set Referer %(referer_url)s
     </Location>
-    <LocationMatch "%(url)s/(user/[^/]+)/(api/kernels/[^/]+/channels|terminals/websocket)/?">
+    <LocationMatch "%(url)s/(user/[^/]+)/(api/kernels/[^/]+/channels|terminals/websocket|api/events/subscribe)(/?|)">
         ProxyPass   balancer://ws_%(name)s_hosts
         ProxyPassReverse    balancer://ws_%(name)s_hosts
     </LocationMatch>
