@@ -1094,7 +1094,9 @@ THIS IS ONLY A DRAFT - EXPLICIT FREEZE IS STILL PENDING!
                 var doi_data = '', raw_meta='';
                 var doi_url = jsonRes.id;
                 var doi = jsonRes.doi;
-                var datacite_url = 'https://search.datacite.org/works/'+doi;
+                /* DataCite URL and API changed slightly */
+                //var datacite_url = 'https://search.datacite.org/works/'+doi;
+                var datacite_url = 'https://commons.datacite.org/doi.org/'+doi;
                 doi_data += '<h4>Archive DOI</h4>';
                 doi_data += '<p><a class=\"iconleftpad doilink\" href=\"';
                 doi_data += doi_url + '\">'+doi_url+'</a></p>';
