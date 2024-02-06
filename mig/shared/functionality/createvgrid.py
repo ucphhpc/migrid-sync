@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createvgrid - create a vgrid with all the collaboration components
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -54,7 +54,8 @@ else:
 try:
     from mig.shared import returnvalues
     from mig.shared.base import client_id_dir, generate_https_urls, \
-        valid_dir_input, distinguished_name_to_user, get_site_base_url
+        valid_dir_input, distinguished_name_to_user, get_site_base_url, \
+        force_utf8
     from mig.shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
         keyword_owners, keyword_members
     from mig.shared.fileio import write_file, make_symlink, walk
@@ -337,13 +338,32 @@ def create_tracker(
         if not repair or not os.path.isdir(target_tracker_var):
             # Init tracker with trac-admin command:
             # trac-admin tracker_dir initenv projectname db respostype repospath
+            # NOTE: repo type arg is gone since 1.6 - use ini file instead
             create_cmd = [configuration.trac_admin_path, target_tracker_var,
-                          'initenv', vgrid_name, tracker_db, 'hg',
-                          target_scm_repo]
+                          'initenv', vgrid_name, tracker_db,
+                          ]
+            ini_files = []
             # Trac may fail silently if ini file is missing
             if configuration.trac_ini_path and \
                     os.path.exists(configuration.trac_ini_path):
-                create_cmd.append('--inherit=%s' % configuration.trac_ini_path)
+                ini_files.append(configuration.trac_ini_path)
+            else:
+                logger.warning("no trac ini found: %s" %
+                               configuration.trac_ini_path)
+
+            repo_ini_path = os.path.join(tracker_dir, 'vgridscm-repo.ini')
+            repo_ini_data = """[repositories]
+repository.type = hg
+repository.dir = %s
+""" % target_scm_repo
+            if not write_file(repo_ini_data, repo_ini_path, logger):
+                logger.error("failed to write tmp repo in ini helper")
+            else:
+                ini_files.append(repo_ini_path)
+
+            if ini_files:
+                logger.info("adding repo ini helpers: %s" % ini_files)
+                create_cmd.append('--inherit=%s' % ','.join(ini_files))
 
             # IMPORTANT: trac commands are quite verbose and will cause trouble
             # if the stdout/err is not handled (Popen vs call)
@@ -579,9 +599,10 @@ body {
             trac_tmp, wiki_tmp = trac_fd.name, wiki_fd.name
             style_tmp = style_fd.name
             trac_fd.close()
-            wiki_fd.write(intro_text)
+            # NOTE: bytes are required in these temp files
+            wiki_fd.write(force_utf8(intro_text))
             wiki_fd.flush()
-            style_fd.write(style_text)
+            style_fd.write(force_utf8(style_text))
             style_fd.flush()
 
             for (act, page, path) in [('export', 'WikiStart', trac_tmp),
@@ -605,6 +626,10 @@ body {
         # Some plugins require DB changes so we always force DB update here
         # Upgrade environment using trac-admin command:
         # trac-admin tracker_dir upgrade
+        # Conf changes may be required during upgrade so temporarily add write
+        if repair and os.path.isfile(target_tracker_conf_file):
+            os.chmod(target_tracker_conf, 0o755)
+            os.chmod(target_tracker_conf_file, 0o644)
         upgrade_cmd = [configuration.trac_admin_path, target_tracker_var,
                        'upgrade']
         logger.info('upgrade project tracker database: %s' % upgrade_cmd)
@@ -612,6 +637,9 @@ body {
         proc = subprocess_popen(upgrade_cmd, stdout=subprocess_pipe,
                                 stderr=subprocess_stdout, env=admin_env)
         retval = proc.wait()
+        if repair and os.path.isfile(target_tracker_conf_file):
+            os.chmod(target_tracker_conf, 0o555)
+            os.chmod(target_tracker_conf_file, 0o444)
         if retval != 0:
             raise Exception("tracker 2nd upgrade db %s failed: %s (%d)" %
                             (upgrade_cmd, proc.stdout.read(), retval))
