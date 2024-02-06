@@ -590,7 +590,16 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
             if not authorized or disconnect:
                 # NOTE: validate_auth_attempt will log why
                 raise Exception("session_started: not allowed")
-
+        # Track session
+        active_session = track_open_session(configuration,
+                                            proto,
+                                            self.user_name,
+                                            self.ip_addr,
+                                            self.src_port,
+                                            authorized=True)
+        if not active_session:
+            raise Exception("failed to track open session")
+        # Open GDP project
         if configuration.site_enable_gdp:
             # NOTE: In GDP we do not distinguish
             # between 'sftp' and 'sftp-subsys'
@@ -603,6 +612,7 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
                                          msg, configuration)
                 logger.error(msg)
                 raise Exception(msg)
+
 
     def session_ended(self):
         """The SFTP server session has just ended, either cleanly or via an
