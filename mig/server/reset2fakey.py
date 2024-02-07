@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reset2fakey - (Re)set user 2FA key
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -234,12 +234,13 @@ if '__main__' == __name__:
             pass
 
     if seed_file:
+        # TODO: port to read_file helper
         try:
             s_fd = open(seed_file, 'r')
             seed = s_fd.read().strip()
             s_fd.close()
         except Exception as exc:
-            print("Failed to read sead file: %s" % (exc))
+            print("Failed to read seed file: %s" % exc)
             if not force:
                 sys.exit(1)
 
@@ -290,12 +291,12 @@ if '__main__' == __name__:
                 print("default interval, code: %s"
                       % totp_default.at(current_time, 0))
                 if totp_custom_totp:
-                    print("interval: %d, code: %s" \
-                        % (interval, totp_custom_totp.at(current_time, 0)))
+                    print("interval: %d, code: %s"
+                          % (interval, totp_custom_totp.at(current_time, 0)))
             else:
                 for i in range(-valid_otp_window, valid_otp_window + 1):
-                    print("default interval, window: %d, code: %s" \
-                        % (i, totp_default.at(current_time, i)))
+                    print("default interval, window: %d, code: %s"
+                          % (i, totp_default.at(current_time, i)))
                     if totp_custom_totp:
                         print("interval: %d, window: %d, code: %s" \
                             % (interval, i,
