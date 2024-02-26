@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_openid - openid server authenticating users against user database
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -452,9 +452,9 @@ class ServerHandler(BaseHTTPRequestHandler):
         except (KeyboardInterrupt, SystemExit):
             raise
         except InputException as err:
-            logger.error("Input error:\n%s" % cgitb.text(sys.exc_info(),
-                                                         context=10))
-            print("ERROR:\n%s" % cgitb.text(sys.exc_info(), context=10))
+            logger.error("Invalid %r input: %s" % (key, err))
+            logger.debug("*** Begin Trace ***\n%s\n*** End trace ***" %
+                         cgitb.text(sys.exc_info(), context=10))
             err_msg = """<p class='leftpad'>
 Invalid '%s' input: %s
 </p>
@@ -462,18 +462,22 @@ Invalid '%s' input: %s
 <a href='javascript:history.back(-1);'>Back</a>
 </p>""" % (key, err)
             self.showErrorPage(err_msg)
-        except Exception as err:
-            # Do not disclose internal details in production
-            logger.error("Internal error:\n%s" % cgitb.text(sys.exc_info(),
-                                                            context=10))
-            print("ERROR:\n%s" % cgitb.text(sys.exc_info(), context=10))
+        except Exception as exc:
+            error_ref = time.time()
+            logger.error("do_GET with ref %d crashed: %s" % (error_ref, exc))
+            # Do not disclose internal details
+            filtered_exc = cgitb.text(sys.exc_info(), context=10)
+            # IMPORTANT: do NOT ever print or log raw password
+            pw = self.password
+            filtered_exc = filtered_exc.replace(pw, '*' * len(pw))
+            logger.debug("Traceback %s: %s" % (error_ref, filtered_exc))
             err_msg = """<p class='leftpad'>
-Internal error while handling your request - please contact the system owners
-if this persistently happens.
+Internal error while handling your request - please contact the site support
+%s if this persistently happens and include the error reference %d.
 </p>
 <p>
 <a href='javascript:history.back(-1);'>Back</a>
-</p>"""
+</p>""" % (configuration.support_email, error_ref)
             self.showErrorPage(err_msg, error_code=500)
 
     def do_POST(self):
@@ -516,8 +520,9 @@ if this persistently happens.
         except (KeyboardInterrupt, SystemExit):
             raise
         except InputException as err:
-            logger.error(cgitb.text(sys.exc_info(), context=10))
-            print("ERROR: %s" % cgitb.text(sys.exc_info(), context=10))
+            logger.error("Invalid %r input: %s" % (key, err))
+            logger.debug("*** Begin Trace ***\n%s\n*** End trace ***" %
+                         cgitb.text(sys.exc_info(), context=10))
             err_msg = """<p class='leftpad'>
 Invalid '%s' input: %s
 </p>
@@ -525,13 +530,26 @@ Invalid '%s' input: %s
 <a href='javascript:history.back(-1);'>Back</a>
 </p>""" % (key, err)
             self.showErrorPage(err_msg)
-        except:
+        except Exception as exc:
+            error_ref = time.time()
+            logger.error("do_POST with ref %d crashed: %s" % (error_ref, exc))
+            # Do not disclose internal details
+            filtered_exc = cgitb.text(sys.exc_info(), context=10)
+            # IMPORTANT: do NOT ever print or log raw password
+            pw = self.password
+            filtered_exc = filtered_exc.replace(pw, '*' * len(pw))
+            logger.debug("Traceback %s: %s" % (error_ref, filtered_exc))
             self.send_response(500)
             self.send_header('Content-type', 'text/html')
             self.end_headers()
-            self.wfile.write(cgitb.html(sys.exc_info(), context=10))
-            logger.error(cgitb.text(sys.exc_info(), context=10))
-            print("ERROR: %s" % cgitb.text(sys.exc_info(), context=10))
+            err_msg = """<p class='leftpad'>
+Internal error while handling your request - please contact the site support
+%s if this persistently happens and include the error reference %d.
+</p>
+<p>
+<a href='javascript:history.back(-1);'>Back</a>
+</p>""" % (configuration.support_email, error_ref)
+            self.wfile.write(err_msg)
 
     def handleAllow(self, query):
         """Handle requests to allow authentication:
