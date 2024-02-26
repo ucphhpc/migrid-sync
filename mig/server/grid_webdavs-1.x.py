@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_webdavs - secure WebDAV server providing access to MiG user homes
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -374,10 +374,10 @@ class HardenedSSLAdapter(BuiltinSSLAdapter):
                          (client_addr, exc))
             return None, {}
         except Exception as exc:
-            # Clean up before handling errors
+            # Clean up before handling errors - probably scanner noise
             self.__force_close(_socket_list)
-            logger.error("SSL/TLS wrap of %s failed fundamentally: %s" %
-                         (client_addr, exc))
+            logger.warning("SSL/TLS wrap of %s failed fundamentally: %s" %
+                           (client_addr, exc))
             return None, {}
 
         return ssl_sock, ssl_env
