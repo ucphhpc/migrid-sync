@@ -238,8 +238,8 @@ multiple "key=val" fields separated by "/".
             output_objects.append(
                 {'object_type': 'error_text', 'text':
                  '''Could not create the user account for you:
-Please report this problem to the site administrators (%s).''' %
-                 admin_email})
+Please report this problem to the site support at (%s).''' %
+                 support_email})
             return (output_objects, returnvalues.SYSTEM_ERROR)
 
         output_objects.append({'object_type': 'text', 'text':
