@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_sftp - SFTP server providing access to MiG user homes
-# Copyright (C) 2010-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -446,10 +446,6 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                                   password=True, key=True)
             self.user_name = username
 
-            # NOTE: we do not yet have session limit in sftp subsys handler
-            #       so we implement it as a workaround here and in
-            #       session_ended helper for now.
-            # TODO: implement session limit in subsys and disable workaround
             # Env holds client info in 'SSH_CLIENT' as 'a.b.c.d rport lport'
             ssh_client = force_utf8(os.environ.get('SSH_CLIENT', 'NONE'))
             # Zero-pad to make sure extraction fails gracefully if missing
@@ -457,6 +453,12 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             src_ip, src_port = ssh_client.split()[0:2]
             self.ip_addr = src_ip
             self.src_port = int(src_port)
+
+            # TODO: move the next chunk to session_started
+            # NOTE: we do not yet have session limit in sftp subsys handler
+            #       so we implement it as a workaround here and in
+            #       session_ended helper for now.
+            # TODO: implement session limit in subsys and disable workaround
             active_count = active_sessions(configuration, 'sftp',
                                            self.user_name)
             # NOTE: we delay dead session cleanup until actually hitting limit
@@ -510,6 +512,22 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
                 break
         # logger.debug('auth user chroot is %s' % self.root)
 
+    def _abort_on_missing_client_var(self, caller):
+        """Simple helper to abort further action in session_started and
+        session_ended if any of the required client variables like user_name,
+        ip_addr or src_port are unset. Logs the caller and values first and
+        then raises ValueError if so.
+        """
+        client_vars = {'user_name': self.user_name, 'ip_addr': self.ip_addr,
+                       'src_port': self.src_port}
+        for name in client_vars:
+            if not client_vars[name]:
+                msg = "abort %s: missing mandatory %r value" % (caller, name)
+                details = "user_name %r, ip_addr %r, src_port %r" % \
+                    (self.user_name, self.ip_addr, self.src_port)
+                logger.error("%s : %s" % (msg, details))
+                raise ValueError(msg)
+
     def session_started(self):
         """Perform any necessary setup before handling callbacks from SFTP
         operations.
@@ -527,20 +545,11 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
             enforce_address = self.ip_addr
         else:
             enforce_address = None
+
         # logger.debug("%r session started for %s from %s:%s"
         #             % (proto, self.user_name, self.ip_addr, self.src_port))
-        if not self.user_name:
-            msg = "session_started: missing self.user_name"
-            logger.error(msg)
-            raise ValueError(msg)
-        if not self.ip_addr:
-            msg = "session_started: missing self.ip_addr"
-            logger.error(msg)
-            raise ValueError(msg)
-        if not self.src_port:
-            msg = "session_started: missing self.src_port"
-            logger.error(msg)
-            raise ValueError(msg)
+        self._abort_on_missing_client_var('session_started')
+
         # NOTE: proto == 'sftp' is handled in _validate_authentication
         if proto == 'sftp-subsys':
             active_count = active_sessions(configuration, proto,
@@ -599,7 +608,6 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
                 logger.error(msg)
                 raise Exception(msg)
 
-
     def session_ended(self):
         """The SFTP server session has just ended, either cleanly or via an
         exception. Perform any necessary cleanup before this object is
@@ -610,17 +618,11 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
             proto = 'sftp-subsys'
         else:
             proto = 'sftp'
+
         # logger.debug("%r session ended for %s from %s:%s"
         #             % (proto, self.user_name, self.ip_addr, self.src_port))
-        if not self.user_name:
-            logger.error("session_ended: missing self.user_name")
-            return
-        if not self.ip_addr:
-            logger.error("session_ended: missing self.ip_addr")
-            return
-        if not self.src_port:
-            logger.error("session_ended: missing self.src_port")
-            return
+        self._abort_on_missing_client_var('session_ended')
+
         status = track_close_session(configuration, proto,
                                      self.user_name, self.ip_addr, self.src_port)
         if not status:
@@ -1485,6 +1487,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
     def check_channel_shell_request(self, channel):
         """Check for shell request"""
         self.event.set()
+        # TODO: is this correct behaviour?
         return True
 
 
