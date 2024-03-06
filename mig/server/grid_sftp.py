@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_sftp - SFTP server providing access to MiG user homes
-# Copyright (C) 2010-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -446,10 +446,6 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                                   password=True, key=True)
             self.user_name = username
 
-            # NOTE: we do not yet have session limit in sftp subsys handler
-            #       so we implement it as a workaround here and in
-            #       session_ended helper for now.
-            # TODO: implement session limit in subsys and disable workaround
             # Env holds client info in 'SSH_CLIENT' as 'a.b.c.d rport lport'
             ssh_client = force_utf8(os.environ.get('SSH_CLIENT', 'NONE'))
             # Zero-pad to make sure extraction fails gracefully if missing
@@ -457,42 +453,6 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             src_ip, src_port = ssh_client.split()[0:2]
             self.ip_addr = src_ip
             self.src_port = int(src_port)
-            active_count = active_sessions(configuration, 'sftp',
-                                           self.user_name)
-            # NOTE: we delay dead session cleanup until actually hitting limit
-            if configuration.user_sftp_max_sessions > 0:
-                connections_left = configuration.user_sftp_max_sessions - active_count
-            else:
-                # Arbitrary 'big enough' number
-                connections_left = 4096
-            logger.debug("login from %s with %d sessions left" %
-                         (username, connections_left))
-            if connections_left < 1 and connections_left + \
-                    len(expire_dead_sessions(configuration, 'sftp',
-                                             username)) < 1:
-                notify = True
-                if self.ip_addr in configuration.site_security_scanners:
-                    notify = False
-                auth_msg = "Too many open sessions"
-                max_sessions = ' (%d)' % configuration.user_sftp_max_sessions
-                # NOTE: duplicate griddaemons.auth hint for now
-                session_hint = """
-HINT: due to load and scalability concerns %s only allows a fixed number%s
-of concurrent active %s sessions at any time, and any additional connection
-attempts will simply be rejected. Please adjust your concurrent use settings
-to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
-                                     "SFTP")
-                log_msg = auth_msg + " %d for %s" \
-                    % (active_count, username)
-                logger.warning(log_msg)
-                authlog(configuration, 'WARNING', 'sftp', 'unknown',
-                        self.user_name, self.ip_addr, auth_msg + session_hint,
-                        notify=notify)
-
-                raise Exception("reject further sessions for %s" % username)
-
-            logger.info("proceed with session for %s with %d active sessions"
-                        % (self.user_name, active_count))
 
         # logger.debug('auth user is %s' % self.user_name)
 
@@ -509,6 +469,22 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
                 self.root = force_utf8("%s/%s" % (self.root, entry.home))
                 break
         # logger.debug('auth user chroot is %s' % self.root)
+
+    def _abort_on_missing_client_var(self, caller):
+        """Simple helper to abort further action in session_started and
+        session_ended if any of the required client variables like user_name,
+        ip_addr or src_port are unset. Logs the caller and values first and
+        then raises ValueError if so.
+        """
+        client_vars = {'user_name': self.user_name, 'ip_addr': self.ip_addr,
+                       'src_port': self.src_port}
+        for name in client_vars:
+            if not client_vars[name]:
+                msg = "abort %s: missing mandatory %r value" % (caller, name)
+                details = "user_name %r, ip_addr %r, src_port %r" % \
+                    (self.user_name, self.ip_addr, self.src_port)
+                logger.error("%s : %s" % (msg, details))
+                raise ValueError(msg)
 
     def session_started(self):
         """Perform any necessary setup before handling callbacks from SFTP
@@ -527,22 +503,20 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
             enforce_address = self.ip_addr
         else:
             enforce_address = None
+
         # logger.debug("%r session started for %s from %s:%s"
         #             % (proto, self.user_name, self.ip_addr, self.src_port))
-        if not self.user_name:
-            msg = "session_started: missing self.user_name"
-            logger.error(msg)
-            raise ValueError(msg)
-        if not self.ip_addr:
-            msg = "session_started: missing self.ip_addr"
-            logger.error(msg)
-            raise ValueError(msg)
-        if not self.src_port:
-            msg = "session_started: missing self.src_port"
-            logger.error(msg)
-            raise ValueError(msg)
+        self._abort_on_missing_client_var('session_started')
+
+        # TODO: merge sftp and sftp-subsys auth validation into single helper?
         # NOTE: proto == 'sftp' is handled in _validate_authentication
         if proto == 'sftp-subsys':
+            #logger.debug("sftp-subsys env is: %s" % os.environ)
+            # TODO: can we extract actual auth method somehow instead of this
+            #       dummy 'session' workaround when auth is handled by sshd?
+            authtype = os.environ.get('AUTHTYPE', 'session')
+            # NOTE: emulate native auth case for same 2fa check
+            valid_key, valid_password = True, True
             active_count = active_sessions(configuration, proto,
                                            self.user_name)
             # validate rate_limit, max_sessions and twofactor session
@@ -550,17 +524,20 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
                               self.ip_addr, self.user_name,
                               max_user_hits=default_max_user_hits):
                 exceeded_rate_limit = True
+            # NOTE: we delay dead session cleanup until actually hitting limit
             if max_sftp_sessions > 0 and active_count >= max_sftp_sessions:
-                exceeded_max_sessions = True
-            if (check_twofactor_session(
+                if active_count - len(expire_dead_sessions(
+                        configuration, proto, self.user_name)) >= max_sftp_sessions:
+                    exceeded_max_sessions = True
+            if (valid_key and check_twofactor_session(
                     configuration, self.user_name, enforce_address, 'sftp-key')) \
-                or check_twofactor_session(
-                    configuration, self.user_name, enforce_address, 'sftp-pw'):
+                or (valid_password and check_twofactor_session(
+                    configuration, self.user_name, enforce_address, 'sftp-pw')):
                 valid_twofa = True
             (authorized, disconnect) = validate_auth_attempt(
                 configuration,
                 proto,
-                'session',
+                authtype,
                 self.user_name,
                 self.ip_addr,
                 self.src_port,
@@ -575,7 +552,8 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
             )
             if not authorized or disconnect:
                 # NOTE: validate_auth_attempt will log why
-                raise Exception("session_started: not allowed")
+                raise Exception("reject client based on failed session checks")
+
         # Track session
         active_session = track_open_session(configuration,
                                             proto,
@@ -599,7 +577,6 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
                 logger.error(msg)
                 raise Exception(msg)
 
-
     def session_ended(self):
         """The SFTP server session has just ended, either cleanly or via an
         exception. Perform any necessary cleanup before this object is
@@ -610,17 +587,11 @@ to avoid exceeding this limit.""" % (configuration.short_title, max_sessions,
             proto = 'sftp-subsys'
         else:
             proto = 'sftp'
+
         # logger.debug("%r session ended for %s from %s:%s"
         #             % (proto, self.user_name, self.ip_addr, self.src_port))
-        if not self.user_name:
-            logger.error("session_ended: missing self.user_name")
-            return
-        if not self.ip_addr:
-            logger.error("session_ended: missing self.ip_addr")
-            return
-        if not self.src_port:
-            logger.error("session_ended: missing self.src_port")
-            return
+        self._abort_on_missing_client_var('session_ended')
+
         status = track_close_session(configuration, proto,
                                      self.user_name, self.ip_addr, self.src_port)
         if not status:
@@ -1347,6 +1318,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
                           max_user_hits=max_user_hits):
             exceeded_rate_limit = True
         elif max_sftp_sessions > 0 and active_count >= max_sftp_sessions:
+            # TODO: run expire_dead_sessions here like for subsys case?
             exceeded_max_sessions = True
         elif not default_username_validator(configuration, username):
             invalid_username = True
@@ -1485,6 +1457,7 @@ class SimpleSSHServer(paramiko.ServerInterface):
     def check_channel_shell_request(self, channel):
         """Check for shell request"""
         self.event.set()
+        # TODO: is this correct behaviour?
         return True
 
 
