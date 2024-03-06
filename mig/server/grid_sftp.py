@@ -511,8 +511,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         # TODO: merge sftp and sftp-subsys auth validation into single helper?
         # NOTE: proto == 'sftp' is handled in _validate_authentication
         if proto == 'sftp-subsys':
-            logger.debug("sftp-subsys env is: %s" % os.environ)
-            # TODO: can we extract actual auth method from env instead of this
+            #logger.debug("sftp-subsys env is: %s" % os.environ)
+            # TODO: can we extract actual auth method somehow instead of this
             #       dummy 'session' workaround when auth is handled by sshd?
             authtype = os.environ.get('AUTHTYPE', 'session')
             # NOTE: emulate native auth case for same 2fa check
