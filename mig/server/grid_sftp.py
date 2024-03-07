@@ -491,21 +491,25 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         operations.
         """
         global configuration, logger
+        username, client_ip = self.user_name, self.ip_addr
+        tcp_port = self.src_port
         max_sftp_sessions = configuration.user_sftp_max_sessions
         exceeded_rate_limit = False
         exceeded_max_sessions = False
+        invalid_username = False
+        account_accessible = False
         valid_twofa = False
         if self.transport is None:
             proto = 'sftp-subsys'
         else:
             proto = 'sftp'
         if configuration.site_twofactor_strict_address:
-            enforce_address = self.ip_addr
+            enforce_address = client_ip
         else:
             enforce_address = None
 
         # logger.debug("%r session started for %s from %s:%s"
-        #             % (proto, self.user_name, self.ip_addr, self.src_port))
+        #             % (proto, username, client_ip, tcp_port))
         self._abort_on_missing_client_var('session_started')
 
         # TODO: merge sftp and sftp-subsys auth validation into single helper?
@@ -517,32 +521,39 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
             authtype = os.environ.get('AUTHTYPE', 'session')
             # NOTE: emulate native auth case for same 2fa check
             valid_key, valid_password = True, True
-            active_count = active_sessions(configuration, proto,
-                                           self.user_name)
+            active_count = active_sessions(configuration, proto, username)
             # validate rate_limit, max_sessions and twofactor session
-            if hit_rate_limit(configuration, proto,
-                              self.ip_addr, self.user_name,
+            if hit_rate_limit(configuration, proto, client_ip, username,
                               max_user_hits=default_max_user_hits):
                 exceeded_rate_limit = True
-            # NOTE: we delay dead session cleanup until actually hitting limit
-            if max_sftp_sessions > 0 and active_count >= max_sftp_sessions:
-                if active_count - len(expire_dead_sessions(
-                        configuration, proto, self.user_name)) >= max_sftp_sessions:
-                    exceeded_max_sessions = True
-            if (valid_key and check_twofactor_session(
-                    configuration, self.user_name, enforce_address, 'sftp-key')) \
-                or (valid_password and check_twofactor_session(
-                    configuration, self.user_name, enforce_address, 'sftp-pw')):
-                valid_twofa = True
+            # NOTE: we delay dead session cleanup until limit is hit
+            elif max_sftp_sessions > 0 and active_count >= max_sftp_sessions \
+                    and active_count - \
+                    len(expire_dead_sessions(configuration, proto, username)) \
+                    >= max_sftp_sessions:
+                exceeded_max_sessions = True
+            elif not default_username_validator(configuration, username):
+                invalid_username = True
+            else:
+                # NOTE: subsys+key skips PAM and thus needs access check here
+                if check_account_accessible(configuration, username, proto):
+                    account_accessible = True
+                if (valid_key and check_twofactor_session(
+                    configuration, username, enforce_address, 'sftp-key')) \
+                    or (valid_password and check_twofactor_session(
+                        configuration, username, enforce_address, 'sftp-pw')):
+                    valid_twofa = True
             (authorized, disconnect) = validate_auth_attempt(
                 configuration,
                 proto,
                 authtype,
-                self.user_name,
-                self.ip_addr,
-                self.src_port,
+                username,
+                client_ip,
+                tcp_port,
                 authtype_enabled=True,
                 valid_auth=True,
+                invalid_username=invalid_username,
+                account_accessible=account_accessible,
                 valid_twofa=valid_twofa,
                 exceeded_rate_limit=exceeded_rate_limit,
                 exceeded_max_sessions=exceeded_max_sessions,
@@ -555,25 +566,20 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                 raise Exception("reject client based on failed session checks")
 
         # Track session
-        active_session = track_open_session(configuration,
-                                            proto,
-                                            self.user_name,
-                                            self.ip_addr,
-                                            self.src_port,
+        active_session = track_open_session(configuration, proto, username,
+                                            client_ip, tcp_port,
                                             authorized=True)
         if not active_session:
             raise Exception("failed to track open session")
         # Open GDP project
         if configuration.site_enable_gdp:
-            # NOTE: In GDP we do not distinguish
-            # between 'sftp' and 'sftp-subsys'
-            (gdp_project, msg) = project_open(configuration,
-                                              'sftp',
-                                              self.ip_addr,
-                                              self.user_name)
+            # NOTE: In GDP we do not distinguish between 'sftp' and
+            #       'sftp-subsys'
+            (gdp_project, msg) = project_open(configuration, 'sftp', client_ip,
+                                              username)
             if not gdp_project:
-                send_system_notification(self.user_name, ['SFTP', 'ERROR'],
-                                         msg, configuration)
+                send_system_notification(username, ['SFTP', 'ERROR'], msg,
+                                         configuration)
                 logger.error(msg)
                 raise Exception(msg)
 
@@ -583,34 +589,31 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         destroyed.
         """
         global configuration, logger
+        username, client_ip = self.user_name, self.ip_addr
+        tcp_port = self.src_port
         if self.transport is None:
             proto = 'sftp-subsys'
         else:
             proto = 'sftp'
 
         # logger.debug("%r session ended for %s from %s:%s"
-        #             % (proto, self.user_name, self.ip_addr, self.src_port))
+        #             % (proto, username, client_ip, tcp_port))
         self._abort_on_missing_client_var('session_ended')
 
-        status = track_close_session(configuration, proto,
-                                     self.user_name, self.ip_addr, self.src_port)
+        status = track_close_session(configuration, proto, username, client_ip,
+                                     tcp_port)
         if not status:
             logger.error("failed to track close session")
-        active_count = active_sessions(configuration, proto,
-                                       self.user_name)
-        logger.info("remaining %d active sessions for %s"
-                    % (active_count, self.user_name))
+        active_count = active_sessions(configuration, proto, username)
+        logger.info("remaining %d active sessions for %s" % (active_count,
+                                                             username))
 
         if configuration.site_enable_gdp and active_count == 0:
             # NOTE: In GDP we do not distinguish
             #       between 'sftp' and 'sftp-subsys'
-            project_close(configuration, 'sftp', self.ip_addr, self.user_name)
+            project_close(configuration, 'sftp', client_ip, username)
 
-    def __gdp_log(self,
-                  operation,
-                  path,
-                  dst_path=None,
-                  flags=None,
+    def __gdp_log(self, operation, path, dst_path=None, flags=None,
                   error=None):
         """GDP logger helper function"""
         if not configuration.site_enable_gdp:
