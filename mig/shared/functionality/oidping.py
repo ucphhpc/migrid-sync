@@ -57,13 +57,19 @@ def main(client_id, user_arguments_dict):
     if not validate_status:
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    oid_url = accepted['url'][-1]
+    oid_url = accepted['url'][-1].strip()
     openid_status = {'object_type': 'openid_status', 'server': None,
                      'status': None, 'error': ""}
+
     # IMPORTANT: we only allow ping of configured openid servers to avoid abuse
     # otherwise the urlopen could be tricked to use e.g. file:/etc/passwd or
     # be used to attack remote sites
-    if oid_url in configuration.user_openid_providers:
+    if not oid_url:
+        logger.debug("%s with target URL %r ignored" % (op_name, oid_url))
+        openid_status['server'] = oid_url
+        openid_status['status'] = "invalid query"
+        openid_status['error'] = "please provide a oid ping target URL"
+    elif oid_url in configuration.user_openid_providers:
         # TODO: build url from conf
         ping_url = oid_url.replace("/id/", "/ping")
         openid_status['server'] = ping_url
@@ -127,10 +133,10 @@ def main(client_id, user_arguments_dict):
         if openid_status['status'] == "online":
             logger.info("%s on %s succeeded" % (op_name, oid_url))
         else:
-            logger.error("%s against %s returned error: " % (op_name, oid_url)
+            logger.error("%s against %r returned error: " % (op_name, oid_url)
                          + " %(error)s (%(status)s)" % openid_status)
     else:
-        logger.error("%s against %s is not a valid openid provider" %
+        logger.error("%s against %r is not a valid openid provider" %
                      (op_name, oid_url))
         openid_status['server'] = "no such server configured"
         openid_status['status'] = "unavailable"
