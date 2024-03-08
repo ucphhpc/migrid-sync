@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # autocreate - auto create user from signed certificate or openid login
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -44,6 +44,7 @@ import time
 
 from mig.shared import returnvalues
 from mig.shared.accountstate import default_account_expire
+from mig.shared.bailout import filter_output_objects
 from mig.shared.base import client_id_dir, canonical_user, mask_creds, \
     fill_user, distinguished_name_to_user, fill_distinguished_name, \
     get_site_base_url, requested_page
@@ -286,7 +287,8 @@ def main(client_id, user_arguments_dict, environ=None):
     if not validate_status:
         # NOTE: 'accepted' is a non-sensitive error string here
         logger.warning('%s from %s got invalid input: %s' %
-                       (op_name, client_id, accepted))
+                       (op_name, client_id,
+                        filter_output_objects(configuration, accepted)))
         return (accepted, returnvalues.CLIENT_ERROR)
 
     # IMPORTANT: do NOT log credentials

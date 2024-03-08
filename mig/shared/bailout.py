@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # bailout - emergency backend output helpers
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -101,11 +101,23 @@ def filter_output_objects(configuration, out_obj, truncate_out_len=78,
     """
     out_filtered = []
     for entry in out_obj:
-        if entry.get('object_type', 'UNKNOWN') == 'title':
+        if entry.get('object_type', 'UNKNOWN') == 'start':
+            # NOTE: shallow copy so we must be careful not to edit original
+            stripped_start = entry.copy()
+            for name in ('headers', ):
+                stripped_start[name] = '[ ... ]'
+            out_filtered.append(stripped_start)
+        elif entry.get('object_type', 'UNKNOWN') == 'title':
             # NOTE: shallow copy so we must be careful not to edit original
             stripped_title = entry.copy()
+            # NOTE: copy keys to avoid error when removing keys in iteration
+            for key in list(stripped_title):
+                if key.startswith('skip'):
+                    del stripped_title[key]
             for name in ('style', 'script', 'user_profile', 'user_settings'):
                 stripped_title[name] = '{ ... }'
+            for name in ('user_menu', 'base_menu'):
+                stripped_title[name] = '[ ... ]'
             out_filtered.append(stripped_title)
         elif entry.get('object_type', 'UNKNOWN') == 'file_output':
             # NOTE: shallow copy so we must be careful not to edit original
