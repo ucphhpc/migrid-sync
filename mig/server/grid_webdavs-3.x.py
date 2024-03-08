@@ -63,6 +63,7 @@ try:
     from wsgidav.request_resolver import RequestResolver
     # NOTE: use cheroot now that we require any 3.x wsgidav
     wsgidav_major = int(wsgidav_version.split('.')[0])
+    wsgidav_minor = int(wsgidav_version.split('.')[1])
     from cheroot.wsgi import Server
     from cheroot.errors import NoSSLError
     from cheroot.ssl.builtin import BuiltinSSLAdapter, ssl, \
@@ -1784,6 +1785,12 @@ def run(configuration):
         RequestResolver  # this must be the last middleware item
     ]
 
+    # IMPORTANT: use workaround for CVE-2022-41905 on wsgidav >=3.0 and <4.1
+    enable_dir_browser = False
+    if wsgidav_major < 3:
+        enable_dir_browser = True
+    if wsgidav_major >= 4 and wsgidav_minor >= 1:
+        enable_dir_browser = True
     config = DEFAULT_CONFIG.copy()
     config.update(dav_conf)
     config.update(daemon_conf)
@@ -1883,7 +1890,7 @@ def run(configuration):
         },
         #: Options for `WsgiDavDirBrowser`
         "dir_browser": {
-            "enable": True,  # Render HTML listing for GET requests on collections
+            "enable": enable_dir_browser,  # Render HTML listing for GET requests on collections
             # List of fnmatch patterns:
             "ignore": [
                 ".DS_Store",  # macOS folder meta data
