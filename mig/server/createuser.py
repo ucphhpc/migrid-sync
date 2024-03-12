@@ -193,7 +193,7 @@ if '__main__' == __name__:
 
     configuration = get_configuration_object(config_file=conf_path)
     logger = configuration.logger
-    # NOTE: we nedd explicit db_path lookup here for load_user_dict call
+    # NOTE: we need explicit db_path lookup here for load_user_dict call
     if db_path == keyword_auto:
         db_path = default_db_path(configuration)
 
