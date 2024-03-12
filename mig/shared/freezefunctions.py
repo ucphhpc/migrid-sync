@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # freezefunctions - freeze archive helper functions
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -500,11 +500,14 @@ def list_frozen_archives(configuration, client_id, strict_owner=False,
             if not freeze_id in frozen_list:
                 frozen_list.append(freeze_id)
             # NOTE: this should no longer be needed with active cache updates
-            #       but just in case suh a cache update failed or something.
+            #       but just in case such a cache update failed or something.
             cached_meta = frozen_cache.get(freeze_id, {})
+            # _logger.debug("check stale cache for archive %s of %s" %
+            #             (freeze_id, client_id))
             if not cached_meta or meta_out['CREATED_TIMESTAMP'] > \
                     cached_meta['CREATED_TIMESTAMP'] or \
-                    meta_out['STATE'] != cached_meta['STATE']:
+                    meta_out.get('STATE', keyword_final) != \
+                    cached_meta.get('STATE', keyword_final):
                 _logger.debug("found stale cache for archive %s of %s" %
                               (freeze_id, client_id))
                 update_cached_meta(configuration, client_id, freeze_id,
