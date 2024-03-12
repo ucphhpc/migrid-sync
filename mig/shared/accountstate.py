@@ -370,7 +370,7 @@ def detect_special_login(configuration, username, proto):
     """
     _logger = configuration.logger
     try:
-        if proto in ('sftp', 'ftps', 'davs') and \
+        if proto in ('sftp', 'sftp-subsys', 'ftps', 'davs') and \
                 possible_sharelink_id(configuration, username):
             for mode in ['read-write']:
                 real_path = os.path.realpath(os.path.join(
@@ -379,15 +379,16 @@ def detect_special_login(configuration, username, proto):
                     _logger.info("%s sharelink %s detected - always accessible" %
                                  (mode, username))
                     return True
-        if proto == 'sftp' and possible_job_id(configuration, username):
+        if proto in ('sftp', 'sftp-subsys') and \
+                possible_job_id(configuration, username):
             real_path = os.path.realpath(os.path.join(
                 configuration.sessid_to_mrsl_link_home, username + '.mRSL'))
             if os.path.exists(real_path):
                 _logger.info(
                     "job mount %s detected - always accessible" % username)
                 return True
-        if proto == 'sftp' and possible_jupyter_mount_id(configuration,
-                                                         username):
+        if proto in ('sftp', 'sftp-subsys') and \
+                possible_jupyter_mount_id(configuration, username):
             real_path = os.path.realpath(os.path.join(
                 configuration.sessid_to_jupyter_mount_link_home, username))
             if os.path.exists(real_path):
@@ -492,9 +493,12 @@ if __name__ == "__main__":
         conf, suspended_user_email, 'sftp', expand_alias=True))
 
     sharelink = 'JFPyQ7Gt2p'
-    print("check account accessible for %s" % sharelink)
-    print(check_account_accessible(conf, sharelink, 'sftp', expand_alias=True))
+    for proto in ('sftp', 'sftp-subsys'):
+        print("check account accessible on %s for %s" % (proto, sharelink))
+        print(check_account_accessible(conf, sharelink, proto,
+                                       expand_alias=True))
 
     job_id = 'eaeeff724b8d0d73b55b50b880a4c76873eb44cbfe1f97e67dd251d1002ad748'
-    print("check account accessible for %s" % job_id)
-    print(check_account_accessible(conf, job_id, 'sftp', expand_alias=True))
+    for proto in ('sftp', 'sftp-subsys'):
+        print("check account accessible on %s for %s" % (proto, job_id))
+        print(check_account_accessible(conf, job_id, proto, expand_alias=True))
