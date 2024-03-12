@@ -844,7 +844,7 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --enable_cracklib=True --enable_hsts=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
                    --enable_notify=True --enable_jupyter=True \
-                   --jupyter_services='DAG.https://dag002.science DAG.https://dag003.science DAG.https://dag004.science DAG.https://dag005.science DAG.https://dag006.science DAG.https://dag007.science DAG.https://dag008.science DAG.https://dag009.science DAG.https://dag010.science DAG.https://dag201.science DAG.https://dag203.science DAG.https://dag204.science MODI.https://dag100.science' \
+                   --jupyter_services='DAG.https://dag002.science DAG.https://dag003.science DAG.https://dag004.science DAG.https://dag005.science DAG.https://dag006.science DAG.https://dag007.science DAG.https://dag008.science DAG.https://dag009.science DAG.https://dag010.science DAG.https://dag203.science DAG.https://dag204.science MODI.https://dag100.science' \
                    --jupyter_services_desc="{'DAG': '/home/mig/state/wwwpublic/dag_desc.html', 'MODI': '/home/mig/state/wwwpublic/modi_desc.html'}" \
                    --enable_cloud=True \
                    --enable_migadmin=True \
@@ -933,7 +933,7 @@ with optional 2-FA support and legacy sftp clients:
                    --enable_workflows=True --enable_hsts=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
                    --enable_jupyter=True --enable_migadmin=True \
-                   --jupyter_services='DAG.https://dag002.science DAG.https://dag003.science DAG.https://dag004.science DAG.https://dag005.science DAG.https://dag006.science DAG.https://dag007.science DAG.https://dag008.science DAG.https://dag009.science DAG.https://dag010.science DAG.https://dag201.science DAG.https://dag203.science DAG.https://dag204.science MODI.https://dag100.science' \
+                   --jupyter_services='DAG.https://dag002.science DAG.https://dag003.science DAG.https://dag004.science DAG.https://dag005.science DAG.https://dag006.science DAG.https://dag007.science DAG.https://dag008.science DAG.https://dag009.science DAG.https://dag010.science DAG.https://dag203.science DAG.https://dag204.science MODI.https://dag100.science' \
                    --jupyter_services_desc="{'DAG': '/home/mig/state/wwwpublic/dag_desc.html', 'MODI': '/home/mig/state/wwwpublic/modi_desc.html'}" \
                    --enable_peers=True --peers_mandatory=True \
                    --peers_explicit_fields='full_name email' \
