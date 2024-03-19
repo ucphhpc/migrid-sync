@@ -508,6 +508,8 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
         username, client_ip = self.user_name, self.ip_addr
         tcp_port = self.src_port
         max_sftp_sessions = configuration.user_sftp_max_sessions
+        # We skip track session on reject with e.g. disabled or expired account
+        self._session_tracked = False
         exceeded_rate_limit = False
         exceeded_max_sessions = False
         invalid_username = False
@@ -585,6 +587,7 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
                                             authorized=True)
         if not active_session:
             raise Exception("failed to track open session")
+        self._session_tracked = True
         # Open GDP project
         if configuration.site_enable_gdp:
             # NOTE: In GDP we do not distinguish between 'sftp' and
@@ -612,6 +615,13 @@ class SimpleSftpServer(paramiko.SFTPServerInterface):
 
         # logger.debug("%r session ended for %s from %s:%s"
         #             % (proto, username, client_ip, tcp_port))
+
+        # No session tracking if e.g. refused with expired/disabled account
+        if not self._session_tracked:
+            logger.info("no tracked %s session for refused try by %r from %s:%s"
+                        % (proto, username, client_ip, tcp_port))
+            return
+
         self._abort_on_missing_client_var('session_ended')
 
         status = track_close_session(configuration, proto, username, client_ip,
