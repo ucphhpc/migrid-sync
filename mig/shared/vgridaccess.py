@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridaccess - user access in VGrids
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -826,11 +826,17 @@ def user_vgrid_access(configuration, client_id, inherited=False,
     the vgrid module and should replace that one everywhere that only vgrid map
     (cached) lookups are needed.
     """
+    _logger = configuration.logger
     vgrid_access = [default_vgrid]
     vgrid_map = get_vgrid_map(configuration, recursive, caching)
     for vgrid in vgrid_map.get(VGRIDS, {}):
-        if vgrid_allowed(client_id, vgrid_map[VGRIDS][vgrid][OWNERS]) or \
-                vgrid_allowed(client_id, vgrid_map[VGRIDS][vgrid][MEMBERS]):
+        vgrid_dict = vgrid_map[VGRIDS][vgrid]
+        if not vgrid_dict or vgrid_dict.get(OWNERS, None) is None:
+            # Probably found a recently removed vgrid in stale cache
+            _logger.warning("skip stale vgrid %r in access check" % vgrid)
+            continue
+        if vgrid_allowed(client_id, vgrid_dict[OWNERS]) or \
+                vgrid_allowed(client_id, vgrid_dict[MEMBERS]):
             if inherited:
                 vgrid_access += vgrid_list_parents(vgrid, configuration)
             vgrid_access.append(vgrid)

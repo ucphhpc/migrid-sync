@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # vgridman - backend to manage vgrids
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -207,9 +207,9 @@ resources.''' % label})
         # User vgrid_list here to include default and all mangling above
         for vgrid_name in vgrid_list:
             vgrid_dict = vgrid_map[VGRIDS].get(vgrid_name, {})
-            if not vgrid_dict or not vgrid_dict.get(OWNERS, []):
+            if not vgrid_dict or vgrid_dict.get(OWNERS, None) is None:
                 # Probably found a recently removed vgrid in stale cache
-                logger.warning("skip stale vgrid %s" % vgrid_name)
+                logger.warning("skip stale vgrid %r in list" % vgrid_name)
                 continue
             settings_dict = dict(vgrid_dict.get(SETTINGS, []))
             # Mark and show hidden vgrids if owner or member and hide otherwise
