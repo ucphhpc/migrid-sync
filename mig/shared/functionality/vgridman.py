@@ -207,6 +207,10 @@ resources.''' % label})
         # User vgrid_list here to include default and all mangling above
         for vgrid_name in vgrid_list:
             vgrid_dict = vgrid_map[VGRIDS].get(vgrid_name, {})
+            if not vgrid_dict or not vgrid_dict.get(OWNERS, []):
+                # Probably found a recently removed vgrid in stale cache
+                logger.warning("skip stale vgrid %s" % vgrid_name)
+                continue
             settings_dict = dict(vgrid_dict.get(SETTINGS, []))
             # Mark and show hidden vgrids if owner or member and hide otherwise
             view_icon, hidden_status = "infolink", " "
