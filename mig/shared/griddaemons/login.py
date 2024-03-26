@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # login - grid daemon login helper functions
-# Copyright (C) 2010-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -1144,7 +1144,7 @@ def refresh_jupyter_creds(configuration, protocol, username):
         #   % username)
         return (conf, active_jupyter_creds)
 
-    logger.info("Getting active jupuyter mount creds")
+    logger.info("Getting active jupyter mount creds")
     link_path = os.path.join(configuration.sessid_to_jupyter_mount_link_home,
                              "%s" % username + ".jupyter_mount")
     # logger.debug("jupyter linkpath: %s jupyter path exists: %s" % \
