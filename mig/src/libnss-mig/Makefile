@@ -13,8 +13,10 @@
 #MIG_DEFAULTS=
 # TODO: implement this conf lookup!!
 # Leave like this to lookup values in $MIG_CONF or default MiGserver.conf .
-#MIG_DEFAULTS=-D'SHARELINK_HOME=""' -D'SHARELINK_LENGTH=-1' -D'USERNAME_REGEX=""' 
+#MIG_DEFAULTS=-D'SHARELINK_HOME=""' -D'SHARELINK_LENGTH=-1' -D'USERNAME_REGEX=""'
 # ... or hard code to your site values like this (NOTE: escaped dollar = '$$')
+# NOTE: we lookup UID and GID of 'mig' user to limit hard-coding but we may still
+#       need to update paths and even the user name if using custom install
 MIG_DEFAULTS=-D'MIG_UID=$(shell id -u mig)' \
 	-D'MIG_GID=$(shell id -g mig)' \
 	-D'SHARELINK_HOME="$(shell ~mig/mig/server/readconfval.py sharelink_home)"' \
@@ -40,7 +42,7 @@ DEBUG_CFLAGS=
 CC = gcc
 INCLUDES=
 # NOTE: try python-config first: if 2 and 3 are installed default is there
-PYCONF = $(shell which python-config || which python3-config)
+PYCONF = $(shell which python-config 2> /dev/null || which python3-config 2> /dev/null)
 DEFINES=$(MIG_DEFAULTS) \
 		$(DEBUG_DEFINES)
 CFLAGS=${DEBUG_CFLAGS} -Wall -Wpedantic $(shell ${PYCONF} --cflags)
