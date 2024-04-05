@@ -15,7 +15,7 @@
 # Leave like this to lookup values in $MIG_CONF or default MiGserver.conf .
 #MIG_DEFAULTS=-D'SHARELINK_HOME=""' -D'SHARELINK_LENGTH=-1' -D'USERNAME_REGEX=""'
 # ... or hard code to your site values like this (NOTE: escaped dollar = '$$')
-# NOTE: we lookup UID and GID of 'mig' user to limit hard-coding but we may stil
+# NOTE: we lookup UID and GID of 'mig' user to limit hard-coding but we may still
 #       need to update paths and even the user name if using custom install
 # IMPORTANT: do NOT allow single/double quotes in USERNAME_REGEX: breaks pyrun
 MIG_DEFAULTS=-D'MIG_UID=$(shell id -u mig)' \
@@ -41,7 +41,7 @@ DEBUG_CFLAGS=
 
 CC = gcc
 # NOTE: try python-config first: if 2 and 3 are installed default is there
-PYCONF = $(shell which python-config || which python3-config)
+PYCONF = $(shell which python-config 2> /dev/null || which python3-config 2> /dev/null)
 PYLDFLAGS = $(shell ${PYCONF} --ldflags --embed  | egrep -v '^Usage: ' || ${PYCONF} --ldflags)
 LIBPYTHON = $(shell echo ${PYLDFLAGS} | sed 's/.*-l\(python[^ ]\+\).*/lib\1.so/g')
 BUILD_DEFINES =	-D'LIBPYTHON="${LIBPYTHON}"'
