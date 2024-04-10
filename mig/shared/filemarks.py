@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # filemarks - helpers for various site state info relying on simple file marks
-# Copyright (C) 2020  The MiG Project lead by Brian Vinter
+# Copyright (C) 2020-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -33,12 +33,13 @@ from __future__ import absolute_import
 
 import os
 
-from mig.shared.fileio import makedirs_rec, touch
+from mig.shared.fileio import makedirs_rec, touch, delete_file
 
 
 def update_filemark(configuration, base_dir, rel_path, timestamp):
     """Create or update file mark file in rel_path under base_dir and set the
     given timestamp.
+    If a negative timestamp is provided the mark is instead deleted.
     """
     _logger = configuration.logger
     mark_path = os.path.join(base_dir, rel_path.lstrip(os.sep))
@@ -47,6 +48,8 @@ def update_filemark(configuration, base_dir, rel_path, timestamp):
         _logger.error("could not create required mark dir: %s" %
                       mark_dir)
         return False
+    if timestamp < 0:
+        return delete_file(mark_path, _logger, allow_missing=True)
     return touch(mark_path, configuration, timestamp)
 
 
@@ -67,10 +70,12 @@ def get_filemark(configuration, base_dir, rel_path):
     return timestamp
 
 
-def reset_filemark(configuration, base_dir, mark_list=None):
+def reset_filemark(configuration, base_dir, mark_list=None, delete=False):
     """Reset mark(s) in the cache for one or more marks given by mark_list
     considered relative to base_dir. The default value of None means all
     marks but it can also a list of strings.
+    The optional delete_mark toggles between setting the mark(s) to 0 and
+    completely deleting.
     """
     _logger = configuration.logger
     if mark_list is None:
@@ -87,5 +92,11 @@ def reset_filemark(configuration, base_dir, mark_list=None):
     else:
         _logger.error("invalid mark list: %s" % mark_list)
         return False
+
+    # NOTE: negative timestamp deletes mark
+    if delete:
+        timestamp = -1
+    else:
+        timestamp = 0
     for rel_path in rel_list:
-        update_filemark(configuration, base_dir, rel_path, 0)
+        return update_filemark(configuration, base_dir, rel_path, timestamp)

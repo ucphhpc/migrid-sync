@@ -159,9 +159,12 @@ def track_open_session(configuration,
                               proto, _active_sessions, do_lock=False):
             raise IOError("%s save sessions failed for %s" %
                           (proto, client_id))
+        logger.debug("tracking open %s session %s for %r" % (proto, session_id,
+                                                             client_id))
     except Exception as exc:
         result = None
-        logger.error("track open session failed: %s" % exc)
+        logger.error("track open %s session %s for %r failed: %s" %
+                     (proto, session_id, client_id, exc))
 
     if do_lock:
         _release_sessions_lock(sessions_lock)
@@ -277,10 +280,10 @@ def track_close_session(configuration,
     """Track that proto session for client_id is closed,
     returns closed session dictionary"""
     logger = configuration.logger
-    # msg = "track close session for proto: '%s'" % proto \
-    #     + " from %s:%s with session_id: %s, client_id: %s, do_lock: %s" % \
-    #     (client_address, client_port, session_id, client_id, do_lock)
-    # logger.debug(msg)
+    msg = "track close session for proto: '%s'" % proto \
+          + " from %s:%s with session_id: %s, client_id: %s, do_lock: %s" % \
+          (client_address, client_port, session_id, client_id, do_lock)
+    logger.debug(msg)
     result = {}
     if not session_id:
         session_id = "%s:%s" % (client_address, client_port)
@@ -299,6 +302,8 @@ def track_close_session(configuration,
                                       proto, _active_sessions, do_lock=False):
                     raise IOError("%s save sessions failed for %s" %
                                   (proto, client_id))
+                logger.debug("tracking close %s session %s for %r" %
+                             (proto, session_id, client_id))
             elif timestamp is not None:
                 logger.debug("track close session skipping"
                              + " proto: %s, session_id: %s, client_id: %s"
