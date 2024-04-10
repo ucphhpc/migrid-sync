@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # base - shared base helper functions
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -41,10 +41,11 @@ import sys
 
 # IMPORTANT: do not import any other MiG modules here - to avoid import loops
 from mig.shared.defaults import default_str_coding, default_fs_coding, \
-    keyword_all, sandbox_names, _user_invisible_files, _user_invisible_dirs, \
-    _vgrid_xgi_scripts, cert_field_order, csrf_field, gdp_distinguished_field, \
-    valid_gdp_auth_scripts, valid_gdp_anon_scripts, STR_KIND, FS_KIND, \
-    AUTH_OPENID_V2, AUTH_OPENID_CONNECT, AUTH_CERTIFICATE
+    keyword_all, keyword_auto, sandbox_names, _user_invisible_files, \
+    _user_invisible_dirs, _vgrid_xgi_scripts, cert_field_order, csrf_field, \
+    gdp_distinguished_field, valid_gdp_auth_scripts, valid_gdp_anon_scripts, \
+    STR_KIND, FS_KIND, AUTH_OPENID_V2, AUTH_OPENID_CONNECT, AUTH_CERTIFICATE, \
+    X509_USER_ID_FORMAT, UUID_USER_ID_FORMAT
 
 _id_sep, _dir_sep, _id_space, _dir_space = '/', '+', ' ', '_'
 _key_val_sep = '='
@@ -152,6 +153,37 @@ def get_short_id(configuration, user_id, user_alias):
             short_id = "%s@%s" % (short_id, gdp_id)
 
     return short_id
+
+
+def get_user_id(configuration, user):
+    """Extract configured unique user ID value from user dictionary. The actual
+    chosen value depends on the user_id_format from the site configuration and
+    can be X509 or UUID of user.
+    """
+    user_id = None
+    uid_format = configuration.site_user_id_format
+    if uid_format == X509_USER_ID_FORMAT:
+        user_id = user.get('distinguished_name', None)
+    elif uid_format == UUID_USER_ID_FORMAT:
+        user_id = user.get('unique_id', None)
+    else:
+        raise ValueError("invalid user ID format %s" % uid_format)
+    if user_id is None:
+        raise ValueError("no client ID found for %s in %s" %
+                         (uid_format, user))
+    return user_id
+
+
+def get_client_id(user):
+    """Extract client ID on the Distinguished Name form from user dictionary.
+    Please note that this is used for all public and human-friendly display,
+    whereas user_id may be a generated random key UUID or coincide with DN
+    depending on the actual site configuration.
+    """
+    client_id = user.get('distinguished_name', None)
+    if client_id is None:
+        raise ValueError("no client DN found in %s" % user)
+    return client_id
 
 
 # TODO: migrate all uses of binascii hexlify to use this helper instead

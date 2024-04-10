@@ -37,7 +37,8 @@ import time
 
 from mig.shared.base import client_dir_id, client_id_dir, client_alias, \
     force_utf8, get_short_id
-from mig.shared.defaults import dav_domain
+from mig.shared.defaults import dav_domain, X509_USER_ID_FORMAT, \
+    UUID_USER_ID_FORMAT
 from mig.shared.fileio import unpickle
 from mig.shared.gdp.all import get_project_from_user_id
 from mig.shared.sharelinks import extract_mode_id
@@ -46,7 +47,8 @@ from mig.shared.useradm import ssh_authkeys, davs_authkeys, ftps_authkeys, \
     https_authkeys, get_authkeys, ssh_authpasswords, davs_authpasswords, \
     ftps_authpasswords, https_authpasswords, get_authpasswords, \
     ssh_authdigests, davs_authdigests, ftps_authdigests, https_authdigests, \
-    generate_password_hash, generate_password_digest, load_user_dict
+    generate_password_hash, generate_password_digest, load_user_dict, \
+    lookup_client_id
 from mig.shared.validstring import possible_sharelink_id, possible_job_id, \
     possible_jupyter_mount_id
 
@@ -454,8 +456,8 @@ def update_user_objects(configuration, auth_file, path, user_vars, auth_protos,
         for login_id in user_id_list:
             add_user_object(configuration, login_id, user_dir,
                             digest=user_digest, user_dict=user_dict)
-    # logger.debug("after update users list is:\n%s" % \
-    #             '\n'.join(["%s" % i for i in conf['users']]))
+    # logger.debug("after update users list is:\n%s" %
+    #              '\n'.join(["%s" % i for i in conf['users']]))
 
 
 def refresh_user_creds(configuration, protocol, username):
@@ -468,8 +470,8 @@ def refresh_user_creds(configuration, protocol, username):
     Returns a tuple with the updated daemon_conf and the list of changed user
     IDs.
 
-    NOTE: username must be the direct username used in home dir or an OpenID
-    alias with associated symlink there. Encoded username aliases must be
+    NOTE: username must be the direct username used in home dir or an OpenID or
+    UUID alias with associated symlink there. Encoded username aliases must be
     decoded before use here.
     """
     changed_users = []
@@ -539,19 +541,28 @@ def refresh_user_creds(configuration, protocol, username):
             logger.warning("Skipping non-existant auth path %s" % path)
             continue
         # logger.debug("Checking %s" % path)
-        # Expand actual user home from alias
-        user_home = os.path.realpath(os.path.join(configuration.user_home,
-                                                  username))
-        user_dir = os.path.basename(user_home)
+        user_home = os.path.join(configuration.user_home, username)
+        if configuration.site_user_id_format == X509_USER_ID_FORMAT:
+            # Expand actual user home from alias
+            user_home = os.path.realpath(user_home)
+            user_dir = os.path.basename(user_home)
+        elif configuration.site_user_id_format == UUID_USER_ID_FORMAT:
+            # Only follow first username -> client_id_dir symlink with UUID
+            # then build user_home from there as link may be just the name
+            user_dir = os.path.basename(os.readlink(user_home))
+            user_home = os.path.join(configuration.user_home, user_dir)
+
         # Check that user home exists
         if not os.path.exists(user_home):
             logger.warning("Skipping user without home %s" % user_home)
             continue
 
+        # NOTE: user_id is really just the usual client_id here
         user_id = client_dir_id(user_dir)
         user_alias = client_alias(user_id)
         if conf['user_alias']:
-            short_id = get_short_id(configuration, user_id, conf['user_alias'])
+            short_id = get_short_id(configuration, user_id,
+                                    conf['user_alias'])
             # Allow both raw alias field value and asciified alias
             # logger.debug("find short_alias for %s" % short_id)
             short_alias = client_alias(short_id)
@@ -565,7 +576,8 @@ def refresh_user_creds(configuration, protocol, username):
                 continue
             user_dir = os.path.join(user_dir, project_name)
         user_vars = (user_id, user_alias, user_dir, short_id, short_alias)
-        # logger.debug("refresh_user_creds updating objs for %s" % username)
+        # logger.debug("refresh_user_creds updating objs for %s: %s" %
+        #              (username, user_vars))
         update_user_objects(configuration, auth_file, path, user_vars,
                             auth_protos, private_auth_file)
 
@@ -900,7 +912,7 @@ def update_login_map(daemon_conf, changed_users, changed_jobs=[],
         login_map[username] = [i for i in daemon_conf['users'] if username ==
                                i.username]
     # logger.debug("update_login_map for %s: %s" %
-    #                (username, '\n'.join(["%s" % i for i in login_map[username]])))
+    #              (username, '\n'.join(["%s" % i for i in login_map[username]])))
     for username in changed_jobs:
         login_map[username] = [i for i in daemon_conf['jobs'] if username ==
                                i.username]

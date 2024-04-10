@@ -46,9 +46,9 @@ import time
 from mig.shared.accountstate import update_account_expire_cache, \
     update_account_status_cache
 from mig.shared.base import client_id_dir, client_dir_id, client_alias, \
-    sandbox_resource, fill_user, fill_distinguished_name, extract_field, \
-    is_gdp_user, mask_creds, force_native_str, force_native_str_rec, \
-    native_str_escape, native_args
+    get_client_id, extract_field, fill_user, fill_distinguished_name, \
+    is_gdp_user, mask_creds, sandbox_resource, force_native_str, \
+    force_native_str_rec, native_str_escape, native_args
 from mig.shared.conf import get_configuration_object
 from mig.shared.configuration import Configuration
 from mig.shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
@@ -57,10 +57,13 @@ from mig.shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
     widgets_filename, seafile_ro_dirname, authkeys_filename, \
     authpasswords_filename, authdigests_filename, cert_field_order, \
     twofactor_filename, peers_filename, gdp_distinguished_field, \
-    unique_id_length
+    unique_id_length, unique_id_charset, X509_USER_ID_FORMAT, \
+    UUID_USER_ID_FORMAT, valid_user_id_formats, user_id_alias_dir, \
+    expire_marks_dir, status_marks_dir
 from mig.shared.fileio import filter_pickled_list, filter_pickled_dict, \
     make_symlink, delete_symlink, read_file, write_file, remove_dir, \
-    remove_rec, listdir, move
+    remove_rec, makedirs_rec, listdir, move
+from mig.shared.filemarks import reset_filemark
 from mig.shared.modified import mark_user_modified
 from mig.shared.refunctions import list_runtime_environments, \
     update_runtimeenv_owner
@@ -216,66 +219,98 @@ def sync_gdp_users(configuration,
     return user_db
 
 
-def create_user(
-    user,
-    conf_path,
-    db_path,
-    force=False,
-    verbose=False,
-    ask_renew=True,
-    default_renew=False,
-    do_lock=True,
-    verify_peer=None,
-    peer_expire_slack=0,
-    from_edit_user=False,
-    ask_change_pw=False,
-    auto_create_db=True,
-    create_backup=True,
-):
-    """Add user"""
-    flock = None
-    user_db = {}
-    if conf_path:
-        if isinstance(conf_path, basestring):
-
-            # has been checked for accessibility above...
-
-            configuration = Configuration(conf_path)
-        else:
-            configuration = conf_path
+def _get_required_user_dir_links(configuration, real_dir, link_dir):
+    """Build and return a list of tuples listing all user state dirs and their
+    required ID symlinks. E.g for state/user_home the tuple is
+    (state/user_home/REAL_ID, state/user_home/LINK_ID)
+    """
+    home_dir = os.path.join(configuration.user_home, real_dir)
+    settings_dir = os.path.join(configuration.user_settings, real_dir)
+    cache_dir = os.path.join(configuration.user_cache, real_dir)
+    mrsl_dir = os.path.join(configuration.mrsl_files_dir, real_dir)
+    user_pending_dir = os.path.join(configuration.user_pending, real_dir)
+    res_pending_dir = os.path.join(configuration.resource_pending, real_dir)
+    if link_dir:
+        home_link = os.path.join(configuration.user_home, link_dir)
+        settings_link = os.path.join(configuration.user_settings, link_dir)
+        cache_link = os.path.join(configuration.user_cache, link_dir)
+        mrsl_link = os.path.join(configuration.mrsl_files_dir, link_dir)
+        res_pending_link = os.path.join(configuration.resource_pending,
+                                        link_dir)
+        # NOTE: see explanation of this reverse link below
+        id_alias_link = os.path.join(configuration.mig_system_run,
+                                     user_id_alias_dir, real_dir)
     else:
-        configuration = get_configuration_object()
+        home_link = settings_link = cache_link = mrsl_link = False
+        res_pending_link = id_alias_link = False
+
+    # No link in user pending as that is before user has UUID
+    user_pending_link = None
+    # NOTE: id_alias_link should point to home_link and not home_dir in order
+    #       to allow user ID alias lookup.
+    dir_links = [(home_dir, home_link), (settings_dir, settings_link),
+                 (cache_dir, cache_link), (mrsl_dir, mrsl_link),
+                 (user_pending_dir, user_pending_link),
+                 (res_pending_dir, res_pending_link),
+                 (link_dir, id_alias_link)]
+    return dir_links
+
+
+def lookup_client_id(configuration, user_id):
+    """Lookup the X509 format client_id linked to user_id based on the helper
+    symlink in user_id_alias_dir in configured mig_system_run location.
+    """
     _logger = configuration.logger
-    if db_path == keyword_auto:
-        db_path = default_db_path(configuration)
+    alias_link = os.path.join(configuration.mig_system_run, user_id_alias_dir,
+                              user_id)
+    _logger.debug("looking for alias link %r" % alias_link)
+    # NOTE: use islink rahter than exists here because it is a dead link if so
+    if os.path.islink(alias_link):
+        target_path = os.path.realpath(alias_link)
+        client_dir = os.path.basename(target_path)
+        _logger.debug("found linked alias %r for %r" % (client_dir, user_id))
+    else:
+        # Try a reverse lookup directly in user_home with writeback to
+        # mig_system_run, which is only scratch space.
+        client_dir = False
+        for name in listdir(configuration.user_home):
+            link_path = os.path.join(configuration.user_home, name)
+            if os.path.islink(link_path):
+                target = os.path.basename(os.path.realpath(link_path))
+                if target == user_id:
+                    client_dir = name
+                    _logger.debug("reverse lookup found link %r to %r" %
+                                  (client_dir, user_id))
+                    makedirs_rec(os.path.dirname(alias_link), configuration)
+                    make_symlink(client_dir, alias_link, _logger)
+                    break
+        if not client_dir:
+            _logger.warning("found no alias %r" % user_id)
+            return user_id
+    client_id = client_dir_id(client_dir)
+    return client_id
 
-    fill_distinguished_name(user)
-    client_id = user['distinguished_name']
-    client_dir = client_id_dir(client_id)
 
-    renew = default_renew
-    # Requested with existing valid certificate?
-    # Used in order to authorize password change
-    authorized = False
-    if 'authorized' in user:
-        authorized = user['authorized']
-        # Always remove any authorized fields before DB insert
-        del user['authorized']
-    reset_token, reset_auth_type = '', 'UNKNOWN'
-    if 'reset_token' in user:
-        reset_token = user['reset_token']
-        # NOTE: reqX backend saves auth_type in auth list of user dict
-        reset_auth_type = user.get('auth', ['UNKNOWN'])[-1]
-        # Always remove any reset_token fields before DB insert
-        del user['reset_token']
-
-    _logger.info('trying to create or renew user %r' % client_id)
-    now = time.time()
+def verify_user_peers(configuration, db_path, client_id, user, now, verify_peer,
+                      peer_expire_slack, force, verbose):
+    """Handle peer verification during create_user operations. If verify_peer
+    is set any matching users in the user database are tried in turn as
+    possible peers for user.
+    A list of acceptable peers is returned if any are found and verified to
+    accept user as their peer.
+    """
+    _logger = configuration.logger
     now_dt = datetime.datetime.fromtimestamp(now)
     accepted_peer_list = []
-    verify_pattern = verify_peer
-    if verify_peer == keyword_auto:
-        _logger.debug('auto-detect peers for: %s' % client_id)
+    verify_pattern = verify_peer.strip()
+    if not verify_pattern:
+        _logger.warning("no peers for %s to verify %r" % (client_id,
+                                                          verify_pattern))
+        raise Exception("No peers for %s to verify: %r" % (client_id,
+                                                           verify_pattern))
+
+    if verify_pattern == keyword_auto:
+        _logger.debug('auto-detect peers for %s' % client_id)
         peer_email_list = []
         # Extract email of peers contact from explicit peers field or comment
         # We don't try peers full name here as it is far too tricky to match
@@ -298,128 +333,132 @@ def create_user(
         verify_pattern = '|'.join(['.*emailAddress=%s' %
                                    i for i in peer_email_list])
 
-    if verify_pattern:
-        _logger.debug('verify peers for %s with %s' % (client_id,
-                                                       verify_pattern))
-        search_filter = default_search()
-        search_filter['distinguished_name'] = verify_pattern
-        if verify_peer == keyword_auto or verify_pattern.find('|') != -1:
-            regex_patterns = ['distinguished_name']
-        else:
-            regex_patterns = []
-        (_, hits) = search_users(search_filter, conf_path, db_path,
-                                 verbose, regex_match=regex_patterns)
-        peer_notes = []
-        if not hits:
-            peer_notes.append("no match for peers")
-        # Request can ask for expire with fall-back cap to highest peer value
-        # in case the original expire is not satisfied by any peer contacts.
-        # TODO: migrate this cap expire choice to a conf option?
-        cap_expire = user.get('cap_expire', True)
-        client_expire = user['expire']
-        client_expire_dt = datetime.datetime.fromtimestamp(client_expire)
-        # Latest expire value accepted by any peers contact (init to now)
-        effective_expire_dt = now_dt
-        for (contact_id, contact_dict) in hits:
-            if configuration.site_enable_gdp and is_gdp_user(configuration,
-                                                             contact_id):
-                _logger.debug(
-                    "skip gdp project user %s as peers contact" % contact_id)
-                continue
-            _logger.debug("check %s in peers contacts for %s" % (client_id,
-                                                                 contact_id))
-            if client_id == contact_id:
-                warn_msg = "users cannot invite themselves as peer: %s vs %s" \
-                           % (client_id, contact_id)
-                _logger.warning(warn_msg)
-                continue
-            # Check that peers contact account is not suspended or similar
-            contact_status = contact_dict.get('status', 'active')
-            if contact_status not in ['active', 'temporal']:
-                warn_msg = "status %s prevents %s as peer, including for %s" \
-                           % (contact_status, contact_id, client_id)
-                _logger.warning(warn_msg)
-                peer_notes.append(warn_msg)
-                continue
-            # Check that peers contact account is not expired (with slack)
-            contact_expire = contact_dict.get('expire', -1)
-            # Only allow slack if not temporal account
-            allowed_slack = 0
-            if contact_status == 'active':
-                allowed_slack = peer_expire_slack
-            if contact_expire >= 0 and now > contact_expire + allowed_slack:
-                warn_msg = "expire %s (slack %d) prevents %s as peer for %s" \
-                           % (contact_expire, allowed_slack, contact_id,
-                              client_id)
-                _logger.warning(warn_msg)
-                peer_notes.append(warn_msg)
-                continue
-            # TODO: make sure peers contact can (still) have peers at all
-            #       Checks in reqacceptpeer and on peer creation may be stale
-            #       by now upon any conf changes.
-            #       May require move of peers_permit_allowed to separate module
-            #       to avoid circular imports.
-            # Check if among accepted peers
-            accepted_peers = get_accepted_peers(configuration, contact_id)
-            peer_entry = accepted_peers.get(client_id, None)
-            if not peer_entry:
-                _logger.warning("%s has not (yet) accepted %s as peer" %
-                                (contact_id, client_id))
-                continue
-            # Found a potential peers contact, check contact vs client expire
-            # NOTE: adjust given peer contact expire date to the end of that day
-            peer_expire_dt = datetime.datetime.strptime(
-                peer_entry.get('expire', 0), '%Y-%m-%d') + \
-                datetime.timedelta(days=1, microseconds=-1)
-            if peer_expire_dt < client_expire_dt:
-                if cap_expire and peer_expire_dt > now_dt:
-                    info_msg = "%s accepts %s as peer with expire cap %s" % \
-                               (contact_id, client_id, peer_expire_dt)
-                    _logger.info(info_msg)
-                    peer_notes.append(info_msg)
-                    # NOTE: only allow effective expire to increase
-                    if peer_expire_dt > effective_expire_dt:
-                        _logger.info("bump effective expire to %s" %
-                                     peer_expire_dt)
-                        effective_expire_dt = peer_expire_dt
-                else:
-                    warn_msg = "expire %s vs %s prevents %s as peer for %s" % \
-                               (peer_expire_dt, client_expire_dt, contact_id,
-                                client_id)
-                    _logger.warning(warn_msg)
-                    peer_notes.append(warn_msg)
-                    continue
-            else:
-                _logger.info("%s accepts %s as peer with requested expire %s"
-                             % (contact_id, client_id, client_expire_dt))
-                effective_expire_dt = client_expire_dt
-
-            _logger.debug("validated %s accepts %s as peers contact" %
-                          (contact_id, client_id))
-            accepted_peer_list.append(contact_id)
-        if not accepted_peer_list:
-            _logger.warning("requested peer validation with %r for %s failed" %
-                            (verify_pattern, client_id))
-            raise Exception("Failed verify peers for %s using pattern %r: %s" %
-                            (client_id, verify_pattern, '\n'.join(peer_notes)))
-
-        # Enforce effective_expire_dt as highest actual account expire value
-        effective_expire = int(time.mktime(effective_expire_dt.timetuple()))
-        user['expire'] = effective_expire
-        # Save peers in user DB for updates etc. but ignore peer search pattern
-        user['peers'] = accepted_peer_list
-        if user.get('peer_pattern', None):
-            del user['peer_pattern']
-        _logger.info("accept create user %s (expire %s) with contact(s): %s" %
-                     (client_id, effective_expire_dt,
-                      ', '.join(accepted_peer_list)))
-
+    _logger.debug('verify peers for %s with %s' % (client_id,
+                                                   verify_pattern))
+    search_filter = default_search()
+    search_filter['distinguished_name'] = verify_pattern
+    if verify_peer == keyword_auto or verify_pattern.find('|') != -1:
+        regex_patterns = ['distinguished_name']
     else:
-        _logger.info('skip peer verification for %s' % client_id)
+        regex_patterns = []
+    (_, hits) = search_users(search_filter, configuration, db_path, force, verbose,
+                             regex_match=regex_patterns)
+    peer_notes = []
+    if not hits:
+        peer_notes.append("no match for peers")
+    # Request can ask for expire with fall-back cap to highest peer value
+    # in case the original expire is not satisfied by any peer contacts.
+    # TODO: migrate this cap expire choice to a conf option?
+    cap_expire = user.get('cap_expire', True)
+    client_expire = user['expire']
+    client_expire_dt = datetime.datetime.fromtimestamp(client_expire)
+    # Latest expire value accepted by any peers contact (init to now)
+    effective_expire_dt = now_dt
+    for (contact_id, contact_dict) in hits:
+        if configuration.site_enable_gdp and is_gdp_user(configuration,
+                                                         contact_id):
+            _logger.debug(
+                "skip gdp project user %s as peers contact" % contact_id)
+            continue
+        _logger.debug("check %s in peers contacts for %s" % (client_id,
+                                                             contact_id))
+        if client_id == contact_id:
+            warn_msg = "users cannot invite themselves as peer: %s vs %s" \
+                % (client_id, contact_id)
+            _logger.warning(warn_msg)
+            continue
+        # Check that peers contact account is not suspended or similar
+        contact_status = contact_dict.get('status', 'active')
+        if contact_status not in ['active', 'temporal']:
+            warn_msg = "status %s prevents %s as peer, including for %s" \
+                % (contact_status, contact_id, client_id)
+            _logger.warning(warn_msg)
+            peer_notes.append(warn_msg)
+            continue
+        # Check that peers contact account is not expired (with slack)
+        contact_expire = contact_dict.get('expire', -1)
+        # Only allow slack if not temporal account
+        allowed_slack = 0
+        if contact_status == 'active':
+            allowed_slack = peer_expire_slack
+        if contact_expire >= 0 and now > contact_expire + allowed_slack:
+            warn_msg = "expire %s (slack %d) prevents %s as peer for %s" \
+                % (contact_expire, allowed_slack, contact_id,
+                   client_id)
+            _logger.warning(warn_msg)
+            peer_notes.append(warn_msg)
+            continue
+        # TODO: make sure peers contact can (still) have peers at all
+        #       Checks in reqacceptpeer and on peer creation may be stale
+        #       by now upon any conf changes.
+        #       May require move of peers_permit_allowed to separate module
+        #       to avoid circular imports.
+        # Check if among accepted peers
+        accepted_peers = get_accepted_peers(configuration, contact_id)
+        peer_entry = accepted_peers.get(client_id, None)
+        if not peer_entry:
+            _logger.warning("%s has not (yet) accepted %s as peer" %
+                            (contact_id, client_id))
+            continue
+        # Found a potential peers contact, check contact vs client expire
+        # NOTE: adjust given peer contact expire date to the end of that day
+        peer_expire_dt = datetime.datetime.strptime(
+            peer_entry.get('expire', 0), '%Y-%m-%d') + \
+            datetime.timedelta(days=1, microseconds=-1)
+        if peer_expire_dt < client_expire_dt:
+            if cap_expire and peer_expire_dt > now_dt:
+                info_msg = "%s accepts %s as peer with expire cap %s" % \
+                    (contact_id, client_id, peer_expire_dt)
+                _logger.info(info_msg)
+                peer_notes.append(info_msg)
+                # NOTE: only allow effective expire to increase
+                if peer_expire_dt > effective_expire_dt:
+                    _logger.info("bump effective expire to %s" %
+                                 peer_expire_dt)
+                    effective_expire_dt = peer_expire_dt
+            else:
+                warn_msg = "expire %s vs %s prevents %s as peer for %s" % \
+                    (peer_expire_dt, client_expire_dt, contact_id,
+                     client_id)
+                _logger.warning(warn_msg)
+                peer_notes.append(warn_msg)
+                continue
+        else:
+            _logger.info("%s accepts %s as peer with requested expire %s"
+                         % (contact_id, client_id, client_expire_dt))
+            effective_expire_dt = client_expire_dt
 
-    if verbose:
-        print('User ID: %s\n' % client_id)
+        _logger.debug("validated %s accepts %s as peers contact" %
+                      (contact_id, client_id))
+        accepted_peer_list.append(contact_id)
 
+    if not accepted_peer_list:
+        _logger.warning("requested peer validation with %r for %s failed" %
+                        (verify_pattern, client_id))
+        raise Exception("Failed verify peers for %s using pattern %r: %s" %
+                        (client_id, verify_pattern, '\n'.join(peer_notes)))
+
+    # Enforce effective_expire_dt as highest actual account expire value
+    effective_expire = int(time.mktime(effective_expire_dt.timetuple()))
+    _logger.info("accept create user %s (expire %s) with contact(s): %s" %
+                 (client_id, effective_expire_dt,
+                  ', '.join(accepted_peer_list)))
+
+    return accepted_peer_list, effective_expire
+
+
+def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
+                      reset_token, reset_auth_type, accepted_peer_list, force,
+                      verbose, ask_renew, default_renew, do_lock,
+                      from_edit_user, ask_change_pw, auto_create_db,
+                      create_backup):
+    """Handle all the parts of user creation or renewal relating to the user
+    datatbase.
+    """
+    _logger = configuration.logger
+    flock = None
+    user_db = {}
+    renew = default_renew
     if do_lock:
         flock = lock_user_db(db_path)
 
@@ -475,7 +514,7 @@ def create_user(
             if do_lock:
                 unlock_user_db(flock)
             if verbose:
-                print('Attempting create_user with conflicting alias %s'
+                print('Attempting create user with conflicting alias %s'
                       % alias)
             raise Exception(
                 'A conflicting user with alias %s already exists' % alias)
@@ -484,8 +523,6 @@ def create_user(
         _logger.debug('add new user %r in user DB' % client_id)
         default_ui = configuration.new_user_default_ui
         user['created'] = now
-        user['unique_id'] = generate_random_ascii(unique_id_length,
-                                                  '0123456789abcdef')
     else:
         _logger.debug('update existing user %r in user DB' % client_id)
         default_ui = None
@@ -600,11 +637,6 @@ change."""
             user.clear()
             user.update(updated_user)
             user['renewed'] = now
-            # Init existing users with a safe hash of client_id as unique_id
-            if not user.get('unique_id', None):
-                _logger.debug('Adding missing unique_id to user %s' %
-                              mask_creds(user))
-                user['unique_id'] = make_safe_hash(client_id)
         elif not force:
             if do_lock:
                 unlock_user_db(flock)
@@ -623,38 +655,47 @@ change."""
         openid_names.append(short_id)
     add_names = []
 
-    # NOTE: careful to skip GDP project users here
-    if configuration.user_openid_providers and \
-            configuration.user_openid_alias:
-        if not configuration.site_enable_gdp:
+    # NOTE: careful to skip GDP project users in openid and unique_id setup
+    if not configuration.site_enable_gdp or \
+            not is_gdp_user(configuration, client_id):
+        if configuration.user_openid_providers and \
+                configuration.user_openid_alias:
             add_names.append(user[configuration.user_openid_alias])
-        elif not is_gdp_user(configuration, client_id):
-            add_names.append(user[configuration.user_openid_alias])
+
+        # Make sure unique_id is really unique in user DB
+        all_unique = [i['unique_id'] for (_, i) in user_db.items() if
+                      i.get('unique_id', None) and
+                      i['distinguished_name'] != client_id]
+        found_unique = False
+        for _ in range(4):
+            user['unique_id'] = user.get('unique_id', False)
+            if user['unique_id'] and user['unique_id'] not in all_unique:
+                _logger.debug("validated unique_id %(unique_id)s" %
+                              mask_creds(user))
+                found_unique = True
+                break
+            if not user['unique_id']:
+                _logger.debug('Adding missing unique_id to user %s' %
+                              mask_creds(user))
+            elif renew:
+                # NOTE: bail out here on edit/renewal as IDs are not unique
+                raise ValueError("unique ID for %s (%r) has a collission!" %
+                                 (client_id, user['unique_id']))
+            else:
+                _logger.warning("retry unique ID for %s (%r) - collission" %
+                                (client_id, user['unique_id']))
+            user['unique_id'] = generate_random_ascii(unique_id_length,
+                                                      unique_id_charset)
+        if not found_unique:
+            if verbose:
+                print('Failed to generate a unique id for %s - bailing out!' %
+                      client_id)
+            raise Exception('Failed to generate a unique id for %s - bail out!'
+                            % client_id)
+
+    # Now update possibly extended openid_names
     user['openid_names'] = list(dict([(name, 0) for name in add_names +
                                       openid_names]))
-
-    # Make sure unique_id is really unique in user DB
-    all_unique = [i['unique_id'] for (_, i) in user_db.items() if
-                  i.get('unique_id', None) and i['distinguished_name'] != client_id]
-    found_unique = False
-    for _ in range(4):
-        if user['unique_id'] not in all_unique:
-            _logger.debug("validated unique_id %(unique_id)s" %
-                          mask_creds(user))
-            found_unique = True
-            break
-        # TODO: bail out here on edit/renewal if existing should be unique?
-        _logger.warning("regenerate unique ID for %s as %r has a collission" %
-                        (client_id, user['unique_id']))
-        user['unique_id'] = generate_random_ascii(unique_id_length,
-                                                  '0123456789abcdef')
-
-    if not found_unique:
-        if verbose:
-            print('Failed to generate a unique id for %s - bailing out!' %
-                  client_id)
-        raise Exception('Failed to generate a unique id for %s - bailing out!'
-                        % client_id)
 
     try:
         if create_backup:
@@ -678,19 +719,33 @@ change."""
     if do_lock:
         unlock_user_db(flock)
 
-    # Mark user updated for all logins
-    update_account_expire_cache(configuration, user)
-    update_account_status_cache(configuration, user)
+    return user
 
-    # TODO: migrate to use unique_id as client_dir everywhere
+
+def create_user_in_fs(configuration, client_id, user, now, renew, force, verbose):
+    """Handle all the parts of user creation or renewal relating to making
+    directories and writing default files.
+    """
+    _logger = configuration.logger
+    x509_dir = client_dir = client_id_dir(client_id)
+    uuid_dir = unique_id = user.get('unique_id', None)
+    # TODO: migrate to use unique_id as actual user dirname everywhere
     #       Symlink old client_dir to unique_id for new users
     #       Symlink unique_id to old client_dir for existing users
-    home_dir = os.path.join(configuration.user_home, client_dir)
-    settings_dir = os.path.join(configuration.user_settings, client_dir)
-    cache_dir = os.path.join(configuration.user_cache, client_dir)
-    mrsl_dir = os.path.join(configuration.mrsl_files_dir, client_dir)
-    pending_dir = os.path.join(configuration.resource_pending,
-                               client_dir)
+    if configuration.site_user_id_format == X509_USER_ID_FORMAT:
+        real_dir = x509_dir
+        link_dir = uuid_dir
+    elif configuration.site_user_id_format == UUID_USER_ID_FORMAT:
+        if uuid_dir is None:
+            _logger.warning("UUID requested but user lacks unique_id: %s" %
+                            mask_creds(user))
+        real_dir = uuid_dir
+        link_dir = x509_dir
+    else:
+        raise ValueError("invalid user ID format requested: %s" %
+                         configuration.site_user_id_format)
+    home_dir = os.path.join(configuration.user_home, real_dir)
+    settings_dir = os.path.join(configuration.user_settings, real_dir)
     ssh_dir = os.path.join(home_dir, ssh_conf_dir)
     davs_dir = os.path.join(home_dir, davs_conf_dir)
     ftps_dir = os.path.join(home_dir, ftps_conf_dir)
@@ -700,8 +755,10 @@ change."""
     profile_path = os.path.join(settings_dir, profile_filename)
     widgets_path = os.path.join(settings_dir, widgets_filename)
     css_path = os.path.join(home_dir, default_css_filename)
-    required_dirs = (settings_dir, cache_dir, mrsl_dir, pending_dir, ssh_dir,
-                     davs_dir, ftps_dir)
+    required_dir_links = _get_required_user_dir_links(configuration, real_dir,
+                                                      link_dir)
+    required_dirs = [path[0] for path in required_dir_links] + [ssh_dir,
+                                                                davs_dir, ftps_dir]
 
     # Make sure we set permissions tight enough for e.g. ssh auth keys to work
     os.umask(0o22)
@@ -709,19 +766,13 @@ change."""
     if not renew:
         if verbose:
             print('Creating dirs and files for new user: %s' % client_id)
-        try:
-            os.mkdir(home_dir)
-        except:
-            if not force:
-                raise Exception('could not create home dir: %s'
-                                % home_dir)
         for dir_path in required_dirs:
             try:
                 os.mkdir(dir_path)
             except:
                 if not force:
-                    raise Exception('could not create required dir: %s'
-                                    % dir_path)
+                    raise Exception('could not create required dir: %s' %
+                                    dir_path)
 
     else:
         if os.path.exists(htaccess_path):
@@ -732,6 +783,25 @@ change."""
                 os.makedirs(dir_path)
             except Exception as exc:
                 pass
+
+    # Make any missing home links
+    for (target_dir, target_link) in required_dir_links:
+        if not target_link:
+            continue
+        _logger.debug("handling link to %s in %s" % (target_dir,
+                                                     target_link))
+        if os.path.exists(target_link):
+            _logger.debug("remove old link in %s" % target_link)
+            delete_symlink(target_link, _logger)
+        else:
+            _logger.debug("make link to %s in %s" % (target_dir, target_link))
+
+        try:
+            os.symlink(target_dir, target_link)
+        except:
+            if not force:
+                raise Exception('could not create link to %s in %s' %
+                                (target_dir, target_link))
 
     # Always write/update any openid symlinks
 
@@ -911,8 +981,81 @@ The %(short_title)s site operators
         if not force:
             raise Exception('could not create custom css file: %s' % css_path)
 
-    _logger.info("created/renewed user %s" % client_id)
+
+def create_user(user, conf_path, db_path, force=False, verbose=False,
+                ask_renew=True, default_renew=False, do_lock=True,
+                verify_peer=None, peer_expire_slack=0, from_edit_user=False,
+                ask_change_pw=False, auto_create_db=True, create_backup=True):
+    """Add user in database and in file system. Distinguishes on the user ID
+    format as a first step.
+    """
+
+    if conf_path:
+        if isinstance(conf_path, basestring):
+
+            # has been checked for accessibility above...
+
+            configuration = Configuration(conf_path)
+        else:
+            configuration = conf_path
+    else:
+        configuration = get_configuration_object()
+    _logger = configuration.logger
+    if db_path == keyword_auto:
+        db_path = default_db_path(configuration)
+
+    fill_distinguished_name(user)
+    client_id = get_client_id(user)
+
+    # Requested with existing valid account login?
+    # Used in order to authorize password change
+    authorized = False
+    if 'authorized' in user:
+        authorized = user['authorized']
+        # Always remove any authorized fields before DB insert
+        del user['authorized']
+    reset_token, reset_auth_type = '', 'UNKNOWN'
+    if 'reset_token' in user:
+        reset_token = user['reset_token']
+        # NOTE: reqX backend saves auth_type in auth list of user dict
+        reset_auth_type = user.get('auth', ['UNKNOWN'])[-1]
+        # Always remove any reset_token fields before DB insert
+        del user['reset_token']
+
+    _logger.info('trying to create or renew user %r' % client_id)
+    if verbose:
+        print('User ID: %s\n' % client_id)
+    now = time.time()
+    # TODO: skip peer check and leave expire alone if valid password reset
+    if verify_peer:
+        accepted_peer_list, effective_expire = verify_user_peers(
+            configuration, db_path, client_id, user, now, verify_peer,
+            peer_expire_slack, force, verbose)
+        user['expire'] = effective_expire
+        # Save peers in user DB for updates etc. but ignore peer search pattern
+        user['peers'] = accepted_peer_list
+        if user.get('peer_pattern', None):
+            del user['peer_pattern']
+    else:
+        _logger.info('skip peer verification for %s' % client_id)
+        accepted_peer_list = []
+
+    created = create_user_in_db(configuration, db_path, client_id, user, now,
+                                authorized, reset_token, reset_auth_type,
+                                accepted_peer_list, force, verbose, ask_renew,
+                                default_renew, do_lock, from_edit_user,
+                                ask_change_pw, auto_create_db, create_backup)
+    # Mark user updated for all logins
+    update_account_expire_cache(configuration, created)
+    update_account_status_cache(configuration, created)
+
+    renew = False
+    if created.get('renewed', -1) == now:
+        renew = True
+    create_user_in_fs(configuration, client_id, created, now, renew, force,
+                      verbose)
     mark_user_modified(configuration, client_id)
+    _logger.info("created/renewed user %s" % client_id)
     return user
 
 
@@ -1033,17 +1176,8 @@ def fix_vgrid_sharelinks(conf_path, db_path, verbose=False, force=False):
                     print('ERROR: add missing sharelink failed: %s' % add_msg)
 
 
-def edit_user(
-    client_id,
-    changes,
-    removes,
-    conf_path,
-    db_path,
-    force=False,
-    verbose=False,
-    meta_only=False,
-    do_lock=True,
-):
+def edit_user(client_id, changes, removes, conf_path, db_path, force=False,
+              verbose=False, meta_only=False, do_lock=True):
     """Edit user: updates client_id in user DB and on disk with key/val pairs
     from changes dict and deletes any existing dict keys in removes list.
     """
@@ -1212,7 +1346,7 @@ def edit_user(
                 raise Exception('could not rename %s to %s: %s'
                                 % (old_path, new_path, exc))
     if verbose:
-        print('User dirs for %s was successfully renamed!'
+        print('User dirs for %s were successfully renamed!'
               % client_id)
 
     # Now create freeze_home alias to preserve access to published archives
@@ -1368,17 +1502,12 @@ def edit_user(
     return user_dict
 
 
-def delete_user(
-    user,
-    conf_path,
-    db_path,
-    force=False,
-    verbose=False,
-    do_lock=True,
-    create_backup=True,
-):
-    """Delete user"""
-
+def delete_user_in_db(configuration, db_path, client_id, user, force, verbose,
+                      do_lock, create_backup):
+    """Handle all the parts of user deletion relating to removing database
+    entries.
+    """
+    _logger = configuration.logger
     flock = None
     user_db = {}
     if conf_path:
@@ -1392,21 +1521,6 @@ def delete_user(
     if db_path == keyword_auto:
         db_path = default_db_path(configuration)
 
-    fill_distinguished_name(user)
-    client_id = user['distinguished_name']
-    client_dir = client_id_dir(client_id)
-
-    if verbose:
-        print('User ID: %s\n' % client_id)
-
-    if not force:
-        delete_answer = input(
-            "Really PERMANENTLY delete %r including user home data? [y/N] " %
-            client_id)
-        if not delete_answer.lower().startswith('y'):
-            raise Exception("Aborted removal of %s from user DB" % client_id)
-
-    _logger.info('trying to delete user %r and all user data' % client_id)
     if do_lock:
         flock = lock_user_db(db_path)
 
@@ -1443,8 +1557,7 @@ def delete_user(
         del user_db[client_id]
         save_user_db(user_db, db_path, do_lock=False)
         if verbose:
-            print('User %s was successfully removed from user DB!'
-                  % client_id)
+            print('User %s was successfully removed from user DB!' % client_id)
     except Exception as err:
         _logger.error("failed to remove %r from user db: %s" %
                       (client_id, err))
@@ -1457,20 +1570,50 @@ def delete_user(
     if do_lock:
         unlock_user_db(flock)
 
+    return user_dict
+
+
+def delete_user_in_fs(configuration, client_id, user, force, verbose):
+    """Handle all the parts of user deletion relating to removing directories
+    and files.
+    """
+    _logger = configuration.logger
+    x509_dir = client_dir = client_id_dir(client_id)
+    uuid_dir = unique_id = user.get('unique_id', None)
+    # TODO: migrate to use unique_id as actual user dirname everywhere
+    #       Symlink old client_dir to unique_id for new users
+    #       Symlink unique_id to old client_dir for existing users
+    if configuration.site_user_id_format == X509_USER_ID_FORMAT:
+        real_dir = x509_dir
+        link_dir = uuid_dir
+    elif configuration.site_user_id_format == UUID_USER_ID_FORMAT:
+        if uuid_dir is None:
+            _logger.warning("UUID requested but user lacks unique_id: %s" %
+                            mask_creds(user))
+        real_dir = uuid_dir
+        link_dir = x509_dir
+    else:
+        raise ValueError("invalid user ID format requested: %s" %
+                         configuration.site_user_id_format)
+
+    required_dir_links = _get_required_user_dir_links(configuration, real_dir,
+                                                      link_dir)
+    required_dirs = [path[0] for path in required_dir_links]
+
     # Remove any OpenID symlinks
 
-    for name in user_dict.get('openid_names', []):
+    for name in user.get('openid_names', []):
         remove_alias_link(name, configuration.user_home)
+
+    for (target_dir, target_link) in required_dir_links:
+        if not target_link:
+            continue
+        if os.path.islink(target_link):
+            delete_symlink(target_link, _logger)
 
     # Remove user dirs recursively
 
-    for base_dir in (configuration.user_home,
-                     configuration.user_settings,
-                     configuration.user_cache,
-                     configuration.mrsl_files_dir,
-                     configuration.resource_pending):
-
-        user_path = os.path.join(base_dir, client_dir)
+    for user_path in required_dirs:
         try:
             remove_rec(user_path, configuration)
         except Exception as exc:
@@ -1478,11 +1621,57 @@ def delete_user(
             if not force:
                 raise Exception('could not remove %s: %s'
                                 % (user_path, exc))
+
+    # NOTE: remove all traces in mig_system_run, too?
+    mark_dirs = [expire_marks_dir, status_marks_dir]
+    mark_paths = [os.path.join(i, x509_dir) for i in mark_dirs]
+    reset_filemark(configuration, configuration.mig_system_run,
+                   mark_paths, delete=True)
+
     if verbose:
-        print('User dirs for %s was successfully removed!'
-              % client_id)
+        print('User dirs for %s were successfully removed!' % client_id)
+
+
+def delete_user(user, conf_path, db_path, force=False, verbose=False,
+                do_lock=True, create_backup=True):
+    """Remove user in database and in file system. Distinguishes on the user ID
+    format as a first step.
+    """
+
+    if conf_path:
+        if isinstance(conf_path, basestring):
+            configuration = Configuration(conf_path)
+        else:
+            configuration = conf_path
+    else:
+        configuration = get_configuration_object()
+    _logger = configuration.logger
+    if db_path == keyword_auto:
+        db_path = default_db_path(configuration)
+
+    fill_distinguished_name(user)
+    client_id = get_client_id(user)
+    if verbose:
+        print('User DN: %s\n' % client_id)
+
+    if not force:
+        delete_answer = raw_input(
+            "Really PERMANENTLY delete %r including user home data? [y/N] " %
+            client_id)
+        if not delete_answer.lower().startswith('y'):
+            raise Exception("Aborted removal of %s from user DB" % client_id)
+
+    _logger.info('trying to delete user %r and all user data' % client_id)
+
+    removed = delete_user_in_db(configuration, db_path, client_id, user, force,
+                                verbose, do_lock, create_backup)
+
+    # TODO: update account status like in create?
+
+    delete_user_in_fs(configuration, client_id, removed, force, verbose)
     mark_user_modified(configuration, client_id)
     _logger.info("deleted user %r including user dirs" % client_id)
+    return removed
 
 
 def get_openid_user_map(configuration, do_lock=True):
@@ -1593,7 +1782,13 @@ def get_any_oid_user_dn(configuration, raw_login,
     if os.path.islink(link_path):
         native_path = os.path.realpath(link_path)
         native_dir = os.path.basename(native_path)
-        distinguished_name = client_dir_id(native_dir)
+        _logger.debug("checking native dir %r for login %s" %
+                      (native_dir, raw_login))
+        if configuration.site_user_id_format == UUID_USER_ID_FORMAT:
+            user_id = native_dir
+            distinguished_name = lookup_client_id(configuration, user_id)
+        elif configuration.site_user_id_format == X509_USER_ID_FORMAT:
+            distinguished_name = client_dir_id(native_dir)
         _logger.debug('found full ID %s from %s link'
                       % (distinguished_name, raw_login))
         return distinguished_name
@@ -1609,8 +1804,8 @@ def get_any_oid_user_dn(configuration, raw_login,
                 return distinguished_name
 
     # Fall back to try direct DN (possibly on cert dir form)
-    _logger.debug('fall back to direct ID %s from %s'
-                  % (raw_login, raw_login))
+    _logger.debug('fall back to direct ID %s from %s' % (raw_login,
+                                                         raw_login))
     # Force to dir format and check if user home exists
     cert_dir = client_id_dir(raw_login)
     base_path = os.path.join(configuration.user_home, cert_dir)
@@ -1620,12 +1815,11 @@ def get_any_oid_user_dn(configuration, raw_login,
                       % (distinguished_name, raw_login))
         return distinguished_name
     elif not user_check:
-        _logger.debug('accepting raw user %s from %s'
-                      % (raw_login, raw_login))
+        _logger.debug('accepting raw user %s from %s' % (raw_login,
+                                                         raw_login))
         return raw_login
     else:
-        _logger.error('no such openid user %s: %s'
-                      % (cert_dir, raw_login))
+        _logger.error('no such openid user %s: %s' % (cert_dir, raw_login))
         return ''
 
 

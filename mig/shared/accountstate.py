@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # accountstate - various user account state helpers
-# Copyright (C) 2020-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2020-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -40,7 +40,8 @@ from mig.shared.base import client_id_dir, client_dir_id, requested_url_base
 from mig.shared.defaults import expire_marks_dir, status_marks_dir, \
     valid_account_status, oid_auto_extend_days, oidc_auto_extend_days, \
     cert_auto_extend_days, attempt_auto_extend_days, AUTH_GENERIC, \
-    AUTH_CERTIFICATE, AUTH_OPENID_V2, AUTH_OPENID_CONNECT
+    AUTH_CERTIFICATE, AUTH_OPENID_V2, AUTH_OPENID_CONNECT, \
+    X509_USER_ID_FORMAT, UUID_USER_ID_FORMAT
 from mig.shared.filemarks import get_filemark, update_filemark, reset_filemark
 from mig.shared.gdp.userid import get_base_client_id
 from mig.shared.userdb import load_user_dict, default_db_path, update_user_dict
@@ -437,8 +438,13 @@ def check_account_accessible(configuration, username, proto, environ=None,
         # Use client_id_dir to make it work even if already expanded
         home_dir = os.path.join(configuration.user_home,
                                 client_id_dir(client_id))
-        real_home = os.path.realpath(home_dir)
-        real_id = os.path.basename(real_home)
+        if configuration.site_user_id_format == X509_USER_ID_FORMAT:
+            # Expand to actual home dir
+            expanded_home = os.path.realpath(home_dir)
+        elif configuration.site_user_id_format == UUID_USER_ID_FORMAT:
+            # Only follow first username -> client_id_dir symlink with UUID
+            expanded_home = os.readlink(home_dir)
+        real_id = os.path.basename(expanded_home)
         client_id = client_dir_id(real_id)
 
     (account_accessible, account_status, _) = check_account_status(
