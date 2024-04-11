@@ -99,5 +99,8 @@ def reset_filemark(configuration, base_dir, mark_list=None, delete=False):
         timestamp = -1
     else:
         timestamp = 0
+    reset_status = True
     for rel_path in rel_list:
-        return update_filemark(configuration, base_dir, rel_path, timestamp)
+        if not update_filemark(configuration, base_dir, rel_path, timestamp):
+            reset_status = False
+    return reset_status
