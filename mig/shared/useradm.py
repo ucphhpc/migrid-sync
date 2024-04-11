@@ -531,6 +531,7 @@ def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
         user['created'] = now
     else:
         _logger.debug('update existing user %r in user DB' % client_id)
+        new_expire = user.get('expire', False)
         account_status = user_db[client_id].get('status', 'active')
         # Only allow renew if account is active or if temporal with peer list
         if account_status == 'active':
@@ -538,13 +539,18 @@ def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
         elif account_status == 'temporal' and accepted_peer_list:
             _logger.debug("proceed with %s account and accepted peers %s" %
                           (account_status, accepted_peer_list))
+        elif account_status == 'temporal' and reset_token and not new_expire:
+            _logger.debug("proceed with %s account password reset (token %s)" %
+                          (account_status, reset_token))
         elif from_edit_user:
             _logger.debug("proceed with %s account during edit user" %
                           account_status)
         else:
             raise Exception('refusing to renew %s account! (%s)' %
                             (account_status, accepted_peer_list))
-        if ask_renew:
+        if reset_token and not new_expire:
+            renew = True
+        elif ask_renew:
             print('User DB entry for "%s" already exists' % client_id)
             renew_answer = raw_input('Renew existing entry? [Y/n] ')
             renew = not renew_answer.lower().startswith('n')
@@ -624,9 +630,9 @@ Please tell user to use the original password, request password reset or go
 through renewal using Xgi-bin with proper authentication to authorize the
 change."""
                         raise Exception(err)
-            _logger.debug('renew existing user %s' % client_id)
+            _logger.debug('Renew/update existing user %s' % client_id)
             if verbose:
-                print('Renewing existing user')
+                print('Renewing or updating existing user')
             # Take old user details and override fields with new ones but
             # ONLY if actually set. This leaves any openid_names and roles
             # alone on cert re-signup after openid signup.
@@ -1050,8 +1056,16 @@ def create_user(user, conf_path, db_path, force=False, verbose=False,
     if verbose:
         print('User ID: %s\n' % client_id)
     now = time.time()
-    # TODO: skip peer check and leave expire alone if valid password reset
-    if verify_peer:
+    accepted_peer_list = []
+    # NOTE: skip peer check and leave expire alone if valid password reset
+    if reset_token:
+        _logger.info('skip peer verification and renew in %s password update'
+                     % client_id)
+        if user.get('peer_pattern', None):
+            del user['peer_pattern']
+        if user.get('expire', None):
+            del user['expire']
+    elif verify_peer:
         accepted_peer_list, effective_expire = verify_user_peers(
             configuration, db_path, client_id, user, now, verify_peer,
             peer_expire_slack, force, verbose)
@@ -1062,7 +1076,6 @@ def create_user(user, conf_path, db_path, force=False, verbose=False,
             del user['peer_pattern']
     else:
         _logger.info('skip peer verification for %s' % client_id)
-        accepted_peer_list = []
 
     created = create_user_in_db(configuration, db_path, client_id, user, now,
                                 authorized, reset_token, reset_auth_type,
