@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # useradm - user administration functions
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -237,23 +237,37 @@ def _get_required_user_dir_links(configuration, real_dir, link_dir):
         mrsl_link = os.path.join(configuration.mrsl_files_dir, link_dir)
         res_pending_link = os.path.join(configuration.resource_pending,
                                         link_dir)
-        # NOTE: see explanation of this reverse link below
-        id_alias_link = os.path.join(configuration.mig_system_run,
-                                     user_id_alias_dir, real_dir)
     else:
         home_link = settings_link = cache_link = mrsl_link = False
-        res_pending_link = id_alias_link = False
+        res_pending_link = False
 
     # No link in user pending as that is before user has UUID
     user_pending_link = None
-    # NOTE: id_alias_link should point to home_link and not home_dir in order
-    #       to allow user ID alias lookup.
     dir_links = [(home_dir, home_link), (settings_dir, settings_link),
                  (cache_dir, cache_link), (mrsl_dir, mrsl_link),
                  (user_pending_dir, user_pending_link),
-                 (res_pending_dir, res_pending_link),
-                 (link_dir, id_alias_link)]
+                 (res_pending_dir, res_pending_link)]
     return dir_links
+
+
+def _get_required_user_alias_links(configuration, real_dir, link_dir):
+    """Build and return a list of tuples listing all user alias symlink source
+    and destination paths. E.g for state/mig_system_run/user_id_alias the tuple
+    is (state/mig_system_run/user_id_alias/REAL_ID,
+     state/mig_system_run/user_id_alias/LINK_ID)
+    """
+    if link_dir:
+        # NOTE: see explanation of this reverse link below
+        id_alias_link = os.path.join(configuration.mig_system_run,
+                                     user_id_alias_dir, real_dir)
+        # Lazy init of mig_system_run subdir always recreated on demand
+        makedirs_rec(os.path.dirname(id_alias_link), configuration)
+    else:
+        id_alias_link = False
+    # NOTE: id_alias_link should point to link_dir and not real_dir in order
+    #       to allow (reverse) user ID alias lookup.
+    alias_links = [(link_dir, id_alias_link)]
+    return alias_links
 
 
 def lookup_client_id(configuration, user_id):
@@ -264,7 +278,7 @@ def lookup_client_id(configuration, user_id):
     alias_link = os.path.join(configuration.mig_system_run, user_id_alias_dir,
                               user_id)
     _logger.debug("looking for alias link %r" % alias_link)
-    # NOTE: use islink rahter than exists here because it is a dead link if so
+    # NOTE: use islink rather than exists here because it is a dead link if so
     if os.path.islink(alias_link):
         target_path = os.path.realpath(alias_link)
         client_dir = os.path.basename(target_path)
@@ -755,6 +769,8 @@ def create_user_in_fs(configuration, client_id, user, now, renew, force, verbose
     profile_path = os.path.join(settings_dir, profile_filename)
     widgets_path = os.path.join(settings_dir, widgets_filename)
     css_path = os.path.join(home_dir, default_css_filename)
+    required_alias_links = _get_required_user_alias_links(configuration,
+                                                          real_dir, link_dir)
     required_dir_links = _get_required_user_dir_links(configuration, real_dir,
                                                       link_dir)
     required_dirs = [path[0] for path in required_dir_links] + [ssh_dir,
@@ -802,6 +818,26 @@ def create_user_in_fs(configuration, client_id, user, now, renew, force, verbose
             if not force:
                 raise Exception('could not create link to %s in %s' %
                                 (target_dir, target_link))
+
+    # Make any missing alias links
+    for (target_name, target_link) in required_alias_links:
+        if not target_link:
+            continue
+        _logger.debug("handling aliaslink to %s in %s" % (target_name,
+                                                          target_link))
+        if os.path.islink(target_link):
+            _logger.debug("remove old alias link in %s" % target_link)
+            delete_symlink(target_link, _logger)
+        else:
+            _logger.debug("make alias link to %s in %s" % (target_name,
+                                                           target_link))
+
+        try:
+            os.symlink(target_name, target_link)
+        except:
+            if not force:
+                raise Exception('could not create alias link to %s in %s' %
+                                (target_name, target_link))
 
     # Always write/update any openid symlinks
 
@@ -1596,6 +1632,8 @@ def delete_user_in_fs(configuration, client_id, user, force, verbose):
         raise ValueError("invalid user ID format requested: %s" %
                          configuration.site_user_id_format)
 
+    required_alias_links = _get_required_user_alias_links(configuration,
+                                                          real_dir, link_dir)
     required_dir_links = _get_required_user_dir_links(configuration, real_dir,
                                                       link_dir)
     required_dirs = [path[0] for path in required_dir_links]
@@ -1604,6 +1642,12 @@ def delete_user_in_fs(configuration, client_id, user, force, verbose):
 
     for name in user.get('openid_names', []):
         remove_alias_link(name, configuration.user_home)
+
+    for (_, target_link) in required_alias_links:
+        if not target_link:
+            continue
+        if os.path.islink(target_link):
+            delete_symlink(target_link, _logger)
 
     for (target_dir, target_link) in required_dir_links:
         if not target_link:
