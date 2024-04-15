@@ -153,6 +153,22 @@ twofactor_key_bytes = 32
 twofactor_cookie_bytes = 80
 twofactor_cookie_ttl = 24 * 60 * 60
 
+# Default 2FA auth app names and URLs
+default_twofactor_auth_apps = {
+    'google': {'name': 'Google Authenticator',
+               'url': 'https://en.wikipedia.org/wiki/Google_Authenticator'},
+    'freeotp': {'name': 'FreeOTP',
+                'url': 'https://freeotp.github.io/'},
+    'yubico': {'name': 'Yubico Authenticator',
+               'url': 'https://www.yubico.com/products/yubico-authenticator/#h-download-yubico-authenticator'},
+    'bitwarden': {'name': 'Bitwarden',
+                  'url': 'https://bitwarden.com/download/'},
+    'microfocus': {'name': 'NetIQ Advanced Authentication',
+                   'url': 'https://www.microfocus.com/en-us/products/netiq-advanced-authentication/overview'},
+    'microsoft': {'name': 'Microsoft Authenticator',
+                  'url': 'https://www.microsoft.com/en-us/security/mobile-authenticator-app'},
+}
+
 # Sharelink format helpers
 # Let mode chars be aAbBcC ... xX (to make splitting evenly into 3 easy)
 share_mode_charset = ''.join(['%s%s' % pair for pair in zip(
