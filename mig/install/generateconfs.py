@@ -187,6 +187,7 @@ if '__main__' == __name__:
         'smtp_sender',
         'log_level',
         'twofactor_mandatory_protos',
+        'twofactor_auth_apps',
         'freeze_to_tape',
         'status_system_match',
         'duplicati_protocols',
