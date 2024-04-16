@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # checkcloud - Check cloud access and instance status for users
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -34,7 +34,7 @@ import getopt
 import pickle
 import sys
 
-from mig.shared.defaults import keyword_auto, keyword_all
+from mig.shared.defaults import keyword_all
 from mig.shared.useradm import init_user_adm, search_users, default_search
 from mig.shared.cloud import lookup_user_service_value, cloud_load_instance, \
     status_all_cloud_instances
@@ -58,11 +58,10 @@ Where CHECK_OPTIONS may be one or more of:
 if '__main__' == __name__:
     (args, app_dir, db_path) = init_user_adm()
     conf_path = None
-    fields = keyword_auto
     verbose = False
     user_file = None
     search_filter = default_search()
-    opt_args = 'c:d:hf:I:v'
+    opt_args = 'c:d:hI:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
@@ -75,8 +74,6 @@ if '__main__' == __name__:
             conf_path = val
         elif opt == '-d':
             db_path = val
-        elif opt == '-f':
-            fields = val.split()
         elif opt == '-h':
             usage()
             sys.exit(0)
@@ -100,34 +97,35 @@ if '__main__' == __name__:
     services = configuration.cloud_services
     if not hits:
         print("No matching users in user DB")
-    else:
-        # Reuse conf and hits as a sparse user DB for speed
-        conf_path, db_path = configuration, dict(hits)
-        print("Cloud status:")
-        for (uid, user_dict) in hits:
-            if verbose:
-                print("Checking %s" % uid)
-            for service in services:
-                cloud_id = service['service_name']
-                cloud_title = service['service_title']
-                cloud_flavor = service.get(
-                    "service_provider_flavor", "openstack")
-                max_instances = lookup_user_service_value(
-                    configuration, uid, service, 'service_max_user_instances')
-                max_user_instances = int(max_instances)
-                print('%s cloud instances allowed for %s: %d' %
-                      (cloud_title, uid, max_user_instances))
-                # Load all user instances and show status
-                saved_instances = cloud_load_instance(configuration, uid,
-                                                      cloud_id, keyword_all)
-                instance_fields = ['public_fqdn', 'status']
-                status_map = status_all_cloud_instances(
-                    configuration, uid, cloud_id, cloud_flavor,
-                    list(saved_instances), instance_fields)
-                for (instance_id, instance_dict) in saved_instances.items():
-                    instance_label = instance_dict.get('INSTANCE_LABEL',
-                                                       instance_id)
-                    print('%s cloud instance %s (%s) for %s at %s status: %s' %
-                          (cloud_title, instance_label, instance_id, uid,
-                           status_map[instance_id]['public_fqdn'],
-                           status_map[instance_id]['status']))
+        sys.exit(1)
+
+    # Reuse conf and hits as a sparse user DB for speed
+    conf_path, db_path = configuration, dict(hits)
+    print("Cloud status:")
+    for (uid, user_dict) in hits:
+        if verbose:
+            print("Checking %s" % uid)
+        for service in services:
+            cloud_id = service['service_name']
+            cloud_title = service['service_title']
+            cloud_flavor = service.get(
+                "service_provider_flavor", "openstack")
+            max_instances = lookup_user_service_value(
+                configuration, uid, service, 'service_max_user_instances')
+            max_user_instances = int(max_instances)
+            print('%s cloud instances allowed for %s: %d' %
+                  (cloud_title, uid, max_user_instances))
+            # Load all user instances and show status
+            saved_instances = cloud_load_instance(configuration, uid,
+                                                  cloud_id, keyword_all)
+            instance_fields = ['public_fqdn', 'status']
+            status_map = status_all_cloud_instances(
+                configuration, uid, cloud_id, cloud_flavor,
+                list(saved_instances), instance_fields)
+            for (instance_id, instance_dict) in saved_instances.items():
+                instance_label = instance_dict.get('INSTANCE_LABEL',
+                                                   instance_id)
+                print('%s cloud instance %s (%s) for %s at %s status: %s' %
+                      (cloud_title, instance_label, instance_id, uid,
+                       status_map[instance_id]['public_fqdn'],
+                       status_map[instance_id]['status']))
