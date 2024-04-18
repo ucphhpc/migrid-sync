@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # safeinput - user input validation functions
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -50,8 +50,8 @@ except ImportError:
     nbformat = None
 
 from mig.shared.base import force_unicode, force_utf8
-from mig.shared.defaults import src_dst_sep, user_id_charset, \
-    user_id_max_length, session_id_charset, session_id_length, \
+from mig.shared.defaults import src_dst_sep, username_charset, \
+    username_max_length, session_id_charset, session_id_length, \
     workflow_id_length, MAX_SWEEP, maxfill_fields
 from mig.shared.listhandling import frange
 from mig.shared.validstring import valid_user_path, silent_email_validator
@@ -199,7 +199,7 @@ valid_password_chars = ascii_letters + digits + password_extras
 valid_name_chars = ascii_letters + digits + name_extras
 valid_org_chars = ascii_letters + digits + org_extras
 valid_dn_chars = ascii_letters + digits + dn_extras
-valid_username_chars = user_id_charset
+valid_username_chars = username_charset
 valid_role_chars = ascii_letters + digits + role_extras
 VALID_INTEGER_CHARACTERS = valid_integer_chars
 VALID_FLOAT_CHARACTERS = valid_float_chars
@@ -517,7 +517,7 @@ def valid_distinguished_name(
 def valid_username(
     username,
     min_length=1,
-    max_length=user_id_max_length,
+    max_length=username_max_length,
     extra_chars='',
 ):
     """Verify that supplied username only contains

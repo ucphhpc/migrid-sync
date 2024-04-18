@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # validstring - string validators
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -42,7 +42,8 @@ from mig.shared.base import invisible_path
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import keyword_auto, session_id_length, \
     session_id_charset, share_id_charset, share_mode_charset, \
-    user_id_charset, user_id_min_length, user_id_max_length
+    unique_id_charset, unique_id_length, username_charset, username_min_length, \
+    username_max_length, UUID_USER_ID_FORMAT, X509_USER_ID_FORMAT
 from mig.shared.fileio import user_chroot_exceptions, untrusted_store_res_symlink
 from mig.shared.logger import null_logger
 
@@ -161,14 +162,23 @@ def silent_email_validator(addr):
 
 def possible_user_id(configuration, user_id):
     """Check if user_id is a possible user ID based on knowledge about
-    contents. We always use email or hexlified version of cert DN.
+    contents. We always use UUID, email or hexlified version of X509 DN.
     """
-    if len(user_id) < user_id_min_length or len(user_id) > user_id_max_length:
-        return False
-    for i in user_id:
-        if i not in user_id_charset:
-            return False
-    return True
+    _logger = configuration.logger
+    valid_uuid, valid_x509 = False, False
+    _logger.debug("checking if %r is a possible username" % user_id)
+    user_id_len = len(user_id)
+    if user_id_len == unique_id_length:
+        if user_id_len == len([i for i in user_id if i in unique_id_charset]):
+            _logger.debug("%r matches UUID" % user_id)
+            return True
+    if user_id_len >= username_min_length and \
+            user_id_len <= username_max_length:
+        if user_id_len == len([i for i in user_id if i in username_charset]):
+            _logger.debug("%r matches email or hexlified X509 DN" % user_id)
+            return True
+    _logger.warning("not a valid UUID or X509 username: %s" % user_id)
+    return False
 
 
 def possible_gdp_user_id(configuration, gdp_user_id):

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # configuration - configuration wrapper
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -49,7 +49,7 @@ from mig.shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
     POLICY_MODERN, POLICY_CUSTOM, freeze_flavors, duplicati_protocol_choices, \
     default_css_filename, keyword_any, cert_valid_days, oid_valid_days, \
     generic_valid_days, keyword_all, keyword_file, keyword_env, \
-    DEFAULT_USER_ID_FORMAT, valid_user_id_formats
+    DEFAULT_USER_ID_FORMAT, valid_user_id_formats, default_twofactor_auth_apps
 from mig.shared.logger import Logger, SYSLOG_GDP
 from mig.shared.html import menu_items, vgrid_items
 from mig.shared.fileio import read_file, load_json, write_file
@@ -1308,6 +1308,15 @@ location.""" % self.config_file)
                 'SITE', 'twofactor_strict_address')
         else:
             self.site_twofactor_strict_address = False
+        auth_apps = []
+        if config.has_option('SITE', 'twofactor_auth_apps'):
+            auth_apps = config.get('SITE', 'twofactor_auth_apps').split()
+            auth_apps = [i for i in auth_apps
+                         if i in default_twofactor_auth_apps]
+        if auth_apps:
+            self.site_twofactor_auth_apps = auth_apps
+        else:
+            self.site_twofactor_auth_apps = default_twofactor_auth_apps.keys()
         if config.has_option('SITE', 'enable_crontab'):
             self.site_enable_crontab = config.getboolean(
                 'SITE', 'enable_crontab')

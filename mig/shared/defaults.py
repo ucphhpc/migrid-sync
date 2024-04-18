@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # defaults - default constant values used in many locations
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -127,14 +127,15 @@ mqueue_empty = 'NO MESSAGES'
 
 user_home_label = "USER HOME LABEL"
 
-# We use a hex string of this many characters to uniquely identify users
-unique_id_length = 64
+# We use a b64-like string of this many characters to uniquely identify users
+unique_id_min_length = unique_id_max_length = unique_id_length = 64
+unique_id_charset = ascii_uppercase + ascii_lowercase + digits
 
-# User ID is email or hexlified version of full cert DN.
+# Username is email or hexlified version of X509 DN.
 # Shortest email would have to be something like a@ku.dk
-user_id_min_length = 7
-user_id_max_length = 256
-user_id_charset = ascii_uppercase + ascii_lowercase + digits + '_-@.'
+username_min_length = 7
+username_max_length = 256
+username_charset = ascii_uppercase + ascii_lowercase + digits + '_-@.'
 
 # We hexlify 32 random bytes to get 64 character string
 session_id_bytes = 32
@@ -151,6 +152,22 @@ twofactor_key_bytes = 32
 # Size of random key generated in 2FA cookies and session life time
 twofactor_cookie_bytes = 80
 twofactor_cookie_ttl = 24 * 60 * 60
+
+# Default 2FA auth app names and URLs
+default_twofactor_auth_apps = {
+    'google': {'name': 'Google Authenticator',
+               'url': 'https://en.wikipedia.org/wiki/Google_Authenticator'},
+    'freeotp': {'name': 'FreeOTP',
+                'url': 'https://freeotp.github.io/'},
+    'yubico': {'name': 'Yubico Authenticator',
+               'url': 'https://www.yubico.com/products/yubico-authenticator/#h-download-yubico-authenticator'},
+    'bitwarden': {'name': 'Bitwarden',
+                  'url': 'https://bitwarden.com/download/'},
+    'microfocus': {'name': 'NetIQ Advanced Authentication',
+                   'url': 'https://www.microfocus.com/en-us/products/netiq-advanced-authentication/overview'},
+    'microsoft': {'name': 'Microsoft Authenticator',
+                  'url': 'https://www.microsoft.com/en-us/security/mobile-authenticator-app'},
+}
 
 # Sharelink format helpers
 # Let mode chars be aAbBcC ... xX (to make splitting evenly into 3 easy)
@@ -204,6 +221,7 @@ cloud_conf_dir = '.cloud'
 expire_marks_dir = 'expire_marks'
 status_marks_dir = 'status_marks'
 archive_marks_dir = 'archive_marks'
+user_id_alias_dir = 'user_id_alias'
 job_output_dir = 'job_output'
 transfer_output_dir = 'transfer_output'
 cron_output_dir = 'cron_output'

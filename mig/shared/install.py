@@ -269,6 +269,7 @@ def generate_confs(
     enable_twofactor=False,
     twofactor_mandatory_protos='',
     enable_twofactor_strict_address=False,
+    twofactor_auth_apps='',
     enable_peers=False,
     peers_mandatory=False,
     peers_explicit_fields='',
@@ -507,6 +508,7 @@ def generate_confs(
     user_dict['__ENABLE_TWOFACTOR__'] = "%s" % enable_twofactor
     user_dict['__TWOFACTOR_MANDATORY_PROTOS__'] = twofactor_mandatory_protos
     user_dict['__ENABLE_TWOFACTOR_STRICT_ADDRESS__'] = "%s" % enable_twofactor_strict_address
+    user_dict['__TWOFACTOR_AUTH_APPS__'] = twofactor_auth_apps
     user_dict['__ENABLE_PEERS__'] = "%s" % enable_peers
     user_dict['__PEERS_MANDATORY__'] = "%s" % peers_mandatory
     user_dict['__PEERS_EXPLICIT_FIELDS__'] = peers_explicit_fields
@@ -2089,6 +2091,7 @@ def create_user(
     enable_twofactor = False
     twofactor_mandatory_protos = ''
     enable_twofactor_strict_address = False
+    twofactor_auth_apps = ''
     enable_peers = False
     peers_mandatory = False
     peers_explicit_fields = ''
@@ -2253,6 +2256,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_twofactor,
         twofactor_mandatory_protos,
         enable_twofactor_strict_address,
+        twofactor_auth_apps,
         enable_peers,
         peers_mandatory,
         peers_explicit_fields,

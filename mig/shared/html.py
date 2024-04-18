@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # html - html helper functions
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,7 +35,7 @@ import sys
 
 from mig.shared.base import requested_backend, client_id_dir
 from mig.shared.defaults import default_pager_entries, trash_linkname, \
-    csrf_field, keyword_all
+    csrf_field, keyword_all, default_twofactor_auth_apps
 
 ICONS_ONLY, TEXT_ONLY = "ICONS_ONLY", "TEXT_ONLY"
 
@@ -1564,6 +1564,19 @@ def twofactor_wizard_html(configuration):
     for delayed string expansion in order for it to be shared between cases
     where twofactor authentication is mandatory/optional and pending/enabled.
     """
+    twofactor_links = []
+    for key in configuration.site_twofactor_auth_apps:
+        twofactor_dict = default_twofactor_auth_apps[key]
+        twofactor_links.append(
+            "<a href='%s' class='urllink iconleftpad' target='_blank'>%s</a>"
+            % (twofactor_dict['url'], twofactor_dict['name']))
+    if twofactor_links[1:]:
+        prefix = [", ".join(twofactor_links[:-1])]
+        suffix = twofactor_links[-1:]
+    else:
+        prefix = twofactor_links[:1]
+        suffix = []
+    twofactor_links_html = " or ".join(prefix + suffix)
     html = """
 <tr class='otp_wizard otp_intro'><td>
 <div id='warning_dialog' title='Warning'
@@ -1588,18 +1601,9 @@ Okay, let's go!</button>
 </td></tr>
 <tr class='otp_wizard otp_install hidden'><td>
 <h3>1. Install an Authenticator App</h3>
-<p>You first need to install a TOTP authenticator client like
-<a href='https://en.wikipedia.org/wiki/Google_Authenticator'
-  class='urllink iconleftpad' target='_blank'>
-Google Authenticator</a>,
-<a href='https://freeotp.github.io/' class='urllink iconleftpad'
-  target='_blank'>FreeOTP</a>,
-<a href='https://www.yubico.com/products/yubico-authenticator/#h-download-yubico-authenticator' class='urllink iconleftpad'
-  target='_blank'>Yubico Authenticator</a>,
-<a href='https://bitwarden.com/download/' class='urllink iconleftpad'
-  target='_blank'>Bitwarden</a> or
-<a href='https://www.microfocus.com/en-us/products/netiq-advanced-authentication/overview'
-  class='urllink iconleftpad' target='_blank'>NetIQ Advanced Authentication</a> on your phone
+<p>You first need to install a TOTP authenticator client like """
+    html += twofactor_links_html
+    html += """ on your phone
 or tablet. You can find and install either of them on your device(s) through your
 usual app store.</p>
 </td></tr>

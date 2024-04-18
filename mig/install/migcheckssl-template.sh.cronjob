@@ -14,6 +14,9 @@
 # This is a limitation on the run-parts wrapper used by cron
 # (see man run-parts for the rationale behind this).
 
+# Send output to another email address
+#MAILTO="root"
+
 # Look in getssl install dir first
 export PATH="/usr/local/sbin:${PATH}"
 
@@ -37,6 +40,9 @@ getssl_path=`which ${getssl_script} 2>/dev/null`
 apache_services="httpd apache2"
 postfix_services="postfix"
 migrid_subservices="ftps webdavs openid"
+# Set if running migrid inside a container with LetsEncrypt at host
+# value is the container manager (docker, podman, or empty string for none)
+container=""
 
 if [[ $(id -u) -ne 0 ]]; then
     echo "Please run $0 as root"
@@ -169,7 +175,15 @@ if [[ ${org_mtime} -ne ${new_mtime} && ${org_chksum} != ${new_chksum} ]]; then
 
         openssl rsa -in ${server_key} -text > ${server_pem}
         cat ${server_pem} ${server_crt_ca_pem} > ${combined_pem}
-        chown mig:mig ${combined_pem}
+        # IMPORTANT: daemons will fail unless combined_pem is UID/GID-owned
+        if [ -z "$container" ]; then
+            MIGUID=$(id -z -u mig)
+            MIGGID=$(id -z -g mig)
+        else
+            MIGUID=$(${container} exec -it migrid id -z -u mig)
+            MIGGID=$(${container} exec -it migrid id -z -g mig)
+        fi
+        chown ${MIGUID}:${MIGGID} ${combined_pem}
         chmod 400 ${server_pem} ${combined_pem}
 
         # Generate openssh public key for combined.pem in combined.pub
@@ -192,21 +206,41 @@ if [[ ${org_mtime} -ne ${new_mtime} && ${org_chksum} != ${new_chksum} ]]; then
     # Restart migrid and apache service daemons if set
 
     for subsvc in ${migrid_subservices}; do
-        service migrid statusdaemon ${subsvc} > /dev/null 2>&1
-        if [[ $? -eq 0 ]]; then
+        if [ -z "$container" ]; then
+            service migrid statusdaemon ${subsvc} > /dev/null 2>&1
+            svcstatus=$?
+        else
+            ${container} exec -it migrid service migrid-$subsvc statusdaemon ${subsvc} > /dev/null 2>&1
+            svcstatus=$?
+        fi
+        if [[ $svcstatus -eq 0 ]]; then
             if [[ ${verbose} -eq 1 ]]; then
                 echo "--- Restarting migrid daemon: ${subsvc} ---"
             fi
-            service migrid restartdaemon ${subsvc}
+            if [ -z "$container" ]; then
+                service migrid restartdaemon ${subsvc}
+            else
+                ${container} exec -it migrid-$subsvc service migrid restartdaemon ${subsvc}
+            fi
         fi
     done
     for svc in ${apache_services} ${postfix_services}; do
-        service ${svc} status > /dev/null 2>&1
-        if [[ $? -eq 0 ]]; then
+        if [ -z "$container" ]; then
+            service ${svc} status > /dev/null 2>&1
+            svcstatus=$?
+        else
+            ${container} exec -it migrid service ${svc} status > /dev/null 2>&1
+            svcstatus=$?
+        fi
+        if [[ $svcstatus -eq 0 ]]; then
             if [[ ${verbose} -eq 1 ]]; then
                 echo "--- Restarting service: ${svc} ---"
             fi
-            service ${svc} restart
+            if [ -z "$container" ]; then
+                service ${svc} restart
+            else
+                ${container} exec -it migrid service ${svc} restart
+            fi
         fi
     done
     if [ -n "${migrid_subservices}" ]; then
