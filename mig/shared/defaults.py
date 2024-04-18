@@ -90,6 +90,14 @@ AUTH_UNKNOWN = "Unknown"
 # Password reset tokens expire after this number of seconds (one hour)
 RESET_TOKEN_TTL = 3600
 
+# Which format to use for unique user IDs, used to be X509 but modern sites
+# are moving to simple unique identifier keys (UUID) to simplify e.g. changes
+# in affiliation without renaming in datatbase and moving user directories.
+X509_USER_ID_FORMAT, UUID_USER_ID_FORMAT = 'X509', 'UUID'
+# TODO: change default to UUID format once it is ready to take over
+DEFAULT_USER_ID_FORMAT = X509_USER_ID_FORMAT
+valid_user_id_formats = [X509_USER_ID_FORMAT, UUID_USER_ID_FORMAT]
+# Order of fields in X509 user ID format
 cert_field_order = [
     ('country', 'C'),
     ('state', 'ST'),

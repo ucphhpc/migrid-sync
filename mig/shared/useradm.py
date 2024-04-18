@@ -955,11 +955,7 @@ The %(short_title)s site operators
 ''' % {'short_title': configuration.short_title,
        'support_email': configuration.support_email}
     _logger.info("write welcome msg in %s" % welcome_path)
-    try:
-        filehandle = open(welcome_path, 'w')
-        filehandle.write(welcome_msg)
-        filehandle.close()
-    except:
+    if not write_file(welcome_msg, welcome_path, _logger):
         _logger.error("could not write %s" % welcome_path)
         if not force:
             raise Exception('could not create welcome file: %s'
@@ -1557,16 +1553,6 @@ def delete_user_in_db(configuration, db_path, client_id, user, force, verbose,
     _logger = configuration.logger
     flock = None
     user_db = {}
-    if conf_path:
-        if isinstance(conf_path, basestring):
-            configuration = Configuration(conf_path)
-        else:
-            configuration = conf_path
-    else:
-        configuration = get_configuration_object()
-    _logger = configuration.logger
-    if db_path == keyword_auto:
-        db_path = default_db_path(configuration)
 
     if do_lock:
         flock = lock_user_db(db_path)
@@ -1710,7 +1696,7 @@ def delete_user(user, conf_path, db_path, force=False, verbose=False,
         print('User DN: %s\n' % client_id)
 
     if not force:
-        delete_answer = raw_input(
+        delete_answer = input(
             "Really PERMANENTLY delete %r including user home data? [y/N] " %
             client_id)
         if not delete_answer.lower().startswith('y'):
@@ -1740,8 +1726,6 @@ def get_openid_user_map(configuration, do_lock=True):
     user_alias = configuration.user_openid_alias
     for cert_id in user_map:
         for oid_provider in configuration.user_openid_providers:
-            _logger.debug("oid user map: cert id %r vs oid provider %r" %
-                          ([cert_id], [oid_provider]))
             full = oid_provider + client_id_dir(cert_id)
             id_map[full] = cert_id
             alias = oid_provider + client_alias(cert_id)
@@ -1785,7 +1769,6 @@ def get_openid_user_dn(configuration, login_url,
         _logger.error("openid login from invalid provider: %s" % login_url)
         return ''
     raw_login = login_url.replace(found_openid_prefix, '')
-    _logger.debug("get_openid_user_dn with raw login: %s" % [raw_login])
     return get_any_oid_user_dn(configuration, raw_login, user_check, do_lock)
 
 
@@ -1830,10 +1813,6 @@ def get_any_oid_user_dn(configuration, raw_login,
     _logger.debug("trying openid raw login: %s" % [raw_login])
     # Lookup native user_home from openid user symlink
     link_path = os.path.join(configuration.user_home, raw_login)
-    _logger.debug('found link %s from %s user base' %
-                  ([link_path], [configuration.user_home]))
-    _logger.debug('default %s and fs %s encoding' % (sys.getdefaultencoding(),
-                                                     sys.getfilesystemencoding()))
     if os.path.islink(link_path):
         native_path = os.path.realpath(link_path)
         native_dir = os.path.basename(native_path)
