@@ -68,9 +68,10 @@ def default_account_expire(configuration, auth_type, start_time=int(time.time())
     return expire
 
 
-def update_account_expire_cache(configuration, user_dict):
+def update_account_expire_cache(configuration, user_dict, delete=False):
     """Create or update expire mark for account with given user_dict if it
-    contains the expire field.
+    contains the expire field. The optional delete argument can be used to
+    completely remove an existing expire mark instead.
     """
     _logger = configuration.logger
     if not isinstance(user_dict, dict):
@@ -87,6 +88,8 @@ def update_account_expire_cache(configuration, user_dict):
     elif isinstance(expire, basestring):
         _logger.warning("found string expire value for user: %s" % user_dict)
         return False
+    if delete:
+        expire = -1
     client_dir = client_id_dir(client_id)
     base_dir = os.path.join(configuration.mig_system_run, expire_marks_dir)
     return update_filemark(configuration, base_dir, client_dir, expire)
@@ -117,9 +120,10 @@ def reset_account_expire_cache(configuration, client_id=None):
     return res
 
 
-def update_account_status_cache(configuration, user_dict):
+def update_account_status_cache(configuration, user_dict, delete=False):
     """Create or update status mark for account with given user_dict if it
-    contains the status field.
+    contains the status field. The optional delete argument can be used to
+    completely remove an existing status mark instead.
     """
     _logger = configuration.logger
     if not isinstance(user_dict, dict):
@@ -137,7 +141,10 @@ def update_account_status_cache(configuration, user_dict):
     if not status_key in valid_account_status:
         _logger.error("invalid account status for user: %s" % user_dict)
         return False
-    status = valid_account_status.index(status_key)
+    if delete:
+        status = -1
+    else:
+        status = valid_account_status.index(status_key)
     client_dir = client_id_dir(client_id)
     base_dir = os.path.join(configuration.mig_system_run, status_marks_dir)
     return update_filemark(configuration, base_dir, client_dir, status)

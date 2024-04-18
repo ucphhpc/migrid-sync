@@ -1663,12 +1663,6 @@ def delete_user_in_fs(configuration, client_id, user, force, verbose):
                 raise Exception('could not remove %s: %s'
                                 % (user_path, exc))
 
-    # NOTE: remove all traces in mig_system_run, too?
-    mark_dirs = [expire_marks_dir, status_marks_dir]
-    mark_paths = [os.path.join(i, x509_dir) for i in mark_dirs]
-    reset_filemark(configuration, configuration.mig_system_run,
-                   mark_paths, delete=True)
-
     if verbose:
         print('User dirs for %s were successfully removed!' % client_id)
 
@@ -1706,8 +1700,9 @@ def delete_user(user, conf_path, db_path, force=False, verbose=False,
 
     removed = delete_user_in_db(configuration, db_path, client_id, user, force,
                                 verbose, do_lock, create_backup)
-
-    # TODO: update account status like in create?
+    # Mark user deleted for all logins
+    update_account_expire_cache(configuration, removed, delete=True)
+    update_account_status_cache(configuration, removed, delete=True)
 
     delete_user_in_fs(configuration, client_id, removed, force, verbose)
     mark_user_modified(configuration, client_id)
