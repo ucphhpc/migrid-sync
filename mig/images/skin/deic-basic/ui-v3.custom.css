@@ -1,0 +1,859 @@
+/*
+
+#
+# --- BEGIN_HEADER ---
+#
+# ui-v3.custom - global skin overrides for UI V3 only
+# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# -- END_HEADER ---
+#
+
+*/
+
+@charset "UTF-8";
+
+/* IMPORTANT: this style sheet is only loaded when UI V3 is enabled, so any 
+              skin changes that should not affect UI V2 must go here.
+*/
+
+
+#content {
+    /* NOTE: override V2 menu spacing */
+    margin-left: 0;
+    /* NOTE: override V2 content frame border */
+    border: 0;
+}
+
+table {
+    background: transparent;
+}
+
+/* APP POPUP PAGE */
+.app-container {
+    background: rgba(70, 116, 60, 1);
+}
+
+/* Don't let buttons shrink when not active/hovering */
+[type=button]:not(:disabled):hover, [type=reset]:not(:disabled):hover, [type=submit]:not(:disabled):hover, button:not(:disabled):hover {
+    padding: 5px 10px;
+}
+[type=button]:not(:disabled):active, [type=reset]:not(:disabled):active, [type=submit]:not(:disabled):active, button:not(:disabled):active {
+    padding: 5px 10px;
+}
+
+
+
+.global-container.menu {
+    /*width: calc(100% - 70px);*/
+    padding: 0 0 0 70px;
+}
+
+
+/* NOTE: adjust icon color when background turns white on focus/hover.
+         We use a custom made skin-colored version of the icons from UI theme
+         and path is taken relative to this skin sub-dir.
+*/
+
+/* Navigation */
+.home-nav-user {
+    background-color: #46743C;
+}
+
+.home-nav-user:hover {
+    color: #46743C;
+}
+
+.slider-header h2 {
+    color: #FFF;
+    background-color: #46743C;
+}
+.slider-footer a {
+    color: #FFF;
+    background-color: #46743C;
+}
+
+/* SLIDER NAVIGATION */
+.slidernav-container {
+    background: rgba(70, 115, 60, 1);
+}
+
+.hamburger.is-active .hamburger-inner,
+.hamburger.is-active .hamburger-inner::before,
+.hamburger.is-active .hamburger-inner::after {
+    background-color: #46743C; 
+}
+
+.hamburger-inner, .hamburger-inner::before, .hamburger-inner::after {
+    background-color: #46743C;
+}
+
+button.avatar-link {
+    color: #46743C;
+}
+
+button.avatar-link:active, button.avatar-link:hover {
+    color: #46743C;
+}
+
+.close_btn {
+    color: #46743C; 
+}
+
+
+/* General style overrides */
+.ui-state-hover .ui-icon,
+.ui-button:hover .ui-icon {
+    background-image: url("images/ui-icons_46743c_256x240.png");
+}
+
+a.greenBtn {
+    color: #fff; 
+    background-color: #46743C;
+    border-color: #FFF;
+}
+
+a.greenBtn:hover {
+    background: #FFF;
+    color: #46743C;
+    border-color: #46743C;
+}
+
+a.greenBtn:active {
+    background: #EEE;
+}
+
+/* For app nav selection and active marking */
+.sidebar-middle ::after,
+.sidebar-middle ::before {
+    box-sizing: border-box;
+}
+.sidebar-middle a {
+    color: #46743C;
+}
+.sidebar-middle a span {
+    line-height: unset;
+    border-radius: 8px;
+    border: 1px solid #fff;
+}
+.sidebar-middle a span.selected {
+    /* TODO: preserve grey background or use lighter green like this? */
+    /*
+      background-color: #8fd182;
+      */
+    border-color: #46743C;
+}
+.sidebar-middle a span:hover {
+    background-color: #fff;
+    border: 1px solid #46743C;
+}
+
+[type=button]:not(:disabled), [type=reset]:not(:disabled), [type=submit]:not(:disabled), button:not(:disabled) {
+    background: #46743C;
+    color: #FFF;
+    border-color: #FFF;
+}
+
+[type=button]:not(:disabled):hover, [type=reset]:not(:disabled):hover, [type=submit]:not(:disabled):hover, button:not(:disabled):hover {
+    background: #FFF;
+    color: #46743C;
+    border-color: #46743C;
+}
+
+[type=button]:not(:disabled):active, [type=reset]:not(:disabled):active, [type=submit]:not(:disabled):active, button:not(:disabled):active {
+    background-color: #EEE;
+}
+
+input:checked + .slider {
+    background-color: #679c5b;
+}
+input:focus + .slider {
+    box-shadow: 0 0 1px #679c5b;
+}
+
+.accordion >  .card > .card-header > h2 > .btn-link {
+    color: #46743C;
+}
+
+button.more-button, button.avatar-link {
+    background: #FFF;
+    color: #46743C;
+}
+
+/* PAGE - Archives */
+span.ui-dialog-title {
+    color: #46743C;
+}
+
+span.fileinput-button {
+    background: #46743C;
+    color: #FFF;
+    border-color: #FFF;
+}
+
+span.fileinput-button:hover {
+    background: #FFF;
+    color: #46743C;
+    border-color: #46743C;
+}
+
+span.fileinput-button:active {
+    background: #EEE;
+}
+
+.ui-tabs .ui-tabs-panel {
+    border: 1px solid #46743C;
+    border-radius: 10px;
+    background: #fff;
+}
+
+/* PAGE - Jupyter */
+a.ui-button {
+    background: #46743C;
+    color: #FFF;
+    border-color: #FFF;
+}
+
+a.ui-button:hover {
+    background: #FFF;
+    color: #46743C;
+    border-color: #46743C;
+}
+
+a.ui-button:active {
+    background: #EEE;
+}
+
+span.fakelink {
+    color: #46743C;
+}
+
+span.fakelink:hover {
+    color: #679c5b;
+}
+
+.iconspace svg {
+    background-color: #46743C;
+}
+
+/* FILE MANAGER POP-UP*/
+.ui-widget-content a {
+    color: #46743C;
+}
+
+.toast [type=button]:not(:disabled), .toast [type=reset]:not(:disabled), .toast [type=submit]:not(:disabled), .toast button:not(:disabled) {
+    background: #46743C;
+    color: #FFF;
+    border-color: #FFF;
+}
+
+
+h1, h2, h3, .supporttitle:not(.staticpage p), .privacytitle:not(div.staticpage p) {
+    color: #46743C;
+    background-color: #FFF;
+}
+/* Strip border when using color on white */
+h1 {
+    border: 0;
+}
+/* Slightly smaller font for h1 to keep e.g. Home title on a single line */
+@media (min-width: 1000px) {
+    h1 {
+	font-size: 90px;
+    }
+}
+
+a {
+    color: #46743C;
+    
+}
+
+.mandatory {
+    background-color: #FFF;
+}
+
+.mandatory:hover {
+    background-color: #46743C;
+}
+
+.app__btn {
+    background-color: #FFF;
+}
+.app__btn:hover {
+    background-color: #46743C;
+}
+
+.app__btn a {
+    color: #46743C;
+    background-color: transparent;
+}
+.app__btn span {
+    color: #46743C;
+    background-color: transparent;
+}
+.app__btn h3 {
+    color: #46743C;
+    background-color: transparent;
+}
+
+.add-app__btn {
+    background-color: #46743C;
+}
+.add-app__btn:hover {
+    background-color: #FFF;
+    color: #46743C;
+}
+
+.add-app__btn a {
+    color: #FFF;
+    background-color: transparent;
+}
+.add-app__btn span {
+    color: #FFF;
+    background-color: transparent;
+}
+.add-app__btn h3 {
+    color: #FFF;
+    background-color: transparent;
+}
+.add-app__btn:hover span {
+    color: #46743C;
+}
+.add-app__btn:hover h3 {
+    color: #46743C;
+}
+
+
+.add-app__close {
+    color: #FFF;
+    background-color: #46743C;
+}
+
+#add-app__window .app-page__header h1,
+#add-app__window .app-page__header h2 {
+    color: #FFF;
+    background-color: #46743C;
+}
+
+/* When the checkbox is checked, change background color */
+.app-content input:checked ~ .checkmark {
+    background-color: #46743C;
+}
+
+/*CUSTOM ICON FA (JUPYTER)*/
+.fa-jupyter {
+    background: url(/images/icons/jupyter_icon_46743c.svg) center center no-repeat; 
+}
+
+
+/*CUSTOM ICON FA (DATATRANSFER)*/
+.fa-datatransfer {
+    background: url(/images/icons/datatransfer_icon_46743c.svg) center center no-repeat; 
+}
+
+
+/*CUSTOM ICON FA (SEAFILE)*/
+.fa-seafile {
+    background: url(/images/icons/seafile_46743c.svg) center center no-repeat; 
+}
+
+.app__btn .fa-seafile:hover {
+    background: url(/images/icons/seafile_icon_white_46743c.svg) center center no-repeat;
+}
+
+.app__btn:hover .fa-seafile {
+    background: url(/images/icons/seafile_icon_white_46743c.svg) center center no-repeat;
+}
+
+
+/* View user page */
+.anonymous-profile-img {
+    background: url(/images/icons/anonymous_46743c.svg) center center no-repeat;
+}
+
+/* User menu */
+.anonymous.avatar-image {
+    background: url(/images/icons/anonymous_46743c.svg) center center no-repeat;
+}
+
+/* Pages with table and pager */
+.pager span.refresh.icon {
+    background: url(/images/icons/arrow_refresh_46743c.svg) center center no-repeat;
+}
+.pager span.first.icon {
+    background: url(/images/icons/arrow_first_46743c.svg) center center no-repeat;
+}
+.pager span.prev.icon {
+    background: url(/images/icons/arrow_left_46743c.svg) center center no-repeat;
+}
+.pager span.next.icon {
+    background: url(/images/icons/arrow_right_46743c.svg) center center no-repeat;
+}
+.pager span.last.icon {
+    background: url(/images/icons/arrow_last_46743c.svg) center center no-repeat;
+}
+
+
+#fancyfileupload .ui-progressbar {
+    border: 1px solid #46743C;
+    border-radius: 4px;
+}
+#fancyfileupload .ui-progressbar-value {
+    margin: 0;
+}
+
+/* No striping here */
+#fancyfileupload .table-striped tr {
+    background-color: #fff;
+    border: 0;
+}
+
+/* NOTE: needed because bootstrap floats Add files button up left */
+#fancyfileupload .fileinput-button {
+    display: inline-table;
+}
+
+
+/* PAGE - FILE MANAGER */
+/* Avoid white and grey interference */
+#fm_filemanager, #fm_filechooser {
+  background: #fff;
+}
+
+/*HEADER BAR*/
+#fm_filemanager > .container-fluid {
+    padding-left: 0;
+}
+
+.tree-container {
+    padding: 0;
+}
+
+.tree-row {
+    margin: 0;
+}
+
+/* Override breadcrumbs user home icon */
+#fm_xbreadcrumbs .userhome {
+    background: url(/images/icons/folder_open_user_46743c.svg) left top no-repeat;
+}
+
+.xbreadcrumbs LI {
+    padding: 0 4px;
+}
+.xbreadcrumbs LI:hover {
+    padding: 0 14px;
+}
+
+@media (max-width: 1000px) {
+    .tree-header {
+        display: none;
+    }
+
+    #fm_statusprogress {
+        display: none;
+    }
+}
+
+.tree-header {
+    background-color: #F4F4F4;
+    padding: 10px 0;
+    min-height: 50px;
+}
+
+.fm_buttonbar {
+    text-align: right;
+    padding: 10px 10px;
+    min-height: 50px;
+}
+
+.fm_buttonbar li:hover {
+    border: 1px solid #fff;
+    border-radius: 50px;
+}
+
+.fm_path_breadcrumbs {
+    border: 0;
+    padding: 10px 0;
+    min-height: 50px;
+}
+
+.xbreadcrumbs {
+    background-color: #FFF;
+}
+
+.xbreadcrumbs li {
+    border-right: none;
+    background: url(/images/icons/separator.gif) no-repeat right center;
+    padding-right: 15px;
+    padding-left: 10px;
+    line-height: 1.5;
+
+}
+
+.fm_buttonbar {
+    background-color: #FFF;
+}
+
+#fm_filemanager {
+    background: #FFF;
+    border: none;
+    padding: 0;
+}
+
+.jqueryFileTree li div {
+    font-size: 14px;
+}
+
+.fm_folders {
+    overflow: auto;
+    background-color: #F4F4F4;
+    border: none;
+    padding-top: 15px;
+    height: calc(100vh - 90px);
+}
+
+#fm_statusbar {
+    border: none;
+    background-color: #FFF;
+    padding: 0;
+}
+
+@media (max-width: 1000px) {
+    #fm_statusinfo {
+        font-size: 10px;
+    }
+    #fm_options {
+        font-size: 10px;
+    }
+}
+
+#fm_statusprogress {
+    background-color: #F4F4F4;
+    height: 40px;
+}
+
+
+.fm_files {
+    overflow: auto;
+    border: none;
+    height: calc(100vh - 90px);
+}
+
+@media (max-width: 1000px) {
+    .fm_folders {
+        display: none;
+    }
+
+    .fm_files {
+        width: 100%;
+    }
+}
+
+/* FILES MENU */
+.jqueryFileTree {
+/*display: block !important;*/
+}
+
+.fm_folders > UL.jqueryFileTree {
+    height: 100%;
+}
+
+.expanded.userhome {
+    height: 100%;
+}
+
+.context-menu-list LI {
+    background-image: unset; 
+}
+
+.context-menu-input {
+    background-color: #FFF;
+}
+
+.context-menu-item {
+    background-color: #FFF;
+/*padding: 3px 0 10px 30px;*/
+}
+
+.context-menu-list {
+    width: 200px;
+    z-index: 101;
+}
+
+
+#fm_touchscreen {
+    position: relative;
+    display: inline-block;
+}
+
+/*TABLE FILES*/
+
+@media (max-width: 1000px) {
+    .fm_size, .fm_type, .fm_date {
+        display: none;
+    }
+}
+
+.tablesorter-header {
+    background-color: #FFF;
+    border: none;
+    border-bottom: 1px solid #EEE;
+}
+
+.even, .odd {
+    background-color: #FFF;
+    border-bottom: 1px solid #EEE;
+}
+
+/*JQUERY MANAGER CUSTOM ICONS */
+
+.fm_buttonbar ul li {
+    border: none;
+}
+
+.fm_buttonbar li.parentdirbutton {
+    background-image: url('/images/icons/arrow_up_46743c.svg');
+}
+.fm_buttonbar li.refreshbutton {
+    background-image: url('/images/icons/arrow_refresh_46743c.svg');
+}
+.fm_buttonbar li.datatransfersbutton {
+    background-image: url('/images/icons/table_refresh_46743c.svg');
+}
+.fm_buttonbar li.sharelinksbutton {
+    background-image: url('/images/icons/table_link_46743c.svg');
+    padding: 1pxs;
+}
+
+/* NOTE: we replaced this custom square plain file icon with the fontawesome 'regular'
+         one for consistency
+*/
+/*
+.file.icon { background: url(/images/icons/file_46743c.svg) left center no-repeat; }
+.fileicon { background: url(/images/icons/file_46743c.svg) left center no-repeat; background-size: 16px 16px;}
+*/
+.file.icon { background: url(/images/icons/file-plain_46743c.svg) left center no-repeat; }
+.fileicon { background: url(/images/icons/file-plain_46743c.svg) left center no-repeat; background-size: 16px 16px;}
+
+
+
+
+/* override folder icon for user home and vgrid folders */
+.directoryicon { background: url(/images/icons/folder_46743c.svg) left top no-repeat; background-size: 16px 16px; }
+.directory.icon { background: url(/images/icons/folder_46743c.svg) left top no-repeat; background-size: 16px 16px;  }
+.expanded {background: url(/images/icons/folder_open_46743c.svg) left top no-repeat; background-size: 16px 16px; }
+
+.rmdir.icon { background: url(/images/icons/folder_delete_46743c.svg) left center no-repeat; background-size: 16px 16px; }
+
+.vgridshared { background: url(/images/icons/folder_link_46743c.svg) left top no-repeat; background-size: 16px 16px; }
+.expanded.vgridshared { background: url(/images/icons/folder_open_link_46743c.svg) left top no-repeat; background-size: 16px 16px; }
+
+.trashbin { background: url(/images/icons/trash_closed_46743c.svg) left top no-repeat; background-size: 16px 16px; }
+.expanded.trashbin { background: url(/images/icons/trash_open_46743c.svg) left top no-repeat; background-size: 16px 16px; }
+
+.userhome { background: url(/images/icons/folder_user_46743c.svg) left top no-repeat; background-size: 16px 16px; }
+.expanded.userhome { background: url(/images/icons/folder_open_user_46743c.svg) left top no-repeat; background-size: 16px 16px; }
+
+.vgridprivateweb { background: url(/images/icons/folder_key_46743c.svg) left top no-repeat; background-size: 16px 16px;}
+.expanded.vgridprivateweb {background: url(/images/icons/folder_open_key_46743c.svg) left top no-repeat;}
+
+.ext_pdf {
+    background: url(/images/icons/svgrepo-file-pdf_46743c.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+.ext_doc, .ext_docx, .ext_odt {
+    background: url(/images/icons/svgrepo-file-text-edit_46743c.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+.ext_xls, .ext_xlsx, .ext_ods {
+    background: url(/images/icons/svgrepo-file-spreadsheet_46743c.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+.ext_ppt, .ext_pptx, .ext_odp {
+    background: url(/images/icons/svgrepo-file-presentation_46743c.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+.ext_jpg, .ext_jpeg, .ext_gif, .ext_png, .ext_bmp, .ext_pcx, .ext_tif, .ext_tiff, .ext_svg, .ext_eps, .ext_xcf, .ext_psd, .ext_raw, .ext_webp, .ext_heic {
+    background: url(/images/icons/file-image_46743c.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+.ext_zip, .ext_tar, .ext_gz, .ext_tgz, .ext_gzip, .ext_bz, .ext_bzip, .ext_bz2, .ext_tbz, .ext_tbz2, .ext_xz, .ext_txz, .ext_arj {
+    background: url(/images/icons/file-zipper_46743c.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+.ext_txt, .ext_log, .ext_out, .ext_diff, .ext_conf, .ext_cfg, .ext_cnf, .ext_stdout, .ext_stderr, .ext_status, .ext_io-status { 
+    background: url(/images/icons/file-lines_46743c.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+.ext_sh, .ext_csh, .ext_bash, .ext_py, .ext_pyx, .ext_pl, .ext_c, .ext_cxx, .ext_cpp, .ext_h, .ext_java, .ext_js, .ext_rb, .ext_rbx, .ext_rhtml, .ext_ruby, .ext_lisp, .ext_lasso, .ext_hs, .ext_afp, .ext_afpa, .ext_asp, .ext_aspx, .ext_html, .ext_htm, .ext_make, .ext_cmake { 
+    background: url(/images/icons/file-code_46743c.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+.ext_mp3, .ext_m4a, .ext_wav, .ext_flac, .ext_ogg { 
+    background: url(/images/icons/file-audio_46743c.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+.ext_mpg, .ext_mpeg, .ext_mp4, .ext_m4v, .ext_avi, .ext_mov, .ext_3gp { 
+    background: url(/images/icons/file-video_46743c.svg) left center no-repeat; background-size: 16px 16px;
+}
+
+.upload.icon { background: url(/images/icons/page_white_get_46743c.svg) left center no-repeat; background-size: 16px 16px; }
+.rm.icon { background: url(/images/icons/page_white_delete_46743c.svg) left center no-repeat; background-size: 16px 16px; }
+
+.expanded.vgridpublicweb { background: url(/images/icons/folder_open_table_46743c.svg) left top no-repeat; background-size: 16px 16px; }
+
+/* NOTE: Don't color error and warn in skin */
+/*
+.error {
+    background-image: url('/images/icons/exclamation_46743c.svg');
+}
+.warn {
+    background-image: url('/images/icons/exclamation_46743c.svg');
+}
+*/
+.info { 
+    background-image: url('/images/icons/information_46743c.svg');
+}
+.ok {
+    background-image: url('/images/icons/accept_46743c.svg');
+}
+.tip {
+    background-image: url('/images/icons/lightbulb_idea_46743c.svg');
+}
+.urllink {
+    background-image: url('/images/icons/html_46743c.svg'); 
+}
+.infolink {
+    background-image: url('/images/icons/information_46743c.svg');
+}
+.sendemaillink {
+    background-image: url(/images/icons/email_protocol_46743c.svg);
+}
+
+
+.editlink {
+    background-image: url('/images/icons/page_edit_46743c.svg'); 
+}
+.invitelink {
+    background-image: url('/images/icons/page_white_add_46743c.svg');
+}
+.userlink {
+    background-image: url('/images/icons/anonymous_46743c.svg');
+}
+.sharedfolderlink {
+    background-image: url('/images/icons/folder_link_46743c.svg');
+}
+
+.adminlink {
+    background-image: url('/images/icons/wrench_46743c.svg');
+}
+
+.addlink {
+    background-image: url('/images/icons/add_46743c.svg'); 
+}
+.addadminlink {
+    background-image: url('/images/icons/cog_add_46743c.svg');
+}
+
+.additemlink {
+  background-image: url('/images/icons/page_white_add_46743c.svg');
+  }
+.peerlink {
+  background-image: url('/images/icons/page_white_add_46743c.svg');
+  }
+
+.removelink {
+    background-image: url('/images/icons/delete_46743c.svg');
+}
+.removeadminlink {
+    background-image: url('/images/icons/cog_delete_46743c.svg');
+}
+
+.removeitemlink {
+  background-image: url('/images/icons/page_white_delete_46743c.svg');
+  }
+.rejectlink {
+  background-image: url('/images/icons/page_white_delete_46743c.svg');
+  }
+
+.previouslink {
+    background-image: url('/images/icons/arrow_left_46743c.svg');
+}
+.nextlink {
+    background-image: url('/images/icons/arrow_right_46743c.svg');
+}
+.firstlink {
+    background-image: url('/images/icons/arrow_first_46743c.svg');
+}
+.lastlink {
+    background-image: url('/images/icons/arrow_last_46743c.svg');
+}
+
+
+.seafilelink {
+    background-image: url('/images/icons/seafile_46743c.svg');
+}
+
+.adminlink {
+    background-image: url('/images/icons/wrench_46743c.svg');
+}
+
+
+/* FILE MANAGER POP-UP*/
+#fm_filemanager .ui-widget-content a {
+    color: #46743C;
+}
+
+/* NOTE: these are needed for vertical text centering and alignment with sliders */
+#fm_statusbar span {
+    height: 34px;
+    line-height: 34px;
+    vertical-align: middle;
+}
+
+/* Hide touchscreen toggle now we have toolbox button on all entries */
+#fm_toggle_touchscreen, #fm_touchscreen_label {
+    display: none;
+}
+
+#fm_options .switch .slider {
+    transform: scale(0.6);
+}
+
+.app-grid > * {
+  color: unset;
+  background-color: transparent;
+  border: none;
+}
+
+.pager .icon {
+    border: 0;
+    padding: 0;
+}
+.pager .icon:hover {
+    border: 0;
+}
+.pager .pagedisplay, .pager .pagesize, .pager .maxjobs, .pager .filterid {
+    padding: 6px 0;
+}
+
+.pager-select {
+    height: unset;
+}

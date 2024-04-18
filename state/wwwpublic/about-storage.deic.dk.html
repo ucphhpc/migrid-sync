@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<!-- NOTE: we mark lang undecided here and set individually below -->
+<html lang="">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            About DeiC Storage
+        </title>
+
+        <!-- site default style -->
+        <link rel="stylesheet" type="text/css" href="/images/default.css" media="screen"/>
+
+        <!-- site basic skin style -->
+        <!--<link rel="stylesheet" type="text/css" href="/images/static-skin.css" media="screen"/>-->
+        <link rel="stylesheet" type="text/css" href="/images/skin/deic-basic/core.css" media="screen"/>
+
+        <!-- base page styles -->
+        <link rel="stylesheet" type="text/css" href="/images/css/jquery-ui.css" media="screen"/>
+
+        <!-- country-dropdown -->
+        <link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/dd.css" />
+        <link rel="stylesheet" type="text/css" href="/images/lib/country-dropdown/css/msdropdown/flags.css" />
+
+        <!-- override with any site-specific styles -->
+        <link rel="stylesheet" type="text/css" href="/images/site-custom.css"
+              media="screen"/>
+
+        <!-- site skin style -->
+        <link rel="stylesheet" type="text/css" href="/images/skin/deic-basic/ui-theme.css" media="screen"/>
+        <link rel="stylesheet" type="text/css" href="/images/skin/deic-basic/ui-theme.custom.css" media="screen"/>
+
+
+        <link rel="icon" type="image/vnd.microsoft.icon"
+              href="/images/skin/deic-basic/favicon.ico"/>
+
+        <script type="text/javascript" src="/images/js/jquery.js"></script>
+        <script type="text/javascript" src="/images/js/jquery-ui.js"></script>
+        <script type="text/javascript" src="/assets/js/V2/ui-dynamic.js"></script>
+        <script type="text/javascript" src="/images/lib/country-dropdown/js/msdropdown/jquery.dd.min.js"></script>
+
+        <script type="text/javascript">
+         $(document).ready(function() {
+             var locale = extract_default_locale();
+             /* Init supported languages to just english and extend based on lang select */
+             var supported_languages = ['en'];
+             var default_lang = supported_languages[0];
+             var user_lang;
+             /* Extend supported_languages with all entries from select elem */
+             $("#langselect option").each(function() {
+                 var option_val = $(this).val();
+                 if (supported_languages.indexOf(option_val) < 0) {
+                     supported_languages.push($(this).val());
+                 }
+             });
+             //console.debug("found supported langs: "+supported_languages);
+             if (locale && supported_languages.indexOf(locale) >= 0)  {
+                 user_lang = locale;
+             } else {
+                 console.warn(locale+" not supported - fall back to: "+default_lang);
+                 user_lang = default_lang;
+             }
+
+             $("#langselect").on('change', function() { 
+                 var lang = $(this).val();
+                 //alert("switch_language: "+lang);
+                 switch_language(lang);
+             }
+             );
+             $("#langselect").val(user_lang);
+             switch_language(user_lang);
+             $("#langselect").msDropdown().fadeIn(500);
+         });
+        </script>
+
+    </head>
+
+    <body class="staticpage">
+        <div id="topspace">
+        </div>
+        <div id="toplogo" class="staticpage">
+            <div id="toplogoleft" class="staticpage">
+            </div>
+            <div id="toplogocenter" class="staticpage">
+                <img src="/images/skin/deic-basic/banner-logo.jpg" id="logoimagecenter"
+                     class="staticpage" alt="site logo center"/>
+                <span id="logotitle" class="staticpage">
+                    About DeiC Storage
+                </span>
+            </div>
+            <div id="toplogoright" class="staticpage">
+            </div>
+        </div>
+
+        <div class="contentblock staticpage" id="nomenu">
+            <div class="precontentwidgets">
+                <!-- begin user supplied pre content widgets -->
+                <!-- empty -->
+                <!-- end user supplied pre content widgets -->
+            </div>
+            <div id="migheader">
+            </div>
+            <div class="staticpage" id="content">
+                <div class="righttext langselect">
+                    <!-- Please refer to /images/lib/country-dropdown/index.html for more choices -->
+                    <select name="languages" id="langselect" class="hidden">
+                        <option value='da' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag dk" data-title="Denmark">Dansk</option>
+                        <option value='en' data-image="/images/lib/country-dropdown/images/msdropdown/icons/blank.gif" data-imagecss="flag us" data-title="United States" selected="selected">English</option>
+                    </select>
+                </div>
+
+                <!-- NOTE: we hide all contents at first to avoid flickering page load -->
+                <div id="about-english" class="english i18n row hidden" lang="en">
+                    <!-- NOTE: disclaimer is shown only if page is loaded directly -->
+                    <div id="about-disclaimer-english" class="col-lg-12 snippet-disclaimer">
+                        <p class="systemnote">
+                            This is only a helper page which is used by the
+                            <a class="urllink" href="/">actual front page</a>
+                        </p>
+                    </div>
+                    <div id="intro-english" class="col-lg-12">
+                        <h2 class="staticpage">About DeiC Storage</h2>
+                        <p>
+                            This is the preview version of the DeiC Storage System. Invited test users can log in during the test period.
+                        </p>
+                    </div>
+                </div>
+                <div id="about-danish" class="danish i18n row hidden" lang="da">
+                    <div id="about-disclaimer-danish" class="col-lg-12 snippet-disclaimer">
+                        <p class="systemnote">
+                            Dette er kun en hjælpeside med indhold som benyttes af den
+                            <a class="urllink" href="/">rigtige forside</a>
+                        </p>
+                    </div>
+                    <div id="intro-danish" class="col-lg-12">
+                        <h2 class="staticpage">Om DeiC Storage</h2>
+                        <p>
+                            Det er en forhåndsvisning af DeiC storage systemet. Inviteret bruger kan log på mens test perioden.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
