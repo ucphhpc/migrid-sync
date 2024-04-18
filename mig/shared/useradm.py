@@ -528,11 +528,9 @@ def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
 
     if client_id not in user_db:
         _logger.debug('add new user %r in user DB' % client_id)
-        default_ui = configuration.new_user_default_ui
         user['created'] = now
     else:
         _logger.debug('update existing user %r in user DB' % client_id)
-        default_ui = None
         new_expire = user.get('expire', False)
         account_status = user_db[client_id].get('status', 'active')
         # Only allow renew if account is active or if temporal with peer list
@@ -964,8 +962,8 @@ The %(short_title)s site operators
     user_email = user.get('email', '')
     if user_email:
         settings_defaults['EMAIL'] = [user_email]
-    if not renew and default_ui:
-        settings_defaults['USER_INTERFACE'] = default_ui
+    if not renew:
+        settings_defaults['USER_INTERFACE'] = configuration.new_user_default_ui
     settings_defaults['CREATOR'] = client_id
     settings_defaults['CREATED_TIMESTAMP'] = datetime.datetime.now()
     try:
