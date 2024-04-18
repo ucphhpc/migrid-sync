@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # serial - object serialization operations using pickle, json or yaml
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -54,16 +54,36 @@ def dumps(data, protocol=0, serializer='pickle', **kwargs):
     IMPORTANT: we always force data onto UTF-8 bytes for consistency and
     backwards compliance with data from legacy Python versions.
     """
-    utf8_data = force_utf8_rec(data)
+    # NOTE: depending on serializer we need to convert to utf8 before or after.
+    preprocess_helper = force_utf8_rec
+    postprocess_helper = force_utf8_rec
+    serial_helper = None
     if serializer == 'pickle':
         serial_helper = pickle.dumps
         if 'protocol' not in kwargs:
             kwargs['protocol'] = protocol
+        # pickle dumps already returns bytes - skip post conversion
+        postprocess_helper = None
     if serializer == 'json':
         serial_helper = json.dumps
+        # json dumps expects and returns native string - skip pre conversion
+        preprocess_helper = None
     if serializer == 'yaml':
         serial_helper = yaml.dump
-    return serial_helper(utf8_data, **kwargs)
+    if not serial_helper:
+        raise ValueError("invalid serializer %r provided" % serializer)
+
+    # Run any pre conversion on input data
+    if preprocess_helper:
+        input_data = preprocess_helper(data)
+    else:
+        input_data = data
+    output_data = serial_helper(input_data, **kwargs)
+    # Run any post conversion on output data
+    if postprocess_helper:
+        return postprocess_helper(output_data)
+    else:
+        return output_data
 
 
 def dump(data, path, protocol=0, serializer='pickle', mode='wb', **kwargs):
@@ -80,13 +100,18 @@ def loads(data, serializer='pickle', **kwargs):
     IMPORTANT: we force data into native string format for consistency and
     backwards compatibility with data from legacy Python versions.
     """
-    serial_helper = pickle.loads
+    serial_helper = None
+    if serializer == 'pickle':
+        serial_helper = pickle.loads
     if serializer == 'json':
         serial_helper = json.loads
     if serializer == 'yaml':
         # NOTE: yaml load supports both string and file-like obj
         serial_helper = yaml.load
         kwargs['Loader'] = yaml.SafeLoader
+    if not serial_helper:
+        raise ValueError("invalid serializer %r provided" % serializer)
+
     # Python3+ fallback to read as bytes, which Python2 always implicitly did.
     try:
         result = serial_helper(data, **kwargs)
