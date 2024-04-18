@@ -1443,10 +1443,14 @@ cert, oid and sid based https!
             user_dict[commented_tag] = ''
 
     # Enable alternative daemon show address only if explicitly requested
+    user_dict['__SHOW_IO_ADDRESS_COMMENTED__'] = '#'
     if user_dict['__DAEMON_SHOW_ADDRESS__']:
-        user_dict['__SHOW_ADDRESS_COMMENTED__'] = ''
-    else:
-        user_dict['__SHOW_ADDRESS_COMMENTED__'] = '#'
+        user_dict['__SHOW_IO_ADDRESS_COMMENTED__'] = ''
+    # Enable openid proxy if implicitly requested with different OID provider
+    user_dict['__SHOW_OID_ADDRESS_COMMENTED__'] = '#'
+    if openid_address not in mig_oid_provider or \
+            openid_show_port != openid_port:
+        user_dict['__SHOW_OID_ADDRESS_COMMENTED__'] = ''
 
     # Enable dhparams only if explicitly requested and file available
     if user_dict['__DHPARAMS_PATH__']:
