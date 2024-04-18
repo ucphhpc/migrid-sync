@@ -21,6 +21,8 @@
 export PATH="/usr/local/sbin:${PATH}"
 
 domain="__BASE_FQDN__"
+mig_user="__USER__"
+mig_group="__GROUP__"
 cert_base="__MIG_CERTS__"
 cert_path="${cert_base}/letsencrypt"
 domain_cert_path="${cert_path}/${domain}"
@@ -36,9 +38,12 @@ dhparams_pem="${cert_base}/dhparams.pem"
 getssl_version="release"
 getssl_tmp="/tmp/getssl"
 getssl_script="getssl"
-getssl_path=`which ${getssl_script} 2>/dev/null`
-apache_services="httpd apache2"
+getssl_path=$(which ${getssl_script} 2>/dev/null)
+# Names of apache httpd service, depends on distro
+apache_services="__APACHE_DAEMON__"
+# Include postfix here if service is enabled on host with same LetsEncrypt cert
 postfix_services="postfix"
+# Services requiring reload for renewed certificate (NOTE: sftp doesn't)
 migrid_subservices="ftps webdavs openid"
 # Set if running migrid inside a container with LetsEncrypt at host
 # value is the container manager (docker, podman, or empty string for none)
@@ -68,14 +73,14 @@ if [ ! -x "${getssl_path}" ]; then
     echo "ERROR: Missing getssl script"
     exit 1
 else   
-    wget -q -O ${getssl_tmp} ${getssl_url}
+    wget -q -O "${getssl_tmp}" "${getssl_url}"
     if [ $? -eq 0 ]; then
-        if ! diff -q -w ${getssl_tmp} ${getssl_path} ; then
+        if ! diff -q -w "${getssl_tmp}" "${getssl_path}" ; then
             echo "--- Updated LetsEncrypt script available - please verify+update ---"
             echo "${getssl_url}"
             echo
             echo "--- Start of detailed difference follows ---"
-            diff -u -w ${getssl_tmp} ${getssl_path} | head
+            diff -u -w "${getssl_tmp}" "${getssl_path}" | head
             echo
         fi
     fi
@@ -88,7 +93,8 @@ fi
 if [[ "$#" -eq 0 ]]; then
     getssl_cmd="${getssl_script} --preferred-chain X1 -q ${domain}"
 else
-    getssl_cmd="${getssl_script} --preferred-chain X1 $@ ${domain}"
+    # NOTE: use $* rather than $@ here as suggested by shellcheck (SC2124)
+    getssl_cmd="${getssl_script} --preferred-chain X1 $* ${domain}"
 fi
 
 # Run in verbose mode if run without -q arg
@@ -152,7 +158,7 @@ fi
 
 # Update MiG specific certificate paths if certificate is updated
 
-if [[ ${org_mtime} -ne ${new_mtime} && ${org_chksum} != ${new_chksum} ]]; then
+if [[ ${org_mtime} -ne ${new_mtime} && "${org_chksum}" != "${new_chksum}" ]]; then
     if [[ ${verbose} -eq 1 ]]; then
         echo "--- LetsEncrypt certificates updated ---"
     fi
@@ -171,19 +177,19 @@ if [[ ${org_mtime} -ne ${new_mtime} && ${org_chksum} != ${new_chksum} ]]; then
         # Paramiko expects 'combined.pem' to contain plain-text part of 
         # 'server.key' and 'server_key_crt_ca_pem' is 'combined.pem'
         # without plain-text part of 'server.key'
-        # The combined keys must be owned by mig user for daemon access
+        # The combined keys must be owned by __USER__ user for daemon access
 
         openssl rsa -in ${server_key} -text > ${server_pem}
         cat ${server_pem} ${server_crt_ca_pem} > ${combined_pem}
         # IMPORTANT: daemons will fail unless combined_pem is UID/GID-owned
         if [ -z "$container" ]; then
-            MIGUID=$(id -z -u mig)
-            MIGGID=$(id -z -g mig)
+            MIGUID=$(id -z -u ${mig_user})
+            MIGGID=$(id -z -g ${mig_group})
         else
-            MIGUID=$(${container} exec -it migrid id -z -u mig)
-            MIGGID=$(${container} exec -it migrid id -z -g mig)
+            MIGUID=$(${container} exec -it migrid id -z -u ${mig_user})
+            MIGGID=$(${container} exec -it migrid id -z -g ${mig_group})
         fi
-        chown ${MIGUID}:${MIGGID} ${combined_pem}
+        chown "${MIGUID}:${MIGGID}" ${combined_pem}
         chmod 400 ${server_pem} ${combined_pem}
 
         # Generate openssh public key for combined.pem in combined.pub
@@ -207,10 +213,10 @@ if [[ ${org_mtime} -ne ${new_mtime} && ${org_chksum} != ${new_chksum} ]]; then
 
     for subsvc in ${migrid_subservices}; do
         if [ -z "$container" ]; then
-            service migrid statusdaemon ${subsvc} > /dev/null 2>&1
+            service migrid statusdaemon "${subsvc}" > /dev/null 2>&1
             svcstatus=$?
         else
-            ${container} exec -it migrid service migrid-$subsvc statusdaemon ${subsvc} > /dev/null 2>&1
+            ${container} exec -it migrid service "migrid-$subsvc" statusdaemon "${subsvc}" > /dev/null 2>&1
             svcstatus=$?
         fi
         if [[ $svcstatus -eq 0 ]]; then
@@ -218,13 +224,13 @@ if [[ ${org_mtime} -ne ${new_mtime} && ${org_chksum} != ${new_chksum} ]]; then
                 echo "--- Restarting migrid daemon: ${subsvc} ---"
             fi
             if [ -z "$container" ]; then
-                service migrid restartdaemon ${subsvc}
+                service migrid restartdaemon "${subsvc}"
             else
-                ${container} exec -it migrid-$subsvc service migrid restartdaemon ${subsvc}
+                ${container} exec -it "migrid-$subsvc" service migrid restartdaemon "${subsvc}"
             fi
         fi
     done
-    for svc in ${apache_services} ${postfix_services}; do
+    for svc in ${apache_services}; do
         if [ -z "$container" ]; then
             service ${svc} status > /dev/null 2>&1
             svcstatus=$?
@@ -243,11 +249,24 @@ if [[ ${org_mtime} -ne ${new_mtime} && ${org_chksum} != ${new_chksum} ]]; then
             fi
         fi
     done
+
+    # Restart host postfix service daemon if set
+
+    for svc in ${postfix_services}; do
+        service ${svc} status > /dev/null 2>&1
+        svcstatus=$?
+        if [[ $svcstatus -eq 0 ]]; then
+            if [[ ${verbose} -eq 1 ]]; then
+                echo "--- Restarting service: ${svc} ---"
+            fi
+            service ${svc} restart
+        fi
+    done
     if [ -n "${migrid_subservices}" ]; then
         sha256_fingerprint=$(openssl x509 -noout -fingerprint -sha256 -in ${combined_pem})
-        sha256_fingerprint=$(echo ${sha256_fingerprint} | sed 's/SHA256 Fingerprint=//g')
+        sha256_fingerprint=${sha256_fingerprint/SHA256 Fingerprint=/}
         echo "Please update ftps and davs sha256 fingerprint in MiGserver.conf to:"
-        echo ${sha256_fingerprint}
+        echo "${sha256_fingerprint}"
     fi
 fi
 
