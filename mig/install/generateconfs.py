@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # generateconfs - create custom MiG server configuration files
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -196,7 +196,8 @@ if '__main__' == __name__:
         'imnotify_password',
         'gdp_data_categories',
         'gdp_id_scramble',
-        'gdp_path_scramble'
+        'gdp_path_scramble',
+        'quota_backend'
     ]
     int_names = [
         'cert_valid_days',
@@ -232,6 +233,8 @@ if '__main__' == __name__:
         'seafile_seafhttp_port',
         'seafile_client_port',
         'seafile_quota',
+        'quota_user_limit',
+        'quota_vgrid_limit',
     ]
     bool_names = [
         'auto_add_cert_user',
@@ -248,6 +251,7 @@ if '__main__' == __name__:
         'enable_workflows',
         'enable_events',
         'enable_sharelinks',
+        'enable_quota',
         'enable_transfers',
         'enable_freeze',
         'enable_sandboxes',

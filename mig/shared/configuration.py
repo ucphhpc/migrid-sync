@@ -185,6 +185,7 @@ def fix_missing(config_file, verbose=True):
         'openid_store': '~/state/openid_store/',
         'paraview_home': '~/state/paraview_home/',
         'sitestats_home': '~/state/sitestats_home/',
+        'quota_home': '~/state/quota_home/',
         'public_key_file': '',
         'javabin_home': '~/mig/java-bin',
         'events_home': '~/state/events_home/',
@@ -297,6 +298,7 @@ def fix_missing(config_file, verbose=True):
         'user_notify_log': 'notify.log',
         'user_auth_log': 'auth.log',
         'user_shared_dhparams': '~/certs/dhparams.pem',
+        'user_quota_log': 'quota.log',
         'logfile': 'server.log',
         'loglevel': 'info',
         'sleep_period_for_empty_jobs': '80',
@@ -326,12 +328,13 @@ def fix_missing(config_file, verbose=True):
                            'enable_suggest': 'False',
                            'suggest_threshold': 'GREEN',
                            }
-
     workflows_section = {'vgrid_tasks_home': '.workflow_tasks_home/',
                          'vgrid_patterns_home': '.workflow_patterns_home/',
                          'vgrid_recipes_home': '.workflow_recipes_home/',
                          'vgrid_history_home': '.workflow_history_home/'}
-
+    quota_section = {'backend': 'lustre',
+                     'user_limit': 1024**4,
+                     'vgrid_limit': 1024**4}
     defaults = {
         'GLOBAL': global_section,
         'SCHEDULER': scheduler_section,
@@ -339,6 +342,7 @@ def fix_missing(config_file, verbose=True):
         'SETTINGS': settings_section,
         'FEASIBILITY': feasibility_section,
         'WORKFLOWS': workflows_section,
+        'QUOTA': quota_section,
     }
     for section in defaults:
         if not section in config.sections():
@@ -434,6 +438,7 @@ class Configuration:
     openid_store = ''
     paraview_home = ''
     sitestats_home = ''
+    quota_home = ''
     workflows_vgrid_tasks_home = ''
     workflows_vgrid_patterns_home = ''
     workflows_vgrid_recipes_home = ''
@@ -555,6 +560,7 @@ class Configuration:
     user_notify_log = 'notify.log'
     user_auth_log = 'auth.log'
     user_shared_dhparams = ''
+    user_quota_log = 'quota.log'
     user_imnotify_address = ''
     user_imnotify_port = 6667
     user_imnotify_channel = ''
@@ -959,6 +965,8 @@ location.""" % self.config_file)
             self.paraview_home = config.get('GLOBAL', 'paraview_home')
         if config.has_option('GLOBAL', 'sitestats_home'):
             self.sitestats_home = config.get('GLOBAL', 'sitestats_home')
+        if config.has_option('GLOBAL', 'quota_home'):
+            self.quota_home = config.get('GLOBAL', 'quota_home')
         if config.has_option('GLOBAL', 'jupyter_mount_files_dir'):
             self.jupyter_mount_files_dir = config.get(
                 'GLOBAL', 'jupyter_mount_files_dir')
@@ -1504,7 +1512,6 @@ location.""" % self.config_file)
             text_range = config.get('GLOBAL', 'job_vnc_ports')
             first, last = text_range.split(':')[:2]
             self.job_vnc_ports = range(int(first), int(last))
-
         if config.has_option('GLOBAL', 'user_shared_dhparams'):
             self.user_shared_dhparams = config.get('GLOBAL',
                                                    'user_shared_dhparams')
@@ -1611,7 +1618,6 @@ location.""" % self.config_file)
                 'GLOBAL', 'vgrid_imagesettings')
         if config.has_option('GLOBAL', 'vgrid_monitor'):
             self.vgrid_monitor = config.get('GLOBAL', 'vgrid_monitor')
-
         # Needed for read-only vgrids, but optional
         if config.has_option('GLOBAL', 'vgrid_files_readonly'):
             self.vgrid_files_readonly = config.get(
@@ -1760,6 +1766,16 @@ location.""" % self.config_file)
         if config.has_option('WORKFLOWS', 'vgrid_history_home'):
             self.workflows_vgrid_history_home = config.get(
                 'WORKFLOWS', 'vgrid_history_home')
+
+        if config.has_option('QUOTA', 'backend'):
+            self.quota_backend = config.get(
+                'QUOTA', 'backend')
+        if config.has_option('QUOTA', 'user_limit'):
+            self.quota_user_limit = config.get(
+                'QUOTA', 'user_limit')
+        if config.has_option('QUOTA', 'vgrid_limit'):
+            self.quota_vgrid_limit = config.get(
+                'QUOTA', 'vgrid_limit')
 
         if config.has_option('SITE', 'images'):
             self.site_images = config.get('SITE', 'images')
@@ -2022,6 +2038,11 @@ location.""" % self.config_file)
                 'SITE', 'sharelink_length')
         else:
             self.site_sharelink_length = 10
+        if config.has_option('SITE', 'enable_quota'):
+            self.site_enable_quota = config.getboolean('SITE',
+                                                            'enable_quota')
+        else:
+            self.site_enable_quota = False
         if config.has_option('SITE', 'enable_transfers'):
             self.site_enable_transfers = config.getboolean('SITE',
                                                            'enable_transfers')
@@ -2445,7 +2466,8 @@ location.""" % self.config_file)
                          'user_events_log', 'user_cron_log',
                          'user_transfers_log', 'user_notify_log',
                          'user_imnotify_log', 'user_auth_log',
-                         'user_chkuserroot_log', 'user_chksidroot_log'):
+                         'user_chkuserroot_log', 'user_chksidroot_log',
+                         'user_quota_log'):
             _log_path = getattr(self, _log_var)
             if not os.path.isabs(_log_path):
                 setattr(self, _log_var, os.path.join(self.log_dir, _log_path))
