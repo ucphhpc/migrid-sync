@@ -654,7 +654,7 @@ def generate_confs(
     user_dict['__GDP_PATH_SCRAMBLE__'] = gdp_path_scramble
     user_dict['__PUBLIC_HTTPS_LISTEN__'] = listen_clause
     user_dict['__PUBLIC_ALIAS_HTTPS_LISTEN__'] = listen_clause
-    user_dict['__QUOTA_BACKEND__'] = "%s" % quota_backend
+    user_dict['__QUOTA_BACKEND__'] = quota_backend
     user_dict['__QUOTA_USER_LIMIT__'] = "%s" % quota_user_limit
     user_dict['__QUOTA_VGRID_LIMIT__'] = "%s" % quota_vgrid_limit
 
