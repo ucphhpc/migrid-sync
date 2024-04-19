@@ -50,7 +50,8 @@ from mig.shared.defaults import default_vgrid, all_vgrids, any_vgrid, \
     keyword_auto, gdp_distinguished_field, io_session_timeout, \
     valid_gdp_auth_scripts as valid_auth_scripts
 from mig.shared.fileio import touch, make_symlink, write_file, remove_rec, \
-    acquire_file_lock, release_file_lock, copy_file, move_rec, makedirs_rec
+    acquire_file_lock, release_file_lock, copy_file, move_rec, makedirs_rec, \
+    unpickle
 from mig.shared.gdp.userid import __validate_user_id, \
     __client_id_from_project_client_id, \
     __project_name_from_project_client_id, \
@@ -891,7 +892,7 @@ def __update_gdp_user_log(configuration, client_id, do_lock=True):
         date = current_datetime.strftime('%d-%m-%Y_%H-%M-%S')
         scrambled_client_id = __scramble_user_id(configuration, client_id)
         content = "%s : %s : %s :\n" \
-                % (date, client_id, scrambled_client_id)
+            % (date, client_id, scrambled_client_id)
         retval = write_file(content, log_filepath, _logger, mode='ab')
         if not retval:
             _logger.error("GDP: __update_gdp_user_log failed")
@@ -1385,6 +1386,7 @@ def get_project_info(configuration,
             'references': [],
         },
         'users': [],
+        'quota': {},
     }
     mig_user_map = get_full_user_map(configuration)
     user_db = __load_user_db(configuration, do_lock=do_lock)
@@ -1455,6 +1457,46 @@ def get_project_info(configuration,
                 'allowed_owner':
                 vgrid_create_allowed(configuration, mig_user_dict)
             })
+
+    # Fill quota info if enabled and exists
+
+    if configuration.site_enable_quota:
+        quota_filepath = os.path.join(
+            configuration.quota_home,
+            'vgrid',
+            "%s.pck" % project_name)
+        quota = unpickle(quota_filepath, _logger)
+        if quota:
+            # Pretty format usage
+            quota_bytes = quota.get('bytes', 0)
+            if quota_bytes < 1024:
+                quota_usage = "%d Bytes" % quota_bytes
+            elif quota_bytes > 1024 and quota_bytes < 1024**2:
+                quota_usage = "%d KB" % int(quota_bytes/1024)
+            elif quota_bytes > 1024**2 and quota_bytes < 1024**3:
+                quota_usage = "%d MB" % int(quota_bytes/1024**2)
+            elif quota_bytes > 1024**3 and quota_bytes < 1024**4:
+                quota_usage = "%d GB" % int(quota_bytes/1024**3)
+            else:
+                quota_usage = "%d TB" % int(quota_bytes/1024**4)
+            result['quota']['usage'] = quota_usage
+            # Pretty format limit
+            quota_hardlimit_bytes = quota.get('hardlimit_bytes', 0)
+            if quota_hardlimit_bytes < 1024:
+                quota_limit = "%d Bytes" % quota_hardlimit_bytes
+            elif quota_hardlimit_bytes > 1024 \
+                    and quota_hardlimit_bytes < 1024**2:
+                quota_limit = "%d KB" % int(quota_hardlimit_bytes/1024)
+            elif quota_hardlimit_bytes > 1024**2 \
+                    and quota_hardlimit_bytes < 1024**3:
+                quota_limit = "%d MB" % int(quota_hardlimit_bytes/1024**2)
+            elif quota_hardlimit_bytes > 1024**3 \
+                    and quota_hardlimit_bytes < 1024**4:
+                quota_limit = "%d GB" % int(quota_hardlimit_bytes/1024**3)
+            else:
+                quota_limit = "%d TB" % int(quota_hardlimit_bytes/1024**4)
+            result['quota']['limit'] = quota_limit
+
     return result
 
 

@@ -1390,6 +1390,15 @@ def js_tmpl_parts(configuration, csrf_token):
                 html += project_info.OK[0].create.references[i].value;
                 html += '</span>';
             }
+            if (project_info.OK[0].quota !== undefined
+                    && project_info.OK[0].quota.usage !== undefined
+                    && project_info.OK[0].quota.limit !== undefined) {
+                html += '<span>';
+                html += '<b>Usage:</b>';
+                html += '</span><span>';
+                html += project_info.OK[0].quota.usage+' / '+project_info.OK[0].quota.limit;
+                html += '</span>';
+            }
             html += '</div>';
             for (var i=0; i<project_info.OK[0].users.length; i++) {
                 if (project_info.OK[0].users[i].state === 'accepted') {
