@@ -1468,34 +1468,8 @@ def get_project_info(configuration,
         quota = unpickle(quota_filepath, _logger)
         if quota:
             # Pretty format usage
-            quota_bytes = quota.get('bytes', 0)
-            if quota_bytes < 1024:
-                quota_usage = "%d Bytes" % quota_bytes
-            elif quota_bytes > 1024 and quota_bytes < 1024**2:
-                quota_usage = "%d KB" % int(quota_bytes/1024)
-            elif quota_bytes > 1024**2 and quota_bytes < 1024**3:
-                quota_usage = "%d MB" % int(quota_bytes/1024**2)
-            elif quota_bytes > 1024**3 and quota_bytes < 1024**4:
-                quota_usage = "%d GB" % int(quota_bytes/1024**3)
-            else:
-                quota_usage = "%d TB" % int(quota_bytes/1024**4)
-            result['quota']['usage'] = quota_usage
-            # Pretty format limit
-            quota_hardlimit_bytes = quota.get('hardlimit_bytes', 0)
-            if quota_hardlimit_bytes < 1024:
-                quota_limit = "%d Bytes" % quota_hardlimit_bytes
-            elif quota_hardlimit_bytes > 1024 \
-                    and quota_hardlimit_bytes < 1024**2:
-                quota_limit = "%d KB" % int(quota_hardlimit_bytes/1024)
-            elif quota_hardlimit_bytes > 1024**2 \
-                    and quota_hardlimit_bytes < 1024**3:
-                quota_limit = "%d MB" % int(quota_hardlimit_bytes/1024**2)
-            elif quota_hardlimit_bytes > 1024**3 \
-                    and quota_hardlimit_bytes < 1024**4:
-                quota_limit = "%d GB" % int(quota_hardlimit_bytes/1024**3)
-            else:
-                quota_limit = "%d TB" % int(quota_hardlimit_bytes/1024**4)
-            result['quota']['limit'] = quota_limit
+            result['quota']['usage'] = quota.get('bytes', 0)
+            result['quota']['limit'] = quota.get('hardlimit_bytes', 0)
 
     return result
 
