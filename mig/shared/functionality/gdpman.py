@@ -1022,6 +1022,7 @@ def js_tmpl_parts(configuration, csrf_token):
                     'tfa_ready': tfa_ready,
                     }
     js_import = ''
+    js_import += '<script type="text/javascript" src="/images/js/jquery.prettyprint.js"></script>'
     js_import += '<script type="text/javascript" src="/images/js/jquery.ajaxhelpers.js"></script>'
     js_import += tfa_import
     # TODO: move this code to stand-alone js file
@@ -1396,7 +1397,7 @@ def js_tmpl_parts(configuration, csrf_token):
                 html += '<span>';
                 html += '<b>Usage:</b>';
                 html += '</span><span>';
-                html += project_info.OK[0].quota.usage+' / '+project_info.OK[0].quota.limit;
+                html += pp_bytes(project_info.OK[0].quota.usage)+' / '+pp_bytes(project_info.OK[0].quota.limit);
                 html += '</span>';
             }
             html += '</div>';
