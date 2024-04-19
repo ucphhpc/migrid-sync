@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # install - MiG server install helpers
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -282,6 +282,7 @@ def generate_confs(
     enable_openid=False,
     enable_gravatars=True,
     enable_sitestatus=True,
+    enable_quota=False,
     prefer_python3=False,
     io_account_expire=False,
     gdp_email_notify=False,
@@ -399,7 +400,10 @@ def generate_confs(
     imnotify_password='',
     gdp_data_categories='data_categories.json',
     gdp_id_scramble='safe_hash',
-    gdp_path_scramble='safe_encrypt'
+    gdp_path_scramble='safe_encrypt',
+    quota_backend='lustre',
+    quota_user_limit=(1024**4),
+    quota_vgrid_limit=(1024**4),
 ):
     """Generate Apache and MiG server confs with specified variables"""
 
@@ -521,6 +525,7 @@ def generate_confs(
     user_dict['__ENABLE_OPENID__'] = "%s" % enable_openid
     user_dict['__ENABLE_GRAVATARS__'] = "%s" % enable_gravatars
     user_dict['__ENABLE_SITESTATUS__'] = "%s" % enable_sitestatus
+    user_dict['__ENABLE_QUOTA__'] = "%s" % enable_quota
     user_dict['__PREFER_PYTHON3__'] = "%s" % prefer_python3
     user_dict['__IO_ACCOUNT_EXPIRE__'] = "%s" % io_account_expire
     user_dict['__GDP_EMAIL_NOTIFY__'] = "%s" % gdp_email_notify
@@ -649,6 +654,9 @@ def generate_confs(
     user_dict['__GDP_PATH_SCRAMBLE__'] = gdp_path_scramble
     user_dict['__PUBLIC_HTTPS_LISTEN__'] = listen_clause
     user_dict['__PUBLIC_ALIAS_HTTPS_LISTEN__'] = listen_clause
+    user_dict['__QUOTA_BACKEND__'] = "%s" % quota_backend
+    user_dict['__QUOTA_USER_LIMIT__'] = "%s" % quota_user_limit
+    user_dict['__QUOTA_VGRID_LIMIT__'] = "%s" % quota_vgrid_limit
 
     # Needed for PAM/NSS
     pw_info = pwd.getpwnam(user)
@@ -2115,6 +2123,7 @@ def create_user(
     enable_openid = False
     enable_gravatars = True
     enable_sitestatus = True
+    enable_quota = False
     enable_wsgi = True
     wsgi_procs = 5
     enable_jobs = True
@@ -2280,6 +2289,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         enable_openid,
         enable_gravatars,
         enable_sitestatus,
+        enable_quota,
         user_interface,
         mig_oid_title,
         mig_oid_provider,
