@@ -44,15 +44,20 @@ if sys.version_info[0] < 3:
 else:
     from configparser import ConfigParser
 
-from mig.shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
-    CSRF_FULL, POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, \
-    POLICY_MODERN, POLICY_CUSTOM, freeze_flavors, duplicati_protocol_choices, \
-    default_css_filename, keyword_any, cert_valid_days, oid_valid_days, \
-    generic_valid_days, keyword_all, keyword_file, keyword_env, \
-    DEFAULT_USER_ID_FORMAT, valid_user_id_formats, default_twofactor_auth_apps
-from mig.shared.logger import Logger, SYSLOG_GDP
-from mig.shared.html import menu_items, vgrid_items
-from mig.shared.fileio import read_file, load_json, write_file
+# NOTE: protect migrid import from autopep8 reordering
+try:
+    from mig.shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
+        CSRF_FULL, POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, \
+        POLICY_MODERN, POLICY_CUSTOM, freeze_flavors, \
+        duplicati_protocol_choices, default_css_filename, keyword_any, \
+        cert_valid_days, oid_valid_days, generic_valid_days, keyword_all, \
+        keyword_file, keyword_env, DEFAULT_USER_ID_FORMAT, \
+        valid_user_id_formats, default_twofactor_auth_apps
+    from mig.shared.logger import Logger, SYSLOG_GDP
+    from mig.shared.html import menu_items, vgrid_items
+    from mig.shared.fileio import read_file, load_json, write_file
+except ImportError as ioe:
+    print("could not import migrid modules")
 
 
 def expand_external_sources(logger, val):
