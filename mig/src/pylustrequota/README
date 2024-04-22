@@ -1,0 +1,32 @@
+This folder contains a module for MiG lustre quota
+
+To suppert containerized MiG (where lustre is mounted outside the container) 
+lustre quota functionality is compiled statically into this module.
+
+Install lustre dependencies (Rocky 9):
+======================================
+VERSION=2.15.4
+dnf --enablerepo=crb install \
+    python3-devel.x86_64 \
+    libtool.x86_64 \
+    kernel-devel.x86_64 \
+    kernel-abi-stablelists \
+    flex.x86_64 \
+    bison.x86_64 \
+    keyutils-libs-devel.x86_64 \
+    libmount-devel.x86_64 \
+    libnl3-devel.x86_64 \
+    libyaml-devel \
+    krb5-devel.x86_64   
+git clone git://git.whamcloud.com/fs/lustre-release.git
+cd lustre-release && git checkout ${VERSION} ; cd -
+cd lustre-release && sh ./autogen.sh ; cd -
+cd lustre-release && ./configure --disable-server --enable-quota --enable-utils --enable-gss ; cd -
+cd lustre-release && make undef.h ; cd -
+cd lustre-release/libcfs/libcfs && make libcfs.la ; cd -
+cd lustre-release/lnet/utils/lnetconfig && make liblnetconfig.la ; cd -
+cd lustre-release/lustre/utils && make liblustreapi.la ; cd -
+
+Install:
+========
+python3 setup.py install
