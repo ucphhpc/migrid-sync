@@ -183,11 +183,11 @@ if [[ ${org_mtime} -ne ${new_mtime} && "${org_chksum}" != "${new_chksum}" ]]; th
         cat ${server_pem} ${server_crt_ca_pem} > ${combined_pem}
         # IMPORTANT: daemons will fail unless combined_pem is UID/GID-owned
         if [ -z "$container" ]; then
-            MIGUID=$(id -z -u ${mig_user})
-            MIGGID=$(id -z -g ${mig_group})
+            MIGUID=$(id -u ${mig_user})
+            MIGGID=$(id -g ${mig_group})
         else
-            MIGUID=$(${container} exec -it migrid id -z -u ${mig_user})
-            MIGGID=$(${container} exec -it migrid id -z -g ${mig_group})
+            MIGUID=$(${container} exec -it migrid id -u ${mig_user})
+            MIGGID=$(${container} exec -it migrid id -g ${mig_group})
         fi
         chown "${MIGUID}:${MIGGID}" ${combined_pem}
         chmod 400 ${server_pem} ${combined_pem}
