@@ -55,6 +55,7 @@ def usage(name=sys.argv[0]):
 Where OPTIONS may be one or more of:
    -h|--help                    Show this help
    -v|--verbose                 Verbose output
+   -q|--quiet                   No stdout/stderr output
    -c PATH|--config=PATH        Path to config file
    -l PATH|--lustre-basepath    Path to lustre base
    -g PATH|--gocryptfs-sock     Path to gocryptfs socket
@@ -69,10 +70,10 @@ def INFO(configuration, msg, verbose=False):
         print(msg)
 
 
-def ERROR(configuration, msg, verbose=False):
+def ERROR(configuration, msg, quiet=False):
     """log error and print to stderr on verbose"""
     configuration.logger.error(msg)
-    if verbose:
+    if not quiet:
         print("ERROR: %s" % msg, file=sys.stderr)
 
 
@@ -157,7 +158,8 @@ def __update_quota(configuration,
                    quota_type,
                    gocryptfs_sock,
                    timestamp,
-                   verbose):
+                   verbose,
+                   quiet):
     """Update quota for *quota_name*, if new entry then
     assign lustre project id and set default quota.
     If existing entry then update quota settings if changed
@@ -169,7 +171,7 @@ def __update_quota(configuration,
     if next_lustre_pid == -1:
         msg = "Invalid lustre quota next_pid: %d for: %r" \
             % (next_lustre_pid, quota_name)
-        ERROR(configuration, msg, verbose)
+        ERROR(configuration, msg, quiet)
         return False
     if quota_type == 'vgrid':
         default_quota_limit = configuration.vgrid_quota_limit
@@ -189,7 +191,7 @@ def __update_quota(configuration,
         if not quota:
             msg = "Failed to load quota settings for: %r from %r" \
                 % (quota_name, quota_filepath)
-            ERROR(configuration, msg, verbose)
+            ERROR(configuration, msg, quiet)
             return False
     else:
         quota = {'lustre_pid': next_lustre_pid,
@@ -203,7 +205,7 @@ def __update_quota(configuration,
     if quota_lustre_pid == -1:
         msg = "Invalid quota lustre pid: %d for %r" \
             % (quota_lustre_pid, quota_name)
-        ERROR(configuration, msg, verbose)
+        ERROR(configuration, msg, quiet)
         return False
 
     # Resolve quota data path
@@ -228,7 +230,7 @@ def __update_quota(configuration,
                 % quota_name \
                 + ", rc: %d, error: %s" \
                 % (rc, stderr)
-            ERROR(configuration, msg, verbose)
+            ERROR(configuration, msg, quiet)
             return False
 
     # Skip non-dir entries
@@ -254,7 +256,7 @@ def __update_quota(configuration,
                 % (quota_lustre_pid, quota_name, quota_datapath) \
                 + ", rc: %d, error: %s" \
                 % (rc, stderr)
-            ERROR(configuration, msg, verbose)
+            ERROR(configuration, msg, quiet)
             return False
 
     # Get current quota values for lustre_pid
@@ -266,7 +268,7 @@ def __update_quota(configuration,
             % (quota_lustre_pid, quota_name, quota_datapath) \
             + ", rc: %d, error: %s" \
             % (rc, stderr)
-        ERROR(configuration, msg, verbose)
+        ERROR(configuration, msg, quiet)
         return False
 
     # Update quota info
@@ -303,7 +305,7 @@ def __update_quota(configuration,
                    quota_name,
                    quota_datapath,
                    rc)
-            ERROR(configuration, msg, verbose)
+            ERROR(configuration, msg, quiet)
             return False
 
     # Save current quota
@@ -315,26 +317,26 @@ def __update_quota(configuration,
             and not makedirs_rec(new_quota_basepath, configuration):
         msg = "Failed to create new quota base path: %r" \
             % new_quota_basepath
-        ERROR(configuration, msg, verbose)
+        ERROR(configuration, msg, quiet)
         return False
 
     new_quota_filepath_pck = os.path.join(new_quota_basepath,
-                                        "%s.pck" % quota_name)
+                                          "%s.pck" % quota_name)
     status = pickle(quota, new_quota_filepath_pck, logger)
     if not status:
         msg = "Failed to save quota for: %r to %r" \
             % (quota_name, new_quota_filepath_pck)
-        ERROR(configuration, msg, verbose)
+        ERROR(configuration, msg, quiet)
         return False
     new_quota_filepath_json = os.path.join(new_quota_basepath,
-                                        "%s.json" % quota_name)
+                                           "%s.json" % quota_name)
     status = save_json(quota,
                        new_quota_filepath_json,
                        logger)
     if not status:
         msg = "Failed to save quota for: %r to %r" \
             % (quota_name, new_quota_filepath_json)
-        ERROR(configuration, msg, verbose)
+        ERROR(configuration, msg, quiet)
         return False
 
     # Create symlink to new quota
@@ -346,7 +348,7 @@ def __update_quota(configuration,
     if not status:
         msg = "Failed to make quota symlink for: %r: %r -> %r" \
             % (quota_name, new_quota_filepath_pck, quota_filepath)
-        ERROR(configuration, msg, verbose)
+        ERROR(configuration, msg, quiet)
         return False
 
     return True
@@ -355,23 +357,12 @@ def __update_quota(configuration,
 def update_quota(configuration,
                  lustre_basepath,
                  gocryptfs_sock,
-                 verbose):
+                 verbose,
+                 quiet):
     """Update lustre quotas for users and vgrids"""
     logger = configuration.logger
     retval = True
     timestamp = int(time.time())
-    # Check lustre mount point
-    lustre_mounted = False
-    if lustre_basepath and os.path.isdir(lustre_basepath):
-        for mount in psutil.disk_partitions(all=True):
-            if mount.fstype == "lustre" \
-                    and lustre_basepath.startswith(mount.mountpoint):
-                lustre_mounted = True
-                break
-    if not lustre_mounted:
-        msg = "Lustre base: %r is NOT mounted" % lustre_basepath
-        ERROR(configuration, msg, verbose)
-        return False
 
     # Load lustre quota settings
 
@@ -382,7 +373,7 @@ def update_quota(configuration,
                                   logger)
         if not lustre_setting:
             msg = "Failed to load lustre quota: %r" % lustre_setting_filepath
-            ERROR(configuration, msg, verbose)
+            ERROR(configuration, msg, quiet)
             return False
     else:
         lustre_setting = {'next_pid': 1,
@@ -399,7 +390,7 @@ def update_quota(configuration,
         # Scan for new and modified entries
 
         with os.scandir(scandir) as it:
-            for entry in it:    
+            for entry in it:
                 if not os.path.isdir(entry.path):
                     # Only take dirs into account
                     msg = "Skiping non-dir path: %r" % entry.path
@@ -413,6 +404,7 @@ def update_quota(configuration,
                                         gocryptfs_sock,
                                         timestamp,
                                         verbose,
+                                        quiet,
                                         )
                 if not status:
                     retval = False
@@ -426,7 +418,7 @@ def update_quota(configuration,
     if not status:
         msg = "Failed to save lustra quota settings: %r" \
             % lustre_setting_filepath
-        ERROR(configuration, msg, verbose)
+        ERROR(configuration, msg, quiet)
 
     return retval
 
@@ -434,12 +426,13 @@ def update_quota(configuration,
 def main():
     retval = True
     verbose = False
+    quiet = False
     config_file = None
     lustre_basepath = None
     gocryptfs_sock = None
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hvc:l:g:",
-                                   ["help", "verbose", "config=",
+        opts, args = getopt.getopt(sys.argv[1:], "hvqc:l:g:",
+                                   ["help", "verbose", "quiet", "config=",
                                     "--lustre-basepath", "--gocryptfs-sock="])
         for opt, arg in opts:
             if opt in ("-h", "--help"):
@@ -447,6 +440,8 @@ def main():
                 sys.exit()
             elif opt in ("-v", "--verbose"):
                 verbose = True
+            elif opt in ("-q", "--quiet"):
+                quiet = True
             elif opt in ("-c", "--config"):
                 config_file = arg
             elif opt in ("-l", "--lustre-basepath"):
@@ -458,25 +453,78 @@ def main():
         usage()
         return 1
 
-    if not config_file or not os.path.isfile(config_file):
-        msg = "Missing config_file: %r" % config_file
-        print(msg, file=sys.stderr)
+    if quiet:
+        verbose = False
+
+    # Initialize configuration
+
+    try:
+        configuration = get_configuration_object(config_file=config_file)
+    except Exception as err:
+        print(err, file=sys.stderr)
         usage()
         return 1
 
-    # Initialize configuration
-    configuration = get_configuration_object(config_file=config_file)
-
     # Use separate logger
+
     logger = daemon_logger("quota",
                            configuration.user_quota_log,
                            configuration.loglevel)
     configuration.logger = logger
 
+    # If lustre_basepath is provided then check it,
+    # otherwise try to resolve it
+
+    valid_lustre_basepath = None
+    for mount in psutil.disk_partitions(all=True):
+        if mount.fstype == "lustre":
+            if lustre_basepath \
+                    and lustre_basepath.startswith(mount.mountpoint) \
+                    and os.path.isdir(lustre_basepath):
+                valid_lustre_basepath = lustre_basepath
+                break
+            elif mount.mountpoint.endswith(configuration.server_fqdn):
+                valid_lustre_basepath = mount.mountpoint
+            else:
+                check_lustre_basepath = os.path.join(mount.mountpoint,
+                                                     configuration.server_fqdn)
+                if os.path.isdir(check_lustre_basepath):
+                    valid_lustre_basepath = check_lustre_basepath
+                    break
+
+    if valid_lustre_basepath is None:
+        if lustre_basepath:
+            msg = "Lustre base: %r is NOT mounted" % lustre_basepath
+        else:
+            msg = "Found no valid lustre mounts for: %s" \
+                % configuration.server_fqdn
+        ERROR(configuration, msg, quiet)
+        return False
+
+    INFO(configuration,
+         "Using lustre basepath: %r" % valid_lustre_basepath,
+         verbose)
+
+    # Check gocryptfs socket
+
+    valid_gocryptfs_sock = None
+    if gocryptfs_sock is None:
+        check_gocryptfs_sock = "/var/run/gocryptfs.%s.sock" \
+            % configuration.server_fqdn
+        if os.path.exists(check_gocryptfs_sock):
+            valid_gocryptfs_sock = check_gocryptfs_sock
+
+    INFO(configuration,
+         "Using gocryptfs socket: %r" % valid_gocryptfs_sock,
+         verbose)
+
+    # Perform update
+
     status = update_quota(configuration,
-                          lustre_basepath,
-                          gocryptfs_sock,
-                          verbose)
+                          valid_lustre_basepath,
+                          valid_gocryptfs_sock,
+                          verbose,
+                          quiet)
     if status:
         retval = 0
     if not status:
