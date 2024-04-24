@@ -425,6 +425,19 @@ def load_json(path, logger, allow_missing=False, convert_utf8=True):
         return False
 
 
+def save_json(data_object, path, logger):
+    """Pack data_object as json object in path"""
+    if not logger:
+        logger = null_logger("dummy")
+    try:
+        dump(data_object, path, serializer='json')
+        # logger.debug("pickled %r successfully" % path)
+        return True
+    except Exception as err:
+        logger.error("could not save json %r: %s" % (path, err))
+        return False
+
+
 def send_message_to_grid_script(message, logger, configuration):
     """Write an instruction to the grid_script name pipe input"""
     if not logger:
@@ -687,7 +700,7 @@ def _check_access(path, mode, parent_dir, follow_symlink):
     """Internal helper to check for mode access on path. If parent_dir is set
     the check is applied to the directory part of path. With follow_symlink set
     any symlinks in path are first expanded so that the corresponding parent is
-    checked if parent_dir is requested.  
+    checked if parent_dir is requested.
     """
     if follow_symlink:
         path = os.path.realpath(path)
@@ -744,11 +757,11 @@ def write_named_tempfile(configuration, contents):
 
 def checksum_file(path, hash_algo, chunk_size=default_chunk_size,
                   max_chunks=default_max_chunks, logger=None):
-    """Simple block hashing for checksumming of files inspired by  
+    """Simple block hashing for checksumming of files inspired by
     http://stackoverflow.com/questions/16799088/file-checksums-in-python
     Read at most max_chunks blocks of chunk_size (to avoid DoS) and checksum
     using hash_algo (md5, sha1, sha256, sha512, ...).
-    Any non-positive max_chunks value removes the size limit.  
+    Any non-positive max_chunks value removes the size limit.
     If max_chunks is positive the checksum will match that of the Xsum
     command for files smaller than max_chunks * chunk_size and for bigger
     files a partial checksum of the first chunk_size * max_chunks bytes will
@@ -756,7 +769,8 @@ def checksum_file(path, hash_algo, chunk_size=default_chunk_size,
     """
     if not logger:
         logger = null_logger("dummy")
-    checksum = valid_hash_algos.get(hash_algo, valid_hash_algos[default_algo])()
+    checksum = valid_hash_algos.get(
+        hash_algo, valid_hash_algos[default_algo])()
     chunks_read = 0
     msg = ''
     try:
