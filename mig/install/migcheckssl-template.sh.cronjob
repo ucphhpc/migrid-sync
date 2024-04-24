@@ -85,7 +85,7 @@ else
             echo "${getssl_url}"
             echo
             echo "--- Start of detailed difference follows ---"
-            diff -u -w "${getssl_tmp}" "${getssl_path}" | head
+            diff -u -w "${getssl_tmp}" "${getssl_path}" || true | head
             echo
         fi
     fi
