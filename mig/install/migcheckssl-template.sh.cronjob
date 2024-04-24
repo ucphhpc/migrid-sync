@@ -14,9 +14,9 @@
 # This is a limitation on the run-parts wrapper used by cron
 # (see man run-parts for the rationale behind this).
 
-# TODO: Force bash to handle uninitialized variables and errors
+# Force bash to handle uninitialized variables and errors
 # https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
-#set -eEuo pipefail
+set -eEuo pipefail
 
 # Send output to another email address
 #MAILTO="root"
@@ -146,9 +146,9 @@ else
     org_chksum=$(/usr/bin/md5sum ${server_key_crt_ca_pem})
 fi
 
-# Check for new certificate
+# Check for new certificate - returns 1 upon update
 
-${getssl_cmd}
+${getssl_cmd} || true
 
 # Get timestamp of new certificate
 
