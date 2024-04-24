@@ -14,8 +14,16 @@
 # This is a limitation on the run-parts wrapper used by cron
 # (see man run-parts for the rationale behind this).
 
+# Force bash to handle uninitialized variables and errors
+# https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
+set -eEuo pipefail
+
 # Send output to another email address
 #MAILTO="root"
+
+# Specify if migrid runs natively or inside containers with LetsEncrypt at host.
+# Value is the container manager (docker, podman, or empty string for none)
+container_manager=""
 
 # Look in getssl install dir first
 export PATH="/usr/local/sbin:${PATH}"
@@ -45,9 +53,6 @@ apache_services="__APACHE_DAEMON__"
 postfix_services="postfix"
 # Services requiring reload for renewed certificate (NOTE: sftp doesn't)
 migrid_subservices="ftps webdavs openid"
-# Set if running migrid inside a container with LetsEncrypt at host
-# value is the container manager (docker, podman, or empty string for none)
-container=""
 
 if [[ $(id -u) -ne 0 ]]; then
     echo "Please run $0 as root"
@@ -141,9 +146,9 @@ else
     org_chksum=$(/usr/bin/md5sum ${server_key_crt_ca_pem})
 fi
 
-# Check for new certificate
+# Check for new certificate - returns 1 upon update
 
-${getssl_cmd}
+${getssl_cmd} || true
 
 # Get timestamp of new certificate
 
@@ -165,6 +170,10 @@ if [[ ${org_mtime} -ne ${new_mtime} && "${org_chksum}" != "${new_chksum}" ]]; th
 
     # Set owner to root on apache keys
 
+    if [[ ${verbose} -eq 1 ]]; then
+        echo "Changing owner of all keys with"
+        echo chown 0:0 ${domain_cert_path}/*.{key,pem}
+    fi
     chown 0:0 ${domain_cert_path}/*.{key,pem}
 
     if [ -n "${migrid_subservices}" ]; then
@@ -181,17 +190,23 @@ if [[ ${org_mtime} -ne ${new_mtime} && "${org_chksum}" != "${new_chksum}" ]]; th
 
         openssl rsa -in ${server_key} -text > ${server_pem}
         cat ${server_pem} ${server_crt_ca_pem} > ${combined_pem}
+        chmod 400 ${server_pem} ${combined_pem}
         # IMPORTANT: daemons will fail unless combined_pem is UID/GID-owned
-        if [ -z "$container" ]; then
+        if [ -z "${container_manager}" ]; then
             MIGUID=$(id -u ${mig_user})
             MIGGID=$(id -g ${mig_group})
         else
-            MIGUID=$(${container} exec -it migrid id -u ${mig_user})
-            MIGGID=$(${container} exec -it migrid id -g ${mig_group})
+            MIGUID=$(${container_manager} exec -it migrid id -u ${mig_user})
+            MIGGID=$(${container_manager} exec -it migrid id -g ${mig_group})
         fi
         chown "${MIGUID}:${MIGGID}" ${combined_pem}
-        chmod 400 ${server_pem} ${combined_pem}
-
+        if [[ ${verbose} -eq 1 ]]; then
+            echo "Changed owner of ${combined_pem} with"
+            echo chown "${MIGUID}:${MIGGID}" ${combined_pem}
+            echo "to end up with"
+            ls -l ${combined_pem}
+        fi
+        
         # Generate openssh public key for combined.pem in combined.pub
 
         ssh-keygen -y -f ${combined_pem} > ${combined_pub}
@@ -212,40 +227,40 @@ if [[ ${org_mtime} -ne ${new_mtime} && "${org_chksum}" != "${new_chksum}" ]]; th
     # Restart migrid and apache service daemons if set
 
     for subsvc in ${migrid_subservices}; do
-        if [ -z "$container" ]; then
+        if [ -z "${container_manager}" ]; then
             service migrid statusdaemon "${subsvc}" > /dev/null 2>&1
             svcstatus=$?
         else
-            ${container} exec -it migrid service "migrid-$subsvc" statusdaemon "${subsvc}" > /dev/null 2>&1
+            ${container_manager} exec -it "migrid-$subsvc" service migrid statusdaemon "${subsvc}" > /dev/null 2>&1
             svcstatus=$?
         fi
         if [[ $svcstatus -eq 0 ]]; then
             if [[ ${verbose} -eq 1 ]]; then
                 echo "--- Restarting migrid daemon: ${subsvc} ---"
             fi
-            if [ -z "$container" ]; then
+            if [ -z "${container_manager}" ]; then
                 service migrid restartdaemon "${subsvc}"
             else
-                ${container} exec -it "migrid-$subsvc" service migrid restartdaemon "${subsvc}"
+                ${container_manager} exec -it "migrid-$subsvc" service migrid restartdaemon "${subsvc}"
             fi
         fi
     done
     for svc in ${apache_services}; do
-        if [ -z "$container" ]; then
+        if [ -z "${container_manager}" ]; then
             service ${svc} status > /dev/null 2>&1
             svcstatus=$?
         else
-            ${container} exec -it migrid service ${svc} status > /dev/null 2>&1
+            ${container_manager} exec -it migrid service ${svc} status > /dev/null 2>&1
             svcstatus=$?
         fi
         if [[ $svcstatus -eq 0 ]]; then
             if [[ ${verbose} -eq 1 ]]; then
                 echo "--- Restarting service: ${svc} ---"
             fi
-            if [ -z "$container" ]; then
+            if [ -z "${container_manager}" ]; then
                 service ${svc} restart
             else
-                ${container} exec -it migrid service ${svc} restart
+                ${container_manager} exec -it migrid service ${svc} restart
             fi
         fi
     done
