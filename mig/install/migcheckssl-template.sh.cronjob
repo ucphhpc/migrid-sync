@@ -14,6 +14,10 @@
 # This is a limitation on the run-parts wrapper used by cron
 # (see man run-parts for the rationale behind this).
 
+# TODO: Force bash to handle uninitialized variables and errors
+# https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
+#set -eEuo pipefail
+
 # Send output to another email address
 #MAILTO="root"
 
