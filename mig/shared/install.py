@@ -349,15 +349,15 @@ def generate_confs(
     sid_port=default_https_port,
     sftp_port=2222,
     sftp_subsys_port=22,
-    sftp_show_port=22,
+    sftp_show_port='',
     sftp_max_sessions=-1,
     davs_port=4443,
-    davs_show_port=443,
+    davs_show_port='',
     ftps_ctrl_port=8021,
-    ftps_ctrl_show_port=21,
+    ftps_ctrl_show_port='',
     ftps_pasv_ports='8100:8400',
     openid_port=8443,
-    openid_show_port=443,
+    openid_show_port='',
     openid_session_lifetime=43200,
     seafile_seahub_port=8000,
     seafile_seafhttp_port=8082,
@@ -585,18 +585,13 @@ def generate_confs(
     user_dict['__DAEMON_PUBKEY_MD5__'] = ''
     user_dict['__DAEMON_PUBKEY_SHA256__'] = ''
     user_dict['__DAEMON_PUBKEY_FROM_DNS__'] = "%s" % daemon_pubkey_from_dns
-    user_dict['__DAEMON_SHOW_ADDRESS__'] = daemon_show_address
     user_dict['__SFTP_PORT__'] = "%s" % sftp_port
     user_dict['__SFTP_SUBSYS_PORT__'] = "%s" % sftp_subsys_port
-    user_dict['__SFTP_SHOW_PORT__'] = "%s" % sftp_show_port
     user_dict['__SFTP_MAX_SESSIONS__'] = "%s" % sftp_max_sessions
     user_dict['__DAVS_PORT__'] = "%s" % davs_port
-    user_dict['__DAVS_SHOW_PORT__'] = "%s" % davs_show_port
     user_dict['__FTPS_CTRL_PORT__'] = "%s" % ftps_ctrl_port
-    user_dict['__FTPS_CTRL_SHOW_PORT__'] = "%s" % ftps_ctrl_show_port
     user_dict['__FTPS_PASV_PORTS__'] = ftps_pasv_ports
     user_dict['__OPENID_PORT__'] = "%s" % openid_port
-    user_dict['__OPENID_SHOW_PORT__'] = "%s" % openid_show_port
     user_dict['__OPENID_SESSION_LIFETIME__'] = "%s" % openid_session_lifetime
     user_dict['__SEAFILE_SEAHUB_PORT__'] = "%s" % seafile_seahub_port
     user_dict['__SEAFILE_SEAFHTTP_PORT__'] = "%s" % seafile_seafhttp_port
@@ -891,16 +886,20 @@ cert, oid and sid based https!
 
     if user_dict['__ENABLE_SFTP__'].lower() == 'true':
         fail2ban_daemon_ports.append(sftp_port)
-        fail2ban_daemon_ports.append(sftp_show_port)
+        if sftp_show_port:
+            fail2ban_daemon_ports.append(sftp_show_port)
     if user_dict['__ENABLE_SFTP_SUBSYS__'].lower() == 'true':
         fail2ban_daemon_ports.append(sftp_subsys_port)
-        fail2ban_daemon_ports.append(sftp_show_port)
+        if sftp_show_port:
+            fail2ban_daemon_ports.append(sftp_show_port)
     if user_dict['__ENABLE_FTPS__'].lower() == 'true':
         fail2ban_daemon_ports.append(ftps_ctrl_port)
-        fail2ban_daemon_ports.append(ftps_ctrl_show_port)
+        if ftps_ctrl_show_port:
+            fail2ban_daemon_ports.append(ftps_ctrl_show_port)
     if user_dict['__ENABLE_DAVS__'].lower() == 'true':
         fail2ban_daemon_ports.append(davs_port)
-        fail2ban_daemon_ports.append(davs_show_port)
+        if davs_show_port:
+            fail2ban_daemon_ports.append(davs_show_port)
 
     if duplicati_protocols:
         prio_duplicati_protocols = duplicati_protocols.split()
@@ -1017,6 +1016,26 @@ cert, oid and sid based https!
         elif io_fqdn:
             user_dict[address_field] = io_fqdn
     user_dict['__ALL_IO_FQDNS__'] = ' '.join(all_io_fqdns)
+
+    # Enable alternative show ports only if explicitly requested.
+    # Default is handled in configuration if the option is unset.
+
+    user_dict['__SHOW_SFTP_PORT_COMMENTED__'] = '#'
+    user_dict['__SHOW_DAVS_PORT_COMMENTED__'] = '#'
+    user_dict['__SHOW_FTPS_CTRL_PORT_COMMENTED__'] = '#'
+    user_dict['__SHOW_OPENID_PORT_COMMENTED__'] = '#'
+    if sftp_show_port:
+        user_dict['__SHOW_SFTP_PORT_COMMENTED__'] = ''
+    if davs_show_port:
+        user_dict['__SHOW_DAVS_PORT_COMMENTED__'] = ''
+    if ftps_ctrl_show_port:
+        user_dict['__SHOW_FTPS_CTRL_PORT_COMMENTED__'] = ''
+    if openid_show_port:
+        user_dict['__SHOW_OPENID_PORT_COMMENTED__'] = ''
+    user_dict['__SFTP_SHOW_PORT__'] = "%s" % sftp_show_port
+    user_dict['__DAVS_SHOW_PORT__'] = "%s" % davs_show_port
+    user_dict['__FTPS_CTRL_SHOW_PORT__'] = "%s" % ftps_ctrl_show_port
+    user_dict['__OPENID_SHOW_PORT__'] = "%s" % openid_show_port
 
     user_dict['__PREFER_HTTPS_COMMENTED__'] = '#'
     if public_use_https:
@@ -1377,7 +1396,8 @@ cert, oid and sid based https!
         user_dict['__PROXY_HTTP_COMMENTED__'] = ''
         user_dict['__PROXY_HTTPS_COMMENTED__'] = ''
         fail2ban_daemon_ports.append(openid_port)
-        fail2ban_daemon_ports.append(openid_show_port)
+        if openid_show_port:
+            fail2ban_daemon_ports.append(openid_show_port)
     else:
         user_dict['__OPENID_COMMENTED__'] = '#'
     mig_issuer_url, ext_issuer_url = '', ''
@@ -1411,7 +1431,8 @@ cert, oid and sid based https!
         # user_dict['__PROXY_HTTPS_COMMENTED__'] = ''
         # TODO: enable next lines if implementing native openid connect service
         # fail2ban_daemon_ports.append(openidconnect_port)
-        # fail2ban_daemon_ports.append(openidconnect_show_port)
+        # if openidconnect_show_port:
+        #     fail2ban_daemon_ports.append(openidconnect_show_port)
     else:
         user_dict['__OPENIDCONNECT_COMMENTED__'] = '#'
 
@@ -1458,13 +1479,15 @@ cert, oid and sid based https!
 
     # Enable alternative daemon show address only if explicitly requested
     user_dict['__SHOW_IO_ADDRESS_COMMENTED__'] = '#'
-    if user_dict['__DAEMON_SHOW_ADDRESS__']:
+    user_dict['__DAEMON_SHOW_ADDRESS__'] = ''
+    if daemon_show_address:
         user_dict['__SHOW_IO_ADDRESS_COMMENTED__'] = ''
+        user_dict['__DAEMON_SHOW_ADDRESS__'] = daemon_show_address
+
     # Enable openid proxy if implicitly requested with different OID provider
-    user_dict['__SHOW_OID_ADDRESS_COMMENTED__'] = '#'
-    if openid_address not in mig_oid_provider or \
-            openid_show_port != openid_port:
-        user_dict['__SHOW_OID_ADDRESS_COMMENTED__'] = ''
+    user_dict['__SHOW_OPENID_ADDRESS_COMMENTED__'] = '#'
+    if openid_address not in mig_oid_provider:
+        user_dict['__SHOW_OPENID_ADDRESS_COMMENTED__'] = ''
 
     # Enable dhparams only if explicitly requested and file available
     if user_dict['__DHPARAMS_PATH__']:
