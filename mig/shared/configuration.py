@@ -1109,23 +1109,6 @@ location.""" % self.config_file)
         if config.has_option('GLOBAL', 'user_sftp_port'):
             self.user_sftp_port = config.getint('GLOBAL',
                                                 'user_sftp_port')
-        if config.has_option('GLOBAL', 'user_sftp_show_address'):
-            self.user_sftp_show_address = config.get('GLOBAL',
-                                                     'user_sftp_show_address')
-        elif self.site_enable_sftp_subsys and self.user_sftp_subsys_address:
-            self.user_sftp_show_address = self.user_sftp_subsys_address
-        elif self.site_enable_sftp and self.user_sftp_address:
-            self.user_sftp_show_address = self.user_sftp_address
-        else:
-            # address may be empty to use all interfaces - then use FQDN
-            self.user_sftp_show_address = self.server_fqdn
-        if config.has_option('GLOBAL', 'user_sftp_show_port'):
-            self.user_sftp_show_port = config.getint('GLOBAL',
-                                                     'user_sftp_show_port')
-        elif self.site_enable_sftp_subsys and self.user_sftp_subsys_port:
-            self.user_sftp_show_port = self.user_sftp_subsys_port
-        elif self.site_enable_sftp and self.user_sftp_port:
-            self.user_sftp_show_port = self.user_sftp_port
         if config.has_option('GLOBAL', 'user_sftp_key'):
             self.user_sftp_key = config.get('GLOBAL',
                                             'user_sftp_key')
@@ -1166,6 +1149,7 @@ location.""" % self.config_file)
         if config.has_option('GLOBAL', 'user_sftp_max_sessions'):
             self.user_sftp_max_sessions = config.getint(
                 'GLOBAL', 'user_sftp_max_sessions')
+        # NOTE: we need all sftp and sftpsubsys conf parsing done in next part
         if config.has_option('GLOBAL', 'user_sftp_subsys_address'):
             self.user_sftp_subsys_address = config.get(
                 'GLOBAL', 'user_sftp_subsys_address')
@@ -1175,6 +1159,23 @@ location.""" % self.config_file)
         if config.has_option('GLOBAL', 'user_sftp_subsys_log'):
             self.user_sftp_subsys_log = config.get('GLOBAL',
                                                    'user_sftp_subsys_log')
+        if config.has_option('GLOBAL', 'user_sftp_show_address'):
+            self.user_sftp_show_address = config.get('GLOBAL',
+                                                     'user_sftp_show_address')
+        elif self.site_enable_sftp_subsys and self.user_sftp_subsys_address:
+            self.user_sftp_show_address = self.user_sftp_subsys_address
+        elif self.site_enable_sftp and self.user_sftp_address:
+            self.user_sftp_show_address = self.user_sftp_address
+        else:
+            # address may be empty to use all interfaces - then use FQDN
+            self.user_sftp_show_address = self.server_fqdn
+        if config.has_option('GLOBAL', 'user_sftp_show_port'):
+            self.user_sftp_show_port = config.getint('GLOBAL',
+                                                     'user_sftp_show_port')
+        elif self.site_enable_sftp_subsys and self.user_sftp_subsys_port:
+            self.user_sftp_show_port = self.user_sftp_subsys_port
+        elif self.site_enable_sftp and self.user_sftp_port:
+            self.user_sftp_show_port = self.user_sftp_port
         if config.has_option('SITE', 'enable_davs'):
             self.site_enable_davs = config.getboolean('SITE', 'enable_davs')
         else:
