@@ -1,0 +1,86 @@
+/*
+
+#
+# --- BEGIN_HEADER ---
+#
+# ui-theme.custom - style overrides for jquery-ui theme
+# Copyright (C) 2003-2020  The MiG Project lead by Brian Vinter
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# -- END_HEADER ---
+#
+
+*/
+
+
+/* Don't obfuscate links in accordion */
+.ui-widget-content a {
+	color: #165AAD;
+}
+
+#fm_filemanager .ui-progressbar-value, #fm_filechooser .ui-progressbar-value {
+    /* progres floats underneath frame if margin is not negative - value depends on font size */
+    margin-top: -16px;
+    /* not sure this is needed */
+    vertical-align: middle;
+    /* look and feel */
+    padding: 0px;
+    border-radius: 4px;
+    transition: width 0.5s;
+    -webkit-transition: width 0.5s;
+}
+
+/* smaller inline buttons for e.g. 2FA wizard */
+.ui-button.inline-button, .ui-button.inline-button:hover {
+    border-radius: 4px;
+    /* default from jquery-ui is 0.4em 1em */
+    padding: .1em 1em;
+    /* enforce minimum size for visual clarity and uniform look */
+    min-width: 100px;
+    min-height: 24px;
+}
+
+/* NOTE: adjust icon color when background is white.
+         We use a custom made skin-colored version of the icons from UI theme
+         and path is taken relative to this skin sub-dir.
+*/
+
+.ui-icon.skin {
+	background-image: url("images/ui-icons_46743c_256x240.png");
+}
+
+/*
+  Support for inverting theme for some components like FAQ and Tips accordion.
+*/
+.invert-theme .ui-state-default, .invert-theme .ui-state-hover, .invert-theme .ui-state-focus { 
+    background: transparent;
+    color: #46743C;
+}
+.invert-theme .ui-state-default { 
+    border: 1px solid #46743C;
+}
+.invert-theme .ui-state-focus { 
+    border: 1px solid #679c5b;
+}
+.invert-theme .ui-state-hover { 
+    border: 1px solid #679c5b;
+    color: #679c5b;
+}
+.invert-theme .ui-icon {
+    background-image: url("images/ui-icons_46743c_256x240.png");
+}
