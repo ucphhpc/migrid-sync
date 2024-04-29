@@ -174,10 +174,10 @@ def __update_quota(configuration,
         ERROR(configuration, msg, quiet)
         return False
     if quota_type == 'vgrid':
-        default_quota_limit = configuration.vgrid_quota_limit
+        default_quota_limit = configuration.quota_vgrid_limit
         data_basepath = configuration.vgrid_files_writable
     else:
-        default_quota_limit = configuration.user_quota_limit
+        default_quota_limit = configuration.quota_user_limit
         data_basepath = configuration.user_home
 
     # Load quota if it exists otherwise new quota
