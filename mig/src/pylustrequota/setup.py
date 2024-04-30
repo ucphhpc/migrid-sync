@@ -51,7 +51,7 @@ setup(
     install_requires=versioned_requires,
     requires=project_requires,
     extras_require=project_extras,
-    scripts=['bin/mig_lustre_quota.py',
+    scripts=['bin/miglustrequota.py',
              ],
     packages=['pylustrequota'],
     package_dir={'pylustrequota': 'pylustrequota',
