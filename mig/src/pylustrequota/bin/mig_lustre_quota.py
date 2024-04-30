@@ -34,6 +34,7 @@ Fetch the number of files and bytes used by each project id.
 import os
 import sys
 import time
+import stat
 import getopt
 import shlex
 import subprocess
@@ -209,11 +210,10 @@ def __update_quota(configuration,
         return False
 
     # Resolve quota data path
+    # if gocryptfs_sock then resolve encrypted path
+    # otherwise use plain path
 
-    if not gocryptfs_sock:
-        quota_datapath = os.path.join(data_basepath,
-                                      quota_name)
-    else:
+    if gocryptfs_sock:
         rel_data_basepath = data_basepath. \
             replace(configuration.state_path + os.sep, "")
         stdin_str = os.path.join(rel_data_basepath, quota_name)
@@ -232,6 +232,9 @@ def __update_quota(configuration,
                 % (rc, stderr)
             ERROR(configuration, msg, quiet)
             return False
+    else:
+        quota_datapath = os.path.join(data_basepath,
+                                      quota_name)
 
     # Skip non-dir entries
 
@@ -254,8 +257,8 @@ def __update_quota(configuration,
         else:
             msg = "Failed to set lustre project id: %d for %r: %r" \
                 % (quota_lustre_pid, quota_name, quota_datapath) \
-                + ", rc: %d, error: %s" \
-                % (rc, stderr)
+                + ", rc: %d" \
+                % rc
             ERROR(configuration, msg, quiet)
             return False
 
@@ -266,8 +269,8 @@ def __update_quota(configuration,
     if rc != 0:
         msg = "Failed to fetch quota for lustre project id: %d, %r, %r" \
             % (quota_lustre_pid, quota_name, quota_datapath) \
-            + ", rc: %d, error: %s" \
-            % (rc, stderr)
+            + ", rc: %d" \
+            % rc
         ERROR(configuration, msg, quiet)
         return False
 
@@ -511,12 +514,16 @@ def main():
     if gocryptfs_sock is None:
         check_gocryptfs_sock = "/var/run/gocryptfs.%s.sock" \
             % configuration.server_fqdn
-        if os.path.exists(check_gocryptfs_sock):
+
+    if os.path.exists(check_gocryptfs_sock):
+        gocryptfs_sock_stat = os.lstat(check_gocryptfs_sock)
+        if stat.S_ISSOCK(gocryptfs_sock_stat.st_mode):
             valid_gocryptfs_sock = check_gocryptfs_sock
 
-    INFO(configuration,
-         "Using gocryptfs socket: %r" % valid_gocryptfs_sock,
-         verbose)
+    if valid_gocryptfs_sock:
+        INFO(configuration,
+             "Using gocryptfs socket: %r" % valid_gocryptfs_sock,
+             verbose)
 
     # Perform update
 
