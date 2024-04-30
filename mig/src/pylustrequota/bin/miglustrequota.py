@@ -50,6 +50,9 @@ from pylustrequota.lfs import lfs_set_project_id, lfs_get_project_quota, \
     lfs_set_project_quota
 
 
+supported_quota_backends = ['lustre', 'lustre-gocryptfs']
+
+
 def usage(name=sys.argv[0]):
     """Usage help"""
     msg = """Usage: %(name)s [OPTIONS]
@@ -210,10 +213,13 @@ def __update_quota(configuration,
         return False
 
     # Resolve quota data path
-    # if gocryptfs_sock then resolve encrypted path
+    # if gocryptfs then resolve encrypted path
     # otherwise use plain path
 
-    if gocryptfs_sock:
+    if configuration.quota_backend == "lustre":
+        quota_datapath = os.path.join(data_basepath,
+                                      quota_name)
+    elif configuration.quota_backend == "lustre-gocryptfs":
         rel_data_basepath = data_basepath. \
             replace(configuration.state_path + os.sep, "")
         stdin_str = os.path.join(rel_data_basepath, quota_name)
@@ -233,8 +239,10 @@ def __update_quota(configuration,
             ERROR(configuration, msg, quiet)
             return False
     else:
-        quota_datapath = os.path.join(data_basepath,
-                                      quota_name)
+        ERROR(configuration,
+              "Invalid quota backend: %r" % configuration.quota_backend,
+              quiet)
+        return False
 
     # Skip non-dir entries
 
@@ -474,6 +482,12 @@ def main():
                            configuration.user_quota_log,
                            configuration.loglevel)
     configuration.logger = logger
+    if configuration.quota_backend not in supported_quota_backends:
+        msg = "Quota backend: %s not in supported backends: %s" \
+            % (configuration.quota_backend,
+               ", ".join(supported_quota_backends))
+        ERROR(configuration, msg, quiet)
+        return False
 
     # If lustre_basepath is provided then check it,
     # otherwise try to resolve it
@@ -510,26 +524,30 @@ def main():
 
     # Check gocryptfs socket
 
-    valid_gocryptfs_sock = None
-    if gocryptfs_sock is None:
-        check_gocryptfs_sock = "/var/run/gocryptfs.%s.sock" \
-            % configuration.server_fqdn
-
-    if os.path.exists(check_gocryptfs_sock):
-        gocryptfs_sock_stat = os.lstat(check_gocryptfs_sock)
-        if stat.S_ISSOCK(gocryptfs_sock_stat.st_mode):
-            valid_gocryptfs_sock = check_gocryptfs_sock
-
-    if valid_gocryptfs_sock:
-        INFO(configuration,
-             "Using gocryptfs socket: %r" % valid_gocryptfs_sock,
-             verbose)
+    if configuration.quota_backend == "lustre-gocryptfs":
+        check_gocryptfs_sock = gocryptfs_sock
+        if check_gocryptfs_sock is None:
+            check_gocryptfs_sock = "/var/run/gocryptfs.%s.sock" \
+                % configuration.server_fqdn
+        if os.path.exists(check_gocryptfs_sock):
+            gocryptfs_sock_stat = os.lstat(check_gocryptfs_sock)
+            if stat.S_ISSOCK(gocryptfs_sock_stat.st_mode):
+                gocryptfs_sock = check_gocryptfs_sock
+        if gocryptfs_sock:
+            INFO(configuration,
+                 "Using gocryptfs socket: %r" % gocryptfs_sock,
+                 verbose)
+        else:
+            ERROR(configuration,
+                  "Missing gocryptfs socket: %r" % check_gocryptfs_sock,
+                  quiet)
+            return False
 
     # Perform update
 
     status = update_quota(configuration,
                           valid_lustre_basepath,
-                          valid_gocryptfs_sock,
+                          gocryptfs_sock,
                           verbose,
                           quiet)
     if status:
