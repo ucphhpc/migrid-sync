@@ -9,3 +9,16 @@ finally users can customize their pages on their Settings page.
 Please note that the SITE section in MiGserver.conf also provides overrides for
 fav_icon and logo_text / logo_image used as the top logo on all pages.
 Similarly the status-icons dir or symlink holds e.g. the resource monitor icons.
+
+If using the built-in site status feature and status page the corresponding
+status events is filtered based on the contents in site-conf.js here. Sample
+status events are maintained in a json file on a relatively flexible format and
+a sample can be found in basic-status.json on
+https://github.com/ucphhpc/migrid-ucph-sites
+
+The site-logo.png here is implicitly used as top left logo in vgrid Trac wiki
+pages if enabled. This is in line with the trac conf intitialization seen in
+mig/shared/functionality/createvgrid.py.
+One can symlink it to the MiG-logo-small.png from this folder or to e.g.
+logo-left.png in the active skin folder. If not there the wiki pages will show
+a placeholder referencing the underlying Trac conf and section.
