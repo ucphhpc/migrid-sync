@@ -133,6 +133,7 @@ if '__main__' == __name__:
         'ext_oidc_id_token_encrypted_response_alg',
         'ext_oidc_id_token_encrypted_response_enc',
         'ext_oidc_user_info_signed_response_alg',
+        'ext_oidc_cookie_same_site',
         'ext_oidc_pass_cookies',
         'ext_oidc_remote_user_claim',
         'ext_oidc_pass_claim_as',

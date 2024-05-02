@@ -309,6 +309,7 @@ def generate_confs(
     ext_oidc_id_token_encrypted_response_alg='',
     ext_oidc_id_token_encrypted_response_enc='',
     ext_oidc_user_info_signed_response_alg='',
+    ext_oidc_cookie_same_site='',
     ext_oidc_pass_cookies='',
     ext_oidc_remote_user_claim='sub',
     ext_oidc_pass_claim_as='both',
@@ -557,6 +558,7 @@ def generate_confs(
     user_dict['__EXT_OIDC_ID_TOKEN_ENCRYPTED_RESPONSE_ALG__'] = ext_oidc_id_token_encrypted_response_alg
     user_dict['__EXT_OIDC_ID_TOKEN_ENCRYPTED_RESPONSE_ENC__'] = ext_oidc_id_token_encrypted_response_enc
     user_dict['__EXT_OIDC_USER_INFO_SIGNED_RESPONSE_ALG__'] = ext_oidc_user_info_signed_response_alg
+    user_dict['__EXT_OIDC_COOKIE_SAME_SITE__'] = ext_oidc_cookie_same_site
     user_dict['__EXT_OIDC_PASS_COOKIES__'] = ext_oidc_pass_cookies
     user_dict['__EXT_OIDC_REMOTE_USER_CLAIM__'] = ext_oidc_remote_user_claim
     user_dict['__EXT_OIDC_PASS_CLAIM_AS__'] = ext_oidc_pass_claim_as
@@ -1460,6 +1462,7 @@ cert, oid and sid based https!
          ext_oidc_id_token_encrypted_response_enc),
         ('__EXT_OIDC_USER_INFO_SIGNED_RESPONSE_ALG__',
          ext_oidc_user_info_signed_response_alg),
+        ('__EXT_OIDC_COOKIE_SAME_SITE__', ext_oidc_cookie_same_site),
         ('__EXT_OIDC_PASS_COOKIES__', ext_oidc_pass_cookies),
         ('__EXT_OIDC_REMOTE_USER_CLAIM__', ext_oidc_remote_user_claim),
         ('__EXT_OIDC_PASS_CLAIM_AS__', ext_oidc_pass_claim_as),
