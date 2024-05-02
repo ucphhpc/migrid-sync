@@ -1752,7 +1752,6 @@ def guess_type(name):
             'share_id',
             'miguser',
             'reset_token',
-            'oidc.claim.sub',
             'oidc.claim.oid',
         ):
             __type_map[key] = valid_job_id
@@ -1867,7 +1866,6 @@ def guess_type(name):
             'oidc.claim.fullname',
             'oidc.claim.name',
             'oidc.claim.association',
-            'oidc.claim.aud',
             'changes',
             'version',
         ):
@@ -1946,6 +1944,7 @@ def guess_type(name):
             'openid.sreg.mail',
             'oidc.claim.email',
             'oidc.claim.upn',
+            'oidc.claim.sub',
             'adminemail',
         ):
             __type_map[key] = valid_email_address
@@ -1992,8 +1991,10 @@ def guess_type(name):
                 'openid.ns',
                 'openid.ns.sreg',
                 'oidc.claim.iss',
+                'oidc.claim.aud',
                 'url',
-                'icon', ):
+                'icon',
+        ):
             __type_map[key] = valid_base_url
         for key in ('modauthopenid.referrer',
                     'transfer_src',
