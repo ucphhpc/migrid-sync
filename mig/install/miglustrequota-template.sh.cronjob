@@ -46,7 +46,7 @@ else
     eval "$check_cmd"
     ret=$?
     if [ "$ret" -ne 0 ]; then
-        echo "ERROR: Missing migrid-lustre-quota container"
+        echo "ERROR: Missing ${container} container"
         exit 1
     fi
     quota_cmd="${container_manager} start -a ${container}"
