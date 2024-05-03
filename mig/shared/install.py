@@ -1845,6 +1845,7 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
         ("migcheckssl-template.sh.cronjob", "migcheckssl"),
         ("migacctexpire-template.sh.cronjob", "migacctexpire"),
         ("migverifyarchives-template.sh.cronjob", "migverifyarchives"),
+        ("miglustrequota-template.sh.cronjob", "miglustrequota"),
     ]
     for (in_name, out_name) in replacement_list:
         in_path = os.path.join(source, in_name)
@@ -1983,9 +1984,10 @@ chmod 755 %(destination)s/mig{stateclean,errors,sftpmon,importdoi,notifyexpire}
 sudo cp %(destination)s/mig{stateclean,errors,sftpmon,importdoi,notifyexpire} \\
         /etc/cron.daily/
 
-The migcheckssl, migverifyarchives and migacctexpire files are cron scripts to
-automatically check for LetsEncrypt certificate renewal, run pending archive
-verification before sending a copy to tape and to generate account expire stats.
+The migcheckssl, migverifyarchives, migacctexpire and miglustrequota files
+are cron scripts to automatically check for LetsEncrypt certificate renewal,
+run pending archive verification before sending a copy to tape,
+generate account expire stats and create/update lustre quota.
 You can install them with:
 chmod 700 %(destination)s/migcheckssl
 sudo cp %(destination)s/migcheckssl /etc/cron.daily/
@@ -1993,6 +1995,8 @@ chmod 700 %(destination)s/migverifyarchives
 sudo cp %(destination)s/migverifyarchives /etc/cron.hourly/
 chmod 700 %(destination)s/migacctexpire
 sudo cp %(destination)s/migacctexpire /etc/cron.monthly/
+chmod 700 %(destination)s/miglustrequota
+sudo cp %(destination)s/migacctexpire /etc/cron.hourly/
 
 ''' % expanded
     instructions_path = "%s/instructions.txt" % destination
