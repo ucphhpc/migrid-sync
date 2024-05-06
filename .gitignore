@@ -1,0 +1,9 @@
+# local
+/.vscode/
+/envhelp/venv/
+/envhelp/*.depends
+/envhelp/*.imageid
+
+# build
+__pycache__/
+**/*.pyc
