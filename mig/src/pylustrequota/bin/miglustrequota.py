@@ -550,12 +550,7 @@ def main():
                           gocryptfs_sock,
                           verbose,
                           quiet)
-    if status:
-        retval = 0
-    if not status:
-        retval = 1
-
-    return retval
+    return status
 
 
 if __name__ == "__main__":
