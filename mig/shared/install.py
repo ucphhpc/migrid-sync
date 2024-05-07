@@ -1996,7 +1996,7 @@ sudo cp %(destination)s/migverifyarchives /etc/cron.hourly/
 chmod 700 %(destination)s/migacctexpire
 sudo cp %(destination)s/migacctexpire /etc/cron.monthly/
 chmod 700 %(destination)s/miglustrequota
-sudo cp %(destination)s/migacctexpire /etc/cron.hourly/
+sudo cp %(destination)s/miglustrequota /etc/cron.hourly/
 
 ''' % expanded
     instructions_path = "%s/instructions.txt" % destination
