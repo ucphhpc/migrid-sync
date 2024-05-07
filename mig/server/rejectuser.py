@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # rejectuser - Reject a MiG user request with an explanation on email
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -57,6 +57,7 @@ Where OPTIONS may be one or more of:
    -h                  Show this help
    -i CERT_DN          Use CERT_DN as user ID despite what other fields suggest
    -r REASON           Display REASON for reject in email to help user retry
+   -s                  Skip automatic notification to email in user request
    -u USER_FILE        Read user information from pickle file
    -v                  Verbose output
 """ % {'name': name})
@@ -70,12 +71,13 @@ if '__main__' == __name__:
     reason = "invalid or missing mandatory info"
     verbose = False
     admin_copy = False
+    user_copy = True
     raw_targets = {'email': []}
     user_file = None
     user_id = None
     user_dict = {}
     override_fields = {}
-    opt_args = 'a:c:Cd:e:fhi:r:u:v'
+    opt_args = 'a:c:Cd:e:fhi:r:su:v'
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
@@ -103,6 +105,8 @@ if '__main__' == __name__:
             user_id = val
         elif opt == '-r':
             reason = val
+        elif opt == '-s':
+            user_copy = False
         elif opt == '-u':
             user_file = val
         elif opt == '-v':
@@ -142,8 +146,9 @@ if '__main__' == __name__:
     fill_user(user_dict)
     user_id = user_dict['distinguished_name']
 
-    # Default to inform mail used in request
-    raw_targets['email'].append(user_dict.get('email', keyword_auto))
+    # Optionally inform mail used in request
+    if user_copy:
+        raw_targets['email'].append(user_dict.get('email', keyword_auto))
 
     # Now all user fields are set and we can reject and warn the user
 
