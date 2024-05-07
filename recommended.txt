@@ -1,0 +1,33 @@
+# migrid recommended libs on a format suitable for pip install as described on
+# https://pip.pypa.io/en/stable/reference/requirement-specifiers/
+wsgidav
+paramiko
+pyOpenSSL
+pyftpdlib
+watchdog
+scandir
+python-openid
+irclib; python_version < '3.0'
+jsonrpclib
+requests
+# cracklib requires libcrack2-dev or similar system package to build
+#cracklib
+pdfkit
+xvfbwrapper
+pyotp
+openstackclient
+pyyaml
+nbformat
+more-itertools
+nbconvert
+papermill
+notebook_parameterizer
+psutil
+email-validator
+dnspython
+# sslkeylog requires libssl-dev or similar system package to build
+#sslkeylog
+pyenchant
+
+# NOTE: core dependencies are listed in requirements.txt and can be installed
+#       by pointing pip there 
