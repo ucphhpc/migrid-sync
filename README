@@ -33,11 +33,14 @@ tools and a Python interpreter with a few external modules.
 -Apache Rewrite module (http://httpd.apache.org/docs/current/mod/mod_rewrite.html)
 -OpenSSH clients (https://www.openssh.org/)
 -Python 2.7 or later (https://www.python.org/)
+-Python future module (https://pypi.org/project/future/)
 
-As of early 2023 the Python 3.x support still has some rough edges, so the
-trunk / master branch for the time being concentrates on the old stable 2.x
-version, while the edge and experimental branches are used to polish 3.x
-support. At some point we will make the switch to 3.x completely.
+Since early 2023 the Python 3.x support is stabilizing and getting real world
+testing. The trunk / master branch for the time being still concentrates on the
+old stable 2.x version, while the edge and experimental branches are used to
+polish 3.x support. At some point in mid 2024 we will completely make the switch
+to 3.x when popular distributions having python-2.x as default reach their
+End-of-Life.
 
 Optional file synchronization, WSGI interface, OpenID 2.0 / Connect login,
 instant messaging service, efficient file access services, event handler
