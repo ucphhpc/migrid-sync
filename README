@@ -76,7 +76,6 @@ the following additional software:
 -Python psutil (https://pypi.org/project/psutil/)
 -Python email-validator (https://pypi.org/project/email-validator/)
 -Python dnspython (https://pypi.org/project/dnspython/)
--Python future (https://pypi.org/project/future/)
 -Python sslkeylog (https://pypi.org/project/sslkeylog/)
 -LFTP (http://lftp.yar.ru/)
 -RSync (https://rsync.samba.org/)
