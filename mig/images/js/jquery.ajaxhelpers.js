@@ -1036,7 +1036,7 @@ function check_oidc_available(action, oidc_title, oidc_url, tag_prefix) {
             var online = false;
             var err = "";
             /* NOTE: just fake online for now */
-            online = true;
+            online = "online";
             $("#"+tag_prefix+"status").removeClass("spinner iconleftpad");
             $("#"+tag_prefix+"msg").empty();
             $("#"+tag_prefix+"msg").append(online);
