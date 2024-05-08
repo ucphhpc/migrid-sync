@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # signup - general sign up entry point backend
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -114,20 +114,22 @@ def main(client_id, user_arguments_dict):
         oid_url = "%s";
         tag_prefix = "extoid_";
         check_oid_available(action, oid_title, oid_url, tag_prefix);
+        oidc_title = "%s";
         oidc_url = "%s";
         tag_prefix = "extoidc_";
-        check_oid_available(action, oid_title, oidc_url, tag_prefix);
+        check_oidc_available(action, oidc_title, oidc_url, tag_prefix);
         oid_title = "%s";
         var oid_url = "%s";
         tag_prefix = "migoid_";
         check_oid_available(action, oid_title, oid_url, tag_prefix);
+        oidc_title = "%s";
         var oidc_url = "%s";
         tag_prefix = "migoidc_";
-        check_oid_available(action, oid_title, oidc_url, tag_prefix);
+        check_oidc_available(action, oidc_title, oidc_url, tag_prefix);
 ''' % (configuration.user_ext_oid_title, configuration.user_ext_oid_provider,
-       configuration.user_ext_oidc_provider, configuration.user_mig_oid_title,
-       configuration.user_mig_oid_provider,
-       configuration.user_mig_oidc_provider)
+       configuration.user_ext_oidc_title, configuration.user_ext_oidc_provider,
+       configuration.user_mig_oid_title, configuration.user_mig_oid_provider,
+       configuration.user_mig_oidc_title, configuration.user_mig_oidc_provider)
     title_entry['script']['advanced'] += add_import
     title_entry['script']['init'] += add_init
     title_entry['script']['ready'] += add_ready
@@ -195,7 +197,7 @@ account on %(short_title)s with that OpenID login associated.
             if method == 'migoidc':
                 html += """
 <p>
-%(migoid_title)s users can sign up for an account with OpenID Connect access here.
+%(migoidc_title)s users can sign up for an account with OpenID Connect access here.
 </p>
 <div id='migoidc_status'>
 <!-- OpenID Connect status updated by AJAX call -->
@@ -207,7 +209,7 @@ account on %(short_title)s with that OpenID login associated.
 <form method='post' action='%(migoidc_url)s'>
 <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
 <!-- NOTE: we can't request field here as there is no account yet! -->
-<input id='migoidc_button' type='submit' value='%(migoid_title)s User OpenID Connect Signup' />
+<input id='migoidc_button' type='submit' value='%(migoidc_title)s User OpenID Connect Signup' />
 </form>
 </div>
 <p>
@@ -246,7 +248,7 @@ need to enter your credentials and accept that your identity is used for
             if method == 'extoidc':
                 html += """
 <p>
-%(extoid_title)s users can sign up for an account here using their existing
+%(extoidc_title)s users can sign up for an account here using their existing
 OpenID Connect credentials.
 </p>
 <div id='extoidc_status'>
@@ -258,7 +260,7 @@ OpenID Connect credentials.
 <div class='form_container'>
 <form method='post' action='%(extoidc_url)s'>
 <input type='hidden' name='%(csrf_field)s' value='%(csrf_token)s' />
-<input id='extoidc_button' type='submit' value='%(extoid_title)s User OpenID Connect Signup' />
+<input id='extoidc_button' type='submit' value='%(extoidc_title)s User OpenID Connect Signup' />
 </form>
 </div>
 <p>
@@ -317,9 +319,11 @@ to accept that your certificate is used for %(short_title)s login.
     var_map = {'migoid_url': valid_show['migoid']['url'],
                'migoidc_url': valid_show['migoidc']['url'],
                'migoid_title': configuration.user_mig_oid_title,
+               'migoidc_title': configuration.user_mig_oidc_title,
                'extoid_url': valid_show['extoid']['url'],
                'extoidc_url': valid_show['extoidc']['url'],
                'extoid_title': configuration.user_ext_oid_title,
+               'extoidc_title': configuration.user_ext_oidc_title,
                'migcert_url': valid_show['migcert']['url'],
                'migcert_title': configuration.user_mig_cert_title,
                'extcert_url': valid_show['extcert']['url'],
