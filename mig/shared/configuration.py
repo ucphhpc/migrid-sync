@@ -1800,10 +1800,10 @@ location.""" % self.config_file)
             self.quota_backend = config.get(
                 'QUOTA', 'backend')
         if config.has_option('QUOTA', 'user_limit'):
-            self.quota_user_limit = config.get(
+            self.quota_user_limit = config.getint(
                 'QUOTA', 'user_limit')
         if config.has_option('QUOTA', 'vgrid_limit'):
-            self.quota_vgrid_limit = config.get(
+            self.quota_vgrid_limit = config.getint(
                 'QUOTA', 'vgrid_limit')
 
         if config.has_option('SITE', 'images'):
