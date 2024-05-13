@@ -1,0 +1,29 @@
+#!/bin/sh
+
+set -e
+
+SCRIPT_PATH=$(realpath "$0")
+SCRIPT_BASE=$(dirname -- "$SCRIPT_PATH")
+DOCKER_BASE="$SCRIPT_BASE/docker"
+DOCKER_IMAGEID_FILE="$SCRIPT_BASE/py2.imageid"
+
+# determine if the image has changed
+echo -n "validating container.. "
+
+# load a previously written docker image id if present
+IMAGEID_STORED=$(cat "$DOCKER_IMAGEID_FILE" 2>/dev/null || echo "")
+
+IMAGEID=$(docker build -f "$DOCKER_BASE/Dockerfile.python2" . -q)
+if [ "$IMAGEID" != "$IMAGEID_STORED" ]; then
+    echo "rebuilt for changes"
+
+    # reset the image id so the next call finds no changes
+    echo "$IMAGEID" > "$DOCKER_IMAGEID_FILE"
+else
+    echo "no changes needed"
+fi
+
+echo
+
+# execute python2 within the image passing the supplied arguments
+docker run -it --rm --mount type=bind,source=.,target=/usr/src/app "$IMAGEID" python2 "$@"
