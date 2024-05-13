@@ -117,9 +117,10 @@ _ACCENT_CATS = frozenset(('Lu', 'Ll', 'Lt', ))
 # http://practicaltypography.com/common-accented-characters.html
 # ./getglyphs.py http://practicaltypography.com/common-accented-characters.html
 # found glyphs: áÁàÀâÂäÄãÃåÅæÆçÇéÉèÈêÊëËíÍìÌîÎïÏñÑóÓòÒôÔöÖõÕøØœŒßúÚùÙûÛüÜ
+# Explicitly add a few common Northern Atlantic chars as requested in issue 35.
 
 VALID_ACCENTED = \
-    'áÁàÀâÂäÄãÃåÅæÆçÇéÉèÈêÊëËíÍìÌîÎïÏñÑóÓòÒôÔöÖõÕøØœŒßúÚùÙûÛüÜ' + 'ıİ'
+    'áÁàÀâÂäÄãÃåÅæÆçÇéÉèÈêÊëËíÍìÌîÎïÏñÑóÓòÒôÔöÖõÕøØœŒßúÚùÙûÛüÜ' + 'ıİ' + 'ÐðÝýÞþ'
 
 # NOTE: we carefully avoid shell interpretation of dollar everywhere
 
@@ -2275,7 +2276,7 @@ if __name__ == '__main__':
     for test_path in ('test.txt', 'Test Æøå', 'Test Überh4x0r',
                       'Test valid Jean-Luc Géraud', 'Test valid Źacãŕ',
                       'Test valid special%&()!$¶â€', 'Test look-alike-å å',
-                      'Test exotic لرحيم',
+                      'Test north Atlantic Barður Ðýþ', 'Test exotic لرحيم',
                       'Test Invalid ?', 'Test Invalid `',
                       'Test invalid <', 'Test Invalid >',
                       'Test Invalid *', 'Test Invalid "'):
