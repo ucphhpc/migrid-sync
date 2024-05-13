@@ -1,6 +1,7 @@
 # migrid dependencies on a format suitable for pip install as described on 
 # https://pip.pypa.io/en/stable/reference/requirement-specifiers/
 future
+pyyaml
 
 # NOTE: additional optional dependencies depending on site conf are listed
 #       in recommended.txt and can be installed in the same manner by pointing
