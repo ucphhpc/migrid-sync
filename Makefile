@@ -3,6 +3,11 @@ ifeq ($(PY),2)
 else
 	PYTHON_BIN = './envhelp/venv/bin/python3'
 endif
+ifeq ($(ALLDEPS),1)
+        REQS_PATH = ./recommended.txt
+else
+        REQS_PATH = ./requirements.txt
+endif
 
 info:
 	@echo "Welcome to MiGrid"
@@ -30,10 +35,10 @@ test: dependencies
 .PHONY: dependencies
 dependencies: ./envhelp/venv/pyvenv.cfg ./envhelp/py3.depends
 
-./envhelp/py3.depends: requirements.txt
+./envhelp/py3.depends: $(REQS_PATH)
 	@rm -f ./envhelp/py3.depends
-	@echo "installing dependencies"
-	@./envhelp/venv/bin/pip3 install -r requirements.txt
+	@echo "installing dependencies from $(REQS_PATH)"
+	@./envhelp/venv/bin/pip3 install -r $(REQS_PATH)
 	@touch ./envhelp/py3.depends
 
 ./envhelp/venv/pyvenv.cfg:
