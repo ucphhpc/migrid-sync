@@ -21,6 +21,7 @@ clean:
 distclean: clean
 	@rm -rf ./envhelp/venv
 	@rm -rf ./tests/__pycache__
+	@rm -f ./tests/*.pyc
 
 .PHONY: test
 test: dependencies
