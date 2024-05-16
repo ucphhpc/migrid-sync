@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cgishared - cgi helper function
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -78,9 +78,9 @@ def init_cgiscript_possibly_with_cert(print_header=True,
     # get DN of user currently logged in
 
     client_id = extract_client_id(configuration, environ)
-    if not client_id:
-        logger.debug('(No client ID available in SSL session)')
-
-    logger.info('script: %s cert: %s' %
-                (requested_backend(environ, strip_ext=False), client_id))
+    if client_id:
+        logger.info('script: %s , client id: %r' %
+                    (requested_backend(environ, strip_ext=False), client_id))
+    else:
+        logger.debug('script: %s , no client ID available in SSL session')
     return (logger, configuration, client_id, out)

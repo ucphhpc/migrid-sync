@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cgiscriptstub - cgi wrapper functions for functionality backends
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -60,8 +60,12 @@ def init_cgi_script(environ, delayed_input=None):
     # get and log ID of user currently logged in
 
     client_id = extract_client_id(configuration, environ)
-    logger.info('script: %s cert: %s' %
-                (requested_backend(environ, strip_ext=False), client_id))
+    if client_id:
+        logger.info('script: %s , client id: %r' %
+                    (requested_backend(environ, strip_ext=False), client_id))
+    else:
+        logger.debug('script: %s , no client ID available in SSL session' %
+                     requested_backend(environ, strip_ext=False))
     if not delayed_input:
         fieldstorage = cgi.FieldStorage()
         user_arguments_dict = fieldstorage_to_dict(fieldstorage)
