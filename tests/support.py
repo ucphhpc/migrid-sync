@@ -42,6 +42,9 @@ TEST_OUTPUT_DIR = os.path.join(TEST_BASE, "output")
 MIG_BASE = os.path.realpath(os.path.join(TEST_BASE, ".."))
 PY2 = sys.version_info[0] == 2
 
+# force defaults to a local environment
+os.environ['MIG_ENV'] = 'local'
+
 # All MiG related code will at some point include bits
 # from the mig module namespace. Rather than have this
 # knowledge spread through every test file, make the
@@ -53,8 +56,9 @@ sys.path.append(MIG_BASE)
 try:
     os.mkdir(TEST_OUTPUT_DIR)
 except EnvironmentError as enverr:
-    if enverr.errno == errno.EEXIST:
-        pass  # FileExistsError
+    if enverr.errno == errno.EEXIST:  # FileExistsError
+        shutil.rmtree(TEST_OUTPUT_DIR)
+        os.mkdir(TEST_OUTPUT_DIR)
 
 # Basic global logging configuration for testing
 
@@ -175,7 +179,9 @@ class MigTestCase(TestCase):
             self._reset_logging(stream=BLACKHOLE_STREAM)
 
         for path in self._cleanup_paths:
-            if os.path.isdir(path):
+            if os.path.islink(path):
+                os.remove(path)
+            elif os.path.isdir(path):
                 shutil.rmtree(path)
             elif os.path.exists(path):
                 os.remove(path)
@@ -197,8 +203,10 @@ class MigTestCase(TestCase):
         assert not os.path.isabs(
             relative_path), "expected relative path within output folder"
         absolute_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
-        stat_result = os.stat(absolute_path)
-        if stat.S_ISDIR(stat_result.st_mode):
+        stat_result = os.lstat(absolute_path)
+        if stat.S_ISLNK(stat_result.st_mode):
+            return "symlink"
+        elif stat.S_ISDIR(stat_result.st_mode):
             return "dir"
         else:
             return "file"

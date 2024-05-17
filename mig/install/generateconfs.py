@@ -353,8 +353,8 @@ if '__main__' == __name__:
         if val == 'DEFAULT':
             del settings[key]
     conf = generate_confs(**settings)
-    # print "DEBUG: %s" % conf
-    instructions_path = "%(destination)s/instructions.txt" % conf
+    # TODO: avoid reconstructing this path (also done inside generate_confs)
+    instructions_path = "%s/instructions.txt" % conf['destination_path']
     try:
         instructions_fd = open(instructions_path, "r")
         instructions = instructions_fd.read()
