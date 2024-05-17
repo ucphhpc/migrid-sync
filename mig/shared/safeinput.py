@@ -54,6 +54,7 @@ except ImportError:
 from mig.shared.base import force_unicode, force_native_str
 from mig.shared.defaults import src_dst_sep, username_charset, \
     username_max_length, session_id_charset, session_id_length, \
+    subject_id_charset, subject_id_min_length, subject_id_max_length, \
     workflow_id_length, MAX_SWEEP, maxfill_fields
 from mig.shared.listhandling import frange
 from mig.shared.validstring import valid_user_path, silent_email_validator
@@ -691,6 +692,22 @@ def valid_job_name(
 
     valid_chars = VALID_JOB_NAME_CHARACTERS + extra_chars
     __valid_contents(job_name, valid_chars, min_length, max_length)
+
+
+def valid_subject_id(
+    subject_id,
+    min_length=subject_id_min_length,
+    max_length=subject_id_max_length,
+    extra_chars='',
+):
+    """Verify that supplied subject ID is expected length and only contains
+    characters that we consider valid. Subject IDs are ID Provider unique user
+    IDs and may use different formats including some that resemble email
+    addresses and others that are more like a simple random ascii string.
+    """
+
+    valid_chars = subject_id_charset + extra_chars
+    __valid_contents(subject_id, valid_chars, min_length, max_length)
 
 
 def valid_backup_names(
@@ -1948,11 +1965,14 @@ def guess_type(name):
             'openid.sreg.email',
             'openid.sreg.mail',
             'oidc.claim.email',
-            'oidc.claim.upn',
-            'oidc.claim.sub',
             'adminemail',
         ):
             __type_map[key] = valid_email_address
+        for key in (
+            'oidc.claim.upn',
+            'oidc.claim.sub',
+        ):
+            __type_map[key] = valid_subject_id
         for key in (
             'peers_full_name',
         ):
@@ -2383,6 +2403,7 @@ if __name__ == '__main__':
         'oidc.claim.aud': [''],
         'oidc.claim.nickname': [''],
         'oidc.claim.email': [''],
+        'oidc.claim.name': [''],
         'oidc.claim.fullname': [''],
         'oidc.claim.o': [''],
         'oidc.claim.ou': [''],
@@ -2413,6 +2434,33 @@ if __name__ == '__main__':
                            'oidc.claim.association': ['sci-nbi-tap'],
                            'oidc.claim.o': ['science'],
                            'oidc.claim.email': ['bardino@nbi.ku.dk']}
+    (accepted, rejected) = validated_input(user_arguments_dict,
+                                           autocreate_defaults)
+    print("Accepted:")
+    for (key, val) in accepted.items():
+        print("\t%s: %s" % (key, val))
+    print("Rejected:")
+    for (key, val) in rejected.items():
+        print("\t%s: %s" % (key, val))
+    user_arguments_dict = {'oidc.claim.aud': ['http://somedomain.org'],
+                           'oidc.claim.country': ['DK'],
+                           'oidc.claim.email': ['bardino@science.ku.dk'],
+                           'oidc.claim.iss': ['https://wayf.wayf.dk'],
+                           'oidc.claim.name': ['Jonas Bardino'],
+                           'oidc.claim.organization': ['ku.dk'],
+                           'oidc.claim.role': ['staff'],
+                           'oidc.claim.sub': ['brs278@ku.dk'],
+                           # 'oidc.claim.oid': [''], 'oidc.claim.upn': [''],
+                           # 'oidc.claim.nickname': [''],
+                           # 'oidc.claim.fullname': [''], 'oidc.claim.o': [''],
+                           # 'oidc.claim.ou': [''],
+                           # 'oidc.claim.organizational_unit': [''],
+                           # 'oidc.claim.timezone': [''],
+                           # 'oidc.claim.state': [''],
+                           # 'oidc.claim.locality': [''],
+                           # 'oidc.claim.roles': [''],
+                           # 'oidc.claim.association': ['']
+                           }
     (accepted, rejected) = validated_input(user_arguments_dict,
                                            autocreate_defaults)
     print("Accepted:")

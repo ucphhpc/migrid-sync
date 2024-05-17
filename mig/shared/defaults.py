@@ -143,6 +143,12 @@ session_id_bytes = 32
 session_id_length = session_id_bytes * 2
 session_id_charset = digits + 'abcdef'
 
+# ID providers assign unique IDs to their users. This will be either be a
+# random ascii subset or email address form.
+subject_id_min_length = 6
+subject_id_max_length = 255
+subject_id_charset = ascii_lowercase + ascii_uppercase + digits + '_-@.'
+
 # Workflow IDs, is a 24 character random string
 workflow_id_bytes = 12
 workflow_id_length = workflow_id_bytes * 2
