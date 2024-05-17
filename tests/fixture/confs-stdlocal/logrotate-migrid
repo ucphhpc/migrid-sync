@@ -1,0 +1,17 @@
+/home/mig/state/log/*.log /home/mig/state/log/*.out {
+	weekly
+	missingok
+	rotate 52
+	compress
+	delaycompress
+	notifempty
+	create 640 testuser tesggroup
+	# NOTE we need root to restart services
+	#su testuser tesggroup
+	su root tesggroup
+	sharedscripts
+	postrotate
+           service migrid reload; \
+           service apache2 reload;
+	endscript
+}

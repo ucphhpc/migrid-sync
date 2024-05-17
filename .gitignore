@@ -178,9 +178,11 @@ mig/images/site-conf.js
 .vscode/
 
 # self-test
+/envhelp/output/
 /envhelp/venv/
 /envhelp/*.depends
 /envhelp/*.imageid
+/tests/output/
 
 # Mac OSX noise
 *.DS_Store

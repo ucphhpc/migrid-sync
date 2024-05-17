@@ -1,0 +1,52 @@
+# envvars - default environment variables for apache(2)?ctl
+
+# this won't be correct after changing uid
+unset HOME
+
+# Distro-specific name of apache httpd daemon binary
+APACHE_DAEMON="apache2"
+
+# for supporting multiple dev users with their own daemon instances
+APACHE_SUFFIX=
+
+# Since there is no sane way to get the parsed ${APACHE_DAEMON} config in scripts, some
+# settings are defined via environment variables and then used in apache(2)?ctl,
+# /etc/init.d/${APACHE_DAEMON}, /etc/logrotate.d/${APACHE_DAEMON}, etc.
+APACHE_RUN_USER=testuser
+APACHE_RUN_GROUP=tesggroup
+APACHE_PID_FILE=/var/run/apache2.pid
+APACHE_RUN_DIR=/var/run
+APACHE_LOCK_DIR=/var/lock
+# Only /var/log/apache2 is handled by /etc/logrotate.d/apache2.
+APACHE_LOG_DIR=/var/log/apache2
+# Custom etc dir support
+APACHE_ETC_DIR=/etc/apache2
+# CentOS systemd parsing chokes on quotes 
+APACHE_ARGUMENTS="-f ${APACHE_ETC_DIR}/${APACHE_DAEMON}.conf -d ${APACHE_ETC_DIR}"
+#APACHE_ARGUMENTS=-f ${APACHE_ETC_DIR}/${APACHE_DAEMON}.conf -d ${APACHE_ETC_DIR}
+# Needed for absolute mig.X imports which are now required by PEP8
+PYTHONPATH=/home/mig
+
+## The locale used by some modules like wsgi
+# NOTE: set to UTF-8 explicitly to avoid e.g. ASCII or exotic default encodings
+LANG=en_US.utf8
+LC_CTYPE=en_US.utf8
+
+# Export variables if possible - may be ignored on systemd without proper shell
+export APACHE_DAEMON
+export APACHE_SUFFIX
+export APACHE_RUN_USER
+export APACHE_RUN_GROUP
+export APACHE_PID_FILE
+export APACHE_RUN_DIR
+export APACHE_LOCK_DIR
+export APACHE_LOG_DIR
+export APACHE_ETC_DIR
+export APACHE_ARGUMENTS
+export PYTHONPATH
+export LANG
+export LC_CTYPE
+
+## The command to get the status for 'apache(2)?ctl status'.
+## Some packages providing 'www-browser' need '--dump' instead of '-dump'.
+#export APACHE_LYNX='www-browser -dump'

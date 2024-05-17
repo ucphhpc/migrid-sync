@@ -1,0 +1,888 @@
+#!/bin/bash
+#
+#	/etc/rc.d/init.d/migrid
+#
+#	MiG is a grid middleware with minimal user and resource requirements
+#
+#	Recognized arguments:
+#	    start   - start MiG system components
+#	    stop    - terminate MiG system components
+#	    restart - terminate and start MiG system 
+#	    reload  - reload MiG system components
+#	    status  - report MiG system component's status
+#
+#	Customization of the MiG installation should be specified by
+#	variables in /etc/sysconfig/migrid
+#
+# Made from the template /usr/share/doc/initscripts-X/sysinitvfiles
+# from our CentOS installation
+#
+# <tags ...>
+#
+# chkconfig: - 90 10
+# description: MiG is a grid middleware with minimal user and resource requirements
+# processname: grid_script.py(default)
+# processname: grid_monitor.py
+# processname: grid_sshmux.py
+# processname: grid_events.py
+# processname: grid_cron.py
+# processname: grid_transfers.py
+# processname: grid_openid.py
+# processname: grid_sftp.py
+# processname: grid_webdavs.py
+# processname: grid_ftps.py
+# processname: grid_notify.py
+# processname: grid_imnotify.py
+# processname: grid_vmproxy.py
+# processname: sshd
+# config: /etc/sysconfig/migrid
+# 
+
+# Source function library.
+. /etc/init.d/functions
+
+# <define any local shell functions used by the code that follows>
+
+# first, pull in custom configuration (if it exists):
+if [ -f /etc/sysconfig/migrid ]; then
+    . /etc/sysconfig/migrid
+fi
+# define default locations and user for MiG if not set:
+if [ -z "$MIG_USER" ]; then 
+    MIG_USER=mig
+fi
+if [ -z "$MIG_PATH" ]; then
+    MIG_PATH=/home/${MIG_USER}
+fi
+# more configurable paths:
+if [ -z "$MIG_STATE" ]; then 
+    MIG_STATE=${MIG_PATH}/state
+fi
+if [ -z "$MIG_CODE" ]; then 
+    MIG_CODE=${MIG_PATH}/mig
+fi
+if [ -z "$MIG_SFTPSUBSYS_CONF" ]; then 
+    MIG_SFTPSUBSYS_CONF=/etc/ssh/sshd_config-MiG-sftp-subsys
+fi
+# Needed for absolute mig.X imports which are now required by PEP8
+if [ -z "$PYTHONPATH" ]; then
+    export PYTHONPATH=${MIG_PATH}
+else
+    export PYTHONPATH=${MIG_PATH}:$PYTHONPATH
+fi
+# you probably do not want to modify these...
+PID_DIR=${PID_DIR:-/var/run}
+MIG_LOG=${MIG_STATE}/log
+MIG_SCRIPT=${MIG_CODE}/server/grid_script.py
+MIG_MONITOR=${MIG_CODE}/server/grid_monitor.py
+MIG_SSHMUX=${MIG_CODE}/server/grid_sshmux.py
+MIG_EVENTS=${MIG_CODE}/server/grid_events.py
+MIG_CRON=${MIG_CODE}/server/grid_cron.py
+MIG_TRANSFERS=${MIG_CODE}/server/grid_transfers.py
+MIG_OPENID=${MIG_CODE}/server/grid_openid.py
+MIG_SFTP=${MIG_CODE}/server/grid_sftp.py
+MIG_SFTPSUBSYS=/usr/sbin/sshd
+MIG_SFTPSUBSYS_WORKER=${MIG_CODE}/server/sftp_subsys.py
+MIG_WEBDAVS=${MIG_CODE}/server/grid_webdavs.py
+MIG_FTPS=${MIG_CODE}/server/grid_ftps.py
+MIG_NOTIFY=${MIG_CODE}/server/grid_notify.py
+MIG_IMNOTIFY=${MIG_CODE}/server/grid_imnotify.py
+MIG_VMPROXY=${MIG_CODE}/server/grid_vmproxy.py
+MIG_CHKUSERROOT=${MIG_CODE}/server/chkuserroot.py
+MIG_CHKSIDROOT=${MIG_CODE}/server/chksidroot.py
+
+show_usage() {
+    echo "Usage: migrid {start|stop|status|restart|reload}[daemon DAEMON]"
+    echo "where daemon is left out for all or given along with DAEMON as one of the following"
+    echo "(script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|all)"
+}
+
+check_enabled() {
+    su - ${MIG_USER} -c "PYTHONPATH=${PYTHONPATH} ${MIG_CODE}/server/chkenabled.py $1" > /dev/null
+    DAEMON_ENABLED=$?
+    if [ ${DAEMON_ENABLED} -ne 0 ]; then
+        echo "$1 not enabled in MiGserver conf - skipping"
+    fi
+    return ${DAEMON_ENABLED}
+}
+
+kick_script() {
+    # send dummy event to kick the server into gear if enabled ...
+    DAEMON_PATH=${MIG_SCRIPT}
+    # Make sure daemon start had time to launch python and bail out if disabled
+    sleep 2 && pgrep -f "${DAEMON_PATH}" > /dev/null && \
+        echo "" >> ${MIG_CODE}/server/server.stdin
+}
+
+start_script() {
+    check_enabled "jobs" || return
+    DAEMON_PATH=${MIG_SCRIPT}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Starting MiG server daemon: $SHORT_NAME"
+    daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
+	   "${DAEMON_PATH} >> ${MIG_LOG}/script.out 2>&1 &"
+    RET=$?
+    if [ $RET -ne 0 ]; then 
+	failure
+	exit $RET
+    else
+	# Force pipe cleaning in the background
+	kick_script &
+	success
+    fi
+    echo
+}
+start_monitor() {
+    check_enabled "jobs" || return
+    DAEMON_PATH=${MIG_MONITOR}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Starting MiG monitor daemon: $SHORT_NAME"
+    daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
+	   "${DAEMON_PATH} >> ${MIG_LOG}/monitor.out 2>&1 &"
+    RET2=$?
+    [ $RET2 ] && success
+    echo
+    [ $RET2 ] || echo "Warning: monitor not started."
+    echo
+}
+start_sshmux() {
+    check_enabled "jobs" || return
+    DAEMON_PATH=${MIG_SSHMUX}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Starting MiG sshmux daemon: $SHORT_NAME"
+    daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
+	   "${DAEMON_PATH} >> ${MIG_LOG}/sshmux.out 2>&1 &"
+    RET2=$?
+    [ $RET2 ] && success
+    echo
+    [ $RET2 ] || echo "Warning: sshmux not started."
+    echo
+}
+start_events() {
+    check_enabled "events" || return
+    DAEMON_PATH=${MIG_EVENTS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    # NOTE: event handlers can be quite heavy so we lower sched prio a bit
+    echo -n "Starting MiG events daemon: $SHORT_NAME"
+    daemon +10 --user ${MIG_USER} --pidfile ${PID_FILE} \
+	   "${DAEMON_PATH} >> ${MIG_LOG}/events.out 2>&1 &"
+    RET2=$?
+    [ $RET2 ] && success
+    echo
+    [ $RET2 ] || echo "Warning: events not started."
+    echo
+}
+start_cron() {
+    check_enabled "crontab" || return
+    DAEMON_PATH=${MIG_CRON}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    # NOTE: cron jobs can be quite heavy so we lower sched prio a bit
+    echo -n "Starting MiG cron daemon: $SHORT_NAME"
+    daemon +10 --user ${MIG_USER} --pidfile ${PID_FILE} \
+	   "${DAEMON_PATH} >> ${MIG_LOG}/cron.out 2>&1 &"
+    RET2=$?
+    [ $RET2 ] && success
+    echo
+    [ $RET2 ] || echo "Warning: cron not started."
+    echo
+}
+start_transfers() {
+    check_enabled "transfers" || return
+    DAEMON_PATH=${MIG_TRANSFERS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Starting MiG transfers daemon: $SHORT_NAME"
+    daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
+	   "${DAEMON_PATH} >> ${MIG_LOG}/transfers.out 2>&1 &"
+    RET2=$?
+    [ $RET2 ] && success
+    echo
+    [ $RET2 ] || echo "Warning: transfers not started."
+    echo
+}
+start_openid() {
+    check_enabled "openid" || return
+    DAEMON_PATH=${MIG_OPENID}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Starting MiG openid daemon: $SHORT_NAME"
+    daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
+	   "${DAEMON_PATH} >> ${MIG_LOG}/openid.out 2>&1 &"
+    RET2=$?
+    [ $RET2 ] && success
+    echo
+    [ $RET2 ] || echo "Warning: openid not started."
+    echo
+}
+start_sftp() {
+    check_enabled "sftp" || return
+    DAEMON_PATH=${MIG_SFTP}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Starting MiG sftp daemon: $SHORT_NAME"
+    daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
+	   "${DAEMON_PATH} >> ${MIG_LOG}/sftp.out 2>&1 &"
+    RET2=$?
+    [ $RET2 ] && success
+    echo
+    [ $RET2 ] || echo "Warning: sftp not started."
+    echo
+}
+start_webdavs() {
+    check_enabled "davs" || return
+    DAEMON_PATH=${MIG_WEBDAVS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Starting MiG webdavs daemon: $SHORT_NAME"
+    daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
+	   "${DAEMON_PATH} >> ${MIG_LOG}/webdavs.out 2>&1 &"
+    RET2=$?
+    [ $RET2 ] && success
+    echo
+    [ $RET2 ] || echo "Warning: webdavs not started."
+    echo
+}
+start_ftps() {
+    check_enabled "ftps" || return
+    DAEMON_PATH=${MIG_FTPS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Starting MiG ftps daemon: $SHORT_NAME"
+    daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
+	   "${DAEMON_PATH} >> ${MIG_LOG}/ftps.out 2>&1 &"
+    RET2=$?
+    [ $RET2 ] && success
+    echo
+    [ $RET2 ] || echo "Warning: ftps not started."
+    echo
+}
+start_notify() {
+    check_enabled "notify" || return
+    DAEMON_PATH=${MIG_NOTIFY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Starting MiG notify daemon: $SHORT_NAME"
+    daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
+       "${DAEMON_PATH} >> ${MIG_LOG}/notify.out 2>&1 &"
+    RET2=$?
+    [ $RET2 ] && success
+    echo
+    [ $RET2 ] || echo "Warning: notify not started."
+    echo
+}
+start_imnotify() {
+    check_enabled "imnotify" || return
+    DAEMON_PATH=${MIG_IMNOTIFY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Starting MiG IM notify daemon: $SHORT_NAME"
+    daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
+	   "${DAEMON_PATH} >> ${MIG_LOG}/imnotify.out 2>&1 &"
+    RET2=$?
+    [ $RET2 ] && success
+    echo
+    [ $RET2 ] || echo "Warning: imnotify not started."
+    echo
+}
+start_vmproxy() {
+    check_enabled "vmachines" || return
+    DAEMON_PATH=${MIG_VMPROXY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Starting MiG VM proxy daemon: $SHORT_NAME"
+    daemon --user ${MIG_USER} --pidfile ${PID_FILE} \
+	   "${DAEMON_PATH} >> ${MIG_LOG}/vmproxy.out 2>&1 &"
+    RET2=$?
+    [ $RET2 ] && success
+    echo
+    [ $RET2 ] || echo "Warning: vmproxy not started."
+    echo
+}
+start_sftpsubsys() {
+    check_enabled "sftp_subsys" || return
+    DAEMON_PATH=${MIG_SFTPSUBSYS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    echo -n "Starting MiG sftpsubsys daemon: $SHORT_NAME"
+    ${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}
+    RET2=$?
+    [ $RET2 ] && success
+    echo
+    [ $RET2 ] || echo "Warning: sftpsubsys not started."
+    echo
+    # NOTE: sftp subsys workers start automatically
+}
+# NOTE: apache user and SID chroot helpers start automatically
+
+start_all() {
+    start_script
+    start_monitor
+    start_sshmux
+    start_events
+    start_cron
+    start_transfers
+    start_openid
+    start_sftp
+    start_sftpsubsys
+    # Use wsgidav implementation instead of outdated PyWebDav one
+    start_webdavs
+    start_ftps
+    start_notify
+    start_imnotify
+    start_vmproxy
+    return 0
+}
+
+stop_script() {
+    check_enabled "jobs" || return
+    DAEMON_PATH=${MIG_SCRIPT}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Shutting down MiG server: $SHORT_NAME "
+    # Try graceful shutdown so that state is properly saved
+    killproc ${DAEMON_PATH} -INT
+    for delay in 1 2 3; do
+        status ${DAEMON_PATH} || break
+        sleep $delay
+    done
+    echo
+    status ${DAEMON_PATH} && killproc ${DAEMON_PATH}
+}
+stop_monitor() {
+    check_enabled "jobs" || return
+    DAEMON_PATH=${MIG_MONITOR}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Shutting down MiG monitor: $SHORT_NAME "
+    killproc ${DAEMON_PATH}
+    echo
+}
+stop_sshmux() {
+    check_enabled "jobs" || return
+    DAEMON_PATH=${MIG_SSHMUX}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Shutting down MiG sshmux: $SHORT_NAME "
+    killproc ${DAEMON_PATH}
+    echo
+}
+stop_events() {
+    check_enabled "events" || return
+    DAEMON_PATH=${MIG_EVENTS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Shutting down MiG events: $SHORT_NAME "
+    # Try graceful shutdown so that state is properly saved
+    killproc ${DAEMON_PATH} -INT
+    for delay in 1 2 3; do
+        status ${DAEMON_PATH} || break
+        sleep $delay
+    done
+    echo
+    status ${DAEMON_PATH} && killproc ${DAEMON_PATH}
+}
+stop_cron() {
+    check_enabled "crontab" || return
+    DAEMON_PATH=${MIG_CRON}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Shutting down MiG cron: $SHORT_NAME "
+    # Try graceful shutdown so that state is properly saved
+    killproc ${DAEMON_PATH} -INT
+    for delay in 1 2 3; do
+        status ${DAEMON_PATH} || break
+        sleep $delay
+    done
+    echo
+    status ${DAEMON_PATH} && killproc ${DAEMON_PATH}
+}
+stop_transfers() {
+    check_enabled "transfers" || return
+    DAEMON_PATH=${MIG_TRANSFERS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Shutting down MiG transfers: $SHORT_NAME "
+    # Try graceful shutdown so that state is properly saved
+    killproc ${DAEMON_PATH} -INT
+    for delay in 1 2 3; do
+        status ${DAEMON_PATH} || break
+        sleep $delay
+    done
+    echo
+    status ${DAEMON_PATH} && killproc ${DAEMON_PATH}
+}
+stop_openid() {
+    check_enabled "openid" || return
+    DAEMON_PATH=${MIG_OPENID}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Shutting down MiG openid: $SHORT_NAME "
+    killproc ${DAEMON_PATH}
+    echo
+}
+stop_sftp() {
+    check_enabled "sftp" || return
+    DAEMON_PATH=${MIG_SFTP}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Shutting down MiG sftp: $SHORT_NAME "
+    killproc ${DAEMON_PATH}
+    echo
+}
+stop_webdavs() {
+    check_enabled "davs" || return
+    DAEMON_PATH=${MIG_WEBDAVS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Shutting down MiG webdavs: $SHORT_NAME "
+    killproc ${DAEMON_PATH}
+    echo
+}
+stop_ftps() {
+    check_enabled "ftps" || return
+    DAEMON_PATH=${MIG_FTPS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Shutting down MiG ftps: $SHORT_NAME "
+    killproc ${DAEMON_PATH}
+    echo
+}
+stop_notify() {
+    check_enabled "notify" || return
+    DAEMON_PATH=${MIG_NOTIFY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Shutting down MiG notify: $SHORT_NAME "
+    killproc ${DAEMON_PATH}
+    echo
+}
+stop_imnotify() {
+    check_enabled "imnotify" || return
+    DAEMON_PATH=${MIG_IMNOTIFY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Shutting down MiG IM notify: $SHORT_NAME "
+    killproc ${DAEMON_PATH}
+    echo
+}
+stop_vmproxy() {
+    check_enabled "vmachines" || return
+    DAEMON_PATH=${MIG_VMPROXY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Shutting down MiG VM proxy: $SHORT_NAME "
+    killproc ${DAEMON_PATH}
+    echo
+}
+stop_sftpsubsys_workers() {
+    DAEMON_PATH=${MIG_SFTPSUBSYS_WORKER}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    echo -n "Shutting down MiG sftpsubsys workers: $SHORT_NAME "
+    # Proc only running if one or more clients are connected
+    pkill -f ${DAEMON_PATH} || true
+    echo
+}
+stop_sftpsubsys() {
+    check_enabled "sftp_subsys" || return
+    DAEMON_PATH=${MIG_SFTPSUBSYS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    echo -n "Shutting down MiG sftpsubsys: $SHORT_NAME "
+    pkill -f "${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}"
+    echo
+    # Workers don't react to parent stop and hang on to mount point etc. 
+    sleep 1
+    stop_sftpsubsys_workers
+}
+# NOTE: apache user and SID chroot helpers stop automatically
+
+stop_all() {
+    # Stop script first to leave it some time to save state
+    stop_script
+    stop_monitor
+    stop_sshmux
+    stop_events
+    stop_cron
+    stop_transfers
+    stop_openid
+    stop_sftp
+    stop_sftpsubsys
+    # Use wsgidav implementation instead of outdated PyWebDav one
+    stop_webdavs
+    stop_ftps
+    stop_notify
+    stop_imnotify
+    stop_vmproxy
+    return 0
+}
+
+reload_script() {
+    check_enabled "jobs" || return
+    DAEMON_PATH=${MIG_SCRIPT}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG server: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_monitor() {
+    check_enabled "jobs" || return
+    DAEMON_PATH=${MIG_MONITOR}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG monitor: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_sshmux() {
+    check_enabled "jobs" || return
+    DAEMON_PATH=${MIG_SSHMUX}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG sshmux: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_events() {
+    check_enabled "events" || return
+    DAEMON_PATH=${MIG_EVENTS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG events: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_cron() {
+    check_enabled "crontab" || return
+    DAEMON_PATH=${MIG_CRON}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG cron: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_transfers() {
+    check_enabled "transfers" || return
+    DAEMON_PATH=${MIG_TRANSFERS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG transfers: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_openid() {
+    check_enabled "openid" || return
+    DAEMON_PATH=${MIG_OPENID}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG openid: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_sftp() {
+    check_enabled "sftp" || return
+    DAEMON_PATH=${MIG_SFTP}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG sftp: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_webdavs() {
+    check_enabled "davs" || return
+    DAEMON_PATH=${MIG_WEBDAVS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG webdavs: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_ftps() {
+    check_enabled "ftps" || return
+    DAEMON_PATH=${MIG_FTPS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG ftps: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_notify() {
+    check_enabled "notify" || return
+    DAEMON_PATH=${MIG_NOTIFY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG notify: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_imnotify() {
+    check_enabled "imnotify" || return
+    DAEMON_PATH=${MIG_IMNOTIFY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG IM notify: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_vmproxy() {
+    check_enabled "vmachines" || return
+    DAEMON_PATH=${MIG_VMPROXY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    echo -n "Reloading MiG VM proxy: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_sftpsubsys_workers() {
+    DAEMON_PATH=${MIG_SFTPSUBSYS_WORKER}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    echo -n "Reloading MiG sftpsubsys workers: $SHORT_NAME "
+    # Proc only running if one or more clients are connected
+    pkill -HUP -f ${DAEMON_PATH} || true
+    echo
+}
+reload_sftpsubsys() {
+    check_enabled "sftp_subsys" || return
+    DAEMON_PATH=${MIG_SFTPSUBSYS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    echo -n "Reloading MiG sftpsubsys: $SHORT_NAME "
+    pkill -HUP -f "${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}"
+    echo
+    # Workers don't react to parent reload and hang on to mount point etc. 
+    sleep 1
+    reload_sftpsubsys_workers
+}
+reload_chkuserroot() {
+    DAEMON_PATH=${MIG_CHKUSERROOT}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    echo -n "Reloading MiG user chroot helper: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+reload_chksidroot() {
+    DAEMON_PATH=${MIG_CHKSIDROOT}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    echo -n "Reloading MiG SID chroot helper: $SHORT_NAME "
+    killproc ${DAEMON_PATH} -HUP
+    echo
+}
+
+reload_all() {
+    # Stop script first to leave it some time to save state
+    reload_script
+    reload_monitor
+    reload_sshmux
+    reload_events
+    reload_cron
+    reload_transfers
+    reload_openid
+    reload_sftp
+    reload_sftpsubsys
+    # Use wsgidav implementation instead of outdated PyWebDav one
+    reload_webdavs
+    reload_ftps
+    reload_notify
+    reload_imnotify
+    reload_vmproxy
+    # Apache helpers to verify proper chrooting
+    reload_chkuserroot
+    reload_chksidroot
+    return 0
+}
+
+status_script() {
+    check_enabled "jobs" || return
+    DAEMON_PATH=${MIG_SCRIPT}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status ${DAEMON_PATH}
+}
+status_monitor() {
+    check_enabled "jobs" || return
+    DAEMON_PATH=${MIG_MONITOR}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status ${DAEMON_PATH}
+}
+status_sshmux() {
+    check_enabled "jobs" || return
+    DAEMON_PATH=${MIG_SSHMUX}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status ${DAEMON_PATH}
+}
+status_events() {
+    check_enabled "events" || return
+    DAEMON_PATH=${MIG_EVENTS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status ${DAEMON_PATH}
+}
+status_cron() {
+    check_enabled "crontab" || return
+    DAEMON_PATH=${MIG_CRON}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status ${DAEMON_PATH}
+}
+status_transfers() {
+    check_enabled "transfers" || return
+    DAEMON_PATH=${MIG_TRANSFERS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status ${DAEMON_PATH}
+}
+status_openid() {
+    check_enabled "openid" || return
+    DAEMON_PATH=${MIG_OPENID}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status ${DAEMON_PATH}
+}
+status_sftp() {
+    check_enabled "sftp" || return
+    DAEMON_PATH=${MIG_SFTP}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status ${DAEMON_PATH}
+}
+status_webdavs() {
+    check_enabled "davs" || return
+    DAEMON_PATH=${MIG_WEBDAVS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status ${DAEMON_PATH}
+}
+status_ftps() {
+    check_enabled "ftps" || return
+    DAEMON_PATH=${MIG_FTPS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status ${DAEMON_PATH} 
+}
+status_notify() {
+    check_enabled "notify" || return
+    DAEMON_PATH=${MIG_NOTIFY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status ${DAEMON_PATH} 
+}
+status_imnotify() {
+    check_enabled "imnotify" || return
+    DAEMON_PATH=${MIG_IMNOTIFY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status ${DAEMON_PATH} 
+}
+status_vmproxy() {
+    check_enabled "vmachines" || return
+    DAEMON_PATH=${MIG_VMPROXY}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    PID_FILE="$PID_DIR/${SHORT_NAME}.pid"
+    status ${DAEMON_PATH} 
+}
+status_sftpsubsys_workers() {
+    DAEMON_PATH=${MIG_SFTPSUBSYS_WORKER}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    pgrep -f ${DAEMON_PATH} > /dev/null
+}
+status_sftpsubsys() {
+    check_enabled "sftp_subsys" || return
+    DAEMON_PATH=${MIG_SFTPSUBSYS}
+    SHORT_NAME=$(basename ${DAEMON_PATH})
+    pgrep -f "${DAEMON_PATH} -f ${MIG_SFTPSUBSYS_CONF}" > /dev/null
+    status_sftpsubsys_workers
+}
+
+status_all() {
+    status_script
+    status_monitor
+    status_sshmux
+    status_events
+    status_cron
+    status_transfers
+    status_openid
+    status_sftp
+    status_sftpsubsys
+    # Use wsgidav implementation instead of outdated PyWebDav one
+    status_webdavs
+    status_ftps
+    status_notify
+    status_imnotify
+    status_vmproxy
+    return 0
+}
+
+
+### Main ###
+
+# Exit cleanly if main daemon is missing
+test -f ${MIG_SCRIPT} || exit 0
+
+# Force valid target
+case "$2" in
+    script|monitor|sshmux|events|cron|transfers|openid|sftp|sftpsubsys|webdavs|ftps|notify|imnotify|vmproxy|all)
+        TARGET="$2"
+	;;
+    '')
+        TARGET="all"
+	;;
+    *)
+	show_usage
+	exit 1
+	;;
+esac
+
+case "$1" in
+    start)
+        eval "start_$TARGET"
+	;;
+    stop)
+        eval "stop_$TARGET"
+	;;
+    status)
+        eval "status_$TARGET"
+	;;
+    restart)
+        eval "stop_$TARGET"
+        eval "start_$TARGET"
+	;;
+    reload)
+        eval "reload_$TARGET"
+	;;
+    # NOTE: we need custom targets for single daemon actions (systemd issue?)
+    startdaemon)
+        eval "start_$TARGET"
+	;;
+    stopdaemon)
+        eval "stop_$TARGET"
+	;;
+    statusdaemon)
+        eval "status_$TARGET"
+	;;
+    restartdaemon)
+        eval "stop_$TARGET"
+        eval "start_$TARGET"
+	;;
+    reloaddaemon)
+        eval "reload_$TARGET"
+	;;
+#    condrestart)
+#    	<Restarts the service if it is already running. For example:>
+#	[ -f /var/lock/subsys/<service> ] && restart || :
+#    probe)
+#	<optional.  If it exists, then it should determine whether
+#	or not the service needs to be restarted or reloaded (or
+#	whatever) in order to activate any changes in the configuration
+#	scripts.  It should print out a list of commands to give to
+#	$0; see the description under the probe tag below.>
+#	;;
+    *)
+	show_usage
+	exit 1
+	;;
+esac
+exit $?

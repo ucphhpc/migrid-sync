@@ -49,11 +49,13 @@ import subprocess
 import sys
 
 from mig.shared.defaults import default_http_port, default_https_port, \
+    mig_user, mig_group, default_source, default_destination, \
     auth_openid_mig_db, auth_openid_ext_db, STRONG_TLS_CIPHERS, \
     STRONG_TLS_CURVES, STRONG_SSH_KEXALGOS, STRONG_SSH_LEGACY_KEXALGOS, \
     STRONG_SSH_CIPHERS, STRONG_SSH_LEGACY_CIPHERS, STRONG_SSH_MACS, \
     STRONG_SSH_LEGACY_MACS, CRACK_USERNAME_REGEX, CRACK_WEB_REGEX, \
     keyword_any, keyword_auto
+from mig.shared.compat import ensure_native_string
 from mig.shared.fileio import read_file, read_file_lines, write_file, \
     write_file_lines
 from mig.shared.htmlgen import menu_items
@@ -187,8 +189,8 @@ def template_remove(template_file, remove_pattern):
 def generate_confs(
     # NOTE: make sure command line args with white-space are properly wrapped
     generateconfs_command=subprocess.list2cmdline(sys.argv),
-    source=os.path.dirname(sys.argv[0]),
-    destination=os.path.dirname(sys.argv[0]),
+    source=default_source,
+    destination=default_destination,
     destination_suffix="",
     base_fqdn='',
     public_fqdn='',
@@ -217,8 +219,8 @@ def generate_confs(
     jupyter_services_desc='{}',
     cloud_services='',
     cloud_services_desc='{}',
-    user='mig',
-    group='mig',
+    user=mig_user,
+    group=mig_group,
     apache_version='2.4',
     apache_etc='/etc/apache2',
     apache_run='/var/run',
@@ -358,6 +360,8 @@ def generate_confs(
     openid_port=8443,
     openid_show_port='',
     openid_session_lifetime=43200,
+    seafile_secret=keyword_auto,
+    seafile_ccnetid=keyword_auto,
     seafile_seahub_port=8000,
     seafile_seafhttp_port=8082,
     seafile_client_port=13419,
@@ -403,12 +407,25 @@ def generate_confs(
     quota_backend='lustre',
     quota_user_limit=(1024**4),
     quota_vgrid_limit=(1024**4),
+    _getpwnam=pwd.getpwnam,
 ):
     """Generate Apache and MiG server confs with specified variables"""
 
     # Read out dictionary of args with defaults and overrides
 
-    expanded = locals()
+    expanded = dict(locals())
+
+    # expand any directory path specific as "auto" relative to CWD
+    if source is keyword_auto:
+        expanded['source'] = os.path.dirname(sys.argv[0])
+        source = expanded['source']
+    if destination is keyword_auto:
+        expanded['destination'] = os.path.dirname(sys.argv[0])
+        destination = expanded['destination']
+
+    # finalize a destination path up-front
+    expanded['destination_path'] = "%s%s" % (destination, destination_suffix)
+    destination_path = expanded['destination_path']
 
     # Backwards compatibility with old name
     if public_port and not public_http_port:
@@ -656,7 +673,7 @@ def generate_confs(
     user_dict['__QUOTA_VGRID_LIMIT__'] = "%s" % quota_vgrid_limit
 
     # Needed for PAM/NSS
-    pw_info = pwd.getpwnam(user)
+    pw_info = _getpwnam(user)
     user_dict['__MIG_UID__'] = "%s" % (pw_info.pw_uid)
     user_dict['__MIG_GID__'] = "%s" % (pw_info.pw_gid)
 
@@ -928,10 +945,15 @@ cert, oid and sid based https!
     except Exception as exc:
         print("WARNING: failed to extract system time zone: %s" % exc)
     user_dict['__SEAFILE_TIMEZONE__'] = sys_timezone
-    user_dict['__SEAFILE_SECRET_KEY__'] = base64.b64encode(
-        os.urandom(32)).lower()
-    user_dict['__SEAFILE_CCNET_ID__'] = base64.b16encode(
-        os.urandom(20)).lower()
+
+    if seafile_secret is keyword_auto:
+        seafile_secret = ensure_native_string(base64.b64encode(os.urandom(32))).lower()
+    user_dict['__SEAFILE_SECRET_KEY__'] = seafile_secret
+
+    if seafile_ccnetid is keyword_auto:
+        seafile_ccnetid = ensure_native_string(base64.b64encode(os.urandom(20))).lower()
+    user_dict['__SEAFILE_CCNET_ID__'] = seafile_ccnetid
+
     user_dict['__SEAFILE_SHORT_NAME__'] = short_title.replace(' ', '-')
     # IMPORTANT: we discriminate on local and remote seafile service
     #            for local ones we partly integrate directly with apache etc.
@@ -1584,14 +1606,16 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
     user_dict['__ALL_OIDC_PROVIDER_META_URLS__'] = ' '.join(
         all_oidc_provider_meta_urls)
 
-    destination_path = "%s%s" % (destination, destination_suffix)
     if not os.path.islink(destination) and os.path.isdir(destination):
         print("ERROR: Legacy %s dir in the way - please remove first" %
               destination)
         sys.exit(1)
     try:
         os.makedirs(destination_path)
-        if os.path.exists(destination):
+    except OSError:
+        pass
+    try:
+        if os.path.lexists(destination):
             os.remove(destination)
         os.symlink(destination_path, destination)
     except OSError:
@@ -1693,10 +1717,10 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
 
     if digest_salt == keyword_auto:
         # Generate random hex salt for scrambling saved digest credentials
-        digest_salt = base64.b16encode(os.urandom(16))
+        digest_salt = ensure_native_string(base64.b16encode(os.urandom(16)))
     if crypto_salt == keyword_auto:
         # Generate random hex salt for various crypto helpers
-        crypto_salt = base64.b16encode(os.urandom(16))
+        crypto_salt = ensure_native_string(base64.b16encode(os.urandom(16)))
 
     user_dict['__DIGEST_SALT__'] = digest_salt
     user_dict['__CRYPTO_SALT__'] = crypto_salt
@@ -1989,7 +2013,7 @@ chmod 700 %(destination)s/migacctexpire
 sudo cp %(destination)s/migacctexpire /etc/cron.monthly/
 
 ''' % expanded
-    instructions_path = "%s/instructions.txt" % destination
+    instructions_path = "%s/instructions.txt" % destination_path
     if not write_file(instructions, instructions_path, None):
         print("could not write instructions ot %s" % instructions_path)
     return expanded

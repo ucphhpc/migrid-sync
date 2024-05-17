@@ -32,6 +32,7 @@ from string import ascii_lowercase, ascii_uppercase, digits
 import os
 import sys
 
+MIG_BASE = os.path.realpath(os.path.join(os.path.dirname(__file__), '../..'))
 MIG_ENV = os.getenv('MIG_ENV', 'default')
 
 # NOTE: python3 switched strings to use unicode by default in contrast to bytes
@@ -75,6 +76,33 @@ all_jobs = keyword_all
 
 any_protocol = keyword_any
 any_state = keyword_any
+
+from pwd import getpwuid
+mig_user = {
+    'default': 'mig',
+    'local': getpwuid(os.getuid())[0],
+}[MIG_ENV]
+
+from grp import getgrgid
+mig_group = {
+    'default': 'mig',
+    'local': getgrgid(os.getgid())[0],
+}[MIG_ENV]
+
+default_source = {
+    'default': keyword_auto,
+    'local': os.path.join(MIG_BASE, "mig/install"),
+}[MIG_ENV]
+
+default_destination = {
+    'default': keyword_auto,
+    'local': os.path.join(MIG_BASE, "envhelp/output/confs"),
+}[MIG_ENV]
+
+default_enable_events = {
+    'default': True,
+    'local': False
+}[MIG_ENV]
 
 AUTH_NONE, AUTH_GENERIC, AUTH_CERTIFICATE = "None", "Generic", "X.509 Certificate"
 AUTH_OPENID_CONNECT, AUTH_OPENID_V2 = "OpenID Connect", "OpenID 2.0"
