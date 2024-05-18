@@ -540,7 +540,7 @@ Auto log out first to avoid sign up problems ...
 accepting authentic requests through %s OpenID 2.0''' %
                                configuration.user_ext_oid_title})
         return (output_objects, returnvalues.CLIENT_ERROR)
-    # NOTE: implict openid connect claim signature
+    # NOTE: implicit openid connect claim signature
     #       manually check correct issuer and audience to verify claim trust
     elif auth_flavor == AUTH_EXT_OIDC and \
         (configuration.user_ext_oidc_audience != token_audience or
@@ -551,7 +551,7 @@ accepting authentic requests through %s OpenID 2.0''' %
                       configuration.user_ext_oidc_issuer))
         output_objects.append({'object_type': 'error_text', 'text': '''Only
 accepting authentic requests through %s OpenID Connect''' %
-                               configuration.user_ext_oid_title})
+                               configuration.user_ext_oidc_title})
         return (output_objects, returnvalues.CLIENT_ERROR)
     elif auth_flavor not in [AUTH_EXT_OID, AUTH_EXT_OIDC] and not safe_handler(
             configuration, 'post', op_name, client_id,
@@ -587,7 +587,7 @@ multiple "key=val" fields separated by "/".
                                                      AUTH_OPENID_V2)
         fill_distinguished_name(user_dict)
     elif auth_flavor == AUTH_EXT_OIDC:
-        ext_login_title = "%s login" % configuration.user_ext_oid_title
+        ext_login_title = "%s login" % configuration.user_ext_oidc_title
         personal_page_url = configuration.migserver_https_ext_oidc_url
         user_dict['expire'] = default_account_expire(configuration,
                                                      AUTH_OPENID_CONNECT)

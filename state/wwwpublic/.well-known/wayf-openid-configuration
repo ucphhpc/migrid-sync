@@ -1,0 +1,1 @@
+{"issuer":"https://wayf.wayf.dk","authorization_endpoint":"https://wayf.wayf.dk/saml2/idp/SSOService2.php","token_endpoint":"https://wayf.wayf.dk/token","userinfo_endpoint":"https://wayf.wayf.dk/token","scopes_supported":["openid"],"response_types_supported":["token","id_token","code","token id_token","code token","code id_token token","code id_token","none"]}
