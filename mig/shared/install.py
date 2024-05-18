@@ -1411,15 +1411,16 @@ cert, oid and sid based https!
             else:
                 parsed = urlparse(meta_url)
                 mig_issuer_url = "%s://%s" % (parsed.scheme, parsed.netloc)
-        if user_dict['__EXT_OIDC_PROVIDER_META_URL__'].strip():
+        # NOTE: prefer explictly provided issuer but fallback to meta parsing
+        if user_dict['__EXT_OIDC_PROVIDER_ISSUER__'].strip():
+            ext_issuer_url = user_dict['__EXT_OIDC_PROVIDER_ISSUER__']
+        elif user_dict['__EXT_OIDC_PROVIDER_META_URL__'].strip():
             meta_url = user_dict['__EXT_OIDC_PROVIDER_META_URL__'].strip()
             if issuer_split_mark in meta_url:
                 ext_issuer_url = meta_url.split(issuer_split_mark, 1)[0]
             else:
                 parsed = urlparse(meta_url)
                 ext_issuer_url = "%s://%s" % (parsed.scheme, parsed.netloc)
-        elif user_dict['__EXT_OIDC_PROVIDER_ISSUER__'].strip():
-            ext_issuer_url = user_dict['__EXT_OIDC_PROVIDER_ISSUER__']
 
         # TODO: enable next lines if openid connect requires proxy for
         #       cert_redirect support
