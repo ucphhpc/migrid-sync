@@ -109,7 +109,7 @@ def main(client_id, user_arguments_dict):
         oidc_title = "%s";
         oidc_url = "%s";
         tag_prefix = "extoidc_";
-        check_oidc_available(action, oidc_title, oidc_url, tag_prefix);
+        check_oid_available(action, oidc_title, oidc_url, tag_prefix);
         oid_title = "%s";
         var oid_url = "%s";
         tag_prefix = "migoid_";
@@ -117,7 +117,7 @@ def main(client_id, user_arguments_dict):
         oidc_title = "%s";
         var oidc_url = "%s";
         tag_prefix = "migoidc_";
-        check_oidc_available(action, oidc_title, oidc_url, tag_prefix);
+        check_oid_available(action, oidc_title, oidc_url, tag_prefix);
 ''' % (configuration.user_ext_oid_title, configuration.user_ext_oid_provider,
        configuration.user_ext_oidc_title, configuration.user_ext_oidc_provider,
        configuration.user_mig_oid_title, configuration.user_mig_oid_provider,
