@@ -1017,44 +1017,6 @@ function check_oid_available(action, oid_title, oid_url, tag_prefix) {
     });
 }
 
-function check_oidc_available(action, oidc_title, oidc_url, tag_prefix) {
-    $("#"+tag_prefix+"status").removeClass();
-    $("#"+tag_prefix+"status").addClass("status_box");
-    $("#"+tag_prefix+"status").addClass("spinner iconleftpad");
-    $("#"+tag_prefix+"status").append("<span>"+oidc_title+" OpenID Connect server status: </span>");
-    $("#"+tag_prefix+"status").append("<span id="+tag_prefix+"msg></span> <span id="+tag_prefix+"err></span>");
-    $("#"+tag_prefix+"msg").append("checking availability ...");
-    /* TODO: implement oidcping and enable use here */
-    /* Run oidcping check in the background and handle as soon as results come in */
-    $.ajax({
-        url: oidc_url,
-        type: "GET",
-        // TODO: get proper json target and enable here
-        //dataType: "json",
-        cache: false,
-        success: function(jsonRes, textStatus) {
-            var online = false;
-            var err = "";
-            /* NOTE: just fake online for now */
-            online = "online";
-            $("#"+tag_prefix+"status").removeClass("spinner iconleftpad");
-            $("#"+tag_prefix+"msg").empty();
-            $("#"+tag_prefix+"msg").append(online);
-            if (online === "online") {
-                $("#"+tag_prefix+"status").addClass("ok iconleftpad");
-                $("#"+tag_prefix+"msg").addClass("status_online");
-                $("#"+tag_prefix+"button").attr("disabled", false);
-            } else {
-                $("#"+tag_prefix+"err").append("("+err+")<br/>");
-                $("#"+tag_prefix+"status").append("<span>Unable to "+action+" with this method until OpenID server comes back online. Please report the problem to the "+oidc_title+" OpenID administrators.</span>");
-                $("#"+tag_prefix+"status").addClass("error iconleftpad");
-                $("#"+tag_prefix+"msg").addClass("status_offline");
-                $("#"+tag_prefix+"button").attr("disabled", true);
-            }
-        }
-    });
-}
-
 /* Seafile settings helper used to switch between register and save sections */
 function select_seafile_section(section_prefix) {
     var reg_prefix="seafilereg";
