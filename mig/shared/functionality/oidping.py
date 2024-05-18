@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # oidping - OpenID 2.0 and Connect server availability checker backend
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -114,8 +114,10 @@ def main(client_id, user_arguments_dict):
             data = ping_status.read()
             ping_status.close()
             if http_status == 200:
-                # TODO: better parsing
+                # TODO: improve parsing, especially the crude WAYF check
                 if "authorization_endpoint" in data:
+                    openid_status['status'] = "online"
+                elif "wayf" in ping_url.lower() and "WAYF" in data:
                     openid_status['status'] = "online"
                 else:
                     openid_status['status'] = "down"
