@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # migwsgi.py - Provides the entire WSGI interface
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -220,6 +220,7 @@ def application(environ, start_response):
 
     backend = "UNKNOWN"
     output_objs = []
+    fieldstorage = None
     user_arguments_dict = {}
 
     _logger.debug("handling wsgi request with python %s from %s" %
@@ -380,3 +381,17 @@ def application(environ, start_response):
     except Exception as exc:
         _logger.error("WSGI %s for %s crashed during response: %s" %
                       (backend, client_id, exc))
+
+    # NOTE: we're done, but add explicit clean up to address late log blow-up
+    #       https://github.com/ucphhpc/migrid-sync/issues/50
+    _logger.debug("done and cleaning up to prevent further log noise")
+    if user_arguments_dict:
+        del user_arguments_dict
+    if fieldstorage:
+        del fieldstorage
+    _logger.debug("done cleaning up - detach wsgi error loggers")
+    # NOTE: limit further wsgi error traces in vhost log to something like
+    #       Exception occurred processing WSGI script '/path/to/migwsgi.py'
+    wsgi_env['wsgi.errors'].close()
+    # TMP! uncomment next to test unhandled exception and error log
+    # fieldstorage.__del__
