@@ -32,7 +32,7 @@ import sys
 import time
 
 from mig.shared import returnvalues
-from mig.shared.bailout import bailout_helper, crash_helper
+from mig.shared.bailout import bailout_helper, crash_helper, compact_string
 from mig.shared.base import requested_backend, allow_script, \
     is_default_str_coding, force_default_str_coding_rec
 from mig.shared.defaults import download_block_size, default_fs_coding
@@ -141,6 +141,49 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
     return (output_objects, (ret_code, ret_msg))
 
 
+def wrap_wsgi_errors(environ, configuration, max_line_len=100):
+    """Try to handle wsgi errors completely in our own logs and automatically
+    compact massive log entries to max_line_len characters.
+    """
+    _logger = configuration.logger
+
+    # Inline helpers to work on local vars directly
+    def _write_wsgi_errors(msg):
+        """Override write handler on wsgi.errors stream to log msg using
+        _logger instead to avoid errors ending up in apache error log.
+        """
+        if msg:
+            _logger.error(compact_string(msg.rstrip(), max_line_len))
+
+    def _writelines_wsgi_errors(lines):
+        """Override writelines handler on wsgi.errors stream to wrap lines into
+        individual write calls.
+        """
+        for msg in lines:
+            _write_wsgi_errors(msg)
+
+    def _flush_wsgi_errors():
+        """Override flush handler on wsgi.errors stream to just reopen _logger
+        handlers.
+        """
+        configuration.logger_obj.reopen()
+        _logger = configuration.logger
+
+    try:
+        environ['wsgi.errors'].write = _write_wsgi_errors
+        environ['wsgi.errors'].writelines = _writelines_wsgi_errors
+        environ['wsgi.errors'].flush = _flush_wsgi_errors
+    except:
+        # NOTE: python2 wsgi throws Log object attribute 'write' is read-only
+        # TODO: can we find a better way to silence wsgi in apache error log?
+        #       wsgiref docs say don't use methods like close() but replacing
+        #       with a custom Log object with same signature has no effect.
+        _logger.debug("could not wrap wsgi errors in our own loggers - close")
+        # NOTE: limits further wsgi error traces in vhost log to something like
+        #       Exception occurred processing WSGI script '/path/to/migwsgi.py'
+        environ['wsgi.errors'].close()
+
+
 def application(environ, start_response):
     """MiG app called automatically by WSGI.
 
@@ -201,6 +244,9 @@ def application(environ, start_response):
 
     configuration = get_configuration_object()
     _logger = configuration.logger
+
+    # NOTE: replace default wsgi errors to apache error log with our own logs
+    wrap_wsgi_errors(environ, configuration)
 
     for line in env_sync_status:
         _logger.debug(line)
@@ -390,8 +436,5 @@ def application(environ, start_response):
     if fieldstorage:
         del fieldstorage
     _logger.debug("done cleaning up - detach wsgi error loggers")
-    # NOTE: limit further wsgi error traces in vhost log to something like
-    #       Exception occurred processing WSGI script '/path/to/migwsgi.py'
-    wsgi_env['wsgi.errors'].close()
     # TMP! uncomment next to test unhandled exception and error log
     # fieldstorage.__del__
