@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# Wrap python3 virtual environment for testing
+
+set -e
+
+SCRIPT_PATH=$(realpath "$0")
+SCRIPT_BASE=$(dirname -- "$SCRIPT_PATH")
+PYTHON3_BIN="$SCRIPT_BASE/venv/bin/python3"
+
+if [ ! -f "${PYTHON3_BIN}" ]; then
+    echo "No python3 binary found - perhaps the virtual env was not created"
+    exit 1
+fi
+
+# default any variables for local development
+MIG_ENV=${MIG_ENV:-'local'}
+
+echo "running with MIG_ENV='$MIG_ENV' under python 3"
+echo
+
+MIG_ENV="$MIG_ENV" "$PYTHON3_BIN" "$@"
