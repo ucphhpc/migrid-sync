@@ -8,8 +8,7 @@ sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), ".")))
 
 from support import MigTestCase, cleanpath, temppath, testmain
 
-import mig.shared.fileio
-fileio = mig.shared.fileio
+import mig.shared.fileio as fileio
 
 DUMMY_BYTES = binascii.unhexlify('DEADBEEF') # 4 bytes
 DUMMY_BYTES_LENGTH = 4
@@ -19,8 +18,13 @@ assert isinstance(DUMMY_BYTES, bytes)
 
 class TestFileioWriteChunk(MigTestCase):
     def setUp(self):
+        super(TestFileioWriteChunk, self).setUp()
         self.tmp_path = temppath(DUMMY_FILE_WRITECHUNK, self, skip_clean=True)
         cleanpath(os.path.dirname(DUMMY_FILE_WRITECHUNK), self)
+
+    def test_write_chunk_error_on_invalid_data(self):
+        did_succeed = fileio.write_chunk(self.tmp_path, 1234, 0, self.logger)
+        self.assertFalse(did_succeed)
 
     def test_write_chunk_creates_directory(self):
         fileio.write_chunk(self.tmp_path, DUMMY_BYTES, 0, self.logger)
