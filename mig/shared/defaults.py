@@ -30,7 +30,10 @@
 
 from builtins import zip
 from string import ascii_lowercase, ascii_uppercase, digits
+import os
 import sys
+
+MIG_ENV = os.getenv('MIG_ENV', 'default')
 
 # NOTE: python3 switched strings to use unicode by default in contrast to bytes
 #       in python2. File systems remain with utf8 however so we need to
