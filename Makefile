@@ -1,12 +1,12 @@
 ifeq ($(PY),2)
 	PYTHON_BIN = './envhelp/python2'
 else
-	PYTHON_BIN = './envhelp/venv/bin/python3'
+	PYTHON_BIN = './envhelp/python3'
 endif
 ifeq ($(ALLDEPS),1)
-        REQS_PATH = ./recommended.txt
+	REQS_PATH = ./recommended.txt
 else
-        REQS_PATH = ./requirements.txt
+	REQS_PATH = ./requirements.txt
 endif
 
 info:

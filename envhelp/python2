@@ -16,6 +16,9 @@ if [ -z "${DOCKER_BIN}" ]; then
     exit 1
 fi
 
+# default any variables for local development
+MIG_ENV=${MIG_ENV:-'local'}
+
 # determine if the image has changed
 echo -n "validating container.. "
 
@@ -32,7 +35,9 @@ else
     echo "no changes needed"
 fi
 
+echo "running with MIG_ENV='$MIG_ENV' under python 2"
 echo
 
 # execute python2 within the image passing the supplied arguments
-${DOCKER_BIN} run -it --rm --mount type=bind,source=.,target=/usr/src/app "$IMAGEID" python2 "$@"
+
+${DOCKER_BIN} run -it --rm --mount type=bind,source=.,target=/usr/src/app --env "MIG_ENV=$MIG_ENV" "$IMAGEID" python2 "$@"
