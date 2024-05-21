@@ -1,0 +1,50 @@
+name: Continuous Integration
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    branches:
+      - edge
+
+  push:
+    branches:
+      - edge
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  python3:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository contents
+        uses: actions/checkout@v3
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+      - name: Setup environment
+        run: |
+          make dependencies
+      - name: Run tests
+        run: |
+          make test
+
+  python2:
+    runs-on: ubuntu-latest
+    container:
+      image: python:2
+      volumes:
+        - .:/usr/src/app
+    steps:
+      - name: Check out repository contents
+        uses: actions/checkout@v3
+      - name: Setup environment
+        run: |
+          pip install --no-cache-dir -r requirements.txt
+      - name: Run tests
+        run: |
+          MIG_ENV='local' python -m unittest discover -s tests/
