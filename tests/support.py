@@ -45,6 +45,15 @@ logging.captureWarnings(True)
 
 
 class FakeLogger:
+    """An output capturing logger suitable for being passed to the
+    majority of MiG code by presenting an API compatible interface
+    with the common logger module.
+
+    An instance of this class is made avaiable to test cases which
+    can pass it down into function calls and subsequenently make
+    assertions against any output strings hat were recorded during
+    execution while also avoiding noise hitting the console."""
+
     RE_UNCLOSEDFILE = re.compile(
         'unclosed file <.*? name=\'(?P<location>.*?)\'( .*?)?>')
 
@@ -107,6 +116,14 @@ class FakeLogger:
 
 
 class MigTestCase(TestCase):
+    """Embellished base class for MiG test cases. Provides additional commonly
+    used assertions as well as some basics for the standardised and idiomatic
+    testing of logic within the codebase.
+
+    By containing these details in a single place we can ensure the reliable
+    cleanup of state across tests as well as permit enforcement of constraints
+    on all code under test."""
+
     def __init__(self, *args):
         super(MigTestCase, self).__init__(*args)
         self._cleanup_paths = set()
