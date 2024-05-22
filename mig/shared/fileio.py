@@ -74,6 +74,12 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
     """Wrapper to handle writing of chunks with offset to path.
     Creates file first if it doesn't already exist.
     """
+    return _write_chunk(path, chunk, offset, logger, mode)
+
+
+def _write_chunk(path, chunk, offset, logger=None, mode='r+b', make_parent=True, create_file=True):
+    """Internal method supporting the writing of file data.
+    """
     if not logger:
         logger = null_logger("dummy")
     # logger.debug("writing chunk to %r at offset %d" % (path, offset))
@@ -81,32 +87,38 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
     # create dir and file if it does not exists
 
     (head, _) = os.path.split(path)
-    if not os.path.isdir(head):
+    if not os.path.isdir(head) and make_parent:
         try:
             os.mkdir(head)
         except Exception as err:
             logger.error("could not create parent dir %r: %s" % (head, err))
-    if not os.path.isfile(path):
+            return False
+
+    # ensure a file is present
+
+    if not os.path.isfile(path) and create_file:
         try:
             open(path, "w").close()
         except Exception as err:
             logger.error("could not create file %r: %s" % (path, err))
+            return False
+
     try:
-        filehandle = open(path, mode)
-        # Make sure we can write at requested position, filling if needed
-        try:
-            filehandle.seek(offset)
-        except:
-            filehandle.seek(0, 2)
-            file_size = filehandle.tell()
-            for _ in xrange(offset - file_size):
-                filehandle.write('\0')
-        # logger.debug("write %r chunk of size %d at position %d" %
-        #             (path, len(chunk), filehandle.tell()))
-        filehandle.write(chunk)
-        filehandle.close()
-        # logger.debug("file %r chunk written at %d" % (path, offset))
-        return True
+        with open(path, mode) as filehandle:
+            if offset > 0:
+                # Make sure we can write at requested position, filling if needed
+                try:
+                    filehandle.seek(offset)
+                except:
+                    filehandle.seek(0, 2)
+                    file_size = filehandle.tell()
+                    for _ in xrange(offset - file_size):
+                        filehandle.write('\0')
+            # logger.debug("write %r chunk of size %d at position %d" %
+            #             (path, len(chunk), filehandle.tell()))
+            filehandle.write(chunk)
+            # logger.debug("file %r chunk written at %d" % (path, offset))
+            return True
     except Exception as err:
         logger.error("could not write %r chunk at %d: %s" %
                      (path, offset, err))
@@ -119,28 +131,19 @@ def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
         logger = null_logger("dummy")
     # logger.debug("writing %r file" % path)
 
-    # create dir if it does not exists
-
-    (head, _) = os.path.split(path)
     if umask is not None:
         old_umask = os.umask(umask)
-    if not os.path.isdir(head) and make_parent:
-        try:
-            # logger.debug("making parent directory %r" % head)
-            os.mkdir(head)
-        except Exception as err:
-            logger.error("could not create parent dir %r: %s" % (head, err))
-    try:
-        filehandle = open(path, mode)
-        filehandle.write(content)
-        filehandle.close()
-        # logger.debug("file %r written" % path)
-        retval = True
-    except Exception as err:
-        logger.error("could not write file %r: %s" % (path, err))
-        retval = False
+
+    # ensure writing raw bytes to a file can occur on PY3
+    if isinstance(content, bytes) and 'b' not in mode:
+        mode = "%sb" % mode  # appended to avoid mode ordering error on PY2
+
+    retval = _write_chunk(path, content, offset=0, logger=logger,
+                          mode=mode, make_parent=make_parent, create_file=False)
+
     if umask is not None:
         os.umask(old_umask)
+
     return retval
 
 
