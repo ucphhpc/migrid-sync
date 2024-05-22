@@ -60,14 +60,18 @@ else:
         listdir = os.listdir
 
 try:
+    import mig.ident
     from mig.shared.base import force_utf8_rec
     from mig.shared.defaults import default_chunk_size, default_max_chunks
     from mig.shared.logger import null_logger
     from mig.shared.pwcrypto import valid_hash_algos, default_algo
     from mig.shared.serial import dump, load
 except ImportError as ioe:
-    print("ERROR: could not import migrid modules!")
-    exit(1)
+    if ioe.name == 'mig.ident':
+        print("ERROR: the migrid modules must be in PYTHONPATH")
+    else:
+        print("ERROR: could not import migrid modules - " + str(ioe))
+    sys.exit(1)
 
 
 def _auto_adjust_mode(data, mode):

@@ -41,14 +41,17 @@ import sys
 # Solve this by ensuring that the chckout is part of the sys.path
 
 # NOTE: __file__ is /MIG_BASE/mig/install/generateconfs.py and we need MIG_BASE
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "../..")))
 
 # NOTE: moved mig imports into try/except to avoid autopep8 moving to top!
 try:
+    import mig.ident
     from mig.shared.install import generate_confs
-except ImportError:
-    print("ERROR: the migrid modules must be in PYTHONPATH")
+except ImportError as ioe:
+    if ioe.name == 'mig.ident':
+        print("ERROR: the migrid modules must be in PYTHONPATH")
+    else:
+        print("ERROR: could not import migrid modules - " + str(ioe))
     sys.exit(1)
 
 
