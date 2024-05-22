@@ -1960,7 +1960,6 @@ def guess_type(name):
             'openid.sreg.nickname',
             'openid.sreg.email',
             'openid.sreg.mail',
-            'oidc.claim.email',
             'adminemail',
         ):
             __type_map[key] = valid_email_address
@@ -1975,8 +1974,11 @@ def guess_type(name):
             # NOTE: allow space or comma as delimiter
             __type_map[key] = lambda x: valid_commonname(
                 x, extra_chars=',')
+        # NOTE: some OIDCs concat email list into comma-separated string
+        #       accept and handle unpacking explicitly in autocreate.py
         for key in (
             'peers_email',
+            'oidc.claim.email',
         ):
             # NOTE: allow space or comma as delimiter
             __type_map[key] = lambda x: valid_email_addresses(
@@ -2440,7 +2442,7 @@ if __name__ == '__main__':
         print("\t%s: %s" % (key, val))
     user_arguments_dict = {'oidc.claim.aud': ['http://somedomain.org'],
                            'oidc.claim.country': ['DK'],
-                           'oidc.claim.email': ['bardino@science.ku.dk'],
+                           'oidc.claim.email': ['bardino@nbi.ku.dk,bardino@science.ku.dk'],
                            'oidc.claim.iss': ['https://wayf.wayf.dk'],
                            'oidc.claim.name': ['Jonas Bardino'],
                            'oidc.claim.organization': ['ku.dk'],

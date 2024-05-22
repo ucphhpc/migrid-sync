@@ -219,6 +219,18 @@ def handle_proxy(proxy_string, client_id, config):
     return output
 
 
+def split_comma_concat(value_list, sep=','):
+    """Take a list of values and adjust it so that any values with given sep
+    inside is expanded to the individual values without the separator.
+    I.e. the list ['abc,def'] is transformed into ['abc', 'def'].
+    """
+    result = []
+    for val in value_list:
+        parts = val.split(sep)
+        result += parts
+    return result
+
+
 def main(client_id, user_arguments_dict, environ=None):
     """Main function used by front end"""
 
@@ -384,7 +396,10 @@ def main(client_id, user_arguments_dict, environ=None):
                                 if i])
         locality = accepted['oidc.claim.locality'][-1].strip()
         timezone = accepted['oidc.claim.timezone'][-1].strip()
-        email = accepted['oidc.claim.email'][-1].strip()
+        # NOTE: some OIDC providers may comma-separate values concatenated
+        #       translate to individual args instead in that case. E.g. as in
+        #       'john@doe.org,jd@doe.org' -> ['john@doe.org', 'jd@doe.org']
+        email = split_comma_concat(accepted['oidc.claim.email'])[-1].strip()
 
     # We may encounter results without an email, fall back to try plain IDs then
     if not email:
