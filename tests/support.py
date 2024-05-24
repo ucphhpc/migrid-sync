@@ -9,6 +9,7 @@ import sys
 from unittest import TestCase, main as testmain
 
 TEST_BASE = os.path.dirname(__file__)
+TEST_DATA_DIR = os.path.join(TEST_BASE, "data")
 TEST_OUTPUT_DIR = os.path.join(TEST_BASE, "output")
 MIG_BASE = os.path.realpath(os.path.join(TEST_BASE, ".."))
 PY2 = sys.version_info[0] == 2
@@ -156,6 +157,17 @@ def cleanpath(relative_path, test_case):
     assert(isinstance(test_case, MigTestCase))
     tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
     test_case._cleanup_paths.add(tmp_path)
+
+
+def fixturepath(relative_path):
+    tmp_path = os.path.join(TEST_DATA_DIR, relative_path)
+    assert (not stat.ISDIR(os.stat(tmp_path)))
+    return tmp_path
+
+
+def projectrelative(tmp_path):
+    return os.path.relpath(tmp_path, start=MIG_BASE)
+
 
 def temppath(relative_path, test_case, skip_clean=False):
     assert(isinstance(test_case, MigTestCase))
