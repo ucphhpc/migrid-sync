@@ -40,11 +40,22 @@ distclean: clean
 	@rm -f ./tests/*.pyc
 
 .PHONY: test
-test: dependencies
+test: dependencies testconfig
 	@$(PYTHON_BIN) -m unittest discover -s tests/
 
 .PHONY: dependencies
 dependencies: ./envhelp/venv/pyvenv.cfg ./envhelp/py3.depends
+
+.PHONY: testconfig
+testconfig: ./envhelp/output/testconfs
+
+./envhelp/output/testconfs:
+	@echo "generating test configuration"
+	@./envhelp/makeconfig test --python2
+	@./envhelp/makeconfig test
+	@mkdir -p ./envhelp/output/certs
+	@mkdir -p ./envhelp/output/state
+	@mkdir -p ./envhelp/output/state/log
 
 ifeq ($(MIG_ENV),'local')
 ./envhelp/py3.depends: $(REQS_PATH) local-requirements.txt

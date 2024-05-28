@@ -174,6 +174,7 @@ class MigTestCase(TestCase):
     def setUp(self):
         if not self._skip_logging:
             self._reset_logging(stream=self.logger)
+        self.before_each()
 
     def tearDown(self):
         if not self._skip_logging:
@@ -190,6 +191,10 @@ class MigTestCase(TestCase):
                 os.remove(path)
             else:
                 continue
+
+    # hooks
+    def before_each(self):
+        pass
 
     def _reset_logging(self, stream):
         root_logger = logging.getLogger()
@@ -242,10 +247,13 @@ included:
         return relative_path
 
 
-def cleanpath(relative_path, test_case):
+def cleanpath(relative_path, test_case, start=None, skip_clean=False):
     assert isinstance(test_case, MigTestCase)
-    tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
-    test_case._cleanup_paths.add(tmp_path)
+    if start is None:
+        start = TEST_OUTPUT_DIR
+    tmp_path = os.path.join(start, relative_path)
+    if not skip_clean:
+        test_case._cleanup_paths.add(tmp_path)
     return tmp_path
 
 

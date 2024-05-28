@@ -28,17 +28,69 @@
 """Unit tests for core helper functions"""
 from __future__ import print_function
 
+from configparser import ConfigParser
+import os
+import stat
 import sys
 import time
 import logging
+
+sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "../..")))
+from tests.support import MIG_BASE, PY2
 
 from mig.shared.base import client_id_dir, client_dir_id, get_short_id, \
     invisible_path, allow_script, brief_list
 
 
-if __name__ == "__main__":
+_PYTHON_MAJOR = '2' if PY2 else '3'
+_LOCAL_MIG_BASE = '/usr/src/app' if PY2 else MIG_BASE
+_LOCAL_CONF_DIR = os.path.join(MIG_BASE, "envhelp/output/testconfs-py%s" % (_PYTHON_MAJOR,))
+_LOCAL_CONF_FILE = os.path.join(_LOCAL_CONF_DIR, "MiGserver.conf")
+_LOCAL_CONF_SYMLINK = os.path.join(MIG_BASE, "envhelp/output/testconfs")
+
+
+def _assert_local_config():
+    try:
+        link_stat = os.lstat(_LOCAL_CONF_SYMLINK)
+        assert stat.S_ISLNK(link_stat.st_mode)
+        configdir_stat = os.stat(_LOCAL_CONF_DIR)
+        assert stat.S_ISDIR(configdir_stat.st_mode)
+        config = ConfigParser()
+        config.read([_LOCAL_CONF_FILE])
+        #config_mig_base = os.path.dirname(config.get('GLOBAL', 'mig_path'))
+        #host_conf_dir = os.path.join(MIG_BASE, "envhelp/output/testconfs-dir")
+        #assert host_conf_dir == linkpath, 'bad symlink target'
+        return config
+    except Exception as exc:
+        raise AssertionError('local configuration invalid or missing: %s' % (str(exc),))
+
+
+def _assert_local_config_global_values(config):
+    config_global_values = dict(config.items('GLOBAL'))
+
+    for path in ('mig_path', 'certs_path', 'state_path'):
+        path_value = config_global_values.get(path)
+        if not _is_path_within(path_value, start=_LOCAL_MIG_BASE):
+            raise ValueError('local config contains bad path: %s=%s' % (path, path_value))
+
+    return config_global_values
+
+
+def _is_path_within(path, start=None, _msg=None):
+    try:
+        assert os.path.isabs(path), _msg
+        relative = os.path.relpath(path, start=start)
+    except:
+        return False
+    return not relative.startswith('..')
+
+
+def main(_exit=sys.exit):
+    config = _assert_local_config()
+    config_global_values = _assert_local_config_global_values(config)
+
     from mig.shared.conf import get_configuration_object
-    configuration = get_configuration_object()
+    configuration = get_configuration_object(_LOCAL_CONF_FILE, skip_log=True)
     logging.basicConfig(filename=None, level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(message)s")
     configuration.logger = logging
@@ -66,15 +118,16 @@ if __name__ == "__main__":
     if client_id != test_id:
         print("ERROR: Expected match on IDs but found: %s vs %s" %
               (client_id, test_id))
-        sys.exit(1)
+        _exit(1)
     if client_dir != test_dir:
         print("ERROR: Expected match on dirs but found: %s vs %s" %
               (client_dir, test_dir))
-        sys.exit(1)
+        _exit(1)
     if client_short != test_short:
         print("ERROR: Expected match on %s but found: %s vs %s" %
               (short_alias, client_short, test_short))
-        sys.exit(1)
+        _exit(1)
+
 
     orig_id = '/X=ab/Y=cdef ghi/Z=klmn'
     client_dir = client_id_dir(orig_id)
@@ -106,12 +159,12 @@ if __name__ == "__main__":
     for path in legal:
         if invisible_path(path):
             print("ERROR: Expected visible on %s but not the case" % path)
-            sys.exit(1)
+            _exit(1)
     # print("check that these are invisible:")
     for path in illegal:
         if not invisible_path(path):
             print("ERROR: Expected invisible on %s but not the case" % path)
-            sys.exit(1)
+            _exit(1)
 
     print("Check script restrictions:")
     access_any = ['reqoid.py', 'docs.py', 'ls.py']
@@ -121,33 +174,36 @@ if __name__ == "__main__":
         if not allow:
             print("ERROR: Expected anon access to %s but not the case" %
                   script_name)
-            sys.exit(1)
+            _exit(1)
         (allow, msg) = allow_script(configuration, script_name, client_id)
         if not allow:
             print("ERROR: Expected auth access to %s but not the case" %
                   script_name)
-            sys.exit(1)
+            _exit(1)
     for script_name in access_auth:
         (allow, msg) = allow_script(configuration, script_name, '')
         if configuration.site_enable_gdp and allow:
             print("ERROR: Expected anon restrict to %s but not the case" %
                   script_name)
-            sys.exit(1)
+            _exit(1)
         (allow, msg) = allow_script(configuration, script_name, client_id)
         if not allow:
             print("ERROR: Expected auth access to %s but not the case" %
                   script_name)
-            sys.exit(1)
+            _exit(1)
 
     print("Check brief format list limit")
     for (size, outlen) in [(5, 15), (30, 58), (200, 63)]:
-        shortened = "%s" % brief_list(range(size))
+        shortened = "%s" % brief_list(list(range(size)))
         if len(shortened) != outlen:
             print("ERROR: Expected brief range %d list of length %d but not the case: %s" %
                   (size, outlen, len(shortened)))
-            sys.exit(1)
+            _exit(1)
 
     print("Completed shared base functions tests")
 
     print("Done running unit test on shared core functions")
-    sys.exit(0)
+    _exit(0)
+
+if __name__ == "__main__":
+    main()

@@ -109,38 +109,44 @@ class MigSharedInstall__determine_timezone(MigTestCase):
 class MigSharedInstall__generate_confs(MigTestCase):
     """Unit test helper for the migrid code pointed to in class name"""
 
+    def before_each(self):
+        self.output_path = temppath('sharedinstall', self)
+
     def test_creates_output_directory_and_adds_active_symlink(self):
-        symlink_path = temppath('confs', self)
-        cleanpath('confs-foobar', self)
+        symlink_path = cleanpath('sharedinstall/confs', self, skip_clean=True)
+        folder_path = cleanpath('sharedinstall/confs-foobar', self, skip_clean=True)
 
-        generate_confs(destination=symlink_path, destination_suffix='-foobar')
+        generate_confs(self.output_path, destination_suffix='-foobar')
 
-        path_kind = self.assertPathExists('confs-foobar')
+        path_kind = self.assertPathExists('sharedinstall/confs-foobar')
         self.assertEqual(path_kind, "dir")
-        path_kind = self.assertPathExists('confs')
+        path_kind = self.assertPathExists('sharedinstall/confs')
         self.assertEqual(path_kind, "symlink")
 
     def test_creates_output_directory_and_repairs_active_symlink(self):
-        symlink_path = temppath('confs', self)
-        output_path = cleanpath('confs-foobar', self)
-        nowhere_path = temppath('confs-nowhere', self, skip_clean=True)
+        symlink_path = temppath('xxxconfs', self)
+        folder_path = cleanpath('xxxconfs-foobar', self)
+        nowhere_path = temppath('xxxconfs-nowhere', self, skip_clean=True)
         # arrange pre-existing symlink pointing nowhere
         os.symlink(nowhere_path, symlink_path)
 
-        generate_confs(destination=symlink_path, destination_suffix='-foobar')
+        generate_confs(self.output_path, destination=symlink_path, destination_suffix='-foobar')
 
-        self.assertEqual(os.readlink(symlink_path), output_path)
+        self.assertEqual(os.readlink(symlink_path), folder_path)
 
     def test_creates_output_directory_containing_a_standard_local_configuration(self):
         fixture_dir = fixturepath("confs-stdlocal")
-        expected_generated_dir = cleanpath('confs-stdlocal', self)
-        symlink_path = temppath('confs', self)
+        expected_generated_dir = cleanpath('sharedinstall/confs-stdlocal', self, skip_clean=True)
+        symlink_path = temppath('sharedinstall/confs', self, skip_clean=True)
 
         generate_confs(
-            destination=symlink_path,
+            self.output_path,
             destination_suffix='-stdlocal',
             user='testuser',
             group='testgroup',
+            mig_code='/home/mig/mig',
+            mig_certs='/home/mig/certs',
+            mig_state='/home/mig/state',
             timezone='Test/Place',
             crypto_salt='_TEST_CRYPTO_SALT'.zfill(32),
             digest_salt='_TEST_DIGEST_SALT'.zfill(32),
@@ -166,8 +172,8 @@ class MigSharedInstall__generate_confs(MigTestCase):
 
     def test_options_for_source_auto(self):
         options = generate_confs(
+            '/some/arbitrary/path',
             source=keyword_auto,
-            _getcwd=lambda: '/some/arbitrary/path',
             _getpwnam=create_dummy_gpwnam(4321, 1234),
             _prepare=noop,
             _writefiles=noop,
@@ -179,8 +185,8 @@ class MigSharedInstall__generate_confs(MigTestCase):
 
     def test_options_for_source_relative(self):
         options = generate_confs(
+            '/current/working/directory/mig/install',
             source='.',
-            _getcwd=lambda: '/current/working/directory/mig/install',
             _getpwnam=create_dummy_gpwnam(4321, 1234),
             _prepare=noop,
             _writefiles=noop,
@@ -192,9 +198,9 @@ class MigSharedInstall__generate_confs(MigTestCase):
 
     def test_options_for_destination_auto(self):
         options = generate_confs(
+            '/some/arbitrary/path',
             destination=keyword_auto,
             destination_suffix='_suffix',
-            _getcwd=lambda: '/some/arbitrary/path',
             _getpwnam=create_dummy_gpwnam(4321, 1234),
             _prepare=noop,
             _writefiles=noop,
@@ -208,9 +214,9 @@ class MigSharedInstall__generate_confs(MigTestCase):
 
     def test_options_for_destination_relative(self):
         options = generate_confs(
+            '/current/working/directory',
             destination='generate-confs',
             destination_suffix='_suffix',
-            _getcwd=lambda: '/current/working/directory',
             _getpwnam=create_dummy_gpwnam(4321, 1234),
             _prepare=noop,
             _writefiles=noop,
