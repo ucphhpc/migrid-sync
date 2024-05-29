@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # indexdoi - Build index of imported site DOIs
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -83,7 +83,7 @@ to build an index page of all locally published archives with DOIs registered.
     # Ignore msec in stamp
     now -= datetime.timedelta(microseconds=now.microsecond)
 
-    doi_exports = []
+    doi_exports, doi_count = [], 0
     doi_imports = extract_imported_doi_dicts(configuration)
     if verbose:
         print("extracted %d doi entries: %s" % len(doi_imports))
@@ -115,10 +115,12 @@ to build an index page of all locally published archives with DOIs registered.
             if verbose:
                 print("Found existing DOI data in %s" % doi_path)
             doi_exports.append((plain_doi, archive_url))
+            doi_count += 1
 
     if dump:
         fill_helpers = {'short_title': configuration.short_title,
                         'update_stamp': now,
+                        'doi_count': doi_count,
                         }
         publish_title = '%(short_title)s DOI Index' % fill_helpers
 
@@ -143,8 +145,8 @@ to build an index page of all locally published archives with DOIs registered.
 <div id="doi-index" class="staticpage">
 <h2 class="staticpage">%(short_title)s DOI Index</h2>
 <div class="doi-index-intro">
-A list of all known DOIs pointing to Archives at %(short_title)s, sorted with
-the most recently discovered ones at the top.
+A list of all %(doi_count)d known DOIs pointing to Archives at %(short_title)s, sorted
+with the most recently discovered ones at the top.
 </div>
 <div class="vertical-spacer"></div>
 <div class="info leftpad">
@@ -173,7 +175,7 @@ Last auto-generated on %(update_stamp)s
             index_fd.write(contents % fill_helpers)
             index_fd.close()
             msg = "Published index of %d DOIs in %s" % \
-                  (len(doi_exports), doi_index_path)
+                  (doi_count, doi_index_path)
             _logger.info(msg)
             if verbose:
                 print(msg)
@@ -181,7 +183,7 @@ Last auto-generated on %(update_stamp)s
             msg = "failed to write %s: %s" % (doi_index_path, exc)
             _logger.error(msg)
             print("Error writing index of %d DOIs in %s" %
-                  (len(doi_exports), doi_index_path))
+                  (doi_count, doi_index_path))
             sys.exit(1)
 
     sys.exit(0)
