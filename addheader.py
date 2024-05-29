@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # addheader - add license header to all code modules.
-# Copyright (C) 2009-2020  Jonas Bardino
+# Copyright (C) 2009-2024  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -41,7 +41,8 @@ from mig.shared.projcode import code_root, py_code_files, sh_code_files, \
 # Modify these to fit actual project
 proj_vars = {}
 proj_vars['project_name'] = "MiG"
-proj_vars['authors'] = 'The MiG Project lead by Brian Vinter'
+proj_vars['authors'] = 'The MiG Project by the Science HPC Center at UCPH'
+
 proj_vars['copyright_year'] = '2003-%d' % datetime.date.today().year
 
 # Set interpreter path and file encoding if not already set in source files
@@ -160,6 +161,7 @@ def add_header(path, var_dict, explicit_border=True, block_wrap=False):
     module_fd = open(path, 'w')
     module_fd.write(module_text)
     module_fd.close()
+
 
 if __name__ == '__main__':
     target = os.getcwd()
