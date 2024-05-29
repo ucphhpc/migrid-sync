@@ -10,12 +10,13 @@ from support import MigTestCase, cleanpath, temppath, testmain
 
 import mig.shared.fileio as fileio
 
-DUMMY_BYTES = binascii.unhexlify('DEADBEEF') # 4 bytes
+DUMMY_BYTES = binascii.unhexlify('DEADBEEF')  # 4 bytes
 DUMMY_BYTES_LENGTH = 4
 DUMMY_FILE_WRITECHUNK = 'fileio/write_chunk'
 DUMMY_FILE_WRITEFILE = 'fileio/write_file'
 
 assert isinstance(DUMMY_BYTES, bytes)
+
 
 class MigSharedFileio__write_chunk(MigTestCase):
     def setUp(self):
@@ -25,6 +26,11 @@ class MigSharedFileio__write_chunk(MigTestCase):
 
     def test_return_false_on_invalid_data(self):
         did_succeed = fileio.write_chunk(self.tmp_path, 1234, 0, self.logger)
+        self.assertFalse(did_succeed)
+
+    def test_return_false_on_invalid_offset(self):
+        did_succeed = fileio.write_chunk(self.tmp_path, DUMMY_BYTES, -42,
+                                         self.logger)
         self.assertFalse(did_succeed)
 
     def test_return_false_on_invalid_dir(self):
@@ -55,7 +61,8 @@ class MigSharedFileio__write_chunk(MigTestCase):
         with open(self.tmp_path, 'rb') as file:
             content = file.read(1024)
             self.assertEqual(len(content), DUMMY_BYTES_LENGTH + offset)
-            self.assertEqual(content[0:3], bytearray([0, 0, 0]), "expected a hole was left")
+            self.assertEqual(content[0:3], bytearray([0, 0, 0]),
+                             "expected a hole was left")
             self.assertEqual(content[3:], DUMMY_BYTES)
 
 
@@ -76,7 +83,8 @@ class MigSharedFileio__write_file(MigTestCase):
         self.assertFalse(did_succeed)
 
     def test_return_false_on_missing_dir(self):
-        did_succeed = fileio.write_file(DUMMY_BYTES, self.tmp_path, self.logger, make_parent=False)
+        did_succeed = fileio.write_file(DUMMY_BYTES, self.tmp_path, self.logger,
+                                        make_parent=False)
         self.assertFalse(did_succeed)
 
     def test_creates_directory(self):
