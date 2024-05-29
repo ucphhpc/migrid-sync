@@ -80,6 +80,11 @@ def _write_chunk(path, chunk, offset, logger=None, mode='r+b',
         logger = null_logger("dummy")
     # logger.debug("writing chunk to %r at offset %d" % (path, offset))
 
+    if offset < 0:
+        logger.error("cannot write to negative offset %d in %r" %
+                     (offset, path))
+        return False
+
     # create dir and file if it does not exists
 
     (head, _) = os.path.split(path)
