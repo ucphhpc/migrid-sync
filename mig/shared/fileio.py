@@ -71,6 +71,21 @@ except ImportError as ioe:
     exit(1)
 
 
+def _auto_adjust_mode(data, mode):
+    """Select suitable file open mode based on string type of data. I.e. whether
+    to use binary or text mode depending on data in bytes or unicode format.
+    """
+
+    # NOTE: detect byte/unicode writes and handle explicitly in a portable way
+    if isinstance(data, bytes):
+        if 'b' not in mode:
+            mode = "%sb" % mode  # appended to avoid mode ordering error on PY2
+    else:
+        if 'b' in mode:
+            mode = mode.strip('b')
+    return mode
+
+
 def _write_chunk(path, chunk, offset, logger=None, mode='r+b',
                  make_parent=True, create_file=True):
     """Internal helper to wrap writing of chunks with offset to path.
@@ -136,9 +151,7 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
     if not logger:
         logger = null_logger("dummy")
 
-    # NOTE: detect byte writes and handle explicitly in a portable way
-    if isinstance(chunk, bytes) and 'b' not in mode:
-        mode = "%sb" % mode  # appended to avoid mode ordering error on PY2
+    mode = _auto_adjust_mode(chunk, mode)
 
     return _write_chunk(path, chunk, offset, logger, mode)
 
@@ -152,9 +165,7 @@ def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
     if umask is not None:
         old_umask = os.umask(umask)
 
-    # NOTE: detect byte writes and handle explicitly in a portable way
-    if isinstance(content, bytes) and 'b' not in mode:
-        mode = "%sb" % mode  # appended to avoid mode ordering error on PY2
+    mode = _auto_adjust_mode(content, mode)
 
     retval = _write_chunk(path, content, offset=0, logger=logger, mode=mode,
                           make_parent=make_parent, create_file=False)
