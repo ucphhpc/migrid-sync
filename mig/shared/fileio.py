@@ -76,8 +76,6 @@ def _write_chunk(path, chunk, offset, logger=None, mode='r+b',
     The optional make_parent and create_file are used to decide if the parent
     directory and the file should be created if it doesn't already exist.
     """
-    if not logger:
-        logger = null_logger("dummy")
     # logger.debug("writing chunk to %r at offset %d" % (path, offset))
 
     if offset < 0:
@@ -130,6 +128,13 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
     """Wrapper to handle writing of chunks with offset to path.
     Creates file first if it doesn't already exist.
     """
+    if not logger:
+        logger = null_logger("dummy")
+
+    # NOTE: detect byte writes and handle explicitly in a portable way
+    if isinstance(chunk, bytes) and 'b' not in mode:
+        mode = "%sb" % mode  # appended to avoid mode ordering error on PY2
+
     return _write_chunk(path, chunk, offset, logger, mode)
 
 
