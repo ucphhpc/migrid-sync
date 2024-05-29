@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # fileio - wrappers to keep file I/O in a single replaceable module
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -71,9 +71,11 @@ except ImportError as ioe:
     exit(1)
 
 
-def write_chunk(path, chunk, offset, logger, mode='r+b'):
-    """Wrapper to handle writing of chunks with offset to path.
-    Creates file first if it doesn't already exist.
+def _write_chunk(path, chunk, offset, logger=None, mode='r+b',
+                 make_parent=True, create_file=True):
+    """Internal helper to wrap writing of chunks with offset to path.
+    The optional make_parent and create_file are used to decide if the parent
+    directory and the file should be created if it doesn't already exist.
     """
     if not logger:
         logger = null_logger("dummy")
@@ -82,40 +84,53 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
     # create dir and file if it does not exists
 
     (head, _) = os.path.split(path)
-    if not os.path.isdir(head):
+    if not os.path.isdir(head) and make_parent:
         try:
             os.mkdir(head)
         except Exception as err:
             logger.error("could not create parent dir %r: %s" % (head, err))
-    if not os.path.isfile(path):
+            return False
+
+    # ensure a file is present
+
+    if not os.path.isfile(path) and create_file:
         try:
             open(path, "w").close()
         except Exception as err:
             logger.error("could not create file %r: %s" % (path, err))
+            return False
+
     try:
-        filehandle = open(path, mode)
-        # Make sure we can write at requested position, filling if needed
-        try:
-            filehandle.seek(offset)
-        except:
-            filehandle.seek(0, 2)
-            file_size = filehandle.tell()
-            for _ in range(offset - file_size):
-                filehandle.write('\0')
-        # logger.debug('write %s chunk of size %d at position %d' %
-        #              (path, len(chunk), filehandle.tell()))
-        # NOTE: we may need to force str or bytes here depending on mode
-        if 'b' in mode:
-            filehandle.write(force_utf8(chunk))
-        else:
-            filehandle.write(force_native_str(chunk))
-        filehandle.close()
-        # logger.debug("file %r chunk written at %d" % (path, offset))
-        return True
+        with open(path, mode) as filehandle:
+            # Make sure we can write at requested position, filling if needed
+            if offset > 0:
+                try:
+                    filehandle.seek(offset)
+                except:
+                    filehandle.seek(0, 2)
+                    file_size = filehandle.tell()
+                    for _ in range(offset - file_size):
+                        filehandle.write('\0')
+            # logger.debug('write %s chunk of size %d at position %d' %
+            #              (path, len(chunk), filehandle.tell()))
+            # NOTE: we may need to force str or bytes here depending on mode
+            if 'b' in mode:
+                filehandle.write(force_utf8(chunk))
+            else:
+                filehandle.write(force_native_str(chunk))
+            # logger.debug("file %r chunk written at %d" % (path, offset))
+            return True
     except Exception as err:
         logger.error("could not write %r chunk at %d: %s" %
                      (path, offset, err))
         return False
+
+
+def write_chunk(path, chunk, offset, logger, mode='r+b'):
+    """Wrapper to handle writing of chunks with offset to path.
+    Creates file first if it doesn't already exist.
+    """
+    return _write_chunk(path, chunk, offset, logger, mode)
 
 
 def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
@@ -124,32 +139,19 @@ def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
         logger = null_logger("dummy")
     # logger.debug("writing %r file" % path)
 
-    # create dir if it does not exists
-
-    (head, _) = os.path.split(path)
     if umask is not None:
         old_umask = os.umask(umask)
-    if not os.path.isdir(head) and make_parent:
-        try:
-            # logger.debug("making parent directory %r" % head)
-            os.mkdir(head)
-        except Exception as err:
-            logger.error("could not create parent dir %r: %s" % (head, err))
-    try:
-        filehandle = open(path, mode)
-        # NOTE: we may need to force str or bytes here depending on mode
-        if 'b' in mode:
-            filehandle.write(force_utf8(content))
-        else:
-            filehandle.write(force_native_str(content))
-        filehandle.close()
-        # logger.debug("file %r written" % path)
-        retval = True
-    except Exception as err:
-        logger.error("could not write file %r: %s" % (path, err))
-        retval = False
+
+    # NOTE: detect byte writes and handle explicitly in a portable way
+    if isinstance(content, bytes) and 'b' not in mode:
+        mode = "%sb" % mode  # appended to avoid mode ordering error on PY2
+
+    retval = _write_chunk(path, content, offset=0, logger=logger, mode=mode,
+                          make_parent=make_parent, create_file=False)
+
     if umask is not None:
         os.umask(old_umask)
+
     return retval
 
 
