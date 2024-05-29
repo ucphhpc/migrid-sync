@@ -1,3 +1,32 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# --- BEGIN_HEADER ---
+#
+# support - helper functions for unit testing
+# Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# -- END_HEADER ---
+#
+
+"""Supporting functions for the unit test framework"""
+
 from collections import defaultdict
 import errno
 import logging
@@ -23,16 +52,16 @@ sys.path.append(MIG_BASE)
 # provision an output directory up-front
 try:
     os.mkdir(TEST_OUTPUT_DIR)
-except EnvironmentError as e:
-    if e.errno == errno.EEXIST:
+except EnvironmentError as enverr:
+    if enverr.errno == errno.EEXIST:
         pass  # FileExistsError
 
-# basic global logging configuration for testing
-#
-# arrange a stream that ignores all logging messages
+# Basic global logging configuration for testing
 
 
 class BlackHole:
+    """Arrange a stream that ignores all logging messages"""
+
     def write(self, message):
         pass
 
@@ -91,7 +120,7 @@ class FakeLogger:
         self._append_as('warning', line)
 
     def write(self, message):
-        channel, namespace, specifics = message.split(':', maxsplit=2)
+        channel, namespace, specifics = message.split(':', 2)
 
         # ignore everything except warnings sent by th python runtime
         if not (channel == 'WARNING' and namespace == 'py.warnings'):
@@ -103,13 +132,16 @@ class FakeLogger:
 
     @staticmethod
     def identify_unclosed_file(specifics):
-        filename, lineno, exc_name, message = specifics.split(':', maxsplit=3)
+        filename, lineno, exc_name, message = specifics.split(':', 3)
+
         exc_name = exc_name.lstrip()
         if exc_name != 'ResourceWarning':
             return
+
         matched = FakeLogger.RE_UNCLOSEDFILE.match(message.lstrip())
         if matched is None:
             return
+
         relative_testfile = os.path.relpath(filename, start=MIG_BASE)
         relative_outputfile = os.path.relpath(
             matched.groups('location')[0], start=TEST_BASE)
@@ -162,7 +194,8 @@ class MigTestCase(TestCase):
         return self._logger
 
     def assertPathExists(self, relative_path):
-        assert(not os.path.isabs(relative_path)), "expected relative path within output folder"
+        assert not os.path.isabs(
+            relative_path), "expected relative path within output folder"
         absolute_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
         stat_result = os.stat(absolute_path)
         if stat.S_ISDIR(stat_result.st_mode):
@@ -172,12 +205,13 @@ class MigTestCase(TestCase):
 
 
 def cleanpath(relative_path, test_case):
-    assert(isinstance(test_case, MigTestCase))
+    assert isinstance(test_case, MigTestCase)
     tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
     test_case._cleanup_paths.add(tmp_path)
 
+
 def temppath(relative_path, test_case, skip_clean=False):
-    assert(isinstance(test_case, MigTestCase))
+    assert isinstance(test_case, MigTestCase)
     tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
     if not skip_clean:
         test_case._cleanup_paths.add(tmp_path)
