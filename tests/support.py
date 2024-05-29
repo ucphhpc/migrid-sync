@@ -81,7 +81,7 @@ class FakeLogger:
         self._append_as('warning', line)
 
     def write(self, message):
-        channel, namespace, specifics = message.split(':', maxsplit=2)
+        channel, namespace, specifics = message.split(':', 2)
 
         # ignore everything except warnings sent by th python runtime
         if not (channel == 'WARNING' and namespace == 'py.warnings'):
@@ -93,13 +93,16 @@ class FakeLogger:
 
     @staticmethod
     def identify_unclosed_file(specifics):
-        filename, lineno, exc_name, message = specifics.split(':', maxsplit=3)
+        filename, lineno, exc_name, message = specifics.split(':', 3)
+
         exc_name = exc_name.lstrip()
         if exc_name != 'ResourceWarning':
             return
+
         matched = FakeLogger.RE_UNCLOSEDFILE.match(message.lstrip())
         if matched is None:
             return
+
         relative_testfile = os.path.relpath(filename, start=MIG_BASE)
         relative_outputfile = os.path.relpath(
             matched.groups('location')[0], start=TEST_BASE)
@@ -143,7 +146,8 @@ class MigTestCase(TestCase):
         return self._logger
 
     def assertPathExists(self, relative_path):
-        assert(not os.path.isabs(relative_path)), "expected relative path within output folder"
+        assert not os.path.isabs(
+            relative_path), "expected relative path within output folder"
         absolute_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
         stat_result = os.stat(absolute_path)
         if stat.S_ISDIR(stat_result.st_mode):
@@ -153,12 +157,13 @@ class MigTestCase(TestCase):
 
 
 def cleanpath(relative_path, test_case):
-    assert(isinstance(test_case, MigTestCase))
+    assert isinstance(test_case, MigTestCase)
     tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
     test_case._cleanup_paths.add(tmp_path)
 
+
 def temppath(relative_path, test_case, skip_clean=False):
-    assert(isinstance(test_case, MigTestCase))
+    assert isinstance(test_case, MigTestCase)
     tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
     if not skip_clean:
         test_case._cleanup_paths.add(tmp_path)
