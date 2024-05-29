@@ -131,11 +131,8 @@ def _write_chunk(path, chunk, offset, logger=None, mode='r+b',
                         filehandle.write('\0')
             # logger.debug('write %s chunk of size %d at position %d' %
             #              (path, len(chunk), filehandle.tell()))
-            # NOTE: we may need to force str or bytes here depending on mode
-            if 'b' in mode:
-                filehandle.write(force_utf8(chunk))
-            else:
-                filehandle.write(force_native_str(chunk))
+            # NOTE: mode should already be adjusted to chunk string type here
+            filehandle.write(chunk)
             # logger.debug("file %r chunk written at %d" % (path, offset))
             return True
     except Exception as err:
