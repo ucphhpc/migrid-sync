@@ -129,10 +129,13 @@ def _write_chunk(path, chunk, offset, logger=None, mode='r+b',
                     file_size = filehandle.tell()
                     for _ in range(offset - file_size):
                         filehandle.write('\0')
-            # logger.debug('write %s chunk of size %d at position %d' %
+            # logger.debug("write %r chunk of size %d at position %d" %
             #              (path, len(chunk), filehandle.tell()))
-            # NOTE: mode should already be adjusted to chunk string type here
-            filehandle.write(chunk)
+            # NOTE: we may need to force str or bytes here depending on mode
+            if 'b' in mode:
+                filehandle.write(force_utf8(chunk))
+            else:
+                filehandle.write(force_native_str(chunk))
             # logger.debug("file %r chunk written at %d" % (path, offset))
             return True
     except Exception as err:
@@ -148,7 +151,8 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
     if not logger:
         logger = null_logger("dummy")
 
-    mode = _auto_adjust_mode(chunk, mode)
+    # TODO: enable this again once throuroughly tested and assured py2+3 safe
+    # mode = _auto_adjust_mode(chunk, mode)
 
     return _write_chunk(path, chunk, offset, logger, mode)
 
@@ -162,7 +166,8 @@ def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
     if umask is not None:
         old_umask = os.umask(umask)
 
-    mode = _auto_adjust_mode(content, mode)
+    # TODO: enable this again once throuroughly tested and assured py2+3 safe
+    #mode = _auto_adjust_mode(content, mode)
 
     retval = _write_chunk(path, content, offset=0, logger=logger, mode=mode,
                           make_parent=make_parent, create_file=False)
