@@ -1,18 +1,56 @@
 # -*- coding: utf-8 -*-
+#
+# --- BEGIN_HEADER ---
+#
+# test_mig_shared_fileio - unit test of the corresponding mig shared module
+# Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# -- END_HEADER ---
+#
+
+"""Unit test fileio functions"""
 
 import binascii
 import os
 import sys
 
-sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), ".")))
+# TODO: remove this as it should not be needed with PYTHONPATH properly set
+#sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), ".")))
 
-from support import MigTestCase, cleanpath, temppath, testmain
+# NOTE: wrap next imports in try except to prevent autopep8 shuffling up
+try:
+    import mig.shared.fileio as fileio
+except ImportError as ioe:
+    print("Failed to import mig core modules: %s" % ioe.message)
+    exit(1)
 
-import mig.shared.fileio as fileio
+# NOTE: prevent autopep8 shuffling next imports up
+try:
+    from support import MigTestCase, cleanpath, temppath, testmain
+except ImportError as ioe:
+    print("Failed to import mig test modules: %s" % ioe.message)
+    exit(1)
+
 
 DUMMY_BYTES = binascii.unhexlify('DEADBEEF')  # 4 bytes
 DUMMY_BYTES_LENGTH = 4
-DUMMY_UNICODE = u'UniCode123'
+DUMMY_UNICODE = u'UniCode123½¾µßðþđŋħĸþł@ª€£$¥©®'
 DUMMY_UNICODE_LENGTH = len(DUMMY_UNICODE)
 DUMMY_FILE_WRITECHUNK = 'fileio/write_chunk'
 DUMMY_FILE_WRITEFILE = 'fileio/write_file'
@@ -21,6 +59,7 @@ assert isinstance(DUMMY_BYTES, bytes)
 
 
 class MigSharedFileio__write_chunk(MigTestCase):
+    # TODO: Add docstrings to this class and its methods
     def setUp(self):
         super(MigSharedFileio__write_chunk, self).setUp()
         self.tmp_path = temppath(DUMMY_FILE_WRITECHUNK, self, skip_clean=True)
