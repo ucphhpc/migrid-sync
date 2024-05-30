@@ -66,7 +66,9 @@ class MigSharedFileio__write_chunk(MigTestCase):
         cleanpath(os.path.dirname(DUMMY_FILE_WRITECHUNK), self)
 
     def test_return_false_on_invalid_data(self):
-        did_succeed = fileio.write_chunk(self.tmp_path, 1234, 0, self.logger)
+        # NOTE: we make sure to disable any forced stringification here
+        did_succeed = fileio.write_chunk(self.tmp_path, 1234, 0, self.logger,
+                                         force_string=False)
         self.assertFalse(did_succeed)
 
     def test_return_false_on_invalid_offset(self):
@@ -144,7 +146,9 @@ class MigSharedFileio__write_file(MigTestCase):
         cleanpath(os.path.dirname(DUMMY_FILE_WRITEFILE), self)
 
     def test_return_false_on_invalid_data(self):
-        did_succeed = fileio.write_file(1234, self.tmp_path, self.logger)
+        # NOTE: we make sure to disable any forced stringification here
+        did_succeed = fileio.write_file(1234, self.tmp_path, self.logger,
+                                        force_string=False)
         self.assertFalse(did_succeed)
 
     def test_return_false_on_invalid_dir(self):
