@@ -86,10 +86,12 @@ def _auto_adjust_mode(data, mode):
 
 
 def _write_chunk(path, chunk, offset, logger=None, mode='r+b',
-                 make_parent=True, create_file=True):
+                 make_parent=True, create_file=True, force_string=False):
     """Internal helper to wrap writing of chunks with offset to path.
     The optional make_parent and create_file are used to decide if the parent
     directory and the file should be created if it doesn't already exist.
+    The optional force_string is used to force contents to string even if it's
+    another type.
     """
     # logger.debug("writing chunk to %r at offset %d" % (path, offset))
 
@@ -130,7 +132,11 @@ def _write_chunk(path, chunk, offset, logger=None, mode='r+b',
                         filehandle.write('\0')
             # logger.debug("write %r chunk of size %d at position %d" %
             #              (path, len(chunk), filehandle.tell()))
-            filehandle.write(chunk)
+            # NOTE: any value/type of chunk is forced to str if requested
+            if force_string:
+                filehandle.write(str(chunk))
+            else:
+                filehandle.write(chunk)
             # logger.debug("file %r chunk written at %d" % (path, offset))
             return True
     except Exception as err:
@@ -139,7 +145,7 @@ def _write_chunk(path, chunk, offset, logger=None, mode='r+b',
         return False
 
 
-def write_chunk(path, chunk, offset, logger, mode='r+b'):
+def write_chunk(path, chunk, offset, logger, mode='r+b', force_string=False):
     """Wrapper to handle writing of chunks with offset to path.
     Creates file first if it doesn't already exist.
     """
@@ -149,10 +155,12 @@ def write_chunk(path, chunk, offset, logger, mode='r+b'):
     # TODO: enable this again once throuroughly tested and assured py2+3 safe
     # mode = _auto_adjust_mode(chunk, mode)
 
-    return _write_chunk(path, chunk, offset, logger, mode)
+    return _write_chunk(path, chunk, offset, logger, mode,
+                        force_string=force_string)
 
 
-def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
+def write_file(content, path, logger, mode='w', make_parent=True, umask=None,
+               force_string=False):
     """Wrapper to handle writing of contents to path"""
     if not logger:
         logger = null_logger("dummy")
@@ -165,7 +173,8 @@ def write_file(content, path, logger, mode='w', make_parent=True, umask=None):
     #mode = _auto_adjust_mode(content, mode)
 
     retval = _write_chunk(path, content, offset=0, logger=logger, mode=mode,
-                          make_parent=make_parent, create_file=False)
+                          make_parent=make_parent, create_file=False,
+                          force_string=force_string)
 
     if umask is not None:
         os.umask(old_umask)
