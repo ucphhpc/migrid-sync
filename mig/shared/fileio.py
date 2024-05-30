@@ -86,13 +86,14 @@ def _auto_adjust_mode(data, mode):
     return mode
 
 
+# TODO: toggle force_string default once we have auto mode select?
 def _write_chunk(path, chunk, offset, logger=None, mode='r+b',
-                 make_parent=True, create_file=True, force_string=False):
+                 make_parent=True, create_file=True, force_string=True):
     """Internal helper to wrap writing of chunks with offset to path.
     The optional make_parent and create_file are used to decide if the parent
     directory and the file should be created if it doesn't already exist.
-    The optional force_string is used to force contents to string even if it's
-    another type.
+    The optional force_string is used to handle byte vs unicode for now and
+    implicitly also forces contents to string even if it's another type.
     """
     # logger.debug("writing chunk to %r at offset %d" % (path, offset))
 
@@ -133,6 +134,7 @@ def _write_chunk(path, chunk, offset, logger=None, mode='r+b',
                         filehandle.write('\0')
             # logger.debug("write %r chunk of size %d at position %d" %
             #              (path, len(chunk), filehandle.tell()))
+            # TODO: remove force_X here after enabling auto mode select again?
             # NOTE: we may need to force str or bytes here depending on mode
             if not force_string:
                 filehandle.write(chunk)
@@ -147,8 +149,8 @@ def _write_chunk(path, chunk, offset, logger=None, mode='r+b',
                      (path, offset, err))
         return False
 
-
-def write_chunk(path, chunk, offset, logger, mode='r+b', force_string=False):
+# TODO: toggle default force_string here when we have auto mode select?
+def write_chunk(path, chunk, offset, logger, mode='r+b', force_string=True):
     """Wrapper to handle writing of chunks with offset to path.
     Creates file first if it doesn't already exist.
     """
@@ -162,8 +164,9 @@ def write_chunk(path, chunk, offset, logger, mode='r+b', force_string=False):
                         force_string=force_string)
 
 
+# TODO: toggle default force_string here when we have auto mode select?
 def write_file(content, path, logger, mode='w', make_parent=True, umask=None,
-               force_string=False):
+               force_string=True):
     """Wrapper to handle writing of contents to path"""
     if not logger:
         logger = null_logger("dummy")
