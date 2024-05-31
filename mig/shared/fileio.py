@@ -30,14 +30,18 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+import codecs
 import errno
 import fcntl
 import os
 import shutil
 import sys
 import tempfile
+import traceback
 import time
 import zipfile
+
+PY2 = sys.version_info[0] == 2
 
 # NOTE: We expose optimized walk function directly for ease and efficiency.
 #       Requires stand-alone scandir module on python 2 whereas the native os
@@ -70,19 +74,8 @@ except ImportError as ioe:
     exit(1)
 
 
-def _auto_adjust_mode(data, mode):
-    """Select suitable file open mode based on string type of data. I.e. whether
-    to use binary or text mode depending on data in bytes or unicode format.
-    """
-
-    # NOTE: detect byte/unicode writes and handle explicitly in a portable way
-    if isinstance(data, bytes):
-        if 'b' not in mode:
-            mode = "%sb" % mode  # appended to avoid mode ordering error on PY2
-    else:
-        if 'b' in mode:
-            mode = mode.strip('b')
-    return mode
+def _is_string(value):
+    return isinstance(value, unicode) if PY2 else isinstance(value, str)
 
 
 def _write_chunk(path, chunk, offset, logger=None, mode='r+b',
@@ -99,6 +92,12 @@ def _write_chunk(path, chunk, offset, logger=None, mode='r+b',
         logger.error("cannot write to negative offset %d in %r" %
                      (offset, path))
         return False
+
+    if _is_string(chunk):
+        chunk = bytearray(chunk, 'utf8')
+    # detect byte writes and handle explicitly in a portable way
+    if isinstance(chunk, (bytes, bytearray)) and 'b' not in mode:
+        mode = "%sb" % mode  # appended to avoid mode ordering error on PY2
 
     # create dir and file if it does not exists
 
@@ -140,6 +139,7 @@ def _write_chunk(path, chunk, offset, logger=None, mode='r+b',
             # logger.debug("file %r chunk written at %d" % (path, offset))
             return True
     except Exception as err:
+        #traceback.print_exc()
         logger.error("could not write %r chunk at %d: %s" %
                      (path, offset, err))
         return False
@@ -151,9 +151,6 @@ def write_chunk(path, chunk, offset, logger, mode='r+b', force_string=False):
     """
     if not logger:
         logger = null_logger("dummy")
-
-    # TODO: enable this again once throuroughly tested and assured py2+3 safe
-    # mode = _auto_adjust_mode(chunk, mode)
 
     return _write_chunk(path, chunk, offset, logger, mode,
                         force_string=force_string)
@@ -168,9 +165,6 @@ def write_file(content, path, logger, mode='w', make_parent=True, umask=None,
 
     if umask is not None:
         old_umask = os.umask(umask)
-
-    # TODO: enable this again once throuroughly tested and assured py2+3 safe
-    #mode = _auto_adjust_mode(content, mode)
 
     retval = _write_chunk(path, content, offset=0, logger=logger, mode=mode,
                           make_parent=make_parent, create_file=False,
