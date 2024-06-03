@@ -1630,7 +1630,7 @@ def html_format(configuration, ret_val, ret_msg, out_obj):
     <tr>
         <th>Name</th>
         <th class="icon">Action<!-- Open, Delete --></th>
-        <th>Date</th>
+        <th>Date added / original</th>
         <th>Size in bytes</th>'''
             for algo in sorted_hash_algos:
                 checksum_field = '%ssum' % algo

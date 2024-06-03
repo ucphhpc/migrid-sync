@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createfreeze - back end for freezing archives
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -39,7 +39,7 @@ from mig.shared.defaults import max_freeze_files, csrf_field, freeze_flavors, \
     keyword_auto, keyword_pending, keyword_final
 from mig.shared.fileio import strip_dir, walk
 from mig.shared.freezefunctions import create_frozen_archive, published_url, \
-    is_frozen_archive
+    is_frozen_archive, get_frozen_files, default_algo
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
 from mig.shared.html import man_base_js, man_base_html, html_post_helper
@@ -63,6 +63,7 @@ def signature():
         'freeze_department': [''],
         'freeze_organization': [''],
         'freeze_state': [keyword_auto],
+        'checksum_list': [],
     }
     return ['text', defaults]
 
@@ -244,6 +245,7 @@ Please contact the %s site support (%s) if you think it should be enabled.
     freeze_department = accepted['freeze_department'][-1].strip()
     freeze_organization = accepted['freeze_organization'][-1].strip()
     freeze_publish = accepted['freeze_publish'][-1].strip()
+    chksums = accepted['checksum_list']
     do_publish = (freeze_publish.lower() in ('on', 'true', 'yes', '1'))
 
     # Share init of base meta with lookup of default state in freeze_flavors
@@ -337,6 +339,13 @@ existing archive of yours!""" % freeze_id})
     freeze_id = freeze_meta['ID']
     logger.info("%s: successful for '%s': %s" % (op_name,
                                                  freeze_id, client_id))
+    # Calculate / update checksums if requested
+    if chksums:
+        (chksum_status, chksum_res) = get_frozen_files(client_id, freeze_id,
+                                                       configuration,
+                                                       checksum_list=chksums,
+                                                       force_refresh=True)
+
     # Return simple status mainly for use in scripting
     output_objects.append({'object_type': 'freezestatus', 'freeze_id': freeze_id,
                            'flavor': flavor, 'freeze_state': freeze_state})
