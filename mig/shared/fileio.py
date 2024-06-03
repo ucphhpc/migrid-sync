@@ -650,6 +650,8 @@ def _copy_helper(src, dst, configuration, recursive):
     """Copy a file or directory from src to dst where dst must be a new
     file/dir path and the parent dir is created if necessary. The recursive
     flag enables recursive copy.
+    We use the same 'copy2' helper for single file copies as for the recursive
+    copytree case to always transfer metadata, too.
     """
     dst_dir = os.path.dirname(dst)
     makedirs_rec(dst_dir, configuration)
@@ -657,7 +659,7 @@ def _copy_helper(src, dst, configuration, recursive):
         if recursive:
             shutil.copytree(src, dst)
         else:
-            shutil.copy(src, dst)
+            shutil.copy2(src, dst)
     except Exception as exc:
         return (False, "copy %r %r failed: %s" % (src, dst, exc))
     return (True, "")
