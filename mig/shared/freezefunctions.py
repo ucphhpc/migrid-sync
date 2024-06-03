@@ -182,10 +182,16 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False,
                 'title': 'Show archive file %(name)s' % file_item,
                 'text': ''
             }
+            # NOTE: we have file creation time in archive as timestamp
             int_timestamp = int(file_item['timestamp'])
+            # NOTE: we may have preserved file modification time as file_mtime
+            int_origtime = int(file_item.get('file_mtime', int_timestamp))
             # NOTE: datetime is not json-serializable so we force to string
             dt_timestamp = datetime.datetime.fromtimestamp(int_timestamp)
+            dt_origtime = datetime.datetime.fromtimestamp(int_origtime)
             str_timestamp = "%s" % dt_timestamp
+            if dt_timestamp != dt_origtime:
+                str_timestamp += " / %s" % dt_origtime
             # NOTE: xmlrpc is limited to 32-bit ints so force size to string
             str_size = "%(size)s" % file_item
             entry = {
@@ -193,6 +199,7 @@ def build_freezeitem_object(configuration, freeze_dict, summary=False,
                 'name': file_item['name'],
                 'showfile_link': showfile_link,
                 'timestamp': int_timestamp,
+                'origtime': int_origtime,
                 'date': str_timestamp,
                 'size': str_size,
             }
@@ -713,14 +720,16 @@ def get_frozen_files(client_id, freeze_id, configuration,
             entry = file_map.get(rel_path, {})
             if not entry or needs_update:
                 entry['name'] = entry.get('name', rel_path)
-                file_ctime, file_size = -1, -1
+                file_ctime, file_mtime, file_size = -1, -1, -1
                 try:
                     file_ctime = os.path.getctime(frozen_path)
+                    file_mtime = os.path.getmtime(frozen_path)
                     file_size = os.path.getsize(frozen_path)
                 except Exception as err:
                     _logger.warning("failed to update cached %s stats: %s" %
                                     (frozen_path, err))
-                entry['timestamp'] = file_ctime
+                entry['timestamp'] = entry['file_ctime'] = file_ctime
+                entry['file_mtime'] = file_mtime
                 entry['size'] = file_size
                 updates += 1
 
