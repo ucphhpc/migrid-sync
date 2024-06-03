@@ -26,8 +26,19 @@
 #
 
 import codecs
+import os
+import string
 import sys
 
+sys.path.append(os.path.realpath(
+    os.path.join(os.path.dirname(__file__), "../..")))
+
+from mig.shared.defaults import username_charset
+
+UNSAFE_CHARS = sorted(list(set(string.printable) - set(username_charset)))
+UNSAFE_CHARS_ORD = list(ord(c) for c in UNSAFE_CHARS)
+UNSAFE_CHARS_NAMES = list(str(o).zfill(3) for o in UNSAFE_CHARS_ORD)
+UNSAFE_SUBSTIUTIONS = dict(zip(UNSAFE_CHARS_ORD, UNSAFE_CHARS_NAMES))
 PY2 = sys.version_info[0] == 2
 
 if PY2:
@@ -37,8 +48,34 @@ else:
 
 
 def safename_encode(value):
-    return _as_ascii_string(codecs.encode(value, 'punycode'))
+    punycoded = _as_ascii_string(codecs.encode(value, 'punycode'))
+    characters = list(punycoded)
+
+    for index, character in enumerate(characters):
+        character_ordinal = ord(character)
+        character_substitute = UNSAFE_SUBSTIUTIONS.get(character_ordinal, None)
+        if character_substitute is not None:
+            characters[index] = ":%s" % character_substitute
+
+    return ''.join(characters)
 
 
 def safename_decode(value):
-    return codecs.decode(value, 'punycode')
+    chunked = value.split(':')
+
+    if len(chunked) > 1:
+        for index, chunk in enumerate(chunked):
+            if chunk == '':
+                continue
+            trailer = chunk[3:]
+            character_substitute = chunk[0:3]
+            character_ordinal = int(character_substitute)
+            chunked[index] = "%s%s" % (chr(character_ordinal), trailer)
+
+    return codecs.decode(''.join(chunked), 'punycode')
+
+
+if __name__ == '__main__':
+    d = dict(zip(UNSAFE_CHARS_ORD, UNSAFE_CHARS_NAMES))
+    print(len(d))
+    print(d)

@@ -21,7 +21,7 @@ class MigSharedSanitize_safename(MigTestCase):
         encoded = safename_encode(DUMMY_EXOTIC)
 
         self.assertEqual(
-            encoded, "UniCode123@$-lna3a4dm6e3ftgua80ewlwka88boszo7i7iv930g")
+            encoded, "UniCode123@:036-lna3a4dm6e3ftgua80ewlwka88boszo7i7iv930g")
 
     def test_executes_decode(self):
         safename_decode("")
@@ -34,12 +34,16 @@ class MigSharedSanitize_safename(MigTestCase):
         self.assertEqual(outputvalue, inputvalue)
 
     def test_roundtrip_ascii(self):
-        inputvalue = "abcde123467890"
+        inputvalue = "$abcde$123467890$"
 
         outputvalue = safename_decode(safename_encode(inputvalue))
 
         self.assertEqual(outputvalue, inputvalue)
 
 
-if __name__ == '__main__':
+def main():
     testmain()
+
+
+if __name__ == '__main__':
+    main()
