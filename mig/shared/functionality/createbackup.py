@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # createbackup - back end for one-shot backup archive creation
-# Copyright (C) 2003-2018  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,7 +29,7 @@
 from __future__ import absolute_import
 
 from mig.shared.functionality.createfreeze import main as createfreeze_main, \
-    signature as createfreeze_signature, keyword_final
+    signature as createfreeze_signature, keyword_final, default_algo
 
 
 def main(client_id, user_arguments_dict):
@@ -39,5 +39,7 @@ def main(client_id, user_arguments_dict):
     args_dict = createfreeze_signature()[1]
     args_dict.update(user_arguments_dict)
     args_dict['flavor'] = ['backup']
+    # Always checksum when running in background
+    args_dict['checksum_list'] = [default_algo]
     args_dict['freeze_state'] = [keyword_final]
     return createfreeze_main(client_id, args_dict)
