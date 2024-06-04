@@ -5,17 +5,24 @@ import os
 import sys
 
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), ".")))
-
 from support import MigTestCase, testmain
 
 from mig.shared.sanitize import safename_encode, safename_decode
 
+DUMMY_ASCII = u'abcde123467890'
+DUMMY_ASCII_WITH_REPLACE = "$abcde$123467890$"
 DUMMY_EXOTIC = u'UniCode123½¾µßðþđŋħĸþł@ª€£$¥©®'
 
 
 class MigSharedSanitize_safename(MigTestCase):
     def test_executes_encode(self):
         safename_encode("")
+
+    def test_encode_ascii(self):
+        encoded = safename_encode(DUMMY_ASCII)
+
+        self.assertEqual(
+            encoded, "abcde123467890-")
 
     def test_encode_exotic(self):
         encoded = safename_encode(DUMMY_EXOTIC)
@@ -34,7 +41,7 @@ class MigSharedSanitize_safename(MigTestCase):
         self.assertEqual(outputvalue, inputvalue)
 
     def test_roundtrip_ascii(self):
-        inputvalue = "$abcde$123467890$"
+        inputvalue = DUMMY_ASCII_WITH_REPLACE
 
         outputvalue = safename_decode(safename_encode(inputvalue))
 
