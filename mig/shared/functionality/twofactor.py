@@ -50,7 +50,7 @@ from mig.shared.base import requested_backend, requested_page, extract_field, \
 from mig.shared.defaults import twofactor_cookie_ttl, AUTH_MIG_OID, \
     AUTH_EXT_OID, AUTH_MIG_OIDC, AUTH_EXT_OIDC
 from mig.shared.functional import validate_input
-from mig.shared.griddaemons.openid import default_max_user_hits, \
+from mig.shared.griddaemons.https import default_max_user_hits, \
     default_user_abuse_hits, default_proto_abuse_hits, hit_rate_limit, \
     expire_rate_limit, validate_auth_attempt
 from mig.shared.init import initialize_main_variables
@@ -326,8 +326,8 @@ function update_reload_counter(cnt, delay) {
             )
 
         if exceeded_rate_limit or disconnect:
-            logger.warning('Throttle twofactor from %s (%s) - past rate limit'
-                           % (client_id, client_addr))
+            logger.warning('Throttle %s from %s (%s) - past rate limit' %
+                           (op_name, client_id, client_addr))
             # NOTE: we keep actual result in plain text for json extract
             output_objects.append({'object_type': 'html_form', 'text': '''
 <div class="vertical-spacer"></div>

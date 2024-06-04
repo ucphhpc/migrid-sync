@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # auth - grid daemon auth helper functions
-# Copyright (C) 2010-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -187,6 +187,7 @@ def validate_auth_attempt(configuration,
                           valid_twofa=False,
                           authtype_enabled=False,
                           valid_auth=False,
+                          auth_reset=False,
                           exceeded_rate_limit=False,
                           exceeded_max_sessions=False,
                           user_abuse_hits=default_user_abuse_hits,
@@ -228,6 +229,8 @@ def validate_auth_attempt(configuration,
                  % valid_twofa
                  + "authtype_enabled: %s, valid_auth: %s\n"
                  % (authtype_enabled, valid_auth)
+                 + "auth_reset: %s\n"
+                 % auth_reset
                  + "exceeded_rate_limit: %s\n"
                  % exceeded_rate_limit
                  + "exceeded_max_sessions: %s\n"
@@ -261,11 +264,11 @@ def validate_auth_attempt(configuration,
             and authtype in configuration.user_sftp_auth:
         pass
     elif protocol == 'sftp-subsys' \
-            and (authtype in configuration.user_sftp_auth \
-            or authtype in ["session"]):
+            and (authtype in configuration.user_sftp_auth
+                 or authtype in ["session"]):
         pass
     elif protocol == 'https' \
-            and authtype in ["twofactor"]:
+            and authtype in ["twofactor", "reqpwresetaction"]:
         pass
     elif protocol == 'openid' \
             and authtype in configuration.user_openid_auth:
@@ -395,6 +398,16 @@ mandatory two factor session was closed or expired.
         authlog(configuration, 'WARNING', protocol, authtype,
                 username, ip_addr, auth_msg,
                 notify=notify, hint=mount_hint)
+    elif authtype_enabled and auth_reset:
+        # IMPORTANT: leave unauthorized here to enforce rate limit on resets
+        authorized = False
+        auth_msg = "Allow %s" % authtype
+        log_msg = auth_msg + " for %s from %s" % (username, ip_addr)
+        if tcp_port > 0:
+            log_msg += ":%s" % tcp_port
+        logger.info(log_msg)
+        authlog(configuration, 'INFO', protocol, authtype,
+                username, ip_addr, auth_msg, notify=notify)
     elif authtype_enabled and not valid_auth:
         auth_msg = "Failed %s" % authtype
         mount_hint = ''
@@ -450,7 +463,7 @@ fails to provide the correct credentials.
                               username, authorized,
                               secret=max_secret)
 
-    # Check if we should log abuse messages for use by eg. fail2ban
+    # Check if we should log abuse messages for use by e.g. fail2ban
 
     if user_abuse_hits > 0 and user_hits > user_abuse_hits:
         auth_msg = "Abuse limit reached"

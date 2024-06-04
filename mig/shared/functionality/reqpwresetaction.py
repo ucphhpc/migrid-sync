@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # reqpwresetaction - handle account password reset requests and send email to user
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -30,8 +30,8 @@
 from __future__ import absolute_import
 
 import os
-import time
 import tempfile
+import time
 
 from mig.shared import returnvalues
 from mig.shared.base import canonical_user_with_peers, generate_https_urls, \
@@ -39,7 +39,11 @@ from mig.shared.base import canonical_user_with_peers, generate_https_urls, \
     mask_creds, is_gdp_user
 from mig.shared.defaults import keyword_auto, RESET_TOKEN_TTL
 from mig.shared.functional import validate_input, REJECT_UNSET
+from mig.shared.griddaemons.https import default_max_user_hits, \
+    default_user_abuse_hits, default_proto_abuse_hits, hit_rate_limit, \
+    expire_rate_limit, validate_auth_attempt
 from mig.shared.handlers import safe_handler, get_csrf_limit
+from mig.shared.html import themed_styles, themed_scripts
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.notification import send_email
 from mig.shared.pwcrypto import generate_reset_token
@@ -61,7 +65,22 @@ def main(client_id, user_arguments_dict):
     """Main function used by front end"""
 
     (configuration, logger, output_objects, op_name) = \
-        initialize_main_variables(client_id, op_header=False, op_menu=False)
+        initialize_main_variables(client_id, op_header=False, op_title=False,
+                                  op_menu=False)
+    # IMPORTANT: no title in init above so we MUST call it immediately here
+    #            or basic styling will break on e.g. the check user result.
+    styles = themed_styles(configuration)
+    scripts = themed_scripts(configuration, logged_in=False)
+    title_entry = {'object_type': 'title',
+                   'text': '%s reset account password request' %
+                   configuration.short_title,
+                   'skipmenu': True, 'style': styles, 'script': scripts}
+    output_objects.append(title_entry)
+    output_objects.append({'object_type': 'header', 'text':
+                           '%s reset account password request' %
+                           configuration.short_title
+                           })
+
     defaults = signature(configuration)[1]
     (validate_status, accepted) = validate_input(user_arguments_dict,
                                                  defaults, output_objects,
@@ -71,15 +90,20 @@ def main(client_id, user_arguments_dict):
         logger.warning('%s invalid input: %s' % (op_name, accepted))
         return (accepted, returnvalues.CLIENT_ERROR)
 
-    title_entry = find_entry(output_objects, 'title')
-    title_entry['text'] = '%s reset account password request' % \
-                          configuration.short_title
-    title_entry['skipmenu'] = True
-    output_objects.append({'object_type': 'header', 'text':
-                           '%s reset account password request' %
-                           configuration.short_title
-                           })
-
+    # Seconds to delay next reset attempt after hitting rate limit
+    delay_retry = 900
+    scripts['init'] += '''
+function update_reload_counter(cnt, delay) {
+    var remain = (delay - cnt);
+    $("#reload_counter").html(remain.toString());
+    if (cnt >= delay) {
+        /* Load previous page again without re-posting last attempt */
+        location = history.back();
+    } else {
+        setTimeout(function() { update_reload_counter(cnt+1, delay); }, 1000);
+    }
+}
+    '''
     smtp_server = configuration.smtp_server
 
     cert_id = accepted['cert_id'][-1].strip()
@@ -118,7 +142,67 @@ Please contact the %s providers if you want to reset your associated password.
         return (output_objects, returnvalues.CLIENT_ERROR)
 
     mig_user = os.environ.get('USER', 'mig')
+    client_addr = os.environ.get('REMOTE_ADDR', None)
+    tcp_port = int(os.environ.get('REMOTE_PORT', '0'))
     anon_migoid_url = configuration.migserver_https_sid_url
+
+    status = returnvalues.OK
+
+    # Rate limit password reset attempts for any cert_id from source addr
+    # to prevent excessive requests spamming users or overloading server.
+    # We do so no matter if cert_id matches a valid user to prevent disclosure.
+    # Rate limit does not affect reset for another ID from same address as
+    # that may be perfectly valid e.g. if behind a shared NAT-gateway.
+    proto = 'https'
+    disconnect, exceeded_rate_limit = False, False
+    # Clean up expired entries in persistent rate limit cache
+    expire_rate_limit(configuration, proto, fail_cache=delay_retry,
+                      expire_delay=delay_retry)
+    if hit_rate_limit(configuration, proto, client_addr, cert_id,
+                      max_user_hits=1):
+        exceeded_rate_limit = True
+    # Update rate limits and write to auth log
+    (authorized, disconnect) = validate_auth_attempt(
+        configuration,
+        proto,
+        op_name,
+        cert_id,
+        client_addr,
+        tcp_port,
+        secret=None,
+        authtype_enabled=True,
+        auth_reset=True,
+        exceeded_rate_limit=exceeded_rate_limit,
+        user_abuse_hits=default_user_abuse_hits,
+        proto_abuse_hits=default_proto_abuse_hits,
+        max_secret_hits=1,
+        skip_notify=True,
+    )
+
+    if exceeded_rate_limit or disconnect:
+        logger.warning('Throttle %s for %s from %s - past rate limit' %
+                       (op_name, cert_id, client_addr))
+        # NOTE: we keep actual result in plain text for json extract
+        output_objects.append({'object_type': 'html_form', 'text': '''
+<div class="vertical-spacer"></div>
+<div class="error leftpad errortext">
+'''})
+        output_objects.append({'object_type': 'text', 'text': """
+Invalid input or rate limit exceeded - please wait %d seconds before retrying.
+""" % delay_retry
+                               })
+        output_objects.append({'object_type': 'html_form', 'text': '''
+</div>
+<div class="vertical-spacer"></div>
+<div class="info leftpad">
+Origin will reload automatically in <span id="reload_counter">%d</span> seconds.
+</div>
+</div>
+''' % delay_retry})
+        scripts['ready'] += '''
+    setTimeout(function() { update_reload_counter(1, %d); }, 1000);
+''' % delay_retry
+        return (output_objects, status)
 
     search_filter = default_search()
     if '/' in cert_id:
@@ -215,4 +299,4 @@ if it doesn't show up.""" % (cert_id, auth_type_name,
     output_objects.append(
         {'object_type': 'link', 'destination': 'javascript:history.back();',
          'class': 'genericbutton', 'text': "Back"})
-    return (output_objects, returnvalues.OK)
+    return (output_objects, status)
