@@ -35,6 +35,9 @@ sys.path.append(os.path.realpath(
 
 from mig.shared.defaults import username_charset
 
+INDICATOR_CH = ':'
+MARKER = INDICATOR_CH * 2
+MARKER_LENGTH = len(MARKER)
 UNSAFE_CHARS = sorted(list(set(string.printable) - set(username_charset)))
 UNSAFE_CHARS_ORD = list(ord(c) for c in UNSAFE_CHARS)
 UNSAFE_CHARS_NAMES = list(str(o).zfill(3) for o in UNSAFE_CHARS_ORD)
@@ -47,32 +50,81 @@ else:
     def _as_ascii_string(value): return codecs.decode(value, 'ascii')
 
 
+# TODO
+# - swap to converting the ord char value to hex as a way to save bytes
+
 def safename_encode(value):
     punycoded = _as_ascii_string(codecs.encode(value, 'punycode'))
+
+    if len(punycoded) == 0:
+        return ''
+
+    was_ascii = False
+    was_encoded = False
+    idx_trailer = -1
+
+    if punycoded[-1] == '-':
+        # the value is punycoded ascii - record this fact and
+        # remove this trailing character which will be added
+        # back later bsaed on the indication character
+        was_ascii = True
+    if not was_ascii:
+        idx_trailer = punycoded.rindex('-')
+        was_encoded = idx_trailer > -1
+    if not (was_ascii or was_encoded):
+        raise NotImplementedError()
+
+
     characters = list(punycoded)
 
     for index, character in enumerate(characters):
         character_ordinal = ord(character)
         character_substitute = UNSAFE_SUBSTIUTIONS.get(character_ordinal, None)
         if character_substitute is not None:
-            characters[index] = ":%s" % character_substitute
+            characters[index] = "%s%s" % (INDICATOR_CH, character_substitute)
+
+    if was_ascii:
+        # replace punycode single hyphen trailer with an escaped indicator
+        characters[-1] = INDICATOR_CH
+        characters.append(INDICATOR_CH)
+
+    if was_encoded:
+        # replace punycode single hyphen trailer with an escaped indicator
+        characters[idx_trailer] = INDICATOR_CH
+        characters.insert(idx_trailer, INDICATOR_CH)
 
     return ''.join(characters)
 
 
 def safename_decode(value):
-    chunked = value.split(':')
+    if value == '':
+        return value
 
-    if len(chunked) > 1:
-        for index, chunk in enumerate(chunked):
-            if chunk == '':
-                continue
-            trailer = chunk[3:]
-            character_substitute = chunk[0:3]
-            character_ordinal = int(character_substitute)
-            chunked[index] = "%s%s" % (chr(character_ordinal), trailer)
+    value_to_decode = None
+    try:
+        idx = value.rindex(MARKER)
+        value_to_decode = ''.join((value[:idx + 1], '045', value[idx + 2:]))
+    except ValueError:
+        raise RuntimeError()
 
-    return codecs.decode(''.join(chunked), 'punycode')
+    chunked = value_to_decode.split(INDICATOR_CH)
+
+    skip_first_chunk = chunked[0] != ''
+    index = 1 if skip_first_chunk else 0
+
+    while index < len(chunked):
+        chunk = chunked[index]
+        if chunk == '':
+            index += 1
+            continue
+        character_substitute = chr(int(chunk[0:3]))
+        chunked[index] = "%s%s" % (character_substitute, chunk[3:])
+        index += 1
+
+    try:
+        return codecs.decode(''.join(chunked), 'punycode')
+    except Exception as e:
+        raise e
 
 
 if __name__ == '__main__':
