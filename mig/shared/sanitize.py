@@ -36,8 +36,8 @@ sys.path.append(os.path.realpath(
 from mig.shared.defaults import username_charset
 
 INDICATOR_CH = ':'
+INVALID_INSERTION_POINT = -2
 MARKER = INDICATOR_CH * 2
-MARKER_LENGTH = len(MARKER)
 UNSAFE_CHARS = sorted(list(set(string.printable) - set(username_charset)))
 UNSAFE_CHARS_ORD = list(ord(c) for c in UNSAFE_CHARS)
 UNSAFE_CHARS_NAMES = list(str(o).zfill(3) for o in UNSAFE_CHARS_ORD)
@@ -59,20 +59,22 @@ def safename_encode(value):
     if len(punycoded) == 0:
         return ''
 
-    was_ascii = False
-    was_encoded = False
-    idx_trailer = -1
+    insertion_point = INVALID_INSERTION_POINT
 
     if punycoded[-1] == '-':
         # the value is punycoded ascii - record this fact and
         # remove this trailing character which will be added
         # back later bsaed on the indication character
-        was_ascii = True
-    if not was_ascii:
-        idx_trailer = punycoded.rindex('-')
-        was_encoded = idx_trailer > -1
-    if not (was_ascii or was_encoded):
-        raise NotImplementedError()
+        insertion_point = -1
+    else:
+        try:
+            insertion_point = punycoded.rindex('-')
+        except ValueError:
+            # the marker could not be located so the insertion
+            # point as not updated and thus remains set invalid
+            pass
+    if insertion_point == INVALID_INSERTION_POINT:
+        raise AssertionError(None)
 
 
     characters = list(punycoded)
@@ -83,15 +85,10 @@ def safename_encode(value):
         if character_substitute is not None:
             characters[index] = "%s%s" % (INDICATOR_CH, character_substitute)
 
-    if was_ascii:
+    if insertion_point != INVALID_INSERTION_POINT:
         # replace punycode single hyphen trailer with an escaped indicator
-        characters[-1] = INDICATOR_CH
-        characters.insert(-1, INDICATOR_CH)
-
-    if was_encoded:
-        # replace punycode single hyphen trailer with an escaped indicator
-        characters[idx_trailer] = INDICATOR_CH
-        characters.insert(idx_trailer, INDICATOR_CH)
+        characters[insertion_point] = INDICATOR_CH
+        characters.insert(insertion_point, INDICATOR_CH)
 
     return ''.join(characters)
 
