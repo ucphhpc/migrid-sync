@@ -86,7 +86,7 @@ def safename_encode(value):
     if was_ascii:
         # replace punycode single hyphen trailer with an escaped indicator
         characters[-1] = INDICATOR_CH
-        characters.append(INDICATOR_CH)
+        characters.insert(-1, INDICATOR_CH)
 
     if was_encoded:
         # replace punycode single hyphen trailer with an escaped indicator
