@@ -25,6 +25,7 @@
 # -- END_HEADER ---
 #
 
+import base64
 import codecs
 import os
 import string
@@ -38,10 +39,10 @@ from mig.shared.defaults import username_charset
 INDICATOR_CH = ':'
 INVALID_INSERTION_POINT = -2
 MARKER = INDICATOR_CH * 2
+MARKER_HEXDIGIT_WIDTH = 2
 UNSAFE_CHARS = sorted(list(set(string.printable) - set(username_charset)))
-UNSAFE_CHARS_ORD = list(ord(c) for c in UNSAFE_CHARS)
-UNSAFE_CHARS_NAMES = list(str(o).zfill(3) for o in UNSAFE_CHARS_ORD)
-UNSAFE_SUBSTIUTIONS = dict(zip(UNSAFE_CHARS_ORD, UNSAFE_CHARS_NAMES))
+UNSAFE_CHARS_HEXDIGITS = None
+UNSAFE_SUBSTIUTIONS = None
 PY2 = sys.version_info[0] == 2
 
 if PY2:
@@ -49,6 +50,11 @@ if PY2:
 else:
     def _as_ascii_string(value): return codecs.decode(value, 'ascii')
 
+def _as_hexdigit(ch):
+    return _as_ascii_string(base64.b16encode(bytes(ch, 'ascii')))
+
+UNSAFE_CHARS_HEXDIGITS = list(_as_hexdigit(c) for c in UNSAFE_CHARS)
+UNSAFE_SUBSTIUTIONS = dict(zip(UNSAFE_CHARS, UNSAFE_CHARS_HEXDIGITS))
 
 # TODO
 # - swap to converting the ord char value to hex as a way to save bytes
@@ -80,8 +86,7 @@ def safename_encode(value):
     characters = list(punycoded)
 
     for index, character in enumerate(characters):
-        character_ordinal = ord(character)
-        character_substitute = UNSAFE_SUBSTIUTIONS.get(character_ordinal, None)
+        character_substitute = UNSAFE_SUBSTIUTIONS.get(character, None)
         if character_substitute is not None:
             characters[index] = "%s%s" % (INDICATOR_CH, character_substitute)
 
@@ -100,7 +105,8 @@ def safename_decode(value):
     value_to_decode = None
     try:
         idx = value.rindex(MARKER)
-        value_to_decode = ''.join((value[:idx + 1], '045', value[idx + 2:]))
+        character_substitute = _as_hexdigit('-')
+        value_to_decode = ''.join((value[:idx + 1], character_substitute, value[idx + 2:]))
     except ValueError:
         raise RuntimeError()
 
@@ -114,8 +120,9 @@ def safename_decode(value):
         if chunk == '':
             index += 1
             continue
-        character_substitute = chr(int(chunk[0:3]))
-        chunked[index] = "%s%s" % (character_substitute, chunk[3:])
+        hexdigit = chunk[0:MARKER_HEXDIGIT_WIDTH]
+        character_substitute = _as_ascii_string(base64.b16decode(hexdigit))
+        chunked[index] = chunked[index].replace(hexdigit, character_substitute, 1)
         index += 1
 
     try:

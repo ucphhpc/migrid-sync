@@ -28,7 +28,7 @@ class MigSharedSanitize_safename(MigTestCase):
         encoded = safename_encode(DUMMY_EXOTIC)
 
         self.assertEqual(
-            encoded, "UniCode123@:036::lna3a4dm6e3ftgua80ewlwka88boszo7i7iv930g")
+            encoded, "UniCode123@:24::lna3a4dm6e3ftgua80ewlwka88boszo7i7iv930g")
 
     def test_decode_basic(self):
         safename_decode("")
@@ -39,7 +39,7 @@ class MigSharedSanitize_safename(MigTestCase):
         self.assertEqual(decoded, DUMMY_ASCII)
 
     def test_decode_exotic(self):
-        decoded = safename_decode("UniCode123@:036::lna3a4dm6e3ftgua80ewlwka88boszo7i7iv930g")
+        decoded = safename_decode("UniCode123@:24::lna3a4dm6e3ftgua80ewlwka88boszo7i7iv930g")
 
         self.assertEqual(decoded, DUMMY_EXOTIC)
 
