@@ -60,11 +60,11 @@ try:
     from mig.shared.base import force_native_str
     from mig.shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
         CSRF_FULL, POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, \
-        POLICY_MODERN, POLICY_CUSTOM, freeze_flavors, \
+        POLICY_MODERN, POLICY_CUSTOM, freeze_flavors, cert_field_order, \
         duplicati_protocol_choices, default_css_filename, keyword_any, \
         cert_valid_days, oid_valid_days, generic_valid_days, keyword_all, \
         keyword_file, keyword_env, DEFAULT_USER_ID_FORMAT, \
-        valid_user_id_formats, default_twofactor_auth_apps
+        valid_user_id_formats, valid_filter_methods, default_twofactor_auth_apps
     from mig.shared.logger import Logger, SYSLOG_GDP
     from mig.shared.html import menu_items, vgrid_items
     from mig.shared.fileio import read_file, load_json, write_file
@@ -149,6 +149,8 @@ def fix_missing(config_file, verbose=True):
         'auto_add_oid_user': False,
         'auto_add_oidc_user': False,
         'auto_add_resource': False,
+        'auto_add_filter_method': '',
+        'auto_add_filter_fields': '',
         'server_fqdn': fqdn,
         'support_email': '',
         'admin_email': '%s@%s' % (user, fqdn),
@@ -690,6 +692,8 @@ class Configuration(object):
     auto_add_oid_user = False
     auto_add_oidc_user = False
     auto_add_resource = False
+    auto_add_filter_method = ''
+    auto_add_filter_fields = []
 
     # ARC resource configuration (list)
     # wired-in shorthands in arcwrapper:
@@ -2545,6 +2549,18 @@ location.""" % self.config_file)
         if config.has_option('GLOBAL', 'auto_add_resource'):
             self.auto_add_resource = config.getboolean('GLOBAL',
                                                        'auto_add_resource')
+
+        # Apply requested automatic filtering of selected auto add user fields
+        if config.has_option('GLOBAL', 'auto_add_filter_method'):
+            filter_method = config.get('GLOBAL', 'auto_add_filter_method')
+            if filter_method not in valid_filter_methods:
+                filter_method = ''
+            self.auto_add_filter_method = filter_method
+        if config.has_option('GLOBAL', 'auto_add_filter_fields'):
+            filter_fields = config.get('GLOBAL', 'auto_add_filter_fields')
+            valid_filter_fields = [i[0] for i in cert_field_order]
+            self.auto_add_filter_fields = [i for i in filter_fields.split()
+                                           if i in valid_filter_fields]
 
         # Allow override of account valid days from shared.defaults
         if config.has_option('GLOBAL', 'cert_valid_days'):

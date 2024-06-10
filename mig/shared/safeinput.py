@@ -1375,10 +1375,11 @@ def filter_date(contents):
     return __filter_contents(contents, digits + '-/')
 
 
-def filter_commonname(contents):
+def filter_commonname(contents, illegal_handler=None):
     """Filter supplied contents to only contain valid commonname characters"""
 
-    return __filter_contents(contents, VALID_NAME_CHARACTERS, COMMON_ACCENTED)
+    return __filter_contents(contents, VALID_NAME_CHARACTERS, COMMON_ACCENTED,
+                             illegal_handler=illegal_handler)
 
 
 def filter_organization(contents):
