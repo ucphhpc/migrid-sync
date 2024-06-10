@@ -16,6 +16,10 @@ if [ -z "${DOCKER_BIN}" ]; then
     exit 1
 fi
 
+# default PYTHONPATH such that directly executing files in the repo "just works"
+# NOTE: this is hard-coded to the mount point used within the container
+PYTHONPATH='/usr/app/src'
+
 # default any variables for local development
 MIG_ENV=${MIG_ENV:-'local'}
 
@@ -40,4 +44,8 @@ echo
 
 # execute python2 within the image passing the supplied arguments
 
-${DOCKER_BIN} run -it --rm --mount type=bind,source=.,target=/usr/src/app --env "MIG_ENV=$MIG_ENV" "$IMAGEID" python2 "$@"
+${DOCKER_BIN} run -it --rm \
+    --mount type=bind,source=.,target=/usr/src/app \
+    --env "PYTHONPATH=$PYTHON_PATH" \
+    --env "MIG_ENV=$MIG_ENV" \
+    "$IMAGEID" python2 "$@"
