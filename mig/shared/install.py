@@ -232,6 +232,8 @@ def generate_confs(
     auto_add_cert_user=False,
     auto_add_oid_user=False,
     auto_add_oidc_user=False,
+    auto_add_filter_fields='',
+    auto_add_filter_method='skip',
     cert_valid_days=365,
     oid_valid_days=365,
     oidc_valid_days=365,
@@ -474,6 +476,8 @@ def generate_confs(
     user_dict['__AUTO_ADD_CERT_USER__'] = "%s" % auto_add_cert_user
     user_dict['__AUTO_ADD_OID_USER__'] = "%s" % auto_add_oid_user
     user_dict['__AUTO_ADD_OIDC_USER__'] = "%s" % auto_add_oidc_user
+    user_dict['__AUTO_ADD_FILTER_FIELDS__'] = auto_add_filter_fields
+    user_dict['__AUTO_ADD_FILTER_METHOD__'] = auto_add_filter_method
     user_dict['__CERT_VALID_DAYS__'] = "%s" % cert_valid_days
     user_dict['__OID_VALID_DAYS__'] = "%s" % oid_valid_days
     user_dict['__OIDC_VALID_DAYS__'] = "%s" % oidc_valid_days
@@ -2116,6 +2120,8 @@ def create_user(
     auto_add_cert_user = False
     auto_add_oid_user = False
     auto_add_oidc_user = False
+    auto_add_filter_fields = ''
+    auto_add_filter_method = 'skip'
     cert_valid_days = 365
     oid_valid_days = 365
     oidc_valid_days = 365
@@ -2260,6 +2266,8 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         auto_add_cert_user,
         auto_add_oid_user,
         auto_add_oidc_user,
+        auto_add_filter_fields,
+        auto_add_filter_method,
         cert_valid_days,
         oid_valid_days,
         oidc_valid_days,
