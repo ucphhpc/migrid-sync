@@ -50,7 +50,7 @@ from mig.shared.accountstate import default_account_expire
 from mig.shared.bailout import filter_output_objects
 from mig.shared.base import client_id_dir, canonical_user, mask_creds, \
     fill_user, distinguished_name_to_user, fill_distinguished_name, \
-    get_site_base_url, requested_page
+    get_site_base_url, requested_page, force_utf8, force_native_str
 from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_V2, \
     AUTH_OPENID_CONNECT, AUTH_MIG_CERT, AUTH_EXT_CERT, AUTH_MIG_OID, \
     AUTH_EXT_OID, AUTH_MIG_OIDC, AUTH_EXT_OIDC, keyword_auto
@@ -245,7 +245,8 @@ def lookup_filter_illegal_handler(filter_method):
         def hex_wrap(val):
             """Insert a clearly marked hex representation of val"""
             # NOTE: use '.X' as '.x' will typically be capitalized in use anyway
-            return ".X%s" % base64.b16encode(val)
+            # NOTE: base64 encoders require and return byte
+            return ".X%s" % force_native_str(base64.b16encode(force_utf8(val)))
         return hex_wrap
     else:
         raise ValueError("unsupported filter_method: %r" % filter_method)
