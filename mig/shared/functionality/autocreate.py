@@ -39,6 +39,7 @@ OpenID Connect logins.
 
 from __future__ import absolute_import
 
+import base64
 import os
 import time
 
@@ -231,6 +232,66 @@ def split_comma_concat(value_list, sep=','):
     return result
 
 
+def lookup_filter_illegal_handler(filter_method):
+    """Get the illegal handler function to match filter_method. The output is
+    directly suitable for the filter_X helpers with illegal_handler argument.
+    """
+    # NOTE: the None value is a special case that means skip illegal values
+    if filter_method in ('', 'skip'):
+        return None
+    elif filter_method == 'hexlify':
+        def hex_wrap(val):
+            """Insert a clearly marked hex representation of val"""
+            # NOTE: use '.X' as '.x' will typically be capitalized in use anyway
+            return ".X%s" % base64.b16encode(val)
+        return hex_wrap
+    else:
+        raise ValueError("unsupported filter_method: %r" % filter_method)
+
+
+def populate_prefilters(configuration, prefilter_map, auth_type):
+    """Populate the prefilter map applied to input values before anything else
+    so that they can be used e.g. to mangle illegal values into compliance.
+    Particularly useful for making sure we keep file system names to something
+    we can actually safely handle.
+    """
+    _logger = configuration.logger
+    _logger.debug("populate prefilters for %s" % auth_type)
+    # TODO: add better reversible filters like punycode or base64 on whole name
+    filter_name = configuration.auto_add_filter_method
+    illegal_handler = lookup_filter_illegal_handler(filter_name)
+    _logger.debug("populate prefilters found filter illegal char handler %s" %
+                  illegal_handler)
+    if auth_type == AUTH_OPENID_V2:
+        if filter_name and 'full_name' in configuration.auto_add_filter_fields:
+            def _filter_helper(x):
+                return filter_commonname(x, illegal_handler)
+            # NOTE: KUIT OpenID 2.0 provides full name as 'fullname'
+            for name in ('openid.sreg.fullname', 'openid.sreg.full_name'):
+                prefilter_map[name] = _filter_helper
+    elif auth_type == AUTH_OPENID_CONNECT:
+        if configuration.auto_add_filter_method and \
+                'full_name' in configuration.auto_add_filter_fields:
+            def _filter_helper(x):
+                return filter_commonname(x, illegal_handler)
+            # NOTE: WAYF provides full name as 'name'
+            for name in ('oidc.claim.fullname', 'oidc.claim.full_name',
+                         'oidc.claim.name'):
+                prefilter_map[name] = _filter_helper
+    elif auth_type == AUTH_CERTIFICATE:
+        if configuration.auto_add_filter_method and \
+                'full_name' in configuration.auto_add_filter_fields:
+            def _filter_helper(x):
+                return filter_commonname(x, illegal_handler)
+            for name in ('cert_name', ):
+                prefilter_map[name] = _filter_helper
+    else:
+        raise ValueError("unsupported auth_type in populate_prefilters: %r" %
+                         auth_type)
+    _logger.debug("populate prefilters returns: %s" % prefilter_map)
+    return prefilter_map
+
+
 def main(client_id, user_arguments_dict, environ=None):
     """Main function used by front end"""
 
@@ -257,6 +318,8 @@ def main(client_id, user_arguments_dict, environ=None):
             output_objects.append({'object_type': 'error_text', 'text':
                                    '%s sign up not supported' % auth_flavor})
             return (output_objects, returnvalues.SYSTEM_ERROR)
+        # NOTE: simple filters to handle unsupported chars e.g. in full name
+        populate_prefilters(configuration, prefilter_map, auth_type)
     elif identity and auth_type == AUTH_OPENID_V2:
         if auth_flavor == AUTH_MIG_OID:
             base_url = configuration.migserver_https_mig_oid_url
@@ -267,9 +330,8 @@ def main(client_id, user_arguments_dict, environ=None):
             output_objects.append({'object_type': 'error_text', 'text':
                                    '%s sign up not supported' % auth_flavor})
             return (output_objects, returnvalues.SYSTEM_ERROR)
-        for name in ('openid.sreg.cn', 'openid.sreg.fullname',
-                     'openid.sreg.full_name'):
-            prefilter_map[name] = filter_commonname
+        # NOTE: simple filters to handle unsupported chars e.g. in full name
+        populate_prefilters(configuration, prefilter_map, auth_type)
     elif identity and auth_type == AUTH_OPENID_CONNECT:
         if auth_flavor == AUTH_MIG_OIDC:
             base_url = configuration.migserver_https_mig_oidc_url
@@ -286,6 +348,8 @@ def main(client_id, user_arguments_dict, environ=None):
             low_key = key.replace('OIDC_CLAIM_', 'oidc.claim.').lower()
             if low_key in oidc_keys:
                 user_arguments_dict[low_key] = [environ[key]]
+        # NOTE: simple filters to handle unsupported chars e.g. in full name
+        populate_prefilters(configuration, prefilter_map, auth_type)
     else:
         logger.error('autocreate without ID rejected for %s' % client_id)
         output_objects.append({'object_type': 'error_text',
