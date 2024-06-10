@@ -68,6 +68,8 @@ if '__main__' == __name__:
         'source',
         'destination',
         'destination_suffix',
+        'auto_add_filter_fields',
+        'auto_add_filter_method',
         'base_fqdn',
         'public_fqdn',
         'public_alias_fqdn',

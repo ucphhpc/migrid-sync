@@ -384,6 +384,8 @@ settings:
 --source=SOURCE
 --destination=DESTINATION
 --destination_suffix=DESTINATION_SUFFIX
+--auto_add_filter_fields=AUTO_ADD_FILTER_FIELDS
+--auto_add_filter_method=AUTO_ADD_FILTER_METHOD
 --base_fqdn=BASE_FQDN
 --public_fqdn=PUBLIC_FQDN
 --public_alias_fqdn=PUBLIC_ALIAS_FQDN
@@ -727,6 +729,7 @@ or the same on centos
                    --wsgi_procs=25 --sftp_subsys_auth_procs=20 \
                    --sftp_max_sessions=16 \
                    --auto_add_oid_user=True --auto_add_cert_user=True \
+                   --auto_add_filter_fields=full_name --auto_add_filter_method=skip \
                    --io_account_expire=True \
                    --password_policy="MODERN:12" \
                    --password_legacy_policy=MEDIUM \
@@ -796,6 +799,7 @@ optimized SFTP, Seafile integration and OpenID login:
                    --default_menu="home files submitjob jobs vgrids settings setup logout" \
                    --user_menu="sharelinks people seafile crontab transfers peers downloads docs" \
                    --auto_add_oid_user=True --auto_add_cert_user=True \
+                   --auto_add_filter_fields=full_name --auto_add_filter_method=skip \
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
                    
 and the same with added Jupyter+cloud integration and optional 2FA support:
@@ -881,6 +885,7 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --external_doc=https://erda.ku.dk \
                    --mig_oid_title="Non-KU/UCPH" --ext_oid_title="KU/UCPH" \
                    --auto_add_oid_user=True --auto_add_cert_user=True \
+                   --auto_add_filter_fields=full_name --auto_add_filter_method=skip \
                    --freeze_to_tape="4w" --io_account_expire=True \
                    --password_policy="MODERN:12" \
                    --password_legacy_policy=MEDIUM \
@@ -969,6 +974,7 @@ with optional 2-FA support and legacy sftp clients:
                    --external_doc=https://www.idmc.dk \
                    --mig_oid_title="Non-KU/UCPH" --ext_oid_title="KU/UCPH" \
                    --auto_add_oid_user=True --auto_add_cert_user=True \
+                   --auto_add_filter_fields=full_name --auto_add_filter_method=skip \
                    --io_account_expire=True \
                    --password_policy="MODERN:12" \
                    --password_legacy_policy=MEDIUM \
@@ -991,6 +997,7 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --auto_add_cert_user=False \
                    --auto_add_oid_user=True \
                    --auto_add_oidc_user=False \ 
+                   --auto_add_filter_fields=full_name --auto_add_filter_method=skip \
                    --oid_valid_days=180 \
                    --base_fqdn=sif.erda.dk \
                    --public_fqdn=sif-www.erda.dk \
