@@ -40,6 +40,7 @@ from __future__ import absolute_import
 
 import re
 import sys
+from collections import namedtuple
 from email.utils import parseaddr, formataddr
 from string import ascii_letters, digits, printable
 from unicodedata import category, normalize, name as unicode_name
@@ -2086,6 +2087,34 @@ def guess_value(name):
     return __value_map.get(name.lower().strip(), id)
 
 
+_PerformChecks = namedtuple('PerformChecks', ['type', 'value'])
+
+def _validated_input_checks(
+    input_dict,
+    defaults,
+    type_override,
+    value_override,
+):
+    """Generate
+    """
+
+    checks = _PerformChecks({}, {})
+    type_checks = checks.type
+    value_checks = checks.value
+
+    for name in defaults:
+        if name in type_override:
+            type_checks[name] = type_override[name]
+        else:
+            type_checks[name] = guess_type(name)
+        if name in value_override:
+            value_checks[name] = value_override[name]
+        else:
+            value_checks[name] = guess_value(name)
+
+    return checks
+
+
 def validated_input(
     input_dict,
     defaults,
@@ -2098,18 +2127,15 @@ def validated_input(
     variable being rejected if no value is found.
     """
 
-    type_checks = {}
-    value_checks = {}
+    checks = _validated_input_checks(
+        input_dict,
+        defaults,
+        type_override,
+        value_override,
+    )
+    type_checks = checks.type
+    value_checks = checks.value
 
-    for name in defaults:
-        if name in type_override:
-            type_checks[name] = type_override[name]
-        else:
-            type_checks[name] = guess_type(name)
-        if name in value_override:
-            value_checks[name] = value_override[name]
-        else:
-            value_checks[name] = guess_value(name)
     (accepted, rejected) = validate_helper(input_dict, list(defaults),
                                            type_checks, value_checks,
                                            list_wrap)
