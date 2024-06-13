@@ -101,28 +101,28 @@ class MigSharedFileio__write_chunk(MigTestCase):
 
     @unittest.skip("TODO: enable again - requires the temporarily disabled auto mode select")
     def test_store_bytes_in_text_mode(self):
-       fileio.write_chunk(self.tmp_path, DUMMY_BYTES, 0, self.logger,
-                          mode="r+")
+        fileio.write_chunk(self.tmp_path, DUMMY_BYTES, 0, self.logger,
+                           mode="r+")
 
-       with open(self.tmp_path, 'rb') as file:
-           content = file.read(1024)
-           self.assertEqual(len(content), DUMMY_BYTES_LENGTH)
-           self.assertEqual(content[:], DUMMY_BYTES)
+        with open(self.tmp_path, 'rb') as file:
+            content = file.read(1024)
+            self.assertEqual(len(content), DUMMY_BYTES_LENGTH)
+            self.assertEqual(content[:], DUMMY_BYTES)
 
     @unittest.skip("TODO: enable again - requires the temporarily disabled auto mode select")
     def test_store_unicode(self):
-       fileio.write_chunk(self.tmp_path, DUMMY_UNICODE, 0, self.logger,
-                          mode='r+')
+        fileio.write_chunk(self.tmp_path, DUMMY_UNICODE, 0, self.logger,
+                           mode='r+')
 
-       with open(self.tmp_path, 'r') as file:
-           content = file.read(1024)
-           self.assertEqual(len(content), DUMMY_UNICODE_LENGTH)
-           self.assertEqual(content[:], DUMMY_UNICODE)
+        with open(self.tmp_path, 'r') as file:
+            content = file.read(1024)
+            self.assertEqual(len(content), DUMMY_UNICODE_LENGTH)
+            self.assertEqual(content[:], DUMMY_UNICODE)
 
     @unittest.skip("TODO: enable again - requires the temporarily disabled auto mode select")
     def test_store_unicode_in_binary_mode(self):
-       fileio.write_chunk(self.tmp_path, DUMMY_UNICODE, 0, self.logger,
-                          mode='r+b')
+        fileio.write_chunk(self.tmp_path, DUMMY_UNICODE, 0, self.logger,
+                           mode='r+b')
 
        with open(self.tmp_path, 'r') as file:
            content = file.read(1024)
