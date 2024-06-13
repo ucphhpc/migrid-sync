@@ -29,24 +29,15 @@
 import binascii
 import os
 import sys
-
-# TODO: remove this as it should not be needed with PYTHONPATH properly set
-#sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), ".")))
+import unittest
 
 # NOTE: wrap next imports in try except to prevent autopep8 shuffling up
 try:
+    from tests.support import MigTestCase, cleanpath, temppath, testmain
     import mig.shared.fileio as fileio
 except ImportError as ioe:
     print("Failed to import mig core modules: %s" % ioe)
     exit(1)
-
-# NOTE: prevent autopep8 shuffling next imports up
-try:
-    from support import MigTestCase, cleanpath, temppath, testmain
-except ImportError as ioe:
-    print("Failed to import mig test modules: %s" % ioe)
-    exit(1)
-
 
 DUMMY_BYTES = binascii.unhexlify('DEADBEEF')  # 4 bytes
 DUMMY_BYTES_LENGTH = 4
@@ -66,9 +57,7 @@ class MigSharedFileio__write_chunk(MigTestCase):
         cleanpath(os.path.dirname(DUMMY_FILE_WRITECHUNK), self)
 
     def test_return_false_on_invalid_data(self):
-        # NOTE: we make sure to disable any forced stringification here
-        did_succeed = fileio.write_chunk(self.tmp_path, 1234, 0, self.logger,
-                                         force_string=False)
+        did_succeed = fileio.write_chunk(self.tmp_path, 1234, 0, self.logger)
         self.assertFalse(did_succeed)
 
     def test_return_false_on_invalid_offset(self):
@@ -108,35 +97,35 @@ class MigSharedFileio__write_chunk(MigTestCase):
                              "expected a hole was left")
             self.assertEqual(content[3:], DUMMY_BYTES)
 
-    # TODO: enable again - requires the temporarily disabled auto mode select
-    # def test_store_bytes_in_text_mode(self):
-    #    fileio.write_chunk(self.tmp_path, DUMMY_BYTES, 0, self.logger,
-    #                       mode="r+")
-    #
-    #    with open(self.tmp_path, 'rb') as file:
-    #        content = file.read(1024)
-    #        self.assertEqual(len(content), DUMMY_BYTES_LENGTH)
-    #        self.assertEqual(content[:], DUMMY_BYTES)
+    @unittest.skip("TODO: enable again - requires the temporarily disabled auto mode select")
+    def test_store_bytes_in_text_mode(self):
+       fileio.write_chunk(self.tmp_path, DUMMY_BYTES, 0, self.logger,
+                          mode="r+")
 
-    # TODO: enable again - requires the temporarily disabled auto mode select
-    # def test_store_unicode(self):
-    #    fileio.write_chunk(self.tmp_path, DUMMY_UNICODE, 0, self.logger,
-    #                       mode='r+')
-    #
-    #    with open(self.tmp_path, 'r') as file:
-    #        content = file.read(1024)
-    #        self.assertEqual(len(content), DUMMY_UNICODE_LENGTH)
-    #        self.assertEqual(content[:], DUMMY_UNICODE)
+       with open(self.tmp_path, 'rb') as file:
+           content = file.read(1024)
+           self.assertEqual(len(content), DUMMY_BYTES_LENGTH)
+           self.assertEqual(content[:], DUMMY_BYTES)
 
-    # TODO: enable again - requires the temporarily disabled auto mode select
-    # def test_store_unicode_in_binary_mode(self):
-    #    fileio.write_chunk(self.tmp_path, DUMMY_UNICODE, 0, self.logger,
-    #                       mode='r+b')
-    #
-    #    with open(self.tmp_path, 'r') as file:
-    #        content = file.read(1024)
-    #        self.assertEqual(len(content), DUMMY_UNICODE_LENGTH)
-    #        self.assertEqual(content[:], DUMMY_UNICODE)
+    @unittest.skip("TODO: enable again - requires the temporarily disabled auto mode select")
+    def test_store_unicode(self):
+       fileio.write_chunk(self.tmp_path, DUMMY_UNICODE, 0, self.logger,
+                          mode='r+')
+
+       with open(self.tmp_path, 'r') as file:
+           content = file.read(1024)
+           self.assertEqual(len(content), DUMMY_UNICODE_LENGTH)
+           self.assertEqual(content[:], DUMMY_UNICODE)
+
+    @unittest.skip("TODO: enable again - requires the temporarily disabled auto mode select")
+    def test_store_unicode_in_binary_mode(self):
+       fileio.write_chunk(self.tmp_path, DUMMY_UNICODE, 0, self.logger,
+                          mode='r+b')
+
+       with open(self.tmp_path, 'r') as file:
+           content = file.read(1024)
+           self.assertEqual(len(content), DUMMY_UNICODE_LENGTH)
+           self.assertEqual(content[:], DUMMY_UNICODE)
 
 
 class MigSharedFileio__write_file(MigTestCase):
@@ -146,9 +135,7 @@ class MigSharedFileio__write_file(MigTestCase):
         cleanpath(os.path.dirname(DUMMY_FILE_WRITEFILE), self)
 
     def test_return_false_on_invalid_data(self):
-        # NOTE: we make sure to disable any forced stringification here
-        did_succeed = fileio.write_file(1234, self.tmp_path, self.logger,
-                                        force_string=False)
+        did_succeed = fileio.write_file(1234, self.tmp_path, self.logger)
         self.assertFalse(did_succeed)
 
     def test_return_false_on_invalid_dir(self):
@@ -184,38 +171,38 @@ class MigSharedFileio__write_file(MigTestCase):
             self.assertEqual(len(content), DUMMY_BYTES_LENGTH)
             self.assertEqual(content[:], DUMMY_BYTES)
 
-    # TODO: enable again - requires the temporarily disabled auto mode select
-    # def test_store_bytes_in_text_mode(self):
-    #    did_succeed = fileio.write_file(DUMMY_BYTES, self.tmp_path, self.logger,
-    #                                    mode="w")
-    #    self.assertTrue(did_succeed)
-    #
-    #    with open(self.tmp_path, 'rb') as file:
-    #        content = file.read(1024)
-    #        self.assertEqual(len(content), DUMMY_BYTES_LENGTH)
-    #        self.assertEqual(content[:], DUMMY_BYTES)
+    @unittest.skip("TODO: enable again - requires the temporarily disabled auto mode select")
+    def test_store_bytes_in_text_mode(self):
+       did_succeed = fileio.write_file(DUMMY_BYTES, self.tmp_path, self.logger,
+                                       mode="w")
+       self.assertTrue(did_succeed)
 
-    # TODO: enable again - requires the temporarily disabled auto mode select
-    # def test_store_unicode(self):
-    #    did_succeed = fileio.write_file(DUMMY_UNICODE, self.tmp_path,
-    #                                    self.logger, mode='w')
-    #    self.assertTrue(did_succeed)
-    #
-    #    with open(self.tmp_path, 'r') as file:
-    #        content = file.read(1024)
-    #        self.assertEqual(len(content), DUMMY_UNICODE_LENGTH)
-    #        self.assertEqual(content[:], DUMMY_UNICODE)
+       with open(self.tmp_path, 'rb') as file:
+           content = file.read(1024)
+           self.assertEqual(len(content), DUMMY_BYTES_LENGTH)
+           self.assertEqual(content[:], DUMMY_BYTES)
 
-    # TODO: enable again - requires the temporarily disabled auto mode select
-    # def test_store_unicode_in_binary_mode(self):
-    #    did_succeed = fileio.write_file(DUMMY_UNICODE, self.tmp_path,
-    #                                    self.logger, mode='wb')
-    #    self.assertTrue(did_succeed)
-    #
-    #    with open(self.tmp_path, 'r') as file:
-    #        content = file.read(1024)
-    #        self.assertEqual(len(content), DUMMY_UNICODE_LENGTH)
-    #        self.assertEqual(content[:], DUMMY_UNICODE)
+    @unittest.skip("TODO: enable again - requires the temporarily disabled auto mode select")
+    def test_store_unicode(self):
+       did_succeed = fileio.write_file(DUMMY_UNICODE, self.tmp_path,
+                                       self.logger, mode='w')
+       self.assertTrue(did_succeed)
+
+       with open(self.tmp_path, 'r') as file:
+           content = file.read(1024)
+           self.assertEqual(len(content), DUMMY_UNICODE_LENGTH)
+           self.assertEqual(content[:], DUMMY_UNICODE)
+
+    @unittest.skip("TODO: enable again - requires the temporarily disabled auto mode select")
+    def test_store_unicode_in_binary_mode(self):
+       did_succeed = fileio.write_file(DUMMY_UNICODE, self.tmp_path,
+                                       self.logger, mode='wb')
+       self.assertTrue(did_succeed)
+
+       with open(self.tmp_path, 'r') as file:
+           content = file.read(1024)
+           self.assertEqual(len(content), DUMMY_UNICODE_LENGTH)
+           self.assertEqual(content[:], DUMMY_UNICODE)
 
 
 if __name__ == '__main__':
