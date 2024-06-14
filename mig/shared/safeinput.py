@@ -36,30 +36,40 @@ basis.
 """
 
 from __future__ import print_function
+from mig.shared.valuecheck import lines_value_checker, \
+    max_jobs_value_checker
+from mig.shared.validstring import valid_user_path, silent_email_validator
+from mig.shared.listhandling import frange
+from mig.shared.defaults import src_dst_sep, username_charset, \
+    username_max_length, session_id_charset, session_id_length, \
+    subject_id_charset, subject_id_min_length, subject_id_max_length, \
+    workflow_id_length, MAX_SWEEP, maxfill_fields
+from mig.shared.base import force_unicode, force_native_str
 from __future__ import absolute_import
 
 from builtins import range
 from past.builtins import basestring
+
+import re
+import sys
 from email.utils import parseaddr, formataddr
 from string import ascii_letters, digits, printable
 from unicodedata import category, normalize, name as unicode_name
-import html
-import re
 
 try:
     import nbformat
 except ImportError:
     nbformat = None
 
-from mig.shared.base import force_unicode, force_native_str
-from mig.shared.defaults import src_dst_sep, username_charset, \
-    username_max_length, session_id_charset, session_id_length, \
-    subject_id_charset, subject_id_min_length, subject_id_max_length, \
-    workflow_id_length, MAX_SWEEP, maxfill_fields
-from mig.shared.listhandling import frange
-from mig.shared.validstring import valid_user_path, silent_email_validator
-from mig.shared.valuecheck import lines_value_checker, \
-    max_jobs_value_checker
+PY2 = sys.version_info[0] < 3
+
+escape_html = None
+if PY2:
+    from cgi import escape as escape_html
+else:
+    from html import escape as escape_html
+assert escape_html is not None
+
 
 VALID_WORKFLOW_ATTRIBUTES = [
     'persistence_id',
@@ -322,17 +332,17 @@ def __wrap_unicode_val(char):
 # Public functions
 
 def html_escape(contents, quote=None):
-    """Uses html.escape() to encode contents in a html safe way. In that
+    """Use an stdlib escape to encode contents in a html safe way. In that
     way the resulting data can be included in a html page without risk
     of XSS vulnerabilities.
-    The optional quote argument is passed as is to enable additional escaping
+    The optional quote argument is passed as-is to enable additional escaping
     of single and double quotes.
     """
 
     # We use html_escape as a general protection even though it is
     # mostly html request related
 
-    return html.escape(contents, quote)
+    return escape_html(contents, quote)
 
 
 def valid_printable(contents, min_length=0, max_length=-1):
@@ -2274,7 +2284,9 @@ class InputException(Exception):
         return force_native_str(self.value)
 
 
-if __name__ == '__main__':
+def main(_print=print):
+    print = _print  # workaround print as reserved word on PY2
+
     for test_cn in ('Firstname Lastname', 'Test Æøå', 'Test Überh4x0r',
                     'Harry S. Truman',  u'Unicode æøå', "Invalid D'Angelo",
                     'Test Maybe Invalid Źacãŕ', 'Test Invalid ?',
@@ -2472,3 +2484,7 @@ if __name__ == '__main__':
     print("Rejected:")
     for (key, val) in rejected.items():
         print("\t%s: %s" % (key, val))
+
+
+if __name__ == '__main__':
+    main()
