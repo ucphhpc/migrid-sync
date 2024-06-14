@@ -44,12 +44,20 @@ import sys
 from email.utils import parseaddr, formataddr
 from string import ascii_letters, digits, printable
 from unicodedata import category, normalize, name as unicode_name
-import html
 
 try:
     import nbformat
 except ImportError:
     nbformat = None
+
+PY2 = sys.version_info[0] < 3
+
+escape_html = None
+if PY2:
+    from cgi import escape as escape_html
+else:
+    from html import escape as escape_html
+assert escape_html is not None
 
 from mig.shared.base import force_unicode, force_utf8
 from mig.shared.defaults import src_dst_sep, username_charset, \
@@ -322,7 +330,7 @@ def __wrap_unicode_val(char):
 # Public functions
 
 def html_escape(contents, quote=None):
-    """Uses html.escape() to encode contents in a html safe way. In that
+    """Use an stdlib escape to encode contents in a html safe way. In that
     way the resulting data can be included in a html page without risk
     of XSS vulnerabilities.
     The optional quote argument is passed as is to enable additional escaping
@@ -332,7 +340,7 @@ def html_escape(contents, quote=None):
     # We use html_escape as a general protection even though it is
     # mostly html request related
 
-    return html.escape(contents, quote)
+    return escape_html(contents, quote)
 
 
 def valid_printable(contents, min_length=0, max_length=-1):
