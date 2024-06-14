@@ -36,15 +36,6 @@ basis.
 """
 
 from __future__ import print_function
-from mig.shared.valuecheck import lines_value_checker, \
-    max_jobs_value_checker
-from mig.shared.validstring import valid_user_path, silent_email_validator
-from mig.shared.listhandling import frange
-from mig.shared.defaults import src_dst_sep, username_charset, \
-    username_max_length, session_id_charset, session_id_length, \
-    subject_id_charset, subject_id_min_length, subject_id_max_length, \
-    workflow_id_length, MAX_SWEEP, maxfill_fields
-from mig.shared.base import force_unicode, force_native_str
 from __future__ import absolute_import
 
 from builtins import range
@@ -70,6 +61,15 @@ else:
     from html import escape as escape_html
 assert escape_html is not None
 
+from mig.shared.base import force_unicode, force_native_str
+from mig.shared.defaults import src_dst_sep, username_charset, \
+    username_max_length, session_id_charset, session_id_length, \
+    subject_id_charset, subject_id_min_length, subject_id_max_length, \
+    workflow_id_length, MAX_SWEEP, maxfill_fields
+from mig.shared.listhandling import frange
+from mig.shared.validstring import valid_user_path, silent_email_validator
+from mig.shared.valuecheck import lines_value_checker, \
+    max_jobs_value_checker
 
 VALID_WORKFLOW_ATTRIBUTES = [
     'persistence_id',
