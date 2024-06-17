@@ -3,8 +3,8 @@
 #
 # --- BEGIN_HEADER ---
 #
-# readconfval - Helper to easily lookup specific configuration values
-# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
+# genoiddiscovery - Helper to easily generate openid discovery info xml
+# Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
 #
@@ -25,9 +25,9 @@
 # -- END_HEADER ---
 #
 
-"""Helper to lookup a specific evaluated configuration value based on the
-active MiGserver.conf . Used for extracting e.g. core paths in init scripts and
-other components outside the actual python code.
+"""Helper to generate the discovery information for the OpenID 2.0 relying
+party verification mechanism. Please refer to the generate_openid_discovery_doc
+helper function for details.
 """
 
 from __future__ import print_function
@@ -38,12 +38,13 @@ import os
 import sys
 
 from mig.shared.conf import get_configuration_object
+from mig.shared.httpsclient import generate_openid_discovery_doc
 
 
-def usage(name='readconfval.py'):
+def usage(name='genoiddiscovery.py'):
     """Usage help"""
 
-    print("""Lookup a evaluated configuration value using MiGserver.conf.
+    print("""Generate OpenID 2.0 discovery information for this site.
 Usage:
 %(name)s [OPTIONS] NAME
 Where OPTIONS may be one or more of:
@@ -90,21 +91,21 @@ if '__main__' == __name__:
         else:
             print('using configuration from MIG_CONF (or default)')
 
-    if len(args) == 1:
-        name = args[0]
-    else:
+    if args:
+        print('Got unexpected non-option arguments!')
         usage()
         sys.exit(1)
 
     if verbose:
-        print('Lookup configuration value for %s' % name)
+        print("""OpenID discovery information XML which may be pasted into
+state/wwwpublic/oiddiscover.xml if site uses OpenId but doesn't enable the
+SID vhost:
+""")
     retval = 42
     try:
         configuration = get_configuration_object(skip_log=True)
-        val = getattr(configuration, name, 'UNKNOWN')
-        if val != 'UNKNOWN':
-            retval = 0
-        print("%s" % val)
+        print(generate_openid_discovery_doc(configuration))
+        retval = 0
     except Exception as err:
         print(err)
         sys.exit(1)

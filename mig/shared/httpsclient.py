@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # httpsclient - Shared functions for all HTTPS clients
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -624,8 +624,15 @@ def generate_openid_discovery_doc(configuration):
 
 
 if __name__ == "__main__":
+    import time
     from mig.shared.conf import get_configuration_object
     conf = get_configuration_object()
+    print()
+    print("*** DEPRECATION WARNING ***")
+    print("Please use dedicated mig/server/genoiddiscovery.py instead of %s!"
+          % __file__)
+    print()
+    time.sleep(30)
     print("""OpenID discovery infomation XML which may be pasted into
 state/wwwpublic/oiddiscover.xml if site uses OpenId but doesn't enable the
 SID vhost:
