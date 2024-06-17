@@ -44,7 +44,7 @@ from mig.shared.duplicatikeywords import get_duplicati_specs
 from mig.shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.html import man_base_js, man_base_html, console_log_javascript, \
+from mig.shared.htmlgen import man_base_js, man_base_html, console_log_javascript, \
     twofactor_wizard_html, twofactor_wizard_js, twofactor_token_html, \
     save_settings_js, save_settings_html
 from mig.shared.httpsclient import detect_client_auth, require_twofactor_setup, \

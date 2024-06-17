@@ -38,7 +38,7 @@ import sys
 
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import public_archive_doi, public_doi_index
-from mig.shared.html import get_xgi_html_header, get_xgi_html_footer, \
+from mig.shared.htmlgen import get_xgi_html_header, get_xgi_html_footer, \
     themed_styles, themed_scripts
 
 

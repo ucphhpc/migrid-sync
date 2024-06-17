@@ -43,7 +43,7 @@ from mig.shared.functionality.editor import advanced_editor_css_deps, \
     advanced_editor_js_deps, lock_info, edit_file
 from mig.shared.gdp.all import get_project_from_client_id
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.html import themed_styles, legacy_user_interface
+from mig.shared.htmlgen import themed_styles, legacy_user_interface
 from mig.shared.init import initialize_main_variables, find_entry, extract_menu
 from mig.shared.pwcrypto import sorted_hash_algos, default_algo
 from mig.shared.sharelinks import create_share_link_form, import_share_link_form
@@ -78,7 +78,7 @@ def html_tmpl(configuration, client_id, title_entry, csrf_map={}, chroot=''):
     for (target_op, token) in csrf_map.items():
         fill_entries["%s_csrf_token" % target_op] = token
 
-    # TODO: switch to use shared fancy_upload_html from mig.shared.html!
+    # TODO: switch to use shared fancy_upload_html from mig.shared.htmlgen!
     html = '''
     <div id="fm_debug"></div>
     <div id="fm_filemanager">

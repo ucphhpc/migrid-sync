@@ -37,7 +37,7 @@ from mig.shared.base import client_id_dir, pretty_format_user, extract_field, \
 from mig.shared.defaults import any_vgrid, csrf_field
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.html import confirm_js, confirm_html, html_post_helper
+from mig.shared.htmlgen import confirm_js, confirm_html, html_post_helper
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.output import html_link
 from mig.shared.profilekeywords import get_profile_specs

@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# html - html helper functions
+# htmlgen - html generator helper functions
 # Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.

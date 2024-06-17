@@ -43,7 +43,7 @@ from mig.shared.griddaemons.https import default_max_user_hits, \
     default_user_abuse_hits, default_proto_abuse_hits, hit_rate_limit, \
     expire_rate_limit, validate_auth_attempt
 from mig.shared.handlers import safe_handler, get_csrf_limit
-from mig.shared.html import themed_styles, themed_scripts
+from mig.shared.htmlgen import themed_styles, themed_scripts
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.notification import send_email
 from mig.shared.pwcrypto import generate_reset_token

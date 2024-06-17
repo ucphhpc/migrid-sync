@@ -35,7 +35,7 @@ import time
 
 from mig.shared.base import requested_backend, extract_field
 from mig.shared.conf import get_configuration_object
-from mig.shared.html import themed_styles, themed_scripts
+from mig.shared.htmlgen import themed_styles, themed_scripts
 from mig.shared.settings import load_settings, load_widgets, load_profile
 
 

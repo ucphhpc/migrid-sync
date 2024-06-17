@@ -43,7 +43,7 @@ from mig.shared.defaults import csrf_field, keyword_all
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
 from mig.shared.init import find_entry, initialize_main_variables
-from mig.shared.html import man_base_js, man_base_html, html_post_helper
+from mig.shared.htmlgen import man_base_js, man_base_html, html_post_helper
 from mig.shared.useradm import get_full_user_map
 
 
