@@ -56,6 +56,9 @@ def _as_hexdigit(ch):
 UNSAFE_CHARS_HEXDIGITS = list(_as_hexdigit(c) for c in UNSAFE_CHARS)
 UNSAFE_SUBSTIUTIONS = dict(zip(UNSAFE_CHARS, UNSAFE_CHARS_HEXDIGITS))
 
+class NotAnExistingSafenameError(RuntimeError):
+    pass
+
 # TODO
 # - swap to converting the ord char value to hex as a way to save bytes
 
@@ -108,7 +111,7 @@ def safename_decode(value):
         character_substitute = _as_hexdigit('-')
         value_to_decode = ''.join((value[:idx + 1], character_substitute, value[idx + 2:]))
     except ValueError:
-        raise RuntimeError()
+        raise NotAnExistingSafenameError()
 
     chunked = value_to_decode.split(INDICATOR_CH)
 
