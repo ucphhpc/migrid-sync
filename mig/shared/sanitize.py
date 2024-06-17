@@ -141,6 +141,8 @@ if __name__ == '__main__':
             c_ord = ord(c)
             if c == ' ':
                 pieces.append("\\N{SPACE}")
+            elif c_ord == 27:
+                pieces.append("\\N{ESCAPE}")
             elif c == '"':
                 pieces.append('\\"')
             elif c_ord < 10:
