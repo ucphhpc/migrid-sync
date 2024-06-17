@@ -46,7 +46,7 @@ from mig.shared.fileio import send_message_to_grid_script, read_tail_lines, \
 from mig.shared.findtype import is_admin
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.html import man_base_js, man_base_html, html_post_helper
+from mig.shared.htmlgen import man_base_js, man_base_html, html_post_helper
 from mig.shared.httpsclient import detect_client_auth
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.safeeval import subprocess_popen, subprocess_pipe, \

@@ -41,7 +41,7 @@ from mig.shared.freezefunctions import create_frozen_archive, published_url, \
     is_frozen_archive, get_frozen_files, default_algo
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from mig.shared.html import man_base_js, man_base_html, html_post_helper
+from mig.shared.htmlgen import man_base_js, man_base_html, html_post_helper
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.safeinput import valid_path, html_escape
 from mig.shared.validstring import valid_user_path

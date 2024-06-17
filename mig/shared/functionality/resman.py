@@ -36,7 +36,7 @@ from mig.shared.base import sandbox_resource
 from mig.shared.defaults import default_pager_entries, csrf_field
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.html import man_base_js, man_base_html, html_post_helper
+from mig.shared.htmlgen import man_base_js, man_base_html, html_post_helper
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.modified import pending_resources_update, pending_vgrids_update
 from mig.shared.resource import anon_to_real_res_map

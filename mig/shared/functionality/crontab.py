@@ -48,7 +48,7 @@ from mig.shared.events import get_time_expand_map, load_crontab, load_atjobs, \
 from mig.shared.fileio import makedirs_rec
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from mig.shared.html import man_base_js, man_base_html
+from mig.shared.htmlgen import man_base_js, man_base_html
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.parseflags import verbose
 
