@@ -37,7 +37,7 @@ from mig.shared.base import client_id_dir
 from mig.shared.defaults import csrf_field, keyword_members
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
-from mig.shared.html import html_post_helper
+from mig.shared.htmlgen import html_post_helper
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.parseflags import force
 from mig.shared.useradm import get_full_user_map

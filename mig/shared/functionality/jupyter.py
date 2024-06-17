@@ -36,7 +36,7 @@ from mig.shared import returnvalues
 
 from mig.shared.init import find_entry, initialize_main_variables
 from mig.shared.functional import validate_input_and_cert
-from mig.shared.html import man_base_js
+from mig.shared.htmlgen import man_base_js
 
 
 def signature():

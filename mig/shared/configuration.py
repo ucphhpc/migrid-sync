@@ -66,7 +66,7 @@ try:
         keyword_file, keyword_env, DEFAULT_USER_ID_FORMAT, \
         valid_user_id_formats, valid_filter_methods, default_twofactor_auth_apps
     from mig.shared.logger import Logger, SYSLOG_GDP
-    from mig.shared.html import menu_items, vgrid_items
+    from mig.shared.htmlgen import menu_items, vgrid_items
     from mig.shared.fileio import read_file, load_json, write_file
 except ImportError as ioe:
     print("could not import migrid modules")

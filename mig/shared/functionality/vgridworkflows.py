@@ -49,7 +49,7 @@ from mig.shared.defaults import keyword_all, keyword_auto, \
 from mig.shared.events import get_path_expand_map
 from mig.shared.fileio import unpickle, makedirs_rec, move_file
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
-from mig.shared.html import man_base_js, man_base_html
+from mig.shared.htmlgen import man_base_js, man_base_html
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.parseflags import verbose
 from mig.shared.vgrid import vgrid_add_remove_table, vgrid_is_owner_or_member, \

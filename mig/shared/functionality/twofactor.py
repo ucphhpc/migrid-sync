@@ -54,7 +54,7 @@ from mig.shared.griddaemons.https import default_max_user_hits, \
     default_user_abuse_hits, default_proto_abuse_hits, hit_rate_limit, \
     expire_rate_limit, validate_auth_attempt
 from mig.shared.init import initialize_main_variables
-from mig.shared.html import twofactor_token_html, themed_styles, themed_scripts
+from mig.shared.htmlgen import twofactor_token_html, themed_styles, themed_scripts
 from mig.shared.httpsclient import detect_client_auth, require_twofactor_setup
 from mig.shared.settings import load_twofactor
 from mig.shared.twofactorkeywords import get_keywords_dict as twofactor_defaults

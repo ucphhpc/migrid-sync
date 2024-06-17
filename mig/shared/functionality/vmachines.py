@@ -38,7 +38,7 @@ from mig.shared.base import hexlify
 from mig.shared.defaults import any_vgrid, csrf_field
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from mig.shared.html import render_menu, confirm_js, confirm_html, \
+from mig.shared.htmlgen import render_menu, confirm_js, confirm_html, \
     html_post_helper
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.vgridaccess import user_vgrid_access

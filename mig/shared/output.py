@@ -50,7 +50,7 @@ from mig.shared.base import force_native_str, hexlify
 from mig.shared.defaults import file_dest_sep, keyword_any, keyword_updating
 from mig.shared.base import hexlify
 from mig.shared.defaults import file_dest_sep, keyword_any, keyword_updating
-from mig.shared.html import get_xgi_html_header, get_xgi_html_footer, \
+from mig.shared.htmlgen import get_xgi_html_header, get_xgi_html_footer, \
     vgrid_items, html_post_helper, tablesorter_pager
 from mig.shared.objecttypes import validate
 from mig.shared.prettyprinttable import pprint_table

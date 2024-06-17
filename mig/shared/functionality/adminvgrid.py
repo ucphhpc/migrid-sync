@@ -42,7 +42,7 @@ from mig.shared.accessrequests import list_access_requests, load_access_request,
     build_accessrequestitem_object
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.html import man_base_js, man_base_html, html_post_helper
+from mig.shared.htmlgen import man_base_js, man_base_html, html_post_helper
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.sharelinks import build_sharelinkitem_object
 from mig.shared.vgrid import vgrid_add_remove_table, vgrid_list, vgrid_is_owner, \

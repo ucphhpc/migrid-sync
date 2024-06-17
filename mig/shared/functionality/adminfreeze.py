@@ -38,7 +38,7 @@ from mig.shared.defaults import upload_tmp_dir, trash_linkname, csrf_field, \
 from mig.shared.freezefunctions import get_frozen_archive, brief_freeze
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.html import man_base_js, man_base_html, fancy_upload_js, \
+from mig.shared.htmlgen import man_base_js, man_base_html, fancy_upload_js, \
     fancy_upload_html, themed_styles
 from mig.shared.init import initialize_main_variables, find_entry
 

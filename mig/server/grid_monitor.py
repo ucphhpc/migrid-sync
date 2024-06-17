@@ -39,7 +39,7 @@ from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import default_vgrid
 from mig.shared.fileio import unpickle
 from mig.shared.gridstat import GridStat
-from mig.shared.html import get_xgi_html_header, get_xgi_html_footer, \
+from mig.shared.htmlgen import get_xgi_html_header, get_xgi_html_footer, \
     themed_styles, themed_scripts
 from mig.shared.logger import daemon_logger, register_hangup_handler
 from mig.shared.output import format_timedelta

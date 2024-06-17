@@ -37,7 +37,7 @@ from mig.shared.defaults import any_vgrid, default_mrsl_filename, maxfill_fields
     keyword_all, csrf_field
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.html import fancy_upload_js, fancy_upload_html, \
+from mig.shared.htmlgen import fancy_upload_js, fancy_upload_html, \
     themed_styles
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.mrslkeywords import get_job_specs

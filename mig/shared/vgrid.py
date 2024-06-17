@@ -50,7 +50,7 @@ from mig.shared.fileio import make_symlink, move, check_readonly, check_writable
     slow_walk, remove_rec, move_rec, delete_symlink
 from mig.shared.findtype import is_user, is_resource
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.html import html_post_helper
+from mig.shared.htmlgen import html_post_helper
 from mig.shared.modified import mark_vgrid_modified
 from mig.shared.output import html_link
 from mig.shared.safeeval import subprocess_popen, subprocess_pipe, \

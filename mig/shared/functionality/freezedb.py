@@ -35,7 +35,7 @@ from mig.shared.freezefunctions import build_freezeitem_object, \
     pending_archives_update, TARGET_ARCHIVE
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.html import man_base_js, man_base_html, html_post_helper
+from mig.shared.htmlgen import man_base_js, man_base_html, html_post_helper
 from mig.shared.init import initialize_main_variables, find_entry
 
 list_operations = ['showlist', 'list']

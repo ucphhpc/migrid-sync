@@ -44,7 +44,7 @@ from mig.shared.defaults import csrf_field, peers_filename, \
     pending_peers_filename, peers_fields, peer_kinds, default_pager_entries
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.html import man_base_js, man_base_html, html_post_helper
+from mig.shared.htmlgen import man_base_js, man_base_html, html_post_helper
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.serial import load
 from mig.shared.user import anon_user_id

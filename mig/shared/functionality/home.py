@@ -38,7 +38,7 @@ from mig.shared.findtype import is_admin
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.init import initialize_main_variables, find_entry, extract_menu
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.html import save_settings_js, save_settings_html, render_apps, \
+from mig.shared.htmlgen import save_settings_js, save_settings_html, render_apps, \
     menu_items, legacy_user_interface, html_user_messages
 from mig.shared.settings import load_settings
 from mig.shared.settingskeywords import get_keywords_dict

@@ -60,7 +60,7 @@ from mig.shared.defaults import default_http_port, default_https_port, \
     keyword_any, keyword_auto
 from mig.shared.fileio import read_file, read_file_lines, write_file, \
     write_file_lines
-from mig.shared.html import menu_items
+from mig.shared.htmlgen import menu_items
 from mig.shared.jupyter import gen_balancer_proxy_template, gen_openid_template, \
     gen_rewrite_template
 from mig.shared.pwcrypto import password_requirements, make_simple_hash, \
