@@ -145,8 +145,9 @@ if __name__ == '__main__':
                 pieces.append("\\x0%d" % c_ord)
             elif c_ord < 32:
                 # double digit control chars
-                pieces.append("\\x%s" % c_ord)
+                pieces.append(str(hex(27)).replace('0', '\\', 1))
             else:
                 pieces.append(c)
         return ''.join(pieces)
+
     print("%d username chars: %s" % (len(UNSAFE_CHARS), visibly_print(UNSAFE_CHARS)))
