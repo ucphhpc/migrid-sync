@@ -77,7 +77,7 @@ def safename_encode(value):
             insertion_point = punycoded.rindex('-')
         except ValueError:
             # the marker could not be located so the insertion
-            # point as not updated and thus remains set invalid
+            # point is not updated and thus remains set invalid
             pass
     if insertion_point == INVALID_INSERTION_POINT:
         raise AssertionError(None)
