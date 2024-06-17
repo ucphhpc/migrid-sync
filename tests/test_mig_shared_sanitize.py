@@ -7,7 +7,7 @@ import sys
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), ".")))
 from support import MigTestCase, testmain
 
-from mig.shared.sanitize import safename_encode, safename_decode
+from mig.shared.sanitize import safename_encode, safename_decode, NotAnExistingSafenameError
 
 DUMMY_ASCII = u'abcde123467890'
 DUMMY_ASCII_WITH_REPLACE = "$abcde$123467890$"
@@ -29,6 +29,13 @@ class MigSharedSanitize_safename(MigTestCase):
 
         self.assertEqual(
             encoded, "UniCode123@:24::lna3a4dm6e3ftgua80ewlwka88boszo7i7iv930g")
+
+    def test_decode_a_non_safename(self):
+        with self.assertRaises(Exception) as asserted:
+            safename_decode("foobar")
+
+        the_exception = asserted.exception
+        self.assertIsInstance(the_exception, NotAnExistingSafenameError)
 
     def test_decode_basic(self):
         safename_decode("")
@@ -59,7 +66,7 @@ class MigSharedSanitize_safename(MigTestCase):
 
 
 def main():
-    testmain()
+    testmain(failfast=True)
 
 
 if __name__ == '__main__':
