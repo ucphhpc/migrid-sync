@@ -134,7 +134,7 @@ def safename_decode(value):
 if __name__ == '__main__':
     def visibly_print(characters):
         pieces = []
-        for c in UNSAFE_CHARS:
+        for c in characters:
             c_ord = ord(c)
             if c == ' ':
                 pieces.append("\\N{SPACE}")
