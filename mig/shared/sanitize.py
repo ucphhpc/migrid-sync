@@ -36,7 +36,7 @@ sys.path.append(os.path.realpath(
 
 from mig.shared.defaults import username_charset
 
-INDICATOR_CH = ':'
+INDICATOR_CH = '\x1b'
 INVALID_INSERTION_POINT = -2
 MARKER = INDICATOR_CH * 2
 MARKER_HEXDIGIT_WIDTH = 2
