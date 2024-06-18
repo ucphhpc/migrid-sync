@@ -2284,20 +2284,6 @@ class InputException(Exception):
 def main(_print=print):
     print = _print # workaround print as reserved word on PY2
 
-    for test_cn in ('Firstname Lastname', 'Test Æøå', 'Test Überh4x0r',
-                    'Harry S. Truman',  u'Unicode æøå', "Invalid D'Angelo",
-                    'Test Maybe Invalid Źacãŕ', 'Test Invalid ?',
-                    'Test HTML Invalid <code/>'):
-        try:
-            print('Testing valid_commonname: %s' % test_cn)
-            print('Filtered commonname: %s' % filter_commonname(test_cn))
-            # print 'DEBUG %s only in %s' % ([test_cn],
-            #        [VALID_NAME_CHARACTERS])
-            valid_commonname(test_cn)
-            print('Accepted raw commonname!')
-        except Exception as exc:
-            print('Rejected raw commonname %r: %s' % (test_cn, exc))
-
     for test_org in ('UCPH', 'Some University, Some Dept.', 'Green Shoes Ltd.',
                      u'Unicode Org', "Invalid R+D", "Invalid R/D",
                      "Invalid R@D", 'Test HTML Invalid <code/>'):
