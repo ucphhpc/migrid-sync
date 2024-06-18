@@ -854,7 +854,7 @@ def __get_gdp_user_log_entry(configuration,
             touch(log_filepath, configuration)
         fh = open(log_filepath, 'rb')
         for line in fh:
-            line_arr = [i.strip() for i in line.split(':')]
+            line_arr = [i.strip() for i in force_native_str(line).split(':')]
             if (match_client_id and client_id == line_arr[1]) \
                     or (match_scrambled_client_id
                         and scrambled_client_id == line_arr[2]):
