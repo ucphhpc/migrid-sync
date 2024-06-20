@@ -92,7 +92,7 @@ from mig.shared.griddaemons.openid import default_max_user_hits, \
     default_username_validator, refresh_user_creds, update_login_map, \
     login_map_lookup, hit_rate_limit, expire_rate_limit, \
     validate_auth_attempt
-from mig.shared.html import openid_page_template
+from mig.shared.htmlgen import openid_page_template
 from mig.shared.logger import daemon_logger, register_hangup_handler
 from mig.shared.pwcrypto import make_simple_hash
 from mig.shared.safeinput import valid_distinguished_name, valid_password, \

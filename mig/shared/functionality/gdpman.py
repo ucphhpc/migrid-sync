@@ -45,7 +45,7 @@ from mig.shared.gdp.all import ensure_gdp_user, get_projects, get_users, \
     validate_user, get_project_info, get_project_from_client_id, \
     project_promote_to_owner, project_demote_owner, fill_category_meta
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
-from mig.shared.html import twofactor_wizard_html, twofactor_wizard_js, \
+from mig.shared.htmlgen import twofactor_wizard_html, twofactor_wizard_js, \
     twofactor_token_html
 from mig.shared.httpsclient import extract_client_id, build_autologout_url
 from mig.shared.init import initialize_main_variables, find_entry

@@ -41,7 +41,7 @@ from mig.shared.forum import list_single_thread, list_threads, reply, new_subjec
     search_threads, toggle_subscribe, list_subscribers
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
 from mig.shared.handlers import safe_handler, get_csrf_limit
-from mig.shared.html import themed_styles
+from mig.shared.htmlgen import themed_styles
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.notification import notify_user_thread
 from mig.shared.vgrid import vgrid_is_owner_or_member

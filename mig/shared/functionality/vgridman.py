@@ -35,7 +35,7 @@ from mig.shared.defaults import default_vgrid, all_vgrids, default_pager_entries
     csrf_field
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.html import man_base_js, man_base_html, html_post_helper
+from mig.shared.htmlgen import man_base_js, man_base_html, html_post_helper
 from mig.shared.init import initialize_main_variables, find_entry
 from mig.shared.modified import pending_vgrids_update
 from mig.shared.useradm import get_full_user_map

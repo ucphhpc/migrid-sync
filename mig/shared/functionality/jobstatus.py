@@ -39,7 +39,7 @@ from mig.shared.defaults import all_jobs, job_output_dir, csrf_field
 from mig.shared.fileio import unpickle
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
-from mig.shared.html import html_post_helper
+from mig.shared.htmlgen import html_post_helper
 from mig.shared.init import initialize_main_variables
 from mig.shared.job import get_job_ids_with_specified_project_name
 from mig.shared.mrslparser import expand_variables
