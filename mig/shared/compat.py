@@ -55,6 +55,31 @@ def _is_unicode(val):
     return (type(val) == _TYPE_UNICODE)
 
 
+def encode_ascii_string(unicode_string):
+    """Given a supplied input which can be either a string or bytes
+    return a representation that is gauranteed to be an ASCII string
+    in which any unicode characters are escaped. Output is suitable
+    for use in situations in Python 2 that are required to be ASCII
+    but we want to preserve any contained unicode characters e.g.
+    exception messages.
+    """
+
+    assert _is_unicode(unicode_string)
+
+    if PY2:
+        prepared_string = bytearray(unicode_string, 'utf8')
+    else:
+        prepared_string = unicode_string
+
+    encoded_latin1 = codecs.decode(prepared_string, 'raw_unicode_escape')
+    encoded_ascii = list(encoded_latin1)
+    for index, character in enumerate(encoded_latin1):
+        character_ord = ord(character)
+        if character_ord > 127:
+            encoded_ascii[index] = "\%s" % hex(character_ord)[1:]
+    return ''.join(encoded_ascii)
+
+
 def ensure_native_string(string_or_bytes):
     """Given a supplied input which can be either a string or bytes
     return a representation providing string operations while ensuring that
