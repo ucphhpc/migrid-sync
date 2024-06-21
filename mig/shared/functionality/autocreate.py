@@ -49,8 +49,8 @@ from mig.shared.bailout import filter_output_objects
 from mig.shared.base import client_id_dir, canonical_user, mask_creds, \
     fill_user, distinguished_name_to_user, fill_distinguished_name, \
     get_site_base_url, requested_page
-from mig.shared.defaults import AUTH_CERTIFICATE, AUTH_OPENID_V2, \
-    AUTH_OPENID_CONNECT, AUTH_MIG_CERT, AUTH_EXT_CERT, AUTH_MIG_OID, \
+from mig.shared.defaults import \
+    AUTH, AUTH_MIG_CERT, AUTH_EXT_CERT, AUTH_MIG_OID, \
     AUTH_EXT_OID, AUTH_MIG_OIDC, AUTH_EXT_OIDC, keyword_auto
 from mig.shared.fileio import write_file
 from mig.shared.functional import validate_input, REJECT_UNSET
@@ -58,6 +58,7 @@ from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.httpsclient import extract_client_id, detect_client_auth, \
     build_autologout_url
 from mig.shared.init import initialize_main_variables, find_entry
+from mig.shared.localtypes import namedconstants
 from mig.shared.notification import send_email
 from mig.shared.safeinput import filter_commonname
 from mig.shared.useradm import create_user
@@ -73,40 +74,75 @@ except Exception as exc:
     pass
 
 
+AUTOCREATE_AUTH_DEFAULTS = namedconstants('AUTOCREATE_AUTH_DEFAULTS', {
+    AUTH.OPENID_V2: {
+        # NOTE: that we only get sreg.required here if user is
+        # already logged in at OpenID provider when signing up so
+        # that we do not get the required attributes
+        'openid.ns.sreg': [''],
+        'openid.sreg.nickname': [''],
+        'openid.sreg.fullname': [''],
+        'openid.sreg.o': [''],
+        'openid.sreg.ou': [''],
+        'openid.sreg.timezone': [''],
+        'openid.sreg.short_id': [''],
+        'openid.sreg.full_name': [''],
+        'openid.sreg.organization': [''],
+        'openid.sreg.organizational_unit': [''],
+        'openid.sreg.email': [''],
+        'openid.sreg.country': ['DK'],
+        'openid.sreg.state': [''],
+        'openid.sreg.locality': [''],
+        'openid.sreg.role': [''],
+        'openid.sreg.roles': [''],
+        'openid.sreg.association': [''],
+        'openid.sreg.required': [''],
+        'openid.ns': [''],
+        'password': [''],
+        'comment': [''],
+        'accept_terms': [''],
+        'proxy_upload': [''],
+        'proxy_uploadfilename': [''],
+        'authsig': ['']
+    },
+    AUTH.OPENID_CONNECT:  {
+        # IMPORTANT: consistently lowercase to avoid case sensitive validation
+        # NOTE: at least one of sub, oid or upn should be set - check later
+        'oidc.claim.sub': [''],
+        'oidc.claim.oid': [''],
+        'oidc.claim.upn': [''],
+        'oidc.claim.iss': REJECT_UNSET,
+        'oidc.claim.aud': REJECT_UNSET,
+        'oidc.claim.nickname': [''],
+        'oidc.claim.fullname': [''],
+        'oidc.claim.name': [''],
+        'oidc.claim.o': [''],
+        'oidc.claim.ou': [''],
+        'oidc.claim.organization': [''],
+        'oidc.claim.organizational_unit': [''],
+        'oidc.claim.timezone': [''],
+        'oidc.claim.email': [''],
+        'oidc.claim.country': [''],
+        'oidc.claim.state': [''],
+        'oidc.claim.locality': [''],
+        'oidc.claim.role': [''],
+        'oidc.claim.roles': [''],
+        'oidc.claim.association': [''],
+        'comment': [''],
+        'accept_terms': [''],
+        'proxy_upload': [''],
+        'proxy_uploadfilename': [''],
+    },
+})
+
+
 def signature(configuration, auth_type):
     """Signature of the main function"""
 
-    if auth_type == AUTH_OPENID_V2:
-        # Please note that we only get sreg.required here if user is
-        # already logged in at OpenID provider when signing up so
-        # that we do not get the required attributes
-        defaults = {
-            'openid.ns.sreg': [''],
-            'openid.sreg.nickname': [''],
-            'openid.sreg.fullname': [''],
-            'openid.sreg.o': [''],
-            'openid.sreg.ou': [''],
-            'openid.sreg.timezone': [''],
-            'openid.sreg.short_id': [''],
-            'openid.sreg.full_name': [''],
-            'openid.sreg.organization': [''],
-            'openid.sreg.organizational_unit': [''],
-            'openid.sreg.email': [''],
-            'openid.sreg.country': ['DK'],
-            'openid.sreg.state': [''],
-            'openid.sreg.locality': [''],
-            'openid.sreg.role': [''],
-            'openid.sreg.roles': [''],
-            'openid.sreg.association': [''],
-            'openid.sreg.required': [''],
-            'openid.ns': [''],
-            'password': [''],
-            'comment': [''],
-            'accept_terms': [''],
-            'proxy_upload': [''],
-            'proxy_uploadfilename': [''],
-            'authsig': ['']
-        }
+    if auth_type == AUTH.OPENID_V2:
+        defaults = AUTOCREATE_AUTH_DEFAULTS[AUTH.OPENID_V2]
+    elif auth_type == AUTH.OPENID_CONNECT:
+        defaults = AUTOCREATE_AUTH_DEFAULTS[AUTH.OPENID_CONNECT]
     elif auth_type == AUTH_CERTIFICATE:
         # We end up here from extcert if conf allows auto creation
         # TODO: switch to add fields from cert_field_order in shared.defaults
@@ -132,35 +168,6 @@ def signature(configuration, auth_type):
                 peers_default = ['']
             for field_name in configuration.site_peers_explicit_fields:
                 defaults['peers_%s' % field_name] = peers_default
-    elif auth_type == AUTH_OPENID_CONNECT:
-        # IMPORTANT: consistently lowercase to avoid case sensitive validation
-        # NOTE: at least one of sub, oid or upn should be set - check later
-        defaults = {
-            'oidc.claim.sub': [''],
-            'oidc.claim.oid': [''],
-            'oidc.claim.upn': [''],
-            'oidc.claim.iss': REJECT_UNSET,
-            'oidc.claim.aud': REJECT_UNSET,
-            'oidc.claim.nickname': [''],
-            'oidc.claim.fullname': [''],
-            'oidc.claim.name': [''],
-            'oidc.claim.o': [''],
-            'oidc.claim.ou': [''],
-            'oidc.claim.organization': [''],
-            'oidc.claim.organizational_unit': [''],
-            'oidc.claim.timezone': [''],
-            'oidc.claim.email': [''],
-            'oidc.claim.country': [''],
-            'oidc.claim.state': [''],
-            'oidc.claim.locality': [''],
-            'oidc.claim.role': [''],
-            'oidc.claim.roles': [''],
-            'oidc.claim.association': [''],
-            'comment': [''],
-            'accept_terms': [''],
-            'proxy_upload': [''],
-            'proxy_uploadfilename': [''],
-        }
     else:
         raise ValueError('no such auth_type: %s' % auth_type)
     return ['text', defaults]
