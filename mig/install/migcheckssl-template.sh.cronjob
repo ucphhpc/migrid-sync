@@ -192,12 +192,13 @@ if [[ ${org_mtime} -ne ${new_mtime} && "${org_chksum}" != "${new_chksum}" ]]; th
         cat ${server_pem} ${server_crt_ca_pem} > ${combined_pem}
         chmod 400 ${server_pem} ${combined_pem}
         # IMPORTANT: daemons will fail unless combined_pem is UID/GID-owned
+        # NOTE: strip trailing carriage return from podman exec output at least
         if [ -z "${container_manager}" ]; then
             MIGUID=$(id -u ${mig_user})
             MIGGID=$(id -g ${mig_group})
         else
-            MIGUID=$(${container_manager} exec -it migrid id -u ${mig_user})
-            MIGGID=$(${container_manager} exec -it migrid id -g ${mig_group})
+            MIGUID=$(${container_manager} exec -it migrid id -u ${mig_user} | tr -d '\r')
+            MIGGID=$(${container_manager} exec -it migrid id -g ${mig_group} | tr -d '\r')
         fi
         chown "${MIGUID}:${MIGGID}" ${combined_pem}
         if [[ ${verbose} -eq 1 ]]; then
