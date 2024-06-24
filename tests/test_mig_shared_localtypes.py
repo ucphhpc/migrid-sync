@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from tests.support import MigTestCase, testmain
 
 from mig.shared.localtypes import AsciiEnum
