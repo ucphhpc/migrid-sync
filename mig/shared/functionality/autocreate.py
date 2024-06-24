@@ -58,7 +58,6 @@ from mig.shared.handlers import safe_handler, get_csrf_limit
 from mig.shared.httpsclient import extract_client_id, detect_client_auth, \
     build_autologout_url
 from mig.shared.init import initialize_main_variables, find_entry
-from mig.shared.localtypes import namedconstants
 from mig.shared.notification import send_email
 from mig.shared.safeinput import filter_commonname
 from mig.shared.useradm import create_user
@@ -74,7 +73,7 @@ except Exception as exc:
     pass
 
 
-AUTOCREATE_AUTH_DEFAULTS = namedconstants('AUTOCREATE_AUTH_DEFAULTS', {
+AUTOCREATE_AUTH_DEFAULTS = {
     AUTH.OPENID_V2: {
         # NOTE: that we only get sreg.required here if user is
         # already logged in at OpenID provider when signing up so
@@ -133,7 +132,7 @@ AUTOCREATE_AUTH_DEFAULTS = namedconstants('AUTOCREATE_AUTH_DEFAULTS', {
         'proxy_upload': [''],
         'proxy_uploadfilename': [''],
     },
-})
+}
 
 
 def signature(configuration, auth_type):
