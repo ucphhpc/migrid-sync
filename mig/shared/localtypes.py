@@ -1,4 +1,4 @@
-from enum import ReprEnum
+import enum as enum34
 from past.builtins import basestring
 
 """ A module containing a set of commonly used local data strutures.
@@ -15,7 +15,7 @@ def _isascii(value):
     return not any((b > 0x7f for b in bytearray(value, 'utf8')))
 
 
-class AsciiEnum(str, ReprEnum):
+class AsciiEnum(str, enum34.ReprEnum):
     """
     Enum where members behave as strings and are reuired to contain only ascii.
     """
