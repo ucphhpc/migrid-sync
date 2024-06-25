@@ -844,6 +844,7 @@ def __get_gdp_user_log_entry(configuration,
 
     result = None
     (log_filepath, log_lock_filepath) = __gdp_user_log_filepath(configuration)
+    client_id = force_native_str(client_id)
     scrambled_client_id = __scramble_user_id(configuration, client_id)
     if scrambled_client_id is None:
         return result
