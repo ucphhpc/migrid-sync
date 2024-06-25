@@ -38,6 +38,7 @@ import sys
 from unittest import TestCase, main as testmain
 
 TEST_BASE = os.path.dirname(__file__)
+TEST_DATA_DIR = os.path.join(TEST_BASE, "data")
 TEST_OUTPUT_DIR = os.path.join(TEST_BASE, "output")
 MIG_BASE = os.path.realpath(os.path.join(TEST_BASE, ".."))
 PY2 = sys.version_info[0] == 2
@@ -193,6 +194,8 @@ class MigTestCase(TestCase):
             self._logger = FakeLogger()
         return self._logger
 
+    # custom assertions available for common use
+
     def assertPathExists(self, relative_path):
         assert not os.path.isabs(
             relative_path), "expected relative path within output folder"
@@ -203,11 +206,24 @@ class MigTestCase(TestCase):
         else:
             return "file"
 
+    @staticmethod
+    def pretty_display_path(absolute_path):
+        assert os.path.isabs(absolute_path)
+        relative_path = os.path.relpath(absolute_path, start=MIG_BASE)
+        assert not relative_path.startswith('..')
+        return relative_path
+
 
 def cleanpath(relative_path, test_case):
     assert isinstance(test_case, MigTestCase)
     tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
     test_case._cleanup_paths.add(tmp_path)
+    return tmp_path
+
+
+def fixturepath(relative_path):
+    tmp_path = os.path.join(TEST_DATA_DIR, relative_path)
+    assert (not stat.S_ISDIR(os.stat(tmp_path)))
     return tmp_path
 
 
