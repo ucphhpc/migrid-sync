@@ -77,16 +77,14 @@ all_jobs = keyword_all
 any_protocol = keyword_any
 any_state = keyword_any
 
-from pwd import getpwuid
 mig_user = {
     'default': 'mig',
-    'local': getpwuid(os.getuid())[0],
+    'local': keyword_auto,
 }[MIG_ENV]
 
-from grp import getgrgid
 mig_group = {
     'default': 'mig',
-    'local': getgrgid(os.getgid())[0],
+    'local': keyword_auto,
 }[MIG_ENV]
 
 default_source = {

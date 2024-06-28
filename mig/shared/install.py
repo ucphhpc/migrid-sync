@@ -40,6 +40,7 @@ import ast
 import base64
 import crypt
 import datetime
+import grp
 import os
 import pwd
 import random
@@ -422,6 +423,12 @@ def generate_confs(
     if destination is keyword_auto:
         expanded['destination'] = os.path.dirname(sys.argv[0])
         destination = expanded['destination']
+
+    # expand any user information marked as "auto" based on the environment
+    if user is keyword_auto:
+        user = pwd.getpwuid(os.getuid())[0]
+    if group is keyword_auto:
+        group = grp.getgrgid(os.getgid())[0]
 
     # finalize a destination path up-front
     expanded['destination_path'] = "%s%s" % (destination, destination_suffix)
