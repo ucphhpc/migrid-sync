@@ -222,6 +222,7 @@ def generate_confs(
     cloud_services_desc='{}',
     user=mig_user,
     group=mig_group,
+    timezone=keyword_auto,
     apache_version='2.4',
     apache_etc='/etc/apache2',
     apache_run='/var/run',
@@ -940,18 +941,27 @@ cert, oid and sid based https!
             prio_duplicati_protocols.append('davs')
     user_dict['__DUPLICATI_PROTOCOLS__'] = ' '.join(prio_duplicati_protocols)
 
-    sys_timezone = 'UTC'
-    timezone_cmd = ["/usr/bin/timedatectl", "status"]
-    try:
-        timezone_proc = subprocess_popen(timezone_cmd, stdout=subprocess_pipe)
-        for line in timezone_proc.stdout.readlines():
-            line = line.strip()
-            if not line.startswith("Time zone: "):
-                continue
-            sys_timezone = line.replace("Time zone: ", "").split(" ", 1)[0]
-    except Exception as exc:
-        print("WARNING: failed to extract system time zone: %s" % exc)
-    user_dict['__SEAFILE_TIMEZONE__'] = sys_timezone
+    if timezone is keyword_auto:
+        # attempt to detect the timezone
+        sys_timezone = None
+        try:
+            timezone_cmd = ["/usr/bin/timedatectl", "status"]
+            timezone_proc = subprocess_popen(timezone_cmd, stdout=subprocess_pipe)
+            for line in timezone_proc.stdout.readlines():
+                line = ensure_native_string(line.strip())
+                if not line.startswith("Time zone: "):
+                    continue
+                sys_timezone = line.replace("Time zone: ", "").split(" ", 1)[0]
+        except OSError as exc:
+            # any issues execuiting the command is something yo warn about but continue
+            pass
+        if sys_timezone is None:
+            print("WARNING: failed to extract system time zone; defaulting to UTC")
+            sys_timezone = 'UTC'
+
+        timezone = sys_timezone
+
+    user_dict['__SEAFILE_TIMEZONE__'] = timezone
 
     if seafile_secret is keyword_auto:
         seafile_secret = ensure_native_string(base64.b64encode(os.urandom(32))).lower()
