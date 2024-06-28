@@ -1732,15 +1732,16 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
                                                      default_https_port])
             user_dict['__SID_URL__'] += ':%(__SID_PORT__)s' % user_dict
 
-    if digest_salt == keyword_auto:
+    if digest_salt is keyword_auto:
         # Generate random hex salt for scrambling saved digest credentials
         digest_salt = ensure_native_string(base64.b16encode(os.urandom(16)))
-    if crypto_salt == keyword_auto:
+    user_dict['__DIGEST_SALT__'] = digest_salt
+
+    if crypto_salt is keyword_auto:
         # Generate random hex salt for various crypto helpers
         crypto_salt = ensure_native_string(base64.b16encode(os.urandom(16)))
-
-    user_dict['__DIGEST_SALT__'] = digest_salt
     user_dict['__CRYPTO_SALT__'] = crypto_salt
+
 
     # Greedy match trailing space for all the values to uncomment stuff
     strip_trailing_space = ['__IF_SEPARATE_PORTS__', '__APACHE_PRE2.4__',
