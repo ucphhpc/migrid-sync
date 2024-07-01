@@ -170,7 +170,7 @@ AllowGroups tesggroup
 Match Group tesggroup
     # Look for public keys in standard authorized_keys file in home and 
     # optionally in job and jupyter session mount key location if enabled.
-    AuthorizedKeysFile    %h/.ssh/authorized_keys /home/mig/state/mig_system_files/job_mount/%u.authorized_keys
+    AuthorizedKeysFile    %h/.ssh/authorized_keys
     # NOTE: chroot is already handled in our paramiko subsystem
     #ChrootDirectory       %h
     # NOTE: we force our paramiko subsystem for sftp-only access

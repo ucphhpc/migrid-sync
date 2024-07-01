@@ -101,4 +101,4 @@ BRANDING_CSS = 'custom/seahub.css'
 ENABLE_WIKI = True
 
 # Enable optional 2FA for client logins
-ENABLE_TWO_FACTOR_AUTH = False
+ENABLE_TWO_FACTOR_AUTH = True
