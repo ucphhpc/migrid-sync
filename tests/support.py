@@ -129,7 +129,7 @@ class FakeLogger:
     def write(self, message):
         channel, namespace, specifics = message.split(':', 2)
 
-        # ignore everything except warnings sent by th python runtime
+        # ignore everything except warnings sent by the python runtime
         if not (channel == 'WARNING' and namespace == 'py.warnings'):
             return
 

@@ -82,7 +82,7 @@ class MigSharedInstall__generate_confs(MigTestCase):
             destination=symlink_path,
             destination_suffix='-stdlocal',
             user='testuser',
-            group='tesggroup',
+            group='testgroup',
             timezone='Test/Place',
             crypto_salt='_TEST_CRYPTO_SALT'.zfill(32),
             digest_salt='_TEST_DIGEST_SALT'.zfill(32),
