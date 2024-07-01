@@ -13,7 +13,7 @@ APACHE_SUFFIX=
 # settings are defined via environment variables and then used in apache(2)?ctl,
 # /etc/init.d/${APACHE_DAEMON}, /etc/logrotate.d/${APACHE_DAEMON}, etc.
 APACHE_RUN_USER=testuser
-APACHE_RUN_GROUP=tesggroup
+APACHE_RUN_GROUP=testgroup
 APACHE_PID_FILE=/var/run/apache2.pid
 APACHE_RUN_DIR=/var/run
 APACHE_LOCK_DIR=/var/lock
