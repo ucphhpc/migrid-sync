@@ -50,7 +50,6 @@ import subprocess
 import sys
 
 from mig.shared.defaults import default_http_port, default_https_port, \
-    mig_user, mig_group, default_source, default_destination, \
     auth_openid_mig_db, auth_openid_ext_db, STRONG_TLS_CIPHERS, \
     STRONG_TLS_CURVES, STRONG_SSH_KEXALGOS, STRONG_SSH_LEGACY_KEXALGOS, \
     STRONG_SSH_CIPHERS, STRONG_SSH_LEGACY_CIPHERS, STRONG_SSH_MACS, \
@@ -190,8 +189,8 @@ def template_remove(template_file, remove_pattern):
 def generate_confs(
     # NOTE: make sure command line args with white-space are properly wrapped
     generateconfs_command=subprocess.list2cmdline(sys.argv),
-    source=default_source,
-    destination=default_destination,
+    source=keyword_auto,
+    destination=keyword_auto,
     destination_suffix="",
     base_fqdn='',
     public_fqdn='',
@@ -220,8 +219,8 @@ def generate_confs(
     jupyter_services_desc='{}',
     cloud_services='',
     cloud_services_desc='{}',
-    user=mig_user,
-    group=mig_group,
+    user=keyword_auto,
+    group=keyword_auto,
     timezone=keyword_auto,
     apache_version='2.4',
     apache_etc='/etc/apache2',
@@ -230,9 +229,9 @@ def generate_confs(
     apache_log='/var/log/apache2',
     apache_worker_procs=256,
     openssh_version='7.4',
-    mig_code='/home/mig/mig',
-    mig_state='/home/mig/state',
-    mig_certs='/home/mig/certs',
+    mig_code=keyword_auto,
+    mig_state=keyword_auto,
+    mig_certs=keyword_auto,
     auto_add_cert_user=False,
     auto_add_oid_user=False,
     auto_add_oidc_user=False,
@@ -391,7 +390,7 @@ def generate_confs(
     default_vgrid_links='files web',
     advanced_vgrid_links='files web scm tracker workflows monitor',
     support_email='',
-    admin_email='mig',
+    admin_email=keyword_auto,
     admin_list='',
     smtp_server='localhost',
     smtp_sender='',
@@ -417,23 +416,41 @@ def generate_confs(
 
     expanded = dict(locals())
 
-    # expand any directory path specific as "auto" relative to CWD
+    # Dynamic user, group and home related path lookup if not explicitly given
+    # I.e. expand any directory path specified as "AUTO" relative to CWD
+    cmd_dir = os.path.dirname(sys.argv[0])
+    cmd_par_dir = os.path.dirname(cmd_dir)
+    cmd_grpar_dir = os.path.dirname(cmd_par_dir)
+    default_gen_dst = 'generated-confs'
     if source is keyword_auto:
-        expanded['source'] = os.path.dirname(sys.argv[0])
+        expanded['source'] = cmd_dir
         source = expanded['source']
     if destination is keyword_auto:
-        expanded['destination'] = os.path.dirname(sys.argv[0])
+        expanded['destination'] = os.path.join(cmd_dir, default_gen_dst)
         destination = expanded['destination']
 
-    # expand any user information marked as "auto" based on the environment
+    # Expand any user information marked as "AUTO" based on the environment
     if user is keyword_auto:
-        user = pwd.getpwuid(os.getuid())[0]
+        user = expanded['user'] = pwd.getpwuid(os.getuid())[0]
     if group is keyword_auto:
-        group = grp.getgrgid(os.getgid())[0]
+        group = expanded['group'] = grp.getgrgid(os.getgid())[0]
 
-    # finalize a destination path up-front
+    if admin_email is keyword_auto:
+        admin_email = expanded['admin_email'] = user
+
+    # Finalize a destination path up-front
     expanded['destination_path'] = "%s%s" % (destination, destination_suffix)
     destination_path = expanded['destination_path']
+
+    # Expand any upath information marked as "AUTO" based on the environment
+    if mig_code is keyword_auto:
+        mig_code = expanded['mig_code'] = os.path.realpath(cmd_par_dir)
+    if mig_state is keyword_auto:
+        mig_state = expanded['mig_state'] = os.path.realpath(os.path.join(
+            cmd_grpar_dir, 'state'))
+    if mig_certs is keyword_auto:
+        mig_certs = expanded['mig_certs'] = os.path.realpath(os.path.join(
+            cmd_grpar_dir, 'certs'))
 
     # Backwards compatibility with old name
     if public_port and not public_http_port:
@@ -946,7 +963,8 @@ cert, oid and sid based https!
         sys_timezone = None
         try:
             timezone_cmd = ["/usr/bin/timedatectl", "status"]
-            timezone_proc = subprocess_popen(timezone_cmd, stdout=subprocess_pipe)
+            timezone_proc = subprocess_popen(
+                timezone_cmd, stdout=subprocess_pipe)
             for line in timezone_proc.stdout.readlines():
                 line = ensure_native_string(line.strip())
                 if not line.startswith("Time zone: "):
@@ -964,11 +982,13 @@ cert, oid and sid based https!
     user_dict['__SEAFILE_TIMEZONE__'] = timezone
 
     if seafile_secret is keyword_auto:
-        seafile_secret = ensure_native_string(base64.b64encode(os.urandom(32))).lower()
+        seafile_secret = ensure_native_string(
+            base64.b64encode(os.urandom(32))).lower()
     user_dict['__SEAFILE_SECRET_KEY__'] = seafile_secret
 
     if seafile_ccnetid is keyword_auto:
-        seafile_ccnetid = ensure_native_string(base64.b64encode(os.urandom(20))).lower()
+        seafile_ccnetid = ensure_native_string(
+            base64.b64encode(os.urandom(20))).lower()
     user_dict['__SEAFILE_CCNET_ID__'] = seafile_ccnetid
 
     user_dict['__SEAFILE_SHORT_NAME__'] = short_title.replace(' ', '-')
@@ -1741,7 +1761,6 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
         # Generate random hex salt for various crypto helpers
         crypto_salt = ensure_native_string(base64.b16encode(os.urandom(16)))
     user_dict['__CRYPTO_SALT__'] = crypto_salt
-
 
     # Greedy match trailing space for all the values to uncomment stuff
     strip_trailing_space = ['__IF_SEPARATE_PORTS__', '__APACHE_PRE2.4__',
