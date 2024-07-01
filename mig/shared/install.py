@@ -423,10 +423,11 @@ def generate_confs(
     cmd_grpar_dir = os.path.dirname(cmd_par_dir)
     default_gen_dst = 'generated-confs'
     if source is keyword_auto:
-        expanded['source'] = cmd_dir
+        expanded['source'] = os.path.join(cmd_grpar_dir, 'mig', 'install')
         source = expanded['source']
     if destination is keyword_auto:
-        expanded['destination'] = os.path.join(cmd_dir, default_gen_dst)
+        expanded['source'] = os.path.join(cmd_grpar_dir, 'mig', 'install',
+                                          default_gen_dst)
         destination = expanded['destination']
 
     # Expand any user information marked as "AUTO" based on the environment
@@ -444,7 +445,8 @@ def generate_confs(
 
     # Expand any upath information marked as "AUTO" based on the environment
     if mig_code is keyword_auto:
-        mig_code = expanded['mig_code'] = os.path.realpath(cmd_par_dir)
+        mig_code = expanded['mig_code'] = os.path.realpath(os.path.join(
+            cmd_grpar_dir, 'mig'))
     if mig_state is keyword_auto:
         mig_state = expanded['mig_state'] = os.path.realpath(os.path.join(
             cmd_grpar_dir, 'state'))
