@@ -443,7 +443,7 @@ def generate_confs(
     expanded['destination_path'] = "%s%s" % (destination, destination_suffix)
     destination_path = expanded['destination_path']
 
-    # Expand any upath information marked as "AUTO" based on the environment
+    # Expand any path information marked as "AUTO" based on the environment
     # NOTE: we do NOT follow symlinks here as they should remain transparent
     if mig_code is keyword_auto:
         mig_code = expanded['mig_code'] = os.path.abspath(os.path.join(
