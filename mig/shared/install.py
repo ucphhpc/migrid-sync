@@ -444,14 +444,15 @@ def generate_confs(
     destination_path = expanded['destination_path']
 
     # Expand any upath information marked as "AUTO" based on the environment
+    # NOTE: we do NOT follow symlinks here as they should remain transparent
     if mig_code is keyword_auto:
-        mig_code = expanded['mig_code'] = os.path.realpath(os.path.join(
+        mig_code = expanded['mig_code'] = os.path.abspath(os.path.join(
             cmd_grpar_dir, 'mig'))
     if mig_state is keyword_auto:
-        mig_state = expanded['mig_state'] = os.path.realpath(os.path.join(
+        mig_state = expanded['mig_state'] = os.path.abspath(os.path.join(
             cmd_grpar_dir, 'state'))
     if mig_certs is keyword_auto:
-        mig_certs = expanded['mig_certs'] = os.path.realpath(os.path.join(
+        mig_certs = expanded['mig_certs'] = os.path.abspath(os.path.join(
             cmd_grpar_dir, 'certs'))
 
     # Backwards compatibility with old name
