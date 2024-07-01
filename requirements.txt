@@ -1,9 +1,10 @@
-# migrid dependencies on a format suitable for pip install as described on 
+# migrid core dependencies on a format suitable for pip install as described on
 # https://pip.pypa.io/en/stable/reference/requirement-specifiers/
 future
 pyotp;python_version >= "3"
 pyotp<2.4;python_version < "3"
 pyyaml
+email-validator
 
 # NOTE: additional optional dependencies depending on site conf are listed
 #       in recommended.txt and can be installed in the same manner by pointing

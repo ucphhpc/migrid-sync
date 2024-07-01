@@ -1,3 +1,11 @@
+# migrid core dependencies on a format suitable for pip install as described on
+# https://pip.pypa.io/en/stable/reference/requirement-specifiers/
+future
+pyotp;python_version >= "3"
+pyotp<2.4;python_version < "3"
+pyyaml
+email-validator
+
 # migrid recommended libs on a format suitable for pip install as described on
 # https://pip.pypa.io/en/stable/reference/requirement-specifiers/
 wsgidav
@@ -15,14 +23,12 @@ requests
 pdfkit
 xvfbwrapper
 openstackclient
-pyyaml
 nbformat
 more-itertools
 nbconvert
 papermill
 notebook_parameterizer
 psutil
-email-validator
 dnspython
 # sslkeylog requires libssl-dev or similar system package to build
 #sslkeylog
