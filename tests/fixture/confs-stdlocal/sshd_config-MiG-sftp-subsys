@@ -161,13 +161,13 @@ MaxStartups 10:30:100
 Subsystem   sftp    /home/mig/mig/server/sftp_subsys.py
 
 # IMPORTANT: please make sure to also restrict any native sshd to deny login
-#            from ALL users entering as user testuser or group tesggroup with
+#            from ALL users entering as user testuser or group testgroup with
 #            DenyUsers testuser
-#            DenyGroups tesggroup
+#            DenyGroups testgroup
 
 # NOTE: Only allow MiG users on this sshd instance, and sftp-only access
-AllowGroups tesggroup
-Match Group tesggroup
+AllowGroups testgroup
+Match Group testgroup
     # Look for public keys in standard authorized_keys file in home and 
     # optionally in job and jupyter session mount key location if enabled.
     AuthorizedKeysFile    %h/.ssh/authorized_keys
