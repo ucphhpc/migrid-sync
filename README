@@ -558,13 +558,14 @@ settings:
 
 All those values can also be set via environment variable, by setting the
 corresponding MIG_X environment variable where X is the option name in upper
-case. That is, instead of passing --enable_hsts=True as argument one could set
-MIG_ENABLE_HSTS=True in the environment.
+case. That is, instead of passing --enable_transfers=True as argument one could set
+MIG_ENABLE_TRANSFERS=True in the environment.
 If the same option is set both as environment variable and CLI parameter, then
 the CLI parameter takes precedence.
 
-For one of our servers running MiG as the 'mig' user with the code
-checked out directly in the home directory and Debian apache 2.4 without OpenID:
+For a server running MiG as the 'mig' user with the code checked out directly
+in the home directory and Debian apache 2.4 without OpenID but with full grid
+jobs and resources and efficient data access services:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --base_fqdn=migrid.org \
                    --public_fqdn=www.migrid.org \
@@ -590,8 +591,9 @@ checked out directly in the home directory and Debian apache 2.4 without OpenID:
                    --trac_ini_path=/home/mig/mig/server/trac.ini \
                    --public_http_port=80 --mig_cert_port=443 --mig_oid_port=443 \
                    --ext_oid_port=443 --sid_port=443 \
-                   --enable_openid=False --enable_wsgi=True \
-                   --enable_sftp=False --enable_sftp_subsys=True \
+                   --enable_jobs=True --enable_resources=True \
+                   --enable_ftps=True --enable_sftp_subsys=True \
+                   --enable_webdavs=True --enable_transfers=True \
                    --enable_sandboxes=True --enable_vmachines=True \
                    --user_clause=User --group_clause=Group \
                    --listen_clause='#Listen' \
@@ -601,64 +603,8 @@ checked out directly in the home directory and Debian apache 2.4 without OpenID:
                    --skin=migrid-basic \
                    --short_title=MiG
                     
-or the same with HSTS, WSGI (default web), optimized SFTP,
-vhost-specific certificates from LetsEncrypt and OpenID with optional
-2FA support:
-./generateconfs.py --source=. --destination=generated-confs \
-                   --destination_suffix="_svn$(svnversion -n ~/)" \
-                   --base_fqdn=migrid.org \
-                   --public_fqdn=www.migrid.org \
-                   --public_alias_fqdn=dk-www.migrid.org \
-                   --mig_cert_fqdn=dk-cert.migrid.org \
-                   --ext_cert_fqdn= \
-                   --mig_oid_fqdn=dk-ext.migrid.org \
-                   --ext_oid_fqdn=dk-oid.migrid.org \
-                   --sid_fqdn=dk-sid.migrid.org \
-                   --io_fqdn=dk-io.migrid.org \
-                   --user=mig --group=mig \
-                   --apache_version=2.4 \
-                   --apache_etc=/etc/apache2 \
-                   --apache_run=/var/run/apache2 \
-                   --apache_lock=/var/lock/apache2 \
-                   --apache_log=/var/log/apache2 \
-                   --openssh_version=7.4 \
-                   --mig_code=/home/mig/mig \
-                   --mig_state=/home/mig/state \
-                   --mig_certs=/etc/apache2/MiG-certificates \
-                   --hg_path=/usr/bin/hg \
-                   --hgweb_scripts=/usr/share/doc/mercurial-common/examples \
-                   --trac_admin_path=/usr/bin/trac-admin \
-                   --trac_ini_path=/home/mig/mig/server/trac.ini \
-                   --public_http_port=80 --public_https_port=443 \
-                   --ext_cert_port=443 --mig_oid_port=443 \
-                   --ext_oid_port=443 --sid_port=443 \
-                   --mig_oid_provider=https://dk-ext.migrid.org/openid/ \
-                   --ext_oid_provider=https://openid.ku.dk/ \
-                   --enable_openid=True --enable_wsgi=True \
-                   --enable_sftp=False --enable_sftp_subsys=True \
-                   --enable_davs=True --enable_ftps=True \
-                   --enable_duplicati=False --enable_seafile=True \
-                   --enable_sandboxes=True --enable_vmachines=False \
-                   --enable_crontab=True --enable_jobs=True \
-                   --enable_resources=True --enable_notify=True \
-                   --enable_events=True --enable_imnotify=True \
-                   --enable_twofactor=True --enable_cracklib=True \
-                   --enable_hsts=True --enable_vhost_certs=True \
-                   --enable_verify_certs=True --enable_migadmin=True \
-                   --user_clause=User --group_clause=Group \
-                   --listen_clause='#Listen' \
-                   --serveralias_clause='ServerAlias' --alias_field=email \
-                   --dhparams_path=~/certs/dhparams.pem \
-                   --daemon_keycert=~/certs/combined.pem \
-                   --daemon_pubkey=~/certs/combined.pub \
-                   --daemon_pubkey_from_dns=True \
-                   --signup_methods="extoid migoid migcert" \
-                   --login_methods="extoid migoid migcert" \
-                   --skin=migrid-basic \
-                   --wsgi_procs=25 \
-                   --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
-
-or the same on centos
+or a similar setup with vhost-specific certificates from LetsEncrypt,
+additional web apps and OpenID on CentOS:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --destination_suffix="_svn$(svnversion -n ~/)" \
                    --base_fqdn=migrid.org \
@@ -690,16 +636,13 @@ or the same on centos
                    --ext_oid_port=443 --sid_port=443 \
                    --mig_oid_provider=https://dk-ext.migrid.org/openid/ \
                    --ext_oid_provider=https://openid.ku.dk/ \
-                   --enable_openid=True --enable_wsgi=True \
-                   --enable_sftp=False --enable_sftp_subsys=True \
+                   --enable_openid=True --enable_sftp_subsys=True \
                    --enable_davs=True --enable_ftps=True \
-                   --enable_duplicati=False --enable_seafile=False \
-                   --enable_sandboxes=True --enable_vmachines=False \
-                   --enable_crontab=True --enable_jobs=True \
+                   --enable_sandboxes=True --enable_jobs=True \
                    --enable_resources=True --enable_notify=True \
                    --enable_events=True --enable_imnotify=True \
-                   --enable_twofactor=True --enable_cracklib=True \
-                   --enable_freeze=False --enable_hsts=True \
+                   --enable_cracklib=True --enable_freeze=False \
+                   --enable_transfers=True --enable_gravatars=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
                    --enable_migadmin=True --enable_peers=True \
                    --peers_mandatory=True --peers_explicit_fields='full_name email' \
@@ -744,65 +687,8 @@ or the same on centos
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
 
 and a storage-only setup with CentOS 7.x, apache 2.4, WSGI (default web), 
-optimized SFTP, Seafile integration and OpenID login:
-./generateconfs.py --source=. --destination=generated-confs \
-                   --destination_suffix="_svn$(svnversion -n ~/)" \
-                   --base_fqdn=erda.dk \
-                   --public_fqdn=www.erda.dk \
-                   --public_alias_fqdn=www.erda.dk \
-                   --public_sec_fqdn=erda.ku.dk \
-                   --mig_cert_fqdn= \
-                   --ext_cert_fqdn=cert.erda.dk \
-                   --mig_oid_fqdn=ext.erda.dk \
-                   --ext_oid_fqdn=erda.dk \
-                   --sid_fqdn=sid.erda.dk \
-                   --io_fqdn=io.erda.dk \
-                   --seafile_fqdn=sid.erda.dk \
-                   --user=mig --group=mig \
-                   --apache_version=2.4 \
-                   --apache_etc=/etc/httpd \
-                   --apache_run=/var/run/httpd \
-                   --apache_lock=/var/lock/subsys/httpd \
-                   --apache_log=/var/log/httpd \
-                   --openssh_version=7.4 \
-                   --mig_code=/home/mig/mig \
-                   --mig_state=/home/mig/state \
-                   --mig_certs=/etc/httpd/MiG-certificates \
-                   --hg_path=/usr/bin/hg \
-                   --hgweb_scripts=/usr/share/doc/mercurial-2.6.2 \
-                   --trac_admin_path='' --trac_ini_path='' \
-                   --public_http_port=80 --public_https_port=443 \
-                   --ext_cert_port=443 --mig_oid_port=443 \
-                   --ext_oid_port=443 --sid_port=443 \
-                   --mig_oid_provider=https://ext.erda.dk/openid/ \
-                   --ext_oid_provider=https://openid.ku.dk/ \
-                   --enable_openid=True --enable_wsgi=True \
-                   --enable_sftp=False --enable_sftp_subsys=True \
-                   --enable_davs=True --enable_ftps=True \
-                   --enable_duplicati=True --enable_seafile=True \
-                   --enable_sandboxes=False --enable_vmachines=False \
-                   --enable_crontab=True --enable_jobs=False \
-                   --enable_resources=False --enable_events=True \
-                   --enable_freeze=True --enable_hsts=True \
-                   --enable_vhost_certs=True --enable_verify_certs=True \
-                   --user_clause=User --group_clause=Group \
-                   --listen_clause='#Listen' \
-                   --serveralias_clause='#ServerAlias' --alias_field=email \
-                   --dhparams_path=~/certs/dhparams.pem \
-                   --daemon_keycert=~/certs/combined.pem \
-                   --daemon_pubkey=~/certs/combined.pub \
-                   --daemon_pubkey_from_dns=True \
-                   --signup_methods="extoid migoid extcert" \
-                   --login_methods="extoid migoid extcert" \
-                   --distro=centos --skin=erda-ucph-science \
-                   --vgrid_label=Workgroup --wsgi_procs=25 \
-                   --default_menu="home files submitjob jobs vgrids settings setup logout" \
-                   --user_menu="sharelinks people seafile crontab transfers peers downloads docs" \
-                   --auto_add_oid_user=True --auto_add_cert_user=True \
-                   --auto_add_filter_fields=full_name --auto_add_filter_method=skip \
-                   --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
-                   
-and the same with added Jupyter+cloud integration and optional 2FA support:
+optimized SFTP, WebDAVS FTPS, Data Transfers, external Seafile integration,
+local OpenID login and added Jupyter+cloud integration for data analysis:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --destination_suffix="_svn$(svnversion -n ~/)" \
                    --base_fqdn=erda.dk \
@@ -838,23 +724,17 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --ext_oid_port=443 --sid_port=443 \
                    --mig_oid_provider=https://ext.erda.dk/openid/ \
                    --ext_oid_provider=https://openid.ku.dk/ \
-                   --enable_openid=True --enable_wsgi=True \
-                   --enable_sftp=False --enable_sftp_subsys=True \
+                   --enable_openid=True --enable_sftp_subsys=True \
                    --enable_davs=True --enable_ftps=True \
                    --enable_duplicati=True --enable_seafile=True \
                    --seafile_fqdn=seafile.erda.dk \
-                   --seafile_ro_access=False \
-                   --enable_sandboxes=False --enable_vmachines=False \
-                   --enable_crontab=True --enable_jobs=False \
-                   --enable_resources=False --enable_events=False \
-                   --enable_freeze=True --enable_twofactor=True \
-                   --enable_cracklib=True --enable_hsts=True \
+                   --seafile_ro_access=False --enable_cracklib=True \
+                   --enable_transfers=True --enable_gravatars=True \
                    --enable_vhost_certs=True --enable_verify_certs=True \
                    --enable_notify=True --enable_jupyter=True \
                    --jupyter_services='DAG.https://dag002.science DAG.https://dag003.science DAG.https://dag004.science DAG.https://dag005.science DAG.https://dag006.science DAG.https://dag007.science DAG.https://dag008.science DAG.https://dag009.science DAG.https://dag010.science DAG.https://dag203.science DAG.https://dag204.science MODI.https://dag100.science' \
                    --jupyter_services_desc="{'DAG': '/home/mig/state/wwwpublic/dag_desc.html', 'MODI': '/home/mig/state/wwwpublic/modi_desc.html'}" \
-                   --enable_cloud=True \
-                   --enable_migadmin=True \
+                   --enable_cloud=True --enable_migadmin=True \
                    --enable_peers=True --peers_mandatory=True \
                    --peers_explicit_fields='full_name email' \
                    --peers_contact_hint='employed at UCPH and authorized to invite external users' \
@@ -897,8 +777,8 @@ and the same with added Jupyter+cloud integration and optional 2FA support:
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
 
 and a similar setup with CentOS 7.x, apache 2.4, WSGI (default web), 
-optimized SFTP, job execution, Jupyter integration, previews and OpenID login
-with optional 2-FA support and legacy sftp clients:
+optimized SFTP, WebDAVS, FTPS, job execution, Jupyter integration, previews and
+local OpenID login and support for legacy sftp clients:
 ./generateconfs.py --source=. --destination=generated-confs \
                    --destination_suffix="_svn$(svnversion -n ~/)" \
                    --base_fqdn=idmc.dk \
@@ -915,7 +795,7 @@ with optional 2-FA support and legacy sftp clients:
                    --apache_run=/var/run/httpd \
                    --apache_lock=/var/lock/subsys/httpd \
                    --apache_log=/var/log/httpd \
-                   --openssh_version=7.4 \
+                   --openssh_version=7.3 \
                    --mig_code=/home/mig/mig \
                    --mig_state=/home/mig/state \
                    --mig_certs=/etc/httpd/MiG-certificates \
@@ -927,18 +807,13 @@ with optional 2-FA support and legacy sftp clients:
                    --ext_oid_port=443 --sid_port=443 \
                    --mig_oid_provider=https://ext.idmc.dk/openid/ \
                    --ext_oid_provider=https://openid.ku.dk/ \
-                   --enable_openid=True --enable_wsgi=True \
-                   --enable_sftp=False --enable_sftp_subsys=True \
+                   --enable_openid=True --enable_sftp_subsys=True \
                    --enable_davs=True --enable_ftps=True \
-                   --enable_sharelinks=True --enable_transfers=True \
-                   --enable_duplicati=False --enable_seafile=False \
-                   --enable_sandboxes=False --enable_vmachines=False \
-                   --enable_crontab=True --enable_jobs=True \
-                   --enable_resources=True --enable_events=True \
-                   --enable_freeze=False --enable_imnotify=False \
-                   --enable_twofactor=True --enable_cracklib=True \
+                   --enable_transfers=True --enable_gravatars=True \
+                   --enable_jobs=True --enable_resources=True \
+                   --enable_events=True --enable_cracklib=True \
                    --enable_notify=True --enable_preview=True \
-                   --enable_workflows=True --enable_hsts=True \
+                   --enable_workflows=True --enable_freeze=False \
                    --enable_vhost_certs=True --enable_verify_certs=True \
                    --enable_jupyter=True --enable_migadmin=True \
                    --jupyter_services='DAG.https://dag002.science DAG.https://dag003.science DAG.https://dag004.science DAG.https://dag005.science DAG.https://dag006.science DAG.https://dag007.science DAG.https://dag008.science DAG.https://dag009.science DAG.https://dag010.science DAG.https://dag203.science DAG.https://dag204.science MODI.https://dag100.science' \
@@ -986,8 +861,8 @@ with optional 2-FA support and legacy sftp clients:
                    --secscan_addr="130.226.158.3 130.225.213.72 192.38.10.137"
 
 Finally a storage-only with CentOS 7.x, apache 2.4, WSGI (default web), 
-optimized SFTP, strict access control and extensive logging to comply with the 
-General Data Protection Regulation (GDPR) imposed by EU:
+optimized SFTP, WebDAVS, strict access control and extensive logging to comply
+with the  General Data Protection Regulation (GDPR) imposed by EU:
 https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
 ./generateconfs.py --source=. --destination=generated-confs \
                    --destination_suffix="_svn$(svnversion -n ~/)" \
@@ -1028,7 +903,7 @@ https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
                    --ext_oid_port=443 --sid_port=443 \
                    --mig_oid_provider=https://sif-ext.erda.dk/openid/ \
                    --ext_oid_provider=https://openid.ku.dk/ \
-                   --enable_openid=True --enable_wsgi=True \
+                   --enable_openid=True \
                    --enable_sftp=True --enable_sftp_subsys=False \
                    --enable_davs=True --enable_ftps=False \
                    --enable_sharelinks=False --enable_transfers=False \
