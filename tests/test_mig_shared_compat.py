@@ -33,20 +33,30 @@ import sys
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), ".")))
 from support import MigTestCase, testmain
 
-from mig.shared.compat import ensure_native_string
+from mig.shared.compat import PY2, ensure_native_string
 
 DUMMY_BYTECHARS = b'DEADBEEF'
 DUMMY_BYTESRAW = binascii.unhexlify('DEADBEEF') # 4 bytes
+DUMMY_UNICODE = u'UniCode123½¾µßðþđŋħĸþł@ª€£$¥©®'
 
 class MigSharedCompat__ensure_native_string(MigTestCase):
     # TODO: Add docstrings to this class and its methods
     def test_char_bytes_conversion(self):
         actual = ensure_native_string(DUMMY_BYTECHARS)
+        self.assertIs(type(actual), str)
         self.assertEqual(actual, 'DEADBEEF')
 
     def test_raw_bytes_conversion(self):
         with self.assertRaises(UnicodeDecodeError):
             ensure_native_string(DUMMY_BYTESRAW)
+
+    def test_unicode_conversion(self):
+        actual = ensure_native_string(DUMMY_UNICODE)
+        self.assertEqual(type(actual), str)
+        if PY2:
+            self.assertEqual(actual, DUMMY_UNICODE.encode("utf8"))
+        else:
+            self.assertEqual(actual, DUMMY_UNICODE)
 
 
 if __name__ == '__main__':
