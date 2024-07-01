@@ -28,7 +28,9 @@
 """Supporting functions for the unit test framework"""
 
 from collections import defaultdict
+import difflib
 import errno
+import io
 import logging
 import os
 import re
@@ -38,10 +40,13 @@ import sys
 from unittest import TestCase, main as testmain
 
 TEST_BASE = os.path.dirname(__file__)
-TEST_DATA_DIR = os.path.join(TEST_BASE, "data")
+TEST_FIXTURE_DIR = os.path.join(TEST_BASE, "fixture")
 TEST_OUTPUT_DIR = os.path.join(TEST_BASE, "output")
 MIG_BASE = os.path.realpath(os.path.join(TEST_BASE, ".."))
 PY2 = sys.version_info[0] == 2
+
+# force defaults to a local environment
+os.environ['MIG_ENV'] = 'local'
 
 # All MiG related code will at some point include bits
 # from the mig module namespace. Rather than have this
@@ -54,8 +59,9 @@ sys.path.append(MIG_BASE)
 try:
     os.mkdir(TEST_OUTPUT_DIR)
 except EnvironmentError as enverr:
-    if enverr.errno == errno.EEXIST:
-        pass  # FileExistsError
+    if enverr.errno == errno.EEXIST:  # FileExistsError
+        shutil.rmtree(TEST_OUTPUT_DIR)
+        os.mkdir(TEST_OUTPUT_DIR)
 
 # Basic global logging configuration for testing
 
@@ -176,7 +182,9 @@ class MigTestCase(TestCase):
             self._reset_logging(stream=BLACKHOLE_STREAM)
 
         for path in self._cleanup_paths:
-            if os.path.isdir(path):
+            if os.path.islink(path):
+                os.remove(path)
+            elif os.path.isdir(path):
                 shutil.rmtree(path)
             elif os.path.exists(path):
                 os.remove(path)
@@ -196,12 +204,32 @@ class MigTestCase(TestCase):
 
     # custom assertions available for common use
 
+    def assertFileContentIdentical(self, file_actual, file_expected):
+        with io.open(file_actual) as f_actual, io.open(file_expected) as f_expected:
+            lhs = f_actual.readlines()
+            rhs = f_expected.readlines()
+            different_lines = list(difflib.unified_diff(rhs, lhs))
+            try:
+                self.assertEqual(len(different_lines), 0)
+            except AssertionError:
+                raise AssertionError("""differences found between files
+* %s
+* %s
+included:
+%s
+                    """ % (
+                    os.path.relpath(file_expected, MIG_BASE),
+                    os.path.relpath(file_actual, MIG_BASE),
+                    ''.join(different_lines)))
+
     def assertPathExists(self, relative_path):
         assert not os.path.isabs(
             relative_path), "expected relative path within output folder"
         absolute_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
-        stat_result = os.stat(absolute_path)
-        if stat.S_ISDIR(stat_result.st_mode):
+        stat_result = os.lstat(absolute_path)
+        if stat.S_ISLNK(stat_result.st_mode):
+            return "symlink"
+        elif stat.S_ISDIR(stat_result.st_mode):
             return "dir"
         else:
             return "file"
@@ -222,8 +250,7 @@ def cleanpath(relative_path, test_case):
 
 
 def fixturepath(relative_path):
-    tmp_path = os.path.join(TEST_DATA_DIR, relative_path)
-    assert (not stat.S_ISDIR(os.stat(tmp_path)))
+    tmp_path = os.path.join(TEST_FIXTURE_DIR, relative_path)
     return tmp_path
 
 

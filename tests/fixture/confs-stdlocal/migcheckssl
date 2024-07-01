@@ -1,0 +1,289 @@
+#!/bin/bash
+#
+# Check letsencrypt ssl certificates for MiG servers
+#
+# The script depends on a configured getssl (https://github.com/srvrco/getssl)
+# setup (please refer to ${cert_path}/README).
+# If a new certificate is retrieved from letsencrypt then the appropriate
+# certificates are updated and the apache and MiG services are restarted.
+#
+# IMPORTANT: if placed in /etc/cron.X the script filename must be
+# something consisting entirely of upper and lower case letters, digits,
+# underscores, and hyphens. I.e. if the script name contains e.g. a period,
+# '.', it will be silently ignored!
+# This is a limitation on the run-parts wrapper used by cron
+# (see man run-parts for the rationale behind this).
+
+# Force bash to handle uninitialized variables and errors
+# https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
+set -eEuo pipefail
+
+# Send output to another email address
+#MAILTO="root"
+
+# Specify if migrid runs natively or inside containers with LetsEncrypt at host.
+# Value is the container manager (docker, podman, or empty string for none)
+container_manager=""
+
+# Look in getssl install dir first
+export PATH="/usr/local/sbin:${PATH}"
+
+domain=""
+mig_user="testuser"
+mig_group="tesggroup"
+cert_base="/home/mig/certs"
+cert_path="${cert_base}/letsencrypt"
+domain_cert_path="${cert_path}/${domain}"
+server_key="${domain_cert_path}/server.key"
+server_pem="${domain_cert_path}/server.pem"
+server_crt="${domain_cert_path}/server.crt"
+server_crt_ca_pem="${domain_cert_path}/server.crt.ca.pem"
+server_key_crt_ca_pem="${domain_cert_path}/server.key.crt.ca.pem"
+combined_pem="${domain_cert_path}/combined.pem"
+combined_pub="${domain_cert_path}/combined.pub"
+dhparams_pem="${cert_base}/dhparams.pem"
+# use git latest or release version of getssl
+getssl_version="release"
+getssl_tmp="/tmp/getssl"
+getssl_script="getssl"
+getssl_path=$(which ${getssl_script} 2>/dev/null)
+# Names of apache httpd service, depends on distro
+apache_services="apache2"
+# Include postfix here if service is enabled on host with same LetsEncrypt cert
+postfix_services="postfix"
+# Services requiring reload for renewed certificate (NOTE: sftp doesn't)
+migrid_subservices="ftps webdavs openid"
+
+if [[ $(id -u) -ne 0 ]]; then
+    echo "Please run $0 as root"
+    exit 1
+fi
+
+# Check getssl script
+
+if [ "$getssl_version" = "latest" ]; then
+  # Latest version is directly available from master url
+  getssl_url="https://raw.githubusercontent.com/srvrco/getssl/master/getssl"
+else
+  # Extract latest release tag use in direct download url
+  release_tag=$(curl -s https://api.github.com/repos/srvrco/getssl/releases/latest | grep 'tag_name' | cut -d\" -f4)
+  if [ $? -ne 0 ]; then
+      echo "Could not extract latest release tag from getssl git repo!"
+      exit 1
+  fi
+  getssl_url=https://raw.githubusercontent.com/srvrco/getssl/${release_tag}/getssl
+fi
+
+if [ ! -x "${getssl_path}" ]; then
+    echo "ERROR: Missing getssl script"
+    exit 1
+else   
+    wget -q -O "${getssl_tmp}" "${getssl_url}"
+    if [ $? -eq 0 ]; then
+        if ! diff -q -w "${getssl_tmp}" "${getssl_path}" ; then
+            echo "--- Updated LetsEncrypt script available - please verify+update ---"
+            echo "${getssl_url}"
+            echo
+            echo "--- Start of detailed difference follows ---"
+            diff -u -w "${getssl_tmp}" "${getssl_path}" || true | head
+            echo
+        fi
+    fi
+    rm -f ${getssl_tmp}
+fi
+
+# Generate getssl command with args
+# NOTE: we force modern X1 root chain to avoid cert expired warnings
+
+if [[ "$#" -eq 0 ]]; then
+    getssl_cmd="${getssl_script} --preferred-chain X1 -q ${domain}"
+else
+    # NOTE: use $* rather than $@ here as suggested by shellcheck (SC2124)
+    getssl_cmd="${getssl_script} --preferred-chain X1 $* ${domain}"
+fi
+
+# Run in verbose mode if run without -q arg
+if [[ ${getssl_cmd} =~ .*\ -q\ .* ]]; then
+    verbose=0
+else
+    verbose=1
+fi
+
+if [[ ${verbose} -eq 1 ]]; then
+    echo "getssl_cmd: ${getssl_cmd}"
+    echo "cert_path: ${cert_path}"
+    echo "domain_cert_path: ${domain_cert_path}"
+    echo "server_key: ${server_key}" 
+    echo "server_pem: ${server_pem}" 
+    echo "server_crt: ${server_crt}" 
+    echo "server_crt_ca_pem: ${server_crt_ca_pem}"
+    echo "server_key_crt_ca_pem: ${server_key_crt_ca_pem}"
+    echo "dhparams_pem: ${dhparams_pem}" 
+    echo "combined_pem: ${combined_pem}"
+    echo "combined_pub: ${combined_pub}"
+fi
+
+# Ensure domain certificate path
+
+if [ ! -d "${domain_cert_path}" ]; then
+    mkdir -p ${domain_cert_path}
+fi
+
+# Ensure file containing server: key + cert + ca
+
+if [ ! -f "${server_key_crt_ca_pem}" ]; then
+    touch ${server_key_crt_ca_pem}
+fi
+
+# Get timestamp of current certificate
+
+if [ ! -f ${server_key_crt_ca_pem} ]; then
+    org_mtime=(0)
+    org_chksum=''
+else
+    # Avoid shell builtin stat as it may not have c option 
+    org_mtime=$(/usr/bin/stat -c %Y ${server_key_crt_ca_pem})
+    org_chksum=$(/usr/bin/md5sum ${server_key_crt_ca_pem})
+fi
+
+# Check for new certificate - returns 1 upon update
+
+${getssl_cmd} || true
+
+# Get timestamp of new certificate
+
+if [ ! -f ${server_key_crt_ca_pem} ]; then
+    new_mtime=(0)
+    new_chksum=''
+else
+    # Avoid shell builtin stat as it may not have c option 
+    new_mtime=$(/usr/bin/stat -c %Y ${server_key_crt_ca_pem})
+    new_chksum=$(/usr/bin/md5sum ${server_key_crt_ca_pem})
+fi
+
+# Update MiG specific certificate paths if certificate is updated
+
+if [[ ${org_mtime} -ne ${new_mtime} && "${org_chksum}" != "${new_chksum}" ]]; then
+    if [[ ${verbose} -eq 1 ]]; then
+        echo "--- LetsEncrypt certificates updated ---"
+    fi
+
+    # Set owner to root on apache keys
+
+    if [[ ${verbose} -eq 1 ]]; then
+        echo "Changing owner of all keys with"
+        echo chown 0:0 ${domain_cert_path}/*.{key,pem}
+    fi
+    chown 0:0 ${domain_cert_path}/*.{key,pem}
+
+    if [ -n "${migrid_subservices}" ]; then
+        if [[ ${verbose} -eq 1 ]]; then
+            echo "Creating ${combined_pem} and ${combined_pub}"
+        fi
+
+        # Generate combined.pem
+        #
+        # Paramiko expects 'combined.pem' to contain plain-text part of 
+        # 'server.key' and 'server_key_crt_ca_pem' is 'combined.pem'
+        # without plain-text part of 'server.key'
+        # The combined keys must be owned by testuser user for daemon access
+
+        openssl rsa -in ${server_key} -text > ${server_pem}
+        cat ${server_pem} ${server_crt_ca_pem} > ${combined_pem}
+        chmod 400 ${server_pem} ${combined_pem}
+        # IMPORTANT: daemons will fail unless combined_pem is UID/GID-owned
+        # NOTE: strip trailing carriage return from podman exec output at least
+        if [ -z "${container_manager}" ]; then
+            MIGUID=$(id -u ${mig_user})
+            MIGGID=$(id -g ${mig_group})
+        else
+            MIGUID=$(${container_manager} exec -it migrid id -u ${mig_user} | tr -d '\r')
+            MIGGID=$(${container_manager} exec -it migrid id -g ${mig_group} | tr -d '\r')
+        fi
+        chown "${MIGUID}:${MIGGID}" ${combined_pem}
+        if [[ ${verbose} -eq 1 ]]; then
+            echo "Changed owner of ${combined_pem} with"
+            echo chown "${MIGUID}:${MIGGID}" ${combined_pem}
+            echo "to end up with"
+            ls -l ${combined_pem}
+        fi
+        
+        # Generate openssh public key for combined.pem in combined.pub
+
+        ssh-keygen -y -f ${combined_pem} > ${combined_pub}
+    fi
+
+    # Append dhparams (if available) to server.crt for use in apache<2.4.8
+
+    if [ -f ${dhparams_pem} ]; then
+        echo "Append ${dhparams_pem} to ${server_crt} to address LOGJAM, etc."
+        echo "for older apache versions where it can't be passed in conf."
+        cat ${dhparams_pem} >> ${server_crt}
+    fi
+
+    # Set permissions on all keys
+
+    chmod 400 ${domain_cert_path}/*.{key,pem}
+
+    # Restart migrid and apache service daemons if set
+
+    for subsvc in ${migrid_subservices}; do
+        if [ -z "${container_manager}" ]; then
+            service migrid statusdaemon "${subsvc}" > /dev/null 2>&1
+            svcstatus=$?
+        else
+            ${container_manager} exec -it "migrid-$subsvc" service migrid statusdaemon "${subsvc}" > /dev/null 2>&1
+            svcstatus=$?
+        fi
+        if [[ $svcstatus -eq 0 ]]; then
+            if [[ ${verbose} -eq 1 ]]; then
+                echo "--- Restarting migrid daemon: ${subsvc} ---"
+            fi
+            if [ -z "${container_manager}" ]; then
+                service migrid restartdaemon "${subsvc}"
+            else
+                ${container_manager} exec -it "migrid-$subsvc" service migrid restartdaemon "${subsvc}"
+            fi
+        fi
+    done
+    for svc in ${apache_services}; do
+        if [ -z "${container_manager}" ]; then
+            service ${svc} status > /dev/null 2>&1
+            svcstatus=$?
+        else
+            ${container_manager} exec -it migrid service ${svc} status > /dev/null 2>&1
+            svcstatus=$?
+        fi
+        if [[ $svcstatus -eq 0 ]]; then
+            if [[ ${verbose} -eq 1 ]]; then
+                echo "--- Restarting service: ${svc} ---"
+            fi
+            if [ -z "${container_manager}" ]; then
+                service ${svc} restart
+            else
+                ${container_manager} exec -it migrid service ${svc} restart
+            fi
+        fi
+    done
+
+    # Restart host postfix service daemon if set
+
+    for svc in ${postfix_services}; do
+        service ${svc} status > /dev/null 2>&1
+        svcstatus=$?
+        if [[ $svcstatus -eq 0 ]]; then
+            if [[ ${verbose} -eq 1 ]]; then
+                echo "--- Restarting service: ${svc} ---"
+            fi
+            service ${svc} restart
+        fi
+    done
+    if [ -n "${migrid_subservices}" ]; then
+        sha256_fingerprint=$(openssl x509 -noout -fingerprint -sha256 -in ${combined_pem})
+        sha256_fingerprint=${sha256_fingerprint/SHA256 Fingerprint=/}
+        echo "Please update ftps and davs sha256 fingerprint in MiGserver.conf to:"
+        echo "${sha256_fingerprint}"
+    fi
+fi
+
+exit 0
