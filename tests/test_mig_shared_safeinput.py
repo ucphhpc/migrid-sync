@@ -37,7 +37,10 @@ sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), ".")))
 
 from support import MigTestCase, testmain
 from mig.shared.safeinput import \
+    _validated_input_checks, \
     filter_commonname, valid_commonname
+
+import mig.shared.safeinput as validators
 
 PY2 = sys.version_info[0] == 2
 
@@ -51,6 +54,7 @@ def as_string_of_unicode(value):
 
 
 def is_string_of_unicode(value):
+    assert isinstance(value, basestring)
     return type(value) == type(u'')
 
 
@@ -103,6 +107,57 @@ class MigSharedSafeinput(MigTestCase):
             test_cn_unicode = as_string_of_unicode(test_cn)
             filtered_cn = filter_commonname(test_cn)
             self.assertNotEqual(filtered_cn, test_cn_unicode)
+
+    VALIDATED_INPUTS_AUTOCREATE = {}
+
+    def test__validated_input_checks_commonname_openid_2(self):
+        # OpenID 2.0 version
+        autocreate_defaults = {
+            'openid.ns.sreg': [''],
+            'openid.sreg.nickname': [''],
+            'openid.sreg.fullname': [''],
+            'openid.sreg.o': [''],
+            'openid.sreg.ou': [''],
+            'openid.sreg.timezone': [''],
+            'openid.sreg.short_id': [''],
+            'openid.sreg.full_name': [''],
+            'openid.sreg.organization': [''],
+            'openid.sreg.organizational_unit': [''],
+            'openid.sreg.email': [''],
+            'openid.sreg.country': ['DK'],
+            'openid.sreg.state': [''],
+            'openid.sreg.locality': [''],
+            'openid.sreg.role': [''],
+            'openid.sreg.roles': [''],
+            'openid.sreg.association': [''],
+            # Please note that we only get sreg.required here if user is
+            # already logged in at OpenID provider when signing up so
+            # that we do not get the required attributes
+            'openid.sreg.required': [''],
+            'openid.ns': [''],
+            'password': [''],
+            'comment': ['(Created through autocreate)'],
+            'proxy_upload': [''],
+            'proxy_uploadfilename': [''],
+        }
+        user_arguments_dict = {'openid.ns.sreg':
+                            ['http://openid.net/extensions/sreg/1.1'],
+                            'openid.sreg.ou': ['nbi'],
+                            'openid.sreg.nickname': ['brs278@ku.dk'],
+                            'openid.sreg.fullname': ['Jonas Bardino'],
+                            'openid.sreg.role': ['tap', 'staff'],
+                            'openid.sreg.roles': ['tap, staff', 'developer'],
+                            'openid.sreg.association': ['sci-nbi-tap'],
+                            'openid.sreg.o': ['science'],
+                            'openid.sreg.email': ['bardino@nbi.ku.dk']}
+
+        perform_checks = _validated_input_checks(user_arguments_dict, autocreate_defaults, type_override={}, value_override={})
+        type_keys = set(perform_checks.type.keys())
+        value_keys = set(perform_checks.value.keys())
+
+        present_keys = set.union(type_keys, value_keys)
+        unique_keys = set.intersection(type_keys, present_keys)
+        self.assertEqual(len(present_keys), len(unique_keys))
 
 
 if __name__ == '__main__':
