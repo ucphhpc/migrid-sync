@@ -725,7 +725,7 @@ accepting create matching supplied ID!'''})
             or auth_type == AUTH_OPENID_V2 and \
             configuration.auto_add_oid_user \
             or auth_type == AUTH_OPENID_CONNECT and \
-            configuration.auto_add_oid_user:
+            configuration.auto_add_oidc_user:
         fill_user(user_dict)
 
         # IMPORTANT: do NOT log credentials
