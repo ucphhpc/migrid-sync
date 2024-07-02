@@ -13,7 +13,7 @@
 # (see man run-parts for the rationale behind this).
 
 # Modify this base dir variable to fit actual state dir location in your setup
-STATEDIR="/home/mig/state"
+STATEDIR="/home/testuser/migrid/state"
 VERBOSE=1
 REQCLEANUP=0
 JOBCLEANUP=0
@@ -83,6 +83,6 @@ if [ -n "$SESSCLEANUP" ]; then
     # Run session cleanup script to remove dead login sessions from griddaemon
     # session tracking in case of unclean session shutdowns.
     logmsg "Cleaning up dead client sessions in griddaemon session tracking for $SESSCLEANUP"
-    su - mig -c "PYTHONPATH=/home/mig mig/server/cleansessions.py -c $SESSCLEANUP"
+    su - mig -c "PYTHONPATH=/home/testuser/migrid mig/server/cleansessions.py -c $SESSCLEANUP"
 fi
 exit 0

@@ -8,6 +8,6 @@
 doi_fqdn="url:" 
 
 # No more edits below
-su - mig -c "PYTHONPATH=/home/mig mig/server/importdoi.py $doi_fqdn"
+su - mig -c "PYTHONPATH=/home/testuser/migrid mig/server/importdoi.py $doi_fqdn"
 
 exit 0
