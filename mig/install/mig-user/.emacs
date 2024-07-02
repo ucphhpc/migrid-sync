@@ -120,10 +120,12 @@
 ;   pip install autopep8
 ;   wget https://raw.githubusercontent.com/paetzke/py-autopep8.el/master/py-autopep8.el \
 ;           -O ~/.emacs.d/site-lisp/py-autopep8.el
-;   
+;
+; NOTE: we adjust max line length and disable import mangling as it breaks
+;       some migrid modules.
 (require 'py-autopep8)
 (add-hook 'python-mode-hook 'py-autopep8-enable-on-save)
-(setq py-autopep8-options '("--max-line-length=79"))
+(setq py-autopep8-options '("--max-line-length=80 --ignore E402"))
 
 ;; Prefer espresso mode from  
 ;; http://download.savannah.gnu.org/releases-noredirect/espresso/espresso.el
