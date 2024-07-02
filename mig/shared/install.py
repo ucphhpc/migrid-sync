@@ -426,8 +426,12 @@ def generate_confs(
         expanded['source'] = os.path.join(cmd_grpar_dir, 'mig', 'install')
         source = expanded['source']
     if destination is keyword_auto:
-        expanded['source'] = os.path.join(cmd_grpar_dir, 'mig', 'install',
-                                          default_gen_dst)
+        if os.environ.get('MIG_ENV', 'default') == 'local':
+            expanded['destination'] = os.path.join(cmd_grpar_dir, 'envhelp',
+                                                   'output', 'confs')
+        else:
+            expanded['destination'] = os.path.join(cmd_grpar_dir, 'mig',
+                                                   'install', default_gen_dst)
         destination = expanded['destination']
 
     # Expand any user information marked as "AUTO" based on the environment
