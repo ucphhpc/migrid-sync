@@ -25,7 +25,7 @@ APACHE_ETC_DIR=/etc/apache2
 APACHE_ARGUMENTS="-f ${APACHE_ETC_DIR}/${APACHE_DAEMON}.conf -d ${APACHE_ETC_DIR}"
 #APACHE_ARGUMENTS=-f ${APACHE_ETC_DIR}/${APACHE_DAEMON}.conf -d ${APACHE_ETC_DIR}
 # Needed for absolute mig.X imports which are now required by PEP8
-PYTHONPATH=/home/mig
+PYTHONPATH=/home/testuser/migrid
 
 ## The locale used by some modules like wsgi
 # NOTE: set to UTF-8 explicitly to avoid e.g. ASCII or exotic default encodings

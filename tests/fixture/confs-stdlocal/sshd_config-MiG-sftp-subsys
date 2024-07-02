@@ -31,7 +31,7 @@ ListenAddress
 # HostKeys for protocol version 2
 # NOTE: use MiG I/O RSA key as host key - we don't have an ed25519 key
 #HostKey /etc/ssh/ssh_host_rsa_key
-HostKey /home/mig/certs//server.key
+HostKey /home/testuser/migrid/certs//server.key
 #HostKey /etc/ssh/ssh_host_dsa_key
 #HostKey /etc/ssh/ssh_host_ecdsa_key
 #HostKey /etc/ssh/ssh_host_ed25519_key
@@ -158,7 +158,7 @@ MaxStartups 10:30:100
 #AcceptEnv XMODIFIERS
 
 # override default of no subsystems
-Subsystem   sftp    /home/mig/mig/server/sftp_subsys.py
+Subsystem   sftp    /home/testuser/migrid/mig/server/sftp_subsys.py
 
 # IMPORTANT: please make sure to also restrict any native sshd to deny login
 #            from ALL users entering as user testuser or group testgroup with
@@ -174,7 +174,7 @@ Match Group testgroup
     # NOTE: chroot is already handled in our paramiko subsystem
     #ChrootDirectory       %h
     # NOTE: we force our paramiko subsystem for sftp-only access
-    ForceCommand           /home/mig/mig/server/sftp_subsys.py
+    ForceCommand           /home/testuser/migrid/mig/server/sftp_subsys.py
     # Lock down any other uses to be on the safe side
     AllowTcpForwarding no
     PermitTTY no
