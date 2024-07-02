@@ -34,23 +34,29 @@ import pwd
 import sys
 
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), ".")))
+
 from support import MigTestCase, testmain, temppath, cleanpath, fixturepath
 
-from mig.shared.install import \
-    generate_confs
+from mig.shared.install import generate_confs
 
 class DummyPwInfo:
+    """Wrapper to assist in create_dummy_gpwnam"""
+
     def __init__(self, pw_uid, pw_gid):
         self.pw_uid = pw_uid
         self.pw_gid = pw_gid
 
 
 def create_dummy_gpwnam(pw_uid, pw_gid):
+    """Helper to mimic pwd.getpwnam /etc/passwd lookup for arbitrary users"""
+    
     dummy = DummyPwInfo(pw_uid, pw_gid)
     return lambda _: dummy
 
 
 class MigSharedInstall__generate_confs(MigTestCase):
+    """Unit test helper for the migrid code pointed to in class name"""
+    
     def test_creates_output_directory_and_adds_active_symlink(self):
         symlink_path = temppath('confs', self)
         cleanpath('confs-foobar', self)
