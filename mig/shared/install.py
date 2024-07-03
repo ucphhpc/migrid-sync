@@ -422,17 +422,17 @@ def generate_confs(
     expanded = dict(locals())
 
     # expand any directory path specific as "auto" relative to CWD
-    if source is keyword_auto:
+    if source == keyword_auto:
         expanded['source'] = os.path.dirname(sys.argv[0])
         source = expanded['source']
-    if destination is keyword_auto:
+    if destination == keyword_auto:
         expanded['destination'] = os.path.dirname(sys.argv[0])
         destination = expanded['destination']
 
     # expand any user information marked as "auto" based on the environment
-    if user is keyword_auto:
+    if user == keyword_auto:
         user = pwd.getpwuid(os.getuid())[0]
-    if group is keyword_auto:
+    if group == keyword_auto:
         group = grp.getgrgid(os.getgid())[0]
 
     # finalize a destination path up-front
@@ -945,7 +945,7 @@ cert, oid and sid based https!
             prio_duplicati_protocols.append('davs')
     user_dict['__DUPLICATI_PROTOCOLS__'] = ' '.join(prio_duplicati_protocols)
 
-    if timezone is keyword_auto:
+    if timezone == keyword_auto:
         # attempt to detect the timezone
         sys_timezone = None
         try:
@@ -967,11 +967,11 @@ cert, oid and sid based https!
 
     user_dict['__SEAFILE_TIMEZONE__'] = timezone
 
-    if seafile_secret is keyword_auto:
+    if seafile_secret == keyword_auto:
         seafile_secret = ensure_native_string(base64.b64encode(os.urandom(32))).lower()
     user_dict['__SEAFILE_SECRET_KEY__'] = seafile_secret
 
-    if seafile_ccnetid is keyword_auto:
+    if seafile_ccnetid == keyword_auto:
         seafile_ccnetid = ensure_native_string(base64.b64encode(os.urandom(20))).lower()
     user_dict['__SEAFILE_CCNET_ID__'] = seafile_ccnetid
 
@@ -1739,13 +1739,13 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
                                                      default_https_port])
             user_dict['__SID_URL__'] += ':%(__SID_PORT__)s' % user_dict
 
-    if digest_salt is keyword_auto:
+    if digest_salt == keyword_auto:
         # Generate random hex salt for scrambling saved digest credentials
         # NOTE: b16encode takes bytes and returns bytes
         digest_salt = ensure_native_string(base64.b16encode(os.urandom(16)))
     user_dict['__DIGEST_SALT__'] = digest_salt
 
-    if crypto_salt is keyword_auto:
+    if crypto_salt == keyword_auto:
         # Generate random hex salt for various crypto helpers
         # NOTE: b16encode takes bytes and returns bytes
         crypto_salt = ensure_native_string(base64.b16encode(os.urandom(16)))
