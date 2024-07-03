@@ -31,13 +31,22 @@ ease their subsequent removal.
 """
 
 from __future__ import absolute_import
+from past.builtins import basestring
 
 import codecs
 import sys
 
 PY2 = sys.version_info[0] < 3
+_TYPE_UNICODE = type(u"")
 
-from mig.shared.base import STR_KIND, _force_default_coding
+
+def _is_unicode(val):
+    """Return boolean indicating if the value is a unicode string.
+
+    We avoid the `isinstance(val, unicode)` recommended by PEP8 here since it
+    breaks when combined with python-future and futurize.
+    """
+    return (type(val) == _TYPE_UNICODE)
 
 
 def ensure_native_string(string_or_bytes):
@@ -50,7 +59,6 @@ def ensure_native_string(string_or_bytes):
     valid textual string) will trigger a UnicodeDecodeError on PY3.
     Force the same to occur on PY2.
     """
-    textual_output = _force_default_coding(string_or_bytes, STR_KIND)
     if PY2:
         # Simulate decoding done by PY3 to trigger identical exceptions
         # note the use of a forced "utf8" encoding value: this function
@@ -58,5 +66,9 @@ def ensure_native_string(string_or_bytes):
         # into strings that are defined in the source code. In Python 3
         # these are mandated to be UTF-8, and thus decoding as "utf8" is
         # what will be attempted on supplied input. Match it.
-        codecs.decode(textual_output, "utf8")
+        textual_output = codecs.encode(string_or_bytes, 'utf8')
+    elif not _is_unicode(string_or_bytes):
+        textual_output = str(string_or_bytes, 'utf8')
+    else:
+        textual_output = string_or_bytes
     return textual_output
