@@ -107,7 +107,7 @@ SID vhost:
         print(generate_openid_discovery_doc(configuration))
         retval = 0
     except Exception as err:
-        print(err)
+        print(err, file=sys.stderr)
         sys.exit(1)
 
     sys.exit(retval)
