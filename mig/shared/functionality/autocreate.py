@@ -44,6 +44,7 @@ import os
 import time
 
 from mig.shared import returnvalues
+from mig.shared.accountreq import auto_add_user_allowed
 from mig.shared.accountstate import default_account_expire
 from mig.shared.bailout import filter_output_objects
 from mig.shared.base import client_id_dir, canonical_user, mask_creds, \
@@ -724,6 +725,16 @@ accepting create matching supplied ID!'''})
             or auth_type == AUTH_OPENID_CONNECT and \
             configuration.auto_add_oidc_user:
         fill_user(user_dict)
+
+        if not auto_add_user_allowed(configuration, user_dict):
+            logger.warning('autocreate not permitted for %s' % client_id)
+            output_objects.append({
+                'object_type': 'error_text', 'text':
+                """Your credentials do not fit the automatic account sign up
+criteria permitted on this site.
+Please contact the %(short_title)s support (%(support_email)s) if you think it
+should be enabled.""" % fill_helper})
+            return (output_objects, returnvalues.ERROR)
 
         # IMPORTANT: do NOT log credentials
         logger.info('create user: %s' % mask_creds(user_dict))
