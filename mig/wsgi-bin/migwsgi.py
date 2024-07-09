@@ -185,6 +185,10 @@ def wrap_wsgi_errors(environ, configuration, max_line_len=100):
 
 
 def application(environ, start_response):
+    return application_(environ, start_response, _config_file=None)
+
+
+def application_(environ, start_response, _config_file=None, _skip_log=False):
     """MiG app called automatically by WSGI.
 
     *environ* is a dictionary populated by the server with CGI-like variables
@@ -235,14 +239,17 @@ def application(environ, start_response):
                                                              os_env_value))
 
     # Assign updated environ to LOCAL os.environ for the rest of this session
-    os.environ = environ
+    try:
+        os.environ = environ
+    except:
+        pass
 
     # NOTE: redirect stdout to stderr in python 2 only. It breaks logger in 3
     #       and stdout redirection apparently is already handled there.
     if sys.version_info[0] < 3:
         sys.stdout = sys.stderr
 
-    configuration = get_configuration_object()
+    configuration = get_configuration_object(_config_file, _skip_log)
     _logger = configuration.logger
 
     # NOTE: replace default wsgi errors to apache error log with our own logs
@@ -257,7 +264,11 @@ def application(environ, start_response):
     # tries to use pre-mangled environ for conf loading
 
     from mig.shared.httpsclient import extract_client_id
-    client_id = extract_client_id(configuration, environ)
+    try:
+        client_id = extract_client_id(configuration, environ)
+    except Exception as e:
+        start_response('418', [('Content-Type', 'text/plain')])
+        return [b'FOOBAR']
 
     # Default to html output
 

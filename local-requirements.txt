@@ -1,3 +1,4 @@
 # migrid dependencies on a format suitable for pip install as described on
 # https://pip.pypa.io/en/stable/reference/requirement-specifiers/
 autopep8
+cheroot
