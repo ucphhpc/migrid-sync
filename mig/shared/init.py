@@ -118,11 +118,11 @@ def start_error(configuration, output_format, status_pair):
 
 def initialize_main_variables(client_id, op_title=True, op_header=True,
                               op_menu=True):
-    """Script initialization is identical for most scripts in 
+    """Script initialization is identical for most scripts in
     shared/functionality. This function should be called in most cases.
     """
 
-    configuration = get_configuration_object()
+    configuration = get_configuration_object(None, skip_log=True) # FIXME:
     logger = configuration.logger
     output_objects = []
     start_entry = make_start_entry()
