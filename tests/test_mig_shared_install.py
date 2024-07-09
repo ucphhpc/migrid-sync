@@ -49,14 +49,14 @@ class DummyPwInfo:
 
 def create_dummy_gpwnam(pw_uid, pw_gid):
     """Helper to mimic pwd.getpwnam /etc/passwd lookup for arbitrary users"""
-    
+
     dummy = DummyPwInfo(pw_uid, pw_gid)
     return lambda _: dummy
 
 
 class MigSharedInstall__generate_confs(MigTestCase):
     """Unit test helper for the migrid code pointed to in class name"""
-    
+
     def test_creates_output_directory_and_adds_active_symlink(self):
         symlink_path = temppath('confs', self)
         cleanpath('confs-foobar', self)
@@ -112,4 +112,4 @@ class MigSharedInstall__generate_confs(MigTestCase):
 
 
 if __name__ == '__main__':
-    testmain(failfast=True)
+    testmain()
