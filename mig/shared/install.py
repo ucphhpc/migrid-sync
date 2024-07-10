@@ -944,20 +944,40 @@ cert, oid and sid based https!
     user_dict['__DUPLICATI_PROTOCOLS__'] = ' '.join(prio_duplicati_protocols)
 
     if timezone == keyword_auto:
-        # attempt to detect the timezone
+        # Attempt to detect the timezone in various known portable ways
         sys_timezone = None
-        try:
-            timezone_cmd = ["/usr/bin/timedatectl", "status"]
-            timezone_proc = subprocess_popen(
-                timezone_cmd, stdout=subprocess_pipe)
-            for line in timezone_proc.stdout.readlines():
-                line = ensure_native_string(line.strip())
-                if not line.startswith("Time zone: "):
-                    continue
-                sys_timezone = line.replace("Time zone: ", "").split(" ", 1)[0]
-        except OSError as exc:
-            # warn about any issues executing the command but continue
-            pass
+
+        env_timezone = os.environ.get('TZ', None)
+        timezone_link = '/etc/localtime'
+        timezone_mark = '/zoneinfo/'
+        timezone_cmd = ["/usr/bin/timedatectl", "status"]
+        if env_timezone:
+            # Use TZ env value directly if set
+            sys_timezone = env_timezone
+        elif os.path.exists(timezone_link):
+            # Parse /etc/localtime link to e.g. /usr/share/zoneinfo/Europe/Rome
+            # into Europe/Rome .
+            active_timezone = os.path.realpath(timezone_link).split(timezone_mark)
+            if active_timezone[1:]:
+                sys_timezone = active_timezone[-1]
+        elif os.path.exists(timezone_cmd[0]):
+            # Parse Time zone: LOCATION (ALIAS, OFFSET) output of timedatectl
+            # into just LOCATION.
+            try:
+                timezone_proc = subprocess_popen(
+                    timezone_cmd, stdout=subprocess_pipe)
+                for line in timezone_proc.stdout.readlines():
+                    line = ensure_native_string(line.strip())
+                    if not line.startswith("Time zone: "):
+                        continue
+                    sys_timezone = line.replace("Time zone: ", "").split(" ", 1)[0]
+            except OSError as exc:
+                # warn about any issues executing the command but continue
+                print("WARNING: failed to extract time zone with %s : %s" % \
+                      (' '.join(timezone_cmd), exc))
+        else:
+            print("WARNING: no more known ways to extract time zone")
+
         if sys_timezone is None:
             print("WARNING: failed to extract system time zone; defaulting to UTC")
             sys_timezone = 'UTC'
