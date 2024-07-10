@@ -1,4 +1,4 @@
-/home/mig/state/log/*.log /home/mig/state/log/*.out {
+/home/testuser/migrid/state/log/*.log /home/testuser/migrid/state/log/*.out {
 	weekly
 	missingok
 	rotate 52

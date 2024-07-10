@@ -25,6 +25,6 @@ done
 for fqdn in $trust_fqdn; do
     trust="$trust -X $fqdn"
 done
-su - mig -c "PYTHONPATH=/home/mig mig/server/sftpfailinfo.py $flags $trust"
+su - mig -c "PYTHONPATH=/home/testuser/migrid mig/server/sftpfailinfo.py $flags $trust"
 
 exit 0

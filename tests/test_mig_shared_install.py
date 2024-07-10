@@ -84,11 +84,17 @@ class MigSharedInstall__generate_confs(MigTestCase):
         symlink_path = temppath('confs', self)
         cleanpath('confs-stdlocal', self)
 
+        # NOTE: force constant user, group and paths here to fit fixtures.
+        #       The default auto detection results in variable names and path
+        #       prefix e.g. between CI and local runs.
         generate_confs(
             destination=symlink_path,
             destination_suffix='-stdlocal',
             user='testuser',
             group='testgroup',
+            mig_code='/home/testuser/migrid/mig',
+            mig_state='/home/testuser/migrid/state',
+            mig_certs='/home/testuser/migrid/certs',
             timezone='Test/Place',
             crypto_salt='_TEST_CRYPTO_SALT'.zfill(32),
             digest_salt='_TEST_DIGEST_SALT'.zfill(32),

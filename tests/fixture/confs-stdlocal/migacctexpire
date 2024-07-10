@@ -4,7 +4,7 @@
 
 # Additional flags like e.g. what to output for hits
 flags="-f distinguished_name"
-outfile="/home/mig/state/sitestats_home/expirestats-$(date +%s).txt"
+outfile="/home/testuser/migrid/state/sitestats_home/expirestats-$(date +%s).txt"
 outdir=$(dirname $outfile)
 
 startyear=2016
@@ -19,7 +19,7 @@ touch $outfile
 chown mig:mig $outfile
 for year in $(seq $startyear $endyear); do
     echo "= Accounts expiring before $year =" >> $outfile
-    su - mig -c "PYTHONPATH=/home/mig mig/server/searchusers.py -b $(date +%s -d $year-01-01) $flags" |grep -v "Matching users:" >> $outfile
+    su - mig -c "PYTHONPATH=/home/testuser/migrid mig/server/searchusers.py -b $(date +%s -d $year-01-01) $flags" |grep -v "Matching users:" >> $outfile
     echo "" >> $outfile
 done
 

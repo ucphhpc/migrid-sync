@@ -22,7 +22,7 @@ if [ -z "$tapedeadline" ]; then
 fi
 
 # Where to look up pending archive checks
-archivestaging="/home/mig/state/freeze_tape/staging"
+archivestaging="/home/testuser/migrid/state/freeze_tape/staging"
 
 if [ ! -d "$archivestaging" ]; then
     echo "ERROR: No such archive staging directory: $archivestaging"
@@ -68,7 +68,7 @@ for archivelist in $(/bin/find "$archivestaging" -type f -regex "$marker_pattern
         verifycount=$((verifycount+1))
         email=$(echo "$archpath" | sed 's@.*emailAddress=\([^/]*\)\/archive-.*@\1@g')
         archname=$(echo "$archpath"|sed 's@.*\/\(archive-.*\)@\1@g')
-        su - mig -c "PYTHONPATH=/home/mig mig/server/verifyarchives.py -A $(date +%s -d 'a month ago') -I \"*${email}*\" -n \"$archname\""
+        su - mig -c "PYTHONPATH=/home/testuser/migrid mig/server/verifyarchives.py -A $(date +%s -d 'a month ago') -I \"*${email}*\" -n \"$archname\""
         checkfailed=$?
         if [ $checkfailed -eq 0 ]; then
             echo "$archpath" >> "$tmppassedlist"

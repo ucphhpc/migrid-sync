@@ -20,7 +20,7 @@ su - mig -c '
 # Optional security scanner host address to exclude from log errors.
 # Useful to leave out errors from automated Nessus/OpenVAS scans
 SECSCANIP="(UNSET)"
-LOGDIR="/home/mig/state/log"
+LOGDIR="/home/testuser/migrid/state/log"
 TODAY=$(date +'%Y-%m-%d')
 YESTERDAY=$(date --date=yesterday +%'Y-%m-%d')
 # Number of lines to allow from each log 
