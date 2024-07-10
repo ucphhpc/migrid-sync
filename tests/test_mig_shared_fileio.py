@@ -51,9 +51,11 @@ DUMMY_FILE_WRITEFILE = 'fileio/write_file'
 
 assert isinstance(DUMMY_BYTES, bytes)
 
+
 def as_unicode_string(value):
     assert isinstance(value, bytearray)
     return unicode(codecs.decode(value, 'utf8')) if PY2 else str(value, 'utf8')
+
 
 class TextFile:
     def __init__(self, path, mode='r'):
