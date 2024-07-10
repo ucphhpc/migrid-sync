@@ -242,6 +242,7 @@ def generate_confs(
     auto_add_oidc_user=False,
     auto_add_filter_fields='',
     auto_add_filter_method='skip',
+    auto_add_user_permit='distinguished_name:.*',
     cert_valid_days=365,
     oid_valid_days=365,
     oidc_valid_days=365,
@@ -507,6 +508,7 @@ def generate_confs(
     user_dict['__AUTO_ADD_OIDC_USER__'] = "%s" % auto_add_oidc_user
     user_dict['__AUTO_ADD_FILTER_FIELDS__'] = auto_add_filter_fields
     user_dict['__AUTO_ADD_FILTER_METHOD__'] = auto_add_filter_method
+    user_dict['__AUTO_ADD_USER_PERMIT__'] = auto_add_user_permit
     user_dict['__CERT_VALID_DAYS__'] = "%s" % cert_valid_days
     user_dict['__OID_VALID_DAYS__'] = "%s" % oid_valid_days
     user_dict['__OIDC_VALID_DAYS__'] = "%s" % oidc_valid_days
@@ -950,7 +952,8 @@ cert, oid and sid based https!
         sys_timezone = None
         try:
             timezone_cmd = ["/usr/bin/timedatectl", "status"]
-            timezone_proc = subprocess_popen(timezone_cmd, stdout=subprocess_pipe)
+            timezone_proc = subprocess_popen(
+                timezone_cmd, stdout=subprocess_pipe)
             for line in timezone_proc.stdout.readlines():
                 line = ensure_native_string(line.strip())
                 if not line.startswith("Time zone: "):
@@ -968,11 +971,13 @@ cert, oid and sid based https!
     user_dict['__SEAFILE_TIMEZONE__'] = timezone
 
     if seafile_secret == keyword_auto:
-        seafile_secret = ensure_native_string(base64.b64encode(os.urandom(32))).lower()
+        seafile_secret = ensure_native_string(
+            base64.b64encode(os.urandom(32))).lower()
     user_dict['__SEAFILE_SECRET_KEY__'] = seafile_secret
 
     if seafile_ccnetid == keyword_auto:
-        seafile_ccnetid = ensure_native_string(base64.b64encode(os.urandom(20))).lower()
+        seafile_ccnetid = ensure_native_string(
+            base64.b64encode(os.urandom(20))).lower()
     user_dict['__SEAFILE_CCNET_ID__'] = seafile_ccnetid
 
     user_dict['__SEAFILE_SHORT_NAME__'] = short_title.replace(' ', '-')
@@ -1751,7 +1756,6 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
         crypto_salt = ensure_native_string(base64.b16encode(os.urandom(16)))
     user_dict['__CRYPTO_SALT__'] = crypto_salt
 
-
     # Greedy match trailing space for all the values to uncomment stuff
     strip_trailing_space = ['__IF_SEPARATE_PORTS__', '__APACHE_PRE2.4__',
                             '__APACHE_RECENT__']
@@ -2177,6 +2181,7 @@ def create_user(
     auto_add_oidc_user = False
     auto_add_filter_fields = ''
     auto_add_filter_method = 'skip'
+    auto_add_user_permit = 'distinguished_name:.*'
     cert_valid_days = 365
     oid_valid_days = 365
     oidc_valid_days = 365
@@ -2323,6 +2328,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
         auto_add_oidc_user,
         auto_add_filter_fields,
         auto_add_filter_method,
+        auto_add_user_permit,
         cert_valid_days,
         oid_valid_days,
         oidc_valid_days,
