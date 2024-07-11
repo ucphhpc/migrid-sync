@@ -52,12 +52,16 @@ DUMMY_FILE_WRITEFILE = 'fileio/write_file'
 assert isinstance(DUMMY_BYTES, bytes)
 
 
-def as_unicode_string(value):
+def _as_unicode_string(value):
     assert isinstance(value, bytearray)
     return unicode(codecs.decode(value, 'utf8')) if PY2 else str(value, 'utf8')
 
 
-class TextFile:
+class _ByteText:
+    """File-like object that allows interacting with a text file as a bytearray.
+
+    Supports reading and directly usable as a context manager."""
+
     def __init__(self, path, mode='r'):
         self._file = None
         self._path = path
@@ -79,7 +83,8 @@ class TextFile:
 
 
 class MigSharedFileio__write_chunk(MigTestCase):
-    # TODO: Add docstrings to this class and its methods
+    """Coverage of the write_chunk() function."""
+
     def setUp(self):
         super(MigSharedFileio__write_chunk, self).setUp()
         self.tmp_path = temppath(DUMMY_FILE_WRITECHUNK, self, skip_clean=True)
@@ -126,7 +131,6 @@ class MigSharedFileio__write_chunk(MigTestCase):
                              "expected a hole was left")
             self.assertEqual(content[3:], DUMMY_BYTES)
 
-    @unittest.skip("TODO: enable again - requires the temporarily disabled auto mode select")
     def test_store_bytes_in_text_mode(self):
         fileio.write_chunk(self.tmp_path, DUMMY_BYTES, 0, self.logger,
                            mode="r+")
@@ -141,7 +145,7 @@ class MigSharedFileio__write_chunk(MigTestCase):
                                          mode='r+')
         self.assertTrue(did_succeed)
 
-        with TextFile(self.tmp_path) as file:
+        with _ByteText(self.tmp_path) as file:
             content = file.read(1024)
             self.assertEqual(len(content), DUMMY_UNICODE_BYTES_LENGTH)
             self.assertEqual(content[:], DUMMY_UNICODE_BYTES)
@@ -150,13 +154,15 @@ class MigSharedFileio__write_chunk(MigTestCase):
         fileio.write_chunk(self.tmp_path, DUMMY_UNICODE, 0, self.logger,
                            mode='r+b')
 
-        with TextFile(self.tmp_path) as file:
+        with _ByteText(self.tmp_path) as file:
             content = file.read(1024)
             self.assertEqual(len(content), DUMMY_UNICODE_BYTES_LENGTH)
-            self.assertEqual(as_unicode_string(content[:]), DUMMY_UNICODE)
+            self.assertEqual(_as_unicode_string(content[:]), DUMMY_UNICODE)
 
 
 class MigSharedFileio__write_file(MigTestCase):
+    """Coverage of the write_file() function."""
+
     def setUp(self):
         super(MigSharedFileio__write_file, self).setUp()
         self.tmp_path = temppath(DUMMY_FILE_WRITEFILE, self, skip_clean=True)
@@ -196,7 +202,6 @@ class MigSharedFileio__write_file(MigTestCase):
             self.assertEqual(len(content), DUMMY_BYTES_LENGTH)
             self.assertEqual(content[:], DUMMY_BYTES)
 
-    @unittest.skip("TODO: enable again - requires the temporarily disabled auto mode select")
     def test_store_bytes_in_text_mode(self):
         did_succeed = fileio.write_file(DUMMY_BYTES, self.tmp_path, self.logger,
                                         mode="w")
@@ -207,27 +212,25 @@ class MigSharedFileio__write_file(MigTestCase):
             self.assertEqual(len(content), DUMMY_BYTES_LENGTH)
             self.assertEqual(content[:], DUMMY_BYTES)
 
-    @unittest.skip("TODO: enable again - requires the temporarily disabled auto mode select")
     def test_store_unicode(self):
         did_succeed = fileio.write_file(DUMMY_UNICODE, self.tmp_path,
                                         self.logger, mode='w')
         self.assertTrue(did_succeed)
 
-        with open(self.tmp_path, 'r') as file:
+        with _ByteText(self.tmp_path, 'r') as file:
             content = file.read(1024)
-            self.assertEqual(len(content), DUMMY_UNICODE_LENGTH)
-            self.assertEqual(content[:], DUMMY_UNICODE)
+            self.assertEqual(len(content), DUMMY_UNICODE_BYTES_LENGTH)
+            self.assertEqual(content[:], DUMMY_UNICODE_BYTES)
 
-    @unittest.skip("TODO: enable again - requires the temporarily disabled auto mode select")
     def test_store_unicode_in_binary_mode(self):
         did_succeed = fileio.write_file(DUMMY_UNICODE, self.tmp_path,
                                         self.logger, mode='wb')
         self.assertTrue(did_succeed)
 
-        with open(self.tmp_path, 'r') as file:
+        with _ByteText(self.tmp_path, 'r') as file:
             content = file.read(1024)
-            self.assertEqual(len(content), DUMMY_UNICODE_LENGTH)
-            self.assertEqual(content[:], DUMMY_UNICODE)
+            self.assertEqual(len(content), DUMMY_UNICODE_BYTES_LENGTH)
+            self.assertEqual(content[:], DUMMY_UNICODE_BYTES)
 
 
 if __name__ == '__main__':

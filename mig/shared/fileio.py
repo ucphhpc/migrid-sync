@@ -74,21 +74,6 @@ except ImportError as ioe:
     exit(1)
 
 
-def _auto_adjust_mode(data, mode):
-    """Select suitable file open mode based on string type of data. I.e. whether
-    to use binary or text mode depending on data in bytes or unicode format.
-    """
-
-    # NOTE: detect byte/unicode writes and handle explicitly in a portable way
-    if isinstance(data, bytes):
-        if 'b' not in mode:
-            mode = "%sb" % mode  # appended to avoid mode ordering error on PY2
-    else:
-        if 'b' in mode:
-            mode = mode.strip('b')
-    return mode
-
-
 def _is_string(value):
     return isinstance(value, unicode) if PY2 else isinstance(value, str)
 
