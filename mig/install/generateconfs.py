@@ -42,7 +42,7 @@ import sys
 
 # NOTE: __file__ is /MIG_BASE/mig/install/generateconfs.py and we need MIG_BASE
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "../..")))
 
 # NOTE: moved mig imports into try/except to avoid autopep8 moving to top!
 try:
@@ -355,9 +355,9 @@ if '__main__' == __name__:
         # Remove default values to use generate_confs default values
         if val == 'DEFAULT':
             del settings[key]
-    conf = generate_confs(**settings)
+    options = generate_confs(**settings)
     # TODO: avoid reconstructing this path (also done inside generate_confs)
-    instructions_path = "%s/instructions.txt" % conf['destination_path']
+    instructions_path = os.path.join(options['destination_dir'], 'instructions.txt')
     try:
         instructions_fd = open(instructions_path, "r")
         instructions = instructions_fd.read()
