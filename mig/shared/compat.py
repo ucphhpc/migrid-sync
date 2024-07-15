@@ -34,6 +34,7 @@ from __future__ import absolute_import
 from past.builtins import basestring
 
 import codecs
+import inspect
 import io
 import sys
 # NOTE: StringIO is only available in python2
@@ -44,6 +45,19 @@ except ImportError:
 
 PY2 = sys.version_info[0] < 3
 _TYPE_UNICODE = type(u"")
+
+
+if PY2:
+    class SimpleNamespace(dict):
+        """Bare minimum SimpleNamespace for Python 2."""
+
+        def __getattribute__(self, name):
+            if name == '__dict__':
+                return dict(**self)
+
+            return self[name]
+else:
+    from types import SimpleNamespace
 
 
 def _is_unicode(val):
@@ -78,6 +92,15 @@ def ensure_native_string(string_or_bytes):
     else:
         textual_output = string_or_bytes
     return textual_output
+
+
+def inspect_args(func):
+    """Wrapper to return the arguments of a function."""
+
+    if PY2:
+        return inspect.getargspec(func).args
+    else:
+        return inspect.getfullargspec(func).args
 
 
 def NativeStringIO(initial_value=''):
