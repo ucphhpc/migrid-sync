@@ -73,6 +73,61 @@ from mig.shared.safeinput import valid_alphanumeric, InputException
 from mig.shared.url import urlparse
 
 
+def determine_timezone(_environ=os.environ, _path_exists=os.path.exists, _print=print):
+    """Attempt to detect the timezone in various known portable ways."""
+
+    sys_timezone = None
+
+    timezone_link = '/etc/localtime'
+    timezone_cmd = ["/usr/bin/timedatectl", "status"]
+
+    env_timezone = _environ.get('TZ', None)
+    if env_timezone:
+        # Use TZ env value directly if set
+        return env_timezone
+
+    if _path_exists(timezone_link):
+        zoneinfo_absolute = os.path.realpath(timezone_link)
+        # Convert /etc/localtime link to e.g. /.../zoneinfo/Europe/Rome
+        # then remove leading directories leaving TZ e.g. Europe/Rome
+        zoneinfo_path_parts = zoneinfo_absolute.split('/')
+        try:
+            zoneinfo_index = zoneinfo_path_parts.index('zoneinfo')
+            # the last path parts are at least .../zoneinfo/ which
+            # is good enough for us here - treat them as the timezone
+            localtime_timezone = '/'.join(
+                zoneinfo_path_parts[zoneinfo_index + 1:])
+            return localtime_timezone
+        except IndexError:
+            pass
+
+        _print("WARNING: ignoring non-standard /etc/localtime")
+
+    if _path_exists(timezone_cmd[0]):
+        # Parse Time zone: LOCATION (ALIAS, OFFSET) output of timedatectl
+        # into just LOCATION
+        try:
+            timezone_proc = subprocess_popen(
+                timezone_cmd, stdout=subprocess_pipe)
+            for line in timezone_proc.stdout.readlines():
+                line = ensure_native_string(line.strip())
+                if not line.startswith("Time zone: "):
+                    continue
+                timedatectl_parts = line.replace(
+                    "Time zone: ", "").split(" ", 1)
+                return timedatectl_parts[0]
+        except IndexError:
+            pass
+        except OSError as exc:
+            # warn about any issues executing the command but continue
+            _print("WARNING: failed to extract time zone with %s : %s" %
+                   (' '.join(timezone_cmd), exc))
+
+    # none of the standard extraction methods succeeded by this point
+    _print("WARNING: failed to extract system time zone; defaulting to UTC")
+    return 'UTC'
+
+
 def fill_template(template_file, output_file, settings, eat_trailing_space=[],
                   additional=None):
     """Fill a configuration template using provided settings dictionary"""
@@ -948,25 +1003,7 @@ cert, oid and sid based https!
     user_dict['__DUPLICATI_PROTOCOLS__'] = ' '.join(prio_duplicati_protocols)
 
     if timezone == keyword_auto:
-        # attempt to detect the timezone
-        sys_timezone = None
-        try:
-            timezone_cmd = ["/usr/bin/timedatectl", "status"]
-            timezone_proc = subprocess_popen(
-                timezone_cmd, stdout=subprocess_pipe)
-            for line in timezone_proc.stdout.readlines():
-                line = ensure_native_string(line.strip())
-                if not line.startswith("Time zone: "):
-                    continue
-                sys_timezone = line.replace("Time zone: ", "").split(" ", 1)[0]
-        except OSError as exc:
-            # warn about any issues executing the command but continue
-            pass
-        if sys_timezone is None:
-            print("WARNING: failed to extract system time zone; defaulting to UTC")
-            sys_timezone = 'UTC'
-
-        timezone = sys_timezone
+        timezone = determine_timezone()
 
     user_dict['__SEAFILE_TIMEZONE__'] = timezone
 

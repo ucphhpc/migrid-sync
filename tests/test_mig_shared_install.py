@@ -37,7 +37,8 @@ sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), ".")))
 
 from support import MigTestCase, testmain, temppath, cleanpath, fixturepath
 
-from mig.shared.install import generate_confs
+from mig.shared.install import determine_timezone, generate_confs
+
 
 class DummyPwInfo:
     """Wrapper to assist in create_dummy_gpwnam"""
@@ -52,6 +53,54 @@ def create_dummy_gpwnam(pw_uid, pw_gid):
 
     dummy = DummyPwInfo(pw_uid, pw_gid)
     return lambda _: dummy
+
+
+def noop(*args, **kwargs):
+    pass
+
+
+class MigSharedInstall__determine_timezone(MigTestCase):
+    """Coverage of timezone determination."""
+
+    def test_determines_tz_utc_fallback(self):
+        timezone = determine_timezone(
+            _environ={}, _path_exists=lambda _: False, _print=noop)
+
+        self.assertEqual(timezone, 'UTC')
+
+    def test_determines_tz_via_environ(self):
+        example_environ = {
+            'TZ': 'Example/Enviromnent'
+        }
+        timezone = determine_timezone(_environ=example_environ)
+
+        self.assertEqual(timezone, 'Example/Enviromnent')
+
+    def test_determines_tz_via_localtime(self):
+        def exists_localtime(value):
+            saw_call = value == '/etc/localtime'
+            exists_localtime.was_called = saw_call
+            return saw_call
+        exists_localtime.was_called = False
+
+        timezone = determine_timezone(
+            _environ={}, _path_exists=exists_localtime)
+
+        self.assertTrue(exists_localtime.was_called)
+        self.assertIsNotNone(timezone)
+
+    def test_determines_tz_via_timedatectl(self):
+        def exists_timedatectl(value):
+            saw_call = value == '/usr/bin/timedatectl'
+            exists_timedatectl.was_called = saw_call
+            return saw_call
+        exists_timedatectl.was_called = False
+
+        timezone = determine_timezone(
+            _environ={}, _path_exists=exists_timedatectl, _print=noop)
+
+        self.assertTrue(exists_timedatectl.was_called)
+        self.assertIsNotNone(timezone)
 
 
 class MigSharedInstall__generate_confs(MigTestCase):
