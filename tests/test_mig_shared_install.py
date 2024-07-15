@@ -93,6 +93,11 @@ class MigSharedInstall__determine_timezone(MigTestCase):
         self.assertTrue(exists_timedatectl.was_called)
         self.assertIsNotNone(timezone)
 
+    def test_determines_tz_utc_fallback(self):
+        timezone = determine_timezone(_environ={}, _path_exists=lambda _: False, _print=noop)
+
+        self.assertEqual(timezone, 'UTC')
+
 
 class MigSharedInstall__generate_confs(MigTestCase):
     """Unit test helper for the migrid code pointed to in class name"""
