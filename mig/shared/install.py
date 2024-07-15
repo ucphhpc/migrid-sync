@@ -82,12 +82,19 @@ def determine_timezone(_environ=os.environ, _path_exists=os.path.exists, _print=
         # Use TZ env value directly if set
         sys_timezone = env_timezone
     if sys_timezone is None and _path_exists(timezone_link):
-        # Convert /etc/localtime link to e.g. /usr/share/zoneinfo/Europe/Rome
+        zoneinfo_absolute = os.path.realpath(timezone_link)
+        # Convert /etc/localtime link to e.g. /.../zoneinfo/Europe/Rome
         # then remove leading directories leaving TZ e.g. Europe/Rome
-        active_timezone = os.path.realpath(timezone_link)
-        active_timezone_relative = os.path.relpath(active_timezone, '/usr/share/zoneinfo')
-        if not active_timezone.startswith('..'):
-            sys_timezone = active_timezone_relative
+        zoneinfo_path_parts = zoneinfo_absolute.split('/')
+        try:
+            zoneinfo_index = zoneinfo_path_parts.index('zoneinfo')
+            # the last path parts are at least .../zoneinfo/ which
+            # is good enough for us here - treat them as the timezone
+            sys_timezone = '/'.join(zoneinfo_path_parts[zoneinfo_index+1:])
+        except IndexError:
+            pass
+        if sys_timezone is None:
+            _print("WARNING: ignoring non-standard /etc/localtime")
     if sys_timezone is None and _path_exists(timezone_cmd[0]):
         # Parse Time zone: LOCATION (ALIAS, OFFSET) output of timedatectl
         # into just LOCATION
