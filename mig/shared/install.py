@@ -481,6 +481,8 @@ def generate_confs(
     del expanded['destination']
     del expanded['destination_suffix']
     del expanded['generateconfs_command']
+    del expanded['group']
+    del expanded['user']
     del expanded['_getpwnam']
 
     # expand any directory path specific as "auto" relative to CWD
@@ -497,10 +499,8 @@ def generate_confs(
     # expand any user information marked as "auto" based on the environment
     if user == keyword_auto:
         user = pwd.getpwuid(os.getuid())[0]
-        expanded['user'] = user
     if group == keyword_auto:
         group = grp.getgrgid(os.getgid())[0]
-        expanded['group'] = group
 
     # finalize a destination path up-front
     destination_dir = "%s%s" % (destination, destination_suffix)
@@ -509,17 +509,23 @@ def generate_confs(
     if public_port and not public_http_port:
         public_http_port = public_port
 
+    user_pw_info = _getpwnam(user)
+
     options = {
         'command_line': generateconfs_command,
         'destination_dir': destination_dir,
         'destination_link': destination_link,
         'template_dir': template_path,
-        'user_pwinfo': _getpwnam(user),
+        'user_gid': user_pw_info.pw_gid,
+        'user_group': group,
+        'user_uid': user_pw_info.pw_uid,
+        'user_uname': user,
     }
     user_dict = _generate_confs_prepare(options, **expanded)
     _generate_confs_write(options, user_dict)
     _generate_confs_instructions(options, user_dict)
     return options
+
 
 def _generate_confs_prepare(
     options,
@@ -551,8 +557,6 @@ def _generate_confs_prepare(
     jupyter_services_desc,
     cloud_services,
     cloud_services_desc,
-    user,
-    group,
     timezone,
     apache_version,
     apache_etc,
@@ -779,8 +783,8 @@ def _generate_confs_prepare(
     user_dict['__JUPYTER_SECTIONS__'] = ''
     user_dict['__CLOUD_SERVICES__'] = cloud_services
     user_dict['__CLOUD_SECTIONS__'] = ''
-    user_dict['__USER__'] = user
-    user_dict['__GROUP__'] = group
+    user_dict['__USER__'] = options['user_uname']
+    user_dict['__GROUP__'] = options['user_group']
     user_dict['__PUBLIC_HTTP_PORT__'] = "%s" % public_http_port
     user_dict['__PUBLIC_HTTPS_PORT__'] = "%s" % public_https_port
     user_dict['__MIG_CERT_PORT__'] = "%s" % mig_cert_port
@@ -984,13 +988,12 @@ def _generate_confs_prepare(
     user_dict['__QUOTA_USER_LIMIT__'] = "%s" % quota_user_limit
     user_dict['__QUOTA_VGRID_LIMIT__'] = "%s" % quota_vgrid_limit
 
-    user_dict['__MIG_USER__'] = "%s" % (user)
-    user_dict['__MIG_GROUP__'] = "%s" % (group)
+    user_dict['__MIG_USER__'] = "%s" % (options['user_uname'])
+    user_dict['__MIG_GROUP__'] = "%s" % (options['user_group'])
 
     # Needed for PAM/NSS
-    pw_info = options['user_pwinfo']
-    user_dict['__MIG_UID__'] = "%s" % (pw_info.pw_uid)
-    user_dict['__MIG_GID__'] = "%s" % (pw_info.pw_gid)
+    user_dict['__MIG_UID__'] = "%s" % (options['user_uid'])
+    user_dict['__MIG_GID__'] = "%s" % (options['user_gid'])
 
     fail2ban_daemon_ports = []
     # Apache fails on duplicate Listen directives so comment in that case
@@ -2109,6 +2112,7 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
     user_dict['__GENERATECONFS_VARIABLES__'] = variable_lines
 
     return user_dict
+
 
 def _generate_confs_write(options, user_dict, insert_list=[], cleanup_list=[]):
     assert os.path.isabs(options['destination_dir'])
