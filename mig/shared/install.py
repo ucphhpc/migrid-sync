@@ -252,6 +252,9 @@ def generate_confs(
     generateconfs_command=subprocess.list2cmdline(sys.argv),
     source=default_source,
     destination=default_destination,
+    user=mig_user,
+    group=mig_group,
+    timezone=keyword_auto,
     destination_suffix="",
     base_fqdn='',
     public_fqdn='',
@@ -280,9 +283,6 @@ def generate_confs(
     jupyter_services_desc='{}',
     cloud_services='',
     cloud_services_desc='{}',
-    user=mig_user,
-    group=mig_group,
-    timezone=keyword_auto,
     apache_version='2.4',
     apache_etc='/etc/apache2',
     apache_run='/var/run',
@@ -483,6 +483,7 @@ def generate_confs(
     del expanded['generateconfs_command']
     del expanded['group']
     del expanded['user']
+    del expanded['timezone']
     del expanded['_getpwnam']
 
     # expand any directory path specific as "auto" relative to CWD
@@ -511,11 +512,15 @@ def generate_confs(
 
     user_pw_info = _getpwnam(user)
 
+    if timezone == keyword_auto:
+        timezone = determine_timezone()
+
     options = {
         'command_line': generateconfs_command,
         'destination_dir': destination_dir,
         'destination_link': destination_link,
         'template_dir': template_path,
+        'timezone': timezone,
         'user_gid': user_pw_info.pw_gid,
         'user_group': group,
         'user_uid': user_pw_info.pw_uid,
@@ -557,7 +562,6 @@ def _generate_confs_prepare(
     jupyter_services_desc,
     cloud_services,
     cloud_services_desc,
-    timezone,
     apache_version,
     apache_etc,
     apache_run,
@@ -1251,10 +1255,7 @@ cert, oid and sid based https!
             prio_duplicati_protocols.append('davs')
     user_dict['__DUPLICATI_PROTOCOLS__'] = ' '.join(prio_duplicati_protocols)
 
-    if timezone == keyword_auto:
-        timezone = determine_timezone()
-
-    user_dict['__SEAFILE_TIMEZONE__'] = timezone
+    user_dict['__SEAFILE_TIMEZONE__'] = options['timezone']
 
     if seafile_secret == keyword_auto:
         seafile_secret = ensure_native_string(
