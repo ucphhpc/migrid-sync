@@ -80,8 +80,9 @@ def determine_timezone(_environ=os.environ, _path_exists=os.path.exists, _print=
     env_timezone = _environ.get('TZ', None)
     if env_timezone:
         # Use TZ env value directly if set
-        sys_timezone = env_timezone
-    if sys_timezone is None and _path_exists(timezone_link):
+        return env_timezone
+
+    if _path_exists(timezone_link):
         zoneinfo_absolute = os.path.realpath(timezone_link)
         # Convert /etc/localtime link to e.g. /.../zoneinfo/Europe/Rome
         # then remove leading directories leaving TZ e.g. Europe/Rome
@@ -90,12 +91,15 @@ def determine_timezone(_environ=os.environ, _path_exists=os.path.exists, _print=
             zoneinfo_index = zoneinfo_path_parts.index('zoneinfo')
             # the last path parts are at least .../zoneinfo/ which
             # is good enough for us here - treat them as the timezone
-            sys_timezone = '/'.join(zoneinfo_path_parts[zoneinfo_index+1:])
+            localtime_timezone = '/'.join(
+                zoneinfo_path_parts[zoneinfo_index + 1:])
+            return localtime_timezone
         except IndexError:
             pass
-        if sys_timezone is None:
-            _print("WARNING: ignoring non-standard /etc/localtime")
-    if sys_timezone is None and _path_exists(timezone_cmd[0]):
+
+        _print("WARNING: ignoring non-standard /etc/localtime")
+
+    if _path_exists(timezone_cmd[0]):
         # Parse Time zone: LOCATION (ALIAS, OFFSET) output of timedatectl
         # into just LOCATION
         try:
@@ -105,17 +109,19 @@ def determine_timezone(_environ=os.environ, _path_exists=os.path.exists, _print=
                 line = ensure_native_string(line.strip())
                 if not line.startswith("Time zone: "):
                     continue
-                sys_timezone = line.replace("Time zone: ", "").split(" ", 1)[0]
+                timedatectl_parts = line.replace(
+                    "Time zone: ", "").split(" ", 1)
+                return timedatectl_parts[0]
+        except IndexError:
+            pass
         except OSError as exc:
             # warn about any issues executing the command but continue
-            _print("WARNING: failed to extract time zone with %s : %s" % \
-                    (' '.join(timezone_cmd), exc))
+            _print("WARNING: failed to extract time zone with %s : %s" %
+                   (' '.join(timezone_cmd), exc))
 
-    if sys_timezone is None:
-        _print("WARNING: failed to extract system time zone; defaulting to UTC")
-        sys_timezone = 'UTC'
-
-    return sys_timezone
+    # none of the standard extraction methods succeeded by this point
+    _print("WARNING: failed to extract system time zone; defaulting to UTC")
+    return 'UTC'
 
 
 def fill_template(template_file, output_file, settings, eat_trailing_space=[],
