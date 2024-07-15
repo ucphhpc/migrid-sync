@@ -247,6 +247,18 @@ def template_remove(template_file, remove_pattern):
     return True
 
 
+_GENERATE_CONFS_NOFORWARD_KEYS = [
+    'generateconfs_command',
+    'source',
+    'destination',
+    'destination_suffix',
+    'group',
+    'user',
+    'timezone',
+    '_getpwnam',
+]
+
+
 def generate_confs(
     # NOTE: make sure command line args with white-space are properly wrapped
     generateconfs_command=subprocess.list2cmdline(sys.argv),
@@ -476,15 +488,8 @@ def generate_confs(
 
     # Read out dictionary of args with defaults and overrides
 
-    expanded = dict(locals())
-    del expanded['source']
-    del expanded['destination']
-    del expanded['destination_suffix']
-    del expanded['generateconfs_command']
-    del expanded['group']
-    del expanded['user']
-    del expanded['timezone']
-    del expanded['_getpwnam']
+    thelocals = locals()
+    expanded = { k: v for k, v in thelocals.items() if k not in _GENERATE_CONFS_NOFORWARD_KEYS }
 
     # expand any directory path specific as "auto" relative to CWD
     if source == keyword_auto:
