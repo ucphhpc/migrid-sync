@@ -5,7 +5,7 @@
 #
 #
 # migrateusers - a simple helper to migrate old CN to new DN user IDs
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -43,7 +43,7 @@ def usage(name='migrateusers.py'):
     """Usage help"""
 
     print("""Update MiG user database and user dirs from old format with CN
-as user idetifier to new format with DN as user identifier.
+as user identifier to new format with DN as user identifier.
 
 Usage:
 %(name)s [OPTIONS]
