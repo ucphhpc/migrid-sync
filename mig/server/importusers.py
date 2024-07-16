@@ -38,7 +38,8 @@ import time
 
 from mig.shared import returnvalues
 from mig.shared.accountstate import default_account_expire
-from mig.shared.base import fill_user, distinguished_name_to_user
+from mig.shared.base import fill_user, distinguished_name_to_user, \
+     force_native_str
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import csrf_field, keyword_auto, valid_auth_types
 from mig.shared.functionality.sendrequestaction import main
@@ -89,7 +90,8 @@ def dump_contents(url, key_path=None, cert_path=None):
     browser = FancyURLopener(key_file=key_path,
                              cert_file=cert_path)
     pipe = browser.open(url)
-    data = pipe.read()
+    # NOTE: FancyURLopener returns bytes and we want native string for search
+    data = force_native_str(pipe.read())
     browser.close()
 
     return data
