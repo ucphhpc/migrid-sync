@@ -201,7 +201,10 @@ if '__main__' == __name__:
         'gdp_data_categories',
         'gdp_id_scramble',
         'gdp_path_scramble',
-        'quota_backend'
+        'quota_backend',
+        'ca_fqdn',
+        'ca_smtp',
+        'ca_user',
     ]
     int_names = [
         'cert_valid_days',
