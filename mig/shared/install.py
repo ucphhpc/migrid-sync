@@ -469,6 +469,9 @@ def generate_confs(
     quota_backend='lustre',
     quota_user_limit=(1024**4),
     quota_vgrid_limit=(1024**4),
+    ca_fqdn='',
+    ca_user='mig-ca',
+    ca_smtp='localhost',
     _getpwnam=pwd.getpwnam,
 ):
     """Generate Apache and MiG server confs with specified variables"""
@@ -653,6 +656,9 @@ def generate_confs(
     user_dict['__EXT_OIDC_REMOTE_USER_CLAIM__'] = ext_oidc_remote_user_claim
     user_dict['__EXT_OIDC_PASS_CLAIM_AS__'] = ext_oidc_pass_claim_as
     user_dict['__EXT_OIDC_REWRITE_COOKIE__'] = ext_oidc_rewrite_cookie
+    user_dict['__CA_FQDN__'] = ca_fqdn
+    user_dict['__CA_USER__'] = ca_user
+    user_dict['__CA_SMTP__'] = ca_smtp
     user_dict['__PUBLIC_URL__'] = ''
     user_dict['__PUBLIC_ALIAS_URL__'] = ''
     user_dict['__PUBLIC_HTTP_URL__'] = ''
