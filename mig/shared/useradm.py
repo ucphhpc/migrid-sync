@@ -133,7 +133,7 @@ def create_alias_link(username, client_id, user_home):
     client_dir = client_id_dir(client_id)
     home_dir = os.path.join(user_home, client_dir)
     link_path = os.path.join(user_home, username)
-    if os.path.exists(link_path):
+    if os.path.islink(link_path):
         return True
     try:
         os.symlink(client_dir, link_path)
@@ -804,7 +804,7 @@ def create_user_in_fs(configuration, client_id, user, now, renew, force, verbose
             continue
         _logger.debug("handling link to %s in %s" % (target_dir,
                                                      target_link))
-        if os.path.exists(target_link):
+        if os.path.islink(target_link):
             _logger.debug("remove old link in %s" % target_link)
             delete_symlink(target_link, _logger)
         else:
