@@ -367,6 +367,38 @@
                                 interfaces and backends. Feel free to contact us about the possibility
                                 of allowing any additional characters that you may miss.
                             </p>
+                            <h4 class="staticpage">Can I use SSH to log in or use rsync to synchronize data with ERDA?</h4>
+                            <p>
+                                For security reasons, we don't allow SSH access to ERDA at all. 
+                                This also means that you can't use rsync directly, as it relies on SSH
+                                under the hood.
+                                However, we offer several other secure alternatives for accessing and
+                                managing your data:<br/>
+                                <br/>
+                                1. <b>File Transfer:</b> Use SFTP, FTPS, or WebDAVS for efficient and
+                                secure data upload and download.<br/>
+                                <br/>
+                                2. <b>Interactive Access:</b> Connect ERDA as a network drive on your
+                                local computer using SSHFS. This allows you to seamlessly interact
+                                with your data as if it were on your local machine. Alternatively,
+                                you can launch a Jupyter DAG session, which comes with a similar
+                                network drive setup and, in addition to the interactive data analysis
+                                facilities, has a Terminal where you can run commands.<br/>
+                                <br/>
+                                3. <b>Rsync-like Functionality:</b> After connecting ERDA as a network
+                                drive using e.g. SSHFS, you can use rsync on top to transfer data
+                                between your local storage and ERDA. 
+                                Alternatively, use tools like 'rclone' or 'lftp' in 'mirror' mode,
+                                which provide similar functionality to rsync but over SFTP.<br/>
+                                <br/>
+                                4. <b>Large Data Transfers:</b> For transferring large datasets, check
+                                our 'Data Imports/Exports' feature. It allows background data transfers
+                                using e.g. rsync between ERDA and any internet-accessible servers or
+                                sites you may have access to.<br/>
+                                <br/>    
+                                If you need help setting up any of these methods, please refer to our 
+                                detailed guides or contact our support team.
+                            </p>
                             <h4 class="staticpage">How do I install and run software XYZ in Jupyter?</h4>
                             <p>
                                 We've added Jupyter integration in ERDA, so that you can run interactive
@@ -807,6 +839,40 @@
                                 skade brugergrænseflader eller bagvedliggende systemer. Du er
                                 naturligvis velkommen til at kontakte os angående at få yderligere tegn
                                 du måtte savne tilladt.
+                            </p>
+                            <h4 class="staticpage">Kan jeg bruge SSH til at logge ind eller bruge rsync til at synkronisere data med ERDA?</h4>
+                            <p>
+                                Af sikkerhedsmæssige årsager tillader vi slet ikke direkte SSH-adgang
+                                til ERDA. 
+                                Det betyder også, at du ikke uden videre kan bruge rsync, eftersom den
+                                benytter SSH under motorhjelmen. 
+                                Vi tilbyder derimod flere andre sikre alternativer til at tilgå og
+                                administrere dine data:<br/>
+                                <br/>    
+                                1. <b>Filoverførsel:</b> Brug SFTP, FTPS eller WebDAVS til effektiv 
+                                og sikker upload og download af data.<br/>
+                                <br/>
+                                2. <b>Interaktiv adgang:</b> Tilknyt ERDA som netværksdrev på din
+                                lokale computer ved hjælp af SSHFS. Dette giver dig mulighed for
+                                sømløst at arbejde med dine data, som om de var på din lokale maskine.
+                                Alternativt kan du starte en Jupyter DAG-session, som tilsvarende
+                                tilknytter ERDA som netværksdrev og udover værktøjerne til interaktiv
+                                dataanalyse også har en Terminal, hvor du kan køre kommandoer.<br/>
+                                <br/>
+                                3. <b>Rsync-lignende funktionalitet:</b> Efter tilknytning af ERDA som
+                                netværksdrev ved hjælp af f.eks. SSHFS, kan du bruge rsync ovenpå til
+                                at overføre data mellem dit lokale lager og ERDA.
+                                Alternativt kan du bruge værktøjer som 'rclone' eller 'lftp' i 
+                                'mirror'-tilstand, for lignende funktionalitet men over SFTP.<br/>
+                                <br/>
+                                4. <b>Store dataoverførsler:</b> Til overførsel af store datasæt kan
+                                du tjekke vores 'Data Import/Eksport'-funktion. Den muliggør kort sagt
+                                dataoverførsler i baggrunden ved hjælp af f.eks. rsync mellem ERDA og
+                                de internetvendte servere og sites du måtte have adgang til.<br/>
+                                <br/>
+                                Hvis du har brug for hjælp til at opsætte nogen af de nævnte metoder,
+                                henviser vi til vores detaljerede vejledninger, eller du kan kontakte
+                                vores supportteam.
                             </p>
                             <h4 class="staticpage">Hvordan installerer og kører jeg software XYZ i Jupyter?</h4>
                             <p>
