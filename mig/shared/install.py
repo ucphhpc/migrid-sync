@@ -69,6 +69,11 @@ from mig.shared.safeinput import valid_alphanumeric, InputException
 from mig.shared.url import urlparse
 
 
+def _override_apache_initd(template_name, user_dict):
+    file_name, _ = os.path.splitext(template_name)
+    return "%s-%s" % (file_name, user_dict['__MIG_USER__'])
+
+
 def determine_timezone(_environ=os.environ, _path_exists=os.path.exists, _print=print):
     """Attempt to detect the timezone in various known portable ways."""
 
@@ -242,11 +247,26 @@ def template_remove(template_file, remove_pattern):
     return True
 
 
+_GENERATE_CONFS_NOFORWARD_KEYS = [
+    'generateconfs_command',
+    'source',
+    'destination',
+    'destination_suffix',
+    'group',
+    'user',
+    'timezone',
+    '_getpwnam',
+]
+
+
 def generate_confs(
     # NOTE: make sure command line args with white-space are properly wrapped
     generateconfs_command=subprocess.list2cmdline(sys.argv),
     source=default_source,
     destination=default_destination,
+    user=mig_user,
+    group=mig_group,
+    timezone=keyword_auto,
     destination_suffix="",
     base_fqdn='',
     public_fqdn='',
@@ -275,9 +295,6 @@ def generate_confs(
     jupyter_services_desc='{}',
     cloud_services='',
     cloud_services_desc='{}',
-    user=mig_user,
-    group=mig_group,
-    timezone=keyword_auto,
     apache_version='2.4',
     apache_etc='/etc/apache2',
     apache_run='/var/run',
@@ -474,15 +491,20 @@ def generate_confs(
 
     # Read out dictionary of args with defaults and overrides
 
-    expanded = dict(locals())
+    thelocals = locals()
+    expanded = {k: v for k, v in thelocals.items() if k not in
+                _GENERATE_CONFS_NOFORWARD_KEYS}
 
     # expand any directory path specific as "auto" relative to CWD
     if source == keyword_auto:
-        expanded['source'] = os.path.dirname(sys.argv[0])
-        source = expanded['source']
+        template_path = os.path.dirname(sys.argv[0])
+    else:
+        template_path = source
+
     if destination == keyword_auto:
-        expanded['destination'] = os.path.dirname(sys.argv[0])
-        destination = expanded['destination']
+        destination_link = os.path.dirname(sys.argv[0])
+    else:
+        destination_link = destination
 
     # expand any user information marked as "auto" based on the environment
     if user == keyword_auto:
@@ -491,15 +513,258 @@ def generate_confs(
         group = grp.getgrgid(os.getgid())[0]
 
     # finalize a destination path up-front
-    expanded['destination_path'] = "%s%s" % (destination, destination_suffix)
-    destination_path = expanded['destination_path']
+    destination_dir = "%s%s" % (destination, destination_suffix)
 
     # Backwards compatibility with old name
     if public_port and not public_http_port:
         public_http_port = public_port
 
+    user_pw_info = _getpwnam(user)
+
+    if timezone == keyword_auto:
+        timezone = determine_timezone()
+
+    options = {
+        'command_line': generateconfs_command,
+        'destination_dir': destination_dir,
+        'destination_link': destination_link,
+        'template_dir': template_path,
+        'timezone': timezone,
+        'user_gid': user_pw_info.pw_gid,
+        'user_group': group,
+        'user_uid': user_pw_info.pw_uid,
+        'user_uname': user,
+    }
+    user_dict = _generate_confs_prepare(options, **expanded)
+    _generate_confs_write(options, user_dict)
+    _generate_confs_instructions(options, user_dict)
+    return options
+
+
+def _generate_confs_prepare(
+    options,
+    # forwarded arguments
+    base_fqdn,
+    public_fqdn,
+    public_alias_fqdn,
+    public_sec_fqdn,
+    mig_cert_fqdn,
+    ext_cert_fqdn,
+    mig_oid_fqdn,
+    ext_oid_fqdn,
+    mig_oidc_fqdn,
+    ext_oidc_fqdn,
+    sid_fqdn,
+    io_fqdn,
+    cert_fqdn_extras,
+    cloud_fqdn,
+    seafile_fqdn,
+    seafile_base,
+    seafmedia_base,
+    seafhttp_base,
+    openid_address,
+    sftp_address,
+    sftp_subsys_address,
+    ftps_address,
+    davs_address,
+    jupyter_services,
+    jupyter_services_desc,
+    cloud_services,
+    cloud_services_desc,
+    apache_version,
+    apache_etc,
+    apache_run,
+    apache_lock,
+    apache_log,
+    apache_worker_procs,
+    openssh_version,
+    mig_code,
+    mig_state,
+    mig_certs,
+    auto_add_cert_user,
+    auto_add_oid_user,
+    auto_add_oidc_user,
+    auto_add_filter_fields,
+    auto_add_filter_method,
+    auto_add_user_permit,
+    cert_valid_days,
+    oid_valid_days,
+    oidc_valid_days,
+    generic_valid_days,
+    enable_migadmin,
+    enable_sftp,
+    enable_sftp_subsys,
+    sftp_subsys_auth_procs,
+    enable_davs,
+    enable_ftps,
+    enable_wsgi,
+    wsgi_procs,
+    enable_gdp,
+    enable_jobs,
+    enable_resources,
+    enable_workflows,
+    enable_events,
+    enable_sharelinks,
+    enable_transfers,
+    enable_freeze,
+    enable_sandboxes,
+    enable_vmachines,
+    enable_preview,
+    enable_jupyter,
+    enable_cloud,
+    enable_hsts,
+    enable_vhost_certs,
+    enable_verify_certs,
+    enable_seafile,
+    enable_duplicati,
+    enable_crontab,
+    enable_notify,
+    enable_imnotify,
+    enable_dev_accounts,
+    enable_twofactor,
+    twofactor_mandatory_protos,
+    enable_twofactor_strict_address,
+    twofactor_auth_apps,
+    enable_peers,
+    peers_mandatory,
+    peers_explicit_fields,
+    peers_contact_hint,
+    enable_cracklib,
+    enable_openid,
+    enable_gravatars,
+    enable_sitestatus,
+    enable_quota,
+    prefer_python3,
+    io_account_expire,
+    gdp_email_notify,
+    user_interface,
+    mig_oid_title,
+    mig_oid_provider,
+    ext_oid_title,
+    ext_oid_provider,
+    mig_oidc_title,
+    mig_oidc_provider_meta_url,
+    ext_oidc_title,
+    ext_oidc_provider_meta_url,
+    ext_oidc_provider_issuer,
+    ext_oidc_provider_authorization_endpoint,
+    ext_oidc_provider_verify_cert_files,
+    ext_oidc_provider_token_endpoint,
+    ext_oidc_provider_token_endpoint_auth,
+    ext_oidc_provider_user_info_endpoint,
+    ext_oidc_scope,
+    ext_oidc_user_info_token_method,
+    ext_oidc_public_key_files,
+    ext_oidc_private_key_files,
+    ext_oidc_response_type,
+    ext_oidc_response_mode,
+    ext_oidc_client_id,
+    ext_oidc_client_name,
+    ext_oidc_pkce_method,
+    ext_oidc_id_token_encrypted_response_alg,
+    ext_oidc_id_token_encrypted_response_enc,
+    ext_oidc_user_info_signed_response_alg,
+    ext_oidc_cookie_same_site,
+    ext_oidc_pass_cookies,
+    ext_oidc_remote_user_claim,
+    ext_oidc_pass_claim_as,
+    ext_oidc_rewrite_cookie,
+    dhparams_path,
+    daemon_keycert,
+    daemon_pubkey,
+    daemon_pubkey_from_dns,
+    daemon_show_address,
+    alias_field,
+    peers_permit,
+    vgrid_creators,
+    vgrid_managers,
+    signup_methods,
+    login_methods,
+    digest_salt,
+    crypto_salt,
+    csrf_protection,
+    password_policy,
+    password_legacy_policy,
+    hg_path,
+    hgweb_scripts,
+    trac_admin_path,
+    trac_ini_path,
+    public_port,
+    public_http_port,
+    public_https_port,
+    mig_cert_port,
+    ext_cert_port,
+    mig_oid_port,
+    ext_oid_port,
+    mig_oidc_port,
+    ext_oidc_port,
+    sid_port,
+    sftp_port,
+    sftp_subsys_port,
+    sftp_show_port,
+    sftp_max_sessions,
+    davs_port,
+    davs_show_port,
+    ftps_ctrl_port,
+    ftps_ctrl_show_port,
+    ftps_pasv_ports,
+    openid_port,
+    openid_show_port,
+    openid_session_lifetime,
+    seafile_secret,
+    seafile_ccnetid,
+    seafile_seahub_port,
+    seafile_seafhttp_port,
+    seafile_client_port,
+    seafile_quota,
+    seafile_ro_access,
+    public_use_https,
+    user_clause,
+    group_clause,
+    listen_clause,
+    serveralias_clause,
+    distro,
+    autolaunch_page,
+    landing_page,
+    skin,
+    title,
+    short_title,
+    extra_userpage_scripts,
+    extra_userpage_styles,
+    external_doc,
+    vgrid_label,
+    secscan_addr,
+    default_menu,
+    user_menu,
+    collaboration_links,
+    default_vgrid_links,
+    advanced_vgrid_links,
+    support_email,
+    admin_email,
+    admin_list,
+    smtp_server,
+    smtp_sender,
+    log_level,
+    freeze_to_tape,
+    status_system_match,
+    duplicati_protocols,
+    imnotify_address,
+    imnotify_channel,
+    imnotify_username,
+    imnotify_password,
+    gdp_data_categories,
+    gdp_id_scramble,
+    gdp_path_scramble,
+    quota_backend,
+    quota_user_limit,
+    quota_vgrid_limit,
+    ca_fqdn,
+    ca_user,
+    ca_smtp,
+):
+    """Prepate conf generator run"""
     user_dict = {}
-    user_dict['__GENERATECONFS_COMMAND__'] = generateconfs_command
+    user_dict['__GENERATECONFS_COMMAND__'] = options['command_line']
     user_dict['__BASE_FQDN__'] = base_fqdn
     user_dict['__PUBLIC_FQDN__'] = public_fqdn
     user_dict['__PUBLIC_ALIAS_FQDN__'] = public_alias_fqdn
@@ -535,8 +800,8 @@ def generate_confs(
     user_dict['__JUPYTER_SECTIONS__'] = ''
     user_dict['__CLOUD_SERVICES__'] = cloud_services
     user_dict['__CLOUD_SECTIONS__'] = ''
-    user_dict['__USER__'] = user
-    user_dict['__GROUP__'] = group
+    user_dict['__USER__'] = options['user_uname']
+    user_dict['__GROUP__'] = options['user_group']
     user_dict['__PUBLIC_HTTP_PORT__'] = "%s" % public_http_port
     user_dict['__PUBLIC_HTTPS_PORT__'] = "%s" % public_https_port
     user_dict['__MIG_CERT_PORT__'] = "%s" % mig_cert_port
@@ -652,9 +917,6 @@ def generate_confs(
     user_dict['__EXT_OIDC_REMOTE_USER_CLAIM__'] = ext_oidc_remote_user_claim
     user_dict['__EXT_OIDC_PASS_CLAIM_AS__'] = ext_oidc_pass_claim_as
     user_dict['__EXT_OIDC_REWRITE_COOKIE__'] = ext_oidc_rewrite_cookie
-    user_dict['__CA_FQDN__'] = ca_fqdn
-    user_dict['__CA_USER__'] = ca_user
-    user_dict['__CA_SMTP__'] = ca_smtp
     user_dict['__PUBLIC_URL__'] = ''
     user_dict['__PUBLIC_ALIAS_URL__'] = ''
     user_dict['__PUBLIC_HTTP_URL__'] = ''
@@ -742,11 +1004,16 @@ def generate_confs(
     user_dict['__QUOTA_BACKEND__'] = quota_backend
     user_dict['__QUOTA_USER_LIMIT__'] = "%s" % quota_user_limit
     user_dict['__QUOTA_VGRID_LIMIT__'] = "%s" % quota_vgrid_limit
+    user_dict['__CA_FQDN__'] = ca_fqdn
+    user_dict['__CA_USER__'] = ca_user
+    user_dict['__CA_SMTP__'] = ca_smtp
+
+    user_dict['__MIG_USER__'] = "%s" % (options['user_uname'])
+    user_dict['__MIG_GROUP__'] = "%s" % (options['user_group'])
 
     # Needed for PAM/NSS
-    pw_info = _getpwnam(user)
-    user_dict['__MIG_UID__'] = "%s" % (pw_info.pw_uid)
-    user_dict['__MIG_GID__'] = "%s" % (pw_info.pw_gid)
+    user_dict['__MIG_UID__'] = "%s" % (options['user_uid'])
+    user_dict['__MIG_GID__'] = "%s" % (options['user_gid'])
 
     fail2ban_daemon_ports = []
     # Apache fails on duplicate Listen directives so comment in that case
@@ -1004,10 +1271,7 @@ cert, oid and sid based https!
             prio_duplicati_protocols.append('davs')
     user_dict['__DUPLICATI_PROTOCOLS__'] = ' '.join(prio_duplicati_protocols)
 
-    if timezone == keyword_auto:
-        timezone = determine_timezone()
-
-    user_dict['__SEAFILE_TIMEZONE__'] = timezone
+    user_dict['__SEAFILE_TIMEZONE__'] = options['timezone']
 
     if seafile_secret == keyword_auto:
         seafile_secret = ensure_native_string(
@@ -1671,10 +1935,13 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
     user_dict['__ALL_OIDC_PROVIDER_META_URLS__'] = ' '.join(
         all_oidc_provider_meta_urls)
 
+    destination = options['destination_link']
     if not os.path.islink(destination) and os.path.isdir(destination):
         print("ERROR: Legacy %s dir in the way - please remove first" %
               destination)
         sys.exit(1)
+
+    destination_path = options['destination_dir']
     try:
         os.makedirs(destination_path)
     except OSError:
@@ -1790,13 +2057,6 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
         crypto_salt = ensure_native_string(base64.b16encode(os.urandom(16)))
     user_dict['__CRYPTO_SALT__'] = crypto_salt
 
-    # Greedy match trailing space for all the values to uncomment stuff
-    strip_trailing_space = ['__IF_SEPARATE_PORTS__', '__APACHE_PRE2.4__',
-                            '__APACHE_RECENT__']
-    for key in user_dict:
-        if key.endswith('_COMMENTED__'):
-            strip_trailing_space.append(key)
-
     # Dynamically set ssh subsys auth key locations for enabled site features
     # NOTE: some percent variables must be preserved, namely %h for user home
     #       and %u for user id in ssh login.
@@ -1868,6 +2128,14 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
                                 for i in sorted_keys])
     user_dict['__GENERATECONFS_VARIABLES__'] = variable_lines
 
+    return user_dict
+
+
+def _generate_confs_write(options, user_dict, insert_list=[], cleanup_list=[]):
+    """Actually write generated confs"""
+    assert os.path.isabs(options['destination_dir'])
+    assert os.path.isabs(options['template_dir'])
+
     # Insert lines into templates
     for (temp_file, insert_identifiers) in insert_list:
         template_insert(temp_file, insert_identifiers, unique=True)
@@ -1882,7 +2150,7 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
         ("apache-MiG-template.conf", "MiG.conf"),
         ("apache-production-mode-template.conf", "production-mode.conf"),
         ("apache-mimic-deb-template.conf", "mimic-deb.conf"),
-        ("apache-init.d-deb-template", "apache-%s" % user),
+        ("apache-init.d-deb-template", "apache.initd"),
         ("apache-service-template.conf", "apache2.service"),
         ("apache-MiG-jupyter-def-template.conf", "MiG-jupyter-def.conf"),
         ("apache-MiG-jupyter-openid-template.conf", "MiG-jupyter-openid.conf"),
@@ -1929,9 +2197,25 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
         ("migacctexpire-template.sh.cronjob", "migacctexpire"),
         ("migverifyarchives-template.sh.cronjob", "migverifyarchives"),
     ]
+    overrides_out_name = {
+        'apache.initd': _override_apache_initd
+    }
+
+    # Greedy match trailing space for all the values to uncomment stuff
+    strip_trailing_space = ['__IF_SEPARATE_PORTS__', '__APACHE_PRE2.4__',
+                            '__APACHE_RECENT__']
+    for key in user_dict:
+        if key.endswith('_COMMENTED__'):
+            strip_trailing_space.append(key)
+
     for (in_name, out_name) in replacement_list:
-        in_path = os.path.join(source, in_name)
-        out_path = os.path.join(destination_path, out_name)
+        in_path = os.path.join(options['template_dir'], in_name)
+
+        if out_name in overrides_out_name:
+            out_name = overrides_out_name[out_name](out_name, user_dict)
+
+        out_path = os.path.join(options['destination_dir'], out_name)
+
         if os.path.exists(in_path):
             # print "DEBUG: fill template: %s" % in_path
             fill_template(in_path, out_path, user_dict, strip_trailing_space)
@@ -1944,11 +2228,24 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
     for (temp_file, remove_pattern) in cleanup_list:
         template_remove(temp_file, remove_pattern)
 
+
+def _generate_confs_instructions(options, user_dict):
+    """Write additional instructions for further use of generated confs"""
+    instructions_dict = {
+        'destination': options['destination_link'],
+        'destination_dir': options['destination_dir'],
+        'apache_etc': user_dict['__APACHE_ETC__'],
+        'mig_code': user_dict['__MIG_CODE__'],
+        'mig_state': user_dict['__MIG_STATE__'],
+        'user': user_dict['__MIG_USER__'],
+        'group': user_dict['__MIG_GROUP__'],
+    }
+
     instructions = '''Configurations for MiG and Apache were generated in
-%(destination)s%(destination_suffix)s/ and symlinked to %(destination)s .
+%(destination_dir)s/ and symlinked to %(destination)s .
 For a default setup you will probably want to copy the MiG daemon conf to the
 server code directory:
-cp %(destination)s%(destination_suffix)s/MiGserver.conf %(mig_code)s/server/
+cp %(destination_dir)s/MiGserver.conf %(mig_code)s/server/
 the static skin stylesheet to the styling directory:
 cp %(destination)s/static-skin.css %(mig_code)s/images/
 and the default landing page to the user_home directory:
@@ -2077,11 +2374,13 @@ sudo cp %(destination)s/migverifyarchives /etc/cron.hourly/
 chmod 700 %(destination)s/migacctexpire
 sudo cp %(destination)s/migacctexpire /etc/cron.monthly/
 
-''' % expanded
-    instructions_path = "%s/instructions.txt" % destination_path
-    if not write_file(instructions, instructions_path, None):
-        print("could not write instructions ot %s" % instructions_path)
-    return expanded
+''' % instructions_dict
+    instructions_path = os.path.join(
+        options['destination_dir'], "instructions.txt")
+    success = write_file(instructions, instructions_path, None)
+    if not success:
+        print("could not write instructions ot %s" % (instructions_path,))
+    return success
 
 
 def create_user(

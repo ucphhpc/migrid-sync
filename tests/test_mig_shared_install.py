@@ -130,8 +130,8 @@ class MigSharedInstall__generate_confs(MigTestCase):
 
     def test_creates_output_directory_containing_a_standard_local_configuration(self):
         fixture_dir = fixturepath("confs-stdlocal")
+        expected_generated_dir = cleanpath('confs-stdlocal', self)
         symlink_path = temppath('confs', self)
-        cleanpath('confs-stdlocal', self)
 
         generate_confs(
             destination=symlink_path,
@@ -147,6 +147,8 @@ class MigSharedInstall__generate_confs(MigTestCase):
         )
 
         generated_dir = os.path.realpath(symlink_path)
+        self.assertEqual(generated_dir, expected_generated_dir)
+
         os.remove(os.path.join(generated_dir, "generateconfs.log"))
         os.remove(os.path.join(generated_dir, "instructions.txt"))
 
