@@ -42,8 +42,8 @@ import sys
 # Solve this by ensuring that the chckout is part of the sys.path
 
 # NOTE: __file__ is /MIG_BASE/mig/install/generateconfs.py and we need MIG_BASE
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+dirname = os.path.dirname
+sys.path.append(dirname(dirname(dirname(os.path.abspath(__file__)))))
 
 # NOTE: moved mig imports into try/except to avoid autopep8 moving to top!
 try:
@@ -359,9 +359,10 @@ if '__main__' == __name__:
         # Remove default values to use generate_confs default values
         if val == 'DEFAULT':
             del settings[key]
-    conf = generate_confs(**settings)
+    options = generate_confs(**settings)
     # TODO: avoid reconstructing this path (also done inside generate_confs)
-    instructions_path = "%s/instructions.txt" % conf['destination_path']
+    instructions_path = os.path.join(options['destination_dir'],
+                                     'instructions.txt')
     try:
         instructions_fd = open(instructions_path, "r")
         instructions = instructions_fd.read()
