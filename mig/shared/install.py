@@ -50,7 +50,7 @@ import subprocess
 import sys
 
 from mig.shared.defaults import default_http_port, default_https_port, \
-    mig_user, mig_group, default_source, default_destination, \
+    MIG_BASE, mig_user, mig_group, default_source, default_destination, \
     auth_openid_mig_db, auth_openid_ext_db, STRONG_TLS_CIPHERS, \
     STRONG_TLS_CURVES, STRONG_SSH_KEXALGOS, STRONG_SSH_LEGACY_KEXALGOS, \
     STRONG_SSH_CIPHERS, STRONG_SSH_LEGACY_CIPHERS, STRONG_SSH_MACS, \
@@ -72,6 +72,15 @@ from mig.shared.url import urlparse
 def _override_apache_initd(template_name, user_dict):
     file_name, _ = os.path.splitext(template_name)
     return "%s-%s" % (file_name, user_dict['__MIG_USER__'])
+
+
+def abspath(path, start):
+    """Generate an absolute path as per os.path.abspath()
+    from an explicit starting cwf if necessary.
+    """
+    if os.path.isabs(path):
+        return path
+    return os.path.normpath(os.path.join(start, path))
 
 
 def determine_timezone(_environ=os.environ, _path_exists=os.path.exists, _print=print):
@@ -255,7 +264,11 @@ _GENERATE_CONFS_NOFORWARD_KEYS = [
     'group',
     'user',
     'timezone',
+    '_getcwd',
     '_getpwnam',
+    '_prepare',
+    '_writefiles',
+    '_instructions',
 ]
 
 
@@ -485,9 +498,21 @@ def generate_confs(
     ca_fqdn='',
     ca_user='mig-ca',
     ca_smtp='localhost',
+    _getcwd=os.getcwd,
     _getpwnam=pwd.getpwnam,
+    _prepare=None,
+    _writefiles=None,
+    _instructions=None,
 ):
     """Generate Apache and MiG server confs with specified variables"""
+
+    # TODO: override in signature as a non-functional follow-up change
+    if _prepare is None:
+        _prepare = _generate_confs_prepare
+    if _writefiles is None:
+        _writefiles = _generate_confs_writefiles
+    if _instructions is None:
+        _instructions = _generate_confs_instructions
 
     # Read out dictionary of args with defaults and overrides
 
@@ -496,15 +521,21 @@ def generate_confs(
                 _GENERATE_CONFS_NOFORWARD_KEYS}
 
     # expand any directory path specific as "auto" relative to CWD
+    thecwd = _getcwd()
+
     if source == keyword_auto:
-        template_path = os.path.dirname(sys.argv[0])
+        # use the templates from this copy of the code tree
+        template_dir = os.path.join(MIG_BASE, "mig/install")
     else:
-        template_path = source
+        # construct a path using the supplied value made absolute
+        template_dir = abspath(source, start=thecwd)
 
     if destination == keyword_auto:
-        destination_link = os.path.dirname(sys.argv[0])
+        # write output into a confs folder within the CWD
+        destination = os.path.join(thecwd, 'confs')
     else:
-        destination_link = destination
+        # construct a path from the supplied value made absolute
+        destination = abspath(destination, start=thecwd)
 
     # expand any user information marked as "auto" based on the environment
     if user == keyword_auto:
@@ -512,7 +543,8 @@ def generate_confs(
     if group == keyword_auto:
         group = grp.getgrgid(os.getgid())[0]
 
-    # finalize a destination path up-front
+    # finalize destination paths up-front
+    destination_link = destination
     destination_dir = "%s%s" % (destination, destination_suffix)
 
     # Backwards compatibility with old name
@@ -528,16 +560,16 @@ def generate_confs(
         'command_line': generateconfs_command,
         'destination_dir': destination_dir,
         'destination_link': destination_link,
-        'template_dir': template_path,
+        'template_dir': template_dir,
         'timezone': timezone,
         'user_gid': user_pw_info.pw_gid,
         'user_group': group,
         'user_uid': user_pw_info.pw_uid,
         'user_uname': user,
     }
-    user_dict = _generate_confs_prepare(options, **expanded)
-    _generate_confs_write(options, user_dict)
-    _generate_confs_instructions(options, user_dict)
+    user_dict = _prepare(options, **expanded)
+    _writefiles(options, user_dict)
+    _instructions(options, user_dict)
     return options
 
 
@@ -2131,7 +2163,7 @@ ssh-keygen -f %(__DAEMON_KEYCERT__)s -y > %(__DAEMON_PUBKEY__)s""" % user_dict)
     return user_dict
 
 
-def _generate_confs_write(options, user_dict, insert_list=[], cleanup_list=[]):
+def _generate_confs_writefiles(options, user_dict, insert_list=[], cleanup_list=[]):
     """Actually write generated confs"""
     assert os.path.isabs(options['destination_dir'])
     assert os.path.isabs(options['template_dir'])

@@ -35,8 +35,9 @@ import sys
 
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), ".")))
 
-from support import MigTestCase, testmain, temppath, cleanpath, fixturepath
+from support import MIG_BASE, MigTestCase, testmain, temppath, cleanpath, fixturepath
 
+from mig.shared.defaults import keyword_auto
 from mig.shared.install import determine_timezone, generate_confs
 
 
@@ -56,7 +57,9 @@ def create_dummy_gpwnam(pw_uid, pw_gid):
 
 
 def noop(*args, **kwargs):
-    pass
+    if (len(args) > 0):
+        return args[0]
+    return None
 
 
 class MigSharedInstall__determine_timezone(MigTestCase):
@@ -160,6 +163,64 @@ class MigSharedInstall__generate_confs(MigTestCase):
             actual_file = os.path.join(generated_dir, file_name)
             expected_file = os.path.join(fixture_dir, file_name)
             self.assertFileContentIdentical(actual_file, expected_file)
+
+    def test_options_for_source_auto(self):
+        options = generate_confs(
+            source=keyword_auto,
+            _getcwd=lambda: '/some/arbitrary/path',
+            _getpwnam=create_dummy_gpwnam(4321, 1234),
+            _prepare=noop,
+            _writefiles=noop,
+            _instructions=noop,
+        )
+        expected_template_dir = os.path.join(MIG_BASE, 'mig/install')
+
+        self.assertEqual(options['template_dir'], expected_template_dir)
+
+    def test_options_for_source_relative(self):
+        options = generate_confs(
+            source='.',
+            _getcwd=lambda: '/current/working/directory/mig/install',
+            _getpwnam=create_dummy_gpwnam(4321, 1234),
+            _prepare=noop,
+            _writefiles=noop,
+            _instructions=noop,
+        )
+
+        self.assertEqual(options['template_dir'],
+                         '/current/working/directory/mig/install')
+
+    def test_options_for_destination_auto(self):
+        options = generate_confs(
+            destination=keyword_auto,
+            destination_suffix='_suffix',
+            _getcwd=lambda: '/some/arbitrary/path',
+            _getpwnam=create_dummy_gpwnam(4321, 1234),
+            _prepare=noop,
+            _writefiles=noop,
+            _instructions=noop,
+        )
+
+        self.assertEqual(options['destination_link'],
+                         '/some/arbitrary/path/confs')
+        self.assertEqual(options['destination_dir'],
+                         '/some/arbitrary/path/confs_suffix')
+
+    def test_options_for_destination_relative(self):
+        options = generate_confs(
+            destination='generate-confs',
+            destination_suffix='_suffix',
+            _getcwd=lambda: '/current/working/directory',
+            _getpwnam=create_dummy_gpwnam(4321, 1234),
+            _prepare=noop,
+            _writefiles=noop,
+            _instructions=noop,
+        )
+
+        self.assertEqual(options['destination_link'],
+                         '/current/working/directory/generate-confs')
+        self.assertEqual(options['destination_dir'],
+                         '/current/working/directory/generate-confs_suffix')
 
 
 if __name__ == '__main__':
