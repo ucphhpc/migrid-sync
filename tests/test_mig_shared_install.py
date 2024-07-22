@@ -35,7 +35,8 @@ import sys
 
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), ".")))
 
-from support import MIG_BASE, MigTestCase, testmain, temppath, cleanpath, fixturepath, is_path_within
+from support import MIG_BASE, TEST_OUTPUT_DIR, MigTestCase, \
+    testmain, temppath, cleanpath, fixturepath, is_path_within
 
 from mig.shared.defaults import keyword_auto
 from mig.shared.install import determine_timezone, generate_confs
@@ -110,24 +111,23 @@ class MigSharedInstall__generate_confs(MigTestCase):
     """Unit test helper for the migrid code pointed to in class name"""
 
     def before_each(self):
-        self.output_path = temppath('sharedinstall', self)
+        self.output_path = TEST_OUTPUT_DIR
 
     def test_creates_output_directory_and_adds_active_symlink(self):
-        symlink_path = cleanpath('sharedinstall/confs', self, skip_clean=True)
-        folder_path = cleanpath(
-            'sharedinstall/confs-foobar', self, skip_clean=True)
+        symlink_path = cleanpath('confs', self)
+        folder_path = cleanpath('confs-foobar', self)
 
         generate_confs(self.output_path, destination_suffix='-foobar')
 
-        path_kind = self.assertPathExists('sharedinstall/confs-foobar')
+        path_kind = self.assertPathExists('confs-foobar')
         self.assertEqual(path_kind, "dir")
-        path_kind = self.assertPathExists('sharedinstall/confs')
+        path_kind = self.assertPathExists('confs')
         self.assertEqual(path_kind, "symlink")
 
     def test_creates_output_directory_and_repairs_active_symlink(self):
-        symlink_path = temppath('xxxconfs', self)
-        folder_path = cleanpath('xxxconfs-foobar', self)
-        nowhere_path = temppath('xxxconfs-nowhere', self, skip_clean=True)
+        symlink_path = temppath('confs', self)
+        folder_path = cleanpath('confs-foobar', self)
+        nowhere_path = temppath('confs-nowhere', self)
         # arrange pre-existing symlink pointing nowhere
         os.symlink(nowhere_path, symlink_path)
 
@@ -138,9 +138,8 @@ class MigSharedInstall__generate_confs(MigTestCase):
 
     def test_creates_output_directory_containing_a_standard_local_configuration(self):
         fixture_dir = fixturepath("confs-stdlocal")
-        expected_generated_dir = cleanpath(
-            'sharedinstall/confs-stdlocal', self, skip_clean=True)
-        symlink_path = temppath('sharedinstall/confs', self, skip_clean=True)
+        expected_generated_dir = cleanpath('confs-stdlocal', self)
+        symlink_path = temppath('confs', self)
 
         generate_confs(
             self.output_path,
