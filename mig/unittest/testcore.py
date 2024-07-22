@@ -36,7 +36,7 @@ import time
 import logging
 
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "../..")))
-from tests.support import MIG_BASE, PY2
+from tests.support import MIG_BASE, PY2, is_path_within
 
 from mig.shared.base import client_id_dir, client_dir_id, get_short_id, \
     invisible_path, allow_script, brief_list
@@ -67,19 +67,10 @@ def _assert_local_config_global_values(config):
 
     for path in ('mig_path', 'certs_path', 'state_path'):
         path_value = config_global_values.get(path)
-        if not _is_path_within(path_value, start=_LOCAL_MIG_BASE):
-            raise ValueError('local config contains bad path: %s=%s' % (path, path_value))
+        if not is_path_within(path_value, start=_LOCAL_MIG_BASE):
+            raise AssertionError('local config contains bad path: %s=%s' % (path, path_value))
 
     return config_global_values
-
-
-def _is_path_within(path, start=None, _msg=None):
-    try:
-        assert os.path.isabs(path), _msg
-        relative = os.path.relpath(path, start=start)
-    except:
-        return False
-    return not relative.startswith('..')
 
 
 def main(_exit=sys.exit):

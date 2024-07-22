@@ -35,7 +35,7 @@ import sys
 
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), ".")))
 
-from support import MIG_BASE, MigTestCase, testmain, temppath, cleanpath, fixturepath
+from support import MIG_BASE, MigTestCase, testmain, temppath, cleanpath, fixturepath, is_path_within
 
 from mig.shared.defaults import keyword_auto
 from mig.shared.install import determine_timezone, generate_confs
@@ -169,6 +169,24 @@ class MigSharedInstall__generate_confs(MigTestCase):
             actual_file = os.path.join(generated_dir, file_name)
             expected_file = os.path.join(fixture_dir, file_name)
             self.assertFileContentIdentical(actual_file, expected_file)
+
+    def test_kwargs_for_paths_auto(self):
+        def capture_defaulted(*args, **kwargs):
+            capture_defaulted.kwargs = kwargs
+            return args[0]
+        capture_defaulted.kwargs = None
+
+        options = generate_confs(
+            '/some/arbitrary/path',
+            _getpwnam=create_dummy_gpwnam(4321, 1234),
+            _prepare=capture_defaulted,
+            _writefiles=noop,
+            _instructions=noop,
+        )
+
+        defaulted = capture_defaulted.kwargs
+        self.assertPathWithin(defaulted['mig_certs'], MIG_BASE)
+        self.assertPathWithin(defaulted['mig_state'], MIG_BASE)
 
     def test_options_for_source_auto(self):
         options = generate_confs(

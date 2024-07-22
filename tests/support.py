@@ -239,12 +239,25 @@ included:
         else:
             return "file"
 
+    def assertPathWithin(self, path, start=None):
+        if not is_path_within(path, start=start):
+            raise AssertionError("path %s is not within directory %s" % (path, start))
+
     @staticmethod
     def pretty_display_path(absolute_path):
         assert os.path.isabs(absolute_path)
         relative_path = os.path.relpath(absolute_path, start=MIG_BASE)
         assert not relative_path.startswith('..')
         return relative_path
+
+
+def is_path_within(path, start=None, _msg=None):
+    try:
+        assert os.path.isabs(path), _msg
+        relative = os.path.relpath(path, start=start)
+    except:
+        return False
+    return not relative.startswith('..')
 
 
 def cleanpath(relative_path, test_case, start=None, skip_clean=False):
