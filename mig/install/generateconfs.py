@@ -352,6 +352,15 @@ if '__main__' == __name__:
     if settings['destination_suffix'] == 'DEFAULT':
         suffix = "-%s" % datetime.datetime.now().isoformat()
         settings['destination_suffix'] = suffix
+    if os.getenv('MIG_ENV', 'default') == 'local':
+        output_path = os.path.join(MIG_BASE, 'envhelp/output')
+    elif settings['destination'] == 'DEFAULT' or \
+            not os.path.isabs(settings['destination']):
+        # Default to generate in subdir of CWD ...
+        output_path = os.getcwd()
+    else:
+        # ... but use verbatim passthrough for absolute destination
+        output_path = settings['destination']
     print('# Creating confs with:')
     # NOTE: force list to avoid problems with in-line edits
     for (key, val) in list(settings.items()):
@@ -360,15 +369,6 @@ if '__main__' == __name__:
         if val == 'DEFAULT':
             del settings[key]
 
-    if os.getenv('MIG_ENV', 'default') == 'local':
-        output_path = os.path.join(MIG_BASE, 'envhelp/output')
-    else:
-        output_path = os.getcwd()
-        # set user and group to hard-coded bakcwards compatible values
-        settings.update(
-            user='mig',
-            group='mig'
-        )
     options = generate_confs(output_path, **settings)
 
     # TODO: avoid reconstructing this path (also done inside generate_confs)
