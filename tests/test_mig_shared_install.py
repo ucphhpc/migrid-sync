@@ -33,9 +33,10 @@ import os
 import pwd
 import sys
 
-sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), ".")))
+sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 
-from support import MIG_BASE, MigTestCase, testmain, temppath, cleanpath, fixturepath
+from support import MIG_BASE, TEST_OUTPUT_DIR, MigTestCase, \
+    testmain, temppath, cleanpath, fixturepath, is_path_within
 
 from mig.shared.defaults import keyword_auto
 from mig.shared.install import determine_timezone, generate_confs
@@ -109,11 +110,14 @@ class MigSharedInstall__determine_timezone(MigTestCase):
 class MigSharedInstall__generate_confs(MigTestCase):
     """Unit test helper for the migrid code pointed to in class name"""
 
+    def before_each(self):
+        self.output_path = TEST_OUTPUT_DIR
+
     def test_creates_output_directory_and_adds_active_symlink(self):
         symlink_path = temppath('confs', self)
         cleanpath('confs-foobar', self)
 
-        generate_confs(destination=symlink_path, destination_suffix='-foobar')
+        generate_confs(self.output_path, destination_suffix='-foobar')
 
         path_kind = self.assertPathExists('confs-foobar')
         self.assertEqual(path_kind, "dir")
@@ -121,15 +125,16 @@ class MigSharedInstall__generate_confs(MigTestCase):
         self.assertEqual(path_kind, "symlink")
 
     def test_creates_output_directory_and_repairs_active_symlink(self):
+        expected_generated_dir = cleanpath('confs-foobar', self)
         symlink_path = temppath('confs', self)
-        output_path = cleanpath('confs-foobar', self)
-        nowhere_path = temppath('confs-nowhere', self, skip_clean=True)
+        nowhere_path = temppath('confs-nowhere', self)
         # arrange pre-existing symlink pointing nowhere
         os.symlink(nowhere_path, symlink_path)
 
-        generate_confs(destination=symlink_path, destination_suffix='-foobar')
+        generate_confs(self.output_path, destination_suffix='-foobar')
 
-        self.assertEqual(os.readlink(symlink_path), output_path)
+        generated_dir = os.path.realpath(symlink_path)
+        self.assertEqual(generated_dir, expected_generated_dir)
 
     def test_creates_output_directory_containing_a_standard_local_configuration(self):
         fixture_dir = fixturepath("confs-stdlocal")
@@ -137,10 +142,13 @@ class MigSharedInstall__generate_confs(MigTestCase):
         symlink_path = temppath('confs', self)
 
         generate_confs(
-            destination=symlink_path,
+            self.output_path,
             destination_suffix='-stdlocal',
             user='testuser',
             group='testgroup',
+            mig_code='/home/mig/mig',
+            mig_certs='/home/mig/certs',
+            mig_state='/home/mig/state',
             timezone='Test/Place',
             crypto_salt='_TEST_CRYPTO_SALT'.zfill(32),
             digest_salt='_TEST_DIGEST_SALT'.zfill(32),
@@ -164,10 +172,28 @@ class MigSharedInstall__generate_confs(MigTestCase):
             expected_file = os.path.join(fixture_dir, file_name)
             self.assertFileContentIdentical(actual_file, expected_file)
 
+    def test_kwargs_for_paths_auto(self):
+        def capture_defaulted(*args, **kwargs):
+            capture_defaulted.kwargs = kwargs
+            return args[0]
+        capture_defaulted.kwargs = None
+
+        options = generate_confs(
+            '/some/arbitrary/path',
+            _getpwnam=create_dummy_gpwnam(4321, 1234),
+            _prepare=capture_defaulted,
+            _writefiles=noop,
+            _instructions=noop,
+        )
+
+        defaulted = capture_defaulted.kwargs
+        self.assertPathWithin(defaulted['mig_certs'], MIG_BASE)
+        self.assertPathWithin(defaulted['mig_state'], MIG_BASE)
+
     def test_options_for_source_auto(self):
         options = generate_confs(
+            '/some/arbitrary/path',
             source=keyword_auto,
-            _getcwd=lambda: '/some/arbitrary/path',
             _getpwnam=create_dummy_gpwnam(4321, 1234),
             _prepare=noop,
             _writefiles=noop,
@@ -179,8 +205,8 @@ class MigSharedInstall__generate_confs(MigTestCase):
 
     def test_options_for_source_relative(self):
         options = generate_confs(
+            '/current/working/directory/mig/install',
             source='.',
-            _getcwd=lambda: '/current/working/directory/mig/install',
             _getpwnam=create_dummy_gpwnam(4321, 1234),
             _prepare=noop,
             _writefiles=noop,
@@ -192,9 +218,9 @@ class MigSharedInstall__generate_confs(MigTestCase):
 
     def test_options_for_destination_auto(self):
         options = generate_confs(
+            '/some/arbitrary/path',
             destination=keyword_auto,
             destination_suffix='_suffix',
-            _getcwd=lambda: '/some/arbitrary/path',
             _getpwnam=create_dummy_gpwnam(4321, 1234),
             _prepare=noop,
             _writefiles=noop,
@@ -208,9 +234,9 @@ class MigSharedInstall__generate_confs(MigTestCase):
 
     def test_options_for_destination_relative(self):
         options = generate_confs(
+            '/current/working/directory',
             destination='generate-confs',
             destination_suffix='_suffix',
-            _getcwd=lambda: '/current/working/directory',
             _getpwnam=create_dummy_gpwnam(4321, 1234),
             _prepare=noop,
             _writefiles=noop,
@@ -221,6 +247,22 @@ class MigSharedInstall__generate_confs(MigTestCase):
                          '/current/working/directory/generate-confs')
         self.assertEqual(options['destination_dir'],
                          '/current/working/directory/generate-confs_suffix')
+
+    def test_options_for_destination_absolute(self):
+        options = generate_confs(
+            '/current/working/directory',
+            destination='/some/other/place/confs',
+            destination_suffix='_suffix',
+            _getpwnam=create_dummy_gpwnam(4321, 1234),
+            _prepare=noop,
+            _writefiles=noop,
+            _instructions=noop,
+        )
+
+        self.assertEqual(options['destination_link'],
+                         '/some/other/place/confs')
+        self.assertEqual(options['destination_dir'],
+                         '/some/other/place/confs_suffix')
 
 
 if __name__ == '__main__':

@@ -2486,11 +2486,17 @@ location.""" % self.config_file)
 
         # Init auth logger
 
+        auth_logger_logfile = None
+        if skip_log:
+            auth_logger_logfile = None
+        else:
+            auth_logger_logfile = self.user_auth_log
+
         if self.auth_logger_obj:
             self.auth_logger_obj.reopen()
         else:
             self.auth_logger_obj = Logger(
-                self.loglevel, logfile=self.user_auth_log, app='main-auth')
+                self.loglevel, logfile=auth_logger_logfile, app='main-auth')
         self.auth_logger = self.auth_logger_obj.logger
 
         # cert and key for generating a default proxy for nordugrid/ARC
