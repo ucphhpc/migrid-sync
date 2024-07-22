@@ -241,7 +241,8 @@ included:
 
     def assertPathWithin(self, path, start=None):
         if not is_path_within(path, start=start):
-            raise AssertionError("path %s is not within directory %s" % (path, start))
+            raise AssertionError(
+                "path %s is not within directory %s" % (path, start))
 
     @staticmethod
     def pretty_display_path(absolute_path):
