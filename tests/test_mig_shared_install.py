@@ -131,8 +131,7 @@ class MigSharedInstall__generate_confs(MigTestCase):
         # arrange pre-existing symlink pointing nowhere
         os.symlink(nowhere_path, symlink_path)
 
-        generate_confs(self.output_path, destination=symlink_path,
-                       destination_suffix='-foobar')
+        generate_confs(self.output_path, destination_suffix='-foobar')
 
         generated_dir = os.path.realpath(symlink_path)
         self.assertEqual(generated_dir, expected_generated_dir)
@@ -248,6 +247,22 @@ class MigSharedInstall__generate_confs(MigTestCase):
                          '/current/working/directory/generate-confs')
         self.assertEqual(options['destination_dir'],
                          '/current/working/directory/generate-confs_suffix')
+
+    def test_options_for_destination_absolute(self):
+        options = generate_confs(
+            '/current/working/directory',
+            destination='/some/other/place/confs',
+            destination_suffix='_suffix',
+            _getpwnam=create_dummy_gpwnam(4321, 1234),
+            _prepare=noop,
+            _writefiles=noop,
+            _instructions=noop,
+        )
+
+        self.assertEqual(options['destination_link'],
+                         '/some/other/place/confs')
+        self.assertEqual(options['destination_dir'],
+                         '/some/other/place/confs_suffix')
 
 
 if __name__ == '__main__':
