@@ -57,9 +57,6 @@ def _assert_local_config():
         assert stat.S_ISDIR(configdir_stat.st_mode)
         config = ConfigParser()
         config.read([_LOCAL_CONF_FILE])
-        #config_mig_base = os.path.dirname(config.get('GLOBAL', 'mig_path'))
-        #host_conf_dir = os.path.join(MIG_BASE, "envhelp/output/testconfs-dir")
-        #assert host_conf_dir == linkpath, 'bad symlink target'
         return config
     except Exception as exc:
         raise AssertionError('local configuration invalid or missing: %s' % (str(exc),))
