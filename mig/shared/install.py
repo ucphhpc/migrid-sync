@@ -50,8 +50,7 @@ import subprocess
 import sys
 
 from mig.shared.defaults import default_http_port, default_https_port, \
-    MIG_BASE, mig_user, mig_group, default_source, default_destination, \
-    auth_openid_mig_db, auth_openid_ext_db, STRONG_TLS_CIPHERS, \
+    auth_openid_mig_db, auth_openid_ext_db, MIG_BASE, STRONG_TLS_CIPHERS, \
     STRONG_TLS_CURVES, STRONG_SSH_KEXALGOS, STRONG_SSH_LEGACY_KEXALGOS, \
     STRONG_SSH_CIPHERS, STRONG_SSH_LEGACY_CIPHERS, STRONG_SSH_MACS, \
     STRONG_SSH_LEGACY_MACS, CRACK_USERNAME_REGEX, CRACK_WEB_REGEX, \
@@ -257,6 +256,7 @@ def template_remove(template_file, remove_pattern):
 
 
 _GENERATE_CONFS_NOFORWARD_KEYS = [
+    'generateconfs_output_path',
     'generateconfs_command',
     'source',
     'destination',
@@ -264,7 +264,6 @@ _GENERATE_CONFS_NOFORWARD_KEYS = [
     'group',
     'user',
     'timezone',
-    '_getcwd',
     '_getpwnam',
     '_prepare',
     '_writefiles',
@@ -273,12 +272,13 @@ _GENERATE_CONFS_NOFORWARD_KEYS = [
 
 
 def generate_confs(
+    generateconfs_output_path,
     # NOTE: make sure command line args with white-space are properly wrapped
     generateconfs_command=subprocess.list2cmdline(sys.argv),
-    source=default_source,
-    destination=default_destination,
-    user=mig_user,
-    group=mig_group,
+    source=keyword_auto,
+    destination=keyword_auto,
+    user=keyword_auto,
+    group=keyword_auto,
     timezone=keyword_auto,
     destination_suffix="",
     base_fqdn='',
@@ -315,9 +315,9 @@ def generate_confs(
     apache_log='/var/log/apache2',
     apache_worker_procs=256,
     openssh_version='7.4',
-    mig_code='/home/mig/mig',
-    mig_state='/home/mig/state',
-    mig_certs='/home/mig/certs',
+    mig_code=keyword_auto,
+    mig_state=keyword_auto,
+    mig_certs=keyword_auto,
     auto_add_cert_user=False,
     auto_add_oid_user=False,
     auto_add_oidc_user=False,
@@ -498,13 +498,15 @@ def generate_confs(
     ca_fqdn='',
     ca_user='mig-ca',
     ca_smtp='localhost',
-    _getcwd=os.getcwd,
     _getpwnam=pwd.getpwnam,
     _prepare=None,
     _writefiles=None,
     _instructions=None,
 ):
     """Generate Apache and MiG server confs with specified variables"""
+
+    assert os.path.isabs(
+        generateconfs_output_path), "output directory must be an absolute path"
 
     # TODO: override in signature as a non-functional follow-up change
     if _prepare is None:
@@ -521,29 +523,44 @@ def generate_confs(
                 _GENERATE_CONFS_NOFORWARD_KEYS}
 
     # expand any directory path specific as "auto" relative to CWD
-    thecwd = _getcwd()
 
     if source == keyword_auto:
         # use the templates from this copy of the code tree
         template_dir = os.path.join(MIG_BASE, "mig/install")
     else:
         # construct a path using the supplied value made absolute
-        template_dir = abspath(source, start=thecwd)
+        template_dir = abspath(source, start=generateconfs_output_path)
 
     if destination == keyword_auto:
         # write output into a confs folder within the CWD
-        destination = os.path.join(thecwd, 'confs')
+        destination = os.path.join(generateconfs_output_path, 'confs')
+    elif os.path.isabs(destination):
+        # take the caller at face-value and do not change the path
+        pass
     else:
         # construct a path from the supplied value made absolute
-        destination = abspath(destination, start=thecwd)
+        destination = abspath(destination, start=generateconfs_output_path)
 
     # finalize destination paths up-front
     destination_link = destination
     destination_dir = "%s%s" % (destination, destination_suffix)
 
+    # expand mig, certs and state paths relative to base if left to "AUTO"
+
+    if mig_code == keyword_auto:
+        mig_code = expanded['mig_code'] = os.path.join(MIG_BASE, 'mig')
+
+    if mig_certs == keyword_auto:
+        mig_certs = expanded['mig_certs'] = os.path.join(MIG_BASE, 'certs')
+
+    if mig_state == keyword_auto:
+        mig_state = expanded['mig_state'] = os.path.join(MIG_BASE, 'state')
+
     # expand any user information marked as "auto" based on the environment
+
     if user == keyword_auto:
         user = pwd.getpwuid(os.getuid())[0]
+
     if group == keyword_auto:
         group = grp.getgrgid(os.getgid())[0]
 
