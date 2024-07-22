@@ -42,21 +42,21 @@ from mig.shared.base import client_id_dir, client_dir_id, get_short_id, \
     invisible_path, allow_script, brief_list
 
 
+_LOCAL_MIG_BASE = '/usr/src/app' if PY2 else MIG_BASE # account for execution in container
 _PYTHON_MAJOR = '2' if PY2 else '3'
-_LOCAL_MIG_BASE = '/usr/src/app' if PY2 else MIG_BASE
-_LOCAL_CONF_DIR = os.path.join(MIG_BASE, "envhelp/output/testconfs-py%s" % (_PYTHON_MAJOR,))
-_LOCAL_CONF_FILE = os.path.join(_LOCAL_CONF_DIR, "MiGserver.conf")
-_LOCAL_CONF_SYMLINK = os.path.join(MIG_BASE, "envhelp/output/testconfs")
+_TEST_CONF_DIR = os.path.join(MIG_BASE, "envhelp/output/testconfs-py%s" % (_PYTHON_MAJOR,))
+_TEST_CONF_FILE = os.path.join(_TEST_CONF_DIR, "MiGserver.conf")
+_TEST_CONF_SYMLINK = os.path.join(MIG_BASE, "envhelp/output/testconfs")
 
 
 def _assert_local_config():
     try:
-        link_stat = os.lstat(_LOCAL_CONF_SYMLINK)
+        link_stat = os.lstat(_TEST_CONF_SYMLINK)
         assert stat.S_ISLNK(link_stat.st_mode)
-        configdir_stat = os.stat(_LOCAL_CONF_DIR)
+        configdir_stat = os.stat(_TEST_CONF_DIR)
         assert stat.S_ISDIR(configdir_stat.st_mode)
         config = ConfigParser()
-        config.read([_LOCAL_CONF_FILE])
+        config.read([_TEST_CONF_FILE])
         return config
     except Exception as exc:
         raise AssertionError('local configuration invalid or missing: %s' % (str(exc),))
@@ -78,7 +78,7 @@ def main(_exit=sys.exit):
     config_global_values = _assert_local_config_global_values(config)
 
     from mig.shared.conf import get_configuration_object
-    configuration = get_configuration_object(_LOCAL_CONF_FILE, skip_log=True)
+    configuration = get_configuration_object(_TEST_CONF_FILE, skip_log=True)
     logging.basicConfig(filename=None, level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(message)s")
     configuration.logger = logging
