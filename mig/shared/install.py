@@ -50,11 +50,10 @@ import subprocess
 import sys
 
 from mig.shared.defaults import default_http_port, default_https_port, \
-    auth_openid_mig_db, auth_openid_ext_db, STRONG_TLS_CIPHERS, \
+    auth_openid_mig_db, auth_openid_ext_db, MIG_BASE, STRONG_TLS_CIPHERS, \
     STRONG_TLS_CURVES, STRONG_SSH_KEXALGOS, STRONG_SSH_LEGACY_KEXALGOS, \
     STRONG_SSH_CIPHERS, STRONG_SSH_LEGACY_CIPHERS, STRONG_SSH_MACS, \
     STRONG_SSH_LEGACY_MACS, CRACK_USERNAME_REGEX, CRACK_WEB_REGEX, \
-    MIG_BASE, \
     keyword_any, keyword_auto
 from mig.shared.compat import ensure_native_string
 from mig.shared.fileio import read_file, read_file_lines, write_file, \
@@ -549,16 +548,13 @@ def generate_confs(
     # expand mig, certs and state paths relative to base if left to "AUTO"
 
     if mig_code == keyword_auto:
-        expanded['mig_code'] = os.path.join(MIG_BASE, 'mig')
-        mig_code = expanded['mig_code']
+        mig_code = expanded['mig_code'] = os.path.join(MIG_BASE, 'mig')
 
     if mig_certs == keyword_auto:
-        expanded['mig_certs'] = os.path.join(MIG_BASE, 'certs')
-        mig_certs = expanded['mig_certs']
+        mig_certs = expanded['mig_certs'] = os.path.join(MIG_BASE, 'certs')
 
     if mig_state == keyword_auto:
-        expanded['mig_state'] = os.path.join(MIG_BASE, 'state')
-        mig_state = expanded['mig_state']
+        mig_state = expanded['mig_state'] = os.path.join(MIG_BASE, 'state')
 
     # expand any user information marked as "auto" based on the environment
 
