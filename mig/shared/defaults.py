@@ -78,31 +78,6 @@ all_jobs = keyword_all
 any_protocol = keyword_any
 any_state = keyword_any
 
-mig_user = {
-    'default': 'mig',
-    'local': keyword_auto,
-}[MIG_ENV]
-
-mig_group = {
-    'default': 'mig',
-    'local': keyword_auto,
-}[MIG_ENV]
-
-default_source = {
-    'default': keyword_auto,
-    'local': os.path.join(MIG_BASE, "mig/install"),
-}[MIG_ENV]
-
-default_destination = {
-    'default': keyword_auto,
-    'local': os.path.join(MIG_BASE, "envhelp/output/confs"),
-}[MIG_ENV]
-
-default_enable_events = {
-    'default': True,
-    'local': False
-}[MIG_ENV]
-
 AUTH_NONE, AUTH_GENERIC, AUTH_CERTIFICATE = "None", "Generic", "X.509 Certificate"
 AUTH_OPENID_CONNECT, AUTH_OPENID_V2 = "OpenID Connect", "OpenID 2.0"
 

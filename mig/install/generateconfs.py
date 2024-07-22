@@ -47,6 +47,7 @@ sys.path.append(dirname(dirname(dirname(os.path.abspath(__file__)))))
 
 # NOTE: moved mig imports into try/except to avoid autopep8 moving to top!
 try:
+    from mig.shared.defaults import MIG_BASE, MIG_ENV
     from mig.shared.install import generate_confs
 except ImportError:
     print("ERROR: the migrid modules must be in PYTHONPATH")
@@ -352,6 +353,15 @@ if '__main__' == __name__:
     if settings['destination_suffix'] == 'DEFAULT':
         suffix = "-%s" % datetime.datetime.now().isoformat()
         settings['destination_suffix'] = suffix
+    if os.getenv('MIG_ENV', 'default') == 'local':
+        output_path = os.path.join(MIG_BASE, 'envhelp/output')
+    elif settings['destination'] == 'DEFAULT' or \
+            not os.path.isabs(settings['destination']):
+        # Default to generate in subdir of CWD ...
+        output_path = os.getcwd()
+    else:
+        # ... but use verbatim passthrough for absolute destination
+        output_path = settings['destination']
     print('# Creating confs with:')
     # NOTE: force list to avoid problems with in-line edits
     for (key, val) in list(settings.items()):
@@ -359,7 +369,9 @@ if '__main__' == __name__:
         # Remove default values to use generate_confs default values
         if val == 'DEFAULT':
             del settings[key]
-    options = generate_confs(**settings)
+
+    options = generate_confs(output_path, **settings)
+
     # TODO: avoid reconstructing this path (also done inside generate_confs)
     instructions_path = os.path.join(options['destination_dir'],
                                      'instructions.txt')
