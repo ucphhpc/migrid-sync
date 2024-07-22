@@ -546,20 +546,18 @@ def generate_confs(
     destination_link = destination
     destination_dir = "%s%s" % (destination, destination_suffix)
 
+    # expand mig, certs and state paths relative to base if left to "AUTO"
+
     if mig_code == keyword_auto:
         expanded['mig_code'] = os.path.join(MIG_BASE, 'mig')
         mig_code = expanded['mig_code']
 
-    # expand any directory path specified "auto" relative to output location
-
     if mig_certs == keyword_auto:
-        expanded['mig_certs'] = os.path.join(
-            generateconfs_output_path, 'certs')
+        expanded['mig_certs'] = os.path.join(MIG_BASE, 'certs')
         mig_certs = expanded['mig_certs']
 
     if mig_state == keyword_auto:
-        expanded['mig_state'] = os.path.join(
-            generateconfs_output_path, 'state')
+        expanded['mig_state'] = os.path.join(MIG_BASE, 'state')
         mig_state = expanded['mig_state']
 
     # expand any user information marked as "auto" based on the environment
