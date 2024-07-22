@@ -114,8 +114,8 @@ class MigSharedInstall__generate_confs(MigTestCase):
         self.output_path = TEST_OUTPUT_DIR
 
     def test_creates_output_directory_and_adds_active_symlink(self):
-        symlink_path = cleanpath('confs', self)
-        folder_path = cleanpath('confs-foobar', self)
+        symlink_path = temppath('confs', self)
+        cleanpath('confs-foobar', self)
 
         generate_confs(self.output_path, destination_suffix='-foobar')
 
@@ -125,8 +125,8 @@ class MigSharedInstall__generate_confs(MigTestCase):
         self.assertEqual(path_kind, "symlink")
 
     def test_creates_output_directory_and_repairs_active_symlink(self):
+        expected_generated_dir = cleanpath('confs-foobar', self)
         symlink_path = temppath('confs', self)
-        folder_path = cleanpath('confs-foobar', self)
         nowhere_path = temppath('confs-nowhere', self)
         # arrange pre-existing symlink pointing nowhere
         os.symlink(nowhere_path, symlink_path)
@@ -134,7 +134,8 @@ class MigSharedInstall__generate_confs(MigTestCase):
         generate_confs(self.output_path, destination=symlink_path,
                        destination_suffix='-foobar')
 
-        self.assertEqual(os.readlink(symlink_path), folder_path)
+        generated_dir = os.path.realpath(symlink_path)
+        self.assertEqual(generated_dir, expected_generated_dir)
 
     def test_creates_output_directory_containing_a_standard_local_configuration(self):
         fixture_dir = fixturepath("confs-stdlocal")

@@ -263,7 +263,6 @@ def is_path_within(path, start=None, _msg=None):
 
 def cleanpath(relative_path, test_case):
     assert isinstance(test_case, MigTestCase)
-    assert not os.path.isabs(relative_path)
     tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
     test_case._cleanup_paths.add(tmp_path)
     return tmp_path
