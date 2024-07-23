@@ -27,8 +27,11 @@
 
 """Unit tests for the migrid module pointed to in the filename"""
 
+from past.builtins import basestring
 import binascii
+from configparser import ConfigParser, NoSectionError, NoOptionError
 import difflib
+import io
 import os
 import pwd
 import sys
@@ -36,7 +39,7 @@ import sys
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 
 from support import MIG_BASE, TEST_OUTPUT_DIR, MigTestCase, \
-    testmain, temppath, cleanpath, fixturepath, is_path_within
+    testmain, temppath, cleanpath, fixturepath, is_path_within, outputpath
 
 from mig.shared.defaults import keyword_auto
 from mig.shared.install import determine_timezone, generate_confs
@@ -112,6 +115,21 @@ class MigSharedInstall__generate_confs(MigTestCase):
 
     def before_each(self):
         self.output_path = TEST_OUTPUT_DIR
+
+    def assertConfigKey(self, generated, section, key, expected):
+        if isinstance(generated, basestring):
+            with io.open(generated) as config_file:
+                generated = ConfigParser()
+                generated.read_file(config_file)
+
+        try:
+            actual = generated.get(section, key)
+        except NoSectionError:
+            raise AssertionError("no such section: %s" % (section,))
+        except NoOptionError:
+            raise AssertionError("on such option: %s in %s" % (key, section))
+
+        self.assertEqual(actual, expected)
 
     def test_creates_output_directory_and_adds_active_symlink(self):
         symlink_path = temppath('confs', self)
@@ -189,6 +207,29 @@ class MigSharedInstall__generate_confs(MigTestCase):
         defaulted = capture_defaulted.kwargs
         self.assertPathWithin(defaulted['mig_certs'], MIG_BASE)
         self.assertPathWithin(defaulted['mig_state'], MIG_BASE)
+
+    def test_creates_output_files_with_datasafety(self):
+        fixture_dir = fixturepath("confs-stdlocal")
+        expected_generated_dir = cleanpath('confs-stdlocal', self)
+        symlink_path = temppath('confs', self)
+
+        generate_confs(
+            self.output_path,
+            destination=symlink_path,
+            destination_suffix='-stdlocal',
+            datasafety_link='TEST_DATASAFETY_LINK',
+            datasafety_text='TEST_DATASAFETY_TEXT',
+            _getpwnam=create_dummy_gpwnam(4321, 1234),
+        )
+
+        relative_file = 'confs-stdlocal/MiGserver.conf'
+        self.assertPathExists('confs-stdlocal/MiGserver.conf')
+
+        actual_file = outputpath(relative_file)
+        self.assertConfigKey(
+            actual_file, 'SITE', 'datasafety_link', expected='TEST_DATASAFETY_LINK')
+        self.assertConfigKey(
+            actual_file, 'SITE', 'datasafety_text', expected='TEST_DATASAFETY_TEXT')
 
     def test_options_for_source_auto(self):
         options = generate_confs(

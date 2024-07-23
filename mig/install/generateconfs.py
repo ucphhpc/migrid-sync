@@ -206,7 +206,9 @@ if '__main__' == __name__:
         'quota_backend',
         'ca_fqdn',
         'ca_user',
-        'ca_smtp'
+        'ca_smtp',
+        'datasafety_link',
+        'datasafety_text',
     ]
     int_names = [
         'cert_valid_days',
