@@ -498,6 +498,8 @@ def generate_confs(
     ca_fqdn='',
     ca_user='mig-ca',
     ca_smtp='localhost',
+    datasafety_link='',
+    datasafety_text='',
     _getpwnam=pwd.getpwnam,
     _prepare=None,
     _writefiles=None,
@@ -810,6 +812,8 @@ def _generate_confs_prepare(
     ca_fqdn,
     ca_user,
     ca_smtp,
+    datasafety_link,
+    datasafety_text,
 ):
     """Prepate conf generator run"""
     user_dict = {}
@@ -1056,6 +1060,8 @@ def _generate_confs_prepare(
     user_dict['__CA_FQDN__'] = ca_fqdn
     user_dict['__CA_USER__'] = ca_user
     user_dict['__CA_SMTP__'] = ca_smtp
+    user_dict['__DATASAFETY_LINK__'] = datasafety_link
+    user_dict['__DATASAFETY_TEXT__'] = datasafety_text
 
     user_dict['__MIG_USER__'] = "%s" % (options['user_uname'])
     user_dict['__MIG_GROUP__'] = "%s" % (options['user_group'])

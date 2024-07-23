@@ -273,6 +273,12 @@ def fixturepath(relative_path):
     return tmp_path
 
 
+def outputpath(relative_path):
+    assert not os.path.isabs(relative_path)
+    tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
+    return tmp_path
+
+
 def temppath(relative_path, test_case, skip_clean=False):
     assert isinstance(test_case, MigTestCase)
     tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
