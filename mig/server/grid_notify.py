@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # grid_notify - Notify users about relevant system events
-# Copyright (C) 2010-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2010-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -41,6 +41,7 @@ from datetime import datetime
 
 from mig.shared.base import extract_field, expand_openid_alias
 from mig.shared.conf import get_configuration_object
+from mig.shared.defaults import ignore_file_names
 from mig.shared.fileio import unpickle, delete_file
 from mig.shared.logger import daemon_logger, \
     register_hangup_handler
@@ -87,6 +88,9 @@ def cleanup_notify_home(configuration, notified_users=[], timestamp=None):
         now_timestamp = time.time()
         cleanuptime = now_timestamp - timestamp
         for direntry in os.listdir(notify_home):
+            # NOTE: do NOT delete placeholder and scm state files
+            if direntry in ignore_file_names:
+                continue
             filepath = os.path.join(notify_home, direntry)
             ctime = os.path.getctime(filepath)
             if ctime > cleanuptime:
