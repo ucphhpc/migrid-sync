@@ -251,7 +251,7 @@ def fix_missing(config_file, verbose=True):
         'user_davs_log': 'davs.log',
         'user_ftps_address': fqdn,
         'user_ftps_ctrl_port': 8021,
-        'user_ftps_pasv_ports': range(8100, 8400),
+        'user_ftps_pasv_ports': list(range(8100, 8400)),
         'user_ftps_key': '~/certs/combined.pem',
         'user_ftps_key_sha256': '',
         'user_ftps_auth': ['password'],
@@ -516,7 +516,7 @@ class Configuration:
     user_davs_log = 'davs.log'
     user_ftps_address = ''
     user_ftps_ctrl_port = 8021
-    user_ftps_pasv_ports = range(8100, 8400)
+    user_ftps_pasv_ports = list(range(8100, 8400))
     user_ftps_show_address = ''
     user_ftps_show_ctrl_port = 8021
     user_ftps_key = ''
@@ -609,7 +609,7 @@ class Configuration:
     vm_client_port = 8111
     vm_applet_port = 8114
     # Interactive job VNC port
-    job_vnc_ports = range(8080, 8099)
+    job_vnc_ports = list(range(8080, 8099))
     enable_server_dist = False
     sleep_secs = 0
     sleep_update_totals = 0
@@ -687,10 +687,10 @@ class Configuration:
 
     def __init__(self, config_file, verbose=False, skip_log=False,
                  disable_auth_log=False):
-        self.config_file = config_file
-        self.reload_config(verbose, skip_log, disable_auth_log)
+        if config_file is not None:
+            self.reload_config(verbose, skip_log, _config_file=config_file)
 
-    def reload_config(self, verbose, skip_log=False, disable_auth_log=False):
+    def reload_config(self, verbose, skip_log=False, disable_auth_log=False, _config_file=None):
         """Re-read and parse configuration file. Optional skip_log arg
         initializes default logger(s) to use the NullHandler in order to
         avoid uninitialized log while not really touching log files or causing
@@ -702,13 +702,23 @@ class Configuration:
         NEVER be set in code used for production.
         """
 
+        _config_file = _config_file or self.config_file
+        assert _config_file is not None
+
         try:
             if self.logger:
                 self.logger.info('reloading configuration and reopening log')
         except:
             pass
 
-        if not os.path.isfile(self.config_file):
+        try:
+            config_file_is_path = os.path.isfile(_config_file)
+        except TypeError:
+            config_file_is_path = False
+
+        if config_file_is_path:
+            self.config_file = _config_file
+        else:
             print("""Could not find your configuration file (%s). You might
 need to point the MIG_CONF environment to your actual MiGserver.conf
 location.""" % self.config_file)
@@ -1225,7 +1235,7 @@ location.""" % self.config_file)
         if config.has_option('GLOBAL', 'user_ftps_pasv_ports'):
             text_range = config.get('GLOBAL', 'user_ftps_pasv_ports')
             first, last = text_range.split(':')[:2]
-            self.user_ftps_pasv_ports = range(int(first), int(last))
+            self.user_ftps_pasv_ports = list(range(int(first), int(last)))
         if config.has_option('GLOBAL', 'user_ftps_show_address'):
             self.user_ftps_show_address = config.get('GLOBAL',
                                                      'user_ftps_show_address')
@@ -1529,7 +1539,7 @@ location.""" % self.config_file)
         if config.has_option('GLOBAL', 'job_vnc_ports'):
             text_range = config.get('GLOBAL', 'job_vnc_ports')
             first, last = text_range.split(':')[:2]
-            self.job_vnc_ports = range(int(first), int(last))
+            self.job_vnc_ports = list(range(int(first), int(last)))
         if config.has_option('GLOBAL', 'user_shared_dhparams'):
             self.user_shared_dhparams = config.get('GLOBAL',
                                                    'user_shared_dhparams')
