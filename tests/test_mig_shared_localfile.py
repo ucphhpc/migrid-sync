@@ -27,17 +27,16 @@
 
 """Unit tests for the migrid module pointed to in the filename"""
 
-import binascii
 from contextlib import contextmanager
 import errno
 import fcntl
 import os
 import sys
-import zipfile
 
-sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), ".")))
+sys.path.append(os.path.realpath(
+    os.path.join(os.path.dirname(__file__), "..")))
 
-from support import MigTestCase, fixturepath, temppath, testmain
+from tests.support import MigTestCase, fixturepath, temppath, testmain
 from mig.shared.serverfile import LOCK_EX
 from mig.shared.localfile import LocalFile
 
@@ -67,13 +66,12 @@ class MigSharedLocalfile(MigTestCase):
         with open(file_path) as conflicting_f:
             reraise = None
             try:
-                fcntl.flock(
-                    conflicting_f, fcntl.LOCK_NB | LOCK_EX)
+                fcntl.flock(conflicting_f, fcntl.LOCK_NB | LOCK_EX)
 
                 # we were errantly able to acquire a lock, mark errored
                 reraise = AssertionError("RERAISE_MUST_UNLOCK")
-            except Exception as maybeerr:
-                if getattr(maybeerr, 'errno', None) == errno.EAGAIN:
+            except Exception as maybe_err:
+                if getattr(maybe_err, 'errno', None) == errno.EAGAIN:
                     # this is the expected exception - the logic tried to lock
                     # a file that was (as we intended) already locked, meaning
                     # this assertion has succeeded so we do not need to raise
@@ -87,7 +85,7 @@ class MigSharedLocalfile(MigTestCase):
                 if str(reraise) == 'RERAISE_MUST_UNLOCK':
                     fcntl.flock(conflicting_f, fcntl.LOCK_NB | fcntl.LOCK_UN)
 
-                # raise a user-friendly error to aovid nested raise
+                # raise a user-friendly error to avoid nested raise
                 raise AssertionError(
                     "expected locked file: %s" % self.pretty_display_path(file_path))
 
