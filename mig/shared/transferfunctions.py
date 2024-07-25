@@ -47,6 +47,12 @@ default_key_type = 'rsa'
 default_key_bits = 2048
 
 
+def get_transfers_path(configuration, client_id):
+    """Build the default transfers file path for client_id"""
+    return os.path.join(configuration.user_settings, client_id_dir(client_id),
+                        datatransfers_filename)
+
+
 def get_status_dir(configuration, client_id, transfer_id=''):
     """Lookup the status directory for transfers on behalf of client_id.
     The optional transfer_id is used to get the explicit status dir for that
@@ -133,9 +139,7 @@ def load_data_transfers(configuration, client_id, do_lock=True, blocking=True):
     """
     logger = configuration.logger
     logger.debug("load transfers for %s" % client_id)
-    transfers_path = os.path.join(configuration.user_settings,
-                                  client_id_dir(client_id),
-                                  datatransfers_filename)
+    transfers_path = get_transfers_path(configuration, client_id)
     if do_lock:
         flock = lock_data_transfers(transfers_path, exclusive=False,
                                     blocking=blocking)
@@ -190,10 +194,7 @@ def modify_data_transfers(configuration, client_id, transfer_dict, action,
     """
     logger = configuration.logger
     transfer_id = transfer_dict['transfer_id']
-
-    transfers_path = os.path.join(configuration.user_settings,
-                                  client_id_dir(client_id),
-                                  datatransfers_filename)
+    transfers_path = get_transfers_path(configuration, client_id)
     # Lock during entire load and save
     if do_lock:
         flock = lock_data_transfers(transfers_path, exclusive=True,
