@@ -2,7 +2,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# test_mig_shared_trabsferfunctions - unit test of the corresponding mig shared module
+# test_mig_shared_transferfunctions - unit test of the corresponding mig shared module
 # Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
@@ -27,7 +27,6 @@
 
 """Unit tests for the migrid module pointed to in the filename"""
 
-from __future__ import print_function
 import os
 import sys
 import tempfile
