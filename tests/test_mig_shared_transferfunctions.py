@@ -27,46 +27,182 @@
 
 """Unit tests for the migrid module pointed to in the filename"""
 
-from contextlib import contextmanager
-import errno
-import fcntl
+from __future__ import print_function
 import os
 import sys
+import tempfile
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__))))
 
-from tests.support import MigTestCase, fixturepath, temppath, testmain
-from mig.shared.transferfunctions import load_data_transfers, \
-    create_data_transfer, delete_data_transfer, lock_data_transfers, \
-    unlock_data_transfers
+from tests.support import TEST_OUTPUT_DIR, MigTestCase, FakeConfiguration, \
+    cleanpath, temppath, testmain
+from mig.shared.transferfunctions import get_transfers_path, \
+    load_data_transfers, create_data_transfer, delete_data_transfer, \
+    lock_data_transfers, unlock_data_transfers
 
-DUMMY_TRANSFERS = "dummy-transfers"
+DUMMY_USER = "dummy-user"
+DUMMY_ID = "dummy-id"
+DUMMY_HOME_DIR = 'dummy_user_home'
+DUMMY_HOME_PATH = os.path.join(TEST_OUTPUT_DIR, DUMMY_HOME_DIR)
+DUMMY_SETTINGS_DIR = 'dummy_user_settings'
+DUMMY_SETTINGS_PATH = os.path.join(TEST_OUTPUT_DIR, DUMMY_SETTINGS_DIR)
 
 
-@contextmanager
-def managed_transfersfile(tfd):
-    """Helper to assure transfer pickle files are properly handled"""
-
-    try:
-        yield tfd
-    finally:
-        if tfd.get_lock_mode() != fcntl.LOCK_UN:
-            pass
-        if not tfd.closed:
-            tfd.close()
+def noop(*args, **kwargs):
+    if args:
+        return args[0]
+    return None
 
 
 class MigSharedTransferfunctions(MigTestCase):
     """Wrap unit tests for the corresponding module"""
 
-    def test_transfers_locking(self):
-        transfers_file = temppath(DUMMY_TRANSFERS, self)
+    def test_transfers_basic_locking(self):
+        os.makedirs(os.path.join(DUMMY_HOME_PATH, DUMMY_USER))
+        cleanpath(DUMMY_HOME_DIR, self)
+        os.makedirs(os.path.join(DUMMY_SETTINGS_PATH, DUMMY_USER))
+        cleanpath(DUMMY_SETTINGS_DIR, self)
+        dummy_conf = FakeConfiguration(user_home=DUMMY_HOME_PATH,
+                                       user_settings=DUMMY_SETTINGS_PATH)
+        transfers_path = get_transfers_path(dummy_conf, DUMMY_USER)
 
-        ro_lock = lock_data_transfers(DUMMY_TRANSFERS, exclusive=False)
-        ro_lock_again = lock_data_transfers(DUMMY_TRANSFERS, exclusive=False)
+        # Lock shared twice should be fine
+        ro_lock = lock_data_transfers(transfers_path, exclusive=False)
+        ro_lock_again = lock_data_transfers(transfers_path, exclusive=False)
         assert(ro_lock and ro_lock_again)
-        unlock_data_transfers(ro_lock_again)
+
+        # Non-blocking repeated exclusive locking must fail
+        rw_lock_again = lock_data_transfers(
+            transfers_path, exclusive=True, blocking=False)
+        assert(not rw_lock_again)
+
+        # Unlock all to leave critical section and allow exclusive locking
         unlock_data_transfers(ro_lock)
+        unlock_data_transfers(ro_lock_again)
+
+        # Take exclusive lock
+        rw_lock = lock_data_transfers(transfers_path, exclusive=True)
+        # Non-blocking repeated shared or exclusive locking must fail
+        ro_lock_again = lock_data_transfers(
+            transfers_path, exclusive=False, blocking=False)
+        rw_lock_again = lock_data_transfers(
+            transfers_path, exclusive=True, blocking=False)
+        assert(rw_lock and not ro_lock_again and not rw_lock_again)
+
+        unlock_data_transfers(rw_lock)
+
+    def test_create_and_delete_transfer(self):
+        os.makedirs(os.path.join(DUMMY_HOME_PATH, DUMMY_USER))
+        cleanpath(DUMMY_HOME_DIR, self)
+        os.makedirs(os.path.join(DUMMY_SETTINGS_PATH, DUMMY_USER))
+        cleanpath(DUMMY_SETTINGS_DIR, self)
+        dummy_conf = FakeConfiguration(user_home=DUMMY_HOME_PATH,
+                                       user_settings=DUMMY_SETTINGS_PATH)
+        (success, out) = create_data_transfer(dummy_conf, DUMMY_USER,
+                                              {'transfer_id': DUMMY_ID})
+        assert(success and DUMMY_ID in out)
+
+        (success, transfers) = load_data_transfers(dummy_conf, DUMMY_USER)
+
+        assert(success and transfers.get(DUMMY_ID, None))
+
+        (success, out) = delete_data_transfer(dummy_conf, DUMMY_USER, DUMMY_ID)
+        assert(success and out == DUMMY_ID)
+
+        (success, transfers) = load_data_transfers(dummy_conf, DUMMY_USER)
+
+        assert(success and transfers.get(DUMMY_ID, None) is None)
+
+    def test_transfers_shared_read_locking(self):
+        os.makedirs(os.path.join(DUMMY_HOME_PATH, DUMMY_USER))
+        cleanpath(DUMMY_HOME_DIR, self)
+        os.makedirs(os.path.join(DUMMY_SETTINGS_PATH, DUMMY_USER))
+        cleanpath(DUMMY_SETTINGS_DIR, self)
+        dummy_conf = FakeConfiguration(user_home=DUMMY_HOME_PATH,
+                                       user_settings=DUMMY_SETTINGS_PATH)
+        transfers_path = get_transfers_path(dummy_conf, DUMMY_USER)
+        # Init a dummy transfer to read and delete later
+        (success, out) = create_data_transfer(dummy_conf, DUMMY_USER,
+                                              {'transfer_id': DUMMY_ID},
+                                              do_lock=True, blocking=False)
+
+        # Lock shared to limit the next section to reading transfers
+        ro_lock = lock_data_transfers(transfers_path, exclusive=False)
+        assert(ro_lock)
+
+        (success, transfers) = load_data_transfers(dummy_conf, DUMMY_USER)
+        assert(success and DUMMY_ID in transfers)
+
+        # Create with repeated locking should fail
+        (success, out) = create_data_transfer(dummy_conf, DUMMY_USER,
+                                              {'transfer_id': DUMMY_ID},
+                                              do_lock=True, blocking=False)
+        assert(not success)
+
+        # Delete with repeated locking should fail
+        (success, out) = delete_data_transfer(dummy_conf, DUMMY_USER, DUMMY_ID,
+                                              do_lock=True, blocking=False)
+        assert(not success)
+
+        # Verify unchanged
+        (success, transfers) = load_data_transfers(dummy_conf, DUMMY_USER)
+        assert(success and DUMMY_ID in transfers)
+
+        # Unlock all to leave critical section and allow clean up
+        unlock_data_transfers(ro_lock)
+
+        # Delete with locking should be fine again
+        (success, out) = delete_data_transfer(dummy_conf, DUMMY_USER, DUMMY_ID,
+                                              do_lock=True)
+        assert(success and out == DUMMY_ID)
+
+    def test_transfers_exclusive_write_locking(self):
+        os.makedirs(os.path.join(DUMMY_HOME_PATH, DUMMY_USER))
+        cleanpath(DUMMY_HOME_DIR, self)
+        os.makedirs(os.path.join(DUMMY_SETTINGS_PATH, DUMMY_USER))
+        cleanpath(DUMMY_SETTINGS_DIR, self)
+        dummy_conf = FakeConfiguration(user_home=DUMMY_HOME_PATH,
+                                       user_settings=DUMMY_SETTINGS_PATH)
+        transfers_path = get_transfers_path(dummy_conf, DUMMY_USER)
+
+        # Take exclusive lock
+        rw_lock = lock_data_transfers(transfers_path, exclusive=True)
+        assert(rw_lock)
+
+        # Non-blocking load with repeated locking should fail
+        (success, transfers) = load_data_transfers(dummy_conf, DUMMY_USER,
+                                                   do_lock=True, blocking=False)
+        assert(not success)
+
+        # Load without repeated locking should be fine
+        (success, transfers) = load_data_transfers(dummy_conf, DUMMY_USER,
+                                                   do_lock=False)
+        assert(success)
+
+        # Non-blocking create with repeated locking should fail
+        (success, out) = create_data_transfer(dummy_conf, DUMMY_USER,
+                                              {'transfer_id': DUMMY_ID},
+                                              do_lock=True, blocking=False)
+        assert(not success)
+
+        # Create without repeated locking should be fine
+        (success, out) = create_data_transfer(dummy_conf, DUMMY_USER,
+                                              {'transfer_id': DUMMY_ID},
+                                              do_lock=False)
+        assert(success)
+
+        # Non-blocking delete with repeated locking should fail
+        (success, out) = create_data_transfer(dummy_conf, DUMMY_USER,
+                                              {'transfer_id': DUMMY_ID},
+                                              do_lock=True, blocking=False)
+        assert(not success)
+
+        # Delete without repeated locking should be fine
+        (success, out) = delete_data_transfer(dummy_conf, DUMMY_USER, DUMMY_ID,
+                                              do_lock=False)
+        assert(success)
+
+        unlock_data_transfers(rw_lock)
 
 
 if __name__ == '__main__':
