@@ -46,6 +46,19 @@ PY2 = sys.version_info[0] < 3
 _TYPE_UNICODE = type(u"")
 
 
+if PY2:
+    class SimpleNamespace(dict):
+        """Bare minimum SimpleNamespace for Python 2."""
+
+        def __getattribute__(self, name):
+            if name == '__dict__':
+                return dict(**self)
+
+            return self[name]
+else:
+    from types import SimpleNamespace
+
+
 def _is_unicode(val):
     """Return boolean indicating if the value is a unicode string.
 

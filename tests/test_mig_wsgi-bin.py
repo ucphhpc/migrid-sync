@@ -1,0 +1,177 @@
+# -*- coding: utf-8 -*-
+#
+# --- BEGIN_HEADER ---
+#
+# test_mig_wsgi-bin - unit tests of the WSGI glue
+# Copyright (C) 2003-2025  The MiG Project by the Science HPC Center at UCPH
+#
+# This file is part of MiG.
+#
+# MiG is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# MiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
+#
+# --- END_HEADER ---
+#
+
+"""Unit tests for the MiG WSGI glue"""
+
+import codecs
+from configparser import ConfigParser
+import importlib
+import os
+import stat
+import sys
+
+from tests.support import PY2, MIG_BASE, MigTestCase, testmain, is_path_within
+from tests.support.wsgisupp import prepare_wsgi, WsgiAssertMixin
+
+from mig.shared.base import client_id_dir, client_dir_id, get_short_id, \
+    invisible_path, allow_script, brief_list
+from mig.shared.compat import SimpleNamespace
+import mig.shared.returnvalues as returnvalues
+
+if PY2:
+    from HTMLParser import HTMLParser
+else:
+    from html.parser import HTMLParser
+
+
+class TitleExtractingHtmlParser(HTMLParser):
+    """An HTML parser using builtin machinery which will extract the title."""
+
+    def __init__(self):
+        HTMLParser.__init__(self)
+        self._title = None
+        self._within_title = None
+
+    def handle_data(self, *args, **kwargs):
+        if self._within_title:
+            self._title = args[0]
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'title':
+            self._within_title = True
+
+    def handle_endtag(self, tag):
+        if tag == 'title':
+            self._within_title = False
+
+    def title(self, trim_newlines=False):
+        if self._title and not self._within_title:
+            if trim_newlines:
+                return self._title.strip()
+            else:
+                return self._title
+        elif self._within_title:
+            raise AssertionError(None, "title end tag missing")
+        else:
+            raise AssertionError(None, "title was not encountered")
+
+
+def _import_forcibly(module_name, relative_module_dir=None):
+    """Custom import function to allow an import of a file for testing
+    that resides within a non-module directory."""
+
+    module_path = os.path.join(MIG_BASE, 'mig')
+    if relative_module_dir is not None:
+        module_path = os.path.join(module_path, relative_module_dir)
+    sys.path.append(module_path)
+    mod = importlib.import_module(module_name)
+    sys.path.pop(-1)  # do not leave the forced module path
+    return mod
+
+
+migwsgi = _import_forcibly('migwsgi', relative_module_dir='wsgi-bin')
+
+
+class FakeBackend:
+    """Object with programmable behaviour that behave like a backend and
+    captures details about the calls made to it. It allows the tests to
+    assert against known outcomes as well as selectively trigger a wider
+    range of codepaths."""
+
+    def __init__(self):
+        self.output_objects = [
+            {'object_type': 'start'},
+            {'object_type': 'title', 'text': 'ERROR'},
+        ]
+        self.return_value = returnvalues.ERROR
+
+    def main(self, client_id, user_arguments_dict):
+        return self.output_objects, self.return_value
+
+    def set_response(self, output_objects, returnvalue):
+        self.output_objects = output_objects
+        self.return_value = returnvalue
+
+    def to_import_module(self):
+        def _import_module(module_path):
+            return self
+        return _import_module
+
+
+class MigWsgibin(MigTestCase, WsgiAssertMixin):
+    """WSGI glue test cases"""
+
+    def _provide_configuration(self):
+        return 'testconfig'
+
+    def before_each(self):
+        self.fake_backend = FakeBackend()
+        self.fake_wsgi = prepare_wsgi(self.configuration, 'http://localhost/')
+
+        self.application_args = (
+            self.fake_wsgi.environ,
+            self.fake_wsgi.start_response,
+        )
+        self.application_kwargs = dict(
+            configuration=self.configuration,
+            _import_module=self.fake_backend.to_import_module(),
+            _set_os_environ=False,
+        )
+
+    def assertHtmlTitle(self, value, title_text=None, trim_newlines=False):
+        assert title_text is not None
+
+        parser = TitleExtractingHtmlParser()
+        parser.feed(value)
+        actual_title = parser.title(trim_newlines=trim_newlines)
+        self.assertEqual(actual_title, title_text)
+
+    def test_return_value_ok_returns_status_200(self):
+        wsgi_result = migwsgi.application(
+            *self.application_args,
+            **self.application_kwargs
+        )
+
+        self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
+
+    def test_return_value_ok_returns_expected_title(self):
+        output_objects = [
+            {'object_type': 'title', 'text': 'TEST'}
+        ]
+        self.fake_backend.set_response(output_objects, returnvalues.OK)
+
+        wsgi_result = migwsgi.application(
+            *self.application_args,
+            **self.application_kwargs
+        )
+
+        output, _ = self.assertWsgiResponse(wsgi_result, self.fake_wsgi, 200)
+        self.assertHtmlTitle(output, title_text='TEST', trim_newlines=True)
+
+
+if __name__ == '__main__':
+    testmain()
