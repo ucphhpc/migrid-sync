@@ -34,7 +34,7 @@ import time
 from mig.shared import returnvalues
 from mig.shared.bailout import bailout_helper, crash_helper, compact_string
 from mig.shared.base import requested_backend, allow_script, \
-    is_default_str_coding, force_default_str_coding_rec
+    is_default_str_coding, force_default_str_coding_rec, force_utf8
 from mig.shared.defaults import download_block_size, default_fs_coding
 from mig.shared.conf import get_configuration_object
 from mig.shared.objecttypes import get_object_type_info
@@ -43,14 +43,19 @@ from mig.shared.safeinput import valid_backend_name, html_escape, InputException
 from mig.shared.scriptinput import fieldstorage_to_dict
 
 
+def _import_backend(backend):
+    import_path = 'mig.shared.functionality.%s' % backend
+    module_handle = importlib.import_module(import_path)
+    return module_handle.main
+
+
 def object_type_info(object_type):
     """Lookup object type"""
 
     return get_object_type_info(object_type)
 
 
-def stub(configuration, client_id, import_path, backend, user_arguments_dict,
-         environ):
+def stub(configuration, client_id, user_arguments_dict, environ, _retrieve_handler):
     """Run backend on behalf of client_id with supplied user_arguments_dict.
     I.e. import main from import_path and execute it with supplied arguments.
     """
@@ -61,6 +66,7 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
     before_time = time.time()
 
     output_objects = []
+    backend = 'UNKNOWN'
     main = dummy_main
 
     # _logger.debug("stub for backend %r" % backend)
@@ -69,10 +75,12 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
     #            NEVER print/output it verbatim before it is validated below.
 
     try:
+        default_page = configuration.site_landing_page # TODO: avoid doing this work a second time
+        backend = requested_backend(environ, fallback=default_page)
         valid_backend_name(backend)
     except InputException as iex:
-        _logger.error("%s refused to import invalid backend %r (%s): %s" %
-                      (_addr, backend, import_path, iex))
+        _logger.error("%s refused to import invalid backend %r: %s" %
+                      (_addr, backend, iex))
         bailout_helper(configuration, backend, output_objects,
                        header_text='User Error')
         output_objects.extend([
@@ -81,18 +89,17 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
             {'object_type': 'link', 'text': 'Go to default interface',
              'destination': configuration.site_landing_page}
         ])
-        return (output_objects, returnvalues.CLIENT_ERROR)
+        return backend, (output_objects, returnvalues.CLIENT_ERROR)
 
     try:
         # Import main from backend module
 
         # _logger.debug("import main from %r" % import_path)
         # NOTE: dynamic module loading to find corresponding main function
-        module_handle = importlib.import_module(import_path)
-        main = module_handle.main
+        main = _retrieve_handler(backend)
     except Exception as err:
-        _logger.error("%s could not import %r (%s): %s" %
-                      (_addr, backend, import_path, err))
+        _logger.error("%s could not import %r: %s" %
+                      (_addr, backend, err))
         bailout_helper(configuration, backend, output_objects)
         output_objects.extend([
             {'object_type': 'error_text', 'text':
@@ -100,22 +107,22 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
             {'object_type': 'link', 'text': 'Go to default interface',
              'destination': configuration.site_landing_page}
         ])
-        return (output_objects, returnvalues.SYSTEM_ERROR)
+        return backend, (output_objects, returnvalues.SYSTEM_ERROR)
 
     # _logger.debug("imported main %s" % main)
 
     # Now backend value is validated to be safe for output
 
     if not isinstance(user_arguments_dict, dict):
-        _logger.error("%s invalid user args %s for %s" % (_addr,
+        _logger.error("%s invalid user args %s for backend %r" % (_addr,
                                                           user_arguments_dict,
-                                                          import_path))
+                                                          backend))
         bailout_helper(configuration, backend, output_objects,
                        header_text='Input Error')
         output_objects.append(
             {'object_type': 'error_text', 'text':
              'User input is not on expected format!'})
-        return (output_objects, returnvalues.INVALID_ARGUMENT)
+        return backend, (output_objects, returnvalues.INVALID_ARGUMENT)
 
     try:
         (output_objects, (ret_code, ret_msg)) = main(client_id,
@@ -125,7 +132,7 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
         _logger.error("%s script crashed:\n%s" % (_addr,
                                                   traceback.format_exc()))
         crash_helper(configuration, backend, output_objects)
-        return (output_objects, returnvalues.ERROR)
+        return backend, (output_objects, returnvalues.ERROR)
 
     (val_ret, val_msg) = validate(output_objects)
     if not val_ret:
@@ -138,7 +145,7 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
     after_time = time.time()
     output_objects.append({'object_type': 'timing_info', 'text':
                            "done in %.3fs" % (after_time - before_time)})
-    return (output_objects, (ret_code, ret_msg))
+    return backend, (output_objects, (ret_code, ret_msg))
 
 
 def wrap_wsgi_errors(environ, configuration, max_line_len=100):
@@ -193,6 +200,14 @@ def application(environ, start_response):
     *start_response* is a helper function used to deliver the client response.
     """
 
+    def _set_os_environ(value):
+        os.environ = value
+
+    return _application(None, environ, start_response, _set_environ=_set_os_environ, _wrap_wsgi_errors=wrap_wsgi_errors)
+
+
+def _application(configuration, environ, start_response, _set_environ, _format_output=format_output, _retrieve_handler=_import_backend, _wrap_wsgi_errors=True, _config_file=None, _skip_log=False):
+
     # NOTE: pass app environ including apache and query args on to sub handlers
     #       through the usual 'os.environ' channel expected in functionality
     #       handlers. Special care is needed to avoid various sub-interpreter
@@ -235,18 +250,20 @@ def application(environ, start_response):
                                                              os_env_value))
 
     # Assign updated environ to LOCAL os.environ for the rest of this session
-    os.environ = environ
+    _set_environ(environ)
 
     # NOTE: redirect stdout to stderr in python 2 only. It breaks logger in 3
     #       and stdout redirection apparently is already handled there.
     if sys.version_info[0] < 3:
         sys.stdout = sys.stderr
 
-    configuration = get_configuration_object()
+    if configuration is None:
+        configuration = get_configuration_object(_config_file, _skip_log)
+
     _logger = configuration.logger
 
     # NOTE: replace default wsgi errors to apache error log with our own logs
-    wrap_wsgi_errors(environ, configuration)
+    _wrap_wsgi_errors(environ, configuration)
 
     for line in env_sync_status:
         _logger.debug(line)
@@ -298,7 +315,6 @@ def application(environ, start_response):
         default_page = configuration.site_landing_page
         script_name = requested_backend(environ, fallback=default_page,
                                         strip_ext=False)
-        backend = requested_backend(environ, fallback=default_page)
         # _logger.debug('DEBUG: wsgi found backend %s and script %s' %
         #              (backend, script_name))
         fieldstorage = cgi.FieldStorage(fp=environ['wsgi.input'],
@@ -307,13 +323,12 @@ def application(environ, start_response):
         if 'output_format' in user_arguments_dict:
             output_format = user_arguments_dict['output_format'][0]
 
-        module_path = 'mig.shared.functionality.%s' % backend
         (allow, msg) = allow_script(configuration, script_name, client_id)
         if allow:
             # _logger.debug("wsgi handling script: %s" % script_name)
-            (output_objs, ret_val) = stub(configuration, client_id,
-                                          module_path, backend,
-                                          user_arguments_dict, environ)
+            backend, (output_objs, ret_val) = stub(configuration, client_id,
+                                          user_arguments_dict, environ,
+                                          _retrieve_handler)
         else:
             _logger.warning("wsgi handling refused script:%s" % script_name)
             (output_objs, ret_val) = reject_main(client_id,
@@ -363,7 +378,7 @@ def application(environ, start_response):
     output_objs.append(wsgi_entry)
 
     _logger.debug("call format %r output to %s" % (backend, output_format))
-    output = format_output(configuration, backend, ret_code, ret_msg,
+    output = _format_output(configuration, backend, ret_code, ret_msg,
                            output_objs, output_format)
     # _logger.debug("formatted %s output to %s" % (backend, output_format))
     # _logger.debug("output:\n%s" % [output])
@@ -372,7 +387,7 @@ def application(environ, start_response):
         _logger.error(
             "Formatted output is NOT on default str coding: %s" % [output[:100]])
         err_mark = '__****__'
-        output = format_output(configuration, backend, ret_code, ret_msg,
+        output = _format_output(configuration, backend, ret_code, ret_msg,
                                force_default_str_coding_rec(
                                    output_objs, highlight=err_mark),
                                output_format)
@@ -396,7 +411,14 @@ def application(environ, start_response):
     # NOTE: send response to client but don't crash e.g. on closed connection
     try:
         start_response(status, response_headers)
+    except IOError as ioe:
+        _logger.warning("WSGI %s for %s could not deliver output: %s" %
+                        (backend, client_id, ioe))
+    except Exception as exc:
+        _logger.error("WSGI %s for %s crashed during response: %s" %
+                      (backend, client_id, exc))
 
+    try:
         # NOTE: we consistently hit download error for archive files reaching ~2GB
         #       with showfreezefile.py on wsgi but the same on cgi does NOT suffer
         #       the problem for the exact same files. It seems wsgi has a limited
@@ -410,12 +432,12 @@ def application(environ, start_response):
             _logger.info("WSGI %s yielding %d output parts (%db)" %
                          (backend, chunk_parts, content_length))
         # _logger.debug("send chunked %r response to client" % backend)
-        for i in xrange(chunk_parts):
+        for i in list(range(chunk_parts)):
             # _logger.debug("WSGI %s yielding part %d / %d output parts" %
             #              (backend, i+1, chunk_parts))
             # end index may be after end of content - but no problem
             part = output[i*download_block_size:(i+1)*download_block_size]
-            yield part
+            yield force_utf8(part)
         if chunk_parts > 1:
             _logger.info("WSGI %s finished yielding all %d output parts" %
                          (backend, chunk_parts))

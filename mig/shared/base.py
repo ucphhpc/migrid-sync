@@ -542,8 +542,9 @@ def force_utf8_rec(input_obj, highlight=''):
     if isinstance(input_obj, dict):
         return {force_utf8_rec(i, highlight): force_utf8_rec(j, highlight) for (i, j) in
                 input_obj.items()}
-    elif isinstance(input_obj, list):
-        return [force_utf8_rec(i, highlight) for i in input_obj]
+    elif isinstance(input_obj, (list, tuple)):
+        thetype = type(input_obj)
+        return thetype(force_utf8_rec(i, highlight) for i in input_obj)
     elif is_unicode(input_obj):
         return force_utf8(input_obj, highlight)
     else:
@@ -570,8 +571,9 @@ def force_unicode_rec(input_obj, highlight=''):
     if isinstance(input_obj, dict):
         return {force_unicode_rec(i, highlight): force_unicode_rec(j, highlight) for (i, j) in
                 input_obj.items()}
-    elif isinstance(input_obj, list):
-        return [force_unicode_rec(i, highlight) for i in input_obj]
+    elif isinstance(input_obj, (list, tuple)):
+        thetype = type(input_obj)
+        return thetype(force_utf8_rec(i, highlight) for i in input_obj)
     elif not is_unicode(input_obj):
         return force_unicode(input_obj, highlight)
     else:
