@@ -193,6 +193,13 @@ def application(environ, start_response):
     *start_response* is a helper function used to deliver the client response.
     """
 
+    def _set_os_environ(value):
+        os.environ = value
+
+    return _application(environ, start_response, _format_output=format_output, _set_environ=_set_os_environ, _wrap_wsgi_errors=wrap_wsgi_errors)
+
+def _application(environ, start_response, _format_output, _set_environ, _wrap_wsgi_errors=True, _config_file=None, _skip_log=False):
+
     # NOTE: pass app environ including apache and query args on to sub handlers
     #       through the usual 'os.environ' channel expected in functionality
     #       handlers. Special care is needed to avoid various sub-interpreter
@@ -235,18 +242,18 @@ def application(environ, start_response):
                                                              os_env_value))
 
     # Assign updated environ to LOCAL os.environ for the rest of this session
-    os.environ = environ
+    _set_environ(environ)
 
     # NOTE: redirect stdout to stderr in python 2 only. It breaks logger in 3
     #       and stdout redirection apparently is already handled there.
     if sys.version_info[0] < 3:
         sys.stdout = sys.stderr
 
-    configuration = get_configuration_object()
+    configuration = get_configuration_object(_config_file, _skip_log)
     _logger = configuration.logger
 
     # NOTE: replace default wsgi errors to apache error log with our own logs
-    wrap_wsgi_errors(environ, configuration)
+    _wrap_wsgi_errors(environ, configuration)
 
     for line in env_sync_status:
         _logger.debug(line)
@@ -363,7 +370,7 @@ def application(environ, start_response):
     output_objs.append(wsgi_entry)
 
     _logger.debug("call format %r output to %s" % (backend, output_format))
-    output = format_output(configuration, backend, ret_code, ret_msg,
+    output = _format_output(configuration, backend, ret_code, ret_msg,
                            output_objs, output_format)
     # _logger.debug("formatted %s output to %s" % (backend, output_format))
     # _logger.debug("output:\n%s" % [output])
@@ -396,7 +403,14 @@ def application(environ, start_response):
     # NOTE: send response to client but don't crash e.g. on closed connection
     try:
         start_response(status, response_headers)
+    except IOError as ioe:
+        _logger.warning("WSGI %s for %s could not deliver output: %s" %
+                        (backend, client_id, ioe))
+    except Exception as exc:
+        _logger.error("WSGI %s for %s crashed during response: %s" %
+                      (backend, client_id, exc))
 
+    try:
         # NOTE: we consistently hit download error for archive files reaching ~2GB
         #       with showfreezefile.py on wsgi but the same on cgi does NOT suffer
         #       the problem for the exact same files. It seems wsgi has a limited
@@ -410,7 +424,7 @@ def application(environ, start_response):
             _logger.info("WSGI %s yielding %d output parts (%db)" %
                          (backend, chunk_parts, content_length))
         # _logger.debug("send chunked %r response to client" % backend)
-        for i in xrange(chunk_parts):
+        for i in list(range(chunk_parts)):
             # _logger.debug("WSGI %s yielding part %d / %d output parts" %
             #              (backend, i+1, chunk_parts))
             # end index may be after end of content - but no problem
