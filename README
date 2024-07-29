@@ -279,11 +279,13 @@ sudo pip install pygdb
 
 The optional but recommended email-validator module used for verification e.g.
 of user email addresses during sign up is available with pip. It relies on
-the similarly pip installable dnspython library, which migrated to python 3 in
-the 2.x versions. Thus, for it to work with older python versions the pip
-installation command requires an explicit 1.x version as in:
-sudo pip install dnspython==1.16.0 email-validator
-For python 3.x one can simply install with pip3 without such workarounds:
+the similarly pip installable dnspython library, which dropped python2 support
+in the 2.x series. Furthermore email-validator itself silently started
+migrating to python 3 in the 1.3.x and officially in 2.x version. Thus, for it
+to work with python2 versions the pip installation command requires quite
+explicit versions as in:
+sudo pip install 'dnspython<2.0' 'email-validator<1.3'
+For python 3 one can simply install with pip3 without such workarounds:
 sudo pip3 install email-validator
 
 The optional workflows module relies on the python special modules 
