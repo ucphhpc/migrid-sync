@@ -78,7 +78,8 @@ def main(_exit=sys.exit):
     config_global_values = _assert_local_config_global_values(config)
 
     from mig.shared.conf import get_configuration_object
-    configuration = get_configuration_object(_TEST_CONF_FILE, skip_log=True)
+    configuration = get_configuration_object(_TEST_CONF_FILE, skip_log=True,
+                                             disable_auth_log=True)
     logging.basicConfig(filename=None, level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(message)s")
     configuration.logger = logging

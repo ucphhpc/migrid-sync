@@ -685,20 +685,21 @@ class Configuration:
 
     # constructor
 
-    def __init__(self, config_file, verbose=False, skip_mig_log=False,
-                 skip_gdp_log=False, skip_auth_log=False):
+    def __init__(self, config_file, verbose=False, skip_log=False,
+                 disable_auth_log=False):
         self.config_file = config_file
-        self.reload_config(verbose, skip_mig_log, skip_gdp_log, skip_auth_log)
+        self.reload_config(verbose, skip_log, disable_auth_log)
 
-    def reload_config(self, verbose, skip_mig_log=False, skip_gdp_log=False,
-                      skip_auth_log=False):
-        """Re-read and parse configuration file. Optional skip_X_log args
-        initializes corresponding logger to use the NullHandler in order to
+    def reload_config(self, verbose, skip_log=False, disable_auth_log=False):
+        """Re-read and parse configuration file. Optional skip_log arg
+        initializes default logger(s) to use the NullHandler in order to
         avoid uninitialized log while not really touching log files or causing
-        stdio output. The skip_mig_log is used to disable logging to mig.log
-        from griddaemons, which already set up their own per-daemon log.
-        The others are likely only needed e.g. in unit testing and such places
-        where log makes little sense.
+        stdio output. It is mainly used to disable logging to mig.log from
+        grid_X daemons, which already set up their own per-daemon log for the
+        purpose.
+        The optional disable_auth_log is a workaround ONLY to be used inside a
+        few unit tests where auth.log is really only in the way. It should
+        NEVER be set in code used for production.
         """
 
         try:
@@ -739,7 +740,7 @@ location.""" % self.config_file)
             self.logfile = 'mig.log'
             self.loglevel = 'info'
 
-        if skip_mig_log:
+        if skip_log:
             self.log_path = None
         else:
             self.log_path = os.path.join(self.log_dir, self.logfile)
@@ -2076,7 +2077,7 @@ location.""" % self.config_file)
         syslog_gdp = None
         if config.has_option('SITE', 'enable_gdp'):
             self.site_enable_gdp = config.getboolean('SITE', 'enable_gdp')
-            if not skip_gdp_log and self.site_enable_gdp:
+            if not skip_log and self.site_enable_gdp:
                 syslog_gdp = SYSLOG_GDP
         else:
             self.site_enable_gdp = False
@@ -2491,7 +2492,7 @@ location.""" % self.config_file)
 
         # Init auth logger
 
-        if skip_auth_log:
+        if disable_auth_log:
             self.user_auth_log = None
 
         if self.auth_logger_obj:
