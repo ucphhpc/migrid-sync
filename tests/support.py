@@ -85,7 +85,7 @@ class FakeLogger:
     majority of MiG code by presenting an API compatible interface
     with the common logger module.
 
-    An instance of this class is made avaiable to test cases which
+    An instance of this class is made available to test cases which
     can pass it down into function calls and subsequenently make
     assertions against any output strings hat were recorded during
     execution while also avoiding noise hitting the console.
@@ -111,7 +111,7 @@ class FakeLogger:
         # complain loudly (and in detail) in the case of unclosed files
         if len(unclosed_by_file) > 0:
             messages = '\n'.join({' --> %s: line=%s, file=%s' % (fname, lineno, outname)
-                                 for fname, (lineno, outname) in unclosed_by_file.items()})
+                                  for fname, (lineno, outname) in unclosed_by_file.items()})
             raise RuntimeError('unclosed files encountered:\n%s' % (messages,))
 
     def debug(self, line):
@@ -153,6 +153,23 @@ class FakeLogger:
         relative_outputfile = os.path.relpath(
             matched.groups('location')[0], start=TEST_BASE)
         return (relative_testfile, (lineno, relative_outputfile))
+
+
+class FakeConfiguration:
+    """A simple helper to pretend we have a real Configuration object with any
+    required attributes explicitly passed.
+    Automatically attaches a FakeLogger instance if no logger is provided in
+    kwargs.
+    """
+
+    def __init__(self, **kwargs):
+        """Initialise instance attributes to be any named args provided and a
+        FakeLogger instance attached if not provided.
+        """
+        self.__dict__.update(kwargs)
+        if not 'logger' in self.__dict__:
+            dummy_logger = FakeLogger()
+            self.__dict__.update({'logger': dummy_logger})
 
 
 class MigTestCase(TestCase):
