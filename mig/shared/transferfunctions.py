@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # transferfunctions - data transfer helper functions
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -38,12 +38,19 @@ import time
 from mig.shared.base import client_id_dir, mask_creds
 from mig.shared.defaults import datatransfers_filename, user_keys_dir, \
     transfer_output_dir
-from mig.shared.fileio import makedirs_rec, delete_file
+from mig.shared.fileio import makedirs_rec, delete_file, acquire_file_lock, \
+    release_file_lock, remove_rec
 from mig.shared.safeeval import subprocess_popen, subprocess_pipe
 from mig.shared.serial import load, dump
 
 default_key_type = 'rsa'
 default_key_bits = 2048
+
+
+def get_transfers_path(configuration, client_id):
+    """Build the default transfers file path for client_id"""
+    return os.path.join(configuration.user_settings, client_id_dir(client_id),
+                        datatransfers_filename)
 
 
 def get_status_dir(configuration, client_id, transfer_id=''):
@@ -65,7 +72,7 @@ def blind_pw(transfer_dict):
     for target in ('lftp_src', 'lftp_dst'):
         if transfer_dict.get(target, ''):
             replace_map[target] = (
-                r'(.*://[^:]*):[^@]+@(.*)',  r'\1:%s@\2' % hide_pw)
+                r'(.*://[^:]*):[^@]+@(.*)', r'\1:%s@\2' % hide_pw)
     blinded = mask_creds(
         transfer_dict, masked_value=hide_pw, subst_map=replace_map)
     return blinded
@@ -114,32 +121,58 @@ def build_keyitem_object(configuration, key_dict):
     return key_obj
 
 
-def load_data_transfers(configuration, client_id):
-    """Find all data transfers owned by user"""
+def lock_data_transfers(transfers_path, exclusive=True, blocking=True):
+    """Lock per-user transfers index"""
+    transfers_lock_path = '%s.lock' % transfers_path
+    return acquire_file_lock(transfers_lock_path, exclusive=exclusive,
+                             blocking=blocking)
+
+
+def unlock_data_transfers(transfers_lock):
+    """Unlock per-user transfers index"""
+    return release_file_lock(transfers_lock)
+
+
+def load_data_transfers(configuration, client_id, do_lock=True, blocking=True):
+    """Find all data transfers owned by user with optional locking support
+    for synchronized access.
+    """
     logger = configuration.logger
     logger.debug("load transfers for %s" % client_id)
+    transfers_path = get_transfers_path(configuration, client_id)
+    if do_lock:
+        flock = lock_data_transfers(transfers_path, exclusive=False,
+                                    blocking=blocking)
+        if not blocking and not flock:
+            return (False, "could not lock+load saved data transfers for %s" %
+                    client_id)
     try:
-        transfers_path = os.path.join(configuration.user_settings,
-                                      client_id_dir(client_id),
-                                      datatransfers_filename)
         logger.debug("load transfers from %s" % transfers_path)
         if os.path.isfile(transfers_path):
             transfers = load(transfers_path)
         else:
             transfers = {}
     except Exception as exc:
+        if do_lock:
+            unlock_data_transfers(flock)
         return (False, "could not load saved data transfers: %s" % exc)
+    if do_lock:
+        unlock_data_transfers(flock)
     return (True, transfers)
 
 
-def get_data_transfer(configuration, client_id, transfer_id, transfers=None):
+def get_data_transfer(configuration, client_id, transfer_id, transfers=None,
+                      do_lock=True, blocking=True):
     """Helper to extract all details for a data transfer. The optional
     transfers argument can be used to pass an already loaded dictionary of
-    saved transfers to avoid reloading.
+    saved transfers to avoid reloading. In that case the caller might want to
+    hold the corresponding lock during the handling here to avoid races.
+    Locking is also generally supported for synchronized access.
     """
     if transfers is None:
         (load_status, transfers) = load_data_transfers(configuration,
-                                                       client_id)
+                                                       client_id, do_lock,
+                                                       blocking)
         if not load_status:
             return (load_status, transfers)
     transfer_dict = transfers.get(transfer_id, None)
@@ -150,18 +183,34 @@ def get_data_transfer(configuration, client_id, transfer_id, transfers=None):
 
 
 def modify_data_transfers(configuration, client_id, transfer_dict, action,
-                          transfers=None):
+                          transfers=None, do_lock=True, blocking=True):
     """Modify data transfers with given action and transfer_dict for client_id.
     In practice this a shared helper to add or remove transfers from the saved
     data transfers. The optional transfers argument can be used to pass an
-    already loaded dictionary of saved transfers to avoid reloading.
+    already loaded dictionary of saved transfers to avoid reloading. In that
+    case the caller might want to hold the corresponding lock during the
+    handling here to avoid races. Locking is also generally supported for
+    synchronized access.
     """
     logger = configuration.logger
     transfer_id = transfer_dict['transfer_id']
+    transfers_path = get_transfers_path(configuration, client_id)
+    # Lock during entire load and save
+    if do_lock:
+        flock = lock_data_transfers(transfers_path, exclusive=True,
+                                    blocking=blocking)
+        if not blocking and not flock:
+            return (False, "could not lock+update data transfers for %s" %
+                    client_id)
+
     if transfers is None:
+        # Load without repeated lock
         (load_status, transfers) = load_data_transfers(configuration,
-                                                       client_id)
+                                                       client_id,
+                                                       do_lock=False)
         if not load_status:
+            if do_lock:
+                unlock_data_transfers(flock)
             logger.error("modify_data_transfers failed in load: %s" %
                          transfers)
             return (load_status, transfers)
@@ -180,49 +229,61 @@ def modify_data_transfers(configuration, client_id, transfer_dict, action,
     elif action == "delete":
         del transfers[transfer_id]
     else:
-        return (False, "Invalid action %s on data transfers" % action)
+        if do_lock:
+            unlock_data_transfers(flock)
+        return (False, "Invalid action %s on data transfer %s" % (action,
+                                                                  transfer_id))
 
     try:
-        transfers_path = os.path.join(configuration.user_settings,
-                                      client_id_dir(client_id),
-                                      datatransfers_filename)
         dump(transfers, transfers_path)
         res_dir = get_status_dir(configuration, client_id, transfer_id)
         makedirs_rec(res_dir, configuration)
     except Exception as err:
+        if do_lock:
+            unlock_data_transfers(flock)
         logger.error("modify_data_transfers failed: %s" % err)
         return (False, 'Error updating data transfers: %s' % err)
+    if do_lock:
+        unlock_data_transfers(flock)
     return (True, transfer_id)
 
 
 def create_data_transfer(configuration, client_id, transfer_dict,
-                         transfers=None):
+                         transfers=None, do_lock=True, blocking=True):
     """Create a new data transfer for client_id. The optional
     transfers argument can be used to pass an already loaded dictionary of
-    saved transfers to avoid reloading.
+    saved transfers to avoid reloading. In that case the caller might want to
+    hold the corresponding lock during the handling here to avoid races.
+    Locking is also generally supported for synchronized access.
     """
     return modify_data_transfers(configuration, client_id, transfer_dict,
-                                 "create", transfers)
+                                 "create", transfers, do_lock, blocking)
 
 
 def update_data_transfer(configuration, client_id, transfer_dict,
-                         transfers=None):
+                         transfers=None, do_lock=True, blocking=True):
     """Update existing data transfer for client_id. The optional transfers
     argument can be used to pass an already loaded dictionary of saved
-    transfers to avoid reloading.
+    transfers to avoid reloading. In that case the caller might want to
+    hold the corresponding lock during the handling here to avoid races.
+    Locking is also generally supported for synchronized access.
     """
     return modify_data_transfers(configuration, client_id, transfer_dict,
-                                 "modify", transfers)
+                                 "modify", transfers, do_lock, blocking)
 
 
 def delete_data_transfer(configuration, client_id, transfer_id,
-                         transfers=None):
+                         transfers=None, do_lock=True, blocking=True):
     """Delete an existing data transfer without checking ownership. The
     optional transfers argument can be used to pass an already loaded
-    dictionary of saved transfers to avoid reloading.    """
+    dictionary of saved transfers to avoid reloading. In that case the caller
+    might want to hold the corresponding lock during the handling here to avoid
+    races.
+    Locking is also generally supported for synchronized access.
+    """
     transfer_dict = {'transfer_id': transfer_id}
     return modify_data_transfers(configuration, client_id, transfer_dict,
-                                 "delete", transfers)
+                                 "delete", transfers, do_lock, blocking)
 
 
 def load_user_keys(configuration, client_id):
@@ -434,11 +495,93 @@ if __name__ == "__main__":
     from mig.shared.conf import get_configuration_object
     conf = get_configuration_object()
     print("Unit testing transfer functions")
+    # NOTE: use /tmp for testing
+    orig_user_settings = conf.user_settings
+    client, transfer = "testuser", "testtransfer"
+    conf.user_settings = '/tmp/transferstest'
+    dummy_transfers_dir = os.path.join(conf.user_settings, client)
+    dummy_transfers_file = os.path.join(dummy_transfers_dir,
+                                        datatransfers_filename)
+    makedirs_rec(dummy_transfers_dir, conf)
+    transfer_dict = {'transfer_id': transfer}
+    dummypw = 'NotSoSecretDummy'
+    transfer_dict.update(
+        {'password': dummypw,
+         'lftp_src': 'sftp://john.doe:%s@nowhere.org/README' % dummypw,
+         'lftp_dst': 'https://john.doe:%s@outerspace.org/' % dummypw,
+         })
+    print("=== user transfers dict mangling ===")
+    (status, transfers) = load_data_transfers(conf, client)
+    print("initial transfers before create : %s" % transfers)
+    create_data_transfer(conf, client, transfer_dict)
+    (status, transfers) = load_data_transfers(conf, client)
+    print("transfers after create: %s" % transfers)
+    transfer_dict['password'] += "-UPDATED-NOW"
+    update_data_transfer(conf, client, transfer_dict)
+    (status, transfers) = load_data_transfers(conf, client)
+    print("transfers after update: %s" % transfers)
+    delete_data_transfer(conf, client, transfer)
+    (status, transfers) = load_data_transfers(conf, client)
+    print("transfers after delete: %s" % transfers)
+
+    print("lock transfers file for testing prevented create access")
+    dummy_lock = lock_data_transfers(dummy_transfers_file, exclusive=True)
+    for i in range(3):
+        print("try creating transfer while locked (%d)" % i)
+        transfer_dict['transfer_id'] = '%s-%s' % (transfer, i)
+        (create_status, created_id) = \
+            create_data_transfer(conf, client, transfer_dict,
+                                 blocking=False)
+        print("create transfer while locked status: %s" % create_status)
+        time.sleep(1)
+    print("unlock transfers file for testing restored create access")
+    unlock_data_transfers(dummy_lock)
+    (status, transfers) = load_data_transfers(conf, client)
+    print("transfers after locked create attempts: %s" % transfers)
+    for i in range(3):
+        print("try creating transfer while unlocked (%d)" % i)
+        transfer_dict['transfer_id'] = '%s-%s' % (transfer, i)
+        (create_status, created_id) = \
+            create_data_transfer(conf, client, transfer_dict,
+                                 blocking=False)
+        print("create transfer while unlocked status: %s" % create_status)
+        time.sleep(1)
+
+    (status, transfers) = load_data_transfers(conf, client)
+    print("transfers after unlocked create attempts: %s" % transfers)
+    print("lock transfers file for testing prevented delete access")
+    dummy_lock = lock_data_transfers(dummy_transfers_file, exclusive=True)
+    for i in range(3):
+        print("try deleting transfer while locked (%d)" % i)
+        transfer_id = transfer_dict['transfer_id'] = '%s-%s' % (transfer, i)
+        (delete_status, delete_id) = \
+            delete_data_transfer(conf, client, transfer_id,
+                                 blocking=False)
+        print("delete transfer while locked status: %s" % delete_status)
+        time.sleep(1)
+
+    print("unlock transfers file for testing restored delete access")
+    unlock_data_transfers(dummy_lock)
+    (status, transfers) = load_data_transfers(conf, client)
+    print("transfers after locked delete attempts: %s" % transfers)
+    for i in range(3):
+        print("try deleting transfer while unlocked (%d)" % i)
+        transfer_id = transfer_dict['transfer_id'] = '%s-%s' % (transfer, i)
+        (delete_status, delete_id) = \
+            delete_data_transfer(conf, client, transfer_id,
+                                 blocking=False)
+        print("delete transfer while unlocked status: %s" % delete_status)
+        time.sleep(1)
+
+    (status, transfers) = load_data_transfers(conf, client)
+    print("transfers after unlocked delete attempts: %s" % transfers)
+
+    remove_rec(dummy_transfers_dir, conf)
+
     print("=== sub pid functions ===")
     import multiprocessing
     manager = multiprocessing.Manager()
     sub_procs_map = manager.dict()
-    client, transfer = "testuser", "testtransfer"
     sub_procs = sub_pid_list(conf, sub_procs_map, client, transfer)
     print("initial sub pids: %s" % sub_procs)
     for pid in xrange(3):
@@ -476,13 +619,6 @@ if __name__ == "__main__":
         print("verify transfer worker is no longer found: %s" % verify_worker)
     transfer_workers = all_worker_transfers(conf, workers_map)
     print("final transfer workers: %s" % transfer_workers)
-    transfer_dict = {}
-    dummypw = 'NotSoSecretDummy'
-    transfer_dict.update(
-        {'password': dummypw,
-         'lftp_src': 'sftp://john.doe:%s@nowhere.org/README' % dummypw,
-         'lftp_dst': 'https://john.doe:%s@outerspace.org/' % dummypw,
-         })
 
     print("raw transfer dict:\n%s\nis blinded into:\n%s" %
           (transfer_dict, blind_pw(transfer_dict)))
