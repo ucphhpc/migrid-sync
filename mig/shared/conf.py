@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # conf - Server configuration handling
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -35,9 +35,11 @@ import sys
 from mig.shared.fileio import unpickle
 
 
-def get_configuration_object(config_file=None, skip_log=False):
+def get_configuration_object(config_file=None, skip_log=False,
+                             disable_auth_log=False):
     """Simple helper to call the general configuration init. Optional skip_log
-    argument is passed on to allow skipping the default log initialization.
+    and disable_auth_log arguments are passed on to allow skipping the default
+    log initialization and disabling auth log for unit tests.
     """
     from mig.shared.configuration import Configuration
     if config_file:
@@ -51,7 +53,8 @@ def get_configuration_object(config_file=None, skip_log=False):
         else:
             _config_file = os.path.join(app_dir, '..', 'server',
                                         'MiGserver.conf')
-    configuration = Configuration(_config_file, False, skip_log)
+    configuration = Configuration(_config_file, False, skip_log,
+                                  disable_auth_log)
     return configuration
 
 

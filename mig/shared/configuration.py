@@ -707,15 +707,21 @@ class Configuration(object):
 
     # constructor
 
-    def __init__(self, config_file, verbose=False, skip_log=False):
+    def __init__(self, config_file, verbose=False, skip_log=False,
+                 disable_auth_log=False):
         self.config_file = config_file
-        self.reload_config(verbose, skip_log)
+        self.reload_config(verbose, skip_log, disable_auth_log)
 
-    def reload_config(self, verbose, skip_log=False):
-        """Re-read and parse configuration file. Optional skip_log
-        initializes default logger to use the NullHandler in order to avoid
-        uninitialized log while not really touching log files or causing stdio
-        output.
+    def reload_config(self, verbose, skip_log=False, disable_auth_log=False):
+        """Re-read and parse configuration file. Optional skip_log arg
+        initializes default logger(s) to use the NullHandler in order to
+        avoid uninitialized log while not really touching log files or causing
+        stdio output. It is mainly used to disable logging to mig.log from
+        grid_X daemons, which already set up their own per-daemon log for the
+        purpose.
+        The optional disable_auth_log is a workaround ONLY to be used inside a
+        few unit tests where auth.log is really only in the way. It should
+        NEVER be set in code used for production.
         """
 
         try:
@@ -2511,17 +2517,14 @@ location.""" % self.config_file)
 
         # Init auth logger
 
-        auth_logger_logfile = None
-        if skip_log:
-            auth_logger_logfile = None
-        else:
-            auth_logger_logfile = self.user_auth_log
+        if disable_auth_log:
+            self.user_auth_log = None
 
         if self.auth_logger_obj:
             self.auth_logger_obj.reopen()
         else:
             self.auth_logger_obj = Logger(
-                self.loglevel, logfile=auth_logger_logfile, app='main-auth')
+                self.loglevel, logfile=self.user_auth_log, app='main-auth')
         self.auth_logger = self.auth_logger_obj.logger
 
         # cert and key for generating a default proxy for nordugrid/ARC
