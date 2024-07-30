@@ -36,7 +36,7 @@ from past.builtins import basestring
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), ".")))
 
 from support import MigTestCase, testmain
-from mig.shared.safeinput import \
+from mig.shared.safeinput import main as safeinput_main, InputException, \
     filter_commonname, valid_commonname
 
 PY2 = sys.version_info[0] == 2
@@ -56,12 +56,21 @@ def is_string_of_unicode(value):
 
 class MigSharedSafeinput(MigTestCase):
 
-    def test_basic_import(self):
-        safeimport = importlib.import_module("mig.shared.safeinput")
-
     def test_existing_main(self):
-        safeimport = importlib.import_module("mig.shared.safeinput")
-        safeimport.main(_print=lambda _: None)
+        def raise_on_error_exit(exit_code):
+            if exit_code != 0:
+                if raise_on_error_exit.last_print is not None:
+                    identifying_message = raise_on_error_exit.last_print
+                else:
+                    identifying_message = 'unknown'
+                raise AssertionError(
+                    'failure in unittest/testcore: %s' % (identifying_message,))
+        raise_on_error_exit.last_print = None
+
+        def record_last_print(value):
+            raise_on_error_exit.last_print = value
+
+        safeinput_main(_exit=raise_on_error_exit, _print=record_last_print)
 
     COMMONNAME_PERMITTED = (
         'Firstname Lastname',
@@ -81,7 +90,7 @@ class MigSharedSafeinput(MigTestCase):
             saw_raise = False
             try:
                 valid_commonname(test_cn)
-            except Exception:
+            except InputException:
                 saw_raise = True
             self.assertFalse(saw_raise)
 
@@ -89,7 +98,7 @@ class MigSharedSafeinput(MigTestCase):
             saw_raise = False
             try:
                 valid_commonname(test_cn)
-            except Exception:
+            except InputException:
                 saw_raise = True
             self.assertTrue(saw_raise)
 
