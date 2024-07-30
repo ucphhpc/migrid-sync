@@ -36,8 +36,13 @@ from past.builtins import basestring
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), ".")))
 
 from support import MigTestCase, testmain
+from mig.shared.defaults import AUTH_OPENID_V2
 from mig.shared.safeinput import \
+    _validated_input_checks, \
     filter_commonname, valid_commonname
+from mig.shared.functionality.autocreate import AUTOCREATE_AUTH_DEFAULTS
+
+import mig.shared.safeinput as validators
 
 PY2 = sys.version_info[0] == 2
 
@@ -51,6 +56,7 @@ def as_string_of_unicode(value):
 
 
 def is_string_of_unicode(value):
+    assert isinstance(value, basestring)
     return type(value) == type(u'')
 
 
@@ -103,6 +109,28 @@ class MigSharedSafeinput(MigTestCase):
             test_cn_unicode = as_string_of_unicode(test_cn)
             filtered_cn = filter_commonname(test_cn)
             self.assertNotEqual(filtered_cn, test_cn_unicode)
+
+    def test__validated_input_checks_commonname_openid_2(self):
+        DEFAULTS = AUTOCREATE_AUTH_DEFAULTS[AUTH_OPENID_V2]
+        input_dict = {
+            'openid.ns.sreg':
+                            ['http://openid.net/extensions/sreg/1.1'],
+                            'openid.sreg.ou': ['nbi'],
+                            'openid.sreg.nickname': ['brs278@ku.dk'],
+                            'openid.sreg.fullname': ['Jonas Bardino'],
+                            'openid.sreg.role': ['tap', 'staff'],
+                            'openid.sreg.roles': ['tap, staff', 'developer'],
+                            'openid.sreg.association': ['sci-nbi-tap'],
+                            'openid.sreg.o': ['science'],
+                            'openid.sreg.email': ['bardino@nbi.ku.dk']}
+
+        perform_checks = _validated_input_checks(input_dict, DEFAULTS, type_override={}, value_override={})
+        type_keys = set(perform_checks.type.keys())
+        value_keys = set(perform_checks.value.keys())
+
+        present_keys = set.union(type_keys, value_keys)
+        unique_keys = set.intersection(type_keys, present_keys)
+        self.assertEqual(len(present_keys), len(unique_keys))
 
 
 if __name__ == '__main__':
