@@ -40,38 +40,28 @@ DUMMY_BYTESRAW = binascii.unhexlify('DEADBEEF') # 4 bytes
 DUMMY_UNICODE = u'UniCode123½¾µßðþđŋħĸþł@ª€£$¥©®'
 
 
-if PY2:
-    def _strbytes(value):
-        assert isinstance(value, str)
-        return value
-else:
-    def _strbytes(value):
-        assert isinstance(value, str)
-        return bytes(value, 'utf8')
-
-
 class MigSharedBase__force_default_fs_coding_rec(MigTestCase):
     """Unit tests of mig.shared.base force_default_fs_coding_rec()"""
 
     def test_encode_a_string(self):
         output = force_default_fs_coding_rec('foobar')
 
-        self.assertEqual(output, _strbytes('foobar'))
+        self.assertEqual(output, 'foobar')
 
     def test_encode_within_a_dict(self):
         output = force_default_fs_coding_rec({ 'key': 'value' })
 
-        self.assertEqual(output, { _strbytes('key'): _strbytes('value') })
+        self.assertEqual(output, { 'key': 'value' })
 
     def test_encode_within_a_list(self):
         output = force_default_fs_coding_rec(['foo', 'bar', 'baz'])
 
-        self.assertEqual(output, [_strbytes('foo'), _strbytes('bar'), _strbytes('baz')])
+        self.assertEqual(output, ['foo', 'bar', 'baz'])
 
     def test_encode_within_a_tuple(self):
         output = force_default_fs_coding_rec(('foo', 'bar', 'baz'))
 
-        self.assertEqual(output, (_strbytes('foo'), _strbytes('bar'), _strbytes('baz')))
+        self.assertEqual(output, ('foo', 'bar', 'baz'))
 
 
 class MigSharedBase__force_default_str_coding_rec(MigTestCase):

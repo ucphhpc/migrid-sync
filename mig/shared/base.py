@@ -519,8 +519,6 @@ def _walk_and_covert_recursive(input_obj, highlight='', _as_bytes=False, _force_
         return thetype((_force_recursive(i, highlight) for i in input_obj))
     elif not is_unicode(input_obj):
         return _force_primitive(input_obj, highlight)
-    elif not PY2 and _as_bytes:
-        return _force_primitive(input_obj, highlight)
     else:
         return input_obj
 
@@ -530,7 +528,7 @@ def force_utf8_rec(input_obj, highlight=''):
     dictionaries with nested unicode strings to a pure utf8 version. Actual
     changes are marked out with the highlight string if given.
     """
-    return _walk_and_covert_recursive(input_obj, highlight, _as_bytes=True, _force_primitive=force_utf8, _force_recursive=force_utf8_rec)
+    return _walk_and_covert_recursive(input_obj, highlight, _force_primitive=force_utf8, _force_recursive=force_utf8_rec)
 
 
 def force_unicode(val, highlight=''):
