@@ -1924,8 +1924,9 @@ openssl genrsa -out %(__DAEMON_KEYCERT__)s 2048""" % user_dict)
             openssl_proc = subprocess_popen(
                 openssl_cmd, stdout=subprocess_pipe)
             raw_sha256 = openssl_proc.stdout.read().strip()
-            daemon_keycert_sha256 = raw_sha256.replace("SHA256 Fingerprint=",
-                                                       "")
+            # NOTE: openssl outputs something like 'SHA256 Fingerprint=BLA'
+            #       but algo part case may vary - split and take last part.
+            daemon_keycert_sha256 = raw_sha256.split(" Fingerprint=", 1)[-1]
         except Exception as exc:
             print("ERROR: failed to extract sha256 fingerprint of %s: %s" %
                   (key_path, exc))
