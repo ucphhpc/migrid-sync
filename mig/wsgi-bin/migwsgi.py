@@ -26,6 +26,7 @@
 #
 
 import cgi
+import codecs
 import importlib
 import os
 import sys
@@ -35,12 +36,25 @@ from mig.shared import returnvalues
 from mig.shared.bailout import bailout_helper, crash_helper, compact_string
 from mig.shared.base import requested_backend, allow_script, \
     is_default_str_coding, force_default_str_coding_rec
+from mig.shared.compat import PY2
 from mig.shared.defaults import download_block_size, default_fs_coding
 from mig.shared.conf import get_configuration_object
 from mig.shared.objecttypes import get_object_type_info
 from mig.shared.output import validate, format_output, dummy_main, reject_main
 from mig.shared.safeinput import valid_backend_name, html_escape, InputException
 from mig.shared.scriptinput import fieldstorage_to_dict
+
+if PY2:
+    pass
+else:
+    def _ensure_wsgi_chunk(chunk):
+        return codecs.encode(chunk, 'utf8')
+
+
+def _import_backend(backend):
+    import_path = 'mig.shared.functionality.%s' % backend
+    module_handle = importlib.import_module(import_path)
+    return module_handle.main
 
 
 def object_type_info(object_type):
@@ -49,8 +63,7 @@ def object_type_info(object_type):
     return get_object_type_info(object_type)
 
 
-def stub(configuration, client_id, import_path, backend, user_arguments_dict,
-         environ):
+def stub(configuration, client_id, user_arguments_dict, environ, _retrieve_handler):
     """Run backend on behalf of client_id with supplied user_arguments_dict.
     I.e. import main from import_path and execute it with supplied arguments.
     """
@@ -61,6 +74,7 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
     before_time = time.time()
 
     output_objects = []
+    backend = 'UNKNOWN'
     main = dummy_main
 
     # _logger.debug("stub for backend %r" % backend)
@@ -69,6 +83,7 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
     #            NEVER print/output it verbatim before it is validated below.
 
     try:
+        backend = requested_backend(environ, fallback=default_page)
         valid_backend_name(backend)
     except InputException as iex:
         _logger.error("%s refused to import invalid backend %r (%s): %s" %
@@ -81,15 +96,14 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
             {'object_type': 'link', 'text': 'Go to default interface',
              'destination': configuration.site_landing_page}
         ])
-        return (output_objects, returnvalues.CLIENT_ERROR)
+        return backend, (output_objects, returnvalues.CLIENT_ERROR)
 
     try:
         # Import main from backend module
 
         # _logger.debug("import main from %r" % import_path)
         # NOTE: dynamic module loading to find corresponding main function
-        module_handle = importlib.import_module(import_path)
-        main = module_handle.main
+        main = _retrieve_handler(backend)
     except Exception as err:
         _logger.error("%s could not import %r (%s): %s" %
                       (_addr, backend, import_path, err))
@@ -100,7 +114,7 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
             {'object_type': 'link', 'text': 'Go to default interface',
              'destination': configuration.site_landing_page}
         ])
-        return (output_objects, returnvalues.SYSTEM_ERROR)
+        return backend, (output_objects, returnvalues.SYSTEM_ERROR)
 
     # _logger.debug("imported main %s" % main)
 
@@ -115,7 +129,7 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
         output_objects.append(
             {'object_type': 'error_text', 'text':
              'User input is not on expected format!'})
-        return (output_objects, returnvalues.INVALID_ARGUMENT)
+        return backend, (output_objects, returnvalues.INVALID_ARGUMENT)
 
     try:
         (output_objects, (ret_code, ret_msg)) = main(client_id,
@@ -125,7 +139,7 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
         _logger.error("%s script crashed:\n%s" % (_addr,
                                                   traceback.format_exc()))
         crash_helper(configuration, backend, output_objects)
-        return (output_objects, returnvalues.ERROR)
+        return backend, (output_objects, returnvalues.ERROR)
 
     (val_ret, val_msg) = validate(output_objects)
     if not val_ret:
@@ -138,7 +152,7 @@ def stub(configuration, client_id, import_path, backend, user_arguments_dict,
     after_time = time.time()
     output_objects.append({'object_type': 'timing_info', 'text':
                            "done in %.3fs" % (after_time - before_time)})
-    return (output_objects, (ret_code, ret_msg))
+    return backend, (output_objects, (ret_code, ret_msg))
 
 
 def wrap_wsgi_errors(environ, configuration, max_line_len=100):
@@ -198,7 +212,7 @@ def application(environ, start_response):
 
     return _application(environ, start_response, _format_output=format_output, _set_environ=_set_os_environ, _wrap_wsgi_errors=wrap_wsgi_errors)
 
-def _application(environ, start_response, _format_output, _set_environ, _wrap_wsgi_errors=True, _config_file=None, _skip_log=False):
+def _application(environ, start_response, _format_output, _set_environ, _retrieve_handler=_import_backend, _wrap_wsgi_errors=True, _config_file=None, _skip_log=False):
 
     # NOTE: pass app environ including apache and query args on to sub handlers
     #       through the usual 'os.environ' channel expected in functionality
@@ -305,7 +319,6 @@ def _application(environ, start_response, _format_output, _set_environ, _wrap_ws
         default_page = configuration.site_landing_page
         script_name = requested_backend(environ, fallback=default_page,
                                         strip_ext=False)
-        backend = requested_backend(environ, fallback=default_page)
         # _logger.debug('DEBUG: wsgi found backend %s and script %s' %
         #              (backend, script_name))
         fieldstorage = cgi.FieldStorage(fp=environ['wsgi.input'],
@@ -314,13 +327,12 @@ def _application(environ, start_response, _format_output, _set_environ, _wrap_ws
         if 'output_format' in user_arguments_dict:
             output_format = user_arguments_dict['output_format'][0]
 
-        module_path = 'mig.shared.functionality.%s' % backend
         (allow, msg) = allow_script(configuration, script_name, client_id)
         if allow:
             # _logger.debug("wsgi handling script: %s" % script_name)
-            (output_objs, ret_val) = stub(configuration, client_id,
-                                          module_path, backend,
-                                          user_arguments_dict, environ)
+            backend, (output_objs, ret_val) = stub(configuration, client_id,
+                                          user_arguments_dict, environ,
+                                          _retrieve_handler)
         else:
             _logger.warning("wsgi handling refused script:%s" % script_name)
             (output_objs, ret_val) = reject_main(client_id,
@@ -370,7 +382,7 @@ def _application(environ, start_response, _format_output, _set_environ, _wrap_ws
     output_objs.append(wsgi_entry)
 
     _logger.debug("call format %r output to %s" % (backend, output_format))
-    output = _format_output(configuration, backend, ret_code, ret_msg,
+    output = format_output(configuration, backend, ret_code, ret_msg,
                            output_objs, output_format)
     # _logger.debug("formatted %s output to %s" % (backend, output_format))
     # _logger.debug("output:\n%s" % [output])
@@ -429,7 +441,7 @@ def _application(environ, start_response, _format_output, _set_environ, _wrap_ws
             #              (backend, i+1, chunk_parts))
             # end index may be after end of content - but no problem
             part = output[i*download_block_size:(i+1)*download_block_size]
-            yield part
+            yield _ensure_wsgi_chunk(part)
         if chunk_parts > 1:
             _logger.info("WSGI %s finished yielding all %d output parts" %
                          (backend, chunk_parts))

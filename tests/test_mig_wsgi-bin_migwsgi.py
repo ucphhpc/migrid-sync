@@ -40,8 +40,9 @@ def create_output_returner(arranged=None):
         return arranged
     return test_format_output
 
-def create_wsgi_environ(config_file, env_http_host=None, env_path_info=None):
+def create_wsgi_environ(config_file, wsgi_input=None, env_http_host=None, env_path_info=None):
     environ = {}
+    environ['wsgi.input'] = ()
     environ['MIG_CONF'] = config_file
     environ['HTTP_HOST'] = env_http_host
     environ['PATH_INFO'] = env_path_info
@@ -106,6 +107,9 @@ class MigSharedConfiguration(MigTestCase):
         config = _assert_local_config()
         config_global_values = _assert_local_config_global_values(config)
 
+        def fake_handler(*args):
+            pass
+
         def fake_start_response(status, headers, exc=None):
             fake_start_response.calls.append((status, headers, exc))
         fake_start_response.calls = []
@@ -120,11 +124,12 @@ class MigSharedConfiguration(MigTestCase):
             env_path_info='/'
         )
 
-        test_output_returner = create_output_returner(b'')
+        test_output_returner = create_output_returner('HELLO WORLD')
 
         yielder = migwsgi._application(wsgi_environ, fake_start_response,
             _format_output=test_output_returner,
             _set_environ=fake_set_environ,
+            _retrieve_handler=lambda _: fake_handler,
             _wrap_wsgi_errors=noop,
             _config_file=_TEST_CONF_FILE,
             _skip_log=True,
@@ -132,7 +137,8 @@ class MigSharedConfiguration(MigTestCase):
         chunks = list(yielder)
 
         self.assertGreater(len(chunks), 0)
-
+        import codecs
+        print(codecs.decode(chunks[0], 'utf8'))
 
 
 if __name__ == '__main__':
