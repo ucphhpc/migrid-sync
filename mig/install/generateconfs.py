@@ -46,22 +46,13 @@ sys.path.append(dirname(dirname(dirname(os.path.abspath(__file__)))))
 
 # NOTE: moved mig imports into try/except to avoid autopep8 moving to top!
 try:
-    from mig.shared.defaults import MIG_BASE, MIG_ENV
-    from mig.shared.install import generate_confs, _GENERATE_CONFS_PARAMETERS
+    from mig.shared.defaults import MIG_BASE, MIG_ENV, keyword_auto
+    from mig.shared.install import generate_confs, \
+        _GENERATE_CONFS_DEFAULTS, _GENERATE_CONFS_PARAMETERS
+    from mig.shared.minimist import minimist
 except ImportError:
     print("ERROR: the migrid modules must be in PYTHONPATH")
     sys.exit(1)
-
-
-def usage(options):
-    """Usage help"""
-    lines = ["--%s=%s" % pair for pair in zip(options,
-                                              [i.upper() for i in options])]
-    print('''Usage:
-%s [OPTIONS]
-Where supported options include -h/--help for this help or the conf settings:
-%s
-''' % (sys.argv[0], '\n'.join(lines)))
 
 
 def _make_parameters():
@@ -301,71 +292,58 @@ def _make_parameters():
     return (str_names, int_names, bool_names)
 
 
-str_names, int_names, bool_names = _make_parameters()
-_PARAMETERS = str_names + int_names + bool_names
+STR_NAMES, INT_NAMES, BOOL_NAMES = _make_parameters()
+_PARAMETERS = STR_NAMES + INT_NAMES + BOOL_NAMES
+_CLI_ADDITIONAL = {
+    'source': 'DEFAULT',
+    'destination': 'DEFAULT',
+    'destination_suffix': 'DEFAULT',
+    'user': 'DEFAULT',
+    'group': 'DEFAULT',
+}
+_CLI_DEFAULTS = dict(_GENERATE_CONFS_DEFAULTS)
+_CLI_DEFAULTS.update(**_CLI_ADDITIONAL)
 
 
 def main(argv, _generate_confs=generate_confs, _print=print):
     names = _PARAMETERS
     settings, options, result = {}, {}, {}
     default_val = 'DEFAULT'
-    # Force values to expected type
-    for key in names:
-        settings[key] = default_val
+
+    parser_options = {
+        'boolean': BOOL_NAMES,
+        'string': STR_NAMES
+    }
+    parser = minimist("generateconfs", "", "", **parser_options, _defaults=_CLI_DEFAULTS)
 
     # Apply values from environment - use custom prefix to avoid
     # interference with certain native environments like USER.
     env_prefix = os.getenv("MIG_GENCONF_ENV_PREFIX", 'MIG_')
+
     for opt_name in names:
         val = os.getenv("%s%s" % (env_prefix, opt_name.upper()))
         if not val:
             # NOTE: Empty text values are not supported in env
             continue
-        if opt_name in str_names:
+        if opt_name in STR_NAMES:
             settings[opt_name] = val
-        elif opt_name in int_names and val:
+        elif opt_name in INT_NAMES and val:
             settings[opt_name] = int(val)
-        elif opt_name in bool_names and val:
+        elif opt_name in BOOL_NAMES and val:
             settings[opt_name] = (val.strip().lower() in ['1', 'true', 'yes'])
         else:
-            _print('Error: environment options %r not supported!' % opt_name)
-            usage(names)
-            return 1
+            parser.error('environment options %r not supported!' % opt_name)
 
-    # apply values from CLI parameters
-    flag_str = 'h'
-    opts_str = ["%s=" % key for key in names] + ["help"]
-    try:
-        (opts, args) = getopt.getopt(argv, flag_str, opts_str)
-    except getopt.GetoptError as exc:
-        _print('Error: ', exc.msg)
-        usage(names)
-        return 1
+    args = parser.parse_args(argv)
+    settings.update(args.__dict__)
 
-    for (opt, val) in opts:
-        opt_name = opt.lstrip('-')
-        if opt in ('-h', '--help'):
-            usage(names)
-            return 0
-        elif opt_name in str_names:
-            settings[opt_name] = val
-        elif opt_name in int_names:
-            settings[opt_name] = int(val)
-        elif opt_name in bool_names:
-            settings[opt_name] = (val.strip().lower() in ['1', 'true', 'yes'])
-        else:
-            _print('Error: command line option %r not supported!' % opt_name)
-            usage(names)
-            return 1
+    for setting_name in _CLI_ADDITIONAL.keys():
+        if settings[setting_name] == 'DEFAULT':
+            settings[setting_name] = keyword_auto
+        elif settings[setting_name] == 'AUTO':
+            settings[setting_name] = keyword_auto
 
-    if args:
-        _print('Error: non-option arguments are no longer supported!')
-        _print(" ... found: %s" % args)
-        usage(names)
-        return 1
-    if settings['destination_suffix'] == 'DEFAULT':
-        suffix = "-%s" % datetime.datetime.now().isoformat()
-        settings['destination_suffix'] = suffix
+    # output path
     if os.getenv('MIG_ENV', 'default') == 'local':
         output_path = os.path.join(MIG_BASE, 'envhelp/output')
     elif settings['destination'] == 'DEFAULT' or \
@@ -375,6 +353,7 @@ def main(argv, _generate_confs=generate_confs, _print=print):
     else:
         # ... but use verbatim passthrough for absolute destination
         output_path = settings['destination']
+
     _print('# Creating confs with:')
     # NOTE: force list to avoid problems with in-line edits
     for (key, val) in list(settings.items()):
