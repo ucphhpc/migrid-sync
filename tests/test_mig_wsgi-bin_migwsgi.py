@@ -33,7 +33,7 @@ import stat
 import sys
 
 from tests.support import MIG_BASE, MigTestCase, testmain
-
+import mig.shared.returnvalues as returnvalues
 
 def create_output_returner(arranged=None):
     def test_format_output(*args):
@@ -108,7 +108,7 @@ class MigSharedConfiguration(MigTestCase):
         config_global_values = _assert_local_config_global_values(config)
 
         def fake_handler(*args):
-            pass
+            return [], returnvalues.OK
 
         def fake_start_response(status, headers, exc=None):
             fake_start_response.calls.append((status, headers, exc))
@@ -127,7 +127,6 @@ class MigSharedConfiguration(MigTestCase):
         test_output_returner = create_output_returner('HELLO WORLD')
 
         yielder = migwsgi._application(wsgi_environ, fake_start_response,
-            _format_output=test_output_returner,
             _set_environ=fake_set_environ,
             _retrieve_handler=lambda _: fake_handler,
             _wrap_wsgi_errors=noop,

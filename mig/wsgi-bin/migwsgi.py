@@ -83,6 +83,7 @@ def stub(configuration, client_id, user_arguments_dict, environ, _retrieve_handl
     #            NEVER print/output it verbatim before it is validated below.
 
     try:
+        default_page = configuration.site_landing_page # TODO: avoid doing this work a second time
         backend = requested_backend(environ, fallback=default_page)
         valid_backend_name(backend)
     except InputException as iex:
@@ -210,9 +211,9 @@ def application(environ, start_response):
     def _set_os_environ(value):
         os.environ = value
 
-    return _application(environ, start_response, _format_output=format_output, _set_environ=_set_os_environ, _wrap_wsgi_errors=wrap_wsgi_errors)
+    return _application(environ, start_response, _set_environ=_set_os_environ, _wrap_wsgi_errors=wrap_wsgi_errors)
 
-def _application(environ, start_response, _format_output, _set_environ, _retrieve_handler=_import_backend, _wrap_wsgi_errors=True, _config_file=None, _skip_log=False):
+def _application(environ, start_response, _set_environ, _retrieve_handler=_import_backend, _wrap_wsgi_errors=True, _config_file=None, _skip_log=False):
 
     # NOTE: pass app environ including apache and query args on to sub handlers
     #       through the usual 'os.environ' channel expected in functionality
