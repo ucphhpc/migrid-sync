@@ -32,16 +32,17 @@ import binascii
 from configparser import ConfigParser, NoSectionError, NoOptionError
 import difflib
 import io
+import json
 import os
 import pwd
 import sys
 
-from support import MIG_BASE, TEST_OUTPUT_DIR, MigTestCase, \
+from tests.support import MIG_BASE, TEST_OUTPUT_DIR, MigTestCase, \
     testmain, temppath, cleanpath, fixturepath, is_path_within, outputpath
 
 from mig.install.generateconfs import _GENERATE_CONFS_PARAMETERS
 from mig.shared.defaults import keyword_auto
-from mig.shared.install import determine_timezone, generate_confs, _DEFAULTS
+from mig.shared.install import determine_timezone, generate_confs, _generate_confs_prepare, _DEFAULTS
 
 
 class DummyPwInfo:
@@ -311,6 +312,41 @@ class MigSharedInstall__generate_confs(MigTestCase):
                          '/some/other/place/confs')
         self.assertEqual(options['destination_dir'],
                          '/some/other/place/confs_suffix')
+
+
+class MigSharedInstall__generate_confs_prepare(MigTestCase):
+    def test_generates_user_dict(self):
+        destination_link = temppath('confs', self, skip_clean=True)
+        destination_dir = temppath('confs-stdlocal', self, skip_clean=True)
+
+        with open(fixturepath("stdlocal-user_dict.json")) as json_fixture:
+            fixture_user_dict = json.load(json_fixture)
+
+        options = {
+            'command_line': 'tests/test_mig_shared_install.py',
+            'destination_dir': destination_dir,
+            'destination_link': destination_link,
+            'template_dir': os.path.join(MIG_BASE, "mig/install"),
+            'timezone': 'Test/Place',
+            'user_gid': 1234,
+            'user_group': 'testgroup',
+            'user_uid': 4321,
+            'user_uname': 'testuser',
+        }
+        expanded = dict(_DEFAULTS.__dict__)
+        expanded.update(
+            mig_code='/home/mig/mig',
+            mig_certs='/home/mig/certs',
+            mig_state='/home/mig/state',
+            crypto_salt='_TEST_CRYPTO_SALT'.zfill(32),
+            digest_salt='_TEST_DIGEST_SALT'.zfill(32),
+            seafile_secret='_test-seafile-secret='.zfill(44),
+            seafile_ccnetid='_TEST_SEAFILE_CCNETID'.zfill(40),
+        )
+        user_dict = _generate_confs_prepare(options, **expanded)
+
+        self.maxDiff = None
+        self.assertEqual(user_dict, fixture_user_dict)
 
 
 if __name__ == '__main__':
