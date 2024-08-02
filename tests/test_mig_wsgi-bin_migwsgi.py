@@ -26,6 +26,7 @@
 
 """Unit tests for the MiG WSGI glue"""
 
+import codecs
 from configparser import ConfigParser
 import importlib
 import os
@@ -33,25 +34,8 @@ import stat
 import sys
 
 from tests.support import MIG_BASE, MigTestCase, testmain
+from mig.shared.output import format_output
 import mig.shared.returnvalues as returnvalues
-
-def create_output_returner(arranged=None):
-    def test_format_output(*args):
-        return arranged
-    return test_format_output
-
-def create_wsgi_environ(config_file, wsgi_input=None, env_http_host=None, env_path_info=None):
-    environ = {}
-    environ['wsgi.input'] = ()
-    environ['MIG_CONF'] = config_file
-    environ['HTTP_HOST'] = env_http_host
-    environ['PATH_INFO'] = env_path_info
-    environ['SCRIPT_URI'] = ''.join(('http://', environ['HTTP_HOST'], environ['PATH_INFO']))
-    return environ
-
-
-def noop(*args):
-    pass
 
 
 from tests.support import PY2, is_path_within
@@ -90,19 +74,92 @@ def _assert_local_config_global_values(config):
     return config_global_values
 
 
-_WSGI_BIN = os.path.join(MIG_BASE, 'mig/wsgi-bin')
-
 def _import_migwsgi():
-    sys.path.append(_WSGI_BIN)
+    sys.path.append(os.path.join(MIG_BASE, 'mig/wsgi-bin'))
     migwsgi = importlib.import_module('migwsgi')
     sys.path.pop(-1)
     return migwsgi
-
-
 migwsgi = _import_migwsgi()
 
 
+def create_instrumented_format_output(arranged):
+    def instrumented_format_output(
+        configuration,
+        backend,
+        ret_val,
+        ret_msg,
+        out_obj,
+        outputformat,
+    ):
+        # record the call args
+        call_args_out_obj = list(out_obj) # capture the original before altering it
+        call_args = (configuration, backend, ret_val, ret_msg, call_args_out_obj, outputformat,)
+        instrumented_format_output.calls.append({ 'args': call_args })
+
+
+        # FIXME: the following is a workaround for a bug that exists between the WSGI wrapper
+        #        and the output formatter - specifically, the latter adds default header and
+        #        title if start does not exist, but the former ensures that start always exists
+        #        meaning that a default response under WSGI is missing half the HTML.
+        start_obj_idx = next((i for i, obj in enumerate(out_obj) if obj['object_type'] == 'start'))
+        insertion_idx = start_obj_idx
+
+        insertion_idx += 1
+        out_obj.insert(insertion_idx, {
+            'object_type': 'title',
+            'text': arranged,
+            'meta': '',
+            'style': {},
+            'script': {},
+        })
+
+        # FIXME: format_output() will write the header _before_ the preamble unless there some
+        #        other non-special output object prior to it.
+        # insertion_idx += 1
+        # out_obj.insert(insertion_idx, {
+        #     'object_type': '__FORCEPREAMBLE__',
+        # })
+
+        insertion_idx += 1
+        out_obj.insert(insertion_idx, {
+            'object_type': 'header',
+            'text': arranged
+        })
+
+        return format_output(
+            configuration,
+            backend,
+            ret_val,
+            ret_msg,
+            out_obj,
+            outputformat,
+        )
+    instrumented_format_output.calls = []
+    return instrumented_format_output
+
+
+def create_wsgi_environ(config_file, wsgi_input=None, env_http_host=None, env_path_info=None):
+    environ = {}
+    environ['wsgi.input'] = ()
+    environ['MIG_CONF'] = config_file
+    environ['HTTP_HOST'] = env_http_host
+    environ['PATH_INFO'] = env_path_info
+    environ['SCRIPT_URI'] = ''.join(('http://', environ['HTTP_HOST'], environ['PATH_INFO']))
+    return environ
+
+
+def noop(*args):
+    pass
+
+
 class MigSharedConfiguration(MigTestCase):
+    def assertHtmlBasics(self, value):
+        assert isinstance(value, type(u""))
+        assert value.startswith("<!DOCTYPE")
+        end_html_tag_idx = value.rfind('</html>')
+        maybe_document_end = value[end_html_tag_idx:].rstrip()
+        self.assertEqual(maybe_document_end, '</html>')
+
     def test_xxx(self):
         config = _assert_local_config()
         config_global_values = _assert_local_config_global_values(config)
@@ -124,9 +181,10 @@ class MigSharedConfiguration(MigTestCase):
             env_path_info='/'
         )
 
-        test_output_returner = create_output_returner('HELLO WORLD')
+        instrumented_format_output = create_instrumented_format_output('HELLO WORLD')
 
         yielder = migwsgi._application(wsgi_environ, fake_start_response,
+            _format_output=instrumented_format_output,
             _set_environ=fake_set_environ,
             _retrieve_handler=lambda _: fake_handler,
             _wrap_wsgi_errors=noop,
@@ -136,8 +194,8 @@ class MigSharedConfiguration(MigTestCase):
         chunks = list(yielder)
 
         self.assertGreater(len(chunks), 0)
-        import codecs
-        print(codecs.decode(chunks[0], 'utf8'))
+        value = codecs.decode(chunks[0], 'utf8')
+        self.assertHtmlBasics(value)
 
 
 if __name__ == '__main__':

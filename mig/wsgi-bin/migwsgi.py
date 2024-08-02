@@ -45,7 +45,8 @@ from mig.shared.safeinput import valid_backend_name, html_escape, InputException
 from mig.shared.scriptinput import fieldstorage_to_dict
 
 if PY2:
-    pass
+    def _ensure_wsgi_chunk(chunk):
+        return chunk
 else:
     def _ensure_wsgi_chunk(chunk):
         return codecs.encode(chunk, 'utf8')
@@ -213,7 +214,7 @@ def application(environ, start_response):
 
     return _application(environ, start_response, _set_environ=_set_os_environ, _wrap_wsgi_errors=wrap_wsgi_errors)
 
-def _application(environ, start_response, _set_environ, _retrieve_handler=_import_backend, _wrap_wsgi_errors=True, _config_file=None, _skip_log=False):
+def _application(environ, start_response, _set_environ, _format_output=format_output, _retrieve_handler=_import_backend, _wrap_wsgi_errors=True, _config_file=None, _skip_log=False):
 
     # NOTE: pass app environ including apache and query args on to sub handlers
     #       through the usual 'os.environ' channel expected in functionality
@@ -383,7 +384,7 @@ def _application(environ, start_response, _set_environ, _retrieve_handler=_impor
     output_objs.append(wsgi_entry)
 
     _logger.debug("call format %r output to %s" % (backend, output_format))
-    output = format_output(configuration, backend, ret_code, ret_msg,
+    output = _format_output(configuration, backend, ret_code, ret_msg,
                            output_objs, output_format)
     # _logger.debug("formatted %s output to %s" % (backend, output_format))
     # _logger.debug("output:\n%s" % [output])
@@ -392,7 +393,7 @@ def _application(environ, start_response, _set_environ, _retrieve_handler=_impor
         _logger.error(
             "Formatted output is NOT on default str coding: %s" % [output[:100]])
         err_mark = '__****__'
-        output = format_output(configuration, backend, ret_code, ret_msg,
+        output = _format_output(configuration, backend, ret_code, ret_msg,
                                force_default_str_coding_rec(
                                    output_objs, highlight=err_mark),
                                output_format)
