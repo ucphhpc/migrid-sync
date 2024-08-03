@@ -22,7 +22,7 @@
   "ca_fqdn": "",
   "ca_smtp": "",
   "ca_user": "mig-ca",
-  "certs_path": "/home/alex/certs",
+  "certs_path": "/some/place/certs",
   "config_file": null,
   "cputime_for_empty_jobs": 0,
   "default_page": [
@@ -103,7 +103,7 @@
   "loglevel": "",
   "lrmstypes": [],
   "mig_code_base": "",
-  "mig_path": "/home/alex/mig",
+  "mig_path": "/some/place/mig",
   "mig_server_home": "",
   "mig_server_id": null,
   "mig_system_files": "",
@@ -206,7 +206,7 @@
   "smtp_sender": "",
   "smtp_server": "",
   "sss_home": "",
-  "state_path": "/home/alex/state",
+  "state_path": "/some/place/state",
   "storage_protocols": [
     "sftp"
   ],

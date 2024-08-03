@@ -48,6 +48,12 @@ class MigSharedConfiguration(MigTestCase):
         expected_values = fixturefile('mig_shared_configuration--new', fixture_format='json')
 
         configuration = Configuration(None)
+        # TODO: the following work around default values set for these on the instance that
+        #       no longer make total sense but fiddling with them is better as a follow-up.
+        configuration.certs_path = '/some/place/certs'
+        configuration.state_path = '/some/place/state'
+        configuration.mig_path = '/some/place/mig'
+
         actual_values = _to_dict(configuration)
 
         self.maxDiff = None
