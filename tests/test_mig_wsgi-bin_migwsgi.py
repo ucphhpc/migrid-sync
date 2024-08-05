@@ -104,6 +104,9 @@ def create_instrumented_format_output(arranged):
         start_obj_idx = next((i for i, obj in enumerate(out_obj) if obj['object_type'] == 'start'))
         insertion_idx = start_obj_idx
 
+        # FIXME: format_output() is sensitive to ordering and MUST see a title object _before_
+        #        anything else otherwise the preamble ends up written above the header and thus
+        #        an invalid HTML page is served.
         insertion_idx += 1
         out_obj.insert(insertion_idx, {
             'object_type': 'title',
@@ -112,13 +115,6 @@ def create_instrumented_format_output(arranged):
             'style': {},
             'script': {},
         })
-
-        # FIXME: format_output() will write the header _before_ the preamble unless there some
-        #        other non-special output object prior to it.
-        # insertion_idx += 1
-        # out_obj.insert(insertion_idx, {
-        #     'object_type': '__FORCEPREAMBLE__',
-        # })
 
         insertion_idx += 1
         out_obj.insert(insertion_idx, {
