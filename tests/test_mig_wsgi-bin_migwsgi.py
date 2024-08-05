@@ -148,16 +148,23 @@ def create_instrumented_format_output(arranged):
 
 
 def create_instrumented_retrieve_handler():
-    def _instrumented_retrieve_handler(*args):
-        _instrumented_retrieve_handler.calls.append(tuple(args))
-        return _instrumented_retrieve_handler.returning or ([], returnvalues.ERROR)
-    def _program(output_objects=None, return_value=None):
+    def _simulated_action(*args):
+        return _simulated_action.returning or ([], returnvalues.ERROR)
+    _simulated_action.calls = []
+    _simulated_action.returning = None
+
+    def _program_response(output_objects=None, return_value=None):
         assert _is_return_value(return_value), "return value must be present in returnvalues"
         assert isinstance(output_objects, list)
-        _instrumented_retrieve_handler.returning = (output_objects, return_value)
+        _simulated_action.returning = (output_objects, return_value)
+
+    def _instrumented_retrieve_handler(*args):
+        _instrumented_retrieve_handler.calls.append(tuple(args))
+        return _simulated_action
     _instrumented_retrieve_handler.calls = []
-    _instrumented_retrieve_handler.returning = None
-    _instrumented_retrieve_handler.program = _program
+
+    _instrumented_retrieve_handler.program = _program_response
+    _instrumented_retrieve_handler.simulated = _simulated_action
 
     return _instrumented_retrieve_handler
 
@@ -178,7 +185,8 @@ def noop(*args):
 
 class MigWsgi_binMigwsgi(MigTestCase):
     def assertInstrumentation(self):
-        self.assertIsNotNone(self.instrumented_retrieve_handler.returning, "no response programmed")
+        simulated_action = self.instrumented_retrieve_handler.simulated
+        self.assertIsNotNone(simulated_action.returning, "no response programmed")
 
         def was_called(fake):
             assert hasattr(fake, 'calls')
