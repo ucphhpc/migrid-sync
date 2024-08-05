@@ -185,6 +185,17 @@ class MigWsgi_binMigwsgi(MigTestCase):
         self.assertTrue(was_called(self.instrumented_format_output))
         self.assertTrue(was_called(self.instrumented_retrieve_handler))
 
+    def assertResponseStatus(self, expected_status_code):
+        def called_once(fake):
+            assert hasattr(fake, 'calls')
+            return len(fake.calls) == 1
+
+        self.assertTrue(called_once(self.fake_start_response))
+        thecall = self.fake_start_response.calls[0]
+        wsgi_status = thecall[0]
+        actual_status_code = int(wsgi_status[0:3])
+        self.assertEqual(actual_status_code, expected_status_code)
+
     def assertIsValidHtmlDocument(self, value):
         assert isinstance(value, type(u""))
         assert value.startswith("<!DOCTYPE")
@@ -199,10 +210,12 @@ class MigWsgi_binMigwsgi(MigTestCase):
         def fake_start_response(status, headers, exc=None):
             fake_start_response.calls.append((status, headers, exc))
         fake_start_response.calls = []
+        self.fake_start_response = fake_start_response
 
         def fake_set_environ(value):
             fake_set_environ.calls.append((value))
         fake_set_environ.calls = []
+        self.fake_set_environ = fake_set_environ
 
         fake_wsgi_environ = create_wsgi_environ(_TEST_CONF_FILE, wsgi_variables=dict(
             http_host='localhost',
@@ -219,7 +232,21 @@ class MigWsgi_binMigwsgi(MigTestCase):
             _set_environ=fake_set_environ,
         )
 
-    def test_creates_valid_html_page_for_return_value_ok(self):
+    def test_return_value_ok_returns_status_200(self):
+        application_result = migwsgi._application(
+            *self.application_args,
+            _wrap_wsgi_errors=noop,
+            _config_file=_TEST_CONF_FILE,
+            _skip_log=True,
+            **self.application_kwargs
+        )
+
+        output = _unpack_result(application_result)
+
+        self.assertInstrumentation()
+        self.assertResponseStatus(200)
+
+    def test_return_value_ok_creates_valid_html_page(self):
         application_result = migwsgi._application(
             *self.application_args,
             _wrap_wsgi_errors=noop,
