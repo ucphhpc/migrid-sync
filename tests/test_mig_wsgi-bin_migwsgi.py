@@ -96,7 +96,7 @@ def _trigger_and_unpack_result(application_result):
     return decoded_value
 
 
-def create_instrumented_format_output(arranged):
+def create_instrumented_format_output():
     def _instrumented_format_output(
         configuration,
         backend,
@@ -123,7 +123,7 @@ def create_instrumented_format_output(arranged):
         insertion_idx += 1
         out_obj.insert(insertion_idx, {
             'object_type': 'title',
-            'text': arranged,
+            'text': _instrumented_format_output.values['title_text'],
             'meta': '',
             'style': {},
             'script': {},
@@ -132,7 +132,7 @@ def create_instrumented_format_output(arranged):
         insertion_idx += 1
         out_obj.insert(insertion_idx, {
             'object_type': 'header',
-            'text': arranged
+            'text': _instrumented_format_output.values['header_text']
         })
 
         return format_output(
@@ -144,6 +144,16 @@ def create_instrumented_format_output(arranged):
             outputformat,
         )
     _instrumented_format_output.calls = []
+    _instrumented_format_output.values = dict(
+        title_text='',
+        header_text='',
+    )
+
+    def _program_values(**kwargs):
+        _instrumented_format_output.values.update(kwargs)
+
+    _instrumented_format_output.set_values = _program_values
+
     return _instrumented_format_output
 
 
@@ -206,6 +216,18 @@ class MigWsgi_binMigwsgi(MigTestCase):
         actual_status_code = int(wsgi_status[0:3])
         self.assertEqual(actual_status_code, expected_status_code)
 
+    def assertHtmlElementTextContent(self, output, tag_name, expected_text, trim_newlines=True):
+        # TODO: this is a definitively stop-gap way of finding a tag within the HTML
+        #       and is used purely to keep this initial change to a reasonable size.
+        tag_open = ''.join(['<', tag_name, '>'])
+        tag_open_index = output.index(tag_open)
+        tag_close = ''.join(['</', tag_name, '>'])
+        tag_close_index = output.index(tag_close)
+        actual_text = output[tag_open_index+len(tag_open):tag_close_index]
+        if trim_newlines:
+            actual_text = actual_text.strip('\n')
+        self.assertEqual(actual_text, expected_text)
+
     def assertIsValidHtmlDocument(self, value):
         assert isinstance(value, type(u""))
         assert value.startswith("<!DOCTYPE")
@@ -232,7 +254,7 @@ class MigWsgi_binMigwsgi(MigTestCase):
             path_info='/',
         ))
 
-        self.instrumented_format_output = create_instrumented_format_output('HELLO WORLD')
+        self.instrumented_format_output = create_instrumented_format_output()
         self.instrumented_retrieve_handler = create_instrumented_retrieve_handler()
 
         self.application_args = (fake_wsgi_environ, fake_start_response,)
@@ -258,7 +280,7 @@ class MigWsgi_binMigwsgi(MigTestCase):
         self.assertInstrumentation()
         self.assertResponseStatus(200)
 
-    def test_return_value_ok_creates_valid_html_page(self):
+    def test_return_value_ok_returns_valid_html_page(self):
         self.instrumented_retrieve_handler.program([], returnvalues.OK)
 
         application_result = migwsgi._application(
@@ -273,6 +295,23 @@ class MigWsgi_binMigwsgi(MigTestCase):
 
         self.assertInstrumentation()
         self.assertIsValidHtmlDocument(output)
+
+    def test_return_value_ok_returns_expected_title(self):
+        self.instrumented_format_output.set_values(title_text='TEST')
+        self.instrumented_retrieve_handler.program([], returnvalues.OK)
+
+        application_result = migwsgi._application(
+            *self.application_args,
+            _wrap_wsgi_errors=noop,
+            _config_file=_TEST_CONF_FILE,
+            _skip_log=True,
+            **self.application_kwargs
+        )
+
+        output = _trigger_and_unpack_result(application_result)
+
+        self.assertInstrumentation()
+        self.assertHtmlElementTextContent(output, 'title', 'TEST', trim_newlines=True)
 
 
 if __name__ == '__main__':
