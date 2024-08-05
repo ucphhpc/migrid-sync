@@ -82,8 +82,25 @@ def _import_migwsgi():
 migwsgi = _import_migwsgi()
 
 
+def _is_return_value(return_value):
+    defined_return_values = returnvalues.__dict__.values()
+    return return_value in defined_return_values
+
+
+def create_instrumented_retrieve_handler(output_objects=None, return_value=None):
+    if not output_objects:
+        output_objects = []
+
+    assert isinstance(output_objects, list)
+    assert _is_return_value(return_value), "return value must be present in returnvalues"
+
+    def _instrumented_retrieve_handler(*args):
+        return [], return_value
+    return _instrumented_retrieve_handler
+
+
 def create_instrumented_format_output(arranged):
-    def instrumented_format_output(
+    def _instrumented_format_output(
         configuration,
         backend,
         ret_val,
@@ -94,8 +111,7 @@ def create_instrumented_format_output(arranged):
         # record the call args
         call_args_out_obj = list(out_obj) # capture the original before altering it
         call_args = (configuration, backend, ret_val, ret_msg, call_args_out_obj, outputformat,)
-        instrumented_format_output.calls.append({ 'args': call_args })
-
+        _instrumented_format_output.calls.append({ 'args': call_args })
 
         # FIXME: the following is a workaround for a bug that exists between the WSGI wrapper
         #        and the output formatter - specifically, the latter adds default header and
@@ -130,16 +146,16 @@ def create_instrumented_format_output(arranged):
             out_obj,
             outputformat,
         )
-    instrumented_format_output.calls = []
-    return instrumented_format_output
+    _instrumented_format_output.calls = []
+    return _instrumented_format_output
 
 
-def create_wsgi_environ(config_file, wsgi_input=None, env_http_host=None, env_path_info=None):
+def create_wsgi_environ(config_file, wsgi_variables):
     environ = {}
     environ['wsgi.input'] = ()
     environ['MIG_CONF'] = config_file
-    environ['HTTP_HOST'] = env_http_host
-    environ['PATH_INFO'] = env_path_info
+    environ['HTTP_HOST'] = wsgi_variables.get('http_host')
+    environ['PATH_INFO'] = wsgi_variables.get('path_info')
     environ['SCRIPT_URI'] = ''.join(('http://', environ['HTTP_HOST'], environ['PATH_INFO']))
     return environ
 
@@ -160,9 +176,6 @@ class MigSharedConfiguration(MigTestCase):
         config = _assert_local_config()
         config_global_values = _assert_local_config_global_values(config)
 
-        def fake_handler(*args):
-            return [], returnvalues.OK
-
         def fake_start_response(status, headers, exc=None):
             fake_start_response.calls.append((status, headers, exc))
         fake_start_response.calls = []
@@ -171,18 +184,18 @@ class MigSharedConfiguration(MigTestCase):
             fake_set_environ.value = value
         fake_set_environ.value = None
 
-        wsgi_environ = create_wsgi_environ(
-            _TEST_CONF_FILE,
-            env_http_host='localhost',
-            env_path_info='/'
-        )
+        wsgi_environ = create_wsgi_environ(_TEST_CONF_FILE, wsgi_variables=dict(
+            http_host='localhost',
+            path_info='/',
+        ))
 
         instrumented_format_output = create_instrumented_format_output('HELLO WORLD')
+        instrumented_retrieve_handler = create_instrumented_retrieve_handler(None, returnvalues.OK)
 
         yielder = migwsgi._application(wsgi_environ, fake_start_response,
             _format_output=instrumented_format_output,
+            _retrieve_handler=instrumented_retrieve_handler,
             _set_environ=fake_set_environ,
-            _retrieve_handler=lambda _: fake_handler,
             _wrap_wsgi_errors=noop,
             _config_file=_TEST_CONF_FILE,
             _skip_log=True,
