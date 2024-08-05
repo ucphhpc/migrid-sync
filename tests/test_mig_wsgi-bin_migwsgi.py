@@ -88,6 +88,14 @@ def _is_return_value(return_value):
     return return_value in defined_return_values
 
 
+def _unpack_result(application_result):
+    chunks = list(application_result)
+    assert len(chunks) > 0, "invocation returned no output"
+    complete_value = b''.join(chunks)
+    decoded_value = codecs.decode(complete_value, 'utf8')
+    return decoded_value
+
+
 def create_instrumented_format_output(arranged):
     def _instrumented_format_output(
         configuration,
@@ -147,7 +155,10 @@ def create_instrumented_retrieve_handler(output_objects=None, return_value=None)
     assert _is_return_value(return_value), "return value must be present in returnvalues"
 
     def _instrumented_retrieve_handler(*args):
+        _instrumented_retrieve_handler.calls.append(tuple(args))
         return [], return_value
+    _instrumented_retrieve_handler.calls = []
+
     return _instrumented_retrieve_handler
 
 
@@ -165,15 +176,23 @@ def noop(*args):
     pass
 
 
-class MigSharedConfiguration(MigTestCase):
-    def assertHtmlBasics(self, value):
+class MigWsgi_binMigwsgi(MigTestCase):
+    def assertInstrumentation(self):
+        def was_called(fake):
+            assert hasattr(fake, 'calls')
+            return len(fake.calls) > 0
+
+        self.assertTrue(was_called(self.instrumented_format_output))
+        self.assertTrue(was_called(self.instrumented_retrieve_handler))
+
+    def assertIsValidHtmlDocument(self, value):
         assert isinstance(value, type(u""))
         assert value.startswith("<!DOCTYPE")
         end_html_tag_idx = value.rfind('</html>')
         maybe_document_end = value[end_html_tag_idx:].rstrip()
         self.assertEqual(maybe_document_end, '</html>')
 
-    def test_xxx(self):
+    def before_each(self):
         config = _assert_local_config()
         config_global_values = _assert_local_config_global_values(config)
 
@@ -182,30 +201,37 @@ class MigSharedConfiguration(MigTestCase):
         fake_start_response.calls = []
 
         def fake_set_environ(value):
-            fake_set_environ.value = value
-        fake_set_environ.value = None
+            fake_set_environ.calls.append((value))
+        fake_set_environ.calls = []
 
-        wsgi_environ = create_wsgi_environ(_TEST_CONF_FILE, wsgi_variables=dict(
+        fake_wsgi_environ = create_wsgi_environ(_TEST_CONF_FILE, wsgi_variables=dict(
             http_host='localhost',
             path_info='/',
         ))
 
-        instrumented_format_output = create_instrumented_format_output('HELLO WORLD')
-        instrumented_retrieve_handler = create_instrumented_retrieve_handler(None, returnvalues.OK)
+        self.instrumented_format_output = create_instrumented_format_output('HELLO WORLD')
+        self.instrumented_retrieve_handler = create_instrumented_retrieve_handler(None, returnvalues.OK)
 
-        yielder = migwsgi._application(wsgi_environ, fake_start_response,
-            _format_output=instrumented_format_output,
-            _retrieve_handler=instrumented_retrieve_handler,
+        self.application_args = (fake_wsgi_environ, fake_start_response,)
+        self.application_kwargs = dict(
+            _format_output=self.instrumented_format_output,
+            _retrieve_handler=self.instrumented_retrieve_handler,
             _set_environ=fake_set_environ,
+        )
+
+    def test_creates_valid_html_page_for_return_value_ok(self):
+        application_result = migwsgi._application(
+            *self.application_args,
             _wrap_wsgi_errors=noop,
             _config_file=_TEST_CONF_FILE,
             _skip_log=True,
+            **self.application_kwargs
         )
-        chunks = list(yielder)
 
-        self.assertGreater(len(chunks), 0)
-        value = codecs.decode(chunks[0], 'utf8')
-        self.assertHtmlBasics(value)
+        output = _unpack_result(application_result)
+
+        self.assertInstrumentation()
+        self.assertIsValidHtmlDocument(output)
 
 
 if __name__ == '__main__':
