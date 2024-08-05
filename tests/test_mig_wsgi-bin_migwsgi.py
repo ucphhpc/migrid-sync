@@ -50,6 +50,15 @@ _TEST_CONF_FILE = os.path.join(_TEST_CONF_DIR, "MiGserver.conf")
 _TEST_CONF_SYMLINK = os.path.join(MIG_BASE, "envhelp/output/testconfs")
 
 
+# workaround for migwsgi being placed witin a non-module directory
+def _import_migwsgi():
+    sys.path.append(os.path.join(MIG_BASE, 'mig/wsgi-bin'))
+    migwsgi = importlib.import_module('migwsgi')
+    sys.path.pop(-1)
+    return migwsgi
+migwsgi = _import_migwsgi()
+
+
 def _assert_local_config():
     try:
         link_stat = os.lstat(_TEST_CONF_SYMLINK)
@@ -74,29 +83,9 @@ def _assert_local_config_global_values(config):
     return config_global_values
 
 
-def _import_migwsgi():
-    sys.path.append(os.path.join(MIG_BASE, 'mig/wsgi-bin'))
-    migwsgi = importlib.import_module('migwsgi')
-    sys.path.pop(-1)
-    return migwsgi
-migwsgi = _import_migwsgi()
-
-
 def _is_return_value(return_value):
     defined_return_values = returnvalues.__dict__.values()
     return return_value in defined_return_values
-
-
-def create_instrumented_retrieve_handler(output_objects=None, return_value=None):
-    if not output_objects:
-        output_objects = []
-
-    assert isinstance(output_objects, list)
-    assert _is_return_value(return_value), "return value must be present in returnvalues"
-
-    def _instrumented_retrieve_handler(*args):
-        return [], return_value
-    return _instrumented_retrieve_handler
 
 
 def create_instrumented_format_output(arranged):
@@ -148,6 +137,18 @@ def create_instrumented_format_output(arranged):
         )
     _instrumented_format_output.calls = []
     return _instrumented_format_output
+
+
+def create_instrumented_retrieve_handler(output_objects=None, return_value=None):
+    if not output_objects:
+        output_objects = []
+
+    assert isinstance(output_objects, list)
+    assert _is_return_value(return_value), "return value must be present in returnvalues"
+
+    def _instrumented_retrieve_handler(*args):
+        return [], return_value
+    return _instrumented_retrieve_handler
 
 
 def create_wsgi_environ(config_file, wsgi_variables):
