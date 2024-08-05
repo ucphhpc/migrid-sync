@@ -189,39 +189,3 @@ def openid_valid_redirect_url(configuration, url):
     in order to prevent redirect abuse.
     """
     return check_local_site_url(configuration, url)
-
-
-if __name__ == "__main__":
-    from mig.shared.conf import get_configuration_object
-    conf = get_configuration_object()
-    print("Test possible site URLs")
-    enc_url = 'https%3A%2F%2Fsomewhere.org%2Fsub%0A'
-    valid_site_urls = ['', 'abc', 'abc.txt', '/', '/bla', '/bla#anchor',
-                       '/bla/', '/bla/#anchor', '/bla/bla', '/bla/bla/bla',
-                       '//bla//', './bla', './bla/', './bla/bla',
-                       './bla/bla/bla', 'logout.py', 'logout.py?bla=',
-                       '/cgi-sid/logout.py', '/cgi-sid/logout.py?bla=bla',
-                       '/cgi-sid/logout.py?return_url=%s' % enc_url,
-                       ]
-    for site_base in _get_site_urls(conf):
-        valid_site_urls += ['%s' % site_base, '%s/' % site_base,
-                            '%s/wsgi-bin/home.py' % site_base,
-                            '%s/wsgi-bin/logout.py' % site_base,
-                            '%s/wsgi-bin/logout.py?return_url=' % site_base,
-                            '%s/wsgi-bin/logout.py?return_url=%s' % (site_base,
-                                                                     enc_url)
-                            ]
-    invalid_site_urls = [
-        'http://abc.org', 'https://abc.org', 'ftp://abc.org',
-        'http://abc.org?bla=blabla', 'http://abc.org#anchor',
-        'https://malicious-site.com', '%s.malicious-site.com' %
-        conf.migserver_http_url,
-        '%s.malicious-site.com' % conf.migserver_https_url
-    ]
-    for url in valid_site_urls:
-        print("Check that local URL %r is detected as a local site url" % url)
-        assert(check_local_site_url(conf, url))
-
-    for url in invalid_site_urls:
-        print("Check that remote URL %r is rejected as a local site url" % url)
-        assert(not check_local_site_url(conf, url))
