@@ -88,7 +88,7 @@ def _is_return_value(return_value):
     return return_value in defined_return_values
 
 
-def _unpack_result(application_result):
+def _trigger_and_unpack_result(application_result):
     chunks = list(application_result)
     assert len(chunks) > 0, "invocation returned no output"
     complete_value = b''.join(chunks)
@@ -147,17 +147,17 @@ def create_instrumented_format_output(arranged):
     return _instrumented_format_output
 
 
-def create_instrumented_retrieve_handler(output_objects=None, return_value=None):
-    if not output_objects:
-        output_objects = []
-
-    assert isinstance(output_objects, list)
-    assert _is_return_value(return_value), "return value must be present in returnvalues"
-
+def create_instrumented_retrieve_handler():
     def _instrumented_retrieve_handler(*args):
         _instrumented_retrieve_handler.calls.append(tuple(args))
-        return [], return_value
+        return _instrumented_retrieve_handler.returning or ([], returnvalues.ERROR)
+    def _program(output_objects=None, return_value=None):
+        assert _is_return_value(return_value), "return value must be present in returnvalues"
+        assert isinstance(output_objects, list)
+        _instrumented_retrieve_handler.returning = (output_objects, return_value)
     _instrumented_retrieve_handler.calls = []
+    _instrumented_retrieve_handler.returning = None
+    _instrumented_retrieve_handler.program = _program
 
     return _instrumented_retrieve_handler
 
@@ -178,12 +178,14 @@ def noop(*args):
 
 class MigWsgi_binMigwsgi(MigTestCase):
     def assertInstrumentation(self):
+        self.assertIsNotNone(self.instrumented_retrieve_handler.returning, "no response programmed")
+
         def was_called(fake):
             assert hasattr(fake, 'calls')
             return len(fake.calls) > 0
 
-        self.assertTrue(was_called(self.instrumented_format_output))
-        self.assertTrue(was_called(self.instrumented_retrieve_handler))
+        self.assertTrue(was_called(self.instrumented_format_output), "no output generated")
+        self.assertTrue(was_called(self.instrumented_retrieve_handler), "no output generated")
 
     def assertResponseStatus(self, expected_status_code):
         def called_once(fake):
@@ -223,7 +225,7 @@ class MigWsgi_binMigwsgi(MigTestCase):
         ))
 
         self.instrumented_format_output = create_instrumented_format_output('HELLO WORLD')
-        self.instrumented_retrieve_handler = create_instrumented_retrieve_handler(None, returnvalues.OK)
+        self.instrumented_retrieve_handler = create_instrumented_retrieve_handler()
 
         self.application_args = (fake_wsgi_environ, fake_start_response,)
         self.application_kwargs = dict(
@@ -233,6 +235,8 @@ class MigWsgi_binMigwsgi(MigTestCase):
         )
 
     def test_return_value_ok_returns_status_200(self):
+        self.instrumented_retrieve_handler.program([], returnvalues.OK)
+
         application_result = migwsgi._application(
             *self.application_args,
             _wrap_wsgi_errors=noop,
@@ -241,12 +245,14 @@ class MigWsgi_binMigwsgi(MigTestCase):
             **self.application_kwargs
         )
 
-        output = _unpack_result(application_result)
+        _trigger_and_unpack_result(application_result)
 
         self.assertInstrumentation()
         self.assertResponseStatus(200)
 
     def test_return_value_ok_creates_valid_html_page(self):
+        self.instrumented_retrieve_handler.program([], returnvalues.OK)
+
         application_result = migwsgi._application(
             *self.application_args,
             _wrap_wsgi_errors=noop,
@@ -255,7 +261,7 @@ class MigWsgi_binMigwsgi(MigTestCase):
             **self.application_kwargs
         )
 
-        output = _unpack_result(application_result)
+        output = _trigger_and_unpack_result(application_result)
 
         self.assertInstrumentation()
         self.assertIsValidHtmlDocument(output)
