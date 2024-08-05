@@ -475,7 +475,7 @@ Invalid '%s' input: %s
             # Do not disclose internal details
             filtered_exc = cgitb.text(sys.exc_info(), context=10)
             # IMPORTANT: do NOT ever print or log raw password
-            pw = self.password
+            pw = self.password or ''
             filtered_exc = filtered_exc.replace(pw, '*' * len(pw))
             logger.debug("Traceback %s: %s" % (error_ref, filtered_exc))
             err_msg = """<p class='leftpad'>

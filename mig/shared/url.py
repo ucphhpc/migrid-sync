@@ -182,10 +182,3 @@ def check_local_site_url(configuration, url):
         return False
     _logger.debug("Verified URL %r to be on local site" % url)
     return True
-
-
-def openid_valid_redirect_url(configuration, url):
-    """Helper to make sure provided URL is site-local before redirecting to it
-    in order to prevent redirect abuse.
-    """
-    return check_local_site_url(configuration, url)
