@@ -189,9 +189,16 @@ def filter_why_pw(configuration, why):
     if isinstance(why, server.EncodingError):
         text = why.response.encodeToKVForm()
         return strip_password(configuration, text)
+    elif isinstance(why, server.ProtocolError):
+        text = why.message
+        return strip_password(configuration, text)
     else:
-        _logger.warning("can't filter password in unknown 'why': %s" % why)
-    return why
+        # IMPORTANT: do NOT log or show raw why as it may contain credentials
+        # NOTE: we should not get here, but return generic safe msg if we do.
+        why_type = type(why)
+        _logger.warning("can't filter unknown 'why' (%s) - show generic err" %
+                        why_type)
+        return 'Unexpected %s to filter for safe log and output.' % why_type
 
 
 def lookup_full_user(username):
@@ -581,9 +588,20 @@ Internal error while handling your request - please contact the site support
             except server.ProtocolError as why:
                 # IMPORTANT: NEVER log or show raw why or query with password!
                 safe_query = strip_password(configuration, query)
-                logger.error("handleAllow got broken request: %s" % safe_query)
-                # NOTE: let displayResponse filter pw
-                self.displayResponse(why)
+                safe_why = filter_why_pw(configuration, why)
+                logger.error("handleAllow got broken request %s: %s" %
+                             (safe_query, safe_why))
+                # IMPORTANT: do NOT use displayResponse here! It would a.o.
+                #            uncritically forward user any unverified return_to
+                #            value in query.
+                self.showErrorPage('''<h2>Error in Communication</h2>
+You may have discovered a bug in the %s OpenID 2.0 service. Please report it
+to the site admins if you keep getting here. If you arrived here using the
+browser "back" button, however, that is expected since it results in
+inconsistent session state.
+<h3>Error details:</h3>
+<pre>%s</pre>
+''' % (configuration.short_title, cgi.escape(safe_why)))
                 return
 
         logger.debug("handleAllow with last request %s from user %s" %
@@ -743,9 +761,20 @@ Internal error while handling your request - please contact the site support
         except server.ProtocolError as why:
             # IMPORTANT: NEVER log or show raw why or query with password!
             safe_query = strip_password(configuration, query)
-            logger.error("serverEndPoint got broken request: %s" % safe_query)
-            # NOTE: let displayResponse filter pw
-            self.displayResponse(why)
+            safe_why = filter_why_pw(configuration, why)
+            logger.error("serverEndPoint got broken request %s: %s" %
+                         (safe_query, safe_why))
+            # IMPORTANT: do NOT use displayResponse here! It would a.o.
+            #            uncritically forward user any unverified return_to
+            #            value in query.
+            self.showErrorPage('''<h2>Error in Communication</h2>
+You may have discovered a bug in the %s OpenID 2.0 service. Please report it
+to the site admins if you keep getting here. If you arrived here using the
+browser "back" button, however, that is expected since it results in
+inconsistent session state.
+<h3>Error details:</h3>
+<pre>%s</pre>
+''' % (configuration.short_title, cgi.escape(safe_why)))
             return
 
         if request is None:
@@ -825,18 +854,17 @@ Internal error while handling your request - please contact the site support
         try:
             webresponse = self.server.openid.encodeResponse(response)
         except server.EncodingError as why:
-            # IMPORTANT: always mask passwords in output for security
-            text = filter_why_pw(configuration, why)
+            # IMPORTANT: NEVER log or show raw why or query with password!
+            safe_why = filter_why_pw(configuration, why)
+            logger.error("displayResponse failed encode: %s" % safe_why)
             self.showErrorPage('''<h2>Error in Communication</h2>
-<p>
-You may have discovered a bug in the OpenID service. Please report it to the
-site admins if you keep getting here. If you arrived here using the browser
-"back" button, however, that is expected since it results in inconsistent
-session state.
-</p>
+You may have discovered a bug in the %s OpenID 2.0 service. Please report it
+to the site admins if you keep getting here. If you arrived here using the
+browser "back" button, however, that is expected since it results in
+inconsistent session state.
 <h3>Error details:</h3>
 <pre>%s</pre>
-''' % cgi.escape(text))
+''' % (configuration.short_title, cgi.escape(safe_why)))
             return
 
         self.send_response(webresponse.code)
