@@ -145,3 +145,83 @@ def openid_basic_logout_url(
                      'logout?return_to=%s' % return_url)
     _logger.debug("basic openid logout url: %s" % oid_logout_url)
     return oid_logout_url
+
+
+def _get_site_urls(configuration):
+    """Helper to extract actually enabled site URLs from configuration. Namely,
+    the ones that are non-empty.
+    """
+    site_url_list = (configuration.migserver_http_url,
+                     configuration.migserver_https_url,
+                     configuration.migserver_public_url,
+                     configuration.migserver_public_alias_url,
+                     configuration.migserver_https_mig_cert_url,
+                     configuration.migserver_https_ext_cert_url,
+                     configuration.migserver_https_mig_oid_url,
+                     configuration.migserver_https_ext_oid_url,
+                     configuration.migserver_https_mig_oidc_url,
+                     configuration.migserver_https_ext_oidc_url,
+                     configuration.migserver_https_sid_url)
+    return [url for url in site_url_list if url.strip()]
+
+
+def check_local_site_url(configuration, url):
+    """Check if provided url can possibly belongs to this site based on the
+    configuration. Only inspects the PROTOCOL and FQDN part of the url and
+    makes sure it fits one of the configured migserver_X_url names - not
+    whether the remaining part makes sense. The URL is expected to already be
+    basically validated for invalid character contents e.g. with something
+    like the mig.shared.safeinput.valid_complex_url helper.
+    """
+    _logger = configuration.logger
+    proto, fqdn = urlsplit(url)[:2]
+    url_base = '%s://%s' % (proto, fqdn)
+    if proto and fqdn and not url_base in _get_site_urls(configuration):
+        _logger.error("Not a valid URL %r in local site URL check for %r" %
+                      (url, url_base))
+        return False
+    _logger.debug("Verified URL %r to be on local site" % url)
+    return True
+
+
+def openid_valid_redirect_url(configuration, url):
+    """Helper to make sure provided URL is site-local before redirecting to it
+    in order to prevent redirect abuse.
+    """
+    return check_local_site_url(configuration, url)
+
+
+if __name__ == "__main__":
+    from mig.shared.conf import get_configuration_object
+    conf = get_configuration_object()
+    print("Test possible site URLs")
+    enc_url = 'https%3A%2F%2Fsomewhere.org%2Fsub%0A'
+    valid_site_urls = ['', 'abc', 'abc.txt', '/', '/bla', '/bla#anchor',
+                       '/bla/', '/bla/#anchor', '/bla/bla', '/bla/bla/bla',
+                       '//bla//', './bla', './bla/', './bla/bla',
+                       './bla/bla/bla', 'logout.py', 'logout.py?bla=',
+                       '/cgi-sid/logout.py', '/cgi-sid/logout.py?bla=bla',
+                       '/cgi-sid/logout.py?return_url=%s' % enc_url,
+                       ]
+    for site_base in _get_site_urls(conf):
+        valid_site_urls += ['%s' % site_base, '%s/' % site_base,
+                            '%s/wsgi-bin/home.py' % site_base,
+                            '%s/wsgi-bin/logout.py' % site_base,
+                            '%s/wsgi-bin/logout.py?return_url=' % site_base,
+                            '%s/wsgi-bin/logout.py?return_url=%s' % (site_base,
+                                                                     enc_url)
+                            ]
+    invalid_site_urls = [
+        'http://abc.org', 'https://abc.org', 'ftp://abc.org',
+        'http://abc.org?bla=blabla', 'http://abc.org#anchor',
+        'https://malicious-site.com', '%s.malicious-site.com' %
+        conf.migserver_http_url,
+        '%s.malicious-site.com' % conf.migserver_https_url
+    ]
+    for url in valid_site_urls:
+        print("Check that local URL %r is detected as a local site url" % url)
+        assert(check_local_site_url(conf, url))
+
+    for url in invalid_site_urls:
+        print("Check that remote URL %r is rejected as a local site url" % url)
+        assert(not check_local_site_url(conf, url))

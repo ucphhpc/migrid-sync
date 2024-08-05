@@ -99,7 +99,7 @@ from mig.shared.safeinput import valid_distinguished_name, valid_password, \
     valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url, \
     valid_complex_url, InputException
 from mig.shared.tlsserver import hardened_ssl_context
-from mig.shared.url import urlparse, urlencode
+from mig.shared.url import urlparse, urlencode, check_local_site_url
 from mig.shared.useradm import get_openid_user_dn, check_password_scramble, \
     check_hash
 from mig.shared.userdb import default_db_path
@@ -938,7 +938,8 @@ session state.
                 self.user = self.query['user']
             else:
                 self.clearUser()
-                self.redirect(self.query['success_to'])
+                success_to_url = self.query.get('success_to', None)
+                self.redirect(success_to_url)
                 return
 
             if hit_rate_limit(configuration, "openid",
@@ -992,7 +993,8 @@ session state.
             )
 
             if authorized:
-                self.redirect(self.query['success_to'])
+                success_to_url = self.query.get('success_to', None)
+                self.redirect(success_to_url)
             else:
                 logger.warning("login failed for %s" % self.user)
                 logger.debug("full query: %s" % self.query)
@@ -1012,7 +1014,8 @@ session state.
                     retry_url = self.server.base_url
                 self.redirect(retry_url)
         elif 'cancel' in self.query:
-            self.redirect(self.query['fail_to'])
+            fail_to_url = self.query.get('fail_to', None)
+            self.redirect(fail_to_url)
         else:
             assert 0, 'strange login %r' % (self.query,)
 
@@ -1020,15 +1023,21 @@ session state.
         """Logout handler"""
         logger.debug("logout clearing user %s" % self.user)
         self.clearUser()
-        if 'return_to' in self.query:
-            # print "logout redirecting to %(return_to)s" % self.query
-            self.redirect(self.query['return_to'])
+        return_to_url = self.query.get('return_to', None)
+        if return_to_url:
+            self.redirect(return_to_url)
 
     def redirect(self, url):
-        """Redirect helper"""
-        self.send_response(302)
-        self.send_header('Location', url)
-        self.writeUserHeader()
+        """Redirect helper with built-in check for safe destination URL"""
+
+        if url and not check_local_site_url(configuration, url):
+            logger.error("reject redirect to external URL %r" % url)
+            self.send_response(400)
+        else:
+            logger.debug("redirect to local site URL %r" % url)
+            self.send_response(302)
+            self.send_header('Location', url)
+            self.writeUserHeader()
 
         self.end_headers()
 
@@ -1152,7 +1161,7 @@ session state.
 
     def showDecidePage(self, request):
         """Decide page provider"""
-        id_url_base = self.server.base_url+'id/'
+        id_url_base = self.server.base_url + 'id/'
         # XXX: This may break if there are any synonyms for id_url_base,
         # such as referring to it by IP address or a CNAME.
         assert (request.identity.startswith(id_url_base) or
@@ -1297,7 +1306,7 @@ session state.
         link_tag = '<link rel="openid.server" href="%sopenidserver">' % \
             self.server.base_url
         yadis_loc_tag = '<meta http-equiv="x-xrds-location" content="%s"/>' % \
-            (self.server.base_url+'yadis/'+path[4:])
+            (self.server.base_url + 'yadis/' + path[4:])
         disco_tags = link_tag + yadis_loc_tag
         ident = self.server.base_url + path[1:]
 
@@ -1689,7 +1698,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'root_dir': os.path.abspath(configuration.user_home),
         'db_path': os.path.abspath(default_db_path(configuration)),
         'session_store': os.path.abspath(configuration.openid_store),
-        'session_ttl': 24*3600,
+        'session_ttl': 24 * 3600,
         'allow_password': 'password' in configuration.user_openid_auth,
         'allow_digest': 'digest' in configuration.user_openid_auth,
         'allow_publickey': 'publickey' in configuration.user_openid_auth,
