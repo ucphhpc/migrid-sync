@@ -113,7 +113,8 @@ try:
         valid_path, valid_ascii, valid_job_id, valid_base_url, valid_url, \
         valid_complex_url, html_escape, InputException
     from mig.shared.tlsserver import hardened_ssl_context
-    from mig.shared.url import urlparse, urlencode, parse_qsl
+    from mig.shared.url import urlparse, urlencode, check_local_site_url, \
+     parse_qsl
     from mig.shared.useradm import get_openid_user_dn, check_password_scramble, \
         check_hash
     from mig.shared.userdb import default_db_path
@@ -206,9 +207,16 @@ def filter_why_pw(configuration, why):
     if isinstance(why, server.EncodingError):
         text = why.response.encodeToKVForm()
         return strip_password(configuration, text)
+    elif isinstance(why, server.ProtocolError):
+        text = why.message
+        return strip_password(configuration, text)
     else:
-        _logger.warning("can't filter password in unknown 'why': %s" % why)
-    return why
+        # IMPORTANT: do NOT log or show raw why as it may contain credentials
+        # NOTE: we should not get here, but return generic safe msg if we do.
+        why_type = type(why)
+        _logger.warning("can't filter unknown 'why' (%s) - show generic err" %
+                        why_type)
+        return 'Unexpected %s to filter for safe log and output.' % why_type
 
 
 def lookup_full_user(username):
@@ -486,7 +494,7 @@ Invalid '%s' input: %s
             # Do not disclose internal details
             filtered_exc = cgitb.text(sys.exc_info(), context=10)
             # IMPORTANT: do NOT ever print or log raw password
-            pw = self.password
+            pw = self.password or ''
             filtered_exc = filtered_exc.replace(pw, '*' * len(pw))
             logger.debug("Traceback %s: %s" % (error_ref, filtered_exc))
             err_msg = """<p class='leftpad'>
@@ -602,9 +610,20 @@ Internal error while handling your request - please contact the site support
             except server.ProtocolError as why:
                 # IMPORTANT: NEVER log or show raw why or query with password!
                 safe_query = strip_password(configuration, query)
-                logger.error("handleAllow got broken request: %s" % safe_query)
-                # NOTE: let displayResponse filter pw
-                self.displayResponse(why)
+                safe_why = filter_why_pw(configuration, why)
+                logger.error("handleAllow got broken request %s: %s" %
+                             (safe_query, safe_why))
+                # IMPORTANT: do NOT use displayResponse here! It would a.o.
+                #            uncritically forward user any unverified return_to
+                #            value in query.
+                self.showErrorPage('''<h2>Error in Communication</h2>
+You may have discovered a bug in the %s OpenID 2.0 service. Please report it
+to the site admins if you keep getting here. If you arrived here using the
+browser "back" button, however, that is expected since it results in
+inconsistent session state.
+<h3>Error details:</h3>
+<pre>%s</pre>
+''' % (configuration.short_title, cgi.escape(safe_why)))
                 return
 
         logger.debug("handleAllow with last request %s from user %s" %
@@ -765,9 +784,20 @@ Internal error while handling your request - please contact the site support
         except server.ProtocolError as why:
             # IMPORTANT: NEVER log or show raw why or query with password!
             safe_query = strip_password(configuration, query)
-            logger.error("serverEndPoint got broken request: %s" % safe_query)
-            # NOTE: let displayResponse filter pw
-            self.displayResponse(why)
+            safe_why = filter_why_pw(configuration, why)
+            logger.error("serverEndPoint got broken request %s: %s" %
+                         (safe_query, safe_why))
+            # IMPORTANT: do NOT use displayResponse here! It would a.o.
+            #            uncritically forward user any unverified return_to
+            #            value in query.
+            self.showErrorPage('''<h2>Error in Communication</h2>
+You may have discovered a bug in the %s OpenID 2.0 service. Please report it
+to the site admins if you keep getting here. If you arrived here using the
+browser "back" button, however, that is expected since it results in
+inconsistent session state.
+<h3>Error details:</h3>
+<pre>%s</pre>
+''' % (configuration.short_title, cgi.escape(safe_why)))
             return
 
         if request is None:
@@ -847,18 +877,17 @@ Internal error while handling your request - please contact the site support
         try:
             webresponse = self.server.openid.encodeResponse(response)
         except server.EncodingError as why:
-            # IMPORTANT: always mask passwords in output for security
-            text = filter_why_pw(configuration, why)
+            # IMPORTANT: NEVER log or show raw why or query with password!
+            safe_why = filter_why_pw(configuration, why)
+            logger.error("displayResponse failed encode: %s" % safe_why)
             self.showErrorPage('''<h2>Error in Communication</h2>
-<p>
-You may have discovered a bug in the OpenID service. Please report it to the
-site admins if you keep getting here. If you arrived here using the browser
-"back" button, however, that is expected since it results in inconsistent
-session state.
-</p>
+You may have discovered a bug in the %s OpenID 2.0 service. Please report it
+to the site admins if you keep getting here. If you arrived here using the
+browser "back" button, however, that is expected since it results in
+inconsistent session state.
 <h3>Error details:</h3>
 <pre>%s</pre>
-''' % html_escape(text))
+''' % (configuration.short_title, html_escape(safe_why))
             return
 
         self.send_response(webresponse.code)
@@ -879,9 +908,9 @@ session state.
         """
 
         # Only need to update users here
-        changed_users = []
+        changed_users=[]
         if possible_user_id(configuration, username):
-            daemon_conf, changed_users = refresh_user_creds(configuration,
+            daemon_conf, changed_users=refresh_user_creds(configuration,
                                                             'openid',
                                                             username)
         else:
@@ -889,31 +918,31 @@ session state.
             return None
         update_login_map(daemon_conf, changed_users, [], [])
 
-        strict_policy = True
+        strict_policy=True
         # Support password legacy policy during log in for transition periods
-        allow_legacy = True
+        allow_legacy=True
         # username may be None here
-        login_url = os.path.join(configuration.user_mig_oid_provider,
+        login_url=os.path.join(configuration.user_mig_oid_provider,
                                  username or '')
-        distinguished_name = get_openid_user_dn(configuration, login_url)
-        entries = login_map_lookup(daemon_conf, username)
+        distinguished_name=get_openid_user_dn(configuration, login_url)
+        entries=login_map_lookup(daemon_conf, username)
         for entry in entries:
-            allowed = entry.password
+            allowed=entry.password
             if allowed is None or not password:
                 continue
             # NOTE: We always enforce password policy here to refuse weak
             #       legacy passwords.
             # NOTE: we prefer password hash but with fall back to scrambled
-            is_hashed = allowed.startswith('PBKDF2$')
+            is_hashed=allowed.startswith('PBKDF2$')
             if is_hashed and check_hash(configuration, 'openid', username,
                                         password, allowed,
                                         self.server.hash_cache, strict_policy,
                                         allow_legacy):
                 logger.info("Accepted password hash login for %s from %s" %
                             (username, addr))
-                self.user_dn = distinguished_name
-                self.user_dn_dir = client_id_dir(distinguished_name)
-                self.login_expire = int(time.time() + self.session_ttl)
+                self.user_dn=distinguished_name
+                self.user_dn_dir=client_id_dir(distinguished_name)
+                self.login_expire=int(time.time() + self.session_ttl)
                 return True
             elif not is_hashed and check_password_scramble(
                     configuration, 'openid', username, password, allowed,
@@ -921,9 +950,9 @@ session state.
                     self.server.scramble_cache, strict_policy, allow_legacy):
                 logger.info("Accepted password login for %s from %s" %
                             (username, addr))
-                self.user_dn = distinguished_name
-                self.user_dn_dir = client_id_dir(distinguished_name)
-                self.login_expire = int(time.time() + self.session_ttl)
+                self.user_dn=distinguished_name
+                self.user_dn_dir=client_id_dir(distinguished_name)
+                self.login_expire=int(time.time() + self.session_ttl)
                 return True
             else:
                 logger.warning("Failed password check for user %s" % username)
@@ -937,51 +966,52 @@ session state.
 
     def doLogin(self):
         """Login handler"""
-        hashed_secret = None
-        exceeded_rate_limit = False
-        invalid_username = False
-        invalid_user = False
-        account_accessible = False
-        valid_password = False
-        daemon_conf = configuration.daemon_conf
-        max_user_hits = daemon_conf['auth_limits']['max_user_hits']
-        user_abuse_hits = daemon_conf['auth_limits']['user_abuse_hits']
-        proto_abuse_hits = daemon_conf['auth_limits']['proto_abuse_hits']
-        max_secret_hits = daemon_conf['auth_limits']['max_secret_hits']
+        hashed_secret=None
+        exceeded_rate_limit=False
+        invalid_username=False
+        invalid_user=False
+        account_accessible=False
+        valid_password=False
+        daemon_conf=configuration.daemon_conf
+        max_user_hits=daemon_conf['auth_limits']['max_user_hits']
+        user_abuse_hits=daemon_conf['auth_limits']['user_abuse_hits']
+        proto_abuse_hits=daemon_conf['auth_limits']['proto_abuse_hits']
+        max_secret_hits=daemon_conf['auth_limits']['max_secret_hits']
         # Use client address directly but with optional local proxy override
-        client_ip = self.headers.get('X-Forwarded-For', self.client_address[0])
+        client_ip=self.headers.get('X-Forwarded-For', self.client_address[0])
 
         if client_ip == self.client_address[0]:
-            tcp_port = self.client_address[1]
+            tcp_port=self.client_address[1]
         else:
-            tcp_port = 0
+            tcp_port=0
         if 'submit' in self.query:
             if 'user' in self.query:
-                self.user = self.query['user']
+                self.user=self.query['user']
             else:
                 self.clearUser()
-                self.redirect(self.query['success_to'])
+                success_to_url=self.query.get('success_to', None)
+                self.redirect(success_to_url)
                 return
 
             if hit_rate_limit(configuration, "openid",
                               client_ip, self.user,
                               max_user_hits=max_user_hits):
-                exceeded_rate_limit = True
+                exceeded_rate_limit=True
             elif not default_username_validator(configuration, self.user):
-                invalid_username = True
+                invalid_username=True
             else:
                 if 'password' in self.query:
-                    self.password = self.query['password']
+                    self.password=self.query['password']
                     # NOTE: base64 encode expects byte strings
-                    hashed_secret = make_simple_hash(base64.b64encode(
+                    hashed_secret=make_simple_hash(base64.b64encode(
                         force_utf8(self.password)))
                 else:
-                    self.password = None
+                    self.password=None
 
-                account_accessible = check_account_accessible(
+                account_accessible=check_account_accessible(
                     configuration, self.user, 'openid')
                 # NOTE: returns None for invalid user, and boolean otherwise
-                accepted = self.checkLogin(self.user, self.password, client_ip)
+                accepted=self.checkLogin(self.user, self.password, client_ip)
                 if accepted is None:
                     invalid_user = True
                 elif accepted:
@@ -1015,7 +1045,8 @@ session state.
             )
 
             if authorized:
-                self.redirect(self.query['success_to'])
+                success_to_url = self.query.get('success_to', None)
+                self.redirect(success_to_url)
             else:
                 logger.warning("login failed for %s" % self.user)
                 logger.debug("full query: %s" % self.query)
@@ -1035,7 +1066,8 @@ session state.
                     retry_url = self.server.base_url
                 self.redirect(retry_url)
         elif 'cancel' in self.query:
-            self.redirect(self.query['fail_to'])
+            fail_to_url = self.query.get('fail_to', None)
+            self.redirect(fail_to_url)
         else:
             assert 0, 'strange login %r' % (self.query,)
 
@@ -1043,15 +1075,21 @@ session state.
         """Logout handler"""
         logger.debug("logout clearing user %s" % self.user)
         self.clearUser()
-        if 'return_to' in self.query:
-            # print "logout redirecting to %(return_to)s" % self.query
-            self.redirect(self.query['return_to'])
+        return_to_url = self.query.get('return_to', None)
+        if return_to_url:
+            self.redirect(return_to_url)
 
     def redirect(self, url):
-        """Redirect helper"""
-        self.send_response(302)
-        self.send_header('Location', url)
-        self.writeUserHeader()
+        """Redirect helper with built-in check for safe destination URL"""
+
+        if url and not check_local_site_url(configuration, url):
+            logger.error("reject redirect to external URL %r" % url)
+            self.send_response(400)
+        else:
+            logger.debug("redirect to local site URL %r" % url)
+            self.send_response(302)
+            self.send_header('Location', url)
+            self.writeUserHeader()
 
         self.end_headers()
 
@@ -1175,7 +1213,7 @@ session state.
 
     def showDecidePage(self, request):
         """Decide page provider"""
-        id_url_base = self.server.base_url+'id/'
+        id_url_base = self.server.base_url + 'id/'
         # XXX: This may break if there are any synonyms for id_url_base,
         # such as referring to it by IP address or a CNAME.
         assert (request.identity.startswith(id_url_base) or
@@ -1320,7 +1358,7 @@ session state.
         link_tag = '<link rel="openid.server" href="%sopenidserver">' % \
             self.server.base_url
         yadis_loc_tag = '<meta http-equiv="x-xrds-location" content="%s"/>' % \
-            (self.server.base_url+'yadis/'+path[4:])
+            (self.server.base_url + 'yadis/' + path[4:])
         disco_tags = link_tag + yadis_loc_tag
         ident = self.server.base_url + path[1:]
 
@@ -1715,7 +1753,7 @@ i4HdbgS6M21GvqIfhN2NncJ00aJukr5L29JrKFgSCPP9BDRb9Jgy0gu1duhTv0C0
         'root_dir': os.path.abspath(configuration.user_home),
         'db_path': os.path.abspath(default_db_path(configuration)),
         'session_store': os.path.abspath(configuration.openid_store),
-        'session_ttl': 24*3600,
+        'session_ttl': 24 * 3600,
         'allow_password': 'password' in configuration.user_openid_auth,
         'allow_digest': 'digest' in configuration.user_openid_auth,
         'allow_publickey': 'publickey' in configuration.user_openid_auth,

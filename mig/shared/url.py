@@ -156,3 +156,40 @@ def openid_basic_logout_url(
                      'logout?return_to=%s' % return_url)
     _logger.debug("basic openid logout url: %s" % oid_logout_url)
     return oid_logout_url
+
+
+def _get_site_urls(configuration):
+    """Helper to extract actually enabled site URLs from configuration. Namely,
+    the ones that are non-empty.
+    """
+    site_url_list = (configuration.migserver_http_url,
+                     configuration.migserver_https_url,
+                     configuration.migserver_public_url,
+                     configuration.migserver_public_alias_url,
+                     configuration.migserver_https_mig_cert_url,
+                     configuration.migserver_https_ext_cert_url,
+                     configuration.migserver_https_mig_oid_url,
+                     configuration.migserver_https_ext_oid_url,
+                     configuration.migserver_https_mig_oidc_url,
+                     configuration.migserver_https_ext_oidc_url,
+                     configuration.migserver_https_sid_url)
+    return [url for url in site_url_list if url.strip()]
+
+
+def check_local_site_url(configuration, url):
+    """Check if provided url can possibly belongs to this site based on the
+    configuration. Only inspects the PROTOCOL and FQDN part of the url and
+    makes sure it fits one of the configured migserver_X_url names - not
+    whether the remaining part makes sense. The URL is expected to already be
+    basically validated for invalid character contents e.g. with something
+    like the mig.shared.safeinput.valid_complex_url helper.
+    """
+    _logger = configuration.logger
+    proto, fqdn = urlsplit(url)[:2]
+    url_base = '%s://%s' % (proto, fqdn)
+    if proto and fqdn and not url_base in _get_site_urls(configuration):
+        _logger.error("Not a valid URL %r in local site URL check for %r" %
+                      (url, url_base))
+        return False
+    _logger.debug("Verified URL %r to be on local site" % url)
+    return True
