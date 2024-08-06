@@ -114,7 +114,7 @@ try:
         valid_complex_url, html_escape, InputException
     from mig.shared.tlsserver import hardened_ssl_context
     from mig.shared.url import urlparse, urlencode, check_local_site_url, \
-     parse_qsl
+        parse_qsl
     from mig.shared.useradm import get_openid_user_dn, check_password_scramble, \
         check_hash
     from mig.shared.userdb import default_db_path
@@ -427,7 +427,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             self.parsed_uri = urlparse(force_native_str(self.path))
             self.query = {}
             for (key, val) in parse_qsl(self.parsed_uri[4]):
-                print("DEBUG: checking input arg %s: '%s'" % (key, val))
+                # print("DEBUG: checking input arg %s: '%s'" % (key, val))
                 validate_helper = self.validators.get(key, invalid_argument)
                 # Let validation errors pass to general exception handler below
                 validate_helper(val)
@@ -623,7 +623,7 @@ browser "back" button, however, that is expected since it results in
 inconsistent session state.
 <h3>Error details:</h3>
 <pre>%s</pre>
-''' % (configuration.short_title, cgi.escape(safe_why)))
+''' % (configuration.short_title, html_escape(safe_why)))
                 return
 
         logger.debug("handleAllow with last request %s from user %s" %
@@ -797,7 +797,7 @@ browser "back" button, however, that is expected since it results in
 inconsistent session state.
 <h3>Error details:</h3>
 <pre>%s</pre>
-''' % (configuration.short_title, cgi.escape(safe_why)))
+''' % (configuration.short_title, html_escape(safe_why)))
             return
 
         if request is None:
@@ -887,7 +887,7 @@ browser "back" button, however, that is expected since it results in
 inconsistent session state.
 <h3>Error details:</h3>
 <pre>%s</pre>
-''' % (configuration.short_title, html_escape(safe_why))
+''' % (configuration.short_title, html_escape(safe_why)))
             return
 
         self.send_response(webresponse.code)
@@ -908,9 +908,9 @@ inconsistent session state.
         """
 
         # Only need to update users here
-        changed_users=[]
+        changed_users = []
         if possible_user_id(configuration, username):
-            daemon_conf, changed_users=refresh_user_creds(configuration,
+            daemon_conf, changed_users = refresh_user_creds(configuration,
                                                             'openid',
                                                             username)
         else:
@@ -918,31 +918,31 @@ inconsistent session state.
             return None
         update_login_map(daemon_conf, changed_users, [], [])
 
-        strict_policy=True
+        strict_policy = True
         # Support password legacy policy during log in for transition periods
-        allow_legacy=True
+        allow_legacy = True
         # username may be None here
-        login_url=os.path.join(configuration.user_mig_oid_provider,
+        login_url = os.path.join(configuration.user_mig_oid_provider,
                                  username or '')
-        distinguished_name=get_openid_user_dn(configuration, login_url)
-        entries=login_map_lookup(daemon_conf, username)
+        distinguished_name = get_openid_user_dn(configuration, login_url)
+        entries = login_map_lookup(daemon_conf, username)
         for entry in entries:
-            allowed=entry.password
+            allowed = entry.password
             if allowed is None or not password:
                 continue
             # NOTE: We always enforce password policy here to refuse weak
             #       legacy passwords.
             # NOTE: we prefer password hash but with fall back to scrambled
-            is_hashed=allowed.startswith('PBKDF2$')
+            is_hashed = allowed.startswith('PBKDF2$')
             if is_hashed and check_hash(configuration, 'openid', username,
                                         password, allowed,
                                         self.server.hash_cache, strict_policy,
                                         allow_legacy):
                 logger.info("Accepted password hash login for %s from %s" %
                             (username, addr))
-                self.user_dn=distinguished_name
-                self.user_dn_dir=client_id_dir(distinguished_name)
-                self.login_expire=int(time.time() + self.session_ttl)
+                self.user_dn = distinguished_name
+                self.user_dn_dir = client_id_dir(distinguished_name)
+                self.login_expire = int(time.time() + self.session_ttl)
                 return True
             elif not is_hashed and check_password_scramble(
                     configuration, 'openid', username, password, allowed,
@@ -950,9 +950,9 @@ inconsistent session state.
                     self.server.scramble_cache, strict_policy, allow_legacy):
                 logger.info("Accepted password login for %s from %s" %
                             (username, addr))
-                self.user_dn=distinguished_name
-                self.user_dn_dir=client_id_dir(distinguished_name)
-                self.login_expire=int(time.time() + self.session_ttl)
+                self.user_dn = distinguished_name
+                self.user_dn_dir = client_id_dir(distinguished_name)
+                self.login_expire = int(time.time() + self.session_ttl)
                 return True
             else:
                 logger.warning("Failed password check for user %s" % username)
@@ -966,52 +966,52 @@ inconsistent session state.
 
     def doLogin(self):
         """Login handler"""
-        hashed_secret=None
-        exceeded_rate_limit=False
-        invalid_username=False
-        invalid_user=False
-        account_accessible=False
-        valid_password=False
-        daemon_conf=configuration.daemon_conf
-        max_user_hits=daemon_conf['auth_limits']['max_user_hits']
-        user_abuse_hits=daemon_conf['auth_limits']['user_abuse_hits']
-        proto_abuse_hits=daemon_conf['auth_limits']['proto_abuse_hits']
-        max_secret_hits=daemon_conf['auth_limits']['max_secret_hits']
+        hashed_secret = None
+        exceeded_rate_limit = False
+        invalid_username = False
+        invalid_user = False
+        account_accessible = False
+        valid_password = False
+        daemon_conf = configuration.daemon_conf
+        max_user_hits = daemon_conf['auth_limits']['max_user_hits']
+        user_abuse_hits = daemon_conf['auth_limits']['user_abuse_hits']
+        proto_abuse_hits = daemon_conf['auth_limits']['proto_abuse_hits']
+        max_secret_hits = daemon_conf['auth_limits']['max_secret_hits']
         # Use client address directly but with optional local proxy override
-        client_ip=self.headers.get('X-Forwarded-For', self.client_address[0])
+        client_ip = self.headers.get('X-Forwarded-For', self.client_address[0])
 
         if client_ip == self.client_address[0]:
-            tcp_port=self.client_address[1]
+            tcp_port = self.client_address[1]
         else:
-            tcp_port=0
+            tcp_port = 0
         if 'submit' in self.query:
             if 'user' in self.query:
-                self.user=self.query['user']
+                self.user = self.query['user']
             else:
                 self.clearUser()
-                success_to_url=self.query.get('success_to', None)
+                success_to_url = self.query.get('success_to', None)
                 self.redirect(success_to_url)
                 return
 
             if hit_rate_limit(configuration, "openid",
                               client_ip, self.user,
                               max_user_hits=max_user_hits):
-                exceeded_rate_limit=True
+                exceeded_rate_limit = True
             elif not default_username_validator(configuration, self.user):
-                invalid_username=True
+                invalid_username = True
             else:
                 if 'password' in self.query:
-                    self.password=self.query['password']
+                    self.password = self.query['password']
                     # NOTE: base64 encode expects byte strings
-                    hashed_secret=make_simple_hash(base64.b64encode(
+                    hashed_secret = make_simple_hash(base64.b64encode(
                         force_utf8(self.password)))
                 else:
-                    self.password=None
+                    self.password = None
 
-                account_accessible=check_account_accessible(
+                account_accessible = check_account_accessible(
                     configuration, self.user, 'openid')
                 # NOTE: returns None for invalid user, and boolean otherwise
-                accepted=self.checkLogin(self.user, self.password, client_ip)
+                accepted = self.checkLogin(self.user, self.password, client_ip)
                 if accepted is None:
                     invalid_user = True
                 elif accepted:
