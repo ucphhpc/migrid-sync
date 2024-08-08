@@ -29,11 +29,12 @@
 
 from __future__ import absolute_import
 
-import Cookie
 import base64
 import glob
+from http.cookies import SimpleCookie
 import os
 import re
+import sys
 import time
 
 # Only needed for 2FA so ignore import error and only fail on use
@@ -291,7 +292,7 @@ def client_twofactor_session(configuration,
     if configuration.site_enable_gdp:
         client_id = get_base_client_id(configuration, client_id,
                                        expand_oid_alias=False)
-    session_cookie = Cookie.SimpleCookie()
+    session_cookie = SimpleCookie()
     session_cookie.load(environ.get('HTTP_COOKIE', ""))
     session_cookie = session_cookie.get('2FA_Auth', None)
     if session_cookie is None:
