@@ -1,6 +1,8 @@
 # migrid core dependencies on a format suitable for pip install as described on
 # https://pip.pypa.io/en/stable/reference/requirement-specifiers/
 future
+python-openid;python_version < "3"
+python3-openid;python_version >= "3"
 # NOTE: python-3.6 and earlier versions require older pyotp, whereas 3.7+
 #       should work with any modern version. We tested 2.9.0 to work.
 pyotp;python_version >= "3.7"
