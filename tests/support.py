@@ -96,16 +96,20 @@ class FakeLogger:
 
     def __init__(self):
         self.channels_dict = defaultdict(list)
+        self.forgive_by_channel = defaultdict(lambda: False)
         self.unclosed_by_file = defaultdict(list)
 
     def _append_as(self, channel, line):
         self.channels_dict[channel].append(line)
 
     def check_empty_and_reset(self):
+        channels_dict = self.channels_dict
+        forgive_by_channel = self.forgive_by_channel
         unclosed_by_file = self.unclosed_by_file
 
         # reset the record of any logged messages
         self.channels_dict = defaultdict(list)
+        self.forgive_by_channel = defaultdict(lambda: False)
         self.unclosed_by_file = defaultdict(list)
 
         # complain loudly (and in detail) in the case of unclosed files
@@ -113,6 +117,15 @@ class FakeLogger:
             messages = '\n'.join({' --> %s: line=%s, file=%s' % (fname, lineno, outname)
                                   for fname, (lineno, outname) in unclosed_by_file.items()})
             raise RuntimeError('unclosed files encountered:\n%s' % (messages,))
+
+        if channels_dict['error'] and not forgive_by_channel['error']:
+            raise RuntimeError('errors reported to logger:\n%s' % '\n'.join(channels_dict['error']))
+
+
+    def forgive_errors(self):
+        self.forgive_by_channel['error'] = True
+
+    # logger interface
 
     def debug(self, line):
         self._append_as('debug', line)
@@ -194,6 +207,8 @@ class MigTestCase(TestCase):
         self.before_each()
 
     def tearDown(self):
+        self.after_each()
+
         if not self._skip_logging:
             self._logger.check_empty_and_reset()
         if self._logger is not None:
@@ -210,6 +225,9 @@ class MigTestCase(TestCase):
                 continue
 
     # hooks
+    def after_each(self):
+        pass
+
     def before_each(self):
         pass
 
