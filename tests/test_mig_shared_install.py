@@ -231,6 +231,26 @@ class MigSharedInstall__generate_confs(MigTestCase):
         self.assertConfigKey(
             actual_file, 'SITE', 'datasafety_text', expected='TEST_DATASAFETY_TEXT')
 
+    def test_creates_output_files_with_premanent_freeze(self):
+        fixture_dir = fixturepath("confs-stdlocal")
+        expected_generated_dir = cleanpath('confs-stdlocal', self)
+        symlink_path = temppath('confs', self)
+
+        generate_confs(
+            self.output_path,
+            destination=symlink_path,
+            destination_suffix='-stdlocal',
+            permanent_freeze=('foo', 'bar', 'baz'),
+            _getpwnam=create_dummy_gpwnam(4321, 1234),
+        )
+
+        relative_file = 'confs-stdlocal/MiGserver.conf'
+        self.assertPathExists('confs-stdlocal/MiGserver.conf')
+
+        actual_file = outputpath(relative_file)
+        self.assertConfigKey(
+            actual_file, 'SITE', 'permanent_freeze', expected='foo bar baz')
+
     def test_options_for_source_auto(self):
         options = generate_confs(
             '/some/arbitrary/path',
