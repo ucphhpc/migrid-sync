@@ -289,6 +289,7 @@ if '__main__' == __name__:
         'enable_sitestatus',
         'daemon_pubkey_from_dns',
         'seafile_ro_access',
+        'permanent_freeze',
         'public_use_https',
         'prefer_python3',
         'io_account_expire',
