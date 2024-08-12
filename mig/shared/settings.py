@@ -63,7 +63,8 @@ def parse_and_save_pickle(source, destination, keywords, client_id,
     client_dir = client_id_dir(client_id)
     result = parse(source, strip_space, strip_comments)
 
-    # NOTE: check_types also fills parsed results into the passed keywords dict
+    # TODO: rename or split up check_types to avoid or clarify side-effects
+    # NOTE: check_types also fills parsed results into the given keywords dict!
     parsed = copy.deepcopy(keywords)
     (status, parsemsg) = check_types(result, parsed, configuration)
 

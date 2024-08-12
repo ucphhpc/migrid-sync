@@ -49,6 +49,22 @@ DUMMY_MRSL_PATH = os.path.join(DUMMY_TMP_PATH, DUMMY_TMP_FILE)
 
 DUMMY_USER_INTERFACE = ['V3', 'V42']
 DUMMY_DEFAULT_UI = 'V42'
+DUMMY_INIT_MRSL = """
+::EMAIL::
+john@doe.org
+
+::SITE_USER_MENU::
+sharelinks
+people
+peers
+"""
+DUMMY_UPDATE_MRSL = """
+::EMAIL::
+jane@doe.org
+
+::SITE_USER_MENU::
+people
+"""
 DUMMY_CONF = FakeConfiguration(user_settings=DUMMY_SETTINGS_PATH,
                                mig_system_files=DUMMY_SYSTEM_FILES_PATH,
                                user_interface=DUMMY_USER_INTERFACE,
@@ -58,7 +74,7 @@ DUMMY_CONF = FakeConfiguration(user_settings=DUMMY_SETTINGS_PATH,
 class MigSharedSettings(MigTestCase):
     """Wrap unit tests for the corresponding module"""
 
-    def test_settings_load_save(self):
+    def test_settings_save_load(self):
         os.makedirs(os.path.join(DUMMY_SETTINGS_PATH, DUMMY_USER))
         cleanpath(DUMMY_SETTINGS_DIR, self)
         os.makedirs(os.path.join(DUMMY_SYSTEM_FILES_PATH, DUMMY_USER))
@@ -66,55 +82,28 @@ class MigSharedSettings(MigTestCase):
         os.makedirs(os.path.join(DUMMY_TMP_PATH))
         cleanpath(DUMMY_TMP_DIR, self)
 
-        settings_mrsl = """
-::EMAIL::
-john@doe.org
-
-::SITE_USER_MENU::
-sharelinks
-people
-peers
-"""
-        tmp_fd = open(DUMMY_MRSL_PATH, 'w')
-        tmp_fd.write(settings_mrsl)
-        tmp_fd.close()
-
-        result = parse_and_save_settings(
+        with open(DUMMY_MRSL_PATH, 'w') as mrsl_fd:
+            mrsl_fd.write(DUMMY_INIT_MRSL)
+        save_status, save_msg = parse_and_save_settings(
             DUMMY_MRSL_PATH, DUMMY_USER, DUMMY_CONF)
-        assert(result[0] and not result[1])
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
 
         saved_path = os.path.join(DUMMY_SETTINGS_PATH, DUMMY_USER, 'settings')
-        assert(os.path.exists(saved_path))
+        self.assertTrue(os.path.exists(saved_path))
 
         settings = load_settings(DUMMY_USER, DUMMY_CONF)
-        assert(settings)
-        assert(settings['EMAIL'] == ['john@doe.org'])
-        assert(settings['SITE_USER_MENU'] == ['sharelinks', 'people', 'peers'])
+        # NOTE: updated should be a non-empty dict at this point
+        self.assertTrue(isinstance(settings, dict))
+        self.assertEqual(settings['EMAIL'], ['john@doe.org'])
+        self.assertEqual(settings['SITE_USER_MENU'],
+                         ['sharelinks', 'people', 'peers'])
         # NOTE: we no longer auto save default values for optional vars
-        assert(not [i for i in settings.keys()
-                    if not i in ['EMAIL', 'SITE_USER_MENU']])
+        for key in settings.keys():
+            self.assertTrue(key in ['EMAIL', 'SITE_USER_MENU'])
         # Any saved USER_INTERFACE value must match configured default if set
-        assert(settings.get('USER_INTERFACE', DUMMY_DEFAULT_UI) ==
-               DUMMY_DEFAULT_UI)
-
-        update_mrsl = """
-::EMAIL::
-jane@doe.org
-
-::SITE_USER_MENU::
-downloads
-"""
-        tmp_fd = open(DUMMY_MRSL_PATH, 'w')
-        tmp_fd.write(update_mrsl)
-        tmp_fd.close()
-        result = parse_and_save_settings(
-            DUMMY_MRSL_PATH, DUMMY_USER, DUMMY_CONF)
-        assert(result[0] and not result[1])
-
-        updated = load_settings(DUMMY_USER, DUMMY_CONF)
-        assert(updated)
-        assert(updated['EMAIL'] == ['jane@doe.org'])
-        assert(updated['SITE_USER_MENU'] == ['downloads'])
+        self.assertEqual(settings.get('USER_INTERFACE', DUMMY_DEFAULT_UI),
+                         DUMMY_DEFAULT_UI)
 
     def test_settings_replace(self):
         os.makedirs(os.path.join(DUMMY_SETTINGS_PATH, DUMMY_USER))
@@ -124,54 +113,47 @@ downloads
         os.makedirs(os.path.join(DUMMY_TMP_PATH))
         cleanpath(DUMMY_TMP_DIR, self)
 
-        settings_mrsl = """
-::EMAIL::
-john@doe.org
-
-::SITE_USER_MENU::
-crontab
-people
-peers
-sharelinks
-"""
-        tmp_fd = open(DUMMY_MRSL_PATH, 'w')
-        tmp_fd.write(settings_mrsl)
-        tmp_fd.close()
-
-        result = parse_and_save_settings(
+        with open(DUMMY_MRSL_PATH, 'w') as mrsl_fd:
+            mrsl_fd.write(DUMMY_INIT_MRSL)
+        save_status, save_msg = parse_and_save_settings(
             DUMMY_MRSL_PATH, DUMMY_USER, DUMMY_CONF)
-        assert(result[0] and not result[1])
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
 
-        update_mrsl = """
-::EMAIL::
-jane@doe.org
-
-::SITE_USER_MENU::
-downloads
-"""
-        tmp_fd = open(DUMMY_MRSL_PATH, 'w')
-        tmp_fd.write(update_mrsl)
-        tmp_fd.close()
-        result = parse_and_save_settings(
+        with open(DUMMY_MRSL_PATH, 'w') as mrsl_fd:
+            mrsl_fd.write(DUMMY_UPDATE_MRSL)
+        save_status, save_msg = parse_and_save_settings(
             DUMMY_MRSL_PATH, DUMMY_USER, DUMMY_CONF)
-        assert(result[0] and not result[1])
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
 
         updated = load_settings(DUMMY_USER, DUMMY_CONF)
-        assert(updated)
-        assert(updated['EMAIL'] == ['jane@doe.org'])
-        assert(updated['SITE_USER_MENU'] == ['downloads'])
+        # NOTE: updated should be a non-empty dict at this point
+        self.assertTrue(isinstance(updated, dict))
+        self.assertEqual(updated['EMAIL'], ['jane@doe.org'])
+        self.assertEqual(updated['SITE_USER_MENU'], ['people'])
 
     def test_update_settings(self):
         os.makedirs(os.path.join(DUMMY_SETTINGS_PATH, DUMMY_USER))
         cleanpath(DUMMY_SETTINGS_DIR, self)
         os.makedirs(os.path.join(DUMMY_SYSTEM_FILES_PATH, DUMMY_USER))
         cleanpath(DUMMY_SYSTEM_FILES_DIR, self)
+        os.makedirs(os.path.join(DUMMY_TMP_PATH))
+        cleanpath(DUMMY_TMP_DIR, self)
+
+        with open(DUMMY_MRSL_PATH, 'w') as mrsl_fd:
+            mrsl_fd.write(DUMMY_INIT_MRSL)
+        save_status, save_msg = parse_and_save_settings(
+            DUMMY_MRSL_PATH, DUMMY_USER, DUMMY_CONF)
+        self.assertTrue(save_status)
+        self.assertFalse(save_msg)
 
         changes = {'EMAIL': ['john@doe.org', 'jane@doe.org']}
         defaults = {}
         updated = update_settings(DUMMY_USER, DUMMY_CONF, changes, defaults)
-        assert(updated)
-        assert(updated['EMAIL'] == ['john@doe.org', 'jane@doe.org'])
+        # NOTE: updated should be a non-empty dict at this point
+        self.assertTrue(isinstance(updated, dict))
+        self.assertEqual(updated['EMAIL'], ['john@doe.org', 'jane@doe.org'])
 
 
 if __name__ == '__main__':
