@@ -1048,8 +1048,8 @@ def _generate_confs_prepare(
 
     if isinstance(permanent_freeze, str):
         permanent_freeze = permanent_freeze.split(' ')
-    if not permanent_freeze:
-        permanent_freeze = ['no']
+    elif isinstance(permanent_freeze, bool):
+        permanent_freeze = ['yes' if permanent_freeze else 'no']
     user_dict['__PERMANENT_FREEZE__'] = ' '.join(permanent_freeze)
 
     user_dict['__FREEZE_TO_TAPE__'] = freeze_to_tape
