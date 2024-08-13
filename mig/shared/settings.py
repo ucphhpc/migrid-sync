@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settings - helpers for handling user settings
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,6 +27,7 @@
 
 from __future__ import absolute_import
 
+import copy
 import datetime
 import os
 
@@ -62,7 +63,10 @@ def parse_and_save_pickle(source, destination, keywords, client_id,
     client_dir = client_id_dir(client_id)
     result = parse(source, strip_space, strip_comments)
 
-    (status, parsemsg) = check_types(result, keywords, configuration)
+    # TODO: rename or split up check_types to avoid or clarify side-effects
+    # NOTE: check_types also fills parsed results into the given keywords dict!
+    parsed = copy.deepcopy(keywords)
+    (status, parsemsg) = check_types(result, parsed, configuration)
 
     try:
         os.remove(source)
@@ -70,18 +74,19 @@ def parse_and_save_pickle(source, destination, keywords, client_id,
         msg = 'Exception removing temporary file %s, %s'\
             % (source, err)
 
-        # should we exit because of this? o.reply_and_exit(o.ERROR)
-
     if not status:
         msg = 'Parse failed (typecheck) %s' % parsemsg
         return (False, msg)
 
     new_dict = {}
 
-    # move parseresult to a dictionary
+    # copy parsed result and required default values to a new flat dictionary
 
-    for (key, value_dict) in keywords.iteritems():
-        new_dict[key] = value_dict['Value']
+    for key in keywords:
+        if keywords[key].get('Required', True):
+            new_dict[key] = parsed[key]['Value']
+        elif parsed[key]['Value'] != keywords[key]['Value']:
+            new_dict[key] = parsed[key]['Value']
     # apply any overrides
     for key in overrides:
         new_dict[key] = overrides[key]
