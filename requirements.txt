@@ -4,7 +4,11 @@ future
 pyotp;python_version >= "3"
 pyotp<2.4;python_version < "3"
 pyyaml
-email-validator
+dnspython;python_version >= "3"
+dnspython<2;python_version < "3"
+email-validator<2.1;python_version >= "3.7"
+email-validator<2.0;python_version >= "3" and python_version < "3.7"
+email-validator<1.3;python_version < "3"
 
 # NOTE: additional optional dependencies depending on site conf are listed
 #       in recommended.txt and can be installed in the same manner by pointing

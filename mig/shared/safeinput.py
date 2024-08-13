@@ -120,7 +120,7 @@ NO_ACCENTED, COMMON_ACCENTED, ANY_ACCENTED = list(range(3))
 # Unicode letter categories as defined on
 # http://www.unicode.org/reports/tr44/#GC_Values_Table
 # TODO: should we go all in and allow even these very exotic modifiers?
-#_ACCENT_CATS = frozenset(('Lu', 'Ll', 'Lt', 'Lm', 'Lo', ))
+# _ACCENT_CATS = frozenset(('Lu', 'Ll', 'Lt', 'Lm', 'Lo', ))
 _ACCENT_CATS = frozenset(('Lu', 'Ll', 'Lt', ))
 
 # Use utf8 byte string representation here ("something" and not u"something")
@@ -882,13 +882,29 @@ def valid_email_address(addr, allow_real_name=True):
     John Doe <john@doe.org>
     """
 
+    # TODO: rework this as formataddr does NOT have RFC6532 support on py3
+    #       and assuming parse+format matches orig also introduces false
+    #       positives regarding e.g. extra white space in display name.
+    #       https://github.com/python/cpython/issues/70143
     (real_name, plain_addr) = name_address_pair = parseaddr(addr)
     if real_name and not allow_real_name:
         raise InputException("Only plain addresses without name allowed")
     if not silent_email_validator(plain_addr):
+        # NOTE: email-validator validate_email function ONLY accepts non-ascii
+        #       chars when passed unicode on py2, so we end up here for valid
+        #       RFC 6532 addresses when passed as native byte strings.
         raise InputException("No actual email address included")
-    merged = formataddr(name_address_pair)
-    if merged != addr:
+    try:
+        merged = formataddr(name_address_pair)
+        if merged != addr:
+            raise ValueError("parsed vs raw email mismatch")
+    except (ValueError, UnicodeEncodeError) as exc:
+        # TODO: eliminate this UnicodeEncodeError handling here once reworked
+        # NOTE: formataddr does NOT support non-ascii chars on py3 at all and
+        #       explicitly encodes to ascii so we end up here for valid RFC
+        #       6532 addresses. See note and link above for details.
+        # print("unicode err in %s" %
+        #       [addr, real_name, plain_addr, name_address_pair])
         raise InputException("Invalid email format")
 
 
@@ -2284,24 +2300,47 @@ class InputException(Exception):
         return force_native_str(self.value)
 
 
-def main(_print=print):
+def main(_exit=sys.exit, _print=print):
     print = _print  # workaround print as reserved word on PY2
 
     for test_org in ('UCPH', 'Some University, Some Dept.', 'Green Shoes Ltd.',
-                     u'Unicode Org', "Invalid R+D", "Invalid R/D",
-                     "Invalid R@D", 'Test HTML Invalid <code/>'):
+                     u'Unicode Org'):
         try:
             print('Testing valid_organization: %r' % test_org)
             print('Filtered organization: %s' % filter_organization(test_org))
             valid_organization(test_org)
             print('Accepted raw organization!')
-        except Exception as exc:
+        except InputException as exc:
+            print('Rejected raw organization %r: %s' % (test_org, exc))
+            _exit(1)
+
+    for test_org in ("Invalid R+D", "Invalid R/D", "Invalid R@D",
+                     'Test HTML Invalid <code/>'):
+        try:
+            print('Testing valid_organization: %r' % test_org)
+            print('Filtered organization: %s' % filter_organization(test_org))
+            valid_organization(test_org)
+            print('Accepted raw organization!')
+            _exit(1)
+        except InputException as exc:
             print('Rejected raw organization %r: %s' % (test_org, exc))
 
     for test_path in ('test.txt', 'Test Æøå', 'Test Überh4x0r',
                       'Test valid Jean-Luc Géraud', 'Test valid Źacãŕ',
                       'Test valid special%&()!$¶â€', 'Test look-alike-å å',
-                      'Test north Atlantic Barður Ðýþ', 'Test exotic لرحيم',
+                      'Test north Atlantic Barður Ðýþ'):
+        try:
+            print('Testing valid_path: %s' % test_path)
+            print('Filtered path: %s' % filter_path(test_path))
+            # print 'DEBUG %s only in %s' % ([test_path],
+            #                               [VALID_PATH_CHARACTERS])
+            valid_path(test_path)
+            print('Accepted raw path!')
+        except InputException as exc:
+            print('Rejected raw path %r: %s' % (test_path, exc))
+            _exit(1)
+
+    for test_path in ('Test exotic لرحيم',
                       'Test Invalid ?', 'Test Invalid `',
                       'Test invalid <', 'Test Invalid >',
                       'Test Invalid *', 'Test Invalid "'):
@@ -2312,19 +2351,40 @@ def main(_print=print):
             #                               [VALID_PATH_CHARACTERS])
             valid_path(test_path)
             print('Accepted raw path!')
-        except Exception as exc:
+            _exit(1)
+        except InputException as exc:
             print('Rejected raw path %r: %s' % (test_path, exc))
 
-    for test_addr in ('', 'invalid', 'abc@dk', 'abc@def.org', 'abc@def.gh.org',
-                      'aBc@Def.org', '<invalid@def.org>',
-                      'Test <abc@def.org>', 'Test Æøå <æøå@abc.org>',
+    # Simple valid addresses to accept
+    for test_addr in ('abc@def.org', 'abc@def.gh.org', 'Test <abc@def.org>',
                       'Test <abc.def@ghi.org>', 'Test <abc+def@ghi.org>',
-                      'A valid-name <abc@ghi.org>',
+                      'A valid-name <abc@ghi.org>'):
+        try:
+            print('Testing valid_email_address: %s' % test_addr)
+            valid_email_address(test_addr)
+            print('Accepted raw address! %s' % [parseaddr(test_addr)])
+        except InputException as exc:
+            print('Rejected raw address %r: %s' % (test_addr, exc))
+            _exit(1)
+
+    # TODO: fix validation and toggle exit back on below
+    # Corner-case valid addresses that we currently don't accept
+    for test_addr in ('Test Æøå <æøå@abc.org>',
+                      'aBc@Def.org', '<valid@def.org>',
                       ' false-positive@ghi.org',
                       'False Positive  <abc@ghi.org>',
-                      ' Another False Positive  <abc@ghi.org>',
-                      'invalid <abc@ghi,org>', 'invalid <abc@',
-                      'invalid abc@def.org',
+                      ' Another False Positive  <abc@ghi.org>'):
+        try:
+            print('Testing valid_email_address: %s' % test_addr)
+            valid_email_address(test_addr)
+            print('Accepted raw address! %s' % [parseaddr(test_addr)])
+        except InputException as exc:
+            print('Rejected raw address %r: %s' % (test_addr, exc))
+            # _exit(1)
+
+    # Simple invalid addresses to fail on
+    for test_addr in ('', 'invalid', 'abc@dk', 'invalid <abc@ghi,org>',
+                      'invalid <abc@', 'invalid abc@def.org',
                       'Test <abc@ghi.org>, twice <def@def.org>',
                       'A !#¤%/) positive  <abc@ghi.org>',
                       'a@b.c<script>alert("XSS vulnerable");</script>',
@@ -2334,7 +2394,8 @@ def main(_print=print):
             print('Testing valid_email_address: %s' % test_addr)
             valid_email_address(test_addr)
             print('Accepted raw address! %s' % [parseaddr(test_addr)])
-        except Exception as exc:
+            _exit(1)
+        except InputException as exc:
             print('Rejected raw address %r: %s' % (test_addr, exc))
 
     # OpenID 2.0 version
@@ -2381,9 +2442,12 @@ def main(_print=print):
     print("Accepted:")
     for (key, val) in accepted.items():
         print("\t%s: %s" % (key, val))
-    print("Rejected:")
-    for (key, val) in rejected.items():
-        print("\t%s: %s" % (key, val))
+    if rejected:
+        print("Rejected:")
+        for (key, val) in rejected.items():
+            print("\t%s: %s" % (key, val))
+        _exit(1)
+
     user_arguments_dict['openid.sreg.fullname'] = [
         force_unicode('Jonas Æøå Bardino')]
     (accepted, rejected) = validated_input(
@@ -2391,9 +2455,11 @@ def main(_print=print):
     print("Accepted:")
     for (key, val) in accepted.items():
         print("\t%s: %s" % (key, val))
-    print("Rejected:")
-    for (key, val) in rejected.items():
-        print("\t%s: %s" % (key, val))
+    if rejected:
+        print("Rejected:")
+        for (key, val) in rejected.items():
+            print("\t%s: %s" % (key, val))
+        _exit(1)
 
     # OpenID Connect version
     autocreate_defaults = {
@@ -2440,9 +2506,12 @@ def main(_print=print):
     print("Accepted:")
     for (key, val) in accepted.items():
         print("\t%s: %s" % (key, val))
-    print("Rejected:")
-    for (key, val) in rejected.items():
-        print("\t%s: %s" % (key, val))
+    if rejected:
+        print("Rejected:")
+        for (key, val) in rejected.items():
+            print("\t%s: %s" % (key, val))
+        _exit(1)
+
     user_arguments_dict = {'oidc.claim.aud': ['http://somedomain.org'],
                            'oidc.claim.country': ['DK'],
                            'oidc.claim.email': ['bardino@nbi.ku.dk,bardino@science.ku.dk'],
@@ -2467,9 +2536,13 @@ def main(_print=print):
     print("Accepted:")
     for (key, val) in accepted.items():
         print("\t%s: %s" % (key, val))
-    print("Rejected:")
-    for (key, val) in rejected.items():
-        print("\t%s: %s" % (key, val))
+    if rejected:
+        print("Rejected:")
+        for (key, val) in rejected.items():
+            print("\t%s: %s" % (key, val))
+        _exit(1)
+
+    _exit(0)
 
 
 if __name__ == '__main__':
