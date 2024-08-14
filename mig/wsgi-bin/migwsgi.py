@@ -44,11 +44,12 @@ from mig.shared.output import validate, format_output, dummy_main, reject_main
 from mig.shared.safeinput import valid_backend_name, html_escape, InputException
 from mig.shared.scriptinput import fieldstorage_to_dict
 
+
 if PY2:
-    def _ensure_wsgi_chunk(chunk):
+    def _ensure_encoded_string(chunk):
         return chunk
 else:
-    def _ensure_wsgi_chunk(chunk):
+    def _ensure_encoded_string(chunk):
         return codecs.encode(chunk, 'utf8')
 
 
@@ -443,7 +444,7 @@ def _application(environ, start_response, _set_environ, _format_output=format_ou
             #              (backend, i+1, chunk_parts))
             # end index may be after end of content - but no problem
             part = output[i*download_block_size:(i+1)*download_block_size]
-            yield _ensure_wsgi_chunk(part)
+            yield _ensure_encoded_string(part)
         if chunk_parts > 1:
             _logger.info("WSGI %s finished yielding all %d output parts" %
                          (backend, chunk_parts))
