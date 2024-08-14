@@ -278,9 +278,14 @@ def is_path_within(path, start=None, _msg=None):
     return not relative.startswith('..')
 
 
-def cleanpath(relative_path, test_case):
+def cleanpath(relative_path, test_case, ensure_dir=False):
     assert isinstance(test_case, MigTestCase)
     tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
+    if ensure_dir:
+        try:
+            os.mkdir(tmp_path)
+        except FileExistsError:
+            raise AssertionError("ABORT: use of unclean output path: %s" % relative_path)
     test_case._cleanup_paths.add(tmp_path)
     return tmp_path
 
