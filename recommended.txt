@@ -11,7 +11,9 @@ pyyaml
 #       modern version. We tested 2.6.1 to work.
 # IMPORTANT: there's a known security issue (CVE-2023-29483) in dnspython<2.6.1
 #            as explained on https://www.dnspython.org/news/2.6.1/
-dnspython>=2.6.1;python_version >= "3"
+dnspython>=2.6.1;python_version >= "3.7"
+# NOTE: one should use a patched 2.x version e.g. from RHEL/Rocky 8 if on python3.6
+dnspython<2.4;python_version > "3" and python_version < "3.7"
 # NOTE: one should use a patched 1.x version e.g. from RHEL/Rocky 8 if on python2
 dnspython<2;python_version < "3"
 # NOTE: python-3.6 and earlier versions require older email-validator, whereas
