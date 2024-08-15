@@ -64,7 +64,7 @@ Where supported options include -h/--help for this help or the conf settings:
 ''' % (sys.argv[0], '\n'.join(lines)))
 
 
-if '__main__' == __name__:
+def main(argv, _generate_confs=generate_confs):
     str_names = [
         'source',
         'destination',
@@ -289,6 +289,7 @@ if '__main__' == __name__:
         'enable_sitestatus',
         'daemon_pubkey_from_dns',
         'seafile_ro_access',
+        'permanent_freeze',
         'public_use_https',
         'prefer_python3',
         'io_account_expire',
@@ -318,23 +319,23 @@ if '__main__' == __name__:
         else:
             print('Error: environment options %r not supported!' % opt_name)
             usage(names)
-            sys.exit(1)
+            return 1
 
     # apply values from CLI parameters
     flag_str = 'h'
     opts_str = ["%s=" % key for key in names] + ["help"]
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], flag_str, opts_str)
+        (opts, args) = getopt.getopt(argv, flag_str, opts_str)
     except getopt.GetoptError as exc:
         print('Error: ', exc.msg)
         usage(names)
-        sys.exit(1)
+        return 1
 
     for (opt, val) in opts:
         opt_name = opt.lstrip('-')
         if opt in ('-h', '--help'):
             usage(names)
-            sys.exit(0)
+            return 0
         elif opt_name in str_names:
             settings[opt_name] = val
         elif opt_name in int_names:
@@ -350,7 +351,7 @@ if '__main__' == __name__:
         print('Error: non-option arguments are no longer supported!')
         print(" ... found: %s" % args)
         usage(names)
-        sys.exit(1)
+        return 1
     if settings['destination_suffix'] == 'DEFAULT':
         suffix = "-%s" % datetime.datetime.now().isoformat()
         settings['destination_suffix'] = suffix
@@ -371,7 +372,7 @@ if '__main__' == __name__:
         if val == 'DEFAULT':
             del settings[key]
 
-    options = generate_confs(output_path, **settings)
+    options = _generate_confs(output_path, **settings)
 
     # TODO: avoid reconstructing this path (also done inside generate_confs)
     instructions_path = os.path.join(options['destination_dir'],
@@ -383,5 +384,10 @@ if '__main__' == __name__:
         print(instructions)
     except Exception as exc:
         print("ERROR: could not read generated instructions: %s" % exc)
-        sys.exit(1)
-    sys.exit(0)
+        return 1
+    return 0
+
+
+if '__main__' == __name__:
+    exit_code = main(sys.argv[1:])
+    sys.exit(exit_code)

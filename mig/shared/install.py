@@ -35,6 +35,7 @@ Create MiG developer account with dedicated web server and daemons.
 
 from __future__ import print_function
 from __future__ import absolute_import
+from past.builtins import basestring
 
 import ast
 import base64
@@ -482,6 +483,7 @@ def generate_confs(
     smtp_server='localhost',
     smtp_sender='',
     log_level='info',
+    permanent_freeze='no',
     freeze_to_tape='',
     status_system_match=keyword_any,
     duplicati_protocols='',
@@ -796,6 +798,7 @@ def _generate_confs_prepare(
     smtp_server,
     smtp_sender,
     log_level,
+    permanent_freeze,
     freeze_to_tape,
     status_system_match,
     duplicati_protocols,
@@ -1043,6 +1046,13 @@ def _generate_confs_prepare(
     user_dict['__SMTP_SERVER__'] = smtp_server
     user_dict['__SMTP_SENDER__'] = smtp_sender
     user_dict['__LOG_LEVEL__'] = log_level
+
+    if isinstance(permanent_freeze, basestring):
+        permanent_freeze = permanent_freeze.split(' ')
+    elif isinstance(permanent_freeze, bool):
+        permanent_freeze = ['yes' if permanent_freeze else 'no']
+    user_dict['__PERMANENT_FREEZE__'] = ' '.join(permanent_freeze)
+
     user_dict['__FREEZE_TO_TAPE__'] = freeze_to_tape
     user_dict['__STATUS_SYSTEM_MATCH__'] = status_system_match
     user_dict['__IMNOTIFY_ADDRESS__'] = imnotify_address
