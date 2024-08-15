@@ -48,7 +48,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Setup environment
         run: |
-          pip install --no-cache-dir -r requirements.txt
+          pip install --no-cache-dir -r requirements.txt -r local-requirements.txt
       - name: Run tests
         run: |
           PYTHON_BIN=python ./envhelp/makeconfig test --python2
