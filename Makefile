@@ -64,6 +64,8 @@ else
 ./envhelp/py3.depends: $(REQS_PATH)
 endif
 	@rm -f ./envhelp/py3.depends
+	@echo "upgrading venv pip as required for some dependencies"
+	@./envhelp/venv/bin/pip3 install --upgrade pip
 	@echo "installing dependencies from $(REQS_PATH)"
 	@./envhelp/venv/bin/pip3 install -r $(REQS_PATH)
 ifeq ($(MIG_ENV),'local')
