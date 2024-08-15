@@ -36,7 +36,8 @@ import os
 import pwd
 import sys
 
-sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.append(os.path.realpath(
+    os.path.join(os.path.dirname(__file__), "..")))
 
 from support import MIG_BASE, TEST_OUTPUT_DIR, MigTestCase, \
     testmain, temppath, cleanpath, fixturepath, is_path_within, outputpath
@@ -230,6 +231,26 @@ class MigSharedInstall__generate_confs(MigTestCase):
             actual_file, 'SITE', 'datasafety_link', expected='TEST_DATASAFETY_LINK')
         self.assertConfigKey(
             actual_file, 'SITE', 'datasafety_text', expected='TEST_DATASAFETY_TEXT')
+
+    def test_creates_output_files_with_permanent_freeze(self):
+        fixture_dir = fixturepath("confs-stdlocal")
+        expected_generated_dir = cleanpath('confs-stdlocal', self)
+        symlink_path = temppath('confs', self)
+
+        generate_confs(
+            self.output_path,
+            destination=symlink_path,
+            destination_suffix='-stdlocal',
+            permanent_freeze=('foo', 'bar', 'baz'),
+            _getpwnam=create_dummy_gpwnam(4321, 1234),
+        )
+
+        relative_file = 'confs-stdlocal/MiGserver.conf'
+        self.assertPathExists('confs-stdlocal/MiGserver.conf')
+
+        actual_file = outputpath(relative_file)
+        self.assertConfigKey(
+            actual_file, 'SITE', 'permanent_freeze', expected='foo bar baz')
 
     def test_options_for_source_auto(self):
         options = generate_confs(
