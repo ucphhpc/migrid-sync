@@ -34,7 +34,13 @@ from __future__ import absolute_import
 from past.builtins import basestring
 
 import codecs
+import io
 import sys
+# NOTE: StringIO is only available in python2
+try:
+    import StringIO
+except ImportError:
+    StringIO = None
 
 PY2 = sys.version_info[0] < 3
 _TYPE_UNICODE = type(u"")
@@ -72,3 +78,15 @@ def ensure_native_string(string_or_bytes):
     else:
         textual_output = string_or_bytes
     return textual_output
+
+
+def NativeStringIO(initial_value=''):
+    """Mock StringIO pseudo-class to create a StringIO matching the native
+    string coding form. That is a BytesIO with utf8 on python 2 and unicode
+    StringIO otherwise. Optional string helpers are automatically converted
+    accordingly.
+    """
+    if PY2 and StringIO is not None:
+        return StringIO.StringIO(initial_value)
+    else:
+        return io.StringIO(initial_value)
