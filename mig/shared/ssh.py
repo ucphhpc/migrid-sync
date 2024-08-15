@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # ssh - remote command wrappers using ssh/scp
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -38,14 +38,6 @@ import os
 import sys
 import tempfile
 
-# NOTE: we would prefer the modern io.BytesIO but it fails in python2 during
-#       rsa_key.write_private_key(string_io_obj) with a Paramiko error:
-#       TypeError: 'unicode' does not have the buffer interface
-try:
-    from cStringIO import StringIO as LegacyStringIO
-except ImportError:
-    from io import BytesIO as LegacyStringIO
-
 try:
     import paramiko
 except ImportError:
@@ -54,6 +46,7 @@ except ImportError:
 
 from mig.shared.base import client_id_dir, force_utf8
 from mig.shared.conf import get_resource_exe, get_configuration_object
+from mig.shared.compat import NativeStringIO
 from mig.shared.defaults import ssh_conf_dir
 from mig.shared.safeeval import subprocess_popen, subprocess_pipe
 
@@ -98,7 +91,7 @@ def parse_pub_key(public_key):
         msg = 'Invalid ssh public key: (%s)' % public_key
         raise ValueError(msg)
 
-    head, tail = public_key.split(' ')[ssh_type_idx:2+ssh_type_idx]
+    head, tail = public_key.split(' ')[ssh_type_idx:2 + ssh_type_idx]
     bits = base64.b64decode(tail)
     msg = paramiko.Message(bits)
     parse_key = type_map[head]
@@ -514,7 +507,12 @@ def generate_ssh_rsa_key_pair(size=2048, public_key_prefix='',
         raise Exception("You need paramiko to provide the ssh/sftp service")
     rsa_key = paramiko.RSAKey.generate(size)
 
-    string_io_obj = LegacyStringIO()
+    # NOTE: we would prefer the modern io.BytesIO on python2 but it fails
+    #       during rsa_key.write_private_key(string_io_obj) with a Paramiko
+    #       TypeError: 'unicode' does not have the buffer interface.
+    #       Use compat NativeStringIO to pick a suitable StringIO for the
+    #       active platform.
+    string_io_obj = NativeStringIO()
     rsa_key.write_private_key(string_io_obj)
 
     private_key = string_io_obj.getvalue()
