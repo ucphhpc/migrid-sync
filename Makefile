@@ -36,6 +36,7 @@ clean:
 .PHONY: distclean
 distclean: clean
 	@rm -rf ./envhelp/venv
+	@rm -rf ./envhelp/output
 	@rm -rf ./tests/__pycache__
 	@rm -f ./tests/*.pyc
 
