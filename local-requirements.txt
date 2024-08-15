@@ -1,5 +1,8 @@
 # migrid dependencies on a format suitable for pip install as described on
 # https://pip.pypa.io/en/stable/reference/requirement-specifiers/
-autopep8
-# Needed for ssh unit tests
-paramiko
+# We only need autopep8 on py 3 as it's used in 'make fmt' (with py3)
+autopep8;python_version >= "3"
+# We need paramiko for the ssh unit tests
+# NOTE: paramiko-3.0.0 dropped python2 support
+paramiko;python_version >= "3"
+paramiko<3;python_version < "3"
