@@ -197,7 +197,7 @@ class MigSharedInstall__generate_confs(MigTestCase):
             return args[0]
         capture_defaulted.kwargs = None
 
-        options = generate_confs(
+        (options, _) = generate_confs(
             '/some/arbitrary/path',
             _getpwnam=create_dummy_gpwnam(4321, 1234),
             _prepare=capture_defaulted,
@@ -237,23 +237,24 @@ class MigSharedInstall__generate_confs(MigTestCase):
         expected_generated_dir = cleanpath('confs-stdlocal', self)
         symlink_path = temppath('confs', self)
 
-        generate_confs(
-            self.output_path,
-            destination=symlink_path,
-            destination_suffix='-stdlocal',
-            permanent_freeze=('foo', 'bar', 'baz'),
-            _getpwnam=create_dummy_gpwnam(4321, 1234),
-        )
+        for arg_val in ('yes', 'no', 'foo bar baz'):
+            generate_confs(
+                self.output_path,
+                destination=symlink_path,
+                destination_suffix='-stdlocal',
+                permanent_freeze=arg_val,
+                _getpwnam=create_dummy_gpwnam(4321, 1234),
+            )
 
-        relative_file = 'confs-stdlocal/MiGserver.conf'
-        self.assertPathExists('confs-stdlocal/MiGserver.conf')
+            relative_file = 'confs-stdlocal/MiGserver.conf'
+            self.assertPathExists('confs-stdlocal/MiGserver.conf')
 
-        actual_file = outputpath(relative_file)
-        self.assertConfigKey(
-            actual_file, 'SITE', 'permanent_freeze', expected='foo bar baz')
+            actual_file = outputpath(relative_file)
+            self.assertConfigKey(
+                actual_file, 'SITE', 'permanent_freeze', expected=arg_val)
 
     def test_options_for_source_auto(self):
-        options = generate_confs(
+        (options, _) = generate_confs(
             '/some/arbitrary/path',
             source=keyword_auto,
             _getpwnam=create_dummy_gpwnam(4321, 1234),
@@ -266,7 +267,7 @@ class MigSharedInstall__generate_confs(MigTestCase):
         self.assertEqual(options['template_dir'], expected_template_dir)
 
     def test_options_for_source_relative(self):
-        options = generate_confs(
+        (options, _) = generate_confs(
             '/current/working/directory/mig/install',
             source='.',
             _getpwnam=create_dummy_gpwnam(4321, 1234),
@@ -279,7 +280,7 @@ class MigSharedInstall__generate_confs(MigTestCase):
                          '/current/working/directory/mig/install')
 
     def test_options_for_destination_auto(self):
-        options = generate_confs(
+        (options, _) = generate_confs(
             '/some/arbitrary/path',
             destination=keyword_auto,
             destination_suffix='_suffix',
@@ -295,7 +296,7 @@ class MigSharedInstall__generate_confs(MigTestCase):
                          '/some/arbitrary/path/confs_suffix')
 
     def test_options_for_destination_relative(self):
-        options = generate_confs(
+        (options, _) = generate_confs(
             '/current/working/directory',
             destination='generate-confs',
             destination_suffix='_suffix',
@@ -311,7 +312,7 @@ class MigSharedInstall__generate_confs(MigTestCase):
                          '/current/working/directory/generate-confs_suffix')
 
     def test_options_for_destination_absolute(self):
-        options = generate_confs(
+        (options, _) = generate_confs(
             '/current/working/directory',
             destination='/some/other/place/confs',
             destination_suffix='_suffix',
