@@ -59,7 +59,7 @@ class MigSharedSsh(MigTestCase):
             except ValueError as vae:
                 #print("Error in parsing pub key: %r" % vae)
                 parsed = None
-            self.assertTrue(parsed is not None)
+            self.assertIsNotNone(parsed)
 
             (priv_key, pub_key) = generate_ssh_rsa_key_pair(size=keysize,
                                                             encode_utf8=True)
