@@ -53,9 +53,9 @@ def create_fake_generate_confs(return_dict=None):
     """Fake generate confs helper"""
     def _generate_confs(*args, **kwargs):
         if return_dict:
-            return return_dict
+            return (return_dict, {})
         else:
-            return {}
+            return ({}, {})
     return _generate_confs
 
 
@@ -68,9 +68,8 @@ class MigInstallGenerateconfs__main(MigTestCase):
         with open(os.path.join(expected_generated_dir, "instructions.txt"),
                   "w"):
             pass
-        fake_generate_confs = create_fake_generate_confs(dict(
-            destination_dir=expected_generated_dir
-        ))
+        fake_generate_confs = create_fake_generate_confs(
+            dict(destination_dir=expected_generated_dir))
         test_arguments = ['--permanent_freeze', 'yes']
 
         exit_code = main(test_arguments, _generate_confs=fake_generate_confs)

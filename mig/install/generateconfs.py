@@ -193,6 +193,7 @@ def main(argv, _generate_confs=generate_confs):
         'log_level',
         'twofactor_mandatory_protos',
         'twofactor_auth_apps',
+        'permanent_freeze',
         'freeze_to_tape',
         'status_system_match',
         'duplicati_protocols',
@@ -290,14 +291,13 @@ def main(argv, _generate_confs=generate_confs):
         'enable_sitestatus',
         'daemon_pubkey_from_dns',
         'seafile_ro_access',
-        'permanent_freeze',
         'public_use_https',
         'prefer_python3',
         'io_account_expire',
         'gdp_email_notify',
     ]
     names = str_names + int_names + bool_names
-    settings = {}
+    settings, options, result = {}, {}, {}
     default_val = 'DEFAULT'
     # Force values to expected type
     for key in names:
@@ -346,7 +346,7 @@ def main(argv, _generate_confs=generate_confs):
         else:
             print('Error: command line option %r not supported!' % opt_name)
             usage(names)
-            sys.exit(1)
+            return 1
 
     if args:
         print('Error: non-option arguments are no longer supported!')
@@ -373,7 +373,7 @@ def main(argv, _generate_confs=generate_confs):
         if val == 'DEFAULT':
             del settings[key]
 
-    options = _generate_confs(output_path, **settings)
+    (options, result) = _generate_confs(output_path, **settings)
 
     # TODO: avoid reconstructing this path (also done inside generate_confs)
     instructions_path = os.path.join(options['destination_dir'],
