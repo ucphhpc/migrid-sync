@@ -654,6 +654,14 @@ def _force_default_coding_rec(input_obj, kind, highlight='', stringify=False):
         raise ValueError('Unsupported default coding kind: %s' % kind)
 
 
+def force_native_str_rec(input_obj, highlight=''):
+    """A helper to force input_obj to the default string coding.
+    Use the active interpreter and the shared.defaults helpers to force the
+    current default.
+    """
+    return _force_default_coding_rec(input_obj, STR_KIND, highlight)
+
+
 def force_default_str_coding_rec(input_obj, highlight='', stringify=False):
     """A helper to force input_obj to the default string coding recursively.
     Use the active interpreter and the shared.defaults helpers to force the
