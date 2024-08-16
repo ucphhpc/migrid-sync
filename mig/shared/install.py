@@ -591,7 +591,7 @@ def generate_confs(
     user_dict = _prepare(options, **expanded)
     _writefiles(options, user_dict)
     _instructions(options, user_dict)
-    return options
+    return (options, user_dict)
 
 
 def _generate_confs_prepare(
@@ -1046,13 +1046,7 @@ def _generate_confs_prepare(
     user_dict['__SMTP_SERVER__'] = smtp_server
     user_dict['__SMTP_SENDER__'] = smtp_sender
     user_dict['__LOG_LEVEL__'] = log_level
-
-    if isinstance(permanent_freeze, basestring):
-        permanent_freeze = permanent_freeze.split(' ')
-    elif isinstance(permanent_freeze, bool):
-        permanent_freeze = ['yes' if permanent_freeze else 'no']
-    user_dict['__PERMANENT_FREEZE__'] = ' '.join(permanent_freeze)
-
+    user_dict['__PERMANENT_FREEZE__'] = permanent_freeze
     user_dict['__FREEZE_TO_TAPE__'] = freeze_to_tape
     user_dict['__STATUS_SYSTEM_MATCH__'] = status_system_match
     user_dict['__IMNOTIFY_ADDRESS__'] = imnotify_address
