@@ -36,8 +36,8 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__))))
 
 from tests.support import TEST_OUTPUT_DIR, MigTestCase, FakeConfiguration, \
     cleanpath, testmain
-from mig.shared.cloud import cloud_access_allowed, cloud_load_instance, \
-    cloud_save_instance, cloud_purge_instance, allowed_cloud_images
+from mig.shared.cloud import cloud_load_instance, cloud_save_instance, \
+    allowed_cloud_images
 
 DUMMY_USER = 'dummy-user'
 DUMMY_SETTINGS_DIR = 'dummy_user_settings'
