@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cloud - Helper functions for the cloud service
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -47,7 +47,7 @@ try:
 except ImportError as err:
     requests = None
 
-from mig.shared.base import force_utf8, force_utf8_rec, client_id_dir
+from mig.shared.base import force_native_str, force_native_str_rec, client_id_dir
 from mig.shared.defaults import keyword_all
 from mig.shared.fileio import pickle, unpickle, acquire_file_lock, \
     release_file_lock
@@ -99,7 +99,7 @@ def __wait_available(configuration, client_id, cloud_id, cloud_flavor,
         for i in xrange(__max_wait_secs // __poll_delay_secs):
             status, msg = status_of_cloud_instance(configuration, client_id,
                                                    cloud_id, cloud_flavor,
-                                                   force_utf8(instance.name))
+                                                   force_native_str(instance.name))
             if 'active' == msg.lower():
                 _logger.info("%s cloud instance %s is ready" % (cloud_id,
                                                                 instance))
@@ -125,7 +125,7 @@ def __wait_gone(configuration, client_id, cloud_id, cloud_flavor, instance):
         for i in xrange(__max_wait_secs // __poll_delay_secs):
             status, msg = status_of_cloud_instance(configuration, client_id,
                                                    cloud_id, cloud_flavor,
-                                                   force_utf8(instance.name))
+                                                   force_native_str(instance.name))
             if not status:
                 _logger.info("%s cloud instance %s is gone" % (cloud_id,
                                                                instance))
@@ -172,8 +172,8 @@ def openstack_list_cloud_images(configuration, client_id, cloud_id):
         return (False, [])
     img_list = []
     for image in conn.image.images():
-        image_name = force_utf8(image.name)
-        image_id = force_utf8(image.id)
+        image_name = force_native_str(image.name)
+        image_id = force_native_str(image.id)
         image_alias = service['service_image_alias_map'].get(image_name,
                                                              image_name)
         img_list.append((image_name, image_id, image_alias))
@@ -204,7 +204,7 @@ def openstack_start_cloud_instance(configuration, client_id, cloud_id, instance_
         msg = conn.compute.start_server(instance)
         if msg:
             status = False
-            msg = force_utf8(msg)
+            msg = force_native_str(msg)
             _logger.error("%s failed to start %s cloud instance: %s" %
                           (client_id, instance_id, msg))
         else:
@@ -247,7 +247,7 @@ def openstack_stop_cloud_instance(configuration, client_id, cloud_id, instance_i
         msg = conn.compute.stop_server(instance)
         if msg:
             status = False
-            msg = force_utf8(msg)
+            msg = force_native_str(msg)
             _logger.error("%s failed to stop %s cloud instance: %s" %
                           (client_id, instance_id, msg))
         else:
@@ -292,7 +292,7 @@ def openstack_restart_cloud_instance(
         msg = conn.compute.reboot_server(instance, boot_strength)
         if msg:
             status = False
-            msg = force_utf8(msg)
+            msg = force_native_str(msg)
             _logger.error("%s failed to %s restart %s cloud instance: %s" %
                           (client_id, boot_strength, instance_id, msg))
         else:
@@ -328,7 +328,7 @@ def openstack_status_of_cloud_instance(configuration, client_id, cloud_id,
     try:
         instance = None
         for server in conn.compute.servers():
-            if force_utf8(server.name) == instance_id:
+            if force_native_str(server.name) == instance_id:
                 instance = server
                 break
 
@@ -340,7 +340,7 @@ def openstack_status_of_cloud_instance(configuration, client_id, cloud_id,
             _logger.error("%s failed to locate %s cloud instance %s: %s" %
                           (client_id, cloud_id, instance_id, msg))
             return (status, msg)
-        status_msg = force_utf8(instance.status)
+        status_msg = force_native_str(instance.status)
         if status_msg:
             msg = status_msg
             _logger.info("%s status for cloud %s instance %s" %
@@ -379,7 +379,7 @@ def openstack_status_all_cloud_instances(configuration, client_id, cloud_id,
     try:
         # Extract corresponding cloud status objects
         for server in conn.compute.servers():
-            instance_id = force_utf8(server.name)
+            instance_id = force_native_str(server.name)
             if instance_id in instance_id_list:
                 instance_map[instance_id] = server
 
@@ -399,7 +399,7 @@ def openstack_status_all_cloud_instances(configuration, client_id, cloud_id,
                 lookup_name = lookup_map.get(name, name)
                 raw_val = getattr(instance, lookup_name, "UNKNOWN")
                 if isinstance(raw_val, dict):
-                    field_val = force_utf8_rec(raw_val)
+                    field_val = force_native_str_rec(raw_val)
                     # NOTE: addresses format is something along the lines of:
                     # {NETWORK_ID: [
                     #   {..., 'addr': INT_IP, 'OS-EXT-IPS:type': 'fixed'},
@@ -426,7 +426,7 @@ def openstack_status_all_cloud_instances(configuration, client_id, cloud_id,
                                         name)
                         field_val = "%s" % field_val
                 else:
-                    field_val = force_utf8(raw_val)
+                    field_val = force_native_str(raw_val)
                 status_dict[instance_id][name] = field_val
                 status_dict[instance_id]['success'] = True
                 status_dict[instance_id]['msg'] = ''
@@ -457,7 +457,7 @@ def openstack_web_access_cloud_instance(configuration, client_id, cloud_id,
     try:
         instance = None
         for server in conn.compute.servers():
-            if force_utf8(server.name) == instance_id:
+            if force_native_str(server.name) == instance_id:
                 instance = server
                 break
 
@@ -470,7 +470,7 @@ def openstack_web_access_cloud_instance(configuration, client_id, cloud_id,
                           (client_id, cloud_id, instance_id, msg))
             return (status, msg)
         # TODO: openstack does not expose console URL - manual request for now
-        # console_url = force_utf8(instance.get_console_url())
+        # console_url = force_native_str(instance.get_console_url())
 
         web_auth = conn.authorize()
 
@@ -494,7 +494,7 @@ def openstack_web_access_cloud_instance(configuration, client_id, cloud_id,
                      (instance_id, server.id, instance))
         response = requests.post(
             API_ENDPOINT, headers=HEADERS, data=body, verify=True)
-        response_dict = force_utf8_rec(response.json())
+        response_dict = force_native_str_rec(response.json())
         _logger.info("%s web console response: %s" %
                      (client_id, response_dict))
         console_url = response_dict.get('console', {}).get('url', '')
@@ -678,7 +678,7 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
                                       security_groups=sec_group_id)
         if not instance:
             status = False
-            msg = force_utf8("%s" % instance)
+            msg = force_native_str("%s" % instance)
             _logger.error("%s failed to create %s cloud instance: %s" %
                           (client_id, instance_id, msg))
 
@@ -695,7 +695,7 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
                 instance = conn.compute.find_server(instance_id)
                 msg = conn.compute.delete_server(instance)
                 if msg:
-                    raise Exception(force_utf8(msg))
+                    raise Exception(force_native_str(msg))
             except Exception as exc:
                 _logger.error("%s failed to clean up %s cloud instance: %s" %
                               (client_id, instance_id, exc))
@@ -706,7 +706,7 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
             floating_network_id=floating_network_id)
         if not floating_ip:
             status = False
-            msg = force_utf8("%s" % floating_ip)
+            msg = force_native_str("%s" % floating_ip)
             _logger.error("%s failed to create %s cloud instance ip: %s" %
                           (client_id, instance_id, msg))
             return (status, msg)
@@ -716,11 +716,11 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
             instance.id, floating_ip.floating_ip_address)
         if not floating_ip.floating_ip_address:
             status = False
-            msg = force_utf8("%s" % floating_ip.floating_ip_address)
+            msg = force_native_str("%s" % floating_ip.floating_ip_address)
             _logger.error("%s failed to create %s cloud instance float ip: %s"
                           % (client_id, instance_id, msg))
             return (status, msg)
-        msg = force_utf8(floating_ip.floating_ip_address)
+        msg = force_native_str(floating_ip.floating_ip_address)
         _logger.info("%s created cloud %s instance %s with floating IP %s" %
                      (client_id, cloud_id, instance_id, msg))
 
@@ -758,7 +758,7 @@ def openstack_delete_cloud_instance(configuration, client_id, cloud_id,
         if instance:
             msg = conn.compute.delete_server(instance)
             if msg:
-                msg = force_utf8(msg)
+                msg = force_native_str(msg)
                 status = False
                 _logger.error("%s failed to delete %s cloud instance: %s" %
                               (client_id, instance_id, msg))
