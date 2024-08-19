@@ -1026,9 +1026,9 @@ def _get_encoder(configuration, coding):
 
 
 def _get_jump_host(configuration, client_id, cloud_id, manage=False):
-    """Return any configured ssh jump host ssh details including address, port
-    and username for client_id on cloud_id. If the optional manage arg is set
-    the two additional manage key script and coding settings are added.
+    """Return any configured ssh jump host ssh details including address, port,
+    username and key for client_id on cloud_id. If the optional manage arg is
+    set the two additional manage key script and coding settings are added.
     """
     _logger = configuration.logger
     jump_host = {}
@@ -1042,6 +1042,8 @@ def _get_jump_host(configuration, client_id, cloud_id, manage=False):
     jump_host['fqdn'] = cloud_fqdn_from_ip(configuration, addr)[0]
     jump_host['user'] = lookup_user_service_value(
         configuration, client_id, service, 'service_jumphost_user', '')
+    jump_host['key'] = lookup_user_service_value(
+        configuration, client_id, service, 'service_jumphost_key', '')
     # TODO: support jumphost port with port map override?
     if manage:
         for name in ('manage_keys_script', 'manage_keys_coding'):
@@ -1095,6 +1097,8 @@ def _manage_jump_host_keys(configuration, client_id, cloud_id, action,
     ssh_cmd = ['ssh']
     if jump_host['user']:
         ssh_cmd.append('-oUser=%(user)s' % jump_host)
+    if jump_host['key']:
+        ssh_cmd.append('-oIdentityFile=%(key)s' % jump_host)
     ssh_cmd.append("%(fqdn)s" % jump_host)
     # NOTE: remote script should restrict key access to reduce abuse risk with
     # command="/bin/false",no-pty,no-agent-forwarding,no-X11-forwarding PUBKEY
