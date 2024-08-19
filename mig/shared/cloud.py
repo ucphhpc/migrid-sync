@@ -1329,7 +1329,8 @@ if __name__ == "__main__":
     cloud_id = 'MIST2'
     cloud_flavor = 'openstack'
     instance_id = 'My-Misty-Test-42'
-    instance_image = 'cirrossdk'
+    #instance_image = 'cirrossdk'
+    instance_image = 'Cirros Test Image'
 
     reuse_instance = False
     restart_instance = False
@@ -1355,7 +1356,8 @@ if __name__ == "__main__":
     # TODO: load yaml from custom location or inline
     print("calling cloud operations for %s in %s with instance %s" %
           (client_id, cloud_id, instance_id))
-    img_list = list_cloud_images(conf, client_id, cloud_id, cloud_flavor)
+    (img_status, img_list) = list_cloud_images(conf, client_id, cloud_id,
+                                               cloud_flavor)
     print(img_list)
     image_id = ''
     for (img_name, img_id, img_alias) in img_list:
@@ -1363,6 +1365,9 @@ if __name__ == "__main__":
             image_id = img_id
 
     if not reuse_instance:
+        if not image_id:
+            print("Warning: request new instance but img %r not found on %r" %
+                  (instance_image, cloud_id))
         print(create_cloud_instance(conf, client_id, cloud_id, cloud_flavor,
                                     instance_id, image_id, auth_keys))
         # Start happens automatically on create
