@@ -712,8 +712,17 @@ def openstack_create_cloud_instance(configuration, client_id, cloud_id,
             return (status, msg)
 
         # Add floating IP to instance
-        conn.compute.add_floating_ip_to_server(
-            instance.id, floating_ip.floating_ip_address)
+        try:
+            conn.compute.add_floating_ip_to_server(
+                instance.id, floating_ip.floating_ip_address)
+        except openstack.exceptions.ResourceNotFound as rnf:
+            # TODO: investigate if this apparently stray warning can be avoided
+            # Try to proceed here as we seem to hit bogus warning here on
+            # recent versions. We WILL bail out below if floating_ip_address
+            # was not set.
+            _logger.warning("%s ignore warning attaching floating ip: %s" %
+                            (instance.id, rnf))
+
         if not floating_ip.floating_ip_address:
             status = False
             msg = force_native_str("%s" % floating_ip.floating_ip_address)
