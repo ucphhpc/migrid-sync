@@ -48,7 +48,8 @@ try:
 except ImportError as err:
     requests = None
 
-from mig.shared.base import force_native_str, force_native_str_rec, client_id_dir
+from mig.shared.base import force_native_str, force_native_str_rec, \
+    force_utf8, client_id_dir
 from mig.shared.defaults import keyword_all
 from mig.shared.fileio import pickle, unpickle, acquire_file_lock, \
     release_file_lock
@@ -1022,7 +1023,9 @@ def _get_encoder(configuration, coding):
     if not coding in coding_map:
         raise ValueError("invalid coding value: %s (allowed: %s)" %
                          (coding, ', '.join(list(coding_map))))
-    return coding_map[coding]
+    # NOTE: base N encoders expect and return bytes - force to bytes and back
+    def encoder(x): return force_native_str(coding_map[coding](force_utf8(x)))
+    return encoder
 
 
 def _get_jump_host(configuration, client_id, cloud_id, manage=False):
