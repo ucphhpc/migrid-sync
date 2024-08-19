@@ -30,8 +30,9 @@
 import inspect
 import io
 import json
+import unittest
 
-from tests.support import MigTestCase, testmain, fixturefile
+from tests.support import MigTestCase, PY2, testmain, fixturefile
 from mig.shared.configuration import Configuration
 
 
@@ -44,6 +45,7 @@ def _to_dict(obj):
 
 
 class MigSharedConfiguration(MigTestCase):
+    @unittest.skipIf(PY2, "Python 3 only")
     def test_default_object(self):
         expected_values = fixturefile('mig_shared_configuration--new', fixture_format='json')
 
