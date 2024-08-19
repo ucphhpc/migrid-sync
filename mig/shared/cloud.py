@@ -1016,7 +1016,7 @@ def lookup_user_service_value(configuration, client_id, service, setting,
 
 
 def _get_encoder(configuration, coding):
-    """"""
+    """Return a helper to encode any string to a command-line safe value"""
     coding_map = {"base16": base64.b16encode, "base32": base64.b32encode,
                   "base64": base64.b64encode}
     if not coding in coding_map:
