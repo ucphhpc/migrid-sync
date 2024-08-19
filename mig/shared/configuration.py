@@ -1593,7 +1593,8 @@ location.""" % self.config_file)
                              'service_floating_network_id',
                              'service_availability_zone',
                              'service_jumphost_address',
-                             'service_jumphost_user']
+                             'service_jumphost_user',
+                             'service_jumphost_key']
         # Load generated cloud sections
         for section in config.sections():
             if 'CLOUD_' in section:
