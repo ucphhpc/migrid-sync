@@ -688,7 +688,7 @@ class Configuration:
     def __init__(self, config_file, verbose=False, skip_log=False,
                  disable_auth_log=False):
         if config_file is not None:
-            self.reload_config(verbose, skip_log, _config_file=config_file)
+            self.reload_config(verbose, skip_log, disable_auth_log=disable_auth_log, _config_file=config_file)
 
     def reload_config(self, verbose, skip_log=False, disable_auth_log=False, _config_file=None):
         """Re-read and parse configuration file. Optional skip_log arg
