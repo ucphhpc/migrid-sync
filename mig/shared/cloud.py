@@ -413,6 +413,9 @@ def openstack_status_all_cloud_instances(configuration, client_id, cloud_id,
                                 field_val = entry[-1].get('addr', 'UNKNOWN')
                                 break
                         else:
+                            _logger.warning("no %s in cloud instance %r: %s" %
+                                            (name, instance_id,
+                                             address_entries))
                             field_val = 'Unknown public IP'
                     elif name == 'public_fqdn':
                         address_entries = field_val.values()
@@ -424,6 +427,9 @@ def openstack_status_all_cloud_instances(configuration, client_id, cloud_id,
                                                                addr)[0]
                                 break
                         else:
+                            _logger.warning("no %s in cloud instance %r: %s" %
+                                            (name, instance_id,
+                                             address_entries))
                             field_val = 'Unknown public FQDN'
                     else:
                         _logger.warning("no converter for status field %s" %
