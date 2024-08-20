@@ -58,17 +58,23 @@ class MigSharedFileio__write_chunk(MigTestCase):
         cleanpath(os.path.dirname(DUMMY_FILE_WRITECHUNK), self)
 
     def test_return_false_on_invalid_data(self):
+        self.logger.forgive_errors()
+
         # NOTE: we make sure to disable any forced stringification here
         did_succeed = fileio.write_chunk(self.tmp_path, 1234, 0, self.logger,
                                          force_string=False)
         self.assertFalse(did_succeed)
 
     def test_return_false_on_invalid_offset(self):
+        self.logger.forgive_errors()
+
         did_succeed = fileio.write_chunk(self.tmp_path, DUMMY_BYTES, -42,
                                          self.logger)
         self.assertFalse(did_succeed)
 
     def test_return_false_on_invalid_dir(self):
+        self.logger.forgive_errors()
+
         os.makedirs(self.tmp_path)
 
         did_succeed = fileio.write_chunk(self.tmp_path, 1234, 0, self.logger)
@@ -138,18 +144,24 @@ class MigSharedFileio__write_file(MigTestCase):
         cleanpath(os.path.dirname(DUMMY_FILE_WRITEFILE), self)
 
     def test_return_false_on_invalid_data(self):
+        self.logger.forgive_errors()
+
         # NOTE: we make sure to disable any forced stringification here
         did_succeed = fileio.write_file(1234, self.tmp_path, self.logger,
                                         force_string=False)
         self.assertFalse(did_succeed)
 
     def test_return_false_on_invalid_dir(self):
+        self.logger.forgive_errors()
+
         os.makedirs(self.tmp_path)
 
         did_succeed = fileio.write_file(DUMMY_BYTES, self.tmp_path, self.logger)
         self.assertFalse(did_succeed)
 
     def test_return_false_on_missing_dir(self):
+        self.logger.forgive_errors()
+
         did_succeed = fileio.write_file(DUMMY_BYTES, self.tmp_path, self.logger,
                                         make_parent=False)
         self.assertFalse(did_succeed)
