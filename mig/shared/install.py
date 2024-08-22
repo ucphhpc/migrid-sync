@@ -851,6 +851,7 @@ def _generate_confs_prepare(
     user_dict['__JUPYTER_SERVICES__'] = jupyter_services
     user_dict['__JUPYTER_DEFS__'] = ''
     user_dict['__JUPYTER_OPENIDS__'] = ''
+    user_dict['__JUPYTER_OIDCS__'] = ''
     user_dict['__JUPYTER_REWRITES__'] = ''
     user_dict['__JUPYTER_PROXIES__'] = ''
     user_dict['__JUPYTER_SECTIONS__'] = ''
@@ -1462,8 +1463,8 @@ cert, oid and sid based https!
         user_dict['__WEBSOCKETS_COMMENTED__'] = ''
 
         # Dynamic apache configuration replacement lists
-        jupyter_sections, jupyter_proxies, jupyter_defs, \
-            jupyter_openids, jupyter_rewrites = [], [], [], [], []
+        jupyter_sections, jupyter_proxies, jupyter_defs = [], [], []
+        jupyter_openids, jupyter_oidcs, jupyter_rewrites = [], [], []
         services = user_dict['__JUPYTER_SERVICES__'].split()
 
         try:
@@ -1542,9 +1543,13 @@ cert, oid and sid based https!
                 if u_k not in user_dict:
                     user_dict[u_k] = u_v
 
-            # Setup apache openid template
-            openid_template = gen_openid_template(url, def_name)
+            # Setup apache openid 2.0 and openid connect template
+            openid_template = gen_openid_template(url, def_name,
+                                                  auth_type="OpenID")
             jupyter_openids.append(openid_template)
+            oidc_template = gen_openid_template(url, def_name,
+                                                auth_type="openid-connect")
+            jupyter_oidcs.append(oidc_template)
 
             # Setup apache rewrite template
             rewrite_template = gen_rewrite_template(url, def_name, name)
@@ -1590,6 +1595,7 @@ cert, oid and sid based https!
 
         user_dict['__JUPYTER_DEFS__'] = '\n'.join(jupyter_defs)
         user_dict['__JUPYTER_OPENIDS__'] = '\n'.join(jupyter_openids)
+        user_dict['__JUPYTER_OIDCS__'] = '\n'.join(jupyter_oidcs)
         user_dict['__JUPYTER_REWRITES__'] = '\n'.join(jupyter_rewrites)
         user_dict['__JUPYTER_PROXIES__'] = '\n'.join(jupyter_proxies)
         user_dict['__JUPYTER_SECTIONS__'] = ''.join(jupyter_sections)
@@ -2214,6 +2220,7 @@ def _generate_confs_writefiles(options, user_dict, insert_list=[], cleanup_list=
         ("apache-service-template.conf", "apache2.service"),
         ("apache-MiG-jupyter-def-template.conf", "MiG-jupyter-def.conf"),
         ("apache-MiG-jupyter-openid-template.conf", "MiG-jupyter-openid.conf"),
+        ("apache-MiG-jupyter-oidc-template.conf", "MiG-jupyter-oidc.conf"),
         ("apache-MiG-jupyter-proxy-template.conf", "MiG-jupyter-proxy.conf"),
         ("apache-MiG-jupyter-rewrite-template.conf",
          "MiG-jupyter-rewrite.conf"),
@@ -2337,6 +2344,7 @@ If jupyter is enabled, the following configuration directory must be created
 sudo mkdir -p %(apache_etc)s/conf.extras.d
 sudo cp %(destination)s/MiG-jupyter-def.conf %(apache_etc)s/conf.extras.d
 sudo cp %(destination)s/MiG-jupyter-openid.conf %(apache_etc)s/conf.extras.d
+sudo cp %(destination)s/MiG-jupyter-oidc.conf %(apache_etc)s/conf.extras.d
 sudo cp %(destination)s/MiG-jupyter-proxy.conf %(apache_etc)s/conf.extras.d
 sudo cp %(destination)s/MiG-jupyter-rewrite.conf %(apache_etc)s/conf.extras.d
 
@@ -2808,6 +2816,7 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
     apache_mig_conf = os.path.join(dst, 'MiG.conf')
     apache_jupyter_def = os.path.join(dst, 'MiG-jupyter-def.conf')
     apache_jupyter_openid = os.path.join(dst, 'MiG-jupyter-openid.conf')
+    apache_jupyter_oidc = os.path.join(dst, 'MiG-jupyter-oidc.conf')
     apache_jupyter_proxy = os.path.join(dst, 'MiG-jupyter-proxy.conf')
     apache_jupyter_rewrite = os.path.join(dst, 'MiG-jupyter-rewrite.conf')
     server_conf = os.path.join(dst, 'MiGserver.conf')
@@ -2837,6 +2846,8 @@ echo '/home/%s/state/sss_home/MiG-SSS/hda.img      /home/%s/state/sss_home/mnt  
     print('sudo cp -f -d %s %s/conf.extras.d/' % (
         apache_jupyter_def, apache_dir))
     print('sudo cp -f -d %s %s/conf.extras.d/' % (apache_jupyter_openid,
+                                                  apache_dir))
+    print('sudo cp -f -d %s %s/conf.extras.d/' % (apache_jupyter_oidc,
                                                   apache_dir))
     print('sudo cp -f -d %s %s/conf.extras.d/' % (apache_jupyter_proxy,
                                                   apache_dir))
