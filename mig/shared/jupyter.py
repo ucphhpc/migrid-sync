@@ -1,11 +1,10 @@
-
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # --- BEGIN_HEADER ---
 #
 # jupyter - Helper functions for the jupyter service
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -27,6 +26,10 @@
 #
 
 """ Jupyter service helper functions """
+
+from __future__ import print_function
+from __future__ import absolute_import
+from past.builtins import basestring
 
 
 from past.builtins import basestring
@@ -71,7 +74,8 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
 
     for ws_host in ws_member_hosts:
         fill_helpers['ws_hosts'] += ''.join(['        ', ws_host])
-    print("filling in jupyter gen_balancer_proxy_template with helper: (%s)" % fill_helpers)
+    print("filling in jupyter gen_balancer_proxy_template with helper: (%s)" %
+          fill_helpers)
 
     template = """
 <IfDefine %(define)s>
@@ -102,19 +106,24 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
 </IfDefine>""" % fill_helpers
     return template
 
-def gen_openid_template(url, define):
-    """ Generates an openid apache configuration section template
-     for a particular jupyter service.
+
+def gen_openid_template(url, define, auth_type):
+    """Generates an openid 2.0 or connect apache configuration section template
+    for a particular jupyter service.
     url: Setting the url_path to where the jupyter service is to be located.
     define: The name of the apache variable containing the 'url' value.
+    auth_type: the apache AuthType for this section (OpenID or openid-connect).
     """
 
     assert isinstance(url, basestring)
     assert isinstance(define, basestring)
+    assert isinstance(auth_type, basestring)
+    assert auth_type in ("OpenID", "openid-connect")
 
     fill_helpers = {
         'url': url,
-        'define': define
+        'define': define,
+        'auth_type': auth_type
     }
     print("filling in jupyter gen_openid_template with helper: (%s)" % fill_helpers)
 
@@ -123,7 +132,7 @@ def gen_openid_template(url, define):
     <Location %(url)s>
         # Pass SSL variables on
         SSLOptions +StdEnvVars
-        AuthType OpenID
+        AuthType %(auth_type)s
         require valid-user
     </Location>
 </IfDefine>
