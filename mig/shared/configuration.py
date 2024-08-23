@@ -1224,8 +1224,12 @@ location.""" % self.config_file)
                                                      'user_ftps_ctrl_port')
         if config.has_option('GLOBAL', 'user_ftps_pasv_ports'):
             text_range = config.get('GLOBAL', 'user_ftps_pasv_ports')
-            first, last = text_range.split(':')[:2]
-            self.user_ftps_pasv_ports = range(int(first), int(last))
+            parts = text_range.split(':', 2)
+            if parts[1:]:
+                self.user_ftps_pasv_ports = range(int(parts[0]), int(parts[1]))
+            else:
+                self.logger.warning("Ignore invalid user_ftps_pasv_ports: %s" %
+                                    text_range)
         if config.has_option('GLOBAL', 'user_ftps_show_address'):
             self.user_ftps_show_address = config.get('GLOBAL',
                                                      'user_ftps_show_address')
