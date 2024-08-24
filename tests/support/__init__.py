@@ -3,7 +3,6 @@
 #
 # --- BEGIN_HEADER ---
 #
-# support - helper functions for unit testing
 # Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
@@ -27,22 +26,18 @@
 
 """Supporting functions for the unit test framework"""
 
-from collections import defaultdict
 import difflib
 import errno
 import io
 import logging
 import os
-import re
 import shutil
 import stat
 import sys
 from unittest import TestCase, main as testmain
 
-TEST_BASE = os.path.dirname(__file__)
-TEST_FIXTURE_DIR = os.path.join(TEST_BASE, "fixture")
-TEST_OUTPUT_DIR = os.path.join(TEST_BASE, "output")
-MIG_BASE = os.path.realpath(os.path.join(TEST_BASE, ".."))
+from tests.support.suppconst import MIG_BASE, \
+    TEST_BASE, TEST_FIXTURE_DIR, TEST_OUTPUT_DIR
 PY2 = sys.version_info[0] == 2
 
 # force defaults to a local environment
@@ -63,6 +58,12 @@ except EnvironmentError as enverr:
         shutil.rmtree(TEST_OUTPUT_DIR)
         os.mkdir(TEST_OUTPUT_DIR)
 
+# Exports to expose at the top level from the support library.
+
+from tests.support.configsupp import FakeConfiguration
+from tests.support.loggersupp import FakeLogger
+
+
 # Basic global logging configuration for testing
 
 
@@ -78,111 +79,6 @@ BLACKHOLE_STREAM = BlackHole()
 logging.basicConfig(stream=BLACKHOLE_STREAM)
 # request capturing warnings from within the Python runtime
 logging.captureWarnings(True)
-
-
-class FakeLogger:
-    """An output capturing logger suitable for being passed to the
-    majority of MiG code by presenting an API compatible interface
-    with the common logger module.
-
-    An instance of this class is made available to test cases which
-    can pass it down into function calls and subsequenently make
-    assertions against any output strings hat were recorded during
-    execution while also avoiding noise hitting the console.
-    """
-
-    RE_UNCLOSEDFILE = re.compile(
-        'unclosed file <.*? name=\'(?P<location>.*?)\'( .*?)?>')
-
-    def __init__(self):
-        self.channels_dict = defaultdict(list)
-        self.forgive_by_channel = defaultdict(lambda: False)
-        self.unclosed_by_file = defaultdict(list)
-
-    def _append_as(self, channel, line):
-        self.channels_dict[channel].append(line)
-
-    def check_empty_and_reset(self):
-        channels_dict = self.channels_dict
-        forgive_by_channel = self.forgive_by_channel
-        unclosed_by_file = self.unclosed_by_file
-
-        # reset the record of any logged messages
-        self.channels_dict = defaultdict(list)
-        self.forgive_by_channel = defaultdict(lambda: False)
-        self.unclosed_by_file = defaultdict(list)
-
-        # complain loudly (and in detail) in the case of unclosed files
-        if len(unclosed_by_file) > 0:
-            messages = '\n'.join({' --> %s: line=%s, file=%s' % (fname, lineno, outname)
-                                  for fname, (lineno, outname) in unclosed_by_file.items()})
-            raise RuntimeError('unclosed files encountered:\n%s' % (messages,))
-
-        if channels_dict['error'] and not forgive_by_channel['error']:
-            raise RuntimeError('errors reported to logger:\n%s' % '\n'.join(channels_dict['error']))
-
-
-    def forgive_errors(self):
-        self.forgive_by_channel['error'] = True
-
-    # logger interface
-
-    def debug(self, line):
-        self._append_as('debug', line)
-
-    def error(self, line):
-        self._append_as('error', line)
-
-    def info(self, line):
-        self._append_as('info', line)
-
-    def warning(self, line):
-        self._append_as('warning', line)
-
-    def write(self, message):
-        channel, namespace, specifics = message.split(':', 2)
-
-        # ignore everything except warnings sent by the python runtime
-        if not (channel == 'WARNING' and namespace == 'py.warnings'):
-            return
-
-        filename_and_datatuple = FakeLogger.identify_unclosed_file(specifics)
-        if filename_and_datatuple is not None:
-            self.unclosed_by_file.update((filename_and_datatuple,))
-
-    @staticmethod
-    def identify_unclosed_file(specifics):
-        filename, lineno, exc_name, message = specifics.split(':', 3)
-
-        exc_name = exc_name.lstrip()
-        if exc_name != 'ResourceWarning':
-            return
-
-        matched = FakeLogger.RE_UNCLOSEDFILE.match(message.lstrip())
-        if matched is None:
-            return
-
-        relative_testfile = os.path.relpath(filename, start=MIG_BASE)
-        relative_outputfile = os.path.relpath(
-            matched.groups('location')[0], start=TEST_BASE)
-        return (relative_testfile, (lineno, relative_outputfile))
-
-
-class FakeConfiguration:
-    """A simple helper to pretend we have a real Configuration object with any
-    required attributes explicitly passed.
-    Automatically attaches a FakeLogger instance if no logger is provided in
-    kwargs.
-    """
-
-    def __init__(self, **kwargs):
-        """Initialise instance attributes to be any named args provided and a
-        FakeLogger instance attached if not provided.
-        """
-        self.__dict__.update(kwargs)
-        if not 'logger' in self.__dict__:
-            dummy_logger = FakeLogger()
-            self.__dict__.update({'logger': dummy_logger})
 
 
 class MigTestCase(TestCase):
@@ -303,7 +199,8 @@ def cleanpath(relative_path, test_case, ensure_dir=False):
         try:
             os.mkdir(tmp_path)
         except FileExistsError:
-            raise AssertionError("ABORT: use of unclean output path: %s" % relative_path)
+            raise AssertionError(
+                "ABORT: use of unclean output path: %s" % relative_path)
     test_case._cleanup_paths.add(tmp_path)
     return tmp_path
 
