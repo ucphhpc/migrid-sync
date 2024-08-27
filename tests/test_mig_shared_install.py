@@ -36,11 +36,8 @@ import os
 import pwd
 import sys
 
-sys.path.append(os.path.realpath(
-    os.path.join(os.path.dirname(__file__), "..")))
-
-from support import MIG_BASE, TEST_OUTPUT_DIR, MigTestCase, \
-    testmain, temppath, cleanpath, fixturepath, is_path_within, outputpath
+from tests.support import MIG_BASE, TEST_OUTPUT_DIR, MigTestCase, \
+    testmain, temppath, cleanpath, fixturepath, is_path_within
 
 from mig.shared.defaults import keyword_auto
 from mig.shared.install import determine_timezone, generate_confs
@@ -223,10 +220,8 @@ class MigSharedInstall__generate_confs(MigTestCase):
             _getpwnam=create_dummy_gpwnam(4321, 1234),
         )
 
-        relative_file = 'confs-stdlocal/MiGserver.conf'
-        self.assertPathExists('confs-stdlocal/MiGserver.conf')
+        actual_file = self.assertFileExists('confs-stdlocal/MiGserver.conf')
 
-        actual_file = outputpath(relative_file)
         self.assertConfigKey(
             actual_file, 'SITE', 'datasafety_link', expected='TEST_DATASAFETY_LINK')
         self.assertConfigKey(
@@ -246,10 +241,8 @@ class MigSharedInstall__generate_confs(MigTestCase):
                 _getpwnam=create_dummy_gpwnam(4321, 1234),
             )
 
-            relative_file = 'confs-stdlocal/MiGserver.conf'
-            self.assertPathExists('confs-stdlocal/MiGserver.conf')
+            actual_file = self.assertFileExists('confs-stdlocal/MiGserver.conf')
 
-            actual_file = outputpath(relative_file)
             self.assertConfigKey(
                 actual_file, 'SITE', 'permanent_freeze', expected=arg_val)
 

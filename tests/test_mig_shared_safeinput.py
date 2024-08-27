@@ -33,9 +33,8 @@ import os
 import sys
 from past.builtins import basestring
 
-sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), ".")))
+from tests.support import MigTestCase, testmain
 
-from support import MigTestCase, testmain
 from mig.shared.safeinput import main as safeinput_main, InputException, \
     filter_commonname, valid_commonname
 

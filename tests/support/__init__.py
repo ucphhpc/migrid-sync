@@ -158,6 +158,11 @@ included:
                     os.path.relpath(file_actual, MIG_BASE),
                     ''.join(different_lines)))
 
+    def assertFileExists(self, relative_path):
+        path_kind = self.assertPathExists(relative_path)
+        assert path_kind == "file", "expected a file but found %d" % (path_kind,)
+        return os.path.join(TEST_OUTPUT_DIR, relative_path)
+
     def assertPathExists(self, relative_path):
         assert not os.path.isabs(
             relative_path), "expected relative path within output folder"
@@ -195,12 +200,6 @@ def is_path_within(path, start=None, _msg=None):
 def cleanpath(relative_path, test_case, ensure_dir=False):
     assert isinstance(test_case, MigTestCase)
     tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
-    if ensure_dir:
-        try:
-            os.mkdir(tmp_path)
-        except FileExistsError:
-            raise AssertionError(
-                "ABORT: use of unclean output path: %s" % relative_path)
     test_case._cleanup_paths.add(tmp_path)
     return tmp_path
 
@@ -210,15 +209,20 @@ def fixturepath(relative_path):
     return tmp_path
 
 
-def outputpath(relative_path):
-    assert not os.path.isabs(relative_path)
-    tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
-    return tmp_path
-
-
-def temppath(relative_path, test_case, skip_clean=False):
+def temppath(relative_path, test_case, ensure_dir=False, skip_clean=False):
     assert isinstance(test_case, MigTestCase)
     tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
+    if ensure_dir:
+        try:
+            os.mkdir(tmp_path)
+        except FileExistsError:
+            raise AssertionError(
+                "ABORT: use of unclean output path: %s" % relative_path)
     if not skip_clean:
         test_case._cleanup_paths.add(tmp_path)
     return tmp_path
+
+
+# compatibility alias
+def cleanpath(relative_path, test_case, **kwargs):
+    return temppath(relative_path, test_case, **kwargs)

@@ -59,6 +59,10 @@ def create_fake_generate_confs(return_dict=None):
     return _generate_confs
 
 
+def noop(*args):
+    pass
+
+
 class MigInstallGenerateconfs__main(MigTestCase):
     """Unit test helper for the migrid code pointed to in class name"""
 
@@ -72,7 +76,7 @@ class MigInstallGenerateconfs__main(MigTestCase):
             dict(destination_dir=expected_generated_dir))
         test_arguments = ['--permanent_freeze', 'yes']
 
-        exit_code = main(test_arguments, _generate_confs=fake_generate_confs)
+        exit_code = main(test_arguments, _generate_confs=fake_generate_confs, _print=noop)
         self.assertEqual(exit_code, 0)
 
 
