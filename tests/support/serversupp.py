@@ -41,6 +41,7 @@ class ServerWithinThreadExecutor:
 
     def __init__(self, ServerClass, *args, **kwargs):
         self._serverclass = ServerClass
+        self._serverclass_on_instance = kwargs.pop('on_instance')
         self._arguments = (args, kwargs)
         self._started = ThreadEvent()
         self._thread = None
@@ -53,6 +54,8 @@ class ServerWithinThreadExecutor:
         server_kwargs['on_start'] = lambda _: self._started.set()
 
         self._wrapped = self._serverclass(*server_args, **server_kwargs)
+        if self._serverclass_on_instance:
+            self._serverclass_on_instance(self._wrapped)
 
         try:
             self._wrapped.serve_forever()
