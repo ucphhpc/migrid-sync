@@ -682,13 +682,21 @@ _CONFIGURATION_DEFAULTS = {
 }
 
 
+def _contains_only(d, keyset=None):
+    assert isinstance(d, dict)
+    assert isinstance(keyset, set)
+    supplied_keys = d.keys()
+    supported_keys = keyset
+    return len(supplied_keys | supported_keys) == len(supported_keys)
+
+
 class Configuration:
 
     """Server configuration in parsed form"""
 
     # constructor
 
-    def __init__(self, config_file, verbose=False, skip_log=False,
+    def __init__(self, config_file, verbose=False, overrides=None, skip_log=False,
                  disable_auth_log=False):
         self.config_file = config_file
         self.mig_server_id = None
@@ -702,6 +710,13 @@ class Configuration:
             self.reload_config(verbose, skip_log,
                                disable_auth_log=disable_auth_log,
                                _config_file=config_file)
+
+        if overrides is not None:
+            supported_keys = set(self.__dict__.keys())
+            assert _contains_only(overrides, keyset=supported_keys), "overrides contained unsupported configuration keys"
+            for k, v in overrides.items():
+                setattr(self, k, v)
+
 
     def reload_config(self, verbose, skip_log=False, disable_auth_log=False,
                       _config_file=None):
