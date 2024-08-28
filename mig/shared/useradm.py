@@ -2318,7 +2318,9 @@ def search_users(search_filter, conf_path, db_path,
     fnmatch for.
     """
 
-    if conf_path:
+    if isinstance(conf_path, Configuration):
+        configuration = conf_path
+    elif conf_path:
         if isinstance(conf_path, basestring):
             configuration = Configuration(conf_path)
         else:
