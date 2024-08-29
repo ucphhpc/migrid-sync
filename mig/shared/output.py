@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # output - general formatting of backend output objects
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -28,6 +28,7 @@
 """Helper functions to generate output in format specified by the client"""
 
 from __future__ import absolute_import
+from past.builtins import basestring
 
 import os
 import sys
@@ -363,7 +364,7 @@ ___%s___
             header = [['ID', 'Path']]
             optional_cols = [('access', 'Access'), ('created', 'Created'),
                              ('active', 'Active'), ('owner', 'Owner'),
-                             ('invites', 'Invites'),  ('expire', 'Expire'),
+                             ('invites', 'Invites'), ('expire', 'Expire'),
                              ('single_file', 'Single file'),
                              ]
             content_keys = ['share_id', 'path']
@@ -1730,8 +1731,9 @@ Show archive with file checksums - might take quite a while to calculate:
             lines.append("""    </div>
 </div>""")
 
-            show_updating, show_edit, show_register = 3 * ['hidden']
-            edit_link, finalize_link, register_link = 3 * \
+            show_updating, show_edit, show_register, show_updates = 4 * \
+                ['hidden']
+            edit_link, finalize_link, register_link, updates_link = 4 * \
                 ['<!-- filled by AJAX-->']
             if i.get('state', '') == keyword_updating:
                 show_updating = ''
@@ -1745,6 +1747,9 @@ Show archive with file checksums - might take quite a while to calculate:
             if i.get('registerdoi_link', ''):
                 register_link = html_link(i['registerdoi_link'])
                 show_register = ''
+            if i.get('assignupdates_link', ''):
+                updates_link = html_link(i['assignupdates_link'])
+                show_updates = ''
 
             lines.append("""
 <div class='updatearchive %s'>
@@ -1770,10 +1775,19 @@ want to reference the contents in a publication.
 %s
 <p id='registerdoibutton'>%s</p>
 </div>
+<div class='assignupdates %s'>
+<p>
+You can assign updates to already finalized published archives. This may be
+useful in case you fouund errors in the existing archive or want to reference
+the already published contents in another archive.
+</p>
+<p id='assignupdatesbutton'>%s</p>
+</div>
 <div class='vertical-spacer'></div>
 </div>
 """ % (show_updating, show_edit, edit_link, finalize_link, show_register,
-                configuration.site_freeze_doi_text, register_link))
+                configuration.site_freeze_doi_text, register_link,
+                show_updates, updates_link))
 
         elif i['object_type'] == 'freezestatus':
             # We only use this element for scripted archive creation
@@ -1894,7 +1908,7 @@ want to reference the contents in a publication.
             skip_list = i.get('skip_list', [])
             optional_cols = [('access', 'Access'), ('created', 'Created'),
                              ('active', 'Active'), ('owner', 'Owner'),
-                             ('invites', 'Invites'),  ('expire', 'Expire'),
+                             ('invites', 'Invites'), ('expire', 'Expire'),
                              ('single_file', 'Single file'),
                              ]
             # IMPORTANT: AdBlock Plus hides elements with class sharelink(s)
@@ -2849,10 +2863,10 @@ def format_output(
 def format_timedelta(timedelta):
     """Formats timedelta as '[Years,] [days,] HH:MM:SS'"""
     years = timedelta.days // 365
-    days = timedelta.days - (years*365)
+    days = timedelta.days - (years * 365)
     hours = timedelta.seconds // 3600
-    minutes = (timedelta.seconds-(hours*3600)) // 60
-    seconds = timedelta.seconds - (hours*3600) - (minutes*60)
+    minutes = (timedelta.seconds - (hours * 3600)) // 60
+    seconds = timedelta.seconds - (hours * 3600) - (minutes * 60)
 
     hours_str = "%s" % hours
     if hours < 10:

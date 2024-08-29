@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # style - Core UI V3 specific but skin-independent styling
-# Copyright (C) 2003-2019  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -807,4 +807,12 @@ var, sampl, code {
 */
 .table-responsive .table td, .table-responsive .table th {
     padding: 0.5rem  1.2rem;
+}
+
+/* Highligt replacement and supplement information for published Archives */
+.archive-update-header {
+    background-color: #ffcc00; /* Yellow for attention */
+    padding: 10px;
+    border: 1px solid #ff9900;
+    margin-bottom: 20px;
 }
