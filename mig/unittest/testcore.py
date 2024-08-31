@@ -89,9 +89,7 @@ def main(_exit=sys.exit):
                         format="%(asctime)s %(levelname)s %(message)s")
     configuration.logger = logging
 
-    print("Running unit test on shared core functions")
-
-    print("Testing shared base functions")
+    print("Running unit test on shared core functions ..")
 
     short_alias = 'email'
     test_clients = [
@@ -194,9 +192,8 @@ def main(_exit=sys.exit):
                   (size, outlen, len(shortened)))
             _exit(1)
 
-    print("Completed shared base functions tests")
+    print("Running unit test on shared core functions DONE")
 
-    print("Done running unit test on shared core functions")
     _exit(0)
 
 if __name__ == "__main__":

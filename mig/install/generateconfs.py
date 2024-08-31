@@ -65,7 +65,7 @@ Where supported options include -h/--help for this help or the conf settings:
 ''' % (sys.argv[0], '\n'.join(lines)))
 
 
-def main(argv, _generate_confs=generate_confs):
+def main(argv, _generate_confs=generate_confs, _print=print):
     str_names = [
         'source',
         'destination',
@@ -318,7 +318,7 @@ def main(argv, _generate_confs=generate_confs):
         elif opt_name in bool_names and val:
             settings[opt_name] = (val.strip().lower() in ['1', 'true', 'yes'])
         else:
-            print('Error: environment options %r not supported!' % opt_name)
+            _print('Error: environment options %r not supported!' % opt_name)
             usage(names)
             return 1
 
@@ -328,7 +328,7 @@ def main(argv, _generate_confs=generate_confs):
     try:
         (opts, args) = getopt.getopt(argv, flag_str, opts_str)
     except getopt.GetoptError as exc:
-        print('Error: ', exc.msg)
+        _print('Error: ', exc.msg)
         usage(names)
         return 1
 
@@ -344,13 +344,13 @@ def main(argv, _generate_confs=generate_confs):
         elif opt_name in bool_names:
             settings[opt_name] = (val.strip().lower() in ['1', 'true', 'yes'])
         else:
-            print('Error: command line option %r not supported!' % opt_name)
+            _print('Error: command line option %r not supported!' % opt_name)
             usage(names)
             return 1
 
     if args:
-        print('Error: non-option arguments are no longer supported!')
-        print(" ... found: %s" % args)
+        _print('Error: non-option arguments are no longer supported!')
+        _print(" ... found: %s" % args)
         usage(names)
         return 1
     if settings['destination_suffix'] == 'DEFAULT':
@@ -365,10 +365,10 @@ def main(argv, _generate_confs=generate_confs):
     else:
         # ... but use verbatim passthrough for absolute destination
         output_path = settings['destination']
-    print('# Creating confs with:')
+    _print('# Creating confs with:')
     # NOTE: force list to avoid problems with in-line edits
     for (key, val) in list(settings.items()):
-        print('%s: %s' % (key, val))
+        _print('%s: %s' % (key, val))
         # Remove default values to use generate_confs default values
         if val == 'DEFAULT':
             del settings[key]
@@ -382,9 +382,9 @@ def main(argv, _generate_confs=generate_confs):
         instructions_fd = open(instructions_path, "r")
         instructions = instructions_fd.read()
         instructions_fd.close()
-        print(instructions)
+        _print(instructions)
     except Exception as exc:
-        print("ERROR: could not read generated instructions: %s" % exc)
+        _print("ERROR: could not read generated instructions: %s" % exc)
         return 1
     return 0
 

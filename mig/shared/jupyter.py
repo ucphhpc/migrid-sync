@@ -107,7 +107,7 @@ def gen_balancer_proxy_template(url, define, name, member_hosts,
     return template
 
 
-def gen_openid_template(url, define, auth_type):
+def gen_openid_template(url, define, auth_type, _print=print):
     """Generates an openid 2.0 or connect apache configuration section template
     for a particular jupyter service.
     url: Setting the url_path to where the jupyter service is to be located.
@@ -125,7 +125,7 @@ def gen_openid_template(url, define, auth_type):
         'define': define,
         'auth_type': auth_type
     }
-    print("filling in jupyter gen_openid_template with helper: (%s)" % fill_helpers)
+    _print("filling in jupyter gen_openid_template with helper: (%s)" % fill_helpers)
 
     template = """
 <IfDefine %(define)s>
