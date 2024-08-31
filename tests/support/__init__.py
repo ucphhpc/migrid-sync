@@ -62,6 +62,7 @@ except EnvironmentError as enverr:
 
 # Exports to expose at the top level from the support library.
 
+from tests.support.assertover import AssertOver
 from tests.support.configsupp import FakeConfiguration
 from tests.support.loggersupp import FakeLogger
 
@@ -96,6 +97,7 @@ class MigTestCase(TestCase):
 
     def __init__(self, *args):
         super(MigTestCase, self).__init__(*args)
+        self._cleanup_checks = list()
         self._cleanup_paths = set()
         self._logger = None
         self._skip_logging = False
@@ -112,6 +114,11 @@ class MigTestCase(TestCase):
 
         if not self._skip_logging:
             self._logger.check_empty_and_reset()
+
+        for check_callable in self._cleanup_checks:
+            check_callable.__call__()
+        self._cleanup_checks = list()
+
         if self._logger is not None:
             self._reset_logging(stream=BLACKHOLE_STREAM)
 
@@ -134,6 +141,9 @@ class MigTestCase(TestCase):
         """Before each test action hook"""
         pass
 
+    def _register_check(self, check_callable):
+        self._cleanup_checks.append(check_callable)
+
     def _reset_logging(self, stream):
         root_logger = logging.getLogger()
         root_handler = root_logger.handlers[0]
@@ -145,6 +155,12 @@ class MigTestCase(TestCase):
         if self._logger is None:
             self._logger = FakeLogger()
         return self._logger
+
+    def assert_over(self, values=None, _AssertOver=AssertOver):
+        assert_over = _AssertOver(values=values, testcase=self)
+        check_callable = assert_over.to_check_callable()
+        self._register_check(check_callable)
+        return assert_over
 
     # custom assertions available for common use
 
