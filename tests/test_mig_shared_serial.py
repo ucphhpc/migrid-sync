@@ -30,9 +30,8 @@
 import os
 import sys
 
-sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), ".")))
+from tests.support import MigTestCase, temppath, testmain
 
-from support import MigTestCase, temppath, testmain
 from mig.shared.serial import *
 
 class BasicSerial(MigTestCase):

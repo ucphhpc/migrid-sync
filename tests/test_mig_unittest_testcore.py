@@ -31,9 +31,7 @@ import importlib
 import os
 import sys
 
-sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
-
-from support import MigTestCase, testmain
+from tests.support import MigTestCase, testmain
 
 from mig.unittest.testcore import main as testcore_main
 

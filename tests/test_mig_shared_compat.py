@@ -31,8 +31,7 @@ import binascii
 import os
 import sys
 
-sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), ".")))
-from support import MigTestCase, testmain
+from tests.support import MigTestCase, testmain
 
 from mig.shared.compat import PY2, ensure_native_string
 
