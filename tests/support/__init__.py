@@ -167,6 +167,13 @@ included:
                     os.path.relpath(file_actual, MIG_BASE),
                     ''.join(different_lines)))
 
+    def assertFileExists(self, relative_path):
+        """Make sure relative_path exists and is a file"""
+        path_kind = self.assertPathExists(relative_path)
+        assert path_kind == "file", "expected a file but found %s" % (
+            path_kind, )
+        return os.path.join(TEST_OUTPUT_DIR, relative_path)
+
     def assertPathExists(self, relative_path):
         """Make sure file in relative_path exists"""
         assert not os.path.isabs(
@@ -208,12 +215,6 @@ def cleanpath(relative_path, test_case, ensure_dir=False):
     """Register post-test clean up of file in relative_path"""
     assert isinstance(test_case, MigTestCase)
     tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
-    if ensure_dir:
-        try:
-            os.mkdir(tmp_path)
-        except FileExistsError:
-            raise AssertionError(
-                "ABORT: use of unclean output path: %s" % relative_path)
     test_case._cleanup_paths.add(tmp_path)
     return tmp_path
 
@@ -224,17 +225,21 @@ def fixturepath(relative_path):
     return tmp_path
 
 
-def outputpath(relative_path):
-    """Get absolute output path for relative_path"""
-    assert not os.path.isabs(relative_path)
-    tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
-    return tmp_path
-
-
-def temppath(relative_path, test_case, skip_clean=False):
+def temppath(relative_path, test_case, ensure_dir=False, skip_clean=False):
     """Get absolute temp path for relative_path"""
     assert isinstance(test_case, MigTestCase)
     tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
+    if ensure_dir:
+        try:
+            os.mkdir(tmp_path)
+        except FileExistsError:
+            raise AssertionError(
+                "ABORT: use of unclean output path: %s" % relative_path)
     if not skip_clean:
         test_case._cleanup_paths.add(tmp_path)
     return tmp_path
+
+
+# compatibility alias
+def cleanpath(relative_path, test_case, **kwargs):
+    return temppath(relative_path, test_case, **kwargs)

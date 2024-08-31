@@ -3,7 +3,7 @@ import os
 import sys
 import unittest
 
-from support import MigTestCase, PY2, testmain, temppath
+from tests.support import MigTestCase, PY2, testmain, temppath
 
 
 class SupportTestCase(MigTestCase):
