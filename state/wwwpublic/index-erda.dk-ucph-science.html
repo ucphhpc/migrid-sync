@@ -44,23 +44,38 @@
          function login(user) {
              if (user == "extoid") {
                  window.open('https://erda.dk', '_blank');
+             } else if (user == "extoidc") {
+                 window.open('https://oidc.erda.dk', '_blank');
              } else if (user == "extcert") {
                  window.open('https://cert.erda.dk', '_blank');
              } else if (user == "migoid") {
                  window.open('https://ext.erda.dk', '_blank');
+             } else if (user == "migcert") {
+                 window.open('https://cert.erda.dk', '_blank');
              } else {
-                 window.open('https://sid.erda.dk/cgi-sid/login.py', '_blank');
+                 window.open('https://sid.erda.dk/cgi-sid/login.py',
+                             '_blank');
              }
          }
          function signup(user) {
              if (user == "extoid") {
-                 window.open('https://erda.dk/wsgi-bin/autocreate.py', '_blank');
+                 window.open('https://erda.dk/wsgi-bin/autocreate.py',
+                             '_blank');
+             } else if (user == "extoidc") {
+                 window.open('https://oidc.erda.dk/wsgi-bin/autocreate.py',
+                             '_blank');
              } else if (user == "extcert") {
-                 window.open('https://cert.erda.dk/wsgi-bin/extcert.py', '_blank');
+                 window.open('https://cert.erda.dk/wsgi-bin/extcert.py',
+                             '_blank');
              } else if (user == "migoid") {
-                 window.open('https://sid.erda.dk/cgi-sid/reqoid.py', '_blank');
+                 window.open('https://sid.erda.dk/cgi-sid/reqoid.py',
+                             '_blank');
+             } else if (user == "migcert") {
+                 window.open('https://cert.erda.dk/cgi-sid/reqcert.py',
+                             '_blank');
              } else {
-                 window.open('https://sid.erda.dk/cgi-sid/signup.py', '_blank');
+                 window.open('https://sid.erda.dk/cgi-sid/signup.py',
+                             '_blank');
              }
          }
          $(document).ready(function() {
@@ -98,6 +113,28 @@
              $("#langselect").val(user_lang);
              switch_language(user_lang);
              $("#langselect").msDropdown().fadeIn(500);
+
+	     var query = window.location.search;
+	     const urlParams = new URLSearchParams(query);
+	     var show = [];
+	     var quicktabs = ['extoid', 'extoidc', 'migoid', 'extcert'];
+	     urlParams.forEach((value, key) => {
+	         //console.log("Found "+value+" in "+key);
+		 show.push(value);
+	     });
+	     if (!urlParams.get('show')) {
+	         show = ['extoid', 'migoid', 'extcert'];
+	     }
+	     quicktabs.forEach((name) => {
+		 if (show.indexOf(name) >= 0) {
+	             //console.log("show "+name+" tab");
+                     $(".show-"+name).show();
+		 } else {
+	             //console.log("remove "+name+" tab");
+                     $(".show-"+name).remove();
+		 }
+	     });
+
              /* Init Quick Start as tabs to avoid information overload and do
                 last for proper init. */
              $("#quick-start-tabs-en").tabs({
@@ -165,12 +202,13 @@
 
                         <div id="quick-start-tabs-en">
                             <ul class="fillwidth padspace">
-                                <li><a href="#ucph-user-tab-en">KU / UCPH Users</a></li>
-                                <li><a href="#external-user-tab-en">External Users</a></li>
-                                <li><a href="#cert-user-tab-en">Advanced Access</a></li>
+			        <li title="KU OpenID 2.0 Auth" class="show-extoid"><a href="#ucph-user-tab-en">KU / UCPH Users</a></li>
+				<li title="KU OpenID Connect Auth" class="show-extoidc"><a href="#ucph-oidc-user-tab-en">KU / UCPH Users (NEW OIDC)</a></li>
+                                <li title="Built-in OpenID 2.0 Auth" class="show-migoid"><a href="#external-user-tab-en">External Users</a></li>
+                                <li title="X509 User Certificate Auth" class="show-extcert"><a href="#cert-user-tab-en">Advanced Access</a></li>
                             </ul>
 
-                            <div id="ucph-user-tab-en">
+                            <div id="ucph-user-tab-en" class="show-extoid">
                                 <div class="staticpage centertext signupfield">
                                     <p>Sign up to ERDA using your KU / UCPH account?</p>
                                     <form method='post' action='https://erda.dk/wsgi-bin/autocreate.py' target='_blank'>
@@ -193,7 +231,26 @@
                                 </div>
                             </div>
 
-                            <div id="external-user-tab-en">
+                            <div id="ucph-oidc-user-tab-en" class="show-extoidc">
+                                <div class="staticpage centertext signupfield">
+                                    <p>Sign up to ERDA using your KU / UCPH account?</p>
+                                    <form method='post' action='https://oidc.erda.dk/wsgi-bin/autocreate.py' target='_blank'>
+                                        <input class="signupbutton" type="submit" value="sign up" />
+                                    </form>
+                                    <p></p> 
+                                </div>
+                                <div class="staticpage centertext loginfield">
+                                    <p>I'm already signed up to ERDA with my KU / UCPH account!</p>
+                                    <!-- Use form with JS override to enable fallback functionality -->
+                                    <form method='get' action='https://oidc.erda.dk' target='_blank'>
+                                        <input class="loginbutton" type="submit" value="log in"
+                                               onClick="login('extoidc'); return false;" />
+                                    </form>
+                                    <p></p>
+                                </div>
+                            </div>
+
+                            <div id="external-user-tab-en" class="show-migoid">
                                 <div class="staticpage centertext signupfield">
                                     <p>Sign up to ERDA <em>without</em> a KU / UCPH account?</p>
                                     <!-- Use form with JS override to enable fallback functionality -->
@@ -214,7 +271,7 @@
                                 </div>
                             </div>
 
-                            <div id="cert-user-tab-en">
+                            <div id="cert-user-tab-en" class="show-extcert show-migcert">
                                 <div class="staticpage centertext signupfield">
                                     <p>Sign up to ERDA with your user certificate?</p>
                                     <!-- Use form with JS override to enable fallback functionality -->
@@ -344,12 +401,13 @@
                         <div id="quick-start-tabs-da">
 
                             <ul>
-                                <li><a href="#ucph-user-tab-da">KU / UCPH brugere</a></li>
-                                <li><a href="#external-user-tab-da">Eksterne brugere</a></li>
-                                <li><a href="#cert-user-tab-da">Avanceret adgang</a></li>
+                                <li class="show-extoid" title="UCPH OpenID 2.0 Auth"><a href="#ucph-user-tab-da">KU / UCPH brugere</a></li>
+                                <li class="show-extoidc" title="UCPH OpenID Connect Auth"><a href="#ucph-oidc-user-tab-da">KU / UCPH brugere (NY OIDC)</a></li>
+                                <li class="show-migoid" title="Built-in OpenID 2.0 Auth"><a href="#external-user-tab-da">Eksterne brugere</a></li>
+                                <li class="show-extcert" title="X509 User Certificate Auth"><a href="#cert-user-tab-da">Avanceret adgang</a></li>
                             </ul>
 
-                            <div id="ucph-user-tab-da">
+                            <div id="ucph-user-tab-da" class="show-extoid">
                                 <div class="staticpage centertext signupfield">
                                     <p>Tilmeld dig ERDA med din KU-konto?</p>
                                     <form method='post' action='https://erda.dk/wsgi-bin/autocreate.py' target='_blank'>
@@ -372,7 +430,26 @@
                                 </div>
                             </div>
 
-                            <div id="external-user-tab-da" class="hidden">
+                            <div id="ucph-oidc-user-tab-da" class="show-extoidc">
+                                <div class="staticpage centertext signupfield">
+                                    <p>Tilmeld dig ERDA med din KU-konto?</p>
+                                    <form method='post' action='https://oidc.erda.dk/wsgi-bin/autocreate.py' target='_blank'>
+                                        <input class="signupbutton" type="submit" value="tilmelding" />
+                                    </form>
+                                    <p></p>
+                                </div>
+                                <div class="staticpage centertext loginfield">
+                                    <p>Jeg er allerede tilmeldt ERDA med min KU-konto!</p>
+                                    <!-- Use form with JS override to enable fallback functionality -->
+                                    <form method='get' action='https://oidc.erda.dk' target='_blank'>
+                                        <input class="loginbutton" type="submit" value="log ind"
+                                               onClick="login('extoidc'); return false;" />
+                                    </form>
+                                    <p></p>
+                                </div>
+                            </div>
+
+                            <div id="external-user-tab-da" class="show-migoid">
                                 <div class="staticpage centertext signupfield">
                                     <p>Tilmeld dig ERDA <em>uden</em> en KU-konto?</p>
                                     <!-- Use form with JS override to enable fallback functionality -->
@@ -393,7 +470,7 @@
                                 </div>
                             </div>
 
-                            <div id="cert-user-tab-da" class="hidden">
+                            <div id="cert-user-tab-da" class="show-extcert show-migrcert">
                                 <div class="staticpage centertext signupfield">
                                     <p>Tilmeld dig ERDA med dit brugercertifikat?</p>
                                     <!-- Use form with JS override to enable fallback functionality -->

@@ -44,23 +44,38 @@
          function login(user) {
              if (user == "extoid") {
                  window.open('https://erda.dk', '_blank');
+             } else if (user == "extoidc") {
+                 window.open('https://oidc.erda.dk', '_blank');
              } else if (user == "extcert") {
                  window.open('https://cert.erda.dk', '_blank');
              } else if (user == "migoid") {
                  window.open('https://ext.erda.dk', '_blank');
+             } else if (user == "migcert") {
+                 window.open('https://cert.erda.dk', '_blank');
              } else {
-                 window.open('https://sid.erda.dk/cgi-sid/login.py', '_blank');
+                 window.open('https://sid.erda.dk/cgi-sid/login.py',
+                             '_blank');
              }
          }
          function signup(user) {
              if (user == "extoid") {
-                 window.open('https://erda.dk/wsgi-bin/autocreate.py', '_blank');
+                 window.open('https://erda.dk/wsgi-bin/autocreate.py',
+                             '_blank');
+             } else if (user == "extoidc") {
+                 window.open('https://oidc.erda.dk/wsgi-bin/autocreate.py',
+                             '_blank');
              } else if (user == "extcert") {
-                 window.open('https://cert.erda.dk/wsgi-bin/extcert.py', '_blank');
+                 window.open('https://cert.erda.dk/wsgi-bin/extcert.py',
+                             '_blank');
              } else if (user == "migoid") {
-                 window.open('https://sid.erda.dk/cgi-sid/reqoid.py', '_blank');
+                 window.open('https://sid.erda.dk/cgi-sid/reqoid.py',
+                             '_blank');
+             } else if (user == "migcert") {
+                 window.open('https://cert.erda.dk/cgi-sid/reqcert.py',
+                             '_blank');
              } else {
-                 window.open('https://sid.erda.dk/cgi-sid/signup.py', '_blank');
+                 window.open('https://sid.erda.dk/cgi-sid/signup.py',
+                             '_blank');
              }
          }
          $(document).ready(function() {
@@ -98,6 +113,28 @@
              $("#langselect").val(user_lang);
              switch_language(user_lang);
              $("#langselect").msDropdown().fadeIn(500);
+
+	     var query = window.location.search;
+	     const urlParams = new URLSearchParams(query);
+	     var show = [];
+	     var quicktabs = ['extoid', 'extoidc', 'migoid', 'extcert'];
+	     urlParams.forEach((value, key) => {
+	         //console.log("Found "+value+" in "+key);
+		 show.push(value);
+	     });
+	     if (!urlParams.get('show')) {
+	         show = ['extoid', 'migoid', 'extcert'];
+	     }
+	     quicktabs.forEach((name) => {
+		 if (show.indexOf(name) >= 0) {
+	             //console.log("show "+name+" tab");
+                     $(".show-"+name).show();
+		 } else {
+	             //console.log("remove "+name+" tab");
+                     $(".show-"+name).remove();
+		 }
+	     });
+
              /* Init Quick Start as tabs to avoid information overload and do
                 last for proper init. */
              $("#quick-start-tabs-en").tabs({
@@ -154,7 +191,6 @@
                          optional further explanation.
                          Can just be disabled by putting it into an html comment when not in use.
                     -->
-                    
                     <div class="staticpage systemmessages centertext">
 
                     </div>
@@ -163,12 +199,13 @@
 
                         <div id="quick-start-tabs-en">
                             <ul class="fillwidth padspace">
-                                <li><a href="#ucph-user-tab-en">KU / UCPH Users</a></li>
-                                <li><a href="#external-user-tab-en">External Users</a></li>
-                                <li><a href="#cert-user-tab-en">Advanced Access</a></li>
+			        <li title="KU OpenID 2.0 Auth" class="show-extoid"><a href="#ucph-user-tab-en">KU / UCPH Users</a></li>
+				<li title="KU OpenID Connect Auth" class="show-extoidc"><a href="#ucph-oidc-user-tab-en">KU / UCPH Users (NEW OIDC)</a></li>
+                                <li title="Built-in OpenID 2.0 Auth" class="show-migoid"><a href="#external-user-tab-en">External Users</a></li>
+                                <li title="X509 User Certificate Auth" class="show-extcert"><a href="#cert-user-tab-en">Advanced Access</a></li>
                             </ul>
 
-                            <div id="ucph-user-tab-en">
+                            <div id="ucph-user-tab-en" class="show-extoid">
                                 <div class="staticpage centertext signupfield">
                                     <p>Sign up to ERDA using your KU / UCPH account?</p>
                                     <form method='post' action='https://erda.dk/wsgi-bin/autocreate.py' target='_blank'>
@@ -191,7 +228,26 @@
                                 </div>
                             </div>
 
-                            <div id="external-user-tab-en">
+                            <div id="ucph-oidc-user-tab-en" class="show-extoidc">
+                                <div class="staticpage centertext signupfield">
+                                    <p>Sign up to ERDA using your KU / UCPH account?</p>
+                                    <form method='post' action='https://oidc.erda.dk/wsgi-bin/autocreate.py' target='_blank'>
+                                        <input class="signupbutton" type="submit" value="sign up" />
+                                    </form>
+                                    <p></p> 
+                                </div>
+                                <div class="staticpage centertext loginfield">
+                                    <p>I'm already signed up to ERDA with my KU / UCPH account!</p>
+                                    <!-- Use form with JS override to enable fallback functionality -->
+                                    <form method='get' action='https://oidc.erda.dk' target='_blank'>
+                                        <input class="loginbutton" type="submit" value="log in"
+                                               onClick="login('extoidc'); return false;" />
+                                    </form>
+                                    <p></p>
+                                </div>
+                            </div>
+
+                            <div id="external-user-tab-en" class="show-migoid">
                                 <div class="staticpage centertext signupfield">
                                     <p>Sign up to ERDA <em>without</em> a KU / UCPH account?</p>
                                     <!-- Use form with JS override to enable fallback functionality -->
@@ -212,7 +268,7 @@
                                 </div>
                             </div>
 
-                            <div id="cert-user-tab-en">
+                            <div id="cert-user-tab-en" class="show-extcert show-migcert">
                                 <div class="staticpage centertext signupfield">
                                     <p>Sign up to ERDA with your user certificate?</p>
                                     <!-- Use form with JS override to enable fallback functionality -->
@@ -280,7 +336,8 @@
                             <li><a class="introguidelink" href="/public/ucph-erda-guide_user-sign-up.pdf">Sign Up Intro</a> for UCPH and external users</li> 
                             <li><a class="introguidelink" href="/public/ucph-erda-guide_workgroup-sharing.pdf">Workgroup Intro</a> about creating, managing and accessing Workgroups</li> 
                             <li><a class="introguidelink" href="/public/ucph-erda-guide_network-drive_win.pdf">Network Drive Intro</a> about using ERDA as a network drive on your computer (only covers Windows for now)</li>
-                            <li><a class="introguidelink" href="/public/ucph-erda-guide_seafile-signup-sync.pdf">Seafile Sign Up and Sync Intro</a> for UCPH and external users</li> 
+                            <li><a class="introguidelink" href="/public/ucph-erda-guide_seafile-signup-sync.pdf">Seafile Intro</a> about Seafile sign up and file synchronization</li> 
+                            <li><a class="introguidelink" href="/public/ucph-erda-guide_seafile-share-exchange.pdf">Seafile Collaboration Intro</a> about Seafile data sharing and exchange</li> 
                             <li><a class="infolink" href="/public/ucph-erda-guide_overview.pdf">ERDA Overview</a>
                                 if you're not sure whether to use ERDA's main storage or Seafile</li> 
                             <li><a class="userguidelink" href="/public/ucph-erda-user-guide.pdf">User Guide</a> with general usage instructions</li>
@@ -329,7 +386,6 @@
                          optional further explanation.
                          Can just be disabled by putting it into an html comment when not in use.
                     -->
-
                     <div class="staticpage systemmessages centertext">
 
                     </div>
@@ -338,12 +394,13 @@
                         <div id="quick-start-tabs-da">
 
                             <ul>
-                                <li><a href="#ucph-user-tab-da">KU / UCPH brugere</a></li>
-                                <li><a href="#external-user-tab-da">Eksterne brugere</a></li>
-                                <li><a href="#cert-user-tab-da">Avanceret adgang</a></li>
+                                <li class="show-extoid" title="UCPH OpenID 2.0 Auth"><a href="#ucph-user-tab-da">KU / UCPH brugere</a></li>
+                                <li class="show-extoidc" title="UCPH OpenID Connect Auth"><a href="#ucph-oidc-user-tab-da">KU / UCPH brugere (NY OIDC)</a></li>
+                                <li class="show-migoid" title="Built-in OpenID 2.0 Auth"><a href="#external-user-tab-da">Eksterne brugere</a></li>
+                                <li class="show-extcert" title="X509 User Certificate Auth"><a href="#cert-user-tab-da">Avanceret adgang</a></li>
                             </ul>
 
-                            <div id="ucph-user-tab-da">
+                            <div id="ucph-user-tab-da" class="show-extoid">
                                 <div class="staticpage centertext signupfield">
                                     <p>Tilmeld dig ERDA med din KU-konto?</p>
                                     <form method='post' action='https://erda.dk/wsgi-bin/autocreate.py' target='_blank'>
@@ -366,7 +423,26 @@
                                 </div>
                             </div>
 
-                            <div id="external-user-tab-da" class="hidden">
+                            <div id="ucph-oidc-user-tab-da" class="show-extoidc">
+                                <div class="staticpage centertext signupfield">
+                                    <p>Tilmeld dig ERDA med din KU-konto?</p>
+                                    <form method='post' action='https://oidc.erda.dk/wsgi-bin/autocreate.py' target='_blank'>
+                                        <input class="signupbutton" type="submit" value="tilmelding" />
+                                    </form>
+                                    <p></p>
+                                </div>
+                                <div class="staticpage centertext loginfield">
+                                    <p>Jeg er allerede tilmeldt ERDA med min KU-konto!</p>
+                                    <!-- Use form with JS override to enable fallback functionality -->
+                                    <form method='get' action='https://oidc.erda.dk' target='_blank'>
+                                        <input class="loginbutton" type="submit" value="log ind"
+                                               onClick="login('extoidc'); return false;" />
+                                    </form>
+                                    <p></p>
+                                </div>
+                            </div>
+
+                            <div id="external-user-tab-da" class="show-migoid">
                                 <div class="staticpage centertext signupfield">
                                     <p>Tilmeld dig ERDA <em>uden</em> en KU-konto?</p>
                                     <!-- Use form with JS override to enable fallback functionality -->
@@ -387,7 +463,7 @@
                                 </div>
                             </div>
 
-                            <div id="cert-user-tab-da" class="hidden">
+                            <div id="cert-user-tab-da" class="show-extcert show-migrcert">
                                 <div class="staticpage centertext signupfield">
                                     <p>Tilmeld dig ERDA med dit brugercertifikat?</p>
                                     <!-- Use form with JS override to enable fallback functionality -->
@@ -459,7 +535,9 @@
                             <li><a class="introguidelink" href="/public/ucph-erda-guide_workgroup-deling.pdf">Workgroup-intro</a> om Workgroup-oprettelse, -deling og -adgang</li>
                             <li><a class="introguidelink" href="/public/ucph-erda-guide_netvaerksdrev_win.pdf">Netværksdrev-intro</a> om at benytte ERDA som netværksdrev på din computer (dækker kun Windows for nu)</li>
                             <li><a class="introguidelink" href="/public/ucph-erda-guide_seafile-tilmeld-sync.pdf">Seafile-intro</a>
-                                om Seafile tilmelding for KU- og eksterne brugere samt om synkronisering</li> 
+                                om Seafile tilmelding og filsynkronisering</li> 
+                            <li><a class="introguidelink" href="/public/ucph-erda-guide_seafile-del-udvekls.pdf">Seafile samarbejds-intro</a>
+                                om Seafile data-deling og -udveksling</li> 
                             <li><a class="infolink" href="/public/ucph-erda-guide_overblik.pdf">ERDA-overblik</a>
                                 hvis du er i tvivl om du skal bruge ERDAs hovedlager eller Seafile</li> 
                             <li><a class="userguidelink" href="/public/ucph-erda-brugervejledning.pdf">Brugervejledningen</a> med generel gennemgang af brugen</li>
@@ -510,10 +588,10 @@
             </div>
         </div>
 
-        <div id="bottomlogo">
-            <div id="bottomlogoleft">
-                <div id="support">
-                    <img src="/images/icons/help.png" id="supportimage" alt=""/>
+        <div id="bottomlogo" class="staticpage">
+            <div id="bottomlogoleft" class="staticpage">
+                <div id="support" class="staticpage">
+                    <img src="/images/icons/help.png" id="supportimage" class="staticpage" alt=""/>
                     <div class="supporttext staticpage i18n hidden" lang="en">
                         <a href="mailto:support@erda.dk">Contact & Help</a>
                     </div>
@@ -522,8 +600,8 @@
                     </div>
                 </div>
             </div>
-            <div id="bottomlogoright">
-                <div id="privacy">
+            <div id="bottomlogoright" class="staticpage">
+                <div id="privacy" class="staticpage">
                     <div class="privacytext staticpage i18n hidden" lang="en">
                         <p class="i18n" lang="en">
                             <a href="/public/site-privacy-policy.pdf">Privacy Policy</a>
@@ -537,15 +615,15 @@
                         </p>
                     </div>
                 </div>
-                <div id="copyright">
-                    <img src="/images/copyright.png" id="creditsimage" alt=""/>
+                <div id="copyright" class="staticpage">
+                    <img src="/images/copyright.png" id="creditsimage" class="staticpage" alt=""/>
                     <span id="credits">
                         2003-2021, <a href="https://www.migrid.org">The MiG Project</a>
                     </span>
                 </div>
             </div>
         </div>
-        <div id="bottomspace">
+        <div id="bottomspace" class="staticpage">
         </div>
 
     </body>
