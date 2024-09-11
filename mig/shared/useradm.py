@@ -30,8 +30,11 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+from past.builtins import basestring
 from email.utils import parseaddr
+import codecs
 import datetime
+import errno
 import fnmatch
 import os
 import re
@@ -44,6 +47,7 @@ from mig.shared.accountstate import update_account_expire_cache, \
 from mig.shared.base import client_id_dir, client_dir_id, client_alias, \
     get_client_id, extract_field, fill_user, fill_distinguished_name, \
     is_gdp_user, mask_creds, sandbox_resource
+from mig.shared.compat import PY2, _unicode_string_to_escaped_unicode
 from mig.shared.conf import get_configuration_object
 from mig.shared.configuration import Configuration
 from mig.shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
@@ -82,6 +86,9 @@ from mig.shared.vgridaccess import get_resource_map, get_vgrid_map, \
     force_update_user_map, force_update_resource_map, force_update_vgrid_map, \
     VGRIDS, OWNERS, MEMBERS
 
+if not PY2:
+    raw_input = input
+
 ssh_authkeys = os.path.join(ssh_conf_dir, authkeys_filename)
 ssh_authpasswords = os.path.join(ssh_conf_dir, authpasswords_filename)
 ssh_authdigests = os.path.join(ssh_conf_dir, authdigests_filename)
@@ -95,6 +102,10 @@ ftps_authdigests = os.path.join(ftps_conf_dir, authdigests_filename)
 https_authkeys = ''
 https_authpasswords = user_db_filename
 https_authdigests = user_db_filename
+
+
+_USERADM_CONFIG_DIR_KEYS = ('user_db_home', 'user_home', 'user_settings',
+                            'user_cache', 'mrsl_files_dir', 'resource_pending')
 
 
 def init_user_adm(dynamic_db_path=True):
@@ -451,6 +462,21 @@ def verify_user_peers(configuration, db_path, client_id, user, now, verify_peer,
     return accepted_peer_list, effective_expire
 
 
+def _check_directories_unprovisioned(configuration, db_path):
+    user_db_home = os.path.dirname(db_path)
+    return not os.path.exists(db_path) and not os.path.exists(user_db_home)
+
+
+def _provision_directories(configuration):
+    for config_attr in _USERADM_CONFIG_DIR_KEYS:
+        try:
+            dir_to_create = getattr(configuration, config_attr)
+            os.mkdir(dir_to_create)
+        except OSError as oserr:
+            if oserr.errno != errno.ENOENT:  # FileNotFoundError
+                raise
+
+
 def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
                       reset_token, reset_auth_type, accepted_peer_list, force,
                       verbose, ask_renew, default_renew, do_lock,
@@ -463,8 +489,25 @@ def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
     flock = None
     user_db = {}
     renew = default_renew
+
+    retry_lock = False
     if do_lock:
+        try:
+            flock = lock_user_db(db_path)
+        except (IOError, OSError) as oserr:
+            if oserr.errno != errno.ENOENT:  # FileNotFoundError
+                raise
+
+            if _check_directories_unprovisioned(configuration, db_path=db_path):
+                _provision_directories(configuration)
+                retry_lock = True
+            else:
+                raise Exception("Failed to lock user DB: '%s'" % db_path)
+
+    if retry_lock:
         flock = lock_user_db(db_path)
+        if not flock:
+            raise Exception("Failed to lock user DB: '%s'" % db_path)
 
     if not os.path.exists(db_path):
         # Auto-create missing user DB if either auto_create_db or force is set
@@ -859,7 +902,7 @@ def create_user_in_fs(configuration, client_id, user, now, renew, force, verbose
         # match in htaccess
 
         dn_plain = info['distinguished_name']
-        dn_enc = dn_plain.encode('string_escape')
+        dn_enc = _unicode_string_to_escaped_unicode(dn_plain)
 
         def upper_repl(match):
             """Translate hex codes to upper case form"""
@@ -1013,7 +1056,7 @@ The %(short_title)s site operators
             raise Exception('could not create custom css file: %s' % css_path)
 
 
-def create_user(user, conf_path, db_path, force=False, verbose=False,
+def create_user(user, conf_path, db_path, configuration=None, force=False, verbose=False,
                 ask_renew=True, default_renew=False, do_lock=True,
                 verify_peer=None, peer_expire_slack=0, from_edit_user=False,
                 ask_change_pw=False, auto_create_db=True, create_backup=True):
@@ -1021,7 +1064,10 @@ def create_user(user, conf_path, db_path, force=False, verbose=False,
     format as a first step.
     """
 
-    if conf_path:
+    if configuration is not None:
+        # use it
+        pass
+    elif conf_path:
         if isinstance(conf_path, basestring):
 
             # has been checked for accessibility above...

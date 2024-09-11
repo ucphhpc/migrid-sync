@@ -32,8 +32,7 @@ from string import ascii_lowercase, ascii_uppercase, digits
 import os
 import sys
 
-MIG_BASE = os.path.realpath(os.path.join(os.path.dirname(__file__), '../..'))
-MIG_ENV = os.getenv('MIG_ENV', 'default')
+from mig.shared._env import MIG_BASE, MIG_ENV
 
 # NOTE: python3 switched strings to use unicode by default in contrast to bytes
 #       in python2. File systems remain with utf8 however so we need to
