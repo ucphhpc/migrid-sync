@@ -91,8 +91,7 @@ Where OPTIONS may be one or more of:
 """ % {'name': name, 'cert_warn': cert_warn})
 
 
-if '__main__' == __name__:
-    (args, app_dir, db_path) = init_user_adm()
+def main(args, cwd, db_path=keyword_auto):
     conf_path = None
     auth_type = 'custom'
     expire = None
@@ -111,6 +110,7 @@ if '__main__' == __name__:
     user_dict = {}
     override_fields = {}
     opt_args = 'a:c:d:e:fhi:o:p:rR:s:u:v'
+
     try:
         (opts, args) = getopt.getopt(args, opt_args)
     except getopt.GetoptError as err:
@@ -138,13 +138,8 @@ if '__main__' == __name__:
                     parsed = True
                     break
                 except ValueError:
-                    pass
-            if parsed:
-                override_fields['expire'] = expire
-                override_fields['status'] = 'temporal'
-            else:
-                print('Failed to parse expire value: %s' % val)
-                sys.exit(1)
+                    print('Failed to parse expire value: %s' % val)
+                    sys.exit(1)
         elif opt == '-f':
             force = True
         elif opt == '-h':
@@ -154,17 +149,13 @@ if '__main__' == __name__:
             user_id = val
         elif opt == '-o':
             short_id = val
-            override_fields['short_id'] = short_id
         elif opt == '-p':
             peer_pattern = val
-            override_fields['peer_pattern'] = peer_pattern
-            override_fields['status'] = 'temporal'
         elif opt == '-r':
             default_renew = True
             ask_renew = False
         elif opt == '-R':
             role = val
-            override_fields['role'] = role
         elif opt == '-s':
             # Translate slack days into seconds as
             slack_secs = int(float(val)*24*3600)
@@ -190,8 +181,52 @@ if '__main__' == __name__:
             if verbose:
                 print('using configuration from MIG_CONF (or default)')
 
-    configuration = get_configuration_object(config_file=conf_path)
+    _main(None, args,
+          conf_path=conf_path,
+          db_path=db_path,
+          expire=expire,
+          force=force,
+          verbose=verbose,
+          ask_renew=ask_renew,
+          default_renew=default_renew,
+          ask_change_pw=ask_change_pw,
+          user_file=user_file,
+          user_id=user_id,
+          short_id=short_id,
+          role=role,
+          peer_pattern=peer_pattern,
+          slack_secs=slack_secs,
+          hash_password=hash_password
+          )
+
+
+def _main(configuration, args,
+          conf_path=keyword_auto,
+          db_path=keyword_auto,
+          auth_type='custom',
+          expire=None,
+          force=False,
+          verbose=False,
+          ask_renew=True,
+          default_renew=False,
+          ask_change_pw=True,
+          user_file=None,
+          user_id=None,
+          short_id=None,
+          role=None,
+          peer_pattern=None,
+          slack_secs=0,
+          hash_password=True
+          ):
+    if configuration is None:
+        if conf_path == keyword_auto:
+            config_file = None
+        else:
+            config_file = conf_path
+        configuration = get_configuration_object(config_file=config_file)
+
     logger = configuration.logger
+
     # NOTE: we need explicit db_path lookup here for load_user_dict call
     if db_path == keyword_auto:
         db_path = default_db_path(configuration)
@@ -210,9 +245,6 @@ if '__main__' == __name__:
     # NOTE: renew requires original password
     if auth_type == 'cert':
         hash_password = False
-
-    if expire is None:
-        expire = default_account_expire(configuration, auth_type)
 
     raw_user = {}
     if args:
@@ -291,9 +323,19 @@ if '__main__' == __name__:
 
     fill_user(user_dict)
 
-    # Make sure account expire is set with local certificate or OpenID login
-
+    # assemble the fields to be explicitly overriden
+    override_fields = {}
+    if peer_pattern:
+        override_fields['peer_pattern'] = peer_pattern
+        override_fields['status'] = 'temporal'
+    if role:
+        override_fields['role'] = role
+    if short_id:
+        override_fields['short_id'] = short_id
     if 'expire' not in user_dict:
+        # Make sure account expire is set with local certificate or OpenID login
+        if not expire:
+            expire = default_account_expire(configuration, auth_type)
         override_fields['expire'] = expire
 
     # NOTE: let non-ID command line values override loaded values
@@ -305,8 +347,10 @@ if '__main__' == __name__:
     if verbose:
         print('using user dict: %s' % user_dict)
     try:
-        create_user(user_dict, conf_path, db_path, force, verbose, ask_renew,
-                    default_renew, verify_peer=peer_pattern,
+        conf_path = configuration.config_file
+        create_user(user_dict, conf_path, db_path, configuration, force, verbose, ask_renew,
+                    default_renew,
+                    verify_peer=peer_pattern,
                     peer_expire_slack=slack_secs, ask_change_pw=ask_change_pw)
         if configuration.site_enable_gdp:
             (success_here, msg) = ensure_gdp_user(configuration,
@@ -326,3 +370,8 @@ if '__main__' == __name__:
         if verbose:
             print('Cleaning up tmp file: %s' % user_file)
         os.remove(user_file)
+
+
+if __name__ == '__main__':
+    (args, cwd, db_path) = init_user_adm()
+    main(args, cwd, db_path=db_path)

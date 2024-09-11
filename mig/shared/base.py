@@ -295,7 +295,9 @@ def canonical_user(configuration, user_dict, limit_fields):
         if key == 'full_name':
             # IMPORTANT: we get utf8 coded bytes here and title() treats such
             # chars as word termination. Temporarily force to unicode.
-            val = force_utf8(force_unicode(val).title())
+            val = force_unicode(val).title()
+            if PY2:
+                val = force_utf8(val)
         elif key == 'email':
             val = val.lower()
         elif key == 'country':
