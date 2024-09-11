@@ -91,8 +91,7 @@ Where OPTIONS may be one or more of:
 """ % {'name': name, 'cert_warn': cert_warn})
 
 
-if '__main__' == __name__:
-    (args, app_dir, db_path) = init_user_adm()
+def main(args, cwd, configuration=None, db_path=keyword_auto):
     conf_path = None
     auth_type = 'custom'
     expire = None
@@ -190,8 +189,11 @@ if '__main__' == __name__:
             if verbose:
                 print('using configuration from MIG_CONF (or default)')
 
-    configuration = get_configuration_object(config_file=conf_path)
+    if configuration is None:
+        configuration = get_configuration_object(config_file=conf_path)
+
     logger = configuration.logger
+
     # NOTE: we need explicit db_path lookup here for load_user_dict call
     if db_path == keyword_auto:
         db_path = default_db_path(configuration)
@@ -326,3 +328,7 @@ if '__main__' == __name__:
         if verbose:
             print('Cleaning up tmp file: %s' % user_file)
         os.remove(user_file)
+
+if __name__ == '__main__':
+    (args, cwd, db_path) = init_user_adm()
+    main(args, cwd, db_path=db_path)
