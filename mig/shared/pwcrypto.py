@@ -114,12 +114,14 @@ def best_crypt_salt(configuration):
     return salt_data
 
 
-def make_hash(password):
+def make_hash(password, _urandom=urandom):
     """Generate a random salt and return a new hash for the password."""
-    salt = b64encode(urandom(SALT_LENGTH))
-    derived = b64encode(hashlib.pbkdf2_hmac(HASH_FUNCTION,
-                                            force_utf8(password), salt,
-                                            COST_FACTOR, KEY_LENGTH))
+    salt = b64encode(_urandom(SALT_LENGTH))
+    password_bytes = force_utf8(password)
+    password_hashed = hashlib.pbkdf2_hmac(HASH_FUNCTION,
+                                            password_bytes, salt,
+                                            COST_FACTOR, KEY_LENGTH)
+    derived = b64encode(password_hashed)
     return 'PBKDF2${}${}${}${}'.format(HASH_FUNCTION, COST_FACTOR,
                                        salt, derived)
 
