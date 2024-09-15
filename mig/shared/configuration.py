@@ -709,10 +709,13 @@ class Configuration(object):
 
     def __init__(self, config_file, verbose=False, skip_log=False,
                  disable_auth_log=False):
-        self.config_file = config_file
-        self.reload_config(verbose, skip_log, disable_auth_log)
+        if config_file is not None:
+            self.reload_config(verbose, skip_log,
+                               disable_auth_log=disable_auth_log,
+                               _config_file=config_file)
 
-    def reload_config(self, verbose, skip_log=False, disable_auth_log=False):
+    def reload_config(self, verbose, skip_log=False, disable_auth_log=False,
+                      _config_file=None):
         """Re-read and parse configuration file. Optional skip_log arg
         initializes default logger(s) to use the NullHandler in order to
         avoid uninitialized log while not really touching log files or causing
@@ -724,13 +727,23 @@ class Configuration(object):
         NEVER be set in code used for production.
         """
 
+        _config_file = _config_file or self.config_file
+        assert _config_file is not None
+
         try:
             if self.logger:
                 self.logger.info('reloading configuration and reopening log')
         except:
             pass
 
-        if not os.path.isfile(self.config_file):
+        try:
+            config_file_is_path = os.path.isfile(_config_file)
+        except TypeError:
+            config_file_is_path = False
+
+        if config_file_is_path:
+            self.config_file = _config_file
+        else:
             print("""Could not find your configuration file (%s). You might
 need to point the MIG_CONF environment to your actual MiGserver.conf
 location.""" % self.config_file)
