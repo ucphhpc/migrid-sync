@@ -43,6 +43,7 @@ import base64
 import cgi
 import cgitb
 import codecs
+from collections import defaultdict, namedtuple
 from flask import Flask, request, Response
 from functools import partial, update_wrapper
 import os
@@ -56,7 +57,7 @@ import werkzeug.exceptions as httpexceptions
 from wsgiref.simple_server import WSGIRequestHandler
 
 from mig.shared.accountstate import check_account_accessible
-from mig.shared.base import client_dir_id, client_id_dir, cert_field_map
+from mig.shared.base import canonical_user, client_dir_id, client_id_dir, cert_field_map
 from mig.shared.conf import get_configuration_object
 from mig.shared.compat import PY2
 from mig.shared.griddaemons.openid import default_max_user_hits, \
@@ -72,10 +73,11 @@ from mig.shared.safeinput import valid_distinguished_name, valid_password, \
     valid_complex_url, InputException
 from mig.shared.tlsserver import hardened_ssl_context
 from mig.shared.url import urlparse, urlencode, parse_qsl
-from mig.shared.useradm import create_user, get_any_oid_user_dn, check_password_scramble, \
+from mig.shared.useradm import get_any_oid_user_dn, check_password_scramble, \
     check_hash
 from mig.shared.userdb import default_db_path
 from mig.shared.validstring import possible_user_id, is_valid_email_address
+from mig.server.createuser import _main as createuser
 
 # Update with extra fields
 cert_field_map.update({'role': 'ROLE', 'timezone': 'TZ', 'nickname': 'NICK',
@@ -114,8 +116,8 @@ httpexceptions_by_code = {
     exc.code: exc for exc in httpexceptions.__dict__.values() if hasattr(exc, 'code')}
 
 
-def http_error_from_status_code(http_status_code, http_url):
-    return httpexceptions_by_code[http_status_code]()
+def http_error_from_status_code(http_status_code, http_url, description=None):
+    return httpexceptions_by_code[http_status_code](description)
 
 
 def quoteattr(val):
@@ -156,7 +158,66 @@ def invalid_argument(arg):
     raise ValueError("Unexpected query variable: %s" % quoteattr(arg))
 
 
-def _create_and_expose_server(configuration):
+class ValidationReport(RuntimeError):
+    def __init__(self, errors_by_field):
+        self.errors_by_field = errors_by_field
+
+    def serialize(self, output_format='text'):
+        if output_format == 'json':
+            return dict(errors=self.errors_by_field)
+        else:
+            lines = ["- %s: required %s" % (k, v) for k, v in self.errors_by_field.items()]
+            lines.insert(0, '')
+            return 'payload failed to validate:%s' % ('\n'.join(lines),)
+
+
+def _is_not_none(value):
+    """value is not None"""
+    return value is not None
+
+
+def _is_string_and_non_empty(value):
+    """value is a non-empty string"""
+    return isinstance(value, str) and len(value) > 0
+
+
+_REQUEST_ARGS_POST_USER = namedtuple('PostUserArgs', [
+    'full_name',
+    'organization',
+    'state',
+    'country',
+    'email',
+    'comment',
+    'password',
+])
+
+
+_REQUEST_ARGS_POST_USER._validators = defaultdict(lambda: _is_not_none, dict(
+    full_name=_is_string_and_non_empty,
+    organization=_is_string_and_non_empty,
+    state=_is_string_and_non_empty,
+    country=_is_string_and_non_empty,
+    email=_is_string_and_non_empty,
+    comment=_is_string_and_non_empty,
+    password=_is_string_and_non_empty,
+))
+
+
+def validate_payload(definition, payload):
+    args = definition(*[payload.get(field, None) for field in definition._fields])
+
+    errors_by_field = {}
+    for field_name, field_value in args._asdict().items():
+        validator_fn = definition._validators[field_name]
+        if not validator_fn(field_value):
+            errors_by_field[field_name] = validator_fn.__doc__
+    if errors_by_field:
+        raise ValidationReport(errors_by_field)
+    else:
+        return args
+
+
+def _create_and_expose_server(server, configuration):
     app = Flask('coreapi')
 
     @app.get('/user')
@@ -171,9 +232,18 @@ def _create_and_expose_server(configuration):
     def POST_user():
         payload = request.get_json()
 
-        greeting = payload.get('greeting', '<none>')
-        if greeting == 'provocation':
-            raise http_error_from_status_code(422, None)
+        try:
+            validated = validate_payload(_REQUEST_ARGS_POST_USER, payload)
+        except ValidationReport as vr:
+            return http_error_from_status_code(400, None, vr.serialize())
+
+        args = list(validated)
+
+        ret = createuser(configuration, args)
+        if ret != 0:
+            raise http_error_from_status_code(400, None)
+
+        greeting = 'hello client!'
         return Response(greeting, 201)
 
     return app
