@@ -27,9 +27,12 @@
 
 """Supporting functions for the unit test framework"""
 
+from collections import defaultdict
+from configparser import ConfigParser
 import difflib
 import errno
 import io
+import json
 import logging
 import os
 import shutil
@@ -234,6 +237,60 @@ def cleanpath(relative_path, test_case, ensure_dir=False):
     tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
     test_case._cleanup_paths.add(tmp_path)
     return tmp_path
+
+
+def fixturefile(relative_path, fixture_format=None):
+    """Support function for loading fixtures from their serialised format.
+
+    Doing so is a little more involved than it may seem because serialisation
+    formats may not capture various nuances of the python data they represent.
+    For this reason each supported format defers to a format specific function
+    which can then, for example, load hints about deserialization.
+    """
+
+    assert fixture_format is not None, "fixture format must be specified"
+    assert not os.path.isabs(
+        relative_path), "fixture is not relative to fixture folder"
+    relative_path_with_ext = "%s.%s" % (relative_path, fixture_format)
+    tmp_path = os.path.join(TEST_FIXTURE_DIR, relative_path_with_ext)
+    assert os.path.isfile(tmp_path), \
+        "fixture file for format is not present: %s" % \
+        (relative_path_with_ext,)
+    #_, extension = os.path.splitext(os.path.basename(tmp_path))
+    #assert fixture_format == extension, "fixture file does not match format"
+
+    if fixture_format == 'json':
+        return _fixturefile_json(tmp_path)
+    else:
+        raise AssertionError(
+            "unsupported fixture format: %s" % (fixture_format,))
+
+
+_FIXTUREFILE_HINTAPPLIERS = {
+    'array_of_tuples': lambda value: [tuple(x) for x in value]
+}
+
+
+def _fixturefile_json(json_path):
+    hints = ConfigParser()
+
+    # leti's see if there are loading hints
+    try:
+        hints_path = "%s.ini" % (json_path,)
+        with open(hints_path) as hints_file:
+            hints.read_file(hints_file)
+    except FileNotFoundError:
+        pass
+
+    with io.open(json_path) as json_file:
+        json_object = json.load(json_file)
+
+        for item_name, item_hint in hints['DEFAULT'].items():
+            loaded_value = json_object[item_name]
+            value_from_loaded_value = _FIXTUREFILE_HINTAPPLIERS[item_hint]
+            json_object[item_name] = value_from_loaded_value(loaded_value)
+
+        return json_object
 
 
 def fixturepath(relative_path):
