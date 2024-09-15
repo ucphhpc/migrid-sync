@@ -1,7 +1,9 @@
 from __future__ import print_function
 import codecs
+import errno
 import json
 import os
+import shutil
 import sys
 import unittest
 from threading import Thread
@@ -9,10 +11,12 @@ from unittest import skip
 
 from tests.support import PY2, MIG_BASE, TEST_OUTPUT_DIR, MigTestCase, \
     testmain, temppath, make_wrapped_server
+from tests.support.htmlsupp import HtmlAssertMixin
 
 from mig.services.coreapi import ThreadedApiHttpServer, \
     _create_and_expose_server
 from mig.shared.conf import get_configuration_object
+from mig.shared.useradm import _USERADM_CONFIG_DIR_KEYS
 
 _PYTHON_MAJOR = '2' if PY2 else '3'
 _TEST_CONF_DIR = os.path.join(
@@ -27,10 +31,18 @@ else:
     from urllib.request import urlopen, Request
 
 
-class MigServerGrid_openid(MigTestCase):
+class MigServerGrid_openid(MigTestCase, HtmlAssertMixin):
     def before_each(self):
         self.server_addr = None
         self.server_thread = None
+
+        for config_key in _USERADM_CONFIG_DIR_KEYS:
+            dir_path = getattr(self.configuration, config_key)[0:-1]
+            try:
+                shutil.rmtree(dir_path)
+            except OSError as exc:
+                if exc.errno != errno.ENOENT:  # FileNotFoundError
+                    pass
 
     def _provide_configuration(self):
         return 'testconfig'
@@ -62,7 +74,7 @@ class MigServerGrid_openid(MigTestCase):
 
         return (status, data)
 
-    def issue_POST(self, request_path, request_data=None, request_json=None):
+    def issue_POST(self, request_path, request_data=None, request_json=None, response_encoding='textual'):
         assert isinstance(request_path, str) and request_path.startswith(
             '/'), "require http path starting with /"
         request_url = ''.join(
@@ -94,12 +106,18 @@ class MigServerGrid_openid(MigTestCase):
             data = response.read()
         except HTTPError as httpexc:
             status = httpexc.code
-            data = None
+            data = httpexc.file.read()
 
-        try:
-            data = json.loads(data)
-        except Exception as e:
-            pass
+        if response_encoding == 'textual':
+            data = codecs.decode(data, 'utf8')
+
+            try:
+                data = json.loads(data)
+            except Exception as e:
+                pass
+        elif response_encoding != 'binary':
+            raise AssertionError(
+                'issue_POST: unknown response_encoding "%s"' % (response_encoding,))
 
         return (status, data)
 
@@ -171,7 +189,11 @@ class MigServerGrid_openid(MigTestCase):
             'greeting': 'provocation'
         })
 
-        self.assertEqual(status, 422)
+        self.assertEqual(status, 400)
+        error_description = self.assertHtmlElement(content, 'p')
+        error_description_lines = error_description.split('<br>')
+        self.assertEqual(
+            error_description_lines[0], 'payload failed to validate:')
 
     @unittest.skipIf(PY2, "Python 3 only")
     def test_POST_user(self):
@@ -181,12 +203,18 @@ class MigServerGrid_openid(MigTestCase):
         self.server_thread = self._make_server(self.configuration, self.logger, self.server_addr)
         self.server_thread.start_wait_until_ready()
 
-        status, content = self.issue_POST('/user', request_json={
-            'greeting': 'hello client!',
-        })
+        status, content = self.issue_POST('/user', response_encoding='textual', request_json=dict(
+            full_name="Test User",
+            organization="Test Org",
+            state="NA",
+            country="DK",
+            email="dummy-user",
+            comment="This is the create comment",
+            password="password",
+        ))
 
         self.assertEqual(status, 201)
-        self.assertEqual(content, b'hello client!')
+        self.assertEqual(content, 'hello client!')
 
     def _make_configuration(self, test_logger, server_addr, overrides=None):
         configuration = self.configuration
@@ -206,7 +234,8 @@ class MigServerGrid_openid(MigTestCase):
     @staticmethod
     def _make_server(configuration, logger=None, server_address=None):
         def _on_instance(server):
-            server.server_app = _create_and_expose_server(server.configuration)
+            server.server_app = _create_and_expose_server(
+                server, server.configuration)
 
         (host, port) = server_address
         server_thread = make_wrapped_server(ThreadedApiHttpServer, \
