@@ -109,6 +109,7 @@ venv.bak/
 # Do not store current config and db
 MiGserver.conf
 MiG-users.db
+gdp-users.db
 daemon-rate-limit.db
 job_id_counter
 grid_script_laststart
