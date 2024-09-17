@@ -985,7 +985,11 @@ Python FTP server library (pyftpdlib) in a recent version (1.x+) is required
 for the optional grid_ftps daemon to work and the python-pyftpdlib
 package provides all required components for it on recent
 Debian/Ubuntu. If no recent version is available, it can still easily be
-installed with pip instead.
+installed with pip instead:
+pip install pyftpdlib
+Please note that a version before 2.x is needed for python2 support so the pip
+command would in that case be:
+pip install 'pyftpdlib<2.0'
 WsgiDAV is required for the optional grid_webdavs daemon to work and a
 recent version is needed for full OSX client support. Thus it is
 recommended to install directly from github or with pip.
