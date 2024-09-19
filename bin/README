@@ -1,0 +1,10 @@
+= Intro =
+We are moving various scripts and tools into a more logical location and will
+as a start just link to the existing paths in this folder so that one can use
+them as
+/path/to/bin/X
+Long term we will likely move them there instead and perhaps only preserve
+symlinks to still support the original paths for a while.
+
+Some scripts and tools may still expect certain relative paths to e.g. the MiGserver.conf file but you can always override it with something like: 
+MIG_CONF=/path/to/my/MiGserver.conf ./bin/searchusers.py
