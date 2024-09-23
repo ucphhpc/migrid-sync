@@ -32,10 +32,12 @@ from __future__ import absolute_import
 from past.builtins import basestring
 
 import base64
+import codecs
 import os
 import re
 
 # IMPORTANT: do not import any other MiG modules here - to avoid import loops
+from mig.shared.compat import PY2
 from mig.shared.defaults import default_str_coding, default_fs_coding, \
     keyword_all, keyword_auto, sandbox_names, _user_invisible_files, \
     _user_invisible_dirs, _vgrid_xgi_scripts, cert_field_order, csrf_field, \
@@ -488,12 +490,28 @@ def verify_local_url(configuration, req_url):
     return False
 
 
+def is_bytes_type(thetype):
+    """Return boolean indicating if val is a unicode string. We avoid
+    `isinstance(val, unicode)`
+    and the like since it breaks when combined with python-future and futurize.
+    """
+    return (thetype == bytes)
+
+
 def is_unicode(val):
     """Return boolean indicating if val is a unicode string. We avoid
     `isinstance(val, unicode)`
     and the like since it breaks when combined with python-future and futurize.
     """
-    return (type(u"") == type(val))
+    return is_unicode_type(type(val))
+
+
+def is_unicode_type(thetype):
+    """Return boolean indicating if val is a unicode string. We avoid
+    `isinstance(val, unicode)`
+    and the like since it breaks when combined with python-future and futurize.
+    """
+    return (thetype == type(u""))
 
 
 def force_utf8(val, highlight=''):
@@ -505,7 +523,24 @@ def force_utf8(val, highlight=''):
         val = "%s" % val
     if not is_unicode(val):
         return val
-    return "%s%s%s" % (highlight, val.encode("utf8"), highlight)
+    return codecs.encode("%s%s%s" % (highlight, val, highlight), 'utf8')
+
+
+def _walk_and_convert_recursive(input_obj, highlight='', _is_primitive=None, _force_primitive=None, _force_recursive=None):
+    assert _is_primitive is not None
+    assert _force_primitive is not None
+    assert _force_recursive is not None
+
+    thetype = type(input_obj)
+    if issubclass(thetype, dict):
+        return {_force_recursive(i, highlight): _force_recursive(j, highlight) for (i, j) in
+                input_obj.items()}
+    elif issubclass(thetype, (list, tuple)):
+        return thetype((_force_recursive(i, highlight) for i in input_obj))
+    elif not _is_primitive(thetype):
+        return _force_primitive(input_obj, highlight)
+    else:
+        return input_obj
 
 
 def force_utf8_rec(input_obj, highlight=''):
@@ -513,15 +548,7 @@ def force_utf8_rec(input_obj, highlight=''):
     dictionaries with nested unicode strings to a pure utf8 version. Actual
     changes are marked out with the highlight string if given.
     """
-    if isinstance(input_obj, dict):
-        return {force_utf8_rec(i, highlight): force_utf8_rec(j, highlight) for (i, j) in
-                input_obj.items()}
-    elif isinstance(input_obj, list):
-        return [force_utf8_rec(i, highlight) for i in input_obj]
-    elif is_unicode(input_obj):
-        return force_utf8(input_obj, highlight)
-    else:
-        return input_obj
+    return _walk_and_convert_recursive(input_obj, highlight, _is_primitive=is_bytes_type, _force_primitive=force_utf8, _force_recursive=force_utf8_rec)
 
 
 def force_unicode(val, highlight=''):
@@ -541,15 +568,7 @@ def force_unicode_rec(input_obj, highlight=''):
     dictionaries with nested utf8 strings to a pure unicode version. Actual
     changes are marked out with the highlight string if given.
     """
-    if isinstance(input_obj, dict):
-        return {force_unicode_rec(i, highlight): force_unicode_rec(j, highlight) for (i, j) in
-                input_obj.items()}
-    elif isinstance(input_obj, list):
-        return [force_unicode_rec(i, highlight) for i in input_obj]
-    elif not is_unicode(input_obj):
-        return force_unicode(input_obj, highlight)
-    else:
-        return input_obj
+    return _walk_and_convert_recursive(input_obj, highlight, _is_primitive=is_unicode_type, _force_primitive=force_unicode, _force_recursive=force_unicode_rec)
 
 
 def _force_default_coding(input_obj, kind, highlight=''):
