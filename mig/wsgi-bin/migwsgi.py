@@ -124,9 +124,9 @@ def stub(configuration, client_id, user_arguments_dict, environ, _retrieve_handl
     # Now backend value is validated to be safe for output
 
     if not isinstance(user_arguments_dict, dict):
-        _logger.error("%s invalid user args %s for %s" % (_addr,
+        _logger.error("%s invalid user args %s for backend %r" % (_addr,
                                                           user_arguments_dict,
-                                                          import_path))
+                                                          backend))
         bailout_helper(configuration, backend, output_objects,
                        header_text='Input Error')
         output_objects.append(
