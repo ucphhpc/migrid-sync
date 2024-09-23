@@ -89,8 +89,8 @@ def stub(configuration, client_id, user_arguments_dict, environ, _retrieve_handl
         backend = requested_backend(environ, fallback=default_page)
         valid_backend_name(backend)
     except InputException as iex:
-        _logger.error("%s refused to import invalid backend %r (%s): %s" %
-                      (_addr, backend, import_path, iex))
+        _logger.error("%s refused to import invalid backend %r: %s" %
+                      (_addr, backend, iex))
         bailout_helper(configuration, backend, output_objects,
                        header_text='User Error')
         output_objects.extend([
