@@ -108,8 +108,8 @@ def stub(configuration, client_id, user_arguments_dict, environ, _retrieve_handl
         # NOTE: dynamic module loading to find corresponding main function
         main = _retrieve_handler(backend)
     except Exception as err:
-        _logger.error("%s could not import %r (%s): %s" %
-                      (_addr, backend, import_path, err))
+        _logger.error("%s could not import %r: %s" %
+                      (_addr, backend, err))
         bailout_helper(configuration, backend, output_objects)
         output_objects.extend([
             {'object_type': 'error_text', 'text':
