@@ -114,21 +114,27 @@ def prepare_wsgi(configuration, url, **kwargs):
     )
 
 
-def _trigger_and_unpack_result(wsgi_result):
+def _trigger_and_unpack_result(wsgi_result, content_kind='textual'):
+    assert content_kind in ('textual', 'binary')
+
     chunks = list(wsgi_result)
     assert len(chunks) > 0, "invocation returned no output"
     complete_value = b''.join(chunks)
-    decoded_value = codecs.decode(complete_value, 'utf8')
+    if content_kind == 'binary':
+        decoded_value = complete_value
+    else:
+        decoded_value = codecs.decode(complete_value, 'utf8')
     return decoded_value
 
 
 class WsgiAssertMixin:
     """Custom assertions for verifying server code executed under test."""
 
-    def assertWsgiResponse(self, wsgi_result, fake_wsgi, expected_status_code):
+    def assertWsgiResponse(self, wsgi_result, fake_wsgi, expected_status_code,
+                           content_kind='textual'):
         assert isinstance(fake_wsgi, _PreparedWsgi)
 
-        content = _trigger_and_unpack_result(wsgi_result)
+        content = _trigger_and_unpack_result(wsgi_result, content_kind=content_kind)
 
         def called_once(fake):
             assert hasattr(fake, 'calls')

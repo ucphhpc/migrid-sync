@@ -33,7 +33,8 @@ import os
 import stat
 import sys
 
-from tests.support import PY2, MIG_BASE, MigTestCase, testmain, is_path_within
+from tests.support import PY2, MIG_BASE, TEST_DATA_DIR, \
+    MigTestCase, testmain, is_path_within
 from tests.support.htmlsupp import HtmlAssertMixin
 from tests.support.wsgisupp import prepare_wsgi, WsgiAssertMixin
 from tests.support.wsgibinsupp import WsgibinInstrumentation, WsgibinAssertMixin
@@ -79,6 +80,7 @@ class MigWsgibin(MigTestCase, HtmlAssertMixin,
         )
         self.application_kwargs = dict(
             _wrap_wsgi_errors=noop,
+            _fieldstorage_to_dict=self.wsgibin_instrumentation.fieldstorage_to_dict,
             _format_output=self.wsgibin_instrumentation.format_output,
             _retrieve_handler=self.wsgibin_instrumentation.retrieve_handler,
             _set_environ=noop,
@@ -121,6 +123,23 @@ class MigWsgibin(MigTestCase, HtmlAssertMixin,
         self.assertWsgibinInstrumentation()
         self.assertHtmlElementTextContent(
             output, 'title', 'TEST', trim_newlines=True)
+
+    def test_return_value_ok_serving_a_binary_file(self):
+        test_binary_file = os.path.join(TEST_DATA_DIR, 'loading.gif')
+        with open(test_binary_file, 'rb') as f:
+            test_binary_data = f.read()
+        self.wsgibin_instrumentation.set_response(
+            test_binary_data, returnvalues.OK, responding_with='file')
+
+        wsgi_result = migwsgi._application(
+            *self.application_args,
+            **self.application_kwargs
+        )
+
+        output, _ = self.assertWsgiResponse(
+            wsgi_result, self.fake_wsgi, 200, content_kind='binary')
+        self.assertWsgibinInstrumentation()
+        self.assertEqual(output, test_binary_data)
 
 
 if __name__ == '__main__':

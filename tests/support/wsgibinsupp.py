@@ -37,6 +37,22 @@ def _is_return_value(return_value):
     return return_value in defined_return_values
 
 
+def create_instrumented_fieldstorage_to_dict():
+    def _instrumented_fieldstorage_to_dict(fieldstorage):
+        return _instrumented_fieldstorage_to_dict._result
+
+    _instrumented_fieldstorage_to_dict._result = {
+        'output_format': ('html',)
+    }
+
+    def set_result(result):
+        _instrumented_fieldstorage_to_dict._result = result
+
+    _instrumented_fieldstorage_to_dict.set_result = set_result
+
+    return _instrumented_fieldstorage_to_dict
+
+
 def create_instrumented_format_output():
     def _instrumented_format_output(
         configuration,
@@ -52,6 +68,16 @@ def create_instrumented_format_output():
         call_args = (configuration, backend, ret_val, ret_msg,
                      call_args_out_obj, outputformat,)
         _instrumented_format_output.calls.append({'args': call_args})
+
+        if _instrumented_format_output._file:
+            return format_output(
+                configuration,
+                backend,
+                ret_val,
+                ret_msg,
+                out_obj,
+                outputformat,
+            )
 
         # FIXME: the following is a workaround for a bug that exists between the WSGI wrapper
         #        and the output formatter - specifically, the latter adds default header and
@@ -88,10 +114,16 @@ def create_instrumented_format_output():
             outputformat,
         )
     _instrumented_format_output.calls = []
+    _instrumented_format_output._file = False
     _instrumented_format_output.values = dict(
         title_text='',
         header_text='',
     )
+
+    def _set_file(is_enabled):
+        _instrumented_format_output._file = is_enabled
+
+    setattr(_instrumented_format_output, 'set_file', _set_file)
 
     def _program_values(**kwargs):
         _instrumented_format_output.values.update(kwargs)
@@ -126,11 +158,32 @@ def create_instrumented_retrieve_handler():
 
 class WsgibinInstrumentation:
     def __init__(self):
+        self.fieldstorage_to_dict = create_instrumented_fieldstorage_to_dict()
         self.format_output = create_instrumented_format_output()
         self.retrieve_handler = create_instrumented_retrieve_handler()
 
-    def set_response(self, content, returnvalue):
+    def _set_response_content(self, content, returnvalue):
         self.retrieve_handler.program(content, returnvalue)
+
+    def _set_response_file(self, returnbytes, returnvalue):
+        self.fieldstorage_to_dict.set_result({
+            'output_format': ('file',)
+        })
+        self.format_output.set_file(True)
+        file_obj = {'object_type': 'binary', 'data': returnbytes}
+        self.set_response([file_obj], returnvalue)
+
+    def set_response(self, content, returnvalue, responding_with='objects'):
+        assert not (content is not None and file is not None)
+
+        if responding_with == 'file':
+            assert isinstance(
+                returnvalue, bytes), "file response demands bytes"
+            self._set_response_file(content, returnvalue)
+        elif responding_with == 'objects':
+            self._set_response_content(content, returnvalue)
+        else:
+            raise NotImplementedError()
 
 
 class WsgibinAssertMixin:
