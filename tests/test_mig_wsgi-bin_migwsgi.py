@@ -202,11 +202,6 @@ class MigWsgi_binMigwsgi(MigTestCase, ServerAssertMixin, HtmlAssertMixin):
 
         self.fake_start_response = FakeStartResponse()
 
-        def fake_set_environ(value):
-            fake_set_environ.calls.append((value))
-        fake_set_environ.calls = []
-        self.fake_set_environ = fake_set_environ
-
         fake_wsgi_environ = create_wsgi_environ(_TEST_CONF_FILE, wsgi_variables=dict(
             http_host='localhost',
             path_info='/',
@@ -222,7 +217,7 @@ class MigWsgi_binMigwsgi(MigTestCase, ServerAssertMixin, HtmlAssertMixin):
             _skip_log=True,
             _format_output=self.instrumented_format_output,
             _retrieve_handler=self.instrumented_retrieve_handler,
-            _set_environ=fake_set_environ,
+            _set_environ=noop,
         )
 
     def test_return_value_ok_returns_status_200(self):
