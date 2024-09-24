@@ -2217,7 +2217,9 @@ def fix_userdb_keys(
                     unlock_user_db(flock)
                 raise Exception('Failed to load user DB: %s' % err)
 
-    for (client_id, user) in user_db.items():
+    # NOTE: force list copy here as we delete inline below
+    for client_id in list(user_db):
+        user = user_db[client_id]
         fill_distinguished_name(user)
         old_id = client_id
         new_id = user['distinguished_name']
