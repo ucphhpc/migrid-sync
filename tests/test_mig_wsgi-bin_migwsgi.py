@@ -38,7 +38,8 @@ from mig.shared.output import format_output
 import mig.shared.returnvalues as returnvalues
 
 
-from tests.support import PY2, is_path_within
+from tests.support import PY2, is_path_within, \
+    create_wsgi_environ, ServerAssertMixin, FakeStartResponse, HtmlAssertMixin
 from mig.shared.base import client_id_dir, client_dir_id, get_short_id, \
     invisible_path, allow_script, brief_list
 
@@ -179,21 +180,11 @@ def create_instrumented_retrieve_handler():
     return _instrumented_retrieve_handler
 
 
-def create_wsgi_environ(config_file, wsgi_variables):
-    environ = {}
-    environ['wsgi.input'] = ()
-    environ['MIG_CONF'] = config_file
-    environ['HTTP_HOST'] = wsgi_variables.get('http_host')
-    environ['PATH_INFO'] = wsgi_variables.get('path_info')
-    environ['SCRIPT_URI'] = ''.join(('http://', environ['HTTP_HOST'], environ['PATH_INFO']))
-    return environ
-
-
 def noop(*args):
     pass
 
 
-class MigWsgi_binMigwsgi(MigTestCase):
+class MigWsgi_binMigwsgi(MigTestCase, ServerAssertMixin, HtmlAssertMixin):
     def assertInstrumentation(self):
         simulated_action = self.instrumented_retrieve_handler.simulated
         self.assertIsNotNone(simulated_action.returning, "no response programmed")
@@ -205,44 +196,11 @@ class MigWsgi_binMigwsgi(MigTestCase):
         self.assertTrue(was_called(self.instrumented_format_output), "no output generated")
         self.assertTrue(was_called(self.instrumented_retrieve_handler), "no output generated")
 
-    def assertResponseStatus(self, expected_status_code):
-        def called_once(fake):
-            assert hasattr(fake, 'calls')
-            return len(fake.calls) == 1
-
-        self.assertTrue(called_once(self.fake_start_response))
-        thecall = self.fake_start_response.calls[0]
-        wsgi_status = thecall[0]
-        actual_status_code = int(wsgi_status[0:3])
-        self.assertEqual(actual_status_code, expected_status_code)
-
-    def assertHtmlElementTextContent(self, output, tag_name, expected_text, trim_newlines=True):
-        # TODO: this is a definitively stop-gap way of finding a tag within the HTML
-        #       and is used purely to keep this initial change to a reasonable size.
-        tag_open = ''.join(['<', tag_name, '>'])
-        tag_open_index = output.index(tag_open)
-        tag_close = ''.join(['</', tag_name, '>'])
-        tag_close_index = output.index(tag_close)
-        actual_text = output[tag_open_index+len(tag_open):tag_close_index]
-        if trim_newlines:
-            actual_text = actual_text.strip('\n')
-        self.assertEqual(actual_text, expected_text)
-
-    def assertIsValidHtmlDocument(self, value):
-        assert isinstance(value, type(u""))
-        assert value.startswith("<!DOCTYPE")
-        end_html_tag_idx = value.rfind('</html>')
-        maybe_document_end = value[end_html_tag_idx:].rstrip()
-        self.assertEqual(maybe_document_end, '</html>')
-
     def before_each(self):
         config = _assert_local_config()
         config_global_values = _assert_local_config_global_values(config)
 
-        def fake_start_response(status, headers, exc=None):
-            fake_start_response.calls.append((status, headers, exc))
-        fake_start_response.calls = []
-        self.fake_start_response = fake_start_response
+        self.fake_start_response = FakeStartResponse()
 
         def fake_set_environ(value):
             fake_set_environ.calls.append((value))
@@ -257,7 +215,7 @@ class MigWsgi_binMigwsgi(MigTestCase):
         self.instrumented_format_output = create_instrumented_format_output()
         self.instrumented_retrieve_handler = create_instrumented_retrieve_handler()
 
-        self.application_args = (fake_wsgi_environ, fake_start_response,)
+        self.application_args = (fake_wsgi_environ, self.fake_start_response,)
         self.application_kwargs = dict(
             _format_output=self.instrumented_format_output,
             _retrieve_handler=self.instrumented_retrieve_handler,
@@ -278,7 +236,7 @@ class MigWsgi_binMigwsgi(MigTestCase):
         _trigger_and_unpack_result(application_result)
 
         self.assertInstrumentation()
-        self.assertResponseStatus(200)
+        self.assertWsgiResponseStatus(self.fake_start_response, 200)
 
     def test_return_value_ok_returns_valid_html_page(self):
         self.instrumented_retrieve_handler.program([], returnvalues.OK)
