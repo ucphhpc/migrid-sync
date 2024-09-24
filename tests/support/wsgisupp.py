@@ -46,6 +46,10 @@ class FakeStartResponse:
         self.calls.append((status, headers, exc))
 
 
+def create_wsgi_start_response():
+    return FakeStartResponse()
+
+
 class ServerAssertMixin:
     """Custom assertions for verifying server code executed under test."""
 

@@ -86,7 +86,7 @@ from tests.support.htmlsupp import HtmlAssertMixin
 from tests.support.loggersupp import FakeLogger
 from tests.support.serversupp import make_wrapped_server
 from tests.support.wsgisupp import create_wsgi_environ, \
-    ServerAssertMixin, FakeStartResponse
+    create_wsgi_start_response, ServerAssertMixin
 
 
 # Basic global logging configuration for testing

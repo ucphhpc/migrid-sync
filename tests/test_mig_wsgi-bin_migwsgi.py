@@ -39,7 +39,8 @@ import mig.shared.returnvalues as returnvalues
 
 
 from tests.support import PY2, is_path_within, \
-    create_wsgi_environ, ServerAssertMixin, FakeStartResponse, HtmlAssertMixin
+    create_wsgi_environ, create_wsgi_start_response, \
+    ServerAssertMixin, HtmlAssertMixin
 from mig.shared.base import client_id_dir, client_dir_id, get_short_id, \
     invisible_path, allow_script, brief_list
 
@@ -200,17 +201,18 @@ class MigWsgi_binMigwsgi(MigTestCase, ServerAssertMixin, HtmlAssertMixin):
         config = _assert_local_config()
         config_global_values = _assert_local_config_global_values(config)
 
-        self.fake_start_response = FakeStartResponse()
-
-        fake_wsgi_environ = create_wsgi_environ(_TEST_CONF_FILE, wsgi_variables=dict(
+        # generic WSGI setup
+        self.fake_wsgi_environ = create_wsgi_environ(_TEST_CONF_FILE, wsgi_variables=dict(
             http_host='localhost',
             path_info='/',
         ))
+        self.fake_start_response = create_wsgi_start_response()
 
+        # MiG WSGI wrapper specific setup
         self.instrumented_format_output = create_instrumented_format_output()
         self.instrumented_retrieve_handler = create_instrumented_retrieve_handler()
 
-        self.application_args = (fake_wsgi_environ, self.fake_start_response,)
+        self.application_args = (self.fake_wsgi_environ, self.fake_start_response,)
         self.application_kwargs = dict(
             _wrap_wsgi_errors=noop,
             _config_file=_TEST_CONF_FILE,
