@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # edituser - Edit a MiG user
-# Copyright (C) 2003-2022  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -168,9 +168,9 @@ if '__main__' == __name__:
         user_dict['role'] = role
 
     # Remove empty value fields
-
-    for (key, val) in user_dict.items():
-        if not val:
+    # NOTE: force list copy here as we delete inline below
+    for key in list(user_dict):
+        if not user_dict[key]:
             del user_dict[key]
 
     if verbose:
