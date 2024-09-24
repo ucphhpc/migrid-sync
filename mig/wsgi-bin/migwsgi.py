@@ -216,7 +216,7 @@ def application(environ, start_response):
     return _application(None, environ, start_response, _set_environ=_set_os_environ, _wrap_wsgi_errors=wrap_wsgi_errors)
 
 
-def _application(configuration, environ, start_response, _set_environ, _format_output=format_output, _retrieve_handler=_import_backend, _wrap_wsgi_errors=True, _config_file=None, _skip_log=False):
+def _application(configuration, environ, start_response, _set_environ, _fieldstorage_to_dict=fieldstorage_to_dict, _format_output=format_output, _retrieve_handler=_import_backend, _wrap_wsgi_errors=True, _config_file=None, _skip_log=False):
 
     # NOTE: pass app environ including apache and query args on to sub handlers
     #       through the usual 'os.environ' channel expected in functionality
@@ -329,7 +329,7 @@ def _application(configuration, environ, start_response, _set_environ, _format_o
         #              (backend, script_name))
         fieldstorage = cgi.FieldStorage(fp=environ['wsgi.input'],
                                         environ=environ)
-        user_arguments_dict = fieldstorage_to_dict(fieldstorage)
+        user_arguments_dict = _fieldstorage_to_dict(fieldstorage)
         if 'output_format' in user_arguments_dict:
             output_format = user_arguments_dict['output_format'][0]
 
@@ -447,7 +447,10 @@ def _application(configuration, environ, start_response, _set_environ, _format_o
             #              (backend, i+1, chunk_parts))
             # end index may be after end of content - but no problem
             part = output[i*download_block_size:(i+1)*download_block_size]
-            yield _ensure_encoded_string(part)
+            if output_format == 'file':
+                yield part
+            else:
+                yield _ensure_encoded_string(part)
         if chunk_parts > 1:
             _logger.info("WSGI %s finished yielding all %d output parts" %
                          (backend, chunk_parts))

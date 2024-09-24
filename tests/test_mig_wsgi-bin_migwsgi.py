@@ -32,8 +32,9 @@ import importlib
 import os
 import stat
 import sys
+import unittest
 
-from tests.support import MIG_BASE, MigTestCase, testmain
+from tests.support import MIG_BASE, TEST_BASE, TEST_DATA_DIR, MigTestCase, testmain
 from mig.shared.output import format_output
 import mig.shared.returnvalues as returnvalues
 
@@ -66,12 +67,33 @@ def _is_return_value(return_value):
     return return_value in defined_return_values
 
 
-def _trigger_and_unpack_result(application_result):
+def _trigger_and_unpack_result(application_result, result_kind='textual'):
+    assert result_kind in ('textual', 'binary')
+
     chunks = list(application_result)
     assert len(chunks) > 0, "invocation returned no output"
     complete_value = b''.join(chunks)
-    decoded_value = codecs.decode(complete_value, 'utf8')
+    if result_kind == 'binary':
+        decoded_value = complete_value
+    else:
+        decoded_value = codecs.decode(complete_value, 'utf8')
     return decoded_value
+
+
+def create_instrumented_fieldstorage_to_dict():
+    def _instrumented_fieldstorage_to_dict(fieldstorage):
+        return _instrumented_fieldstorage_to_dict._result
+
+    _instrumented_fieldstorage_to_dict._result = {
+        'output_format': ('html',)
+    }
+
+    def set_result(result):
+        _instrumented_fieldstorage_to_dict._result = result
+
+    _instrumented_fieldstorage_to_dict.set_result = set_result
+
+    return _instrumented_fieldstorage_to_dict
 
 
 def create_instrumented_format_output():
@@ -87,6 +109,16 @@ def create_instrumented_format_output():
         call_args_out_obj = list(out_obj) # capture the original before altering it
         call_args = (configuration, backend, ret_val, ret_msg, call_args_out_obj, outputformat,)
         _instrumented_format_output.calls.append({ 'args': call_args })
+
+        if _instrumented_format_output._file:
+            return format_output(
+                configuration,
+                backend,
+                ret_val,
+                ret_msg,
+                out_obj,
+                outputformat,
+            )
 
         # FIXME: the following is a workaround for a bug that exists between the WSGI wrapper
         #        and the output formatter - specifically, the latter adds default header and
@@ -122,10 +154,17 @@ def create_instrumented_format_output():
             outputformat,
         )
     _instrumented_format_output.calls = []
+    _instrumented_format_output._file = False
     _instrumented_format_output.values = dict(
         title_text='',
         header_text='',
     )
+
+
+    def _set_file(is_enabled):
+        _instrumented_format_output._file = is_enabled
+
+    setattr(_instrumented_format_output, 'set_file', _set_file)
 
     def _program_values(**kwargs):
         _instrumented_format_output.values.update(kwargs)
@@ -185,6 +224,7 @@ class MigWsgi_binMigwsgi(MigTestCase, ServerAssertMixin, HtmlAssertMixin):
         self.fake_start_response = create_wsgi_start_response()
 
         # MiG WSGI wrapper specific setup
+        self.instrumented_fieldstorage_to_dict = create_instrumented_fieldstorage_to_dict()
         self.instrumented_format_output = create_instrumented_format_output()
         self.instrumented_retrieve_handler = create_instrumented_retrieve_handler()
 
@@ -192,6 +232,7 @@ class MigWsgi_binMigwsgi(MigTestCase, ServerAssertMixin, HtmlAssertMixin):
         self.application_kwargs = dict(
             _wrap_wsgi_errors=noop,
             _format_output=self.instrumented_format_output,
+            _fieldstorage_to_dict=self.instrumented_fieldstorage_to_dict,
             _retrieve_handler=self.instrumented_retrieve_handler,
             _set_environ=noop,
         )
@@ -235,6 +276,29 @@ class MigWsgi_binMigwsgi(MigTestCase, ServerAssertMixin, HtmlAssertMixin):
 
         self.assertInstrumentation()
         self.assertHtmlElementTextContent(output, 'title', 'TEST', trim_newlines=True)
+
+    def test_return_value_ok_serving_a_binary_file(self):
+        test_binary_file = os.path.join(TEST_DATA_DIR, 'loading.gif')
+        with open(test_binary_file, 'rb') as f:
+            test_binary_data = f.read()
+
+        self.instrumented_fieldstorage_to_dict.set_result({
+            'output_format': ('file',)
+        })
+        self.instrumented_format_output.set_file(True)
+
+        file_obj = { 'object_type': 'binary', 'data': test_binary_data }
+        self.instrumented_retrieve_handler.program([file_obj], returnvalues.OK)
+
+        application_result = migwsgi._application(
+            *self.application_args,
+            **self.application_kwargs
+        )
+
+        output = _trigger_and_unpack_result(application_result, 'binary')
+
+        self.assertInstrumentation()
+        self.assertEqual(output, test_binary_data)
 
 
 if __name__ == '__main__':
