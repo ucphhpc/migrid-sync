@@ -51,10 +51,10 @@ Usage:
 %(name)s [OPTIONS] -i USER_ID [FULL_NAME] [ORGANIZATION] [STATE] [COUNTRY] [EMAIL]
 Where OPTIONS may be one or more of:
    -c CONF_FILE        Use CONF_FILE as server configuration
-   -d MIG DB_FILE      Use DB_FILE as MiG user database file
+   -d MIG_DB_FILE      Use MIG_DB_FILE as MiG user database file
    -f                  Force operations to continue past errors
                        WARNING: This disables rollback in case of failure
-   -g GDP DB_FILE      Use GDP_DB_FILE as GDP user database file
+   -g GDP_DB_FILE      Use GDP_DB_FILE as GDP user database file
    -h                  Show this help
    -i CERT_DN          CERT_DN of user to edit
    -r                  Reset project logins
