@@ -217,6 +217,9 @@ class MigWsgi_binMigwsgi(MigTestCase, ServerAssertMixin, HtmlAssertMixin):
 
         self.application_args = (fake_wsgi_environ, self.fake_start_response,)
         self.application_kwargs = dict(
+            _wrap_wsgi_errors=noop,
+            _config_file=_TEST_CONF_FILE,
+            _skip_log=True,
             _format_output=self.instrumented_format_output,
             _retrieve_handler=self.instrumented_retrieve_handler,
             _set_environ=fake_set_environ,
@@ -227,9 +230,6 @@ class MigWsgi_binMigwsgi(MigTestCase, ServerAssertMixin, HtmlAssertMixin):
 
         application_result = migwsgi._application(
             *self.application_args,
-            _wrap_wsgi_errors=noop,
-            _config_file=_TEST_CONF_FILE,
-            _skip_log=True,
             **self.application_kwargs
         )
 
@@ -243,9 +243,6 @@ class MigWsgi_binMigwsgi(MigTestCase, ServerAssertMixin, HtmlAssertMixin):
 
         application_result = migwsgi._application(
             *self.application_args,
-            _wrap_wsgi_errors=noop,
-            _config_file=_TEST_CONF_FILE,
-            _skip_log=True,
             **self.application_kwargs
         )
 
@@ -260,9 +257,6 @@ class MigWsgi_binMigwsgi(MigTestCase, ServerAssertMixin, HtmlAssertMixin):
 
         application_result = migwsgi._application(
             *self.application_args,
-            _wrap_wsgi_errors=noop,
-            _config_file=_TEST_CONF_FILE,
-            _skip_log=True,
             **self.application_kwargs
         )
 
