@@ -360,7 +360,7 @@ def _application(configuration, environ, start_response, _set_environ, _fieldsto
 
     if 'json' == output_format:
         default_content = 'application/json'
-    elif 'file' == output_format:
+    elif 'file' == output_format or 'chunked' == output_format:
         default_content = 'application/octet-stream'
     elif 'html' != output_format:
         default_content = 'text/plain'
@@ -410,17 +410,22 @@ def _application(configuration, environ, start_response, _set_environ, _fieldsto
     if output is None:
         _logger.error("WSGI %s output formatting failed" % output_format)
         output = 'Error: output could not be correctly delivered!'
+        output_format = 'html'
 
-    content_length = len(output)
-    if not 'Content-Length' in dict(response_headers):
-        # _logger.debug("WSGI adding explicit content length %s" % content_length)
-        response_headers.append(('Content-Length', "%d" % content_length))
+    if output_format == 'chunked':
+        response_headers.append(('Transfer-Encoding', 'chunked'))
+    else:
+        content_length = len(output)
+        if not 'Content-Length' in dict(response_headers):
+            # adding explicit content length
+            response_headers.append(('Content-Length', "%d" % content_length))
 
     _logger.debug("send %r response as %s to %s" %
                   (backend, output_format, client_id))
     # NOTE: send response to client but don't crash e.g. on closed connection
     try:
-        start_response(status, response_headers)
+        x = start_response(status, response_headers)
+        pass
     except IOError as ioe:
         _logger.warning("WSGI %s for %s could not deliver output: %s" %
                         (backend, client_id, ioe))
@@ -428,6 +433,12 @@ def _application(configuration, environ, start_response, _set_environ, _fieldsto
         _logger.error("WSGI %s for %s crashed during response: %s" %
                       (backend, client_id, exc))
 
+    if output_format == 'chunked':
+        file_obj = next((x for x in output_objs if x['object_type'] == 'file_abspath'), None)
+        with open(file_obj['abspath'], 'rb') as fh_to_send:
+            os.sendfile(None, fh_to_send)
+
+    # serve response data with a known content type
     try:
         # NOTE: we consistently hit download error for archive files reaching ~2GB
         #       with showfreezefile.py on wsgi but the same on cgi does NOT suffer

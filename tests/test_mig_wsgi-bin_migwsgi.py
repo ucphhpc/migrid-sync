@@ -300,6 +300,30 @@ class MigWsgi_binMigwsgi(MigTestCase, ServerAssertMixin, HtmlAssertMixin):
         self.assertInstrumentation()
         self.assertEqual(output, test_binary_data)
 
+    def test_sendfile(self):
+        test_binary_file = os.path.join(TEST_DATA_DIR, 'loading.gif')
+
+        self.instrumented_fieldstorage_to_dict.set_result({
+            'output_format': ('chunked',)
+        })
+        self.instrumented_format_output.set_file(True)
+
+        output_obj = {
+            'object_type': 'file_abspath',
+            'abspath': test_binary_file
+        }
+        self.instrumented_retrieve_handler.program([output_obj], returnvalues.OK)
+
+        application_result = migwsgi._application(
+            *self.application_args,
+            **self.application_kwargs
+        )
+
+        output = _trigger_and_unpack_result(application_result, 'binary')
+
+        self.assertInstrumentation()
+        self.assertEqual(output, test_binary_data)
+
 
 if __name__ == '__main__':
     testmain()

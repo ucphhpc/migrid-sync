@@ -343,12 +343,16 @@ def temppath(relative_path, test_case, ensure_dir=False, skip_clean=False):
     """Get absolute temp path for relative_path"""
     assert isinstance(test_case, MigTestCase)
     tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
+    return _temppath(tmp_path, test_case, ensure_dir=ensure_dir, skip_clean=skip_clean)
+
+
+def _temppath(tmp_path, test_case, ensure_dir=False, skip_clean=False):
     if ensure_dir:
         try:
             os.mkdir(tmp_path)
         except FileExistsError:
             raise AssertionError(
-                "ABORT: use of unclean output path: %s" % relative_path)
+                "ABORT: use of unclean output path: %s" % tmp_path)
     if not skip_clean:
         test_case._cleanup_paths.add(tmp_path)
     return tmp_path
