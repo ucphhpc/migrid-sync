@@ -31,9 +31,9 @@
 class HtmlAssertMixin:
     """Custom assertions for HTML containing strings."""
 
-    def assertHtmlElementTextContent(self, value, tag_name, expected_text, trim_newlines=True):
-        """Locate the first occurrence of a tag within an HTML input string
-        and assert that any contained string equals what was supplied.
+    def assertHtmlElement(self, value, tag_name):
+        """Check that an occurrence of the specifid tag within an HTML input
+        string can be found. Returns the textual content of the first match.
         """
 
         self.assertIsValidHtmlDocument(value)
@@ -48,7 +48,19 @@ class HtmlAssertMixin:
         tag_close = ''.join(['</', tag_name, '>'])
         tag_close_index = value.index(tag_close, tag_open_index_after)
 
-        actual_text = value[tag_open_index_after:tag_close_index]
+        return value[tag_open_index_after:tag_close_index]
+
+    def assertHtmlElementTextContent(self, value, tag_name, expected_text, trim_newlines=True):
+        """Check there is an occurrence of a tag within an HTML input string
+        and check the text it encloses equals exactly the expecatation.
+        """
+
+        self.assertIsValidHtmlDocument(value)
+
+        # TODO: this is a definitively stop-gap way of finding a tag within the HTML
+        #       and is used purely to keep this initial change to a reasonable size.
+
+        actual_text = self.assertHtmlElement(value, tag_name)
         if trim_newlines:
             actual_text = actual_text.strip('\n')
         self.assertEqual(actual_text, expected_text)
@@ -57,15 +69,16 @@ class HtmlAssertMixin:
         """Check that the input string contains a valid HTML document.
         """
 
-        assert isinstance(value, type(u""))
+        assert isinstance(value, type(u"")), "input string was not utf8"
 
         error = None
         try:
-            assert value.startswith("<!DOCTYPE html")
+            has_doctype = value.startswith("<!DOCTYPE html")
+            assert has_doctype, "no valid document opener"
             end_html_tag_idx = value.rfind('</html>')
             maybe_document_end = value[end_html_tag_idx:].rstrip()
-            self.assertEqual(maybe_document_end, '</html>')
+            assert maybe_document_end == '</html>', "no valid document closer"
         except Exception as exc:
             error = exc
         if error:
-            raise AssertionError("failed to verify input string as HTML: %s", str(exc))
+            raise AssertionError("failed to verify input string as HTML: %s", str(error))
