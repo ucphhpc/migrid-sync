@@ -4,7 +4,10 @@ import sys
 import unittest
 
 from tests.support import MigTestCase, PY2, testmain, temppath, \
-                    AssertOver
+    AssertOver, FakeConfiguration
+
+from mig.shared.conf import get_configuration_object
+from mig.shared.configuration import Configuration
 
 
 class InstrumentedAssertOver(AssertOver):
@@ -38,6 +41,17 @@ class SupportTestCase(MigTestCase):
             setattr(cls, name, kwargs['value'])
         else:
             return getattr(cls, name, None)
+
+    def test_provides_a_fake_configuration(self):
+        configuration = self.configuration
+
+        self.assertIsInstance(configuration, FakeConfiguration)
+
+    def test_provides_a_fake_configuration_for_the_duration_of_the_test(self):
+        c1 = self.configuration
+        c2 = self.configuration
+
+        self.assertIs(c2, c1)
 
     @unittest.skipIf(PY2, "Python 3 only")
     def test_unclosed_files_are_recorded(self):
@@ -86,6 +100,24 @@ class SupportTestCase(MigTestCase):
 
         attempt_wrapper = self._class_attribute('surviving_attempt_wrapper')
         self.assertTrue(attempt_wrapper.was_check_callable_called())
+
+
+class SupportTestCase_overridden_configuration(MigTestCase):
+    def _provide_configuration(self):
+        return 'testconfig'
+
+    def test_provides_the_test_configuration(self):
+        expected_last_dir = 'testconfs-py2' if PY2 else 'testconfs-py3'
+
+        configuration = self.configuration
+
+        # check we have a real config object
+        self.assertIsInstance(configuration, Configuration)
+        # check for having loaded a config file from a test config dir
+        config_file_path_parts = configuration.config_file.split(os.path.sep)
+        config_file_path_parts.pop()  # discard file part
+        config_file_last_dir = config_file_path_parts.pop()
+        self.assertTrue(config_file_last_dir, expected_last_dir)
 
 
 if __name__ == '__main__':
