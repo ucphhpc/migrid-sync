@@ -64,6 +64,16 @@ class MigSharedConfiguration(MigTestCase):
         self.maxDiff = None
         self.assertEqual(actual_values, expected_values)
 
+    def test_object_isolation(self):
+        configuration_1 = Configuration(None)
+        configuration_2 = Configuration(None)
+
+        # change one of the configuration objects
+        configuration_1.default_page.append('foobar')
+
+        # check the other was not affected
+        self.assertEqual(configuration_2.default_page, [''])
+
 
 if __name__ == '__main__':
     testmain()
