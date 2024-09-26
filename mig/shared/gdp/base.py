@@ -3204,10 +3204,12 @@ def create_project_user(
         mig_user_dict['comment'] = "GDP autocreated user for project: %r" \
             % project_name
         mig_user_dict['openid_names'] = aliases
+        # Blank out the remaining fields not to copy from main user
         mig_user_dict['auth'] = ['']
         mig_user_dict['short_id'] = ''
         mig_user_dict['old_password'] = ''
         mig_user_dict['password'] = ''
+        mig_user_dict['unique_id'] = ''
         mig_user_db_path = default_db_path(configuration)
         try:
             create_user(mig_user_dict, configuration.config_file,

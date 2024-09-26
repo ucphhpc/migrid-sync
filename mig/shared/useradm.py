@@ -673,6 +673,8 @@ change."""
         openid_names.append(short_id)
     add_names = []
 
+    # TODO: should GDP project users actually get their OWN unique_id, too?
+    #       They inadvertently copied the main user unique_id for a while.
     # NOTE: careful to skip GDP project users in openid and unique_id setup
     if not configuration.site_enable_gdp or \
             not is_gdp_user(configuration, client_id):
@@ -681,9 +683,11 @@ change."""
             add_names.append(user[configuration.user_openid_alias])
 
         # Make sure unique_id is really unique in user DB
+        # Explicitly skip GDP users to avoid stale leftovers (see TODO above)
         all_unique = [i['unique_id'] for (_, i) in user_db.items() if
                       i.get('unique_id', None) and
-                      i['distinguished_name'] != client_id]
+                      i['distinguished_name'] != client_id and
+                      not is_gdp_user(configuration, i['distinguished_name'])]
         found_unique = False
         for _ in range(4):
             user['unique_id'] = user.get('unique_id', False)
