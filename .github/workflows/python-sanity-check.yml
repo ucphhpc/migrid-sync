@@ -20,10 +20,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     # NOTE: python-2 is no longer supported here - try with apt
-    #- name: Set up Python 3.10
-    #  uses: actions/setup-python@v3
-    #  with:
-    #    python-version: "3.10"
     - name: Set up Python 2.7 with APT and link to default
       run: |
         sudo apt install -y python2 python-pip
@@ -36,11 +32,12 @@ jobs:
     - name: Lint with flake8
       run: |
         # TODO: fix unittest dir and remove from excludes
-        # TODO: fix  or migrate legacy grsfs-fuse dir and remove from excludes
+        # TODO: fix or migrate legacy grsfs-fuse dir and remove from excludes
+        # TODO: should tests be included here - currently fail on py3-only FileNotFoundError, etc.
         # stop the build if there are Python syntax errors or undefined names
-        flake8 . --exclude=state,envhelp,fixture,output,unittest,grsfs-fuse,irclib.py,seafile-seahub_settings-template.py --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --exclude=tests,state,envhelp,fixture,output,unittest,grsfs-fuse,irclib.py,seafile-seahub_settings-template.py --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --exclude=state,envhelp,fixture,output,unittest,grsfs-fuse,vm-proxy,irclib.py,seafile-seahub_settings-template.py --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 . --exclude=tests,state,envhelp,fixture,output,unittest,grsfs-fuse,vm-proxy,irclib.py,seafile-seahub_settings-template.py --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
         # NOTE: for interactive clean up one can use current ignores
         # E501 Ignore long lines, E402 imports below top, E722 bare except,
         # F401 unused imports, F502 explicit list in str expand, F841 unused var,
