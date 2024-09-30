@@ -231,14 +231,6 @@ def is_path_within(path, start=None, _msg=None):
     return not relative.startswith('..')
 
 
-def cleanpath(relative_path, test_case, ensure_dir=False):
-    """Register post-test clean up of file in relative_path"""
-    assert isinstance(test_case, MigTestCase)
-    tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
-    test_case._cleanup_paths.add(tmp_path)
-    return tmp_path
-
-
 def fixturefile(relative_path, fixture_format=None):
     """Support function for loading fixtures from their serialised format.
 
