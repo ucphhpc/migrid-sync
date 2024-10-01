@@ -18,12 +18,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     # NOTE: python-2 is no longer supported here - try with apt
     - name: Set up Python 2.7 with APT and link to default
       run: |
         sudo apt install -y python2 python-pip
-        #ln -s python2 /usr/bin/python
     - name: Install dependencies
       run: |
         python2 -m pip install --upgrade pip
