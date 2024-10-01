@@ -42,10 +42,26 @@ jobs:
     steps:
       - name: Check out repository contents
         uses: actions/checkout@v3
-      - name: Set up Python 3.9 to mimic Rocky9
+      - name: Set up Python 3.9.18 to mimic Rocky9
         uses: actions/setup-python@v3
         with:
-          python-version: "3.9"
+          python-version: "3.9.18"
+      - name: Setup environment
+        run: |
+          make dependencies
+      - name: Run tests
+        run: |
+          make test
+
+  python3-rocky8ish:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Check out repository contents
+        uses: actions/checkout@v3
+      - name: Set up Python 3.6.8 to mimic Rocky8
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.6.8"
       - name: Setup environment
         run: |
           make dependencies
