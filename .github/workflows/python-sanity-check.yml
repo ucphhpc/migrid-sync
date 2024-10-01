@@ -13,10 +13,8 @@ permissions:
   contents: read
 
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
-
+  lint-python2-rocky8ish:
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
     # NOTE: python-2 is no longer supported here - try with apt
