@@ -31,7 +31,7 @@ import codecs
 import importlib
 import os
 import sys
-from past.builtins import basestring
+from past.builtins import basestring, unicode
 
 from tests.support import MigTestCase, testmain
 
