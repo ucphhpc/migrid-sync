@@ -412,31 +412,35 @@ def _application(configuration, environ, start_response, _set_environ, _fieldsto
         output = 'Error: output could not be correctly delivered!'
         output_format = 'html'
 
-    if output_format == 'chunked':
+    if output_format == 'serve':
         response_headers.append(('Transfer-Encoding', 'chunked'))
-    else:
-        content_length = len(output)
-        if not 'Content-Length' in dict(response_headers):
-            # adding explicit content length
-            response_headers.append(('Content-Length', "%d" % content_length))
+
+        start_response(status, response_headers)
+
+        serve_obj = next((x for x in output_objs if x['object_type'] == 'serve_paths'), None)
+
+        for path in serve_obj['paths']:
+            with open(path, 'rb') as fh_for_path:
+                yield fh_for_path.read()
+
+        return
+
+    content_length = len(output)
+    if not 'Content-Length' in dict(response_headers):
+        # adding explicit content length
+        response_headers.append(('Content-Length', "%d" % content_length))
 
     _logger.debug("send %r response as %s to %s" %
                   (backend, output_format, client_id))
     # NOTE: send response to client but don't crash e.g. on closed connection
     try:
-        x = start_response(status, response_headers)
-        pass
+        start_response(status, response_headers)
     except IOError as ioe:
         _logger.warning("WSGI %s for %s could not deliver output: %s" %
                         (backend, client_id, ioe))
     except Exception as exc:
         _logger.error("WSGI %s for %s crashed during response: %s" %
                       (backend, client_id, exc))
-
-    if output_format == 'chunked':
-        file_obj = next((x for x in output_objs if x['object_type'] == 'file_abspath'), None)
-        with open(file_obj['abspath'], 'rb') as fh_to_send:
-            os.sendfile(None, fh_to_send)
 
     # serve response data with a known content type
     try:
