@@ -68,9 +68,14 @@ def _is_return_value(return_value):
 
 
 def _trigger_and_unpack_result(application_result, result_kind='textual'):
-    assert result_kind in ('textual', 'binary')
+    assert result_kind in ('textual', 'binary', 'none')
 
     chunks = list(application_result)
+
+    if result_kind == 'none':
+        assert len(chunks) == 0, "invocation returned output but none expected"
+        return None
+
     assert len(chunks) > 0, "invocation returned no output"
     complete_value = b''.join(chunks)
     if result_kind == 'binary':
@@ -304,10 +309,13 @@ class MigWsgi_binMigwsgi(MigTestCase, ServerAssertMixin, HtmlAssertMixin):
         self.assertInstrumentation()
         self.assertEqual(output, test_binary_data)
 
-    def test_serve_paths_signle_file(self):
+    def test_serve_paths_signle_file_at_limit(self):
         test_binary_file = os.path.join(TEST_DATA_DIR, 'loading.gif')
+        test_binary_file_size = os.stat(test_binary_file).st_size
         with open(test_binary_file, 'rb') as fh_test_file:
             test_binary_data = fh_test_file.read()
+
+        self.configuration.migserver_server_maxsize = test_binary_file_size
 
         self.instrumented_fieldstorage_to_dict.set_result({
             'output_format': ('serve',)
@@ -329,6 +337,35 @@ class MigWsgi_binMigwsgi(MigTestCase, ServerAssertMixin, HtmlAssertMixin):
 
         self.assertInstrumentation()
         self.assertEqual(output, test_binary_data)
+
+    def test_serve_paths_signle_file_over_limit(self):
+        test_binary_file = os.path.join(TEST_DATA_DIR, 'loading.gif')
+        test_binary_file_size = os.stat(test_binary_file).st_size
+        with open(test_binary_file, 'rb') as fh_test_file:
+            test_binary_data = fh_test_file.read()
+
+        self.configuration.migserver_server_maxsize = test_binary_file_size - 1
+
+        self.instrumented_fieldstorage_to_dict.set_result({
+            'output_format': ('serve',)
+        })
+        self.instrumented_format_output.set_file(True)
+
+        output_obj = {
+            'object_type': 'serve_paths',
+            'paths': [test_binary_file]
+        }
+        self.instrumented_retrieve_handler.program([output_obj], returnvalues.OK)
+
+        application_result = migwsgi._application(
+            *self.application_args,
+            **self.application_kwargs
+        )
+
+        _trigger_and_unpack_result(application_result, 'none')
+
+        self.assertInstrumentation()
+        self.assertWsgiResponseStatus(self.fake_start_response, 422)
 
 
 if __name__ == '__main__':

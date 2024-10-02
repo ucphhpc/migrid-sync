@@ -59,6 +59,10 @@ def _import_backend(backend):
     return module_handle.main
 
 
+def _returnvalue_to_status(returnvalue):
+    return ' '.join((str(item) for item in returnvalue))
+
+
 def object_type_info(object_type):
     """Lookup object type"""
 
@@ -415,9 +419,20 @@ def _application(configuration, environ, start_response, _set_environ, _fieldsto
     if output_format == 'serve':
         response_headers.append(('Transfer-Encoding', 'chunked'))
 
-        start_response(status, response_headers)
-
         serve_obj = next((x for x in output_objs if x['object_type'] == 'serve_paths'), None)
+
+        serve_paths_stat_results = (os.stat(path) for path in serve_obj['paths'])
+        serve_paths_total_bytes = sum(st.st_size for st in serve_paths_stat_results)
+
+        serve_maxsize = configuration.migserver_server_maxsize
+
+        if serve_maxsize != float('inf') and serve_paths_total_bytes > serve_maxsize:
+            status = _returnvalue_to_status(returnvalues.REJECTED_ERROR)
+            start_response(status, {})
+            return b''
+
+        # we are all good to respond.. do so
+        start_response(status, response_headers)
 
         for path in serve_obj['paths']:
             with open(path, 'rb') as fh_for_path:
