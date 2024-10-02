@@ -69,6 +69,27 @@ def object_type_info(object_type):
     return get_object_type_info(object_type)
 
 
+def serve_paths(configuration, serve_obj, start_response):
+    serve_maxsize = configuration.migserver_server_maxsize
+
+    serve_paths_stat_results = (os.stat(path) for path in serve_obj['paths'])
+    serve_paths_total_bytes = sum(st.st_size for st in serve_paths_stat_results)
+
+    if serve_maxsize > -1 and serve_paths_total_bytes > serve_maxsize:
+        start_response(_returnvalue_to_status(returnvalues.REJECTED_ERROR), {})
+        return b''
+
+    # we are all good to respond.. do so
+    start_response(_returnvalue_to_status(returnvalues.OK), {
+        'Content-Type': 'application/octet-stream',
+        'Transfer-Encoding': 'chunked',
+    })
+
+    for path in serve_obj['paths']:
+        with open(path, 'rb') as path_handle:
+            yield path_handle.read()
+
+
 def stub(configuration, client_id, user_arguments_dict, environ, _retrieve_handler):
     """Run backend on behalf of client_id with supplied user_arguments_dict.
     I.e. import main from import_path and execute it with supplied arguments.
@@ -417,27 +438,9 @@ def _application(configuration, environ, start_response, _set_environ, _fieldsto
         output_format = 'html'
 
     if output_format == 'serve':
-        response_headers.append(('Transfer-Encoding', 'chunked'))
-
         serve_obj = next((x for x in output_objs if x['object_type'] == 'serve_paths'), None)
-
-        serve_paths_stat_results = (os.stat(path) for path in serve_obj['paths'])
-        serve_paths_total_bytes = sum(st.st_size for st in serve_paths_stat_results)
-
-        serve_maxsize = configuration.migserver_server_maxsize
-
-        if serve_maxsize > -1 and serve_paths_total_bytes > serve_maxsize:
-            status = _returnvalue_to_status(returnvalues.REJECTED_ERROR)
-            start_response(status, {})
-            return b''
-
-        # we are all good to respond.. do so
-        start_response(status, response_headers)
-
-        for path in serve_obj['paths']:
-            with open(path, 'rb') as fh_for_path:
-                yield fh_for_path.read()
-
+        for piece in serve_paths(configuration, serve_obj, start_response):
+            yield piece
         return
 
     content_length = len(output)
