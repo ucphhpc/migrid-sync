@@ -222,7 +222,7 @@ def fix_missing(config_file, verbose=True):
         'trac_id_field': 'email',
         'migserver_http_url': 'http://%%(server_fqdn)s',
         'migserver_https_url': '',
-        'migserver_server_maxsize': float('inf'),
+        'migserver_server_maxsize': -1,
         'myfiles_py_location': '',
         'mig_server_id': '%s.0' % fqdn,
         'empty_job_name': 'no_suitable_job-',
@@ -597,7 +597,7 @@ class Configuration:
     migserver_https_mig_oidc_url = ''
     migserver_https_ext_oidc_url = ''
     migserver_https_sid_url = ''
-    migserver_server_maxsize = float('inf')
+    migserver_server_maxsize = -1
     sleep_period_for_empty_jobs = ''
     min_seconds_between_live_update_requests = 0
     cputime_for_empty_jobs = 0

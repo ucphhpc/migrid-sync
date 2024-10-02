@@ -426,7 +426,7 @@ def _application(configuration, environ, start_response, _set_environ, _fieldsto
 
         serve_maxsize = configuration.migserver_server_maxsize
 
-        if serve_maxsize != float('inf') and serve_paths_total_bytes > serve_maxsize:
+        if serve_maxsize > -1 and serve_paths_total_bytes > serve_maxsize:
             status = _returnvalue_to_status(returnvalues.REJECTED_ERROR)
             start_response(status, {})
             return b''
