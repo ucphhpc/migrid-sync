@@ -32,7 +32,6 @@ import importlib
 import os
 import stat
 import sys
-import unittest
 
 from tests.support import MIG_BASE, TEST_BASE, TEST_DATA_DIR, MigTestCase, testmain
 from mig.shared.output import format_output
@@ -242,7 +241,6 @@ class MigWsgi_binMigwsgi(MigTestCase, ServerAssertMixin, HtmlAssertMixin):
             _set_environ=noop,
         )
 
-    @unittest.skip("TEMP")
     def test_return_value_ok_returns_status_200(self):
         self.instrumented_retrieve_handler.program([], returnvalues.OK)
 
@@ -256,7 +254,6 @@ class MigWsgi_binMigwsgi(MigTestCase, ServerAssertMixin, HtmlAssertMixin):
         self.assertInstrumentation()
         self.assertWsgiResponseStatus(self.fake_start_response, 200)
 
-    @unittest.skip("TEMP")
     def test_return_value_ok_returns_valid_html_page(self):
         self.instrumented_retrieve_handler.program([], returnvalues.OK)
 
@@ -270,7 +267,6 @@ class MigWsgi_binMigwsgi(MigTestCase, ServerAssertMixin, HtmlAssertMixin):
         self.assertInstrumentation()
         self.assertIsValidHtmlDocument(output)
 
-    @unittest.skip("TEMP")
     def test_return_value_ok_returns_expected_title(self):
         self.instrumented_format_output.set_values(title_text='TEST')
         self.instrumented_retrieve_handler.program([], returnvalues.OK)
@@ -285,7 +281,6 @@ class MigWsgi_binMigwsgi(MigTestCase, ServerAssertMixin, HtmlAssertMixin):
         self.assertInstrumentation()
         self.assertHtmlElementTextContent(output, 'title', 'TEST', trim_newlines=True)
 
-    @unittest.skip("TEMP")
     def test_return_value_ok_serving_a_binary_file(self):
         test_binary_file = os.path.join(TEST_DATA_DIR, 'loading.gif')
         with open(test_binary_file, 'rb') as f:
