@@ -213,9 +213,10 @@ def application(environ, start_response):
     def _set_os_environ(value):
         os.environ = value
 
-    return _application(environ, start_response, _set_environ=_set_os_environ, _wrap_wsgi_errors=wrap_wsgi_errors)
+    return _application(None, environ, start_response, _set_environ=_set_os_environ, _wrap_wsgi_errors=wrap_wsgi_errors)
 
-def _application(environ, start_response, _set_environ, _format_output=format_output, _retrieve_handler=_import_backend, _wrap_wsgi_errors=True, _config_file=None, _skip_log=False):
+
+def _application(configuration, environ, start_response, _set_environ, _format_output=format_output, _retrieve_handler=_import_backend, _wrap_wsgi_errors=True, _config_file=None, _skip_log=False):
 
     # NOTE: pass app environ including apache and query args on to sub handlers
     #       through the usual 'os.environ' channel expected in functionality
@@ -266,7 +267,9 @@ def _application(environ, start_response, _set_environ, _format_output=format_ou
     if sys.version_info[0] < 3:
         sys.stdout = sys.stderr
 
-    configuration = get_configuration_object(_config_file, _skip_log)
+    if configuration is None:
+        configuration = get_configuration_object(_config_file, _skip_log)
+
     _logger = configuration.logger
 
     # NOTE: replace default wsgi errors to apache error log with our own logs

@@ -28,10 +28,10 @@
 """Test support library for WSGI."""
 
 
-def create_wsgi_environ(config_file, wsgi_variables):
+def create_wsgi_environ(configuration, wsgi_variables):
     environ = {}
     environ['wsgi.input'] = ()
-    environ['MIG_CONF'] = config_file
+    environ['MIG_CONF'] = configuration.config_file
     environ['HTTP_HOST'] = wsgi_variables.get('http_host')
     environ['PATH_INFO'] = wsgi_variables.get('path_info')
     environ['SCRIPT_URI'] = ''.join(('http://', environ['HTTP_HOST'], environ['PATH_INFO']))

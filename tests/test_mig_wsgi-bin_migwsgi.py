@@ -61,28 +61,11 @@ def _import_migwsgi():
 migwsgi = _import_migwsgi()
 
 
-def _assert_local_config():
-    try:
-        link_stat = os.lstat(_TEST_CONF_SYMLINK)
-        assert stat.S_ISLNK(link_stat.st_mode)
-        configdir_stat = os.stat(_TEST_CONF_DIR)
-        assert stat.S_ISDIR(configdir_stat.st_mode)
-        config = ConfigParser()
-        config.read([_TEST_CONF_FILE])
-        return config
-    except Exception as exc:
-        raise AssertionError('local configuration invalid or missing: %s' % (str(exc),))
-
-
-def _assert_local_config_global_values(config):
-    config_global_values = dict(config.items('GLOBAL'))
-
-    for path in ('mig_path', 'certs_path', 'state_path'):
-        path_value = config_global_values.get(path)
+def _assert_local_config_global_values(configuration):
+    for config_key in ('mig_path', 'certs_path', 'state_path'):
+        path_value = getattr(configuration, config_key)
         if not is_path_within(path_value, start=_LOCAL_MIG_BASE):
             raise AssertionError('local config contains bad path: %s=%s' % (path, path_value))
-
-    return config_global_values
 
 
 def _is_return_value(return_value):
@@ -197,12 +180,14 @@ class MigWsgi_binMigwsgi(MigTestCase, ServerAssertMixin, HtmlAssertMixin):
         self.assertTrue(was_called(self.instrumented_format_output), "no output generated")
         self.assertTrue(was_called(self.instrumented_retrieve_handler), "no output generated")
 
+    def _provide_configuration(self):
+        return 'testconfig'
+
     def before_each(self):
-        config = _assert_local_config()
-        config_global_values = _assert_local_config_global_values(config)
+        _assert_local_config_global_values(self.configuration)
 
         # generic WSGI setup
-        self.fake_wsgi_environ = create_wsgi_environ(_TEST_CONF_FILE, wsgi_variables=dict(
+        self.fake_wsgi_environ = create_wsgi_environ(self.configuration, wsgi_variables=dict(
             http_host='localhost',
             path_info='/',
         ))
@@ -212,11 +197,9 @@ class MigWsgi_binMigwsgi(MigTestCase, ServerAssertMixin, HtmlAssertMixin):
         self.instrumented_format_output = create_instrumented_format_output()
         self.instrumented_retrieve_handler = create_instrumented_retrieve_handler()
 
-        self.application_args = (self.fake_wsgi_environ, self.fake_start_response,)
+        self.application_args = (self.configuration, self.fake_wsgi_environ, self.fake_start_response,)
         self.application_kwargs = dict(
             _wrap_wsgi_errors=noop,
-            _config_file=_TEST_CONF_FILE,
-            _skip_log=True,
             _format_output=self.instrumented_format_output,
             _retrieve_handler=self.instrumented_retrieve_handler,
             _set_environ=noop,
