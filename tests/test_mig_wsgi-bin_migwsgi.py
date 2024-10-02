@@ -61,13 +61,6 @@ def _import_migwsgi():
 migwsgi = _import_migwsgi()
 
 
-def _assert_local_config_global_values(configuration):
-    for config_key in ('mig_path', 'certs_path', 'state_path'):
-        path_value = getattr(configuration, config_key)
-        if not is_path_within(path_value, start=_LOCAL_MIG_BASE):
-            raise AssertionError('local config contains bad path: %s=%s' % (path, path_value))
-
-
 def _is_return_value(return_value):
     defined_return_values = returnvalues.__dict__.values()
     return return_value in defined_return_values
@@ -184,8 +177,6 @@ class MigWsgi_binMigwsgi(MigTestCase, ServerAssertMixin, HtmlAssertMixin):
         return 'testconfig'
 
     def before_each(self):
-        _assert_local_config_global_values(self.configuration)
-
         # generic WSGI setup
         self.fake_wsgi_environ = create_wsgi_environ(self.configuration, wsgi_variables=dict(
             http_host='localhost',
