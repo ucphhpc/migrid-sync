@@ -69,15 +69,16 @@ def object_type_info(object_type):
     return get_object_type_info(object_type)
 
 
-def serve_paths(configuration, serve_obj, start_response):
+def serve_paths(configuration, paths, start_response):
     serve_maxsize = configuration.migserver_server_maxsize
 
-    serve_paths_stat_results = (os.stat(path) for path in serve_obj['paths'])
+    serve_paths_stat_results = (os.stat(path) for path in paths)
     serve_paths_total_bytes = sum(st.st_size for st in serve_paths_stat_results)
 
     if serve_maxsize > -1 and serve_paths_total_bytes > serve_maxsize:
         start_response(_returnvalue_to_status(returnvalues.REJECTED_ERROR), {})
-        return b''
+        yield b''
+        return
 
     # we are all good to respond.. do so
     start_response(_returnvalue_to_status(returnvalues.OK), {
@@ -85,7 +86,7 @@ def serve_paths(configuration, serve_obj, start_response):
         'Transfer-Encoding': 'chunked',
     })
 
-    for path in serve_obj['paths']:
+    for path in paths:
         with open(path, 'rb') as path_handle:
             yield path_handle.read()
 
@@ -439,7 +440,7 @@ def _application(configuration, environ, start_response, _set_environ, _fieldsto
 
     if output_format == 'serve':
         serve_obj = next((x for x in output_objs if x['object_type'] == 'serve_paths'), None)
-        for piece in serve_paths(configuration, serve_obj, start_response):
+        for piece in serve_paths(configuration, serve_obj['paths'], start_response):
             yield piece
         return
 

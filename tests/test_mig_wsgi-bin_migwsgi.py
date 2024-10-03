@@ -67,13 +67,9 @@ def _is_return_value(return_value):
 
 
 def _trigger_and_unpack_result(application_result, result_kind='textual'):
-    assert result_kind in ('textual', 'binary', 'none')
+    assert result_kind in ('textual', 'binary')
 
     chunks = list(application_result)
-
-    if result_kind == 'none':
-        assert len(chunks) == 0, "invocation returned output but none expected"
-        return None
 
     assert len(chunks) > 0, "invocation returned no output"
     complete_value = b''.join(chunks)
@@ -357,9 +353,10 @@ class MigWsgi_binMigwsgi(MigTestCase, ServerAssertMixin, HtmlAssertMixin):
             **self.application_kwargs
         )
 
-        _trigger_and_unpack_result(application_result, 'none')
+        output = _trigger_and_unpack_result(application_result, 'binary')
 
         self.assertInstrumentation()
+        self.assertEqual(output, b'')
         self.assertWsgiResponseStatus(self.fake_start_response, 422)
 
 
