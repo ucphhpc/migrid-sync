@@ -33,8 +33,8 @@ import os
 import shutil
 import sys
 
-from tests.support import MIG_BASE, MigTestCase, testmain, fixturefile, \
-    fixturefile_normname, ensure_dirs_exist, temppath
+from tests.support import MIG_BASE, TEST_DATA_DIR, MigTestCase, testmain, \
+    fixturefile, fixturefile_normname, ensure_dirs_exist, temppath
 
 from mig.shared.base import client_id_dir
 from mig.shared.functionality.cat import _main as main
@@ -85,7 +85,7 @@ class MigSharedFunctionalityCat(MigTestCase):
         temppath(self.test_user_dir, self, skip_output_anchor=True)
         self.test_environ = create_http_environ(self.configuration)
 
-    def test_returns_file_output_with_single_file_match(self):
+    def test_file_serving_a_single_file_match(self):
         with open(os.path.join(self.test_user_dir, 'foobar.txt'), 'w'):
             pass
         payload = {
@@ -97,6 +97,47 @@ class MigSharedFunctionalityCat(MigTestCase):
         self.assertEqual(len(output_objects), 1)
         output_obj = output_objects[0]
         self.assertEqual(output_obj['object_type'], 'file_output')
+
+
+    def test_file_serving_at_limit(self):
+        test_binary_file = os.path.realpath(os.path.join(TEST_DATA_DIR, 'loading.gif'))
+        test_binary_file_size = os.stat(test_binary_file).st_size
+        with open(test_binary_file, 'rb') as fh_test_file:
+            test_binary_file_data = fh_test_file.read()
+        shutil.copyfile(test_binary_file, os.path.join(self.test_user_dir, 'loading.gif'))
+        payload = {
+            'output_format': ['file'],
+            'path': ['loading.gif'],
+        }
+
+        self.configuration.wwwserve_max_bytes = test_binary_file_size
+
+        (output_objects, status) = main(self.configuration, self.logger, client_id=self.TEST_CLIENT_ID, user_arguments_dict=payload, environ=self.test_environ)
+        self.assertEqual(len(output_objects), 3) # TODO: two file_output objects seem to be returned
+        relevant_obj = output_objects[2]
+        self.assertEqual(relevant_obj['object_type'], 'file_output')
+        self.assertEqual(len(relevant_obj['lines']), 1)
+        self.assertEqual(relevant_obj['lines'][0], test_binary_file_data)
+
+
+    def test_file_serving_over_limit(self):
+        test_binary_file = os.path.realpath(os.path.join(TEST_DATA_DIR, 'loading.gif'))
+        test_binary_file_size = os.stat(test_binary_file).st_size
+        with open(test_binary_file, 'rb') as fh_test_file:
+            test_binary_file_data = fh_test_file.read()
+        shutil.copyfile(test_binary_file, os.path.join(self.test_user_dir, 'loading.gif'))
+        payload = {
+            'output_format': ['file'],
+            'path': ['loading.gif'],
+        }
+
+        self.configuration.wwwserve_max_bytes = test_binary_file_size - 1
+
+        (output_objects, status) = main(self.configuration, self.logger, client_id=self.TEST_CLIENT_ID, user_arguments_dict=payload, environ=self.test_environ)
+        self.assertEqual(len(output_objects), 4)
+        relevant_obj = output_objects[3]
+        self.assertEqual(relevant_obj['object_type'], 'error_text')
+        self.assertEqual(relevant_obj['text'], "Site configuration prevents web serving contents bigger than 3896 bytes - please use alternatives like sftp to retrieve the content.")
 
 
 if __name__ == '__main__':
