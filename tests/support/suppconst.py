@@ -31,6 +31,7 @@ import os
 # Use abspath for __file__ on Py2
 _SUPPORT_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_BASE = os.path.normpath(os.path.join(_SUPPORT_DIR, ".."))
+TEST_DATA_DIR = os.path.join(TEST_BASE, "data")
 TEST_FIXTURE_DIR = os.path.join(TEST_BASE, "fixture")
 TEST_OUTPUT_DIR = os.path.join(TEST_BASE, "output")
 MIG_BASE = os.path.realpath(os.path.join(TEST_BASE, ".."))
