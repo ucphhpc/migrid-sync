@@ -31,6 +31,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import base64
+import copy
 import datetime
 import os
 import pwd
@@ -379,314 +380,324 @@ def fix_missing(config_file, verbose=True):
         fd.close()
 
 
-class Configuration:
-
-    """Server configuration in parsed form"""
-
-    mig_server_id = None
+_CONFIGURATION_DEFAULTS = {
     # Optional conf options with default values
-    state_path = os.path.expanduser('~/state')
-    mig_path = os.path.expanduser('~/mig')
-    certs_path = os.path.expanduser('~/certs')
+    'state_path': os.path.expanduser('~/state'),
+    'mig_path': os.path.expanduser('~/mig'),
+    'certs_path': os.path.expanduser('~/certs'),
     # Mandatory conf options
-    mrsl_files_dir = ''
-    re_files_dir = ''
-    re_pending_dir = ''
-    log_dir = ''
-    re_home = ''
-    grid_stdin = ''
-    im_notify_stdin = ''
-    gridstat_files_dir = ''
-    mig_server_home = ''
-    mig_code_base = ''
-    server_fqdn = ''
-    support_email = ''
-    admin_email = ''
-    admin_list = ''
-    ca_fqdn = ''
-    ca_smtp = ''
-    ca_user = 'mig-ca'
-    resource_home = ''
-    vgrid_home = ''
-    vgrid_public_base = ''
-    vgrid_private_base = ''
-    vgrid_files_home = ''
-    vgrid_files_readonly = ''
-    vgrid_files_writable = ''
-    vgrid_owners = 'owners'
-    vgrid_members = 'members'
-    vgrid_resources = 'resources'
-    vgrid_triggers = 'triggers'
-    vgrid_settings = 'settings'
-    vgrid_workflow_job_queue = 'workflowjobqueue'
-    vgrid_sharelinks = 'sharelinks'
-    vgrid_imagesettings = 'imagesettings'
-    vgrid_monitor = 'monitor'
-    resource_pending = ''
-    user_pending = ''
-    webserver_home = ''
-    user_home = ''
-    user_settings = ''
-    user_db_home = ''
-    user_cache = ''
-    user_messages = ''
-    sss_home = ''
-    sandbox_home = ''
-    freeze_home = ''
-    freeze_tape = ''
-    sharelink_home = ''
-    javabin_home = ''
-    events_home = ''
-    twofactor_home = ''
-    gdp_home = ''
-    workflows_home = ''
-    workflows_db_home = ''
-    notify_home = ''
-    seafile_mount = ''
-    openid_store = ''
-    paraview_home = ''
-    sitestats_home = ''
-    quota_home = ''
-    workflows_vgrid_tasks_home = ''
-    workflows_vgrid_patterns_home = ''
-    workflows_vgrid_recipes_home = ''
-    workflows_vgrid_history_home = ''
-    site_prefer_python3 = False
-    site_autolaunch_page = ''
-    site_landing_page = ''
-    site_skin = ''
-    site_collaboration_links = ''
-    site_vgrid_links = []
-    site_default_vgrid_links = []
-    site_advanced_vgrid_links = []
-    site_vgrid_creators = [('distinguished_name', '.*')]
-    site_vgrid_managers = [('distinguished_name', '.*')]
-    site_vgrid_label = 'VGrid'
-    site_cloud_access = [('distinguished_name', '.*')]
-    # Allowed signup and login methods in prioritized order
-    site_signup_methods = ['extcert']
-    site_login_methods = ['extcert']
-    site_signup_hint = ""
-    site_peers_permit = [('distinguished_name', '.*')]
-    site_peers_notice = ""
+    'mrsl_files_dir': '',
+    're_files_dir': '',
+    're_pending_dir': '',
+    'log_dir': '',
+    're_home': '',
+    'grid_stdin': '',
+    'im_notify_stdin': '',
+    'gridstat_files_dir': '',
+    'mig_server_home': '',
+    'mig_code_base': '',
+    'server_fqdn': '',
+    'support_email': '',
+    'admin_email': '',
+    'admin_list': '',
+    'ca_fqdn': '',
+    'ca_smtp': '',
+    'ca_user': 'mig-ca',
+    'resource_home': '',
+    'vgrid_home': '',
+    'vgrid_public_base': '',
+    'vgrid_private_base': '',
+    'vgrid_files_home': '',
+    'vgrid_files_readonly': '',
+    'vgrid_files_writable': '',
+    'vgrid_owners': 'owners',
+    'vgrid_members': 'members',
+    'vgrid_resources': 'resources',
+    'vgrid_triggers': 'triggers',
+    'vgrid_settings': 'settings',
+    'vgrid_workflow_job_queue': 'workflowjobqueue',
+    'vgrid_sharelinks': 'sharelinks',
+    'vgrid_imagesettings': 'imagesettings',
+    'vgrid_monitor': 'monitor',
+    'resource_pending': '',
+    'user_pending': '',
+    'webserver_home': '',
+    'user_home': '',
+    'user_settings': '',
+    'user_db_home': '',
+    'user_cache': '',
+    'user_messages': '',
+    'sss_home': '',
+    'sandbox_home': '',
+    'freeze_home': '',
+    'freeze_tape': '',
+    'sharelink_home': '',
+    'javabin_home': '',
+    'events_home': '',
+    'twofactor_home': '',
+    'gdp_home': '',
+    'workflows_home': '',
+    'workflows_db_home': '',
+    'notify_home': '',
+    'seafile_mount': '',
+    'openid_store': '',
+    'paraview_home': '',
+    'sitestats_home': '',
+    'quota_home': '',
+    'workflows_vgrid_tasks_home': '',
+    'workflows_vgrid_patterns_home': '',
+    'workflows_vgrid_recipes_home': '',
+    'workflows_vgrid_history_home': '',
+    'site_prefer_python3': False,
+    'site_autolaunch_page': '',
+    'site_landing_page': '',
+    'site_skin': '',
+    'site_collaboration_links': '',
+    'site_vgrid_links': [],
+    'site_default_vgrid_links': [],
+    'site_advanced_vgrid_links': [],
+    'site_vgrid_creators': [('distinguished_name', '.*')],
+    'site_vgrid_managers': [('distinguished_name', '.*')],
+    'site_vgrid_label': 'VGrid',
+    'site_cloud_access': [('distinguished_name', '.*')],
+    # Allowed signup and login methods in prioritized order,
+    'site_signup_methods': ['extcert'],
+    'site_login_methods': ['extcert'],
+    'site_signup_hint': "",
+    'site_peers_permit': [('distinguished_name', '.*')],
+    'site_peers_notice': "",
     # TODO: switch to CSRF_FULL when rpc and scripts are ready?
     # Default to medium CSRF protection for now to protect all web access
-    site_csrf_protection = CSRF_MEDIUM
+    'site_csrf_protection': CSRF_MEDIUM,
     # Default to POLICY_MEDIUM to avoid reduce risk of dictionary attacks etc.
-    site_password_policy = POLICY_MEDIUM
-    site_password_legacy_policy = False
-    site_password_cracklib = False
-    site_extra_userpage_scripts = ""
-    site_extra_userpage_styles = ""
-    hg_path = ''
-    hgweb_scripts = ''
-    trac_admin_path = ''
-    trac_ini_path = ''
-    trac_id_field = ''
-    smtp_server = ''
-    smtp_sender = ''
-    smtp_send_as_user = False
-    smtp_reply_to = ''
-    user_sftp_address = ''
-    user_sftp_port = 2222
-    user_sftp_show_address = ''
-    user_sftp_show_port = 2222
-    user_sftp_key = ''
-    user_sftp_key_pub = ''
-    user_sftp_key_md5 = ''
-    user_sftp_key_sha256 = ''
-    user_sftp_key_from_dns = False
-    user_sftp_auth = ['publickey', 'password']
-    user_sftp_alias = ''
-    user_sftp_log = 'sftp.log'
-    user_sftp_window_size = 0
-    user_sftp_max_packet_size = 0
-    user_sftp_max_sessions = -1
-    user_sftp_subsys_address = ''
-    user_sftp_subsys_port = 22
-    user_sftp_subsys_log = 'sftp-subsys.log'
-    user_davs_address = ''
-    user_davs_port = 4443
-    user_davs_show_address = ''
-    user_davs_show_port = 4443
-    user_davs_key = ''
-    user_davs_key_sha256 = ''
-    user_davs_auth = ['password']
-    user_davs_alias = ''
-    user_davs_log = 'davs.log'
-    user_ftps_address = ''
-    user_ftps_ctrl_port = 8021
-    user_ftps_pasv_ports = list(range(8100, 8400))
-    user_ftps_show_address = ''
-    user_ftps_show_ctrl_port = 8021
-    user_ftps_key = ''
-    user_ftps_key_sha256 = ''
-    user_ftps_auth = ['password']
-    user_ftps_alias = ''
-    user_ftps_log = 'ftps.log'
-    user_seahub_url = ''
-    user_seafile_url = ''
-    user_seafile_auth = ['password']
-    user_seafile_alias = ''
-    user_seafile_local_instance = False
-    user_seafile_ro_access = False
-    user_duplicati_protocols = []
-    user_cloud_console_access = []
-    user_cloud_ssh_auth = ['publickey']
-    user_cloud_alias = ''
-    user_openid_address = ''
-    user_openid_port = 8443
-    user_openid_show_address = ''
-    user_openid_show_port = 8443
-    user_openid_key = ''
-    user_openid_auth = ['password']
-    user_openid_alias = ''
-    user_openid_log = 'openid.log'
-    user_openid_enforce_expire = True
-    user_mig_oid_title = ''
-    user_ext_oid_title = ''
-    user_mig_oid_provider = ''
-    user_mig_oid_provider_alias = ''
-    user_ext_oid_provider = ''
-    user_openid_providers = []
-    user_mig_oidc_title = ''
-    user_ext_oidc_title = ''
-    user_mig_oidc_provider = ''
-    user_ext_oidc_provider = ''
-    user_openidconnect_providers = []
-    user_ext_oidc_issuer = ''
-    user_ext_oidc_audience = ''
-    user_mig_cert_title = ''
-    user_ext_cert_title = ''
-    user_monitor_log = 'monitor.log'
-    user_sshmux_log = 'sshmux.log'
-    user_vmproxy_key = ''
-    user_vmproxy_log = 'vmproxy.log'
-    user_events_log = 'events.log'
-    user_cron_log = 'cron.log'
-    user_transfers_log = 'transfers.log'
-    user_notify_log = 'notify.log'
-    user_auth_log = 'auth.log'
-    user_shared_dhparams = ''
-    user_quota_log = 'quota.log'
-    user_imnotify_address = ''
-    user_imnotify_port = 6667
-    user_imnotify_channel = ''
-    user_imnotify_username = ''
-    user_imnotify_password = ''
-    user_imnotify_log = 'imnotify.log'
-    user_chkuserroot_log = user_chksidroot_log = 'chkchroot.log'
-    server_home = ''
-    vms_builder_home = ''
-    jupyter_mount_files_dir = ''
-    sessid_to_mrsl_link_home = ''
-    sessid_to_jupyter_mount_link_home = ''
-    mig_system_files = ''
-    mig_system_storage = ''
-    mig_system_run = ''
-    empty_job_name = ''
-    migserver_http_url = ''
-    migserver_https_url = ''
-    migserver_public_url = ''
-    migserver_public_alias_url = ''
-    migserver_https_mig_cert_url = ''
-    migserver_https_ext_cert_url = ''
-    migserver_https_mig_oid_url = ''
-    migserver_https_ext_oid_url = ''
-    migserver_https_mig_oidc_url = ''
-    migserver_https_ext_oidc_url = ''
-    migserver_https_sid_url = ''
-    sleep_period_for_empty_jobs = ''
-    min_seconds_between_live_update_requests = 0
-    cputime_for_empty_jobs = 0
-    myfiles_py_location = ''
-    public_key_file = ''
-    wwwpublic = ''
+    'site_password_policy': POLICY_MEDIUM,
+    'site_password_legacy_policy': False,
+    'site_password_cracklib': False,
+    'site_extra_userpage_scripts': "",
+    'site_extra_userpage_styles': "",
+    'hg_path': '',
+    'hgweb_scripts': '',
+    'trac_admin_path': '',
+    'trac_ini_path': '',
+    'trac_id_field': '',
+    'smtp_server': '',
+    'smtp_sender': '',
+    'smtp_send_as_user': False,
+    'smtp_reply_to': '',
+    'user_sftp_address': '',
+    'user_sftp_port': 2222,
+    'user_sftp_show_address': '',
+    'user_sftp_show_port': 2222,
+    'user_sftp_key': '',
+    'user_sftp_key_pub': '',
+    'user_sftp_key_md5': '',
+    'user_sftp_key_sha256': '',
+    'user_sftp_key_from_dns': False,
+    'user_sftp_auth': ['publickey', 'password'],
+    'user_sftp_alias': '',
+    'user_sftp_log': 'sftp.log',
+    'user_sftp_window_size': 0,
+    'user_sftp_max_packet_size': 0,
+    'user_sftp_max_sessions': -1,
+    'user_sftp_subsys_address': '',
+    'user_sftp_subsys_port': 22,
+    'user_sftp_subsys_log': 'sftp-subsys.log',
+    'user_davs_address': '',
+    'user_davs_port': 4443,
+    'user_davs_show_address': '',
+    'user_davs_show_port': 4443,
+    'user_davs_key': '',
+    'user_davs_key_sha256': '',
+    'user_davs_auth': ['password'],
+    'user_davs_alias': '',
+    'user_davs_log': 'davs.log',
+    'user_ftps_address': '',
+    'user_ftps_ctrl_port': 8021,
+    'user_ftps_pasv_ports': list(range(8100, 8400)),
+    'user_ftps_show_address': '',
+    'user_ftps_show_ctrl_port': 8021,
+    'user_ftps_key': '',
+    'user_ftps_key_sha256': '',
+    'user_ftps_auth': ['password'],
+    'user_ftps_alias': '',
+    'user_ftps_log': 'ftps.log',
+    'user_seahub_url': '',
+    'user_seafile_url': '',
+    'user_seafile_auth': ['password'],
+    'user_seafile_alias': '',
+    'user_seafile_local_instance': False,
+    'user_seafile_ro_access': False,
+    'user_duplicati_protocols': [],
+    'user_cloud_console_access': [],
+    'user_cloud_ssh_auth': ['publickey'],
+    'user_cloud_alias': '',
+    'user_openid_address': '',
+    'user_openid_port': 8443,
+    'user_openid_show_address': '',
+    'user_openid_show_port': 8443,
+    'user_openid_key': '',
+    'user_openid_auth': ['password'],
+    'user_openid_alias': '',
+    'user_openid_log': 'openid.log',
+    'user_openid_enforce_expire': True,
+    'user_mig_oid_title': '',
+    'user_ext_oid_title': '',
+    'user_mig_oid_provider': '',
+    'user_mig_oid_provider_alias': '',
+    'user_ext_oid_provider': '',
+    'user_openid_providers': [],
+    'user_mig_oidc_title': '',
+    'user_ext_oidc_title': '',
+    'user_mig_oidc_provider': '',
+    'user_ext_oidc_provider': '',
+    'user_openidconnect_providers': [],
+    'user_ext_oidc_issuer': '',
+    'user_ext_oidc_audience': '',
+    'user_mig_cert_title': '',
+    'user_ext_cert_title': '',
+    'user_monitor_log': 'monitor.log',
+    'user_sshmux_log': 'sshmux.log',
+    'user_vmproxy_key': '',
+    'user_vmproxy_log': 'vmproxy.log',
+    'user_events_log': 'events.log',
+    'user_cron_log': 'cron.log',
+    'user_transfers_log': 'transfers.log',
+    'user_notify_log': 'notify.log',
+    'user_auth_log': 'auth.log',
+    'user_shared_dhparams': '',
+    'user_quota_log': 'quota.log',
+    'user_imnotify_address': '',
+    'user_imnotify_port': 6667,
+    'user_imnotify_channel': '',
+    'user_imnotify_username': '',
+    'user_imnotify_password': '',
+    'user_imnotify_log': 'imnotify.log',
+    'user_chkuserroot_log': 'chkchroot.log',
+    'user_chksidroot_log': 'chkchroot.log',
+    'server_home': '',
+    'vms_builder_home': '',
+    'jupyter_mount_files_dir': '',
+    'sessid_to_mrsl_link_home': '',
+    'sessid_to_jupyter_mount_link_home': '',
+    'mig_system_files': '',
+    'mig_system_storage': '',
+    'mig_system_run': '',
+    'empty_job_name': '',
+    'migserver_http_url': '',
+    'migserver_https_url': '',
+    'migserver_public_url': '',
+    'migserver_public_alias_url': '',
+    'migserver_https_mig_cert_url': '',
+    'migserver_https_ext_cert_url': '',
+    'migserver_https_mig_oid_url': '',
+    'migserver_https_ext_oid_url': '',
+    'migserver_https_mig_oidc_url': '',
+    'migserver_https_ext_oidc_url': '',
+    'migserver_https_sid_url': '',
+    'sleep_period_for_empty_jobs': '',
+    'min_seconds_between_live_update_requests': 0,
+    'cputime_for_empty_jobs': 0,
+    'myfiles_py_location': '',
+    'public_key_file': '',
+    'wwwpublic': '',
     # Virtual machine VNC proxy helpers
-    vm_home = ''
-    vm_proxy_host = ''
-    vm_proxy_port = vm_agent_port = 8112
-    vm_client_port = 8111
-    vm_applet_port = 8114
+    'vm_home': '',
+    'vm_proxy_host': '',
+    'vm_proxy_port': 8112,
+    'vm_agent_port': 8112,
+    'vm_client_port': 8111,
+    'vm_applet_port': 8114,
     # Interactive job VNC port
-    job_vnc_ports = list(range(8080, 8099))
-    enable_server_dist = False
-    sleep_secs = 0
-    sleep_update_totals = 0
-    slackperiod = 0
-    architectures = []
-    scriptlanguages = []
-    jobtypes = []
-    lrmstypes = []
-    storage_protocols = ['sftp']
-    server_cert = ''
-    server_key = ''
-    passphrase_file = ''
-    ca_file = ''
-    ca_dir = ''
-    sched_alg = 'FirstFit'
-    expire_after = 86400
-    job_retries = 4
-    logfile = ''
-    loglevel = ''
-    logger_obj = None
-    logger = None
-    gdp_logger_obj = None
-    gdp_logger = None
-    auth_logger_obj = None
-    auth_logger = None
-    gdp_ref_map = {}
-    peers = None
+    'job_vnc_ports': list(range(8080, 8099)),
+    'enable_server_dist': False,
+    'sleep_secs': 0,
+    'sleep_update_totals': 0,
+    'slackperiod': 0,
+    'architectures': [],
+    'scriptlanguages': [],
+    'jobtypes': [],
+    'lrmstypes': [],
+    'storage_protocols': ['sftp'],
+    'server_cert': '',
+    'server_key': '',
+    'passphrase_file': '',
+    'ca_file': '',
+    'ca_dir': '',
+    'sched_alg': 'FirstFit',
+    'expire_after': 86400,
+    'job_retries': 4,
+    'logfile': '',
+    'loglevel': '',
+    'logger_obj': None,
+    'logger': None,
+    'gdp_logger_obj': None,
+    'gdp_logger': None,
+    'auth_logger_obj': None,
+    'auth_logger': None,
+    'gdp_ref_map': {},
+    'peers': None,
 
     # feasibility
 
-    resource_seen_within_hours = 24
-    skip_validation = []
-    job_cond_green = ['ARCHITECTURE', 'PLATFORM', 'RUNTIMEENVIRONMENT',
-                      'VERIFYFILES', 'VGRID', 'SANDBOX']
-    job_cond_yellow = ['DISK', 'MEMORY', 'CPUTIME']
-    job_cond_orange = ['CPUCOUNT', 'NODECOUNT']
-    job_cond_red = ['EXECUTABLES', 'INPUTFILES', 'REGISTERED', 'SEEN_WITHIN_X']
-    enable_suggest = False
-    suggest_threshold = 'GREEN'
+    'resource_seen_within_hours': 24,
+    'skip_validation': [],
+    'job_cond_green': ['ARCHITECTURE', 'PLATFORM', 'RUNTIMEENVIRONMENT',
+                       'VERIFYFILES', 'VGRID', 'SANDBOX'],
+    'job_cond_yellow': ['DISK', 'MEMORY', 'CPUTIME'],
+    'job_cond_orange': ['CPUCOUNT', 'NODECOUNT'],
+    'job_cond_red': ['EXECUTABLES', 'INPUTFILES', 'REGISTERED', 'SEEN_WITHIN_X'],
+    'enable_suggest': False,
+    'suggest_threshold': 'GREEN',
 
     # Max number of jobs to migrate in each migration batch
 
-    migrate_limit = 3
+    'migrate_limit': 3,
 
     # seconds before peer data expires
 
-    expire_peer = 600
-    language = ['English']
-    user_interface = ['V2', 'V3']
-    submitui = ['fields', 'textarea', 'files']
+    'expire_peer': 600,
+    'language': ['English'],
+    'user_interface': ['V2', 'V3'],
+    'submitui': ['fields', 'textarea', 'files'],
     # Init user default page with no selection to use site landing page
-    default_page = ['']
+    'default_page': [''],
 
     # directory for usage records, initially None (means: do not generate)
 
-    usage_record_dir = None
+    'usage_record_dir': None,
 
-    auto_add_cert_user = False
-    auto_add_oid_user = False
-    auto_add_oidc_user = False
-    auto_add_resource = False
-    auto_add_user_permit = [('distinguished_name', '.*')]
-    auto_add_filter_method = ''
-    auto_add_filter_fields = []
+    'auto_add_cert_user': False,
+    'auto_add_oid_user': False,
+    'auto_add_oidc_user': False,
+    'auto_add_resource': False,
+    'auto_add_user_permit': [('distinguished_name', '.*')],
+    'auto_add_filter_method': '',
+    'auto_add_filter_fields': [],
 
     # ARC resource configuration (list)
     # wired-in shorthands in arcwrapper:
     # fyrgrid, benedict. Otherwise, ldap://bla.bla:2135/...
 
-    arc_clusters = []
+    'arc_clusters': [],
+}
 
-    config_file = None
+
+class Configuration:
+
+    """Server configuration in parsed form"""
 
     # constructor
 
     def __init__(self, config_file, verbose=False, skip_log=False,
                  disable_auth_log=False):
+        self.config_file = config_file
+        self.mig_server_id = None
+
+        configuration_options = copy.deepcopy(_CONFIGURATION_DEFAULTS)
+
+        for k, v in configuration_options.items():
+            setattr(self, k, v)
+
         if config_file is not None:
             self.reload_config(verbose, skip_log,
                                disable_auth_log=disable_auth_log,
