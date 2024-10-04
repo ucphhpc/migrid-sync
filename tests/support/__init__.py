@@ -3,7 +3,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# __init__ - package marker
+# __init__ - package marker and core package functions
 # Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
@@ -40,6 +40,7 @@ import stat
 import sys
 from unittest import TestCase, main as testmain
 
+from tests.support.configsupp import FakeConfiguration
 from tests.support.suppconst import MIG_BASE, TEST_BASE, TEST_FIXTURE_DIR, \
     TEST_OUTPUT_DIR
 
@@ -47,6 +48,20 @@ PY2 = (sys.version_info[0] == 2)
 
 # force defaults to a local environment
 os.environ['MIG_ENV'] = 'local'
+
+# expose the configured environment as a constant
+MIG_ENV = os.environ['MIG_ENV']
+
+if MIG_ENV == 'local':
+    # force testconfig as the conig file path
+    is_py2 = PY2
+    _conf_dir_suffix = "-py%s" % ('2' if is_py2 else '3',)
+    _conf_dir = "testconfs%s" % (_conf_dir_suffix,)
+    _local_conf = os.path.join(
+        MIG_BASE, 'envhelp/output', _conf_dir, 'MiGserver.conf')
+    _config_file = os.getenv('MIG_CONF', None)
+    if _config_file is None:
+        os.environ['MIG_CONF'] = _local_conf
 
 # All MiG related code will at some point include bits from the mig module
 # namespace. Rather than have this knowledge spread through every test file,
@@ -103,6 +118,7 @@ class MigTestCase(TestCase):
         super(MigTestCase, self).__init__(*args)
         self._cleanup_checks = list()
         self._cleanup_paths = set()
+        self._configuration = None
         self._logger = None
         self._skip_logging = False
 
@@ -153,6 +169,31 @@ class MigTestCase(TestCase):
         root_handler = root_logger.handlers[0]
         root_handler.stream = stream
 
+    # testcase defaults
+
+    @staticmethod
+    def _make_configuration_instance(configuration_to_make):
+        if configuration_to_make == 'fakeconfig':
+            return FakeConfiguration()
+        elif configuration_to_make == 'testconfig':
+            from mig.shared.conf import get_configuration_object
+            return get_configuration_object(skip_log=True, disable_auth_log=True)
+        else:
+            raise AssertionError(
+                "MigTestCase: unknown configuration %r" % (configuration_to_make,))
+
+    def _provide_configuration(self):
+        return 'fakeconfig'
+
+    @property
+    def configuration(self):
+        """Init a fake configuration if not already done"""
+        if self._configuration is None:
+            configuration_to_make = self._provide_configuration()
+            self._configuration = self._make_configuration_instance(
+                configuration_to_make)
+        return self._configuration
+
     @property
     def logger(self):
         """Init a fake logger if not already done"""
@@ -199,6 +240,10 @@ included:
         assert not os.path.isabs(
             relative_path), "expected relative path within output folder"
         absolute_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
+        return MigTestCase._absolute_path_kind(absolute_path)
+
+    @staticmethod
+    def _absolute_path_kind(absolute_path):
         stat_result = os.lstat(absolute_path)
         if stat.S_ISLNK(stat_result.st_mode):
             return "symlink"
