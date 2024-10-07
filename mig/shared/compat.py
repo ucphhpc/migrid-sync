@@ -55,6 +55,12 @@ def _is_unicode(val):
     return (type(val) == _TYPE_UNICODE)
 
 
+def _unicode_string_to_utf8_bytes(unicode_string):
+    """Convert a unicode string value to bytes."""
+
+    return codecs.encode(unicode_string, 'utf8')
+
+
 def ensure_native_string(string_or_bytes):
     """Given a supplied input which can be either a string or bytes
     return a representation providing string operations while ensuring that
