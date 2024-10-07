@@ -34,6 +34,7 @@ from past.builtins import basestring
 from email.utils import parseaddr
 import codecs
 import datetime
+import errno
 import fnmatch
 import os
 import re
@@ -474,7 +475,10 @@ def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
     if do_lock:
         try:
             flock = lock_user_db(db_path)
-        except FileNotFoundError as e:
+        except OSError as oserr:
+            if oserr.errno != errno.ENOENT: # FileNotFoundError
+                raise
+
             user_db_home = os.path.dirname(db_path)
 
             if not os.path.exists(db_path) and not os.path.exists(user_db_home):
