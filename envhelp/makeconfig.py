@@ -38,8 +38,9 @@ sys.path.append(os.path.realpath(
 
 from mig.shared.install import MIG_BASE, generate_confs
 
-_LOCAL_ENVHELP_OUTPUT_DIR = os.path.realpath(
-    os.path.join(os.path.dirname(__file__), "output"))
+_LOCAL_MIG_BASE = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), ".."))
+_LOCAL_ENVHELP_OUTPUT_DIR = os.path.join(_LOCAL_MIG_BASE, "envhelp/output")
 _MAKECONFIG_ALLOWED = ["local", "test"]
 
 
@@ -51,21 +52,27 @@ def _at(sequence, index=-1, default=None):
         return default
 
 
-def write_testconfig(env_name, is_py2=False):
-    confs_name = 'confs' if env_name == 'local' else '%sconfs' % (env_name,)
-    confs_suffix = 'py2' if is_py2 else 'py3'
+def write_testconfig(env_name, is_docker=False):
+    is_predefined = env_name == 'test'
+    confs_name = '%sconfs' % (env_name,)
+    if is_predefined:
+        confs_suffix = 'docker' if is_docker else 'local'
+    else:
+        confs_suffix = 'py3'
 
     overrides = {
         'destination': os.path.join(_LOCAL_ENVHELP_OUTPUT_DIR, confs_name),
         'destination_suffix': "-%s" % (confs_suffix,),
     }
 
-    # determine the paths by which we will access the various configured dirs
-    if is_py2:
+    # determine the paths b which we will access the various configured dirs
+    #  the tests output directory - when invoked within
+
+    if is_predefined and is_docker:
         env_mig_base = '/usr/src/app'
     else:
-        env_mig_base = MIG_BASE
-    conf_dir_path = os.path.join(env_mig_base, "envhelp/output")
+        env_mig_base = _LOCAL_MIG_BASE
+    conf_dir_path = os.path.join(env_mig_base, "tests/output")
 
     overrides.update(**{
         'mig_code': os.path.join(conf_dir_path, 'mig'),
@@ -85,7 +92,7 @@ def write_testconfig(env_name, is_py2=False):
 
 def main_(argv):
     env_name = _at(argv, index=1, default='')
-    arg_is_py2 = '--python2' in argv
+    arg_is_docker = '--docker' in argv
 
     if env_name == '':
         raise RuntimeError(
@@ -94,7 +101,7 @@ def main_(argv):
         raise RuntimeError('environment must be one of %s' %
                            (_MAKECONFIG_ALLOWED,))
 
-    write_testconfig(env_name, is_py2=arg_is_py2)
+    write_testconfig(env_name, is_docker=arg_is_docker)
 
 
 def main(argv=sys.argv):
