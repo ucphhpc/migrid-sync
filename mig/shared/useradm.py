@@ -30,8 +30,11 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+from past.builtins import basestring
 from email.utils import parseaddr
+import codecs
 import datetime
+import errno
 import fnmatch
 import os
 import re
@@ -44,6 +47,7 @@ from mig.shared.accountstate import update_account_expire_cache, \
 from mig.shared.base import client_id_dir, client_dir_id, client_alias, \
     get_client_id, extract_field, fill_user, fill_distinguished_name, \
     is_gdp_user, mask_creds, sandbox_resource
+from mig.shared.compat import _unicode_string_to_escaped_unicode
 from mig.shared.conf import get_configuration_object
 from mig.shared.configuration import Configuration
 from mig.shared.defaults import user_db_filename, keyword_auto, ssh_conf_dir, \
@@ -466,8 +470,27 @@ def create_user_in_db(configuration, db_path, client_id, user, now, authorized,
     flock = None
     user_db = {}
     renew = default_renew
+
+    retry_lock = False
     if do_lock:
+        try:
+            flock = lock_user_db(db_path)
+        except OSError as oserr:
+            if oserr.errno != errno.ENOENT: # FileNotFoundError
+                raise
+
+            user_db_home = os.path.dirname(db_path)
+
+            if not os.path.exists(db_path) and not os.path.exists(user_db_home):
+                os.mkdir(user_db_home)
+                retry_lock = True
+            else:
+                raise Exception("Failed to lock user DB: '%s'" % db_path)
+
+    if retry_lock:
         flock = lock_user_db(db_path)
+        if not flock:
+            raise Exception("Failed to lock user DB: '%s'" % db_path)
 
     if not os.path.exists(db_path):
         # Auto-create missing user DB if either auto_create_db or force is set
@@ -862,7 +885,7 @@ def create_user_in_fs(configuration, client_id, user, now, renew, force, verbose
         # match in htaccess
 
         dn_plain = info['distinguished_name']
-        dn_enc = dn_plain.encode('string_escape')
+        dn_enc = _unicode_string_to_escaped_unicode(dn_plain)
 
         def upper_repl(match):
             """Translate hex codes to upper case form"""

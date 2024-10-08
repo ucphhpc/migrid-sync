@@ -58,12 +58,17 @@ def write_testconfig(env_name, is_py2=False):
         'destination': os.path.join(_ENVHELP_OUTPUT_DIR, confs_name),
         'destination_suffix': "-py%s" % ('2' if is_py2 else '3',),
     }
+
     if is_py2:
-        overrides.update(**{
-            'mig_code': '/usr/src/app/mig',
-            'mig_certs': '/usr/src/app/envhelp/output/certs',
-            'mig_state': '/usr/src/app/envhelp/output/state',
-        })
+        conf_dir_path = '/usr/src/app'
+    else:
+        conf_dir_path = _ENVHELP_OUTPUT_DIR
+    overrides.update(**{
+        'mig_code': os.path.join(conf_dir_path, 'mig'),
+        'mig_certs': os.path.join(conf_dir_path, 'certs'),
+        'mig_state': os.path.join(conf_dir_path, 'state'),
+    })
+
     generate_confs(_ENVHELP_OUTPUT_DIR, **overrides)
 
 

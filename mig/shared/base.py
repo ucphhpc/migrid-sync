@@ -36,6 +36,7 @@ import os
 import re
 
 # IMPORTANT: do not import any other MiG modules here - to avoid import loops
+from mig.shared.compat import PY2
 from mig.shared.defaults import default_str_coding, default_fs_coding, \
     keyword_all, keyword_auto, sandbox_names, _user_invisible_files, \
     _user_invisible_dirs, _vgrid_xgi_scripts, cert_field_order, csrf_field, \
@@ -294,7 +295,9 @@ def canonical_user(configuration, user_dict, limit_fields):
         if key == 'full_name':
             # IMPORTANT: we get utf8 coded bytes here and title() treats such
             # chars as word termination. Temporarily force to unicode.
-            val = force_utf8(force_unicode(val).title())
+            val = force_unicode(val).title()
+            if PY2:
+                val = force_utf8(val)
         elif key == 'email':
             val = val.lower()
         elif key == 'country':
