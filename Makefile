@@ -1,11 +1,17 @@
 ifndef MIG_ENV
 	MIG_ENV = 'local'
 endif
-ifeq ($(PY),2)
+
+LOCAL_PYTHON_BIN = './envhelp/lpython'
+
+ifeq ($(MIG_ENV),'local')
+	PYTHON_BIN = $(LOCAL_PYTHON_BIN)
+else ifeq ($(PY),2)
 	PYTHON_BIN = './envhelp/python2'
 else
 	PYTHON_BIN = './envhelp/python3'
 endif
+
 ifeq ($(ALLDEPS),1)
 	REQS_PATH = ./recommended.txt
 else
@@ -44,6 +50,10 @@ distclean: clean
 test: dependencies testconfig
 	@$(PYTHON_BIN) -m unittest discover -s tests/
 
+.PHONY: unittest
+unittest: dependencies testconfig
+	@$(LOCAL_PYTHON_BIN) -m unittest discover -s tests/
+
 .PHONY: dependencies
 dependencies: ./envhelp/venv/pyvenv.cfg ./envhelp/py3.depends
 
@@ -52,7 +62,7 @@ testconfig: ./envhelp/output/testconfs
 
 ./envhelp/output/testconfs:
 	@echo "generating test configuration"
-	@./envhelp/makeconfig test --python2
+	@./envhelp/makeconfig test --docker
 	@./envhelp/makeconfig test
 	@mkdir -p ./envhelp/output/certs
 	@mkdir -p ./envhelp/output/state

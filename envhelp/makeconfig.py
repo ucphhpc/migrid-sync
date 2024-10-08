@@ -40,8 +40,8 @@ from mig.shared.install import generate_confs
 
 _ENVHELP_OUTPUT_DIR = os.path.realpath(
     os.path.join(os.path.dirname(__file__), "output"))
-_MAKECONFIG_ALLOWED = ["local", "test"]
-_PYTHON_MAJOR = os.environ.get('PY', '3')
+_MAKECONFIG_ALLOWED = ["test"]
+_MIG_ENV = os.environ.get('MIG_ENV', 'local')
 
 
 def _at(sequence, index=-1, default=None):
@@ -52,24 +52,34 @@ def _at(sequence, index=-1, default=None):
         return default
 
 
-def write_testconfig(env_name, is_py2=False):
-    confs_name = 'confs' if env_name == 'local' else '%sconfs' % (env_name,)
+def write_testconfig(env_name, is_docker=False):
+    is_predefined = env_name == 'test'
+    confs_name = '%sconfs' % (env_name,)
+    if is_predefined:
+        confs_suffix = 'docker' if is_docker else 'local'
+    else:
+        confs_suffix = 'py3'
+
     overrides = {
         'destination': os.path.join(_ENVHELP_OUTPUT_DIR, confs_name),
-        'destination_suffix': "-py%s" % ('2' if is_py2 else '3',),
+        'destination_suffix': "-%s" % (confs_suffix,),
     }
-    if is_py2:
-        overrides.update(**{
-            'mig_code': '/usr/src/app/mig',
-            'mig_certs': '/usr/src/app/envhelp/output/certs',
-            'mig_state': '/usr/src/app/envhelp/output/state',
-        })
+    if is_predefined and is_docker:
+        conf_dir_path = '/usr/src/app'
+    else:
+        conf_dir_path = _ENVHELP_OUTPUT_DIR
+    overrides.update(**{
+        'mig_code': os.path.join(conf_dir_path, 'mig'),
+        'mig_certs': os.path.join(conf_dir_path, 'certs'),
+        'mig_state': os.path.join(conf_dir_path, 'state'),
+    })
+
     generate_confs(_ENVHELP_OUTPUT_DIR, **overrides)
 
 
 def main_(argv):
     env_name = _at(argv, index=1, default='')
-    arg_is_py2 = '--python2' in argv
+    arg_is_docker = '--docker' in argv
 
     if env_name == '':
         raise RuntimeError(
@@ -78,7 +88,7 @@ def main_(argv):
         raise RuntimeError('environment must be one of %s' %
                            (_MAKECONFIG_ALLOWED,))
 
-    write_testconfig(env_name, is_py2=arg_is_py2)
+    write_testconfig(env_name, is_docker=arg_is_docker)
 
 
 def main(argv=sys.argv):

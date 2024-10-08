@@ -42,26 +42,29 @@ from unittest import TestCase, main as testmain
 
 from tests.support.configsupp import FakeConfiguration
 from tests.support.suppconst import MIG_BASE, TEST_BASE, TEST_FIXTURE_DIR, \
-    TEST_OUTPUT_DIR, TEST_DATA_DIR
+    TEST_DATA_DIR, TEST_OUTPUT_DIR, ENVHELP_OUTPUT_DIR
 
-PY2 = (sys.version_info[0] == 2)
+from tests.support._env import MIG_ENV, PY2
 
-# force defaults to a local environment
-os.environ['MIG_ENV'] = 'local'
+# Provide access to a configuration file for the active environment.
 
-# expose the configured environment as a constant
-MIG_ENV = os.environ['MIG_ENV']
-
-if MIG_ENV == 'local':
-    # force testconfig as the conig file path
-    is_py2 = PY2
-    _conf_dir_suffix = "-py%s" % ('2' if is_py2 else '3',)
-    _conf_dir = "testconfs%s" % (_conf_dir_suffix,)
-    _local_conf = os.path.join(
-        MIG_BASE, 'envhelp/output', _conf_dir, 'MiGserver.conf')
+if MIG_ENV in ('local', 'docker'):
+    # force local testconfig
+    _output_dir = os.path.join(MIG_BASE, 'envhelp/output')
+    _conf_dir_name = "testconfs-%s" % (MIG_ENV,)
+    _conf_dir = os.path.join(_output_dir, _conf_dir_name)
+    _local_conf = os.path.join(_conf_dir, 'MiGserver.conf')
     _config_file = os.getenv('MIG_CONF', None)
     if _config_file is None:
         os.environ['MIG_CONF'] = _local_conf
+
+    # adjust the link through which confs are accessed to suit the environment
+    _conf_link = os.path.join(_output_dir, 'testconfs')
+    assert os.path.lexists(_conf_link) # it must already exist
+    os.remove(_conf_link)              # blow it away
+    os.symlink(_conf_dir, _conf_link)  # recreate it using the active MIG_BASE
+else:
+    raise NotImplementedError()
 
 # All MiG related code will at some point include bits from the mig module
 # namespace. Rather than have this knowledge spread through every test file,
@@ -75,7 +78,10 @@ try:
     os.mkdir(TEST_OUTPUT_DIR)
 except EnvironmentError as enverr:
     if enverr.errno == errno.EEXIST:  # FileExistsError
-        shutil.rmtree(TEST_OUTPUT_DIR)
+        try:
+            shutil.rmtree(TEST_OUTPUT_DIR)
+        except Exception as exc:
+            raise
         os.mkdir(TEST_OUTPUT_DIR)
 
 # Exports to expose at the top level from the support library.
@@ -146,7 +152,11 @@ class MigTestCase(TestCase):
             if os.path.islink(path):
                 os.remove(path)
             elif os.path.isdir(path):
-                shutil.rmtree(path)
+                try:
+                    shutil.rmtree(path)
+                except Exception as exc:
+                    print(path)
+                    raise
             elif os.path.exists(path):
                 os.remove(path)
             else:
@@ -369,10 +379,21 @@ def temppath(relative_path, test_case, ensure_dir=False, skip_clean=False,
     resulting temp path.
     """
     assert isinstance(test_case, MigTestCase)
-    if not skip_output_anchor:
-        tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
-    else:
+
+    if os.path.isabs(relative_path):
         tmp_path = relative_path
+    else:
+        tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
+
+    # failsafe path checking that supplied paths are rooted within valid paths
+    is_tmp_path_within_safe_dir = False
+    for start in (TEST_OUTPUT_DIR, ENVHELP_OUTPUT_DIR):
+        is_tmp_path_within_safe_dir = is_path_within(tmp_path, start=start)
+        if is_tmp_path_within_safe_dir:
+            break
+    if not is_tmp_path_within_safe_dir:
+        raise AssertionError("ABORT: corrupt test path=%s" %(start,))
+
     if ensure_dir:
         try:
             os.mkdir(tmp_path)
