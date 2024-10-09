@@ -54,13 +54,25 @@ def signature():
 
 
 def main(client_id, user_arguments_dict, environ=None):
-    """Main function used by front end"""
+    """Main function wrapper used by front end"""
 
     if environ is None:
         environ = os.environ
 
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id)
+
+    return _main(configuration, logger, op_name=op_name,
+                 output_objects=output_objects, client_id=client_id,
+                 user_arguments_dict=user_arguments_dict)
+
+
+def _main(configuration, logger, op_name='', output_objects=[], client_id=None,
+          user_arguments_dict=None, environ=None):
+    """Actual main function to generate contents for the front end"""
+    if logger is None:
+        logger = configuration.logger
+
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
     status = returnvalues.OK
@@ -71,6 +83,7 @@ def main(client_id, user_arguments_dict, environ=None):
         client_id,
         configuration,
         allow_rejects=False,
+        environ=environ,
         # NOTE: path can use wildcards, dst cannot
         typecheck_overrides={'path': valid_path_pattern},
     )
