@@ -276,7 +276,17 @@ def is_path_within(path, start=None, _msg=None):
     return not relative.startswith('..')
 
 
-def fixturefile(relative_path, fixture_format=None):
+def ensure_dirs_exist(absolute_dir):
+    """A simple helper to create absolute_dir and any parents if missing"""
+    try:
+        os.makedirs(absolute_dir)
+    except OSError as oserr:
+        if oserr.errno != errno.EEXIST:
+            raise
+    return absolute_dir
+
+
+def fixturefile(relative_path, fixture_format=None, include_path=False):
     """Support function for loading fixtures from their serialised format.
 
     Doing so is a little more involved than it may seem because serialisation
@@ -296,11 +306,26 @@ def fixturefile(relative_path, fixture_format=None):
     #_, extension = os.path.splitext(os.path.basename(tmp_path))
     #assert fixture_format == extension, "fixture file does not match format"
 
-    if fixture_format == 'json':
-        return _fixturefile_json(tmp_path)
+    data = None
+
+    if fixture_format == 'binary':
+        with open(tmp_path, 'rb') as binfile:
+            data = binfile.read()
+    elif fixture_format == 'json':
+        data = _fixturefile_json(tmp_path)
     else:
         raise AssertionError(
             "unsupported fixture format: %s" % (fixture_format,))
+
+    return (data, tmp_path) if include_path else data
+
+
+def fixturefile_normname(relative_path, prefix=''):
+    """Grab normname from relative_path and optionally add a path prefix"""
+    normname, _ = relative_path.split('--')
+    if prefix:
+        return os.path.join(prefix, normname)
+    return normname
 
 
 _FIXTUREFILE_HINTAPPLIERS = {
@@ -311,7 +336,7 @@ _FIXTUREFILE_HINTAPPLIERS = {
 def _fixturefile_json(json_path):
     hints = ConfigParser()
 
-    # leti's see if there are loading hints
+    # let's see if there are loading hints
     try:
         hints_path = "%s.ini" % (json_path,)
         with open(hints_path) as hints_file:
@@ -336,16 +361,25 @@ def fixturepath(relative_path):
     return tmp_path
 
 
-def temppath(relative_path, test_case, ensure_dir=False, skip_clean=False):
-    """Get absolute temp path for relative_path"""
+def temppath(relative_path, test_case, ensure_dir=False, skip_clean=False,
+             skip_output_anchor=False):
+    """Register relative_path as a temp path and schedule automatic clean up
+    after unit tests unless skip_clean is set. Anchors the temp path in
+    internal test output dir unless skip_output_anchor is set. Returns
+    resulting temp path.
+    """
     assert isinstance(test_case, MigTestCase)
-    tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
+    if not skip_output_anchor:
+        tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
+    else:
+        tmp_path = relative_path
     if ensure_dir:
         try:
             os.mkdir(tmp_path)
-        except FileExistsError:
-            raise AssertionError(
-                "ABORT: use of unclean output path: %s" % relative_path)
+        except OSError as oserr:
+            if oserr.errno == errno.EEXIST:
+                raise AssertionError(
+                    "ABORT: use of unclean output path: %s" % tmp_path)
     if not skip_clean:
         test_case._cleanup_paths.add(tmp_path)
     return tmp_path
