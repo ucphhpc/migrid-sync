@@ -87,8 +87,9 @@ from mig.shared.accountstate import check_account_accessible
 from mig.shared.base import invisible_path, force_utf8, force_unicode
 from mig.shared.conf import get_configuration_object
 from mig.shared.defaults import keyword_auto, STRONG_SSH_KEXALGOS, \
-    STRONG_SSH_CIPHERS, STRONG_SSH_MACS, STRONG_SSH_LEGACY_KEXALGOS, \
-    STRONG_SSH_LEGACY_MACS
+    STRONG_SSH_CIPHERS, STRONG_SSH_MACS, LEGACY_SSH_KEXALGOS, \
+    LEGACY_SSH_CIPHERS, LEGACY_SSH_MACS, FALLBACK_SSH_KEXALGOS, \
+    FALLBACK_SSH_CIPHERS, FALLBACK_SSH_MACS
 from mig.shared.fileio import check_write_access, user_chroot_exceptions, \
     read_file
 from mig.shared.gdp.all import project_open, project_close, project_log
@@ -1518,16 +1519,30 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
                                    default_max_packet_size=max_packet_size)
     # Restrict transport to strong ciphers+kex+digests used in OpenSSH
     transport_security = transport.get_security_options()
-    recommended_ciphers = STRONG_SSH_CIPHERS.split(',')
+    strong_ciphers = STRONG_SSH_CIPHERS.split(',')
+    legacy_ciphers = LEGACY_SSH_CIPHERS.split(',')
+    fallback_ciphers = FALLBACK_SSH_CIPHERS.split(',')
     available_ciphers = transport_security.ciphers
-    strong_ciphers = [i for i in recommended_ciphers if i in available_ciphers]
-    # logger.debug("TLS ciphers available %s, used %s" % (available_ciphers,
-    #                                                    strong_ciphers))
-    if strong_ciphers:
-        transport_security.ciphers = strong_ciphers
+    best_ciphers = [i for i in strong_ciphers if i in available_ciphers]
+    medium_ciphers = [i for i in legacy_ciphers if i in available_ciphers]
+    weak_ciphers = [i for i in fallback_ciphers if i in available_ciphers]
+    # logger.debug("TLS ciphers available %s: best %s, medium %s, weak %s" %
+    #              (available_ciphers, best_ciphers, medium_ciphers, weak_ciphers))
+    if best_ciphers:
+        # logger.debug("Using only strong ciphers: %s" %
+        #             ', '.join(best_ciphers))
+        transport_security.ciphers = best_ciphers
+    elif medium_ciphers:
+        logger.info("Rely on best available legacy ciphers: %s" %
+                    ', '.join(medium_ciphers))
+        transport_security.ciphers = medium_ciphers
+    elif weak_ciphers:
+        logger.warning("Force best available weak ciphers: %s" %
+                       ', '.join(weak_ciphers))
+        transport_security.ciphers = weak_ciphers
     else:
-        logger.warning("No strong TLS ciphers available!")
-        logger.info("You need a recent paramiko for best security")
+        logger.warning("No safe TLS ciphers available!")
+        logger.info("You need a modern paramiko for proper security")
     # NOTE: paramiko doesn't yet implement strong modern kex algos - use legacy
     # A number of paramiko tickets indicate plans and interest for adding the
     # strong curve25519-sha256@libssh.org eventually, but progress looks
@@ -1535,42 +1550,54 @@ def accept_client(client, addr, root_dir, host_rsa_key, conf={}):
     # diffie-hellman-group-exchange-sha256 fallback, which should be safe as
     # long as the moduli size tuning of e.g. ssh-audit is applied:
     # http://cert.europa.eu/static/WhitePapers/CERT-EU-SWP_16-002_Weaknesses%20in%20Diffie-Hellman%20Key%20v1_0.pdf
-    recommended_kex = STRONG_SSH_KEXALGOS.split(',')
-    fallback_kex = STRONG_SSH_LEGACY_KEXALGOS.split(',')
+    strong_kex = STRONG_SSH_KEXALGOS.split(',')
+    legacy_kex = LEGACY_SSH_KEXALGOS.split(',')
+    fallback_kex = FALLBACK_SSH_KEXALGOS.split(',')
     available_kex = transport_security.kex
-    strong_kex = [i for i in recommended_kex if i in available_kex]
-    medium_kex = [i for i in fallback_kex if i in available_kex]
-    # logger.debug("TLS kex available %s, used %s (or fallback to %s)" %
-    #             (available_kex, strong_kex, medium_kex))
-    if strong_kex:
-        # logger.debug("Using only strong key exchange algorithms: %s" %
-        #             ', '.join(strong_kex))
-        transport_security.kex = strong_kex
+    best_kex = [i for i in strong_kex if i in available_kex]
+    medium_kex = [i for i in legacy_kex if i in available_kex]
+    weak_kex = [i for i in fallback_kex if i in available_kex]
+    # logger.debug("TLS kex available %s: best %s, medium %s, weak %s" %
+    #              (available_kex, best_kex, medium_kex, weak_kex))
+    if best_kex:
+        # logger.debug("Using only strong kex algorithms: %s" %
+        #             ', '.join(best_kex))
+        transport_security.kex = best_kex
     elif medium_kex:
-        # logger.debug("Using only medium strength key exchange algorithms: %s" %
-        #             ', '.join(medium_kex))
+        logger.info("Rely on best available legacy kex algorithms: %s" %
+                    ', '.join(medium_kex))
         transport_security.kex = medium_kex
+    elif weak_kex:
+        logger.warning("Force best available weak kex algorithms: %s" %
+                       ', '.join(weak_kex))
+        transport_security.kex = weak_kex
     else:
-        logger.warning("No strong TLS key exchange algorithm available!")
-        logger.info("You need a recent paramiko for best security")
-    recommended_digests = STRONG_SSH_MACS.split(',')
-    fallback_digests = STRONG_SSH_LEGACY_MACS.split(',')
+        logger.warning("No safe TLS key exchange algorithm available!")
+        logger.info("You need a modern paramiko for proper security")
+    strong_digests = STRONG_SSH_MACS.split(',')
+    legacy_digests = LEGACY_SSH_MACS.split(',')
+    fallback_digests = FALLBACK_SSH_MACS.split(',')
     available_digests = transport_security.digests
-    strong_digests = [i for i in recommended_digests if i in available_digests]
-    medium_digests = [i for i in fallback_digests if i in available_digests]
-    # logger.debug("TLS digests available %s, used %s (or fallback to %s)" %
-    #             (available_digests, strong_digests, medium_digests))
-    if strong_digests:
-        # logger.debug("Using only strong message auth codes: %s" %
-        #             ', '.join(strong_digests))
-        transport_security.digests = strong_digests
+    best_digests = [i for i in strong_digests if i in available_digests]
+    medium_digests = [i for i in legacy_digests if i in available_digests]
+    weak_digests = [i for i in fallback_digests if i in available_digests]
+    # logger.debug("TLS digests available %s: best %s, medium %s, weak %s" %
+    #              (available_digests, best_digests, medium_digests, weak_digests))
+    if best_digests:
+        # logger.debug("Using only strong digests: %s" %
+        #             ', '.join(best_digests))
+        transport_security.digests = best_digests
     elif medium_digests:
-        # logger.debug("Using only medium strength message auth codes: %s" %
-        #             ', '.join(medium_digests))
+        logger.info("Rely on best available legacy digests: %s" %
+                    ', '.join(medium_digests))
         transport_security.digests = medium_digests
+    elif weak_digests:
+        logger.warning("Force best available weak digests: %s" %
+                       ', '.join(weak_digests))
+        transport_security.digests = weak_digests
     else:
-        logger.warning("No strong TLS digest algorithm available!")
-        logger.info("You need paramiko 1.16 or later for best security")
+        logger.warning("No safe TLS digest algorithm available!")
+        logger.info("You need a modern paramiko for proper security")
 
     # Default forces re-keying after every 512MB or same number of packets.
     # We bump that to reduce the slowing effect of those: it's a security
