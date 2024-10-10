@@ -56,10 +56,12 @@ import sys
 from mig.shared.base import force_native_str, force_utf8
 from mig.shared.defaults import default_http_port, default_https_port, \
     auth_openid_mig_db, auth_openid_ext_db, MIG_BASE, STRONG_TLS_CIPHERS, \
-    STRONG_TLS_CURVES, STRONG_SSH_KEXALGOS, STRONG_SSH_LEGACY_KEXALGOS, \
-    STRONG_SSH_CIPHERS, STRONG_SSH_LEGACY_CIPHERS, STRONG_SSH_MACS, \
-    STRONG_SSH_LEGACY_MACS, CRACK_USERNAME_REGEX, CRACK_WEB_REGEX, \
-    keyword_any, keyword_auto
+    STRONG_TLS_CURVES, STRONG_SSH_HOSTKEYALGOS, STRONG_SSH_KEXALGOS, \
+    STRONG_SSH_CIPHERS, STRONG_SSH_MACS, LEGACY_SSH_HOSTKEYALGOS, \
+    LEGACY_SSH_KEXALGOS, LEGACY_SSH_CIPHERS, LEGACY_SSH_MACS, \
+    FALLBACK_SSH_HOSTKEYALGOS, FALLBACK_SSH_KEXALGOS, FALLBACK_SSH_CIPHERS, \
+    FALLBACK_SSH_MACS, CRACK_USERNAME_REGEX, CRACK_WEB_REGEX, keyword_any, \
+    keyword_auto
 from mig.shared.compat import ensure_native_string
 from mig.shared.fileio import read_file, read_file_lines, write_file, \
     write_file_lines
@@ -1138,16 +1140,24 @@ cert, oid and sid based https!
     user_dict['__APACHE_CURVES__'] = STRONG_TLS_CURVES
 
     # We use raw string comparison here which seems to work alright for X.Y.Z
-    if user_dict['__OPENSSH_VERSION__'] >= "7.3":
-        # Use current strong Kex/Cipher/MAC settings for openssh >=7.3
+    if user_dict['__OPENSSH_VERSION__'] >= "8.0":
+        # Use current strong HostKey/Kex/Cipher/MAC settings for openssh >=8.0
+        user_dict['__OPENSSH_HOSTKEYALGOS__'] = STRONG_SSH_HOSTKEYALGOS
         user_dict['__OPENSSH_KEXALGOS__'] = STRONG_SSH_KEXALGOS
         user_dict['__OPENSSH_CIPHERS__'] = STRONG_SSH_CIPHERS
         user_dict['__OPENSSH_MACS__'] = STRONG_SSH_MACS
+    elif user_dict['__OPENSSH_VERSION__'] >= "7.4":
+        # Fall back to best legacy HostKey/Kex/Cipher/MAC for openssh >=7.4
+        user_dict['__OPENSSH_HOSTKEYALGOS__'] = LEGACY_SSH_HOSTKEYALGOS
+        user_dict['__OPENSSH_KEXALGOS__'] = LEGACY_SSH_KEXALGOS
+        user_dict['__OPENSSH_CIPHERS__'] = LEGACY_SSH_CIPHERS
+        user_dict['__OPENSSH_MACS__'] = LEGACY_SSH_MACS
     else:
-        # Fall back to legacy Kex/Cipher/MAC for openssh <7.3
-        user_dict['__OPENSSH_KEXALGOS__'] = STRONG_SSH_LEGACY_KEXALGOS
-        user_dict['__OPENSSH_CIPHERS__'] = STRONG_SSH_LEGACY_CIPHERS
-        user_dict['__OPENSSH_MACS__'] = STRONG_SSH_LEGACY_MACS
+        # Fall back to best available HostKey/Kex/Cipher/MAC for openssh <7.4
+        user_dict['__OPENSSH_HOSTKEYALGOS__'] = FALLBACK_SSH_HOSTKEYALGOS
+        user_dict['__OPENSSH_KEXALGOS__'] = FALLBACK_SSH_KEXALGOS
+        user_dict['__OPENSSH_CIPHERS__'] = FALLBACK_SSH_CIPHERS
+        user_dict['__OPENSSH_MACS__'] = FALLBACK_SSH_MACS
 
     # We know that login with one of these common usernames is a password
     # cracking attempt since our own username format differs.

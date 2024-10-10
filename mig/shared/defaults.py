@@ -452,8 +452,8 @@ STRONG_TLS_LEGACY_CIPHERS = "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-
 # TODO: add curve 'X25519' as first choice once we reach openssl-1.1?
 STRONG_TLS_CURVES = "prime256v1:secp384r1:secp521r1"
 
-# Strong SSH key-exchange (Kex), cipher and message auth code (MAC) settings to
-# allow in OpenSSH and native Paramiko SFTP daemons (on OpenSSH format).
+# SSH hostkey, key-exchange (Kex), cipher and message auth code (MAC) settings
+# to allow in OpenSSH and native Paramiko SFTP daemons (on OpenSSH format).
 # NOTE: harden in line with Mozilla recommendations for modern versions:
 # https://wiki.mozilla.org/Security/Guidelines/OpenSSH#Configuration
 # Additional hardening based on https://github.com/arthepsy/ssh-audit
@@ -461,24 +461,32 @@ STRONG_TLS_CURVES = "prime256v1:secp384r1:secp521r1"
 # older versions can relatively safely fall back to instead use the
 # diffie-hellman-group-exchange-sha256 as long as the moduli tuning from
 # https://infosec.mozilla.org/guidelines/openssh is applied.
-# Tested to work with popular recent clients on the main platforms:
+# NOTE: DH group14 may also have weak modulus so leave it out.
+# Tested to work with popular clients on the main platforms:
 # OpenSSH-6.6.1+, LFTP-4.4.13+, FileZilla-3.24+, WinSCP-5.13.3+ and PuTTY-0.70+
-# NOTE: CentOS-6 still comes with OpenSSH-5.3 without strong Kex+MAC support
-# thus it's necessary to fake legacy ssh version to support any such clients.
-STRONG_SSH_KEXALGOS = "curve25519-sha256@libssh.org,diffie-hellman-group18-sha512,diffie-hellman-group14-sha256,diffie-hellman-group16-sha512"
-BEST_SSH_LEGACY_KEXALGOS = "curve25519-sha256@libssh.org"
-SAFE_SSH_LEGACY_KEXALGOS = "diffie-hellman-group-exchange-sha256"
-STRONG_SSH_LEGACY_KEXALGOS = ",".join([BEST_SSH_LEGACY_KEXALGOS,
-                                       SAFE_SSH_LEGACY_KEXALGOS])
+# NOTE: CentOS 7 comes with OpenSSH-7.4 with medium Kex+MAC support
+# but it's necessary to fake legacy ssh version to support older clients.
+# NOTE: ssh-rsa is the deprecated SHA1 based RSA host key exchange. Rely on the
+# modern rsa-sha2-(512|256) algorithms instead where available. Unfortunately
+# ssh-rsa itself cannot be removed on legacy systems without also removing the
+# modern SHA256 versions, too. So keep it last and let client pick best there.
+STRONG_SSH_HOSTKEYALGOS = "ssh-ed25519,rsa-sha2-512,rsa-sha2-256"
+LEGACY_SSH_HOSTKEYALGOS = ",".join([STRONG_SSH_HOSTKEYALGOS, "ssh-rsa"])
+FALLBACK_SSH_HOSTKEYALGOS = LEGACY_SSH_HOSTKEYALGOS
+STRONG_SSH_KEXALGOS = "curve25519-sha256@libssh.org,diffie-hellman-group18-sha512,diffie-hellman-group16-sha512"
+# NOTE: fall back to relatively safe DH group-exchange-sha256 on old paramiko etc.
+LEGACY_SSH_KEXALGOS = ",".join([STRONG_SSH_KEXALGOS,
+                                "diffie-hellman-group-exchange-sha256"])
+FALLBACK_SSH_KEXALGOS = LEGACY_SSH_KEXALGOS
 STRONG_SSH_CIPHERS = "chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr"
-# NOTE: strong cipher support go way back - just reuse
-STRONG_SSH_LEGACY_CIPHERS = BEST_SSH_LEGACY_CIPHERS = SAFE_SSH_LEGACY_CIPHERS = STRONG_SSH_CIPHERS
+# NOTE: avoid chacha20-poly1305@openssh.com to mitigate Terrapin issue on old servers
+LEGACY_SSH_CIPHERS = "aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr"
+FALLBACK_SSH_CIPHERS = LEGACY_SSH_CIPHERS
 STRONG_SSH_MACS = "hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com"
-# NOTE: extend strong MACS with the best possible alternatives on old paramiko
+LEGACY_SSH_MACS = STRONG_SSH_MACS
+# NOTE: fall back to safe MACS with the best possible alternatives on ancient paramiko
 #       to avoid falling back to really bad ones
-BEST_SSH_LEGACY_MACS = STRONG_SSH_MACS
-SAFE_SSH_LEGACY_MACS = "hmac-sha2-512,hmac-sha2-256"
-STRONG_SSH_LEGACY_MACS = ",".join([BEST_SSH_LEGACY_MACS, SAFE_SSH_LEGACY_MACS])
+FALLBACK_SSH_MACS = ",".join([LEGACY_SSH_MACS, "hmac-sha2-512,hmac-sha2-256"])
 
 # Detect and ban cracking attempts and unauthorized vulnerability scans
 # A pattern to match usernames unambiguously identifying cracking attempts
