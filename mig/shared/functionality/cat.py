@@ -29,6 +29,7 @@
 
 from __future__ import absolute_import
 
+import errno
 import glob
 import mimetypes
 import os
@@ -44,6 +45,31 @@ from mig.shared.parseflags import verbose, binary
 from mig.shared.userio import GDPIOLogError, gdp_iolog
 from mig.shared.safeinput import valid_path_pattern
 from mig.shared.validstring import valid_user_path
+
+
+def _check_serve_permitted(configuration, paths):
+    """Given a set of paths ensure that their total size is within limits."""
+
+    wwwserve_max_bytes = configuration.wwwserve_max_bytes
+
+    try:
+        serve_paths_stat_results = (os.stat(path) for path in paths)
+    except OSError as oserr:
+        if oserr.errno == errno.ENOENT: # FileNotFoundError
+            return False
+
+    serve_paths_total_bytes = sum(st.st_size for st in serve_paths_stat_results)
+
+    if wwwserve_max_bytes > -1 and serve_paths_total_bytes > wwwserve_max_bytes:
+        return False
+
+    return True
+
+
+def _render_error_text_for_serve_limit(configuration):
+    limit = configuration.wwwserve_max_bytes
+    alternatives = ', '.join(configuration.storage_protocols)
+    return "Site configuration prevents web serving contents bigger than %d bytes - please use alternatives like %s to retrieve the content." % (limit, alternatives)
 
 
 def signature():
@@ -165,6 +191,12 @@ CSRF-filtered POST requests to prevent unintended updates'''
             output_objects.append({'object_type': 'file_not_found',
                                    'name': pattern})
             status = returnvalues.FILE_NOT_FOUND
+
+        if not _check_serve_permitted(configuration, paths=match):
+            status = returnvalues.REJECTED_ERROR
+            text = _render_error_text_for_serve_limit(configuration)
+            output_objects.append({'object_type': 'error_text', 'text': text})
+            return (output_objects, status)
 
         for abs_path in match:
             output_lines = []

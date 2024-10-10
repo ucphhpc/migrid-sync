@@ -181,6 +181,7 @@ def fix_missing(config_file, verbose=True):
         'mig_system_storage': '~/state/mig_system_storage',
         'mig_system_run': '~/state/mig_system_run/',
         'wwwpublic': '~/state/wwwpublic/',
+        'wwwserve_max_bytes': -1,
         'vm_home': '~/state/vm_home',
         'server_cert': '~/certs/cert.pem',
         'server_key': '~/certs/key.pem',
@@ -600,6 +601,7 @@ _CONFIGURATION_DEFAULTS = {
     'myfiles_py_location': '',
     'public_key_file': '',
     'wwwpublic': '',
+    'wwwserve_max_bytes': -1,
     # Virtual machine VNC proxy helpers
     'vm_home': '',
     'vm_proxy_host': '',

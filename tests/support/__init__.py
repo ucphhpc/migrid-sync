@@ -42,7 +42,7 @@ from unittest import TestCase, main as testmain
 
 from tests.support.configsupp import FakeConfiguration
 from tests.support.suppconst import MIG_BASE, TEST_BASE, TEST_FIXTURE_DIR, \
-    TEST_OUTPUT_DIR
+    TEST_OUTPUT_DIR, TEST_DATA_DIR
 
 PY2 = (sys.version_info[0] == 2)
 

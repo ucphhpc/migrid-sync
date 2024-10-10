@@ -665,5 +665,6 @@
   "workflows_vgrid_patterns_home": "",
   "workflows_vgrid_recipes_home": "",
   "workflows_vgrid_tasks_home": "",
-  "wwwpublic": ""
+  "wwwpublic": "",
+  "wwwserve_max_bytes": -1
 }
