@@ -1,12 +1,6 @@
-ifndef MIG_ENV
-	MIG_ENV = 'local'
-endif
-
 LOCAL_PYTHON_BIN = './envhelp/lpython'
 
-ifeq ($(MIG_ENV),'local')
-	PYTHON_BIN = $(LOCAL_PYTHON_BIN)
-else ifeq ($(PY),2)
+ifeq ($(PY),2)
 	PYTHON_BIN = './envhelp/python2'
 else
 	PYTHON_BIN = './envhelp/python3'
