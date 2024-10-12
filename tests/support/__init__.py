@@ -371,8 +371,7 @@ def fixturepath(relative_path):
     return tmp_path
 
 
-def temppath(relative_path, test_case, ensure_dir=False, skip_clean=False,
-             skip_output_anchor=False):
+def temppath(relative_path, test_case, ensure_dir=False, skip_clean=False):
     """Register relative_path as a temp path and schedule automatic clean up
     after unit tests unless skip_clean is set. Anchors the temp path in
     internal test output dir unless skip_output_anchor is set. Returns
@@ -392,7 +391,7 @@ def temppath(relative_path, test_case, ensure_dir=False, skip_clean=False,
         if is_tmp_path_within_safe_dir:
             break
     if not is_tmp_path_within_safe_dir:
-        raise AssertionError("ABORT: corrupt test path=%s" %(start,))
+        raise AssertionError("ABORT: corrupt test path=%s" % (tmp_path,))
 
     if ensure_dir:
         try:

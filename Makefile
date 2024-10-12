@@ -55,7 +55,6 @@ dependencies: ./envhelp/venv/pyvenv.cfg ./envhelp/py3.depends
 testconfig: ./envhelp/output/testconfs
 
 ./envhelp/output/testconfs:
-	@echo "generating test configuration"
 	@./envhelp/makeconfig test --docker
 	@./envhelp/makeconfig test
 	@mkdir -p ./envhelp/output/certs

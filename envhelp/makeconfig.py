@@ -38,10 +38,10 @@ sys.path.append(os.path.realpath(
 
 from mig.shared.install import generate_confs
 
-_ENVHELP_OUTPUT_DIR = os.path.realpath(
-    os.path.join(os.path.dirname(__file__), "output"))
+_LOCAL_MIG_BASE = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), ".."))
+_LOCAL_ENVHELP_OUTPUT_DIR = os.path.join(_LOCAL_MIG_BASE, "envhelp/output")
 _MAKECONFIG_ALLOWED = ["test"]
-_MIG_ENV = os.environ.get('MIG_ENV', 'local')
 
 
 def _at(sequence, index=-1, default=None):
@@ -61,20 +61,26 @@ def write_testconfig(env_name, is_docker=False):
         confs_suffix = 'py3'
 
     overrides = {
-        'destination': os.path.join(_ENVHELP_OUTPUT_DIR, confs_name),
+        'destination': os.path.join(_LOCAL_ENVHELP_OUTPUT_DIR, confs_name),
         'destination_suffix': "-%s" % (confs_suffix,),
     }
     if is_predefined and is_docker:
-        conf_dir_path = '/usr/src/app'
+        env_mig_base = '/usr/src/app'
     else:
-        conf_dir_path = _ENVHELP_OUTPUT_DIR
+        env_mig_base = _LOCAL_MIG_BASE
+    conf_dir_path = os.path.join(env_mig_base, "envhelp/output")
     overrides.update(**{
         'mig_code': os.path.join(conf_dir_path, 'mig'),
         'mig_certs': os.path.join(conf_dir_path, 'certs'),
         'mig_state': os.path.join(conf_dir_path, 'state'),
     })
 
-    generate_confs(_ENVHELP_OUTPUT_DIR, **overrides)
+    print('generating "%s" configuration ...' % (confs_name,))
+
+    generate_confs(_LOCAL_ENVHELP_OUTPUT_DIR, **overrides)
+
+    confs_destination = ''.join([overrides['destination'], overrides['destination_suffix']])
+    print('wrote configuration for "%s" env into: %s' % (confs_suffix, confs_destination))
 
 
 def main_(argv):
