@@ -64,12 +64,16 @@ def write_testconfig(env_name, is_docker=False):
         'destination': os.path.join(_LOCAL_ENVHELP_OUTPUT_DIR, confs_name),
         'destination_suffix': "-%s" % (confs_suffix,),
     }
+
+    # determine the paths b which we will access the various configured dirs
+    #  the tests output directory - when invoked within
+
     if is_predefined and is_docker:
         env_mig_base = '/usr/src/app'
-        conf_dir_path = os.path.join(env_mig_base, "envhelp/output")
     else:
         env_mig_base = _LOCAL_MIG_BASE
-        conf_dir_path = os.path.join(env_mig_base, "tests/output")
+    conf_dir_path = os.path.join(env_mig_base, "tests/output")
+
     overrides.update(**{
         'mig_code': os.path.join(conf_dir_path, 'mig'),
         'mig_certs': os.path.join(conf_dir_path, 'certs'),
