@@ -174,6 +174,11 @@ class MigTestCase(TestCase):
     def _register_check(self, check_callable):
         self._cleanup_checks.append(check_callable)
 
+    def _register_path(self, cleanup_path):
+        assert os.path.isabs(cleanup_path)
+        self._cleanup_paths.add(cleanup_path)
+        return cleanup_path
+
     def _reset_logging(self, stream):
         root_logger = logging.getLogger()
         root_handler = root_logger.handlers[0]
@@ -198,11 +203,26 @@ class MigTestCase(TestCase):
     @property
     def configuration(self):
         """Init a fake configuration if not already done"""
-        if self._configuration is None:
-            configuration_to_make = self._provide_configuration()
-            self._configuration = self._make_configuration_instance(
-                configuration_to_make)
-        return self._configuration
+
+        if self._configuration is not None:
+            return self._configuration
+
+        configuration_to_make = self._provide_configuration()
+        configuration_instance = self._make_configuration_instance(
+            configuration_to_make)
+
+        if configuration_to_make == 'testconfig':
+            # use the paths defined by the loaded configuration to create
+            # the directories which are expected to be present by the code
+            os.mkdir(self._register_path(configuration_instance.certs_path))
+            os.mkdir(self._register_path(configuration_instance.state_path))
+            log_path = os.path.join(configuration_instance.state_path, "log")
+            os.mkdir(self._register_path(log_path))
+
+        self._configuration = configuration_instance
+
+        return configuration_instance
+
 
     @property
     def logger(self):
