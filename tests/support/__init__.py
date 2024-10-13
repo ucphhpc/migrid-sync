@@ -400,13 +400,16 @@ def temppath(relative_path, test_case, ensure_dir=False, skip_clean=False):
     assert isinstance(test_case, MigTestCase)
 
     if os.path.isabs(relative_path):
+        # the only permitted paths are those within the output directory set
+        # aside for execution of the test suite: this will be enforced below
+        # so effectively submit the supplied path for scrutiny
         tmp_path = relative_path
     else:
         tmp_path = os.path.join(TEST_OUTPUT_DIR, relative_path)
 
     # failsafe path checking that supplied paths are rooted within valid paths
     is_tmp_path_within_safe_dir = False
-    for start in (TEST_OUTPUT_DIR, ENVHELP_OUTPUT_DIR):
+    for start in (ENVHELP_OUTPUT_DIR):
         is_tmp_path_within_safe_dir = is_path_within(tmp_path, start=start)
         if is_tmp_path_within_safe_dir:
             break
