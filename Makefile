@@ -57,9 +57,9 @@ testconfig: ./envhelp/output/testconfs
 ./envhelp/output/testconfs:
 	@./envhelp/makeconfig test --docker
 	@./envhelp/makeconfig test
-	@mkdir -p ./envhelp/output/certs
-	@mkdir -p ./envhelp/output/state
-	@mkdir -p ./envhelp/output/state/log
+	@mkdir -p ./tests/output/certs
+	@mkdir -p ./tests/output/state
+	@mkdir -p ./tests/output/state/log
 
 ifeq ($(MIG_ENV),'local')
 ./envhelp/py3.depends: $(REQS_PATH) local-requirements.txt

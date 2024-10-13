@@ -66,9 +66,10 @@ def write_testconfig(env_name, is_docker=False):
     }
     if is_predefined and is_docker:
         env_mig_base = '/usr/src/app'
+        conf_dir_path = os.path.join(env_mig_base, "envhelp/output")
     else:
         env_mig_base = _LOCAL_MIG_BASE
-    conf_dir_path = os.path.join(env_mig_base, "envhelp/output")
+        conf_dir_path = os.path.join(env_mig_base, "tests/output")
     overrides.update(**{
         'mig_code': os.path.join(conf_dir_path, 'mig'),
         'mig_certs': os.path.join(conf_dir_path, 'certs'),
