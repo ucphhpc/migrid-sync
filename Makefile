@@ -1,3 +1,7 @@
+ifndef MIG_ENV
+	MIG_ENV = 'local'
+endif
+
 LOCAL_PYTHON_BIN = './envhelp/lpython'
 
 ifeq ($(PY),2)
