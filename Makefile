@@ -79,9 +79,6 @@ ifeq ($(MIG_ENV),'local')
 else
 ./envhelp/local.depends: $(REQS_PATH)
 endif
-	@rm -f $(LOCAL_DEPENDS)
-	@echo "upgrading venv pip as required for some dependencies"
-	@./envhelp/venv/bin/pip3 install --upgrade pip
 	@echo "installing dependencies from $(REQS_PATH)"
 	@./envhelp/venv/bin/pip3 install -r $(REQS_PATH)
 ifeq ($(MIG_ENV),'local')
@@ -95,3 +92,5 @@ endif
 	@echo "provisioning environment"
 	@/usr/bin/env python3 -m venv ./envhelp/venv
 	@rm -f $(LOCAL_DEPENDS)
+	@echo "upgrading venv pip as required for some dependencies"
+	@./envhelp/venv/bin/pip3 install --upgrade pip
