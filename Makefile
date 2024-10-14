@@ -61,7 +61,11 @@ unittest: dependencies testconfig
 	@$(LOCAL_PYTHON_BIN) -m unittest discover -s tests/
 
 .PHONY: dependencies
+ifeq ($(PY),'2')
+dependencies: ./envhelp/local.depends
+else
 dependencies: ./envhelp/venv/pyvenv.cfg ./envhelp/local.depends
+endif
 
 .PHONY: testconfig
 testconfig: ./envhelp/output/testconfs
