@@ -83,4 +83,4 @@ jobs:
           make PYTHON_BIN=python PY=2 dependencies
       - name: Run tests
         run: |
-          make PYTHON_BIN=python unittest
+          make PYTHON_BIN=python PY=2 unittest
