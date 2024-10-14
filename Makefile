@@ -80,11 +80,11 @@ else
 ./envhelp/local.depends: $(REQS_PATH)
 endif
 	@echo "installing dependencies from $(REQS_PATH)"
-	@./envhelp/venv/bin/pip3 install -r $(REQS_PATH)
+	@$(LOCAL_PYTHON_BIN) -m pip install -r $(REQS_PATH)
 ifeq ($(MIG_ENV),'local')
 	@echo ""
 	@echo "installing development dependencies"
-	@./envhelp/venv/bin/pip3 install -r local-requirements.txt
+	@$(LOCAL_PYTHON_BIN) -m pip install -r local-requirements.txt
 endif
 	@touch $(LOCAL_DEPENDS)
 
