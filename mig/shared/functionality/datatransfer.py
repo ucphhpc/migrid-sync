@@ -67,7 +67,7 @@ key_actions = ['generatekey', 'delkey']
 post_actions = transfer_actions + shuffling_actions + key_actions
 valid_actions = get_actions + post_actions
 # TODO: implement scp in backend and enable here?
-valid_proto_list = ["http", "https", "ftp", "ftps" "webdav", "webdavs", "sftp",
+valid_proto_list = ["http", "https", "ftp", "ftps", "webdav", "webdavs", "sftp",
                     "rsyncssh", "rsyncd"]
 valid_proto = [(proto, protocol_aliases[proto]) for proto in valid_proto_list
                if proto in protocol_aliases]
