@@ -30,8 +30,9 @@ set -e
 SCRIPT_PATH=$(realpath "$0")
 SCRIPT_BASE=$(dirname -- "$SCRIPT_PATH")
 MIG_BASE=$(realpath "$SCRIPT_BASE/..")
-PYTHON_BIN=${PYTHON_BIN:-"$SCRIPT_BASE/venv/bin/python3"}
 PY=${PY:-'3'}
+
+PYTHON_BIN=${PYTHON_BIN:-"$SCRIPT_BASE/venv/bin/python3"}
 
 # default PYTHONPATH such that importing files in the repo "just works"
 PYTHONPATH=${PYTHONPATH:-"$MIG_BASE"}

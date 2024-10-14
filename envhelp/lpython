@@ -30,10 +30,10 @@ set -e
 SCRIPT_PATH=$(realpath "$0")
 SCRIPT_BASE=$(dirname -- "$SCRIPT_PATH")
 MIG_BASE=$(realpath "$SCRIPT_BASE/..")
-PYTHON3_BIN="$SCRIPT_BASE/venv/bin/python3"
 
-if [ ! -f "${PYTHON3_BIN}" ]; then
-    echo "No python3 binary found - perhaps the virtual env was not created"
+PYTHON_BIN=${PYTHON_BIN:-"$SCRIPT_BASE/venv/bin/python3"}
+if [ ! -f "${PYTHON_BIN}" ]; then
+    echo "No python binary found - perhaps the virtual env was not created"
     exit 1
 fi
 
@@ -46,4 +46,4 @@ MIG_ENV=${MIG_ENV:-'local'}
 echo "running with MIG_ENV='$MIG_ENV' under local python 3"
 echo
 
-PYTHONPATH="$PYTHONPATH" MIG_ENV="$MIG_ENV" "$PYTHON3_BIN" "$@"
+PYTHONPATH="$PYTHONPATH" MIG_ENV="$MIG_ENV" "$PYTHON_BIN" "$@"

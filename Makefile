@@ -42,6 +42,7 @@ endif
 .PHONY: clean
 clean:
 	@rm -f ./envhelp/py2.imageid
+	@rm -f ./envhelp/py3.imageid
 	@rm -f $(LOCAL_DEPENDS)
 
 .PHONY: distclean
