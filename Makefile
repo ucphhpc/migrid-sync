@@ -2,9 +2,16 @@ ifndef MIG_ENV
 	MIG_ENV = 'local'
 endif
 
-LOCAL_PYTHON_BIN = './envhelp/lpython'
+ifndef PY
+	PY = 3
+endif
 
-ifeq ($(PY),2)
+LOCAL_PYTHON_BIN = './envhelp/lpython'
+LOCAL_DEPENDS = './envhelp/local.depends'
+
+ifdef PYTHON_BIN
+	LOCAL_PYTHON_BIN = $(PYTHON_BIN)
+else ifeq ($(PY),2)
 	PYTHON_BIN = './envhelp/python2'
 else
 	PYTHON_BIN = './envhelp/python3'
@@ -30,12 +37,12 @@ ifneq ($(MIG_ENV),'local')
 	@echo "unavailable outside local development environment"
 	@exit 1
 endif
-	$(PYTHON_BIN) -m autopep8 --ignore E402 -i
+	$(LOCAL_PYTHON_BIN) -m autopep8 --ignore E402 -i
 
 .PHONY: clean
 clean:
 	@rm -f ./envhelp/py2.imageid
-	@rm -f ./envhelp/py3.depends
+	@rm -f $(LOCAL_DEPENDS)
 
 .PHONY: distclean
 distclean: clean
@@ -53,7 +60,7 @@ unittest: dependencies testconfig
 	@$(LOCAL_PYTHON_BIN) -m unittest discover -s tests/
 
 .PHONY: dependencies
-dependencies: ./envhelp/venv/pyvenv.cfg ./envhelp/py3.depends
+dependencies: ./envhelp/venv/pyvenv.cfg ./envhelp/local.depends
 
 .PHONY: testconfig
 testconfig: ./envhelp/output/testconfs
@@ -63,11 +70,11 @@ testconfig: ./envhelp/output/testconfs
 	@./envhelp/makeconfig test
 
 ifeq ($(MIG_ENV),'local')
-./envhelp/py3.depends: $(REQS_PATH) local-requirements.txt
+./envhelp/local.depends: $(REQS_PATH) local-requirements.txt
 else
-./envhelp/py3.depends: $(REQS_PATH)
+./envhelp/local.depends: $(REQS_PATH)
 endif
-	@rm -f ./envhelp/py3.depends
+	@rm -f $(LOCAL_DEPENDS)
 	@echo "upgrading venv pip as required for some dependencies"
 	@./envhelp/venv/bin/pip3 install --upgrade pip
 	@echo "installing dependencies from $(REQS_PATH)"
@@ -77,9 +84,9 @@ ifeq ($(MIG_ENV),'local')
 	@echo "installing development dependencies"
 	@./envhelp/venv/bin/pip3 install -r local-requirements.txt
 endif
-	@touch ./envhelp/py3.depends
+	@touch $(LOCAL_DEPENDS)
 
 ./envhelp/venv/pyvenv.cfg:
 	@echo "provisioning environment"
 	@/usr/bin/env python3 -m venv ./envhelp/venv
-	@rm -f ./envhelp/py3.depends
+	@rm -f $(LOCAL_DEPENDS)
