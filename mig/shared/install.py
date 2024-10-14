@@ -488,7 +488,8 @@ def generate_confs(
     permanent_freeze='no',
     freeze_to_tape='',
     status_system_match=keyword_any,
-    duplicati_protocols='',
+    storage_protocols=keyword_auto,
+    duplicati_protocols=keyword_auto,
     imnotify_address='',
     imnotify_channel='',
     imnotify_username='',
@@ -803,6 +804,7 @@ def _generate_confs_prepare(
     permanent_freeze,
     freeze_to_tape,
     status_system_match,
+    storage_protocols,
     duplicati_protocols,
     imnotify_address,
     imnotify_channel,
@@ -1328,17 +1330,27 @@ cert, oid and sid based https!
         if davs_show_port:
             fail2ban_daemon_ports.append(davs_show_port)
 
-    if duplicati_protocols:
-        prio_duplicati_protocols = duplicati_protocols.split()
+    # NOTE: prioritized order based on performance and robustness
+    best_storage_svc = []
+    if enable_sftp_subsys or enable_sftp:
+        best_storage_svc.append('sftp')
+    if enable_ftps:
+        best_storage_svc.append('ftps')
+    if enable_davs:
+        best_storage_svc.append('davs')
+
+    if storage_protocols != keyword_auto:
+        storage_protocols = [i for i in storage_protocols.split() if i in
+                             best_storage_svc]
     else:
-        # NOTE: prioritized order based on performance and robustness
-        prio_duplicati_protocols = []
-        if enable_sftp_subsys or enable_sftp:
-            prio_duplicati_protocols.append('sftp')
-        if enable_ftps:
-            prio_duplicati_protocols.append('ftps')
-        if enable_davs:
-            prio_duplicati_protocols.append('davs')
+        storage_protocols = best_storage_svc
+    user_dict['__STORAGE_PROTOCOLS__'] = ' '.join(storage_protocols)
+
+    if duplicati_protocols != keyword_auto:
+        prio_duplicati_protocols = [i for i in duplicati_protocols.split() if i
+                                    in best_storage_svc]
+    else:
+        prio_duplicati_protocols = best_storage_svc
     user_dict['__DUPLICATI_PROTOCOLS__'] = ' '.join(prio_duplicati_protocols)
 
     user_dict['__SEAFILE_TIMEZONE__'] = options['timezone']

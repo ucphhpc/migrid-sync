@@ -32,7 +32,7 @@ import re
 
 from mig.shared.auth import active_twofactor_session
 from mig.shared.base import extract_field, expand_openid_alias
-from mig.shared.defaults import CRACK_USERNAME_REGEX
+from mig.shared.defaults import CRACK_USERNAME_REGEX, protocol_aliases
 from mig.shared.gdp.all import get_client_id_from_project_client_id
 from mig.shared.griddaemons.ratelimits import default_user_abuse_hits, \
     default_proto_abuse_hits, default_max_secret_hits, update_rate_limit
@@ -284,11 +284,8 @@ def validate_auth_attempt(configuration,
 
     # Log auth attempt and set (authorized, disconnect) return values
 
-    proto_names = {'sftp': 'SFTP', 'sftp-subsys': 'SFTP', 'ftps': 'FTPS',
-                   'webdavs': 'WebDAVS', 'davs': 'WebDAVS',
-                   'openid': 'OpenID 2.0', 'openidc': 'OpenID Connect'}
     mountable_protos = ['sftp', 'sftp-subsys', 'ftps', 'webdavs', 'davs']
-    proto_alias = proto_names.get(protocol, protocol.upper())
+    proto_alias = protocol_aliases.get(protocol, protocol.upper())
     if exceeded_rate_limit:
         disconnect = True
         auth_msg = "Exceeded rate limit"

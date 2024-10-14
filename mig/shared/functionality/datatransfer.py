@@ -39,7 +39,7 @@ from mig.shared import returnvalues
 from mig.shared.base import client_id_dir, mask_creds, hexlify
 from mig.shared.conf import get_resource_exe
 from mig.shared.defaults import all_jobs, job_output_dir, default_pager_entries, \
-    csrf_field
+    csrf_field, protocol_aliases
 from mig.shared.fileio import read_tail_lines
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import safe_handler, get_csrf_limit, make_csrf_token
@@ -67,10 +67,10 @@ key_actions = ['generatekey', 'delkey']
 post_actions = transfer_actions + shuffling_actions + key_actions
 valid_actions = get_actions + post_actions
 # TODO: implement scp in backend and enable here?
-valid_proto = [("http", "HTTP"), ("https", "HTTPS"), ("ftp", "FTP"),
-               ("ftps", "FTPS"), ("webdav", "WebDAV"), ("webdavs", "WebDAVS"),
-               ("sftp", "SFTP"), ("rsyncssh", "RSYNC over SSH"),
-               ("rsyncd", "RSYNC daemon")]
+valid_proto_list = ["http", "https", "ftp", "ftps" "webdav", "webdavs", "sftp",
+                    "rsyncssh", "rsyncd"]
+valid_proto = [(proto, protocol_aliases[proto]) for proto in valid_proto_list
+               if proto in protocol_aliases]
 valid_proto_map = dict(valid_proto)
 warn_anon = [i for (i, _) in valid_proto if not i in ('http', 'https', 'ftp',
                                                       'rsyncd')]
@@ -489,7 +489,7 @@ transfers below.'''
 
         # Make page with manage transfers tab and manage keys tab
 
-        output_objects.append({'object_type': 'html_form', 'text':  '''
+        output_objects.append({'object_type': 'html_form', 'text': '''
     <div id="quiet-mode-content" class="hidden">
         <p>
         Accept data %(transfer_action)s of %(transfer_src_string)s from
@@ -509,7 +509,7 @@ transfers below.'''
 
         # Display external transfers, log and form to add new ones
 
-        output_objects.append({'object_type': 'html_form', 'text':  '''
+        output_objects.append({'object_type': 'html_form', 'text': '''
 <div id="transfer-tab">
 '''})
 
@@ -671,13 +671,13 @@ login with key
 '''
         output_objects.append(
             {'object_type': 'html_form', 'text': transfer_html % fill_helpers})
-        output_objects.append({'object_type': 'html_form', 'text':  '''
+        output_objects.append({'object_type': 'html_form', 'text': '''
 </div>
 '''})
 
         # Display key management
 
-        output_objects.append({'object_type': 'html_form', 'text':  '''
+        output_objects.append({'object_type': 'html_form', 'text': '''
 <div id="keys-tab">
 '''})
         output_objects.append(
@@ -737,11 +737,11 @@ Key name:<br/>
 ''' % (restrict_template % 'ssh-rsa AAAAB3NzaC...', configuration.short_title)
         output_objects.append(
             {'object_type': 'html_form', 'text': key_html % fill_helpers})
-        output_objects.append({'object_type': 'html_form', 'text':  '''
+        output_objects.append({'object_type': 'html_form', 'text': '''
 </div>
 '''})
 
-        output_objects.append({'object_type': 'html_form', 'text':  '''
+        output_objects.append({'object_type': 'html_form', 'text': '''
 </div>
 '''})
         return (output_objects, returnvalues.OK)
