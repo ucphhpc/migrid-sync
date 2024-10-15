@@ -28,9 +28,10 @@
 """Unit tests for the configuration object"""
 
 import inspect
+import os
 import unittest
 
-from tests.support import MigTestCase, PY2, testmain, fixturefile
+from tests.support import MigTestCase, TEST_DATA_DIR, PY2, testmain, fixturefile
 from mig.shared.configuration import Configuration
 
 
@@ -45,6 +46,13 @@ def _to_dict(obj):
 
 class MigSharedConfiguration(MigTestCase):
     """Wrap unit tests for the corresponding module"""
+
+    def test_argument_storage_protocols(self):
+        test_conf_file = os.path.join(TEST_DATA_DIR, 'MiGserver--storage_protocols.conf')
+
+        configuration = Configuration(test_conf_file, skip_log=True, disable_auth_log=True)
+
+        self.assertEqual(configuration.storage_protocols, ['xxx', 'yyy', 'zzz'])
 
     @unittest.skipIf(PY2, "Python 3 only")
     def test_default_object(self):

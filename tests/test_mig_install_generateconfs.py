@@ -52,10 +52,12 @@ main = generateconfs.main
 def create_fake_generate_confs(return_dict=None):
     """Fake generate confs helper"""
     def _generate_confs(*args, **kwargs):
+        _generate_confs.settings = kwargs
         if return_dict:
             return (return_dict, {})
         else:
             return ({}, {})
+    _generate_confs.settings = None
     return _generate_confs
 
 
@@ -78,6 +80,22 @@ class MigInstallGenerateconfs__main(MigTestCase):
 
         exit_code = main(test_arguments, _generate_confs=fake_generate_confs, _print=noop)
         self.assertEqual(exit_code, 0)
+
+    def test_option_storage_protocols(self):
+        expected_generated_dir = cleanpath('confs-stdlocal', self,
+                                           ensure_dir=True)
+        with open(os.path.join(expected_generated_dir, "instructions.txt"),
+                  "w"):
+            pass
+        fake_generate_confs = create_fake_generate_confs(
+            dict(destination_dir=expected_generated_dir))
+        test_arguments = ['--storage_protocols', 'proto1,proto2,proto3']
+
+        exit_code = main(test_arguments, _generate_confs=fake_generate_confs, _print=noop)
+        self.assertEqual(exit_code, 0)
+        settings = fake_generate_confs.settings
+        self.assertIn('storage_protocols', settings)
+        self.assertEqual(settings['storage_protocols'], 'proto1,proto2,proto3')
 
 
 if __name__ == '__main__':
