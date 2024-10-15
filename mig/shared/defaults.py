@@ -416,9 +416,18 @@ POLICY_MODERN, POLICY_CUSTOM = "MODERN", "CUSTOM"
 PASSWORD_POLICIES = [POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH,
                      POLICY_MODERN, POLICY_CUSTOM]
 
-# Prioritized protocol choices and internal values
-duplicati_protocol_choices = [('SFTP', 'sftp'), ('FTPS', 'ftps'),
-                              ('WebDAVS', 'davs')]
+# Protocol aliases for pretty printing, etc.
+protocol_aliases = {'http': 'HTTP', 'https': 'HTTPS',
+                    'ftp': 'FTP', 'ftps': 'FTPS',
+                    'sftp': 'SFTP', 'sftp-subsys': 'SFTP',
+                    'dav': 'WebDAV', 'webdav': 'WebDAV',
+                    'davs': 'WebDAVS', 'webdavs': 'WebDAVS',
+                    'rsyncssh': 'RSYNC over SSH', 'rsyncd': 'RSYNC daemon',
+                    'oid': 'OpenID 2.0', 'openid': 'OpenID 2.0',
+                    'oidc': 'OpenID Connect', 'openidc': 'OpenID Connect'}
+# Prioritized protocol choices for duplicati - order matters!
+duplicati_protocol_choices = [(protocol_aliases[i], i) for i in
+                              ['sftp', 'ftps', 'davs']]
 # Prioritized schedule backup frequency choices and json values
 duplicati_schedule_choices = [('Daily', '1D'), ('Weekly', '1W'),
                               ('Monthly', '1M'), ('Never', '')]
