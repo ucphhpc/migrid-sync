@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # cat - show lines of one or more files
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -36,6 +36,7 @@ import os
 
 from mig.shared import returnvalues
 from mig.shared.base import client_id_dir
+from mig.shared.defaults import protocol_aliases
 from mig.shared.fileio import read_file, read_file_lines, write_file, \
     write_file_lines
 from mig.shared.functional import validate_input_and_cert, REJECT_UNSET
@@ -71,10 +72,14 @@ def _check_serve_permitted(configuration, paths):
 def _render_error_text_for_serve_limit(configuration):
     """Helper to inform about suitable alternatives when above limit"""
     limit = configuration.wwwserve_max_bytes
-    alternatives = ', '.join(configuration.storage_protocols)
-    return ("Site configuration prevents web serving contents bigger than "
-            "%d bytes - please use better alternatives (%s) to retrieve large "
-            "data.") % (limit, alternatives)
+    msg = "Site configuration prevents web serving contents bigger than " \
+        "%d bytes" % limit
+    if configuration.storage_protocols:
+        aliased = [protocol_aliases[i] for i in configuration.storage_protocols
+                   if i in protocol_aliases]
+        msg += " - please use better alternatives (%s) to retrieve large data" \
+            % ', '.join(aliased)
+    return msg
 
 
 def signature():
