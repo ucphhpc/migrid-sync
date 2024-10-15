@@ -151,7 +151,7 @@ class MigSharedFunctionalityCat(MigTestCase):
         self.assertEqual(relevant_obj['text'],
                          "Site configuration prevents web serving contents "
                          "bigger than 3896 bytes - please use better "
-                         "alternatives (sftp) to retrieve large data.")
+                         "alternatives (SFTP) to retrieve large data")
 
 
 if __name__ == '__main__':

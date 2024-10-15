@@ -195,6 +195,7 @@ def main(argv, _generate_confs=generate_confs, _print=print):
         'permanent_freeze',
         'freeze_to_tape',
         'status_system_match',
+        'storage_protocols',
         'duplicati_protocols',
         'imnotify_address',
         'imnotify_channel',
