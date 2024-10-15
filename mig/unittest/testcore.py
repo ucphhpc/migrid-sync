@@ -42,7 +42,6 @@ from mig.shared.base import client_id_dir, client_dir_id, get_short_id, \
     invisible_path, allow_script, brief_list
 
 
-_LOCAL_MIG_BASE = '/usr/src/app' if PY2 else MIG_BASE # account for execution in container
 _TEST_CONF_FILE = os.environ['MIG_CONF']
 _TEST_CONF_DIR = os.path.dirname(_TEST_CONF_FILE)
 _TEST_CONF_SYMLINK = os.path.join(MIG_BASE, "envhelp/output/testconfs")
@@ -67,7 +66,7 @@ def _assert_local_config_global_values(config):
 
     for path in ('mig_path', 'certs_path', 'state_path'):
         path_value = config_global_values.get(path)
-        if not is_path_within(path_value, start=_LOCAL_MIG_BASE):
+        if not is_path_within(path_value, start=MIG_BASE):
             raise AssertionError('local config contains bad path: %s=%s' % (path, path_value))
 
     return config_global_values
