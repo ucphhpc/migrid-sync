@@ -36,12 +36,11 @@ import sys
 sys.path.append(os.path.realpath(
     os.path.join(os.path.dirname(__file__), "..")))
 
-from mig.shared.install import generate_confs
+from mig.shared.install import MIG_BASE, generate_confs
 
-_ENVHELP_OUTPUT_DIR = os.path.realpath(
+_LOCAL_ENVHELP_OUTPUT_DIR = os.path.realpath(
     os.path.join(os.path.dirname(__file__), "output"))
 _MAKECONFIG_ALLOWED = ["local", "test"]
-_PYTHON_MAJOR = os.environ.get('PY', '3')
 
 
 def _at(sequence, index=-1, default=None):
@@ -54,17 +53,32 @@ def _at(sequence, index=-1, default=None):
 
 def write_testconfig(env_name, is_py2=False):
     confs_name = 'confs' if env_name == 'local' else '%sconfs' % (env_name,)
+    confs_suffix = 'py2' if is_py2 else 'py3'
+
     overrides = {
-        'destination': os.path.join(_ENVHELP_OUTPUT_DIR, confs_name),
-        'destination_suffix': "-py%s" % ('2' if is_py2 else '3',),
+        'destination': os.path.join(_LOCAL_ENVHELP_OUTPUT_DIR, confs_name),
+        'destination_suffix': "-%s" % (confs_suffix,),
     }
+
+    # determine the paths by which we will access the various configured dirs
     if is_py2:
-        overrides.update(**{
-            'mig_code': '/usr/src/app/mig',
-            'mig_certs': '/usr/src/app/envhelp/output/certs',
-            'mig_state': '/usr/src/app/envhelp/output/state',
-        })
-    generate_confs(_ENVHELP_OUTPUT_DIR, **overrides)
+        env_mig_base = '/usr/src/app'
+    else:
+        env_mig_base = MIG_BASE
+    conf_dir_path = os.path.join(env_mig_base, "envhelp/output")
+
+    overrides.update(**{
+        'mig_code': os.path.join(conf_dir_path, 'mig'),
+        'mig_certs': os.path.join(conf_dir_path, 'certs'),
+        'mig_state': os.path.join(conf_dir_path, 'state'),
+    })
+
+    print('generating "%s" configuration ...' % (confs_name,))
+
+    generate_confs(_LOCAL_ENVHELP_OUTPUT_DIR, **overrides)
+
+    confs_destination = ''.join([overrides['destination'], overrides['destination_suffix']])
+    print('wrote configuration for "%s" env into: %s' % (confs_suffix, confs_destination))
 
 
 def main_(argv):
