@@ -71,7 +71,8 @@ class MigInstallGenerateconfs(MigTestCase):
     def test_consistent_parameters(self):
         mismatched = _GENERATE_CONFS_PARAMETERS - set(_PARAMETERS)
         self.assertEqual(len(mismatched), 0,
-                         "defined parameters do not match generate_confs()")
+                         "defined parameters do not match generate_confs()\n"
+                         "mismatched: %s" % (''.join(mismatched),))
 
 
 class MigInstallGenerateconfs__main(MigTestCase):

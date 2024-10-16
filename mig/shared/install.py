@@ -500,6 +500,9 @@ _DEFAULTS = SimpleNamespace(
 )
 
 
+_GENERATE_CONFS_DEFAULTS = _DEFAULTS.__dict__
+
+
 def generate_confs(
     generateconfs_output_path,
     # NOTE: make sure command line args with white-space are properly wrapped
@@ -509,7 +512,7 @@ def generate_confs(
     user=keyword_auto,
     group=keyword_auto,
     timezone=keyword_auto,
-    destination_suffix="",
+    destination_suffix=keyword_auto,
     base_fqdn=_DEFAULTS.base_fqdn,
     public_fqdn=_DEFAULTS.public_fqdn,
     public_alias_fqdn=_DEFAULTS.public_alias_fqdn,
@@ -763,6 +766,9 @@ def generate_confs(
     else:
         # construct a path using the supplied value made absolute
         template_dir = abspath(source, start=generateconfs_output_path)
+
+    if destination_suffix == keyword_auto:
+        destination_suffix = "-%s" % datetime.datetime.now().isoformat()
 
     if destination == keyword_auto:
         # write output into a confs folder within the CWD
