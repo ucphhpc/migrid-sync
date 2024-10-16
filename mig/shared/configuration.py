@@ -641,7 +641,7 @@ _CONFIGURATION_DEFAULTS = {
     'scriptlanguages': [],
     'jobtypes': [],
     'lrmstypes': [],
-    'storage_protocols': ['sftp'],
+    'storage_protocols': [],
     'server_cert': '',
     'server_key': '',
     'passphrase_file': '',

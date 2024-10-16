@@ -2,7 +2,7 @@
 #
 # --- BEGIN_HEADER ---
 #
-# test_mig_shared_functionality_cat - cat functionality unit test
+# test_mig_shared_functionality_cat - unit test of the corresponding mig module
 # Copyright (C) 2003-2024  The MiG Project by the Science HPC Center at UCPH
 #
 # This file is part of MiG.
@@ -32,12 +32,13 @@ import importlib
 import os
 import shutil
 import sys
+import unittest
 
-from tests.support import MIG_BASE, TEST_DATA_DIR, MigTestCase, testmain, \
+from tests.support import MIG_BASE, PY2, TEST_DATA_DIR, MigTestCase, testmain, \
     fixturefile, fixturefile_normname, ensure_dirs_exist, temppath
 
 from mig.shared.base import client_id_dir
-from mig.shared.functionality.cat import _main as main
+from mig.shared.functionality.cat import _main as submain, main as realmain
 
 
 def create_http_environ(configuration):
@@ -53,6 +54,10 @@ def create_http_environ(configuration):
     environ['SCRIPT_URI'] = ''.join(('https://', environ['HTTP_HOST'],
                                      environ['PATH_INFO']))
     return environ
+
+
+def _only_output_objects(output_objects, with_object_type=None):
+    return [o for o in output_objects if o['object_type'] == with_object_type]
 
 
 class MigSharedFunctionalityCat(MigTestCase):
@@ -85,6 +90,13 @@ class MigSharedFunctionalityCat(MigTestCase):
         temppath(self.test_user_dir, self, skip_output_anchor=True)
         self.test_environ = create_http_environ(self.configuration)
 
+    def assertSingleOutputObject(self, output_objects, with_object_type=None):
+        assert with_object_type is not None
+        found_objects = _only_output_objects(output_objects,
+                                             with_object_type=with_object_type)
+        self.assertEqual(len(found_objects), 1)
+        return found_objects[0]
+
     def test_file_serving_a_single_file_match(self):
         with open(os.path.join(self.test_user_dir, 'foobar.txt'), 'w'):
             pass
@@ -92,13 +104,14 @@ class MigSharedFunctionalityCat(MigTestCase):
             'path': ['foobar.txt'],
         }
 
-        (output_objects, status) = main(self.configuration, self.logger,
-                                        client_id=self.TEST_CLIENT_ID,
-                                        user_arguments_dict=payload,
-                                        environ=self.test_environ)
+        (output_objects, status) = submain(self.configuration, self.logger,
+                                           client_id=self.TEST_CLIENT_ID,
+                                           user_arguments_dict=payload,
+                                           environ=self.test_environ)
+
         self.assertEqual(len(output_objects), 1)
-        output_obj = output_objects[0]
-        self.assertEqual(output_obj['object_type'], 'file_output')
+        self.assertSingleOutputObject(output_objects,
+                                      with_object_type='file_output')
 
     def test_file_serving_at_limit(self):
         test_binary_file = os.path.realpath(
@@ -115,18 +128,19 @@ class MigSharedFunctionalityCat(MigTestCase):
 
         self.configuration.wwwserve_max_bytes = test_binary_file_size
 
-        (output_objects, status) = main(self.configuration, self.logger,
-                                        client_id=self.TEST_CLIENT_ID,
-                                        user_arguments_dict=payload,
-                                        environ=self.test_environ)
-        # TODO: two file_output objects seem to be returned
-        self.assertEqual(len(output_objects), 3)
-        relevant_obj = output_objects[2]
-        self.assertEqual(relevant_obj['object_type'], 'file_output')
+        (output_objects, status) = submain(self.configuration, self.logger,
+                                           client_id=self.TEST_CLIENT_ID,
+                                           user_arguments_dict=payload,
+                                           environ=self.test_environ)
+
+        self.assertEqual(len(output_objects), 2)
+        relevant_obj = self.assertSingleOutputObject(output_objects,
+                                                     with_object_type='file_output')
         self.assertEqual(len(relevant_obj['lines']), 1)
         self.assertEqual(relevant_obj['lines'][0], test_binary_file_data)
 
-    def test_file_serving_over_limit(self):
+
+    def test_file_serving_over_limit_without_storage_protocols(self):
         test_binary_file = os.path.realpath(os.path.join(TEST_DATA_DIR,
                                                          'loading.gif'))
         test_binary_file_size = os.stat(test_binary_file).st_size
@@ -139,19 +153,65 @@ class MigSharedFunctionalityCat(MigTestCase):
             'path': ['loading.gif'],
         }
 
+        self.configuration.storage_protocols = [] # be explicit though it is default
         self.configuration.wwwserve_max_bytes = test_binary_file_size - 1
 
-        (output_objects, status) = main(self.configuration, self.logger,
+        (output_objects, status) = submain(self.configuration, self.logger,
                                         client_id=self.TEST_CLIENT_ID,
                                         user_arguments_dict=payload,
                                         environ=self.test_environ)
-        self.assertEqual(len(output_objects), 4)
-        relevant_obj = output_objects[3]
-        self.assertEqual(relevant_obj['object_type'], 'error_text')
+
+        self.assertEqual(len(output_objects), 1)
+        relevant_obj = self.assertSingleOutputObject(output_objects,
+            with_object_type='error_text')
+        self.assertEqual(relevant_obj['text'],
+                         "Site configuration prevents web serving contents "
+                         "bigger than 3896 bytes")
+
+
+    def test_file_serving_over_limit_with_storage_protocols_sftp(self):
+        test_binary_file = os.path.realpath(os.path.join(TEST_DATA_DIR,
+                                                         'loading.gif'))
+        test_binary_file_size = os.stat(test_binary_file).st_size
+        with open(test_binary_file, 'rb') as fh_test_file:
+            test_binary_file_data = fh_test_file.read()
+        shutil.copyfile(test_binary_file, os.path.join(self.test_user_dir,
+                                                       'loading.gif'))
+        payload = {
+            'output_format': ['file'],
+            'path': ['loading.gif'],
+        }
+
+        self.configuration.storage_protocols = ['sftp']
+        self.configuration.wwwserve_max_bytes = test_binary_file_size - 1
+
+        (output_objects, status) = submain(self.configuration, self.logger,
+                                        client_id=self.TEST_CLIENT_ID,
+                                        user_arguments_dict=payload,
+                                        environ=self.test_environ)
+
+        self.assertEqual(len(output_objects), 1)
+        relevant_obj = self.assertSingleOutputObject(output_objects,
+            with_object_type='error_text')
         self.assertEqual(relevant_obj['text'],
                          "Site configuration prevents web serving contents "
                          "bigger than 3896 bytes - please use better "
                          "alternatives (SFTP) to retrieve large data")
+
+    @unittest.skipIf(PY2, "Python 3 only")
+    def test_main_passes_environ(self):
+        try:
+            result = realmain(self.TEST_CLIENT_ID, {}, None)
+        except Exception as unexpectedexc:
+            raise AssertionError("saw unexpected exception: %s" % (unexpectedexc,))
+
+        (output_objects, status) = result
+        self.assertEqual(status[1], 'Client error')
+
+        error_text_objects = _only_output_objects(output_objects,
+            with_object_type='error_text')
+        relevant_obj = error_text_objects[2]
+        self.assertEqual(relevant_obj['text'], 'Input arguments were rejected - not allowed for this script!')
 
 
 if __name__ == '__main__':
