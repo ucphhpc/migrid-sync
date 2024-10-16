@@ -768,7 +768,8 @@ local OpenID login and added Jupyter+cloud integration for data analysis:
                    --mig_oid_title="Non-KU/UCPH" --ext_oid_title="KU/UCPH" \
                    --auto_add_oid_user=True --auto_add_cert_user=True \
                    --auto_add_filter_fields=full_name --auto_add_filter_method=skip \
-                   --freeze_to_tape="4w" --io_account_expire=True \
+                   --permanent_freeze="freeze phd backup" --freeze_to_tape="4w" \
+                   --io_account_expire=True \
                    --password_policy="MODERN:12" \
                    --password_legacy_policy=MEDIUM \
                    --peers_permit="role:.*(vip|tap)" \
