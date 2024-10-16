@@ -98,16 +98,22 @@ def main(client_id, user_arguments_dict, environ=None):
     (configuration, logger, output_objects, op_name) = \
         initialize_main_variables(client_id)
 
-    return _main(configuration, logger, op_name=op_name,
+    return _main(configuration, logger, environ, op_name=op_name,
                  output_objects=output_objects, client_id=client_id,
                  user_arguments_dict=user_arguments_dict)
 
 
-def _main(configuration, logger, op_name='', output_objects=[], client_id=None,
-          user_arguments_dict=None, environ=None):
+def _main(configuration, logger, environ, op_name='', output_objects=None, client_id=None,
+          user_arguments_dict=None):
     """Actual main function to generate contents for the front end"""
+
+    assert environ is not None, "required arg: environ"
+
     if logger is None:
         logger = configuration.logger
+
+    if output_objects is None:
+        output_objects = [] # create a new list if one was not supplied
 
     client_dir = client_id_dir(client_id)
     defaults = signature()[1]
