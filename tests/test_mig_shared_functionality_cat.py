@@ -34,7 +34,7 @@ import shutil
 import sys
 import unittest
 
-from tests.support import MIG_BASE, TEST_DATA_DIR, MigTestCase, testmain, \
+from tests.support import MIG_BASE, PY2, TEST_DATA_DIR, MigTestCase, testmain, \
     fixturefile, fixturefile_normname, ensure_dirs_exist, temppath
 
 from mig.shared.base import client_id_dir
