@@ -35,6 +35,7 @@ from __future__ import absolute_import
 from builtins import zip, range
 from base64 import b64encode, b64decode, b16encode, b16decode, \
     urlsafe_b64encode, urlsafe_b64decode
+import codecs
 from os import urandom
 from random import SystemRandom
 from string import ascii_lowercase, ascii_uppercase, digits
@@ -43,6 +44,7 @@ import hashlib
 import time
 
 from mig.shared.base import force_utf8, mask_creds, string_snippet
+from mig.shared.compat import _unicode_string_to_utf8_bytes
 from mig.shared.defaults import keyword_auto, RESET_TOKEN_TTL
 
 
@@ -114,12 +116,14 @@ def best_crypt_salt(configuration):
     return salt_data
 
 
-def make_hash(password):
+def make_hash(password, _urandom=urandom):
     """Generate a random salt and return a new hash for the password."""
-    salt = b64encode(urandom(SALT_LENGTH))
-    derived = b64encode(hashlib.pbkdf2_hmac(HASH_FUNCTION,
-                                            force_utf8(password), salt,
-                                            COST_FACTOR, KEY_LENGTH))
+    salt = b64encode(_urandom(SALT_LENGTH))
+    password_bytes = _unicode_string_to_utf8_bytes(password)
+    password_hashed = hashlib.pbkdf2_hmac(HASH_FUNCTION,
+                                            password_bytes, salt,
+                                            COST_FACTOR, KEY_LENGTH)
+    derived = b64encode(password_hashed)
     return 'PBKDF2${}${}${}${}'.format(HASH_FUNCTION, COST_FACTOR,
                                        salt, derived)
 
