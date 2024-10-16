@@ -207,9 +207,7 @@
   "smtp_server": "",
   "sss_home": "",
   "state_path": "/some/place/state",
-  "storage_protocols": [
-    "sftp"
-  ],
+  "storage_protocols": [],
   "submitui": [
     "fields",
     "textarea",
