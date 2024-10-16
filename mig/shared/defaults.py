@@ -424,9 +424,6 @@ protocol_aliases = {'http': 'HTTP', 'https': 'HTTPS',
                     'rsyncssh': 'RSYNC over SSH', 'rsyncd': 'RSYNC daemon',
                     'oid': 'OpenID 2.0', 'openid': 'OpenID 2.0',
                     'oidc': 'OpenID Connect', 'openidc': 'OpenID Connect'}
-# Prioritized protocol choices for duplicati - order matters!
-duplicati_protocol_choices = [(protocol_aliases[i], i) for i in
-                              ['sftp', 'ftps', 'davs']]
 # Prioritized schedule backup frequency choices and json values
 duplicati_schedule_choices = [('Daily', '1D'), ('Weekly', '1W'),
                               ('Monthly', '1M'), ('Never', '')]
