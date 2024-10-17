@@ -47,7 +47,7 @@ sys.path.append(dirname(dirname(dirname(os.path.abspath(__file__)))))
 # NOTE: moved mig imports into try/except to avoid autopep8 moving to top!
 try:
     from mig.shared.defaults import MIG_BASE, MIG_ENV
-    from mig.shared.install import generate_confs
+    from mig.shared.install import generate_confs, _GENERATE_CONFS_PARAMETERS
 except ImportError:
     print("ERROR: the migrid modules must be in PYTHONPATH")
     sys.exit(1)
@@ -64,7 +64,7 @@ Where supported options include -h/--help for this help or the conf settings:
 ''' % (sys.argv[0], '\n'.join(lines)))
 
 
-def main(argv, _generate_confs=generate_confs, _print=print):
+def _make_parameters():
     str_names = [
         'source',
         'destination',
@@ -241,6 +241,8 @@ def main(argv, _generate_confs=generate_confs, _print=print):
         'openid_port',
         'openid_show_port',
         'openid_session_lifetime',
+        'seafile_secret',
+        'seafile_ccnetid',
         'seafile_seahub_port',
         'seafile_seafhttp_port',
         'seafile_client_port',
@@ -296,7 +298,15 @@ def main(argv, _generate_confs=generate_confs, _print=print):
         'io_account_expire',
         'gdp_email_notify',
     ]
-    names = str_names + int_names + bool_names
+    return (str_names, int_names, bool_names)
+
+
+str_names, int_names, bool_names = _make_parameters()
+_PARAMETERS = str_names + int_names + bool_names
+
+
+def main(argv, _generate_confs=generate_confs, _print=print):
+    names = _PARAMETERS
     settings, options, result = {}, {}, {}
     default_val = 'DEFAULT'
     # Force values to expected type
