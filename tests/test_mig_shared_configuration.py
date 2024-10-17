@@ -49,7 +49,7 @@ class MigSharedConfiguration(MigTestCase):
 
     def test_argument_storage_protocols(self):
         test_conf_file = os.path.join(
-            TEST_DATA_DIR, 'MiGserver--storage_protocols.conf')
+            TEST_DATA_DIR, 'MiGserver--customised.conf')
 
         configuration = Configuration(
             test_conf_file, skip_log=True, disable_auth_log=True)
@@ -59,6 +59,15 @@ class MigSharedConfiguration(MigTestCase):
         # TODO: why does even our explicit testdata value 'sftp' yield [] here?
         #self.assertEqual(configuration.storage_protocols, ['sftp'])
         self.assertEqual(configuration.storage_protocols, [])
+
+    def test_argument_wwwserve_max_bytes(self):
+        test_conf_file = os.path.join(
+            TEST_DATA_DIR, 'MiGserver--customised.conf')
+
+        configuration = Configuration(
+            test_conf_file, skip_log=True, disable_auth_log=True)
+
+        self.assertEqual(configuration.wwwserve_max_bytes, 43211234)
 
     @unittest.skipIf(PY2, "Python 3 only")
     def test_default_object(self):
