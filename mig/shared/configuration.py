@@ -50,10 +50,10 @@ try:
     from mig.shared.defaults import CSRF_MINIMAL, CSRF_WARN, CSRF_MEDIUM, \
         CSRF_FULL, POLICY_NONE, POLICY_WEAK, POLICY_MEDIUM, POLICY_HIGH, \
         POLICY_MODERN, POLICY_CUSTOM, freeze_flavors, cert_field_order, \
-        duplicati_protocol_choices, default_css_filename, keyword_any, \
-        cert_valid_days, oid_valid_days, generic_valid_days, keyword_all, \
-        keyword_file, keyword_env, DEFAULT_USER_ID_FORMAT, \
-        valid_user_id_formats, valid_filter_methods, default_twofactor_auth_apps
+        default_css_filename, keyword_any, keyword_auto, keyword_all, \
+        keyword_file, keyword_env, cert_valid_days, oid_valid_days, \
+        generic_valid_days, DEFAULT_USER_ID_FORMAT, valid_user_id_formats, \
+        valid_filter_methods, default_twofactor_auth_apps
     from mig.shared.logger import Logger, SYSLOG_GDP
     from mig.shared.htmlgen import menu_items, vgrid_items
     from mig.shared.fileio import read_file, load_json, write_file
@@ -264,7 +264,6 @@ def fix_missing(config_file, verbose=True):
         'user_seafile_auth': ['password'],
         'user_seafile_local_instance': False,
         'user_seafile_ro_access': False,
-        'user_duplicati_protocols': [],
         'user_cloud_console_access': [],
         'user_cloud_ssh_auth': ['publickey'],
         'user_cloud_alias': '',
@@ -528,7 +527,7 @@ _CONFIGURATION_DEFAULTS = {
     'user_seafile_alias': '',
     'user_seafile_local_instance': False,
     'user_seafile_ro_access': False,
-    'user_duplicati_protocols': [],
+    'user_duplicati_protocols': keyword_auto,
     'user_cloud_console_access': [],
     'user_cloud_ssh_auth': ['publickey'],
     'user_cloud_alias': '',
@@ -619,7 +618,7 @@ _CONFIGURATION_DEFAULTS = {
     'scriptlanguages': [],
     'jobtypes': [],
     'lrmstypes': [],
-    'storage_protocols': [],
+    'storage_protocols': keyword_auto,
     'server_cert': '',
     'server_key': '',
     'passphrase_file': '',
@@ -1284,6 +1283,17 @@ location.""" % self.config_file)
                                               'user_ftps_alias')
         if config.has_option('GLOBAL', 'user_ftps_log'):
             self.user_ftps_log = config.get('GLOBAL', 'user_ftps_log')
+
+        # NOTE: prioritized order based on performance and robustness.
+        #       Needed by duplicati and storage protocols setup below.
+        prio_storage_protos = []
+        if self.site_enable_sftp_subsys or self.site_enable_sftp:
+            prio_storage_protos.append('sftp')
+        if self.site_enable_ftps:
+            prio_storage_protos.append('ftps')
+        if self.site_enable_davs:
+            prio_storage_protos.append('davs')
+
         if config.has_option('SITE', 'enable_seafile'):
             self.site_enable_seafile = config.getboolean(
                 'SITE', 'enable_seafile')
@@ -1321,10 +1331,21 @@ location.""" % self.config_file)
         else:
             self.site_enable_duplicati = False
         if config.has_option('GLOBAL', 'user_duplicati_protocols'):
-            allowed_protos = [j for (i, j) in duplicati_protocol_choices]
-            protos = config.get('GLOBAL', 'user_duplicati_protocols').split()
+            allowed_protos = prio_storage_protos
+            plain_val = config.get('GLOBAL', 'user_duplicati_protocols')
+            protos = [i for i in plain_val.split() if i]
+            # Append missing supported protocols for AUTO and filter invalid
+            if keyword_auto in protos:
+                protos = [i for i in protos if i != keyword_auto] +\
+                         [i for i in allowed_protos if i not in protos]
             valid_protos = [i for i in protos if i in allowed_protos]
+            if protos != valid_protos:
+                invalid_protos = [i for i in protos if i not in valid_protos]
+                self.logger.warning("invalid duplicati_protocol value(s): %s" %
+                                    ', '.join(invalid_protos))
             self.user_duplicati_protocols = valid_protos
+        else:
+            self.user_duplicati_protocols = prio_storage_protos
         if config.has_option('SITE', 'enable_cloud'):
             self.site_enable_cloud = config.getboolean(
                 'SITE', 'enable_cloud')
@@ -1589,8 +1610,22 @@ location.""" % self.config_file)
         else:
             self.notify_protocols = []
         if config.has_option('GLOBAL', 'storage_protocols'):
-            self.storage_protocols = config.get(
-                'GLOBAL', 'storage_protocols').split()
+            allowed_protos = prio_storage_protos
+            plain_val = config.get('GLOBAL', 'storage_protocols')
+            protos = [i for i in plain_val.split() if i]
+            # Append missing supported protocols for AUTO and filter invalid
+            if keyword_auto in protos:
+                protos = [i for i in protos if i != keyword_auto] +\
+                         [i for i in allowed_protos if i not in protos]
+            valid_protos = [i for i in protos if i in allowed_protos]
+            if protos != valid_protos:
+                invalid_protos = [i for i in protos if i not in valid_protos]
+                self.logger.warning("invalid storage_protocols value(s): %s" %
+                                    ', '.join(invalid_protos))
+            self.storage_protocols = valid_protos
+        else:
+            self.storage_protocols = prio_storage_protos
+
         if config.has_option('SITE', 'enable_jupyter'):
             self.site_enable_jupyter = config.getboolean(
                 'SITE', 'enable_jupyter')
