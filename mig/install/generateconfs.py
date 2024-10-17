@@ -248,6 +248,7 @@ def main(argv, _generate_confs=generate_confs, _print=print):
         'seafile_quota',
         'quota_user_limit',
         'quota_vgrid_limit',
+        'wwwserve_max_bytes',
     ]
     bool_names = [
         'auto_add_cert_user',

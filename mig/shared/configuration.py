@@ -193,7 +193,6 @@ def fix_missing(config_file, verbose=True):
         'mig_system_storage': '~/state/mig_system_storage',
         'mig_system_run': '~/state/mig_system_run/',
         'wwwpublic': '~/state/wwwpublic/',
-        'wwwserve_max_bytes': -1,
         'vm_home': '~/state/vm_home',
         'server_cert': '~/certs/cert.pem',
         'server_key': '~/certs/key.pem',
@@ -1648,6 +1647,10 @@ location.""" % self.config_file)
             self.storage_protocols = valid_protos
         else:
             self.storage_protocols = prio_storage_protos
+
+        if config.has_option('GLOBAL', 'wwwserve_max_bytes'):
+            self.wwwserve_max_bytes = config.getint(
+                'GLOBAL', 'wwwserve_max_bytes')
 
         if config.has_option('SITE', 'enable_jupyter'):
             self.site_enable_jupyter = config.getboolean(

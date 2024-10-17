@@ -509,6 +509,7 @@ def generate_confs(
     ca_smtp='localhost',
     datasafety_link='',
     datasafety_text='',
+    wwwserve_max_bytes=-1,
     _getpwnam=pwd.getpwnam,
     _prepare=None,
     _writefiles=None,
@@ -825,6 +826,7 @@ def _generate_confs_prepare(
     ca_smtp,
     datasafety_link,
     datasafety_text,
+    wwwserve_max_bytes,
 ):
     """Prepate conf generator run"""
     user_dict = {}
@@ -1077,6 +1079,7 @@ def _generate_confs_prepare(
     user_dict['__CA_SMTP__'] = ca_smtp
     user_dict['__DATASAFETY_LINK__'] = datasafety_link
     user_dict['__DATASAFETY_TEXT__'] = datasafety_text
+    user_dict['__WWWSERVE_MAX_BYTES__'] = "%d" % (wwwserve_max_bytes)
 
     user_dict['__MIG_USER__'] = "%s" % (options['user_uname'])
     user_dict['__MIG_GROUP__'] = "%s" % (options['user_group'])
