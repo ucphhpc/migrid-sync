@@ -32,6 +32,8 @@ from string import ascii_lowercase, ascii_uppercase, digits
 import os
 import sys
 
+from mig.shared.localtypes import AsciiEnum
+
 MIG_BASE = os.path.realpath(os.path.join(os.path.dirname(__file__), '../..'))
 MIG_ENV = os.getenv('MIG_ENV', 'default')
 
@@ -79,6 +81,13 @@ any_state = keyword_any
 
 AUTH_NONE, AUTH_GENERIC, AUTH_CERTIFICATE = "None", "Generic", "X.509 Certificate"
 AUTH_OPENID_CONNECT, AUTH_OPENID_V2 = "OpenID Connect", "OpenID 2.0"
+
+class AUTH(AsciiEnum):
+    NONE = AUTH_NONE
+    GENERIC = AUTH_GENERIC
+    CERTIFICATE = AUTH_CERTIFICATE
+    OPENID_CONNECT = AUTH_OPENID_CONNECT
+    OPENID_V2 = AUTH_OPENID_V2
 
 AUTH_MIG_OID = "Site %s" % AUTH_OPENID_V2
 AUTH_EXT_OID = "Ext %s" % AUTH_OPENID_V2
