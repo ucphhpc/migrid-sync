@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # duplicatikeywords - keywords used in the duplicati settings file
-# Copyright (C) 2003-2021  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -29,8 +29,7 @@
 
 from __future__ import absolute_import
 
-from mig.shared.defaults import duplicati_protocol_choices, \
-    duplicati_schedule_choices
+from mig.shared.defaults import protocol_aliases, duplicati_schedule_choices
 from mig.shared.url import urlencode
 
 
@@ -54,17 +53,31 @@ duplicati_conf_templates = {'version': '''    "CreatedBy": "%(short_title)s v1.0
     }'''
                             }
 
-protocol_map = dict(duplicati_protocol_choices)
 schedule_map = dict(duplicati_schedule_choices)
 
-# TODO: this function should probably move to shared.settings or something
 
+def get_duplicati_protocol_map(configuration, reverse=False):
+    """Simple helper to extract supported storage protocols from conf and map
+    them to user-friendly aliases. If the optional reverse argument is set the
+    map is reversed to map from aliases to protocols instead of vice-versa.
+    """
+    if reverse:
+        return {protocol_aliases[i]: i for i in configuration.storage_protocols}
+    else:
+        return {i: protocol_aliases[i] for i in configuration.storage_protocols}
+
+
+# TODO: this function should probably move to shared.settings or something
 
 def extract_duplicati_helper(configuration, client_id, duplicati_dict):
     """Fill helper dictionary with values used in duplicati_conf_templates"""
     # lookup fqdn, username, etc for specified protocol
-    default_protocol = duplicati_protocol_choices[0][0]
-    protocol_alias = duplicati_dict.get('PROTOCOL', default_protocol)
+    rev_proto_map = get_duplicati_protocol_map(configuration, reverse=True)
+    if configuration.storage_protocols:
+        default_alias = protocol_aliases[configuration.storage_protocols[0]]
+    else:
+        default_alias = ''
+    protocol_alias = duplicati_dict.get('PROTOCOL', default_alias)
     username = duplicati_dict.get('USERNAME')
     password = duplicati_dict.get('PASSWORD', '')
     credentials = [('auth-username', username)]
@@ -82,7 +95,7 @@ def extract_duplicati_helper(configuration, client_id, duplicati_dict):
     #       cert renew will change the hash and thus break existing confs.
     schedule_alias = duplicati_dict.get('SCHEDULE', '')
     schedule_freq = schedule_map.get(schedule_alias, '')
-    protocol = protocol_map[protocol_alias]
+    protocol = rev_proto_map[protocol_alias]
     if protocol in ('webdavs', 'davs'):
         # Duplicati client requires webdavs://BLA
         protocol = 'webdavs'

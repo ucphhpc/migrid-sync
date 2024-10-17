@@ -207,7 +207,7 @@
   "smtp_server": "",
   "sss_home": "",
   "state_path": "/some/place/state",
-  "storage_protocols": [],
+  "storage_protocols": "AUTO",
   "submitui": [
     "fields",
     "textarea",
@@ -242,7 +242,7 @@
   "user_davs_show_address": "",
   "user_davs_show_port": 4443,
   "user_db_home": "",
-  "user_duplicati_protocols": [],
+  "user_duplicati_protocols": "AUTO",
   "user_events_log": "events.log",
   "user_ext_cert_title": "",
   "user_ext_oid_provider": "",

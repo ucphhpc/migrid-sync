@@ -1054,6 +1054,8 @@ def _generate_confs_prepare(
     user_dict['__PERMANENT_FREEZE__'] = permanent_freeze
     user_dict['__FREEZE_TO_TAPE__'] = freeze_to_tape
     user_dict['__STATUS_SYSTEM_MATCH__'] = status_system_match
+    user_dict['__STORAGE_PROTOCOLS__'] = storage_protocols
+    user_dict['__DUPLICATI_PROTOCOLS__'] = duplicati_protocols
     user_dict['__IMNOTIFY_ADDRESS__'] = imnotify_address
     user_dict['__IMNOTIFY_CHANNEL__'] = imnotify_channel
     user_dict['__IMNOTIFY_USERNAME__'] = imnotify_username
@@ -1329,29 +1331,6 @@ cert, oid and sid based https!
         fail2ban_daemon_ports.append(davs_port)
         if davs_show_port:
             fail2ban_daemon_ports.append(davs_show_port)
-
-    # NOTE: prioritized order based on performance and robustness
-    best_storage_svc = []
-    if enable_sftp_subsys or enable_sftp:
-        best_storage_svc.append('sftp')
-    if enable_ftps:
-        best_storage_svc.append('ftps')
-    if enable_davs:
-        best_storage_svc.append('davs')
-
-    if storage_protocols != keyword_auto:
-        storage_protocols = [i for i in storage_protocols.split() if i in
-                             best_storage_svc]
-    else:
-        storage_protocols = best_storage_svc
-    user_dict['__STORAGE_PROTOCOLS__'] = ' '.join(storage_protocols)
-
-    if duplicati_protocols != keyword_auto:
-        prio_duplicati_protocols = [i for i in duplicati_protocols.split() if i
-                                    in best_storage_svc]
-    else:
-        prio_duplicati_protocols = best_storage_svc
-    user_dict['__DUPLICATI_PROTOCOLS__'] = ' '.join(prio_duplicati_protocols)
 
     user_dict['__SEAFILE_TIMEZONE__'] = options['timezone']
 

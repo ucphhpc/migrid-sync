@@ -139,7 +139,6 @@ class MigSharedFunctionalityCat(MigTestCase):
         self.assertEqual(len(relevant_obj['lines']), 1)
         self.assertEqual(relevant_obj['lines'][0], test_binary_file_data)
 
-
     def test_file_serving_over_limit_without_storage_protocols(self):
         test_binary_file = os.path.realpath(os.path.join(TEST_DATA_DIR,
                                                          'loading.gif'))
@@ -153,13 +152,14 @@ class MigSharedFunctionalityCat(MigTestCase):
             'path': ['loading.gif'],
         }
 
-        self.configuration.storage_protocols = [] # be explicit though it is default
+        # NOTE: override default storage_protocols to empty in this test
+        self.configuration.storage_protocols = []
         self.configuration.wwwserve_max_bytes = test_binary_file_size - 1
 
         (output_objects, status) = submain(self.configuration, self.logger,
-                                        client_id=self.TEST_CLIENT_ID,
-                                        user_arguments_dict=payload,
-                                        environ=self.test_environ)
+                                           client_id=self.TEST_CLIENT_ID,
+                                           user_arguments_dict=payload,
+                                           environ=self.test_environ)
 
         self.assertEqual(len(output_objects), 1)
         relevant_obj = self.assertSingleOutputObject(output_objects,

@@ -4,7 +4,7 @@
 # --- BEGIN_HEADER ---
 #
 # settings - back end for the settings page
-# Copyright (C) 2003-2023  The MiG Project lead by Brian Vinter
+# Copyright (C) 2003-2024  The MiG Project lead by Brian Vinter
 #
 # This file is part of MiG.
 #
@@ -41,8 +41,9 @@ from mig.shared.base import client_alias, client_id_dir, extract_field, get_xgi_
 from mig.shared.defaults import default_mrsl_filename, \
     default_css_filename, profile_img_max_kb, profile_img_extensions, \
     seafile_ro_dirname, duplicati_conf_dir, csrf_field, \
-    duplicati_protocol_choices, duplicati_schedule_choices
-from mig.shared.duplicatikeywords import get_duplicati_specs
+    duplicati_schedule_choices
+from mig.shared.duplicatikeywords import get_duplicati_specs, \
+    get_duplicati_protocol_map
 from mig.shared.editing import cm_css, cm_javascript, cm_options, wrap_edit_area
 from mig.shared.functional import validate_input_and_cert
 from mig.shared.handlers import get_csrf_limit, make_csrf_token
@@ -1675,9 +1676,8 @@ value="%(default_authpassword)s" />
         if configuration.user_duplicati_protocols:
             protocol_order = configuration.user_duplicati_protocols
         else:
-            protocol_order = [j for (i, j) in duplicati_protocol_choices]
-        reverse_proto_map = dict([(j, i) for (i, j) in
-                                  duplicati_protocol_choices])
+            protocol_order = configuration.storage_protocols
+        proto_map = get_duplicati_protocol_map(configuration)
 
         enabled_map = {
             'davs': configuration.site_enable_davs,
@@ -1691,7 +1691,7 @@ value="%(default_authpassword)s" />
             'ftps': extract_field(client_id, configuration.user_ftps_alias)
         }
         for proto in protocol_order:
-            pretty_proto = reverse_proto_map[proto]
+            pretty_proto = proto_map[proto]
             if not enabled_map[proto]:
                 continue
             if not pretty_proto in configuration.protocol:
